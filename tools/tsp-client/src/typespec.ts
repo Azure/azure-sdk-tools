@@ -3,6 +3,7 @@ import { ModuleResolutionResult, resolveModule, ResolveModuleHost } from "@types
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
+import { exit } from "process";
 
 
 export interface TspLocation {
@@ -109,10 +110,11 @@ export async function compileTsp({
     for (const diagnostic of program.diagnostics) {
       const location = getSourceLocation(diagnostic.target);
       const source = location ? location.file.path : "unknown";
-      console.error(
+      Logger.error(
         `${diagnostic.severity}: ${diagnostic.code} - ${diagnostic.message} @ ${source}`,
       );
     }
+    exit(1);
   } else {
     Logger.success("generation complete");
   }

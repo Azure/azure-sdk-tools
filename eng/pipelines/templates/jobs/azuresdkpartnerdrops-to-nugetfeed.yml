@@ -70,7 +70,7 @@ jobs:
         - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
           parameters:
             BuildToolsRepositoryPath: ${{ parameters.BuildToolsRepoPath }}
-            PackagesPath: $(Artifacts)
+            PackagesPath: ${{ parameters.ArtifactsPath }}
             StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
 
         - task: NuGetToolInstaller@1

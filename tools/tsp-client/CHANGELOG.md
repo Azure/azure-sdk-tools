@@ -1,5 +1,9 @@
 # Release
 
+## 2024-07-01 - 0.9.1
+
+- Fix error logging during the `compile` call and exit if diagnostics are encountered.
+
 ## 2024-06-21 - 0.9.0
 
 - Prefer the `service-dir` parameter in the emitter configurations in tspconfig.yaml if specified.

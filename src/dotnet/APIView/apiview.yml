@@ -1,3 +1,11 @@
+parameters:
+  - name: AzureSdkForNetDevOpsFeed
+    type: string
+    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
+  - name: CSharpAPIParserVersion
+    type: string
+    default: '1.0.0-dev.20240626.4'
+
 trigger:
   branches:
     include:
@@ -311,6 +319,10 @@ extends:
                     echo Installing npm packages
                     call npm install --prefix D:\home\site\wwwroot --force
                     call npm run-script build --prefix D:\home\site\wwwroot --force
+                    echo Installing .NET tool
+                    call mkdir D:\home\site\wwwroot\csharp-parser
+                    call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                    echo Installing Python tools
                     call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
                     call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
                   enableCustomDeployment: true

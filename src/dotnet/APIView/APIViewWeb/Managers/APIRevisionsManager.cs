@@ -12,7 +12,6 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
-using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -5,6 +5,8 @@ import json
 import argparse
 import logging
 import dataclasses
+import re
+import glob
 from typing import List
 
 from modules import JavaExample, JavaFormatResult
@@ -14,6 +16,7 @@ from format import JavaFormat
 
 script_path: str = '.'
 tmp_path: str
+specs_path: str
 
 namespace = 'com.azure.resourcemanager'
 
@@ -172,6 +175,8 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 example_filepath = java_example_method.example_relative_path
                 example_dir, example_filename = path.split(example_filepath)
 
+                example_dir = try_find_resource_manager_example(example_dir, example_filename)
+
                 # use Main as class name
                 old_class_name = class_name
                 new_class_name = 'Main'
@@ -186,6 +191,39 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 java_examples.append(java_example)
 
     return java_examples
+
+
+def set_specs_path(new_specs_path: str):
+    # for test
+    global specs_path
+    specs_path = new_specs_path
+
+
+def try_find_resource_manager_example(example_dir: str, example_filename: str) -> str:
+    if '/resource-manager/' not in example_dir:
+        try:
+            match = re.match(r'specification/([^/]+)/.*/examples/([^/]+)(.*)', example_dir)
+            if match:
+                # example: specification/mongocluster/DocumentDB.MongoCluster.Management/examples/2024-03-01-preview
+                # service: mongocluster
+                # api_version: 2024-03-01-preview
+                # additional_path: <empty>
+
+                service = match.group(1)
+                api_version = match.group(2)
+                additional_path = match.group(3)
+
+                glob_resource_manager_filename = f'specification/{service}/resource-manager/**/{api_version}/examples{additional_path}/{example_filename}'
+                candidate_resource_manager_filename = glob.glob(path.join(specs_path, glob_resource_manager_filename),
+                                                                recursive=True)
+                if len(candidate_resource_manager_filename) > 0:
+                    example_path, _ = path.split(candidate_resource_manager_filename[0])
+                    example_dir = path.relpath(example_path, specs_path).replace('\\', '/')
+        except NameError:
+            # specs_path not defined
+            pass
+
+    return example_dir
 
 
 def validate_java_examples(release: Release, java_examples: List[JavaExample]) -> JavaFormatResult:
@@ -275,6 +313,7 @@ def create_java_examples(release: Release, sdk_examples_path: str, java_examples
 def main():
     global script_path
     global tmp_path
+    global specs_path
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -291,7 +330,7 @@ def main():
     with open(input_json_path, 'r', encoding='utf-8') as f_in:
         config = json.load(f_in)
 
-    # specs_path = config['specsPath']
+    specs_path = config['specsPath']
     sdk_path = config['sdkPath']
     sdk_examples_path = config['sdkExamplesPath']
     tmp_path = config['tempPath']

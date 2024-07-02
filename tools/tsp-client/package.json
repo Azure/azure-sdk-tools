@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-client-generator-cli",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
@@ -17,7 +17,7 @@
     "clean": "rimraf ./dist ./types",
     "example": "npx ts-node src/index.ts update",
     "prepack": "npm run build",
-    "test": "mocha"
+    "test": "mocha --exclude **/examples/**"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
@@ -39,7 +39,7 @@
     "@types/prompt-sync": "^4.2.1",
     "@typespec/compiler": "0.50.0",
     "chai": "^4.3.7",
-    "mocha": "^10.2.0",
+    "mocha": "^10.5.2",
     "prettier": "^3.0.1",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",

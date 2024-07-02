@@ -99,6 +99,7 @@ Create following Azure resources in your Azure subscription.
 
 
 ### Connect local debugging instance to Azure resource
+
 Following configuration is required to connect local debug instance to Azure resources as well as to setup debugging environment. Below are the steps to follow and required configuration to be added.
 
 - Right click on `APIViewWeb` project in `APIView solution` using solution explorer in Visual Studio and select `Manage User Secrets`.
@@ -110,12 +111,8 @@ Following configuration is required to connect local debug instance to Azure res
         "ClientId": "<Client-ID>",
         "ClientSecret": "<Client OAuthSecret>"
     },
-    "Blob": {
-        "ConnectionString": "<connection string to storage account>"
-    },
-    "Cosmos": {
-        "ConnectionString": "<connection string to cosmos db>"
-    },
+    "StorageAccountUrl": "https://<storage account name>.blob.core.windows.net/",
+    "CosmosEndpoint": "Cosmos End point URL. For e.g. https://<cosmosDBName>.documents.azure.com:443/",
     "CosmosDBName": "APIViewV2",
     "github-access-token": "",
     "ApiKey": "",
@@ -123,6 +120,18 @@ Following configuration is required to connect local debug instance to Azure res
     "BackgroundTaskDisabled": true,
     "APPCONFIG": "<connection string to app configuration>"
   }
+
+Note: User requires following role based access to storage account and cosmos DB for local debugging and make sure that user is logged in to Azure from Visual studio to access Azure resources.
+
+- `Storage Blob Contributor` to access storage account
+- `DocumentDB Account Contributor` to access Cosmos DB
+
+### Role based access requierd for deployed instances
+
+APIView Azure web app instance requires role based access to storage and cosmos DB instances to access using managed identity. Following are the required RBAC roles.
+
+- `Storage Blob Contributor` to access storage account
+- `DocumentDB Account Contributor` to access Cosmos DB
 
 ### Compile TypeScript code
 

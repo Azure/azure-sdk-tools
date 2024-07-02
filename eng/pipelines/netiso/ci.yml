@@ -6,14 +6,15 @@ jobs:
         MacLatest:
           pool.name: Azure Pipelines
           pool.image: macos-latest
-        Mac11:
+        Mac12:
           pool.name: Azure Pipelines
-          pool.image: macos-11
+          pool.image: macos-12
     pool:
       name: $(pool.name)
       vmImage: $(pool.image)
     steps:
       - checkout: self
+
       - task: AzurePowershell@5
         displayName: Test
         inputs:
@@ -24,4 +25,15 @@ jobs:
           inlineScript: |
             Write-Host "BEBRODER"
 
-      - template: /eng/common/TestResources/setup-environments.yml
+      - bash: sudo chown -R runner ~/.Azure
+        displayName: (MacOS) Grant access to ~/.Azure
+
+      - task: Powershell@2
+        displayName: Setup Az Modules and Dogfood Environment
+        inputs:
+          targetType: inline
+          pwsh: true
+          script: |
+            Set-PSDebug -Trace 2
+            eng/common/scripts/Import-AzModules.ps1
+

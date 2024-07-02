@@ -6,9 +6,6 @@ jobs:
         MacLatest:
           pool.name: Azure Pipelines
           pool.image: macos-latest
-        Mac12:
-          pool.name: Azure Pipelines
-          pool.image: macos-12
     pool:
       name: $(pool.name)
       vmImage: $(pool.image)

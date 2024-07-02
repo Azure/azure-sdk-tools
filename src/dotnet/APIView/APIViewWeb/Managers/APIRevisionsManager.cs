@@ -11,9 +11,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
-using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -575,7 +573,7 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Delete APIRevisions
+        /// Restore APIRevisions
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>

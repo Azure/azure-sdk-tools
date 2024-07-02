@@ -351,7 +351,7 @@ namespace APIViewWeb.Helpers
                 tokenIdsInRow.Clear();
             }
 
-            AddDiagnoasticRow(codePanelData, codePanelRawData, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition);
+            AddDiagnosticRow(codePanelData, codePanelRawData, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition);
         }
 
         private static void BuildTokensForDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
@@ -605,7 +605,7 @@ namespace APIViewWeb.Helpers
                 }
             }
 
-            AddDiagnoasticRow(codePanelData: codePanelData, codePanelRawData: codePanelRawData, nodeId: apiTreeNode.Id, nodeIdHashed: nodeIdHashed, linesOfTokensPosition: linesOfTokensPosition);
+            AddDiagnosticRow(codePanelData: codePanelData, codePanelRawData: codePanelRawData, nodeId: apiTreeNode.Id, nodeIdHashed: nodeIdHashed, linesOfTokensPosition: linesOfTokensPosition);
         }
         
         private static string GetTokenNodeIdHash(APITreeNode apiTreeNode, RowOfTokensPosition linesOfTokensPosition, string parentNodeIdHash)
@@ -728,7 +728,7 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        private static void AddDiagnoasticRow(CodePanelData codePanelData, CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition)
+        private static void AddDiagnosticRow(CodePanelData codePanelData, CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition)
         {
             if (codePanelRawData.Diagnostics.Any(d => d.TargetId == nodeId) && linesOfTokensPosition != RowOfTokensPosition.Bottom)
             {

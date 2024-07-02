@@ -63,8 +63,6 @@ namespace APIViewWeb.Helpers
             {
                 case "C#":
                     return true;
-                case "Java":
-                    return true;
                 default:
                     return false;
             }

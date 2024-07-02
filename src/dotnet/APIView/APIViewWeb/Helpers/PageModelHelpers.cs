@@ -581,7 +581,6 @@ namespace APIViewWeb.Helpers
         /// </summary>
         /// <param name="Model"></param>
         /// <returns></returns>
-
         public static (string modalId, List<string> issueList, Dictionary<string, (string modalBody, string checkboxId, string checkboxName)> issueDict) GetModalInfo(ReviewPageModel Model)
         {
             var issueDict = new Dictionary<string, (string modalBody, string checkboxId, string checkboxName)>

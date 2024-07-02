@@ -1,4 +1,4 @@
-import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
+import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions, formatDiagnostic } from "@typespec/compiler";
 import { ModuleResolutionResult, resolveModule, ResolveModuleHost } from "@typespec/compiler/module-resolver";
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
@@ -66,7 +66,7 @@ export async function compileTsp({
   saveInputs?: boolean;
 }) {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
-  const { compile, NodeHost, getSourceLocation, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
+  const { compile, NodeHost, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
 
   const outputDir = resolvePath(outputPath);
   const overrideOptions: Record<string, Record<string, string>> = {
@@ -107,12 +107,9 @@ export async function compileTsp({
 
   if (program.diagnostics.length > 0) {
     for (const diagnostic of program.diagnostics) {
-      const location = getSourceLocation(diagnostic.target);
-      const source = location ? location.file.path : "unknown";
-      console.error(
-        `${diagnostic.severity}: ${diagnostic.code} - ${diagnostic.message} @ ${source}`,
-      );
+      Logger.error(formatDiagnostic(diagnostic));
     }
+    process.exit(1);
   } else {
     Logger.success("generation complete");
   }

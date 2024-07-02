@@ -187,20 +187,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     TriageLabelConstants.NoRecentActivity
                 };
 
-                /// An issue with the auto-close-exempt label will exempt the issue from being closed by this rule
-                List<string> excludeLabels = new List<string>
-                {
-                    TriageLabelConstants.AutoCloseExempt
-                };
-
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
                                                                  IssueTypeQualifier.Issue,
                                                                  ItemState.Open,
                                                                  14, // more than 14 days since last update
                                                                  new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
-                                                                 includeLabels,
-                                                                 excludeLabels);
+                                                                 includeLabels);
 
                 // Need to stop updating when the we hit the limit but, until then, after exhausting every
                 // issue in the page returned, the query needs to be rerun to get the next page
@@ -582,6 +575,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
+                /// An issue with the auto-close-exempt label will exempt the issue from being closed by this rule
+                List<string> excludeLabels = new List<string>
+                {
+                    TriageLabelConstants.AutoCloseExempt
+                };
+
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(
                     scheduledEventPayload.Repository.Owner.Login,
                     scheduledEventPayload.Repository.Name,
@@ -590,7 +589,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     30, // more than 30 days
                     new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                     null,
-                    null,
+                    excludeLabels,
                     365*2 // Created date > 2 years
                     );
 

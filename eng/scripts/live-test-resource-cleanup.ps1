@@ -441,7 +441,8 @@ function DeleteAndPurgeGroups([array]$toDelete) {
         }
       }
     } catch {
-      Write-Error $_
+      Write-Warning "Failure deleting/purging group $($rg.ResourceGroupName):"
+      Write-Warning $_
       $hasError = $true
     }
   }

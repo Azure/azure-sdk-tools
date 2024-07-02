@@ -149,7 +149,7 @@ def format_js(lines: List[str]) -> List[str]:
             new_lines.append(line)
         else:
             # start with require
-            if 'require(' in line:
+            if 'require(' in line or 'const {' in line:
                 new_lines.append(line)
                 skip_head = False
 

@@ -1,6 +1,6 @@
 import unittest
 from main import get_js_example_method, get_sample_version, get_module_relative_path, \
-    break_down_aggregated_js_example, format_js, create_js_examples, Release
+    break_down_aggregated_js_example, format_js, create_js_examples, Release, PackageType
 
 
 class TestMain(unittest.TestCase):
@@ -310,6 +310,42 @@ main().catch(console.error);
 
         example_lines = aggregated_js_example.class_opening + aggregated_js_example.methods[0].content
         example_lines = format_js(example_lines)
+
+    def test_get_js_example_method_new_require_newline(self):
+        code = '''const {
+  AppComplianceAutomationToolForMicrosoft365,
+} = require("@azure/arm-appcomplianceautomation");
+const { DefaultAzureCredential } = require("@azure/identity");
+require("dotenv").config();
+
+/**
+ * This sample demonstrates how to Get the evidence metadata
+ *
+ * @summary Get the evidence metadata
+ * x-ms-original-file: specification/appcomplianceautomation/resource-manager/Microsoft.AppComplianceAutomation/stable/2024-06-27/examples/Evidence_Get.json
+ */
+async function evidenceGet() {
+  const reportName = "testReportName";
+  const evidenceName = "evidence1";
+  const credential = new DefaultAzureCredential();
+  const client = new AppComplianceAutomationToolForMicrosoft365(credential);
+  const result = await client.evidence.get(reportName, evidenceName);
+  console.log(result);
+}
+
+async function main() {
+  evidenceGet();
+}
+
+main().catch(console.error);
+'''
+
+        lines = code.splitlines(keepends=True)
+
+        aggregated_js_example = break_down_aggregated_js_example(lines)
+        example_lines = aggregated_js_example.class_opening + aggregated_js_example.methods[0].content
+        example_lines = format_js(example_lines)
+        self.assertTrue(example_lines[0].startswith('const {'))
 
     @unittest.skip
     def test_get_module_relative_path(self):

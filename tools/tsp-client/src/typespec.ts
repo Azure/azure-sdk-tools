@@ -100,16 +100,16 @@ export async function compileTsp({
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
   if (diagnostics.length > 0) {
     // This should not happen, but if it does, we should log it.
-    Logger.error(`Compiler options diagnostic information: ${JSON.stringify(diagnostics)}`);
+    Logger.error("Diagnostics were reported while resolving compiler options...")
+    diagnostics.forEach((diagnostic) => { Logger.error(formatDiagnostic(diagnostic)); });
     return false;
   }
 
   const program = await compile(NodeHost, resolvedMainFilePath, options);
 
   if (program.diagnostics.length > 0) {
-    for (const diagnostic of program.diagnostics) {
-      Logger.error(formatDiagnostic(diagnostic));
-    }
+    Logger.error("Diagnostics were reported during compilation...");
+    program.diagnostics.forEach((diagnostic) => { Logger.error(formatDiagnostic(diagnostic)); });
     return false;
   } else {
     Logger.success("generation complete");

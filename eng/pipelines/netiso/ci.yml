@@ -34,6 +34,5 @@ jobs:
           targetType: inline
           pwsh: true
           script: |
-            Set-PSDebug -Trace 2
             eng/common/scripts/Import-AzModules.ps1
 

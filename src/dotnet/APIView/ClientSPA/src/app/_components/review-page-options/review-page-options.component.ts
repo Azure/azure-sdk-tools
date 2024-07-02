@@ -7,6 +7,8 @@ import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
+import { CookieService } from 'ngx-cookie-service';
+import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 
 @Component({
   selector: 'app-review-page-options',
@@ -20,10 +22,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
-  @Input() preferedApprovers: string[] = [];
+  @Input() preferredApprovers: string[] = [];
   @Input() conversiationInfo : any | undefined = undefined;
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
+  @Input() reviewId: string | undefined;
+  @Input() apiRevisionId: string | undefined;
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -37,7 +41,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 
   webAppUrl : string = this.configService.webAppUrl
-  
+
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
@@ -55,12 +59,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   showAPIRevisionApprovalModal: boolean = false;
   overrideActiveConversationforApproval : boolean = false;
   overrideFatalDiagnosticsforApproval : boolean = false;
-  
+
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
 
+  //Approver selection
   selectedApprovers: string[] = [];
+  initialSelectedApprovers: string[] = [];
 
   diffStyleOptions : any[] = [
     { label: 'Full Diff', value: "full" },
@@ -77,7 +83,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     'unDeleted': 'bi bi-plus-circle-fill undeleted'
   };
 
-  constructor(private configService: ConfigService, private route: ActivatedRoute, private router: Router) { }
+  constructor(private configService: ConfigService, private cookieService: CookieService, private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService) { }
 
   ngOnInit() {
     this.setSelectedDiffStyle();
@@ -95,6 +101,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showLineNumbersSwitch = false;
     } else {
       this.showLineNumbersSwitch = true;
+    }
+
+    const selectedApproversCookie = this.cookieService.get('selectedApprovers');
+    if (selectedApproversCookie) {
+      this.selectedApprovers = JSON.parse(selectedApproversCookie);
     }
 
     this.setHasActiveConversatons();
@@ -124,10 +135,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showLineNumbersSwitch = true;
      }
     }
-    
+
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
       this.markedAsViewSwitch = this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!);
-      this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.setAPIRevisionApprovalStates();
     }
 
@@ -206,6 +216,39 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
    */
   onShowHiddenAPISwitchChange(event: InputSwitchOnChangeEvent) {
     this.showHiddenAPIEmitter.emit(event.checked);
+  }
+
+  //sets the list of initial approvers on panel open to the previosuly selected approvers (if any, if not, the original approvers
+  //list loads)
+  handleOnPanelShow() {
+    this.initialSelectedApprovers = [...this.selectedApprovers];
+  }
+
+  //
+  handleOnPanelHide() {
+    if (!this.reviewId || !this.apiRevisionId) {
+      return;
+    }
+    
+    const { isSelectedApproversChanged, currentApproversSet } = this.hasSelectedApproversChanged();
+
+    if (!isSelectedApproversChanged) {
+      return;
+    }
+    this.apiRevisionsService.updateSelectedReviewers(this.reviewId, this.apiRevisionId, currentApproversSet).subscribe();
+    this.cookieService.set('selectedApprovers', JSON.stringify(this.selectedApprovers));
+  }
+
+  hasSelectedApproversChanged() {
+    const currentApproversSet = new Set(this.selectedApprovers);
+    const initialApproversSet = new Set(this.initialSelectedApprovers);
+    const isSelectedApproversChanged = this.selectedApprovers.length !== this.initialSelectedApprovers.length ||
+                      [...currentApproversSet].some(approver => !initialApproversSet.has(approver));
+    return { isSelectedApproversChanged, currentApproversSet };
+  }
+
+  formatSelectedApprovers(approvers: string[]): string {
+    return approvers.join(', ');
   }
 
   setSelectedDiffStyle() {

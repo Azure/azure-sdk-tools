@@ -3,7 +3,7 @@
 ## 2024-07-02 - 0.9.1
 
 - Fix error logging after the `compile()` call and exit if diagnostics are encountered.
-- Use `formatDiagnostic()` from "@typespec/compiler" to report diagnostics after the compiling.
+- Use `formatDiagnostic()` from "@typespec/compiler" to report diagnostics after compiling.
 
 ## 2024-06-21 - 0.9.0
 

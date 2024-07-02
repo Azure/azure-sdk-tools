@@ -64,7 +64,7 @@ export async function compileTsp({
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
-}) {
+}): Promise<boolean> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
   const { compile, NodeHost, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
 
@@ -100,7 +100,8 @@ export async function compileTsp({
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
   if (diagnostics.length > 0) {
     // This should not happen, but if it does, we should log it.
-    Logger.debug(`Compiler options diagnostic information: ${JSON.stringify(diagnostics)}`);
+    Logger.error(`Compiler options diagnostic information: ${JSON.stringify(diagnostics)}`);
+    return false;
   }
 
   const program = await compile(NodeHost, resolvedMainFilePath, options);
@@ -109,10 +110,11 @@ export async function compileTsp({
     for (const diagnostic of program.diagnostics) {
       Logger.error(formatDiagnostic(diagnostic));
     }
-    process.exit(1);
+    return false;
   } else {
     Logger.success("generation complete");
   }
+  return true;
 }
 
 export async function importTsp(baseDir: string): Promise<typeof import("@typespec/compiler")> {

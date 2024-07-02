@@ -1,0 +1,27 @@
+jobs:
+  - job: test
+    timeoutInMinutes: 5
+    strategy:
+      matrix:
+        MacLatest:
+          pool.name: Azure Pipelines
+          pool.image: macos-latest
+        Mac11:
+          pool.name: Azure Pipelines
+          pool.image: macos-11
+    pool:
+      name: $(pool.name)
+      vmImage: $(pool.image)
+    steps:
+      - checkout: self
+      - task: AzurePowershell@5
+        displayName: Test
+        inputs:
+          azureSubscription: azure-sdk-tests
+          azurePowerShellVersion: LatestVersion
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            Write-Host "BEBRODER"
+
+      - template: /eng/common/TestResources/setup-environments.yml

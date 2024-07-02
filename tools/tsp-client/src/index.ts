@@ -228,7 +228,7 @@ async function generate({
     await removeDirectory(tempRoot);
   }
   if (!succeeded) {
-    exit(1);
+    process.exit(1);
   }
 }
 

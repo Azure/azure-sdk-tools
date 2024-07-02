@@ -1,6 +1,6 @@
 # Release
 
-## 2024-07-01 - 0.9.1
+## 2024-07-02 - 0.9.1
 
 - Fix error logging during the `compile` call and exit if diagnostics are encountered.
 

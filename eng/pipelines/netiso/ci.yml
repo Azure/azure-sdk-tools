@@ -1,6 +1,6 @@
 jobs:
   - job: test
-    timeoutInMinutes: 1
+    timeoutInMinutes: 10
     strategy:
       matrix:
         MacLatest:

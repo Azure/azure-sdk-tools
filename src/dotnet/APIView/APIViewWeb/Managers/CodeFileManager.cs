@@ -4,6 +4,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -196,11 +198,25 @@ namespace APIViewWeb.Managers
         /// <param name="codeFileA"></param>
         /// <param name="codeFileB"></param>
         /// <returns></returns>
-        public bool AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
+        public async Task<bool> AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
         {
-            var codeFileATextLines = codeFileA.RenderText(false, skipDiff: true);
-            var codeFileBTextLines = codeFileB.RenderText(false, skipDiff: true);
-            return codeFileATextLines.SequenceEqual(codeFileBTextLines);
+            if (LanguageServiceHelpers.UsesTreeStyleParser(codeFileA.CodeFile.Language))
+            {
+                var diffTree =CodeFileHelpers.ComputeAPIForestDiff(codeFileA.CodeFile.APIForest, codeFileB.CodeFile.APIForest);
+                var codePanelRawData = new CodePanelRawData()
+                {
+                    APIForest = diffTree,
+                    Language = codeFileA.CodeFile.Language
+                };
+                var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+                return result.HasDiff;
+            }
+            else
+            {
+                var codeFileATextLines = codeFileA.RenderText(false, skipDiff: true);
+                var codeFileBTextLines = codeFileB.RenderText(false, skipDiff: true);
+                return codeFileATextLines.SequenceEqual(codeFileBTextLines);
+            }
         }
 
         public bool AreCodeFilesTheSame(CodeFile codeFileA, CodeFile codeFileB)
@@ -228,6 +244,7 @@ namespace APIViewWeb.Managers
             file.PackageName = codeFile.PackageName;
             file.PackageVersion = codeFile.PackageVersion;
             file.CrossLanguagePackageId = codeFile.CrossLanguagePackageId;
+            file.ParserStyle = (codeFile.APIForest.Count > 0) ? "Tree" : null;
         }
     }
 }

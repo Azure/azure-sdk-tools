@@ -1,0 +1,14 @@
+@import "../../../../../../APIViewWeb/Client/css/shared/mixins.scss";
+
+#apiview-logo {
+    @include apiview-logo;
+}
+
+:host .main-nav-cst-theme {
+    @include main-nav-cst-theme;
+}
+
+.navbar-brand {
+    padding-top: 0px;
+    padding-bottom: 0px;
+}

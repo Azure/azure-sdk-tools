@@ -1,0 +1,17 @@
+<div class="row my-2">
+    <p-menubar>
+        <ng-template pTemplate="start">
+            <img src="{{assetsPath}}/images/{{ review?.language! | languageNames }}-original.svg" width="25" height="25">
+            <span class="fw-semibold ms-2 me-3">{{ review?.packageName}}</span>
+            <i class="fas fa-check-circle text-success me-3" *ngIf="review?.isApproved"></i>
+            <app-api-revision-options [apiRevisions]="apiRevisions" 
+                [activeApiRevisionId]="activeApiRevisionId" 
+                [diffApiRevisionId]="diffApiRevisionId">
+            </app-api-revision-options>
+        </ng-template>
+        <ng-template pTemplate="end">
+            <input type="checkbox" (change)="onRightPanelCheckChange($event)" [(ngModel)]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off">
+            <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="page-right-panel"><i class="fa fa-bars"></i></label>
+        </ng-template>
+    </p-menubar>
+</div>

@@ -26,6 +26,7 @@ namespace APIViewWeb.LeanControllers
             _aiCommentsManager = aiCommentsManager;
             _telemetryClient = telemetryClient;
         }
+
         /// <summary>
         /// Create AI Comment
         /// </summary>
@@ -46,14 +47,15 @@ namespace APIViewWeb.LeanControllers
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
         }
+
         /// <summary>
         /// Update AI Comment with specific Id
         /// </summary>
         /// <param name="id"></param>
         /// <param name="aiCommentDto"></param>
         /// <returns></returns>
-        [HttpPost]
         [Route("{id}")]
+        [HttpPost]
         public async Task<ActionResult> UpdateAICommentAsync(string id, AICommentDTO aiCommentDto)
         {
             try
@@ -67,13 +69,14 @@ namespace APIViewWeb.LeanControllers
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
         }
+
         /// <summary>
         /// Get AI Comment with specific Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpGet]
         [Route("{id}")]
+        [HttpGet]
         public async Task<ActionResult> GetAICommentAsync(string id)
         {
             try
@@ -86,7 +89,6 @@ namespace APIViewWeb.LeanControllers
                 _telemetryClient.TrackTrace("Error:  Failed to update AI comment. " + err.Message, SeverityLevel.Information);
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
-
         }
 
         /// <summary>
@@ -94,8 +96,8 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpDelete]
         [Route("{id}")]
+        [HttpDelete]
         public async Task<ActionResult> DeleteAICommentAsync(string id)
         {
             try
@@ -115,8 +117,8 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="aiCommentDTOForSearch"></param>
         /// <returns></returns>
-        [HttpGet]
         [Route("search")]
+        [HttpGet]
         public async Task<ActionResult> SearchAICommentAsync([FromQuery]AICommentDTOForSearch aiCommentDTOForSearch)
         {
             try

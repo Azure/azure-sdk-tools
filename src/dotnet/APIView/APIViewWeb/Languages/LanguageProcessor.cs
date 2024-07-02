@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb
 {
@@ -25,7 +27,7 @@ namespace APIViewWeb
             Directory.CreateDirectory(tempDirectory);
             var originalFilePath = Path.Combine(tempDirectory, originalName);
 
-            var jsonFilePath = Path.ChangeExtension(originalFilePath, ".json");
+            var jsonFilePath = (LanguageServiceHelpers.UsesTreeStyleParser(this.Name)) ? Path.ChangeExtension(originalFilePath, ".json.tgz") : Path.ChangeExtension(originalFilePath, ".json");
 
             using (var file = File.Create(originalFilePath))
             {
@@ -56,7 +58,18 @@ namespace APIViewWeb
 
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
+                    CodeFile codeFile = null;
+                    if (LanguageServiceHelpers.UsesTreeStyleParser(this.Name))
+                    {
+                        using (var gzipStream = new GZipStream(codeFileStream, CompressionMode.Decompress, leaveOpen: true))
+                        {
+                            codeFile = await CodeFile.DeserializeAsync(gzipStream, useTreeStyleParserDeserializerOptions: true);
+                        }
+                    }
+                    else 
+                    {
+                        codeFile = await CodeFile.DeserializeAsync(codeFileStream);
+                    }
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;

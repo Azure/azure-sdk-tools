@@ -1,6 +1,7 @@
 using Azure.Identity;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
@@ -28,6 +29,14 @@ namespace APIViewWeb
                         });
                     });
                     config.AddUserSecrets(typeof(Program).Assembly);
+                })
+                .ConfigureKestrel(options =>
+                {
+                    // Set HTTP/1.1 and HTTP/2 as supported protocols
+                    options.ConfigureEndpointDefaults(endpointOptions =>
+                    {
+                        endpointOptions.Protocols = HttpProtocols.Http1AndHttp2;
+                    });
                 })
                 .UseStartup<Startup>();
     }

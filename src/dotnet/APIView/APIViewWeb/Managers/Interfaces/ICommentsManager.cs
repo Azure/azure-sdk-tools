@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ namespace APIViewWeb.Managers
     public interface ICommentsManager
     {
         public void LoadTaggableUsers();
-        public Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId);
+        public Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false);
         public Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId);
         public Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId);
         public Task AddCommentAsync(ClaimsPrincipal user, CommentItemModel comment);

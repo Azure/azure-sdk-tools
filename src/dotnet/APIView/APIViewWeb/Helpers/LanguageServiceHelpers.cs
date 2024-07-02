@@ -44,6 +44,28 @@ namespace APIViewWeb.Helpers
         public static LanguageService GetLanguageService(string language, IEnumerable<LanguageService> languageServices)
         {
             return languageServices.FirstOrDefault(service => service.Name == language);
-        } 
+        }
+
+        public static bool UseLineBreakForParameterSeparator(string language)
+        { 
+            switch(language)
+            {
+                case "Python":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool UsesTreeStyleParser(string language)
+        {
+            switch (language)
+            {
+                case "C#":
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

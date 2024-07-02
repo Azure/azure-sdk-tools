@@ -1,0 +1,9 @@
+:host ::ng-deep {
+    .p-fileupload-row > div:first-child {
+        display: none;
+    }
+
+    .p-dropdown {
+        display: flex;
+    }
+}

@@ -1,0 +1,76 @@
+:host ::ng-deep {
+    font-family: var(--font-family);
+
+    .user-avartar {
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+    }
+
+    .p-timeline-event-opposite {
+        flex: 0 0 auto !important;
+    }
+
+    .p-timeline .p-timeline-event-connector {
+        background-color: var(--border-color) !important;
+    }
+
+    .p-timeline.p-timeline-vertical .p-timeline-event-connector {
+        width: 2px;
+    }
+    
+    .p-panel {
+        border: none;
+
+        p {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    }
+
+    .p-panel .p-panel-header {
+        border: none;
+        padding: 0px;
+        background: inherit;
+        color: inherit;
+    }
+
+    .p-panel .p-panel-content {
+        padding: 0px;
+        border: none;
+        background: inherit;
+        color: inherit;
+    }
+
+    .p-panel.p-panel-toggleable .p-panel-header {
+        padding: 0px;
+    }
+
+    .p-panel .p-panel-footer {
+        padding: 0.5rem 0 0.5rem 0;
+        border: none;
+        background: inherit;
+        color: inherit;
+    }
+
+    .emoji-active {
+        color: orange;
+    }
+
+    .comment-action-btn {
+        border-color: var(--border-color) !important;
+    }
+
+    .editor-action-btn {
+        border-color: var(--border-color) !important;
+    }
+
+    .resolution-info {
+        margin-bottom: 1px;
+    }
+
+    .resolved-toggler {
+        color: var(--primary-color);
+        font-weight: bolder;
+        cursor: pointer;
+    }
+}

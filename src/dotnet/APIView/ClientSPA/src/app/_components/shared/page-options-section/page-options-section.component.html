@@ -1,0 +1,5 @@
+<p-panel 
+    header="{{sectionName}}" [collapsed]="collapsed" 
+    [toggleable]="true" toggler="header" (collapsedChange)="onCollapseChange($event)">
+    <ng-content></ng-content>
+</p-panel>

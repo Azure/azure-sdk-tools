@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using APIViewWeb.Helpers;
 using APIViewWeb.Models;
+using System.Linq;
 
 namespace APIViewWeb.LeanModels
 {
@@ -115,6 +116,16 @@ namespace APIViewWeb.LeanModels
         public string ReviewId { get; set; }
         public List<APICodeFileModel> Files { get; set; } = new List<APICodeFileModel>();
         public string Label { get; set; }
+        [JsonProperty("resolvedLabel", NullValueHandling = NullValueHandling.Ignore)]
+        public string ResolvedLabel
+        {
+            get => PageModelHelpers.ResolveRevisionLabel(this, addAPIRevisionType: false, addCreatedBy: false, addCreatedOn: false);
+        }
+        [JsonProperty("packageVersion", NullValueHandling = NullValueHandling.Ignore)]
+        public string PackageVersion
+        {
+            get => this.Files.First().PackageVersion;
+        }
         public List<APIRevisionChangeHistoryModel> ChangeHistory { get; set; } = new List<APIRevisionChangeHistoryModel>();
         public APIRevisionType APIRevisionType { get; set; }
         public int? PullRequestNo { get; set; }
@@ -130,6 +141,7 @@ namespace APIViewWeb.LeanModels
         public DateTime ReleasedOn { get; set; }
         public HashSet<string> ViewedBy { get; set; } = new HashSet<string>();
     }
+
 
     public class SamplesRevisionModel
     {

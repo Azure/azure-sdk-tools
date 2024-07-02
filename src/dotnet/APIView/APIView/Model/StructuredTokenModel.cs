@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Text.Json.Serialization;
+using System.Text.Json;
+using System;
 
 namespace APIView.TreeToken
 {
@@ -33,6 +35,52 @@ namespace APIView.TreeToken
         /// Use this between method parameters. Depending on user setting this would result in a single space or new line.
         /// </summary>
         ParameterSeparator = 4
+    }
+
+    public enum DiffKind
+    {
+        NoneDiff = 0,
+        Unchanged = 1, // Unchanged means the top level node is the same, the children could still contain diffs.
+        Added = 2,
+        Removed = 3
+    }
+
+    public class StructuredTokenConverter : JsonConverter<StructuredToken>
+    {
+        private readonly string _parameterSeparator;
+
+        public StructuredTokenConverter(string parameterSeparator = "\u00A0")
+        {
+            _parameterSeparator = parameterSeparator;
+        }
+
+        public override StructuredToken Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            var jObject = JsonDocument.ParseValue(ref reader).RootElement;
+            var myObject = JsonSerializer.Deserialize<StructuredToken>(jObject.GetRawText());
+
+            switch (myObject.Kind)
+            {
+                case StructuredTokenKind.LineBreak:
+                    myObject.Value = "\u000A";
+                    break;
+                case StructuredTokenKind.NonBreakingSpace:
+                    myObject.Value = "\u00A0";
+                    break;
+                case StructuredTokenKind.TabSpace:
+                    myObject.Value = "\u00A0\u00A0\u00A0\u00A0";
+                    break;
+                case StructuredTokenKind.ParameterSeparator:
+                    myObject.Value = _parameterSeparator;
+                    break;
+            }
+            return myObject;
+        }
+
+        public override void Write(Utf8JsonWriter writer, StructuredToken value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value, options);
+        }
     }
 
     /// <summary>
@@ -193,6 +241,21 @@ namespace APIView.TreeToken
             Value = value;
             Kind = StructuredTokenKind.Content;
         }
+        public StructuredToken(StructuredToken token)
+        {
+            Value = token.Value;
+            Id = token.Id;
+            Kind = token.Kind;
+            foreach (var property in token.PropertiesObj)
+            {
+                PropertiesObj.Add(property.Key, property.Value);
+            }
+            foreach (var renderClass in token.RenderClassesObj)
+            {
+                RenderClassesObj.Add(renderClass);
+            }
+        }
+
 
         public static StructuredToken CreateLineBreakToken()
         {

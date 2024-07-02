@@ -1,0 +1,69 @@
+:host ::ng-deep {
+    .p-multiselect .p-multiselect-label {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .p-multiselect-panel .p-multiselect-header {
+        padding: 0.5rem 0.5rem;
+    }
+
+    .p-multiselect-panel .p-multiselect-items .p-multiselect-item {
+        padding: 0.5rem 0.5rem;
+    }
+
+    .p-multiselect-items-wrapper ul, .p-dropdown-items-wrapper ul {
+        margin-bottom: 0px;
+    }
+
+    .p-timeline-event-opposite {
+        flex: 0 0 auto !important;
+    }
+
+    .p-timeline .p-timeline-event-connector {
+        background-color: var(--border-color) !important;
+    }
+
+    .p-timeline.p-timeline-vertical .p-timeline-event-connector {
+        width: 2px;
+    }
+
+    .p-timeline-event {
+        overflow: hidden;
+    }
+
+    .p-panel .p-panel-content {
+        padding: 0;
+    }
+
+    .p-panel {
+        border: none;
+    }
+
+    .p-dropdown, .p-multiselect {
+        .p-inputtext {
+            padding: 0.25rem 0.5rem;
+        }
+    }
+
+    .change-history {
+        .deleted {
+            color: red;
+        }
+    
+        .approval-reverted {
+            color: red;
+        }
+    
+        .created {
+            color: darkorange;
+        }
+    
+        .approved {
+            color: forestgreen;
+        }
+    
+        .undeleted {
+            color: yellow;
+        }
+    }
+}

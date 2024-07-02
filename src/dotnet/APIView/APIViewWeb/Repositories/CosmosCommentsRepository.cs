@@ -19,9 +19,9 @@ namespace APIViewWeb
             _commentsContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "Comments");
         }
 
-        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId)
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false)
         {
-            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.IsDeleted = false");
+            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.IsDeleted = {isDeleted.ToString().ToLower()}");
         }
 
         public async Task UpsertCommentAsync(CommentItemModel commentModel)

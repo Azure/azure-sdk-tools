@@ -351,7 +351,7 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  [Array]$allGroups = Retry { Get-AzResourceGroup | ? { $_.ResourceGroupName -eq 'rg-storage-t447912918ecf4d81' } }
+  [Array]$allGroups = Retry { Get-AzResourceGroup }
   $toDelete = @()
   $toClean = @()
   $toDeleteSoon = @()
@@ -447,8 +447,6 @@ function DeleteAndPurgeGroups([array]$toDelete) {
       $hasError = $true
     }
   }
-
-  return
 
   if (!$purgeableResources.Count) {
     return

@@ -1,5 +1,9 @@
 # Release
 
+## 2024-07-03 - 0.9.2
+
+- Revert `exit(1)` on tsp compile diagnostics.
+
 ## 2024-07-02 - 0.9.1
 
 - Fix error logging after the `compile()` call and exit if diagnostics are encountered.

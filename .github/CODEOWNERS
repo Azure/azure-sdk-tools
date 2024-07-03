@@ -11,8 +11,6 @@
 ################
 # Automation
 ################
-
-# Git Hub integration
 /.github/CODEOWNERS                    @azure/azure-sdk-eng
 
 ###########
@@ -24,6 +22,11 @@
 # CODEOWNERS Linter pipeline
 ###########
 /eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio
+
+###########
+# GitHub Tools
+###########
+/tools/github/                        @jsquire @ronniegeraghty
 
 ###########
 # Eng Sys Tools
@@ -52,7 +55,7 @@
 ###########
 # .NET Client Tools
 ###########
-/src/dotnet/Azure.ClientSdk.Analyzers  @jsquire @pallavit @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @heaths @m-nash
+/src/dotnet/Azure.ClientSdk.Analyzers  @jsquire @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @m-nash
 /src/dotnet/APIView                    @chidozieononiwu
 
 ###########

@@ -5,6 +5,9 @@ parameters:
   - name: DryRun
     type: boolean
     default: false
+  - name: Pool
+    type: string
+    default: azsdk-pool-mms-ubuntu-2204-general
   - name: Subscriptions
     type: object
     default:
@@ -68,7 +71,6 @@ stages:
   - job: Run
     pool:
       name: azsdk-pool-mms-ubuntu-2204-general
-      vmImage: ubuntu-22.04
 
     steps:
     - template: /eng/common/pipelines/templates/steps/cache-ps-modules.yml
@@ -103,3 +105,4 @@ stages:
           SubscriptionConfigurations: ${{ subscription.SubscriptionConfigurations }}
           GithubAliasCachePath: $(CachePath)/github-alias-mappings.txt
           AdditionalParameters: ${{ subscription.AdditionalParameters }}
+          Pool: ${{ parameters.Pool }}

@@ -351,7 +351,7 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  [Array]$allGroups = Retry { Get-AzResourceGroup }
+  [Array]$allGroups = Retry { Get-AzResourceGroup | ? { $_.ResourceGroupName -eq 'rg-storage-t447912918ecf4d81' } }
   $toDelete = @()
   $toClean = @()
   $toDeleteSoon = @()
@@ -435,6 +435,7 @@ function DeleteAndPurgeGroups([array]$toDelete) {
         # For storage tests specifically, if they are aborted then blobs with immutability policies
         # can be left around which prevent deletion.
         if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
+          SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -Override -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
           Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName
         } else {
           Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
@@ -446,6 +447,8 @@ function DeleteAndPurgeGroups([array]$toDelete) {
       $hasError = $true
     }
   }
+
+  return
 
   if (!$purgeableResources.Count) {
     return

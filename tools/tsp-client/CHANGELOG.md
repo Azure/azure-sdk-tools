@@ -1,6 +1,6 @@
 # Release
 
-## 2024-07-03 - 0.9.2
+## 2024-07-04 - 0.9.2
 
 - Revert `exit(1)` on tsp compile diagnostics.
 

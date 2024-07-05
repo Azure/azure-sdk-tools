@@ -219,16 +219,13 @@ async function generate({
     args.push("--force");
   }
   await npmCommand(srcDir, args);
-  const succeeded = await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
+  await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {
     Logger.debug(`Skipping cleanup of temp directory: ${tempRoot}`);
   } else {
     Logger.debug("Cleaning up temp directory");
     await removeDirectory(tempRoot);
-  }
-  if (!succeeded) {
-    process.exit(1);
   }
 }
 

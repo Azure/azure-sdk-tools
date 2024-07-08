@@ -16,6 +16,7 @@ using APIViewWeb.Managers.Interfaces;
 using ApiView;
 using APIViewWeb.Models;
 using APIViewWeb.LeanModels;
+using System;
 
 namespace APIViewWeb.Controllers
 {
@@ -168,6 +169,10 @@ namespace APIViewWeb.Controllers
                 {
                     await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName, commitSha);
                 }
+            }
+            catch (OverflowException exception)
+            {
+                _telemetryClient.TrackException(exception);
             }
             finally
             {

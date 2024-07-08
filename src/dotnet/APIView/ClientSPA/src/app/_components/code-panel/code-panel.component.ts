@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 import { take } from 'rxjs/operators';
 import { CommentItemModel, CommentType } from 'src/app/_models/review';
 import { CodePanelData, CodePanelRowDatatype, StructuredToken } from 'src/app/_models/revision';
@@ -29,6 +29,8 @@ export class CodePanelComponent implements OnChanges{
   @Input() showLineNumbers: boolean = true;
   @Input() loadFailed : boolean = false;
 
+  @Output() hasActiveConversation : EventEmitter<boolean> = new EventEmitter<boolean>();
+
   isLoading: boolean = true;
   codeWindowHeight: string | undefined = undefined;
   codePanelRowDataIndicesMap = new Map<string, number>();
@@ -47,6 +49,7 @@ export class CodePanelComponent implements OnChanges{
     if (changes['codePanelRowData']) {
       if (changes['codePanelRowData'].currentValue.length > 0) {
         this.loadCodePanelViewPort();
+        this.updateHasActiveConversations();
       } else {
         this.isLoading = true;
         this.codePanelRowSource = undefined;
@@ -436,6 +439,7 @@ export class CodePanelComponent implements OnChanges{
         next: () => {
           this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText;
           this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]);
+          this.updateHasActiveConversations();
         }
       });
     }
@@ -447,6 +451,7 @@ export class CodePanelComponent implements OnChanges{
               comments.push(response);
               this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments = [...comments]
               this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]);
+              this.updateHasActiveConversations();
             }
           }
         );
@@ -465,6 +470,7 @@ export class CodePanelComponent implements OnChanges{
         } else {
           this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]);
         }
+        this.updateHasActiveConversations();
       }
     });
   }
@@ -476,6 +482,7 @@ export class CodePanelComponent implements OnChanges{
           this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].isResolvedCommentThread = true;
           this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].commentThreadIsResolvedBy = this.userProfile?.userName!;
           this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]});
+          this.updateHasActiveConversations();
         }
       });
     }
@@ -485,6 +492,7 @@ export class CodePanelComponent implements OnChanges{
           this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].isResolvedCommentThread = false;
           this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].commentThreadIsResolvedBy = '';
           this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]});
+          this.updateHasActiveConversations();
         }
       });
     }
@@ -504,6 +512,19 @@ export class CodePanelComponent implements OnChanges{
         }
       }
     });
+  }
+
+  private updateHasActiveConversations() {
+    let hasActiveConversations = false;
+    for (let row of this.codePanelRowData) {
+      if (row.type === CodePanelRowDatatype.CommentThread) {
+        if (row.comments && row.comments.length > 0 && row.isResolvedCommentThread === false) {
+          hasActiveConversations = true;
+          break;
+        }
+      }
+    }
+    this.hasActiveConversation.emit(hasActiveConversations);
   }
 
   private loadCodePanelViewPort() {

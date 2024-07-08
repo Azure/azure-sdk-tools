@@ -21,8 +21,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
   @Input() preferedApprovers: string[] = [];
-  @Input() conversiationInfo : any | undefined = undefined;
   @Input() hasFatalDiagnostics : boolean = false;
+  @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
@@ -51,7 +51,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   apiRevisionApprovalMessage: string = '';
   apiRevisionApprovalBtnClass: string = '';
   apiRevisionApprovalBtnLabel: string = '';
-  hasActiveConversation : string = '';
   showAPIRevisionApprovalModal: boolean = false;
   overrideActiveConversationforApproval : boolean = false;
   overrideFatalDiagnosticsforApproval : boolean = false;
@@ -97,7 +96,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showLineNumbersSwitch = true;
     }
 
-    this.setHasActiveConversatons();
     this.setAPIRevisionApprovalStates();
     this.setReviewApprovalStatus();
   }
@@ -234,10 +232,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     if (this.reviewIsApproved) {
       this.reviewApprover = this.review?.changeHistory.find(ch => ch.changeAction === 'approved')?.changedBy ?? 'azure-sdk';
     }
-  }
-
-  setHasActiveConversatons() {
-    this.hasActiveConversation = this.conversiationInfo && this.conversiationInfo.totalActiveConversationInApiRevision > 0 && this.conversiationInfo.totalActiveConversationInSampleRevision > 0;
   }
 
   handleAPIRevisionApprovalAction() {

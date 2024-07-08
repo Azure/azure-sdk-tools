@@ -151,7 +151,7 @@
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
     [style]="{ width: '40dvw' }">
     <ul class="list-group">
-        <li class="list-group-item" *ngIf="this.conversiationInfo && this.conversiationInfo.totalActiveConversationInApiRevision > 0 && this.conversiationInfo.totalActiveConversationInSampleRevision > 0">
+        <li class="list-group-item" *ngIf="hasActiveConversation">
             <div class="float-start">
                 <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
             </div>
@@ -173,6 +173,6 @@
       <div class="d-grid gap-2 mt-2">
         <button class="btn btn-success" type="button"
             (click)="toggleAPIRevisionApproval()"
-            [disabled]="(!hasActiveConversation || (hasActiveConversation && overrideActiveConversationforApproval)) && (!hasFatalDiagnostics ||(hasFatalDiagnostics && overrideFatalDiagnosticsforApproval))">Confirm</button>
+            [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
       </div>
 </p-dialog>

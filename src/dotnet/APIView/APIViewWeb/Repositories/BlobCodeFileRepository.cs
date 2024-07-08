@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -30,10 +31,10 @@ namespace APIViewWeb
 
         public Task<RenderedCodeFile> GetCodeFileAsync(APIRevisionListItemModel revision, bool updateCache = true)
         {
-            return GetCodeFileAsync(revision.Id, revision.Files.Single().FileId, updateCache);
+            return GetCodeFileAsync(revision.Id, revision.Files.Single().FileId, revision.Language, updateCache);
         }
 
-        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, bool updateCache = true)
+        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, string language, bool updateCache = true)
         {
             var client = GetBlobClient(revisionId, codeFileId, out var key);
 
@@ -43,7 +44,8 @@ namespace APIViewWeb
             }
 
             var info = await client.DownloadAsync();
-            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content));
+
+            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language)));
 
             if (updateCache)
             {
@@ -52,6 +54,25 @@ namespace APIViewWeb
                 .SetValue(codeFile);
             }            
 
+            return codeFile;
+        }
+
+        public async Task<CodeFile> GetCodeFileWithCompressionAsync(string revisionId, string codeFileId, bool updateCache = true)
+        {
+            var client = GetBlobClient(revisionId, codeFileId, out var key);
+
+            if (_cache.TryGetValue<CodeFile>(key, out var codeFile))
+            {
+                return codeFile;
+            }
+            var info = await client.DownloadAsync();
+            codeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: true);
+            if (updateCache)
+            {
+                using var _ = _cache.CreateEntry(key)
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(10))
+                    .SetValue(codeFile);
+            }
             return codeFile;
         }
 

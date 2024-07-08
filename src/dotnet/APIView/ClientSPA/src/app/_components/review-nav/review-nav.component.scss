@@ -1,0 +1,40 @@
+:host ::ng-deep {
+    .a {
+        text-decoration: none;
+    }
+
+    .p-tree {
+        font-family: Consolas,monospace;
+        font-size: 14px;
+        border: 0px;
+        padding: 0.1rem;
+        max-height: 100%;
+        width: 100%;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+
+    .p-treenode-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .p-tree .p-tree-container .p-treenode .p-treenode-content {
+        padding: 0.05rem;
+        border: 0px;
+        cursor: pointer;
+
+        .p-tree-toggler {
+            height: 1rem;
+        }
+    }
+
+    p-treenode ul {
+        padding-left: 1rem;
+    }
+
+    .p-tree-container {
+        padding-left: 0px !important;
+    }
+}

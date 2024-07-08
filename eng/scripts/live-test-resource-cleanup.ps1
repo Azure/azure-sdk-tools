@@ -435,7 +435,8 @@ function DeleteAndPurgeGroups([array]$toDelete) {
         # For storage tests specifically, if they are aborted then blobs with immutability policies
         # can be left around which prevent deletion.
         if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
-          & $PSScriptRoot/Remove-WormStorageAccounts.ps1 -GroupPrefix $rg.ResourceGroupName
+          SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -Override -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
+          Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
         } else {
           Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
         }

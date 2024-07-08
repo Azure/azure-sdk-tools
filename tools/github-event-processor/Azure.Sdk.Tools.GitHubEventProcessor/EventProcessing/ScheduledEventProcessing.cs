@@ -186,6 +186,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     TriageLabelConstants.NeedsAuthorFeedback,
                     TriageLabelConstants.NoRecentActivity
                 };
+
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
                                                                  IssueTypeQualifier.Issue,
@@ -574,6 +575,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
+                /// An issue with the auto-close-exempt label will exempt the issue from being closed by this rule
+                List<string> excludeLabels = new List<string>
+                {
+                    TriageLabelConstants.AutoCloseExempt
+                };
+
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(
                     scheduledEventPayload.Repository.Owner.Login,
                     scheduledEventPayload.Repository.Name,
@@ -582,7 +589,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     30, // more than 30 days
                     new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                     null,
-                    null,
+                    excludeLabels,
                     365*2 // Created date > 2 years
                     );
 

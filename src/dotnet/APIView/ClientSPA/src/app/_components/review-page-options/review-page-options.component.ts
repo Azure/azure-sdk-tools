@@ -218,13 +218,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showHiddenAPIEmitter.emit(event.checked);
   }
 
-  //sets the list of initial approvers on panel open to the previosuly selected approvers (if any, if not, the original approvers
-  //list loads)
   handleOnPanelShow() {
     this.initialSelectedApprovers = [...this.selectedApprovers];
   }
 
-  //
   handleOnPanelHide() {
     if (!this.reviewId || !this.apiRevisionId) {
       return;

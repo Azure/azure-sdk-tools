@@ -51,12 +51,12 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetConversationInfoAsync(string reviewId, string apiRevisionId)
         {
             var comments = await _commentsManager.GetCommentsAsync(reviewId, false);
-            var commentsInAPIRevision = comments.Where(c => c.APIRevisionId == apiRevisionId).ToList();
+            var commentsInAPIRevision = comments.Where(c => c.CommentType == CommentType.APIRevision).ToList();
             var sampleComments = comments.Where(c => c.CommentType == CommentType.SampleRevision).ToList();
 
             var totalActiveConversiations = 0;
-            var totalActiveConversationInApiRevision = 0;
-            var totalActiveConversationInSampleRevision = 0;
+            var totalActiveConversationInApiRevisions = 0;
+            var totalActiveConversationInSampleRevisions = 0;
 
             foreach (var group in comments.GroupBy(c => c.ElementId))
             {
@@ -70,7 +70,7 @@ namespace APIViewWeb.LeanControllers
             {
                 if (!group.Any(c => c.IsResolved))
                 {
-                    totalActiveConversationInSampleRevision++;
+                    totalActiveConversationInApiRevisions++;
                 }
             }
 
@@ -78,14 +78,14 @@ namespace APIViewWeb.LeanControllers
             {
                 if (!group.Any(c => c.IsResolved))
                 {
-                    totalActiveConversationInApiRevision++;
+                    totalActiveConversationInSampleRevisions++;
                 }
             }
 
             dynamic conversationInfobject = new ExpandoObject();
             conversationInfobject.TotalActiveConversations = totalActiveConversiations;
-            conversationInfobject.ActiveConversationsInActiveAPIRevision = totalActiveConversationInApiRevision;
-            conversationInfobject.ActiveConversationsInSampleRevisions = totalActiveConversationInSampleRevision;
+            conversationInfobject.ActiveConversationsInActiveAPIRevision = totalActiveConversationInApiRevisions;
+            conversationInfobject.ActiveConversationsInSampleRevisions = totalActiveConversationInSampleRevisions;
             return new LeanJsonResult(conversationInfobject, StatusCodes.Status200OK);
         }
 

@@ -41,8 +41,8 @@ export class ReviewPageComponent implements OnInit {
   scrollToNodeId : string | undefined = undefined;
   showLineNumbers : boolean = true;
   preferedApprovers : string[] = [];
-  conversiationInfo : any | undefined = undefined;
   hasFatalDiagnostics : boolean = false;
+  hasActiveConversation : boolean = false;
   hasHiddenAPIs : boolean = false;
   loadFailed : boolean = false;
 
@@ -128,7 +128,6 @@ export class ReviewPageComponent implements OnInit {
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
       this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
-      this.loadConversationInfo(this.reviewId!, this.activeApiRevisionId!);
     });
   }
 
@@ -195,15 +194,6 @@ export class ReviewPageComponent implements OnInit {
           this.preferedApprovers = preferedApprovers;
         }
       });
-  }
-
-  loadConversationInfo(reviewId: string, apiRevisionId: string) {
-    this.commentsService.getConversationInfo(reviewId, apiRevisionId)
-    .pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response: any) => {
-        this.conversiationInfo = response;
-      }
-    });
   }
 
   loadAPIRevisions(noOfItemsRead : number, pageSize: number) {
@@ -377,6 +367,8 @@ export class ReviewPageComponent implements OnInit {
     this.apiRevisionsService.toggleAPIRevisionViewedByForUser(this.activeApiRevisionId!, state).pipe(take(1)).subscribe({
       next: (apiRevision: APIRevision) => {
         this.activeAPIRevision = apiRevision;
+        const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
+        this.apiRevisions[activeAPIRevisionIndex] = this.activeAPIRevision!;
       } 
     });
   }
@@ -386,6 +378,8 @@ export class ReviewPageComponent implements OnInit {
       this.apiRevisionsService.toggleAPIRevisionApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
         next: (apiRevision: APIRevision) => {
           this.activeAPIRevision = apiRevision;
+          const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
+          this.apiRevisions[activeAPIRevisionIndex] = this.activeAPIRevision!;
         }
       });
     }
@@ -410,6 +404,10 @@ export class ReviewPageComponent implements OnInit {
         this.updateStateBasedOnQueryParams(currentParams);
       }
     });
+  }
+
+  handleHasActiveConversationEmitter(value: boolean) {
+    this.hasActiveConversation = value;
   }
 
   checkForFatalDiagnostics() {

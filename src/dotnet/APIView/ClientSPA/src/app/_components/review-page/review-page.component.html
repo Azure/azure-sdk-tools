@@ -34,7 +34,8 @@
                             [userProfile]="userProfile"
                             [loadFailed]="loadFailed"
                             [showLineNumbers]="showLineNumbers" [scrollToNodeIdHashed]="scrollToNodeIdHashed"
-                            [scrollToNodeId]="scrollToNodeId"></app-code-panel>
+                            [scrollToNodeId]="scrollToNodeId"
+                            (hasActiveConversation)="handleHasActiveConversationEmitter($event)"></app-code-panel>
                     </div>
                 </ng-template>
                 <ng-template pTemplate>
@@ -47,8 +48,8 @@
                             [activeAPIRevision]="activeAPIRevision"
                             [diffAPIRevision]="diffAPIRevision"
                             [preferedApprovers]="preferedApprovers"
-                            [conversiationInfo]="conversiationInfo"
                             [hasFatalDiagnostics]="hasFatalDiagnostics"
+                            [hasActiveConversation]="hasActiveConversation"
                             [hasHiddenAPIs]="hasHiddenAPIs"
                             (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
                             (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"

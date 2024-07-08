@@ -49,8 +49,8 @@ static async Task HandlePackageFileParsing(Stream stream, FileInfo packageFilePa
     ZipArchive? zipArchive = null;
     Stream? dllStream = stream;
     Stream? docStream = null;
-    List<DependencyInfo>? dependencies = null;
-    string dependencyFilesTempDir = null;
+    List<DependencyInfo>? dependencies = new List<DependencyInfo>();
+    string? dependencyFilesTempDir = null;
 
     try
     {
@@ -85,7 +85,6 @@ static async Task HandlePackageFileParsing(Stream stream, FileInfo packageFilePa
             using var nuspecStream = nuspecEntry.Open();
             var document = XDocument.Load(nuspecStream);
             var dependencyElements = document.Descendants().Where(e => e.Name.LocalName == "dependency");
-            dependencies = new List<DependencyInfo>();
             dependencies.AddRange(
                     dependencyElements.Select(dependency => new DependencyInfo(
                             dependency.Attribute("id")?.Value,

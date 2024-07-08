@@ -70,10 +70,6 @@ extends:
             value: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
           - name: CosmosEmulatorConnectionString
             value: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-          - name: AzureSdkForNetDevOpsFeed
-            value: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
-          - name: CSharpAPIParserVersion
-            value: "1.0.0-dev.20240626.4"
           - name: TestingDataContainer
             value: "https://apiviewuitest.blob.core.windows.net/testingdata"
           - ${{ if ne(variables['System.TeamProject'], 'internal') }}:
@@ -410,6 +406,19 @@ extends:
                         azureSubscription: 'APIViewUI-Instance-deployment-connection'
                         WebAppName: apiviewuat
                         packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+                        InlineScript: |
+                          @echo off
+                          echo Installing npm packages
+                          call npm install --prefix D:\home\site\wwwroot --force
+                          call npm run-script build --prefix D:\home\site\wwwroot --force
+                          echo Installing .NET tool
+                          call mkdir D:\home\site\wwwroot\csharp-parser
+                          call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                          echo Installing Python tools
+                          call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
+                          call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                        enableCustomDeployment: true
+                        DeploymentType: zipDeploy
 
         - stage: Production_Publish
           displayName: Prod
@@ -463,6 +472,10 @@ extends:
                           echo Installing npm packages
                           call npm install --prefix D:\home\site\wwwroot --force
                           call npm run-script build --prefix D:\home\site\wwwroot --force
+                          echo Installing .NET tool
+                          call mkdir D:\home\site\wwwroot\csharp-parser
+                          call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                          echo Installing Python tools
                           call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
                           call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.3 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
                         enableCustomDeployment: true

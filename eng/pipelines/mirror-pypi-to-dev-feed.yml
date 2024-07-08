@@ -39,6 +39,7 @@ jobs:
 
       - pwsh: |
           $configurations = '${{ convertToJson(parameters.PackageSpecifiers) }}' -replace '\\', '/' -replace '"', '`"'
+          Write-Host $configurations
           python $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages.py $configurations --dest-dir='$(Build.ArtifactStagingDirectory)'
         displayName: 'Download Targeted Packages'
 
@@ -57,7 +58,7 @@ jobs:
           $results = Get-ChildItem -Force -Path $(Build.ArtifactStagingDirectory)
           foreach ($file in $results) {
             Write-Host "Uploading $file"
-            
+
             twine upload --repository "${{ parameters.DevFeed }}" --config-file $(PYPIRC_PATH) $($file.FullName)
           }
         displayName: 'Publish Packages to Dev Feed'

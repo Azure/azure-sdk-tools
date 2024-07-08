@@ -131,7 +131,6 @@ namespace APIViewWeb.LeanControllers
         {
             var apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
             var existingReviewers = apiRevision.AssignedReviewers;
-            //Would these be better in their own method? GetNewReviewersAsync, GetRemovedReviewersAsync
             var newReviewers = reviewers.Where(reviewer => !existingReviewers.Any(existingReviewer => existingReviewer.AssingedTo == reviewer)).ToHashSet();
             var removedReviewers = existingReviewers.Where(existingReviewer => !reviewers.Contains(existingReviewer.AssingedTo)).Select(r => r.AssingedTo).ToHashSet();
 

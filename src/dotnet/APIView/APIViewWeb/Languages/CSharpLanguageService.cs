@@ -86,50 +86,5 @@ namespace APIViewWeb
                 Tokens = builder.Tokens.ToArray()
             };
         }
-
-        /// <summary>
-        /// Resolves the NuGet package dependencies and extracts them to a temporary folder. It is the responsibility of teh caller to clean up the folder.
-        /// </summary>
-        /// <param name="dependencyInfos">The dependency infos</param>
-        /// <returns>A temporary path where the dependency files were extracted.</returns>
-        private async Task<string> ExtractNugetDependencies(List<DependencyInfo> dependencyInfos)
-        {
-            string tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            SourceCacheContext cache = new SourceCacheContext();
-            SourceRepository repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
-            try
-            {
-                FindPackageByIdResource resource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
-                foreach (var dep in dependencyInfos)
-                {
-                    using (MemoryStream packageStream = new MemoryStream())
-                    {
-                        if (await resource.CopyNupkgToStreamAsync(
-                        dep.Name,
-                        new NuGetVersion(dep.Version),
-                        packageStream,
-                        cache,
-                        NullLogger.Instance,
-                        CancellationToken.None))
-                        {
-                            using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
-                            NuspecReader nuspec = reader.NuspecReader;
-                            var file = reader.GetFiles().FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
-                            if (file != null)
-                            {
-                                var fileInfo = new FileInfo(file);
-                                var path = Path.Combine(tempFolder, dep.Name, fileInfo.Name);
-                                var tmp = reader.ExtractFile(file, path, NullLogger.Instance);
-                            }
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                cache.Dispose();
-            }
-            return tempFolder;
-        }
     }
 }

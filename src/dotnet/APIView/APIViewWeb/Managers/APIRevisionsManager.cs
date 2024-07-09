@@ -737,6 +737,7 @@ namespace APIViewWeb.Managers
                         file.ParserStyle = ParserStyle.Tree;
                     }
                     await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                    _telemetryClient.TrackTrace("Successfully Updated APIRevision with Id " + revision.Id);
                 }
                 catch (Exception ex)
                 {

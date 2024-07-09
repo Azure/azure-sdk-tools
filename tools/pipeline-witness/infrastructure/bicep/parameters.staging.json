@@ -20,6 +20,9 @@
     "appStorageAccountName": {
       "value": "pipelinewitnessstaging"
     },
+    "aspEnvironment": {
+      "value": "staging"
+    },
     "logsResourceGroupName": {
       "value": "pipelinelogs"
     },

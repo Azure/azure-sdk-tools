@@ -9,6 +9,7 @@ param networkSecurityGroupName string
 param vnetName string
 param cosmosAccountName string
 param appStorageAccountName string
+param aspEnvironment string
 
 param logsResourceGroupName string
 param logsStorageAccountName string
@@ -30,6 +31,7 @@ module pipelineWitness 'appResourceGroup.bicep' = {
     webAppName: webAppName
     cosmosAccountName: cosmosAccountName
     appStorageAccountName: appStorageAccountName
+    aspEnvironment: aspEnvironment
     networkSecurityGroupName: networkSecurityGroupName
     vnetName: vnetName
   }

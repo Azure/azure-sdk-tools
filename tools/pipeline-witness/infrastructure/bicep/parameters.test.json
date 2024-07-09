@@ -20,6 +20,9 @@
     "appStorageAccountName": {
       "value": "pipelinewitnesstest"
     },
+    "aspEnvironment": {
+      "value": "test"
+    },
     "logsResourceGroupName": {
       "value": "pipelinelogstest"
     },

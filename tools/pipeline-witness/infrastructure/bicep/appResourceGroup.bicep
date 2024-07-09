@@ -3,6 +3,7 @@ param networkSecurityGroupName string
 param vnetName string
 param appServicePlanName string
 param appStorageAccountName string
+param aspEnvironment string
 param cosmosAccountName string
 param location string
 
@@ -336,6 +337,19 @@ resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignm
     principalId: webApp.identity.principalId
     roleDefinitionId: '${resourceGroup().id}/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosAccount.name}/sqlRoleDefinitions/${cosmosContributorRoleId}'
     scope: cosmosAccount.id
+  }
+}
+
+// Use a module to merge the current app settings with the new ones to prevent overwritting the app insights configured settings
+module appSettings 'appsettings.bicep' = {
+  name: '${webAppName}-appsettings'
+  params: {
+    webAppName: webApp.name
+    // Get the current appsettings
+    currentAppSettings: list(resourceId('Microsoft.Web/sites/config', webApp.name, 'appsettings'), '2022-03-01').properties
+    appSettings: {
+      ASPNETCORE_ENVIRONMENT: aspEnvironment
+    }
   }
 }
 

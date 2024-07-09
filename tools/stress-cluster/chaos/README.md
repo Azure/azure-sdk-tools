@@ -245,7 +245,7 @@ Additionally, several values are made available as environment variables via the
 - `AZURE_SUBSCRIPTION_ID` - The Azure subscription id the stress test will authenticate and deploy resources to.
 - `AZURE_TENANT_ID` - The Azure tenant id the stress test will authenticate to. Set by AKS.
 - `AZURE_CLIENT_ID` - The Entra principal the stress test will authenticate as. Set by AKS.
-- `AZURE_FEDERATED_TOKEN_FILE` - The path to the federated identity token that can be used to login with azure cli or the identity SDK. Set by AKS.
+- `AZURE_FEDERATED_TOKEN_FILE` - The path to the federated identity token that can be used to login with Azure CLI or the Identity SDK. Set by AKS.
 
 ### Stress Test File Share
 

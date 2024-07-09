@@ -85,7 +85,7 @@ try {
     RemoveCosmosRoleAssignments $subscriptionId $appResourceGroupName $cosmosAccountName
   }
 
-  Invoke "az deployment sub create --template-file './bicep/resourceGroups.bicep' --parameters '$parametersFile' --location '$location' --name '$deploymentName' --output none"
+  Invoke "az deployment sub create --template-file './bicep/main.bicep' --parameters '$parametersFile' --location '$location' --name '$deploymentName' --output none"
   if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to deploy resource groups"
     exit 1

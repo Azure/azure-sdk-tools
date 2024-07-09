@@ -24,12 +24,14 @@ try {
   Write-Host "Reading parameters from $parametersFile"
   $parameters = (Get-Content -Path $parametersFile -Raw | ConvertFrom-Json).parameters
   $appResourceGroupName = $parameters.appResourceGroupName.value
+  $keyVaultName = $parameters.keyVaultName.value
   $appStorageAccountName = $parameters.appStorageAccountName.value
   $cosmosAccountName = $parameters.cosmosAccountName.value
   $logsResourceGroupName = $parameters.logsResourceGroupName.value
   $logsStorageAccountName = $parameters.logsStorageAccountName.value
 
   Write-Host "Adding Azure SDK Engineering System Team RBAC access to storage resources:`n" + `
+    "  Vault: $appResourceGroupName/$keyVaultName`n" + `
     "  Blob: $logsResourceGroupName/$logsStorageAccountName`n" + `
     "  Queue: $appResourceGroupName/$appStorageAccountName`n" + `
     "  Cosmos: $appResourceGroupName/$cosmosAccountName`n"
@@ -46,6 +48,16 @@ try {
     exit 1
   }
 
+  Write-Host "Granting 'Key Vault Administrator' access to $appStorageAccountName/$keyVaultName"
+  $scope = "/subscriptions/$subscriptionId/resourceGroups/$appStorageAccountName/providers/Microsoft.KeyVault/vaults/$keyVaultName"
+  $output = Invoke "az role assignment create --assignee '$azAdGroupId' --role 'Key Vault Administrator' --scope '$scope' --output none"
+    
+  if ($LASTEXITCODE -ne 0) {
+    Write-Output $output
+    Write-Error "Failed to grant access"
+    exit 1
+  }
+    
   Write-Host "Granting 'Storage Blob Data Contributor' access to $logsResourceGroupName/$logsStorageAccountName"
   $scope = "/subscriptions/$subscriptionId/resourceGroups/$logsResourceGroupName/providers/Microsoft.Storage/storageAccounts/$logsStorageAccountName"
   $output = Invoke "az role assignment create --assignee '$azAdGroupId' --role 'Storage Blob Data Contributor' --scope '$scope' --output none"

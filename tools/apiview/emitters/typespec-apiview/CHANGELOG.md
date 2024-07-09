@@ -3,6 +3,7 @@
 ## Version 0.4.9 (07-09-2024)
 Fix issue where "unknown" was rendered as "any".
 Support value syntax for objects and arrays.
+Support const statements in namespaces.
 
 ## Version 0.4.8 (04-18-2024)
 Display suppressions in APIView.

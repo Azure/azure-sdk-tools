@@ -32,6 +32,7 @@ import {
   DirectiveExpressionNode,
   StringLiteralNode,
   ObjectLiteralNode,
+  ConstStatementNode,
 } from "@typespec/compiler";
 
 export class NamespaceModel {
@@ -66,6 +67,7 @@ export class NamespaceModel {
   >();
   aliases = new Map<string, AliasStatementNode>();
   augmentDecorators = new Array<AugmentDecoratorStatementNode>();
+  constants = new Array<ConstStatementNode>();
 
   constructor(name: string, ns: Namespace, program: Program) {
     this.name = name;
@@ -116,6 +118,11 @@ export class NamespaceModel {
     // collect augment decorators
     for (const augment of findNodes(SyntaxKind.AugmentDecoratorStatement, program, ns)) {
       this.augmentDecorators.push(augment);
+    }
+
+    // collect contants
+    for (const constant of findNodes(SyntaxKind.ConstStatement, program, ns)) {
+      this.constants.push(constant);
     }
 
     // sort operations and models

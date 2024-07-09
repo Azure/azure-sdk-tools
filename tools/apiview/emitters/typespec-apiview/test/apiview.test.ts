@@ -932,4 +932,29 @@ describe("apiview: tests", () => {
       validateDefinitionIds(apiview);
     });
   });
+
+  describe("constants", () => {
+    it("renders constants", async () => {
+      const input = `
+      #suppress "deprecated"
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {
+        const a = 123;
+        const b = #{name: "abc"};
+        const c = a;
+      }
+      `;
+      const expect = `
+        namespace Azure.Test {
+          const a = 123;
+          const b = #{name: "abc"};
+          const c = a;
+        }
+        `;
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 10);
+      validateDefinitionIds(apiview);    
+    });
+  });
 });

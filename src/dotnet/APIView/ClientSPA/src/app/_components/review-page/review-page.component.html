@@ -51,6 +51,8 @@
                             [hasFatalDiagnostics]="hasFatalDiagnostics"
                             [hasActiveConversation]="hasActiveConversation"
                             [hasHiddenAPIs]="hasHiddenAPIs"
+                            [reviewId]="reviewId ?? undefined"
+                            [apiRevisionId]="activeApiRevisionId ?? undefined"
                             (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
                             (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
                             (showCommentsEmitter)="handleShowCommentsEmitter($event)"

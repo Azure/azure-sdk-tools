@@ -7,6 +7,8 @@ import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
+import { CookieService } from 'ngx-cookie-service';
+import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 
 @Component({
   selector: 'app-review-page-options',
@@ -20,10 +22,17 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
+<<<<<<< HEAD
   @Input() preferedApprovers: string[] = [];
+=======
+  @Input() preferredApprovers: string[] = [];
+  @Input() conversiationInfo : any | undefined = undefined;
+>>>>>>> 731fd433d (Select Reviewers functional and updating DB)
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
+  @Input() reviewId: string | undefined;
+  @Input() apiRevisionId: string | undefined;
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -59,7 +68,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
 
+  //Approvers Options
   selectedApprovers: string[] = [];
+  initialSelectedApprovers: string[] = [];
 
   diffStyleOptions : any[] = [
     { label: 'Full Diff', value: "full" },
@@ -76,7 +87,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     'unDeleted': 'bi bi-plus-circle-fill undeleted'
   };
 
-  constructor(private configService: ConfigService, private route: ActivatedRoute, private router: Router) { }
+  constructor(
+    private configService: ConfigService, 
+    private route: ActivatedRoute, 
+    private router: Router, 
+    private cookieService: CookieService, 
+    private apiRevisionsService: RevisionsService) { }
 
   ngOnInit() {
     this.setSelectedDiffStyle();
@@ -94,6 +110,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showLineNumbersSwitch = false;
     } else {
       this.showLineNumbersSwitch = true;
+    }
+
+    const selectedApproversCookie = this.cookieService.get('selectedApprovers');
+    if (selectedApproversCookie) {
+      this.selectedApprovers = JSON.parse(selectedApproversCookie);
     }
 
     this.setAPIRevisionApprovalStates();
@@ -204,6 +225,36 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
    */
   onShowHiddenAPISwitchChange(event: InputSwitchOnChangeEvent) {
     this.showHiddenAPIEmitter.emit(event.checked);
+  }
+
+  handleOnPanelShow() {
+    this.initialSelectedApprovers = [...this.selectedApprovers];
+  }
+
+  handleOnPanelHide() {
+    if (!this.reviewId || !this.apiRevisionId) {
+      return;
+    }
+
+    const { isSelectedApproversChanged, currentApproversSet } = this.hasSelectedApproversChanged();
+
+    if (!isSelectedApproversChanged) {
+      return;
+    }
+    this.apiRevisionsService.updateSelectedReviewers(this.reviewId, this.apiRevisionId, currentApproversSet).subscribe();
+    this.cookieService.set('selectedApprovers', JSON.stringify(this.selectedApprovers));
+  }
+
+  hasSelectedApproversChanged() {
+    const currentApproversSet = new Set(this.selectedApprovers);
+    const initialApproversSet = new Set(this.initialSelectedApprovers);
+    const isSelectedApproversChanged = this.selectedApprovers.length !== this.initialSelectedApprovers.length ||
+                      [...currentApproversSet].some(approver => !initialApproversSet.has(approver));
+    return { isSelectedApproversChanged, currentApproversSet };
+  }
+
+  formatSelectedApprovers(approvers: string[]): string {
+    return approvers.join(', ');
   }
 
   setSelectedDiffStyle() {

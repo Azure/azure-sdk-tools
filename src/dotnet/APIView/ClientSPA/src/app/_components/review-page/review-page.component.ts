@@ -40,7 +40,8 @@ export class ReviewPageComponent implements OnInit {
   scrollToNodeIdHashed : string | undefined;
   scrollToNodeId : string | undefined = undefined;
   showLineNumbers : boolean = true;
-  preferedApprovers : string[] = [];
+  preferredApprovers : string[] = [];
+  conversiationInfo : any | undefined = undefined;
   hasFatalDiagnostics : boolean = false;
   hasActiveConversation : boolean = false;
   hasHiddenAPIs : boolean = false;
@@ -97,7 +98,7 @@ export class ReviewPageComponent implements OnInit {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
 
     this.loadReview(this.reviewId!);
-    this.loadPreferedApprovers(this.reviewId!);
+    this.loadPreferredApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
 
     this.sideMenu = [
@@ -187,11 +188,11 @@ export class ReviewPageComponent implements OnInit {
       });
   }
 
-  loadPreferedApprovers(reviewId: string) {
-    this.reviewsService.getPreferedApprovers(reviewId)
+  loadPreferredApprovers(reviewId: string) {
+    this.reviewsService.getPreferredApprovers(reviewId)
       .pipe(takeUntil(this.destroy$)).subscribe({
-        next: (preferedApprovers: string[]) => {
-          this.preferedApprovers = preferedApprovers;
+        next: (preferredApprovers: string[]) => {
+          this.preferredApprovers = preferredApprovers;
         }
       });
   }

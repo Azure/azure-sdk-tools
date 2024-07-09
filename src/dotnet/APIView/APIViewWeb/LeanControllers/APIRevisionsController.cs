@@ -9,6 +9,8 @@ using APIViewWeb.Managers.Interfaces;
 using System;
 using APIViewWeb.Managers;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -17,15 +19,18 @@ namespace APIViewWeb.LeanControllers
         private readonly ILogger<APIRevisionsController> _logger;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IReviewManager _reviewManager;
+        private readonly INotificationManager _notificationManager;
 
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
             IReviewManager reviewManager,
-            IAPIRevisionsManager apiRevisionsManager)
+            IAPIRevisionsManager apiRevisionsManager,
+            INotificationManager notificationManager)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
+            _notificationManager = notificationManager;
         }
 
         /// <summary>
@@ -108,6 +113,34 @@ namespace APIViewWeb.LeanControllers
             if (updateReview)
             {
                 await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+            }
+            return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA for Requesting Reviewers
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="reviewers"></param>
+        /// <returns></returns>
+
+        [HttpPost("{reviewId}/{apiRevisionId}/reviewers", Name = "AddReviewers")]
+        public async Task<ActionResult<APIRevisionListItemModel>> AddReviewersAsync(string reviewId, string apiRevisionId, [FromBody] HashSet<string> reviewers)
+        {
+            var apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
+            var existingReviewers = apiRevision.AssignedReviewers;
+            var newReviewers = reviewers.Where(reviewer => !existingReviewers.Any(existingReviewer => existingReviewer.AssingedTo == reviewer)).ToHashSet();
+            var removedReviewers = existingReviewers.Where(existingReviewer => !reviewers.Contains(existingReviewer.AssingedTo)).Select(r => r.AssingedTo).ToHashSet();
+
+            if (newReviewers.Any())
+            {
+                await _apiRevisionsManager.AssignReviewersToAPIRevisionAsync(User, apiRevisionId, newReviewers);
+                await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, newReviewers);
+            }
+            if (removedReviewers.Any())
+            {
+                await _apiRevisionsManager.RemoveReviewersFromAPIRevisionAsync(User, apiRevisionId, removedReviewers);
             }
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }

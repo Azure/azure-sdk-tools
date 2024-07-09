@@ -133,4 +133,17 @@ export class RevisionsService {
   openAPIRevisionPage(reviewId: string, activeAPIRevisionId: string) {
     window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}`, '_blank');
   }
+
+  updateSelectedReviewers(reviewId: string, apiRevisionId: string, reviewers: Set<string>): Observable<APIRevision> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    const reviewersArray = Array.from(reviewers);
+
+    return this.http.post<APIRevision>(`${this.baseUrl}/${reviewId}/${apiRevisionId}/reviewers`, reviewersArray, {
+      headers: headers,
+      withCredentials: true,
+    });
+  }
 }

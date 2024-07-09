@@ -845,6 +845,26 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Remove reviewers from a review
+        /// </summary>
+        /// <param name="User"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="reviewers"></param>
+        /// <returns></returns>
+        public async Task RemoveReviewersFromAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers)
+        {
+            APIRevisionListItemModel apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            var reviewersToRemove = apiRevision.AssignedReviewers.Where(x => reviewers.Contains(x.AssingedTo)).ToList();
+
+            foreach (var reviewAssignment in reviewersToRemove)
+            {
+                apiRevision.AssignedReviewers.Remove(reviewAssignment);
+            }
+
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+        }
+
+        /// <summary>
         /// Get Reviews that have been assigned for review to a user
         /// </summary>
         /// <param name="userName"></param>

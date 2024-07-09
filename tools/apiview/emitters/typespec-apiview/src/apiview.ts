@@ -446,6 +446,8 @@ export class ApiView {
         throw new Error(`Case "BlockComment" not implemented`);
       case SyntaxKind.TypeSpecScript:
         throw new Error(`Case "TypeSpecScript" not implemented`);
+      case SyntaxKind.ConstStatement:
+        throw new Error(`Case "ConstStatement" not implemented`);
       case SyntaxKind.DecoratorExpression:
         obj = node as DecoratorExpressionNode;
         this.punctuation("@", false, false);

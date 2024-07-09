@@ -426,9 +426,7 @@ namespace APIViewWeb.Managers
 
                         foreach (var revision in revisions)
                         {
-                            if (
-                                revision.Files.First().HasOriginal &&
-                                LanguageServiceHelpers.GetLanguageService(revision.Language, _languageServices)?.CanUpdate(revision.Files.First().VersionString) == true)
+                            if (revision.Files.First().HasOriginal)
                             {
                                 var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.Id };
                                 var operation = _telemetryClient.StartOperation(requestTelemetry);

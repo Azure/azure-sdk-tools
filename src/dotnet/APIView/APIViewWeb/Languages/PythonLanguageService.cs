@@ -44,7 +44,7 @@ namespace APIViewWeb
             return Path.Combine(tempDirectory, "Scripts", "python.exe");
         }
 
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, TelemetryClient telemetryClient = null)
         {
             var tempPath = Path.GetTempPath();
             _telemetryClient.TrackEvent("Creating code file for " + originalName);

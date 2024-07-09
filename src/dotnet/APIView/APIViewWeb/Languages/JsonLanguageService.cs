@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
 using ApiView;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
@@ -22,7 +23,7 @@ namespace APIViewWeb
             return base.IsSupportedFile(name) && !name.EndsWith(".api.json", StringComparison.OrdinalIgnoreCase);
         }
 
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, TelemetryClient telemetryClient = null)
         {
             if (originalName.EndsWith(".tgz", StringComparison.OrdinalIgnoreCase))
             {

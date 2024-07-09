@@ -714,9 +714,10 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService)
         {
+            _telemetryClient.TrackTrace("Updating Revision With Id " + revision.Id);
             foreach (var file in revision.Files)
             {
-                if (!file.HasOriginal || !languageService.CanUpdate(file.VersionString))
+                if (!file.HasOriginal)
                 {
                     continue;
                 }
@@ -729,7 +730,9 @@ namespace APIViewWeb.Managers
                     // We have added a new property FileName which is only set for new reviews
                     // All older reviews needs to be handled by checking review name field
                     var fileName = file.FileName ?? file.Name;
-                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, false);
+                    _telemetryClient.TrackTrace("Original File Acquired for file Id:" + file.FileId + "and file Name:" + fileName);
+
+                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, false, _telemetryClient);
                     await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
                     // update only version string
                     file.VersionString = codeFile.VersionString;
@@ -737,6 +740,7 @@ namespace APIViewWeb.Managers
                         file.ParserStyle = ParserStyle.Tree;
                     }
                     await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                    _telemetryClient.TrackTrace("Successfully Updated Revision with Id: " + revision.Id);
                 }
                 catch (Exception ex)
                 {

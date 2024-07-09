@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
@@ -23,7 +24,7 @@ namespace APIViewWeb
             return $"\"{originalName}\" \"{jsonFilePath}\"";
         }
 
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, TelemetryClient telemetryClient = null)
         {
             var tempPath = Path.GetTempPath();
             var randomSegment = Guid.NewGuid().ToString("N");

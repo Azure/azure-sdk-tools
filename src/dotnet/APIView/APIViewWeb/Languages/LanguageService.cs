@@ -6,6 +6,7 @@ using APIView;
 using APIViewWeb.Models;
 using APIViewWeb.Helpers;
 using System.Linq;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
@@ -15,7 +16,7 @@ namespace APIViewWeb
         public abstract string [] Extensions { get; }
         public virtual bool IsSupportedFile(string name) => Extensions.Any(x => name.EndsWith(x, StringComparison.OrdinalIgnoreCase));
         public abstract bool CanUpdate(string versionString);
-        public abstract Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis);
+        public abstract Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, TelemetryClient telemetryClient = null);
         public virtual bool IsReviewGenByPipeline { get; set; } = false;
 
         public readonly CodeFileToken ReviewNotReadyCodeFile = new CodeFileToken("API review is being generated for this revision and it will be available in few minutes. Please refresh this page after few minutes to see generated API review.", CodeFileTokenKind.Literal);

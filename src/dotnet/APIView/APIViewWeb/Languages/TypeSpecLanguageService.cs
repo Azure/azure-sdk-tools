@@ -30,7 +30,7 @@ namespace APIViewWeb
             _typeSpecSpecificPathPrefix = "/specification";
             _telemetryClient = telemetryClient;
         }
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, TelemetryClient telemetryClient = null)
         {
             return await CodeFile.DeserializeAsync(stream, true, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
         }

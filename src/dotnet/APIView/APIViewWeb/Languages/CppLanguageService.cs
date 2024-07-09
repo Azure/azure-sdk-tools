@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
@@ -118,7 +119,7 @@ namespace APIViewWeb
 
         public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, TelemetryClient telemetryClient = null)
         {
             MemoryStream astStream = new MemoryStream();
             await stream.CopyToAsync(astStream);

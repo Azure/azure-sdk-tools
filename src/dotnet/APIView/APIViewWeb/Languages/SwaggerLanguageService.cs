@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
@@ -23,7 +24,7 @@ namespace APIViewWeb
         {
             IsReviewGenByPipeline = true;
         }
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, TelemetryClient telemetryClient = null)
         {
             return await CodeFile.DeserializeAsync(stream, hasSections: true, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
         }

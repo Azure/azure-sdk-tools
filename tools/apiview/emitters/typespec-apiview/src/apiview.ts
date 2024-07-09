@@ -5,6 +5,7 @@ import {
   AugmentDecoratorStatementNode,
   BaseNode,
   BooleanLiteralNode,
+  ConstStatementNode,
   DecoratorExpressionNode,
   DirectiveExpressionNode,
   EnumMemberNode,
@@ -447,7 +448,14 @@ export class ApiView {
       case SyntaxKind.TypeSpecScript:
         throw new Error(`Case "TypeSpecScript" not implemented`);
       case SyntaxKind.ConstStatement:
-        throw new Error(`Case "ConstStatement" not implemented`);
+        obj = node as ConstStatementNode;
+        this.namespaceStack.push(obj.id.sv);
+        this.keyword("const", false, true);
+        this.tokenizeIdentifier(obj.id, "declaration");
+        this.punctuation("=", true, true);
+        this.tokenize(obj.value);
+        this.namespaceStack.pop();
+        break;
       case SyntaxKind.DecoratorExpression:
         obj = node as DecoratorExpressionNode;
         this.punctuation("@", false, false);
@@ -1054,6 +1062,11 @@ export class ApiView {
       this.tokenize(node);
       this.punctuation(";");
       this.blankLines(1);
+    }
+    for (const node of model.constants.values()) {
+        this.tokenize(node);
+        this.punctuation(";");
+        this.blankLines(1);
     }
     this.endGroup();
     this.blankLines(1);

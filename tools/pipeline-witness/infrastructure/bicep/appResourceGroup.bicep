@@ -341,7 +341,7 @@ resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignm
 }
 
 // Use a module to merge the current app settings with the new ones to prevent overwritting the app insights configured settings
-module appSettings 'appsettings.bicep' = {
+module appSettings 'appSettings.bicep' = {
   name: '${webAppName}-appsettings'
   params: {
     webAppName: webApp.name

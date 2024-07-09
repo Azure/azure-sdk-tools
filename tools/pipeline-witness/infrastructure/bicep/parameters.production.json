@@ -40,6 +40,12 @@
     },
     "vnetName": {
       "value": "pipelinewitnessprod"
+    },
+    "vnetPrefix": {
+      "value": "10.9.0.0/16"
+    },
+    "subnetPrefix": {
+      "value": "10.9.0.0/24"
     }
   }
 }

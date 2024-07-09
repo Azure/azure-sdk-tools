@@ -6,6 +6,8 @@ param appStorageAccountName string
 param aspEnvironment string
 param cosmosAccountName string
 param location string
+param vnetPrefix string
+param subnetPrefix string
 
 var cosmosContributorRoleId = '00000000-0000-0000-0000-000000000002' // Built-in Contributor role
 
@@ -23,7 +25,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '10.8.0.0/16'
+        vnetPrefix
       ]
     }
     virtualNetworkPeerings: []
@@ -35,7 +37,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = {
   parent: vnet
   name: 'default'
   properties: {
-    addressPrefix: '10.8.0.0/24'
+    addressPrefix: subnetPrefix
     networkSecurityGroup: {
       id: networkSecurityGroup.id
     }

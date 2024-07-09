@@ -40,6 +40,12 @@
     },
     "vnetName": {
       "value": "pipelinewitnessstaging"
+    },
+    "vnetPrefix": {
+      "value": "10.8.0.0/16"
+    },
+    "subnetPrefix": {
+      "value": "10.8.0.0/24"
     }
   }
 }

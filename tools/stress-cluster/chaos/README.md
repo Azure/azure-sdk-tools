@@ -242,7 +242,7 @@ Additionally, several values are made available as environment variables via the
 - `POD_NAMESPACE` - The kubernetes namespace the container is running in, useful for custom telemetry.
 - `DEBUG_SHARE` - See [stress test file share](#stress-test-file-share)
 - `DEBUG_SHARE_ROOT` - See [stress test file share](#stress-test-file-share)
-- `AZURE_SUBSCRIPTION_ID` - The azure subscription id the stress test will authenticate and deploy resources to.
+- `AZURE_SUBSCRIPTION_ID` - The Azure subscription id the stress test will authenticate and deploy resources to.
 - `AZURE_TENANT_ID` - The Azure tenant id the stress test will authenticate to. Set by AKS.
 - `AZURE_CLIENT_ID` - The AAD principal the stress test will authenticate as. Set by AKS.
 - `AZURE_FEDERATED_TOKEN_FILE` - The path to the federated identity token that can be used to login with azure cli or the identity SDK. Set by AKS.

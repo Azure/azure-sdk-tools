@@ -1,10 +1,74 @@
 param webAppName string
+param networkSecurityGroupName string
+param vnetName string
 param appServicePlanName string
 param appStorageAccountName string
+param aspEnvironment string
 param cosmosAccountName string
 param location string
+param vnetPrefix string
+param subnetPrefix string
 
 var cosmosContributorRoleId = '00000000-0000-0000-0000-000000000002' // Built-in Contributor role
+
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+  name: networkSecurityGroupName
+  location: 'westus2'
+  properties: {
+    securityRules: []
+  }
+}
+
+resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
+  name: vnetName
+  location: 'westus2'
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        vnetPrefix
+      ]
+    }
+    virtualNetworkPeerings: []
+    enableDdosProtection: false
+  }
+}
+
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = {
+  parent: vnet
+  name: 'default'
+  properties: {
+    addressPrefix: subnetPrefix
+    networkSecurityGroup: {
+      id: networkSecurityGroup.id
+    }
+    serviceEndpoints: [
+      {
+        service: 'Microsoft.Storage'
+        locations: [
+          'westus2'
+          'westcentralus'
+        ]
+      }
+      {
+        service: 'Microsoft.AzureCosmosDB'
+        locations: [
+          '*'
+        ]
+      }
+    ]
+    delegations: [
+      {
+        name: 'delegation'
+        properties: {
+          serviceName: 'Microsoft.Web/serverfarms'
+        }
+        type: 'Microsoft.Network/virtualNetworks/subnets/delegations'
+      }
+    ]
+    privateEndpointNetworkPolicies: 'Disabled'
+    privateLinkServiceNetworkPolicies: 'Enabled'
+  }
+}
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: appServicePlanName
@@ -28,6 +92,8 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       linuxFxVersion: 'DOTNETCORE|6.0'
     }
     httpsOnly: true
+    virtualNetworkSubnetId: subnet.id
+    publicNetworkAccess: 'Enabled'
   }
   identity: {
     type: 'SystemAssigned'
@@ -46,13 +112,12 @@ resource appStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     defaultToOAuthAuthentication: false
     allowCrossTenantReplication: true
     minimumTlsVersion: 'TLS1_2'
-    allowBlobPublicAccess: true
-    allowSharedKeyAccess: true
+    allowBlobPublicAccess: false
+    allowSharedKeyAccess: false
     networkAcls: {
       bypass: 'AzureServices'
-      virtualNetworkRules: []
-      ipRules: []
-      defaultAction: 'Allow'
+      virtualNetworkRules: [{ id: subnet.id }]
+      defaultAction: 'Deny'
     }
     supportsHttpsTrafficOnly: true
     encryption: {
@@ -120,8 +185,10 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-02-15-preview
     publicNetworkAccess: 'Enabled'
     enableAutomaticFailover: false
     enableMultipleWriteLocations: false
-    isVirtualNetworkFilterEnabled: false
-    virtualNetworkRules: []
+    isVirtualNetworkFilterEnabled: true
+    virtualNetworkRules: [{
+      id: subnet.id
+    }]
     disableKeyBasedMetadataWriteAccess: false
     enableFreeTier: false
     enableAnalyticalStorage: false
@@ -129,7 +196,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-02-15-preview
     databaseAccountOfferType: 'Standard'
     enableMaterializedViews: false
     networkAclBypass: 'None'
-    disableLocalAuth: false
+    disableLocalAuth: true
     enablePartitionMerge: false
     enablePerRegionPerPartitionAutoscale: false
     enableBurstCapacity: false
@@ -275,4 +342,18 @@ resource sqlRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignm
   }
 }
 
+// Use a module to merge the current app settings with the new ones to prevent overwritting the app insights configured settings
+module appSettings 'appSettings.bicep' = {
+  name: '${webAppName}-appsettings'
+  params: {
+    webAppName: webApp.name
+    // Get the current appsettings
+    currentAppSettings: list(resourceId('Microsoft.Web/sites/config', webApp.name, 'appsettings'), '2022-03-01').properties
+    appSettings: {
+      ASPNETCORE_ENVIRONMENT: aspEnvironment
+    }
+  }
+}
+
 output appIdentityPrincipalId string = webApp.identity.principalId
+output subnetId string = subnet.id

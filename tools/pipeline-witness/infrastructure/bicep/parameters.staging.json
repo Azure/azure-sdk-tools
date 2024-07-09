@@ -20,6 +20,9 @@
     "appStorageAccountName": {
       "value": "pipelinewitnessstaging"
     },
+    "aspEnvironment": {
+      "value": "staging"
+    },
     "logsResourceGroupName": {
       "value": "pipelinelogs"
     },
@@ -31,6 +34,18 @@
     },
     "kustoDatabaseName": {
       "value": "Staging"
+    },
+    "networkSecurityGroupName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "vnetName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "vnetPrefix": {
+      "value": "10.8.0.0/16"
+    },
+    "subnetPrefix": {
+      "value": "10.8.0.0/24"
     }
   }
 }

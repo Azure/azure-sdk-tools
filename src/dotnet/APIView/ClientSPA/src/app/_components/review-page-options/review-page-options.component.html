@@ -1,7 +1,7 @@
 <app-page-options-section sectionName="Approval">
     <ul class="list-group">
         <li class="list-group-item text-center">
-            <ng-container *ngIf="userProfile && preferedApprovers.includes(userProfile?.userName!)">
+            <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">
                 <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
                     <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
                     <div class="d-grid gap-2">
@@ -103,16 +103,17 @@
         <li class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
             <p-multiSelect 
-                [options]="preferedApprovers" 
+                [options]="preferredApprovers" 
                 [(ngModel)]="selectedApprovers" 
                 placeholder="Request Reviewers"
                 [showClear]="true"
-                [style]="{'width':'100%'}">
-                    <ng-template let-approver pTemplate="selectedItems">
-                        <div *ngIf="approver && approver.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
-                            <span>{{ approver }},</span>
+                [style]="{'width':'100%'}"
+                (onPanelHide)="handleAssignedReviewersChange()">
+                    <ng-template pTemplate="selectedItems">
+                        <div *ngIf="selectedApprovers && selectedApprovers.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
+                        <span>{{ formatSelectedApprovers(selectedApprovers) }}</span>
                         </div>
-                        <div *ngIf="!approver || approver.length === 0">Select Reviewers</div>
+                        <div *ngIf="!selectedApprovers || selectedApprovers.length === 0">Select Reviewers</div>
                     </ng-template>
                     <ng-template let-approver pTemplate="item">
                         <div class="flex align-items-center gap-2">

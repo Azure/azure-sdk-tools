@@ -38,7 +38,6 @@ export interface APIRevision {
   viewedBy: string[]
 }
 
-
 export interface AssignedReviewer {
   assignedBy: string;
   assingedTo: string;

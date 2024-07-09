@@ -6,9 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
-using System;
 using APIViewWeb.Managers;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using System.Collections.Generic;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -17,15 +16,18 @@ namespace APIViewWeb.LeanControllers
         private readonly ILogger<APIRevisionsController> _logger;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IReviewManager _reviewManager;
+        private readonly INotificationManager _notificationManager;
 
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
             IReviewManager reviewManager,
-            IAPIRevisionsManager apiRevisionsManager)
+            IAPIRevisionsManager apiRevisionsManager,
+            INotificationManager notificationManager)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
+            _notificationManager = notificationManager;
         }
 
         /// <summary>
@@ -109,6 +111,23 @@ namespace APIViewWeb.LeanControllers
             {
                 await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
             }
+            return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA for Requesting Reviewers
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="reviewers"></param>
+        /// <returns></returns>
+
+        [HttpPost("{reviewId}/{apiRevisionId}/reviewers", Name = "AddReviewers")]
+        public async Task<ActionResult<APIRevisionListItemModel>> AddReviewersAsync(string reviewId, string apiRevisionId, [FromBody] HashSet<string> reviewers)
+        {
+            var apiRevision = await _apiRevisionsManager.UpdateAPIRevisionReviewersAsync(User, apiRevisionId, reviewers);
+            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
+
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }
     }

@@ -844,6 +844,30 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
         }
 
+        public async Task<APIRevisionListItemModel> UpdateAPIRevisionReviewersAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers)
+        {
+            APIRevisionListItemModel apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            foreach (var reviewer in reviewers)
+            {
+                if (!apiRevision.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
+                {
+                    var reviewAssignment = new ReviewAssignmentModel()
+                    {
+                        AssingedTo = reviewer,
+                        AssignedBy = User.GetGitHubLogin(),
+                        AssingedOn = DateTime.Now,
+                    };
+                    apiRevision.AssignedReviewers.Add(reviewAssignment);
+                }
+            }
+            foreach (var assignment in apiRevision.AssignedReviewers.FindAll(x => !reviewers.Contains(x.AssingedTo)))
+            {
+                apiRevision.AssignedReviewers.Remove(assignment);
+            }
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            return apiRevision;
+        }
+
         /// <summary>
         /// Get Reviews that have been assigned for review to a user
         /// </summary>

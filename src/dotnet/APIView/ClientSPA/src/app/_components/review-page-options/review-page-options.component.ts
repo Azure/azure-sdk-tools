@@ -7,6 +7,8 @@ import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
+import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { pipe, take } from 'rxjs';
 
 @Component({
   selector: 'app-review-page-options',
@@ -20,7 +22,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
-  @Input() preferedApprovers: string[] = [];
+  @Input() preferredApprovers: string[] = [];
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
@@ -59,6 +61,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
 
+  //Approvers Options
   selectedApprovers: string[] = [];
 
   diffStyleOptions : any[] = [
@@ -76,7 +79,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     'unDeleted': 'bi bi-plus-circle-fill undeleted'
   };
 
-  constructor(private configService: ConfigService, private route: ActivatedRoute, private router: Router) { }
+  constructor(
+    private configService: ConfigService, 
+    private route: ActivatedRoute, 
+    private router: Router, 
+    private apiRevisionsService: RevisionsService) { }
 
   ngOnInit() {
     this.setSelectedDiffStyle();
@@ -96,6 +103,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showLineNumbersSwitch = true;
     }
 
+    this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
     this.setAPIRevisionApprovalStates();
     this.setReviewApprovalStatus();
   }
@@ -204,6 +212,27 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
    */
   onShowHiddenAPISwitchChange(event: InputSwitchOnChangeEvent) {
     this.showHiddenAPIEmitter.emit(event.checked);
+  }
+
+
+  handleAssignedReviewersChange() {
+
+    const existingApprovers = new Set(this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo));
+    const currentApprovers = new Set(this.selectedApprovers);
+    const isSelectedApproversChanged = existingApprovers.size !== currentApprovers.size ||
+                      [...existingApprovers].some(approver => !currentApprovers.has(approver));
+
+    if (isSelectedApproversChanged) {
+      this.apiRevisionsService.updateSelectedReviewers(this.activeAPIRevision!.reviewId, this.activeAPIRevision!.id, currentApprovers).pipe(take(1)).subscribe({
+        next: (response: APIRevision) => {
+          this.activeAPIRevision = response;
+          }
+      });
+    }
+  }
+
+  formatSelectedApprovers(approvers: string[]): string {
+    return approvers.join(', ');
   }
 
   setSelectedDiffStyle() {

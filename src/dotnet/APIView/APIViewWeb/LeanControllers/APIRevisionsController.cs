@@ -129,9 +129,10 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<APIRevisionListItemModel>> AddReviewersAsync(string reviewId, string apiRevisionId, [FromBody] HashSet<string> reviewers)
         {
             var apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
-            var existingReviewers = apiRevision.AssignedReviewers;
-            var newReviewers = reviewers.Where(reviewer => !existingReviewers.Any(existingReviewer => existingReviewer.AssingedTo == reviewer)).ToHashSet();
-            var removedReviewers = existingReviewers.Where(existingReviewer => !reviewers.Contains(existingReviewer.AssingedTo)).Select(r => r.AssingedTo).ToHashSet();
+            var existingReviewers = new HashSet<string>(apiRevision.AssignedReviewers.Select(r => r.AssingedTo));
+
+            var newReviewers = new HashSet<string>(reviewers.Except(existingReviewers));
+            var removedReviewers = new HashSet<string>(existingReviewers.Except(reviewers));
 
             if (newReviewers.Any())
             {

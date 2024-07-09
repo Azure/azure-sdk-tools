@@ -6,11 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
-using System;
 using APIViewWeb.Managers;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -128,21 +125,9 @@ namespace APIViewWeb.LeanControllers
         [HttpPost("{reviewId}/{apiRevisionId}/reviewers", Name = "AddReviewers")]
         public async Task<ActionResult<APIRevisionListItemModel>> AddReviewersAsync(string reviewId, string apiRevisionId, [FromBody] HashSet<string> reviewers)
         {
-            var apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
-            var existingReviewers = new HashSet<string>(apiRevision.AssignedReviewers.Select(r => r.AssingedTo));
+            var apiRevision = await _apiRevisionsManager.UpdateAPIRevisionReviewersAsync(User, apiRevisionId, reviewers);
+            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
 
-            var newReviewers = new HashSet<string>(reviewers.Except(existingReviewers));
-            var removedReviewers = new HashSet<string>(existingReviewers.Except(reviewers));
-
-            if (newReviewers.Any())
-            {
-                await _apiRevisionsManager.AssignReviewersToAPIRevisionAsync(User, apiRevisionId, newReviewers);
-                await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, newReviewers);
-            }
-            if (removedReviewers.Any())
-            {
-                await _apiRevisionsManager.RemoveReviewersFromAPIRevisionAsync(User, apiRevisionId, removedReviewers);
-            }
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }
     }

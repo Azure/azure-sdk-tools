@@ -108,8 +108,7 @@
                 placeholder="Request Reviewers"
                 [showClear]="true"
                 [style]="{'width':'100%'}"
-                (onPanelHide)="handleOnPanelHide()"
-                (onPanelShow)="handleOnPanelShow()">
+                (onPanelHide)="handleAssignedReviewersChange()">
                     <ng-template pTemplate="selectedItems">
                         <div *ngIf="selectedApprovers && selectedApprovers.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
                         <span>{{ formatSelectedApprovers(selectedApprovers) }}</span>

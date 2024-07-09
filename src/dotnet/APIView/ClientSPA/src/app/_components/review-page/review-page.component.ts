@@ -41,7 +41,6 @@ export class ReviewPageComponent implements OnInit {
   scrollToNodeId : string | undefined = undefined;
   showLineNumbers : boolean = true;
   preferredApprovers : string[] = [];
-  conversiationInfo : any | undefined = undefined;
   hasFatalDiagnostics : boolean = false;
   hasActiveConversation : boolean = false;
   hasHiddenAPIs : boolean = false;

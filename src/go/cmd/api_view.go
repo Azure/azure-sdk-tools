@@ -32,11 +32,12 @@ func createReview(pkgDir string) (PackageReview, error) {
 	if err != nil {
 		return PackageReview{}, err
 	}
+	m.Index()
 	tokenList := &[]Token{}
 	nav := []Navigation{}
 	diagnostics := []Diagnostic{}
 	packageNames := []string{}
-	for name, p := range m.packages {
+	for name, p := range m.Packages {
 		// we use a prefixed path separator so that we can handle the "internal" module.
 		//  internal/dig
 		//  internal/errorinfo
@@ -50,7 +51,7 @@ func createReview(pkgDir string) (PackageReview, error) {
 	}
 	sort.Strings(packageNames)
 	for _, name := range packageNames {
-		p := m.packages[name]
+		p := m.Packages[name]
 		n := p.relName
 		makeToken(nil, nil, "package", TokenTypeMemberName, tokenList)
 		makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)

@@ -59,6 +59,13 @@
 /src/dotnet/APIView                    @chidozieononiwu
 
 ###########
-# Go Client Tools
+# APIView parsers
 ###########
-/src/go                                @jhendrixMSFT @chlowell @RickWinter
+/tools/apiview/                          @chidozieononiwu
+/tools/apiview/emitters/typespec-apiview @tjprescott
+/tools/apiview/parsers/cpp-api-parser    @LarryOsterman
+/tools/apiview/parsers/csharp-api-parser @christothes
+/tools/apiview/parsers/js-api-parser     @maorleger
+/src/swift                               @tjprescott
+/src/java/apiview-java-processor         @JonathanGiles
+/src/go                                  @jhendrixMSFT @chlowell @RickWinter

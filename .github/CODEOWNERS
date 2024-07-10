@@ -39,7 +39,7 @@
 /tools/mock-service-host/              @raych1 @tadelesh
 /tools/perf-automation/                @mikeharder @benbp
 /tools/pipeline-generator/             @weshaggard @benbp
-/tools/pipeline-witness/               @praveenkuttappan @weshaggard @hallipr
+/tools/pipeline-witness/               @hallipr
 /tools/sdk-ai-bots/                    @raych1
 /tools/sdk-testgen/                    @raych1 @tadelesh
 /tools/test-proxy/                     @scbedd @mikeharder @benbp

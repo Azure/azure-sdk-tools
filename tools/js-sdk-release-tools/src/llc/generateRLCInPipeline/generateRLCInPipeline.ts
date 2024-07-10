@@ -40,6 +40,7 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+            // TODO: remove it, since this function is used in pipeline.
             if(options.sdkGenerationType === "command") {
                 logger.logGreen("Run TypeSpec command directly.");
                 const copyPackageJsonName = 'emitter-package.json';

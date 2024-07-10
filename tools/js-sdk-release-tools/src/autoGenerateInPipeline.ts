@@ -41,11 +41,12 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     };
     const readmeMd = isTypeSpecProject ? undefined : typeof readmeFiles === 'string' ? readmeFiles : readmeFiles![0];
     const typespecProject = isTypeSpecProject ? typeof typespecProjectFolder === 'string' ? typespecProjectFolder : typespecProjectFolder![0] : undefined;
-    const isMgmt = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
+    const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
     const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
+    
     try {
-        await backupNodeModules(String(shell.pwd()));
-        if (isMgmt) {
+        //await backupNodeModules(String(shell.pwd()));
+        if (isMgmtWithHLC) {
             await generateMgmt({
                 sdkRepo: String(shell.pwd()),
                 swaggerRepo: specFolder,
@@ -79,7 +80,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
         logger.logError((e as any)?.message);
         throw e;
     } finally {
-        await restoreNodeModules(String(shell.pwd()));
+        //await restoreNodeModules(String(shell.pwd()));
         fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, null, '  '), { encoding: 'utf-8' });
     }
 }

@@ -99,8 +99,12 @@ static async Task HandlePackageFileParsing(Stream stream, FileInfo packageFilePa
             }
         }
 
-        dependencyFilesTempDir = await ExtractNugetDependencies(dependencies).ConfigureAwait(false);
-        var dependencyFilePaths = Directory.EnumerateFiles(dependencyFilesTempDir, "*.dll", SearchOption.AllDirectories);
+        IEnumerable<string> dependencyFilePaths = new List<string>();
+        if (dependencies != null && dependencies.Any())
+        {
+            dependencyFilesTempDir = await ExtractNugetDependencies(dependencies).ConfigureAwait(false);
+            dependencyFilePaths = Directory.EnumerateFiles(dependencyFilesTempDir, "*.dll", SearchOption.AllDirectories);
+        }
         var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream, dependencyFilePaths);
 
         if (assemblySymbol == null)

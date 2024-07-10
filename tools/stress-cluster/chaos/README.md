@@ -186,14 +186,13 @@ Fields in `Chart.yaml`
 
 Stress tests are authenticated via [workload identity for AKS](https://learn.microsoft.com/azure/aks/workload-identity-overview).
 
-To authenticate to Azure, tests can choose to use `DefaultAzureCredential`, `WorkloadIdentityCredential`, or `AzureCliCredential`,
+To authenticate to Azure, tests can choose to use `DefaultAzureCredential` or `WorkloadIdentityCredential`,
 though it is recommended to use `DefaultAzureCredential` for ease of switching between local machine runs and container runs in the cluster.
 The container that a stress test runs in will have a federated identity token available in its environment that can be used to authenticate.
 This credential is made available automatically by the cluster.
 
-`DefaultAzureCredential` and `WorkloadIdentityCredential` should work automatically with no setup. `AzureCliCredential` can also be used
-provided a login step is added to the test invocation. This method is also useful for test jobs that may need to exercise additional azure
-cli commands. See an example [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/stress-deployment-example/templates/deploy-job.yaml)
+Azure CLI can also be used for scripting purposes provided a login step is added to the test invocation.
+See an example [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/stress-deployment-example/templates/deploy-job.yaml)
 or in the following snippet:
 
 ```
@@ -203,12 +202,12 @@ args:
       source $ENV_FILE &&
       az login --federated-token "$(cat $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u "$AZURE_CLIENT_ID" -t "$AZURE_TENANT_ID" &&
       az account set -s $AZURE_SUBSCRIPTION_ID &&
-      <your custom test script here>
+      <your custom test script here using az cli commands>
 ```
 
 Each federated identity is backed by a managed identity with authorization to the cluster subscription. For all permissions
 given to this principal, see [workload app roles](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/azure/cluster/workloadapproles.bicep).
-When a new namespace is created in the a stress cluster, a [federated identity](https://learn.microsoft.com/en-us/graph/api/resources/federatedidentitycredentials-overview?view=graph-rest-1.0) specific to that namespace is created against a pool of managed identities by the stress watcher service (there is a hard limit of 20 federated identities per managed identity). When a namespace is deleted, the corresponding federated identity is also deleted.
+When a new namespace is created in the a stress cluster, a [federated identity](https://learn.microsoft.com/graph/api/resources/federatedidentitycredentials-overview?view=graph-rest-1.0) specific to that namespace is created against a pool of managed identities by the stress watcher service (there is a hard limit of 20 federated identities per managed identity). When a namespace is deleted, the corresponding federated identity is also deleted.
 
 ### Stress Test Secrets and Environment
 

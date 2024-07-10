@@ -1,5 +1,11 @@
 # Release History
 
+## 0.3.3 (2024-07-10)
+
+### Features Added
+
+Added new cluster 'storage' to addons environment config
+
 ## 0.3.2 (2024-05-15)
 
 ### Features Added

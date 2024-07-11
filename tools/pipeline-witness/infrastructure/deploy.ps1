@@ -10,16 +10,14 @@ param(
   [switch]$removeRoleAssignments
 )
 
-function Invoke([string]$command) {
-  Write-Host "> $command"
-  Invoke-Expression $command
-}
+$repoRoot = Resolve-Path "$PSScriptRoot/../../.."
+. "$repoRoot/eng/common/scripts/Helpers/CommandInvocation-Helpers.ps1"
 
 function RemoveStorageRoleAssignments($subscriptionId, $resourceGroup, $resourceName) {
   $scope = "/subscriptions/$subscriptionId/resourceGroups/$resourceGroup/providers/Microsoft.Storage/storageAccounts/$resourceName"
   
   Write-Host "Removing role assignments from $resourceGroup/$resourceName"
-  $existingAssignments = az role assignment list --scope $scope --output json | ConvertFrom-Json
+  $existingAssignments = Invoke-LoggedCommand "az role assignment list --scope $scope --output json" | ConvertFrom-Json
 
   if ($existingAssignments.Count -eq 0) {
     Write-Host "  No role assignments found"
@@ -28,13 +26,13 @@ function RemoveStorageRoleAssignments($subscriptionId, $resourceGroup, $resource
 
   foreach ($assignment in $existingAssignments) {
     Write-Host "  Removing role assignment for '$($assignment.principalName)' in role '$($assignment.roleDefinitionName)'"
-    Invoke "az role assignment delete --assignee '$($assignment.principalId)' --role '$($assignment.roleDefinitionId)' --scope '$scope' --yes"
+    Invoke-LoggedCommand "az role assignment delete --assignee '$($assignment.principalId)' --role '$($assignment.roleDefinitionId)' --scope '$scope' --yes"
   }
 }
 
 function RemoveCosmosRoleAssignments($subscriptionId, $resourceGroup, $resourceName) {
   Write-Host "Removing cosmos role assignments from $resourceGroup/$resourceName"
-  $existingAssignments = az cosmosdb sql role assignment list --account-name $resourceName --resource-group $resourceGroup --output json | ConvertFrom-Json
+  $existingAssignments = Invoke-LoggedCommand "az cosmosdb sql role assignment list --account-name $resourceName --resource-group $resourceGroup --output json" | ConvertFrom-Json
 
   if ($existingAssignments.Count -eq 0) {
     Write-Host "  No role assignments found"
@@ -43,7 +41,7 @@ function RemoveCosmosRoleAssignments($subscriptionId, $resourceGroup, $resourceN
 
   foreach ($assignment in $existingAssignments) {
     Write-Host "  Removing cosmos role assignment $($assignment.name)"
-    Invoke "az cosmosdb sql role assignment delete --account-name '$cosmosAccountName' --resource-group '$appResourceGroupName' --role-assignment-id '$($assignment.id)' --yes"
+    Invoke-LoggedCommand "az cosmosdb sql role assignment delete --account-name '$cosmosAccountName' --resource-group '$appResourceGroupName' --role-assignment-id '$($assignment.id)' --yes"
   }
 }
 
@@ -61,8 +59,8 @@ try {
   $logsResourceGroupName = $parameters.logsResourceGroupName.value
   $logsStorageAccountName = $parameters.logsStorageAccountName.value
 
-  Invoke "az account set --subscription '$subscriptionName'"
-  $subscriptionId = az account show --query id -o tsv
+  Invoke-LoggedCommand "az account set --subscription '$subscriptionName'"
+  $subscriptionId = Invoke "az account show --query id -o tsv"
 
   ./Merge-KustoScripts.ps1 -OutputPath "./artifacts/merged.kql"
   if ($?) {
@@ -85,7 +83,7 @@ try {
     RemoveCosmosRoleAssignments $subscriptionId $appResourceGroupName $cosmosAccountName
   }
 
-  Invoke "az deployment sub create --template-file './bicep/resourceGroups.bicep' --parameters '$parametersFile' --location '$location' --name '$deploymentName' --output none"
+  Invoke-LoggedCommand "az deployment sub create --template-file './bicep/main.bicep' --parameters '$parametersFile' --location '$location' --name '$deploymentName' --output none"
   if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to deploy resource groups"
     exit 1

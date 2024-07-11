@@ -90,7 +90,8 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|6.0'
+      linuxFxVersion: 'DOTNETCORE|8.0'
+      alwaysOn: true
     }
     httpsOnly: true
     virtualNetworkSubnetId: subnet.id

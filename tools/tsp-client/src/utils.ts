@@ -41,6 +41,17 @@ export function getServiceDir(configYaml: any, emitter: string): string {
     return serviceDir;
 }
 
+/**
+ * Returns path to a dependency package under node_modules
+ *
+ * @param dependency Name of dependency.
+ *
+ * @example
+ * ```
+ * // Prints '/home/user/foo/node_modules/@autorest/bar':
+ * console.log(getPathToDependency("@autorest/bar"));
+ * ```
+ */
 export async function getPathToDependency(dependency: string): Promise<string> {
     const entrypoint = require.resolve(dependency);
     let currentDir = dirname(entrypoint);

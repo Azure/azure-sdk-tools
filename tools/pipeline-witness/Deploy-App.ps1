@@ -26,7 +26,7 @@ try {
     "  Resource: $resourceName`n"
 
     $artifactsPath = "$repoRoot/artifacts"
-    $publishPath = "$artifactsPath/bin/Azure.Sdk.Tools.PipelineWitness.Tests/Release/net7.0/publish"
+    $publishPath = "$artifactsPath/bin/Azure.Sdk.Tools.PipelineWitness/Release/net6.0/publish"
 
     Invoke-LoggedCommand "dotnet publish --configuration Release"
 
@@ -38,7 +38,7 @@ try {
         exit 1
     }
 
-    Invoke-LoggedCommand "az webapp deploy --src-path '$artifactsPath/pipeline-witness.zip' --subscription '$subscriptionName' --resource-group '$resourceGroupName' --name '$resourceName'"
+    Invoke-LoggedCommand "az webapp deploy --src-path '$artifactsPath/pipeline-witness.zip' --clean true --restart true --type zip --subscription '$subscriptionName' --resource-group '$resourceGroupName' --name '$resourceName'"
 }
 finally {
     Pop-Location

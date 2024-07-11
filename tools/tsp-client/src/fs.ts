@@ -1,8 +1,8 @@
 import { mkdir, rm, stat, readFile, access } from "node:fs/promises";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
-import { TspLocation } from "./typespec.js";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
+import { TspLocation } from "./typespec.js";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });

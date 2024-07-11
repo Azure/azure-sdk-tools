@@ -1,7 +1,5 @@
-import * as path from "node:path";
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import { joinPaths } from "@typespec/compiler";
 
 export async function createPackageJson(rootPath: string, deps: Set<string>): Promise<void> {
@@ -57,16 +55,4 @@ export async function npxCommand(workingDir: string, args: string[]): Promise<vo
       reject(new Error(`npx ${args[0]} failed with error: ${err}`));
     });
   });
-}
-
-let packageVersion: string;
-export async function getPackageVersion(): Promise<string> {
-  if (!packageVersion) {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const packageJson = JSON.parse(
-      await readFile(joinPaths(__dirname, "..", "package.json"), "utf-8"),
-    );
-    packageVersion = packageJson.version ?? "unknown";
-  }
-  return packageVersion;
 }

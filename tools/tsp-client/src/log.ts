@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import { getPackageVersion } from "./npm.js";
 
 const logSink = {
   log: console.log,
@@ -31,8 +30,11 @@ function createLogger(): Logger {
   return direct;
 }
 
-export function enableDebug(): void {
-  logSink.debug = console.debug;
+export function checkDebugLogging(argv: any): void {
+  const debug = argv.debug;
+  if (debug) {
+    logSink.debug = console.debug;
+  }
 }
 
 export const Logger = createLogger();
@@ -54,46 +56,7 @@ export function printBanner() {
   Logger.info(bannerText);
 }
 
-const usageText = `
-Usage: tsp-client <command> [options]
+export const usageText = `
+Usage: tsp-client <COMMAND> [OPTIONS]
 
-Use one of the supported commands to get started generating clients from a TypeSpec project.
-This tool will default to using your current working directory to generate clients in and will
-use it to look for relevant configuration files. To specify a different directory, use
-the -o or --output-dir option.
-
-Commands:
-  init        Initialize the SDK project folder from a tspconfig.yaml   [string]
-  sync        Sync TypeSpec project specified in tsp-location.yaml      [string]
-  generate    Generate from a TypeSpec project                          [string]
-  update      Sync and generate from a TypeSpec project                 [string]
-  convert     Convert a swagger specification to TypeSpec               [string]
-
-Options:
-  --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
-  -c, --tsp-config          The tspconfig.yaml file to use                      [string]
-  --commit                  Commit to be used for project init or update        [string]
-  -d, --debug               Enable debug logging                                [boolean]
-  --emitter-options         The options to pass to the emitter                  [string]
-  --generate-lock-file      Generate a lock file under the eng/ directory from 
-                            an existing emitter-package.json                    [boolean]
-  -h, --help                Show help                                           [boolean]
-  --local-spec-repo         Path to local repository with the TypeSpec project  [string]
-  --no-prompt               Skip prompting for output directory confirmation    [boolean]
-  --save-inputs             Don't clean up the temp directory after generation  [boolean]
-  --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
-  --swagger-readme          Path or url to swagger readme file                  [string]
-  -o, --output-dir          Specify an alternate output directory for the 
-                            generated files. Default is your current directory  [string]
-  --repo                    Repository where the project is defined for init 
-                            or update                                           [string]
-  -v, --version             Show version number                                 [boolean]
-`;
-export function printUsage() {
-  Logger(usageText);
-}
-
-export async function printVersion() {
-  const version = await getPackageVersion();
-  Logger(`tsp-client version: ${version}`);
-}
+Use one of the supported commands to get started generating clients from a TypeSpec project. This tool will default to using your current working directory to generate clients in and will use it to look for relevant configuration files. To specify a different directory, use the -o or --output-dir option.`;

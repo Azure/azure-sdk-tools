@@ -17,7 +17,9 @@
     "clean": "rimraf ./dist ./types",
     "example": "npx ts-node src/index.ts update",
     "prepack": "npm run build",
-    "test": "mocha --exclude **/examples/**"
+    "test": "mocha --exclude **/examples/**",
+    "tsp-client": "node cmd/tsp-client.js",
+    "watch": "tsc -p . --watch"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
@@ -47,11 +49,13 @@
   },
   "dependencies": {
     "@azure/core-rest-pipeline": "^1.12.0",
+    "@types/yargs": "^17.0.32",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
     "prompt-sync": "^4.2.0",
     "simple-git": "^3.20.0",
-    "yaml": "^2.3.1"
+    "yaml": "^2.3.1",
+    "yargs": "^17.2.1"
   },
   "peerDependencies": {
     "@typespec/compiler": ">=0.48.1 <1.0.0"

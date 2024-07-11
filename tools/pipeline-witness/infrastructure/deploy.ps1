@@ -60,7 +60,7 @@ try {
   $logsStorageAccountName = $parameters.logsStorageAccountName.value
 
   Invoke-LoggedCommand "az account set --subscription '$subscriptionName'"
-  $subscriptionId = Invoke "az account show --query id -o tsv"
+  $subscriptionId = Invoke-LoggedCommand "az account show --query id -o tsv"
 
   ./Merge-KustoScripts.ps1 -OutputPath "./artifacts/merged.kql"
   if ($?) {

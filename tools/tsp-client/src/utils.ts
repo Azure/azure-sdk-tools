@@ -41,7 +41,7 @@ export function getServiceDir(configYaml: any, emitter: string): string {
     return serviceDir;
 }
 
-export async function getPathToDependency(dependency: string): Promise<string | undefined> {
+export async function getPathToDependency(dependency: string): Promise<string> {
     const entrypoint = require.resolve(dependency);
     let currentDir = dirname(entrypoint);
 
@@ -58,7 +58,7 @@ export async function getPathToDependency(dependency: string): Promise<string | 
             }
             else {
                 // Reached fs root but no package.json found
-                return;
+                throw new Error(`Unable to find package.json in folder tree above '${entrypoint}'`)
             }
         }
     }

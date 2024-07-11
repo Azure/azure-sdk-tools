@@ -41,7 +41,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
                 case "ping":
                     return Ok();
                 case "workflow_run":
-                    this.logger.LogInformation("Received GitHub event workflow_run");
                     return await ProcessWorkflowRunEventAsync();
                 default:
                     this.logger.LogWarning("Received GitHub event {EventName} which is not supported", eventName);
@@ -72,13 +71,17 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
 
             if (!VerifySignature(body, this.settings.GitHubWebhookSecret, signature))
             {
-                this.logger.LogWarning("Received GitHub event with invalid signature");
+                this.logger.LogWarning("Received GitHub event {Event} with invalid signature", "workflow_run");
                 return Unauthorized();
             }
 
             var eventMessage = JsonDocument.Parse(body).RootElement;
 
-            if (eventMessage.GetProperty("action").GetString() == "completed")
+            string action = eventMessage.GetProperty("action").GetString();
+
+            this.logger.LogInformation("Received GitHub event {Event}.{Action}", "workflow_run", action);
+
+            if (action == "completed")
             {
                 var queueMessage = new GitHubRunCompleteMessage
                 {
@@ -86,6 +89,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
                     Repository = eventMessage.GetProperty("repository").GetProperty("name").GetString(),
                     RunId = eventMessage.GetProperty("workflow_run").GetProperty("id").GetInt64(),
                 };
+
+                this.logger.LogInformation("Enqueuing GitHubRunCompleteMessage for {Owner}/{Repository} run {RunId}", queueMessage.Owner, queueMessage.Repository, queueMessage.RunId);
 
                 await this.queueClient.SendMessageAsync(JsonSerializer.Serialize(queueMessage));
             }

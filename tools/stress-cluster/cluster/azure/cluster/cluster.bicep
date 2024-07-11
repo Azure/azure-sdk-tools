@@ -13,7 +13,7 @@ param updateNodes bool = false
 // monitoring parameters
 param workspaceId string
 
-var kubernetesVersion = '1.26.6'
+var kubernetesVersion = '1.29.4'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var systemAgentPool = {

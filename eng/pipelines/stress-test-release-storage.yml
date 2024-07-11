@@ -5,23 +5,17 @@ trigger: none
 parameters:
   - name: Environment
     type: string
-    default: prod
+    default: storage
     values:
-    - prod
+    - storage
     - pg
+    - prod
   - name: TestRepository
     displayName: Stress Test Repository
     type: string
-    default: all
+    default: java-storage
     values:
-    - all
-    - examples
-    - java
-    - javascript
-    - net
-    - python
-    - go
-    - cpp
+    - java-storage
   - name: DeployFromBranchOrCommit
     type: string
     default: main

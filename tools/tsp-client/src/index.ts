@@ -8,7 +8,7 @@ import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } 
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
-import { formatAdditionalDirectories, getAdditionalDirectoryName, getServiceDir, makeSparseSpecDir } from "./utils.js";
+import { formatAdditionalDirectories, getAdditionalDirectoryName, getPathToDependency, getServiceDir, makeSparseSpecDir } from "./utils.js";
 import { resolve } from "node:path";
 import { config as dotenvConfig } from "dotenv";
 
@@ -231,9 +231,12 @@ async function generate({
 
 
 async function convert(readme: string, outputDir: string, arm?: boolean): Promise<void> {
-  const args = ["autorest", "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, "--use=@autorest/openapi-to-typespec", `"${readme}"`];
+  const openApiToTypeSpecPath = getPathToDependency("@autorest/openapi-to-typespec");
+
+  const args = ["--no", "--", "autorest", "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, `--use="${openApiToTypeSpecPath}"`, `"${readme}"`];
   if (arm) {
-    const generateMetadataCmd = ["autorest", "--csharp", "--max-memory-size=8192", '--use="https://aka.ms/azsdk/openapi-to-typespec-csharp"', `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
+    // TODO: Replace aka.ms link with a dependency in package.json
+    const generateMetadataCmd = ["--no", "--", "autorest", "--csharp", "--max-memory-size=8192", '--use="https://aka.ms/azsdk/openapi-to-typespec-csharp"', `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
     try {
       await npxCommand(outputDir, generateMetadataCmd);
     } catch (err) {

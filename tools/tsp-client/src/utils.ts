@@ -1,7 +1,8 @@
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
-import { mkdir } from "node:fs/promises";
+import { access, constants, mkdir } from "node:fs/promises";
 import { Logger } from "./log.js";
+import { dirname, join } from "node:path";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
     let additionalDirOutput = "";
@@ -38,4 +39,27 @@ export function getServiceDir(configYaml: any, emitter: string): string {
     }
     Logger.debug(`Service directory: ${serviceDir}`)
     return serviceDir;
+}
+
+export async function getPathToDependency(dependency: string): Promise<string | undefined> {
+    const entrypoint = require.resolve(dependency);
+    let currentDir = dirname(entrypoint);
+
+    while (true) {
+        const packageJsonFile = join(currentDir, "package.json");
+        try {
+            // Throws if file cannot be read
+            await access(packageJsonFile, constants.R_OK);
+            return currentDir;
+        } catch {
+            const parentDir = dirname(currentDir);
+            if (parentDir !== currentDir) {
+                currentDir = parentDir;
+            }
+            else {
+                // Reached fs root but no package.json found
+                return;
+            }
+        }
+    }
 }

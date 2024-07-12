@@ -231,12 +231,11 @@ async function generate({
 
 
 async function convert(readme: string, outputDir: string, arm?: boolean): Promise<void> {
-  const openApiToTypeSpecPath = getPathToDependency("@autorest/openapi-to-typespec");
-
-  const args = ["--no", "--", "autorest", "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, `--use="${openApiToTypeSpecPath}"`, `"${readme}"`];
+  const autorestOpenApiToTypeSpecPath = getPathToDependency("@autorest/openapi-to-typespec");
+  const args = ["--no", "--", "autorest", "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, `--use="${autorestOpenApiToTypeSpecPath}"`, `"${readme}"`];
   if (arm) {
-    // TODO: Replace aka.ms link with a dependency in package.json
-    const generateMetadataCmd = ["--no", "--", "autorest", "--csharp", "--max-memory-size=8192", '--use="https://aka.ms/azsdk/openapi-to-typespec-csharp"', `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
+    const autorestCsharpPath = getPathToDependency("@autorest/csharp");
+    const generateMetadataCmd = ["--no", "--", "autorest", "--csharp", "--max-memory-size=8192", `--use="${autorestCsharpPath}"`, `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
     try {
       await npxCommand(outputDir, generateMetadataCmd);
     } catch (err) {

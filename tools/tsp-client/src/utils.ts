@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { access, constants, mkdir } from "node:fs/promises";
 import { Logger } from "./log.js";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
     let additionalDirOutput = "";
@@ -53,7 +54,7 @@ export function getServiceDir(configYaml: any, emitter: string): string {
  * ```
  */
 export async function getPathToDependency(dependency: string): Promise<string> {
-    const entrypoint = import.meta.resolve(dependency);
+    const entrypoint = fileURLToPath(import.meta.resolve(dependency));
     let currentDir = dirname(entrypoint);
 
     while (true) {

@@ -59,6 +59,27 @@ export async function npxCommand(workingDir: string, args: string[]): Promise<vo
   });
 }
 
+export async function nodeCommand(workingDir: string, args: string[]): Promise<void> {
+  console.log(args);
+  return new Promise((resolve, reject) => {
+    const npm = spawn("node", args, {
+      cwd: workingDir,
+      stdio: "inherit",
+      shell: true,
+    });
+    npm.once("exit", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`node ${args[0]} failed exited with code ${code}`));
+      }
+    });
+    npm.once("error", (err) => {
+      reject(new Error(`node ${args[0]} failed with error: ${err}`));
+    });
+  });
+}
+
 let packageVersion: string;
 export async function getPackageVersion(): Promise<string> {
   if (!packageVersion) {

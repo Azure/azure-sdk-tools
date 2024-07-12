@@ -1,4 +1,4 @@
-import { npmCommand, npxCommand } from "./npm.js";
+import { npmCommand, nodeCommand } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
@@ -231,13 +231,17 @@ async function generate({
 
 
 async function convert(readme: string, outputDir: string, arm?: boolean): Promise<void> {
+  const autorestPath = await getPathToDependency("autorest");
+  const autorestPackageJson = JSON.parse(await readFile(joinPaths(autorestPath, "package.json"), "utf8"));
+  const autorestBinPath = joinPaths(autorestPath, autorestPackageJson["bin"]["autorest"]);
+
   const autorestOpenApiToTypeSpecPath = await getPathToDependency("@autorest/openapi-to-typespec");
-  const args = ["--no", "--", "autorest", "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, `--use="${autorestOpenApiToTypeSpecPath}"`, `"${readme}"`];
+  const args = [autorestBinPath, "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, `--use="${autorestOpenApiToTypeSpecPath}"`, `"${readme}"`];
   if (arm) {
     const autorestCsharpPath = await getPathToDependency("@autorest/csharp");
-    const generateMetadataCmd = ["--no", "--", "autorest", "--csharp", "--max-memory-size=8192", `--use="${autorestCsharpPath}"`, `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
+    const generateMetadataCmd = [autorestBinPath, "--csharp", "--max-memory-size=8192", `--use="${autorestCsharpPath}"`, `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
     try {
-      await npxCommand(outputDir, generateMetadataCmd);
+      await nodeCommand(outputDir, generateMetadataCmd);
     } catch (err) {
       Logger.error(`Error occurred while attempting to generate ARM metadata: ${err}`);
       process.exit(1);
@@ -250,7 +254,7 @@ async function convert(readme: string, outputDir: string, arm?: boolean): Promis
     }
     args.push("--isArm");
   }
-  return await npxCommand(outputDir, args);
+  return await nodeCommand(outputDir, args);
 }
 
 async function generateLockFile(rootUrl: string, repoRoot: string) {

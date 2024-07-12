@@ -3,6 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { joinPaths } from "@typespec/compiler";
+import { Logger } from "./log.js";
 
 export async function createPackageJson(rootPath: string, deps: Set<string>): Promise<void> {
   const dependencies: Record<string, string> = {};
@@ -60,7 +61,8 @@ export async function npxCommand(workingDir: string, args: string[]): Promise<vo
 }
 
 export async function nodeCommand(workingDir: string, args: string[]): Promise<void> {
-  console.log(args);
+  Logger.debug("node " + args.join(' '));
+
   return new Promise((resolve, reject) => {
     const npm = spawn("node", args, {
       cwd: workingDir,

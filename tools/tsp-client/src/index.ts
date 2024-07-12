@@ -3,29 +3,37 @@ import { hideBin } from "yargs/helpers";
 import { checkDebugLogging, Logger, printBanner, usageText } from "./log.js";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
-import { createTempDirectory, getEmitterFromRepoConfig, readTspLocation, removeDirectory } from "./fs.js";
+import {
+  createTempDirectory,
+  getEmitterFromRepoConfig,
+  readTspLocation,
+  removeDirectory,
+} from "./fs.js";
 import { cp, mkdir, readFile, rename, stat, unlink, writeFile } from "fs/promises";
 import { npmCommand, npxCommand } from "./npm.js";
 import { compileTsp, discoverMainFile, resolveTspConfigUrl, TspLocation } from "./typespec.js";
-import { formatAdditionalDirectories, getAdditionalDirectoryName, getServiceDir, makeSparseSpecDir } from "./utils.js";
+import {
+  formatAdditionalDirectories,
+  getAdditionalDirectoryName,
+  getServiceDir,
+  makeSparseSpecDir,
+} from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
 import { resolve } from "node:path";
 import { doesFileExist } from "./network.js";
+import PromptSync from "prompt-sync";
 
 function commandPreamble(argv: any) {
-  checkDebugLogging(argv);  
+  checkDebugLogging(argv);
   printBanner();
   yargs().showVersion();
 }
 
 async function initCommand(argv: any) {
+  let outputDir = resolveOutputDir(argv);
   let tspConfig = argv["tsp-config"];
-  let outputDir = argv["output-dir"] ?? ".";
   const skipSyncAndGenerate = argv["skip-sync-and-generate"];
-  const localSpecRepo = argv["local-spec-repo"];
-  const saveInputs = argv["save-inputs"];
-  const emitterOptions = argv["emitter-options"];
   const commit = argv["commit"];
   const repo = argv["repo"];
 
@@ -41,7 +49,18 @@ async function initCommand(argv: any) {
     throw new Error("Couldn't find emitter-package.json in the repo");
   }
 
-  if (isUrl) {
+  let isFolder = true;
+  if (await doesFileExist(tspConfig)) {
+    isFolder = false;
+  }
+  if (!isFolder) {
+    if (!commit || !repo) {
+      Logger.error("--commit and --repo are required when --tsp-config is a local directory");
+      process.exit(1);
+    }
+  }
+
+  if (isFolder) {
     // URL scenario
     const resolvedConfigUrl = resolveTspConfigUrl(tspConfig);
     const cloneDir = await makeSparseSpecDir(repoRoot);
@@ -124,24 +143,22 @@ async function initCommand(argv: any) {
   }
 
   Logger.info(`SDK initialized in ${outputDir}`);
-  
+
   if (!skipSyncAndGenerate) {
-    // FIXME: Call into the syncCommand and the generateCommand
-    await syncCommand(outputDir, localSpecRepo);
-    await generateCommand({
-      rootUrl: outputDir,
-      noCleanup: saveInputs,
-      additionalEmitterOptions: emitterOptions,
-    });
+    // update argv in case anything changed and call into sync and generate
+    argv["output-dir"] = outputDir;
+    argv["tsp-config"] = tspConfig;
+    await syncCommand(argv);
+    await generateCommand(argv);
   }
 }
 
 async function syncCommand(argv: any) {
-  let outputDir = argv["output-dir"] ?? ".";
+  let outputDir = resolveOutputDir(argv);
   const localSpecRepo = argv["local-spec-repo"];
 
   commandPreamble(argv);
-  
+
   const tempRoot = await createTempDirectory(outputDir);
   const repoRoot = await getRepoRoot(outputDir);
   Logger.debug(`Repo root is ${repoRoot}`);
@@ -227,8 +244,7 @@ async function syncCommand(argv: any) {
 }
 
 async function generateCommand(argv: any) {
-
-  let outputDir = argv["output-dir"] ?? ".";
+  let outputDir = resolveOutputDir(argv);
   const emitterOptions = argv["emitter-options"];
   const saveInputs = argv["save-inputs"];
 
@@ -274,7 +290,7 @@ async function generateCommand(argv: any) {
     outputPath: rootUrl,
     resolvedMainFilePath,
     saveInputs: saveInputs,
-    emitterOptions,
+    additionalEmitterOptions: emitterOptions,
   });
 
   if (saveInputs) {
@@ -286,14 +302,10 @@ async function generateCommand(argv: any) {
 }
 
 async function updateCommand(argv: any) {
-
-  const outputDir = argv["output-dir"] ?? ".";
+  const outputDir = resolveOutputDir(argv);
   const repo = argv["repo"];
   const commit = argv["commit"];
   let tspConfig = argv["tsp-config"];
-  const localSpecRepo = argv["local-spec-repo"];
-  const emitterOptions = argv["emitter-options"];
-  const saveInputs = argv["save-inputs"];
 
   commandPreamble(argv);
   const rootUrl = await getRepoRoot(outputDir);
@@ -321,20 +333,16 @@ async function updateCommand(argv: any) {
       `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`,
     );
   }
-  // FIXME: Call into the syncCommand and the generateCommand
-  await syncCommand(rootUrl, localSpecRepo);
-  await generateCommand({
-    rootUrl,
-    noCleanup: saveInputs,
-    additionalEmitterOptions: emitterOptions,
-  });
+  // update argv in case anything changed and call into sync and generate
+  argv["tsp-config"] = tspConfig;
+  await syncCommand(argv);
+  await generateCommand(argv);
 }
 
 async function convertCommand(argv: any): Promise<void> {
-
+  const outputDir = resolveOutputDir(argv);
   const swaggerReadme = argv["swagger-readme"];
   const arm = argv["arm"];
-  const outputDir = argv["output-dir"] ?? ".";
   let rootUrl = resolvePath(outputDir);
 
   commandPreamble(argv);
@@ -394,7 +402,7 @@ async function convertCommand(argv: any): Promise<void> {
 }
 
 async function generateLockFileCommand(argv: any) {
-  const outputDir = argv["output-dir"] ?? ".";
+  const outputDir = resolveOutputDir(argv);
   let rootUrl = resolvePath(outputDir);
   const repoRoot = await getRepoRoot(rootUrl);
 
@@ -419,6 +427,33 @@ async function generateLockFileCommand(argv: any) {
   Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
 }
 
+/** Ensure the output directory exists and allow interactive users to confirm or override the value. */
+function resolveOutputDir(argv: any): string {
+  let outputDir = resolvePath(process.cwd(), argv["output-dir"]);
+  const noPrompt = argv["no-prompt"];
+
+  let useOutputDir;
+  if (process.stdin.isTTY && !noPrompt) {
+    // Ask user is this is the correct output directory
+    const prompt = PromptSync();
+    useOutputDir = prompt(`Use output directory '${outputDir}'? (y/n)`, "y");
+  } else {
+    // There is no user to ask, so assume yes
+    useOutputDir = "y";
+  }
+
+  if (useOutputDir.toLowerCase() === "n") {
+    const newOutputDir = prompt("Enter output directory: ");
+    if (!newOutputDir) {
+      Logger.error("Output directory is required");
+      process.exit(1);
+    }
+    outputDir = resolvePath(normalizePath(newOutputDir));
+  }
+  Logger.info(`Using output directory '${outputDir}'`);
+  return outputDir;
+}
+
 const parser = yargs(hideBin(process.argv))
   .scriptName("")
   .usage(usageText)
@@ -430,7 +465,13 @@ const parser = yargs(hideBin(process.argv))
   .option("output-dir", {
     alias: "o",
     type: "string",
-    description: "Specify an alternate output directory for the generated files. Default is your current directory",
+    description: "Specify an alternate output directory for the generated files.",
+    default: ".",
+  })
+  .option("no-prompt", {
+    alias: "y",
+    type: "boolean",
+    description: "Skip any interactive prompts.",
   })
   .command(
     "init",
@@ -466,11 +507,11 @@ const parser = yargs(hideBin(process.argv))
         .option("repo", {
           type: "string",
           description: "Repository where the project is defined",
-        })
+        });
     },
     async (argv) => {
       await initCommand(argv);
-    }
+    },
   )
   .command(
     "sync",
@@ -480,90 +521,97 @@ const parser = yargs(hideBin(process.argv))
         type: "string",
         description: "Path to local spec repo",
       });
-  }, async (argv) => {
-    await syncCommand(argv);
-  })
-  .command("generate", "Generate from a TypeSpec project", (yargs) => {
-    return yargs
-    .options("emitter-options", {
-      type: "string",
-      description: "The options to pass to the emitter",
-    })
-    .options("save-inputs", {
-      type: "boolean",
-      description: "Don't clean up the temp directory after generation",
-    });
-  }, async (argv) => { 
-    await generateCommand(argv);
-  })
-  .command("update", "Sync and generate from a TypeSpec project", (yargs) => {
-    return yargs
-    .option("repo", {
-      type: "string",
-      description: "Repository where the project is defined",
-    })
-    .option("commit", {
-      type: "string",
-      description: "Commit hash to be used",
-    })
-    .option("tsp-config", {
-      type: "string",
-      description: "Path to tspconfig.yaml",
-    })
-    .option("local-spec-repo", {
-      type: "string",
-      description: "Path to local spec repo",
-    })
-    .option("emitter-options", {
-      type: "string",
-      description: "The options to pass to the emitter",
-    })
-    .option("save-inputs", {
-        type: "boolean",
-        description: "Don't clean up the temp directory after generation",
-    })
-  }, async (argv) => {
-    await updateCommand(argv);
-  })
-  .command("convert", "Convert a swagger specification to TypeSpec", (yargs) => {
-    return yargs.option("swagger-readme", {
-      type: "string",
-      description: "Path to the swagger readme file",
-      demandOption: true,
-    })
-    .option("arm", {
-      type: "boolean",
-      description: "Convert swagger to ARM TypeSpec",
-    });
-  }, async (argv) => {
-    await convertCommand(argv);
-  })
-  .command("generate-lock-file", "Generate a lock file under the eng/ directory from an existing emitter-package.json", {}, async (argv) => {
-    await generateLockFileCommand(argv);
-  })
+    },
+    async (argv) => {
+      await syncCommand(argv);
+    },
+  )
+  .command(
+    "generate",
+    "Generate from a TypeSpec project",
+    (yargs) => {
+      return yargs
+        .options("emitter-options", {
+          type: "string",
+          description: "The options to pass to the emitter",
+        })
+        .options("save-inputs", {
+          type: "boolean",
+          description: "Don't clean up the temp directory after generation",
+        });
+    },
+    async (argv) => {
+      await generateCommand(argv);
+    },
+  )
+  .command(
+    "update",
+    "Sync and generate from a TypeSpec project",
+    (yargs) => {
+      return yargs
+        .option("repo", {
+          type: "string",
+          description: "Repository where the project is defined",
+        })
+        .option("commit", {
+          type: "string",
+          description: "Commit hash to be used",
+        })
+        .option("tsp-config", {
+          type: "string",
+          description: "Path to tspconfig.yaml",
+        })
+        .option("local-spec-repo", {
+          type: "string",
+          description: "Path to local spec repo",
+        })
+        .option("emitter-options", {
+          type: "string",
+          description: "The options to pass to the emitter",
+        })
+        .option("save-inputs", {
+          type: "boolean",
+          description: "Don't clean up the temp directory after generation",
+        });
+    },
+    async (argv) => {
+      await updateCommand(argv);
+    },
+  )
+  .command(
+    "convert",
+    "Convert a swagger specification to TypeSpec",
+    (yargs) => {
+      return yargs
+        .option("swagger-readme", {
+          type: "string",
+          description: "Path to the swagger readme file",
+          demandOption: true,
+        })
+        .option("arm", {
+          type: "boolean",
+          description: "Convert swagger to ARM TypeSpec",
+        });
+    },
+    async (argv) => {
+      await convertCommand(argv);
+    },
+  )
+  .command(
+    "generate-lock-file",
+    "Generate a lock file under the eng/ directory from an existing emitter-package.json",
+    {},
+    async (argv) => {
+      await generateLockFileCommand(argv);
+    },
+  )
   .demandCommand(1, "Please provide a command.")
   .help()
+  .showHelpOnFail(true);
 
 try {
   await parser.parse();
-} catch(err: any) {
+} catch (err: any) {
   Logger.error(err);
   process.exit(1);
 }
-
-
-// Options:
-//   --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
-//   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
-//   --commit                  Commit to be used for project init or update        [string]
-//   --emitter-options         The options to pass to the emitter                  [string]
-//   --generate-lock-file      Generate a lock file under the eng/ directory from 
-//                             an existing emitter-package.json                    [boolean]
-//   --no-prompt               Skip prompting for output directory confirmation    [boolean]
-//   --save-inputs             Don't clean up the temp directory after generation  [boolean]
-//   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
-//   --swagger-readme          Path or url to swagger readme file                  [string]
-//   -o, --output-dir          Specify an alternate output directory for the 
-//                             generated files. Default is your current directory  [string]
-//   --repo                    Repository where the project is defined for init 
-//                             or update                                           [string]

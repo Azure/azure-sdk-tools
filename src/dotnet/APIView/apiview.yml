@@ -46,6 +46,8 @@ extends:
         displayName: 'Build and Test'
 
         variables:
+          - name: 'DotNetVersion'
+            value: '8.x'
           - name: 'PythonVersion'
             value: '3.10'
           - name: 'WebClientProjectDirectory'
@@ -98,6 +100,11 @@ extends:
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
+
+              - task: UseDotNet@2
+                inputs:
+                  version: '$(DotNetVersion)'
+                displayName: 'Use .NET SDK $(DotNetVersion)'
           
               - script: |
                   npm install -g @angular/cli@16.1.8

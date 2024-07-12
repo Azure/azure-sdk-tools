@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             DateTimeOffset blobMinTime = runMinTime.Subtract(TimeSpan.FromHours(1));
             DateTimeOffset blobMaxTime = runMaxTime.Add(TimeSpan.FromHours(1));
 
-            foreach (string ownerAndRepository in settings.Repositories)
+            foreach (string ownerAndRepository in settings.GitHubRepositories)
             {
                 string owner = ownerAndRepository.Split('/')[0];
                 string repository = ownerAndRepository.Split('/')[1];

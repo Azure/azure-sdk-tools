@@ -240,6 +240,10 @@ resource gitHubKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments
   }
 }
 
+// Data Explorer needs to a per-table cursor when importing data. Because the read cursor for Event Hubs is the
+// consumer group and the basic tier for event hubs is limited to 1 consumer group per event hub and 10 event hubs per
+// namespace, we need an event hub per table, so we split our tables across two namespaces.
+// https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-quotas
 module devOpsTables 'tableResources.bicep' = {
   name: 'devOpsTables'
   scope: resourceGroup()

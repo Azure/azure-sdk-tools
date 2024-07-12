@@ -149,6 +149,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// <summary>
         /// Gets or sets the list of GitHub repositories to work with
         /// </summary>
-        public string[] Repositories { get; internal set; }
+        public string[] GitHubRepositories { get; internal set; }
     }
 }

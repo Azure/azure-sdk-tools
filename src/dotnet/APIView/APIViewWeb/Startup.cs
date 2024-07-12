@@ -230,7 +230,7 @@ namespace APIViewWeb
                         "https://localhost:4200",
                         "https://spa.apiviewuxtest.com",
                         "https://spa.apiviewstagingtest.com",
-                        "https://spa.apiview.com"
+                        "https://spa.apiview.dev"
 
                     };
                     builder.WithOrigins(origins)

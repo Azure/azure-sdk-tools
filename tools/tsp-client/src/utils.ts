@@ -54,9 +54,11 @@ export function getServiceDir(configYaml: any, emitter: string): string {
  * ```
  */
 export async function getPathToDependency(dependency: string): Promise<string> {
+    // Example: /home/user/foo/node_modules/@autorest/bar/dist/index.js
     const entrypoint = fileURLToPath(import.meta.resolve(dependency));
-    let currentDir = dirname(entrypoint);
 
+    // Walk up directory tree to first folder containing "package.json"
+    let currentDir = dirname(entrypoint);
     while (true) {
         const packageJsonFile = join(currentDir, "package.json");
         try {

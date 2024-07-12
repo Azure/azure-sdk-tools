@@ -46,7 +46,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "@autorest/openapi-to-typespec": "^0.8.2",
+    "@autorest/openapi-to-typespec": "0.8.2",
     "@autorest/csharp": "https://aka.ms/azsdk/openapi-to-typespec-csharp",
     "@azure/core-rest-pipeline": "^1.12.0",
     "autorest": "^3.7.1",

@@ -41,7 +41,6 @@ async function main() {
     const baseDir = resolve(".");
     const examplesDir = resolve("./test/examples/");
     const constosoJsSdkDir = resolve("./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/");
-    const constosoSyncGenerateDir = resolve("./test/examples/sdk/sync-generate/");
     const specDir = "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/";
     const tspConfig = "https://github.com/Azure/azure-rest-api-specs/blob/db63bea839f5648462c94e685d5cc96f8e8b38ba/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml";
 
@@ -60,10 +59,10 @@ async function main() {
     await runCommand(baseDir, ["update", "-o", constosoJsSdkDir]);
     
     // Run the sync commands
-    await runCommand(baseDir, ["sync", "-o", constosoSyncGenerateDir])
+    await runCommand(baseDir, ["sync", "-o", constosoJsSdkDir])
 
     // Run the generate command
-    await runCommand(baseDir, ["generate", "-o", constosoSyncGenerateDir])
+    await runCommand(baseDir, ["generate", "-o", constosoJsSdkDir])
 
     await unlink(join(repoRoot, "eng/emitter-package.json"));
     console.log("emitter-package.json ---------------> deleted successfully");

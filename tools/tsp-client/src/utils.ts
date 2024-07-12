@@ -1,9 +1,9 @@
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
 import { access, constants, mkdir } from "node:fs/promises";
-import { Logger } from "./log.js";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Logger } from "./log.js";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
     let additionalDirOutput = "";

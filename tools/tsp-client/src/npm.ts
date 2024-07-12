@@ -44,19 +44,19 @@ export async function nodeCommand(workingDir: string, args: string[]): Promise<v
   Logger.debug("node " + args.join(' '));
 
   return new Promise((resolve, reject) => {
-    const npm = spawn("node", args, {
+    const node = spawn("node", args, {
       cwd: workingDir,
       stdio: "inherit",
       shell: true,
     });
-    npm.once("exit", (code) => {
+    node.once("exit", (code) => {
       if (code === 0) {
         resolve();
       } else {
         reject(new Error(`node ${args[0]} failed exited with code ${code}`));
       }
     });
-    npm.once("error", (err) => {
+    node.once("error", (err) => {
       reject(new Error(`node ${args[0]} failed with error: ${err}`));
     });
   });

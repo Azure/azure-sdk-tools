@@ -165,6 +165,12 @@ extends:
                   go build
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
+              
+              - task: UseDotNet@2
+                inputs:
+                  packageType: 'sdk'
+                  useGlobalJson: true
+                  workingDirectory: $(Build.SourcesDirectory)
 
               - script: 'dotnet build $(WebProjectPath) -warnaserror'
                 displayName: 'Build and Package'

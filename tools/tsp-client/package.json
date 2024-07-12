@@ -17,7 +17,8 @@
     "clean": "rimraf ./dist ./types",
     "example": "npx tsx src/index.ts update -o ./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/",
     "prepack": "npm run build",
-    "test": "mocha --exclude **/examples/**"
+    "test": "mocha --exclude **/examples/**",
+    "test:commands": "npx tsx ./test/run_commands.ts"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",

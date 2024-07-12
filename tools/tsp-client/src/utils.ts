@@ -53,7 +53,7 @@ export function getServiceDir(configYaml: any, emitter: string): string {
  * ```
  */
 export async function getPathToDependency(dependency: string): Promise<string> {
-    const entrypoint = require.resolve(dependency);
+    const entrypoint = import.meta.resolve(dependency);
     let currentDir = dirname(entrypoint);
 
     while (true) {

@@ -10,7 +10,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
-using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -24,7 +23,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
-namespace Azure.Sdk.Tools.PipelineWitness
+namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
     [SuppressMessage("Style", "IDE0037:Use inferred member name", Justification = "Explicit member names are added to json export objects for clarity")]
     public class BlobUploadProcessor

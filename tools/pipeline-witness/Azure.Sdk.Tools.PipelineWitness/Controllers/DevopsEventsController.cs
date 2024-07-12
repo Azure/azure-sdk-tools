@@ -1,8 +1,9 @@
+using System;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.PipelineWitness.AzurePipelines;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
-using Azure.Storage.Queues;
-using Azure.Storage.Queues.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -16,12 +17,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
     [ApiController]
     public class DevopsEventsController : ControllerBase
     {
-        private readonly QueueClient queueClient;
         private readonly ILogger<DevopsEventsController> logger;
+        private readonly BuildCompleteQueue buildCompleteQueue;
 
-        public DevopsEventsController(ILogger<DevopsEventsController> logger, QueueServiceClient queueServiceClient, IOptions<PipelineWitnessSettings> options)
+        public DevopsEventsController(ILogger<DevopsEventsController> logger, BuildCompleteQueue buildCompleteQueue, IOptions<PipelineWitnessSettings> options)
         {
-            this.queueClient = queueServiceClient.GetQueueClient(options.Value.BuildCompleteQueueName);
+            this.buildCompleteQueue = buildCompleteQueue;
             this.logger = logger;
         }
 
@@ -29,25 +30,58 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
         [HttpPost]
         public async Task PostAsync([FromBody] JsonDocument value)
         {
-            if (value == null) {
-                throw new BadHttpRequestException("Missing payload", 400);
-            }
-
             this.logger.LogInformation("Message received in DevopsEventsController.PostAsync");
-            string message = value.RootElement.GetRawText();
 
-            if (value.RootElement.TryGetProperty("resource", out var resource)
-                && resource.TryGetProperty("url", out var url)
-                && url.GetString().StartsWith("https://dev.azure.com/azure-sdk/"))
+            if (!TryConvertMessage(value, out BuildCompleteQueueMessage message) || message.Account != "azure-sdk")
             {
-                SendReceipt response = await this.queueClient.SendMessageAsync(message);
-                this.logger.LogInformation("Message added to queue with id {MessageId}", response.MessageId);
-            }
-            else
-            {
-                this.logger.LogError("Message content invalid: {Content}", message);
+                string messageText = value.RootElement.GetRawText();
+                this.logger.LogError("Message content invalid: {Content}", messageText);
                 throw new BadHttpRequestException("Invalid payload", 400);
             }
+
+            await this.buildCompleteQueue.EnqueueMessageAsync(message);
+        }
+
+        public static bool TryConvertMessage(JsonDocument value, out BuildCompleteQueueMessage message)
+        {
+            string buildUrl = value.RootElement.TryGetProperty("resource", out JsonElement resource)
+                    && resource.TryGetProperty("url", out JsonElement resourceUrl)
+                    && resourceUrl.ValueKind == JsonValueKind.String
+                ? resourceUrl.GetString()
+                : null;
+
+            if (buildUrl == null)
+            {
+                message = null;
+                return false;
+            }
+
+            Match match = Regex.Match(buildUrl, @"^https://dev.azure.com/(?<account>[\w-]+)/(?<project>[0-9a-fA-F-]+)/_apis/build/Builds/(?<build>\d+)$");
+
+            if (!match.Success)
+            {
+                message = null;
+                return false;
+            }
+
+            string account = match.Groups["account"].Value;
+            string projectIdString = match.Groups["project"].Value;
+            string buildIdString = match.Groups["build"].Value;
+
+            if (string.IsNullOrEmpty(account) || !Guid.TryParse(projectIdString, out Guid projectId) || !int.TryParse(buildIdString, out int buildId))
+            {
+                message = null;
+                return false;
+            }
+
+            message = new BuildCompleteQueueMessage
+            {
+                Account = account,
+                ProjectId = projectId,
+                BuildId = buildId
+            };
+
+            return true;
         }
     }
 }

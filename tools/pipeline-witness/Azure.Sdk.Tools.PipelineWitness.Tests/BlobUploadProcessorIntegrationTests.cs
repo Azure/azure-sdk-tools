@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.PipelineWitness.AzurePipelines;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging.Abstractions;

@@ -1,19 +1,19 @@
 using System;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
+using Azure.Sdk.Tools.PipelineWitness.Controllers;
+using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-
 using Newtonsoft.Json.Linq;
 
-namespace Azure.Sdk.Tools.PipelineWitness.Services
+namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
     internal class BuildCompleteQueueWorker : QueueWorkerBackgroundService
     {
@@ -41,43 +41,31 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         {
             this.logger.LogInformation("Processing build.complete event: {MessageText}", message.MessageText);
 
-            JObject devopsEvent = JObject.Parse(message.MessageText);
+            BuildCompleteQueueMessage queueMessage;
 
-            string buildUrl = devopsEvent["resource"]?.Value<string>("url");
-
-            if (buildUrl == null)
+            if (message.MessageText.Contains("_apis/build/Builds"))
             {
-                this.logger.LogError("Message contained no build url. Message body: {MessageBody}", message.MessageText);
-                return;
+                // Legacy message format. Parsing is now done in the DevopsEventsController. Use the controler to convert it.
+                if (!DevopsEventsController.TryConvertMessage(JsonDocument.Parse(message.MessageText), out queueMessage))
+                {
+                    this.logger.LogError("Failed to convert legacy message: {MessageText}", message.MessageText);
+                    return;
+                }
+            }
+            else
+            {
+                queueMessage = JsonSerializer.Deserialize<BuildCompleteQueueMessage>(message.MessageText);
             }
 
-            Match match = Regex.Match(buildUrl, @"^https://dev.azure.com/(?<account>[\w-]+)/(?<project>[0-9a-fA-F-]+)/_apis/build/Builds/(?<build>\d+)$");
-
-            if (!match.Success)
+            if (string.IsNullOrEmpty(queueMessage.Account) || queueMessage.ProjectId == Guid.Empty || queueMessage.BuildId == 0)
             {
-                this.logger.LogError("Message contained an invalid build url: {BuildUrl}", buildUrl);
-                return;
-            }
-
-            string account = match.Groups["account"].Value;
-            string projectIdString = match.Groups["project"].Value;
-            string buildIdString = match.Groups["build"].Value;
-
-            if (!Guid.TryParse(projectIdString, out Guid projectId))
-            {
-                this.logger.LogError("Could not parse project id as a guid '{ProjectId}'", projectIdString);
-                return;
-            }
-
-            if (!int.TryParse(buildIdString, out int buildId))
-            {
-                this.logger.LogError("Could not parse build id as a guid '{BuildId}'", buildIdString);
+                this.logger.LogError("Failed to deserialize message: {MessageText}", message.MessageText);
                 return;
             }
 
             BlobUploadProcessor runProcessor = this.runProcessorFactory.Invoke();
 
-            await runProcessor.UploadBuildBlobsAsync(account, projectId, buildId);
+            await runProcessor.UploadBuildBlobsAsync(queueMessage.Account, queueMessage.ProjectId, queueMessage.BuildId);
         }
     }
 }

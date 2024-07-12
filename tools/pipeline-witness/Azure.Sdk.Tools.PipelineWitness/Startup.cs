@@ -4,6 +4,7 @@ using Azure.Core;
 using Azure.Core.Extensions;
 using Azure.Identity;
 using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Azure.Sdk.Tools.PipelineWitness.AzurePipelines;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.GitHubActions;
 using Azure.Sdk.Tools.PipelineWitness.Services;
@@ -67,6 +68,7 @@ public static class Startup
         if (settings.BuildDefinitionWorkerEnabled)
         {
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+            builder.Services.AddHostedService<MissingBuildWorker>();
         }
     }
 

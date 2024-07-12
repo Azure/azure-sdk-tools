@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
@@ -29,7 +30,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             : base(
                   logger,
                   asyncLockProvider,
-                  lockName: "ProcessMissingBuilds",
+                  lockName: "ProcessMissingDevOpsBuilds",
                   lockDuration: options.Value.LockLeasePeriod,
                   loopDuration: options.Value.MissingBuildLoopPeriod,
                   cooldownDuration: options.Value.MissingBuildCooldownPeriod)
@@ -50,23 +51,33 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
         protected override async Task ProcessAsync(CancellationToken cancellationToken)
         {
             var settings = this.options.Value;
-            var minFinishTime = DateTime.UtcNow.Subtract(settings.MissingBuildLookbackPeriod);
-            var maxFinishTime = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1));
+
+            // search for builds that completed within this window
+            var buildMinTime = DateTime.UtcNow.Subtract(settings.MissingBuildLookbackPeriod);
+            var buildMaxTime = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1));
+
+            // search for blobs that were uploaded with a time range that overlaps the build time range
+            var blobMinTime = buildMinTime.Subtract(TimeSpan.FromHours(1));
+            var blobMaxTime = buildMaxTime.Add(TimeSpan.FromHours(1));
 
             BlobUploadProcessor runProcessor = this.runProcessorFactory.Invoke();
 
             foreach (string project in settings.Projects)
             {
+                var knownBlobs = await runProcessor.GetBuildBlobNamesAsync(project, blobMinTime, blobMaxTime, cancellationToken);
+
                 string continuationToken = null;
                 do
                 {
-                    var completedBuilds = await this.buildClient.GetBuildsAsync2(project, minFinishTime: minFinishTime, maxFinishTime: maxFinishTime, statusFilter: BuildStatus.Completed, continuationToken: continuationToken, cancellationToken: cancellationToken);
+                    var completedBuilds = await this.buildClient.GetBuildsAsync2(project, minFinishTime: buildMinTime, maxFinishTime: buildMaxTime, statusFilter: BuildStatus.Completed, continuationToken: continuationToken, cancellationToken: cancellationToken);
 
                     var skipCount = 0;
                     var enqueueCount = 0;
                     foreach (var build in completedBuilds)
                     {
-                        if (await runProcessor.BuildBlobExistsAsync(build))
+                        var buildBlobName = runProcessor.GetBuildBlobName(build);
+
+                        if (knownBlobs.Contains(buildBlobName))
                         {
                             skipCount++;
                             continue;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Configuration
 {
@@ -144,5 +145,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the container to use for async locks
         /// </summary>
         public string CosmosAsyncLockContainer { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of GitHub repositories to work with
+        /// </summary>
+        public string[] Repositories { get; internal set; }
     }
 }

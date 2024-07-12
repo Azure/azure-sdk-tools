@@ -14,6 +14,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using System.Text;
+using Microsoft.TeamFoundation.Build.WebApi;
+using System.Threading;
 using Microsoft.Azure.Pipelines.WebApi;
 
 namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
@@ -26,7 +28,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         private const string LogsContainerName = "githubactionslogs";
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
 
-        private static readonly ProductHeaderValue productHeaderValue1 = new("PipelineWitness", "1.0");
         private static readonly JsonSerializerSettings jsonSettings = new()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
@@ -48,7 +49,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             this.runsContainerClient = blobServiceClient.GetBlobContainerClient(RunsContainerName);
             this.jobsContainerClient = blobServiceClient.GetBlobContainerClient(JobsContainerName);
             this.stepsContainerClient = blobServiceClient.GetBlobContainerClient(StepsContainerName);
-            this.client = new GitHubClient(productHeaderValue1, credentials);
+            this.client = new GitHubClient(new ProductHeaderValue("PipelineWitness", "1.0"), credentials);
         }
 
         public async Task ProcessAsync(string owner, string repository, long runId)
@@ -61,6 +62,41 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 WorkflowRun runAttempt = await this.client.Actions.Workflows.Runs.GetAttempt(owner, repository, runId, attempt);
                 await ProcessWorkflowRunAsync(runAttempt);
             }
+        }
+
+        public async Task<string[]> GetRunBlobNamesAsync(string repository, DateTimeOffset minTime, DateTimeOffset maxTime, CancellationToken cancellationToken)
+        {
+            DateTimeOffset minDay = minTime.ToUniversalTime().Date;
+            DateTimeOffset maxDay = maxTime.ToUniversalTime().Date;
+
+            DateTimeOffset[] days = Enumerable.Range(0, (int)(maxDay - minDay).TotalDays + 1)
+                .Select(offset => minDay.AddDays(offset))
+                .ToArray();
+
+            List<string> blobNames = [];
+
+            foreach (DateTimeOffset day in days)
+            {
+                string blobPrefix = $"{repository}/{day:yyyy/MM/dd}/";
+
+                await foreach (BlobItem blob in this.runsContainerClient.GetBlobsAsync(prefix: blobPrefix, cancellationToken: cancellationToken))
+                {
+                    blobNames.Add(blob.Name);
+                }
+            }
+
+            return blobNames.ToArray();
+        }
+
+        public string GetRunBlobName(WorkflowRun run)
+        {
+            string repository = run.Repository.FullName;
+            long runId = run.Id;
+            long attempt = run.RunAttempt;
+            DateTimeOffset runStartedAt = run.RunStartedAt;
+
+            string blobName = $"{repository}/{runStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl";
+            return blobName;
         }
 
         private async Task ProcessWorkflowRunAsync(WorkflowRun run)
@@ -84,7 +120,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             {
                 // even though runid/attempt is unique, we still add a date component to the path for easier browsing
                 // multiple attempts have the same runStartedAt, so the different attempt blobs will be in the same folder
-                string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl";
+                string blobPath = GetRunBlobName(run);
                 BlobClient blobClient = this.runsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())

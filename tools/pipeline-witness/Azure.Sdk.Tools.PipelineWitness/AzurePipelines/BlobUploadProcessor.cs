@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
@@ -150,8 +151,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                 return;
             }
 
-            await UploadBuildBlobAsync(account, build);
-
             await UploadTestRunBlobsAsync(account, build);
 
             Timeline timeline = await this.buildClient.GetBuildTimelineAsync(projectId, buildId);
@@ -184,6 +183,41 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             {
                 await UploadPipelineOwnersBlobAsync(account, build, timeline);
             }
+
+            // upload the build blob last. This allows us to use the existence of the build blob as a signal that build processing is comploete.
+            await UploadBuildBlobAsync(account, build);
+        }
+
+        public async Task<string[]> GetBuildBlobNamesAsync(string projectName, DateTimeOffset minTime, DateTimeOffset maxTime, CancellationToken cancellationToken)
+        {
+            DateTimeOffset minDay = minTime.ToUniversalTime().Date;
+            DateTimeOffset maxDay = maxTime.ToUniversalTime().Date;
+
+            DateTimeOffset[] days = Enumerable.Range(0, (int)(maxDay - minDay).TotalDays + 1)
+                .Select(offset => minDay.AddDays(offset))
+                .ToArray();
+
+            List<string> blobNames = [];
+
+            foreach (DateTimeOffset day in days)
+            {
+                string blobPrefix = $"{projectName}/{day:yyyy/MM/dd}/";
+
+                await foreach (BlobItem blob in this.buildsContainerClient.GetBlobsAsync(prefix: blobPrefix, cancellationToken: cancellationToken))
+                {
+                    blobNames.Add(blob.Name);
+                }
+            }
+
+            return blobNames.ToArray();
+        }
+
+        public string GetBuildBlobName(Build build)
+        {
+            long changeTime = ((DateTimeOffset)build.LastChangedDate).ToUnixTimeSeconds();
+            string blobName = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{changeTime}.jsonl";
+
+            return blobName;
         }
 
         private async Task UploadPipelineOwnersBlobAsync(string account, Build build, Timeline timeline)
@@ -440,9 +474,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
         {
             try
             {
-                long changeTime = ((DateTimeOffset)build.LastChangedDate).ToUnixTimeSeconds();
-                string blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{changeTime}.jsonl";
-                BlobClient blobClient = this.buildsContainerClient.GetBlobClient(blobPath);
+                BlobClient blobClient = this.buildsContainerClient.GetBlobClient(GetBuildBlobName(build));
 
                 if (await blobClient.ExistsAsync())
                 {

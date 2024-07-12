@@ -7,7 +7,6 @@ using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
 using Azure.Sdk.Tools.PipelineWitness.AzurePipelines;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.GitHubActions;
-using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 
 using Microsoft.ApplicationInsights.Extensibility;
@@ -63,11 +62,12 @@ public static class Startup
 
         builder.Services.AddSingleton<ICredentialStore, GitHubCredentialStore>();
         builder.Services.AddTransient<GitHubActionProcessor>();
-        builder.Services.AddHostedService<GitHubActionsRunQueueWorker>(settings.GitHubActionRunsWorkerCount);
+        builder.Services.AddHostedService<RunCompleteQueueWorker>(settings.GitHubActionRunsWorkerCount);
 
         if (settings.BuildDefinitionWorkerEnabled)
         {
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+            builder.Services.AddHostedService<MissingActionsWorker>();
             builder.Services.AddHostedService<MissingBuildWorker>();
         }
     }

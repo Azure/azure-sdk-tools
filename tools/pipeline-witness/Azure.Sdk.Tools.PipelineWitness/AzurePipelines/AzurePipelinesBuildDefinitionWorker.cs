@@ -6,7 +6,6 @@ using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualStudio.Services.TestResults.WebApi;
 
 namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {

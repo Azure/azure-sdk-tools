@@ -41,7 +41,9 @@ async function main() {
     const baseDir = resolve(".");
     const examplesDir = resolve("./test/examples/");
     const constosoJsSdkDir = resolve("./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/");
-    const specDir = "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/";
+    const baseSpecDir = "./test/examples/specification/convert/";
+    const mgmtSpecLink = "https://github.com/Azure/azure-rest-api-specs/blob/589cb3afdc76fe9a989ef36952eec816906d481f/specification/sphere/resource-manager/readme.md";
+    const contosoSpecDir = "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/";
     const tspConfig = "https://github.com/Azure/azure-rest-api-specs/blob/db63bea839f5648462c94e685d5cc96f8e8b38ba/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml";
 
     const emitterPackageJson = resolve("./test/utils/emitter-package.json");
@@ -63,6 +65,9 @@ async function main() {
 
     // Run the generate command
     await runCommand(baseDir, ["generate", "-o", constosoJsSdkDir])
+
+    // Run the convert command on a mgmt spec
+    await runCommand(baseDir, ["convert", "-o", baseSpecDir, "--swagger-readme", mgmtSpecLink]);
 
     await unlink(join(repoRoot, "eng/emitter-package.json"));
     console.log("emitter-package.json ---------------> deleted successfully");

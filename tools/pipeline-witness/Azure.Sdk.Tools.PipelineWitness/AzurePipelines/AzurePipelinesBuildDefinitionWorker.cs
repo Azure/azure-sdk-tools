@@ -12,12 +12,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
     public class AzurePipelinesBuildDefinitionWorker : PeriodicLockingBackgroundService
     {
         private readonly ILogger<AzurePipelinesBuildDefinitionWorker> logger;
-        private readonly Func<BlobUploadProcessor> runProcessorFactory;
+        private readonly BlobUploadProcessor runProcessor;
         private readonly IOptions<PipelineWitnessSettings> options;
 
         public AzurePipelinesBuildDefinitionWorker(
             ILogger<AzurePipelinesBuildDefinitionWorker> logger,
-            Func<BlobUploadProcessor> runProcessorFactory,
+            BlobUploadProcessor runProcessor,
             IAsyncLockProvider asyncLockProvider,
             IOptions<PipelineWitnessSettings> options)
             : base(
@@ -29,17 +29,16 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                   cooldownDuration: options.Value.BuildDefinitionCooldownPeriod)
         {
             this.logger = logger;
-            this.runProcessorFactory = runProcessorFactory;
+            this.runProcessor = runProcessor;
             this.options = options;
         }
 
         protected override async Task ProcessAsync(CancellationToken cancellationToken)
         {
             var settings = this.options.Value;
-            BlobUploadProcessor runProcessor = this.runProcessorFactory.Invoke();
             foreach (string project in settings.Projects)
             {
-                await runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project, cancellationToken);
+                await this.runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
             }
         }
 

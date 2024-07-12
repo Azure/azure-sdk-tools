@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
 
             if (action == "completed")
             {
-                var queueMessage = new GitHubRunCompleteMessage
+                var queueMessage = new RunCompleteQueueMessage
                 {
                     Owner = eventMessage.GetProperty("repository").GetProperty("owner").GetProperty("login").GetString(),
                     Repository = eventMessage.GetProperty("repository").GetProperty("name").GetString(),

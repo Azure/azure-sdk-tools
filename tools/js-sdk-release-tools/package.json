@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@azure-tools/openapi-tools-common": "^1.2.2",
+    "@npmcli/package-json": "^5.2.0",
     "@ts-common/azure-js-dev-tools": "^21.1.0",
     "colors": "1.4.0",
     "command-line-args": "^5.1.1",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
+    "@types/npmcli__package-json": "^4.0.4",
     "@types/shelljs": "^0.8.15",
     "nodemon": "^3.1.0",
     "rimraf": "^3.0.2",

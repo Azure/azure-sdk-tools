@@ -29,9 +29,10 @@ export interface GenerationOutputInfo {
     packages: GeneratedPackageInfo[];
 }
 
-export interface ModularClientGenerationOptions {
-    tspProjectPath: string;
+export interface ModularClientPackageOptions {
+    typeSpecDirectory: string;
     gitCommitId: string;
-    skipGeneration: boolean;
-    swaggerRepoUrl: string;
+    skip: boolean;
+    repoUrl: string;
+    versionPolicyName: string;
 }

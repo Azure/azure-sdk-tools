@@ -188,6 +188,10 @@ export async function generateRLCInPipeline(options: {
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
 
     try {
+        // TODO: need to refactor
+        // too tricky here, when relativePackagePath === undefined,
+        // the project should be typespec,
+        // and the changedPackageDirectories should be join(service-dir, package-dir)
         if (!packagePath || !relativePackagePath) {
             const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
             if (changedPackageDirectories.size !== 1) {
@@ -230,6 +234,9 @@ export async function generateRLCInPipeline(options: {
         logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
         execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+        // TODO: consider remove this line 
+        // in pipeline, it should be duplicated command to "rush build ..." 
+        // due to https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md?plain=1#L94
         logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {

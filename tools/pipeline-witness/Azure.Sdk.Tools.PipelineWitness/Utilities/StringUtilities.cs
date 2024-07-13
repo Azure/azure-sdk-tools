@@ -12,12 +12,9 @@ public partial class StringUtilities
     [GeneratedRegex(@"^(?:(?<timestamp>\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:.\d+)?Z) )?(?<message>.*)$")]
     private static partial Regex TimestampedLogLineRegex();
 
-    private static readonly Regex ansiiEscapeRegex = AnsiiEscapeRegex();
-    private static readonly Regex timestampedLogLineRegex = TimestampedLogLineRegex();
-
     public static string StripAnsiiEsacpeSequences(string input)
     {
-        return ansiiEscapeRegex.Replace(input, "");
+        return AnsiiEscapeRegex().Replace(input, "");
     }
 
     public static (DateTimeOffset TimeStamp, string Message) ParseLogLine(string line, DateTimeOffset defaultTimestamp)
@@ -25,7 +22,7 @@ public partial class StringUtilities
         // log lines usually follow the format:
         // 2022-03-30T21:38:38.7007903Z Downloading task: AzureKeyVault (1.200.0)
         // If there's no leading timestamp, we return the entire line as Message.
-        Match match = timestampedLogLineRegex.Match(line);
+        Match match = TimestampedLogLineRegex().Match(line);
 
         if (!match.Success)
         {

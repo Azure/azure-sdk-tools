@@ -26,13 +26,13 @@ public class PostConfigureSettings : IPostConfigureOptions<PipelineWitnessSettin
 
             if (string.IsNullOrEmpty(options.GitHubRepositoriesSource))
             {
-                this.logger.LogWarning("No repositories configured for missing actions worker");
+                this.logger.LogWarning("No GitHubRepositories or GitHubRepositoriesSource configured");
                 return;
             }
 
             try
             {
-                this.logger.LogInformation("Loading repository list from source {Source}", options.GitHubRepositoriesSource);
+                this.logger.LogInformation("Replacing settings property GitHubRepositories with values from {Source}", options.GitHubRepositoriesSource);
                 using var client = new HttpClient();
 
                 options.GitHubRepositories = client.GetFromJsonAsync<string[]>(options.GitHubRepositoriesSource)

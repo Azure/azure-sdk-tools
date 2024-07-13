@@ -15,8 +15,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
 {
     [Route("api/devopsevents")]
     [ApiController]
-    public class DevopsEventsController : ControllerBase
+    public partial class DevopsEventsController : ControllerBase
     {
+        [GeneratedRegex(@"^https://dev.azure.com/(?<account>[\w-]+)/(?<project>[0-9a-fA-F-]+)/_apis/build/Builds/(?<build>\d+)$")]
+        private static partial Regex BuildUriRegex();
+
         private readonly ILogger<DevopsEventsController> logger;
         private readonly BuildCompleteQueue buildCompleteQueue;
 
@@ -56,7 +59,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
                 return false;
             }
 
-            Match match = Regex.Match(buildUrl, @"^https://dev.azure.com/(?<account>[\w-]+)/(?<project>[0-9a-fA-F-]+)/_apis/build/Builds/(?<build>\d+)$");
+            Match match = BuildUriRegex().Match(buildUrl);
 
             if (!match.Success)
             {

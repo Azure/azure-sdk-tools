@@ -27,6 +27,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         private const string LogsContainerName = "githubactionslogs";
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
 
+        [GeneratedRegex(@"^(?:(?<folder>.*)\/)?(?<index>\d+)_(?<name>[^\/]+)\.txt$")]
+        private static partial Regex LogFilePathRegex();
+
         private static readonly JsonSerializerSettings jsonSettings = new()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
@@ -327,7 +330,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                     .Select(x => new
                     {
                         Entry = x,
-                        NameRegex = Regex.Match(x.FullName, @"^(?:(?<folder>.*)\/)?(?<index>\d+)_(?<name>[^\/]+)\.txt$"),
+                        NameRegex = LogFilePathRegex().Match(x.FullName),
                     })
                     .Where(x => x.NameRegex.Success)
                     .Select(x => new

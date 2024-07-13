@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Azure.Sdk.Tools.PipelineWitness
+namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
     public class BuildLogBundle
     {
@@ -25,6 +25,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         public string DefinitionName { get; set; }
 
-        public List<BuildLogInfo> TimelineLogs { get; } = new List<BuildLogInfo>();
+        public List<BuildLogInfo> TimelineLogs { get; } = [];
     }
 }

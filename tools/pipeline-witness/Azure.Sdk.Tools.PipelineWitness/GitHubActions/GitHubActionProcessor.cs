@@ -14,11 +14,12 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using System.Text;
-using Microsoft.Azure.Pipelines.WebApi;
+using System.Threading;
+using Azure.Sdk.Tools.PipelineWitness.Utilities;
 
 namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 {
-    public class GitHubActionProcessor
+    public partial class GitHubActionProcessor
     {
         private const string RunsContainerName = "githubactionsruns";
         private const string JobsContainerName = "githubactionsjobs";
@@ -26,7 +27,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         private const string LogsContainerName = "githubactionslogs";
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
 
-        private static readonly ProductHeaderValue productHeaderValue1 = new("PipelineWitness", "1.0");
+        [GeneratedRegex(@"^(?:(?<folder>.*)\/)?(?<index>\d+)_(?<name>[^\/]+)\.txt$")]
+        private static partial Regex LogFilePathRegex();
+
         private static readonly JsonSerializerSettings jsonSettings = new()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
@@ -48,7 +51,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             this.runsContainerClient = blobServiceClient.GetBlobContainerClient(RunsContainerName);
             this.jobsContainerClient = blobServiceClient.GetBlobContainerClient(JobsContainerName);
             this.stepsContainerClient = blobServiceClient.GetBlobContainerClient(StepsContainerName);
-            this.client = new GitHubClient(productHeaderValue1, credentials);
+            this.client = new GitHubClient(new ProductHeaderValue("PipelineWitness", "1.0"), credentials);
         }
 
         public async Task ProcessAsync(string owner, string repository, long runId)
@@ -63,14 +66,27 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
         }
 
+        public string GetRunBlobName(WorkflowRun run)
+        {
+            string repository = run.Repository.FullName;
+            long runId = run.Id;
+            long attempt = run.RunAttempt;
+            DateTimeOffset runStartedAt = run.RunStartedAt;
+
+            string blobName = $"{repository}/{runStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl".ToLower();
+            return blobName;
+        }
+
         private async Task ProcessWorkflowRunAsync(WorkflowRun run)
         {
             List<WorkflowJob> jobs = await GetJobsAsync(run);
 
-            await UploadRunBlobAsync(run);
             await UploadJobsBlobAsync(run, jobs);
             await UploadStepsBlobAsync(run, jobs);
             await UploadLogsBlobAsync(run, jobs);
+
+            // We upload the run blob last. This allows us to use the existence of the blob as a signal that run processing is complete.
+            await UploadRunBlobAsync(run);
         }
 
         private async Task UploadRunBlobAsync(WorkflowRun run)
@@ -84,7 +100,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             {
                 // even though runid/attempt is unique, we still add a date component to the path for easier browsing
                 // multiple attempts have the same runStartedAt, so the different attempt blobs will be in the same folder
-                string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl";
+                string blobPath = GetRunBlobName(run);
                 BlobClient blobClient = this.runsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -145,7 +161,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
             try
             {
-                string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl";
+                string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl".ToLower();
                 BlobClient blobClient = this.jobsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -211,7 +227,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 // logs with a given runId/attempt are immutable and retries add new attempts.
                 // even though runid/attempt is unique, we still add a date component to the path for easier browsing
                 // multiple attempts have the same runStartedAt, so the different attempt blobs will be in the same folder
-                string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl";
+                string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl".ToLower();
                 BlobClient blobClient = this.stepsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -273,7 +289,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 // logs with a given runId/attempt are immutable and retries add new attempts.
                 // even though runid/attempt is unique, we still add a date component to the path for easier browsing
                 // multiple attempts have the same runStartedAt, so the different attempt blobs will be in the same folder
-                string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl";
+                string blobPath = $"{repository}/{run.RunStartedAt:yyyy/MM/dd}/{runId}-{attempt}.jsonl".ToLower();
                 BlobClient blobClient = this.logsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -290,7 +306,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                     .Select(x => new
                     {
                         Entry = x,
-                        NameRegex = Regex.Match(x.FullName, @"^(?:(?<folder>.*)\/)?(?<index>\d+)_(?<name>[^\/]+)\.txt$"),
+                        NameRegex = LogFilePathRegex().Match(x.FullName),
                     })
                     .Where(x => x.NameRegex.Success)
                     .Select(x => new
@@ -325,12 +341,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                         continue;
                     }
 
-                    IList<LogLine> logLines = ReadLogLines(jobEntry, step: 0);
+                    IList<LogLine> logLines = ReadLogLines(jobEntry, step: 0, job.StartedAt);
 
                     IList<LogLine> stepLines = job.Steps
                         .Where(x => x.Conclusion != WorkflowJobConclusion.Skipped)
                         .OrderBy(x => x.Number)
-                        .SelectMany(step => ReadLogLines(logEntries[$"{job.Name}/{step.Number}"], step.Number))
+                        .SelectMany(step => ReadLogLines(logEntries[$"{job.Name}/{step.Number}"], step.Number, step.StartedAt ?? job.StartedAt))
                         .ToArray();
 
                     UpdateStepLines(logLines, stepLines);
@@ -350,9 +366,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                             JobId = job.Id,
                             StepNumber = logLine.Step,
                             LineNumber = logLine.Number,
-                            Length = logLine.Message.Length,
+                            logLine.Message.Length,
                             Timestamp = logLine.Timestamp.ToString(TimeFormat),
-                            Message = logLine.Message,
+                            logLine.Message,
                             EtlIngestDate = DateTime.UtcNow.ToString(TimeFormat),
                         }, jsonSettings));
                     }
@@ -371,7 +387,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
         }
 
-        private bool UpdateStepLines(IList<LogLine> jobLines, IList<LogLine> stepLines)
+        private static bool UpdateStepLines(IList<LogLine> jobLines, IList<LogLine> stepLines)
         {
             // For each line in the step, remove the corresponding line from the job
             if (stepLines.Count == 0)
@@ -414,20 +430,20 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             return false;
         }
 
-        private IList<LogLine> ReadLogLines(ZipArchiveEntry entry, int step)
+        private static List<LogLine> ReadLogLines(ZipArchiveEntry entry, int step, DateTimeOffset logStartTime)
         {
             var result = new List<LogLine>();
 
             using var logReader = new StreamReader(entry.Open());
-            DateTimeOffset lastTimestamp = default;
+            DateTimeOffset lastTimestamp = logStartTime;
 
             for (int lineNumber = 1; !logReader.EndOfStream; lineNumber++)
             {
                 string line = logReader.ReadLine();
-                Match logLine = Regex.Match(line, @"^(?<timestamp>\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:.\d+)?Z )?(?<message>.*)$");
-                string timeStampText = logLine.Groups["timestamp"].Value;
-                string message = StripAnsiiEsacpeSequences(logLine.Groups["message"].Value);
-                DateTimeOffset timestamp = !string.IsNullOrEmpty(timeStampText) ? DateTimeOffset.Parse(timeStampText) : lastTimestamp;
+
+                var (timestamp, message) = StringUtilities.ParseLogLine(line, lastTimestamp);
+
+                lastTimestamp = timestamp;
 
                 result.Add(new LogLine
                 {
@@ -441,11 +457,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             return result;
         }
 
-        private string StripAnsiiEsacpeSequences(string input)
-        {
-            return Regex.Replace(input, @"\x1B\[[0-?]*[ -/]*[@-~]", "");
-        }
-
         private async Task<WorkflowRun> GetWorkflowRunAsync(string owner, string repository, long runId)
         {
             WorkflowRun workflowRun = await this.client.Actions.Workflows.Runs.Get(owner, repository, runId);
@@ -454,7 +465,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
         private async Task<List<WorkflowJob>> GetJobsAsync(WorkflowRun run)
         {
-            List<WorkflowJob> jobs = new();
+            List<WorkflowJob> jobs = [];
             for (int pageNumber = 1; ; pageNumber++)
             {
                 ApiOptions options = new()

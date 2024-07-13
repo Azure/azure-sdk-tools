@@ -9,10 +9,11 @@ param keyVaultName string
 param location string
 param vnetPrefix string
 param subnetPrefix string
+param useVnet bool
 
 var cosmosContributorRoleId = '00000000-0000-0000-0000-000000000002' // Built-in Contributor role
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (useVnet) {
   name: networkSecurityGroupName
   location: 'westus2'
   properties: {
@@ -20,7 +21,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-11-0
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = if (useVnet) {
   name: vnetName
   location: 'westus2'
   properties: {
@@ -34,7 +35,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (useVnet) {
   parent: vnet
   name: 'default'
   properties: {
@@ -94,7 +95,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
       alwaysOn: true
     }
     httpsOnly: true
-    virtualNetworkSubnetId: subnet.id
+    virtualNetworkSubnetId: useVnet ? subnet.id : null
     publicNetworkAccess: 'Enabled'
   }
   identity: {
@@ -116,11 +117,13 @@ resource appStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
     allowSharedKeyAccess: false
-    networkAcls: {
-      bypass: 'AzureServices'
-      virtualNetworkRules: [{ id: subnet.id }]
-      defaultAction: 'Deny'
-    }
+    networkAcls: useVnet
+      ? {
+        bypass: 'AzureServices'
+        virtualNetworkRules: [{ id: subnet.id }]
+        defaultAction: 'Deny'
+      }
+      : null
     supportsHttpsTrafficOnly: true
     encryption: {
       services: {
@@ -207,9 +210,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-02-15-preview
     enableAutomaticFailover: false
     enableMultipleWriteLocations: false
     isVirtualNetworkFilterEnabled: true
-    virtualNetworkRules: [{
-      id: subnet.id
-    }]
+    virtualNetworkRules: useVnet ? [{ id: subnet.id }] : []
     disableKeyBasedMetadataWriteAccess: false
     enableFreeTier: false
     enableAnalyticalStorage: false

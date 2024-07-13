@@ -1,6 +1,6 @@
 namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions;
 
-internal class GitHubRunCompleteMessage
+public class RunCompleteQueueMessage
 {
     public string Owner { get; set; }
     public string Repository { get; set; }

@@ -5,11 +5,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
     public class PipelineWitnessSettings
     {
         /// <summary>
-        /// Gets or sets the uri of the key vault to use
-        /// </summary>
-        public string KeyVaultUri { get; set; }
-
-        /// <summary>
         /// Gets or sets uri of the cosmos account to use
         /// </summary>
         public string CosmosAccountUri { get; set; }
@@ -33,11 +28,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the number of concurrent build complete queue workers to register
         /// </summary>
         public int BuildCompleteWorkerCount { get; set; } = 1;
-
-        /// <summary>
-        /// Gets or sets whether the build definition worker is enabled
-        /// </summary>
-        public bool BuildDefinitionWorkerEnabled { get; set; } = true;
 
         /// <summary>
         /// Gets or sets the name of the GitHub actions queue
@@ -91,9 +81,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         public string Account { get; set; }
 
         /// <summary>
-        /// Gets or sets the amount of time between iterations of the build definition upload loop
+        /// Gets or sets the loops settins for the Build Definitions worker
         /// </summary>
-        public TimeSpan BuildDefinitionLoopPeriod { get; set; } = TimeSpan.FromMinutes(5);
+        public PeriodicProcessSettings BuildDefinitionWorker { get; set; }
 
         /// <summary>
         /// Gets or sets the artifact name used by the pipeline owners extraction build

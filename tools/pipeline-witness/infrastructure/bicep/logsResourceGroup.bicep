@@ -7,6 +7,7 @@ param kustoDatabaseName string
 param webAppName string
 param subnetId string
 param appIdentityPrincipalId string
+param useVnet bool
 
 var kustoScript = loadTextContent('../artifacts/merged.kql')
 
@@ -24,11 +25,13 @@ resource logsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
     allowSharedKeyAccess: false
-    networkAcls: {
-      bypass: 'AzureServices'
-      virtualNetworkRules: [{ id: subnetId }]
-      defaultAction: 'Deny'
-    }
+    networkAcls: useVnet
+      ? {
+        bypass: 'AzureServices'
+        virtualNetworkRules: [{ id: subnetId }]
+        defaultAction: 'Deny'
+      }
+      : null
     supportsHttpsTrafficOnly: true
     encryption: {
       services: {

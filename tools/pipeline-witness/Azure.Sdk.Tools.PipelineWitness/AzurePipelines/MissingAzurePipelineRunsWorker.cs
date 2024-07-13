@@ -12,17 +12,17 @@ using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
-    public class MissingBuildWorker : PeriodicLockingBackgroundService
+    public class MissingAzurePipelineRunsWorker : PeriodicLockingBackgroundService
     {
-        private readonly ILogger<MissingBuildWorker> logger;
-        private readonly Func<BlobUploadProcessor> runProcessorFactory;
+        private readonly ILogger<MissingAzurePipelineRunsWorker> logger;
+        private readonly AzurePipelinesProcessor runProcessor;
         private readonly BuildCompleteQueue buildCompleteQueue;
         private readonly IOptions<PipelineWitnessSettings> options;
         private readonly BuildHttpClient buildClient;
 
-        public MissingBuildWorker(
-            ILogger<MissingBuildWorker> logger,
-            Func<BlobUploadProcessor> runProcessorFactory,
+        public MissingAzurePipelineRunsWorker(
+            ILogger<MissingAzurePipelineRunsWorker> logger,
+            AzurePipelinesProcessor runProcessor,
             IAsyncLockProvider asyncLockProvider,
             VssConnection vssConnection,
             BuildCompleteQueue buildCompleteQueue,
@@ -30,13 +30,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             : base(
                   logger,
                   asyncLockProvider,
-                  lockName: "ProcessMissingDevOpsBuilds",
-                  lockDuration: options.Value.LockLeasePeriod,
-                  loopDuration: options.Value.MissingBuildLoopPeriod,
-                  cooldownDuration: options.Value.MissingBuildCooldownPeriod)
+                  options.Value.MissingPipelineRunsWorker)
         {
             this.logger = logger;
-            this.runProcessorFactory = runProcessorFactory;
+            this.runProcessor = runProcessor;
             this.buildCompleteQueue = buildCompleteQueue;
             this.options = options;
 
@@ -53,31 +50,31 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             var settings = this.options.Value;
 
             // search for builds that completed within this window
-            var buildMinTime = DateTime.UtcNow.Subtract(settings.MissingBuildLookbackPeriod);
-            var buildMaxTime = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1));
-
-            // search for blobs that were uploaded with a time range that overlaps the build time range
-            var blobMinTime = buildMinTime.Subtract(TimeSpan.FromHours(1));
-            var blobMaxTime = buildMaxTime.Add(TimeSpan.FromHours(1));
-
-            BlobUploadProcessor runProcessor = this.runProcessorFactory.Invoke();
+            var buildMinTime = DateTimeOffset.UtcNow.Subtract(settings.MissingPipelineRunsWorker.LookbackPeriod);
+            var buildMaxTime = DateTimeOffset.UtcNow.Subtract(TimeSpan.FromHours(1));
 
             foreach (string project in settings.Projects)
             {
-                var knownBlobs = await runProcessor.GetBuildBlobNamesAsync(project, blobMinTime, blobMaxTime, cancellationToken);
+                var knownBlobs = await this.runProcessor.GetBuildBlobNamesAsync(project, buildMinTime, buildMaxTime, cancellationToken);
 
                 string continuationToken = null;
                 do
                 {
-                    var completedBuilds = await this.buildClient.GetBuildsAsync2(project, minFinishTime: buildMinTime, maxFinishTime: buildMaxTime, statusFilter: BuildStatus.Completed, continuationToken: continuationToken, cancellationToken: cancellationToken);
+                    var completedBuilds = await this.buildClient.GetBuildsAsync2(
+                        project,
+                        minFinishTime: buildMinTime.DateTime,
+                        maxFinishTime: buildMaxTime.DateTime,
+                        statusFilter: BuildStatus.Completed,
+                        continuationToken: continuationToken,
+                        cancellationToken: cancellationToken);
 
                     var skipCount = 0;
                     var enqueueCount = 0;
                     foreach (var build in completedBuilds)
                     {
-                        var buildBlobName = runProcessor.GetBuildBlobName(build);
+                        var blobName = this.runProcessor.GetBuildBlobName(build);
 
-                        if (knownBlobs.Contains(buildBlobName))
+                        if (knownBlobs.Contains(blobName, StringComparer.InvariantCultureIgnoreCase))
                         {
                             skipCount++;
                             continue;

@@ -1,0 +1,12 @@
+[
+    "Azure/autorest.csharp",
+    "Azure/autorest.go",
+    "Azure/autorest.java",
+    "Azure/azure-sdk",
+    "Azure/azure-sdk-for-go",
+    "Azure/azure-sdk-for-js",
+    "Azure/azure-sdk-for-java",
+    "Azure/azure-sdk-for-net",
+    "Azure/azure-sdk-for-python",
+    "Azure/azure-sdk-tools"    
+]

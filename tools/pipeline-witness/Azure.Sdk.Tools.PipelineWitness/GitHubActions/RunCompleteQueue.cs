@@ -16,7 +16,7 @@ public class RunCompleteQueue
     public RunCompleteQueue(ILogger<RunCompleteQueue> logger, QueueServiceClient queueServiceClient, IOptions<PipelineWitnessSettings> options)
     {
         this.logger = logger;
-        this.queueClient = queueServiceClient.GetQueueClient(options.Value.BuildCompleteQueueName);
+        this.queueClient = queueServiceClient.GetQueueClient(options.Value.GitHubActionRunsQueueName);
     }
 
     public async Task EnqueueMessageAsync(RunCompleteQueueMessage message)

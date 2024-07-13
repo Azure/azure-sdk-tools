@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
             Assert.True(recentBuilds.Count > 0);
             int targetBuildId = recentBuilds.First().Id;
 
-            BlobUploadProcessor processor = new(logger: new NullLogger<BlobUploadProcessor>(),
+            AzurePipelinesProcessor processor = new(logger: new NullLogger<AzurePipelinesProcessor>(),
                 blobServiceClient: blobServiceClient,
                 vssConnection: this.visualStudioConnection,
                 options: Options.Create<PipelineWitnessSettings>(this.testSettings));
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         [InlineData(0, 10000, 0)]
         public void TestBatching(int startingNumber, int batchSize, int expectedBatchNumber)
         {
-            int numberOfBatches = BlobUploadProcessor.CalculateBatches(startingNumber, batchSize);
+            int numberOfBatches = AzurePipelinesProcessor.CalculateBatches(startingNumber, batchSize);
 
             Assert.Equal(expectedBatchNumber, numberOfBatches);
         }

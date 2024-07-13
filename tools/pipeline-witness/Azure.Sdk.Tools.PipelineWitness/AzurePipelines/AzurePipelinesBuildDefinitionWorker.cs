@@ -12,21 +12,18 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
     public class AzurePipelinesBuildDefinitionWorker : PeriodicLockingBackgroundService
     {
         private readonly ILogger<AzurePipelinesBuildDefinitionWorker> logger;
-        private readonly BlobUploadProcessor runProcessor;
+        private readonly AzurePipelinesProcessor runProcessor;
         private readonly IOptions<PipelineWitnessSettings> options;
 
         public AzurePipelinesBuildDefinitionWorker(
             ILogger<AzurePipelinesBuildDefinitionWorker> logger,
-            BlobUploadProcessor runProcessor,
+            AzurePipelinesProcessor runProcessor,
             IAsyncLockProvider asyncLockProvider,
             IOptions<PipelineWitnessSettings> options)
             : base(
                   logger,
                   asyncLockProvider,
-                  lockName: "UpdateBuildDefinitions",
-                  lockDuration: options.Value.LockLeasePeriod,
-                  loopDuration: options.Value.BuildDefinitionLoopPeriod,
-                  cooldownDuration: options.Value.BuildDefinitionCooldownPeriod)
+                  options.Value.BuildDefinitionWorker)
         {
             this.logger = logger;
             this.runProcessor = runProcessor;

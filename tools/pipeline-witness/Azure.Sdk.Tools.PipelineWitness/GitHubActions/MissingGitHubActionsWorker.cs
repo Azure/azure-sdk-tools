@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
@@ -11,16 +13,16 @@ using Octokit;
 
 namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 {
-    public class MissingActionsWorker : PeriodicLockingBackgroundService
+    public class MissingGitHubActionsWorker : PeriodicLockingBackgroundService
     {
-        private readonly ILogger<MissingActionsWorker> logger;
+        private readonly ILogger<MissingGitHubActionsWorker> logger;
         private readonly GitHubActionProcessor processor;
         private readonly RunCompleteQueue queue;
         private readonly IOptions<PipelineWitnessSettings> options;
         private readonly GitHubClient client;
 
-        public MissingActionsWorker(
-            ILogger<MissingActionsWorker> logger,
+        public MissingGitHubActionsWorker(
+            ILogger<MissingGitHubActionsWorker> logger,
             GitHubActionProcessor processor,
             IAsyncLockProvider asyncLockProvider,
             ICredentialStore credentials,
@@ -29,10 +31,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             : base(
                   logger,
                   asyncLockProvider,
-                  lockName: "ProcessMissingGitHubActions",
-                  lockDuration: options.Value.LockLeasePeriod,
-                  loopDuration: options.Value.MissingBuildLoopPeriod,
-                  cooldownDuration: options.Value.MissingBuildCooldownPeriod)
+                  options.Value.MissingGitHubActionsWorker)
         {
             this.logger = logger;
             this.processor = processor;
@@ -51,35 +50,33 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         {
             PipelineWitnessSettings settings = this.options.Value;
 
+            var repositories = settings.GitHubRepositories;
+
             // search for builds that completed within this window
-            DateTimeOffset runMinTime = DateTime.UtcNow.Subtract(settings.MissingBuildLookbackPeriod);
-            DateTimeOffset runMaxTime = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1));
+            DateTimeOffset runMinTime = DateTimeOffset.UtcNow.Subtract(settings.MissingGitHubActionsWorker.LookbackPeriod);
+            DateTimeOffset runMaxTime = DateTimeOffset.UtcNow.Subtract(TimeSpan.FromHours(1));
 
-            // search for blobs that were uploaded with a time range that overlaps the build time range
-            DateTimeOffset blobMinTime = runMinTime.Subtract(TimeSpan.FromHours(1));
-            DateTimeOffset blobMaxTime = runMaxTime.Add(TimeSpan.FromHours(1));
-
-            foreach (string ownerAndRepository in settings.GitHubRepositories)
+            foreach (string ownerAndRepository in repositories)
             {
                 string owner = ownerAndRepository.Split('/')[0];
                 string repository = ownerAndRepository.Split('/')[1];
 
-                string[] knownBlobs = await this.processor.GetRunBlobNamesAsync(ownerAndRepository, blobMinTime, blobMaxTime, cancellationToken);
+                string[] knownBlobs = await this.processor.GetRunBlobNamesAsync(ownerAndRepository, runMinTime, runMaxTime, cancellationToken);
 
-                var completedBuilds = await this.client.Actions.Workflows.Runs.List(owner, repository, new WorkflowRunsRequest
+                WorkflowRunsResponse listRunsResponse = await this.client.Actions.Workflows.Runs.List(owner, repository, new WorkflowRunsRequest
                 {
-                    Created = new DateRange(runMinTime, runMaxTime).ToString(),
+                    Created = $"{runMinTime:o}..{runMaxTime:o}",
                     Status = CheckRunStatusFilter.Completed,
                 });
 
                 var skipCount = 0;
                 var enqueueCount = 0;
 
-                foreach (WorkflowRun run in completedBuilds.WorkflowRuns)
+                foreach (WorkflowRun run in listRunsResponse.WorkflowRuns)
                 {
-                    var buildBlobName = this.processor.GetRunBlobName(run);
+                    var blobName = this.processor.GetRunBlobName(run);
 
-                    if (knownBlobs.Contains(buildBlobName))
+                    if (knownBlobs.Contains(blobName, StringComparer.InvariantCultureIgnoreCase))
                     {
                         skipCount++;
                         continue;

@@ -18,11 +18,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
     internal class BuildCompleteQueueWorker : QueueWorkerBackgroundService
     {
         private readonly ILogger logger;
-        private readonly Func<BlobUploadProcessor> runProcessorFactory;
+        private readonly AzurePipelinesProcessor runProcessor;
 
         public BuildCompleteQueueWorker(
             ILogger<BuildCompleteQueueWorker> logger,
-            Func<BlobUploadProcessor> runProcessorFactory,
+            AzurePipelinesProcessor runProcessor,
             QueueServiceClient queueServiceClient,
             TelemetryClient telemetryClient,
             IOptionsMonitor<PipelineWitnessSettings> options)
@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                 options)
         {
             this.logger = logger;
-            this.runProcessorFactory = runProcessorFactory;
+            this.runProcessor = runProcessor;
         }
 
         internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
@@ -63,9 +63,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                 return;
             }
 
-            BlobUploadProcessor runProcessor = this.runProcessorFactory.Invoke();
-
-            await runProcessor.UploadBuildBlobsAsync(queueMessage.Account, queueMessage.ProjectId, queueMessage.BuildId);
+            await this.runProcessor.UploadBuildBlobsAsync(queueMessage.Account, queueMessage.ProjectId, queueMessage.BuildId);
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.PipelineWitness.Services;
+namespace Azure.Sdk.Tools.PipelineWitness.Utilities;
 
 internal sealed class ProcessRunner : IDisposable
 {

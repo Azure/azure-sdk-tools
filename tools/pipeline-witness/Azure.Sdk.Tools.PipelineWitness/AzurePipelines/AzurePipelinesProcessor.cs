@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
+using Azure.Sdk.Tools.PipelineWitness.Utilities;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -27,7 +28,7 @@ using Newtonsoft.Json.Serialization;
 namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
     [SuppressMessage("Style", "IDE0037:Use inferred member name", Justification = "Explicit member names are added to json export objects for clarity")]
-    public class BlobUploadProcessor
+    public class AzurePipelinesProcessor
     {
         private const string BuildsContainerName = "builds";
         private const string BuildLogLinesContainerName = "buildloglines";
@@ -39,6 +40,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
         private const int ApiBatchSize = 10000;
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
+
         private static readonly JsonSerializerSettings jsonSettings = new()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
@@ -46,7 +48,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             Formatting = Formatting.None,
         };
 
-        private readonly ILogger<BlobUploadProcessor> logger;
+        private readonly ILogger<AzurePipelinesProcessor> logger;
         private readonly TestResultsHttpClient testResultsClient;
         private readonly BuildHttpClient buildClient;
         private readonly BlobContainerClient buildLogLinesContainerClient;
@@ -59,8 +61,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
         private readonly IOptions<PipelineWitnessSettings> options;
         private readonly Dictionary<string, int?> cachedDefinitionRevisions = new();
 
-        public BlobUploadProcessor(
-            ILogger<BlobUploadProcessor> logger,
+        public AzurePipelinesProcessor(
+            ILogger<AzurePipelinesProcessor> logger,
             BlobServiceClient blobServiceClient,
             VssConnection vssConnection,
             IOptions<PipelineWitnessSettings> options)
@@ -215,7 +217,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
         public string GetBuildBlobName(Build build)
         {
             long changeTime = ((DateTimeOffset)build.LastChangedDate).ToUnixTimeSeconds();
-            string blobName = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{changeTime}.jsonl";
+            string blobName = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{changeTime}.jsonl".ToLower();
 
             return blobName;
         }
@@ -224,7 +226,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
         {
             try
             {
-                string blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
+                string blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl".ToLower();
                 BlobClient blobClient = this.pipelineOwnersContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -347,7 +349,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 
         private async Task UploadBuildDefinitionBlobAsync(string account, BuildDefinition definition)
         {
-            string blobPath = $"{definition.Project.Name}/{definition.Id}-{definition.Revision}.jsonl";
+            string blobPath = $"{definition.Project.Name}/{definition.Id}-{definition.Revision}.jsonl".ToLower();
 
             try
             {
@@ -553,7 +555,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                     return;
                 }
 
-                string blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
+                string blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl".ToLower();
                 BlobClient blobClient = this.buildTimelineRecordsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -627,7 +629,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             {
                 // we don't use FinishTime in the logs blob path to prevent duplicating logs when processing retries.
                 // i.e.  logs with a given buildid/logid are immutable and retries only add new logs.
-                string blobPath = $"{build.Project.Name}/{build.QueueTime:yyyy/MM/dd}/{build.Id}-{log.LogId}.jsonl";
+                string blobPath = $"{build.Project.Name}/{build.QueueTime:yyyy/MM/dd}/{build.Id}-{log.LogId}.jsonl".ToLower();
                 BlobClient blobClient = this.buildLogLinesContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -662,19 +664,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                         lineNumber += 1;
                         characterCount += line.Length;
 
-                        // log lines usually follow the format:
-                        // 2022-03-30T21:38:38.7007903Z Downloading task: AzureKeyVault (1.200.0)
-                        // Sometimes, there's no leading timestamp, so we'll use the last timestamp we saw.
-                        Match match = Regex.Match(line, @"^([^Z]{20,28}Z) (.*)$");
-
-                        DateTimeOffset timestamp = match.Success
-                            ? DateTime.ParseExact(match.Groups[1].Value, TimeFormat, null,
-                                System.Globalization.DateTimeStyles.AssumeUniversal).ToUniversalTime()
-                            : lastTimeStamp;
+                        var (timestamp, message) = StringUtilities.ParseLogLine(line, lastTimeStamp);
 
                         lastTimeStamp = timestamp;
-
-                        string message = match.Success ? match.Groups[2].Value : line;
 
                         await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
                         {
@@ -762,7 +754,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
         {
             try
             {
-                string blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
+                string blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl".ToLower();
                 BlobClient blobClient = this.testRunsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -845,7 +837,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
         {
             try
             {
-                string blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
+                string blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl".ToLower();
                 BlobClient blobClient = this.testResultsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
@@ -855,7 +847,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                 }
 
                 StringBuilder builder = new();
-                int batchCount = BlobUploadProcessor.CalculateBatches(testRun.TotalTests, batchSize: ApiBatchSize);
+                int batchCount = AzurePipelinesProcessor.CalculateBatches(testRun.TotalTests, batchSize: ApiBatchSize);
 
                 for (int batchMultiplier = 0; batchMultiplier < batchCount; batchMultiplier++)
                 {

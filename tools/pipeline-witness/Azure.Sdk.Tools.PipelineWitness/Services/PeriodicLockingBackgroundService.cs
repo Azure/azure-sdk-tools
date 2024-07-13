@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
     {
         private readonly ILogger logger;
         private readonly IAsyncLockProvider asyncLockProvider;
+        private readonly bool enabled;
         private readonly string lockName;
         private readonly TimeSpan loopDuration;
         private readonly TimeSpan lockDuration;
@@ -20,22 +22,20 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         public PeriodicLockingBackgroundService(
             ILogger logger,
             IAsyncLockProvider asyncLockProvider,
-            string lockName,
-            TimeSpan lockDuration,
-            TimeSpan loopDuration,
-            TimeSpan cooldownDuration)
+            PeriodicProcessSettings settings)
         {
             this.logger = logger;
             this.asyncLockProvider = asyncLockProvider;
-            this.lockName = lockName;
-            this.loopDuration = loopDuration;
-            this.lockDuration = lockDuration;
-            this.cooldownDuration = cooldownDuration;
+            this.enabled = settings.Enabled;
+            this.lockName = settings.LockName;
+            this.loopDuration = settings.LoopPeriod;
+            this.lockDuration = settings.LockLeasePeriod;
+            this.cooldownDuration = settings.CooldownPeriod;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (true)
+            while (this.enabled)
             {
                 Stopwatch stopWatch = Stopwatch.StartNew();
 

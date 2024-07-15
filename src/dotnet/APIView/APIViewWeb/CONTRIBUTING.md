@@ -124,14 +124,14 @@ Following configuration is required to connect local debug instance to Azure res
 Note: User requires following role based access to storage account and cosmos DB for local debugging and make sure that user is logged in to Azure from Visual studio to access Azure resources.
 
 - `Storage Blob Contributor` to access storage account
-- `DocumentDB Account Contributor` to access Cosmos DB
+- `Cosmos DB Built-in Data Contributor` to access Cosmos DB
 
 ### Role based access requierd for deployed instances
 
 APIView Azure web app instance requires role based access to storage and cosmos DB instances to access using managed identity. Following are the required RBAC roles.
 
 - `Storage Blob Contributor` to access storage account
-- `DocumentDB Account Contributor` to access Cosmos DB
+- `Cosmos DB Built-in Data Contributor` to access Cosmos DB
 
 ### Compile TypeScript code
 

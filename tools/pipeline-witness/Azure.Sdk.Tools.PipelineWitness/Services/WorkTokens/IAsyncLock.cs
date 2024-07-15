@@ -8,6 +8,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
     {
         bool ReleaseOnDispose { get; set; }
 
-        Task<bool> TryRenewAsync(CancellationToken cancellationToken);
+        Task<bool> TryExtendAsync(TimeSpan duration, CancellationToken cancellationToken);
     }
 }

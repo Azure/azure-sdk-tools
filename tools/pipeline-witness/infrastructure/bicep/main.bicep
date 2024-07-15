@@ -9,6 +9,7 @@ param networkSecurityGroupName string
 param vnetName string
 param vnetPrefix string
 param subnetPrefix string
+param useVnet bool
 param cosmosAccountName string
 param appStorageAccountName string
 param aspEnvironment string
@@ -42,6 +43,7 @@ module pipelineWitness 'appResourceGroup.bicep' = {
     aspEnvironment: aspEnvironment
     networkSecurityGroupName: networkSecurityGroupName
     vnetName: vnetName
+    useVnet: useVnet
   }
 }
 
@@ -66,5 +68,6 @@ module pipelineLogs 'logsResourceGroup.bicep' = {
     gitHubEventHubNamespaceName: gitHubEventHubNamespaceName
     appIdentityPrincipalId: pipelineWitness.outputs.appIdentityPrincipalId
     subnetId: pipelineWitness.outputs.subnetId
+    useVnet: useVnet
   }
 }

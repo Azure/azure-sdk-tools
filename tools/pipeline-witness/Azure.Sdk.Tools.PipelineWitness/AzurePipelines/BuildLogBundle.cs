@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Azure.Sdk.Tools.PipelineWitness
+namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
     public class BuildLogBundle
     {

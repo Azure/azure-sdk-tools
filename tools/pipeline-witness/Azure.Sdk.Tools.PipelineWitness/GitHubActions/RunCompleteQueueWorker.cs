@@ -12,13 +12,13 @@ using Microsoft.Extensions.Options;
 
 namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 {
-    internal class GitHubActionsRunQueueWorker : QueueWorkerBackgroundService
+    internal class RunCompleteQueueWorker : QueueWorkerBackgroundService
     {
         private readonly ILogger logger;
         private readonly GitHubActionProcessor processor;
 
-        public GitHubActionsRunQueueWorker(
-            ILogger<GitHubActionsRunQueueWorker> logger,
+        public RunCompleteQueueWorker(
+            ILogger<RunCompleteQueueWorker> logger,
             GitHubActionProcessor processor,
             QueueServiceClient queueServiceClient,
             TelemetryClient telemetryClient,
@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         {
             this.logger.LogInformation("Processing build.complete event: {MessageText}", message.MessageText);
 
-            var githubMessage = JsonSerializer.Deserialize<GitHubRunCompleteMessage>(message.MessageText);
+            var githubMessage = JsonSerializer.Deserialize<RunCompleteQueueMessage>(message.MessageText);
 
             await this.processor.ProcessAsync(githubMessage.Owner, githubMessage.Repository, githubMessage.RunId);
         }

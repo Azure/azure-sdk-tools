@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    return new CosmosAsyncLock(id, response.ETag, duration, this.container);
+                    return new CosmosAsyncLock(id, response.ETag, this.container);
                 }
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
                     new PartitionKey(id),
                     cancellationToken: cancellationToken);
 
-                return new CosmosAsyncLock(id, response.ETag, duration, this.container);
+                return new CosmosAsyncLock(id, response.ETag, this.container);
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
             {

@@ -67,7 +67,15 @@ namespace APIViewWeb
             }
             finally
             {
-                Directory.Delete(tempDirectory, true);
+                await Task.Delay(1000);
+                try
+                {
+                    Directory.Delete(tempDirectory, true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to delete directory: {ex.Message}");
+                }
             }
         }
     }

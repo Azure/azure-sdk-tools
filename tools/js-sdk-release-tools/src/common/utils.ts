@@ -2,10 +2,13 @@ import shell from 'shelljs';
 import path from 'path';
 import fs from 'fs';
 
-import { SDKType } from './types'
-import { logger } from "../utils/logger";
+import { SDKType } from './types';
+import { logger } from '../utils/logger';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { replaceAll } from '@ts-common/azure-js-dev-tools';
+import { ExecSyncOptions } from 'node:child_process';
+
+export const execOptions: ExecSyncOptions = { stdio: 'inherit' };
 
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
@@ -32,7 +35,7 @@ export function getApiReviewPath(packageRoot: string): string {
     switch (sdkType) {
         case SDKType.ModularClient:
             const npmPackageName = getNpmPackageName(packageRoot);
-            const packageName = npmPackageName.substring("@azure/".length);
+            const packageName = npmPackageName.substring('@azure/'.length);
             const apiViewFileName = `${packageName}.api.md`;
             return path.join(packageRoot, 'review', apiViewFileName);
         case SDKType.HighLevelClient:
@@ -54,8 +57,8 @@ export function getTsSourceFile(filePath: string): SourceFile | undefined {
 // changelog policy: https://aka.ms/azsdk/guideline/changelogs
 export function fixChangelogFormat(content: string) {
     content = replaceAll(content, '**Features**', '### Features Added')!;
-    content  = replaceAll(content, '**Breaking Changes**', '### Breaking Changes')!;
-    content  = replaceAll(content, '**Bugs Fixed**', '### Bugs Fixed')!;
-    content  = replaceAll(content, '**Other Changes**', '### Other Changes')!;
+    content = replaceAll(content, '**Breaking Changes**', '### Breaking Changes')!;
+    content = replaceAll(content, '**Bugs Fixed**', '### Bugs Fixed')!;
+    content = replaceAll(content, '**Other Changes**', '### Other Changes')!;
     return content;
 }

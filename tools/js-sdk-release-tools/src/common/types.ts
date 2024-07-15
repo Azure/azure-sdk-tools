@@ -13,6 +13,7 @@ export enum ApiVersionType {
 export interface ChangelogInfo {
     content: string;
     hasBreakingChange: boolean;
+    breakingChangeItems: string[];
 }
 
 export interface GeneratedPackageInfo {
@@ -34,5 +35,5 @@ export interface ModularClientPackageOptions {
     gitCommitId: string;
     skip: boolean;
     repoUrl: string;
-    versionPolicyName: string;
+    versionPolicyName: "management" | "client";
 }

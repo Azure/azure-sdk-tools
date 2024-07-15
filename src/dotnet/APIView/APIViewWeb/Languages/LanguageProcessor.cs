@@ -25,6 +25,7 @@ namespace APIViewWeb
             var randomSegment = Guid.NewGuid().ToString("N");
             var tempDirectory = Path.Combine(tempPath, "ApiView", randomSegment);
             Directory.CreateDirectory(tempDirectory);
+            originalName = Path.GetFileName(originalName);
             var originalFilePath = Path.Combine(tempDirectory, originalName);
 
             var jsonFilePath = (LanguageServiceHelpers.UseTreeStyleParser(this.Name)) ? Path.ChangeExtension(originalFilePath, ".json.tgz") : Path.ChangeExtension(originalFilePath, ".json");

@@ -56,7 +56,7 @@ namespace APIViewWeb
                     }
                 }
 
-                using (var codeFileStream = File.OpenRead(jsonFilePath))
+                using (var codeFileStream = new FileStream(jsonFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
                 {
                     CodeFile codeFile = await CodeFile.DeserializeAsync(stream: codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
                     codeFile.VersionString = VersionString;

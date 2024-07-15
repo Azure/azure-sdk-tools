@@ -9,5 +9,6 @@ import { logger } from '../../utils/logger';
 export async function generateChangelogAndBumpVersion(packageDirectory: string): Promise<Changelog | undefined> {
     logger.logInfo(`Generating changelog in ${packageDirectory}`);
     const changelog = await generateChangelogAndBumpVersionBase(packageDirectory);
+    logger.logInfo(`Generated changelog successfully.`);
     return changelog;
 }

@@ -88,7 +88,7 @@ static async Task HandlePackageFileParsing(Stream stream, FileInfo packageFilePa
             dependencies.AddRange(
                     dependencyElements.Select(dependency => new DependencyInfo(
                             dependency.Attribute("id")?.Value,
-                                dependency.Attribute("version")?.Value)));
+                                SelectSpecificVersion(dependency.Attribute("version")?.Value))));
             // filter duplicates and sort
             if (dependencies.Any())
             {
@@ -201,4 +201,16 @@ static async Task<string> ExtractNugetDependencies(List<DependencyInfo> dependen
         cache.Dispose();
     }
     return tempFolder;
+}
+
+static string? SelectSpecificVersion(string? versionRange)
+{
+    if (string.IsNullOrEmpty(versionRange))
+    {
+        return null;
+    }
+
+    var range = VersionRange.Parse(versionRange);
+    var specificVersion = range.MinVersion;
+    return specificVersion?.ToString();
 }

@@ -43,6 +43,7 @@ public static class Program
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Error Reading PackageFile : {ex.Message}");
+                throw;
             }
         }, inputOption, outputOption1, outputOption2, runAnalysis);
 
@@ -141,6 +142,7 @@ public static class Program
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error Parsing PackageFile : {ex.Message}");
+            throw;
         }
         finally
         {

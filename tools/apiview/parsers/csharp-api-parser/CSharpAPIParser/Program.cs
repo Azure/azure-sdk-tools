@@ -218,8 +218,22 @@ public static class Program
         {
             return null;
         }
-
         var range = VersionRange.Parse(versionRange);
+        if (range.HasUpperBound)
+        {
+            var maxVersion = range.MaxVersion;
+            if (maxVersion != null)
+            {
+                if (range.IsMaxInclusive)
+                {
+                    return maxVersion.ToString();
+                }
+                else
+                {
+                    return maxVersion.Version.ToString();
+                }
+            }
+        }
         var specificVersion = range.MinVersion;
         return specificVersion?.ToString();
     }

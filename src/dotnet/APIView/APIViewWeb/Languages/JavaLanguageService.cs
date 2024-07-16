@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.IO;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
@@ -11,6 +12,10 @@ namespace APIViewWeb
         public override string[] Extensions { get; } = { ".jar" };
         public override string ProcessName { get; } = "java";
         public override string VersionString { get; } = "apiview-java-processor-1.31.0.jar";
+
+        public JavaLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
+        {
+        }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {

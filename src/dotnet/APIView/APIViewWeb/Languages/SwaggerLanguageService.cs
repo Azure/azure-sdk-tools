@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
@@ -19,7 +20,7 @@ namespace APIViewWeb
 
         public override string ProcessName => throw new NotImplementedException();
 
-        public SwaggerLanguageService()
+        public SwaggerLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
         {
             IsReviewGenByPipeline = true;
         }

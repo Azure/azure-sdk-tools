@@ -113,9 +113,9 @@ static async Task HandlePackageFileParsing(Stream stream, FileInfo packageFilePa
             return;
         }
 
-        var parsedFileName = string.IsNullOrEmpty(outputFileName) ? assemblySymbol.Name : outputFileName;
+        var parsedFileName = string.IsNullOrEmpty(outputFileName) ? $"{assemblySymbol.Name}.json.tgz" : Path.GetFileName(outputFileName);
         var treeTokenCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies);
-        var gzipJsonTokenFilePath = Path.Combine(OutputDirectory.FullName, $"{parsedFileName}.json.tgz");
+        var gzipJsonTokenFilePath = Path.Combine(OutputDirectory.FullName, parsedFileName);
 
 
         var options = new JsonSerializerOptions()

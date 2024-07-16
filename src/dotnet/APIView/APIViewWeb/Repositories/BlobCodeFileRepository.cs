@@ -45,7 +45,18 @@ namespace APIViewWeb
 
             var info = await client.DownloadAsync();
 
-            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language)));
+            CodeFile deserializedCodeFile = null;
+            // Try to deserialize the code file twice, as the first time might fail due to the file being not yet updated to new tree token format.
+            // This is a temporary work around. We should have a property in Cosmos revision to indicate whether a token is using new format or old format.
+            try
+            {
+                deserializedCodeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
+            }
+            catch
+            {
+                deserializedCodeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: false);
+            }
+            codeFile = new RenderedCodeFile(deserializedCodeFile);
 
             if (updateCache)
             {

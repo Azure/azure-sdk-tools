@@ -123,12 +123,9 @@ static async Task HandlePackageFileParsing(Stream stream, FileInfo packageFilePa
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        {
-            using FileStream gzipFileStream = new FileStream(gzipJsonTokenFilePath, FileMode.Create, FileAccess.Write);
-            using GZipStream gZipStream = new GZipStream(gzipFileStream, CompressionLevel.Optimal);
-            JsonSerializer.Serialize(new Utf8JsonWriter(gZipStream, new JsonWriterOptions { Indented = false }), treeTokenCodeFile, options);
-        }
-
+        await using FileStream gzipFileStream = new FileStream(gzipJsonTokenFilePath, FileMode.Create, FileAccess.Write);
+        await using GZipStream gZipStream = new GZipStream(gzipFileStream, CompressionLevel.Optimal);
+        await JsonSerializer.SerializeAsync(gZipStream, treeTokenCodeFile, options);
         Console.WriteLine($"TokenCodeFile File {gzipJsonTokenFilePath} Generated Successfully.");
         Console.WriteLine();
     }

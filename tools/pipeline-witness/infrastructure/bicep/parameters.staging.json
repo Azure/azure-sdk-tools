@@ -14,11 +14,17 @@
     "webAppName": {
       "value": "pipelinewitnessstaging-app"
     },
+    "keyVaultName": {
+      "value": "pipelinewitnessstaging"
+    },
     "appServicePlanName": {
       "value": "ASP-pipelinewitnessstaging-a2b5"
     },
     "appStorageAccountName": {
       "value": "pipelinewitnessstaging"
+    },
+    "aspEnvironment": {
+      "value": "staging"
     },
     "logsResourceGroupName": {
       "value": "pipelinelogs"
@@ -26,11 +32,29 @@
     "logsStorageAccountName": {
       "value": "pipelinelogsstaging"
     },
+    "devOpsEventHubNamespaceName": {
+      "value": "pipelinelogsstaging"
+    },
+    "gitHubEventHubNamespaceName": {
+      "value": "githublogsstaging"
+    },
     "kustoClusterName": {
       "value": "azsdkengsys"
     },
     "kustoDatabaseName": {
       "value": "Staging"
+    },
+    "networkSecurityGroupName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "vnetName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "vnetPrefix": {
+      "value": "10.8.0.0/16"
+    },
+    "subnetPrefix": {
+      "value": "10.8.0.0/24"
     }
   }
 }

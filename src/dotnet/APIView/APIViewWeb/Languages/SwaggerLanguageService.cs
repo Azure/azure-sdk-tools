@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb
 {
@@ -24,7 +25,7 @@ namespace APIViewWeb
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
-            return await CodeFile.DeserializeAsync(stream, true);
+            return await CodeFile.DeserializeAsync(stream, hasSections: true, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
         }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)

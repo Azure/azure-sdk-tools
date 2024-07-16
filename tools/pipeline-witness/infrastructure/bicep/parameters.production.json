@@ -14,11 +14,17 @@
     "webAppName": {
       "value": "pipelinewitnessprod-app"
     },
+    "keyVaultName": {
+      "value": "pipelinewitnessprod"
+    },
     "appServicePlanName": {
       "value": "ASP-pipelinewitnessprod-b6fe"
     },
     "appStorageAccountName": {
       "value": "pipelinewitnessprod"
+    },
+    "aspEnvironment": {
+      "value": "production"
     },
     "logsResourceGroupName": {
       "value": "pipelinelogs"
@@ -26,11 +32,29 @@
     "logsStorageAccountName": {
       "value": "azsdkengsyspipelinelogs"
     },
+    "devOpsEventHubNamespaceName": {
+      "value": "azsdkengsyspipelinelogs"
+    },
+    "gitHubEventHubNamespaceName": {
+      "value": "azsdkengsysgithublogs"
+    },
     "kustoClusterName": {
       "value": "azsdkengsys"
     },
     "kustoDatabaseName": {
       "value": "Pipelines"
+    },
+    "networkSecurityGroupName": {
+      "value": "pipelinewitnessprod"
+    },
+    "vnetName": {
+      "value": "pipelinewitnessprod"
+    },
+    "vnetPrefix": {
+      "value": "10.9.0.0/16"
+    },
+    "subnetPrefix": {
+      "value": "10.9.0.0/24"
     }
   }
 }

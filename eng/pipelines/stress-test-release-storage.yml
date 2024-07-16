@@ -1,0 +1,28 @@
+pr: none
+
+trigger: none
+
+parameters:
+  - name: Environment
+    type: string
+    default: storage
+    values:
+    - storage
+    - pg
+    - prod
+  - name: TestRepository
+    displayName: Stress Test Repository
+    type: string
+    default: java-storage
+    values:
+    - java-storage
+  - name: DeployFromBranchOrCommit
+    type: string
+    default: main
+
+extends:
+  template: /eng/pipelines/templates/jobs/stress-test-release.yml
+  parameters:
+    Environment: ${{ parameters.Environment }}
+    TestRepository: ${{ parameters.TestRepository }}
+    DeployFromBranchOrCommit: ${{ parameters.DeployFromBranchOrCommit }}

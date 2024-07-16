@@ -1,3 +1,11 @@
+parameters:
+  - name: AzureSdkForNetDevOpsFeed
+    type: string
+    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
+  - name: CSharpAPIParserVersion
+    type: string
+    default: '1.0.0-dev.20240710.3'
+
 trigger:
   branches:
     include:
@@ -42,6 +50,8 @@ extends:
             value: '3.10'
           - name: 'WebClientProjectDirectory'
             value: 'src/dotnet/APIView/APIViewWeb/Client'
+          - name: 'SPAClientProjectDirectory'
+            value: 'src/dotnet/APIView/ClientSPA'
           - name: WebProjectPath
             value: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
           - name: NodeVersion
@@ -88,6 +98,11 @@ extends:
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
+          
+              - script: |
+                  npm install -g @angular/cli@16.1.8
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Angular CLI"
 
               - script: |
                   npm install
@@ -98,6 +113,21 @@ extends:
                   npm run-script build
                 workingDirectory: $(WebClientProjectDirectory)
                 displayName: "Build client assets"
+
+              - script: |
+                  npm install
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Client SPA Packages"
+
+              - script: |
+                  npm run-script build
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Build Client SPA assets"
+
+              - script: |
+                  npx workbox-cli generateSW workbox-config.js
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Configure Service Worker"
 
               - script: |
                   npm install
@@ -135,6 +165,12 @@ extends:
                   go build
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
+              
+              - task: UseDotNet@2
+                inputs:
+                  packageType: 'sdk'
+                  useGlobalJson: true
+                  workingDirectory: $(Build.SourcesDirectory)
 
               - script: 'dotnet build $(WebProjectPath) -warnaserror'
                 displayName: 'Build and Package'
@@ -283,6 +319,12 @@ extends:
           displayName: Pre-Prod
           dependsOn: Build
 
+          variables:
+            - name: 'apiUrl'
+              value: 'https://apiviewstagingtest.com/api/'
+            - name: 'webAppUrl'
+              value: 'https://apiviewstagingtest.com/'
+
           jobs:
             - job: Publish_to_Staging
               displayName: Publish to Staging
@@ -298,6 +340,13 @@ extends:
                 artifact: APIView
                 timeoutInMinutes: 5
 
+              - task: FileTransform@1
+                displayName: 'Update Angular Config for Environment'
+                inputs:
+                  folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
+                  fileType: json
+                  targetFiles: wwwroot/spa/assets/config.json
+
               - task: AzureRmWebAppDeployment@4
                 displayName: 'Deploy Azure App Service'
                 inputs:
@@ -311,6 +360,10 @@ extends:
                     echo Installing npm packages
                     call npm install --prefix D:\home\site\wwwroot --force
                     call npm run-script build --prefix D:\home\site\wwwroot --force
+                    echo Installing .NET tool
+                    call mkdir D:\home\site\wwwroot\csharp-parser
+                    call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                    echo Installing Python tools
                     call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
                     call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
                   enableCustomDeployment: true
@@ -320,6 +373,12 @@ extends:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
+
+          variables:
+            - name: 'apiUrl'
+              value: 'https://apiviewuxtest.com/api/'
+            - name: 'webAppUrl'
+              value: 'https://apiviewuxtest.com/'
 
           jobs:
             - deployment: Publish_Test_UI
@@ -340,16 +399,42 @@ extends:
                       artifact: APIView
                       timeoutInMinutes: 5
 
+                    - task: FileTransform@1
+                      displayName: 'Update Angular Config for Environment'
+                      inputs:
+                        folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
+                        fileType: json
+                        targetFiles: wwwroot/spa/assets/config.json
+
                     - task: AzureRmWebAppDeployment@4
                       displayName: 'Azure App Service Deploy: apiviewuat'
                       inputs:
                         azureSubscription: 'APIViewUI-Instance-deployment-connection'
                         WebAppName: apiviewuat
                         packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+                        InlineScript: |
+                          @echo off
+                          echo Installing npm packages
+                          call npm install --prefix D:\home\site\wwwroot --force
+                          call npm run-script build --prefix D:\home\site\wwwroot --force
+                          echo Installing .NET tool
+                          call mkdir D:\home\site\wwwroot\csharp-parser
+                          call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                          echo Installing Python tools
+                          call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
+                          call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                        enableCustomDeployment: true
+                        DeploymentType: zipDeploy
 
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
+
+          variables:
+            - name: 'apiUrl'
+              value: 'https://apiview.dev/api/'
+            - name: 'webAppUrl'
+              value: 'https://apiview.dev/'
 
           jobs:
             - deployment: Publish_to_Prod
@@ -370,6 +455,13 @@ extends:
                       artifact: APIView
                       timeoutInMinutes: 5
 
+                    - task: FileTransform@1
+                      displayName: 'Update Angular Config for Environment'
+                      inputs:
+                        folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
+                        fileType: json
+                        targetFiles: wwwroot/spa/assets/config.json
+
                     - task: AzureRmWebAppDeployment@4
                       displayName: 'Deploy Azure App Service'
                       inputs:
@@ -386,6 +478,10 @@ extends:
                           echo Installing npm packages
                           call npm install --prefix D:\home\site\wwwroot --force
                           call npm run-script build --prefix D:\home\site\wwwroot --force
+                          echo Installing .NET tool
+                          call mkdir D:\home\site\wwwroot\csharp-parser
+                          call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                          echo Installing Python tools
                           call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
                           call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.3 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
                         enableCustomDeployment: true

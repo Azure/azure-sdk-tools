@@ -30,7 +30,7 @@ describe("apiview-options: tests", () => {
     `
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 9);
+    compare(expect, actual, 10);
   });
 
   it("outputs the global namespace when --include-global-namespace is set", async () => {
@@ -48,6 +48,7 @@ describe("apiview-options: tests", () => {
       model SomeGlobal {}
     }
 
+    #suppress "deprecated"
     @TypeSpec.service(
       {
         title: "Test";
@@ -63,7 +64,7 @@ describe("apiview-options: tests", () => {
     });
     // TODO: Update once bug is fixed: https://github.com/microsoft/typespec/issues/3165
     const actual = apiViewText(apiview);
-    compare(expect, actual, 1);
+    compare(expect, actual, 3);
   });
 
   it("emits error if multi-service package tries to specify version", async () => {
@@ -116,6 +117,6 @@ describe("apiview-options: tests", () => {
     `;
     const apiview = await apiViewFor(input, {"version": "1", "service": "OtherTest"});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 9);
+    compare(expect, actual, 10);
   });
 });

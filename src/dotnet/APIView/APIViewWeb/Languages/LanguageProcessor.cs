@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb
 {
@@ -23,9 +25,13 @@ namespace APIViewWeb
             var randomSegment = Guid.NewGuid().ToString("N");
             var tempDirectory = Path.Combine(tempPath, "ApiView", randomSegment);
             Directory.CreateDirectory(tempDirectory);
+            originalName = Path.GetFileName(originalName);
+            // Replace spaces and parentheses in the file name to remove invalid file name in cosmos DB.
+            // temporary work around. We need to make sure FileName is set for all requests.
+            originalName = originalName.Replace(" ", "_").Replace("(", "").Replace(")","");
             var originalFilePath = Path.Combine(tempDirectory, originalName);
 
-            var jsonFilePath = Path.ChangeExtension(originalFilePath, ".json");
+            var jsonFilePath = (LanguageServiceHelpers.UseTreeStyleParser(this.Name)) ? Path.ChangeExtension(originalFilePath, ".json.tgz") : Path.ChangeExtension(originalFilePath, ".json");
 
             using (var file = File.Create(originalFilePath))
             {
@@ -54,9 +60,9 @@ namespace APIViewWeb
                     }
                 }
 
-                using (var codeFileStream = File.OpenRead(jsonFilePath))
+                using (var codeFileStream = new FileStream(jsonFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
+                    CodeFile codeFile = await CodeFile.DeserializeAsync(stream: codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;
@@ -64,7 +70,15 @@ namespace APIViewWeb
             }
             finally
             {
-                Directory.Delete(tempDirectory, true);
+                await Task.Delay(1000);
+                try
+                {
+                    Directory.Delete(tempDirectory, true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to delete directory: {ex.Message}");
+                }
             }
         }
     }

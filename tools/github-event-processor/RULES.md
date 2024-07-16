@@ -629,6 +629,7 @@ OR
 - Issue is open
 - Issue was opened > 2 years ago
 - Issue was last updated more than 30 days ago
+- Issue does NOT have the auto-close-exempt label
 
 ### Actions
 

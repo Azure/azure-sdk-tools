@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 
@@ -65,7 +66,7 @@ namespace APIViewWeb
                 _telemetryClient.TrackEvent("Completed Python process run to parse " + originalName);
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
+                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;

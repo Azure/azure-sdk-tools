@@ -1,5 +1,18 @@
 # Release
 
+## 2024-07-15 - 0.9.3
+
+- Add autorest and plugins as dependencies, and run the packages from their install folders, to guarantee the versions don't change after install.
+
+## 2024-07-04 - 0.9.2
+
+- Revert `exit(1)` on tsp compile diagnostics.
+
+## 2024-07-02 - 0.9.1
+
+- Fix error logging after the `compile()` call and exit if diagnostics are encountered.
+- Use `formatDiagnostic()` from "@typespec/compiler" to report diagnostics after compiling.
+
 ## 2024-06-21 - 0.9.0
 
 - Prefer the `service-dir` parameter in the emitter configurations in tspconfig.yaml if specified.

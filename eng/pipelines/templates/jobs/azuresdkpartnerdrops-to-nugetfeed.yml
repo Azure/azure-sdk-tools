@@ -4,7 +4,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20240507.1
+      ref: refs/tags/azure-sdk-build-tools_20240711.1
 
 parameters:
   - name: BuildToolsRepoPath
@@ -67,15 +67,11 @@ jobs:
             BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
 
       - ${{ if eq(parameters.ShouldPublish, true) }}:
-        - task: MSBuild@1
-          displayName: 'Upload Symbols'
-          inputs:
-            solution: '${{ parameters.BuildToolsRepoPath }}/tools/symboltool/SymbolUploader.proj'
-            msbuildArguments: >
-              /p:PackagesPath=${{ parameters.ArtifactsPath }}
-              /p:MSPublicSymbolsPAT=$(azuresdk-microsoftpublicsymbols-devops-pat)
-              /p:MSSymbolsPAT=$(azuresdk-microsoft-devops-pat)
-              /p:AzureSDKSymbolsPAT=$(azuresdk-azure-sdk-devops-pat)
+        - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
+          parameters:
+            BuildToolsRepositoryPath: ${{ parameters.BuildToolsRepoPath }}
+            PackagesPath: ${{ parameters.ArtifactsPath }}
+            StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
 
         - task: NuGetToolInstaller@1
           displayName: 'Use NuGet ${{ parameters.NugetVersion }}'

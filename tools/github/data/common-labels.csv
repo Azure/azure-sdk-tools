@@ -1,5 +1,6 @@
 AAD,,e99695
 ACS,,e99695
+AI Model Inference,,e99695
 AKS,,e99695
 API Management,,e99695
 APIChange,This PR contains an addition or change to the API signature and must be reviewed by an architect.,d8f74c
@@ -228,6 +229,7 @@ VideoAnalyzer,Azure Video Analyzer,e99695
 Visual Studio,,e99695
 Web Apps,,e99695
 WebPubSub,,e99695
+auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ededed
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49
 bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875

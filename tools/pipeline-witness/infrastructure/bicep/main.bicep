@@ -12,6 +12,9 @@ param subnetPrefix string
 param cosmosAccountName string
 param appStorageAccountName string
 param aspEnvironment string
+param keyVaultName string
+param devOpsEventHubNamespaceName string
+param gitHubEventHubNamespaceName string
 
 param logsResourceGroupName string
 param logsStorageAccountName string
@@ -33,6 +36,7 @@ module pipelineWitness 'appResourceGroup.bicep' = {
     vnetPrefix: vnetPrefix
     subnetPrefix: subnetPrefix
     webAppName: webAppName
+    keyVaultName: keyVaultName
     cosmosAccountName: cosmosAccountName
     appStorageAccountName: appStorageAccountName
     aspEnvironment: aspEnvironment
@@ -58,6 +62,8 @@ module pipelineLogs 'logsResourceGroup.bicep' = {
     kustoClusterName: kustoClusterName
     kustoDatabaseName: kustoDatabaseName
     webAppName: webAppName
+    devOpsEventHubNamespaceName: devOpsEventHubNamespaceName
+    gitHubEventHubNamespaceName: gitHubEventHubNamespaceName
     appIdentityPrincipalId: pipelineWitness.outputs.appIdentityPrincipalId
     subnetId: pipelineWitness.outputs.subnetId
   }

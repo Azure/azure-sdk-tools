@@ -14,6 +14,9 @@
     "webAppName": {
       "value": "pipelinewitnessstaging-app"
     },
+    "keyVaultName": {
+      "value": "pipelinewitnessstaging"
+    },
     "appServicePlanName": {
       "value": "ASP-pipelinewitnessstaging-a2b5"
     },
@@ -28,6 +31,12 @@
     },
     "logsStorageAccountName": {
       "value": "pipelinelogsstaging"
+    },
+    "devOpsEventHubNamespaceName": {
+      "value": "pipelinelogsstaging"
+    },
+    "gitHubEventHubNamespaceName": {
+      "value": "githublogsstaging"
     },
     "kustoClusterName": {
       "value": "azsdkengsys"

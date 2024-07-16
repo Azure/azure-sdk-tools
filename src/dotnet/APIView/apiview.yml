@@ -4,7 +4,7 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20240626.4'
+    default: '1.0.0-dev.20240710.3'
 
 trigger:
   branches:
@@ -165,6 +165,12 @@ extends:
                   go build
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
+              
+              - task: UseDotNet@2
+                inputs:
+                  packageType: 'sdk'
+                  useGlobalJson: true
+                  workingDirectory: $(Build.SourcesDirectory)
 
               - script: 'dotnet build $(WebProjectPath) -warnaserror'
                 displayName: 'Build and Package'
@@ -426,9 +432,9 @@ extends:
 
           variables:
             - name: 'apiUrl'
-              value: 'https://apiview.com/api/'
+              value: 'https://apiview.dev/api/'
             - name: 'webAppUrl'
-              value: 'https://apiview.com/'
+              value: 'https://apiview.dev/'
 
           jobs:
             - deployment: Publish_to_Prod

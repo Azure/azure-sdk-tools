@@ -201,6 +201,11 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task<bool> AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
         {
+            if (codeFileA.CodeFile.VersionString != codeFileA.CodeFile.VersionString)
+            {
+                return false;
+            }
+
             if (LanguageServiceHelpers.UseTreeStyleParser(codeFileA.CodeFile.Language))
             {
                 var diffTree =CodeFileHelpers.ComputeAPIForestDiff(codeFileA.CodeFile.APIForest, codeFileB.CodeFile.APIForest);

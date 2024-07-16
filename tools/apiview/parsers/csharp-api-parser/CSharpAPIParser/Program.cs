@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
 using ApiView;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using NuGet.Common;
 using NuGet.Packaging;
 using NuGet.Protocol;

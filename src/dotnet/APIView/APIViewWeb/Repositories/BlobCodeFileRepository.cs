@@ -31,12 +31,12 @@ namespace APIViewWeb
 
         public Task<RenderedCodeFile> GetCodeFileAsync(APIRevisionListItemModel revision, bool updateCache = true)
         {
-            return GetCodeFileAsync(revision.Id, revision.Files.Single().FileId, revision.Language, updateCache);
+            return GetCodeFileAsync(revision.Id, revision.Files.Single(), revision.Language, updateCache);
         }
 
-        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, string language, bool updateCache = true)
+        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, APICodeFileModel apiCodeFile, string language, bool updateCache = true)
         {
-            var client = GetBlobClient(revisionId, codeFileId, out var key);
+            var client = GetBlobClient(revisionId, apiCodeFile.FileId, out var key);
 
             if (_cache.TryGetValue<RenderedCodeFile>(key, out var codeFile))
             {
@@ -45,18 +45,7 @@ namespace APIViewWeb
 
             var info = await client.DownloadAsync();
 
-            CodeFile deserializedCodeFile = null;
-            // Try to deserialize the code file twice, as the first time might fail due to the file being not yet updated to new tree token format.
-            // This is a temporary work around. We should have a property in Cosmos revision to indicate whether a token is using new format or old format.
-            try
-            {
-                deserializedCodeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
-            }
-            catch
-            {
-                deserializedCodeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: false);
-            }
-            codeFile = new RenderedCodeFile(deserializedCodeFile);
+            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: apiCodeFile.ParserStyle == ParserStyle.Tree));
 
             if (updateCache)
             {

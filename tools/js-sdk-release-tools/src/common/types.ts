@@ -1,13 +1,13 @@
 export enum SDKType {
     HighLevelClient = 'HighLevelClient',
     RestLevelClient = 'RestLevelClient',
-    ModularClient = 'ModularClient',
-};
+    ModularClient = 'ModularClient'
+}
 
 export enum ApiVersionType {
     None = 'None',
     Stable = 'Stable',
-    Preview = 'Preview',
+    Preview = 'Preview'
 }
 
 export interface ChangelogInfo {
@@ -22,7 +22,7 @@ export interface GeneratedPackageInfo {
     path: string[];
     changelog: ChangelogInfo;
     artifacts: string[];
-    result: "succeeded" | "failed";
+    result: 'succeeded' | 'failed';
     packageFolder?: string;
 }
 
@@ -35,5 +35,10 @@ export interface ModularClientPackageOptions {
     gitCommitId: string;
     skip: boolean;
     repoUrl: string;
-    versionPolicyName: "management" | "client";
+    versionPolicyName: 'management' | 'client';
+}
+
+export interface NpmPackageInfo {
+    name: string;
+    version: string;
 }

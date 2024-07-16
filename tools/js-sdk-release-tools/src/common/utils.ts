@@ -1,14 +1,15 @@
 import shell from 'shelljs';
 import path from 'path';
 import fs from 'fs';
-
+import { spawn } from 'child_process';
 import { SDKType } from './types';
 import { logger } from '../utils/logger';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { replaceAll } from '@ts-common/azure-js-dev-tools';
-import { ExecSyncOptions } from 'node:child_process';
+import { access } from 'node:fs/promises';
+import { SpawnOptions } from 'child_process';
 
-export const execOptions: ExecSyncOptions = { stdio: 'inherit' };
+export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['inherit', 'pipe', 'pipe'] };
 
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
@@ -61,4 +62,51 @@ export function fixChangelogFormat(content: string) {
     content = replaceAll(content, '**Bugs Fixed**', '### Bugs Fixed')!;
     content = replaceAll(content, '**Other Changes**', '### Other Changes')!;
     return content;
+}
+
+export async function existsAsync(path: string): Promise<boolean> {
+    try {
+        await access(path);
+        return true;
+    } catch (error) {
+        logger.logWarn(`Fail to find ${path} for error: ${error}`);
+        return false;
+    }
+}
+
+export function runCommand(
+    command: string,
+    args: readonly string[],
+    options: SpawnOptions
+): Promise<{ stdout: string; stderr: string }> {
+    return new Promise((resolve, reject) => {
+        let stdout = '';
+        let stderr = '';
+        const child = spawn(command, args, options);
+        child.stdout?.on('data', (data) => {
+            const str = data.toString();
+            stdout += str;
+            console.log(str);
+        });
+
+        child.stderr?.on('data', (data) => {
+            const str = data.toString();
+            stderr += str;
+            console.error(str);
+        });
+
+        child.on('close', (code) => {
+            if (code === 0) {
+                resolve({ stdout, stderr });
+            } else {
+                console.log(`run command exit: ${code}`);
+                reject(new Error(`run command exit: ${code}`));
+            }
+        });
+
+        child.on('error', (err) => {
+            console.log('run command err', err);
+            reject(err);
+        });
+    });
 }

@@ -234,9 +234,7 @@ export async function generateRLCInPipeline(options: {
         logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
         execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
-        // TODO: consider remove this line 
-        // in pipeline, it should be duplicated command to "rush build ..." 
-        // due to https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md?plain=1#L94
+        // TODO: should follow: https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#how-to-create-package
         logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {

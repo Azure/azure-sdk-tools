@@ -5,8 +5,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
-	"go/ast"
 	"io/fs"
 	"os"
 	"path"
@@ -26,29 +24,11 @@ var versionReg = regexp.MustCompile(`/v\d+$|/v\d+/`)
 
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
+	// ExternalAliases are type aliases referring to other modules
+	ExternalAliases []*TypeAlias
 	Name string
-	// PackageName is the name of the APIView review for this module
-	PackageName string
-
 	// Packages maps import paths to the module's Packages
 	Packages map[string]*Pkg
-}
-
-var majorVerSuffix = regexp.MustCompile(`/v\d+$`)
-
-// fetches the value for Module.PackageName from the full module path
-func getPackageNameFromModPath(modPath string) string {
-	// for official SDKs, use a subset of the full module path
-	// e.g. github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
-	// becomes sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
-	if suffix, ok := strings.CutPrefix(modPath, "github.com/Azure/azure-sdk-for-go/"); ok {
-		modPath = suffix
-	}
-	// now strip off any major version suffix
-	if loc := majorVerSuffix.FindStringIndex(modPath); loc != nil {
-		modPath = modPath[:loc[0]]
-	}
-	return modPath
 }
 
 // NewModule constructs a Module, locating its constituent packages but not parsing any source.
@@ -99,194 +79,31 @@ func NewModule(dir string) (*Module, error) {
 	return &m, nil
 }
 
-// Index all the types in the module's packages, populating m.Packages
+// Index all the types in the module's packages, populating m.Packages and resolving
+// cross-package type aliases. It adds cross-module aliases to [Module.ExternalAliases]
+// so callers can later resolve these after indexing referenced external modules.
 func (m *Module) Index() {
 	for _, p := range m.Packages {
 		p.Index()
 	}
 
-	// sdkRoot is the path on disk to the sdk folder e.g. /home/user/me/azure-sdk-for-go/sdk.
-	// Used to find definitions of types imported from other Azure SDK modules.
-	sdkRoot := ""
-	if before, _, found := strings.Cut(m.Directory, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
-		sdkRoot = filepath.Join(before, sdkDirName)
-	}
-
-	// Add the definitions of types exported by alias to each package's content. For example,
-	// given "type TokenCredential = shared.TokenCredential" in package azcore, this will hoist
-	// the definition from azcore/internal/shared into the APIView for azcore, making the type's
-	// fields visible there.
-	externalPackages := map[string]*Pkg{}
+	// resolve cross-package references by adding the definitions of types exported by alias to the exporting package
 	for _, p := range m.Packages {
-		for alias, qn := range p.typeAliases {
-			// qn is a type name qualified with import path like
-			// "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared.TokenRequestOptions"
-			impPath := qn[:strings.LastIndex(qn, ".")]
-			typeName := qn[len(impPath)+1:]
-			var source *Pkg
-			var ok bool
-			if source, ok = m.Packages[impPath]; !ok {
-				// must be a package external to this module
-				if source, ok = externalPackages[impPath]; !ok {
-					// haven't seen this package before, must find and index it
-					if _, after, found := strings.Cut(impPath, "azure-sdk-for-go/sdk/"); found && sdkRoot != "" {
-						// SDK package, should be on disk in the same tree as the module we're indexing
-						p := filepath.Join(sdkRoot, strings.TrimSuffix(versionReg.ReplaceAllString(after, "/"), "/"))
-						pkg, err := NewPkg(p, "github.com/Azure/azure-sdk-for-go/sdk/"+after)
-						if err == nil {
-							pkg.Index()
-							externalPackages[impPath] = pkg
-							source = pkg
-						} else {
-							// types from this module will appear in the review without their definitions
-							fmt.Printf("couldn't parse %s: %v\n", impPath, err)
-						}
-					} else {
-						fmt.Printf("TODO: %q isn't an SDK package\n", qn)
-					}
+		for _, alias := range p.TypeAliases {
+			if def, ok := recursiveFindTypeDef(alias, p, m.Packages); ok {
+				alias.Resolve(&def)
+				continue
+			}
+			// The definition is in another module. Add the alias to
+			// ExternalAliases so the caller can find the definition later.
+			for _, req := range m.ModFile.Require {
+				if strings.HasPrefix(alias.QualifiedName, req.Mod.Path) {
+					alias.SourceModPath = req.Mod.Path
+					break
 				}
 			}
-			level := DiagnosticLevelInfo
-			originalName := qn
-			if _, after, found := strings.Cut(qn, m.Name); found {
-				originalName = strings.TrimPrefix(after, "/")
-			} else {
-				// this type is defined in another module
-				level = DiagnosticLevelWarning
-			}
-
-		var t TokenMaker
-		if source == nil {
-			t = p.c.addSimpleType(*p, alias, p.Name(), originalName, nil)
-		} else if def, ok := recursiveFindTypeDef(typeName, source, m.packages); ok {
-			switch n := def.n.Type.(type) {
-			case *ast.InterfaceType:
-				t = p.c.addInterface(*def.p, alias, p.Name(), n, nil)
-			case *ast.StructType:
-				t = p.c.addStruct(*def.p, alias, p.Name(), def.n, nil)
-				hoistMethodsForType(source, alias, p)
-				// ensure that all struct field types that are structs are also aliased from this package
-				for _, field := range n.Fields.List {
-					fieldTypeName := unwrapStructFieldTypeName(field)
-					if fieldTypeName == "" {
-						// we can ignore this field
-						continue
-					}
-
-					// ensure that our package exports this type
-					if _, ok := p.typeAliases[fieldTypeName]; ok {
-						// found an alias
-						continue
-					}
-
-					// no alias, add a diagnostic
-					p.diagnostics = append(p.diagnostics, Diagnostic{
-						Level:    DiagnosticLevelError,
-						TargetID: t.ID(),
-						Text:     missingAliasFor + fieldTypeName,
-					})
-				}
-			case *ast.Ident:
-				t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name, nil)
-				hoistMethodsForType(source, alias, p)
-			default:
-				fmt.Printf("unexpected node type %T\n", def.n.Type)
-				t = p.c.addSimpleType(*p, alias, p.Name(), originalName, nil)
-			} else if def, ok := recursiveFindTypeDef(typeName, source, m.Packages); ok {
-				switch n := def.n.Type.(type) {
-				case *ast.InterfaceType:
-					t = p.c.addInterface(*def.p, alias, p.Name(), n, nil)
-				case *ast.StructType:
-					t = p.c.addStruct(*def.p, alias, p.Name(), def.n, nil)
-					hoistMethodsForType(source, alias, p)
-					// ensure that all struct field types that are structs are also aliased from this package
-					for _, field := range n.Fields.List {
-						fieldTypeName := unwrapStructFieldTypeName(field)
-						if fieldTypeName == "" {
-							// we can ignore this field
-							continue
-						}
-
-						// ensure that our package exports this type
-						if _, ok := p.typeAliases[fieldTypeName]; ok {
-							// found an alias
-							continue
-						}
-
-						// no alias, add a diagnostic
-						p.diagnostics = append(p.diagnostics, Diagnostic{
-							Level:    DiagnosticLevelError,
-							TargetID: t.ID(),
-							Text:     missingAliasFor + fieldTypeName,
-						})
-					}
-				case *ast.Ident:
-					t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name, nil)
-					hoistMethodsForType(source, alias, p)
-				default:
-					fmt.Printf("unexpected node type %T\n", def.n.Type)
-					t = p.c.addSimpleType(*p, alias, p.Name(), originalName, nil)
-				}
-			} else {
-				fmt.Println("found no definition for " + qn)
-			}
-		} else {
-			fmt.Println("found no definition for " + qn)
+			m.ExternalAliases = append(m.ExternalAliases, alias)
 		}
-
-		if t != nil {
-			p.diagnostics = append(p.diagnostics, Diagnostic{
-				Level:    level,
-				TargetID: t.ID(),
-				Text:     aliasFor + originalName,
-			})
-		}
-	}
-}
-
-// returns the type name for the specified struct field.
-// if the field can be ignored, an empty string is returned.
-func unwrapStructFieldTypeName(field *ast.Field) string {
-	if field.Names != nil && !field.Names[0].IsExported() {
-		// field isn't exported so skip it
-		return ""
-	}
-
-	// start with the field expression
-	exp := field.Type
-
-	// if it's an array, get the element expression.
-	// current codegen doesn't support *[]Type so no need to handle it.
-	if at, ok := exp.(*ast.ArrayType); ok {
-		// FieldName []FieldType
-		// FieldName []*FieldType
-		exp = at.Elt
-	}
-
-	// from here we either have a pointer-to-type or type
-	var ident *ast.Ident
-	if se, ok := exp.(*ast.StarExpr); ok {
-		// FieldName *FieldType
-		ident, _ = se.X.(*ast.Ident)
-	} else {
-		// FieldName FieldType
-		ident, _ = exp.(*ast.Ident)
-	}
-
-	// !IsExported() is a hacky way to ignore primitive types
-	// FieldName bool
-	if ident == nil || !ident.IsExported() {
-		return ""
-	}
-
-	// returns FieldType
-	return ident.Name
-}
-
-func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg) {
-	methods := pkg.c.findMethods(typeName)
-	for sig, fn := range methods {
-		target.c.Funcs[sig] = fn.ForAlias(target.Name())
 	}
 }
 
@@ -297,44 +114,4 @@ func parseModFile(dir string) (*modfile.File, error) {
 		return nil, err
 	}
 	return modfile.Parse(p, content, nil)
-}
-
-func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) (typeDef, bool) {
-	def, ok := source.types[typeName]
-	if ok {
-		return def, true
-	}
-
-	// this is a type alias.  recursively find its typeDef
-	alias, ok := source.typeAliases[typeName]
-	if ok {
-		// alias == github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container.DeleteOptions
-		split := strings.LastIndex(alias, ".")
-		if split < 0 {
-			return typeDef{}, false
-		}
-
-		pkgName := alias[:split]   // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
-		typeName = alias[split+1:] // DeleteOptions
-		split = strings.LastIndex(pkgName, "/")
-		if split < 0 {
-			return typeDef{}, false
-		}
-
-		pkgName = pkgName[split+1:] // container
-		source = nil
-		for _, pkg := range packages {
-			if pkg.p.Name == pkgName {
-				source = pkg
-				break
-			}
-		}
-		if source == nil {
-			return typeDef{}, false
-		}
-
-		return recursiveFindTypeDef(typeName, source, packages)
-	}
-
-	return typeDef{}, false
 }

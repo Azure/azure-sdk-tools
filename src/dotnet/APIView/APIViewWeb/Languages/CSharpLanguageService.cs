@@ -5,17 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using ApiView;
-using NuGet.Common;
-using NuGet.Packaging;
-using NuGet.Protocol;
-using NuGet.Protocol.Core.Types;
-using NuGet.Versioning;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
-using System.Linq;
 
 namespace APIViewWeb
 {
@@ -28,7 +20,7 @@ namespace APIViewWeb
         public override string ProcessName => _csharpParserToolPath;
         public override string VersionString { get; } = "27";
 
-        public CSharpLanguageService(IConfiguration configuration, TelemetryClient telemetryClient)
+        public CSharpLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
             _csharpParserToolPath = configuration["CSHARPPARSEREXECUTABLEPATH"];
         }

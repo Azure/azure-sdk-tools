@@ -21,11 +21,6 @@ import (
 // (we never want to do that for real reviews)
 var indexTestdata bool
 
-// sdkDirName allows tests to set the name of the assumed common
-// directory of all Azure SDK modules, which enables tests to
-// pass without the code below having to compute this directory
-var sdkDirName = "sdk"
-
 // versionReg is the regex for version part in import
 var versionReg = regexp.MustCompile(`/v\d+$|/v\d+/`)
 

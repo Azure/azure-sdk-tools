@@ -126,7 +126,7 @@ static async Task HandlePackageFileParsing(Stream stream, FileInfo packageFilePa
         await using FileStream gzipFileStream = new FileStream(gzipJsonTokenFilePath, FileMode.Create, FileAccess.Write);
         await using GZipStream gZipStream = new GZipStream(gzipFileStream, CompressionLevel.Optimal);
         JsonSerializer.Serialize(new Utf8JsonWriter(gZipStream, new JsonWriterOptions { Indented = false }), treeTokenCodeFile, options);
-
+        await Task.Delay(1000);
         Console.WriteLine($"TokenCodeFile File {gzipJsonTokenFilePath} Generated Successfully.");
         Console.WriteLine();
     }

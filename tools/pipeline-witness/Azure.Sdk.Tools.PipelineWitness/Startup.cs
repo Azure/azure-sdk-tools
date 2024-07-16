@@ -4,9 +4,9 @@ using Azure.Core;
 using Azure.Core.Extensions;
 using Azure.Identity;
 using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Azure.Sdk.Tools.PipelineWitness.AzurePipelines;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.GitHubActions;
-using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 
 using Microsoft.ApplicationInsights.Extensibility;
@@ -28,9 +28,15 @@ public static class Startup
 {
     public static void Configure(WebApplicationBuilder builder)
     {
-        PipelineWitnessSettings settings = new();
         IConfigurationSection settingsSection = builder.Configuration.GetSection("PipelineWitness");
+        PipelineWitnessSettings settings = new();
         settingsSection.Bind(settings);
+
+        builder.Services.AddLogging();
+
+        builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
+        builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
+        builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
 
         builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
         builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
@@ -50,24 +56,16 @@ public static class Startup
         builder.Services.AddSingleton<IAsyncLockProvider>(provider => new CosmosAsyncLockProvider(provider.GetRequiredService<CosmosClient>(), settings.CosmosDatabase, settings.CosmosAsyncLockContainer));
         builder.Services.AddTransient(CreateVssConnection);
 
-        builder.Services.AddLogging();
-
-        builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
-        builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
-        builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
-
-        builder.Services.AddTransient<BlobUploadProcessor>();
-        builder.Services.AddTransient<Func<BlobUploadProcessor>>(provider => provider.GetRequiredService<BlobUploadProcessor>);
+        builder.Services.AddTransient<AzurePipelinesProcessor>();
+        builder.Services.AddTransient<BuildCompleteQueue>();
         builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
 
         builder.Services.AddSingleton<ICredentialStore, GitHubCredentialStore>();
         builder.Services.AddTransient<GitHubActionProcessor>();
-        builder.Services.AddHostedService<GitHubActionsRunQueueWorker>(settings.GitHubActionRunsWorkerCount);
+        builder.Services.AddTransient<RunCompleteQueue>();
+        builder.Services.AddHostedService<RunCompleteQueueWorker>(settings.GitHubActionRunsWorkerCount);
 
-        if (settings.BuildDefinitionWorkerEnabled)
-        {
-            builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
-        }
+        builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
     }
 
     private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService

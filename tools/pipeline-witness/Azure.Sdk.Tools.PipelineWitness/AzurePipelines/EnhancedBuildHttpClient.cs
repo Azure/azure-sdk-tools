@@ -3,11 +3,10 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 
-namespace Azure.Sdk.Tools.PipelineWitness.Services
+namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
     public class EnhancedBuildHttpClient : BuildHttpClient
 

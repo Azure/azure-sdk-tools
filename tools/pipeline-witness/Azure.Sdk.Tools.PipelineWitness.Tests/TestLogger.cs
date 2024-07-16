@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
 {
     public class TestLogger : ILogger
     {
-        internal List<object> Logs { get; } = new List<object>();
+        internal List<object> Logs { get; } = [];
 
         public IDisposable BeginScope<TState>(TState state)
         {

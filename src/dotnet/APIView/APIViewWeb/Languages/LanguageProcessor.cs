@@ -26,6 +26,9 @@ namespace APIViewWeb
             var tempDirectory = Path.Combine(tempPath, "ApiView", randomSegment);
             Directory.CreateDirectory(tempDirectory);
             originalName = Path.GetFileName(originalName);
+            // Replace spaces and parentheses in the file name to remove invalid file name in cosmos DB.
+            // temporary work around. We need to make sure FileName is set for all requests.
+            originalName = originalName.Replace(" ", "_").Replace("(", "").Replace(")","");
             var originalFilePath = Path.Combine(tempDirectory, originalName);
 
             var jsonFilePath = (LanguageServiceHelpers.UseTreeStyleParser(this.Name)) ? Path.ChangeExtension(originalFilePath, ".json.tgz") : Path.ChangeExtension(originalFilePath, ".json");

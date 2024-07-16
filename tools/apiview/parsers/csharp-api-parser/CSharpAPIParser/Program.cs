@@ -138,6 +138,11 @@ public static class Program
             Console.WriteLine($"TokenCodeFile File {gzipJsonTokenFilePath} Generated Successfully.");
             Console.WriteLine();
         }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error Parsing PackageFile : {ex.Message}");
+            throw ex;
+        }
         finally
         {
             zipArchive?.Dispose();

@@ -26,6 +26,9 @@ var versionReg = regexp.MustCompile(`/v\d+$|/v\d+/`)
 type Module struct {
 	// ExternalAliases are type aliases referring to other modules
 	ExternalAliases []*TypeAlias
+	// ModFile is the parsed go.mod file for the module
+	ModFile *modfile.File
+	// Name of the module's root package e.g. "azcore"
 	Name string
 	// Packages maps import paths to the module's Packages
 	Packages map[string]*Pkg
@@ -39,13 +42,12 @@ func NewModule(dir string) (*Module, error) {
 		return nil, err
 	}
 	m := Module{
-		Name:        filepath.Base(dir),
-		PackageName: getPackageNameFromModPath(mf.Module.Mod.Path),
-		Packages:    map[string]*Pkg{},
+		ModFile:  mf,
+		Name:     filepath.Base(dir),
+		Packages: map[string]*Pkg{},
 	}
-	fmt.Printf("Package Name: %s\n", m.PackageName)
 
-	baseImportPath := path.Dir(mf.Module.Mod.Path) + "/"
+	baseImportPath := path.Dir(m.ModFile.Module.Mod.Path) + "/"
 	if baseImportPath == "./" {
 		// this is a relative path in the tests, so remove this prefix.
 		// if not, then the package name added below won't match the imported packages.
@@ -64,7 +66,7 @@ func NewModule(dir string) (*Module, error) {
 					return filepath.SkipDir
 				}
 			}
-			p, err := NewPkg(path, mf.Module.Mod.Path)
+			p, err := NewPkg(path, m.ModFile.Module.Mod.Path)
 			if err == nil {
 				m.Packages[baseImportPath+p.Name()] = p
 			} else if !errors.Is(err, ErrNoPackages) {

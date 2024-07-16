@@ -27,12 +27,7 @@
             </ng-template>
         </li>
         <li class="list-group-item text-center">
-            <ng-container *ngIf="reviewIsApproved; else reviewIsNotApprovedBlock">
-                <span class="small text-muted mt-1">
-                    Approved for First Release By: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a>
-                </span>
-            </ng-container>
-            <ng-template #reviewIsNotApprovedBlock>
+            <ng-container *ngIf="!reviewIsApproved && preferredApprovers.includes(userProfile?.userName!); else reviewApprovalHidden">
                 <span class="small text-muted">Approves First Release of the package</span>
                 <div class="d-grid gap-2">
                     <button class="btn btn-success" type="button"
@@ -43,6 +38,11 @@
                     </button>
                 </div>
                 <span class="small mt-2 text-muted">First Release Approval Pending</span>
+            </ng-container>
+            <ng-template #reviewApprovalHidden>
+                <span class="small text-muted mt-1">
+                    Approved for First Release By: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a>
+                </span>
             </ng-template>
         </li>
     </ul>

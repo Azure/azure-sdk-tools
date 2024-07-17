@@ -5,6 +5,7 @@ import {
   getServiceDir,
   makeSparseSpecDir,
 } from "../src/utils.js";
+import { removeDirectory } from "../src/fs.js";
 import { parse as parseYaml } from "yaml";
 import { assert } from "chai";
 import { readFile, stat } from "node:fs/promises";
@@ -27,11 +28,13 @@ describe("get the right service dir from tspconfig.yaml", function () {
 
 describe("Verify other utils functions", function () {
   it("Check makeSparseSpecDir", async function () {
-    const specDir = await makeSparseSpecDir("./test");
-    assert.ok(specDir.startsWith("./test/../sparse-spec"));
+    const specDir = await makeSparseSpecDir("./test/examples/");
+    assert.ok(specDir.startsWith("./test/examples/../sparse-spec"));
 
     const createdDir = await stat(specDir);
     assert.ok(createdDir.isDirectory());
+
+    await removeDirectory(specDir);
   });
 
   it("Check getAdditionalDirectoryName", async function () {

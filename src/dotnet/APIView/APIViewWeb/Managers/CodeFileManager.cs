@@ -215,7 +215,7 @@ namespace APIViewWeb.Managers
                     Language = codeFileA.CodeFile.Language
                 };
                 var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
-                return result.HasDiff;
+                return !result.HasDiff;
             }
             else
             {

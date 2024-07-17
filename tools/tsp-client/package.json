@@ -17,7 +17,7 @@
     "clean": "rimraf ./dist ./types",
     "example": "npx tsx src/index.ts update -o ./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/",
     "prepack": "npm run build",
-    "test": "mocha -- --ignore \"**/examples/**\"",
+    "test": "mocha",
     "test:commands": "npx tsx ./test/run_commands.ts"
   },
   "author": "Microsoft Corporation",
@@ -44,8 +44,8 @@
     "prettier": "^3.0.1",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
-    "typescript": "^5.1.6",
-    "tsx": "^4.16.2"
+    "tsx": "^4.16.2",
+    "typescript": "^5.1.6"
   },
   "dependencies": {
     "@azure/core-rest-pipeline": "^1.12.0",
@@ -62,7 +62,7 @@
     "extension": [
       "ts"
     ],
-    "spec": "test/**/*.spec.ts",
+    "spec": "test/*.spec.ts",
     "loader": "ts-node/esm"
   }
 }

@@ -103,9 +103,7 @@ export class ReviewPageComponent implements OnInit {
     this.sideMenu = [
       {
           icon: 'bi bi-clock-history',
-      },
-      {
-          icon: 'bi bi-file-diff'
+          command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
       },
       {
           icon: 'bi bi-chat-left-dots'
@@ -217,10 +215,6 @@ export class ReviewPageComponent implements OnInit {
           }
         }
       });
-  }
-
-  showRevisionsPanel(showRevisionsPanel : any){
-    this.revisionSidePanel = showRevisionsPanel as boolean;
   }
 
   handlePageOptionsEmitter(showPageOptions: boolean) {

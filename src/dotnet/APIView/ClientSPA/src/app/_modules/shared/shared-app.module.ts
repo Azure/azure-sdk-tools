@@ -5,11 +5,23 @@ import { FooterComponent } from 'src/app/_components/shared/footer/footer.compon
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 import { ApprovalPipe } from 'src/app/_pipes/approval.pipe';
+import { RevisionsListComponent } from 'src/app/_components/revisions-list/revisions-list.component';
+import { ContextMenuModule } from 'primeng/contextmenu';
+import { TableModule } from 'primeng/table';
+import { ChipModule } from 'primeng/chip';
+import { DropdownModule } from 'primeng/dropdown';
+import { MenubarModule } from 'primeng/menubar';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { FormsModule } from '@angular/forms';
+import { SplitterModule } from 'primeng/splitter';
+import { SidebarModule } from 'primeng/sidebar';
+import { TimeagoModule } from 'ngx-timeago';
 
 @NgModule({
   declarations: [
     NavBarComponent,
     FooterComponent,
+    RevisionsListComponent,
     LanguageNamesPipe,
     LastUpdatedOnPipe,
     ApprovalPipe
@@ -17,12 +29,33 @@ import { ApprovalPipe } from 'src/app/_pipes/approval.pipe';
   exports: [
     NavBarComponent,
     FooterComponent,
+    RevisionsListComponent,
     LanguageNamesPipe,
     LastUpdatedOnPipe,
-    ApprovalPipe
+    ApprovalPipe,
+    ContextMenuModule,
+    TableModule,
+    ChipModule,
+    DropdownModule,
+    MenubarModule,
+    MultiSelectModule,
+    FormsModule,
+    SplitterModule,
+    SidebarModule,
+    TimeagoModule,
   ],
   imports: [
-    CommonModule
+    CommonModule,
+    ContextMenuModule,
+    TableModule,
+    ChipModule,
+    DropdownModule,
+    MenubarModule,
+    MultiSelectModule,
+    FormsModule,
+    SplitterModule,
+    SidebarModule,
+    TimeagoModule.forRoot(),
   ]
 })
 export class SharedAppModule { }

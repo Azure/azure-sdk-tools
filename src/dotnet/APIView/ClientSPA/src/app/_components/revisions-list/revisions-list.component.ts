@@ -15,7 +15,7 @@ import { UserProfileService } from 'src/app/_services/user-profile/user-profile.
   styleUrls: ['./revisions-list.component.scss']
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
-  @Input() review : Review | null = null;
+  @Input() review : Review | undefined = undefined;
 
   userProfile : UserProfile | undefined;
   reviewPageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Review/";
@@ -30,6 +30,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   sortField : string = "lastUpdatedOn";
   sortOrder : number = 1;
   filters: any = null;
+  showAddRevisionButton: boolean = false;
 
   sidebarVisible : boolean = false;
 
@@ -268,7 +269,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.showAPIRevisionsAssignedToMe = !this.showAPIRevisionsAssignedToMe;
     this.showDeletedAPIRevisions = false;
     if (this.showAPIRevisionsAssignedToMe) {
-      this.review = null;
+      this.review = undefined;
     }
     this.loadAPIRevisions(0, this.pageSize * 2, true);
   }

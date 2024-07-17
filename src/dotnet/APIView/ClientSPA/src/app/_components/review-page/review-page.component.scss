@@ -8,7 +8,7 @@
     }
 
     .p-sidebar-right {
-        width: 70dvw;
+        width: 75dvw;
     }
 
     .p-splitter-panel-nested {
@@ -39,5 +39,8 @@
     .p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
         color: var(--base-text-color);;
         font-size: x-large;
+        &:hover, &:active {
+            color: var(--primary-color);
+        }
     }
 }

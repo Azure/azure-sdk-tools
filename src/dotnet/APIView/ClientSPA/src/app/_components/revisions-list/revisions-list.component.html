@@ -44,7 +44,7 @@
     <ng-template pTemplate="caption">
         <div class="d-flex justify-content-between index-table-info">
             <div>
-                <p-chip label=""></p-chip>
+                <button type="button" *ngIf="showAddRevisionButton" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i>Add Revision</button>
             </div>
             <div>
                 <button *ngIf="showDeletedAPIRevisions && showDeleteButton" (click)="restoreRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Restore</button>
@@ -125,7 +125,7 @@
         </div>
     </ng-template>
 </p-table>
-<p-sidebar [(visible)]="sidebarVisible" position="right">
+<p-sidebar [(visible)]="sidebarVisible" position="right" [modal]="false">
     <h3>Filter APIRevisions</h3>
     <ul class="list-group list-group-flush">
         <li class="list-group-item">

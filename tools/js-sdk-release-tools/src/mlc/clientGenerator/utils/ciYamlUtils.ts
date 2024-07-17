@@ -13,7 +13,7 @@ interface ArtifactInfo {
 
 const comment = '# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.\n\n';
 
-async function createOrUpdateManagePlaneCiFile(
+async function createOrUpdateManagePlaneCiYaml(
     generatedPackageDirectory: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
@@ -22,7 +22,7 @@ async function createOrUpdateManagePlaneCiFile(
     const serviceDirRelativeToSDKDir = basename(serviceDir);
 
     if (!(await existsAsync(ciMgmtPath))) {
-        await createManagementPlaneCiFile(
+        await createManagementPlaneCiYaml(
             generatedPackageDirectory,
             ciMgmtPath,
             serviceDirRelativeToSDKDir,
@@ -30,7 +30,7 @@ async function createOrUpdateManagePlaneCiFile(
         );
         return ciMgmtPath;
     }
-    await updateManagementPlaneCiFile(generatedPackageDirectory, ciMgmtPath, npmPackageInfo);
+    await updateManagementPlaneCiYaml(generatedPackageDirectory, ciMgmtPath, npmPackageInfo);
     return ciMgmtPath;
 }
 
@@ -56,7 +56,7 @@ function makeSureArrayAvailableInCiYaml(current: any, path: string[]) {
     });
 }
 
-async function updateManagementPlaneCiFile(
+async function updateManagementPlaneCiYaml(
     generatedPackageDirectory: string,
     ciMgmtPath: string,
     npmPackageInfo: NpmPackageInfo
@@ -82,7 +82,7 @@ async function updateManagementPlaneCiFile(
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciMgmtPath) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
 
-    writeCiFile(ciMgmtPath, parsed);
+    writeCiYaml(ciMgmtPath, parsed);
 }
 
 function getArtifact(npmPackageInfo: NpmPackageInfo): ArtifactInfo {
@@ -91,7 +91,7 @@ function getArtifact(npmPackageInfo: NpmPackageInfo): ArtifactInfo {
     return { name, safeName };
 }
 
-async function createManagementPlaneCiFile(
+async function createManagementPlaneCiYaml(
     generatedPackageDirectory: string,
     ciMgmtPath: string,
     serviceDirRelativeToSDKDirectory: string,
@@ -106,22 +106,22 @@ async function createManagementPlaneCiFile(
     parsed.extends.parameters.ServiceDirectory = serviceDirRelativeToSDKDirectory;
     parsed.extends.parameters.Artifacts = [artifact];
 
-    await writeCiFile(ciMgmtPath, parsed);
+    await writeCiYaml(ciMgmtPath, parsed);
 }
 
-async function writeCiFile(ciMgmtPath: string, config: any) {
+async function writeCiYaml(ciMgmtPath: string, config: any) {
     const content = comment + stringify(config);
     await writeFile(ciMgmtPath, content, { encoding: 'utf-8', flush: true });
 }
 
-async function createOrUpdateDataPlaneCiFile(
+async function createOrUpdateDataPlaneCiYaml(
     generatedPackageDirectory: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
     throw new Error('Not implemented function');
 }
 
-export async function createOrUpdateCiFile(
+export async function createOrUpdateCiYaml(
     generatedPackageDirectory: string,
     options: ModularClientPackageOptions,
     npmPackageInfo: NpmPackageInfo
@@ -129,12 +129,12 @@ export async function createOrUpdateCiFile(
     logger.logInfo('Create or update CI files');
     switch (options.versionPolicyName) {
         case 'management': {
-            const ciPath = await createOrUpdateManagePlaneCiFile(generatedPackageDirectory, npmPackageInfo);
+            const ciPath = await createOrUpdateManagePlaneCiYaml(generatedPackageDirectory, npmPackageInfo);
             logger.logInfo('Created or updated MPG CI files successfully.');
             return ciPath;
         }
         case 'client': {
-            const ciPath = await createOrUpdateDataPlaneCiFile(generatedPackageDirectory, npmPackageInfo);
+            const ciPath = await createOrUpdateDataPlaneCiYaml(generatedPackageDirectory, npmPackageInfo);
             logger.logInfo('Created or updated DPG CI files successfully.');
             return ciPath;
         }

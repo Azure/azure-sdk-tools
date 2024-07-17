@@ -10,24 +10,33 @@ export enum ApiVersionType {
     Preview = 'Preview'
 }
 
-export interface ChangelogInfo {
+export interface ChangelogResult {
     content: string;
     hasBreakingChange: boolean;
     breakingChangeItems: string[];
 }
 
-export interface GeneratedPackageInfo {
+export interface InstallInstructionsResult {
+    full: string;
+}
+
+// TODO: investigate the inconsistency to https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/GenerateOutputSchema.json
+// the PackageResult here is stricter by making some optional field to required, due to we always want the package result contains specific fields
+export interface PackageResult {
     packageName: string;
     version: string;
     path: string[];
-    changelog: ChangelogInfo;
+    changelog: ChangelogResult;
     artifacts: string[];
-    result: 'succeeded' | 'failed';
-    packageFolder?: string;
+    result: 'succeeded' | 'failed' | 'warning';
+    packageFolder: string;
+    typespecProject?: string[];
+    readmeMd?: string[];
+    installInstructions?: InstallInstructionsResult;
 }
 
 export interface GenerationOutputInfo {
-    packages: GeneratedPackageInfo[];
+    packages: PackageResult[];
 }
 
 export interface ModularClientPackageOptions {

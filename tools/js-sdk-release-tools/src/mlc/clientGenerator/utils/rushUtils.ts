@@ -45,14 +45,22 @@ async function packPackage(packageDirectory: string) {
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, env, cwd };
 
-    // TODO: check test result
     logger.logInfo(`Start rushx test.`);
-    const { stdout, stderr } = await runCommand('rushx', ['test'], options);
-    logger.logInfo(`rushx test successfully.`);
+    try {
+        await runCommand('rushx', ['test'], options);
+        logger.logInfo(`rushx test successfully.`);
 
-    logger.logInfo(`Start rushx pack.`);
-    await runCommand('rushx', ['pack'], options);
-    logger.logInfo(`rushx pack successfully.`);
+        logger.logInfo(`Start rushx pack.`);
+        await runCommand('rushx', ['pack'], options);
+        logger.logInfo(`rushx pack successfully.`);
+    } catch (err) {
+        logger.logError(`Run command failed due to: ${(err as Error)?.stack ?? err}`);
+        throw err;
+    }
+}
+
+function isRushTestPass(testOutput: string): boolean {
+    return true;
 }
 
 export async function buildPackage(packageDirectory: string, options: ModularClientPackageOptions) {
@@ -67,10 +75,15 @@ export async function buildPackage(packageDirectory: string, options: ModularCli
     if (!dev_rush_build_package) {
         return;
     }
-    await runCommand(`rush`, ['update'], runCommandOptions);
-    logger.logInfo(`Rush update successfully.`);
-    await runCommand('rush', ['build', '-t', name], runCommandOptions);
-    logger.logInfo(`Build package "${name}" successfully.`);
+    try {
+        await runCommand(`rush`, ['update'], runCommandOptions);
+        logger.logInfo(`Rush update successfully.`);
+        await runCommand('rush', ['build', '-t', name], runCommandOptions);
+        logger.logInfo(`Build package "${name}" successfully.`);
+    } catch (err) {
+        logger.logError(`Run command failed due to: ${(err as Error)?.stack ?? err}`);
+        throw err;
+    }
 }
 
 export async function createArtifact(packageDirectory: string) {

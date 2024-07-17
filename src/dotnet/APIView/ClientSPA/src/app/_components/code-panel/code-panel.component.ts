@@ -56,17 +56,17 @@ export class CodePanelComponent implements OnChanges{
         this.codePanelRowSource = undefined;
       }
     }
-
+  
     if (changes['scrollToNodeIdHashed'] && changes['scrollToNodeIdHashed'].currentValue) {
       this.scrollToNode(this.scrollToNodeIdHashed!);
     }
-
+  
     if (changes['loadFailed'] && changes['loadFailed'].currentValue) {
       this.isLoading = false;
     }
   }
 
-  onCodePanelItemClick(event: Event) {
+ onCodePanelItemClick(event: Event) {
     const target = event.target as Element;
     if (target.classList.contains('nav-token')) {
       const navigationId = target.getAttribute('data-navigate-to-id');
@@ -135,6 +135,13 @@ export class CodePanelComponent implements OnChanges{
       return token.properties['NavigateToUrl'];
     }
     return "";
+  }
+
+  getAssociatedCodeLine(item: CodePanelRowData): CodePanelRowData | undefined {
+    if (this.codePanelData?.nodeMetaData && this.codePanelData.nodeMetaData[item.nodeIdHashed]) {
+      return this.codePanelData.nodeMetaData[item.nodeIdHashed].codeLines[item.associatedRowPositionInGroup] || undefined;
+    }
+    return undefined;
   }
 
   toggleNodeComments(target: Element) {

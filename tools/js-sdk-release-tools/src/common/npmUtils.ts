@@ -1,5 +1,5 @@
 import { load } from '@npmcli/package-json';
-import { NpmPackageInfo } from '../../../common/types';
+import { NpmPackageInfo } from './types';
 
 export async function getNpmPackageInfo(packageDirectory): Promise<NpmPackageInfo> {
     const packageJson = await load(packageDirectory);

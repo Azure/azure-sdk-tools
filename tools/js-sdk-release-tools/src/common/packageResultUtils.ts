@@ -1,5 +1,5 @@
-import { Changelog } from '../../../changelog/changelogGenerator';
-import { ChangelogResult, NpmPackageInfo, PackageResult } from '../../../common/types';
+import { Changelog } from '../changelog/changelogGenerator';
+import { ChangelogResult, NpmPackageInfo, PackageResult } from './types';
 
 export function initPackageResult(): PackageResult {
     const breakingChangeItems = [];

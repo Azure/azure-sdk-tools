@@ -39,12 +39,15 @@ export interface GenerationOutputInfo {
     packages: PackageResult[];
 }
 
+export type VersionPolicyName = 'management' | 'client';
+export type EmitterName = '@azure-tools/typespec-ts' | '';
+
 export interface ModularClientPackageOptions {
     typeSpecDirectory: string;
     gitCommitId: string;
     skip: boolean;
     repoUrl: string;
-    versionPolicyName: 'management' | 'client';
+    versionPolicyName: VersionPolicyName;
 }
 
 export interface NpmPackageInfo {

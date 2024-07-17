@@ -1,10 +1,10 @@
 import { readFile, writeFile } from 'fs/promises';
-import { ModularClientPackageOptions, NpmPackageInfo } from '../../../common/types';
+import { NpmPackageInfo, VersionPolicyName } from './types';
 import { basename, join, posix } from 'path';
-import { logger } from '../../../utils/logger';
+import { logger } from '../utils/logger';
 import { parse, stringify } from 'yaml';
 import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils';
-import { existsAsync } from '../../../common/utils';
+import { existsAsync } from './utils';
 
 interface ArtifactInfo {
     name: string;
@@ -123,11 +123,11 @@ async function createOrUpdateDataPlaneCiYaml(
 
 export async function createOrUpdateCiYaml(
     generatedPackageDirectory: string,
-    options: ModularClientPackageOptions,
+    versionPolicyName: VersionPolicyName,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
     logger.logInfo('Create or update CI files');
-    switch (options.versionPolicyName) {
+    switch (versionPolicyName) {
         case 'management': {
             const ciPath = await createOrUpdateManagePlaneCiYaml(generatedPackageDirectory, npmPackageInfo);
             logger.logInfo('Created or updated MPG CI files successfully.');
@@ -139,6 +139,6 @@ export async function createOrUpdateCiYaml(
             return ciPath;
         }
         default:
-            throw new Error(`Unsupported version policy name: ${options.versionPolicyName}`);
+            throw new Error(`Unsupported version policy name: ${versionPolicyName}`);
     }
 }

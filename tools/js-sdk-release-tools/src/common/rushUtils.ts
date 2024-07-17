@@ -1,10 +1,10 @@
-import { ModularClientPackageOptions } from '../../../common/types';
-import { runCommand, runCommandOptions } from '../../../common/utils';
-import { logger } from '../../../utils/logger';
+import { runCommand, runCommandOptions } from './utils';
+import { logger } from '../utils/logger';
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
 import { posix, join } from 'node:path';
+import { VersionPolicyName } from './types';
 
 interface ProjectItem {
     packageName: string;
@@ -63,13 +63,13 @@ function isRushTestPass(testOutput: string): boolean {
     return true;
 }
 
-export async function buildPackage(packageDirectory: string, options: ModularClientPackageOptions) {
+export async function buildPackage(packageDirectory: string, versionPolicyName: VersionPolicyName) {
     logger.logInfo(`Building package in ${packageDirectory}.`);
     const { name } = await getNpmPackageInfo(packageDirectory);
     await updateRushJson({
         packageName: name,
         projectFolder: packageDirectory,
-        versionPolicyName: options.versionPolicyName
+        versionPolicyName: versionPolicyName
     });
 
     if (!dev_rush_build_package) {

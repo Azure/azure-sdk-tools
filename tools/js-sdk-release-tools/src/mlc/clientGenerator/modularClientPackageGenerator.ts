@@ -1,11 +1,11 @@
 import { PackageResult, ModularClientPackageOptions } from '../../common/types';
 import { logger } from '../../utils/logger';
 import { generateChangelogAndBumpVersion } from '../changlog/generateChangelog';
-import { createOrUpdateCiYaml } from './utils/ciYamlUtils';
-import { getNpmPackageInfo } from './utils/npmUtils';
-import { buildPackage, createArtifact } from './utils/rushUtils';
-import { generateTypeScriptCodeFromTypeSpec, getGeneratedPackageDirectory } from './utils/typeSpecUtils';
-import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from './utils/packageResultUtils';
+import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
+import { getNpmPackageInfo } from '../../common/npmUtils';
+import { buildPackage, createArtifact } from '../../common/rushUtils';
+import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
+import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -17,11 +17,9 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     logger.logInfo(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
     try {
-        // TODO: check if clean last generation
-        await generateTypeScriptCodeFromTypeSpec(options);
-        const generatedPackageDir = await getGeneratedPackageDirectory(options.typeSpecDirectory);
+        const generatedPackageDir =  await generateTypeScriptCodeFromTypeSpec(options);
 
-        await buildPackage(generatedPackageDir, options);
+        await buildPackage(generatedPackageDir, options.versionPolicyName);
 
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
@@ -35,7 +33,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         const artifactPath = await createArtifact(generatedPackageDir);
         packageResult.artifacts.push(artifactPath);
 
-        const ciYamlPath = await createOrUpdateCiYaml(generatedPackageDir, options, npmPackageInfo);
+        const ciYamlPath = await createOrUpdateCiYaml(generatedPackageDir, options.versionPolicyName, npmPackageInfo);
         packageResult.path.push(ciYamlPath);
 
         packageResult.result = 'succeeded';

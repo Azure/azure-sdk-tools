@@ -74,106 +74,20 @@
         </div>
     </ng-template>
 </p-table>
-<button type="button" (click)="createReviewSidebarVisible = true" class="btn btn-primary" id="create-review-button"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
-<p-sidebar [(visible)]="createReviewSidebarVisible" (onHide)="onHideSideBar()" position="right">
-    <h3>Create Review</h3>
-    <p>
-        Select a Language Below to view instructions for creating a Review.
-    </p>
-    <form [formGroup]="createReviewForm" (ngSubmit)="createReview()">
-        <p-dropdown formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
-            <ng-template pTemplate="selectedItem">
-                <div class="flex align-items-center gap-2" *ngIf="createReviewForm.get('selectedCRLanguage')!.value">
-                  <img src="{{assetsPath}}/images/{{ createReviewForm.get('selectedCRLanguage')!.value!.label | languageNames }}-original.svg" style="width: 25px"/>
-                  <span class="mx-2 mt-1">{{ createReviewForm.get('selectedCRLanguage')!.value!.label }}</span>
-                </div>
-            </ng-template>
-            <ng-template let-crLanguage pTemplate="item">
-                <div class="flex align-items-center gap-2">
-                    <img src="{{assetsPath}}/images/{{ crLanguage.label | languageNames }}-original.svg" style="width: 25px"/>
-                    <span class="mx-2 mt-1">{{ crLanguage.label }}</span>
-                </div>
-            </ng-template>
-        </p-dropdown>
-        <div *ngIf="createReviewInstruction && createReviewInstruction!.length > 0" class="card mt-2">
-            <div class="card-body">
-              <h5 class="card-title">What to Upload</h5>
-              <ol *ngIf=" createReviewForm.get('selectedCRLanguage')!.value && createReviewForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'">
-                <li *ngFor="let item of createReviewInstruction" [innerHTML]="item"></li>
-              </ol>
-              <div *ngIf="createReviewForm.get('selectedCRLanguage')!.value && createReviewForm.get('selectedCRLanguage')!.value!.label == 'TypeSpec'">
-                    TypeSpec review can be generated manually using one of the following options.
-                    <ol>
-                        <li>
-                            <strong>Option 1:</strong> Create API review using a link to TypeSpec project. Provide the URL to project and click Upload.
-                        </li>
-                        <li>
-                            <strong>Option 2:</strong> Create API review file locally using following steps.
-                            <ul>
-                                <li>
-                                    Install  <code>@azure-tools/typespec-apiview</code>
-                                </li>
-                                <li>
-                                    Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "@azure-tools/typespec-apiview"</code>
-                                </li>
-                                <li>
-                                    Select Json as the language option in Create review page.
-                                </li>
-                                <li>
-                                    Upload the JSON file that is emitted.
-                                </li>
-                            </ul>
-                        </li>
-                    </ol>
-                </div>
-            </div>
-        </div>
-        <div class="mt-2">
-            <p-fileUpload
-                #reviewCreationFileUpload name="selectedFile"
-                *ngIf="createReviewForm.get('selectedCRLanguage')!.value != undefined && createReviewForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'"
-                chooseLabel="Select {{ acceptedFilesForReviewUpload }} File to Upload" [customUpload]="true"
-                [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0" 
-                accept="{{acceptedFilesForReviewUpload}}" class="mt-2" (onSelect)="onFileSelect($event)">
-                <ng-template pTemplate="content">
-                    <div *ngIf="createReviewForm.get('selectedFile')!.value == null" class="mx-2">or drag and drop files here</div>
-                </ng-template>
-            </p-fileUpload>
-        </div>
-        <div *ngIf="createReviewForm.get('selectedCRLanguage')!.value != undefined && createReviewForm.get('selectedCRLanguage')!.value!.label == 'TypeSpec'"
-            class="card flex justify-content-center mt-2">
-            <input type="text" pInputText formControlName="filePath"
-            placeholder="Package root e.g https://github.com/Azure/azure-rest-api-specs/specification/cognitiveservices/AnomalyDetector/"/>
-        </div>
-        <div *ngIf="createReviewForm.get('selectedCRLanguage')!.value != undefined" class="card flex justify-content-center mt-2">
-            <input type="text" pInputText formControlName="label"  placeholder="Enter a label for the APIRevision"/>
-        </div>
-        <div class="d-grid gap-2 mt-2">
-            <button *ngIf="createReviewForm.get('selectedCRLanguage')!.value != undefined" [disabled]="!createReviewForm.valid"
-                type="submit" class="btn btn-primary btn-md"><i class="fas fa-cloud-upload-alt"></i> {{ crButtonText }}
-                <span *ngIf="creatingReview" class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
-            </button>
-        </div>
-    </form>
-</p-sidebar>
-<p-sidebar [(visible)]="filterSideBarVisible" position="right">
+<p-sidebar [(visible)]="filterSideBarVisible" position="right" styleClass="filters-sidebar">
     <h3>Filter Reviews</h3>
     <ul class="list-group list-group-flush">
         <li class="list-group-item">
             <div class="me-auto">
                 <div class="fw-medium">First Release Aprroval</div>
-                <div class="d-grid gap-2 mt-2">
-                    <div class="btn-group" role="group" aria-label="First Release Approval Select">
-                        <input type="radio" class="btn-check" name="PendingFRAInput" id="PendingFRA" autocomplete="off" (click)="updateFirstReleaseApproval('Pending')">
-                        <label class="btn btn-outline-primary btn-sm" for="PendingFRA">Pending</label>
-                        
-                        <input type="radio" #firstReleaseApprovalAllCheck class="btn-check" name="AllFRAInput" id="AllFRA" autocomplete="off" (click)="updateFirstReleaseApproval('All')" checked>
-                        <label class="btn btn-outline-primary btn-sm" for="AllFRA">All</label>
-                        
-                        <input type="radio" class="btn-check" name="ApprovedFRAInput" id="ApprovedFRA" autocomplete="off" (click)="updateFirstReleaseApproval('Approved')">
-                        <label class="btn btn-outline-primary btn-sm" for="ApprovedFRA">Approved</label>
-                    </div>
-                </div>
+                <p-selectButton
+                    class="first-release-approval-filter-button"
+                    [options]="firstReleaseApprovalOptions"
+                    [(ngModel)]="firstReleaseApproval"
+                    (onChange)="updateFirstReleaseApproval($event)"
+                    optionLabel="label" 
+                    optionValue="value"
+                    [style]="{'margin-top':'8px'}" />
             </div>
         </li>
     </ul>

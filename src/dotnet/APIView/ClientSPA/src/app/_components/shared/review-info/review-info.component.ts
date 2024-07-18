@@ -17,7 +17,6 @@ export class ReviewInfoComponent {
   @Input() userProfile: UserProfile | undefined;
   
   @Input() review : Review | undefined = undefined;
-  @Output() revisionsSidePanel : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() pageOptionsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 
   showPageOptions: boolean = true;
@@ -40,10 +39,6 @@ export class ReviewInfoComponent {
         this.showPageOptions = false;
       }
     }
-  }
-
-  showRevisionSidePanel() {
-    this.revisionsSidePanel.emit(true);
   }
 
   onRightPanelCheckChange(event: any) {

@@ -4,7 +4,7 @@
         <h6>Select a Review on the left panel to view its APIRevisions</h6>
         <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
             <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
-            <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
         </div>
     </div>
 </div>
@@ -14,7 +14,7 @@
         <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
             <button *ngIf="!showDeletedAPIRevisions" type="button" (click)="toggleShowDeletedAPIRevisions()" class="btn btn-outline-primary">View Deleted APIRevisions</button>
             <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
-            <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
         </div>
     </div>
 </div>
@@ -44,7 +44,7 @@
     <ng-template pTemplate="caption">
         <div class="d-flex justify-content-between index-table-info">
             <div>
-                <p-chip label=""></p-chip>
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="createRevisionSidebarVisible = true;"><i class="bi bi-plus-lg"></i>Add Revision</button>
             </div>
             <div>
                 <button *ngIf="showDeletedAPIRevisions && showDeleteButton" (click)="restoreRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Restore</button>
@@ -52,7 +52,7 @@
                 <button *ngIf="showSelectionActions" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="clearSelection()"><i class="bi bi-x-circle me-1"></i>Selection</button>
                 <button *ngIf="!showDeletedAPIRevisions && showDiffButton" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="viewDiffOfSelectedAPIRevisions()"><i class="bi bi-file-diff me-1"></i>Diff</button>
                 <button *ngIf="tableHasFilters()" (click)="clear(apiRevisionsTable)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Filters</button>
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="optionsSidebarVisible = true"><i class="bi bi-sliders"></i></button>
             </div>
         </div>
     </ng-template>
@@ -99,7 +99,7 @@
         <tr [pContextMenuRow]="revision">
             <td><p-tableCheckbox [value]="revision"></p-tableCheckbox></td>
             <td>
-                <a *ngIf="!showDeletedAPIRevisions; else disabledLink" href="{{reviewPageWebAppUrl}}{{revision.reviewId}}/{{revision.id}}" target="_blank">{{ revision.resolvedLabel }}</a>
+                <a *ngIf="!showDeletedAPIRevisions; else disabledLink" (click)="viewRevision(revision)" style="cursor: pointer;">{{ revision.resolvedLabel }}</a>
                 <ng-template #disabledLink>{{ revision.resolvedLabel }}</ng-template>
             </td>
             <td class="author-table-data">
@@ -125,7 +125,86 @@
         </div>
     </ng-template>
 </p-table>
-<p-sidebar [(visible)]="sidebarVisible" position="right">
+<p-sidebar [(visible)]="createRevisionSidebarVisible" (onHide)="onHideCreateRevisionSidebar()" position="right" [modal]="false" styleClass="create-revision-sidebar">
+    <h3>Create Revision</h3>
+    <p *ngIf="!createRevisionForm.get('selectedCRLanguage')!.value">Select a Language Below to view instructions for creating a Review.</p>
+    <form [formGroup]="createRevisionForm" (ngSubmit)="createRevision()">
+        <p-dropdown formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
+            <ng-template pTemplate="selectedItem">
+                <div class="flex align-items-center gap-2" *ngIf="createRevisionForm.get('selectedCRLanguage')!.value">
+                  <img src="{{assetsPath}}/images/{{ createRevisionForm.get('selectedCRLanguage')!.value!.label | languageNames }}-original.svg" style="width: 25px"/>
+                  <span class="mx-2 mt-1">{{ createRevisionForm.get('selectedCRLanguage')!.value!.label }}</span>
+                </div>
+            </ng-template>
+            <ng-template let-crLanguage pTemplate="item">
+                <div class="flex align-items-center gap-2">
+                    <img src="{{assetsPath}}/images/{{ crLanguage.label | languageNames }}-original.svg" style="width: 25px"/>
+                    <span class="mx-2 mt-1">{{ crLanguage.label }}</span>
+                </div>
+            </ng-template>
+        </p-dropdown>
+        <div *ngIf="createRevisionInstruction && createRevisionInstruction!.length > 0" class="card mt-2">
+            <div class="card-body">
+              <h5 class="card-title">What to Upload</h5>
+              <ol *ngIf=" createRevisionForm.get('selectedCRLanguage')!.value && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'">
+                <li *ngFor="let item of createRevisionInstruction" [innerHTML]="item"></li>
+              </ol>
+              <div *ngIf="createRevisionForm.get('selectedCRLanguage')!.value && createRevisionForm.get('selectedCRLanguage')!.value!.label == 'TypeSpec'">
+                    TypeSpec review can be generated manually using one of the following options.
+                    <ol>
+                        <li>
+                            <strong>Option 1:</strong> Create API review using a link to TypeSpec project. Provide the URL to project and click Upload.
+                        </li>
+                        <li>
+                            <strong>Option 2:</strong> Create API review file locally using following steps.
+                            <ul>
+                                <li>
+                                    Install  <code>@azure-tools/typespec-apiview</code>
+                                </li>
+                                <li>
+                                    Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "@azure-tools/typespec-apiview"</code>
+                                </li>
+                                <li>
+                                    Select Json as the language option in Create review page.
+                                </li>
+                                <li>
+                                    Upload the JSON file that is emitted.
+                                </li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <p-fileUpload
+                #revisionCreationFileUpload name="selectedFile"
+                *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'"
+                chooseLabel="Select {{ acceptedFilesForReviewUpload }} File to Upload" [customUpload]="true"
+                [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0" 
+                accept="{{acceptedFilesForReviewUpload}}" class="mt-2" (onSelect)="onFileSelect($event)">
+                <ng-template pTemplate="content">
+                    <div *ngIf="createRevisionForm.get('selectedFile')!.value == null" class="mx-2">or drag and drop files here</div>
+                </ng-template>
+            </p-fileUpload>
+        </div>
+        <div *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label == 'TypeSpec'"
+            class="card flex justify-content-center mt-2">
+            <input type="text" pInputText formControlName="filePath"
+            placeholder="Package root e.g https://github.com/Azure/azure-rest-api-specs/specification/cognitiveservices/AnomalyDetector/"/>
+        </div>
+        <div *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined" class="card flex justify-content-center mt-2">
+            <input type="text" pInputText formControlName="label"  placeholder="Enter a label for the APIRevision"/>
+        </div>
+        <div class="d-grid gap-2 mt-2">
+            <button *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined" [disabled]="!createRevisionForm.valid"
+                type="submit" class="btn btn-primary btn-md"><i class="fas fa-cloud-upload-alt"></i> {{ crButtonText }}
+                <span *ngIf="creatingRevision" class="spinner-grow spinner-grow-sm" aria-hidden="true"></span>
+            </button>
+        </div>
+    </form>
+</p-sidebar>
+<p-sidebar [(visible)]="optionsSidebarVisible" position="right" [modal]="false" styleClass="options-sidebar">
     <h3>Filter APIRevisions</h3>
     <ul class="list-group list-group-flush">
         <li class="list-group-item">

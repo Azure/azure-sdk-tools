@@ -167,7 +167,9 @@ namespace CSharpAPIParser.TreeToken
                 foreach (DependencyInfo dependency in dependencies)
                 {
                     apiTreeNode.TopTokensObj.Add(StructuredToken.CreateTextToken(value: dependency.Name, id: dependency.Name));
-                    apiTreeNode.TopTokensObj.Add(StructuredToken.CreateTextToken(value: $"-{dependency.Version}"));
+                    var dependencyVersionToken = StructuredToken.CreateTextToken(value: $"-{dependency.Version}");
+                    dependencyVersionToken.TagsObj.Add(StructuredToken.SKIPP_DIFF);
+                    apiTreeNode.TopTokensObj.Add(dependencyVersionToken);
                     apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
                 }
                 apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateEmptyToken());

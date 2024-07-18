@@ -177,7 +177,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
         version: apiRevision.packageVersion,
         prNo: apiRevision.pullRequestNo,
         createdOn: apiRevision.createdOn,
-        creatorBy: apiRevision.createdBy,
+        createdBy: apiRevision.createdBy,
         lastUpdatedOn: apiRevision.lastUpdatedOn,
         isApproved: apiRevision.isApproved,
         isReleased: apiRevision.isReleased,

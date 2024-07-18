@@ -40,7 +40,11 @@
         }
     }
 
-    .revisions-sidebar {
+    .revisions-sidebar, .conversation-sidebar {
         width: 75dvw;
+    }
+
+    .conversation-sidebar {
+        width: 50dvw;
     }
 }

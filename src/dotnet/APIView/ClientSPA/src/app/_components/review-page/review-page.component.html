@@ -67,9 +67,14 @@
         </div>
     </div>
 </div>
-<p-sidebar [(visible)]="revisionSideBarVisible" position="right" [modal]="true" styleClass="revisions-sidebar">
+<p-sidebar [(visible)]="revisionSidePanel!" position="right" [modal]="true" styleClass="revisions-sidebar">
     <app-revisions-list 
         [review]="review"
-        [revisionSideBarVisible]="revisionSideBarVisible"></app-revisions-list>
+        [revisionSidePanel]="revisionSidePanel!"></app-revisions-list>
+</p-sidebar>
+<p-sidebar [(visible)]="conversationSidePanel!" position="right" [modal]="true" styleClass="conversation-sidebar">
+    <app-conversation 
+        [apiRevisions]="apiRevisions"
+        [comments]="comments"></app-conversation >
 </p-sidebar>
 <app-footer></app-footer>

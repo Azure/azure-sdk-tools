@@ -19,9 +19,9 @@ import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-opt
 import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { ConversationComponent } from 'src/app/_components/conversation/conversation.component';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -34,6 +34,7 @@ const routes: Routes = [
     ReviewInfoComponent,
     CodePanelComponent,
     CommentThreadComponent,
+    ConversationComponent,
     PageOptionsSectionComponent,
     ReviewPageOptionsComponent,
     ApiRevisionOptionsComponent,

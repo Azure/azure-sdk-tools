@@ -1,4 +1,4 @@
-import { NgModule, APP_INITIALIZER, isDevMode } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
@@ -39,10 +39,7 @@ export function initializeApp(configService: ConfigService) {
     BrowserAnimationsModule,
     TabMenuModule,
     ToolbarModule,
-    FileUploadModule,
     HttpClientModule,
-    InputTextModule,
-    ReactiveFormsModule,
   ],
   providers: [
     ConfigService,

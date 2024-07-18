@@ -50,7 +50,6 @@ const routes: Routes = [
     MenuModule,
     TimelineModule,
     ButtonModule,
-    SelectButtonModule,
     InputSwitchModule,
     UiScrollModule,
     RouterModule.forChild(routes),

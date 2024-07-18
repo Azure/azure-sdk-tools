@@ -12,10 +12,13 @@ import { ChipModule } from 'primeng/chip';
 import { DropdownModule } from 'primeng/dropdown';
 import { MenubarModule } from 'primeng/menubar';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SplitterModule } from 'primeng/splitter';
 import { SidebarModule } from 'primeng/sidebar';
 import { TimeagoModule } from 'ngx-timeago';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { FileUploadModule } from 'primeng/fileupload';
+import { InputTextModule } from 'primeng/inputtext';
 
 @NgModule({
   declarations: [
@@ -40,9 +43,13 @@ import { TimeagoModule } from 'ngx-timeago';
     MenubarModule,
     MultiSelectModule,
     FormsModule,
+    FileUploadModule,
+    ReactiveFormsModule,
+    SelectButtonModule,
     SplitterModule,
     SidebarModule,
     TimeagoModule,
+    InputTextModule
   ],
   imports: [
     CommonModule,
@@ -53,8 +60,12 @@ import { TimeagoModule } from 'ngx-timeago';
     MenubarModule,
     MultiSelectModule,
     FormsModule,
+    FileUploadModule,
+    ReactiveFormsModule,
+    SelectButtonModule,
     SplitterModule,
     SidebarModule,
+    InputTextModule,
     TimeagoModule.forRoot(),
   ]
 })

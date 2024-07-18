@@ -7,10 +7,6 @@
         }
     }
 
-    .p-sidebar-right {
-        width: 75dvw;
-    }
-
     .p-splitter-panel-nested {
         display: block;
         min-width: 0;
@@ -42,5 +38,9 @@
         &:hover, &:active {
             color: var(--primary-color);
         }
+    }
+
+    .revisions-sidebar {
+        width: 75dvw;
     }
 }

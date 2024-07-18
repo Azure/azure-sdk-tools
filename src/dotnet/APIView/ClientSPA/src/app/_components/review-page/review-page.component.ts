@@ -104,9 +104,6 @@ export class ReviewPageComponent implements OnInit {
       {
           icon: 'bi bi-clock-history',
           command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
-      },
-      {
-          icon: 'bi bi-chat-left-dots'
       }
     ];
   }

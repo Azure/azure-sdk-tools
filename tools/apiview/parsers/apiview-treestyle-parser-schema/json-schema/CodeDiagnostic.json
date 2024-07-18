@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "CodeDiagnostic.json",
+    "type": "object",
+    "properties": {
+        "DiagnosticId": {
+            "type": "string"
+        },
+        "Text": {
+            "type": "string"
+        },
+        "HelpLinkUri": {
+            "type": "string"
+        },
+        "TargetId": {
+            "type": "string",
+            "description": "Maps to the APITreeNode id"
+        },
+        "Level": {
+            "$ref": "CodeDiagnosticLevel.json"
+        }
+    },
+    "required": [
+        "DiagnosticId",
+        "Text",
+        "HelpLinkUri",
+        "TargetId",
+        "Level"
+    ]
+}

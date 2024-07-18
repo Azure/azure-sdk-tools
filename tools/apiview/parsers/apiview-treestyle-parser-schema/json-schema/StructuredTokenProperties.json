@@ -1,0 +1,16 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "StructuredTokenProperties.json",
+    "type": "object",
+    "properties": {
+        "GroupId": {
+            "type": "string",
+            "const": "doc",
+            "description": "Group a sequence of consecutive StructuredTokens. doc indicates that the group of tokens is documentation."
+        },
+        "NavigateToId": {
+            "type": "string",
+            "description": "Id to navigate to when StructuredToken is clicked."
+        }
+    }
+}

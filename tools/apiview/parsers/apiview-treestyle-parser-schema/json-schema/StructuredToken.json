@@ -1,0 +1,41 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "StructuredToken.json",
+    "type": "object",
+    "properties": {
+        "Id": {
+            "type": "string",
+            "description": "Token Id. Previously known as DefinitionId."
+        },
+        "Kind": {
+            "$ref": "StructuredTokenKind.json",
+            "description": "Represents the type of a structured token"
+        },
+        "Value": {
+            "type": "string",
+            "description": "The token value which will be displayed. Spacing tokens (LineBreak, NonBreakingSpace, TabSpace, and ParameterSeparator) don't need to have value"
+        },
+        "Properties": {
+            "$ref": "StructuredTokenProperties.json",
+            "description": "Properties of the StructuredToken."
+        },
+        "Tags": {
+            "type": "array",
+            "items": {
+                "$ref": "StructuredTokenTags.json"
+            },
+            "description": "Tags of the StructuredToken."
+        },
+        "RenderClasses": {
+            "type": "array",
+            "items": {
+                "$ref": "StructuredTokenRenderClasses.json"
+            },
+            "description": "Classes used to render the StructuredTokens."
+        }
+    },
+    "required": [
+        "Id",
+        "Kind"
+    ]
+}

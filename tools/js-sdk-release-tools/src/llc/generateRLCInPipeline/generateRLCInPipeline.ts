@@ -213,6 +213,7 @@ export async function generateRLCInPipeline(options: {
 
             await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
 
+            // TODO: remove it for typespec project, since no need now, the test and sample are decouple from build
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
         }

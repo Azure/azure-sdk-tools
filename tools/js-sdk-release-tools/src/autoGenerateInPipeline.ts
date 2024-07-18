@@ -8,11 +8,42 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { RunningEnvironment } from './utils/runningEnvironment';
 import { ModularClientPackageOptions, SDKType } from './common/types';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator';
+import { existsAsync } from './common/utils';
 
 const shell = require('shelljs');
 const fs = require('fs');
 
-async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use: string | undefined, typespecEmitter: string | undefined, sdkGenerationType: string | undefined) {
+async function isManagementPlaneModularClient(typespecProjectFolder: string[] | string | undefined) {
+    if (Array.isArray(typespecProjectFolder) && (typespecProjectFolder as string[]).length !== 1) {
+        throw new Error(`Unexpected typespecProjectFolder length: ${(typespecProjectFolder as string[]).length} (expect 1)`);
+    }
+
+    if (!typespecProjectFolder) {
+        return false;
+    }
+
+    const folder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
+    const tspConfigPath = path.join(folder, 'tspconfig.yaml');
+    if (!(await existsAsync(tspConfigPath))) {
+        return false;
+    }
+
+    return true;
+}
+
+
+// TODO: consider add stricter rules for RLC in when update SDK automation for RLC
+function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {
+    if (isMgmtWithHLC) {
+        return SDKType.HighLevelClient;
+    }
+    if (isMgmtWithModular) {
+        return SDKType.ModularClient;
+    }
+    return SDKType.RestLevelClient;
+}
+
+async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use: string | undefined, typespecEmitter: string | undefined, sdkGenerationType: string | undefined, skipBackupNodeModules: boolean) {
     // inputJson schema: https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/GenerateInputSchema.json
     // todo: add interface for the schema
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
@@ -47,24 +78,14 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const readmeMd = isTypeSpecProject ? undefined : typeof readmeFiles === 'string' ? readmeFiles : readmeFiles![0];
     const typespecProject = isTypeSpecProject ? typeof typespecProjectFolder === 'string' ? typespecProjectFolder : typespecProjectFolder![0] : undefined;
     const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
+    const isMgmtWithModular = await isManagementPlaneModularClient(typespecProjectFolder);
     const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
-    
-    // TODO
-    //#region debug
-    console.log('typespecProjectFolder', typespecProjectFolder);
-    const isRLC = readmeMd ? readmeMd!.includes('-rest') : false;
-    let sdkType = SDKType.HighLevelClient;
-    if (!isMgmtWithHLC) {
-        if (isRLC) {
-            sdkType = SDKType.RestLevelClient;
-        } else {
-            sdkType = SDKType.ModularClient;
-        }
-    }
-    //#endregion
+    const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
 
     try {
-        //await backupNodeModules(String(shell.pwd()));
+        if (!skipBackupNodeModules) {
+            await backupNodeModules(String(shell.pwd()));
+        }
         switch (sdkType) {
             case SDKType.HighLevelClient:
                 await generateMgmt({
@@ -107,7 +128,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                     gitCommitId,
                     skip,
                     repoUrl,
-                    // TODO: support MPG for now
+                    // support MPG for now
                     versionPolicyName: 'management'
                 };
                 await generateAzureSDKPackage(options);
@@ -117,19 +138,13 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                 break;
         }
     } catch (e) {
-        const err = e as Error;
-        if (err) {
-            if (err.stack) {
-                logger.logError(err.stack);
-            } else {
-                logger.logError(err.message);
-            }
-        } else {
-            logger.logError((e as any)?.message);
-        }
+        const err = e as any;
+        logger.logError(`Failed to generate sdk due to: "${err?.stack ?? err?.message ?? err?.name ?? err}"`)
         throw e;
     } finally {
-        //await restoreNodeModules(String(shell.pwd()));
+        if (!skipBackupNodeModules) {
+            await restoreNodeModules(String(shell.pwd()));
+        }
         fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, null, '  '), { encoding: 'utf-8' });
     }
 }
@@ -140,10 +155,12 @@ const optionDefinitions = [
     { name: 'sdkGenerationType', type: String },
     { name: 'inputJsonPath', type: String },
     { name: 'outputJsonPath', type: String },
+    // this option is used to skip backup node modules in local, do NOT set to true in sdk automation pipeline 
+    { name: 'skipBackupNodeModules', type: Boolean, defaultValue: false }
 ];
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
-    logger.logError(e.message);
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.skipBackupNodeModules ?? false).catch(e => {
+    logger.logError(e?.stack ?? e?.message ?? e?.name ?? e);
     process.exit(1);
 });

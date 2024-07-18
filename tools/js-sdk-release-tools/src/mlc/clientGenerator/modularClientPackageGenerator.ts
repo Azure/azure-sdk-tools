@@ -3,7 +3,7 @@ import { logger } from '../../utils/logger';
 import { generateChangelogAndBumpVersion } from '../changlog/generateChangelog';
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
 import { getNpmPackageInfo } from '../../common/npmUtils';
-import { buildPackage, createArtifact } from '../../common/rushUtils';
+import { buildPackage, tryBuildSamples, createArtifact, tryTestPackage } from '../../common/rushUtils';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
 
@@ -17,7 +17,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     logger.logInfo(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
     try {
-        const generatedPackageDir =  await generateTypeScriptCodeFromTypeSpec(options);
+        const generatedPackageDir = await generateTypeScriptCodeFromTypeSpec(options);
 
         await buildPackage(generatedPackageDir, options.versionPolicyName);
 
@@ -26,6 +26,10 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // TODO: consider to decouple version bump and changelog generation
         const changelog = await generateChangelogAndBumpVersion(generatedPackageDir);
         updateChangelogResult(packageResult, changelog);
+
+        // build sample and test package will NOT throw exceptions
+        await tryBuildSamples(generatedPackageDir);
+        await tryTestPackage(generatedPackageDir);
 
         const npmPackageInfo = await getNpmPackageInfo(generatedPackageDir);
         updateNpmPackageResult(packageResult, npmPackageInfo, options.typeSpecDirectory, generatedPackageDir);

@@ -12,11 +12,6 @@ interface ProjectItem {
     versionPolicyName: string;
 }
 
-// TODO: remove
-// only used for local debugging
-const dev_rush_build_package = false;
-const dev_rush_pack_package = true;
-
 async function updateRushJson(projectItem: ProjectItem) {
     const content = await readFile('rush.json', { encoding: 'utf-8' });
     const rushJson = parse(content.toString());
@@ -38,18 +33,10 @@ async function updateRushJson(projectItem: ProjectItem) {
 }
 
 async function packPackage(packageDirectory: string) {
-    if (!dev_rush_pack_package) {
-        return;
-    }
-    const env = { ...process.env, TEST_MODE: 'record' };
     const cwd = join(packageDirectory);
-    const options = { ...runCommandOptions, env, cwd };
+    const options = { ...runCommandOptions, cwd };
 
-    logger.logInfo(`Start rushx test.`);
     try {
-        await runCommand('rushx', ['test'], options);
-        logger.logInfo(`rushx test successfully.`);
-
         logger.logInfo(`Start rushx pack.`);
         await runCommand('rushx', ['pack'], options);
         logger.logInfo(`rushx pack successfully.`);
@@ -59,12 +46,8 @@ async function packPackage(packageDirectory: string) {
     }
 }
 
-function isRushTestPass(testOutput: string): boolean {
-    return true;
-}
-
 export async function buildPackage(packageDirectory: string, versionPolicyName: VersionPolicyName) {
-    logger.logInfo(`Building package in ${packageDirectory}.`);
+    logger.logInfo(`Start building package in ${packageDirectory}.`);
     const { name } = await getNpmPackageInfo(packageDirectory);
     await updateRushJson({
         packageName: name,
@@ -72,9 +55,6 @@ export async function buildPackage(packageDirectory: string, versionPolicyName: 
         versionPolicyName: versionPolicyName
     });
 
-    if (!dev_rush_build_package) {
-        return;
-    }
     try {
         await runCommand(`rush`, ['update'], runCommandOptions);
         logger.logInfo(`Rush update successfully.`);
@@ -86,8 +66,37 @@ export async function buildPackage(packageDirectory: string, versionPolicyName: 
     }
 }
 
+// no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
+export async function tryBuildSamples(packageDirectory: string) {
+    logger.logInfo(`Start building samples in ${packageDirectory}.`);
+
+    const cwd = join(packageDirectory);
+    const options = { ...runCommandOptions, cwd };
+    try {
+        await runCommand(`rushx`, ['build:samples'], options);
+        logger.logInfo(`built samples successfully.`);
+    } catch (err) {
+        logger.logError(`Building samples failed due to: ${(err as Error)?.stack ?? err}`);
+    }
+}
+
+// no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
+export async function tryTestPackage(packageDirectory: string) {
+    logger.logInfo(`Start testing package in ${packageDirectory}.`);
+
+    const env = { ...process.env, TEST_MODE: 'record' };
+    const cwd = join(packageDirectory);
+    const options = { ...runCommandOptions, env, cwd };
+    try {
+        await runCommand(`rushx`, ['test'], options);
+        logger.logInfo(`tested package successfully.`);
+    } catch (err) {
+        logger.logError(`Test package failed due to: ${(err as Error)?.stack ?? err}`);
+    }
+}
+
 export async function createArtifact(packageDirectory: string) {
-    logger.logInfo(`Creating artifact in ${packageDirectory}`);
+    logger.logInfo(`Start creating artifact in ${packageDirectory}`);
     await packPackage(packageDirectory);
     const info = await getNpmPackageInfo(packageDirectory);
     const artifactName = getArtifactName(info);
@@ -96,7 +105,7 @@ export async function createArtifact(packageDirectory: string) {
     try {
         await access(artifactPath);
     } catch (error) {
-        throw new Error(`Failed to find artifact ${artifactPath}`);
+        throw new Error(`Failed to find generated artifact ${artifactPath}`);
     }
     logger.logInfo(`Creating artifact ${info.name} successfully.`);
     return artifactPath;

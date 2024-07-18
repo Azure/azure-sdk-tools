@@ -5,10 +5,6 @@ import { join, posix } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { parse } from 'yaml';
 
-// TODO: remove
-// only used for local debugging
-const dev_generate_ts_code = false;
-
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
 const emitterName = '@azure-tools/typespec-ts';
@@ -46,10 +42,6 @@ async function getGeneratedPackageDirectory(typeSpecDirectory: string): Promise<
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts'
 export async function generateTypeScriptCodeFromTypeSpec(options: ModularClientPackageOptions): Promise<string> {
-    if (!dev_generate_ts_code) {
-        return '';
-    }
-
     const script = './eng/common/scripts/TypeSpec-Project-Process.ps1';
     try {
         await runCommand(

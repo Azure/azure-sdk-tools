@@ -316,13 +316,21 @@ type TypeAlias struct {
 	QualifiedName string
 	// SourceModPath is the path of the module defining the type e.g. "github.com/Azure/azure-sdk-for-go/sdk/internal"
 	SourceModPath string
+
+	// resolved indicates whether the alias has been resolved
+	resolved bool
 }
 
-// Resolve adds the definition of a type to the package that exports it via an alias.
-func (a *TypeAlias) Resolve(def *typeDef) error {
-	alias := a.Name
-	if def != nil {
-		a.Package.types[alias] = *def
+// Resolve adds review content for the alias. If def is nonzero i.e., it carries a syntax node for the type definition,
+// Resolve adds that definition to the package exporting the alias. Otherwise, Resolve adds a SimpleType representing the
+// alias to the review.
+func (a *TypeAlias) Resolve(def typeDef) error {
+	if a.resolved {
+		// this should never happen but if it does, it's a bug we want to know about
+		return fmt.Errorf("alias %s already resolved", a.Name)
+	}
+	if def != (typeDef{}) {
+		a.Package.types[a.Name] = def
 	}
 	level := DiagnosticLevelInfo
 	originalName := a.QualifiedName
@@ -332,15 +340,15 @@ func (a *TypeAlias) Resolve(def *typeDef) error {
 		level = DiagnosticLevelWarning
 	}
 	var t TokenMaker
-	if def == nil {
-		t = a.Package.c.addSimpleType(*a.Package, alias, a.Package.Name(), a.QualifiedName, nil)
+	if def.n == nil || def.p == nil {
+		t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), a.QualifiedName, nil)
 	} else {
 		switch n := def.n.Type.(type) {
 		case *ast.InterfaceType:
-			t = a.Package.c.addInterface(*def.p, alias, a.Package.Name(), n, nil)
+			t = a.Package.c.addInterface(*def.p, a.Name, a.Package.Name(), n, nil)
 		case *ast.StructType:
-			t = a.Package.c.addStruct(*def.p, alias, a.Package.Name(), def.n, nil)
-			hoistMethodsForType(def.p, alias, a.Package)
+			t = a.Package.c.addStruct(*def.p, a.Name, a.Package.Name(), def.n, nil)
+			hoistMethodsForType(def.p, a.Name, a.Package)
 			// ensure that all struct field types that are structs are also aliased from this package
 			for _, field := range n.Fields.List {
 				fieldTypeName := unwrapStructFieldTypeName(field)
@@ -369,11 +377,11 @@ func (a *TypeAlias) Resolve(def *typeDef) error {
 				})
 			}
 		case *ast.Ident:
-			t = a.Package.c.addSimpleType(*a.Package, alias, a.Package.Name(), def.n.Type.(*ast.Ident).Name, nil)
-			hoistMethodsForType(def.p, alias, a.Package)
+			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), def.n.Type.(*ast.Ident).Name, nil)
+			hoistMethodsForType(def.p, a.Name, a.Package)
 		default:
 			fmt.Printf("unexpected node type %T\n", def.n.Type)
-			t = a.Package.c.addSimpleType(*a.Package, alias, a.Package.Name(), originalName, nil)
+			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), originalName, nil)
 		}
 	}
 
@@ -384,6 +392,7 @@ func (a *TypeAlias) Resolve(def *typeDef) error {
 			Text:     aliasFor + originalName,
 		})
 	}
+	a.resolved = true
 	return nil
 }
 

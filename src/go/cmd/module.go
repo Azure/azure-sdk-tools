@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"go/ast"
 	"io/fs"
 	"os"
@@ -33,9 +34,6 @@ type Module struct {
 	Name string
 	// Packages maps import paths to the module's Packages
 	Packages map[string]*Pkg
-
-	// indexed is true after Index() succeeds
-	indexed bool
 }
 
 // getPackageNameFromModPath gets the API review name for the module at modPath
@@ -53,9 +51,9 @@ func getPackageNameFromModPath(modPath string) string {
 	return modPath
 }
 
-// NewModule constructs a Module, locating its constituent packages but not parsing any source.
-// Call [Module.Index] to collect type information.
+// NewModule indexes a module's ASTs
 func NewModule(dir string) (*Module, error) {
+	fmt.Println("Indexing", dir)
 	mf, err := parseModFile(dir)
 	if err != nil {
 		return nil, err
@@ -97,20 +95,10 @@ func NewModule(dir string) (*Module, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &m, nil
-}
 
-// Index all the types in the module's packages, populating m.Packages and resolving
-// cross-package type aliases. It adds cross-module aliases to [Module.ExternalAliases]
-// so callers can later resolve these after indexing referenced external modules.
-func (m *Module) Index() {
-	if m.indexed {
-		return
-	}
 	for _, p := range m.Packages {
 		p.Index()
 	}
-
 	// resolve cross-package references by adding the definitions of types exported by alias to the exporting package
 	for _, p := range m.Packages {
 		for _, alias := range p.TypeAliases {
@@ -136,7 +124,7 @@ func (m *Module) Index() {
 			}
 		}
 	}
-	m.indexed = true
+	return &m, nil
 }
 
 // returns the type name for the specified struct field.

@@ -39,7 +39,6 @@ func NewReview(p string) (*Review, error) {
 		name:    getPackageNameFromModPath(m.ModFile.Module.Mod.Path),
 		path:    p,
 	}
-	fmt.Println("Reviewing", r.name)
 	err = r.AddModule(m)
 	return r, err
 }
@@ -50,7 +49,6 @@ func (r *Review) AddModule(m *Module) error {
 	if _, ok := r.modules[m.ModFile.Module.Mod.Path]; ok {
 		return fmt.Errorf("module %s already exists in index", m.ModFile.Module.Mod.Path)
 	}
-	m.Index()
 	if len(r.modules) == 0 {
 		r.reviewed = m
 	}
@@ -59,7 +57,7 @@ func (r *Review) AddModule(m *Module) error {
 }
 
 func (r *Review) Review() (PackageReview, error) {
-	r.index()
+	r.resolveAliases()
 
 	tokenList := &[]Token{}
 	nav := []Navigation{}
@@ -125,13 +123,6 @@ func (r *Review) Review() (PackageReview, error) {
 		Tokens:      *tokenList,
 		PackageName: r.name,
 	}, nil
-}
-
-func (r *Review) index() {
-	for _, m := range r.modules {
-		m.Index()
-	}
-	r.resolveAliases()
 }
 
 // findLocalModule tries to find the source module defining a type in the same repository as

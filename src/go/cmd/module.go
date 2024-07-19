@@ -98,8 +98,8 @@ func (m *Module) Index() {
 	// resolve cross-package references by adding the definitions of types exported by alias to the exporting package
 	for _, p := range m.Packages {
 		for _, alias := range p.TypeAliases {
-			if def, ok := recursiveFindTypeDef(alias, p, m.Packages); ok {
-				alias.Resolve(&def)
+			if def, ok := recursiveFindTypeDef(alias.Name, p, m.Packages); ok {
+				alias.Resolve(def)
 				continue
 			}
 			// The definition is in another module. Add the alias to
@@ -110,7 +110,14 @@ func (m *Module) Index() {
 					break
 				}
 			}
-			m.ExternalAliases = append(m.ExternalAliases, alias)
+			if alias.SourceModPath == "" {
+				// The exporting module doesn't require the source module, so this must be a standard library type.
+				// We want this to appear in the API like "type AzureTime time.Time" and don't want to hoist the
+				// definition into the review. Resolving with a zero typeDef adds a SimpleType to the review.
+				alias.Resolve(typeDef{})
+			} else {
+				m.ExternalAliases = append(m.ExternalAliases, alias)
+			}
 		}
 	}
 	m.indexed = true

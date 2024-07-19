@@ -79,12 +79,18 @@ export async function getPathToDependency(dependency: string): Promise<string> {
     }
 }
 
+/**
+ * Writes tsp-location.yaml file at the given projectPath. Ensures additional directories are formatted correctly.
+ *
+ * @param tspLocation TspLocation object containing tsp location information.
+ * @param projectPath Path to the project.
+ */
 export async function writeTspLocationYaml(
     tspLocation: TspLocation,
-    rootUrl: string,
+    projectPath: string,
   ): Promise<void> {
     await writeFile(
-      joinPaths(rootUrl, "tsp-location.yaml"),
+      joinPaths(projectPath, "tsp-location.yaml"),
       `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${formatAdditionalDirectories(tspLocation.additionalDirectories)}`,
     );
   }

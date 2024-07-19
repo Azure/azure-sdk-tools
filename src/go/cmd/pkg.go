@@ -328,8 +328,10 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	}
 	level := DiagnosticLevelInfo
 	originalName := a.QualifiedName
+	// if the definition is in the same module as the alias, strip the module path from the diagnostic message
 	if _, after, found := strings.Cut(a.QualifiedName, a.Package.modulePath); found {
-		originalName = strings.TrimPrefix(after, "/")
+		// after is e.g. "/internal/log.Event" or ".StatusType"
+		originalName = after[1:]
 	} else {
 		level = DiagnosticLevelWarning
 	}

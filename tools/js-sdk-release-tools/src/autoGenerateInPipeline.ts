@@ -13,7 +13,7 @@ import { existsAsync } from './common/utils';
 const shell = require('shelljs');
 const fs = require('fs');
 
-async function isManagementPlaneModularClient(typespecProjectFolder: string[] | string | undefined) {
+async function isManagementPlaneModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {
     if (Array.isArray(typespecProjectFolder) && (typespecProjectFolder as string[]).length !== 1) {
         throw new Error(`Unexpected typespecProjectFolder length: ${(typespecProjectFolder as string[]).length} (expect 1)`);
     }
@@ -22,8 +22,8 @@ async function isManagementPlaneModularClient(typespecProjectFolder: string[] | 
         return false;
     }
 
-    const folder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
-    const tspConfigPath = path.join(folder, 'tspconfig.yaml');
+    const resolvedTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
+    const tspConfigPath = path.join(specFolder, resolvedTspFolder, 'tspconfig.yaml');
     if (!(await existsAsync(tspConfigPath))) {
         return false;
     }
@@ -73,12 +73,13 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
 
     const packages: any[] = [];
     const outputJson = {
-        packages: packages
+        packages: packages,
+        language: 'JavaScript',
     };
     const readmeMd = isTypeSpecProject ? undefined : typeof readmeFiles === 'string' ? readmeFiles : readmeFiles![0];
     const typespecProject = isTypeSpecProject ? typeof typespecProjectFolder === 'string' ? typespecProjectFolder : typespecProjectFolder![0] : undefined;
     const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
-    const isMgmtWithModular = await isManagementPlaneModularClient(typespecProjectFolder);
+    const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
     const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
 
@@ -120,7 +121,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                 break;
 
             case SDKType.ModularClient: {
-                const typeSpecDirectory = typespecProject!;
+                const typeSpecDirectory = path.posix.join(specFolder, typespecProject!);
                 const skip = skipGeneration ?? false;
                 const repoUrl = repoHttpsUrl;
                 const options: ModularClientPackageOptions = {
@@ -131,7 +132,8 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                     // support MPG for now
                     versionPolicyName: 'management'
                 };
-                await generateAzureSDKPackage(options);
+                const packageResult = await generateAzureSDKPackage(options);
+                outputJson.packages = [packageResult];
                 break;
             }
             default:

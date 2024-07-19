@@ -30,12 +30,24 @@ describe("Verify tsp-location.yaml", function () {
       repo: "foo",
       additionalDirectories: [
         "specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
-        "specification/contosowidgetmanager/Contoso.WidgetManager.Utils",
       ],
     };
     await writeTspLocationYaml(tspLocation, "./test/examples/");
 
     const tspLocationFile = await stat("./test/examples/tsp-location.yaml");
     assert.isTrue(tspLocationFile.isFile());
+  });
+
+  it("Verify read tsp-location.yaml", async function () {
+    const tspLocation = await readTspLocation("./test/examples/");
+    assert.equal(tspLocation.directory, "specification/contosowidgetmanager/Contoso.WidgetManager");
+    assert.equal(tspLocation.commit, "1234567");
+    assert.equal(tspLocation.repo, "foo");
+    assert.typeOf(tspLocation.additionalDirectories, "array");
+    assert.equal(tspLocation.additionalDirectories?.length, 1);
+    assert.equal(
+      tspLocation.additionalDirectories?.[0],
+      "specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+    );
   });
 });

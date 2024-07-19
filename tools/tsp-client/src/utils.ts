@@ -1,9 +1,10 @@
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
-import { access, constants, mkdir } from "node:fs/promises";
+import { access, constants, mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
+import { TspLocation } from "./typespec.js";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
     let additionalDirOutput = "";
@@ -77,3 +78,13 @@ export async function getPathToDependency(dependency: string): Promise<string> {
         }
     }
 }
+
+export async function writeTspLocationYaml(
+    tspLocation: TspLocation,
+    rootUrl: string,
+  ): Promise<void> {
+    await writeFile(
+      joinPaths(rootUrl, "tsp-location.yaml"),
+      `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${formatAdditionalDirectories(tspLocation.additionalDirectories)}`,
+    );
+  }

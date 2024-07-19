@@ -3,12 +3,12 @@ import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRe
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, stat, rename, unlink } from "node:fs/promises";
+import { mkdir, cp, readFile, stat, rename, unlink } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
-import { formatAdditionalDirectories, getAdditionalDirectoryName, getPathToDependency, getServiceDir, makeSparseSpecDir } from "./utils.js";
+import { getAdditionalDirectoryName, getPathToDependency, getServiceDir, makeSparseSpecDir, writeTspLocationYaml } from "./utils.js";
 import { resolve } from "node:path";
 import { config as dotenvConfig } from "dotenv";
 
@@ -58,10 +58,13 @@ async function sdkInit(
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!)
     await mkdir(newPackageDir, { recursive: true });
-    const additionalDirOutput = formatAdditionalDirectories(configYaml?.parameters?.dependencies?.additionalDirectories);
-    await writeFile(
-      joinPaths(newPackageDir, "tsp-location.yaml"),
-    `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories:${additionalDirOutput}\n`);
+    const tspLocationData: TspLocation = {
+        directory: resolvedConfigUrl.path,
+        commit: resolvedConfigUrl.commit,
+        repo: resolvedConfigUrl.repo,
+        additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+        };
+    await writeTspLocationYaml(tspLocationData, newPackageDir);
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
     return newPackageDir;
@@ -81,7 +84,6 @@ async function sdkInit(
     }
     const configYaml = parseYaml(data);
     const serviceDir = getServiceDir(configYaml, emitter);
-    const additionalDirOutput = formatAdditionalDirectories(configYaml?.parameters?.dependencies?.additionalDirectories);
     const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
       throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
@@ -96,8 +98,13 @@ async function sdkInit(
         directory = matchRes.groups!["path"]!;
       }
     }
-    writeFile(joinPaths(newPackageDir, "tsp-location.yaml"),
-          `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories:${additionalDirOutput}\n`);
+    const tspLocationData: TspLocation = {
+        directory: directory,
+        commit: commit ?? "",
+        repo: repo ?? "",
+        additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+        };
+    await writeTspLocationYaml(tspLocationData, newPackageDir);
     return newPackageDir;
   }
 }
@@ -321,13 +328,13 @@ async function main() {
           const tspLocation: TspLocation = await readTspLocation(rootUrl);
           tspLocation.commit = options.commit ?? tspLocation.commit;
           tspLocation.repo = options.repo ?? tspLocation.repo;
-          await writeFile(joinPaths(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
+          await writeTspLocationYaml(tspLocation, rootUrl);
         } else if (options.tspConfig) {
           const tspLocation: TspLocation = await readTspLocation(rootUrl);
           const tspConfig = resolveTspConfigUrl(options.tspConfig);
           tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
           tspLocation.repo = tspConfig.repo ?? tspLocation.repo;
-          await writeFile(joinPaths(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
+          await writeTspLocationYaml(tspLocation, rootUrl);
         }
         await syncTspFiles(rootUrl, options.localSpecRepo);
         await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});

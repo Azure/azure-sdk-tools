@@ -37,7 +37,7 @@ describe("Verify other utils functions", function () {
     await removeDirectory(specDir);
   });
 
-  it("Check getAdditionalDirectoryName", async function () {
+  it("Check getAdditionalDirectoryName", function () {
     const dir = getAdditionalDirectoryName("/specification/foo");
     assert.equal(dir, "foo");
 
@@ -45,7 +45,7 @@ describe("Verify other utils functions", function () {
     assert.equal(dir2, "foo");
   });
 
-  it("Check formatAdditionalDirectories", async function () {
+  it("Check formatAdditionalDirectories", function () {
     const result = formatAdditionalDirectories(["/specification/foo", "/specification/bar"]);
     const expected = "\n- /specification/foo\n- /specification/bar";
     assert.equal(result, expected);

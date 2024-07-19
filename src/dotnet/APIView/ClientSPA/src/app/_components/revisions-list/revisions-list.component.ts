@@ -21,6 +21,7 @@ import { environment } from 'src/environments/environment';
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
+  @Input() revisionSideBarVisible : boolean = false;
 
   @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
 
@@ -106,6 +107,11 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       }
       this.showSelectionActions = false;
       this.showDiffButton = false;
+    }
+
+    if (changes['revisionSideBarVisible'] && changes['revisionSideBarVisible'].currentValue == false) {
+      this.createRevisionSidebarVisible = false;
+      this.optionsSidebarVisible = false;
     }
   }
 

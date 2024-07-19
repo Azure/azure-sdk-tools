@@ -394,6 +394,11 @@ namespace APIViewWeb.Helpers
                 {
                     var token = beforeTokens[beforeIndex++];
 
+                    if (codePanelRawData.ApplySkipDiff && token.TagsObj.Contains(StructuredToken.SKIPP_DIFF))
+                    {
+                        continue;
+                    }
+
                     if (token.Kind == StructuredTokenKind.LineBreak)
                     {
                         break;
@@ -428,6 +433,11 @@ namespace APIViewWeb.Helpers
                 while (afterIndex < afterTokens.Count)
                 {
                     var token = afterTokens[afterIndex++];
+
+                    if (codePanelRawData.ApplySkipDiff && token.TagsObj.Contains(StructuredToken.SKIPP_DIFF))
+                    {
+                        continue;
+                    }
 
                     if (token.Kind == StructuredTokenKind.LineBreak)
                     {

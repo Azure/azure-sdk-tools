@@ -9,7 +9,6 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.CodeAnalysis.Host;
 
 namespace APIViewWeb.Managers
 {
@@ -208,11 +207,12 @@ namespace APIViewWeb.Managers
 
             if (LanguageServiceHelpers.UseTreeStyleParser(codeFileA.CodeFile.Language))
             {
-                var diffTree =CodeFileHelpers.ComputeAPIForestDiff(codeFileA.CodeFile.APIForest, codeFileB.CodeFile.APIForest);
+                var diffTree = CodeFileHelpers.ComputeAPIForestDiff(codeFileA.CodeFile.APIForest, codeFileB.CodeFile.APIForest);
                 var codePanelRawData = new CodePanelRawData()
                 {
                     APIForest = diffTree,
-                    Language = codeFileA.CodeFile.Language
+                    Language = codeFileA.CodeFile.Language,
+                    ApplySkipDiff = true
                 };
                 var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
                 return !result.HasDiff;

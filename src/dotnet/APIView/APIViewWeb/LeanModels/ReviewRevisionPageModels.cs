@@ -67,6 +67,7 @@ namespace APIViewWeb.LeanModels
         public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
         public CodeDiagnostic[] Diagnostics { get; set; } = new CodeDiagnostic[0];
         public string Language { get; set; }
+        public bool ApplySkipDiff { get; set; }
     }
 
     public class CodePanelRowData

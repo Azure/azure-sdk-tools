@@ -16,6 +16,7 @@ import (
 	"unicode"
 
 	"golang.org/x/exp/slices"
+	"golang.org/x/mod/module"
 )
 
 // diagnostic messages
@@ -307,8 +308,8 @@ type TypeAlias struct {
 	Package *Pkg
 	// QualifiedName of the source type e.g. "github.com/Azure/azure-sdk-for-go/sdk/internal/log.Event"
 	QualifiedName string
-	// SourceModPath is the path of the module defining the type e.g. "github.com/Azure/azure-sdk-for-go/sdk/internal"
-	SourceModPath string
+	// SourceMod is the module defining the type
+	SourceMod module.Version
 
 	// resolved indicates whether the alias has been resolved
 	resolved bool

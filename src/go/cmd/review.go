@@ -10,6 +10,8 @@ import (
 	"slices"
 	"sort"
 	"strings"
+
+	"golang.org/x/mod/module"
 )
 
 var errExternalModule = errors.New("reviewed module exports a type defined in a different repository")
@@ -129,23 +131,24 @@ func (r *Review) Review() (PackageReview, error) {
 // the reviewed module. Returns errExternalModule if the source module is in a different repository.
 func (r *Review) findLocalModule(ta TypeAlias) (*Module, error) {
 	// localModulePath could be inlined but is instead separate for easier testing
-	if dir := localModulePath(ta.SourceModPath, r.path); dir != "" {
+	if dir := localModulePath(ta.SourceMod, r.path); dir != "" {
 		return NewModule(dir)
 	}
 	return nil, errExternalModule
 }
 
-// localModulePath tries to find a file path for the given modPath assuming the module
-// is in the same repository as dir. If it is, the two paths must have a common segment
-// implying a disk location for modPath. For example:
+// localModulePath tries to find a file path for the given module.Version assuming that
+// module is in the same repository as dir. If it is, the two paths must have a common
+// segment implying a disk location for the module. For example:
 //
-//   - modPath "github.com/Azure/azure-sdk-for-go/sdk/internal"
+//   - mod.Path "github.com/Azure/azure-sdk-for-go/sdk/internal"
 //   - dir "/home/me/azsdk/sdk/azcore"
 //   - return "/home/me/azsdk/sdk/internal"
 //
-// It returns an empty string when its arguments don't share a common segment.
-func localModulePath(modPath, dir string) string {
-	mp := strings.Split(modPath, "/")
+// It returns an empty string when no such segment exists. Also, it ignores the module
+// version, using only the module path.
+func localModulePath(mod module.Version, dir string) string {
+	mp := strings.Split(mod.Path, "/")
 	// find the rightmost common segment of modPath and filePath
 	i, j := -1, -1
 	for m := len(mp) - 1; m > 0; m-- {
@@ -170,7 +173,7 @@ func (r *Review) resolveAliases() error {
 			m   *Module
 			ok  bool
 		)
-		if m, ok = r.modules[ref.SourceModPath]; !ok {
+		if m, ok = r.modules[ref.SourceMod.Path]; !ok {
 			m, err = r.findLocalModule(*ref)
 			if err == nil {
 				err = r.AddModule(m)

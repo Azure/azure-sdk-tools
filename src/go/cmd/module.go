@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/module"
 )
 
 // indexTestdata allows tests to index this module's testdata
@@ -110,11 +111,11 @@ func NewModule(dir string) (*Module, error) {
 			// ExternalAliases so the caller can find the definition later.
 			for _, req := range m.ModFile.Require {
 				if strings.HasPrefix(alias.QualifiedName, req.Mod.Path) {
-					alias.SourceModPath = req.Mod.Path
+					alias.SourceMod = req.Mod
 					break
 				}
 			}
-			if alias.SourceModPath == "" {
+			if alias.SourceMod == (module.Version{}) {
 				// The exporting module doesn't require the source module, so this must be a standard library type.
 				// We want this to appear in the API like "type AzureTime time.Time" and don't want to hoist the
 				// definition into the review. Resolving with a zero typeDef adds a SimpleType to the review.

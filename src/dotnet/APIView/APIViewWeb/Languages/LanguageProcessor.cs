@@ -1,15 +1,22 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb
 {
     public abstract class LanguageProcessor: LanguageService
     {
+        private readonly TelemetryClient _telemetryClient;
+
+        public LanguageProcessor(TelemetryClient telemetryClient)
+        {
+            _telemetryClient = telemetryClient;
+        }
+
         public abstract string ProcessName { get; }
         public abstract string VersionString { get; }
         public abstract string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath);
@@ -25,6 +32,10 @@ namespace APIViewWeb
             var randomSegment = Guid.NewGuid().ToString("N");
             var tempDirectory = Path.Combine(tempPath, "ApiView", randomSegment);
             Directory.CreateDirectory(tempDirectory);
+            originalName = Path.GetFileName(originalName);
+            // Replace spaces and parentheses in the file name to remove invalid file name in cosmos DB.
+            // temporary work around. We need to make sure FileName is set for all requests.
+            originalName = originalName.Replace(" ", "_").Replace("(", "").Replace(")","");
             var originalFilePath = Path.Combine(tempDirectory, originalName);
 
             var jsonFilePath = (LanguageServiceHelpers.UseTreeStyleParser(this.Name)) ? Path.ChangeExtension(originalFilePath, ".json.tgz") : Path.ChangeExtension(originalFilePath, ".json");
@@ -38,6 +49,8 @@ namespace APIViewWeb
             {
                 var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
                 var processStartInfo = new ProcessStartInfo(ProcessName, arguments);
+                string processErrors = String.Empty;
+
                 processStartInfo.WorkingDirectory = tempDirectory;
                 processStartInfo.RedirectStandardError = true;
                 processStartInfo.RedirectStandardOutput = true;
@@ -47,26 +60,42 @@ namespace APIViewWeb
                     process.WaitForExit();
                     if (process.ExitCode != 0)
                     {
-                        throw new InvalidOperationException(
-                            "Processor failed: " + Environment.NewLine +
+                        processErrors = "Processor failed: " + Environment.NewLine +
                             "stdout: " + Environment.NewLine +
                             process.StandardOutput.ReadToEnd() + Environment.NewLine +
                             "stderr: " + Environment.NewLine +
-                            process.StandardError.ReadToEnd() + Environment.NewLine);
+                            process.StandardError.ReadToEnd() + Environment.NewLine;
+                        throw new InvalidOperationException(processErrors);
                     }
                 }
 
-                using (var codeFileStream = File.OpenRead(jsonFilePath))
+                if (File.Exists(jsonFilePath))
                 {
-                    CodeFile codeFile = await CodeFile.DeserializeAsync(stream: codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
-                    codeFile.VersionString = VersionString;
-                    codeFile.Language = Name;
-                    return codeFile;
+                    using (var codeFileStream = new FileStream(jsonFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                    {
+                        CodeFile codeFile = await CodeFile.DeserializeAsync(stream: codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
+                        codeFile.VersionString = VersionString;
+                        codeFile.Language = Name;
+                        return codeFile;
+                    }
+                }
+                else
+                {
+                    _telemetryClient.TrackTrace($"Processor failed to generate json file {jsonFilePath} with error {processErrors}");
+                    throw new InvalidOperationException($"Processor failed to generate json file {jsonFilePath}");
                 }
             }
             finally
             {
-                Directory.Delete(tempDirectory, true);
+                await Task.Delay(1000);
+                try
+                {
+                    Directory.Delete(tempDirectory, true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to delete directory: {ex.Message}");
+                }
             }
         }
     }

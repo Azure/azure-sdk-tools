@@ -7,7 +7,7 @@ import { FirstReleaseApproval, Review } from 'src/app/_models/review';
   styleUrls: ['./index-page.component.scss']
 })
 export class IndexPageComponent {
-  review : Review | null = null;
+  review : Review | undefined = undefined;
 
   /**
    * Pass ReviewId to revision component to load revisions

@@ -91,7 +91,7 @@ Write-Host ""
 Write-Host ""
 
 # If verbose output is requested, write the raw API responses.
-Write-Verbose "Orginizations API Response:"
+Write-Verbose "Organizations API Response:"
 Write-Verbose "`t$orgResponse"
 
 Write-Verbose ""

@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions;
+namespace Azure.Sdk.Tools.PipelineWitness.Utilities;
 
 internal sealed class ProcessRunner : IDisposable
 {

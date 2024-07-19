@@ -7,6 +7,7 @@ param kustoDatabaseName string
 param webAppName string
 param subnetId string
 param appIdentityPrincipalId string
+param useVnet bool
 
 var kustoScript = loadTextContent('../artifacts/merged.kql')
 
@@ -24,11 +25,13 @@ resource logsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
     allowSharedKeyAccess: false
-    networkAcls: {
-      bypass: 'AzureServices'
-      virtualNetworkRules: [{ id: subnetId }]
-      defaultAction: 'Deny'
-    }
+    networkAcls: useVnet
+      ? {
+        bypass: 'AzureServices'
+        virtualNetworkRules: [{ id: subnetId }]
+        defaultAction: 'Deny'
+      }
+      : null
     supportsHttpsTrafficOnly: true
     encryption: {
       services: {
@@ -164,7 +167,7 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
     }
   }
 
-  resource managedEndpoint 'managedPrivateEndpoints' = {
+  resource managedEndpoint 'managedPrivateEndpoints' = if(useVnet) {
     name: logsStorageAccountName
     properties: {
       groupId: 'blob'
@@ -240,6 +243,10 @@ resource gitHubKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments
   }
 }
 
+// Data Explorer needs to a per-table cursor when importing data. Because the read cursor for Event Hubs is the
+// consumer group and the basic tier for event hubs is limited to 1 consumer group per event hub and 10 event hubs per
+// namespace, we need an event hub per table, so we split our tables across two namespaces.
+// https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-quotas
 module devOpsTables 'tableResources.bicep' = {
   name: 'devOpsTables'
   scope: resourceGroup()

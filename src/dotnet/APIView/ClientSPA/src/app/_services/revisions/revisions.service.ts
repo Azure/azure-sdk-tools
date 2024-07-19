@@ -126,12 +126,14 @@ export class RevisionsService {
     });
   }
 
-  openDiffOfAPIRevisions(reviewId: string, activeAPIRevisionId: string, diffAPIRevisionsId: string) {
-    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevisionsId}`, '_blank');
+  openDiffOfAPIRevisions(reviewId: string, activeAPIRevisionId: string, diffAPIRevisionsId: string, currentRoute: string) {
+    const target = (currentRoute.includes("review")) ? '_self' : '_blank';
+    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevisionsId}`, target);
   }
 
-  openAPIRevisionPage(reviewId: string, activeAPIRevisionId: string) {
-    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}`, '_blank');
+  openAPIRevisionPage(reviewId: string, activeAPIRevisionId: string, currentRoute: string) {
+    const target = (currentRoute.includes("review")) ? '_self' : '_blank';
+    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}`, target);
   }
 
   updateSelectedReviewers(reviewId: string, apiRevisionId: string, reviewers: Set<string>): Observable<APIRevision> {

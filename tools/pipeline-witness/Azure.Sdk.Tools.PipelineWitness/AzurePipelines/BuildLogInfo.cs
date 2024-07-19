@@ -1,6 +1,6 @@
 using System;
 
-namespace Azure.Sdk.Tools.PipelineWitness
+namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
     public class BuildLogInfo
     {

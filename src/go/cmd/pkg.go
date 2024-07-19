@@ -298,13 +298,6 @@ func (pkg Pkg) addTypeNavigator(oriVal string, imports map[string]string) string
 	}
 }
 
-func hoistMethodsForType(source *Pkg, typeName string, p *Pkg) {
-	methods := source.c.findMethods(typeName)
-	for sig, fn := range methods {
-		p.c.Funcs[sig] = fn.ForAlias(p.Name())
-	}
-}
-
 // TypeAlias represents a type exported from one package but defined in another. In code
 // this looks like "type Event = log.Event".
 type TypeAlias struct {
@@ -402,43 +395,4 @@ type typeDef struct {
 	n *ast.TypeSpec
 	// p is the package defining the type
 	p *Pkg
-}
-
-// returns the type name for the specified struct field.
-// if the field can be ignored, an empty string is returned.
-func unwrapStructFieldTypeName(field *ast.Field) string {
-	if field.Names != nil && !field.Names[0].IsExported() {
-		// field isn't exported so skip it
-		return ""
-	}
-
-	// start with the field expression
-	exp := field.Type
-
-	// if it's an array, get the element expression.
-	// current codegen doesn't support *[]Type so no need to handle it.
-	if at, ok := exp.(*ast.ArrayType); ok {
-		// FieldName []FieldType
-		// FieldName []*FieldType
-		exp = at.Elt
-	}
-
-	// from here we either have a pointer-to-type or type
-	var ident *ast.Ident
-	if se, ok := exp.(*ast.StarExpr); ok {
-		// FieldName *FieldType
-		ident, _ = se.X.(*ast.Ident)
-	} else {
-		// FieldName FieldType
-		ident, _ = exp.(*ast.Ident)
-	}
-
-	// !IsExported() is a hacky way to ignore primitive types
-	// FieldName bool
-	if ident == nil || !ident.IsExported() {
-		return ""
-	}
-
-	// returns FieldType
-	return ident.Name
 }

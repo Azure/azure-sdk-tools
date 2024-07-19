@@ -4,11 +4,9 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -38,7 +36,7 @@ func NewReview(p string) (*Review, error) {
 	}
 	r := &Review{
 		modules: map[string]*Module{},
-		name:    getReviewNameFromModPath(m.ModFile.Module.Mod.Path),
+		name:    getPackageNameFromModPath(m.ModFile.Module.Mod.Path),
 		path:    p,
 	}
 	fmt.Println("Reviewing", r.name)
@@ -209,67 +207,4 @@ func (r *Review) resolveAliases() error {
 		}
 	}
 	return nil
-}
-
-// getReviewNameFromModPath gets the API review name for the module at modPath
-func getReviewNameFromModPath(modPath string) string {
-	// for official SDKs, use a subset of the full module path
-	// e.g. github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
-	// becomes sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
-	if suffix, ok := strings.CutPrefix(modPath, "github.com/Azure/azure-sdk-for-go/"); ok {
-		modPath = suffix
-	}
-	// now strip off any major version suffix
-	if loc := regexp.MustCompile(`/v\d+$`).FindStringIndex(modPath); loc != nil {
-		modPath = modPath[:loc[0]]
-	}
-	return modPath
-}
-
-// recursiveFindTypeDef finds a type definition in a collection of packages.
-//
-//   - typeName is the unqualified name of the type e.g. "RetryOptions"
-//   - source is the package containing the type alias
-//   - packages is the collection of Pkgs to search. Its keys are import paths e.g.
-//     "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
-func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) (typeDef, bool) {
-	def, ok := source.types[typeName]
-	if ok {
-		return def, true
-	}
-	// source doesn't define typeName; it must export typeName via an alias.
-	// Recurse into the package from which source imports typeName.
-	for _, a := range source.TypeAliases {
-		if a.Name == typeName {
-			// a.QualifiedName == github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container.DeleteOptions
-			dot := strings.LastIndex(a.QualifiedName, ".")
-			if dot < 0 {
-				break
-			}
-			pkgPath := a.QualifiedName[:dot]      // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
-			sourceName := a.QualifiedName[dot+1:] // DeleteOptions
-			if p, ok := packages[pkgPath]; ok {
-				return recursiveFindTypeDef(sourceName, p, packages)
-			}
-			break
-		}
-	}
-	return typeDef{}, false
-}
-
-func recursiveSortNavigation(n Navigation) {
-	for _, nn := range n.ChildItems {
-		recursiveSortNavigation(nn)
-	}
-	slices.SortFunc(n.ChildItems, func(a Navigation, b Navigation) int {
-		aa, err := json.Marshal(a)
-		if err != nil {
-			panic(err)
-		}
-		bb, err := json.Marshal(b)
-		if err != nil {
-			panic(err)
-		}
-		return strings.Compare(string(aa), string(bb))
-	})
 }

@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"errors"
+	"go/ast"
 	"io/fs"
 	"os"
 	"path"
@@ -35,6 +36,21 @@ type Module struct {
 
 	// indexed is true after Index() succeeds
 	indexed bool
+}
+
+// getPackageNameFromModPath gets the API review name for the module at modPath
+func getPackageNameFromModPath(modPath string) string {
+	// for official SDKs, use a subset of the full module path
+	// e.g. github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
+	// becomes sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
+	if suffix, ok := strings.CutPrefix(modPath, "github.com/Azure/azure-sdk-for-go/"); ok {
+		modPath = suffix
+	}
+	// now strip off any major version suffix
+	if loc := regexp.MustCompile(`/v\d+$`).FindStringIndex(modPath); loc != nil {
+		modPath = modPath[:loc[0]]
+	}
+	return modPath
 }
 
 // NewModule constructs a Module, locating its constituent packages but not parsing any source.
@@ -123,6 +139,52 @@ func (m *Module) Index() {
 	m.indexed = true
 }
 
+// returns the type name for the specified struct field.
+// if the field can be ignored, an empty string is returned.
+func unwrapStructFieldTypeName(field *ast.Field) string {
+	if field.Names != nil && !field.Names[0].IsExported() {
+		// field isn't exported so skip it
+		return ""
+	}
+
+	// start with the field expression
+	exp := field.Type
+
+	// if it's an array, get the element expression.
+	// current codegen doesn't support *[]Type so no need to handle it.
+	if at, ok := exp.(*ast.ArrayType); ok {
+		// FieldName []FieldType
+		// FieldName []*FieldType
+		exp = at.Elt
+	}
+
+	// from here we either have a pointer-to-type or type
+	var ident *ast.Ident
+	if se, ok := exp.(*ast.StarExpr); ok {
+		// FieldName *FieldType
+		ident, _ = se.X.(*ast.Ident)
+	} else {
+		// FieldName FieldType
+		ident, _ = exp.(*ast.Ident)
+	}
+
+	// !IsExported() is a hacky way to ignore primitive types
+	// FieldName bool
+	if ident == nil || !ident.IsExported() {
+		return ""
+	}
+
+	// returns FieldType
+	return ident.Name
+}
+
+func hoistMethodsForType(pkg *Pkg, typeName string, target *Pkg) {
+	methods := pkg.c.findMethods(typeName)
+	for sig, fn := range methods {
+		target.c.Funcs[sig] = fn.ForAlias(target.Name())
+	}
+}
+
 func parseModFile(dir string) (*modfile.File, error) {
 	p := filepath.Join(dir, "go.mod")
 	content, err := os.ReadFile(p)
@@ -130,4 +192,35 @@ func parseModFile(dir string) (*modfile.File, error) {
 		return nil, err
 	}
 	return modfile.Parse(p, content, nil)
+}
+
+// recursiveFindTypeDef finds a type definition in a collection of packages.
+//
+//   - typeName is the unqualified name of the type e.g. "RetryOptions"
+//   - source is the package containing the type alias
+//   - packages is the collection of Pkgs to search. Its keys are import paths e.g.
+//     "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
+func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) (typeDef, bool) {
+	def, ok := source.types[typeName]
+	if ok {
+		return def, true
+	}
+	// source doesn't define typeName; it must export typeName via an alias.
+	// Recurse into the package from which source imports typeName.
+	for _, a := range source.TypeAliases {
+		if a.Name == typeName {
+			// a.QualifiedName == github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container.DeleteOptions
+			dot := strings.LastIndex(a.QualifiedName, ".")
+			if dot < 0 {
+				break
+			}
+			pkgPath := a.QualifiedName[:dot]      // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
+			sourceName := a.QualifiedName[dot+1:] // DeleteOptions
+			if p, ok := packages[pkgPath]; ok {
+				return recursiveFindTypeDef(sourceName, p, packages)
+			}
+			break
+		}
+	}
+	return typeDef{}, false
 }

@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 )
 
 // CreateAPIView generates the output file that the API view tool uses.
@@ -30,4 +32,21 @@ func createReview(pkgDir string) (PackageReview, error) {
 		return PackageReview{}, err
 	}
 	return r.Review()
+}
+
+func recursiveSortNavigation(n Navigation) {
+	for _, nn := range n.ChildItems {
+		recursiveSortNavigation(nn)
+	}
+	slices.SortFunc(n.ChildItems, func(a Navigation, b Navigation) int {
+		aa, err := json.Marshal(a)
+		if err != nil {
+			panic(err)
+		}
+		bb, err := json.Marshal(b)
+		if err != nil {
+			panic(err)
+		}
+		return strings.Compare(string(aa), string(bb))
+	})
 }

@@ -32,6 +32,9 @@ type Module struct {
 	Name string
 	// Packages maps import paths to the module's Packages
 	Packages map[string]*Pkg
+
+	// indexed is true after Index() succeeds
+	indexed bool
 }
 
 // NewModule constructs a Module, locating its constituent packages but not parsing any source.
@@ -85,6 +88,9 @@ func NewModule(dir string) (*Module, error) {
 // cross-package type aliases. It adds cross-module aliases to [Module.ExternalAliases]
 // so callers can later resolve these after indexing referenced external modules.
 func (m *Module) Index() {
+	if m.indexed {
+		return
+	}
 	for _, p := range m.Packages {
 		p.Index()
 	}
@@ -107,6 +113,7 @@ func (m *Module) Index() {
 			m.ExternalAliases = append(m.ExternalAliases, alias)
 		}
 	}
+	m.indexed = true
 }
 
 func parseModFile(dir string) (*modfile.File, error) {

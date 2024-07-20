@@ -10,8 +10,14 @@ describe("Parse tsp-location.yaml", function () {
     const additionalDirectories = tspLocation.additionalDirectories?.map(normalizeDirectory);
     assert.equal(additionalDirectories?.length, 2);
     if (additionalDirectories) {
-        assert.equal(additionalDirectories[0], "specification/contosowidgetmanager/Contoso.WidgetManager.Shared");
-        assert.equal(additionalDirectories[1], "specification/contosowidgetmanager/Contoso.WidgetManager.Utils");
+      assert.equal(
+        additionalDirectories[0],
+        "specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+      );
+      assert.equal(
+        additionalDirectories[1],
+        "specification/contosowidgetmanager/Contoso.WidgetManager.Utils",
+      );
     }
   });
 });

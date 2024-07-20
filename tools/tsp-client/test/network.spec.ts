@@ -1,13 +1,25 @@
+import { describe, it } from "node:test";
+import { doesFileExist, isValidUrl } from "../src/network.js";
 import { assert } from "chai";
-import { rewriteGitHubUrl } from "../src/network.js";
 
-describe("Network", function () {
-  it("rewriteGitHubUrl", function () {
-    const initial =
-      "https://github.com/Azure/azure-rest-api-specs/blob/main/specification/cognitiveservices/OpenAI.Inference/main.tsp";
-    const expected =
-      "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/OpenAI.Inference/main.tsp";
-    const actual = rewriteGitHubUrl(initial);
-    assert.strictEqual(actual, expected);
+describe("Verify network functions", function () {
+  it("Check doesFileExist true", async function () {
+    const exists = await doesFileExist("./test/examples/tspconfig-custom-service-dir.yaml");
+    assert.isTrue(exists);
+  });
+
+  it("Check doesFileExist false", async function () {
+    const exists = await doesFileExist("./test/examples/fake_file.yaml");
+    assert.isFalse(exists);
+  });
+
+  it("Check isValidUrl true", async function () {
+    assert.isTrue(
+      isValidUrl("https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md"),
+    );
+  });
+
+  it("Check isValidUrl false", async function () {
+    assert.isFalse(isValidUrl("./test/examples/tspconfig-custom-service-dir.yaml"));
   });
 });

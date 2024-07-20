@@ -15,9 +15,10 @@
     "build": "npm run clean && npm run build:tsc",
     "build:tsc": "tsc",
     "clean": "rimraf ./dist ./types",
-    "example": "npx ts-node src/index.ts update",
+    "example": "npx tsx src/index.ts update -o ./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/",
     "prepack": "npm run build",
-    "test": "mocha --exclude **/examples/**"
+    "test": "mocha",
+    "test:commands": "npx tsx ./test/run_commands.ts"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
@@ -43,6 +44,7 @@
     "prettier": "^3.0.1",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
+    "tsx": "^4.16.2",
     "typescript": "^5.1.6"
   },
   "dependencies": {
@@ -63,7 +65,7 @@
     "extension": [
       "ts"
     ],
-    "spec": "test/**/*.spec.ts",
+    "spec": "test/*.spec.ts",
     "loader": "ts-node/esm"
   }
 }

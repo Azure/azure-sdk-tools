@@ -169,14 +169,14 @@ func localModulePath(mod module.Version, dir string) string {
 
 // resolveAliases resolves type aliases in the reviewed module that refer to types in other modules
 func (r *Review) resolveAliases() error {
-	for _, ref := range r.reviewed.ExternalAliases {
+	for _, ta := range r.reviewed.ExternalAliases {
 		var (
 			err error
 			m   *Module
 			ok  bool
 		)
-		if m, ok = r.modules[ref.SourceMod.Path]; !ok {
-			m, err = r.findLocalModule(*ref)
+		if m, ok = r.modules[ta.SourceMod.Path]; !ok {
+			m, err = r.findLocalModule(*ta)
 			if err == nil {
 				err = r.AddModule(m)
 			}
@@ -188,16 +188,16 @@ func (r *Review) resolveAliases() error {
 		}
 		def := typeDef{}
 		if m != nil {
-			impPath := ref.QualifiedName[:strings.LastIndex(ref.QualifiedName, ".")]
+			impPath := ta.QualifiedName[:strings.LastIndex(ta.QualifiedName, ".")]
 			p, ok := m.Packages[impPath]
 			if !ok {
-				return fmt.Errorf("couldn't find definition for " + ref.Name)
+				return fmt.Errorf("couldn't find definition for " + ta.Name)
 			}
-			if d, ok := recursiveFindTypeDef(ref.Name, p, m.Packages); ok {
+			if d, ok := recursiveFindTypeDef(ta.Name, p, m.Packages); ok {
 				def = d
 			}
 		}
-		err = ref.Resolve(def)
+		err = ta.Resolve(def)
 		if err != nil {
 			return (err)
 		}

@@ -6,6 +6,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -130,11 +131,20 @@ func (r *Review) Review() (PackageReview, error) {
 }
 
 // findLocalModule tries to find the source module defining a type in the same repository as
-// the reviewed module. Returns errExternalModule if the source module is in a different repository.
+// the reviewed module. Failing that, it searches the module cache, if $GOMODCACHE is set.
+// Returns errExternalModule if the source module isn't found.
 func (r *Review) findLocalModule(ta TypeAlias) (*Module, error) {
 	// localModulePath could be inlined but is instead separate for easier testing
 	if dir := localModulePath(ta.SourceMod, r.path); dir != "" {
 		return NewModule(dir)
+	}
+	if escaped, err := module.EscapePath(ta.SourceMod.Path); err == nil {
+		if cacheDir := os.Getenv("GOMODCACHE"); cacheDir != "" {
+			d := filepath.Join(cacheDir, escaped, ta.SourceMod.Version)
+			if _, err := os.Stat(filepath.Join(d, "go.mod")); err == nil {
+				return NewModule(d)
+			}
+		}
 	}
 	return nil, errExternalModule
 }
@@ -179,10 +189,10 @@ func (r *Review) resolveAliases() error {
 			m, err = r.findLocalModule(*ta)
 			if err == nil {
 				err = r.AddModule(m)
+			} else if errors.Is(err, errExternalModule) {
+				m, err = Download(ta.SourceMod)
 			}
-			// TODO: handle errExternalModule by acquiring the module code from the external repository.
-			// For now, include the aliased type in the review without its definition and add a diagnostic.
-			if err != nil && !errors.Is(err, errExternalModule) {
+			if err != nil {
 				return err
 			}
 		}

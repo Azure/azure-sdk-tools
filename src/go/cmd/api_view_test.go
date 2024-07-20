@@ -162,6 +162,25 @@ func TestDiagnostics(t *testing.T) {
 	}
 }
 
+func TestExternalModule(t *testing.T) {
+	// t.Skip()
+	review, err := createReview(filepath.Clean("testdata/test_external_module"))
+	require.NoError(t, err)
+	require.Equal(t, 1, len(review.Diagnostics))
+	require.Equal(t, DiagnosticLevelWarning, review.Diagnostics[0].Level)
+	// require.Equal(t, aliasFor+"github.com/Azure/azure-sdk-for-go/sdk/azcore.TokenCredential", review.Diagnostics[0].Text)
+	// require.Equal(t, 1, len(review.Navigation))
+	// require.Equal(t, 1, len(review.Navigation[0].ChildItems))
+	// for _, token := range review.Tokens {
+	// 	if token.Value == "Foo" {
+	// 		require.Equal(t, "Foo", token.Value)
+	// 		// TODO: check the definition
+	// 		return
+	// 	}
+	// }
+	// t.Fatal("review doesn't have a definition for type Foo")
+}
+
 func TestAliasDefinitions(t *testing.T) {
 	for _, test := range []struct {
 		name, path, sourceName string

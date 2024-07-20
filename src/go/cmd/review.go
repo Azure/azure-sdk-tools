@@ -59,7 +59,9 @@ func (r *Review) AddModule(m *Module) error {
 }
 
 func (r *Review) Review() (PackageReview, error) {
-	r.resolveAliases()
+	if err := r.resolveAliases(); err != nil {
+		return PackageReview{}, err
+	}
 
 	tokenList := &[]Token{}
 	nav := []Navigation{}

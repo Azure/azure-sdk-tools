@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { APIRevision } from 'src/app/_models/revision';
+import { APIRevision, ParserStyle } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
 
 
@@ -126,14 +126,24 @@ export class RevisionsService {
     });
   }
 
-  openDiffOfAPIRevisions(reviewId: string, activeAPIRevisionId: string, diffAPIRevisionsId: string, currentRoute: string) {
+  openDiffOfAPIRevisions(activeAPIRevision: APIRevision, diffAPIRevision: APIRevision, currentRoute: string) {
     const target = (currentRoute.includes("review")) ? '_self' : '_blank';
-    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevisionsId}`, target);
+
+    if (activeAPIRevision.files[0].parserStyle === "tree") {
+      window.open(`/review/${activeAPIRevision.reviewId}?activeApiRevisionId=${activeAPIRevision.id}&diffApiRevisionId=${diffAPIRevision.id}`, target);
+    } else {
+      window.open(this.configService.webAppUrl + `Assemblies/Review/${activeAPIRevision.reviewId}?revisionId=${activeAPIRevision.id}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevision.id}`, target);
+    }
   }
 
-  openAPIRevisionPage(reviewId: string, activeAPIRevisionId: string, currentRoute: string) {
+  openAPIRevisionPage(apiRevision: APIRevision, currentRoute: string) {
     const target = (currentRoute.includes("review")) ? '_self' : '_blank';
-    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}`, target);
+
+    if (apiRevision.files[0].parserStyle === "tree") {
+      window.open(`/review/${apiRevision.reviewId}?activeApiRevisionId=${apiRevision.id}`, target);
+    } else {
+      window.open(this.configService.webAppUrl + `Assemblies/Review/${apiRevision.reviewId}?revisionId=${apiRevision.id}`, target);
+    }
   }
 
   updateSelectedReviewers(reviewId: string, apiRevisionId: string, reviewers: Set<string>): Observable<APIRevision> {

@@ -15,9 +15,30 @@ export enum CodePanelRowDatatype {
   CommentThread = "commentThread"
 }
 
+export enum ParserStyle {
+  Flat = "Flat",
+  Tree = "Tree"
+}
+
+export interface APICodeFileModel {
+  fileId: string;
+  name: string;
+  versionString: string;
+  parserStyle: string;
+  languageVariant: string;
+  hasOriginal: boolean;
+  creationDate: Date;
+  runAnalysis: boolean;
+  packageName: string;
+  fileName: string;
+  packageVersion: string;
+  crossLanguagePackageId: string;
+}
+
 export interface APIRevision {
   id: string
   reviewId: string
+  files: APICodeFileModel[];
   packageName: string
   language: string
   apiRevisionType: string

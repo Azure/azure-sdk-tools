@@ -21,6 +21,7 @@ import { environment } from 'src/environments/environment';
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
+  @Input() revisionSideBarVisible : boolean = false;
 
   @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
 
@@ -106,6 +107,11 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       }
       this.showSelectionActions = false;
       this.showDiffButton = false;
+    }
+
+    if (changes['revisionSideBarVisible'] && changes['revisionSideBarVisible'].currentValue == false) {
+      this.createRevisionSidebarVisible = false;
+      this.optionsSidebarVisible = false;
     }
   }
 
@@ -231,14 +237,14 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   viewDiffOfSelectedAPIRevisions() {
     if (this.selectedRevisions.length == 2)
     {
-      this.apiRevisionsService.openDiffOfAPIRevisions(this.review!.id, this.selectedRevisions[0].id, this.selectedRevisions[1].id, this.router.url);
+      this.apiRevisionsService.openDiffOfAPIRevisions(this.selectedRevisions[0], this.selectedRevisions[1], this.router.url);
     }
   }
   
   viewRevision(apiRevision: APIRevision) {
     if (!this.showDeletedAPIRevisions)
     {
-      this.apiRevisionsService.openAPIRevisionPage(apiRevision.reviewId, apiRevision.id, this.router.url);
+      this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.router.url);
     }
   }
 
@@ -471,7 +477,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
             this.createRevisionSidebarVisible = false;
             this.creatingRevision = false;
             this.crButtonText = "Create Review";
-            this.apiRevisionsService.openAPIRevisionPage(response.reviewId, response.id, this.router.url);
+            this.apiRevisionsService.openAPIRevisionPage(response, this.router.url);
           }
         },
         error: (error: any) => {

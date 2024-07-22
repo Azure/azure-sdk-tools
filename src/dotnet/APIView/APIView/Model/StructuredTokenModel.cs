@@ -98,6 +98,10 @@ namespace APIView.TreeToken
         /// </summary>
         public static string NAVIGATE_TO_ID = "NavigateToId";
         /// <summary>
+        /// Property key to indicate that a token should be ignored for computing diff
+        /// </summary>
+        public static string SKIPP_DIFF = "SkippDiff";
+        /// <summary>
         /// Property value that marks a token as documentation
         /// </summary>
         public static string DOCUMENTATION = "doc";

@@ -282,7 +282,9 @@ stages:
         inputs:
           pwsh: true
           filePath: $(autorestRepositoryPath)/eng/scripts/Initialize-Repository.ps1
-          arguments: -BuildArtifactsPath '$(buildArtifactsPath)'
+          arguments: >
+            -BuildArtifactsPath '$(buildArtifactsPath)'
+            -UseTypeSpecNext:$${{ parameters.UseTypeSpecNext }}
           workingDirectory: $(autorestRepositoryPath)
 
       - task: PowerShell@2

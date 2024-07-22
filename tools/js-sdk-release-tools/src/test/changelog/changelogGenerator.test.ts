@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import { extractExportAndGenerateChangelog } from "../changelog/extractMetaData";
+import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
 import path from "path";
-import { SDKType } from "../common/types";
+import { SDKType } from "../../common/types";
 
 test("HLC -> Modular: Rename", async () => {
     const oldViewPath = path.join(

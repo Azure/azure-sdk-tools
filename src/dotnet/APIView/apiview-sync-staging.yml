@@ -40,13 +40,18 @@ stages:
             env:
               AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
 
-        - task: UsePythonVersion@0
-          displayName: 'Use Python 3.6'
-          inputs:
-            versionSpec: 3.6
-
-        - script: |
-            cd $(Build.SourcesDirectory)/eng/scripts/python/apiview-syncdb/
-            python -m pip install -r requirements.txt
-            python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --dest-key $(apiview-staging-cosmos-key) --db-name $(apiview-cosmosdb-name) --backup-connection-string $(apiview-cosmos-backup-connection)
+        - task: AzurePowerShell@5
           displayName: Sync CosmosDB
+          inputs:
+            azureSubscription: 'Azure SDK Engineering System'
+            ScriptType: 'InlineScript'
+            azurePowerShellVersion: LatestVersion
+            workingDirectory: $(Build.BinariesDirectory)
+            pwsh: true
+            Inline: |
+              cd $(Build.SourcesDirectory)/eng/scripts/python/apiview-syncdb/
+              python -m pip install -r requirements.txt
+              python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --db-name $(apiview-cosmosdb-name) --backup-storage-url $(apiview-cosmos-backup-url)
+          env:
+            AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
+

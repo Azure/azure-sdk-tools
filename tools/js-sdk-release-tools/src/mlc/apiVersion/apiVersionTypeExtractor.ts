@@ -6,8 +6,6 @@ import * as ts from "typescript";
 import { ApiVersionType } from "../../common/types";
 import { IApiVersionTypeExtractor } from "../../common/interfaces";
 import { getTsSourceFile } from "../../common/utils";
-import { version } from "os";
-import { readFile } from "fs/promises";
 import { readFileSync } from "fs";
 
 const findRestClientPath = (packageRoot: string): string => {
@@ -15,7 +13,7 @@ const findRestClientPath = (packageRoot: string): string => {
     const fileNames = shell.ls(restPath);
     const clientFiles = fileNames.filter((f) => f.endsWith("Client.ts"));
     if (clientFiles.length !== 1)
-        throw new Error(`Single client is supported, but found ${clientFiles}`);
+        throw new Error(`Single client is supported, but found "${clientFiles}" in ${restPath}`);
 
     const clientPath = path.join(restPath, clientFiles[0]);
     return clientPath;
@@ -126,7 +124,6 @@ const getApiVersionTypeFromOperations: IApiVersionTypeExtractor = (
         : ApiVersionType.Stable;
 };
 
-// TODO: add unit test
 export const getApiVersionType: IApiVersionTypeExtractor = (
     packageRoot: string
 ): ApiVersionType => {

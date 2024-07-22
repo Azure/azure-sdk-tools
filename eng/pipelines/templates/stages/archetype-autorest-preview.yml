@@ -242,6 +242,7 @@ stages:
           arguments: >
             -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
             -OutputDirectory "$(Build.ArtifactStagingDirectory)"
+        continueOnError: true
 
     - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
       parameters:

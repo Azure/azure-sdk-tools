@@ -6,6 +6,10 @@
         "IconName": {
             "type": "string",
             "description": "Use this only if you are looking to add a custom icon different from language wide defaults set by APITreeNode kind"
+        },
+        "CrossLangDefId": {
+            "type": "string",
+            "description": "The cross language definitionId for the node."
         }
     }
 }

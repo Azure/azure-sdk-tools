@@ -1,12 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "CodeDiagnosticLevel.json",
-    "type": "string",
+    "type": "number",
     "enum": [
-        "Default",
-        "Info",
-        "Warning",
-        "Error",
-        "Fatal"
+        1,
+        2,
+        3,
+        4
     ]
 }

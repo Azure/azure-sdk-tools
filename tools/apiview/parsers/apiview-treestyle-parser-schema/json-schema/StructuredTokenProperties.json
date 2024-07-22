@@ -9,7 +9,7 @@
             "description": "Group a sequence of consecutive StructuredTokens. doc indicates that the group of tokens is documentation."
         },
         "NavigateToId": {
-            "type": "string",
+            "$ref": "APITreeNodeId.json",
             "description": "Id to navigate to when StructuredToken is clicked."
         }
     }

@@ -21,11 +21,6 @@
             "type": "string",
             "const": "SkipDiff",
             "description": "Indicate that a node should not be used in computation of diff."
-        },
-        {
-            "type": "string",
-            "const": "CrossLangDefId",
-            "description": "The cross language definitionId for the node."
         }
     ]
 }

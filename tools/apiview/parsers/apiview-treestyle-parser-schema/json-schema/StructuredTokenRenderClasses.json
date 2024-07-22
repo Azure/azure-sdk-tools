@@ -12,10 +12,6 @@
         },
         {
             "type": "string",
-            "const": "keyword"
-        },
-        {
-            "type": "string",
             "const": "literal"
         },
         {
@@ -43,7 +39,8 @@
             "const": "text"
         },
         {
-            "type": "string"
+            "type": "string",
+            "description": "Contribute extra classes at https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/ClientSPA/src/app/_components/code-panel/code-panel.component.scss"
         }
     ],
     "description": "Classes used to render the StructuredTokens. Extendable by contributing styles at https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/ClientSPA/src/app/_components/code-panel/code-panel.component.scss"

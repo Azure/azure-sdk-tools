@@ -4,7 +4,8 @@
     "type": "object",
     "properties": {
         "DiagnosticId": {
-            "type": "string"
+            "type": "string",
+            "description": "String associated with a given diagnostic usieally produced by an analyzer"
         },
         "Text": {
             "type": "string"
@@ -13,7 +14,7 @@
             "type": "string"
         },
         "TargetId": {
-            "type": "string",
+            "$ref": "APITreeNodeId.json",
             "description": "Maps to the APITreeNode id"
         },
         "Level": {

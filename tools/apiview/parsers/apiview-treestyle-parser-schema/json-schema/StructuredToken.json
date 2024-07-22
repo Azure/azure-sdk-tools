@@ -4,7 +4,7 @@
     "type": "object",
     "properties": {
         "Id": {
-            "type": "string",
+            "$ref": "StructuredTokenId.json",
             "description": "Token Id. Previously known as DefinitionId."
         },
         "Kind": {

@@ -8,7 +8,7 @@
             "description": "The name of the tree node which will be used as label for the API Navigation. Generally this is the name of the module (class, method)."
         },
         "Id": {
-            "type": "string",
+            "$ref": "APITreeNodeId.json",
             "description": "Id of the node, which should be unique at the node level. i.e. unique among its siblings. This was previously represented by the DefinitionId for the main Token of the node."
         },
         "Kind": {
@@ -54,7 +54,14 @@
                     "const": "type"
                 }
             ],
-            "description": "The kind of node"
+            "description": "Descriptor for the kind of the node. Currently used to select navigation icons"
+        },
+        "TopTokens": {
+            "type": "array",
+            "items": {
+                "$ref": "StructuredToken.json"
+            },
+            "description": "The main data of the node. This is all the tokens that actually define the node. When rendering, TopTokens are rendered first, followed by any Children, and then finally BottomTokens"
         },
         "BottomTokens": {
             "type": "array",

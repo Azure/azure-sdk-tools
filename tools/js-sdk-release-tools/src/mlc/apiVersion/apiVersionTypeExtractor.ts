@@ -21,12 +21,6 @@ const findRestClientPath = (packageRoot: string): string => {
     return clientPath;
 };
 
-const matchPattern = (text: string, pattern: RegExp): string | undefined => {
-    const match = text.match(pattern);
-    const found = match != null && match.length === 2;
-    return found ? match?.at(1) : undefined;
-};
-
 const findApiVersionInRestClientV1 = (
     clientPath: string
 ): string | undefined => {
@@ -37,26 +31,23 @@ const findApiVersionInRestClientV1 = (
 
     const apiVersionStatements = createClientFunction
         .getStatements()
-        .filter(
-            (s) =>
-                s.getKind() === SyntaxKind.ExpressionStatement &&
-                s.getText().indexOf("options.apiVersion") > -1
-        );
-    if (apiVersionStatements.length === 0) return undefined;
-
+        .filter((s) => s.getText().includes("options.apiVersion"));
+    if (apiVersionStatements.length === 0) {
+        return undefined;
+    }
     const text =
         apiVersionStatements[apiVersionStatements.length - 1].getText();
     return extractApiVersionFromText(text);
 };
 
 const extractApiVersionFromText = (text: string): string | undefined => {
-    const pattern = /(\d{4}-\d{2}-\d{2}(?:-preview)?)/;
-    const apiVersion = matchPattern(text, pattern);
-    return apiVersion;
+    const begin = text.indexOf('"');
+    const end = text.lastIndexOf('"');
+    return text.substring(begin + 1,  end);
 };
 
 // new ways in @autorest/typespec-ts emitter to set up api-version
-export const findApiVersionInRestClientV2 = (clientPath: string): string | undefined => {
+const findApiVersionInRestClientV2 = (clientPath: string): string | undefined => {
     const sourceCode= readFileSync(clientPath, {encoding: 'utf-8'})
     const sourceFile = ts.createSourceFile("example.ts", sourceCode, ts.ScriptTarget.Latest, true);
     const createClientFunction = sourceFile.statements.filter(s => (s as ts.FunctionDeclaration)?.name?.escapedText === 'createClient').map(s => (s as ts.FunctionDeclaration))[0];
@@ -77,7 +68,7 @@ export const findApiVersionInRestClientV2 = (clientPath: string): string | undef
 };
 
 // workaround for createClient function changes it's way to setup api-version
-const findApiVersionInRestClient = (clientPath: string): string | undefined => {
+export const findApiVersionInRestClient = (clientPath: string): string | undefined => {
     const version2 = findApiVersionInRestClientV2(clientPath);
     if (version2) {
         return version2;

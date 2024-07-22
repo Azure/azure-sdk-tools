@@ -12,6 +12,7 @@ stages:
   - stage: 'Main'
     jobs:
       - job: 'BlobCopy'
+        displayName: 'Sync API reviews'
         pool:
           name: azsdk-pool-mms-win-2022-general
           vmImage: windows-2022

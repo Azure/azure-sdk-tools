@@ -8,6 +8,7 @@ import { SidebarModule } from 'primeng/sidebar';
 import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { SelectButtonModule } from 'primeng/selectbutton';
 
 describe('ReviewsListComponent', () => {
   let component: ReviewsListComponent;
@@ -24,7 +25,8 @@ describe('ReviewsListComponent', () => {
         DropdownModule,
         ReactiveFormsModule,
         FormsModule,
-        MultiSelectModule
+        MultiSelectModule,
+        SelectButtonModule
       ]
     });
     fixture = TestBed.createComponent(ReviewsListComponent);

@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Subject, Subscription, take, takeUntil, tap } from 'rxjs';
+import { Subject, take, takeUntil } from 'rxjs';
 import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';

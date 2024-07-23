@@ -6,6 +6,8 @@ import { ContextMenuModule } from 'primeng/contextmenu';
 import { SidebarModule } from 'primeng/sidebar';
 import { TabMenuModule } from 'primeng/tabmenu';
 import { SimpleChanges } from '@angular/core';
+import { Dropdown, DropdownModule } from 'primeng/dropdown';
+import { ReactiveFormsModule } from '@angular/forms';
 
 describe('RevisionListComponent', () => {
   let component: RevisionsListComponent;
@@ -18,7 +20,9 @@ describe('RevisionListComponent', () => {
         HttpClientTestingModule,
         ContextMenuModule,
         SidebarModule,
-        TabMenuModule
+        TabMenuModule,
+        DropdownModule,
+        ReactiveFormsModule
       ]
     });
     fixture = TestBed.createComponent(RevisionsListComponent);

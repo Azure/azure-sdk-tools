@@ -13,6 +13,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import {  FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { RevisionsListComponent } from '../revisions-list/revisions-list.component';
+import { SelectButtonModule } from 'primeng/selectbutton';
 
 describe('IndexPageComponent', () => {
   let component: IndexPageComponent;
@@ -36,7 +37,8 @@ describe('IndexPageComponent', () => {
         DropdownModule,
         ReactiveFormsModule,
         FormsModule,
-        MultiSelectModule
+        MultiSelectModule,
+        SelectButtonModule
       ]
     });
     fixture = TestBed.createComponent(IndexPageComponent);

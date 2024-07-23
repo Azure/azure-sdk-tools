@@ -378,19 +378,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (!string.IsNullOrWhiteSpace(diffResult.StdOut))
             {
-                /* 
-                 * Normally, we'd use Environment.NewLine here but this doesn't work on Windows since its NewLine is \r\n and Git's NewLine is just \n
-                 * 
-                 * The output from git status porcelain will include two possible additional values
-                 * " ?? path/to/file" -> File that is new
-                 * " M path/to/file" -> File that is modified
-                 * " D path/to/file" -> File that is deleted
-                */
+                // Normally, we'd use Environment.NewLine here but this doesn't work on Windows since its NewLine is \r\n and
+                // Git's NewLine is just \n
                 var individualResults = diffResult.StdOut.Split("\n")
-                    // strim the leading space, the characters for ADDED or MODIFIED, and the space after them
-                    .Select(x => x.Trim().TrimStart('?', 'M').Trim())
-                    // exclude empty paths or paths that have been DELETED
-                    .Where(x => !string.IsNullOrWhiteSpace(x) && !x.StartsWith("D")).ToArray();
+                    .Select(x => x.Trim())
+                    .Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
                 return individualResults;
             }
 

@@ -1,6 +1,6 @@
 # Release
 
-## 2024-07-20 - 0.9.4
+## 2024-07-23 - 0.9.4
 
 - Fixed issue where one additional directory entry is treated as a string instead of an array. (#8551)
 

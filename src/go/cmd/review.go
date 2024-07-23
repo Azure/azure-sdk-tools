@@ -151,9 +151,10 @@ func (r *Review) findLocalModule(ta TypeAlias) (*Module, error) {
 // version, using only the module path.
 func localModulePath(mod module.Version, dir string) string {
 	mp := strings.Split(mod.Path, "/")
-	// find the rightmost common segment of modPath and filePath
+	// find the rightmost common segment of mod.Path and dir, ignoring the final
+	// segment of mod.Path because it's a package name that may be used in both modules
 	i, j := -1, -1
-	for m := len(mp) - 1; m > 0; m-- {
+	for m := len(mp) - 2; m > 0; m-- {
 		if n := strings.LastIndex(dir, mp[m]); n > i {
 			i = n
 			j = m

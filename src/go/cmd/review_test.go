@@ -45,12 +45,27 @@ func TestLocalModulePath(t *testing.T) {
 			filePath: "d:/azure-sdk-for-go/sdk/azidentity",
 			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/azidentity/cache"},
 		},
+		{
+			expect:   "/home/me/azure-sdk-for-go/sdk/internal",
+			filePath: "/home/me/azure-sdk-for-go/sdk/resourcemanager/internal",
+			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/internal"},
+		},
+		{
+			expect:   "/home/me/azure-sdk-for-go/sdk/internal",
+			filePath: "/home/me/azure-sdk-for-go/sdk/security/keyvault/internal",
+			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/internal"},
+		},
 
 		// unrealistic edge cases just to exercise the algorithm
 		{
 			expect:   "/home/me/azure-sdk-for-go/sdk/azcore",
 			filePath: "/home/me/azure-sdk-for-go/sdk/azcore",
 			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/azcore"},
+		},
+		{
+			expect:   "/home/me/azure-sdk-for-go/sdk/security/keyvault/internal",
+			filePath: "/home/me/azure-sdk-for-go/sdk/internal",
+			mod:      module.Version{Path: "github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal"},
 		},
 		{
 			expect:   "",

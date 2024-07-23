@@ -55,6 +55,9 @@
     },
     "subnetPrefix": {
       "value": "10.9.0.0/24"
+    },
+    "useVnet": {
+      "value": true
     }
   }
 }

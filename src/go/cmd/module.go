@@ -200,8 +200,9 @@ func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg
 		if a.Name == typeName {
 			// a.QualifiedName == github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container.DeleteOptions
 			dot := strings.LastIndex(a.QualifiedName, ".")
-			if dot < 0 {
-				break
+			if len(a.QualifiedName)-2 < dot || dot < 1 {
+				// there must be at least one rune before and after the dot
+				panic(fmt.Sprintf("alias %q refers to an invalid qualified name %q", a.Name, a.QualifiedName))
 			}
 			pkgPath := a.QualifiedName[:dot]      // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
 			sourceName := a.QualifiedName[dot+1:] // DeleteOptions

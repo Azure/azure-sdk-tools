@@ -212,6 +212,7 @@ namespace APIViewWeb.Managers
                 {
                     APIForest = diffTree,
                     Language = codeFileA.CodeFile.Language,
+                    SkipDocsWhenDiffing = true,
                     ApplySkipDiff = true
                 };
                 var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);

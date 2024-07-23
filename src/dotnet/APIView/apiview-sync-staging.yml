@@ -56,6 +56,6 @@ stages:
             Inline: |
               cd $(Build.SourcesDirectory)/eng/scripts/python/apiview-syncdb/
               python -m pip install -r requirements.txt
-              python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --db-name $(apiview-cosmosdb-name) --backup-storage-url $(apiview-cosmos-backup-url)
+              python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --dest-key $(apiview-staging-cosmos-key)s --db-name $(apiview-cosmosdb-name) --backup-storage-url $(apiview-cosmos-backup-url)
 
 

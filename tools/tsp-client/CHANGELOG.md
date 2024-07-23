@@ -1,5 +1,9 @@
 # Release
 
+## 2024-07-23 - 0.9.4
+
+- Fixed issue where one additional directory entry is treated as a string instead of an array. (#8551)
+
 ## 2024-07-15 - 0.9.3
 
 - Add autorest and plugins as dependencies, and run the packages from their install folders, to guarantee the versions don't change after install.

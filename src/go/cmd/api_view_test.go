@@ -163,10 +163,6 @@ func TestDiagnostics(t *testing.T) {
 }
 
 func TestAliasDefinitions(t *testing.T) {
-	priorValue := sdkDirName
-	sdkDirName = "testdata"
-	defer func() { sdkDirName = priorValue }()
-
 	for _, test := range []struct {
 		name, path, sourceName string
 		diagLevel              DiagnosticLevel
@@ -175,7 +171,7 @@ func TestAliasDefinitions(t *testing.T) {
 			diagLevel:  DiagnosticLevelWarning,
 			name:       "service_group",
 			path:       "testdata/test_service_group/group/test_alias_export",
-			sourceName: "github.com/Azure/azure-sdk-for-go/sdk/test_service_group/group/internal.Foo",
+			sourceName: "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_service_group/group/internal.Foo",
 		},
 		{
 			diagLevel:  DiagnosticLevelInfo,
@@ -187,11 +183,13 @@ func TestAliasDefinitions(t *testing.T) {
 			diagLevel:  DiagnosticLevelWarning,
 			name:       "external_package",
 			path:       "testdata/test_external_alias_exporter",
-			sourceName: "github.com/Azure/azure-sdk-for-go/sdk/test_external_alias_source.Foo",
+			sourceName: "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_external_alias_source.Foo",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			review, err := createReview(filepath.Clean(test.path))
+			p, err := filepath.Abs(test.path)
+			require.NoError(t, err)
+			review, err := createReview(p)
 			require.NoError(t, err)
 			require.Equal(t, "Go", review.Language)
 			require.Equal(t, 1, len(review.Diagnostics))
@@ -210,10 +208,6 @@ func TestAliasDefinitions(t *testing.T) {
 }
 
 func TestRecursiveAliasDefinitions(t *testing.T) {
-	priorValue := sdkDirName
-	sdkDirName = "testdata"
-	defer func() { sdkDirName = priorValue }()
-
 	for _, test := range []struct {
 		name, path, sourceName string
 		diagLevel              DiagnosticLevel

@@ -120,7 +120,7 @@ model APITreeNode {
 }
 
 model StructuredToken {
-  /** Token Id. Previously known as DefinitionId. */
+  /** Token Id. Previously known as DefinitionId. Also the id used to place APIView comments. Needs to be deterministic */
   Id: StructuredTokenId;
 
   /** Represents the type of a structured token*/

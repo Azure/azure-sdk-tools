@@ -10,9 +10,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { Review } from 'src/app/_models/review';
-import { APIRevision } from 'src/app/_models/revision';
-import { By } from '@angular/platform-browser';
 
 describe('ReviewPageOptionsComponent', () => {
   let component: ReviewPageOptionsComponent;

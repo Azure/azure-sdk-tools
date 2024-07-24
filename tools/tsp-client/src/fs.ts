@@ -63,7 +63,7 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
   for (const lang of languages) {
     const emitter = Object.keys(obj.dependencies).find((dep: string) => dep.startsWith(lang));
     if (emitter) {
-      Logger.info(`Found emitter package ${emitter}`);
+      Logger.info(`Found emitter package ${emitter}@${obj.dependencies[emitter]}`);
       return emitter;
     }
   }

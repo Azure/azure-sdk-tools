@@ -70,7 +70,7 @@ export function tryReadNpmPackageChangelog(packageFolderPath: string): string {
         const originalChangeLogContent = fs.readFileSync(changelogPath, { encoding: 'utf-8' });
         return originalChangeLogContent;
     } catch (err) {
-        logger.logError(`Failed to read NPM package's changelog "${changelogPath}": ${(err as Error)?.stack ?? err}`);
+        logger.logWarn(`Failed to read NPM package's changelog "${changelogPath}": ${(err as Error)?.stack ?? err}`);
         return '';
     }
 }

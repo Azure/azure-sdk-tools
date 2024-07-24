@@ -25,7 +25,7 @@ describe('ReviewPageOptionsComponent', () => {
         PageOptionsSectionComponent
       ],
       imports: [
-        HttpClientTestingModule,,
+        HttpClientTestingModule,
         HttpClientModule,
         BrowserAnimationsModule,
         SharedAppModule,
@@ -50,25 +50,6 @@ describe('ReviewPageOptionsComponent', () => {
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);
     component = fixture.componentInstance;
-
-    // initialize component properties
-    component.userProfile = new UserProfile();
-    component.review = new Review();
-    component.diffStyleInput = 'Full Diff';
-    component.activeAPIRevision = new APIRevision();
-    component.diffAPIRevision = new APIRevision();
-    component.canApproveReview = false;
-    component.reviewIsApproved = false;
-
-    // Initialize child components
-    const childComponentDE = fixture.debugElement.query(By.directive(PageOptionsSectionComponent));
-    const childComponent = childComponentDE.componentInstance;
-
-    childComponent.sectionName = 'Test Section';
-    childComponent.collapsedInput = false
-    childComponent.sectionId = 'Test Id'
-    childComponent.collapsed = false;
-    childComponent.sectionStateCookieKey = 'Test Key';
 
     fixture.detectChanges();
   });

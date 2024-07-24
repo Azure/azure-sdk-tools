@@ -50,11 +50,43 @@ describe('ReviewPageOptionsComponent', () => {
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);
     component = fixture.componentInstance;
-
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('First Release Approval Button', () => {
+    it('should disable first release approval button when review is approved', () => {
+      component.reviewIsApproved = true;
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector('#first-release-approval-button');
+      expect(button).not.toBeTruthy();
+      const message : HTMLElement = fixture.nativeElement.querySelector('#first-release-approval-message');
+      expect(message.textContent?.startsWith("Approved for First Release By:")).toBeTruthy()
+    });
+    it('should disable first release approval button when review is not approved and user is not an approver', () => {
+      component.reviewIsApproved = false;
+      component.userProfile = new UserProfile();
+      component.userProfile.userName = "test-user-1";
+      component.preferredApprovers = ["test-user-2"]
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector('#first-release-approval-button');
+      expect(button).not.toBeTruthy();
+      const message : HTMLElement = fixture.nativeElement.querySelector('#first-release-approval-message');
+      expect(message.textContent).toEqual("First Release Approval Pending");
+    });
+    it('should enable first release approval button when review is not approved and user is an approver', () => {
+      component.reviewIsApproved = false;
+      component.userProfile = new UserProfile();
+      component.userProfile.userName = "test-user";
+      component.preferredApprovers = ["test-user"]
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector('#first-release-approval-button');
+      expect(button).toBeTruthy();
+      const message : HTMLElement = fixture.nativeElement.querySelector('#first-release-approval-message');
+      expect(message.textContent).toEqual("First Release Approval Pending");
+    });
   });
 });

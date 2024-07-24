@@ -10,6 +10,9 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { Review } from 'src/app/_models/review';
+import { APIRevision } from 'src/app/_models/revision';
+import { By } from '@angular/platform-browser';
 
 describe('ReviewPageOptionsComponent', () => {
   let component: ReviewPageOptionsComponent;
@@ -22,7 +25,7 @@ describe('ReviewPageOptionsComponent', () => {
         PageOptionsSectionComponent
       ],
       imports: [
-        HttpClientTestingModule,
+        HttpClientTestingModule,,
         HttpClientModule,
         BrowserAnimationsModule,
         SharedAppModule,
@@ -47,6 +50,26 @@ describe('ReviewPageOptionsComponent', () => {
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);
     component = fixture.componentInstance;
+
+    // initialize component properties
+    component.userProfile = new UserProfile();
+    component.review = new Review();
+    component.diffStyleInput = 'Full Diff';
+    component.activeAPIRevision = new APIRevision();
+    component.diffAPIRevision = new APIRevision();
+    component.canApproveReview = false;
+    component.reviewIsApproved = false;
+
+    // Initialize child components
+    const childComponentDE = fixture.debugElement.query(By.directive(PageOptionsSectionComponent));
+    const childComponent = childComponentDE.componentInstance;
+
+    childComponent.sectionName = 'Test Section';
+    childComponent.collapsedInput = false
+    childComponent.sectionId = 'Test Id'
+    childComponent.collapsed = false;
+    childComponent.sectionStateCookieKey = 'Test Key';
+
     fixture.detectChanges();
   });
 

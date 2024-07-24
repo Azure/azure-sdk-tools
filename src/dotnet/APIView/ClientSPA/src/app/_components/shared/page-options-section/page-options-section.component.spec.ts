@@ -20,6 +20,12 @@ describe('PageOptionsSectionComponent', () => {
     });
     fixture = TestBed.createComponent(PageOptionsSectionComponent);
     component = fixture.componentInstance;
+    component.sectionName = 'Test Section';
+    component.collapsedInput = false
+    component.sectionId = 'Test Id'
+    component.collapsed = false;
+    component.sectionStateCookieKey = 'Test Key';
+  
     fixture.detectChanges();
   });
 

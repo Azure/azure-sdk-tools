@@ -50,7 +50,6 @@ describe('ReviewPageOptionsComponent', () => {
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);
     component = fixture.componentInstance;
-
     fixture.detectChanges();
   });
 

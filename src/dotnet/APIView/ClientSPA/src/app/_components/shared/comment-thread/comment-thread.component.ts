@@ -1,12 +1,11 @@
 import { Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { MenuItem, MenuItemCommandEvent } from 'primeng/api';
 import { Menu } from 'primeng/menu';
-import { UserProfile } from 'src/app/_models/auth_service_models';
-import { CommentItemModel } from 'src/app/_models/review';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
-import { CodePanelRowData } from 'src/app/_models/revision';
+import { CodePanelRowData } from 'src/app/_models/codePanelRowData';
+import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
   selector: 'app-comment-thread',

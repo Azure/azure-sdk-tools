@@ -3,12 +3,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { mapLanguageAliases } from 'src/app/_helpers/service-helpers';
-import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
-import { pipe, take } from 'rxjs';
+import { take } from 'rxjs';
+import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
   selector: 'app-review-page-options',

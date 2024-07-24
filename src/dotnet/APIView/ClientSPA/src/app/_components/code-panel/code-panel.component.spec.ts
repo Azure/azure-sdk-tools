@@ -4,6 +4,8 @@ import { CodePanelComponent } from './code-panel.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
+import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
 
 describe('CodePanelComponent', () => {
   let component: CodePanelComponent;
@@ -24,7 +26,10 @@ describe('CodePanelComponent', () => {
           }
         }
       ],
-      imports: [HttpClientTestingModule]
+      imports: [HttpClientTestingModule,
+        SharedAppModule,
+        ReviewPageModule
+      ]
     });
     fixture = TestBed.createComponent(CodePanelComponent);
     component = fixture.componentInstance;

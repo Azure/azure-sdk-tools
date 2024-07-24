@@ -1,14 +1,15 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { take } from 'rxjs/operators';
-import { CommentItemModel, CommentType } from 'src/app/_models/review';
-import { CodePanelData, CodePanelRowDatatype, StructuredToken } from 'src/app/_models/revision';
-import { CodePanelRowData } from 'src/app/_models/revision';
+import { CodePanelData } from 'src/app/_models/revision';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
-import { UserProfile } from 'src/app/_models/auth_service_models';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/literal-helpers';
+import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelRowData';
+import { StructuredToken } from 'src/app/_models/structuredToken';
+import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
+import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
   selector: 'app-code-panel',

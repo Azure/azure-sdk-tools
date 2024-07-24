@@ -4,16 +4,10 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { IndexPageComponent } from './index-page.component';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
 import { FooterComponent } from '../shared/footer/footer.component';
-import { SplitterModule } from 'primeng/splitter';
 import { ReviewsListComponent } from '../reviews-list/reviews-list.component';
-import { ContextMenuModule } from 'primeng/contextmenu';
-import { TableModule } from 'primeng/table';
-import { SidebarModule } from 'primeng/sidebar';
-import { DropdownModule } from 'primeng/dropdown';
-import {  FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { RevisionsListComponent } from '../revisions-list/revisions-list.component';
-import { SelectButtonModule } from 'primeng/selectbutton';
+import { AppModule } from 'src/app/app.module';
+import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 
 describe('IndexPageComponent', () => {
   let component: IndexPageComponent;
@@ -30,15 +24,8 @@ describe('IndexPageComponent', () => {
       ],
       imports: [
         HttpClientTestingModule,
-        SplitterModule,
-        ContextMenuModule,
-        TableModule,
-        SidebarModule,
-        DropdownModule,
-        ReactiveFormsModule,
-        FormsModule,
-        MultiSelectModule,
-        SelectButtonModule
+        SharedAppModule,
+        AppModule
       ]
     });
     fixture = TestBed.createComponent(IndexPageComponent);

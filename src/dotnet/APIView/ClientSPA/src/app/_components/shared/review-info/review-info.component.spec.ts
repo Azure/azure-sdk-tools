@@ -3,10 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReviewInfoComponent } from './review-info.component';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Menubar, MenubarModule } from 'primeng/menubar';
+import { MenubarModule } from 'primeng/menubar';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { ApiRevisionOptionsComponent } from '../../api-revision-options/api-revision-options.component';
-import { Dropdown, DropdownModule } from 'primeng/dropdown';
+import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('ReviewInfoComponent', () => {

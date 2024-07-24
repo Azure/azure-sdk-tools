@@ -210,6 +210,16 @@ extends:
                 displayName: "Install Angular CLI"
 
               - script: |
+                  npm install
+                workingDirectory: $(WebClientProjectDirectory)
+                displayName: "Install npm packages"
+
+              - script: |
+                  npm install
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Client SPA Packages"
+
+              - script: |
                   ng test --no-watch --no-progress --browsers=ChromeHeadless
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Run SPA Tests"

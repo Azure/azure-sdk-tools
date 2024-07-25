@@ -10,10 +10,10 @@ import {
   removeDirectory,
 } from "./fs.js";
 import { cp, mkdir, readFile, rename, stat, unlink, writeFile } from "fs/promises";
-import { npmCommand, npxCommand } from "./npm.js";
+import { npmCommand, nodeCommand } from "./npm.js";
 import { compileTsp, discoverMainFile, resolveTspConfigUrl, TspLocation } from "./typespec.js";
 import {
-  formatAdditionalDirectories,
+  writeTspLocationYaml,
   getAdditionalDirectoryName,
   getServiceDir,
   makeSparseSpecDir,
@@ -90,13 +90,13 @@ async function initCommand(argv: any) {
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!);
     await mkdir(newPackageDir, { recursive: true });
-    const additionalDirOutput = formatAdditionalDirectories(
-      configYaml?.parameters?.dependencies?.additionalDirectories,
-    );
-    await writeFile(
-      joinPaths(newPackageDir, "tsp-location.yaml"),
-      `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories:${additionalDirOutput}\n`,
-    );
+    const tspLocationData: TspLocation = {
+        directory: resolvedConfigUrl.path,
+        commit: resolvedConfigUrl.commit,
+        repo: resolvedConfigUrl.repo,
+        additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+        };
+    await writeTspLocationYaml(tspLocationData, newPackageDir);
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
     outputDir = newPackageDir;
@@ -116,9 +116,6 @@ async function initCommand(argv: any) {
     }
     const configYaml = parseYaml(data);
     const serviceDir = getServiceDir(configYaml, emitter);
-    const additionalDirOutput = formatAdditionalDirectories(
-      configYaml?.parameters?.dependencies?.additionalDirectories,
-    );
     const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
       throw new Error(
@@ -135,21 +132,22 @@ async function initCommand(argv: any) {
         directory = matchRes.groups!["path"]!;
       }
     }
-    writeFile(
-      joinPaths(newPackageDir, "tsp-location.yaml"),
-      `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories:${additionalDirOutput}\n`,
-    );
-    outputDir = newPackageDir;
-  }
+    const tspLocationData: TspLocation = {
+        directory: directory,
+        commit: commit ?? "",
+        repo: repo ?? "",
+        additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+        };
+    await writeTspLocationYaml(tspLocationData, newPackageDir);
 
-  Logger.info(`SDK initialized in ${outputDir}`);
-
-  if (!skipSyncAndGenerate) {
-    // update argv in case anything changed and call into sync and generate
-    argv["output-dir"] = outputDir;
-    argv["tsp-config"] = tspConfig;
-    await syncCommand(argv);
-    await generateCommand(argv);
+    if (!skipSyncAndGenerate) {
+        // update argv in case anything changed and call into sync and generate
+        argv["output-dir"] = outputDir;
+        argv["tsp-config"] = tspConfig;
+        await syncCommand(argv);
+        await generateCommand(argv);
+    }
+    return newPackageDir;
   }
 }
 
@@ -374,7 +372,7 @@ async function convertCommand(argv: any): Promise<void> {
       `"${readme}"`,
     ];
     try {
-      await npxCommand(outputDir, generateMetadataCmd);
+      await nodeCommand(outputDir, generateMetadataCmd);
     } catch (err) {
       Logger.error(`Error occurred while attempting to generate ARM metadata: ${err}`);
       process.exit(1);
@@ -389,7 +387,7 @@ async function convertCommand(argv: any): Promise<void> {
     }
     args.push("--isArm");
   }
-  await npxCommand(outputDir, args);
+  await nodeCommand(outputDir, args);
 
   if (arm) {
     try {
@@ -476,7 +474,7 @@ const parser = yargs(hideBin(process.argv))
   .command(
     "init",
     "Initialize the SDK project folder from a tspconfig.yaml",
-    (yargs) => {
+    (yargs: any) => {
       return yargs
         .option("tsp-config", {
           alias: "c",
@@ -509,27 +507,27 @@ const parser = yargs(hideBin(process.argv))
           description: "Repository where the project is defined",
         });
     },
-    async (argv) => {
+    async (argv: any) => {
       await initCommand(argv);
     },
   )
   .command(
     "sync",
     "Sync TypeSpec project specified in tsp-location.yaml",
-    (yargs) => {
+    (yargs: any) => {
       return yargs.option("local-spec-repo", {
         type: "string",
         description: "Path to local spec repo",
       });
     },
-    async (argv) => {
+    async (argv: any) => {
       await syncCommand(argv);
     },
   )
   .command(
     "generate",
     "Generate from a TypeSpec project",
-    (yargs) => {
+    (yargs: any) => {
       return yargs
         .options("emitter-options", {
           type: "string",
@@ -540,14 +538,14 @@ const parser = yargs(hideBin(process.argv))
           description: "Don't clean up the temp directory after generation",
         });
     },
-    async (argv) => {
+    async (argv: any) => {
       await generateCommand(argv);
     },
   )
   .command(
     "update",
     "Sync and generate from a TypeSpec project",
-    (yargs) => {
+    (yargs: any) => {
       return yargs
         .option("repo", {
           type: "string",
@@ -574,14 +572,14 @@ const parser = yargs(hideBin(process.argv))
           description: "Don't clean up the temp directory after generation",
         });
     },
-    async (argv) => {
+    async (argv: any) => {
       await updateCommand(argv);
     },
   )
   .command(
     "convert",
     "Convert a swagger specification to TypeSpec",
-    (yargs) => {
+    (yargs: any) => {
       return yargs
         .option("swagger-readme", {
           type: "string",
@@ -593,7 +591,7 @@ const parser = yargs(hideBin(process.argv))
           description: "Convert swagger to ARM TypeSpec",
         });
     },
-    async (argv) => {
+    async (argv: any) => {
       await convertCommand(argv);
     },
   )
@@ -601,7 +599,7 @@ const parser = yargs(hideBin(process.argv))
     "generate-lock-file",
     "Generate a lock file under the eng/ directory from an existing emitter-package.json",
     {},
-    async (argv) => {
+    async (argv: any) => {
       await generateLockFileCommand(argv);
     },
   )

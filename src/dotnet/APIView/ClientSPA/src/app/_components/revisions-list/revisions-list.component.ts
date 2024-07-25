@@ -1,13 +1,18 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MenuItem, SortEvent } from 'primeng/api';
+import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Pagination } from 'src/app/_models/pagination';
-import { FirstReleaseApproval, Review } from 'src/app/_models/review';
+import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
+import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-revisions-list',
@@ -15,8 +20,12 @@ import { UserProfileService } from 'src/app/_services/user-profile/user-profile.
   styleUrls: ['./revisions-list.component.scss']
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
-  @Input() review : Review | null = null;
+  @Input() review : Review | undefined = undefined;
+  @Input() revisionSideBarVisible : boolean = false;
 
+  @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
+
+  assetsPath : string = environment.assetsPath;
   userProfile : UserProfile | undefined;
   reviewPageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Review/";
   profilePageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Profile/";
@@ -31,7 +40,18 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   sortOrder : number = 1;
   filters: any = null;
 
-  sidebarVisible : boolean = false;
+  createRevisionSidebarVisible : boolean = false;
+  optionsSidebarVisible : boolean = false;
+
+  // Create Revision Selections
+  createRevisionForm! : FormGroup;
+  crLanguages: any[] = [];
+  creatingRevision : boolean = false;
+  crButtonText : string = "Create Review";
+
+  // Review Upload Instructions
+  createRevisionInstruction : string[] | undefined;
+  acceptedFilesForReviewUpload : string | undefined;
 
   // Filters
   details: any[] = [];
@@ -52,10 +72,13 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
-  constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService, private configService: ConfigService) { }
+  constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService,
+    private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
+    private router: Router) { }
 
   ngOnInit(): void {
-    this.createFilters();
+    this.createRevisionFilters();
+    this.createLanguageFilters();
     this.createContextMenuItems();
     this.setDetailsIcons();
     this.loadAPIRevisions(0, this.pageSize * 2, true);
@@ -63,6 +86,13 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       (userProfile : any) => {
         this.userProfile = userProfile;
       });
+    this.createRevisionFormGroup();
+  }
+
+  ngAfterOnit() {
+    if (this.review) {
+      this.loadAPIRevisions(0, this.pageSize * 2, true);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -73,9 +103,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       }
       else {
         this.loadAPIRevisions(0, this.pageSize * 2, true);
+        this.createRevisionFormGroup();
       }
       this.showSelectionActions = false;
       this.showDiffButton = false;
+    }
+
+    if (changes['revisionSideBarVisible'] && changes['revisionSideBarVisible'].currentValue == false) {
+      this.createRevisionSidebarVisible = false;
+      this.optionsSidebarVisible = false;
     }
   }
 
@@ -115,9 +151,22 @@ export class RevisionsListComponent implements OnInit, OnChanges {
             this.pagination = response.pagination;
             this.totalNumberOfRevisions = this.pagination?.totalCount!;
           }
+
+          this.setCreateRevisionLanguageBasedOnReview();
         }
       }
     });
+  }
+
+  createRevisionFormGroup() {
+    this.createRevisionForm = this.fb.group({
+      selectedCRLanguage: [null, Validators.required],
+      selectedFile: [null, Validators.required],
+      filePath: [null, Validators.required],
+      label: [null, Validators.required]
+    });
+    this.createRevisionForm.get('selectedFile')?.disable();
+    this.createRevisionForm.get('filePath')?.disable();
   }
 
   createContextMenuItems() {
@@ -136,7 +185,25 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     }
   }
 
-  createFilters() {     
+  createLanguageFilters() {
+    this.crLanguages = [
+        { label: "C", data: "C" },
+        { label: "C#", data: "C#" },
+        { label: "C++", data: "C++" },
+        { label: "Go", data: "Go" },
+        { label: "Java", data: "Java" },
+        { label: "JavaScript", data: "JavaScript" },
+        { label: "Json", data: "Json" },
+        { label: "Kotlin", data: "Kotlin" },
+        { label: "Python", data: "Python" },
+        { label: "Swagger", data: "Swagger" },
+        { label: "Swift", data: "Swift" },
+        { label: "TypeSpec", data: "TypeSpec" },
+        { label: "Xml", data: "Xml" }
+    ];
+  }
+
+  createRevisionFilters() {     
     this.details = [
       {
         label: 'Status',
@@ -170,14 +237,14 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   viewDiffOfSelectedAPIRevisions() {
     if (this.selectedRevisions.length == 2)
     {
-      this.apiRevisionsService.openDiffOfAPIRevisions(this.review!.id, this.selectedRevisions[0].id, this.selectedRevisions[1].id)
+      this.apiRevisionsService.openDiffOfAPIRevisions(this.selectedRevisions[0], this.selectedRevisions[1], this.router.url);
     }
   }
   
   viewRevision(apiRevision: APIRevision) {
     if (!this.showDeletedAPIRevisions)
     {
-      this.apiRevisionsService.openAPIRevisionPage(this.review!.id, apiRevision.id);
+      this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.router.url);
     }
   }
 
@@ -268,7 +335,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.showAPIRevisionsAssignedToMe = !this.showAPIRevisionsAssignedToMe;
     this.showDeletedAPIRevisions = false;
     if (this.showAPIRevisionsAssignedToMe) {
-      this.review = null;
+      this.review = undefined;
     }
     this.loadAPIRevisions(0, this.pageSize * 2, true);
   }
@@ -285,6 +352,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     }
     msg = msg + " from";
     this.apiRevisionsListDetail = msg;
+  }
+
+  setCreateRevisionLanguageBasedOnReview() {
+    if (this.review) {
+      this.createRevisionForm.patchValue({
+        selectedCRLanguage: this.crLanguages.filter((item) => item.label == this.review?.language)[0],
+      });
+      this.onCRLanguageSelectChange();
+    }
   }
 
   // Getters and Setters
@@ -322,7 +398,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         }
       }
       event.forceUpdate!();
-    }
+  }
 
   /**
    * Callback to invoke on table filter.
@@ -339,7 +415,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   onSelectionChange(value : APIRevision[] = []) {
     this.selectedRevisions = value;
     this.showSelectionActions = (value.length > 0) ? true : false;
-    this.showDiffButton = (value.length == 2) ? true : false;
+    this.showDiffButton = (value.length == 2 && value[0].language == value[1].language) ? true : false;
     let canDelete = (value.length > 0)? true : false;
     for (const revision of value) {
       if (revision.createdBy != this.userProfile?.userName || revision.apiRevisionType != "manual")
@@ -357,5 +433,172 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    */
   onSort(event: SortEvent) {
       this.loadAPIRevisions(0, this.pageSize, true, null, event.field, event.order);
+  }
+
+  // Show or hide the sidebar for creating a review
+  onHideCreateRevisionSidebar() {
+    this.createRevisionForm.reset();
+    this.createRevisionInstruction = [];
+    this.setCreateRevisionLanguageBasedOnReview();
+  }
+
+  /**
+   * Callback to invoke on file selction for review creation
+   * @param event the Filter event
+   */
+  onFileSelect(event: FileSelectEvent) {
+    const uploadFile = event.currentFiles[0];
+    this.createRevisionForm.get('selectedFile')?.setValue(uploadFile);
+  }
+
+  // Fire API request to create the review
+  createRevision() {
+    if (this.createRevisionForm.valid) {
+
+      const formData: FormData = new FormData();
+      formData.append("label", this.createRevisionForm.get('label')?.value!);
+      formData.append("language", this.createRevisionForm.get('selectedCRLanguage')?.value?.data!);
+
+      if (this.createRevisionForm.get('filePath')?.value) {
+        formData.append("filePath", this.createRevisionForm.get('filePath')?.value!);
+      }
+
+      if (this.createRevisionForm.get('selectedFile')?.value) {
+        const file = this.createRevisionForm.get('selectedFile')?.value as File;
+        formData.append("file", file, file.name);
+      }
+
+      this.creatingRevision = true;
+      this.crButtonText = "Creating Review ";
+
+      this.reviewsService.createReview(formData).subscribe({
+        next: (response: any) => {
+          if (response) {
+            this.createRevisionSidebarVisible = false;
+            this.creatingRevision = false;
+            this.crButtonText = "Create Review";
+            this.apiRevisionsService.openAPIRevisionPage(response, this.router.url);
+          }
+        },
+        error: (error: any) => {
+          this.creatingRevision = false;
+        }
+      });
     }
+  }
+
+  onCRLanguageSelectChange() {
+    switch(this.createRevisionForm.get('selectedCRLanguage')?.value?.data){
+      case "C":
+        this.createRevisionInstruction = [
+          `Install clang 10 or later.`, 
+          `Run <code>clang [inputs like az_*.h] -Xclang -ast-dump=json -I ..\\..\\..\\core\\core\\inc -I "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.26.28801\\include\\" > az_core.ast</code>`,
+          `Archive the file <code>Compress-Archive az_core.ast -DestinationPath az_core.zip</code>`,
+          `Upload the resulting archive.`
+        ];
+        this.acceptedFilesForReviewUpload = ".zip";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "C#":
+        this.createRevisionInstruction = [
+          `Run <code>dotnet pack</code>`, 
+          `Upload the resulting .nupkg file.`
+        ];
+        this.acceptedFilesForReviewUpload = ".nupkg";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "C++":
+        this.createRevisionInstruction = [
+          `Generate a token file using the <a href="https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/cpp-api-parser#readme">C++ parser</a>`,
+          `Upload the token file generated.`
+        ];
+        this.acceptedFilesForReviewUpload = ".json";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "Java":
+        this.createRevisionInstruction = [
+          `Run a <code>mvn package</code> build on your project, which will generate a number of build artifacts in the <code>/target</code> directory. In there, find the file ending <code>sources.jar</code>, and select it.`,
+        ];
+        this.acceptedFilesForReviewUpload = ".sources.jar";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "Python":
+        this.createRevisionInstruction = [
+          `Generate wheel for the package. <code>python setup.py bdist_wheel -d [dest_folder]</code>`,
+          `Upload generated whl file`
+        ];
+        this.acceptedFilesForReviewUpload = ".whl";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "JavaScript":
+        this.createRevisionInstruction = [
+          `Use <code>api-extractor</code> to generate a <a href="https://api-extractor.com/pages/setup/generating_docs/">docModel file</a>`,
+          `Upload generated api.json file`
+        ];
+        this.acceptedFilesForReviewUpload = ".api.json";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "Go":
+        this.createRevisionInstruction = [
+          `Archive source module directory in which go.mod is present. <code>Compress-Archive ./sdk/azcore -DestinationPath azcore.zip</code>`,
+          `Rename the file <code>Rename-Item azcore.zip -NewName  azcore.gosource</code>`,
+          `Upload the resulting archive.`
+        ];
+        this.acceptedFilesForReviewUpload = ".gosource";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "Swift":
+        this.createRevisionInstruction = [
+          `Generate JSON file for the source by running Swift APIView parser in XCode. More information is available here on <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/swift/README.md">Swift API parser</a>`,
+          `Upload generated JSON`
+        ];
+        this.acceptedFilesForReviewUpload = ".json";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "Swagger":
+        this.createRevisionInstruction = [
+          `Rename swagger json to replace file extension to .swagger  <code>Rename-Item PetSwagger.json -NewName PetSwagger.swagger</code>`,
+          `Upload renamed swagger file`
+        ];
+        this.acceptedFilesForReviewUpload = ".swagger";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "TypeSpec":
+        this.createRevisionInstruction = [
+          `Rename swagger json to replace file extension to .swagger  <code>Rename-Item PetSwagger.json -NewName PetSwagger.swagger</code>`,
+          `Upload renamed swagger file`
+        ];
+        this.acceptedFilesForReviewUpload = ".json";
+        this.createRevisionForm.get('selectedFile')?.disable();
+        this.createRevisionForm.get('filePath')?.enable();
+        break;
+      case "Json":
+        this.createRevisionInstruction = [
+          `Upload JSON API review token file.`
+        ];
+        this.acceptedFilesForReviewUpload = ".json, .tgz";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      default:
+        this.createRevisionInstruction = []
+    }
+
+    if (this.revisionCreationFileUpload) {    
+      this.revisionCreationFileUpload.clear();
+    }
+
+    this.createRevisionForm.get('label')?.reset();
+    this.createRevisionForm.get('selectedFile')?.reset();
+    this.createRevisionForm.get('filePath')?.reset()
+  }
 }

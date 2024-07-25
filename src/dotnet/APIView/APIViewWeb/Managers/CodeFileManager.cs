@@ -9,7 +9,6 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.CodeAnalysis.Host;
 
 namespace APIViewWeb.Managers
 {
@@ -201,16 +200,23 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task<bool> AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
         {
+            if (codeFileA.CodeFile.VersionString != codeFileA.CodeFile.VersionString)
+            {
+                return false;
+            }
+
             if (LanguageServiceHelpers.UseTreeStyleParser(codeFileA.CodeFile.Language))
             {
-                var diffTree =CodeFileHelpers.ComputeAPIForestDiff(codeFileA.CodeFile.APIForest, codeFileB.CodeFile.APIForest);
+                var diffTree = CodeFileHelpers.ComputeAPIForestDiff(codeFileA.CodeFile.APIForest, codeFileB.CodeFile.APIForest);
                 var codePanelRawData = new CodePanelRawData()
                 {
                     APIForest = diffTree,
-                    Language = codeFileA.CodeFile.Language
+                    Language = codeFileA.CodeFile.Language,
+                    SkipDocsWhenDiffing = true,
+                    ApplySkipDiff = true
                 };
                 var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
-                return result.HasDiff;
+                return !result.HasDiff;
             }
             else
             {

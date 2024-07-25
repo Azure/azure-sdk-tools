@@ -155,7 +155,7 @@ namespace APIViewWeb.LeanControllers
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
                     var diffRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId, _env.IsProduction());
-                    codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionReviewCodeFile.APIForest);
+                    codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(diffRevisionReviewCodeFile.APIForest, activeRevisionReviewCodeFile.APIForest);
                 }
 
                 result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);

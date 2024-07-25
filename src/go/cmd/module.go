@@ -15,33 +15,29 @@ import (
 	"strings"
 
 	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/module"
 )
 
 // indexTestdata allows tests to index this module's testdata
 // (we never want to do that for real reviews)
 var indexTestdata bool
 
-// sdkDirName allows tests to set the name of the assumed common
-// directory of all Azure SDK modules, which enables tests to
-// pass without the code below having to compute this directory
-var sdkDirName = "sdk"
-
 // versionReg is the regex for version part in import
 var versionReg = regexp.MustCompile(`/v\d+$|/v\d+/`)
 
 // Module collects the data required to describe an Azure SDK module's public API.
 type Module struct {
+	// ExternalAliases are type aliases referring to other modules
+	ExternalAliases []*TypeAlias
+	// ModFile is the parsed go.mod file for the module
+	ModFile *modfile.File
+	// Name of the module's root package e.g. "azcore"
 	Name string
-	// PackageName is the name of the APIView review for this module
-	PackageName string
-
-	// packages maps import paths to packages
-	packages map[string]*Pkg
+	// Packages maps import paths to the module's Packages
+	Packages map[string]*Pkg
 }
 
-var majorVerSuffix = regexp.MustCompile(`/v\d+$`)
-
-// fetches the value for Module.PackageName from the full module path
+// getPackageNameFromModPath gets the API review name for the module at modPath
 func getPackageNameFromModPath(modPath string) string {
 	// for official SDKs, use a subset of the full module path
 	// e.g. github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
@@ -50,30 +46,26 @@ func getPackageNameFromModPath(modPath string) string {
 		modPath = suffix
 	}
 	// now strip off any major version suffix
-	if loc := majorVerSuffix.FindStringIndex(modPath); loc != nil {
+	if loc := regexp.MustCompile(`/v\d+$`).FindStringIndex(modPath); loc != nil {
 		modPath = modPath[:loc[0]]
 	}
 	return modPath
 }
 
-// NewModule indexes an Azure SDK module's ASTs
+// NewModule indexes a module's ASTs
 func NewModule(dir string) (*Module, error) {
+	fmt.Println("Indexing", dir)
 	mf, err := parseModFile(dir)
 	if err != nil {
 		return nil, err
 	}
-	// sdkRoot is the path on disk to the sdk folder e.g. /home/user/me/azure-sdk-for-go/sdk.
-	// Used to find definitions of types imported from other Azure SDK modules.
-	sdkRoot := ""
-	if before, _, found := strings.Cut(dir, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
-		sdkRoot = filepath.Join(before, sdkDirName)
+	m := Module{
+		ModFile:  mf,
+		Name:     filepath.Base(dir),
+		Packages: map[string]*Pkg{},
 	}
 
-	packageName := getPackageNameFromModPath(mf.Module.Mod.Path)
-	fmt.Printf("Package Name: %s\n", packageName)
-	m := &Module{Name: filepath.Base(dir), PackageName: packageName, packages: map[string]*Pkg{}}
-
-	baseImportPath := path.Dir(mf.Module.Mod.Path) + "/"
+	baseImportPath := path.Dir(m.ModFile.Module.Mod.Path) + "/"
 	if baseImportPath == "./" {
 		// this is a relative path in the tests, so remove this prefix.
 		// if not, then the package name added below won't match the imported packages.
@@ -92,9 +84,9 @@ func NewModule(dir string) (*Module, error) {
 					return filepath.SkipDir
 				}
 			}
-			p, err := NewPkg(path, mf.Module.Mod.Path)
+			p, err := NewPkg(path, m.ModFile.Module.Mod.Path)
 			if err == nil {
-				m.packages[baseImportPath+p.Name()] = p
+				m.Packages[baseImportPath+p.Name()] = p
 			} else if !errors.Is(err, ErrNoPackages) {
 				return err
 			}
@@ -105,123 +97,35 @@ func NewModule(dir string) (*Module, error) {
 		return nil, err
 	}
 
-	for _, p := range m.packages {
+	for _, p := range m.Packages {
 		p.Index()
 	}
-
-	// Add the definitions of types exported by alias to each package's content. For example,
-	// given "type TokenCredential = shared.TokenCredential" in package azcore, this will hoist
-	// the definition from azcore/internal/shared into the APIView for azcore, making the type's
-	// fields visible there.
-	externalPackages := map[string]*Pkg{}
-
-	// tracks which packages have had their type aliases resolved.
-	// this prevents resolving dependent packages multiple times.
-	processedPackages := map[string]struct{}{}
-
-	for _, p := range m.packages {
-		recursiveResolveTypeAliases(m, p, externalPackages, sdkRoot, processedPackages)
-	}
-	return m, nil
-}
-
-func recursiveResolveTypeAliases(m *Module, p *Pkg, externalPackages map[string]*Pkg, sdkRoot string, processedPackages map[string]struct{}) {
-	if _, ok := processedPackages[p.relName]; ok {
-		// already processed this package
-		return
-	}
-
-	for alias, qn := range p.typeAliases {
-		// qn is a type name qualified with import path like
-		// "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared.TokenRequestOptions"
-		impPath := qn[:strings.LastIndex(qn, ".")]
-		typeName := qn[len(impPath)+1:]
-		var source *Pkg
-		var ok bool
-		if source, ok = m.packages[impPath]; !ok {
-			// must be a package external to this module
-			if source, ok = externalPackages[impPath]; !ok && sdkRoot != "" {
-				// figure out a path to the package, index it
-				if _, after, found := strings.Cut(impPath, "azure-sdk-for-go/sdk/"); found {
-					p := filepath.Join(sdkRoot, strings.TrimSuffix(versionReg.ReplaceAllString(after, "/"), "/"))
-					pkg, err := NewPkg(p, "github.com/Azure/azure-sdk-for-go/sdk/"+after)
-					if err == nil {
-						pkg.Index()
-						externalPackages[impPath] = pkg
-						source = pkg
-					} else {
-						// types from this module will appear in the review without their definitions
-						fmt.Printf("couldn't parse %s: %v\n", impPath, err)
-					}
+	// resolve cross-package references by adding the definitions of types exported by alias to the exporting package
+	for _, p := range m.Packages {
+		for _, alias := range p.TypeAliases {
+			if def, ok := recursiveFindTypeDef(alias.Name, p, m.Packages); ok {
+				alias.Resolve(def)
+				continue
+			}
+			// The definition is in another module. Add the alias to
+			// ExternalAliases so the caller can find the definition later.
+			for _, req := range m.ModFile.Require {
+				if strings.HasPrefix(alias.QualifiedName, req.Mod.Path) {
+					alias.SourceMod = req.Mod
+					break
 				}
 			}
-		} else if len(source.typeAliases) > 0 {
-			// if the source has type aliases we need to resolve them first.
-			// this is to handle recursive type aliases.
-			recursiveResolveTypeAliases(m, source, externalPackages, sdkRoot, processedPackages)
-		}
-
-		level := DiagnosticLevelInfo
-		originalName := qn
-		if _, after, found := strings.Cut(qn, m.Name); found {
-			originalName = strings.TrimPrefix(after, "/")
-		} else {
-			// this type is defined in another module
-			level = DiagnosticLevelWarning
-		}
-
-		var t TokenMaker
-		if source == nil {
-			t = p.c.addSimpleType(*p, alias, p.Name(), originalName, nil)
-		} else if def, ok := recursiveFindTypeDef(typeName, source, m.packages); ok {
-			switch n := def.n.Type.(type) {
-			case *ast.InterfaceType:
-				t = p.c.addInterface(*def.p, alias, p.Name(), n, nil)
-			case *ast.StructType:
-				t = p.c.addStruct(*def.p, alias, p.Name(), def.n, nil)
-				hoistMethodsForType(source, alias, p)
-				// ensure that all struct field types that are structs are also aliased from this package
-				for _, field := range n.Fields.List {
-					fieldTypeName := unwrapStructFieldTypeName(field)
-					if fieldTypeName == "" {
-						// we can ignore this field
-						continue
-					}
-
-					// ensure that our package exports this type
-					if _, ok := p.typeAliases[fieldTypeName]; ok {
-						// found an alias
-						continue
-					}
-
-					// no alias, add a diagnostic
-					p.diagnostics = append(p.diagnostics, Diagnostic{
-						Level:    DiagnosticLevelError,
-						TargetID: t.ID(),
-						Text:     missingAliasFor + fieldTypeName,
-					})
-				}
-			case *ast.Ident:
-				t = p.c.addSimpleType(*p, alias, p.Name(), def.n.Type.(*ast.Ident).Name, nil)
-				hoistMethodsForType(source, alias, p)
-			default:
-				fmt.Printf("unexpected node type %T\n", def.n.Type)
-				t = p.c.addSimpleType(*p, alias, p.Name(), originalName, nil)
+			if alias.SourceMod == (module.Version{}) {
+				// The exporting module doesn't require the source module, so this must be a standard library type.
+				// We want this to appear in the API like "type AzureTime time.Time" and don't want to hoist the
+				// definition into the review. Resolving with a zero typeDef adds a SimpleType to the review.
+				alias.Resolve(typeDef{})
+			} else {
+				m.ExternalAliases = append(m.ExternalAliases, alias)
 			}
-		} else {
-			fmt.Println("found no definition for " + qn)
-		}
-
-		if t != nil {
-			p.diagnostics = append(p.diagnostics, Diagnostic{
-				Level:    level,
-				TargetID: t.ID(),
-				Text:     aliasFor + originalName,
-			})
 		}
 	}
-
-	processedPackages[p.relName] = struct{}{}
+	return &m, nil
 }
 
 // returns the type name for the specified struct field.
@@ -279,42 +183,34 @@ func parseModFile(dir string) (*modfile.File, error) {
 	return modfile.Parse(p, content, nil)
 }
 
+// recursiveFindTypeDef finds a type definition in a collection of packages.
+//
+//   - typeName is the unqualified name of the type e.g. "RetryOptions"
+//   - source is the package containing the type alias
+//   - packages is the collection of Pkgs to search. Its keys are import paths e.g.
+//     "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
 func recursiveFindTypeDef(typeName string, source *Pkg, packages map[string]*Pkg) (typeDef, bool) {
 	def, ok := source.types[typeName]
 	if ok {
 		return def, true
 	}
-
-	// this is a type alias.  recursively find its typeDef
-	alias, ok := source.typeAliases[typeName]
-	if ok {
-		// alias == github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container.DeleteOptions
-		split := strings.LastIndex(alias, ".")
-		if split < 0 {
-			return typeDef{}, false
-		}
-
-		pkgName := alias[:split]   // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
-		typeName = alias[split+1:] // DeleteOptions
-		split = strings.LastIndex(pkgName, "/")
-		if split < 0 {
-			return typeDef{}, false
-		}
-
-		pkgName = pkgName[split+1:] // container
-		source = nil
-		for _, pkg := range packages {
-			if pkg.p.Name == pkgName {
-				source = pkg
-				break
+	// source doesn't define typeName; it must export typeName via an alias.
+	// Recurse into the package from which source imports typeName.
+	for _, a := range source.TypeAliases {
+		if a.Name == typeName {
+			// a.QualifiedName == github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container.DeleteOptions
+			dot := strings.LastIndex(a.QualifiedName, ".")
+			if len(a.QualifiedName)-2 < dot || dot < 1 {
+				// there must be at least one rune before and after the dot
+				panic(fmt.Sprintf("alias %q refers to an invalid qualified name %q", a.Name, a.QualifiedName))
 			}
+			pkgPath := a.QualifiedName[:dot]      // github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container
+			sourceName := a.QualifiedName[dot+1:] // DeleteOptions
+			if p, ok := packages[pkgPath]; ok {
+				return recursiveFindTypeDef(sourceName, p, packages)
+			}
+			break
 		}
-		if source == nil {
-			return typeDef{}, false
-		}
-
-		return recursiveFindTypeDef(typeName, source, packages)
 	}
-
 	return typeDef{}, false
 }

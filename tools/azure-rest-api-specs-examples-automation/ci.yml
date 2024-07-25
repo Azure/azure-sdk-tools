@@ -38,6 +38,11 @@ stages:
     - task: GoTool@0
       inputs:
         version: $(GoVersion)
+    
+    - script: |
+        pip install parameterized
+      displayName: 'Install python unittest dependencies'
+      workingDirectory: ./tools/azure-rest-api-specs-examples-automation
 
     - script: |
         python -m unittest discover .

@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-client-generator-cli",
-  "version": "0.9.2",
+  "version": "0.9.4",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
@@ -15,9 +15,10 @@
     "build": "npm run clean && npm run build:tsc",
     "build:tsc": "tsc",
     "clean": "rimraf ./dist ./types",
-    "example": "npx ts-node src/index.ts update",
+    "example": "npx tsx src/index.ts update -o ./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/",
     "prepack": "npm run build",
-    "test": "mocha --exclude **/examples/**",
+    "test": "mocha",
+    "test:commands": "npx tsx ./test/run_commands.ts",
     "tsp-client": "node cmd/tsp-client.js",
     "watch": "tsc -p . --watch"
   },
@@ -45,11 +46,15 @@
     "prettier": "^3.0.1",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
+    "tsx": "^4.16.2",
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@autorest/openapi-to-typespec": "0.8.2",
+    "@autorest/csharp": "https://aka.ms/azsdk/openapi-to-typespec-csharp",
     "@azure/core-rest-pipeline": "^1.12.0",
     "@types/yargs": "^17.0.32",
+    "autorest": "^3.7.1",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
     "prompt-sync": "^4.2.0",
@@ -64,7 +69,7 @@
     "extension": [
       "ts"
     ],
-    "spec": "test/**/*.spec.ts",
+    "spec": "test/*.spec.ts",
     "loader": "ts-node/esm"
   }
 }

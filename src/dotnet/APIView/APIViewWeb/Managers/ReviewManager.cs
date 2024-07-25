@@ -430,7 +430,7 @@ namespace APIViewWeb.Managers
                                 revision.Files.First().HasOriginal &&
                                 LanguageServiceHelpers.GetLanguageService(revision.Language, _languageServices)?.CanUpdate(revision.Files.First().VersionString) == true)
                             {
-                                var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.Id };
+                                var requestTelemetry = new RequestTelemetry { Name = $"Updating {review.Language} Review with id: {review.Id}"  };
                                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                                 try
                                 {

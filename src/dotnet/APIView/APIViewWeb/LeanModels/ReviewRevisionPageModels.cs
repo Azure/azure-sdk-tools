@@ -67,6 +67,8 @@ namespace APIViewWeb.LeanModels
         public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
         public CodeDiagnostic[] Diagnostics { get; set; } = new CodeDiagnostic[0];
         public string Language { get; set; }
+        public bool ApplySkipDiff { get; set; }
+        public bool SkipDocsWhenDiffing { get; set; }
     }
 
     public class CodePanelRowData
@@ -109,8 +111,8 @@ namespace APIViewWeb.LeanModels
         public List<CodePanelRowData> CodeLinesObj { get; set; } = new List<CodePanelRowData>();
         public List<CodePanelRowData> CodeLines => CodeLinesObj.Count > 0 ? CodeLinesObj : null;
         [JsonIgnore]
-        public Dictionary<int, CodePanelRowData> CommentThreadObj { get; set; } = new Dictionary<int, CodePanelRowData>(); //Dictionary key map to the index of the code line within this node which the comment thread is mapped to
-        public Dictionary<int, CodePanelRowData> CommentThread => CommentThreadObj.Count > 0 ? CommentThreadObj : null;
+        public ConcurrentDictionary<int, CodePanelRowData> CommentThreadObj { get; set; } = new ConcurrentDictionary<int, CodePanelRowData>(); //Dictionary key map to the index of the code line within this node which the comment thread is mapped to
+        public ConcurrentDictionary<int, CodePanelRowData> CommentThread => CommentThreadObj.Count > 0 ? CommentThreadObj : null;
         public NavigationTreeNode NavigationTreeNode { get; set; }
         public string ParentNodeIdHashed { get; set; }
         [JsonIgnore]

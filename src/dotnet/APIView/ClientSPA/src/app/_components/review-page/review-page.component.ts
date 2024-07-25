@@ -33,7 +33,7 @@ export class ReviewPageComponent implements OnInit {
   apiRevisions: APIRevision[] = [];
   activeAPIRevision : APIRevision | undefined = undefined;
   diffAPIRevision : APIRevision | undefined = undefined;
-  revisionSidePanel : boolean | undefined = undefined;
+  revisionSideBarVisible : boolean  = false;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
   languageSafeName: string | undefined;
@@ -103,12 +103,7 @@ export class ReviewPageComponent implements OnInit {
     this.sideMenu = [
       {
           icon: 'bi bi-clock-history',
-      },
-      {
-          icon: 'bi bi-file-diff'
-      },
-      {
-          icon: 'bi bi-chat-left-dots'
+          command: () => { this.revisionSideBarVisible = !this.revisionSideBarVisible; }
       }
     ];
   }
@@ -217,10 +212,6 @@ export class ReviewPageComponent implements OnInit {
           }
         }
       });
-  }
-
-  showRevisionsPanel(showRevisionsPanel : any){
-    this.revisionSidePanel = showRevisionsPanel as boolean;
   }
 
   handlePageOptionsEmitter(showPageOptions: boolean) {
@@ -417,7 +408,7 @@ export class ReviewPageComponent implements OnInit {
         break;
       }
     }
-  }
+  } 
 
   ngOnDestroy() {
     this.workerService.terminateWorker();

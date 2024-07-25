@@ -81,15 +81,32 @@ def get_dotnet_example_method(lines: List[str], start: int) -> DotNetExampleMeth
 
 
 def get_dotnet_using_statements(lines: List[str]) -> List[str]:
-    lines_using_statements = []
+    lines_using_statements = [
+        # these are some using statements that every sample program should use.
+        "using Azure;\n",
+        "using Azure.ResourceManager;\n"
+    ]
     for line in lines:
         if line.startswith('using '):
             lines_using_statements.append(line)
-        elif line.startswith('namespace ') and not line.rstrip().endswith(".Samples"):
+        elif line.startswith('namespace '):
+            # remove the prefix first
             namespace = line[len('namespace '):].strip()
+            # remove the '.Samples' suffix if any
+            if namespace.endswith('.Samples'):
+                namespace = namespace[:-len('.Samples')]
             lines_using_statements.append(f'using {namespace};\n')
             break
-    return lines_using_statements
+    return deduplicate_list(lines_using_statements)
+
+def deduplicate_list(list: List[str]) -> List[str]:
+    seen = set()
+    result: List[str] = []
+    for item in list:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
 
 
 def break_down_aggregated_dotnet_example(lines: List[str]) -> AggregatedDotNetExample:

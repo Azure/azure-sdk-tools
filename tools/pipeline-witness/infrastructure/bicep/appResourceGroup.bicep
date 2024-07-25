@@ -5,13 +5,15 @@ param appServicePlanName string
 param appStorageAccountName string
 param aspEnvironment string
 param cosmosAccountName string
+param keyVaultName string
 param location string
 param vnetPrefix string
 param subnetPrefix string
+param useVnet bool
 
 var cosmosContributorRoleId = '00000000-0000-0000-0000-000000000002' // Built-in Contributor role
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-11-01' = if (useVnet) {
   name: networkSecurityGroupName
   location: 'westus2'
   properties: {
@@ -19,7 +21,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-11-0
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = if (useVnet) {
   name: vnetName
   location: 'westus2'
   properties: {
@@ -33,7 +35,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = if (useVnet) {
   parent: vnet
   name: 'default'
   properties: {
@@ -89,10 +91,11 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|6.0'
+      linuxFxVersion: 'DOTNETCORE|8.0'
+      alwaysOn: true
     }
     httpsOnly: true
-    virtualNetworkSubnetId: subnet.id
+    virtualNetworkSubnetId: useVnet ? subnet.id : null
     publicNetworkAccess: 'Enabled'
   }
   identity: {
@@ -114,11 +117,13 @@ resource appStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
     allowSharedKeyAccess: false
-    networkAcls: {
-      bypass: 'AzureServices'
-      virtualNetworkRules: [{ id: subnet.id }]
-      defaultAction: 'Deny'
-    }
+    networkAcls: useVnet
+      ? {
+        bypass: 'AzureServices'
+        virtualNetworkRules: [{ id: subnet.id }]
+        defaultAction: 'Deny'
+      }
+      : null
     supportsHttpsTrafficOnly: true
     encryption: {
       services: {
@@ -167,6 +172,25 @@ resource appStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     resource buildCompletedQueue 'queues' = {
       name: 'azurepipelines-build-completed'
     }
+
+    resource gitHubActionsQueue 'queues' = {
+      name: 'github-actionrun-completed'
+    }
+  }
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  location: location
+  name: keyVaultName
+  properties: {
+    tenantId: subscription().tenantId
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 90
+    enableRbacAuthorization: true
   }
 }
 
@@ -186,9 +210,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-02-15-preview
     enableAutomaticFailover: false
     enableMultipleWriteLocations: false
     isVirtualNetworkFilterEnabled: true
-    virtualNetworkRules: [{
-      id: subnet.id
-    }]
+    virtualNetworkRules: useVnet ? [{ id: subnet.id }] : []
     disableKeyBasedMetadataWriteAccess: false
     enableFreeTier: false
     enableAnalyticalStorage: false
@@ -313,10 +335,29 @@ resource locksContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/cont
   }
 }
 
+// Assign Key Vault Secrets User role for the Web App on the Key Vault
+resource secretsUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: subscription()
+  // This is the Key Vault Reader role, which is the minimum role permission we can give.
+  // See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#key-vault
+  name: '4633458b-17de-408a-b874-0445c86b69e6'
+}
+
+resource vaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(secretsUserRoleDefinition.id, webAppName, keyVault.id)
+  scope: keyVault
+  properties:{
+    principalId: webApp.identity.principalId
+    roleDefinitionId: secretsUserRoleDefinition.id
+    description: 'Key Vault Secrets User for PipelineWitness'
+  }
+}
+
+
 // Assign Storage Queue Data Contributor role for the Web App on the Queue Storage Account
 resource queueContributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
-  // This is the Storage Blob Data Contributor role, which is the minimum role permission we can give.
+  // This is the Storage Queue Data Contributor role, which is the minimum role permission we can give.
   // See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage
   name: '974c5e8b-45b9-4653-ba55-5f855dd0fb88'
 }

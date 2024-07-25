@@ -10,6 +10,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
   * [Creating a Stress Test](#creating-a-stress-test)
      * [Layout](#layout)
      * [Stress Test Metadata](#stress-test-metadata)
+     * [Stress Test Auth](#stress-test-auth)
      * [Stress Test Secrets and Environment](#stress-test-secrets-and-environment)
      * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
@@ -181,6 +182,33 @@ Fields in `Chart.yaml`
 1. Extra fields in `annotations` can be set arbitrarily, and used via the `-Filters` argument to the [stress test deploy
    script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
 
+### Stress Test Auth
+
+Stress tests are authenticated via [workload identity for AKS](https://learn.microsoft.com/azure/aks/workload-identity-overview).
+
+To authenticate to Azure, tests can choose to use `DefaultAzureCredential` or `WorkloadIdentityCredential`,
+though it is recommended to use `DefaultAzureCredential` for ease of switching between local machine runs and container runs in the cluster.
+The container that a stress test runs in will have a federated identity token available in its environment that can be used to authenticate.
+This credential is made available automatically by the cluster.
+
+Azure CLI can also be used for scripting purposes provided a login step is added to the test invocation.
+See an example [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/stress-deployment-example/templates/deploy-job.yaml)
+or in the following snippet:
+
+```
+command: ['bash', '-c']
+args:
+  - |
+      source $ENV_FILE &&
+      az login --federated-token "$(cat $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u "$AZURE_CLIENT_ID" -t "$AZURE_TENANT_ID" &&
+      az account set -s $AZURE_SUBSCRIPTION_ID &&
+      <your custom test script here using az cli commands>
+```
+
+Each federated identity is backed by a managed identity with authorization to the cluster subscription. For all permissions
+given to this principal, see [workload app roles](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/azure/cluster/workloadapproles.bicep).
+When a new namespace is created in the a stress cluster, a [federated identity](https://learn.microsoft.com/graph/api/resources/federatedidentitycredentials-overview?view=graph-rest-1.0) specific to that namespace is created against a pool of managed identities by the stress watcher service (there is a hard limit of 20 federated identities per managed identity). When a namespace is deleted, the corresponding federated identity is also deleted.
+
 ### Stress Test Secrets and Environment
 
 For ease of implementation regarding merging secrets from various Keyvault sources, secret values injected into the stress
@@ -197,11 +225,6 @@ The following environment variables are currently populated by default into the 
 [bicep template outputs](https://docs.microsoft.com/azure/azure-resource-manager/bicep/outputs) specified.
 
 ```
-AZURE_CLIENT_ID=<value>
-AZURE_CLIENT_OID=<value>
-AZURE_CLIENT_SECRET=<value>
-AZURE_TENANT_ID=<value>
-AZURE_SUBSCRIPTION_ID=<value>
 APPINSIGHTS_CONNECTION_STRING=<value>
 APPINSIGHTS_INSTRUMENTATIONKEY=<value>
 
@@ -209,7 +232,7 @@ APPINSIGHTS_INSTRUMENTATIONKEY=<value>
 RESOURCE_GROUP=<value>
 ```
 
-Additionally, several values are made available as environment variables via the `stress-test-addons.container-env` template (see [job manifest](#job-manifest)):
+Additionally, several values are made available as environment variables via the `stress-test-addons.container-env` template (see [job manifest](#job-manifest)) or by the AKS cluster:
 
 - `GIT_COMMIT` - Matches the git commit of the repository in which the stress test was deployed from. Useful for telemetry queries.
 - `ENV_FILE` - Path to the env file that can be dot sourced to load deployment and other secrets.
@@ -218,6 +241,10 @@ Additionally, several values are made available as environment variables via the
 - `POD_NAMESPACE` - The kubernetes namespace the container is running in, useful for custom telemetry.
 - `DEBUG_SHARE` - See [stress test file share](#stress-test-file-share)
 - `DEBUG_SHARE_ROOT` - See [stress test file share](#stress-test-file-share)
+- `AZURE_SUBSCRIPTION_ID` - The Azure subscription id the stress test will authenticate and deploy resources to.
+- `AZURE_TENANT_ID` - The Azure tenant id the stress test will authenticate to. Set by AKS.
+- `AZURE_CLIENT_ID` - The Entra principal the stress test will authenticate as. Set by AKS.
+- `AZURE_FEDERATED_TOKEN_FILE` - The path to the federated identity token that can be used to login with Azure CLI or the Identity SDK. Set by AKS.
 
 ### Stress Test File Share
 
@@ -400,7 +427,7 @@ spec:
       args:
         - |
             source $ENV_FILE &&
-            az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
+            az login --federated-token "$(cat $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u "$AZURE_CLIENT_ID" -t "$AZURE_TENANT_ID" &&
             az account set -s $AZURE_SUBSCRIPTION_ID &&
             az group show -g $RESOURCE_GROUP -o json
       {{- include "stress-test-addons.container-env" . | nindent 6 }}

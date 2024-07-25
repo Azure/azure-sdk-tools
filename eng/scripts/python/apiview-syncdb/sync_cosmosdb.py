@@ -8,7 +8,7 @@ import logging
 import traceback
 from ast import literal_eval
 from azure.cosmos import CosmosClient
-from azure.identity import DefaultAzureCredential
+from azure.identity import AzurePowerShellCredential
 from azure.storage.blob import BlobServiceClient
 
 logging.getLogger().setLevel(logging.INFO)
@@ -26,12 +26,12 @@ COSMOS_CONTAINERS = ["Reviews", "Comments", "PullRequests", "APIRevisions", "Mig
 BACKUP_CONTAINER = "backups"
 BLOB_NAME_PATTERN ="cosmos/{0}/{1}"
 
-# Create a DefaultAzureCredential instance
-credentials = DefaultAzureCredential()
+# Create a AzurePowerShellCredential()
+credentials = AzurePowerShellCredential()
 
-def restore_data_from_backup(backup_storage_url, dest_url, dest_key, db_name):
+def restore_data_from_backup(backup_storage_url, dest_url, db_name):
 
-    dest_db_client = get_db_client(dest_url, dest_key, db_name)
+    dest_db_client = get_db_client(dest_url, db_name)
     
     blob_service_client = BlobServiceClient(backup_storage_url, credential = credentials)
     container_client = blob_service_client.get_container_client(BACKUP_CONTAINER)
@@ -70,10 +70,10 @@ def get_backup_contents(container_client, blob_name):
 
 
 # Create cosmosdb clients
-def get_db_client(dest_url, dest_key, db_name):
+def get_db_client(dest_url, db_name):
 
     # Create cosmosdb client for destination db
-    dest_cosmos_client = CosmosClient(dest_url, credential=dest_key)
+    dest_cosmos_client = CosmosClient(dest_url, credential=credentials)
     if not dest_cosmos_client:
         logging.error("Failed to create cosmos client for destination db")
         exit(1)
@@ -129,11 +129,6 @@ if __name__ == "__main__":
         help=("URL to backup storage account"),
     )
     parser.add_argument(
-        "--dest-key",
-        required=True,
-        help=("Destination cosmosdb account key"),
-    )
-    parser.add_argument(
         "--dest-url",
         required=True,
         help=("URL to destination cosmosdb"),
@@ -147,4 +142,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.info("Syncing database..")
-    restore_data_from_backup(args.backup_storage_url, args.dest_url, args.dest_key, args.db_name)
+    restore_data_from_backup(args.backup_storage_url, args.dest_url, args.db_name)

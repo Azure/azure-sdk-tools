@@ -4,7 +4,7 @@ import { NPMScope } from "@ts-common/azure-js-dev-tools";
 import { logger } from "../../utils/logger";
 import { getLatestStableVersion } from "../../utils/version";
 import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
-import { fixChangelogFormat, getApiReviewPath, getSDKType } from "../../common/utils";
+import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils";
 
 const shell = require('shelljs');
 const todayDate = new Date();
@@ -22,7 +22,7 @@ function generateChangelogForFirstRelease(packagePath, version) {
 }
 
 function appendChangelog(packagePath, version, changelog) {
-    let originalChangeLogContent: string = fs.readFileSync(path.join(packagePath, 'changelog-temp', 'package', 'CHANGELOG.md'), { encoding: 'utf-8' });
+    let originalChangeLogContent: string = tryReadNpmPackageChangelog(packagePath);
     originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
 
     const modifiedChangelogContent = `## ${version} (${date})

@@ -1,2 +1,0 @@
-GitPython==3.1.41
-pymongo==3.13.0

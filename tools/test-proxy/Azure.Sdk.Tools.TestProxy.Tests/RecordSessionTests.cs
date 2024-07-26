@@ -1,16 +1,19 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Sdk.Tools.TestProxy.Common;
-using Moq;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -33,7 +36,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("19", "application/json")]
         [InlineData("true", "application/json")]
         [InlineData("false", "application/json")]
-        [InlineData("{ \"json\": \"value\" }", "unknown")]
+        [InlineData("{\"a-key\":\"akeywith+inthemiddle\"}", "application/json")]
+        [InlineData("{\"json\":\"value\"}", "unknown")]
         [InlineData("multi\rline", "application/xml")]
         [InlineData("multi\r\nline", "application/xml")]
         [InlineData("multi\n\rline\n", "application/xml")]
@@ -65,7 +69,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var arrayBufferWriter = new ArrayBufferWriter<byte>();
             using var jsonWriter = new Utf8JsonWriter(arrayBufferWriter, new JsonWriterOptions()
             {
-                Indented = true
+                Indented = true, Encoder = RecordEntry.WriterOptions.Encoder
             });
             session.Serialize(jsonWriter);
             jsonWriter.Flush();
@@ -91,6 +95,192 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(bodyBytes, deserializedRecord.Request.Body);
             Assert.Equal(bodyBytes, deserializedRecord.Response.Body);
         }
+
+        [Fact]
+        public async Task CanRoundTripDockerDigest()
+        {
+            // get everything organized
+            var sampleExpected = "{\n   \"schemaVersion\": 2,\n   \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n   \"config\": {\n      \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n      \"size\"" +
+                ": 1472,\n      \"digest\": \"sha256:042a816809aac8d0f7d7cacac7965782ee2ecac3f21bcf9f24b1de1a7387b769\"\n   },\n   \"layers\": [\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\"" + "" +
+                ": 3370628,\n         \"digest\": \"sha256:8921db27df2831fa6eaa85321205a2470c669b855f3ec95d5a3c2b46de0442c9\"\n      }\n   ]\n}";
+            var testName = "roundtrip.json";
+            DefaultHttpContext ctx = new DefaultHttpContext();
+            Assets assets = new Assets()
+            {
+                AssetsRepo = "Azure/azure-sdk-assets-integration",
+                AssetsRepoPrefixPath = "pull/scenarios",
+                AssetsRepoId = "",
+                TagPrefix = "language/tables",
+                Tag = "python/tables_fc54d0"
+            };
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+            var testEntry = new RecordEntry()
+            {
+                RequestUri = "https://Sanitized.azurecr.io/v2/alpine/manifests/3.17.1",
+                RequestMethod = RequestMethod.Get,
+                Request = new RequestOrResponse()
+                {
+                    Headers = new SortedDictionary<string, string[]>()
+                    {
+                        { "Accept", new string[]{ "application/json", "application/vnd.docker.distribution.manifest.v2+json" } },
+                        { "Accept-Encoding", new string[]{ "gzip" } },
+                        { "Authorization", new string[]{ "Sanitized" } },
+                        { "User-Agent", new string[]{ "azsdk-go-azcontainerregistry/v0.2.2 (go1.21.6; linux)" } },
+                    },
+                    Body = null,
+                },
+                StatusCode = 200,
+                Response = new RequestOrResponse()
+                {
+                    Headers = new SortedDictionary<string, string[]>()
+                    {
+                        { "Access-Control-Expose-Headers", new string[]{ "Docker-Content-Digest", "WWW-Authenticate", "Link","X-Ms-Correlation-Request-Id" } },
+                        { "Connection", new string[]{ "keep-alive" } },
+                        { "Content-Length", new string[]{ "528" } },
+                        { "Content-Type", new string[]{ "application/vnd.docker.distribution.manifest.v2+json" } },
+                        { "Date", new string[]{ "Fri, 17 May 2024 21:42:34 GMT" } },
+                        { "Docker-Content-Digest", new string[]{ "sha256:93d5a28ff72d288d69b5997b8ba47396d2cbb62a72b5d87cd3351094b5d578a0" } },
+                        { "Docker-Distribution-Api-Version", new string[]{ "registry/2.0" } },
+                        { "ETag", new string[]{ "\"sha256:93d5a28ff72d288d69b5997b8ba47396d2cbb62a72b5d87cd3351094b5d578a0\"" } },
+                        { "Server", new string[]{ "AzureContainerRegistry" } },
+                        { "Strict-Transport-Security", new string[]{ "max-age=31536000; includeSubDomains", "max-age=31536000; includeSubDomains" } },
+                        { "X-Content-Type-Options", new string[]{ "nosniff" } },
+                        { "X-Ms-Client-Request-Id", new string[]{ "" } },
+                        { "X-Ms-Correlation-Request-Id", new string[]{ "caf56438-d3ba-469d-a30c-360a4ff536c1" } },
+                        { "X-Ms-Request-Id", new string[]{ "Sanitized" } },
+                    },
+                    Body = Encoding.UTF8.GetBytes(sampleExpected)
+                },
+            };
+
+            // create the session which will be saved to disk, then save it
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            var handler = new RecordingHandler(testFolder);
+            await handler.StartRecordingAsync(testName, ctx.Response);
+            var recordingId = ctx.Response.Headers["x-recording-id"].ToString();
+            var session = handler.RecordingSessions[recordingId];
+            session.Session.Entries.Add(testEntry);
+            handler.StopRecording(recordingId);
+
+            // now load it, did we avoid mangling it?
+            var sessionFromDisk = TestHelpers.LoadRecordSession(Path.Combine(testFolder, testName));
+            var targetEntry = sessionFromDisk.Session.Entries[0];
+            var content = Encoding.UTF8.GetString(targetEntry.Response.Body);
+            Assert.Equal(sampleExpected, content);
+        }
+
+        [Fact]
+        public async Task CheckDigestNotNormalized()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_content_digest.json");
+
+            DefaultHttpContext ctx = new DefaultHttpContext();
+            DefaultHttpContext requestCtx = new DefaultHttpContext();
+
+            var handler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var guid = Guid.NewGuid().ToString();
+
+            handler.PlaybackSessions.AddOrUpdate(
+                guid,
+                session,
+                (key, oldValue) => session
+            );
+
+            // we know that on disk and when loaded from memory these bytes are totally untouached
+            // we need to make certain this is the case during matching as well
+            var untouchedBytes = session.Session.Entries[1].Request.Body;
+
+            // define all this stuff where it's easy to observe it
+            var testEntry = new RecordEntry()
+            {
+                RequestUri = "\"https://Sanitized.azurecr.io/v2/hello-world/manifests/test",
+                RequestMethod = RequestMethod.Put,
+                Request = new RequestOrResponse()
+                {
+                    Headers = new SortedDictionary<string, string[]>()
+                    {
+                        { "Accept", new string[]{ "application/json" } },
+                        { "Accept-Encoding", new string[]{ "gzip" } },
+                        { "Authorization", new string[]{ "Sanitized" } },
+                        { "Content-Length", new string[] { "11387" } },
+                        { "User-Agent", new string[]{ "azsdk-go-azcontainerregistry/v0.2.2 (go1.22.2; Windows_NT)" } },
+                        { "Content-Type", new string[] { "application/vnd.oci.image.index.v1+json" } },
+                        { "x-recording-upstream-base-uri", new string[] { "https://Sanitized.azurecr.io" } }
+                    },
+                    Body = untouchedBytes,
+                }
+            };
+
+            // now pull it into where it HAS to be, but is a fairly awkward preparation
+            var httpRequest = requestCtx.Request;
+            var httpResponse = requestCtx.Response;
+            httpRequest.Method = testEntry.RequestMethod.ToString();
+            httpRequest.Scheme = "https";
+            httpRequest.Host = new HostString("Sanitized.azurecr.io");
+            httpRequest.Path = "/v2/hello-world/manifests/test";
+            foreach (var header in testEntry.Request.Headers)
+            {
+                httpRequest.Headers[header.Key] = header.Value;
+            }
+            httpRequest.Body = new MemoryStream(testEntry.Request.Body);
+
+            var requestFeature = requestCtx.Features.Get<IHttpRequestFeature>();
+            if (requestFeature != null)
+            {
+                requestFeature.RawTarget = httpRequest.Path;
+            }
+
+            // if we successfully match, the test is working as expected
+            await handler.HandlePlaybackRequest(guid, httpRequest, httpResponse);
+        }
+
+        [Fact]
+        public void EnsureJsonEscaping()
+        {
+            var shouldNotExist = new string[] {
+                "\\u0026", "\\u002B"
+            };
+
+            var body = "{\"tags\":{\"hidden-link:/app-insights-resource-id\":\"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/Lwm_Rg/providers/microsoft.insights/components/FunctionApp1Lwm\"}"
+            + ",\"properties\":{\"WEBSITE_CONTENTAZUREFILECONNECTIONSTRING\":\"DefaultEndpointsProtocol=https;AccountName=anaccountname!;AccountKey=aBase64&String+Fake==;EndpointSuffix=core.windows.net\"}}";
+
+            var session = new RecordSession();
+            session.Entries.Add(new RecordEntry()
+            {
+                Response = new RequestOrResponse()
+                {
+                    Headers = new SortedDictionary<string, string[]>()
+                    {
+                        {
+                            "Content-Type", new string[] { "application/json" }
+                        }
+                    },
+                    Body = Encoding.UTF8.GetBytes(body),
+                }
+            });
+
+            var tmpDir = Path.GetTempPath();
+            var recordSession = Path.Combine(tmpDir, $"{Guid.NewGuid()}.json");
+            using var stream = System.IO.File.Create(recordSession);
+            var options = new JsonWriterOptions { Indented = true, Encoder = RecordEntry.WriterOptions.Encoder };
+            var writer = new Utf8JsonWriter(stream, options);
+
+            session.Serialize(writer);
+            writer.Flush();
+            stream.Close();
+
+            var text = File.ReadAllText(recordSession);
+
+            foreach(var unicodeChar in shouldNotExist)
+            {
+                Assert.DoesNotContain(unicodeChar, text);
+            }
+        }
+
+
 
         [Theory]
         [InlineData("{\"json\":\"value\"}", "application/json")]

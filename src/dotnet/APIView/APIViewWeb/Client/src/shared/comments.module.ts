@@ -75,3 +75,16 @@ export function updateCommentThreadInReviewPageDOM(reviewId: any, elementId: any
   }
 }
 
+/**
+ * Show Cross Language Comment Indicator
+ */
+export function crossLanguageViewCommentIndicator() {
+  $(".cl-line-no").each(function (index, value) {
+    const crossLangId = $(value).closest(".code-line").data("cross-lang-id");
+    const crossLangComments = $(`[data-cross-lang-id='${crossLangId}']`).filter(".comment-row");
+    if (crossLangComments.length > 0) {
+      $(value).closest(".code-line").find(".icon.icon-comments").removeClass("invisible");
+    }
+  })
+}
+

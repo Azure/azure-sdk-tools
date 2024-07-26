@@ -1,7 +1,5 @@
-FROM mcr.microsoft.com/powershell
+FROM mcr.microsoft.com/azure-powershell:mariner-2
 
-RUN pwsh -c '$ErrorActionPreference = "Stop"; Install-Module Az -Force';
-RUN apt-get update && apt-get -y install curl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 RUN kubectl version --client

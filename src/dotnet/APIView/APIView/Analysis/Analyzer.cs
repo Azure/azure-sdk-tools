@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using ApiView;
@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace APIView.Analysis
 {
-    internal class Analyzer : SymbolVisitor
+    public class Analyzer : SymbolVisitor
     {
         public List<CodeDiagnostic> Results { get; } = new List<CodeDiagnostic>();
 
@@ -20,7 +20,6 @@ namespace APIView.Analysis
             _analyzers.Add(new ClientMethodsAnalyzer());
             _analyzers.Add(new ClientConstructorAnalyzer());
             _analyzers.Add(new ClientOptionsAnalyzer());
-            _analyzers.Add(new ClientAssemblyNamespaceAnalyzer());
             _analyzers.Add(new BannedAssembliesAnalyzer());
             _analyzers.Add(new TypeNameAnalyzer());
         }

@@ -130,7 +130,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             if (profile)
             {
                 var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory), $"{testName}_{profileCount++}.jfr"));
-                profilingConfig = $"-XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
+                profilingConfig = $"-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints -XX:StartFlightRecording=filename={profileOutputPath},maxsize=1gb";
 
                 // If Java 8 is the version of Java being used add '-XX:+UnlockCommercialFeatures' as that is required to run Java Flight Recording in Java 8.
                 // Don't add '-XX:+UnlockCommercialFeatures' if it is any other version as this causes the JVM to crash on an unrecognized VM options.

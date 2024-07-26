@@ -1,0 +1,24 @@
+:host ::ng-deep {
+    .first-release-approval-filter-button .p-selectbutton {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .first-release-approval-filter-button .p-selectbutton .p-button {
+        flex-grow: 1;
+        text-align: center;
+        background-color: transparent;
+        border: 1px solid var(--link-color);
+        color: var(--link-color);
+        font-size: 0.85rem;
+    }
+
+    .first-release-approval-filter-button .p-selectbutton .p-button.p-highlight {
+        color: var(--primary-btn-color);
+        background-color: var(--link-color);
+    }
+
+    .filters-sidebar {
+        width: 20dvw;
+    }
+}

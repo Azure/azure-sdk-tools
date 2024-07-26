@@ -4,9 +4,7 @@ namespace Azure.Sdk.Tools.SecretRotation.Core;
 
 public class RotationPlanStatus
 {
-    public bool Expired { get; set; }
-
-    public bool ThresholdExpired { get; set; }
+    public RotationState State { get; set; }
 
     public bool RequiresRevocation { get; set; }
 

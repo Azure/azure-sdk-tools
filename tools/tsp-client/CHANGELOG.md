@@ -1,5 +1,48 @@
 # Release
 
+## 2024-07-23 - 0.9.4
+
+- Fixed issue where one additional directory entry is treated as a string instead of an array. (#8551)
+
+## 2024-07-15 - 0.9.3
+
+- Add autorest and plugins as dependencies, and run the packages from their install folders, to guarantee the versions don't change after install.
+
+## 2024-07-04 - 0.9.2
+
+- Revert `exit(1)` on tsp compile diagnostics.
+
+## 2024-07-02 - 0.9.1
+
+- Fix error logging after the `compile()` call and exit if diagnostics are encountered.
+- Use `formatDiagnostic()` from "@typespec/compiler" to report diagnostics after compiling.
+
+## 2024-06-21 - 0.9.0
+
+- Prefer the `service-dir` parameter in the emitter configurations in tspconfig.yaml if specified.
+
+## 2024-06-07 - 0.8.1
+
+- Normalize and clean up the directory property in tsp-location.yaml.
+
+## 2024-05-29 - 0.8.0
+
+- Create unique directories for sparse spec checkout.
+
+## 2024-05-20 - 0.7.1
+
+- Added `--no-prompt` flag to skip the output directory confirmation prompt.
+
+## 2024-04-18 - 0.7.0
+
+- Remove `resources.json` after converting resource manager specifications.
+- Support `local-spec-repo` with `init` command.
+
+## 2024-03-19 - 0.6.0
+
+- Support swagger to TypeSpec conversion for ARM specifications using the `--arm` flag. Example usage: `tsp-client convert --swagger-readme <path to your readme> --arm`
+- Support `--generate-lock-file` flag to generate an `emitter-package-lock.json` file in the `eng/` directory based on the `emitter-package.json`. Example usage: `tsp-client --generate-lock-file`
+
 ## 2024-02-21 - 0.5.0
 
 - Support `emitter-package-lock.json` files.

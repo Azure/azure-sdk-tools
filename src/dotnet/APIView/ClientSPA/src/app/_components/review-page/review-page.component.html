@@ -1,0 +1,74 @@
+<app-nav-bar></app-nav-bar>
+<div #mainContainer class="container-fluid main-container">
+    <app-review-info
+        [apiRevisions]="apiRevisions"
+        [activeApiRevisionId]="activeApiRevisionId"
+        [diffApiRevisionId]="diffApiRevisionId"
+        [userProfile]="userProfile"
+        [review]="review"
+        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"></app-review-info>
+    <div class="mt-2" style="display: flex;">
+        <div>
+            <p-menu [model]="sideMenu"></p-menu>
+        </div>
+        <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
+            <p-splitter
+                [panelSizes]="panelSizes"
+                [minSizes]="minSizes"
+                [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
+                <ng-template pTemplate>
+                    <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
+                        <app-review-nav
+                            [reviewPageNavigation]="reviewPageNavigation"
+                            [loadFailed]="loadFailed"
+                            (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate>
+                    <div class="col flex align-items-center justify-content-center border review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
+                        <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
+                            [language]="language" [languageSafeName]="languageSafeName"
+                            [isDiffView]="!!diffApiRevisionId"
+                            [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
+                            [userProfile]="userProfile"
+                            [loadFailed]="loadFailed"
+                            [showLineNumbers]="showLineNumbers" [scrollToNodeIdHashed]="scrollToNodeIdHashed"
+                            [scrollToNodeId]="scrollToNodeId"
+                            (hasActiveConversation)="handleHasActiveConversationEmitter($event)"></app-code-panel>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate>
+                    <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel px-3">
+                        <app-review-page-options
+                            [isDiffView]="!!diffApiRevisionId"
+                            [diffStyleInput]="diffStyle!"
+                            [userProfile]="userProfile"
+                            [review]="review"
+                            [activeAPIRevision]="activeAPIRevision"
+                            [diffAPIRevision]="diffAPIRevision"
+                            [preferredApprovers]="preferredApprovers"
+                            [hasFatalDiagnostics]="hasFatalDiagnostics"
+                            [hasActiveConversation]="hasActiveConversation"
+                            [hasHiddenAPIs]="hasHiddenAPIs"
+                            (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
+                            (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
+                            (showCommentsEmitter)="handleShowCommentsEmitter($event)"
+                            (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
+                            (diffStyleEmitter)="handleDiffStyleEmitter($event)"
+                            (markAsViewedEmitter)="handleMarkAsViewedEmitter($event)"
+                            (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
+                            (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
+                            (reviewApprovalEmitter)="handleReviewApprovalEmitter($event)"
+                            (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"></app-review-page-options>
+                    </div>
+                </ng-template>
+            </p-splitter>
+        </div>
+    </div>
+</div>
+<p-sidebar [(visible)]="revisionSideBarVisible" position="right" [modal]="true" styleClass="revisions-sidebar">
+    <app-revisions-list 
+        [review]="review"
+        [revisionSideBarVisible]="revisionSideBarVisible"></app-revisions-list>
+</p-sidebar>
+<app-footer></app-footer>

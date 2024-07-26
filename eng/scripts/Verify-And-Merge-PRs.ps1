@@ -8,7 +8,7 @@ param(
 
 $ReadyForMerge = $true
 $mergablePRs = @()
-$headers = @{ }
+$headers = @{ "Content-Type" = "text/json" }
 $RetryCount = 5
 
 if ($null -eq $ShouldMerge) {
@@ -16,7 +16,7 @@ if ($null -eq $ShouldMerge) {
 }
 
 if ($AuthToken) {
-  $headers = @{
+  $headers += @{
     Authorization = "bearer $AuthToken"
   }
 }

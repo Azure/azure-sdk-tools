@@ -5,6 +5,7 @@ import {
   IntersectionExpressionNode,
   ModelExpressionNode,
   ModelStatementNode,
+  ObjectLiteralNode,
   OperationStatementNode,
   ProjectionModelExpressionNode,
   ScalarStatementNode,
@@ -34,7 +35,8 @@ export class ApiViewNavigation {
       | ProjectionModelExpressionNode
       | ScalarStatementNode
       | UnionStatementNode
-      | UnionExpressionNode,
+      | UnionExpressionNode
+      | ObjectLiteralNode,
       stack: NamespaceStack
   ) {
     let obj;

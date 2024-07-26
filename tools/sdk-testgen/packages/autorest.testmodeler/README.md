@@ -135,7 +135,7 @@ try-require:
     - ./readme.test.md
     - ./readme.testmodeler.md
 
-version: 3.9.3
+version: 3.9.7
 
 use-extension:
   "@autorest/modelerfour" : "4.25.0"

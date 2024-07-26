@@ -2,7 +2,7 @@ import { mkdir, rm, stat, readFile, access } from "node:fs/promises";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
 import { TspLocation } from "./typespec.js";
-import { joinPaths, resolvePath } from "@typespec/compiler";
+import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -32,6 +32,17 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
       if (!tspLocation.additionalDirectories) {
         tspLocation.additionalDirectories = [];
       }
+
+      // Normalize the directory path and remove trailing slash
+      tspLocation.directory = normalizeDirectory(tspLocation.directory);
+      if (typeof tspLocation.additionalDirectories === "string") {
+        tspLocation.additionalDirectories = [normalizeDirectory(tspLocation.additionalDirectories)];
+      } else {
+        // List of additional directories
+        tspLocation.additionalDirectories =
+          tspLocation.additionalDirectories.map(normalizeDirectory);
+      }
+
       return tspLocation;
     }
     throw new Error("Could not find tsp-location.yaml");
@@ -41,10 +52,9 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
   }
 }
 
-
 export async function getEmitterFromRepoConfig(emitterPath: string): Promise<string> {
   await access(emitterPath);
-  const data = await readFile(emitterPath, 'utf8');
+  const data = await readFile(emitterPath, "utf8");
   const obj = JSON.parse(data);
   if (!obj || !obj.dependencies) {
     throw new Error("Invalid emitter-package.json");
@@ -53,9 +63,14 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
   for (const lang of languages) {
     const emitter = Object.keys(obj.dependencies).find((dep: string) => dep.startsWith(lang));
     if (emitter) {
-      Logger.info(`Found emitter package ${emitter}`);
+      Logger.info(`Found emitter package ${emitter}@${obj.dependencies[emitter]}`);
       return emitter;
     }
   }
   throw new Error("Could not find emitter package");
+}
+
+export function normalizeDirectory(directory: string): string {
+  const normalizedDir = normalizePath(directory);
+  return normalizedDir.endsWith("/") ? normalizedDir.slice(0, -1) : normalizedDir;
 }

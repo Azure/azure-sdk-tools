@@ -36,43 +36,47 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
         [Category("SourceOwners")]
         [Category("Verification")]
         // Source path/owner line with no errors
-        [TestCase($"/sdk/SomePath @{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}0\t@{TestHelpers.TestOwnerNamePartial}2",true)]
+        [TestCase($"/sdk/SomePath @{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}0\t@{TestHelpers.TestOwnerNamePartial}2",true, true)]
         // Moniker Owner lines with no errors
-        [TestCase($"# {MonikerConstants.AzureSdkOwners}: @{TestHelpers.TestOwnerNamePartial}0 @{TestHelpers.TestOwnerNamePartial}4", true)]
-        [TestCase($"# {MonikerConstants.ServiceOwners}: @{TestHelpers.TestOwnerNamePartial}4 @{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}1\t\t@{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}3", true)]
+        [TestCase($"# {MonikerConstants.AzureSdkOwners}: @{TestHelpers.TestOwnerNamePartial}0 @{TestHelpers.TestOwnerNamePartial}4", true, false)]
+        [TestCase($"# {MonikerConstants.ServiceOwners}: @{TestHelpers.TestOwnerNamePartial}4 @{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}1\t\t@{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}3", true, false)]
         // AzureSdkOwners, with no owner defined is legal for a block that ends in a source path/owner line.
-        [TestCase($"# {MonikerConstants.AzureSdkOwners}:", false)]
+        [TestCase($"# {MonikerConstants.AzureSdkOwners}:", false, false)]
         // Source path/owner line with no owners should complain
-        [TestCase($"/sdk/SomePath", true, ErrorMessageConstants.NoOwnersDefined)]
+        // ATTENTION: If ErrorMessageConstants.PathEntryMissingOwners changes, this error needs to change by hand.
+        // The reason being is that string.Format(ErrorMessageConstants.PathEntryMissingOwners, "/sdk/SomePath")
+        // can't be in a TestCase declaration, only a constant.
+        [TestCase($"/sdk/SomePath", true, true, "Path entry, /sdk/SomePath, is missing owners")]
         // AzureSdkOwners, with no owner defined is not legal if the block doesn't end in a source path/owner line.
-        [TestCase($"# {MonikerConstants.AzureSdkOwners}:", true, ErrorMessageConstants.NoOwnersDefined)]
+        [TestCase($"# {MonikerConstants.AzureSdkOwners}:", true, false, ErrorMessageConstants.NoOwnersDefined)]
         // At this point whether or not the line is a moniker or source path/owner line is irrelevant.
         // Test each error individually.
         // Invalid team
-        [TestCase($"# {MonikerConstants.ServiceOwners}: @{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}12", true,
+        [TestCase($"# {MonikerConstants.ServiceOwners}: @{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}12", true, false,
             $"{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}12{ErrorMessageConstants.InvalidTeamPartial}")]
         // Invalid User
-        [TestCase($"# {MonikerConstants.ServiceOwners}: @{TestHelpers.TestOwnerNamePartial}456", true,
+        [TestCase($"# {MonikerConstants.ServiceOwners}: @{TestHelpers.TestOwnerNamePartial}456", true, false,
             $"{TestHelpers.TestOwnerNamePartial}456{ErrorMessageConstants.InvalidUserPartial}")]
         // Non-public member
-        [TestCase($"# {MonikerConstants.ServiceOwners}: @{TestHelpers.TestOwnerNamePartial}1", true,
+        [TestCase($"# {MonikerConstants.ServiceOwners}: @{TestHelpers.TestOwnerNamePartial}1", true, false,
             $"{TestHelpers.TestOwnerNamePartial}1{ErrorMessageConstants.NotAPublicMemberOfAzurePartial}")]
         // Malformed team entry (missing @Azure/) but team otherwise exists in the azure-sdk-write dictionary
-        [TestCase($"/sdk/SomePath @{TestHelpers.TestTeamNamePartial}0", true,
+        [TestCase($"/sdk/SomePath @{TestHelpers.TestTeamNamePartial}0", true, true,
             $"{TestHelpers.TestTeamNamePartial}0{ErrorMessageConstants.MalformedTeamEntryPartial}")]
         // All the owners errors on a single line (except no owners errors)
         [TestCase($"/sdk/SomePath @{TestHelpers.TestTeamNamePartial}0\t@{TestHelpers.TestOwnerNamePartial}1  @{TestHelpers.TestOwnerNamePartial}456\t\t\t@{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}12", 
+            true,
             true,
             $"{TestHelpers.TestTeamNamePartial}0{ErrorMessageConstants.MalformedTeamEntryPartial}",
             $"{TestHelpers.TestOwnerNamePartial}1{ErrorMessageConstants.NotAPublicMemberOfAzurePartial}",
             $"{TestHelpers.TestOwnerNamePartial}456{ErrorMessageConstants.InvalidUserPartial}",
             $"{OrgConstants.Azure}/{TestHelpers.TestTeamNamePartial}12{ErrorMessageConstants.InvalidTeamPartial}")]
-        public void TestVerifyOwners(string line, bool expectOwners, params string[] expectedErrorMessages)
+        public void TestVerifyOwners(string line, bool expectOwners, bool isSourcePathOwnerLine, params string[] expectedErrorMessages)
         {
             // Convert the array to List
             var expectedErrorList = expectedErrorMessages.ToList();
             List<string> actualErrorList = new List<string>();
-            Owners.VerifyOwners(_ownerDataUtils, line, expectOwners, actualErrorList);
+            Owners.VerifyOwners(_ownerDataUtils, line, isSourcePathOwnerLine, expectOwners, actualErrorList);
             if (!TestHelpers.StringListsAreEqual(actualErrorList, expectedErrorList))
             {
                 string expectedErrors = "Empty List";

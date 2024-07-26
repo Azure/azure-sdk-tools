@@ -1,15 +1,15 @@
-﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using System.Collections.Generic;
 
 namespace Microsoft.CodeAnalysis.PooledObjects
 {
-    internal partial class ArrayBuilder<T>
+    public partial class ArrayBuilder<T>
     {
         /// <summary>
         /// struct enumerator used in foreach.
         /// </summary>
-        internal struct Enumerator : IEnumerator<T>
+        public struct Enumerator : IEnumerator<T>
         {
             private readonly ArrayBuilder<T> _builder;
             private int _index;

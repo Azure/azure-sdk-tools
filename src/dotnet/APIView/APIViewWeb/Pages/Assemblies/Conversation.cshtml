@@ -10,7 +10,11 @@
 }
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">
-        <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel), default(APIRevisionListItemModel), default(UserPreferenceModel))" />
+        @{
+            var reviewBadgeModel = new ReviewBadgeModel();
+            reviewBadgeModel.Review = Model.Review;
+        }
+        <partial name="Shared/_ReviewBadge" model="reviewBadgeModel" />
     </div>
 </div>
 @{
@@ -22,8 +26,8 @@
     <div class="left-offcanvas-menu-content" id="left-offcanvas-menu-content">
         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Review" asp-route-id="@Model.Review.Id"><i class="bi bi-braces" data-bs-toggle="tooltip" data-bs-placement="right" title="API"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Revisions" asp-route-id="@Model.Review.Id"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("conversation")"><i class="bi bi-chat-left-dots"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Revisions" asp-route-id="@Model.Review.Id"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisions"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversations" active-if="@TempData["page"].Equals("conversation")"><i class="bi bi-chat-left-dots"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>
     </div>
@@ -98,22 +102,25 @@
                                     {
                                         int indexA = Model.SampleLines.Count() - Math.Abs(revision.Key.sampleRevisionNumber - skipped);
                                         int indexB = int.Parse(thread.Comments.First().ElementId.Split("-").Last()) - 1;
-                                        @if (thread.Comments.Any())
+                                        if (Model.SampleLines.Count() > indexA && Model.SampleLines.ElementAt(indexA).Count() > indexB)
                                         {
-                                            var elementId = thread.LineId;
+                                            @if (thread.Comments.Any())
+                                            {
+                                                var elementId = thread.LineId;
 
-                                            <tr class="code-line">
-                                                <td class="code p-2" style="word-break: break-all;">
-                                                    <a class="comment-url" asp-page="Samples"
-                                                        asp-route-id=@Model.Review.Id
-                                                        asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
-                                                        asp-fragment=@Uri.EscapeDataString(elementId)>
-                                                        @Html.Raw(Model.SampleLines.ElementAt(indexA).ElementAt(indexB))
-                                                    </a>
-                                                </td>
-                                            </tr>
+                                                <tr class="code-line">
+                                                    <td class="code p-2" style="word-break: break-all;">
+                                                        <a class="comment-url" asp-page="Samples"
+                                                            asp-route-id=@Model.Review.Id
+                                                            asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
+                                                            asp-fragment=@Uri.EscapeDataString(elementId)>
+                                                            @Html.Raw(Model.SampleLines.ElementAt(indexA).ElementAt(indexB))
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            <partial name="_CommentThreadPartial" model="@thread" />
                                         }
-                                        <partial name="_CommentThreadPartial" model="@thread" />
                                     }
                                 </table>
                             </div>

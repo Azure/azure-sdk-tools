@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4758
+Pylint custom checkers for SDK guidelines: C4717 - C4760
 """
 
 import logging
@@ -2708,6 +2708,48 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
+
+class NoImportTypingFromTypeCheck(BaseChecker):
+
+    """Rule to check that we aren't importing typing under TYPE_CHECKING."""
+
+    name = "no-typing-import-in-type-check"
+    priority = -1
+    msgs = {
+        "C4760": (
+            "Do not import from typing inside of TYPE_CHECKING.",
+            "no-typing-import-in-type-check",
+            "Do not import from typing inside of TYPE_CHECKING. You can import from typing outside of TYPE_CHECKING.",
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from typing under if TYPE_CHECKING."""
+        try:
+            if isinstance(node.parent, astroid.If) and "TYPE_CHECKING" in node.parent.as_string():
+                if node.modname == "typing" or node.modname == "typing_extensions":
+                    self.add_message(
+                        msgid=f"no-typing-import-in-type-check",
+                        node=node,
+                        confidence=None,
+                    )
+        except:
+            pass
+
+    def visit_import(self, node):
+        """Check that we aren't importing from typing under if TYPE_CHECKING."""
+        try:
+            if isinstance(node.parent, astroid.If) and "TYPE_CHECKING" in node.parent.as_string():
+                for name, _ in node.names:
+                    if name == "typing" or name == "typing_extensions":
+                        self.add_message(
+                            msgid=f"no-typing-import-in-type-check",
+                            node=node,
+                            confidence=None,
+                        )
+        except:
+            pass
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2739,6 +2781,7 @@ def register(linter):
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(DoNotImportLegacySix(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
+    linter.register_checker(NoImportTypingFromTypeCheck(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

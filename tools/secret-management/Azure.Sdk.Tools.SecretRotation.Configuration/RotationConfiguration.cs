@@ -122,6 +122,7 @@ public class RotationConfiguration
             primary!,
             secondaries,
             planConfiguration.RotationThreshold!.Value,
+            planConfiguration.WarningThreshold,
             planConfiguration.RotationPeriod!.Value,
             planConfiguration.RevokeAfterPeriod);
 

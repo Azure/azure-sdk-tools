@@ -28,6 +28,11 @@ import {
   ScalarStatementNode,
   TypeReferenceNode,
   JsNamespaceDeclarationNode,
+  Directive,
+  DirectiveExpressionNode,
+  StringLiteralNode,
+  ObjectLiteralNode,
+  ConstStatementNode,
 } from "@typespec/compiler";
 
 export class NamespaceModel {
@@ -46,6 +51,7 @@ export class NamespaceModel {
     | ScalarStatementNode
     | UnionStatementNode
     | UnionExpressionNode
+    | ObjectLiteralNode
   >();
   models = new Map<
     string,
@@ -57,9 +63,11 @@ export class NamespaceModel {
     | ScalarStatementNode
     | UnionStatementNode
     | UnionExpressionNode
+    | ObjectLiteralNode
   >();
-  aliases = new Map<string, AliasStatementNode>;
+  aliases = new Map<string, AliasStatementNode>();
   augmentDecorators = new Array<AugmentDecoratorStatementNode>();
+  constants = new Array<ConstStatementNode>();
 
   constructor(name: string, ns: Namespace, program: Program) {
     this.name = name;
@@ -112,6 +120,11 @@ export class NamespaceModel {
       this.augmentDecorators.push(augment);
     }
 
+    // collect contants
+    for (const constant of findNodes(SyntaxKind.ConstStatement, program, ns)) {
+      this.constants.push(constant);
+    }
+
     // sort operations and models
     this.operations = new Map([...this.operations].sort(caseInsensitiveSort));
     this.resources = new Map([...this.resources].sort(caseInsensitiveSort));
@@ -124,7 +137,12 @@ export class NamespaceModel {
    * @returns true if there are models, resources or operations
    */
   shouldEmit(): boolean {
-    return (this.models.size > 0 || this.operations.size > 0 || this.resources.size > 0);
+    return (
+      (this.node as NamespaceStatementNode).decorators !== undefined ||
+      this.models.size > 0 ||
+      this.operations.size > 0 ||
+      this.resources.size > 0
+    );
   }
 }
 
@@ -180,7 +198,6 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
         case SyntaxKind.MemberExpression:
           return generateId(node.target);
       }
-      break;
     case SyntaxKind.EnumMember:
       node = obj as EnumMemberNode;
       name = node.id.sv;
@@ -227,6 +244,11 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       name = node.id.sv;
       parentId = generateId(node.parent);
       break;
+    case SyntaxKind.StringLiteral:
+      node = obj as StringLiteralNode;
+      name = node.value;
+      parentId = undefined;
+      break;
     case SyntaxKind.UnionStatement:
       node = obj as UnionStatementNode;
       name = node.id.sv;
@@ -243,10 +265,18 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       parentId = generateId(node.parent);
       break;
     case SyntaxKind.TypeReference:
-        node = obj as TypeReferenceNode;
-        name = generateId(node.target)!;
-        parentId = undefined;
-        break;
+      node = obj as TypeReferenceNode;
+      name = generateId(node.target)!;
+      parentId = undefined;
+      break;
+    case SyntaxKind.DirectiveExpression:
+      node = obj as DirectiveExpressionNode;
+      name = `#${generateId(node.target)!}`;
+      for (const arg of node.arguments) {
+        name += `_${generateId(arg)}`;
+      }
+      parentId = generateId(node.parent);
+      break;
     default:
       return undefined;
   }
@@ -260,5 +290,5 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
 function caseInsensitiveSort(a: [string, any], b: [string, any]): number {
   const aLower = a[0].toLowerCase();
   const bLower = b[0].toLowerCase();
-  return aLower > bLower ? 1 : (aLower < bLower ? -1 : 0);
+  return aLower > bLower ? 1 : aLower < bLower ? -1 : 0;
 }

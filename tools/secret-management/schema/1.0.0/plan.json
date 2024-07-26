@@ -14,7 +14,11 @@
             "type": "string"
         },
         "rotationThreshold": {
-            "description": "Time span indicating when the secret should be rotated before it expires",
+            "description": "Time span before expiration indicating when the secret should be rotated",
+            "type": "string"
+        },
+        "warningThreshold": {
+            "description": "Time span before expiration indicating when warnings should be issued",
             "type": "string"
         },
         "revokeAfterPeriod": {

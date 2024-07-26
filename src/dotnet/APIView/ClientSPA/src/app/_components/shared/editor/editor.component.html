@@ -1,0 +1,38 @@
+<p-editor [(ngModel)]="content" [style]="{ height: '75px'}" >
+    <ng-template pTemplate="header">
+        <span class="ql-formats">
+            <select class="ql-header" aria-label="Heading">
+                <option selected value="">Normal</option>
+                <option value="1">Heading</option>
+                <option value="2">Sub Heading</option>
+            </select>
+        </span>
+        <span class="ql-formats">
+            <select class="ql-font" aria-label="Font Style">
+                <option selected></option>
+                <option value="serif">Serif</option>
+                <option value="monospace">Monospace</option>
+            </select>
+        </span>
+        <span class="ql-formats">
+            <button type="button" class="ql-bold" aria-label="Bold"></button>
+            <button type="button" class="ql-italic" aria-label="Italic"></button>
+            <button type="button" class="ql-underline" aria-label="Underline"></button>
+            <button type="button" class="ql-strike" aria-label="Strikethrough"></button>
+        </span>
+        <span class="ql-formats">
+            <select class="ql-color" aria-label="Text Color"></select>
+            <select class="ql-background" aria-label="Background Color"></select>
+        </span>
+        <span class="ql-formats">
+            <button type="button" class="ql-list" value="ordered" aria-label="Ordered List"></button>
+            <button type="button" class="ql-list" value="bullet" aria-label="Unordered List"></button>
+        </span>
+        <span class="ql-formats">
+            <button type="button" class="ql-align" value="" aria-label="Align Left"></button>
+            <button type="button" class="ql-align" value="center" aria-label="Align Center"></button>
+            <button type="button" class="ql-align" value="right" aria-label="Align Right"></button>
+            <button type="button" class="ql-align" value="justify" aria-label="Justify"></button>
+        </span>
+    </ng-template>
+</p-editor>

@@ -8,7 +8,7 @@
             NavigateToId = null;
             Kind = kind;
             DefinitionId = null;
-            CrossLanguageDefId = null;
+            CrossLanguageDefinitionId = null;
             NumberOfLinesinLeafSection = numberOfLinesinLeafSection;
         }
 
@@ -20,7 +20,7 @@
 
         public CodeFileTokenKind Kind { get; set; }
 
-        public string CrossLanguageDefId { get; set; }
+        public string CrossLanguageDefinitionId { get; set; }
 
         public int? NumberOfLinesinLeafSection { get; set; }
 

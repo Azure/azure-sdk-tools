@@ -1,0 +1,39 @@
+{
+  "Entries": [
+    {
+      "RequestUri": "https://REDACTED/weather/tropical/storms/json?api-version=1.0\u0026year=2023\u0026basinId=AL\u0026govId=5",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "Cache-Control": "public, max-age=600",
+        "Content-Length": "123",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Wed, 19 Jul 2023 22:52:17 GMT",
+        "Expires": "Wed, 19 Jul 2023 23:02:17 GMT",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+        "Vary": "Accept-Encoding",
+        "X-Cache": "CONFIG_NOCACHE",
+        "X-Content-Type-Options": "nosniff",
+        "x-ms-azuremaps-region": "West US 2",
+        "X-MSEdge-Ref": "Ref A: 980665086A12483993E2782EDFC9F29A Ref B: STBEDGE0106 Ref C: 2023-07-19T22:52:17Z"
+      },
+      "ResponseBody": {
+        "results": [
+          {
+            "year": "2023",
+            "basinId": "AL",
+            "govId": 5,
+            "name": "Don",
+            "isActive": true,
+            "isRetired": false,
+            "isSubtropical": false
+          }
+        ]
+      }
+    }
+  ],
+  "Variables": {}
+}

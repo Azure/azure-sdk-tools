@@ -18,9 +18,11 @@ namespace Stress.Watcher
         private Kubernetes Client;
         private GenericChaosClient ChaosClient;
 
-        private ArmClient ARMClient;
+        private ArmClient ArmClient;
 
         private Serilog.Core.Logger Logger;
+
+        private SubscriptionResource Subscription;
 
         public string Namespace;
 
@@ -28,13 +30,15 @@ namespace Stress.Watcher
             Kubernetes client,
             GenericChaosClient chaosClient,
             ArmClient armClient,
+            SubscriptionResource subscription,
             string watchNamespace = ""
         )
         {
             Client = client;
             ChaosClient = chaosClient;
-            ARMClient = armClient;
+            ArmClient = armClient;
             Namespace = watchNamespace;
+            Subscription = subscription;
 
             Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -126,18 +130,16 @@ namespace Stress.Watcher
                 return;
             }
 
-            Subscription subscription = ARMClient.DefaultSubscription;
-
-            ResourceGroup resourceGroup;
+            ResourceGroupResource resourceGroup;
             try {
-                resourceGroup = await subscription.GetResourceGroups().GetAsync(rgName);
+                resourceGroup = await Subscription.GetResourceGroups().GetAsync(rgName);
             } catch (Exception) {
-                Logger.Error($"Failed to get resource group '{rgName}' using subsription id '{subscription.Id}'");
+                Logger.Error($"Failed to get resource group '{rgName}' using subsription id '{Subscription.Id}'");
                 return;
             }
 
             Logger.Information($"Deleting resources for group {rgName}");
-            await resourceGroup.DeleteAsync();
+            await resourceGroup.DeleteAsync(Azure.WaitUntil.Completed);
             Logger.Information($"Deleted resources for group {rgName}");
         }
 

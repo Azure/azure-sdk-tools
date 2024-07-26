@@ -3,8 +3,6 @@
 - [Azure SDK Assets Relocation -- "move recordings out of repos"](#azure-sdk-assets-relocation----move-recordings-out-of-repos)
   - [What is the problem? Why?](#what-is-the-problem-why)
   - [How the test-proxy can ease transition of external recordings](#how-the-test-proxy-can-ease-transition-of-external-recordings)
-    - [Old](#old)
-    - [New](#new)
   - [Which external storage mediums were considered?](#which-external-storage-mediums-were-considered)
     - [`Git SubModules`](#git-submodules)
       - [Advantages of `Git SubModules`](#advantages-of-git-submodules)
@@ -98,18 +96,6 @@ All that needs to happen is to:
 1. Start the test proxy with storage context set to cloned assets repo (details forthcoming)
 2. Adjust the provided "file path" to the recording within the asset repo if necesssary.
 3. Profit.
-
-If you were invoking the test-proxy as a docker image, the difference in initialization is as easy as:
-
-### Old
-
-`docker run -v C:/repo/sdk-for-python/:/etc/testproxy azsdkengsys.azurecr.io/engsys/testproxy-lin:latest`
-
-### New
-
-`docker run -v C:/repo/sdk-for-python-assets/:/etc/testproxy azsdkengsys.azurecr.io/engsys/testproxy-lin:latest`
-
-Given the same relative path in the assets repo, zero changes to test code are necessary.
 
 ## Which external storage mediums were considered?
 

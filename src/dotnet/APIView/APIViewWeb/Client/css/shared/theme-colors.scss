@@ -16,10 +16,15 @@
     --warning-color: #{$warning};
     --danger-color: #{$danger};
     --border-color: #{shade-color($base-bg-color, 20%)};
+    --border-color-transparent: #{shade-color($base-bg-color, 2%)};
     --primary-btn-color: #fff;
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary};
     --link-active: #{shade-color($primary, 20%)};
+    --link-visited: #{shade-color($primary, 40%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #{$primary};
+    --details-link-active-hover: #00CBEB;
     --link-visited: #{shade-color($primary, 40%)};
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary, 80%)};
@@ -42,12 +47,40 @@
     --name-color: #{$base-text-color};
     --code-color: #d1377e;
     --code-comment: green;
-    --code-diagnostics-error-color: lightpink;
-    --code-diagnostics-warn-color: lightyellow;
-    --code-diagnostics-info-color: lightblue;
+    --literal-color: #008509;
+    --enum-color: #8700BD;
+    --java-doc-color: #8c8c8c;
+    --java-comment-color: #8c8c8c;
+    --java-field-name-color: #871094;
+    --java-method-name-color: #00627A;
+    --java-keyword-color: #0033B3;
+    --java-anotation-name-color: #9E880D;
+    --java-string-literal-color: #067D17;
+    --java-number-color: #1750EB;
+    --alert-success-color: #0a3622;
+    --alert-success-bg: #d1e7dd;
+    --alert-success-border-color: #a3cfbb;
+    --alert-success-link-color: #0a3622;
+    --alert-secondary-color: #2b2f32;
+    --alert-secondary-bg: #e2e3e5;
+    --alert-secondary-border-color: #c4c8cb;
+    --alert-secondary-link-color: #2b2f32;
+    --alert-error-color: #58151c;
+    --alert-error-bg: #f8d7da;
+    --alert-error-border-color: #f1aeb5;
+    --alert-error-link-color: #58151c;
+    --alert-warn-color: #664d03;
+    --alert-warn-bg: #fff3cd;
+    --alert-warn-border-color: #ffe69c;
+    --alert-warn-link-color: #664d03;
+    --alert-info-color: #055160;
+    --alert-info-bg: #cff4fc;
+    --alert-info-border-color: #9eeaf9;
+    --alert-info-link-color: #055160;
     --code-added: #cee9d3;
     --code-removed: #fdcfce;
     --code-delta: #fdefc6;
+    --dark-overlay: rgba(0, 0, 0, 0.1);
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
@@ -70,12 +103,17 @@
     --info-color: #{$info-color};
     --warning-color: #{$orange};
     --danger-color: #{$danger};
-    --border-color: #{tint-color($base-bg-color, 30%)};
+    --border-color: #{tint-color($base-bg-color, 20%)};
+    --border-color-transparent: #{tint-color($base-bg-color, 7%)};
     --primary-btn-color: #fff;
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};
     --link-active: #{tint-color($primary-color, 20%)};
     --link-visited: #{tint-color($primary-color, 40%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #0d1dfc;
+    --details-link-active-hover: #00CBEB;
+    --details-link-visited: #3d4afd;
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$white}, .15);
@@ -97,12 +135,38 @@
     --name-color: #{$base-text-color};
     --code-color: #db3984;
     --code-comment: green;
-    --code-diagnostics-error-color: darkmagenta;
-    --code-diagnostics-warn-color: #846007;
-    --code-diagnostics-info-color: darkblue;
+    --java-doc-color: #629755;
+    --java-comment-color: #808080;
+    --java-field-name-color: #9876AA;
+    --java-method-name-color: #FFC66D;
+    --java-keyword-color: #CC7832;
+    --java-anotation-name-color: #BBB529;
+    --java-string-literal-color: #6A8759;
+    --java-number-color: #6897BB;
+    --alert-success-color: #75b798;
+    --alert-success-bg: #051b11;
+    --alert-success-border-color: #0f5132;
+    --alert-success-link-color: #75b798;
+    --alert-secondary-color: #a7acb1;
+    --alert-secondary-bg: #161719;
+    --alert-secondary-border-color: #41464b;
+    --alert-secondary-link-color: #a7acb1;
+    --alert-error-color: #ea868f;
+    --alert-error-bg: #2c0b0e;
+    --alert-error-border-color: #842029;
+    --alert-error-link-color: #ea868f;
+    --alert-warn-color: #ffda6a;
+    --alert-warn-bg: #332701;
+    --alert-warn-border-color: #997404;
+    --alert-warn-link-color: #ffda6a;
+    --alert-info-color: #6edff6;
+    --alert-info-bg: #032830;
+    --alert-info-border-color: #087990;
+    --alert-info-link-color: #6edff6;
     --code-added: #14432d;
     --code-removed: #491d24;
     --code-delta: #4c401a;
+    --dark-overlay: rgba(0, 0, 0, 0.3);
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
@@ -110,10 +174,10 @@
 
 .dark-solarized-theme {
     /*----Base Colors-------------------------------------------------*/
-    $base-bg-color: #2b2b2b;
+    $base-bg-color: #1a1a1a;
     --base-bg-color: #{$base-bg-color};
-    --base-fg-color: #{tint-color($base-bg-color, 5%)};
-    $base-text-color: white;
+    --base-fg-color: #2b2b2b;
+    $base-text-color: #A9B7C6;
     --base-text-color: #{$base-text-color};
     --text-muted-color: #{shade-color($base-text-color, 30%)};
     $primary-color: #FFBD00;
@@ -127,15 +191,21 @@
     --warning-color: #{$warning-color};
     $danger-color: #C80C07;
     --danger-color: #{$danger-color};
-    --border-color: #{tint-color($base-bg-color, 30%)};
+    --border-color: #{tint-color($base-bg-color, 20%)};
+    --border-color-transparent: #{tint-color($base-bg-color, 7%)};
     --primary-btn-color: #{$base-bg-color};
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};
     --link-active: #{tint-color($primary-color, 10%)};
     --link-visited: #{tint-color($primary-color, 20%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #0d1dfc;
+    --details-link-active-hover: #00CBEB;
+    --details-link-visited: #3d4afd;
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$gray-100}, .15);
+    --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary-color, 0.5)};
     --box-shadow: 0 .5rem 1rem #{rgba($gray-100, .15)};
     --box-shadow-sm: 0 .125rem .25rem #{rgba($gray-100, .075)};
     --box-shadow-lg: 0 1rem 3rem #{rgba($gray-100, .175)};
@@ -154,12 +224,38 @@
     --name-color: #{$base-text-color};
     --code-color: #db3984;
     --code-comment: #8a9898;
-    --code-diagnostics-error-color: #ff4c59;
-    --code-diagnostics-warn-color: #e3a710;
-    --code-diagnostics-info-color: #5197f0;
+    --java-doc-color: #629755;
+    --java-comment-color: #808080;
+    --java-field-name-color: #9876AA;
+    --java-method-name-color: #FFC66D;
+    --java-keyword-color: #CC7832;
+    --java-anotation-name-color: #BBB529;
+    --java-string-literal-color: #6A8759;
+    --java-number-color: #6897BB;
+    --alert-success-color: #75b798;
+    --alert-success-bg: #051b11;
+    --alert-success-border-color: #0f5132;
+    --alert-success-link-color: #75b798;
+    --alert-secondary-color: #a7acb1;
+    --alert-secondary-bg: #161719;
+    --alert-secondary-border-color: #41464b;
+    --alert-secondary-link-color: #a7acb1;
+    --alert-error-color: #ea868f;
+    --alert-error-bg: #2c0b0e;
+    --alert-error-border-color: #842029;
+    --alert-error-link-color: #ea868f;
+    --alert-warn-color: #ffda6a;
+    --alert-warn-bg: #332701;
+    --alert-warn-border-color: #997404;
+    --alert-warn-link-color: #ffda6a;
+    --alert-info-color: #6edff6;
+    --alert-info-bg: #032830;
+    --alert-info-border-color: #087990;
+    --alert-info-link-color: #6edff6;
     --code-added: #345039;
     --code-removed: #5d3837;
     --code-delta: #695b32;
+    --dark-overlay: rgba(0, 0, 0, 0.3);
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='dimgray' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='dimgray'/%3e%3c/svg%3e");

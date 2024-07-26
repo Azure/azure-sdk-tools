@@ -67,7 +67,7 @@ Cluster buildout and deployment involves three main steps which are automated in
 First, update the `./azure/parameters/dev.json` parameters file with the values marked `// add me`, then run:
 
 ```
-./provision.ps1 -env dev -LocalAddonsPath `pwd`/kubernetes/stress-test-addons
+./provision.ps1 -env dev -LocalAddonsPath "$(pwd)/kubernetes/stress-test-addons"
 ```
 
 To deploy stress test packages to the dev environment
@@ -78,7 +78,7 @@ resource values from the newly provisioned dev environment that are required by 
 Avoid checking in the updated dev values, they are for local use only.
 
 ```
-<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Environment dev
+<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Environment dev -LocalAddonsPath "$(pwd)/kubernetes/stress-test-addons"
 ```
 
 ## Playground Cluster

@@ -1,0 +1,77 @@
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/azure-rest-api-specs-examples-automation
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/azure-rest-api-specs-examples-automation
+
+variables:
+- template: ../../eng/pipelines/templates/variables/globals.yml
+- name: GoVersion
+  value: '1.18'
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+
+    pool:
+      name: "azsdk-pool-mms-ubuntu-2004-general"
+      vmImage: "MMSUbuntu20.04"
+
+    steps:
+    - task: GoTool@0
+      inputs:
+        version: $(GoVersion)
+    
+    - script: |
+        pip install parameterized
+      displayName: 'Install python unittest dependencies'
+      workingDirectory: ./tools/azure-rest-api-specs-examples-automation
+
+    - script: |
+        python -m unittest discover .
+      displayName: 'Test automation'
+      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/automation
+
+    - script: |
+        python -m unittest discover .
+      displayName: 'Test dotnet worker'
+      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/dotnet
+
+    - script: |
+        export GOPATH=$HOME/go
+        export PATH=$PATH:$GOPATH/bin
+        python -m unittest discover .
+      displayName: 'Test go worker'
+      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/go
+
+    - script: |
+        python -m unittest discover .
+      displayName: 'Test java worker'
+      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/java
+
+    - script: |
+        python -m unittest discover .
+      displayName: 'Test js worker'
+      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/js
+
+    - script: |
+        python -m unittest discover .
+      displayName: 'Test python worker'
+      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/python

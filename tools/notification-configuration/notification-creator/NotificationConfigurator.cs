@@ -196,7 +196,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
                     if (!contactsCache.ContainsKey(contact))
                     {
                         // TODO: Better to have retry if no success on this call.
-                        var userPrincipal = gitHubToAADConverter.GetUserPrincipalNameFromGithub(contact);
+                        var userPrincipal = await gitHubToAADConverter.GetUserPrincipalNameFromGithubAsync(contact);
                         if (!string.IsNullOrEmpty(userPrincipal))
                         {
                             contactsCache[contact] = await service.GetDescriptorForPrincipal(userPrincipal);

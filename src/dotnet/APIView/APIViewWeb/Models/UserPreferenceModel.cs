@@ -16,12 +16,14 @@ namespace APIViewWeb.Models
         internal bool? _hideLineNumbers;
         internal bool? _hideLeftNavigation;
         internal bool? _showHiddenApis;
+        internal bool? _showDocumentation;
         internal bool? _hideReviewPageOptions;
         internal bool? _hideIndexPageOptions;
         internal bool? _hideSamplesPageOptions;
         internal bool? _hideRevisionsPageOptions;
         internal bool? _showComments;
         internal bool? _showSystemComments;
+        internal bool? _useBetaIndexPage;
         internal string _theme;
 
         public string UserName { get; set; }
@@ -81,6 +83,13 @@ namespace APIViewWeb.Models
             set => _showHiddenApis = value;
         }
 
+        [Name("ShowDocumentation")]
+        public bool? ShowDocumentation
+        {
+            get => _showDocumentation ?? false;
+            set => _showDocumentation = value;
+        }
+
         [Name("HideReviewPageOptions")]
         public bool? HideReviewPageOptions
         {
@@ -121,6 +130,13 @@ namespace APIViewWeb.Models
         {
             get => _showSystemComments ?? true;
             set => _showSystemComments = value;
+        }
+
+        [Name("UseBetaIndexPage")]
+        public bool? UseBetaIndexPage
+        {
+            get => _useBetaIndexPage ?? false;
+            set => _useBetaIndexPage = value;
         }
     }
 }

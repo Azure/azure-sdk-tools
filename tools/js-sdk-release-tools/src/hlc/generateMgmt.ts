@@ -52,7 +52,7 @@ export async function generateMgmt(options: {
         logger.logGreen('------------------------------------------------------------');
         try {
             execSync(cmd, {stdio: 'inherit'});
-        } catch (e) {
+        } catch (e: any) {
             throw new Error(`An error occurred while generating codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
         }
     }
@@ -154,7 +154,7 @@ export async function generateMgmt(options: {
                     }
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             logger.logError('Error:');
             logger.logError(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
             if (outputPackageInfo) {

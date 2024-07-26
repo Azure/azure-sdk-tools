@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westus2"
+    },
+    "appResourceGroupName": {
+      "value": "pipelinewitnesstest"
+    },
+    "cosmosAccountName": {
+      "value": "pipelinewitnesstest"
+    },
+    "webAppName": {
+      "value": "pipelinewitnesstest-app"
+    },
+    "keyVaultName": {
+      "value": "pipelinewitnesstest"
+    },
+    "appServicePlanName": {
+      "value": "ASP-pipelinewitnesstest-ab12"
+    },
+    "appStorageAccountName": {
+      "value": "pipelinewitnesstest"
+    },
+    "aspEnvironment": {
+      "value": "test"
+    },
+    "logsResourceGroupName": {
+      "value": "pipelinelogstest"
+    },
+    "logsStorageAccountName": {
+      "value": "pipelinelogstest"
+    },
+    "devOpsEventHubNamespaceName": {
+      "value": "pipelinelogstest"
+    },
+    "gitHubEventHubNamespaceName": {
+      "value": "githublogstest"
+    },
+    "kustoClusterName": {
+      "value": "azsdkengsystest"
+    },
+    "kustoDatabaseName": {
+      "value": "test"
+    },
+    "networkSecurityGroupName": {
+      "value": "pipelinewitnesstest"
+    },
+    "vnetName": {
+      "value": "pipelinewitnesstest"
+    },
+    "vnetPrefix": {
+      "value": "10.7.0.0/16"
+    },
+    "subnetPrefix": {
+      "value": "10.7.0.0/24"
+    },
+    "useVnet": {
+      "value": false
+    }
+  }
+}

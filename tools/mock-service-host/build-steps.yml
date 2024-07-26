@@ -1,0 +1,43 @@
+parameters:
+  - name: PublishArtifact
+    type: boolean
+    default: false
+  - name: NodeVersion
+    type: string
+    default: '16.x'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '${{ parameters.NodeVersion }}'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm ci
+  displayName: 'npm ci'
+  workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+- script: |
+    npm run test
+  displayName: 'npm test'
+  workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+- script: |
+    npm run eslint
+  displayName: 'Eslint'
+  workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+- ${{ if eq(parameters.PublishArtifact, true) }}:
+  - script: |
+      npm pack
+    displayName: 'npm pack'
+    workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+  - script: 'cp azure-tools-mock-service-host-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+    displayName: 'copy to staging dir'
+    workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
+
+  - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+    parameters:
+      ArtifactName: 'drop'
+      ArtifactPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'

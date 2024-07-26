@@ -186,6 +186,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     TriageLabelConstants.NeedsAuthorFeedback,
                     TriageLabelConstants.NoRecentActivity
                 };
+
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
                                                                  IssueTypeQualifier.Issue,
@@ -559,11 +560,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Resulting Action:
         ///     Close the issue
         ///     Add a comment: Hi @{issue.User.Login}, we deeply appreciate your input into this project. Regrettably, 
-        ///                    this issue has remained inactive for over 2 years, leading us to the decision to close it. 
-        ///                    We've implemented this policy to maintain the relevance of our issue queue and facilitate 
-        ///                    easier navigation for new contributors. If you still believe this topic requires attention, 
-        ///                    please feel free to create a new issue, referencing this one. Thank you for your understanding
-        ///                    and ongoing support.
+        ///                    this issue has remained unresolved for over 2 years and inactive for 30 days, leading us
+        ///                    to the decision to close it. We've implemented this policy to maintain the relevance of
+        ///                    our issue queue and facilitate easier navigation for new contributors. If you still believe
+        ///                    this topic requires attention, please feel free to create a new issue, referencing this
+        ///                    one. Thank you for your understanding and ongoing support.
         ///     Lock the issue
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
@@ -574,6 +575,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
+                /// An issue with the auto-close-exempt label will exempt the issue from being closed by this rule
+                List<string> excludeLabels = new List<string>
+                {
+                    TriageLabelConstants.AutoCloseExempt
+                };
+
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(
                     scheduledEventPayload.Repository.Owner.Login,
                     scheduledEventPayload.Repository.Name,
@@ -582,7 +589,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     30, // more than 30 days
                     new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                     null,
-                    null,
+                    excludeLabels,
                     365*2 // Created date > 2 years
                     );
 
@@ -611,7 +618,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                                issue.Number,
                                                                issueUpdate);
                         // Add a comment
-                        string comment = $"Hi @{issue.User.Login}, we deeply appreciate your input into this project. Regrettably, this issue has remained inactive for over 2 years, leading us to the decision to close it. We've implemented this policy to maintain the relevance of our issue queue and facilitate easier navigation for new contributors. If you still believe this topic requires attention, please feel free to create a new issue, referencing this one. Thank you for your understanding and ongoing support.";
+                        string comment = $"Hi @{issue.User.Login}, we deeply appreciate your input into this project. Regrettably, this issue has remained unresolved for over 2 years and inactive for 30 days, leading us to the decision to close it. We've implemented this policy to maintain the relevance of our issue queue and facilitate easier navigation for new contributors. If you still believe this topic requires attention, please feel free to create a new issue, referencing this one. Thank you for your understanding and ongoing support.";
                         gitHubEventClient.CreateComment(scheduledEventPayload.Repository.Id,
                                                         issue.Number,
                                                         comment);

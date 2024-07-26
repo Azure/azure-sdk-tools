@@ -1,12 +1,16 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.7.4",
+  "version": "2.7.11",
   "description": "",
   "scripts": {
+    "dev": "nodemon src/changelogToolCli.ts",
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",
     "build": "rimraf dist && tsc -p .",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ci": "node dist/changelogToolCli.js src/test/testCases/ci/arm-networkanalytics"
   },
   "bin": {
     "changelog-tool": "./dist/changelogToolCli.js",
@@ -19,7 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@azure-tools/openapi-tools-common": "^1.2.2",
-    "@ts-common/azure-js-dev-tools": "^22.4.22",
+    "@ts-common/azure-js-dev-tools": "^21.1.0",
     "colors": "1.4.0",
     "command-line-args": "^5.1.1",
     "comment-json": "^4.1.0",
@@ -33,7 +37,12 @@
     "yaml": "^1.10.2"
   },
   "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/shelljs": "^0.8.15",
+    "nodemon": "^3.1.0",
     "rimraf": "^3.0.2",
-    "typescript": "^3.9.7"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
   }
 }

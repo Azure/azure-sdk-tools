@@ -50,11 +50,15 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             dumpOption.AddAlias("-d");
 
             var universalOption = new Option<bool>(
-                name: "--universalOutput",
+                name: "--universal",
                 description: "Flag; Redirect all logs to stdout, including what would normally be showing up on stderr.",
                 getDefaultValue: () => false);
-            dumpOption.AddAlias("-u");
+            universalOption.AddAlias("-u");
 
+            var breakGlassOption = new Option<bool>(
+                name: "--break-glass",
+                description: "Flag; Ignore secret push protection results when pushing.",
+                getDefaultValue: () => false);
 
             var collectedArgs = new Argument<string[]>("args")
             {
@@ -83,6 +87,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             var startCommand = new Command("start", "Start the TestProxy.");
             startCommand.AddOption(insecureOption);
             startCommand.AddOption(dumpOption);
+            startCommand.AddOption(universalOption);
             startCommand.AddArgument(collectedArgs);
 
             startCommand.SetHandler(async (startOpts) => await callback(startOpts),
@@ -91,9 +96,10 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             root.Add(startCommand);
 
             var pushCommand = new Command("push", "Push the assets, referenced by assets.json, into git.");
+            pushCommand.AddOption(breakGlassOption);
             pushCommand.AddOption(assetsJsonPathOption);
             pushCommand.SetHandler(async (pushOpts) => await callback(pushOpts),
-                new PushOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption)
+                new PushOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption, breakGlassOption)
             );
             root.Add(pushCommand);
 

@@ -40,7 +40,9 @@ class AstNode {
 protected:
   explicit AstNode();
 
+
 public:
+  virtual ~AstNode() = default;
   // AstNode's don't have namespaces or names, so return something that would make callers happy.
   virtual std::string_view const Namespace() const { return ""; }
   virtual std::string_view const Name() const { return ""; }

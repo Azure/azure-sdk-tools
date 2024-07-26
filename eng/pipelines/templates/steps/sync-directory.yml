@@ -79,37 +79,43 @@ steps:
           -PushArgs "${{ parameters.PushArgs }}"
           -AmendCommit $True
 
-    - task: PowerShell@2
+    - task: AzureCLI@2
       displayName: Queue template pipeline
       condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
       inputs:
-        pwsh: true
+        azureSubscription: opensource-api-connection
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
+          ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1 `
+            -Organization "azure-sdk" `
+            -Project "internal" `
+            -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline" `
+            -DefinitionId "$(${{repo}}-template-definition-id)" `
+            -VsoQueuedPipelines "QUEUEDPIPELINES" `
+            -CancelPreviousBuilds $True `
+            -BearerToken $accessToken
         workingDirectory: ${{ parameters.WorkingDirectory }}
-        filePath: ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1
-        arguments: >
-          -Organization "azure-sdk"
-          -Project "internal"
-          -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
-          -DefinitionId "$(${{repo}}-template-definition-id)"
-          -VsoQueuedPipelines "QUEUEDPIPELINES"
-          -CancelPreviousBuilds $True
-          -AuthToken $(azuresdk-azure-sdk-devops-build-queuing-pat)
 
-    - task: PowerShell@2
+    - task: AzureCLI@2
       displayName: Queue live-test template pipeline
       condition: and(succeeded(), ne(variables['${{repo}}-template-tests-definition-id'], ''))
       inputs:
-        pwsh: true
+        azureSubscription: opensource-api-connection
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
+          ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1 `
+            -Organization "azure-sdk" `
+            -Project "internal" `
+            -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline" `
+            -DefinitionId "$(${{repo}}-template-tests-definition-id)" `
+            -VsoQueuedPipelines "QUEUEDPIPELINES" `
+            -CancelPreviousBuilds $True `
+            -BearerToken $accessToken
         workingDirectory: ${{ parameters.WorkingDirectory }}
-        filePath: ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1
-        arguments: >
-          -Organization "azure-sdk"
-          -Project "internal"
-          -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
-          -DefinitionId "$(${{repo}}-template-tests-definition-id)"
-          -VsoQueuedPipelines "QUEUEDPIPELINES"
-          -CancelPreviousBuilds $True
-          -AuthToken $(azuresdk-azure-sdk-devops-build-queuing-pat)
 
   - task: PowerShell@2
     displayName: Write Queued Pipeline Information to Tools PR

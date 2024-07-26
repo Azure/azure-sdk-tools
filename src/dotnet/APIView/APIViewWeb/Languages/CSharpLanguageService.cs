@@ -4,20 +4,32 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using ApiView;
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
-    public class CSharpLanguageService : LanguageService
+    public class CSharpLanguageService : LanguageProcessor
     {
+        private readonly string _csharpParserToolPath;
         private static Regex _packageNameParser = new Regex("([A-Za-z.]*[a-z]).([\\S]*)", RegexOptions.Compiled);
         public override string Name { get; } = "C#";
         public override string[] Extensions { get; } = { ".dll" };
+        public override string ProcessName => _csharpParserToolPath;
+        public override string VersionString { get; } = "28";
+
+        public CSharpLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
+        {
+            _csharpParserToolPath = configuration["CSHARPPARSEREXECUTABLEPATH"];
+        }
+
+        public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
+        {
+            var outputFileName = Path.GetFileName(jsonPath).Replace(".json.tgz", "");
+            return $"--packageFilePath \"{originalName}\" --outputDirectoryPath \"{tempDirectory}\" --outputFileName \"{outputFileName}\"";
+        }
 
         public override bool IsSupportedFile(string name)
         {
@@ -29,11 +41,6 @@ namespace APIViewWeb
             return name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static bool IsNuspec(string name)
-        {
-            return name.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase);
-        }
-
         private static bool IsNuget(string name)
         {
             return name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase);
@@ -41,76 +48,7 @@ namespace APIViewWeb
 
         public override bool CanUpdate(string versionString)
         {
-            return versionString != CodeFileBuilder.CurrentVersion;
-        }
-
-        public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
-        {
-            ZipArchive archive = null;
-            try
-            {
-                Stream dllStream = stream;
-                Stream docStream = null;
-                List<DependencyInfo> dependencies = null;
-
-                if (IsNuget(originalName))
-                {
-                    archive = new ZipArchive(stream, ZipArchiveMode.Read, true);
-
-                    var nuspecEntry = archive.Entries.Single(entry => IsNuspec(entry.Name));
-
-                    var dllEntries = archive.Entries.Where(entry => IsDll(entry.Name)).ToArray();
-                    if (dllEntries.Length == 0)
-                    {
-                        return Task.FromResult(GetDummyReviewCodeFile(originalName, dependencies));
-                    }
-
-                    var dllEntry = dllEntries.First();
-                    if (dllEntries.Length > 1)
-                    {
-                        // If there are multiple dlls in the nupkg (e.g. Cosmos), try to find the first that matches the nuspec name, but
-                        // fallback to just using the first one.
-                        dllEntry = dllEntries.FirstOrDefault(
-                            dll => Path.GetFileNameWithoutExtension(nuspecEntry.Name)
-                                .Equals(Path.GetFileNameWithoutExtension(dll.Name), StringComparison.OrdinalIgnoreCase)) ?? dllEntry;
-                    }
-
-                    dllStream = dllEntry.Open();
-                    var docEntry = archive.GetEntry(Path.ChangeExtension(dllEntry.FullName, ".xml"));
-                    if (docEntry != null)
-                    {
-                        docStream = docEntry.Open();
-                    }
-                    using var nuspecStream = nuspecEntry.Open();
-                    var document = XDocument.Load(nuspecStream);
-                    var dependencyElements = document.Descendants().Where(e => e.Name.LocalName == "dependency");
-                    dependencies = new List<DependencyInfo>();
-                    dependencies.AddRange(
-                            dependencyElements.Select(dependency => new DependencyInfo(
-                                    dependency.Attribute("id").Value,
-                                        dependency.Attribute("version").Value)));
-                    // filter duplicates and sort
-                    if (dependencies.Any())
-                    {
-                        dependencies = dependencies
-                        .GroupBy(d => d.Name)
-                        .Select(d => d.First())
-                        .OrderBy(d => d.Name).ToList();
-                    }
-                }
-
-                var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream);
-                if (assemblySymbol == null)
-                {
-                    return Task.FromResult(GetDummyReviewCodeFile(originalName, dependencies));
-                }
-
-                return Task.FromResult(new CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies));
-            }
-            finally
-            {
-                archive?.Dispose();
-            }
+            return versionString != VersionString;
         }
 
         private CodeFile GetDummyReviewCodeFile(string originalName, List<DependencyInfo> dependencies)
@@ -132,7 +70,7 @@ namespace APIViewWeb
             CodeFileBuilder.BuildDependencies(builder, dependencies);
 
             return new CodeFile()
-            {                
+            {
                 Name = reviewName,
                 Language = "C#",
                 VersionString = CodeFileBuilder.CurrentVersion,

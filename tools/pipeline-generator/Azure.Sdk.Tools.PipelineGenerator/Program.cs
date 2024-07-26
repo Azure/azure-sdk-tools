@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -43,7 +43,6 @@ namespace PipelineGenerator
                         g.Project,
                         g.Prefix,
                         g.Path,
-                        g.Patvar,
                         g.Endpoint,
                         g.Repository,
                         g.Branch,
@@ -127,7 +126,6 @@ namespace PipelineGenerator
             string project,
             string prefix,
             string path,
-            string patvar,
             string endpoint,
             string repository,
             string branch,
@@ -154,7 +152,6 @@ namespace PipelineGenerator
                     this.logger,
                     organization,
                     project,
-                    patvar,
                     endpoint,
                     repository,
                     branch,

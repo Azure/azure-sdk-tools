@@ -28,6 +28,7 @@ spec:
   template:
     metadata:
       labels:
+        azure.workload.identity/use: "true"
         release: {{ .Release.Name }}
         scenario: {{ .Stress.Scenario }}
         gitCommit: {{ .Values.GitCommit | default "" }}
@@ -36,6 +37,7 @@ spec:
         deletionLockExpiry: {{ .Values.PodDisruptionBudgetExpiry }}
       {{- end }}
     spec:
+      serviceAccountName: {{ .Release.Namespace }}
       # In cases where a stress test has higher resource requirements or needs a dedicated node,
       # a new nodepool can be provisioned and labeled to allow custom scheduling.
       nodeSelector:
@@ -68,7 +70,6 @@ spec:
 {{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
-{{- include "stress-test-addons.static-secrets" $global }}
 {{- if $global.Values.PodDisruptionBudgetExpiry }}
 {{- include "stress-test-addons.pod-disruption-budget" $global }}
 {{- end }}
@@ -96,6 +97,7 @@ spec:
   template:
     metadata:
       labels:
+        azure.workload.identity/use: "true"
         release: {{ .Release.Name }}
         scenario: {{ .Stress.Scenario }}
         gitCommit: {{ .Values.GitCommit | default "" }}
@@ -104,6 +106,7 @@ spec:
         deletionLockExpiry: {{ .Values.PodDisruptionBudgetExpiry }}
       {{- end }}
     spec:
+      serviceAccountName: {{ .Release.Namespace }}
       nodeSelector:
         sku: 'default'
       restartPolicy: Never
@@ -129,7 +132,6 @@ spec:
 {{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
-{{- include "stress-test-addons.static-secrets" $global }}
 {{- if $global.Values.PodDisruptionBudgetExpiry }}
 {{- include "stress-test-addons.pod-disruption-budget" $global }}
 {{- end }}

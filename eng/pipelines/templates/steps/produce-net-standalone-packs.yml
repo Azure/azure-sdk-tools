@@ -41,7 +41,7 @@ steps:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
 
-      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+      - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
         parameters:
           ArtifactName: "standalone-${{ target.rid }}"
           ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"
@@ -66,7 +66,7 @@ steps:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
       
-      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+      - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
         parameters:
           ArtifactName: "standalone-${{ target.rid }}"
           ArtifactPath: "$(Build.ArtifactStagingDirectory)/${{ target.rid }}"

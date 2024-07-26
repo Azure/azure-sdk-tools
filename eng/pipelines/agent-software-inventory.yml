@@ -36,7 +36,7 @@ jobs:
         Host: Windows
       CustomMacOS:
         Pool: Azure Pipelines
-        OSVmImage: macos-11
+        OSVmImage: macos-latest
         Host: MacOS
 
   pool:

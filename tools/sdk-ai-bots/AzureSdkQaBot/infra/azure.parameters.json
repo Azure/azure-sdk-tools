@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceBaseName": {
+      "value": "azuresdkqabot${{RESOURCE_SUFFIX}}"
+    },
+    "botAadAppClientId": {
+      "value": "${{BOT_ID}}"
+    },
+    "botAadAppClientSecret": {
+      "value": "${{SECRET_BOT_PASSWORD}}"
+    },
+    "webAppSKU": {
+      "value": "B3"
+    },
+    "botDisplayName": {
+      "value": "AzureSDKAssistant"
+    },
+    "openAIApiKey": {
+      "value": "${{SECRET_OPENAI_API_KEY}}"
+    },
+    "azureOpenAIApiKey": {
+      "value": "${{SECRET_AZURE_OPENAI_API_KEY}}"
+    },
+    "azureOpenAIEndpoint": {
+      "value": "${{SECRET_AZURE_OPENAI_ENDPOINT}}"
+    },
+    "azureContentSafetyApiKey": {
+      "value": "${{SECRET_AZURE_CONTENT_SAFETY_API_KEY}}"
+    },
+    "azureContentSafetyEndpoint": {
+      "value": "${{SECRET_AZURE_CONTENT_SAFETY_ENDPOINT}}"
+    },
+    "azureEmbeddingModelDeploymentName": {
+      "value": "${{AZURE_EMBEDDING_MODEL_DEPLOYMENT_NAME}}"
+    },
+    "azureChatModelDeploymentName": {
+      "value": "${{AZURE_CHAT_MODEL_DEPLOYMENT_NAME}}"
+    },
+    "searchServiceUrl": {
+      "value": "${{SECRET_SEARCH_SERVICE_URL}}"
+    },
+    "searchServiceApiKey": {
+      "value": "${{SECRET_SEARCH_SERVICE_API_KEY}}"
+    },
+    "githubToken": {
+      "value": "${{SECRET_GITHUB_TOKEN}}"
+    },
+    "appInsightConnectionString": {
+      "value": "${{SECRET_APP_INSIGHT_CONNECTION_STRING}}"
+    },
+    "keyVaultUrl": {
+      "value": "${{KEYVAULT_URL}}"
+    },
+    "certificateName": {
+      "value": "${{CERTIFICATE_NAME}}"
+    }
+  }
+}

@@ -1,16 +1,15 @@
-import { npmCommand } from "./npm.js";
+import { npmCommand, nodeCommand } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, access, stat } from "node:fs/promises";
+import { mkdir, cp, readFile, stat, rename, unlink } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
-import { formatAdditionalDirectories, getAdditionalDirectoryName } from "./utils.js";
+import { getAdditionalDirectoryName, getPathToDependency, getServiceDir, makeSparseSpecDir, writeTspLocationYaml } from "./utils.js";
 import { resolve } from "node:path";
-import { spawn } from "node:child_process";
 import { config as dotenvConfig } from "dotenv";
 
 
@@ -34,8 +33,7 @@ async function sdkInit(
     // URL scenario
     const repoRoot = await getRepoRoot(outputDir);
     const resolvedConfigUrl = resolveTspConfigUrl(config);
-    const cloneDir = joinPaths(repoRoot, "..", "sparse-spec");
-    await mkdir(cloneDir, { recursive: true });
+    const cloneDir = await makeSparseSpecDir(repoRoot);
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(outputDir, cloneDir, `https://github.com/${resolvedConfigUrl.repo}.git`);
@@ -53,21 +51,20 @@ async function sdkInit(
       throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
     }
     const configYaml = parseYaml(data);
-    const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
-    if (!serviceDir) {
-      throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
-    }
-    Logger.debug(`Service directory: ${serviceDir}`)
+    const serviceDir = getServiceDir(configYaml, emitter);
     const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
       throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!)
     await mkdir(newPackageDir, { recursive: true });
-    const additionalDirOutput = formatAdditionalDirectories(configYaml?.parameters?.dependencies?.additionalDirectories);
-    await writeFile(
-      joinPaths(newPackageDir, "tsp-location.yaml"),
-    `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories:${additionalDirOutput}\n`);
+    const tspLocationData: TspLocation = {
+        directory: resolvedConfigUrl.path,
+        commit: resolvedConfigUrl.commit,
+        repo: resolvedConfigUrl.repo,
+        additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+        };
+    await writeTspLocationYaml(tspLocationData, newPackageDir);
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
     return newPackageDir;
@@ -86,12 +83,7 @@ async function sdkInit(
       throw new Error(`tspconfig.yaml is empty at ${config}`);
     }
     const configYaml = parseYaml(data);
-    const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
-    if (!serviceDir) {
-      throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
-    }
-    Logger.debug(`Service directory: ${serviceDir}`)
-    const additionalDirOutput = formatAdditionalDirectories(configYaml?.parameters?.dependencies?.additionalDirectories);
+    const serviceDir = getServiceDir(configYaml, emitter);
     const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
       throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
@@ -106,8 +98,13 @@ async function sdkInit(
         directory = matchRes.groups!["path"]!;
       }
     }
-    writeFile(joinPaths(newPackageDir, "tsp-location.yaml"),
-          `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories:${additionalDirOutput}\n`);
+    const tspLocationData: TspLocation = {
+        directory: directory,
+        commit: commit ?? "",
+        repo: repo ?? "",
+        additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
+        };
+    await writeTspLocationYaml(tspLocationData, newPackageDir);
     return newPackageDir;
   }
 }
@@ -131,6 +128,7 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   await mkdir(srcDir, { recursive: true });
 
   if (localSpecRepo) {
+    Logger.info("NOTE: A path to a local spec was provided, will generate based off of local files...");
     Logger.debug(`Using local spec directory: ${localSpecRepo}`);
     function filter(src: string): boolean {
       if (src.includes("node_modules")) {
@@ -152,8 +150,7 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
       await cp(joinPaths(localSpecRepoRoot, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), { recursive: true, filter: filter });
     }
   } else {
-    const cloneDir = joinPaths(repoRoot, "..", "sparse-spec");
-    await mkdir(cloneDir, { recursive: true });
+    const cloneDir = await makeSparseSpecDir(repoRoot);
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
@@ -240,26 +237,49 @@ async function generate({
 }
 
 
-async function convert(readme: string, outputDir: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-      const autorest = spawn("npx", ["autorest", readme, "--openapi-to-typespec", "--use=@autorest/openapi-to-typespec", `--output-folder=${outputDir}`], {
-          cwd: outputDir,
-          stdio: "inherit",
-          shell: true,
-      });
-      autorest.once("exit", (code) => {
-          if (code === 0) {
-              resolve();
-          } else {
-              reject(new Error(`openapi to typespec conversion failed exited with code ${code}`));
-          }
-      });
-      autorest.once("error", (err) => {
-          reject(new Error(`openapi to typespec conversion failed with error: ${err}`));
-      });
-  });
+async function convert(readme: string, outputDir: string, arm?: boolean): Promise<void> {
+  const autorestPath = await getPathToDependency("autorest");
+  const autorestPackageJson = JSON.parse(await readFile(joinPaths(autorestPath, "package.json"), "utf8"));
+  const autorestBinPath = joinPaths(autorestPath, autorestPackageJson["bin"]["autorest"]);
+
+  const autorestOpenApiToTypeSpecPath = await getPathToDependency("@autorest/openapi-to-typespec");
+  const args = [autorestBinPath, "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, `--use="${autorestOpenApiToTypeSpecPath}"`, `"${readme}"`];
+  if (arm) {
+    const autorestCsharpPath = await getPathToDependency("@autorest/csharp");
+    const generateMetadataCmd = [autorestBinPath, "--csharp", "--max-memory-size=8192", `--use="${autorestCsharpPath}"`, `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
+    try {
+      await nodeCommand(outputDir, generateMetadataCmd);
+    } catch (err) {
+      Logger.error(`Error occurred while attempting to generate ARM metadata: ${err}`);
+      process.exit(1);
+    }
+    try {
+      await rename(joinPaths(outputDir, "metadata.json"), joinPaths(outputDir, "resources.json"));
+    } catch (err) {
+      Logger.error(`Error occurred while attempting to rename metadata.json to resources.json: ${err}`);
+      process.exit(1);
+    }
+    args.push("--isArm");
+  }
+  return await nodeCommand(outputDir, args);
 }
 
+async function generateLockFile(rootUrl: string, repoRoot: string) {
+  Logger.info("Generating lock file...");
+  const args: string[] = ["install"];
+  if (process.env['TSPCLIENT_FORCE_INSTALL']?.toLowerCase() === "true") {
+    args.push("--force");
+  }
+  const tempRoot = await createTempDirectory(rootUrl);
+  await cp(joinPaths(repoRoot, "eng", "emitter-package.json"), joinPaths(tempRoot, "package.json"));
+  await npmCommand(tempRoot, args);
+  const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
+  if (lockFile.isFile()) {
+    await cp(joinPaths(tempRoot, "package-lock.json"), joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
+  }
+  await removeDirectory(tempRoot);
+  Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
+}
 
 async function main() {
   const options = await getOptions();
@@ -275,17 +295,12 @@ async function main() {
   }
 
   const repoRoot = await getRepoRoot(rootUrl);
-  try {
-    // FIXME: this is a workaround meanwhile we fix the issue with failing to delete the sparse-spec directory
-    // Tracking issue: https://github.com/Azure/azure-sdk-tools/issues/7636
-    access(joinPaths(repoRoot, "..", "sparse-spec")).then(() => {
-      Logger.debug("Deleting existing sparse-spec directory");
-      removeDirectory(joinPaths(repoRoot, "..", "sparse-spec"));
-    }).catch(() => {});
-  } catch (err) {
-    Logger.debug(`Error occurred while attempting to remove sparse-spec directory: ${err}`);
+
+  if (options.generateLockFile) {
+    await generateLockFile(rootUrl, repoRoot);
+    return;
   }
-  
+
   switch (options.command) {
       case "init":
         const emitter = await getEmitterFromRepoConfig(joinPaths(repoRoot, "eng", "emitter-package.json"));
@@ -295,7 +310,7 @@ async function main() {
         const outputDir = await sdkInit({config: options.tspConfig!, outputDir: rootUrl, emitter, commit: options.commit, repo: options.repo, isUrl: options.isUrl});
         Logger.info(`SDK initialized in ${outputDir}`);
         if (!options.skipSyncAndGenerate) {
-          await syncTspFiles(outputDir);
+          await syncTspFiles(outputDir, options.localSpecRepo);
           await generate({ rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         }
         break;
@@ -313,13 +328,13 @@ async function main() {
           const tspLocation: TspLocation = await readTspLocation(rootUrl);
           tspLocation.commit = options.commit ?? tspLocation.commit;
           tspLocation.repo = options.repo ?? tspLocation.repo;
-          await writeFile(joinPaths(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
+          await writeTspLocationYaml(tspLocation, rootUrl);
         } else if (options.tspConfig) {
           const tspLocation: TspLocation = await readTspLocation(rootUrl);
           const tspConfig = resolveTspConfigUrl(options.tspConfig);
           tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
           tspLocation.repo = tspConfig.repo ?? tspLocation.repo;
-          await writeFile(joinPaths(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
+          await writeTspLocationYaml(tspLocation, rootUrl);
         }
         await syncTspFiles(rootUrl, options.localSpecRepo);
         await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
@@ -330,7 +345,15 @@ async function main() {
         if (await doesFileExist(readme)) {
           readme = normalizePath(resolve(readme));
         }
-        await convert(readme, rootUrl);
+        await convert(readme, rootUrl, options.arm);
+        if (options.arm) {
+          try {
+            await unlink(joinPaths(rootUrl, "resources.json"));
+          } catch (err) {
+            Logger.error(`Error occurred while attempting to delete resources.json: ${err}`);
+            process.exit(1);
+          }
+        }
         break;
       default:
         throw new Error(`Unknown command: ${options.command}`);

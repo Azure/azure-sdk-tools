@@ -24,6 +24,8 @@ public class PlanConfiguration
 
     public TimeSpan? RotationThreshold { get; set; }
 
+    public TimeSpan? WarningThreshold { get; set; }
+
     public TimeSpan? RotationPeriod { get; set; }
 
     public TimeSpan? RevokeAfterPeriod { get; set; }

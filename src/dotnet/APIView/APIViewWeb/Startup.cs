@@ -34,7 +34,7 @@ using Microsoft.OpenApi.Models;
 using System.IO;
 using Microsoft.Azure.Cosmos;
 using APIViewWeb.Managers.Interfaces;
-using WebMarkupMin.AspNetCore7;
+using Azure.Identity;
 
 namespace APIViewWeb
 {
@@ -113,7 +113,6 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
-            services.AddSingleton<IOpenSourceRequestManager, OpenSourceRequestManager>();
             services.AddSingleton<IAICommentsManager, AICommentsManager>();
             services.AddSingleton<UserPreferenceCache>();
 
@@ -224,8 +223,24 @@ namespace APIViewWeb
             }
 
             services.AddAuthorization();
-            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
+            services.AddCors(options => {
+                options.AddPolicy("AllowCredentials", builder =>
+                {
+                    string [] origins = new string[] { 
+                        "https://localhost:4200",
+                        "https://spa.apiviewuxtest.com",
+                        "https://spa.apiviewstagingtest.com",
+                        "https://spa.apiview.dev"
 
+                    };
+                    builder.WithOrigins(origins)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials()
+                        .SetPreflightMaxAge(TimeSpan.FromHours(20));
+                });
+            });
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
@@ -236,18 +251,14 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
             services.AddSingleton<CosmosClient>(x =>
             {
-                return new CosmosClient(Configuration["Cosmos:ConnectionString"]);
+                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential());
             });
 
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<LinesWithDiffBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
-            services.AddWebMarkupMin(options =>
-            {
-                options.AllowMinificationInDevelopmentEnvironment = true;
-                options.AllowCompressionInDevelopmentEnvironment = true;
-            }).AddHtmlMinification().AddHttpCompression();
+
             services.AddControllersWithViews()
                 .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
                 .PartManager.ApplicationParts.Add(new AssemblyPart(typeof(BaseApiController).Assembly));
@@ -322,14 +333,13 @@ namespace APIViewWeb
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseCors("AllowCredentials");
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseMiddleware<SwaggerAuthMiddleware>();
             app.UseSwagger();
             app.UseSwaggerUI();
-            app.UseWebMarkupMin();
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();

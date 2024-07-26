@@ -70,12 +70,16 @@ Commands:
   convert     Convert a swagger specification to TypeSpec               [string]
 
 Options:
+  --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
   --commit                  Commit to be used for project init or update        [string]
   -d, --debug               Enable debug logging                                [boolean]
   --emitter-options         The options to pass to the emitter                  [string]
+  --generate-lock-file      Generate a lock file under the eng/ directory from 
+                            an existing emitter-package.json                    [boolean]
   -h, --help                Show help                                           [boolean]
   --local-spec-repo         Path to local repository with the TypeSpec project  [string]
+  --no-prompt               Skip prompting for output directory confirmation    [boolean]
   --save-inputs             Don't clean up the temp directory after generation  [boolean]
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
   --swagger-readme          Path or url to swagger readme file                  [string]

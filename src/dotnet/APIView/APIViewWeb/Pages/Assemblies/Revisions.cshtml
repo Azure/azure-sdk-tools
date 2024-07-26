@@ -11,7 +11,11 @@
 }
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">
-        <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel), default(APIRevisionListItemModel), default(UserPreferenceModel))" />
+        @{
+            var reviewBadgeModel = new ReviewBadgeModel();
+            reviewBadgeModel.Review = Model.Review;
+        }
+        <partial name="Shared/_ReviewBadge" model="reviewBadgeModel" />
     </div>
 </div>
 
@@ -32,8 +36,8 @@
     <div class="left-offcanvas-menu-content" id="left-offcanvas-menu-content">
         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Review" asp-route-id="@Model.Review.Id"><i class="bi bi-braces" data-bs-toggle="tooltip" data-bs-placement="right" title="API"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" active-if="@TempData["page"].Equals("revisions")"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Conversation" asp-route-id="@Model.Review.Id"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" active-if="@TempData["page"].Equals("revisions")"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisions"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Conversation" asp-route-id="@Model.Review.Id"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversations"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>
     </div>

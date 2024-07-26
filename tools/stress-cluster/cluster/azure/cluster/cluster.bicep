@@ -13,7 +13,7 @@ param updateNodes bool = false
 // monitoring parameters
 param workspaceId string
 
-var kubernetesVersion = '1.26.6'
+var kubernetesVersion = '1.29.4'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var systemAgentPool = {
@@ -24,7 +24,7 @@ var systemAgentPool = {
   mode: 'System'
   vmSize: 'Standard_D4ds_v4'
   type: 'VirtualMachineScaleSets'
-  osType: 'AzureLinux'
+  osType: 'Linux'
   enableAutoScaling: true
   enableEncryptionAtHost: true
   nodeLabels: {
@@ -40,7 +40,7 @@ var defaultAgentPool = {
   mode: 'User'
   vmSize: 'Standard_D8a_v4'
   type: 'VirtualMachineScaleSets'
-  osType: 'AzureLinux'
+  osType: 'Linux'
   osDiskType: 'Ephemeral'
   enableAutoScaling: true
   enableEncryptionAtHost: true
@@ -86,6 +86,14 @@ resource newCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-previ
     agentPoolProfiles: agentPools
     servicePrincipalProfile: {
       clientId: 'msi'
+    }
+    oidcIssuerProfile: {
+      enabled: true
+    }
+    securityProfile: {
+      workloadIdentity: {
+        enabled: true
+      }
     }
     nodeResourceGroup: nodeResourceGroup
   }
@@ -151,4 +159,5 @@ resource metricsPublisher 'Microsoft.Authorization/roleAssignments@2020-04-01-pr
 output secretProviderObjectId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId
 output secretProviderClientId string = cluster.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.clientId
 output kubeletIdentityObjectId string = cluster.properties.identityProfile.kubeletidentity.objectId
+output workloadAppIssuer string = cluster.properties.oidcIssuerProfile.issuerURL
 output clusterName string = clusterName

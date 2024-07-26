@@ -61,8 +61,8 @@ public:
   virtual void AddDocumentRangeEnd() = 0;
   virtual void AddDeprecatedRangeStart() = 0;
   virtual void AddDeprecatedRangeEnd() = 0;
-  virtual void AddDiffRangeStart() = 0;
-  virtual void AddDiffRangeEnd() = 0;
+  virtual void AddSkipDiffRangeStart() = 0;
+  virtual void AddSkipDiffRangeEnd() = 0;
 
   virtual void DumpTypeHierarchyNode(std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node)
       = 0;

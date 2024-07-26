@@ -1,11 +1,12 @@
-﻿using System;
-
+using System;
+using System.Threading;
 using Azure.Core;
+using Azure.Core.Extensions;
 using Azure.Identity;
 using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Azure.Sdk.Tools.PipelineWitness.AzurePipelines;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
-using Azure.Sdk.Tools.PipelineWitness.Services;
-using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
+using Azure.Sdk.Tools.PipelineWitness.GitHubActions;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 
 using Microsoft.ApplicationInsights.Extensibility;
@@ -16,94 +17,80 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.Core.WebApi;
+using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
+using Octokit;
 
-namespace Azure.Sdk.Tools.PipelineWitness
+namespace Azure.Sdk.Tools.PipelineWitness;
+
+public static class Startup
 {
-    public static class Startup
+    public static void Configure(WebApplicationBuilder builder)
     {
-        public static void Configure(WebApplicationBuilder builder)
+        IConfigurationSection settingsSection = builder.Configuration.GetSection("PipelineWitness");
+        PipelineWitnessSettings settings = new();
+        settingsSection.Bind(settings);
+
+        builder.Services.AddLogging();
+
+        builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
+        builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
+        builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
+
+        builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
+        builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
+        builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
+
+        builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
+
+        builder.Services.AddAzureClients(azureBuilder =>
         {
-            var settings = new PipelineWitnessSettings();
-            var settingsSection = builder.Configuration.GetSection("PipelineWitness");
-            settingsSection.Bind(settings);
+            azureBuilder.UseCredential(provider => provider.GetRequiredService<TokenCredential>());
+            azureBuilder.AddCosmosServiceClient(new Uri(settings.CosmosAccountUri));
+            azureBuilder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
+            azureBuilder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
+                .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
+        });
 
-            builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
-            builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
-            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
+        builder.Services.AddSingleton<IAsyncLockProvider>(provider => new CosmosAsyncLockProvider(provider.GetRequiredService<CosmosClient>(), settings.CosmosDatabase, settings.CosmosAsyncLockContainer));
+        builder.Services.AddTransient(CreateVssConnection);
 
-            builder.Services.AddAzureClients(builder =>
-            {
-                builder.UseCredential(new DefaultAzureCredential());
-                builder.AddSecretClient(new Uri(settings.KeyVaultUri));
-                builder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
-                builder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
-                    .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
+        builder.Services.AddTransient<AzurePipelinesProcessor>();
+        builder.Services.AddTransient<BuildCompleteQueue>();
+        builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
 
-                builder.AddClient((CosmosClientOptions options, IServiceProvider provider) =>
-                {
-                    var resolvedSettings = provider.GetRequiredService<IOptions<PipelineWitnessSettings>>().Value;
-                    return new CosmosClient(settings.CosmosAccountUri, resolvedSettings.CosmosAuthorizationKey, options);
-                });
-            });
+        builder.Services.AddSingleton<ICredentialStore, GitHubCredentialStore>();
+        builder.Services.AddTransient<GitHubActionProcessor>();
+        builder.Services.AddTransient<RunCompleteQueue>();
+        builder.Services.AddHostedService<RunCompleteQueueWorker>(settings.GitHubActionRunsWorkerCount);
 
-            builder.Services.AddSingleton<VssConnection>(provider =>
-            {
-                var resolvedSettings = provider.GetRequiredService<IOptions<PipelineWitnessSettings>>().Value;
-                var credential = new VssBasicCredential("nobody", resolvedSettings.DevopsAccessToken);
-                return new VssConnection(new Uri("https://dev.azure.com/azure-sdk"), credential);
-            });
+        builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+    }
 
-            builder.Services.AddSingleton<IAsyncLockProvider>(provider => new CosmosAsyncLockProvider(provider.GetRequiredService<CosmosClient>(), settings.CosmosDatabase, settings.CosmosAsyncLockContainer));
-            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<ProjectHttpClient>());
-            builder.Services.AddSingleton<BuildHttpClient>(provider => provider.GetRequiredService<VssConnection>().GetClient<EnhancedBuildHttpClient>());
-            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<TestResultsHttpClient>());
-
-            builder.Services.AddLogging();
-            builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<BlobUploadProcessor>();
-            builder.Services.AddSingleton<BuildLogProvider>();
-            builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
-            builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CosmosDbEmulatorStartFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzurePipelinesPoolOutageClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, PythonPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JavaScriptLiveTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, TestResourcesDeploymentFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DotnetPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JavaPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JsSamplesExecutionFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JsDevFeedPublishingFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DownloadSecretsFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, GitCheckoutFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, MavenBrokenPipeFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CodeSigningFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
-
-            builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
-            builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
-            builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
-            builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
-
-            builder.Services.AddHostedService<CosmosDatabaseInitializer>();
-            builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
-            builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
-        }
-
-        private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService
+    private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService
+    {
+        for (int i = 0; i < instanceCount; i++)
         {
-            for (var i = 0; i < instanceCount; i++)
-            {
-                services.AddSingleton<IHostedService, T>();
-            }
+            services.AddSingleton<IHostedService, T>();
         }
+    }
+
+    private static void AddCosmosServiceClient<TBuilder>(this TBuilder builder, Uri serviceUri) where TBuilder : IAzureClientFactoryBuilderWithCredential
+    {
+        builder.RegisterClientFactory((CosmosClientOptions options, TokenCredential cred) => new CosmosClient(serviceUri.AbsoluteUri, cred, options));
+    }
+
+    private static VssConnection CreateVssConnection(IServiceProvider provider)
+    {
+        TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
+        TokenRequestContext tokenRequestContext = new(VssAadSettings.DefaultScopes);
+        Azure.Core.AccessToken token = azureCredential.GetToken(tokenRequestContext, CancellationToken.None);
+
+        Uri organizationUrl = new("https://dev.azure.com/azure-sdk");
+        VssAadCredential vssCredential = new(new VssAadToken("Bearer", token.Token));
+        VssHttpRequestSettings settings = VssClientHttpRequestSettings.Default.Clone();
+
+        return new VssConnection(organizationUrl, vssCredential, settings);
     }
 }

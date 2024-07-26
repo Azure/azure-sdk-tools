@@ -1,0 +1,109 @@
+trigger: none
+pr: none
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build
+  branches:
+    include:
+    - main
+  always: true
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  st-account-name: $(storage-account-name)
+  st-container-name: $(storage-account-container)
+  aoai-endpoint: $(azure-openai-endpoint)
+  asch-endpoint: $(azure-search-endpoint)
+  asch-index-name: $(azure-search-index-name)
+  aoai-embedding-model: $(azure-openai-embedding-model)
+  azure-subscription-name: $(service-connection-name)
+
+parameters:
+- name: incrementalEmbedding
+  displayName: 'Incremental Embedding Build?'
+  type: boolean
+  default: true
+
+stages:
+- stage: BuildEngHubDocEmbeddings
+  displayName: 'Build EngHub Document Embeddings'
+  jobs:
+  - job: BuildEngHubDocumentEmbeddings
+    steps:
+    - template: setup-pipeline.yml
+    - checkout: git://internal/_git/azure-sdk-docs-eng.ms
+      displayName: 'Checkout azure-sdk-docs-eng.ms repository'
+    - task: AzurePowerShell@5
+      inputs:
+        azureSubscription: $(azure-subscription-name)
+        ScriptType: 'FilePath'
+        ScriptPath: '$(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngHubDocEmbeddings.ps1'
+        arguments: '-IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"'
+        azurePowerShellVersion: 'LatestVersion'
+        workingDirectory: $(Build.SourcesDirectory)
+      displayName: 'Run embeddings build script'
+      env:
+        AZURE_OPENAI_ENDPOINT: $(aoai-endpoint)
+        AZURE_SEARCH_ENDPOINT: $(asch-endpoint)
+        AZURE_SEARCH_INDEX_NAME: $(asch-index-name)
+        AZURE_OPENAI_EMBEDDING_MODEL: $(aoai-embedding-model)
+        AZURE_OPENAI_API_KEY: $(azure-openapi-key)
+        AZURE_SEARCH_KEY: $(azure-search-key)
+        AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
+        AZURE_STORAGE_ACCOUNT_NAME: $(st-account-name)
+        AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)
+
+- stage: BuildTypeSpecDocEmbeddings
+  displayName: 'Build TypeSpec Document Embeddings'
+  jobs:
+  - job: BuildTypeSpecDocumentEmbeddings
+    steps:
+    - template: setup-pipeline.yml
+    - task: AzurePowerShell@5
+      inputs:
+        azureSubscription: $(azure-subscription-name)
+        ScriptType: 'FilePath'
+        ScriptPath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-TypeSpecAzureDocEmbeddings.ps1
+        arguments: '-IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"'
+        azurePowerShellVersion: 'LatestVersion'
+        workingDirectory: $(Build.SourcesDirectory)
+      displayName: 'Run embeddings build script'
+      env:
+        AZURE_OPENAI_ENDPOINT: $(aoai-endpoint)
+        AZURE_SEARCH_ENDPOINT: $(asch-endpoint)
+        AZURE_SEARCH_INDEX_NAME: $(asch-index-name)
+        AZURE_OPENAI_EMBEDDING_MODEL: $(aoai-embedding-model)
+        AZURE_OPENAI_API_KEY: $(azure-openapi-key)
+        AZURE_SEARCH_KEY: $(azure-search-key)
+        AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
+        AZURE_STORAGE_ACCOUNT_NAME: $(st-account-name)
+        AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)
+
+- stage: BuildCustomizedDocEmbeddings
+  displayName: 'Build Customized Document Embeddings'
+  jobs:
+  - job: BuildCustomizedDocumentEmbeddings
+    steps:
+    - template: setup-pipeline.yml
+    - task: AzurePowerShell@5
+      inputs:
+        azureSubscription: $(azure-subscription-name)
+        ScriptType: 'FilePath'
+        ScriptPath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-CustomizedDocEmbeddings.ps1
+        arguments: '-IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"'
+        azurePowerShellVersion: 'LatestVersion'
+        workingDirectory: $(Build.SourcesDirectory)
+      displayName: 'Run embeddings build script'
+      env:
+        AZURE_OPENAI_ENDPOINT: $(aoai-endpoint)
+        AZURE_SEARCH_ENDPOINT: $(asch-endpoint)
+        AZURE_SEARCH_INDEX_NAME: $(asch-index-name)
+        AZURE_OPENAI_EMBEDDING_MODEL: $(aoai-embedding-model)
+        AZURE_OPENAI_API_KEY: $(azure-openapi-key)
+        AZURE_SEARCH_KEY: $(azure-search-key)
+        AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
+        AZURE_STORAGE_ACCOUNT_NAME: $(st-account-name)
+        AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)

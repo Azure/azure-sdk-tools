@@ -12,22 +12,11 @@ param (
     [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
     [string] $RepositoryFilePath = "$PSScriptRoot/../data/repositories.txt",
 
-    [Parameter(ParameterSetName = 'Repositories')]
-    [ValidateNotNullOrEmpty()]
-    [string[]] $Repositories = @(
-        'Azure/azure-sdk-for-cpp'
-        'Azure/azure-sdk-for-go'
-        'Azure/azure-sdk-for-java'
-        'Azure/azure-sdk-for-js'
-        'Azure/azure-sdk-for-net'
-        'Azure/azure-sdk-for-python'
-        'Azure/azure-sdk-for-rust'
-        'Azure/azure-sdk-tools'
-    ),
+    [Parameter(ParameterSetName = 'Repositories', Mandatory = $true)]
+    [string[]] $Repositories,
 
-    [Parameter(ParameterSetName = 'Languages')]
-    [ValidateNotNullOrEmpty()]
-    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python', 'rust', 'c', 'ios', 'android'),
+    [Parameter(ParameterSetName = 'Languages', Mandatory = $true)]
+    [string[]] $Languages,
 
     [Parameter()]
     [ValidateRange(0,100)]
@@ -76,13 +65,13 @@ foreach ($repo in $Repositories) {
         }
 
         $filePath = (Join-Path $SnapshotDirectory "$($repo.Substring(($repo.IndexOf('/') + 1))).txt")
-        $snapshot = ((ConvertFrom-Json $repositoryLabels)| where { -not $commonLabels.Contains($_.Name) }).Name
+        $snapshot = ((ConvertFrom-Json $repositoryLabels)| Where-Object { -not $commonLabels.Contains($_.Name) }).Name
 
         if ($Diff) {
             $previousSnapshot = [Collections.Generic.HashSet[string]]::new()
 
             if (Test-Path $filePath) {
-                (Get-Content $filePath) | select { $previousSnapshot.Add($_) } | Out-Null
+                (Get-Content $filePath) | Select-Object { $previousSnapshot.Add($_) } | Out-Null
             }
 
             Write-Host "==================================================== " -ForegroundColor Green
@@ -90,13 +79,13 @@ foreach ($repo in $Repositories) {
             Write-Host "==================================================== " -ForegroundColor Green
             Write-Host "New labels added since the last snapshot:"
 
-            $newLabels = $snapshot | where { -not $previousSnapshot.Contains($_) }
+            $newLabels = $snapshot | Where-Object { -not $previousSnapshot.Contains($_) }
 
             if ($newLabels.Count -eq 0) {
                 Write-Host "`t None"
             }
             else {
-                $newLabels | foreach { Write-Host "`t$_" }
+                $newLabels | ForEach-Object { Write-Host "`t$_" }
             }
 
             Write-Host ""

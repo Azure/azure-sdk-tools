@@ -1,16 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
+using System;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Configuration
 {
     public class PipelineWitnessSettings
     {
-        /// <summary>
-        /// Gets or sets the uri of the key vault to use
-        /// </summary>
-        public string KeyVaultUri { get; set; }
-
         /// <summary>
         /// Gets or sets uri of the cosmos account to use
         /// </summary>
@@ -30,6 +23,32 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the name of the build complete queue
         /// </summary>
         public string BuildCompleteQueueName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of concurrent build complete queue workers to register
+        /// </summary>
+        public int BuildCompleteWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets the name of the GitHub actions queue
+        /// </summary>
+        public string GitHubActionRunsQueueName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the GitHub action queue workers to register
+        /// </summary>
+        public int GitHubActionRunsWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets secret used to verify GitHub webhook payloads
+        /// </summary>
+        public string GitHubWebhookSecret { get; set; }
+
+        /// <summary>
+        /// Gets or sets the access token to use for GitHub API requests. This
+        /// must be a personal access token with `repo` scope.
+        /// </summary>
+        public string GitHubAccessToken { get; set; }
 
         /// <summary>
         /// Gets or sets the amount of time a message should be invisible in the queue while being processed
@@ -62,32 +81,27 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         public string Account { get; set; }
 
         /// <summary>
-        /// Gets or sets the amount of time between iterations of the build definition upload loop
+        /// Gets or sets the loops settins for the Build Definitions worker
         /// </summary>
-        public TimeSpan BuildDefinitionLoopPeriod { get; set; } = TimeSpan.FromMinutes(5);
+        public PeriodicProcessSettings BuildDefinitionWorker { get; set; }
 
         /// <summary>
-        /// Gets or sets the number of concurrent build complete queue workers to register
-        /// </summary>
-        public int BuildCompleteWorkerCount { get; set; } = 1;
-
-        /// <summary>
-        /// Gets or sets the artifact name used by the pipeline owners extraction build 
+        /// Gets or sets the artifact name used by the pipeline owners extraction build
         /// </summary>
         public string PipelineOwnersArtifactName { get; set; }
 
         /// <summary>
-        /// Gets or sets the file name used by the pipeline owners extraction build 
+        /// Gets or sets the file name used by the pipeline owners extraction build
         /// </summary>
         public string PipelineOwnersFilePath { get; set; }
 
         /// <summary>
-        /// Gets or sets the definition id of the pipeline owners extraction build 
+        /// Gets or sets the definition id of the pipeline owners extraction build
         /// </summary>
         public int PipelineOwnersDefinitionId { get; set; }
 
         /// <summary>
-        /// Gets or sets the database to use 
+        /// Gets or sets the database to use
         /// </summary>
         public string CosmosDatabase { get; set; }
 
@@ -95,15 +109,5 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the container to use for async locks
         /// </summary>
         public string CosmosAsyncLockContainer { get; set; }
-
-        /// <summary>
-        /// Gets or sets the authorization key for the Cosmos account
-        /// </summary>
-        public string CosmosAuthorizationKey { get; set; }
-
-        /// <summary>
-        /// Gets or sets the access token to use for Azure DevOps clients
-        /// </summary>
-        public string DevopsAccessToken { get; set; }
     }
 }

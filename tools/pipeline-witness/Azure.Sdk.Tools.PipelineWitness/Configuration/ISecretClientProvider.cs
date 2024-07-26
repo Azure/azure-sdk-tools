@@ -1,11 +1,9 @@
-﻿using System;
-
+using System;
 using Azure.Security.KeyVault.Secrets;
 
-namespace Azure.Sdk.Tools.PipelineWitness.Configuration
+namespace Azure.Sdk.Tools.PipelineWitness.Configuration;
+
+public interface ISecretClientProvider
 {
-    public interface ISecretClientProvider
-    {
-        SecretClient GetSecretClient(Uri vaultUri);
-    }
+    SecretClient GetSecretClient(Uri vaultUri);
 }

@@ -3,18 +3,16 @@ using System.Net;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Console;
 using System.Collections.Concurrent;
-using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using Azure.Sdk.tools.TestProxy.Common;
+using Microsoft.Security.Utilities;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -41,6 +39,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
         private bool LocalCacheRefreshed = false;
+        public SecretScanner SecretScanner;
+        public readonly object LocalCacheLock = new object();
 
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 
@@ -65,15 +65,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitStore()
         {
             _consoleWrapper = new ConsoleWrapper();
+            SecretScanner = new SecretScanner(_consoleWrapper);
         }
 
         public GitStore(IConsoleWrapper consoleWrapper)
         {
             _consoleWrapper = consoleWrapper;
-        }
-
-        public GitStore(GitProcessHandler processHandler) {
-            GitHandler = processHandler;
+            SecretScanner = new SecretScanner(consoleWrapper);
         }
 
         #region push, reset, restore, and other asset repo implementations
@@ -95,11 +93,37 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
+        /// Scans the changed files, checking for possible secrets. Returns true if secrets are discovered.
+        /// </summary>
+        /// <param name="assetsConfiguration"></param>
+        /// <param name="pendingChanges"></param>
+        /// <returns></returns>
+        public bool CheckForSecrets(GitAssetsConfiguration assetsConfiguration, string[] pendingChanges)
+        {
+            _consoleWrapper.WriteLine($"Detected new recordings. Prior to pushing to destination repo, test-proxy will scan {pendingChanges.Length} files.");
+            var detectedSecrets = SecretScanner.DiscoverSecrets(assetsConfiguration.AssetsRepoLocation, pendingChanges);
+
+            if (detectedSecrets.Count > 0)
+            {
+                _consoleWrapper.WriteLine("At least one secret was detected in the pushed code. Please register a sanitizer, re-record, and attempt pushing again. Detailed errors follow: ");
+                foreach (var detection in detectedSecrets)
+                {
+                    _consoleWrapper.WriteLine($"{detection.Item1}");
+                    _consoleWrapper.WriteLine($"\t{detection.Item2.Id}: {detection.Item2.Name}");
+                    _consoleWrapper.WriteLine($"\tStart: {detection.Item2.Start}, End: {detection.Item2.End}.\n");
+                }
+            }
+
+            return detectedSecrets.Count > 0;
+        }
+
+        /// <summary>
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
+        /// <param name="ignoreSecretProtection"></param>
         /// <returns></returns>
-        public async Task Push(string pathToAssetsJson) {
+        public async Task<int> Push(string pathToAssetsJson, bool ignoreSecretProtection = false) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
             var initialized = IsAssetsRepoInitialized(config);
@@ -109,26 +133,70 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 _consoleWrapper.WriteLine($"The targeted assets.json \"{config.AssetsJsonRelativeLocation}\" has not been restored prior to attempting push. " +
                     $"Are you certain you're pushing the correct assets.json? Please invoke \'test-proxy restore \"{config.AssetsJsonRelativeLocation}\"\' prior to invoking a push operation.");
 
-                Environment.ExitCode = -1;
-                return;
+                return -1;
             }
 
             SetOrigin(config);
             var pendingChanges = DetectPendingChanges(config);
             var generatedTagName = config.TagPrefix;
+            bool codeCommitted = false;
 
             if (pendingChanges.Length > 0)
             {
+                if (CheckForSecrets(config, pendingChanges))
+                {
+                    if (!ignoreSecretProtection)
+                    {
+                        return -1;
+                    }
+                }
+
                 try
                 {
                     string branchGuid = Guid.NewGuid().ToString().Substring(0, 8);
                     string gitUserName = GetGitOwnerName(config);
                     string gitUserEmail = GetGitOwnerEmail(config);
+                    string assetMessage = "Automatic asset update from test-proxy.";
+                    string configurationString = $"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\"";
+
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
+
+                    /*
+                     * This code works by generating a patch file for SPECIFICALLY the eng folder from main.
+                     * Given that these changes appear as "new" changes, they just look like normal file additions. 
+                     * This totally eliminates the possibility of weird historical merge if main has code that we don't expect. 
+                     * Under azure-sdk-assets, we should never see this, but we have already seen it with specific integration
+                     * test tags under azure-sdk-assets-integration. By keeping it as "patch", the soft RESET on unsuccessful 
+                     * push action will properly put their repo into the expected "ready to push" state that a failed
+                     * merge would NOT.
+                     */
+                    var engPatchLocation = Path.Combine(config.AssetsRepoLocation, "changes.patch");
+                    GitHandler.Run($"diff --output=changes.patch --no-color --binary --no-prefix HEAD main -- eng/", config);
+                    if (GitHandler.TryRun($"apply --check --directory=eng/ changes.patch", config.AssetsRepoLocation.ToString(), out var engPatchResult))
+                    {
+                        GitHandler.Run($"apply --directory=eng/ changes.patch", config);
+                    }
+                    if (File.Exists(engPatchLocation)) {
+                        File.Delete(engPatchLocation);
+                    }
+
+                    GitHandler.Run($"diff --output=changes.patch --no-color --binary HEAD main -- .gitignore", config);
+                    if (GitHandler.TryRun($"apply --check changes.patch", config.AssetsRepoLocation.ToString(), out var applyResult))
+                    {
+                        GitHandler.Run($"apply changes.patch", config);
+                    }
+                    if (File.Exists(engPatchLocation))
+                    {
+                        File.Delete(engPatchLocation);
+                    }
+
+                    // add all the recording changes and commit them
                     GitHandler.Run($"add -A .", config);
-                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit --no-gpg-sign -m \"Automatic asset update from test-proxy.\"", config);
-                    // Get the first 10 digits of the commit SHA. The generatedTagName will be the
+                    GitHandler.Run($"{configurationString} commit --no-gpg-sign -m \"{assetMessage}\"", config);
+                    codeCommitted = true;
+
+                    // Get the first 10 digits of the combined SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
                     if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation.ToString(), out CommandResult SHAResult))
                     {
@@ -156,11 +224,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     HideOrigin(config);
 
-                    // the only executions that have a real chance of failing are
-                    // - ls-remote origin
-                    // - push
-                    // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
-                    GitHandler.TryRun("reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
+                    // we should not reset soft if we haven't ever committed.
+                    if (codeCommitted)
+                    {
+                        // the only executions that have a real chance of failing are
+                        // - ls-remote origin
+                        // - push
+                        // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
+                        GitHandler.TryRun("reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
+                    }
 
                     throw GenerateInvokeException(e.Result);
                 }
@@ -169,6 +241,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             HideOrigin(config);
+            return 0;
         }
 
         /// <summary>
@@ -307,7 +380,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 // Normally, we'd use Environment.NewLine here but this doesn't work on Windows since its NewLine is \r\n and
                 // Git's NewLine is just \n
-                var individualResults = diffResult.StdOut.Split("\n").Select(x => x.Trim()).ToArray();
+                var individualResults = diffResult.StdOut.Split("\n")
+                    .Select(x => x.Trim())
+                    .Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
                 return individualResults;
             }
 
@@ -470,16 +545,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="config"></param>
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
         {
-            // we have to ensure that multiple threads hitting this same segment of code won't stomp on each other
-            if (!LocalCacheRefreshed)
+            // we have to ensure that multiple threads hitting this same segment of code won't stomp on each other. restore is incredibly important.
+            lock (LocalCacheLock)
             {
-                var breadCrumbQueue = InitTasks.GetOrAdd("breadcrumbload", new TaskQueue());
-                breadCrumbQueue.Enqueue(() =>
+                if (!LocalCacheRefreshed)
                 {
-
                     BreadCrumb.RefreshLocalCache(Assets, config);
                     LocalCacheRefreshed = true;
-                });
+                }
             }
 
             if (Assets.ContainsKey(config.AssetsJsonRelativeLocation.ToString()))
@@ -547,11 +620,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (combinedPath.ToLower() == AssetsJsonFileName)
             {
-                return "./";
+                return "./ eng/ .gitignore";
             }
             else
             {
-                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1));
+                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1)) + " eng/ .gitignore";
             }
         }
         #endregion

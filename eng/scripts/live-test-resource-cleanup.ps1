@@ -21,16 +21,8 @@ param (
   [string] $ProvisionerApplicationSecret,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-  [string] $OpensourceApiApplicationId,
-
-  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-  [string] $OpensourceApiApplicationTenantId,
-
-  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
   [ValidateNotNullOrEmpty()]
-  [string] $OpensourceApiApplicationSecret,
+  [string] $OpensourceApiApplicationToken,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
   [Parameter(ParameterSetName = 'Interactive')]
@@ -167,20 +159,21 @@ function AddGithubUsersToAliasCache() {
     $users = Get-Content $GithubAliasCachePath | ConvertFrom-Json -AsHashtable
   } else {
     Write-Host "Retrieving github -> microsoft alias mappings from opensource API."
-    $users = GetAllGithubUsers $OpensourceApiApplicationTenantId $OpensourceApiApplicationId $OpensourceApiApplicationSecret
+    $users = GetAllGithubUsers -Token $OpensourceApiApplicationToken
   }
   if (!$users) {
     Write-Error "Failed to retrieve github -> microsoft alias mappings from opensource api."
     exit 1
   }
+  Write-Host "Found $($users.Count) users"
   foreach ($user in $users) {
-    if ($user.aad.alias) {
+    if ($user -and $user.aad.alias) {
       $OwnerAliasCache[$user.aad.alias] = $true
     }
-    if ($user.aad.userPrincipalName) {
+    if ($user -and $user.aad.userPrincipalName) {
       $OwnerAliasCache[$user.aad.userPrincipalName] = $true
     }
-    if ($user.github.login) {
+    if ($user -and $user.github.login) {
       $OwnerAliasCache[$user.github.login] = $true
     }
   }
@@ -334,11 +327,14 @@ function HasDeleteLock([object]$ResourceGroup) {
 }
 
 function DeleteArmDeployments([object]$ResourceGroup) {
-  if (!$DeleteArmDeployments) {
+  if (!$DeleteArmDeployments -or !$ResourceGroup) {
     return
   }
-  $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName `
-              | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
+  $toDelete = @()
+  try {
+    $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName `
+                | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
+  } catch {}
   if (!$toDelete -or !$toDelete.Count) {
     return
   }
@@ -402,42 +398,53 @@ function DeleteOrUpdateResourceGroups() {
     }
   }
 
-  DeleteAndPurgeGroups $toDelete
+  $hasError = DeleteAndPurgeGroups $toDelete
 
   foreach ($rg in $toClean) {
     DeleteArmDeployments $rg
   }
+
+  if ($hasError) {
+    throw "Encountered errors removing some resource groups"
+  }
 }
 
 function DeleteAndPurgeGroups([array]$toDelete) {
+  $hasError = $false
   # Get purgeable resources already in a deleted state.
   $purgeableResources = @(Get-PurgeableResources)
 
   if ($toDelete) {
     Write-Host "Total Resource Groups To Delete: $($toDelete.Count)"
   }
-  foreach ($rg in $toDelete)
-  {
-    $deleteAfter = GetTag $rg "DeleteAfter"
-    if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
-      # Add purgeable resources that will be deleted with the resource group to the collection.
-      $purgeableResourcesFromRG = @(Get-PurgeableGroupResources $rg.ResourceGroupName)
+  foreach ($rg in $toDelete) {
+    try {
+      $deleteAfter = GetTag $rg "DeleteAfter"
+      if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
+        # Add purgeable resources that will be deleted with the resource group to the collection.
+        $purgeableResourcesFromRG = @(Get-PurgeableGroupResources $rg.ResourceGroupName)
 
-      if ($purgeableResourcesFromRG) {
-        $purgeableResources += $purgeableResourcesFromRG
-        Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
+        if ($purgeableResourcesFromRG) {
+          $purgeableResources += $purgeableResourcesFromRG
+          Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
+        }
+
+        Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
+        Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
+
+        # For storage tests specifically, if they are aborted then blobs with immutability policies
+        # can be left around which prevent deletion.
+        if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
+          SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) 
+          Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
+        } else {
+          Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+        }
       }
-
-      Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
-      Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
-
-      # For storage tests specifically, if they are aborted then blobs with immutability policies
-      # can be left around which prevent deletion.
-      if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
-        & $PSScriptRoot/Remove-WormStorageAccounts.ps1 -GroupPrefix $rg.ResourceGroupName
-      } else {
-        Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
-      }
+    } catch {
+      Write-Warning "Failure deleting/purging group $($rg.ResourceGroupName):"
+      Write-Warning $_
+      $hasError = $true
     }
   }
 
@@ -453,6 +460,8 @@ function DeleteAndPurgeGroups([array]$toDelete) {
       $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
     }
   }
+
+  return $hasError
 }
 
 function Login() {
@@ -492,8 +501,10 @@ if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
   Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false -WhatIf:$false
 }
 
-DeleteOrUpdateResourceGroups
-
-if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
-  Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false
+try {
+  DeleteOrUpdateResourceGroups
+} finally {
+  if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
+    Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false
+  }
 }

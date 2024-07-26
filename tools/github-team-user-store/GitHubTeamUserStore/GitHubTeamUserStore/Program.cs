@@ -11,19 +11,19 @@ namespace GitHubTeamUserStore
         {
             var teamUserBlobStorageUriOption = new Option<string>
                 (name: "--teamUserBlobStorageURI", 
-                description: "The team/user blob storage URI including the SAS.");
+                description: "The team/user blob storage URI.");
             teamUserBlobStorageUriOption.AddAlias("-tUri");
             teamUserBlobStorageUriOption.IsRequired = true;
 
             var userOrgVisibilityBlobStorageUriOption = new Option<string>
                 (name: "--userOrgVisibilityBlobStorageURI",
-                description: "The user/org blob storage URI including the SAS.");
+                description: "The user/org blob storage URI.");
             userOrgVisibilityBlobStorageUriOption.AddAlias("-uUri");
             userOrgVisibilityBlobStorageUriOption.IsRequired = true;
 
             var repoLabelBlobStorageUriOption = new Option<string>
                 (name: "--repoLabelBlobStorageURI",
-                description: "The repo/label blob storage URI including the SAS.");
+                description: "The repo/label blob storage URI.");
             repoLabelBlobStorageUriOption.AddAlias("-rUri");
             repoLabelBlobStorageUriOption.IsRequired = true;
 

@@ -1,0 +1,53 @@
+@import "../../../../../APIViewWeb/Client/css/shared/mixins.scss";
+
+:host ::ng-deep {
+    #langauge-filter p-columnfilterformelement,
+    #details-filter p-columnfilterformelement{
+        width: 38px;
+        .p-multiselect-label {
+            visibility: hidden;
+        }
+    };
+
+    .index-table-info {
+        min-height: 30px;
+        max-height: 30px;
+        .p-chip {
+            font-weight: bold;
+            font-size: xx-small;
+            border-radius: 10px;
+            padding: 0 0.1rem;
+            margin-right: 0px;
+        }
+        .p-multiselect-label {
+            display : hidden;
+        }
+    }
+
+    p-sortIcon {
+        .p-icon {
+            width: 0.7rem;
+            height: 0.7rem;
+        }
+    }
+
+    #create-review-button {
+        @include bottom-right-floating;
+        @include btn-circle;
+        @include btn-circle-xl;
+    }
+
+    .p-sidebar-right {
+        width: 30dvw;
+    }
+
+    .p-datatable .p-datatable-footer {
+        position: sticky;
+        bottom: -10px;
+        text-align: center;
+    }
+
+    .p-scroller-inline {
+        min-height: calc(100vh * 0.75);
+    }
+}

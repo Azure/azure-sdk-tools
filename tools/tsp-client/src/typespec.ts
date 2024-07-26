@@ -1,4 +1,4 @@
-import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
+import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions, formatDiagnostic } from "@typespec/compiler";
 import { ModuleResolutionResult, resolveModule, ResolveModuleHost } from "@typespec/compiler/module-resolver";
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
@@ -64,9 +64,9 @@ export async function compileTsp({
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
-}) {
+}): Promise<boolean> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
-  const { compile, NodeHost, getSourceLocation, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
+  const { compile, NodeHost, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
 
   const outputDir = resolvePath(outputPath);
   const overrideOptions: Record<string, Record<string, string>> = {
@@ -100,22 +100,21 @@ export async function compileTsp({
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
   if (diagnostics.length > 0) {
     // This should not happen, but if it does, we should log it.
-    Logger.debug(`Compiler options diagnostic information: ${JSON.stringify(diagnostics)}`);
+    Logger.error("Diagnostics were reported while resolving compiler options...")
+    diagnostics.forEach((diagnostic) => { Logger.error(formatDiagnostic(diagnostic)); });
+    return false;
   }
 
   const program = await compile(NodeHost, resolvedMainFilePath, options);
 
   if (program.diagnostics.length > 0) {
-    for (const diagnostic of program.diagnostics) {
-      const location = getSourceLocation(diagnostic.target);
-      const source = location ? location.file.path : "unknown";
-      console.error(
-        `${diagnostic.severity}: ${diagnostic.code} - ${diagnostic.message} @ ${source}`,
-      );
-    }
+    Logger.error("Diagnostics were reported during compilation...");
+    program.diagnostics.forEach((diagnostic) => { Logger.error(formatDiagnostic(diagnostic)); });
+    return false;
   } else {
     Logger.success("generation complete");
   }
+  return true;
 }
 
 export async function importTsp(baseDir: string): Promise<typeof import("@typespec/compiler")> {

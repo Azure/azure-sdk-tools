@@ -9,12 +9,14 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"golang.org/x/exp/slices"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"unicode"
+
+	"golang.org/x/exp/slices"
+	"golang.org/x/mod/module"
 )
 
 // diagnostic messages
@@ -37,11 +39,12 @@ type Pkg struct {
 	p           *ast.Package
 	relName     string
 
-	// typeAliases keys are the names of types defined in other packages which this package exports by alias.
-	// For example, package "azcore" may export TokenCredential from azcore/internal/shared with
-	// an alias like "type TokenCredential = shared.TokenCredential", in which case this map will
-	// have key "TokenCredential" with value "azcore/internal/shared.TokenCredential"
-	typeAliases map[string]string
+	// TypeAliases are types exported from this package but defined in another. For
+	// example, package "azcore" may export TokenCredential from azcore/internal/shared
+	// with an alias like "type TokenCredential = shared.TokenCredential". This slice
+	// holds pointers so Module can update aliases with data not available to Pkg such
+	// as the source module path.
+	TypeAliases []*TypeAlias
 
 	// types maps the name of a type defined in this package to that type's definition
 	types map[string]typeDef
@@ -54,7 +57,6 @@ func NewPkg(dir, modulePath string) (*Pkg, error) {
 		modulePath:  modulePath,
 		c:           newContent(),
 		diagnostics: []Diagnostic{},
-		typeAliases: map[string]string{},
 		types:       map[string]typeDef{},
 	}
 	modulePathWithoutVersion := strings.TrimSuffix(versionReg.ReplaceAllString(modulePath, "/"), "/")
@@ -176,8 +178,12 @@ func (p *Pkg) indexFile(f *ast.File) {
 
 						// This is a re-exported type e.g. "type TokenCredential = shared.TokenCredential".
 						// Track it as an alias so we can later hoist its definition into this package.
-						qn := impPath + "." + t.Sel.Name
-						p.typeAliases[x.Name.Name] = qn
+						ta := TypeAlias{
+							Name:          x.Name.Name,
+							Package:       p,
+							QualifiedName: impPath + "." + t.Sel.Name,
+						}
+						p.TypeAliases = append(p.TypeAliases, &ta)
 					} else {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.
@@ -291,6 +297,99 @@ func (pkg Pkg) addTypeNavigator(oriVal string, imports map[string]string) string
 			return oriVal
 		}
 	}
+}
+
+// TypeAlias represents a type exported from one package but defined in another. In code
+// this looks like "type Event = log.Event".
+type TypeAlias struct {
+	// Name in the exporting package e.g. "Event"
+	Name string
+	// Package containing the alias
+	Package *Pkg
+	// QualifiedName of the source type e.g. "github.com/Azure/azure-sdk-for-go/sdk/internal/log.Event"
+	QualifiedName string
+	// SourceMod is the module defining the type
+	SourceMod module.Version
+
+	// resolved indicates whether the alias has been resolved
+	resolved bool
+}
+
+// Resolve adds review content for the alias. If def is nonzero i.e., it carries a syntax node for the type definition,
+// Resolve adds that definition to the package exporting the alias. Otherwise, Resolve adds a SimpleType representing the
+// alias to the review.
+func (a *TypeAlias) Resolve(def typeDef) error {
+	if a.resolved {
+		// this should never happen but if it does, it's a bug we want to know about
+		return fmt.Errorf("alias %s already resolved", a.Name)
+	}
+	if def != (typeDef{}) {
+		a.Package.types[a.Name] = def
+	}
+	level := DiagnosticLevelInfo
+	originalName := a.QualifiedName
+	// if the definition is in the same module as the alias, strip the module path from the diagnostic message
+	if _, after, found := strings.Cut(a.QualifiedName, a.Package.modulePath); found {
+		// after is e.g. "/internal/log.Event" or ".StatusType"
+		originalName = after[1:]
+	} else {
+		level = DiagnosticLevelWarning
+	}
+	var t TokenMaker
+	if def.n == nil || def.p == nil {
+		t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), a.QualifiedName, nil)
+	} else {
+		switch n := def.n.Type.(type) {
+		case *ast.InterfaceType:
+			t = a.Package.c.addInterface(*def.p, a.Name, a.Package.Name(), n, nil)
+		case *ast.StructType:
+			t = a.Package.c.addStruct(*def.p, a.Name, a.Package.Name(), def.n, nil)
+			hoistMethodsForType(def.p, a.Name, a.Package)
+			// ensure that all struct field types that are structs are also aliased from this package
+			for _, field := range n.Fields.List {
+				fieldTypeName := unwrapStructFieldTypeName(field)
+				if fieldTypeName == "" {
+					// we can ignore this field
+					continue
+				}
+
+				// ensure that our package exports this type
+				found := false
+				for _, ta := range a.Package.TypeAliases {
+					if ta.Name == fieldTypeName {
+						found = true
+						break
+					}
+				}
+				if found {
+					continue
+				}
+
+				// no alias, add a diagnostic
+				a.Package.diagnostics = append(a.Package.diagnostics, Diagnostic{
+					Level:    DiagnosticLevelError,
+					TargetID: t.ID(),
+					Text:     missingAliasFor + fieldTypeName,
+				})
+			}
+		case *ast.Ident:
+			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), def.n.Type.(*ast.Ident).Name, nil)
+			hoistMethodsForType(def.p, a.Name, a.Package)
+		default:
+			fmt.Printf("unexpected node type %T\n", def.n.Type)
+			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), originalName, nil)
+		}
+	}
+
+	if t != nil {
+		a.Package.diagnostics = append(a.Package.diagnostics, Diagnostic{
+			Level:    level,
+			TargetID: t.ID(),
+			Text:     aliasFor + originalName,
+		})
+	}
+	a.resolved = true
+	return nil
 }
 
 // TODO: could be replaced by TokenMaker

@@ -1,0 +1,27 @@
+:host ::ng-deep {
+    .p-fileupload-row > div:first-child {
+        display: none;
+    }
+
+    .p-dropdown {
+        display: flex;
+    }
+
+    .author-table-data {
+        vertical-align: middle;
+        font-size: 0.9rem;
+        font-weight: 400;
+        img {
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+    }
+
+    .create-revision-sidebar {
+        width: 30dvw;
+    }
+
+    .options-sidebar {
+        width: 20dvw;
+    }
+}

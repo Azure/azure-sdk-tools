@@ -1,0 +1,11 @@
+parameters:
+- name: pythonVersion
+  type: string
+  default: '3.x'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: ${{ parameters.pythonVersion }}
+    addToPath: true
+- checkout: self

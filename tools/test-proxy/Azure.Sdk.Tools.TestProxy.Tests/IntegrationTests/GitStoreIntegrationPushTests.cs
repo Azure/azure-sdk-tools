@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Console;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -505,6 +506,85 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             }
         }
 
+
+        /// <summary>
+        /// 1. Restore from the initial tag in pull/scenarios
+        /// 2. Only delete a file
+        /// 3. Push to new branch
+        /// 4. Verify local files are what is expected
+        /// 5. Verify assets.json was updated with the new commit Tag
+        /// </summary>
+        /// <param name="inputJson"></param>
+        /// <returns></returns>
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""language/tables"",
+              ""Tag"": ""python/tables_fc54d0""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task EnsureOnlyDeletesDetected(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            Assets updatedAssets = null;
+            string originalTagPrefix = assets.TagPrefix;
+            string originalTag = assets.Tag;
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
+            try
+            {
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.TagPrefix);
+
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
+                // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
+                // will be a forward one as expected by git but on Windows this won't result in a usable path.
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
+
+                // These are the files pulled down with the original Tag
+                Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 1));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 1));
+
+                File.Delete(Path.Combine(localFilePath, "file2.txt"));
+
+                // Push the update, it should be a clean push
+                await _defaultStore.Push(jsonFileLocation);
+
+                // Verify that after the push the directory still contains our updated files
+                Assert.Equal(2, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 1));
+
+                // Ensure that the config was updated with the new Tag as part of the push
+                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
+                Assert.NotEqual(originalTag, updatedAssets.Tag);
+
+                // Ensure that the targeted tag is present on the repo
+                TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
+                TestHelpers.CleanupIntegrationTestTag(updatedAssets);
+            }
+        }
+
         /// <summary>
         /// 1. Restore from a tag that has minimal existing files and a long destination path
         /// 2. Add a _bunch_ of files
@@ -579,6 +659,80 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 DirectoryHelper.DeleteGitDirectory(testFolder);
                 TestHelpers.CleanupIntegrationTestTag(assets);
                 TestHelpers.CleanupIntegrationTestTag(updatedAssets);
+            }
+        }
+
+        /// <summary>
+        /// 1. Restore from empty tag
+        /// 2. Add/Delete/Update files which will include a fake secret
+        /// 3. Attempt to push
+        /// 4. Assert that the expected exception is thrown, preventing a secret being pushed upstream
+        /// </summary>
+        /// <param name="inputJson"></param>
+        /// <returns></returns>
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""language/tables"",
+              ""Tag"": """"
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task SecretProtectionPreventsPush(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
+            try
+            {
+                ConsoleWrapper consoleWrapper = new ConsoleWrapper();
+                GitStore store = new GitStore(consoleWrapper);
+                var recordingHandler = new RecordingHandler(testFolder, store);
+
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await store.ParseConfigurationFile(jsonFileLocation);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
+                // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
+                // will be a forward one as expected by git but on Windows this won't result in a usable path.
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+
+                // generate a couple strings that LOOKs like secrets to the secret scanner.
+                var secretType1 = TestHelpers.GenerateString(3) + "8Q~" + TestHelpers.GenerateString(34);
+
+                // place an entirely new file with the secret
+                TestHelpers.CreateOrUpdateFileWithContent(localFilePath, "secret_type_1.txt", secretType1);
+
+                // modify an existing file with the secret
+                TestHelpers.CreateOrUpdateFileWithContent(localFilePath, "file2.txt", secretType1);
+
+                // delete a file to ensure that we don't attempt to scan a file that no longer exists
+                File.Delete(Path.Combine(localFilePath, "file5.txt"));
+
+                // Use the built in secretscanner
+                await store.Push(jsonFileLocation);
+
+                // no changes should be committed
+                var pendingChanges = store.DetectPendingChanges(parsedConfiguration);
+                Assert.Equal(2, pendingChanges.Count());
+
+                // now double check the actual scan results to ensure they are where we expect
+                var detectedSecrets = store.SecretScanner.DiscoverSecrets(parsedConfiguration.AssetsRepoLocation, pendingChanges);
+
+                Assert.Equal(2, detectedSecrets.Count);
+                Assert.Equal("SEC101/156", detectedSecrets[0].Item2.Id);
+                Assert.Equal("SEC101/156", detectedSecrets[1].Item2.Id);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
             }
         }
     }

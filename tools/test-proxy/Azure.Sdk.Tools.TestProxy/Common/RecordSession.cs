@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true)
         {
-            foreach(RecordedTestSanitizer sanitizer in sanitizers)
+            foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
                 sanitizer.Sanitize(requestEntry);
             }
@@ -100,6 +100,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
 
                 return entry;
+            }
+        }
+
+        public void Remove(RecordEntry entry)
+        {
+            lock (Entries)
+            {
+                Entries.Remove(entry);
             }
         }
 

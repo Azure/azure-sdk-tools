@@ -521,7 +521,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (remove)
             {
-                session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove: true);
+                session.Session.Remove(match);
             }
         }
 

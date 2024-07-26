@@ -460,14 +460,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
 
-            // If request contains "x-recording-remove: false", then request is not removed from session after playback.
-            // Used by perf tests to play back the same request multiple times.
-            var remove = true;
-            if (incomingRequest.Headers.TryGetValue("x-recording-remove", out var removeHeader))
-            {
-                remove = bool.Parse(removeHeader);
-            }
-
+            // Session may be removed later, but only after response has been fully written
             var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove: false);
 
             foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
@@ -497,6 +490,15 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             Interlocked.Increment(ref Startup.RequestsPlayedBack);
+
+            var remove = true;
+
+            // If request contains "x-recording-remove: false", then request is not removed from session after playback.
+            // Used by perf tests to play back the same request multiple times.
+            if (incomingRequest.Headers.TryGetValue("x-recording-remove", out var removeHeader))
+            {
+                remove = bool.Parse(removeHeader);
+            }
 
             // Only remove session once body has been written, to minimize probability client retries but test-proxy has already removed the session
             if (remove)

@@ -3,9 +3,10 @@ import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaDa
 import path, { join } from "path";
 import { SDKType } from "../../common/types";
 import { describe } from "node:test";
-import { mkdirSync } from "node:fs";
 import { tryReadNpmPackageChangelog } from "../../common/utils";
-import { rmdirSync, writeFileSync } from "fs";
+import { writeFileSync } from "fs";
+import ts from "typescript";
+import { mkdir, rm, rmdir, writeFile } from "fs/promises";
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
@@ -139,20 +140,64 @@ describe("Breaking change detection", () => {
 });
 
 describe("Changelog reading", () => {
-    const tempPackageFolder = `./tmp/package-${getRandomInt(10000)}`;
-    try {
-        test("Read changelog that doesn't exist", () => {
-            const content = tryReadNpmPackageChangelog(tempPackageFolder);
-            expect(content).toBe("");
-        });
-        const changelogPath = join(tempPackageFolder, 'CHANGELOG.md')
-        writeFileSync(changelogPath, 'aaa', 'utf-8');
-    
-        test("Read changelog that exists", () => { 
-            const content = tryReadNpmPackageChangelog(tempPackageFolder);
-            expect(content).toBe("aaa");
-        })
-    } finally {
-        rmdirSync(tempPackageFolder);
-    }
+    const tempPackageFolder = "./temp/not/exist";
+    test("Read changelog that doesn't exist", () => {
+        const content = tryReadNpmPackageChangelog(tempPackageFolder);
+        expect(content).toBe("");
+    });
+    const changelogPath = join(tempPackageFolder, "CHANGELOG.md");
+    writeFileSync(changelogPath, "aaa", "utf-8");
+
+    test("Read changelog that exists", () => {
+        const content = tryReadNpmPackageChangelog(tempPackageFolder);
+        expect(content).toBe("aaa");
+    });
+});
+
+describe("Fix breaking change detection", function () {
+    // The issue:
+    //   export type ProvisioningState = "succeeded" | "provisioning" | "failed" ->
+    //   export type ProvisioningState = "Succeeded" | "Provisioning" | "Failed"
+    const tempPackageFolder = join(
+        __dirname,
+        `./.tmp-package-${getRandomInt(10000)}`
+    );
+    const oldPath = join(tempPackageFolder, "old.ts");
+    const newPath = join(tempPackageFolder, "new.ts");
+    test("Improve union enum breaking change detection", async function () {
+        try {
+            const oldCode =
+                'export type ProvisioningState = "succeeded" | "provisioning" | "failed"';
+            const newCode =
+                'export type ProvisioningState = "Succeeded" | "Provisioning" | "Failed"';
+            await mkdir(tempPackageFolder);
+            await writeFile(oldPath, oldCode);
+            await writeFile(newPath, newCode);
+            const compilerOptions = {
+                module: ts.ModuleKind.CommonJS,
+                target: ts.ScriptTarget.ES2022,
+            };
+            const program = ts.createProgram(
+                [oldPath, newPath],
+                compilerOptions
+            );
+            const checker = program.getTypeChecker();
+
+            const oldFile = program.getSourceFile(oldPath);
+            const newFile = program.getSourceFile(newPath);
+            const getType = (file: ts.SourceFile) => {
+                const node = (file.statements[0] as ts.TypeAliasDeclaration)
+                    .type;
+                return checker.getTypeAtLocation(node);
+            };
+            const oldType = getType(oldFile!);
+            const newType = getType(newFile!);
+            const result = checker.isTypeAssignableTo(oldType, newType);
+            expect(result).toBe(false);
+        } finally {
+            await rm(oldPath);
+            await rm(newPath);
+            await rmdir(tempPackageFolder);
+        }
+    });
 });

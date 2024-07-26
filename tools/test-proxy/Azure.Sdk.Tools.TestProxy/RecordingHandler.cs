@@ -468,14 +468,12 @@ namespace Azure.Sdk.Tools.TestProxy
                 remove = bool.Parse(removeHeader);
             }
 
-            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
+            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove: false);
 
             foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
             {
                 transform.Transform(incomingRequest, match);
             }
-
-            Interlocked.Increment(ref Startup.RequestsPlayedBack);
 
             outgoingResponse.StatusCode = match.StatusCode;
 
@@ -496,6 +494,14 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
 
                 await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
+            }
+
+            Interlocked.Increment(ref Startup.RequestsPlayedBack);
+
+            // Only remove session once body has been written, to minimize probability client retries but test-proxy has already removed the session
+            if (remove)
+            {
+                session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove: true);
             }
         }
 

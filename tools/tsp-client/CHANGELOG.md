@@ -1,5 +1,9 @@
 # Release
 
+## 2024-07-31 - 0.10.0
+
+- Copy the package.json + package-lock.json directly under TempTypeSpecFiles/. (#8583)
+
 ## 2024-07-23 - 0.9.4
 
 - Fixed issue where one additional directory entry is treated as a string instead of an array. (#8551)

@@ -114,11 +114,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             var sanitizers = SanitizerRegistry.GetSanitizers(recordingSession);
-
-            foreach (RecordedTestSanitizer sanitizer in sanitizers)
-            {
-                recordingSession.Session.Sanitize(sanitizer);
-            }
+            recordingSession.Session.Sanitize(sanitizers);
 
             if (variables != null)
             {
@@ -464,11 +460,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     if (!session.IsSanitized)
                     {
-                        foreach (RecordedTestSanitizer sanitizer in sanitizers)
-                        {
-                            session.Session.Sanitize(sanitizer);
-                        }
-
+                        session.Session.Sanitize(sanitizers);
                         session.IsSanitized = true;
                     }
                 }

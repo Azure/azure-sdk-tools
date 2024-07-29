@@ -118,5 +118,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 sanitizer.Sanitize(this);
             }
         }
+        public void Sanitize(IEnumerable<RecordedTestSanitizer> sanitizers)
+        {
+            lock (Entries)
+            {
+                foreach(var sanitizer in sanitizers)
+                {
+                    sanitizer.Sanitize(this);
+                }
+            }
+        }
     }
 }

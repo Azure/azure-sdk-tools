@@ -456,7 +456,7 @@ namespace Azure.Sdk.Tools.TestProxy
             if (!session.IsSanitized)
             {
                 // we don't need to re-sanitize with recording-applicable sanitizers every time. just the very first one
-                lock (session)
+                lock (session.SanitizerLock)
                 {
                     if (!session.IsSanitized)
                     {

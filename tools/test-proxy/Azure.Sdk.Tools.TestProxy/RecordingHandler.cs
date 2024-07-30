@@ -394,6 +394,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     Path = path
                 };
+                DebugLogger.LogInformation($"Recording file {assetsPath} is associated with recording id {id}");
             }
 
             if (!PlaybackSessions.TryAdd(id, session))
@@ -409,6 +410,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             // Write to the response
             await outgoingResponse.WriteAsync(json);
+
 
             DebugLogger.LogTrace($"PLAYBACK START END {id}.");
         }

@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if (remove)
                 {
                     Entries.Remove(entry);
-                    DebugLogger.LogDebug($"We successfully matched and popped request URI {entry.RequestUri} for recordingId {sessionId}");
+                    DebugLogger.LogInformation($"We successfully matched and popped request URI {entry.RequestUri} for recordingId {sessionId}");
                 }
 
                 return entry;

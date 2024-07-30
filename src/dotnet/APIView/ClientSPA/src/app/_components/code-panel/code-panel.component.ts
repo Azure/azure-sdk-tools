@@ -5,7 +5,7 @@ import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/literal-helpers';
+import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelRowData';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';

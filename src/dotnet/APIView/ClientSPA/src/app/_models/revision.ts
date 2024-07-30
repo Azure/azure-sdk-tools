@@ -1,5 +1,8 @@
-import { Type, Expose } from 'class-transformer';
-import { ChangeHistory, CodeDiagnostic, CommentItemModel } from "./review"
+import { ChangeHistory } from "./changeHistory";
+import { StructuredToken } from "./structuredToken";
+import { CodePanelRowData } from "./codePanelRowData";
+import { APICodeFileModel } from "./apiCodeFileModel";
+
 
 export enum ReviewPageWorkerMessageDirective {
   CreatePageNavigation,
@@ -8,34 +11,12 @@ export enum ReviewPageWorkerMessageDirective {
   SetHasHiddenAPIFlag
 }
 
-export enum CodePanelRowDatatype {
-  CodeLine = "codeLine",
-  Documentation = "documentation",
-  Diagnostics = "diagnostics",
-  CommentThread = "commentThread"
-}
-
 export enum ParserStyle {
   Flat = "Flat",
   Tree = "Tree"
 }
 
-export interface APICodeFileModel {
-  fileId: string;
-  name: string;
-  versionString: string;
-  parserStyle: string;
-  languageVariant: string;
-  hasOriginal: boolean;
-  creationDate: Date;
-  runAnalysis: boolean;
-  packageName: string;
-  fileName: string;
-  packageVersion: string;
-  crossLanguagePackageId: string;
-}
-
-export interface APIRevision {
+export class APIRevision {
   id: string
   reviewId: string
   files: APICodeFileModel[];
@@ -52,26 +33,41 @@ export interface APIRevision {
   createdBy: string
   createdOn: string
   lastUpdatedOn: string
-  isReleased: boolean,
-  releasedOn: string,
-  isDeleted: boolean,
-  approvers: string[],
+  isReleased: boolean
+  releasedOn: string
+  isDeleted: boolean
+  approvers: string[]
   viewedBy: string[]
+
+  constructor() {
+    this.id = ''
+    this.reviewId = ''
+    this.files = [];
+    this.packageName = ''
+    this.language = ''
+    this.apiRevisionType = ''
+    this.pullRequestNo = 0
+    this.label = ''
+    this.resolvedLabel = ''
+    this.packageVersion = ''
+    this.changeHistory = []
+    this.assignedReviewers = []
+    this.isApproved = false
+    this.createdBy = ''
+    this.createdOn = ''
+    this.lastUpdatedOn = ''
+    this.isReleased = false,
+    this.releasedOn = '',
+    this.isDeleted = false,
+    this.approvers = [],
+    this.viewedBy = []
+  }
 }
 
 export interface AssignedReviewer {
   assignedBy: string;
   assingedTo: string;
   assingedOn: string;
-}
-
-export class StructuredToken {
-  value: string = '';
-  id: string = '';
-  kind: string = '';
-  tags: Set<string> = new Set();
-  properties: { [key: string]: string; } = {};
-  renderClasses: Set<string> = new Set();
 }
 
 export interface DiffLineInProcess {
@@ -92,28 +88,6 @@ export interface APITreeNode {
   bottomDiffTokens: StructuredToken[];
   children: APITreeNode[];
   diffKind: string;
-}
-
-export class CodePanelRowData {
-  type: string = '';
-  lineNumber: number = 0;
-  rowOfTokens: StructuredToken[] = [];
-  nodeId: string = '';
-  nodeIdHashed: string = '';
-  rowPositionInGroup: number = 0;
-  associatedRowPositionInGroup: number = 0;
-  rowOfTokensPosition: string = '';
-  rowClasses: Set<string> = new Set<string>();
-  indent: number = 0;
-  diffKind: string = '';
-  toggleDocumentationClasses: string = '';
-  toggleCommentsClasses: string = '';
-  diagnostics: CodeDiagnostic = new CodeDiagnostic();
-  comments: CommentItemModel[] = [];
-  showReplyTextBox: boolean = false;
-  isResolvedCommentThread: boolean = false;
-  commentThreadIsResolvedBy: string = '';
-  isHiddenAPI: boolean = false;
 }
 
 export class NavigationTreeNodeData {

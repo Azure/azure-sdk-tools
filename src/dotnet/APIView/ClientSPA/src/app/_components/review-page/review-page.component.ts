@@ -1,12 +1,11 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Subject, Subscription, take, takeUntil, tap } from 'rxjs';
+import { Subject, take, takeUntil } from 'rxjs';
 import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Review } from 'src/app/_models/review';
-import { APIRevision, ApiTreeBuilderData, CodePanelData, CodePanelRowData, CodePanelRowDatatype, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { APIRevision, ApiTreeBuilderData, CodePanelData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
@@ -14,6 +13,8 @@ import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/literal-helpers';
+import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelRowData';
+import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
   selector: 'app-review-page',

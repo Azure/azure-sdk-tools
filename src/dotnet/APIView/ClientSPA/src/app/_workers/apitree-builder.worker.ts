@@ -1,8 +1,8 @@
 /// <reference lib="webworker" />
 import 'reflect-metadata';
-import { CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype, InsertCodePanelRowDataMessage, NavigationTreeNode, ReviewPageWorkerMessageDirective } from "../_models/revision";
+import { CodePanelNodeMetaData, InsertCodePanelRowDataMessage, NavigationTreeNode, ReviewPageWorkerMessageDirective } from "../_models/revision";
 import { ApiTreeBuilderData, CodePanelData } from "../_models/revision";
-import { plainToClass } from 'class-transformer';
+import { CodePanelRowData, CodePanelRowDatatype } from '../_models/codePanelRowData';
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];

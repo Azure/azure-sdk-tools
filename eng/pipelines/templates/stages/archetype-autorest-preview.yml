@@ -242,6 +242,7 @@ stages:
           arguments: >
             -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
             -OutputDirectory "$(Build.ArtifactStagingDirectory)"
+        continueOnError: true
 
     - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
       parameters:
@@ -281,7 +282,9 @@ stages:
         inputs:
           pwsh: true
           filePath: $(autorestRepositoryPath)/eng/scripts/Initialize-Repository.ps1
-          arguments: -BuildArtifactsPath '$(buildArtifactsPath)'
+          arguments: >
+            -BuildArtifactsPath '$(buildArtifactsPath)'
+            -UseTypeSpecNext:$${{ parameters.UseTypeSpecNext }}
           workingDirectory: $(autorestRepositoryPath)
 
       - task: PowerShell@2

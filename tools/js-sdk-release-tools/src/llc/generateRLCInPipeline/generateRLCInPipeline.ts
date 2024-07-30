@@ -62,12 +62,12 @@ export async function generateRLCInPipeline(options: {
                 });
                 logger.logGreen("End with TypeSpec command.");
             } else {
-                logger.logGreen("Run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
+                logger.logGreen("Run tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
-                const scriptCommand = ['pwsh', './eng/common/scripts/TypeSpec-Project-Process.ps1', tspDefDir,  options.gitCommitId, options.swaggerRepoUrl].join(" ");
+                const scriptCommand = ['tsp-client', 'init', '--ddebug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
                 logger.logGreen(`${scriptCommand}`);
                 execSync(scriptCommand, {stdio: 'inherit'});
-                logger.logGreen("End with ./eng/common/scripts/TypeSpec-Project-Process.ps1 script.");
+                logger.logGreen("End with tsp-client");
             } 
         }
     } else {

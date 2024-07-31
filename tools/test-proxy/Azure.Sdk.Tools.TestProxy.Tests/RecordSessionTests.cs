@@ -402,7 +402,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             TestRecordingMismatchException exception = Assert.Throws<TestRecordingMismatchException>(() => matcher.FindMatch(requestEntry, entries));
             Assert.Equal(
                 "Unable to find a record for the request HEAD http://localhost/" + Environment.NewLine +
-                "Remaining entry: http://remote-host" + Environment.NewLine +
                 "Method doesn't match, request <HEAD> record <PUT>" + Environment.NewLine +
                 "Uri doesn't match:" + Environment.NewLine +
                 "    request <http://localhost/>" + Environment.NewLine +

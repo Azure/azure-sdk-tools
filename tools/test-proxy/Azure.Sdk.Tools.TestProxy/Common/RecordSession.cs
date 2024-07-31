@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -19,6 +20,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         //Used only for deserializing track 1 session record files
         public Dictionary<string, Queue<string>> Names { get; set; } = new Dictionary<string, Queue<string>>();
+
+        SemaphoreSlim EntryLock { get; set; }
 
         public void Serialize(Utf8JsonWriter jsonWriter)
         {
@@ -74,15 +77,21 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return session;
         }
 
-        public void Record(RecordEntry entry)
+        public async void Record(RecordEntry entry)
         {
-            lock (Entries)
+            await EntryLock.WaitAsync();
+
+            try
             {
                 Entries.Add(entry);
             }
+            finally
+            {
+                EntryLock.Release();
+            }
         }
 
-        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, string sessionId = null)
+        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true)
         {
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
@@ -91,19 +100,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
             RecordEntry.NormalizeJsonBody(requestEntry.Request);
 
-            RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
-            if (remove)
+            lock (Entries)
             {
-                Entries.Remove(entry);
-                DebugLogger.LogDebug($"We successfully matched and popped request URI {entry.RequestUri} for recordingId {sessionId}");
-            }
+                RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
+                if (remove)
+                {
+                    Entries.Remove(entry);
+                }
 
-            return entry;
+                return entry;
+            }
         }
 
         public void Remove(RecordEntry entry)
         {
-            Entries.Remove(entry);
+            lock (Entries)
+            {
+                Entries.Remove(entry);
+            }
         }
 
         public void Sanitize(RecordedTestSanitizer sanitizer)

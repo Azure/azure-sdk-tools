@@ -9,6 +9,7 @@ import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { Message } from 'primeng/api/message';
 
 @Component({
   selector: 'app-code-panel',
@@ -31,6 +32,7 @@ export class CodePanelComponent implements OnChanges{
 
   @Output() hasActiveConversation : EventEmitter<boolean> = new EventEmitter<boolean>();
 
+  noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
   isLoading: boolean = true;
   codeWindowHeight: string | undefined = undefined;
   codePanelRowDataIndicesMap = new Map<string, number>();

@@ -2,6 +2,7 @@
 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
 </div>
+<p-messages *ngIf="codePanelData && !isLoading && isDiffView && !codePanelData?.hasDiff" [(value)]="noDiffInContentMessage" [closable]="false" />
 <div *ngIf="codePanelRowSource;" class="viewport {{languageSafeName!}}" (click)="onCodePanelItemClick($event)">
   <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
     [attr.data-row-position-in-group]="item.rowPositionInGroup" [ngClass]="getRowClassObject(item)">

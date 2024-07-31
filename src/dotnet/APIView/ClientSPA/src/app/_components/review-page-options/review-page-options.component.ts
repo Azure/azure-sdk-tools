@@ -18,6 +18,7 @@ import { UserProfile } from 'src/app/_models/userProfile';
 export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
+  @Input() contentHasDiff: boolean | undefined = false;
   @Input() diffStyleInput: string | undefined;
   @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;

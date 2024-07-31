@@ -69,7 +69,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   let addNodeToBuffer = false
  
   if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === "trees" || apiTreeBuilderData?.diffStyle === "nodes") && 
-    (!node.isNodeWithDiffInDescendants || (!apiTreeBuilderData?.showDocumentation && node.isNodeWithNoneDocDiffInDescendants == false))) {
+    (!node.isNodeWithDiffInDescendants || (!apiTreeBuilderData?.showDocumentation && !node.isNodeWithNoneDocDiffInDescendants))) {
     buildNode = false;
     buildChildren = false;
   }

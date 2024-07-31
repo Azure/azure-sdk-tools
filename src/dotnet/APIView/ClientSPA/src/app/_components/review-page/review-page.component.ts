@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { Subject, take, takeUntil } from 'rxjs';
-import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
+import { getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision, ApiTreeBuilderData, CodePanelData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
@@ -12,7 +12,7 @@ import { UserProfileService } from 'src/app/_services/user-profile/user-profile.
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
-import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/literal-helpers';
+import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelRowData';
 import { UserProfile } from 'src/app/_models/userProfile';
 

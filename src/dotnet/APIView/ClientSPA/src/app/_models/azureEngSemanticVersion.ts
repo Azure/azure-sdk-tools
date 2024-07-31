@@ -44,7 +44,7 @@ export class AzureEngSemanticVersion {
                 this.isPrerelease = true
                 this.versionType = "Beta"
                 this.buildNumberSeparator = versionParts.groups!["buildnumsep"]
-                this.buildNumber = versionParts.groups!["buildnumber"]
+                this.buildNumber = versionParts.groups!["buildnumber"] ?? ''
             } else {
                 // artifically provide these values for non-prereleases to enable easy sorting of them later than prereleases.
                 this.prereleaseLabel = "zzz"

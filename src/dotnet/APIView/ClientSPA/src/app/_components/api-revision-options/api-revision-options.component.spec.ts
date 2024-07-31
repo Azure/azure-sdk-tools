@@ -5,7 +5,6 @@ import { ApiRevisionOptionsComponent } from './api-revision-options.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { APIRevision } from 'src/app/_models/revision';
 
 describe('ApiRevisionOptionsComponent', () => {
   let component: ApiRevisionOptionsComponent;
@@ -39,7 +38,7 @@ describe('ApiRevisionOptionsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Tag APIRevision appriopriately based on date and/or status', () => {
+  describe('Tag APIRevision appropriately based on date and/or status', () => {
     const apiRevisions = [
       {
         id: '1',
@@ -115,6 +114,7 @@ describe('ApiRevisionOptionsComponent', () => {
         lastUpdatedOn: '2021-07-04T00:00:00Z',
       },
     ];
+ 
     it('should correctly tag the latest GA APIRevision', () => {
       var result = component.tagLatestGARevision(apiRevisions);
       expect(result.id).toEqual('3');

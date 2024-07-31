@@ -82,20 +82,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        public RecordEntry NonLockingLookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, string sessionId = null)
-        {
-            foreach (RecordedTestSanitizer sanitizer in sanitizers)
-            {
-                sanitizer.Sanitize(requestEntry);
-            }
-            // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
-            RecordEntry.NormalizeJsonBody(requestEntry.Request);
-
-            RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
-
-            return entry;
-        }
-
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, string sessionId = null)
         {
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
@@ -105,30 +91,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
             RecordEntry.NormalizeJsonBody(requestEntry.Request);
 
-            lock (Entries)
+            RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
+            if (remove)
             {
-                RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
-                if (remove)
-                {
-                    Entries.Remove(entry);
-                    DebugLogger.LogInformation($"We successfully matched and popped request URI {entry.RequestUri} for recordingId {sessionId}");
-                }
-
-                return entry;
+                Entries.Remove(entry);
+                DebugLogger.LogInformation($"We successfully matched and popped request URI {entry.RequestUri} for recordingId {sessionId}");
             }
-        }
 
-        public void NonLockingRemove(RecordEntry entry)
-        {
-            Entries.Remove(entry);
+            return entry;
         }
 
         public void Remove(RecordEntry entry)
         {
-            lock (Entries)
-            {
-                Entries.Remove(entry);
-            }
+            Entries.Remove(entry);
         }
 
         public void Sanitize(RecordedTestSanitizer sanitizer)

@@ -230,13 +230,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
-            int maxWorkerThreads, maxCompletionPortThreads;
-            ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
-            System.Console.WriteLine($"Default max worker threads: {maxWorkerThreads}");
-            System.Console.WriteLine($"Default max completion port threads: {maxCompletionPortThreads}");
-
-
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

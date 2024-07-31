@@ -475,7 +475,7 @@ namespace Azure.Sdk.Tools.TestProxy
             lock (session.Session.Entries)
             {
                 // Session may be removed later, but only after response has been fully written
-                var match = session.Session.NonLockingLookup(entry, session.CustomMatcher ?? Matcher, sanitizers, sessionId: recordingId);
+                var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove: false, sessionId: recordingId);
 
                 foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
                 {
@@ -517,7 +517,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 if (remove)
                 {
-                    session.Session.NonLockingRemove(match);
+                    session.Session.Remove(match);
                 }
             }
         }

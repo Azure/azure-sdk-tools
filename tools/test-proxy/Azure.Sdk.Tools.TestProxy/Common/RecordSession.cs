@@ -82,6 +82,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+        public RecordEntry NonLockingLookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, string sessionId = null)
+        {
+            foreach (RecordedTestSanitizer sanitizer in sanitizers)
+            {
+                sanitizer.Sanitize(requestEntry);
+            }
+            // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
+            RecordEntry.NormalizeJsonBody(requestEntry.Request);
+
+            RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
+
+            return entry;
+        }
+
         public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, string sessionId = null)
         {
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
@@ -102,6 +116,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 return entry;
             }
+        }
+
+        public void NonLockingRemove(RecordEntry entry)
+        {
+            Entries.Remove(entry);
         }
 
         public void Remove(RecordEntry entry)

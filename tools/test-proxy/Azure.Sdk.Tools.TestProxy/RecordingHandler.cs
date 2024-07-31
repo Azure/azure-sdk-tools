@@ -472,50 +472,53 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
 
-            // Session may be removed later, but only after response has been fully written
-            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove: false, sessionId: recordingId);
-
-            foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
+            lock (session.Session.Entries)
             {
-                transform.Transform(incomingRequest, match);
-            }
+                // Session may be removed later, but only after response has been fully written
+                var match = session.Session.NonLockingLookup(entry, session.CustomMatcher ?? Matcher, sanitizers, sessionId: recordingId);
 
-            outgoingResponse.StatusCode = match.StatusCode;
-
-            foreach (var header in match.Response.Headers)
-            {
-                outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
-            }
-
-            outgoingResponse.Headers.Remove("Transfer-Encoding");
-
-            if (match.Response.Body?.Length > 0)
-            {
-                var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
-
-                if (match.Response.Headers.ContainsKey("Content-Length"))
+                foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
                 {
-                    outgoingResponse.ContentLength = bodyData.Length;
+                    transform.Transform(incomingRequest, match);
                 }
 
-                await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
-            }
+                outgoingResponse.StatusCode = match.StatusCode;
 
-            Interlocked.Increment(ref Startup.RequestsPlayedBack);
+                foreach (var header in match.Response.Headers)
+                {
+                    outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
+                }
 
-            // Only remove session once body has been written, to minimize probability client retries but test-proxy has already removed the session
-            var remove = true;
+                outgoingResponse.Headers.Remove("Transfer-Encoding");
 
-            // If request contains "x-recording-remove: false", then request is not removed from session after playback.
-            // Used by perf tests to play back the same request multiple times.
-            if (incomingRequest.Headers.TryGetValue("x-recording-remove", out var removeHeader))
-            {
-                remove = bool.Parse(removeHeader);
-            }
+                if (match.Response.Body?.Length > 0)
+                {
+                    var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
 
-            if (remove)
-            {
-                session.Session.Remove(match);
+                    if (match.Response.Headers.ContainsKey("Content-Length"))
+                    {
+                        outgoingResponse.ContentLength = bodyData.Length;
+                    }
+
+                    WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
+                }
+
+                Interlocked.Increment(ref Startup.RequestsPlayedBack);
+
+                // Only remove session once body has been written, to minimize probability client retries but test-proxy has already removed the session
+                var remove = true;
+
+                // If request contains "x-recording-remove: false", then request is not removed from session after playback.
+                // Used by perf tests to play back the same request multiple times.
+                if (incomingRequest.Headers.TryGetValue("x-recording-remove", out var removeHeader))
+                {
+                    remove = bool.Parse(removeHeader);
+                }
+
+                if (remove)
+                {
+                    session.Session.NonLockingRemove(match);
+                }
             }
         }
 
@@ -545,7 +548,35 @@ namespace Azure.Sdk.Tools.TestProxy
             return batches;
         }
 
-        public async Task WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
+        public void WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
+        {
+            if (playbackResponseTime > 0)
+            {
+                int batchCount = 10;
+                int sleepLength = playbackResponseTime / batchCount;
+
+                byte[][] chunks = GetBatches(bodyData, batchCount);
+
+                for (int i = 0; i < chunks.Length; i++)
+                {
+                    var chunk = chunks[i];
+
+                    outgoingResponse.Body.Write(chunk, 0, chunk.Length);
+
+                    if (i != chunks.Length - 1)
+                    {
+                        Thread.Sleep(sleepLength);
+                    }
+                }
+
+            }
+            else
+            {
+                outgoingResponse.Body.Write(bodyData, 0, bodyData.Length);
+            }
+        }
+
+        public async Task WriteBodyBytesAsync(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
         {
             if (playbackResponseTime > 0)
             {

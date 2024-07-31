@@ -163,7 +163,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingId = ctx.Response.Headers["x-recording-id"].ToString();
             var session = handler.RecordingSessions[recordingId];
             session.Session.Entries.Add(testEntry);
-            handler.StopRecording(recordingId);
+            await handler.StopRecording(recordingId);
 
             // now load it, did we avoid mangling it?
             var sessionFromDisk = TestHelpers.LoadRecordSession(Path.Combine(testFolder, testName));
@@ -629,14 +629,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void RecordingSessionSanitizeSanitizesVariables()
+        public async Task RecordingSessionSanitizeSanitizesVariables()
         {
             var sanitizer = new TestSanitizer();
             var session = new RecordSession();
             session.Variables["A"] = "secret";
             session.Variables["B"] = "Totally not a secret";
 
-            session.Sanitize(sanitizer);
+            await session.Sanitize(sanitizer);
 
             Assert.Equal("SANITIZED", session.Variables["A"]);
             Assert.Equal("Totally not a SANITIZED", session.Variables["B"]);

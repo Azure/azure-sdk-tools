@@ -8,8 +8,17 @@ export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
 }
 
-export async function removeDirectory(path: string) {
-  await rm(path, { recursive: true, force: true });
+export async function removeDirectory(path: string): Promise<void> {
+    try {
+        Logger.info(`Removing directory ${path}`);
+        await rm(path, { recursive: true, force: true });
+    } catch (error: any) {
+        if (error.code === 'ENOENT') {
+            Logger.error(`Error removing directory ${path}: ${error}`);
+            await rm(path, { recursive: true, force: true });
+        }
+    }
+    Logger.info(`Removed directory ${path}`);
 }
 
 export async function createTempDirectory(outputDir: string): Promise<string> {

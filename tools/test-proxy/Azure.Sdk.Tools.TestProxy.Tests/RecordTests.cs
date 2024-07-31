@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
             }
 
-            controller.Stop();
+            await controller.Stop();
 
             if (string.IsNullOrEmpty(additionalEntryModeHeader))
             {
@@ -162,7 +162,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 recordContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
             }
 
-            recordController.Stop();
+            await recordController.Stop();
 
             if (string.IsNullOrEmpty(additionalEntryModeHeader))
             {

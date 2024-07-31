@@ -1,5 +1,0 @@
-.create-or-alter function with (folder='', docstring='') LatestDefinition()
-{
-    BuildDefinition
-    | summarize arg_max(BuildDefinitionRevision, *) by BuildDefinitionId, ProjectId
-}

@@ -1,2 +1,0 @@
-```C# Snippet:EmptySnippet
-```

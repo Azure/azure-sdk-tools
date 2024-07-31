@@ -1,3 +1,0 @@
-# ServiceLabel: %TestLabel2
-# The EOF is on the source path line. This comment is also part of the block but is ignored.
-/sdk/someFakePath @TestOwner3

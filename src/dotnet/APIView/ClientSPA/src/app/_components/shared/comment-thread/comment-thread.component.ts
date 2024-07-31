@@ -17,7 +17,6 @@ import { UserProfile } from 'src/app/_models/userProfile';
 })
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
-  @Input() associatedCodeLine: CodePanelRowData | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -63,37 +62,34 @@ export class CommentThreadComponent {
       items: [{
           title: "csharp",
           label: ".NET",
-          command: (event) => this.createGitHubIssue(event),
+          state: {
+            repo: "azure-sdk-for-net",
+            language: "C#"
+          }
         },
         {
           title: "java",
           label: "Java",
-          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "python",
           label: "Python",
-          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "c",
           label: "C",
-          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "javascript",
           label: "JavaScript",
-          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "go",
           label: "Go",
-          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "cplusplus",
           label: "C++",
-          command: (event) => this.createGitHubIssue(event),
         },
       ]
     });
@@ -104,8 +100,6 @@ export class CommentThreadComponent {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
       this.setCommentResolutionState();
-    }
-    if (changes['associatedCodeLine']) {
     }
   }
 
@@ -143,9 +137,9 @@ export class CommentThreadComponent {
     this.allowAnyOneToResolve = !this.allowAnyOneToResolve;
   }
 
-  createGitHubIssue(event: MenuItemCommandEvent) {
+  createGitHubIsuue(title : string) {
     let repo = "";
-    switch (event.item?.title) {
+    switch (title) {
       case "csharp":
         repo = "azure-sdk-for-net";
         break;
@@ -168,25 +162,6 @@ export class CommentThreadComponent {
         repo = "azure-sdk-for-cpp";
         break;
     }
-  
-    const target = (event.originalEvent?.target as Element).closest("a") as Element;
-    const commentId = target.getAttribute("data-item-id");
-    const commentData = this.codePanelRowData?.comments?.find(comment => comment.id === commentId)?.commentText.replace(/<[^>]*>/g, '').trim();
-
-    const codeLineContent = this.associatedCodeLine 
-        ? this.associatedCodeLine.rowOfTokens
-            .filter(token => token.kind !== 'nonBreakingSpace')
-            .map(token => token.value)
-            .join(' ')
-            .replace(/\s+/g, ' ')
-            .trim()
-        : '';
-
-    const nodeId: string = this.codePanelRowData?.nodeId ?? 'defaultNodeId';
-    const apiViewUrl = `${window.location.href.split("#")[0]}&nId=${encodeURIComponent(nodeId)}`;
-    const issueBody = encodeURIComponent(`\`\`\`${event.item?.title}\n${codeLineContent}\n\`\`\`\n#\n${commentData}\n#\n[Created from ApiView comment](${apiViewUrl})`);
-
-    window.open(`https://github.com/Azure/${repo}/issues/new?body=${issueBody}`, '_blank');
   }
 
   showReplyEditor(event: Event) {

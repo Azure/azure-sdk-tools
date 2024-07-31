@@ -1,8 +1,0 @@
-matrix:
-  scenarios:
-    maps-network-chaos:
-      subdomain: maps
-    images-network-chaos:
-      subdomain: images
-    videos-network-chaos:
-      subdomain: videos

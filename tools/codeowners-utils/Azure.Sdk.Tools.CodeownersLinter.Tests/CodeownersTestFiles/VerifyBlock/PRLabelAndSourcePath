@@ -1,3 +1,0 @@
-# A PRLabel block ending with a source path/owner line should have no errors
-# PRLabel: %TestLabel1
-/sdk/someFakePath @TestOwner0

@@ -1,15 +1,7 @@
 import { ChangeHistory } from "./changeHistory";
 import { StructuredToken } from "./structuredToken";
-import { CodePanelRowData } from "./codePanelRowData";
+import { CodePanelRowData } from "./codePanelModels";
 import { APICodeFileModel } from "./apiCodeFileModel";
-
-
-export enum ReviewPageWorkerMessageDirective {
-  CreatePageNavigation,
-  UpdateCodePanelData,
-  UpdateCodePanelRowData,
-  SetHasHiddenAPIFlag
-}
 
 export enum ParserStyle {
   Flat = "Flat",
@@ -88,41 +80,6 @@ export interface APITreeNode {
   bottomDiffTokens: StructuredToken[];
   children: APITreeNode[];
   diffKind: string;
-}
-
-export class NavigationTreeNodeData {
-  nodeIdHashed: string = '';
-  kind: string = '';
-  icon: string = '';
-}
-
-export class NavigationTreeNode {
-  label: string = '';
-  data: NavigationTreeNodeData = new NavigationTreeNodeData();
-  expanded: boolean = false;
-  children: NavigationTreeNode[] = [];
-}
-
-export class CodePanelNodeMetaData {
-  documentation: CodePanelRowData[] = [];
-  diagnostics: CodePanelRowData[] = [];
-  codeLines: CodePanelRowData[] = [];
-  commentThread: { [key: number]: CodePanelRowData } = {};
-  navigationTreeNode: NavigationTreeNode = new NavigationTreeNode();
-  parentNodeIdHashed: string = '';
-  childrenNodeIdsInOrder: { [key: number]: string } = {};
-  isNodeWithDiff: boolean = false;
-  isNodeWithDiffInDescendants: boolean = false;
-  bottomTokenNodeIdHash: string = '';
-}
-
-export interface CodePanelData {
-  nodeMetaData: { [key: string]: CodePanelNodeMetaData };
-}
-
-export interface InsertCodePanelRowDataMessage {
-  directive: ReviewPageWorkerMessageDirective
-  payload : any
 }
 
 export interface ApiTreeBuilderData {

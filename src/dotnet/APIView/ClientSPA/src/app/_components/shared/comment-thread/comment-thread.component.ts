@@ -4,7 +4,7 @@ import { Menu } from 'primeng/menu';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
-import { CodePanelRowData } from 'src/app/_models/codePanelRowData';
+import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({

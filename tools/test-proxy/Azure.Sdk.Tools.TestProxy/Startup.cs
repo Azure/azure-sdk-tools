@@ -207,6 +207,11 @@ namespace Azure.Sdk.Tools.TestProxy
                     });
             });
 
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.AllowSynchronousIO = true;
+            });
+
             services.AddControllers(options =>
             {
                 options.InputFormatters.Add(new EmptyBodyFormatter());
@@ -229,6 +234,8 @@ namespace Azure.Sdk.Tools.TestProxy
             ThreadPool.GetMaxThreads(out maxWorkerThreads, out maxCompletionPortThreads);
             System.Console.WriteLine($"Default max worker threads: {maxWorkerThreads}");
             System.Console.WriteLine($"Default max completion port threads: {maxCompletionPortThreads}");
+
+
 
             if (env.IsDevelopment())
             {

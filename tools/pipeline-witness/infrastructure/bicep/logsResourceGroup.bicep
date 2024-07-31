@@ -136,6 +136,9 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
   identity: {
     type: 'SystemAssigned'
   }
+  tags: {
+    'NRMS.KustoPlatform.Classification.1P': 'Corp'
+  }
   properties: {
     trustedExternalTenants: []
     optimizedAutoscale: {

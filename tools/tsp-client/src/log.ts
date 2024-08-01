@@ -68,7 +68,7 @@ Commands:
   generate    Generate from a TypeSpec project                          [string]
   update      Sync and generate from a TypeSpec project                 [string]
   convert     Convert a swagger specification to TypeSpec               [string]
-  sortSwagger Sort a swagger specification based on TypeSpec ordering   [string]
+  sort-swagger Sort a swagger specification based on TypeSpec ordering   [string]
 
 Options:
   --arm                     Convert ARM swagger specification to TypeSpec       [boolean]

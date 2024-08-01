@@ -362,7 +362,7 @@ async function main() {
           }
         }
         break;
-    case "sortSwagger":
+    case "sort-swagger":
         Logger.info("Sorting a swagger content...");
         let swaggerFile =  options.swaggerFile;
         if (swaggerFile === undefined || await !doesFileExist(swaggerFile)) {

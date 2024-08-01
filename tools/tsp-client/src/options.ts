@@ -91,7 +91,7 @@ export async function getOptions(): Promise<Options> {
 
   let isUrl = true;
   let swaggerFile;
-  const supportedCommands = ["sync", "generate", "update", "init", "convert", "sortSwagger"];
+  const supportedCommands = ["sync", "generate", "update", "init", "convert", "sort-swagger"];
   const command = positionals[0];
 
   if (!values["generate-lock-file"]) {
@@ -139,7 +139,7 @@ export async function getOptions(): Promise<Options> {
       }
     }
 
-    if (command === "sortSwagger") {
+    if (command === "sort-swagger") {
         swaggerFile = positionals[1];
         if (swaggerFile === undefined) {
           Logger.error("Must specify a swagger file to be sorted.");

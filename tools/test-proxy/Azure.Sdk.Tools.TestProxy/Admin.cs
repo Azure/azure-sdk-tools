@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.TestProxy
             foreach(var sanitizerId in sanitizerList.Sanitizers) {
                 try
                 {
-                    var removedId = _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
+                    var removedId = await _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
                     removedSanitizers.Add(sanitizerId);
                 }
                 catch (HttpException ex) {

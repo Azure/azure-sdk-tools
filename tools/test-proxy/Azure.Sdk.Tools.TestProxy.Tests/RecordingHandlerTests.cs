@@ -239,7 +239,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
             // check that the individual session had reset sanitizers
-            Assert.Equal(testRecordingHandler.SanitizerRegistry.GetSanitizers(), testRecordingHandler.SanitizerRegistry.GetSanitizers(session));
+            Assert.Equal(await testRecordingHandler.SanitizerRegistry.GetSanitizers(), await testRecordingHandler.SanitizerRegistry.GetSanitizers(session));
 
             // stop the recording to clear out the session cache
             await testRecordingHandler.StopRecording(recordingId);

@@ -4830,3 +4830,25 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_import(imb)
             self.checker.visit_import(imc)
             self.checker.visit_importfrom(imd)
+
+class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed legacy typing practices"""
+
+    CHECKER_CLASS = checker.DoNotUseLegacyTyping
+
+    def test_disallowed_typing(self):
+        """Check that illegal method typing comments raise warnings"""
+        fnt = astroid.extract_node(
+            """
+            def function(x):
+                # type: (str) -> str #@
+                pass
+            """
+        )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-legacy-typing",
+                node=fnt,
+            )
+        ):
+            self.checker.visit_functiontype(fnt)

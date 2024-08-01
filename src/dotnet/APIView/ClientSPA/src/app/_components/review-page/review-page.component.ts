@@ -68,7 +68,7 @@ export class ReviewPageComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
-    private userProfileService: UserProfileService, private commentsService: CommentsService) {}
+    private userProfileService: UserProfileService) {}
 
   ngOnInit() {
     this.userProfileService.getUserProfile().subscribe(
@@ -88,7 +88,6 @@ export class ReviewPageComponent implements OnInit {
           this.showLineNumbers = false;
         }
       });
-
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const navigationState = this.router.getCurrentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {

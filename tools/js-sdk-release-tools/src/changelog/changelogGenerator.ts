@@ -9,34 +9,42 @@ import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeL
 import { TSExportedMetaData } from "./extractMetaData";
 import { SDKType } from "../common/types";
 import { logger } from "../utils/logger";
+import { detectBreakingChangesBetweenPackages, InlineDeclarationNameSetMessage, RuleMessage, RuleMessageKind } from "typescript-codegen-breaking-change-detector";
+
+interface ChangelogItem {
+    line: string;
+    name?: string;
+    baselineName?: string;
+    currentName?: string;
+}
 
 export class Changelog {
     // features
-    public addedOperationGroup: string[] = [];
+    public addedOperationGroup: ChangelogItem[] = [];
     public addedOperation: string[] = [];
-    public addedInterface: string[] = [];
+    public addedInterface: ChangelogItem[] = [];
     public addedClass: string[] = [];
     public addedTypeAlias: string[] = [];
     public interfaceAddOptionalParam: string[] = [];
-    public interfaceParamTypeExtended: string[] = [];
-    public typeAliasAddInherit: string[] = [];
+    public interfaceParamTypeExtended: ChangelogItem[] = [];
+    public typeAliasAddInherit: ChangelogItem[] = [];
     public typeAliasAddParam: string[] = [];
     public addedEnum: string[] = [];
     public addedEnumValue: string[] = [];
     public addedFunction: string[] = [];
     // breaking changes
-    public removedOperationGroup: string[] = [];
+    public removedOperationGroup: ChangelogItem[] = [];
     public removedOperation: string[] = [];
     public operationSignatureChange: string[] = [];
     public deletedClass: string[] = [];
     public classSignatureChange: string[] = [];
     public interfaceParamDelete: string[] = [];
     public interfaceParamAddRequired: string[] = [];
-    public interfaceParamTypeChanged: string[] = [];
+    public interfaceParamTypeChanged: ChangelogItem[] = [];
     public interfaceParamChangeRequired: string[] = [];
     public classParamDelete: string[] = [];
     public classParamChangeRequired: string[] = [];
-    public typeAliasDeleteInherit: string[] = [];
+    public typeAliasDeleteInherit: ChangelogItem[] = [];
     public typeAliasParamDelete: string[] = [];
     public typeAliasAddRequiredParam: string[] = [];
     public typeAliasParamChangeRequired: string[] = [];
@@ -83,7 +91,7 @@ export class Changelog {
     public getBreakingChangeItems(): string[] {
         let items: string[] = [];
         if (this.hasBreakingChange) {
-            this.removedOperationGroup
+            this.removedOperationGroup.map(i => i.line)
                 .concat(this.removedOperation)
                 .concat(this.operationSignatureChange)
                 .concat(this.deletedClass)
@@ -91,10 +99,10 @@ export class Changelog {
                 .concat(this.interfaceParamDelete)
                 .concat(this.interfaceParamAddRequired)
                 .concat(this.interfaceParamChangeRequired)
-                .concat(this.interfaceParamTypeChanged)
+                .concat(this.interfaceParamTypeChanged.map(i => i.line))
                 .concat(this.classParamDelete)
                 .concat(this.classParamChangeRequired)
-                .concat(this.typeAliasDeleteInherit)
+                .concat(this.typeAliasDeleteInherit.map(i => i.line))
                 .concat(this.typeAliasParamDelete)
                 .concat(this.typeAliasAddRequiredParam)
                 .concat(this.typeAliasParamChangeRequired)
@@ -113,14 +121,14 @@ export class Changelog {
         if (this.hasFeature) {
             display.push('### Features Added');
             display.push('');
-            this.addedOperationGroup
+            this.addedOperationGroup.map(i => i.line)
                 .concat(this.addedOperation)
-                .concat(this.addedInterface)
+                .concat(this.addedInterface.map(i => i.line))
                 .concat(this.addedClass)
                 .concat(this.addedTypeAlias)
                 .concat(this.interfaceAddOptionalParam)
-                .concat(this.interfaceParamTypeExtended)
-                .concat(this.typeAliasAddInherit)
+                .concat(this.interfaceParamTypeExtended.map(i => i.line))
+                .concat(this.typeAliasAddInherit.map(i => i.line))
                 .concat(this.typeAliasAddParam)
                 .concat(this.addedEnum)
                 .concat(this.addedEnumValue)
@@ -134,7 +142,7 @@ export class Changelog {
             if (this.hasFeature) display.push('');
             display.push('### Breaking Changes');
             display.push('');
-            this.removedOperationGroup
+            this.removedOperationGroup.map(i => i.line)
                 .concat(this.removedOperation)
                 .concat(this.operationSignatureChange)
                 .concat(this.deletedClass)
@@ -142,10 +150,10 @@ export class Changelog {
                 .concat(this.interfaceParamDelete)
                 .concat(this.interfaceParamAddRequired)
                 .concat(this.interfaceParamChangeRequired)
-                .concat(this.interfaceParamTypeChanged)
+                .concat(this.interfaceParamTypeChanged.map(i => i.line))
                 .concat(this.classParamDelete)
                 .concat(this.classParamChangeRequired)
-                .concat(this.typeAliasDeleteInherit)
+                .concat(this.typeAliasDeleteInherit.map(i => i.line))
                 .concat(this.typeAliasParamDelete)
                 .concat(this.typeAliasAddRequiredParam)
                 .concat(this.typeAliasParamChangeRequired)
@@ -159,6 +167,54 @@ export class Changelog {
 
         return display.join('\n');
     }
+
+    // TODO: add modular
+    public async postProcess(baselinePackageRoot: string, currentPackageRoot: string, sdkType: SDKType): Promise<void> {
+        if (sdkType !== SDKType.RestLevelClient) {
+            logger.logWarn(`No need to post process changelog for ${sdkType}.`)
+            return;
+        }
+        try {
+            const messageMap = await detectBreakingChangesBetweenPackages(baselinePackageRoot, currentPackageRoot, baselinePackageRoot, true);
+            
+            switch (sdkType) {
+                case SDKType.RestLevelClient:
+                    await this.postProcessForRestLevelClient(messageMap);
+                    break;
+            }
+        } catch (err) {
+            throw new Error(`Failed to apply special breaking change rules to ${sdkType}`);
+        }
+    }
+
+    private processInlineMessage(messages: InlineDeclarationNameSetMessage[]) {
+        logger.logInfo('Before post process rename messages in changelog')
+        logger.logGreen(this.displayChangeLog());
+        messages.forEach(message => {
+            // operation groups
+            this.addedOperationGroup = this.addedOperationGroup.filter(i => i.name && !message.current.has(i.name))
+            this.removedOperationGroup = this.removedOperationGroup.filter(i => i.name && !message.baseline.has(i.name))
+            // internal types, request type, response type
+            this.addedInterface = this.addedInterface.filter(i => i.name && !message.current.has(i.name))
+            this.typeAliasAddInherit = this.typeAliasAddInherit.filter(i => i.name && !message.current.has(i.name))
+            this.typeAliasDeleteInherit = this.typeAliasDeleteInherit.filter(i => i.name && !message.baseline.has(i.name))
+            this.interfaceParamTypeChanged = this.interfaceParamTypeChanged.filter(i => i.baselineName && !message.baseline.has(i.baselineName))
+            this.interfaceParamTypeChanged = this.interfaceParamTypeChanged.filter(i => i.currentName && !message.current.has(i.currentName))
+            this.interfaceParamTypeExtended = this.interfaceParamTypeExtended.filter(i => i.baselineName && !message.baseline.has(i.baselineName))
+            this.interfaceParamTypeExtended = this.interfaceParamTypeExtended.filter(i => i.currentName && !message.current.has(i.currentName))
+        })
+        logger.logInfo('After post process rename messages in changelog')
+        logger.logGreen(this.displayChangeLog());
+    }
+
+    private async postProcessForRestLevelClient(messageMap: Map<string, RuleMessage[] | undefined>) {
+        // RLC only has 1 api view
+        const key = Array.from(messageMap.keys())[0]
+        const messages = messageMap.get(key)!
+        const inlineMessages = messages.filter(m => m.kind === RuleMessageKind.InlineDeclarationNameSetMessage).map(m => m as InlineDeclarationNameSetMessage)
+        this.processInlineMessage(inlineMessages)
+    }
+    
 }
 
 // todo: special rules for HLC convert to Modular, will use a more generic method to replace
@@ -174,13 +230,13 @@ function getRenamedOperationGroupFromToMap(from: TSExportedMetaData): { [id: str
 
 const findAddedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
-): string[] => {
+): ChangelogItem[] => {
     const newToOldMap = getRenamedOperationGroupFromToMap(metaDataNew);
-    const addOperationGroup: string[] = [];
+    const addOperationGroup: ChangelogItem[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(operationGroup => {
         const oldName = oldSdkType === newSdkType ? operationGroup : newToOldMap[operationGroup];
         if (!metaDataOld.operationInterface[oldName]) {
-            addOperationGroup.push('Added operation group ' + operationGroup);
+            addOperationGroup.push({ line: 'Added operation group ' + operationGroup, name: operationGroup });
         }
     });
     return addOperationGroup;
@@ -212,11 +268,11 @@ const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpo
     return addOperation;
 };
 
-const findAddedInterface = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const addInterface: string[] = [];
+const findAddedInterface = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const addInterface: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (!metaDataOld.modelInterface[model]) {
-            addInterface.push('Added Interface ' + model);
+            addInterface.push({ line: 'Added Interface ' + model, name: model });
         }
     });
     return addInterface;
@@ -267,8 +323,8 @@ const findInterfaceAddOptinalParam = (metaDataOld: TSExportedMetaData, metaDataN
     return interfaceAddedParam;
 };
 
-const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const interfaceParamTypeExtended: string[] = [];
+const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const interfaceParamTypeExtended: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (metaDataOld.modelInterface[model]) {
             const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
@@ -289,7 +345,7 @@ const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDat
                                         }
                                     }
                                     if (allFind) {
-                                        interfaceParamTypeExtended.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                                        interfaceParamTypeExtended.push({ line: `Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`, currentName: pNew.type, baselineName: pOld.type });
                                     }
                                 }
                             }
@@ -303,8 +359,8 @@ const findInterfaceParamTypeExtended = (metaDataOld: TSExportedMetaData, metaDat
     return interfaceParamTypeExtended;
 };
 
-const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const typeAliasAddInherit: string[] = [];
+const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const typeAliasAddInherit: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (metaDataOld.typeAlias[typeAlias]) {
             const typeAliasFromOld = metaDataOld.typeAlias[typeAlias] as TypeAliasDeclaration;
@@ -314,18 +370,20 @@ const findTypeAliasAddInherit = (metaDataOld: TSExportedMetaData, metaDataNew: T
                     typeAliasFromNew.type.inherits.forEach(inherit => {
                         if (typeof inherit === 'string') {
                             if (typeAliasFromOld.type instanceof IntersectionDeclaration) {
+                                // strange behavior, 'ClustersUpdateMediaTypesParam_CCC' is in intersection type, but it's in 'inherits'
+                                // export type ClustersUpdateParameters = ClustersUpdateMediaTypesParam_CCC & ClustersUpdateBodyParam & RequestParameters;
                                 if (typeAliasFromOld.type.inherits) {
                                     if (!typeAliasFromOld.type.inherits.includes(inherit)) {
-                                        typeAliasAddInherit.push('Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias);
+                                        typeAliasAddInherit.push({ line: 'Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias, name: inherit });
                                     }
                                 } else {
-                                    typeAliasAddInherit.push('Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias);
+                                    typeAliasAddInherit.push({ line: 'Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias, name: inherit });
                                 }
                             } else if (typeAliasFromOld.type instanceof TypeLiteralDeclaration) {
-                                typeAliasAddInherit.push('Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias);
+                                typeAliasAddInherit.push({ line: 'Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias, name: inherit });
                             } else if (typeof typeAliasFromOld.type === 'string') {
                                 if (typeAliasFromOld.type !== inherit) {
-                                    typeAliasAddInherit.push('Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias);
+                                    typeAliasAddInherit.push({ line: 'Add parameters of ' + inherit + ' to TypeAlias ' + typeAlias, name: inherit });
                                 }
                             }
                         }
@@ -459,13 +517,13 @@ const findAddedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpor
 
 const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
-): string[] => {
+): ChangelogItem[] => {
     const oldToNew = getRenamedOperationGroupFromToMap(metaDataOld);
-    const removedOperationGroup: string[] = [];
+    const removedOperationGroup: ChangelogItem[] = [];
     Object.keys(metaDataOld.operationInterface).forEach(oldOperationGroup => {
         const newOperationGroup = oldSdkType === newSdkType ? oldOperationGroup : oldToNew[oldOperationGroup];
         if (!metaDataNew.operationInterface[newOperationGroup]) {
-            removedOperationGroup.push('Removed operation group ' + oldOperationGroup);
+            removedOperationGroup.push({ line: 'Removed operation group ' + oldOperationGroup, name: oldOperationGroup });
         }
     });
     return removedOperationGroup;
@@ -679,8 +737,8 @@ const findInterfaceParamChangeRequired = (metaDataOld: TSExportedMetaData, metaD
     return interfaceParamChangeRequired;
 };
 
-const findInterfaceParamTypeChanged = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const interfaceParamTypeChanged: string[] = [];
+const findInterfaceParamTypeChanged = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const interfaceParamTypeChanged: ChangelogItem[] = [];
     Object.keys(metaDataNew.modelInterface).forEach(model => {
         if (metaDataOld.modelInterface[model]) {
             const modelFromOld = metaDataOld.modelInterface[model] as InterfaceDeclaration;
@@ -695,13 +753,13 @@ const findInterfaceParamTypeChanged = (metaDataOld: TSExportedMetaData, metaData
                                 if (!!newTypes && !!oldTypes) {
                                     for (const t of oldTypes) {
                                         if (!newTypes.includes(t)) {
-                                            interfaceParamTypeChanged.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                                            interfaceParamTypeChanged.push({ line: `Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`, baselineName: pOld.type, currentName: pNew.type });
                                             break;
                                         }
                                     }
                                 }
                             } else {
-                                interfaceParamTypeChanged.push(`Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`);
+                                interfaceParamTypeChanged.push({ line: `Type of parameter ${pNew.name} of interface ${model} is changed from ${pOld.type} to ${pNew.type}`, baselineName: pOld.type, currentName: pNew.type });
                             }
                         }
                         return;
@@ -759,8 +817,8 @@ const findClassParamChangeRequired = (metaDataOld: TSExportedMetaData, metaDataN
     return classParamChangeRequired;
 };
 
-const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const typeAliasDeleteInherit: string[] = [];
+const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const typeAliasDeleteInherit: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (metaDataOld.typeAlias[typeAlias]) {
             const typeAliasFromOld = metaDataOld.typeAlias[typeAlias] as TypeAliasDeclaration;
@@ -772,16 +830,16 @@ const findTypeAliasDeleteInherit = (metaDataOld: TSExportedMetaData, metaDataNew
                             if (typeAliasFromNew.type instanceof IntersectionDeclaration) {
                                 if (typeAliasFromNew.type.inherits) {
                                     if (!typeAliasFromNew.type.inherits.includes(inherit)) {
-                                        typeAliasDeleteInherit.push('Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias);
+                                        typeAliasDeleteInherit.push({ line: 'Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias, name: inherit });
                                     }
                                 } else {
-                                    typeAliasDeleteInherit.push('Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias);
+                                    typeAliasDeleteInherit.push({ line: 'Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias, name: inherit });
                                 }
                             } else if (typeAliasFromNew.type instanceof TypeLiteralDeclaration) {
-                                typeAliasDeleteInherit.push('Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias);
+                                typeAliasDeleteInherit.push({ line: 'Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias, name: inherit });
                             } else if (typeof typeAliasFromNew.type === 'string') {
                                 if (typeAliasFromNew.type !== inherit) {
-                                    typeAliasDeleteInherit.push('Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias);
+                                    typeAliasDeleteInherit.push({ line: 'Delete parameters of ' + inherit + ' in TypeAlias ' + typeAlias, name: inherit });
                                 }
                             }
                         }

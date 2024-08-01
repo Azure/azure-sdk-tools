@@ -20,7 +20,7 @@ import {
 } from "../../utils/version";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version";
-import { ApiVersionType } from "../../common/types"
+import { ApiVersionType, SDKType } from "../../common/types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../../common/utils';
 
@@ -57,7 +57,8 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
 
             // only track2 sdk includes sdk-type with value mgmt
             const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), {encoding: 'utf-8'}))['sdk-type'];
-            if (sdkType && sdkType === 'mgmt') {
+            const clientType = getSDKType(packageFolderPath);
+            if (sdkType && sdkType === 'mgmt' || clientType === SDKType.RestLevelClient) {
                 logger.log(`Package ${packageName} released before is track2 sdk`);
                 logger.log('Generating changelog by comparing api.md...');
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
@@ -101,6 +102,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     }
                     makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
+                    await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
                     makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent,stableVersion);
                     logger.log('Generate changelogs and setting version for track2 release successfully');

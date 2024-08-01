@@ -29,12 +29,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void Reset()
+        public async Task Reset()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            _recordingHandler.SetDefaultExtensions(recordingId);
+            await _recordingHandler.SetDefaultExtensions(recordingId);
         }
 
         [HttpGet]
@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.TestProxy
             foreach(var sanitizerId in sanitizerList.Sanitizers) {
                 try
                 {
-                    var removedId = _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
+                    var removedId = await _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
                     removedSanitizers.Add(sanitizerId);
                 }
                 catch (HttpException ex) {
@@ -116,11 +116,11 @@ namespace Azure.Sdk.Tools.TestProxy
             if (!string.IsNullOrEmpty(recordingId))
             {
                 var session = _recordingHandler.GetActiveSession(recordingId);
-                sanitizers = _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers(session);
+                sanitizers = await _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers(session);
             }
             else
             {
-                sanitizers = _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers();
+                sanitizers = await _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers();
             }
 
             var json = JsonSerializer.Serialize(new { Sanitizers = sanitizers });
@@ -143,11 +143,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                registeredSanitizerId = _recordingHandler.RegisterSanitizer(s, recordingId);
+                registeredSanitizerId = await _recordingHandler.RegisterSanitizer(s, recordingId);
             }
             else
             {
-                registeredSanitizerId = _recordingHandler.RegisterSanitizer(s);
+                registeredSanitizerId = await _recordingHandler.RegisterSanitizer(s);
             }
 
             var json = JsonSerializer.Serialize(new { Sanitizer = registeredSanitizerId });
@@ -178,12 +178,12 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (recordingId != null)
                 {
-                    var registeredId = _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
+                    var registeredId = await _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
                     registeredSanitizers.Add(registeredId);
                 }
                 else
                 {
-                    var registeredId = _recordingHandler.RegisterSanitizer(sanitizer);
+                    var registeredId = await _recordingHandler.RegisterSanitizer(sanitizer);
                     registeredSanitizers.Add(registeredId);
                 }
             }

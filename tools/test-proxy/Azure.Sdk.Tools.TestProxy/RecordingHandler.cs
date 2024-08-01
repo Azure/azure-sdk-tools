@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             ContextDirectory = targetDirectory;
 
-            SetDefaultExtensions();
+            SetDefaultExtensions().Wait();
 
             Store = store;
             if (store == null)
@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region recording functionality
-        public void StopRecording(string sessionId, IDictionary<string, string> variables = null, bool saveRecording = true)
+        public async Task StopRecording(string sessionId, IDictionary<string, string> variables = null, bool saveRecording = true)
         {
 
             var id = Guid.NewGuid().ToString();
@@ -113,8 +113,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 return;
             }
 
-            var sanitizers = SanitizerRegistry.GetSanitizers(recordingSession);
-            recordingSession.Session.Sanitize(sanitizers);
+            var sanitizers = await SanitizerRegistry.GetSanitizers(recordingSession);
+            await recordingSession.Session.Sanitize(sanitizers);
 
             if (variables != null)
             {
@@ -197,7 +197,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var sanitizers = SanitizerRegistry.GetSanitizers(session);
+            var sanitizers = await SanitizerRegistry.GetSanitizers(session);
 
             DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
@@ -249,9 +249,14 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (mode != EntryRecordMode.DontRecord)
             {
-                lock (session.Session.Entries)
+                await session.Session.EntryLock.WaitAsync();
+                try 
                 {
                     session.Session.Entries.Add(entry);
+                }
+                finally
+                {
+                    session.Session.EntryLock.Release();
                 }
 
                 Interlocked.Increment(ref Startup.RequestsRecorded);
@@ -394,7 +399,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     Path = path
                 };
-                DebugLogger.LogInformation($"Recording file {assetsPath} is associated with recording id {id}");
             }
 
             if (!PlaybackSessions.TryAdd(id, session))
@@ -410,7 +414,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
             // Write to the response
             await outgoingResponse.WriteAsync(json);
-
 
             DebugLogger.LogTrace($"PLAYBACK START END {id}.");
         }
@@ -453,18 +456,23 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
-            var sanitizers = SanitizerRegistry.GetSanitizers(session);
+            var sanitizers = await SanitizerRegistry.GetSanitizers(session);
 
             if (!session.IsSanitized)
             {
                 // we don't need to re-sanitize with recording-applicable sanitizers every time. just the very first one
-                lock (session.SanitizerLock)
+                await session.SanitizerLock.WaitAsync();
+                try
                 {
                     if (!session.IsSanitized)
                     {
-                        session.Session.Sanitize(sanitizers);
+                        await session.Session.Sanitize(sanitizers, false);
                         session.IsSanitized = true;
                     }
+                }
+                finally
+                {
+                    session.SanitizerLock.Release();
                 }
             }
 
@@ -472,7 +480,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
 
-            lock (session.Session.Entries)
+            await session.Session.EntryLock.WaitAsync();
+            try
             {
                 // Session may be removed later, but only after response has been fully written
                 var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove: false, sessionId: recordingId);
@@ -500,7 +509,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         outgoingResponse.ContentLength = bodyData.Length;
                     }
 
-                    WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
+                    await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
                 }
 
                 Interlocked.Increment(ref Startup.RequestsPlayedBack);
@@ -517,8 +526,12 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 if (remove)
                 {
-                    session.Session.Remove(match);
+                    await session.Session.Remove(match, shouldLock: false);
                 }
+            }
+            finally
+            {
+                session.Session.EntryLock.Release();
             }
         }
 
@@ -548,35 +561,7 @@ namespace Azure.Sdk.Tools.TestProxy
             return batches;
         }
 
-        public void WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
-        {
-            if (playbackResponseTime > 0)
-            {
-                int batchCount = 10;
-                int sleepLength = playbackResponseTime / batchCount;
-
-                byte[][] chunks = GetBatches(bodyData, batchCount);
-
-                for (int i = 0; i < chunks.Length; i++)
-                {
-                    var chunk = chunks[i];
-
-                    outgoingResponse.Body.Write(chunk, 0, chunk.Length);
-
-                    if (i != chunks.Length - 1)
-                    {
-                        Thread.Sleep(sleepLength);
-                    }
-                }
-
-            }
-            else
-            {
-                outgoingResponse.Body.Write(bodyData, 0, bodyData.Length);
-            }
-        }
-
-        public async Task WriteBodyBytesAsync(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
+        public async Task WriteBodyBytes(byte[] bodyData, int playbackResponseTime, HttpResponse outgoingResponse)
         {
             if (playbackResponseTime > 0)
             {
@@ -941,33 +926,27 @@ namespace Azure.Sdk.Tools.TestProxy
             throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
         }
 
-        public string UnregisterSanitizer(string sanitizerId, string recordingId = null)
+        public async Task<string> UnregisterSanitizer(string sanitizerId, string recordingId = null)
         {
             if (!string.IsNullOrWhiteSpace(recordingId))
             {
                 var session = GetActiveSession(recordingId);
-
-                lock (session)
-                {
-                    return SanitizerRegistry.Unregister(sanitizerId, session);
-                }
+                return await SanitizerRegistry.Unregister(sanitizerId, session);
             }
 
-            return SanitizerRegistry.Unregister(sanitizerId);
+            return await SanitizerRegistry.Unregister(sanitizerId);
         }
 
-        public string RegisterSanitizer(RecordedTestSanitizer sanitizer, string recordingId = null)
+        public async Task<string> RegisterSanitizer(RecordedTestSanitizer sanitizer, string recordingId = null)
         {
             if (!string.IsNullOrWhiteSpace(recordingId))
             {
                 var session = GetActiveSession(recordingId);
 
-                lock(session)
-                {
-                    return SanitizerRegistry.Register(session, sanitizer);
-                }
+                return await SanitizerRegistry.Register(session, sanitizer);
             }
-            return SanitizerRegistry.Register(sanitizer);
+
+            return await SanitizerRegistry.Register(sanitizer);
         }
 
         public void AddTransformToRecording(string recordingId, ResponseTransform transform)
@@ -991,7 +970,7 @@ namespace Azure.Sdk.Tools.TestProxy
             session.CustomMatcher = matcher;
         }
 
-        public void SetDefaultExtensions(string recordingId = null)
+        public async Task SetDefaultExtensions(string recordingId = null)
         {
             if (recordingId != null)
             {
@@ -1054,7 +1033,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
 
-                SanitizerRegistry.ResetSessionSanitizers();
+                await SanitizerRegistry.ResetSessionSanitizers();
 
                 Transforms = new List<ResponseTransform>
                 {

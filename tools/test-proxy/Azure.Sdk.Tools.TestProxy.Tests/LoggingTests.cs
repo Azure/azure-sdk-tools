@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 HttpResponse response = new DefaultHttpContext().Response;
                 await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
 
-                AssertLogs(logger, 5, 9, 12);
+                AssertLogs(logger, 4, 8, 12);
             }
             finally
             {
@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
             await testRecordingHandler.HandleRecordRequestAsync(recordingId, request, httpContext.Response);
-            testRecordingHandler.StopRecording(recordingId);
+            await testRecordingHandler.StopRecording(recordingId);
 
             try
             {

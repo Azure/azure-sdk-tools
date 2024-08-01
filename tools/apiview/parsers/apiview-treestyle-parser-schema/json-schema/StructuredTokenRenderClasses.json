@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "StructuredTokenRenderClasses.json",
+    "anyOf": [
+        {
+            "type": "string",
+            "const": "comment"
+        },
+        {
+            "type": "string",
+            "const": "keyword"
+        },
+        {
+            "type": "string",
+            "const": "literal"
+        },
+        {
+            "type": "string",
+            "const": "sliteral",
+            "description": "string literal"
+        },
+        {
+            "type": "string",
+            "const": "mname",
+            "description": "member name"
+        },
+        {
+            "type": "string",
+            "const": "tname",
+            "description": "type name"
+        },
+        {
+            "type": "string",
+            "const": "punc",
+            "description": "punctuation"
+        },
+        {
+            "type": "string",
+            "const": "text"
+        },
+        {
+            "type": "string",
+            "description": "Contribute extra classes at https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/ClientSPA/src/app/_components/code-panel/code-panel.component.scss"
+        }
+    ],
+    "description": "Classes used to render the StructuredTokens. Extendable by contributing styles at https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/ClientSPA/src/app/_components/code-panel/code-panel.component.scss"
+}

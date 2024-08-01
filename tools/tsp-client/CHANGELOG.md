@@ -1,6 +1,6 @@
 # Release
 
-## Unreleased - 0.9.5
+## Unreleased - 0.10.0
 
 - Increase minimum node version to "^18.19.0 || >=20.6.0", to ensure API import.meta.resolve() is available. (#8765)
 

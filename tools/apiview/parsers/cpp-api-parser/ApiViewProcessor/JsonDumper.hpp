@@ -176,9 +176,6 @@ public:
   virtual void InsertTypeName(std::string_view const& type, std::string_view const& navigationId)
       override
   {
-    if (navigationId == "Azure::Security::KeyVault::Administration::Models")
-      __debugbreak();
-
     m_json["Tokens"].push_back(
         {{"DefinitionId", navigationId},
          {"NavigateToId", navigationId},
@@ -190,9 +187,6 @@ public:
       std::string_view const& member,
       std::string_view const& memberFullName) override
   {
-    if (memberFullName == "Azure::Security::KeyVault::Administration::Models")
-      __debugbreak();
-
     m_json["Tokens"].push_back(
         {{"DefinitionId", memberFullName},
          {"NavigateToId", nullptr},

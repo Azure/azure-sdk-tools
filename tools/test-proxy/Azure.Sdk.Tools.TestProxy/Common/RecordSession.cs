@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, bool shouldLock = false)
+        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, string sessionId = null)
         {
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
@@ -112,6 +112,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             if (remove)
             {
                 Entries.Remove(entry);
+                DebugLogger.LogDebug($"We successfully matched and popped request URI {entry.RequestUri} for recordingId {sessionId??"Unknown"}");
             }
 
             return entry;

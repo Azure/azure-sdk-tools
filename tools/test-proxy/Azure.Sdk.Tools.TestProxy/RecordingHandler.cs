@@ -484,7 +484,7 @@ namespace Azure.Sdk.Tools.TestProxy
             try
             {
                 // Session may be removed later, but only after response has been fully written
-                var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove: false);
+                var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove: false, sessionId: recordingId);
 
                 foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
                 {

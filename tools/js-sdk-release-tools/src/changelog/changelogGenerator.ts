@@ -24,7 +24,7 @@ export class Changelog {
     public addedOperation: string[] = [];
     public addedInterface: ChangelogItem[] = [];
     public addedClass: string[] = [];
-    public addedTypeAlias: string[] = [];
+    public addedTypeAlias: ChangelogItem[] = [];
     public interfaceAddOptionalParam: string[] = [];
     public interfaceParamTypeExtended: ChangelogItem[] = [];
     public typeAliasAddInherit: ChangelogItem[] = [];
@@ -35,7 +35,7 @@ export class Changelog {
     // breaking changes
     public removedOperationGroup: ChangelogItem[] = [];
     public removedOperation: string[] = [];
-    public operationSignatureChange: string[] = [];
+    public operationSignatureChange: ChangelogItem[] = [];
     public deletedClass: string[] = [];
     public classSignatureChange: string[] = [];
     public interfaceParamDelete: string[] = [];
@@ -93,7 +93,7 @@ export class Changelog {
         if (this.hasBreakingChange) {
             this.removedOperationGroup.map(i => i.line)
                 .concat(this.removedOperation)
-                .concat(this.operationSignatureChange)
+                .concat(this.operationSignatureChange.map(i => i.line))
                 .concat(this.deletedClass)
                 .concat(this.classSignatureChange)
                 .concat(this.interfaceParamDelete)
@@ -125,7 +125,7 @@ export class Changelog {
                 .concat(this.addedOperation)
                 .concat(this.addedInterface.map(i => i.line))
                 .concat(this.addedClass)
-                .concat(this.addedTypeAlias)
+                .concat(this.addedTypeAlias.map(i => i.line))
                 .concat(this.interfaceAddOptionalParam)
                 .concat(this.interfaceParamTypeExtended.map(i => i.line))
                 .concat(this.typeAliasAddInherit.map(i => i.line))
@@ -144,7 +144,7 @@ export class Changelog {
             display.push('');
             this.removedOperationGroup.map(i => i.line)
                 .concat(this.removedOperation)
-                .concat(this.operationSignatureChange)
+                .concat(this.operationSignatureChange.map(i => i.line))
                 .concat(this.deletedClass)
                 .concat(this.classSignatureChange)
                 .concat(this.interfaceParamDelete)
@@ -202,6 +202,8 @@ export class Changelog {
             this.interfaceParamTypeChanged = this.interfaceParamTypeChanged.filter(i => i.currentName && !message.current.has(i.currentName))
             this.interfaceParamTypeExtended = this.interfaceParamTypeExtended.filter(i => i.baselineName && !message.baseline.has(i.baselineName))
             this.interfaceParamTypeExtended = this.interfaceParamTypeExtended.filter(i => i.currentName && !message.current.has(i.currentName))
+            this.addedTypeAlias = this.addedTypeAlias.filter(i => i.currentName && !message.current.has(i.currentName))
+            this.operationSignatureChange = this.operationSignatureChange.filter(i => i.currentName && !message.current.has(i.currentName))
         })
         logger.logInfo('After post process rename messages in changelog')
         logger.logGreen(this.displayChangeLog());
@@ -288,11 +290,11 @@ const findAddedClass = (metaDataOld: TSExportedMetaData, metaDataNew: TSExported
     return addClass;
 };
 
-const findAddedTypeAlias = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const addModel: string[] = [];
+const findAddedTypeAlias = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): ChangelogItem[] => {
+    const addModel: ChangelogItem[] = [];
     Object.keys(metaDataNew.typeAlias).forEach(typeAlias => {
         if (!metaDataOld.typeAlias[typeAlias]) {
-            addModel.push('Added Type Alias ' + typeAlias);
+            addModel.push({ line: 'Added Type Alias ' + typeAlias, name: typeAlias });
         }
     });
     return addModel;
@@ -551,9 +553,9 @@ const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
 };
 
 const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
-    oldSdkType: SDKType, newSdkType: SDKType): string[] => {
+    oldSdkType: SDKType, newSdkType: SDKType): ChangelogItem[] => {
     const newToOld = getRenamedOperationGroupFromToMap(metaDataNew);
-    const operationSignatureChange: string[] = [];
+    const operationSignatureChange: ChangelogItem[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
         const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOld[newOperationGroup];
         if (!metaDataOld.operationInterface[oldOperationGroup]) {
@@ -591,13 +593,13 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
                         const parametersOld = mOld.parameters;
                         const parametersNew = mNew.parameters;
                         if (parametersNew.length !== parametersOld.length) {
-                            operationSignatureChange.push('Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature');
+                            operationSignatureChange.push({ line:'Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature', name: mNew.type });
                         } else {
                             for (let index = 0; index < parametersNew.length; index++) {
                                 const pOld = parametersOld[index];
                                 const pNew = parametersNew[index];
                                 if (pOld.type !== pNew.type || pOld.isOptional !== pNew.isOptional) {
-                                    operationSignatureChange.push('Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature');
+                                    operationSignatureChange.push({ line:'Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature', name: mNew.type });
                                     return;
                                 }
                             }

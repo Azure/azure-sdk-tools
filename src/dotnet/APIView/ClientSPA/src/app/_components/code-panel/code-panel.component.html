@@ -26,6 +26,7 @@
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
       <app-comment-thread
         [codePanelRowData]="item"
+        [associatedCodeLine]="getAssociatedCodeLine(item)"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
         (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
         (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"

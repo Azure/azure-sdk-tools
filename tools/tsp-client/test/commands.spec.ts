@@ -1,5 +1,5 @@
 import { cp, rmdir, stat } from "node:fs/promises";
-import { generateCommand, syncCommand } from "../src/commands.js";
+import { generateCommand, syncCommand, updateCommand } from "../src/commands.js";
 import { after, before, describe, it } from "node:test";
 import { assert } from "chai";
 import { getRepoRoot } from "../src/git.js";
@@ -24,7 +24,7 @@ describe("Verify commands", async function () {
     await rmdir("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
   });
 
-  await it("Sync example sdk", async function (done) {
+  await it("Sync example sdk", async function () {
     try {
       const args = {
         "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
@@ -37,10 +37,9 @@ describe("Verify commands", async function () {
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
     );
     assert.isTrue(dir.isDirectory());
-    done;
   });
 
-  await it("Sync example sdk with local spec", async function (done) {
+  await it("Sync example sdk with local spec", async function () {
     try {
       const args = {
         "output-dir": "./test/examples/sdk/local-spec-sdk",
@@ -53,10 +52,9 @@ describe("Verify commands", async function () {
     }
     const dir = await stat("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/");
     assert.isTrue(dir.isDirectory());
-    done;
   });
 
-  await it("Generate example sdk", async function (done) {
+  await it("Generate example sdk", async function () {
     try {
       const args = {
         "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
@@ -70,6 +68,61 @@ describe("Verify commands", async function () {
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
     );
     assert.isTrue(dir.isFile());
-    done;
+  });
+
+  await it("Update example sdk", async function () {
+    try {
+      const args = {
+        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        "save-inputs": true,
+      };
+      await updateCommand(args);
+    } catch (error) {
+      assert.fail(`Failed to generate. Error: ${error}`);
+    }
+  });
+
+  await it("Update example sdk & pass tspconfig.yaml", async function () {
+    try {
+      const args = {
+        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        "tsp-config":
+          "https://github.com/Azure/azure-rest-api-specs/blob/db63bea839f5648462c94e685d5cc96f8e8b38ba/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml",
+        "save-inputs": true,
+      };
+      await updateCommand(args);
+    } catch (error) {
+      assert.fail(`Failed to generate. Error: ${error}`);
+    }
+  });
+
+  await it("Update example sdk & pass commit", async function () {
+    try {
+      const args = {
+        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        commit: "db63bea839f5648462c94e685d5cc96f8e8b38ba",
+        "save-inputs": true,
+      };
+      await updateCommand(args);
+    } catch (error) {
+      assert.fail(`Failed to update. Error: ${error}`);
+    }
+  });
+
+  await it("Update example sdk & pass only --repo", async function () {
+    try {
+      const args = {
+        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        repo: "foo",
+        "save-inputs": true,
+      };
+      await updateCommand(args);
+      assert.fail("Should have failed");
+    } catch (error: any) {
+      assert.equal(
+        error.message,
+        "Commit SHA is required when specifying `--repo`; please specify a commit using `--commit`",
+      );
+    }
   });
 });

@@ -87,16 +87,27 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>
+        /// <param name="state"></param> true = subscribe, false = unsubscribe
         /// <returns></returns>
-        public async Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId)
+        public async Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId, bool? state = null)
         {
             var review = await _reviewRepository.GetReviewAsync(reviewId);
             if (PageModelHelpers.IsUserSubscribed(user, review.Subscribers))
             {
+                if (state == false)
+                {
+                    return; // already unsubscribed
+                }
+
                 await UnsubscribeAsync(review, user);
             }
             else
             {
+                if (state == true)
+                {
+                    return; // already subscribed
+                }
+
                 await SubscribeAsync(review, user);
             }
         }

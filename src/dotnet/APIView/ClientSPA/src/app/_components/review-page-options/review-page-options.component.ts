@@ -38,6 +38,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() disableCodeLinesLazyLoadingEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() subscribeEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -50,6 +51,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   showHiddenAPISwitch : boolean = false;
   showLeftNavigationSwitch : boolean = true;
   markedAsViewSwitch : boolean = false;
+  subscribeSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
   disableCodeLinesLazyLoading: boolean = false;
 
@@ -124,6 +126,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     }
 
     if (changes['review']) {
+      this.subscribeSwitch = this.review!.subscribers.includes(this.userProfile?.userName!);
       this.setReviewApprovalStatus();
     }
   }
@@ -191,6 +194,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   */
   onMarkedAsViewedSwitchChange(event: InputSwitchOnChangeEvent) {
     this.markAsViewedEmitter.emit(event.checked);
+  }
+
+  /**
+  * Callback for markedAsViewSwitch Change
+  * @param event the Filter event
+  */
+  onSubscribeSwitchChange(event: InputSwitchOnChangeEvent) {
+    this.subscribeEmitter.emit(event.checked);
   }
 
   /**

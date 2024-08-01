@@ -387,6 +387,14 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
+  handleSubscribeEmitter(state: boolean) {
+    this.reviewsService.toggleReviewSubscriptionByUser(this.reviewId!, state).pipe(take(1)).subscribe({
+      next: (apiRevision: APIRevision) => {
+        // update review
+      } 
+    });
+  }
+
   handleApiRevisionApprovalEmitter(value: boolean) {
     if (value) {
       this.apiRevisionsService.toggleAPIRevisionApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({

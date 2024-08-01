@@ -132,7 +132,7 @@ describe("Breaking change detection", () => {
         expect(changelog.removedOperationGroup[0].line).toBe(
             "Removed operation group DataProductsCatalogs_remove"
         );
-        expect(changelog.operationSignatureChange[0]).toBe(
+        expect(changelog.operationSignatureChange[0].line).toBe(
             "Operation DataProductsCatalogs_sig_change.get has a new signature"
         );
     });

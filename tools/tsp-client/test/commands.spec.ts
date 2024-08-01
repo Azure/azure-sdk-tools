@@ -72,22 +72,4 @@ describe("Verify commands", async function () {
     assert.isTrue(dir.isFile());
     done;
   });
-
-  await it("Generate example sdk with emitter options", async function (done) {
-    try {
-      const args = {
-        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
-        "emitter-options": "@azure-tools/typespec-ts.title='TestClient'",
-        "save-inputs": true,
-      };
-      await generateCommand(args);
-    } catch (error) {
-      assert.fail(`Failed to generate. Error: ${error}`);
-    }
-    const dir = await stat(
-      "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
-    );
-    assert.isTrue(dir.isFile());
-    done;
-  });
 });

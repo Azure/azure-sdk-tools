@@ -393,17 +393,17 @@ struct AstInlineCommand : AstDocumentation
     std::string commandRenderMarkdownEnd;
     switch (comment->getRenderKind())
     {
-      case clang::comments::InlineCommandComment::RenderKind::RenderNormal:
+      case clang::comments::InlineCommandRenderKind::Normal:
         break;
-      case clang::comments::InlineCommandComment::RenderKind::RenderBold:
+      case clang::comments::InlineCommandRenderKind::Bold:
         commandRenderMarkdownEnd = "**";
         commandRenderMarkdownStart = "**";
         break;
-      case clang::comments::InlineCommandComment::RenderKind::RenderEmphasized:
+      case clang::comments::InlineCommandRenderKind::Emphasized:
         commandRenderMarkdownEnd = "*";
         commandRenderMarkdownStart = "*";
         break;
-      case clang::comments::InlineCommandComment::RenderKind::RenderMonospaced:
+      case clang::comments::InlineCommandRenderKind::Monospaced:
         commandRenderMarkdownEnd = "`";
         commandRenderMarkdownStart = "`";
         break;
@@ -617,37 +617,37 @@ std::unique_ptr<AstDocumentation> AstDocumentation::Create(const comments::Comme
 {
   switch (comment->getCommentKind())
   {
-    case comments::Comment::CommentKind::FullCommentKind:
+    case comments::CommentKind::FullComment:
       return std::make_unique<AstComment>(cast<const comments::FullComment>(comment));
-    case comments::Comment::CommentKind::BlockCommandCommentKind:
+    case comments::CommentKind::BlockCommandComment:
       return std::make_unique<AstBlockCommandComment>(
           cast<const comments::BlockCommandComment>(comment));
-    case comments::Comment::CommentKind::ParamCommandCommentKind:
+    case comments::CommentKind::ParamCommandComment:
       return std::make_unique<AstParamComment>(cast<const comments::ParamCommandComment>(comment));
-    case comments::Comment::CommentKind::TParamCommandCommentKind:
+    case comments::CommentKind::TParamCommandComment:
       return std::make_unique<AstTParamComment>(
           cast<const comments::TParamCommandComment>(comment));
-    case comments::Comment::CommentKind::VerbatimBlockCommentKind:
+    case comments::CommentKind::VerbatimBlockComment:
       return std::make_unique<AstVerbatimBlockComment>(
           cast<const comments::VerbatimBlockComment>(comment));
-    case comments::Comment::CommentKind::InlineCommandCommentKind:
+    case comments::CommentKind::InlineCommandComment:
       return std::make_unique<AstInlineCommand>(
           cast<const comments::InlineCommandComment>(comment));
-    case comments::Comment::ParagraphCommentKind:
+    case comments::CommentKind::ParagraphComment:
       return std::make_unique<AstParagraphComment>(cast<const comments::ParagraphComment>(comment));
-    case comments::Comment::TextCommentKind:
+    case comments::CommentKind::TextComment:
       return std::make_unique<AstTextComment>(cast<const comments::TextComment>(comment));
-    case comments::Comment::VerbatimBlockLineCommentKind:
+    case comments::CommentKind::VerbatimBlockLineComment:
       return std::make_unique<AstVerbatimBlockLineComment>(
           cast<const comments::VerbatimBlockLineComment>(comment));
-    case comments::Comment::VerbatimLineCommentKind:
+    case comments::CommentKind::VerbatimLineComment:
       return std::make_unique<AstVerbatimLineComment>(
           cast<const comments::VerbatimLineComment>(comment));
 
-    case comments::Comment::HTMLStartTagCommentKind:
+    case comments::CommentKind::HTMLStartTagComment:
       return std::make_unique<AstHtmlStartTagComment>(
           cast<const comments::HTMLStartTagComment>(comment));
-    case comments::Comment::HTMLEndTagCommentKind:
+    case comments::CommentKind::HTMLEndTagComment:
       return std::make_unique<AstHtmlEndTagComment>(
           cast<const comments::HTMLEndTagComment>(comment));
 

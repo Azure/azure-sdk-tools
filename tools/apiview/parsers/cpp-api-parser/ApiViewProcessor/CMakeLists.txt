@@ -48,6 +48,7 @@ clangSerialization
 clangTooling
 clangEdit
 clangAnalysis
+clangApiNotes
 clangASTMatchers
 )
 
@@ -60,6 +61,7 @@ endforeach()
 
 #message(STATUS "llvm_libs: ${llvm_libs}")
 #message(STATUS "clang_libs: ${clang_libs}")
+
 
 target_link_libraries(ApiViewProcessor
   PUBLIC

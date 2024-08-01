@@ -7,20 +7,11 @@
 #include "JsonDumper.hpp"
 #include "TextDumper.hpp"
 #include "gtest/gtest.h"
-#include <clang/AST/ASTConsumer.h>
-#include <clang/AST/Comment.h>
-#include <clang/AST/CommentVisitor.h>
-#include <clang/AST/RecursiveASTVisitor.h>
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Frontend/FrontendAction.h>
 #include <clang/Frontend/FrontendActions.h>
-#include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
 #include <filesystem>
 #include <fstream>
-#include <llvm/Support/CommandLine.h>
-#include <nlohmann/json.hpp>
 #include <ostream>
 #include <string_view>
 
@@ -28,10 +19,6 @@ using namespace nlohmann::literals;
 using namespace clang;
 using namespace clang::tooling;
 
-inline std::string_view stringFromU8string(std::u8string const& str)
-{
-  return std::string_view(reinterpret_cast<const char*>(str.data()), str.size());
-}
 
 class TestParser : public testing::Test {
 protected:
@@ -124,15 +111,15 @@ private:
           std::vector<std::string> commandLine{defaultCommandLine};
           // Add the source location to the include paths.
           commandLine.push_back(
-              "-I" + static_cast<std::string>(stringFromU8string(m_sourceLocation.u8string())));
+              "-I" + m_sourceLocation.string());
           llvm::outs() << "Adding include directory: "
-                       << static_cast<std::string>(stringFromU8string(m_sourceLocation.u8string()))
+                       << m_sourceLocation.string()
                        << "\n";
           // Add any additional include directories (as absolute paths).
           for (auto const& arg : m_additionalIncludePaths)
           {
-            std::string includePath{static_cast<std::string>(
-                stringFromU8string(std::filesystem::absolute(arg).u8string()))};
+            std::string includePath{
+                std::filesystem::absolute(arg).string()};
             commandLine.push_back("-I" + includePath);
             llvm::outs() << "Adding include directory: " << includePath << "\n";
           }
@@ -141,13 +128,13 @@ private:
           {
             commandLine.push_back(arg);
           }
-          commandLine.push_back(std::string(stringFromU8string(file.u8string())));
+          commandLine.push_back(file.string());
 
           std::vector<clang::tooling::CompileCommand> rv;
           std::string outputFile;
           rv.push_back(CompileCommand(
-              static_cast<std::string>(stringFromU8string(m_sourceLocation.u8string())),
-              static_cast<std::string>(stringFromU8string(file.u8string())),
+              m_sourceLocation.string(),
+              file.string(),
               commandLine,
               ""));
           return rv;
@@ -173,7 +160,7 @@ protected:
       std::filesystem::remove(tempFileName);
     }
     OutputClassDbToFile(
-        classDb, stringFromU8string(tempFileName.u8string()), isAzureTest, isAzureCore);
+        classDb, tempFileName.string(), isAzureTest, isAzureCore);
     //    auto currentTestName{::testing::UnitTest::GetInstance()->current_test_info()->name()};
 
     std::vector<std::filesystem::path> additionalIncludeDirectories;
@@ -188,7 +175,7 @@ protected:
 
     std::vector<std::string> sourceFiles;
     sourceFiles.push_back(
-        std::string(stringFromU8string(std::filesystem::absolute(tempFileName).u8string())));
+        std::filesystem::absolute(tempFileName).string());
 
     clang::tooling::ClangTool tool(compileDb, sourceFiles);
 

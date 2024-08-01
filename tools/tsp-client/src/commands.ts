@@ -7,7 +7,7 @@ import {
   readTspLocation,
   removeDirectory,
 } from "./fs.js";
-import { cp, mkdir, readFile, rename, stat, unlink, writeFile } from "fs/promises";
+import { cp, mkdir, readFile, rename, stat, unlink } from "fs/promises";
 import { npmCommand, nodeCommand } from "./npm.js";
 import { compileTsp, discoverMainFile, resolveTspConfigUrl, TspLocation } from "./typespec.js";
 import {
@@ -290,7 +290,6 @@ export async function updateCommand(argv: any) {
   const repo = argv["repo"];
   const commit = argv["commit"];
   let tspConfig = argv["tsp-config"];
-  const rootUrl = await getRepoRoot(outputDir);
 
   if (repo && !commit) {
     throw new Error(
@@ -298,25 +297,18 @@ export async function updateCommand(argv: any) {
     );
   }
   if (commit) {
-    const tspLocation: TspLocation = await readTspLocation(rootUrl);
+    const tspLocation: TspLocation = await readTspLocation(outputDir);
     tspLocation.commit = commit ?? tspLocation.commit;
     tspLocation.repo = repo ?? tspLocation.repo;
-    await writeFile(
-      joinPaths(rootUrl, "tsp-location.yaml"),
-      `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`,
-    );
+    await writeTspLocationYaml(tspLocation, outputDir);
   } else if (tspConfig) {
-    const tspLocation: TspLocation = await readTspLocation(rootUrl);
+    const tspLocation: TspLocation = await readTspLocation(outputDir);
     tspConfig = resolveTspConfigUrl(tspConfig);
     tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
     tspLocation.repo = tspConfig.repo ?? tspLocation.repo;
-    await writeFile(
-      joinPaths(rootUrl, "tsp-location.yaml"),
-      `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`,
-    );
+    await writeTspLocationYaml(tspLocation, outputDir);
   }
   // update argv in case anything changed and call into sync and generate
-  argv["tsp-config"] = tspConfig;
   await syncCommand(argv);
   await generateCommand(argv);
 }

@@ -1,5 +1,9 @@
 # Release
 
+## Unreleased - 0.10.0
+
+- Increase minimum node version to "^18.19.0 || >=20.6.0", to ensure API import.meta.resolve() is available. (#8765)
+
 ## 2024-07-23 - 0.9.4
 
 - Fixed issue where one additional directory entry is treated as a string instead of an array. (#8551)

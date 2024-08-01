@@ -1315,19 +1315,19 @@ static std::string GetNavigationId(clang::CXXRecordDecl const* record)
   return record->getQualifiedNameAsString();
 }
 
-/** 
-* Get the navigation ID for a qualified type declaration.
-* 
-* The navigation ID uniquely
+/**
+ * Get the navigation ID for a qualified type declaration.
+ *
+ * The navigation ID uniquely
  * identifies a declaration in the ApiView. For qualified type
-* declarations, we want to include
+ * declarations, we want to include
  * the full type name, including the namespace.
-* 
-* @param type The type to get the navigation ID
+ *
+ * @param type The type to get the navigation ID
  * for.
-* @return The navigation ID for the type.
-* 
-*/
+ * @return The navigation ID for the type.
+ *
+ */
 static std::string GetNavigationId(clang::QualType const& type)
 {
   std::string navigationId;
@@ -1341,23 +1341,23 @@ static std::string GetNavigationId(clang::QualType const& type)
   return navigationId;
 }
 
-/** 
-* Get the navigation ID for a friend declaration.
-* 
-* The navigation ID uniquely identifies a
+/**
+ * Get the navigation ID for a friend declaration.
+ *
+ * The navigation ID uniquely identifies a
  * declaration in the ApiView. For friend declarations, we
-* want to include the navigation ID of
+ * want to include the navigation ID of
  * the parent node, followed by "_friend_", followed by the
-* navigation ID of the friend
+ * navigation ID of the friend
  * declaration.
-* 
-* @param friendDecl The friend declaration to get the navigation ID for.
-* @param
+ *
+ * @param friendDecl The friend declaration to get the navigation ID for.
+ * @param
  * parentNodeNavigationId The navigation ID of the parent node.
-* @return The navigation ID for the
+ * @return The navigation ID for the
  * friend declaration.
-* 
-*/
+ *
+ */
 static std::string GetNavigationId(
     clang::FriendDecl const* friendDecl,
     std::string const& parentNodeNavigationId)
@@ -2875,6 +2875,26 @@ public:
       : AstNode(), m_namedNamespace{
                        usingDirective->getNominatedNamespaceAsWritten()->getQualifiedNameAsString()}
   {
+
+    // Determine the location for the error message.
+    auto location = usingDirective->getLocation();
+    auto const& sourceManager = usingDirective->getASTContext().getSourceManager();
+    auto const& presumedLocation = sourceManager.getPresumedLoc(location);
+    std::string typeLocation{presumedLocation.getFilename()};
+
+    // Remove the root directory from the location if the location is within the root directory.
+    if (typeLocation.find(azureClassesDatabase->GetProcessor()->RootDirectory()) == 0)
+    {
+      typeLocation.erase(0, azureClassesDatabase->GetProcessor()->RootDirectory().size() + 1);
+    }
+    
+    typeLocation += ":" + std::to_string(presumedLocation.getLine());
+    typeLocation += ":" + std::to_string(presumedLocation.getColumn());
+
+    llvm::errs() << raw_ostream::Colors::RED
+                 << "Found `using namespace` directive in public headers for `m_namedNamespace`, "
+                    "at location " << typeLocation << raw_ostream::Colors::RESET << "\n";
+
     azureClassesDatabase->CreateApiViewMessage(
         ApiViewMessages::UsingDirectiveFound, m_namedNamespace);
   }

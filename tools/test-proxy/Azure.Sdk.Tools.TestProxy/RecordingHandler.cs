@@ -450,57 +450,6 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
-
-            var sanitizers = SanitizerRegistry.GetSanitizers(session);
-
-            if (!session.IsSanitized)
-            {
-                // we don't need to re-sanitize with recording-applicable sanitizers every time. just the very first one
-                lock (session.SanitizerLock)
-                {
-                    if (!session.IsSanitized)
-                    {
-                        session.Session.Sanitize(sanitizers);
-                        session.IsSanitized = true;
-                    }
-                }
-            }
-
-            DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
-
-            var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
-
-            // Session may be removed later, but only after response has been fully written
-            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove: false);
-
-            foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
-            {
-                transform.Transform(incomingRequest, match);
-            }
-
-            outgoingResponse.StatusCode = match.StatusCode;
-
-            foreach (var header in match.Response.Headers)
-            {
-                outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
-            }
-
-            outgoingResponse.Headers.Remove("Transfer-Encoding");
-
-            if (match.Response.Body?.Length > 0)
-            {
-                var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
-
-                if (match.Response.Headers.ContainsKey("Content-Length"))
-                {
-                    outgoingResponse.ContentLength = bodyData.Length;
-                }
-
-                await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
-            }
-
-            Interlocked.Increment(ref Startup.RequestsPlayedBack);
-
             // Only remove session once body has been written, to minimize probability client retries but test-proxy has already removed the session
             var remove = true;
 
@@ -511,9 +460,68 @@ namespace Azure.Sdk.Tools.TestProxy
                 remove = bool.Parse(removeHeader);
             }
 
-            if (remove)
+            var sanitizers = SanitizerRegistry.GetSanitizers(session);
+
+            if (!session.IsSanitized)
             {
-                session.Session.Remove(match);
+                // we don't need to re-sanitize with recording-applicable sanitizers every time. just the very first one
+                lock (session.SanitizerLock)
+                {
+                    if (!session.IsSanitized)
+                    {
+                        session.Session.LockSanitize(sanitizers);
+                        session.IsSanitized = true;
+                    }
+                }
+            }
+
+            DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
+
+            var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
+
+            await session.Session.EntryLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+
+                // Session may be removed later, but only after response has been fully written
+                var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove: false);
+
+                foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
+                {
+                    transform.Transform(incomingRequest, match);
+                }
+
+                outgoingResponse.StatusCode = match.StatusCode;
+
+                foreach (var header in match.Response.Headers)
+                {
+                    outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
+                }
+
+                outgoingResponse.Headers.Remove("Transfer-Encoding");
+
+                if (match.Response.Body?.Length > 0)
+                {
+                    var bodyData = CompressionUtilities.CompressBody(match.Response.Body, match.Response.Headers);
+
+                    if (match.Response.Headers.ContainsKey("Content-Length"))
+                    {
+                        outgoingResponse.ContentLength = bodyData.Length;
+                    }
+
+                    await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
+                }
+
+                Interlocked.Increment(ref Startup.RequestsPlayedBack);
+
+                if (remove)
+                {
+                    await session.Session.Remove(match, shouldLock: false);
+                }
+            }
+            finally
+            {
+                session.Session.EntryLock.Release();
             }
         }
 

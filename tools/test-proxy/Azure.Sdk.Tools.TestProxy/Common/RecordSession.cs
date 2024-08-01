@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -19,6 +21,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         //Used only for deserializing track 1 session record files
         public Dictionary<string, Queue<string>> Names { get; set; } = new Dictionary<string, Queue<string>>();
+
+        public SemaphoreSlim EntryLock { get; set; } = new SemaphoreSlim(1);
 
         public void Serialize(Utf8JsonWriter jsonWriter)
         {
@@ -74,11 +78,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return session;
         }
 
-        public void Record(RecordEntry entry)
+        public async Task Record(RecordEntry entry)
         {
-            lock (Entries)
+            await EntryLock.WaitAsync().ConfigureAwait(false);
+
+            try
             {
                 Entries.Add(entry);
+            }
+            finally
+            {
+                EntryLock.Release();
             }
         }
 
@@ -91,41 +101,98 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
             RecordEntry.NormalizeJsonBody(requestEntry.Request);
 
-            lock (Entries)
-            {
-                RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
-                if (remove)
-                {
-                    Entries.Remove(entry);
-                }
-
-                return entry;
-            }
-        }
-
-        public void Remove(RecordEntry entry)
-        {
-            lock (Entries)
+            RecordEntry entry = matcher.FindMatch(requestEntry, Entries);
+            if (remove)
             {
                 Entries.Remove(entry);
             }
+
+            return entry;
         }
 
-        public void Sanitize(RecordedTestSanitizer sanitizer)
+        public async Task Remove(RecordEntry entry, bool shouldLock= true)
         {
-            lock (Entries)
+            if (shouldLock)
+            {
+                await EntryLock.WaitAsync().ConfigureAwait(false);
+            }
+            
+
+            try
+            {
+                Entries.Remove(entry);
+            }
+            finally
+            {
+                if (shouldLock)
+                {
+                    EntryLock.Release();
+                }
+            }
+        }
+
+
+
+
+        public void LockSanitize(RecordedTestSanitizer sanitizer)
+        {
+            EntryLock.Wait();
+
+            try
             {
                 sanitizer.Sanitize(this);
             }
-        }
-        public void Sanitize(IEnumerable<RecordedTestSanitizer> sanitizers)
-        {
-            lock (Entries)
+            finally
             {
-                foreach(var sanitizer in sanitizers)
+                EntryLock.Release();
+            }
+        }
+
+        public void LockSanitize(IEnumerable<RecordedTestSanitizer> sanitizers)
+        {
+            EntryLock.Wait();
+
+            try
+            {
+                foreach (var sanitizer in sanitizers)
                 {
                     sanitizer.Sanitize(this);
                 }
+            }
+            finally
+            {
+                EntryLock.Release();
+            }
+        }
+
+        public async Task Sanitize(RecordedTestSanitizer sanitizer)
+        {
+            await EntryLock.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                sanitizer.Sanitize(this);
+            }
+            finally
+            {
+                EntryLock.Release();
+            }
+        }
+
+        public async Task Sanitize(IEnumerable<RecordedTestSanitizer> sanitizers)
+        {
+            await EntryLock.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                foreach (var sanitizer in sanitizers)
+                {
+                    sanitizer.Sanitize(this);
+                }
+            }
+            finally
+            {
+                EntryLock.Release();
             }
         }
     }

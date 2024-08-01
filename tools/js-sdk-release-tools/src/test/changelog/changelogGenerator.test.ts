@@ -126,10 +126,10 @@ describe("Breaking change detection", () => {
 
         expect(changelog.operationSignatureChange.length).toBe(1);
 
-        expect(changelog.addedOperationGroup[0]).toBe(
+        expect(changelog.addedOperationGroup[0].line).toBe(
             "Added operation group DataProductsCatalogs_add"
         );
-        expect(changelog.removedOperationGroup[0]).toBe(
+        expect(changelog.removedOperationGroup[0].line).toBe(
             "Removed operation group DataProductsCatalogs_remove"
         );
         expect(changelog.operationSignatureChange[0]).toBe(

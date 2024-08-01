@@ -4,16 +4,8 @@
 #include "AstNode.hpp"
 #include "CommentExtractor.hpp"
 #include "ProcessorImpl.hpp"
-#include "clang/AST/ASTConsumer.h"
-#include <clang/AST/Comment.h>
-#include <clang/AST/CommentVisitor.h>
-#include <clang/AST/Expr.h>
-#include <clang/AST/ExprCXX.h>
-#include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/AST/Type.h>
 #include <clang/AST/TypeVisitor.h>
-#include <iostream>
-#include <iterator>
 #include <list>
 #include <vector>
 
@@ -1041,7 +1033,7 @@ public:
     }
     switch (m_syntax)
     {
-      case Attr::Syntax::AS_C2x:
+      case Attr::Syntax::AS_C23:
       case Attr::Syntax::AS_CXX11:
         dumper->InsertPunctuation('[');
         dumper->InsertPunctuation('[');
@@ -1072,7 +1064,7 @@ public:
     }
     switch (m_syntax)
     {
-      case Attr::Syntax::AS_C2x:
+      case Attr::Syntax::AS_C23:
       case Attr::Syntax::AS_CXX11:
         dumper->InsertPunctuation('[');
         dumper->InsertPunctuation('[');
@@ -1318,10 +1310,62 @@ static std::string GetNavigationId(clang::FunctionDecl const* func)
   return navigationId;
 }
 
+static std::string GetNavigationId(clang::CXXRecordDecl const* record)
+{
+  return record->getQualifiedNameAsString();
+}
+
+/** 
+* Get the navigation ID for a qualified type declaration.
+* 
+* The navigation ID uniquely
+ * identifies a declaration in the ApiView. For qualified type
+* declarations, we want to include
+ * the full type name, including the namespace.
+* 
+* @param type The type to get the navigation ID
+ * for.
+* @return The navigation ID for the type.
+* 
+*/
+static std::string GetNavigationId(clang::QualType const& type)
+{
+  std::string navigationId;
+  clang::PrintingPolicy pp{LangOptions{}};
+  pp.adjustForCPlusPlus();
+  pp.FullyQualifiedName = true;
+  pp.TerseOutput = true;
+  llvm::raw_string_ostream os(navigationId);
+
+  type.print(os, pp);
+  return navigationId;
+}
+
+/** 
+* Get the navigation ID for a friend declaration.
+* 
+* The navigation ID uniquely identifies a
+ * declaration in the ApiView. For friend declarations, we
+* want to include the navigation ID of
+ * the parent node, followed by "_friend_", followed by the
+* navigation ID of the friend
+ * declaration.
+* 
+* @param friendDecl The friend declaration to get the navigation ID for.
+* @param
+ * parentNodeNavigationId The navigation ID of the parent node.
+* @return The navigation ID for the
+ * friend declaration.
+* 
+*/
 static std::string GetNavigationId(
     clang::FriendDecl const* friendDecl,
     std::string const& parentNodeNavigationId)
 {
+  if (parentNodeNavigationId.empty())
+  {
+    llvm::errs() << "Parent node navigation ID is empty\n";
+  }
   std::string navigationId = parentNodeNavigationId + "_friend_";
   auto dc = friendDecl->getFriendDecl();
   if (dc)
@@ -1334,10 +1378,11 @@ static std::string GetNavigationId(
     else if (isa<CXXRecordDecl>(dc))
     {
       auto rd = cast<CXXRecordDecl>(dc);
-      navigationId += rd->getQualifiedNameAsString();
+      navigationId += GetNavigationId(rd);
     }
     else
     {
+      llvm::errs() << "Unknown friend declaration type.\n";
       dc->dump(llvm::outs());
     }
   }
@@ -1346,11 +1391,13 @@ static std::string GetNavigationId(
     auto friendType = friendDecl->getFriendType();
     if (friendType)
     {
+      navigationId += GetNavigationId(friendType->getType());
       navigationId
           += QualType::getAsString(friendDecl->getFriendType()->getType().split(), LangOptions{});
     }
     else
     {
+      llvm::errs() << "Unknown friend declaration.\n";
       friendDecl->dump(llvm::outs());
     }
   }
@@ -2040,7 +2087,7 @@ public:
       AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstFunction(method, database, parentNode), m_isVirtual(method->isVirtual()),
-        m_isPure(method->isPure()), m_isConst(method->isConst())
+        m_isPure(method->isPureVirtual()), m_isConst(method->isConst())
   {
     // We assume that this is an implicit override if there are overriden methods. If we later
     // find an override attribute, we know it's not an implicit override.
@@ -2377,23 +2424,23 @@ private:
     switch (m_tagUsed)
     {
         /// The "struct" keyword.
-      case TTK_Struct:
+      case TagDecl::TagKind::Struct:
         dumper->InsertKeyword("struct");
         break;
         /// The "__interface" keyword.
-      case TTK_Interface:
+      case TagDecl::TagKind::Interface:
         dumper->InsertKeyword("__interface");
         break;
         /// The "union" keyword.
-      case TTK_Union:
+      case TagDecl::TagKind::Union:
         dumper->InsertKeyword("union");
         break;
         /// The "class" keyword.
-      case TTK_Class:
+      case TagDecl::TagKind::Class:
         dumper->InsertKeyword("class");
         break;
         /// The "enum" keyword.
-      case TTK_Enum:
+      case TagDecl::TagKind::Enum:
         dumper->InsertKeyword("enum");
         break;
       default:
@@ -2978,19 +3025,19 @@ AstClassLike::AstClassLike(
   TypeHierarchy::TypeHierarchyClass classType;
   switch (m_tagUsed)
   {
-    case TagDecl::TagKind::TTK_Class:
+    case TagDecl::TagKind::Class:
       classType = TypeHierarchy::TypeHierarchyClass::Class;
       break;
-    case TagDecl::TagKind::TTK_Enum:
+    case TagDecl::TagKind::Enum:
       classType = TypeHierarchy::TypeHierarchyClass::Enum;
       break;
-    case TagDecl::TagKind::TTK_Interface:
+    case TagDecl::TagKind::Interface:
       classType = TypeHierarchy::TypeHierarchyClass::Interface;
       break;
-    case TagDecl::TagKind::TTK_Struct:
+    case TagDecl::TagKind::Struct:
       classType = TypeHierarchy::TypeHierarchyClass::Struct;
       break;
-    case TagDecl::TagKind::TTK_Union:
+    case TagDecl::TagKind::Union:
       classType = TypeHierarchy::TypeHierarchyClass::Unknown;
       break;
     default:

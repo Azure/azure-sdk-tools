@@ -88,6 +88,13 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
+  getAssociatedCodeLine(item: CodePanelRowData): CodePanelRowData | undefined {
+    if (this.codePanelData?.nodeMetaData && this.codePanelData.nodeMetaData[item.nodeIdHashed]) {
+      return this.codePanelData.nodeMetaData[item.nodeIdHashed].codeLines[item.associatedRowPositionInGroup] || undefined;
+    }
+    return undefined;
+  }
+
   getRowClassObject(row: CodePanelRowData) {
     let classObject: { [key: string]: boolean } = {};
     if (row.rowClasses) {

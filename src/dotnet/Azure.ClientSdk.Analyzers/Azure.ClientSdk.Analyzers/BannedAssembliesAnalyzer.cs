@@ -38,7 +38,10 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     if (BannedAssemblies.Contains(type.ContainingAssembly.Name))
                     {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0014, symbol.Locations.First(), BannedAssembliesMessageArgs), symbol);
+                        if (type.Name != "Utf8JsonReader" && type.Name != "Utf8JsonWriter")
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0014, symbol.Locations.First(), BannedAssembliesMessageArgs), symbol);
+                        } 
                     }
 
                     if (namedTypeSymbol.IsGenericType)

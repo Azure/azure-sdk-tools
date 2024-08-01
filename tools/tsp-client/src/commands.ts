@@ -134,7 +134,6 @@ export async function initCommand(argv: any) {
   if (!skipSyncAndGenerate) {
     // update argv in case anything changed and call into sync and generate
     argv["output-dir"] = outputDir;
-    argv["tsp-config"] = tspConfig;
     await syncCommand(argv);
     await generateCommand(argv);
   }

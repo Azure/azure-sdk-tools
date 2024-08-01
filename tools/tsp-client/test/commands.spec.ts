@@ -1,11 +1,10 @@
-import { cp, rmdir, stat } from "node:fs/promises";
-import { generateCommand, syncCommand, updateCommand } from "../src/commands.js";
+import { cp, rmdir, stat, rm } from "node:fs/promises";
+import { initCommand, generateCommand, syncCommand, updateCommand } from "../src/commands.js";
 import { after, before, describe, it } from "node:test";
 import { assert } from "chai";
 import { getRepoRoot } from "../src/git.js";
 import { cwd } from "node:process";
 import { joinPaths } from "@typespec/compiler";
-import { rm } from "node:fs/promises";
 
 describe("Verify commands", async function () {
   before(async function () {
@@ -125,4 +124,45 @@ describe("Verify commands", async function () {
       );
     }
   });
+
+  await it("Init example sdk", async function () {
+    try {
+      const args = {
+        "output-dir": "./test/examples/",
+        "tsp-config":
+          "https://github.com/Azure/azure-rest-api-specs/blob/7ed015e3dd1b8b1b0e71c9b5e6b6c5ccb8968b3a/specification/cognitiveservices/ContentSafety/tspconfig.yaml",
+      };
+      await initCommand(args);
+
+      assert.isTrue(
+        (
+          await stat("./test/examples/sdk/contentsafety/ai-content-safety-rest/package.json")
+        ).isFile(),
+      );
+
+      // Clean up directory for other init tests
+      // await removeDirectory("./test/examples/sdk/contentsafety/ai-content-safety-rest");
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  //   await it("Init with --skip-sync-and-generate", async function () {
+  //     try {
+  //       const args = {
+  //         "output-dir": "./test/examples/",
+  //         "tsp-config":
+  //           "https://github.com/Azure/azure-rest-api-specs/blob/7ed015e3dd1b8b1b0e71c9b5e6b6c5ccb8968b3a/specification/cognitiveservices/ContentSafety/tspconfig.yaml",
+  //         "skip-sync-and-generate": true,
+  //       };
+  //       await initCommand(args);
+
+  //       const tspLocation = await stat(
+  //         "./test/examples/sdk/contentsafety/ai-content-safety-rest/tsp-location.yaml",
+  //       );
+  //       assert.isTrue(tspLocation.isFile());
+  //     } catch (error: any) {
+  //       assert.fail("Failed to init. Error: " + error);
+  //     }
+  //   });
 });

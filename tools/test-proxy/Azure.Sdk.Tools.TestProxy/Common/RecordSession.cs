@@ -78,9 +78,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return session;
         }
 
-        public async Task Record(RecordEntry entry)
+        public async Task Record(RecordEntry entry, bool shouldLock = true)
         {
-            await EntryLock.WaitAsync();
+            if (shouldLock)
+            {
+                await EntryLock.WaitAsync();
+            }
 
             try
             {
@@ -88,11 +91,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             finally
             {
-                EntryLock.Release();
+                if (shouldLock)
+                {
+                    EntryLock.Release();
+                }
             }
         }
 
-        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true)
+        public RecordEntry Lookup(RecordEntry requestEntry, RecordMatcher matcher, IEnumerable<RecordedTestSanitizer> sanitizers, bool remove = true, bool shouldLock = false)
         {
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
@@ -111,23 +117,32 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return entry;
         }
 
-        public async Task Remove(RecordEntry entry)
+        public async Task Remove(RecordEntry entry, bool shouldLock = true)
         {
-            await EntryLock.WaitAsync();
-
+            if (shouldLock)
+            {
+                await EntryLock.WaitAsync();
+            }
+            
             try
             {
                 Entries.Remove(entry);
             }
             finally
             {
-                EntryLock.Release();
+                if (shouldLock)
+                {
+                    EntryLock.Release();
+                }
             }
         }
 
-        public async Task Sanitize(RecordedTestSanitizer sanitizer)
+        public async Task Sanitize(RecordedTestSanitizer sanitizer, bool shouldLock = true)
         {
-            await EntryLock.WaitAsync();
+            if (shouldLock)
+            {
+                await EntryLock.WaitAsync();
+            }
 
             try
             {
@@ -135,13 +150,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             finally
             {
-                EntryLock.Release();
+                if (shouldLock)
+                {
+                    EntryLock.Release();
+                }
             }
         }
 
-        public async Task Sanitize(IEnumerable<RecordedTestSanitizer> sanitizers)
+        public async Task Sanitize(IEnumerable<RecordedTestSanitizer> sanitizers, bool shouldLock = true)
         {
-            await EntryLock.WaitAsync();
+            if (shouldLock)
+            {
+                await EntryLock.WaitAsync();
+            }
 
             try
             {
@@ -152,7 +173,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             finally
             {
-                EntryLock.Release();
+                if (shouldLock)
+                {
+                    EntryLock.Release();
+                }
             }
         }
     }

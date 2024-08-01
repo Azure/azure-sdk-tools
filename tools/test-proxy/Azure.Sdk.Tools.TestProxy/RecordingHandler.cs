@@ -466,7 +466,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     if (!session.IsSanitized)
                     {
-                        await session.Session.Sanitize(sanitizers);
+                        await session.Session.Sanitize(sanitizers, false);
                         session.IsSanitized = true;
                     }
                 }
@@ -526,7 +526,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 if (remove)
                 {
-                    await session.Session.Remove(match);
+                    await session.Session.Remove(match, shouldLock: false);
                 }
             }
             finally

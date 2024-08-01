@@ -8,6 +8,7 @@ add_executable(ParseAzureSdkCpp ParseAzureSdkCpp.cpp )
 add_dependencies(ParseAzureSdkCpp ApiViewProcessor)
 target_include_directories(ParseAzureSdkCpp PRIVATE ${ApiViewProcessor_SOURCE_DIR})
 
+# Debug builds of azure keyvault administration require a larger stack size to avoid stack overflow
 #if(MSVC)
 target_link_options(ParseAzureSdkCpp PRIVATE /STACK:2000000)
 #endif()

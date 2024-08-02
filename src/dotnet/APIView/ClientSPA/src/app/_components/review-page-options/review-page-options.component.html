@@ -89,6 +89,7 @@
                 (onChange)="onDiffStyleChange($event)"
                 [options]="diffStyleOptions" 
                 [(ngModel)]="selectedDiffStyle"
+                [disabled]="!contentHasDiff"
                 inputId="diff-style-select"
                 optionLabel="label"
                 [style]="{'width':'100%'}"/>

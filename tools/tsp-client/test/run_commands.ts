@@ -51,12 +51,15 @@ async function main() {
     "https://github.com/Azure/azure-rest-api-specs/blob/db63bea839f5648462c94e685d5cc96f8e8b38ba/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml";
 
   const emitterPackageJson = resolve("./test/utils/emitter-package.json");
+  const emitterPackageLockJson = resolve("./test/utils/emitter-package-lock.json");
 
   // Copy the emitter-package.json to the eng directory at the root of the repo
   const repoRoot = await getRepoRoot(".");
 
   await cp(emitterPackageJson, join(repoRoot, "eng/emitter-package.json"));
   console.log("emitter-package.json ---------------> copied successfully");
+  await cp(emitterPackageLockJson, join(repoRoot, "eng/emitter-package-lock.json"));
+  console.log("emitter-package-lock.json ---------------> copied successfully");
 
   // Run the init command
   await runCommand(baseDir, ["init", "-c", tspConfig, "-o", examplesDir]);
@@ -75,6 +78,8 @@ async function main() {
 
   await unlink(join(repoRoot, "eng/emitter-package.json"));
   console.log("emitter-package.json ---------------> deleted successfully");
+  await unlink(join(repoRoot, "eng/emitter-package-lock.json"));
+  console.log("emitter-package-lock.json ---------------> deleted successfully");
 }
 
 main().catch((e) => {

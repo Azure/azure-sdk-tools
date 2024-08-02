@@ -162,6 +162,27 @@ func TestDiagnostics(t *testing.T) {
 	}
 }
 
+func TestExternalModule(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_external_module"))
+	require.NoError(t, err)
+	require.Equal(t, 1, len(review.Diagnostics))
+	require.Equal(t, aliasFor+"github.com/Azure/azure-sdk-for-go/sdk/azcore.Policy", review.Diagnostics[0].Text)
+	require.Equal(t, 1, len(review.Navigation))
+	require.Equal(t, 1, len(review.Navigation[0].ChildItems))
+	foundDo, foundPolicy := false, false
+	for _, token := range review.Tokens {
+		if token.DefinitionID != nil && *token.DefinitionID == "test_external_module.MyPolicy" {
+			require.Equal(t, "MyPolicy", token.Value)
+			foundPolicy = true
+		} else if token.Value == "Do" {
+			foundDo = true
+			require.Contains(t, *token.DefinitionID, "MyPolicy")
+		}
+	}
+	require.True(t, foundDo, "missing MyPolicy.Do()")
+	require.True(t, foundPolicy, "missing MyPolicy type")
+}
+
 func TestAliasDefinitions(t *testing.T) {
 	for _, test := range []struct {
 		name, path, sourceName string

@@ -1,0 +1,123 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "CodeFile.json",
+    "type": "object",
+    "properties": {
+        "VersionString": {
+            "type": "string",
+            "description": "The version of the parser"
+        },
+        "Name": {
+            "type": "string",
+            "description": "Name the ocde file. Usually just the package name and version"
+        },
+        "Language": {
+            "anyOf": [
+                {
+                    "type": "string",
+                    "const": "C"
+                },
+                {
+                    "type": "string",
+                    "const": "C#"
+                },
+                {
+                    "type": "string",
+                    "const": "C++"
+                },
+                {
+                    "type": "string",
+                    "const": "Go"
+                },
+                {
+                    "type": "string",
+                    "const": "Java"
+                },
+                {
+                    "type": "string",
+                    "const": "JavaScript"
+                },
+                {
+                    "type": "string",
+                    "const": "Json"
+                },
+                {
+                    "type": "string",
+                    "const": "Kotlin"
+                },
+                {
+                    "type": "string",
+                    "const": "Python"
+                },
+                {
+                    "type": "string",
+                    "const": "Swagger"
+                },
+                {
+                    "type": "string",
+                    "const": "Swift"
+                },
+                {
+                    "type": "string",
+                    "const": "TypeSpec"
+                },
+                {
+                    "type": "string",
+                    "const": "Xml"
+                }
+            ]
+        },
+        "LanguageVariant": {
+            "anyOf": [
+                {
+                    "type": "string",
+                    "const": "Default"
+                },
+                {
+                    "type": "string",
+                    "const": "Spring"
+                },
+                {
+                    "type": "string",
+                    "const": "Android"
+                }
+            ],
+            "default": "Default"
+        },
+        "PackageName": {
+            "type": "string"
+        },
+        "ServiceName": {
+            "type": "string"
+        },
+        "PackageVersion": {
+            "type": "string"
+        },
+        "CrossLanguagePackageId": {
+            "type": "string",
+            "description": "Maps related packages across Languages"
+        },
+        "APIForest": {
+            "type": "array",
+            "items": {
+                "$ref": "APITreeNode.json"
+            },
+            "description": "The API Tree(s)"
+        },
+        "Diagnostics": {
+            "type": "array",
+            "items": {
+                "$ref": "CodeDiagnostic.json"
+            }
+        }
+    },
+    "required": [
+        "VersionString",
+        "Name",
+        "Language",
+        "PackageName",
+        "PackageVersion",
+        "APIForest",
+        "Diagnostics"
+    ]
+}

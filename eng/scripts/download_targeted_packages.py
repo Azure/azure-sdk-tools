@@ -140,9 +140,8 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    
-    # powershell does some weird escaping. Leaving behind just the '`' in what would normally look like '`"`.
-    pkg_list = read_package_list(args.target_packages.replace("`", "\""))
+
+    pkg_list = args.target_packages.split(",")
 
     assembled_package_list = set()
 

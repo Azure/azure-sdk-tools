@@ -172,14 +172,14 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
 
   try {
     const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
-    await cp(emitterLockPath, joinPaths(srcDir, "package-lock.json"), { recursive: true });
+    await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });
   } catch (err) {
     Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
     Logger.debug("Will attempt look for emitter-package.json...");
   }
   try {
     const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
-    await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
+    await cp(emitterPath, joinPaths(tempRoot, "package.json"), { recursive: true });
   } catch (err) {
     throw new Error(`Ran into the following error: ${err}\nTo continue using tsp-client, please provide a valid emitter-package.json file in the eng/ directory of the repository.`);
   }
@@ -213,7 +213,7 @@ async function generate({
   const args: string[] = [];
   try {
     // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
-    await stat(joinPaths(srcDir, "package-lock.json"));
+    await stat(joinPaths(tempRoot, "package-lock.json"));
     args.push("ci");
   } catch (err) {
     // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`

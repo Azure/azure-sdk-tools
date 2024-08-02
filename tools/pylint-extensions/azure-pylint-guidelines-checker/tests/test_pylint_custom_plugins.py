@@ -4830,3 +4830,60 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_import(imb)
             self.checker.visit_import(imc)
             self.checker.visit_importfrom(imd)
+
+
+class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
+
+    """Test that any errors raised are not logged in the exception block."""
+
+    CHECKER_CLASS = checker.DoNotLogErrorsEndUpRaising
+
+    def test_error_level_not_logged(self):
+        """Check that any exceptions raised aren't logged at error level in the exception block."""
+        # works with other logging levels too (e.g. warning, info etc.)
+
+        exception_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            logger.error(str(e))
+            raise
+        '''
+                                              )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-errors-that-get-raised",
+                line=2,
+                node=exception_node,
+                col_offset=0,
+                end_line=6,
+                end_col_offset=9,
+            )
+        ):
+            self.checker.visit_try(exception_node)
+
+    def test_warning_level_logging_ok_when_no_raise(self):
+        """Check that any exceptions can be logged at error level if exception isn't raised."""
+
+        exception_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            logger.warning(str(e))
+        '''
+                                              )
+        with self.assertNoMessages():
+            self.checker.visit_try(exception_node)
+
+    def test_unlogged_exception_block(self):
+        """Check that exceptions raised without logging are allowed."""
+
+        exception_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            raise
+        '''
+                                              )
+        with self.assertNoMessages():
+            self.checker.visit_try(exception_node)

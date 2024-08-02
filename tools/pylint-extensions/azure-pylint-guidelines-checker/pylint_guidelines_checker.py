@@ -2708,6 +2708,41 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
+class DoNotLogErrorsEndUpRaising(BaseChecker):
+
+    """Rule to check that errors that get raised aren't logged"""
+
+    name = "do-not-log-errors-that-get-raised"
+    priority = -1
+    msg = {"C4762": (
+            "Do not log errors that get rasied in an exception block.",
+            "do-not-log-errors-that-get-raised",
+            "Do not log errors that get rasied in an exception block. Do not log as error, warning or info",
+        ),
+    }
+
+    def visit_try(self, node):
+        """Check that errors aren't logged in exception blocks.
+           Go through each line in the exception block and make sure it hasn't been logged if exception is raised.
+        """
+        matches = ["warning", "info", "error"]
+        # Get the exception block - returns a list
+        except_block = node.handlers
+        for nod in except_block:
+            # Split into list of strings
+            split = nod.as_string().splitlines()
+            for i in split:
+                # Search to check if 'raise' is in the exception block
+                raise_found = i.find("raise")
+                if raise_found != -1:
+                    for j in split:
+                        if any(x in j for x in matches):
+                            self.add_message(
+                            msgid=f"do-not-log-errors-that-get-raised",
+                            node=node,
+                            confidence=None,
+                            )
+
 
 class NoImportTypingFromTypeCheck(BaseChecker):
 
@@ -2785,6 +2820,9 @@ def register(linter):
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
+    
+    
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

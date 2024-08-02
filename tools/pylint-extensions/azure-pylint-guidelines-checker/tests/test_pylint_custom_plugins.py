@@ -4887,3 +4887,44 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                                               )
         with self.assertNoMessages():
             self.checker.visit_try(exception_node)
+
+    def test_mult_exception_blocks_seperate_raise(self):
+        """Check multiple exception blocks with seperate raise and logging is allowed."""
+
+        exception_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            raise
+        except OtherException as x:
+            logger.error(str(x))
+        '''
+                                              )
+        with self.assertNoMessages():
+            self.checker.visit_try(exception_node)
+
+
+    def test_mult_exception_blocks_with_raise(self):
+        """Check that multiple exception blocks with raise and logging is not allowed."""
+
+        exception_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            raise
+        except OtherException as x:
+            logger.error(str(x))
+            raise
+        '''
+                                              )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-errors-that-get-raised",
+                    line=2,
+                    node=exception_node,
+                    col_offset=0,
+                    end_line=8,
+                    end_col_offset=9,
+                )
+        ):
+            self.checker.visit_try(exception_node)

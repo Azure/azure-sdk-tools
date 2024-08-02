@@ -461,7 +461,7 @@ namespace Azure.Sdk.Tools.TestProxy
             if (!session.IsSanitized)
             {
                 // we don't need to re-sanitize with recording-applicable sanitizers every time. just the very first one
-                await session.SanitizerLock.WaitAsync();
+                await session.Session.EntryLock.WaitAsync();
                 try
                 {
                     if (!session.IsSanitized)
@@ -472,7 +472,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
                 finally
                 {
-                    session.SanitizerLock.Release();
+                    session.Session.EntryLock.Release();
                 }
             }
 

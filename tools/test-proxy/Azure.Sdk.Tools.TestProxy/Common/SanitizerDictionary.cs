@@ -749,7 +749,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns></returns>
         public async Task<List<RegisteredSanitizer>> GetRegisteredSanitizers(ModifiableRecordSession session)
         {
-            await session.SanitizerLock.WaitAsync();
+            await session.Session.EntryLock.WaitAsync();
             try
             {
                 var sanitizers = new List<RegisteredSanitizer>();
@@ -770,7 +770,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             finally
             {
-                session.SanitizerLock.Release();
+                session.Session.EntryLock.Release();
             }
         }
 
@@ -904,7 +904,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <exception cref="HttpException"></exception>
         public async Task<string> Unregister(string sanitizerId, ModifiableRecordSession session)
         {
-            await session.SanitizerLock.WaitAsync();
+            await session.Session.EntryLock.WaitAsync();
             try
             {
                 if (session.AppliedSanitizers.Contains(sanitizerId))
@@ -915,7 +915,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             finally
             {
-                session.SanitizerLock.Release();
+                session.Session.EntryLock.Release();
             }
 
             return string.Empty;

@@ -42,8 +42,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public List<ResponseTransform> AdditionalTransforms { get; } = new List<ResponseTransform>();
 
-        public SemaphoreSlim SanitizerLock = new SemaphoreSlim(1);
-
         public List<string> AppliedSanitizers { get; set; } = new List<string>();
         public List<string> ForRemoval { get; } = new List<string>();
 
@@ -53,7 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public async void ResetExtensions(SanitizerDictionary sanitizerDictionary)
         {
-            await SanitizerLock.WaitAsync();
+            await Session.EntryLock.WaitAsync();
             try
             {
                 AdditionalTransforms.Clear();
@@ -66,7 +64,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             finally
             {
-                SanitizerLock.Release();
+                Session.EntryLock.Release();
             }
         }
     }

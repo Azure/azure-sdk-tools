@@ -178,23 +178,30 @@ func (r *Review) resolveAliases() error {
 		)
 		if m, ok = r.modules[ta.SourceMod.Path]; !ok {
 			m, err = r.findLocalModule(*ta)
+			if errors.Is(err, errExternalModule) {
+				m, err = GetExternalModule(ta.SourceMod)
+			}
 			if err == nil {
 				err = r.AddModule(m)
 			}
-			// TODO: handle errExternalModule by acquiring the module code from the external repository.
-			// For now, include the aliased type in the review without its definition and add a diagnostic.
-			if err != nil && !errors.Is(err, errExternalModule) {
+			if err != nil {
 				return err
 			}
 		}
 		def := typeDef{}
 		if m != nil {
-			impPath := ta.QualifiedName[:strings.LastIndex(ta.QualifiedName, ".")]
+			dot := strings.LastIndex(ta.QualifiedName, ".")
+			if len(ta.QualifiedName)-2 < dot || dot < 1 {
+				// there must be at least one rune before and after the dot
+				panic(fmt.Sprintf("alias %q refers to an invalid qualified name %q", ta.Name, ta.QualifiedName))
+			}
+			impPath := ta.QualifiedName[:dot]
 			p, ok := m.Packages[impPath]
 			if !ok {
 				return fmt.Errorf("couldn't find definition for " + ta.Name)
 			}
-			if d, ok := recursiveFindTypeDef(ta.Name, p, m.Packages); ok {
+			sourceName := ta.QualifiedName[dot+1:]
+			if d, ok := recursiveFindTypeDef(sourceName, p, m.Packages); ok {
 				def = d
 			}
 		}

@@ -9,6 +9,7 @@
     <LangVersion>preview</LangVersion>
     <InformationalVersion>$(OfficialBuildId)</InformationalVersion>
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)'=='net5.0'">

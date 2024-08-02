@@ -2,7 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CommentThreadComponent } from './comment-thread.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { TimelineModule } from 'primeng/timeline';
+import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
+import { CodePanelRowData } from 'src/app/_models/codePanelModels';
+import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
 
 describe('CommentThreadComponent', () => {
   let component: CommentThreadComponent;
@@ -13,11 +15,13 @@ describe('CommentThreadComponent', () => {
       declarations: [CommentThreadComponent],
       imports: [
         HttpClientTestingModule,
-        TimelineModule
+        ReviewPageModule,
+        SharedAppModule
       ],
     });
     fixture = TestBed.createComponent(CommentThreadComponent);
     component = fixture.componentInstance;
+    component.codePanelRowData = new CodePanelRowData();
     fixture.detectChanges();
   });
 

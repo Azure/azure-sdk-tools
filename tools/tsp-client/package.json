@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-client-generator-cli",
-  "version": "0.9.4",
+  "version": "0.10.0",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
@@ -26,7 +26,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "^18.19.0 || >=20.6.0"
   },
   "bin": {
     "tsp-client": "cmd/tsp-client.js"
@@ -63,7 +63,7 @@
     "yargs": "^17.2.1"
   },
   "peerDependencies": {
-    "@typespec/compiler": ">=0.48.1 <1.0.0"
+    "@typespec/compiler": ">=0.58.0 <1.0.0"
   },
   "mocha": {
     "extension": [

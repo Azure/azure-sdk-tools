@@ -1,17 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ReviewPageComponent } from './review-page.component';
-import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
 import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
-import { MenuModule } from 'primeng/menu';
-import { SplitterModule } from 'primeng/splitter';
-import {  SidebarModule } from 'primeng/sidebar';
 import { FooterComponent } from '../shared/footer/footer.component';
-import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
+import { ReviewsListComponent } from '../reviews-list/reviews-list.component';
+import { RevisionsListComponent } from '../revisions-list/revisions-list.component';
+import { of } from 'rxjs';
+import { ApprovalPipe } from 'src/app/_pipes/approval.pipe';
+import { ReviewNavComponent } from '../review-nav/review-nav.component';
+import { ReviewPageOptionsComponent } from '../review-page-options/review-page-options.component';
+import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
+import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
+import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
 
 describe('ReviewPageComponent', () => {
   let component: ReviewPageComponent;
@@ -21,18 +26,22 @@ describe('ReviewPageComponent', () => {
     TestBed.configureTestingModule({
       declarations: [ 
         ReviewPageComponent,
+        ReviewNavComponent,
+        ReviewPageOptionsComponent,
+        PageOptionsSectionComponent,
         NavBarComponent,
         ReviewInfoComponent,
         FooterComponent,
-        CodePanelComponent
+        CodePanelComponent,
+        ReviewsListComponent,
+        RevisionsListComponent,
+        ApprovalPipe
       ],
       imports: [
         HttpClientTestingModule,
-        MenuModule,
-        SplitterModule,
-        SidebarModule,
-        BreadcrumbModule,
-        BrowserAnimationsModule
+        BrowserAnimationsModule,
+        SharedAppModule,
+        ReviewPageModule
       ],
       providers: [
         {
@@ -40,8 +49,8 @@ describe('ReviewPageComponent', () => {
           useValue: {
             snapshot: {
               paramMap: convertToParamMap({ reviewId: 'test' }),
-              queryParamMap: convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' })
-            }
+            },
+            queryParams: of(convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' }))
           }
         }
       ]

@@ -63,7 +63,7 @@ func NewPkg(dir, modulePath string) (*Pkg, error) {
 	moduleName := filepath.Base(modulePathWithoutVersion)
 	if _, after, found := strings.Cut(dir, moduleName); found {
 		pk.relName = moduleName
-		if after != "" {
+		if after != "" && after[0] != '@' {
 			pk.relName += after
 		}
 		pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")

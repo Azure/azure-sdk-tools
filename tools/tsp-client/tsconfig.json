@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "dist",
-    "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "strict": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
@@ -13,7 +13,8 @@
     "noImplicitOverride": true,
     "noImplicitThis": true,
     "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": true
+    "noPropertyAccessFromIndexSignature": true,
+    "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],

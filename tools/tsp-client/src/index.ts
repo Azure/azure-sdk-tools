@@ -3,7 +3,7 @@ import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRe
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, cp, readFile, stat, rename, unlink } from "node:fs/promises";
+import { mkdir, cp, readFile, stat, rename, unlink, writeFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -11,7 +11,7 @@ import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { getAdditionalDirectoryName, getPathToDependency, getServiceDir, makeSparseSpecDir, writeTspLocationYaml } from "./utils.js";
 import { resolve } from "node:path";
 import { config as dotenvConfig } from "dotenv";
-
+import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
 async function sdkInit(
   {
@@ -264,6 +264,13 @@ async function convert(readme: string, outputDir: string, arm?: boolean): Promis
   return await nodeCommand(outputDir, args);
 }
 
+async function sortSwagger(swaggerFileName: string): Promise<void> {
+        const content = await readFile(swaggerFileName);
+        const document = JSON.parse(content.toString());
+        const sorted = sortOpenAPIDocument(document);
+        await writeFile(swaggerFileName, JSON.stringify(sorted, null, 2));
+}
+
 async function generateLockFile(rootUrl: string, repoRoot: string) {
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
@@ -355,6 +362,16 @@ async function main() {
           }
         }
         break;
+    case "sort-swagger":
+        Logger.info("Sorting a swagger content...");
+        let swaggerFile =  options.swaggerFile;
+        if (swaggerFile === undefined || await !doesFileExist(swaggerFile)) {
+            throw new Error(`Swagger file not found: ${swaggerFile??"[Not Specified]"}`);
+        }
+        swaggerFile = normalizePath(resolve(swaggerFile));
+        await sortSwagger(swaggerFile);
+        Logger.info(`${swaggerFile} has been sorted.`);
+        break;        
       default:
         throw new Error(`Unknown command: ${options.command}`);
   }

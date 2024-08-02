@@ -19,6 +19,7 @@ export interface Options {
   emitterOptions?: string;
   generateLockFile: boolean;
   swaggerReadme?: string;
+  swaggerFile?: string;
   arm: boolean;
 }
 
@@ -89,7 +90,8 @@ export async function getOptions(): Promise<Options> {
   }
 
   let isUrl = true;
-  const supportedCommands = ["sync", "generate", "update", "init", "convert"];
+  let swaggerFile;
+  const supportedCommands = ["sync", "generate", "update", "init", "convert", "sort-swagger"];
   const command = positionals[0];
 
   if (!values["generate-lock-file"]) {
@@ -136,6 +138,15 @@ export async function getOptions(): Promise<Options> {
         process.exit(1);
       }
     }
+
+    if (command === "sort-swagger") {
+        swaggerFile = positionals[1];
+        if (swaggerFile === undefined) {
+          Logger.error("Must specify a swagger file to be sorted.");
+          printUsage();
+          process.exit(1);
+        }
+      }
   }
 
   // By default, assume that the command is run from the output directory
@@ -184,6 +195,7 @@ export async function getOptions(): Promise<Options> {
     emitterOptions: values["emitter-options"],
     generateLockFile: values["generate-lock-file"] ?? false,
     swaggerReadme: values["swagger-readme"],
+    swaggerFile: swaggerFile,
     arm: values.arm ?? false,
   };
 }

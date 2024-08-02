@@ -8,7 +8,7 @@
 // The script will throw an error if any of the commands fail.
 
 import { spawn } from "child_process";
-import { cp, unlink } from "fs/promises";
+import { cp, unlink, readFile } from "fs/promises";
 import { join, resolve } from "path";
 import { getRepoRoot } from "../src/git";
 
@@ -36,6 +36,8 @@ export async function runCommand(workingDir: string, args: string[]): Promise<vo
 }
 
 async function main() {
+  await verifySwaggerSorting();
+
   // Variables for the target directories
   const baseDir = resolve(".");
   const examplesDir = resolve("./test/examples/");
@@ -80,6 +82,33 @@ async function main() {
   console.log("emitter-package.json ---------------> deleted successfully");
   await unlink(join(repoRoot, "eng/emitter-package-lock.json"));
   console.log("emitter-package-lock.json ---------------> deleted successfully");
+}
+
+async function compareFiles(file1, file2) {
+    try {
+        const data1 = await readFile(file1, 'utf8');
+        const data2 = await readFile(file2, 'utf8');
+        return data1 === data2;
+    } catch (err) {
+        console.error('Error reading files:', err);
+        throw err;
+    }
+}
+
+async function verifySwaggerSorting() {
+    const baseDir = resolve(".");
+    const specDir = resolve("./test/examples/specification/sort-swagger");
+    const unsortedJson = join(specDir, "unsorted.json");
+    const sortedJson = join(specDir, "sorted.json");
+
+    await cp(unsortedJson, sortedJson);
+    
+    await runCommand(baseDir, ["sort-swagger", sortedJson]);
+
+    if (await compareFiles(sortedJson, join(specDir, "expected-sorted.json") ))
+      console.log("sort-swagger verified successfully");
+    else
+      console.error("\x1b[31m", "sort-swagger ---------------> verification FAILED!", "\x1b[0m");
 }
 
 main().catch((e) => {

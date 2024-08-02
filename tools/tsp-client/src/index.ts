@@ -21,10 +21,10 @@ function commandPreamble(argv: any) {
 /** Ensure the output directory exists and allow interactive users to confirm or override the value. */
 export function resolveOutputDir(argv: any): string {
   let outputDir = resolvePath(process.cwd(), argv["output-dir"]);
-  const noPrompt = argv["no-prompt"];
+  const usePrompt = argv["prompt"];
 
   let useOutputDir;
-  if (process.stdin.isTTY && !noPrompt) {
+  if (process.stdin.isTTY && usePrompt) {
     // Ask user is this is the correct output directory
     const prompt = PromptSync();
     useOutputDir = prompt(`Use output directory '${outputDir}'? (y/n)`, "y");

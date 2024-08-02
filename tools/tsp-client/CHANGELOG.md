@@ -1,7 +1,8 @@
 # Release
 
-## Unreleased - 0.10.0
+## 2024-08-05 - 0.10.0
 
+- Added `sort-swagger` command, see [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for more information.
 - Copy the package.json + package-lock.json directly under TempTypeSpecFiles/. (#8583)
 - Only show compile diagnostics if the `--debug` flag is passed to the command.
 - Increase minimum node version to "^18.19.0 || >=20.6.0", to ensure API import.meta.resolve() is available. (#8765)

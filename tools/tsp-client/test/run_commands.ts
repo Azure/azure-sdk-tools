@@ -100,10 +100,10 @@ async function verifySwaggerSorting() {
     
     await runCommand(baseDir, ["sort-swagger", sortedJson]);
 
-    if (!await compareFiles(unsortedJson, sortedJson))
+    if (await compareFiles(sortedJson, join(specDir, "expected-sorted.json") ))
       console.log("sort-swagger verified successfully");
     else
-      console.error("sort-swagger verification failed");
+      console.error("\x1b[31m", "sort-swagger ---------------> verification FAILED!", "\x1b[0m");
 }
 
 main().catch((e) => {

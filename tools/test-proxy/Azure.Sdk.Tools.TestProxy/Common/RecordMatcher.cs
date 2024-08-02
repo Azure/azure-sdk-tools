@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Core;
@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
 
-            throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry));
+            throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry, entries));
         }
 
         public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, StringBuilder descriptionBuilder = null)
@@ -213,10 +213,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return req.ToUri().ToString();
         }
 
-        private string GenerateException(RecordEntry request, RecordEntry bestScoreEntry)
+        private string GenerateException(RecordEntry request, RecordEntry bestScoreEntry, IList<RecordEntry> entries = null)
         {
             StringBuilder builder = new StringBuilder();
             builder.AppendLine($"Unable to find a record for the request {request.RequestMethod} {request.RequestUri}");
+
+            if (entries != null)
+            {
+                foreach (var entry in entries)
+                {
+                    builder.AppendLine($"Remaining entry: {entry.RequestUri}");
+                }
+            }
 
             if (bestScoreEntry == null)
             {

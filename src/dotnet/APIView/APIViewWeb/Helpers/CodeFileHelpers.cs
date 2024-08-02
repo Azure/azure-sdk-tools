@@ -557,6 +557,13 @@ namespace APIViewWeb.Helpers
                         {
                             var parentNode = codePanelData.NodeMetaDataObj[parentNodeIdHashed];
                             parentNode.IsNodeWithDiffInDescendants = true;
+
+                            if ((diffTokenRowResult.Before.Any() && !beforeRowClasses.Contains("doc")) || 
+                                (diffTokenRowResult.After.Any() && !afterRowClasses.Contains("doc")))
+                            {
+                                parentNode.IsNodeWithNoneDocDiffInDescendants = true;
+                            }
+
                             parentNodeIdHashed = parentNode.ParentNodeIdHashed;
                         }
 

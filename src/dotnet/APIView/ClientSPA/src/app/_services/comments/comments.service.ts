@@ -2,7 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ConfigService } from '../config/config.service';
 import { Observable } from 'rxjs';
-import { CommentItemModel, CommentType } from 'src/app/_models/review';
+import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 
 @Injectable({
   providedIn: 'root'

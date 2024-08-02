@@ -19,6 +19,8 @@ import { TimeagoModule } from 'ngx-timeago';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
+import { MessagesModule } from 'primeng/messages';
+ 
 
 @NgModule({
   declarations: [
@@ -41,6 +43,7 @@ import { InputTextModule } from 'primeng/inputtext';
     ChipModule,
     DropdownModule,
     MenubarModule,
+    MessagesModule,
     MultiSelectModule,
     FormsModule,
     FileUploadModule,
@@ -58,6 +61,7 @@ import { InputTextModule } from 'primeng/inputtext';
     ChipModule,
     DropdownModule,
     MenubarModule,
+    MessagesModule,
     MultiSelectModule,
     FormsModule,
     FileUploadModule,

@@ -1,8 +1,10 @@
 # Release
 
-## 2024-07-31 - 0.10.0
+## Unreleased - 0.10.0
 
 - Copy the package.json + package-lock.json directly under TempTypeSpecFiles/. (#8583)
+- Only show compile diagnostics if the `--debug` flag is passed to the command.
+- Increase minimum node version to "^18.19.0 || >=20.6.0", to ensure API import.meta.resolve() is available. (#8765)
 
 ## 2024-07-23 - 0.9.4
 

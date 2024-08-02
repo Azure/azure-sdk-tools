@@ -2,13 +2,13 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { mapLanguageAliases } from 'src/app/_helpers/service-helpers';
-import { UserProfile } from 'src/app/_models/auth_service_models';
+import { mapLanguageAliases } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
-import { pipe, take } from 'rxjs';
+import { take } from 'rxjs';
+import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
   selector: 'app-review-page-options',
@@ -18,6 +18,7 @@ import { pipe, take } from 'rxjs';
 export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
+  @Input() contentHasDiff: boolean | undefined = false;
   @Input() diffStyleInput: string | undefined;
   @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;

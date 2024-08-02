@@ -1,14 +1,15 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { take } from 'rxjs/operators';
-import { CommentItemModel, CommentType } from 'src/app/_models/review';
-import { CodePanelData, CodePanelRowDatatype, StructuredToken } from 'src/app/_models/revision';
-import { CodePanelRowData } from 'src/app/_models/revision';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
-import { UserProfile } from 'src/app/_models/auth_service_models';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/literal-helpers';
+import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
+import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
+import { StructuredToken } from 'src/app/_models/structuredToken';
+import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
+import { UserProfile } from 'src/app/_models/userProfile';
+import { Message } from 'primeng/api/message';
 
 @Component({
   selector: 'app-code-panel',
@@ -31,6 +32,7 @@ export class CodePanelComponent implements OnChanges{
 
   @Output() hasActiveConversation : EventEmitter<boolean> = new EventEmitter<boolean>();
 
+  noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
   isLoading: boolean = true;
   codeWindowHeight: string | undefined = undefined;
   codePanelRowDataIndicesMap = new Map<string, number>();
@@ -84,6 +86,13 @@ export class CodePanelComponent implements OnChanges{
     if (target.classList.contains('toggle-user-comments-btn')) {
       this.toggleNodeComments(target);
     }
+  }
+
+  getAssociatedCodeLine(item: CodePanelRowData): CodePanelRowData | undefined {
+    if (this.codePanelData?.nodeMetaData && this.codePanelData.nodeMetaData[item.nodeIdHashed]) {
+      return this.codePanelData.nodeMetaData[item.nodeIdHashed].codeLines[item.associatedRowPositionInGroup] || undefined;
+    }
+    return undefined;
   }
 
   getRowClassObject(row: CodePanelRowData) {

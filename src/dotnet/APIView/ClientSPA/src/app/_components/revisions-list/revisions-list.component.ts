@@ -4,10 +4,10 @@ import { Router } from '@angular/router';
 import { MenuItem, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
-import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Pagination } from 'src/app/_models/pagination';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
+import { UserProfile } from 'src/app/_models/userProfile';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
@@ -39,6 +39,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   sortField : string = "lastUpdatedOn";
   sortOrder : number = 1;
   filters: any = null;
+  dummyModel: any; // Used to ensure p-fileUpload has a binding
 
   createRevisionSidebarVisible : boolean = false;
   optionsSidebarVisible : boolean = false;

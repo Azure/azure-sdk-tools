@@ -92,7 +92,7 @@ steps:
     "FIXTURE_DIR": "$(Build.BinariesDirectory)"
     "APIVIEW_API_KEY": "$(azuresdk-apiview-apikey)"
 
-- task: PublishBuildArtifacts@1
+- task: 1ES.PublishPipelineArtifact@1
   inputs:
-    pathtoPublish: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
-    artifactName: 'Client-Side Test Reports'
+    path: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
+    artifact: 'Client-Side Test Reports'

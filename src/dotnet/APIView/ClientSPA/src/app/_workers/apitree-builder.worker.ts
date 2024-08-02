@@ -1,8 +1,9 @@
 /// <reference lib="webworker" />
 import 'reflect-metadata';
-import { CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype, InsertCodePanelRowDataMessage, NavigationTreeNode, ReviewPageWorkerMessageDirective } from "../_models/revision";
-import { ApiTreeBuilderData, CodePanelData } from "../_models/revision";
-import { plainToClass } from 'class-transformer';
+import { ApiTreeBuilderData } from "../_models/revision";
+import { CodePanelData, CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype } from '../_models/codePanelModels';
+import { InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from '../_models/insertCodePanelRowDataMessage';
+import { NavigationTreeNode } from '../_models/navigationTreeModels';
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
@@ -67,7 +68,8 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   let buildChildren = true;
   let addNodeToBuffer = false
  
-  if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === "trees" || apiTreeBuilderData?.diffStyle === "nodes") && !node.isNodeWithDiffInDescendants) {
+  if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === "trees" || apiTreeBuilderData?.diffStyle === "nodes") && 
+    (!node.isNodeWithDiffInDescendants || (!apiTreeBuilderData?.showDocumentation && !node.isNodeWithNoneDocDiffInDescendants))) {
     buildNode = false;
     buildChildren = false;
   }

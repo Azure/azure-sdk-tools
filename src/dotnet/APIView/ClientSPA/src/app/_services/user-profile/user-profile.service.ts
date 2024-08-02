@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable, share } from 'rxjs';
+import { Observable, } from 'rxjs';
 import { ConfigService } from '../config/config.service';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { UserPreferenceModel, UserProfile } from 'src/app/_models/auth_service_models';
+import { HttpClient } from '@angular/common/http';
+import { UserProfile } from 'src/app/_models/userProfile';
+import { UserPreferenceModel } from 'src/app/_models/userPreferenceModel';
 
 @Injectable({
   providedIn: 'root'

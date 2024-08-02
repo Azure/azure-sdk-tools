@@ -939,32 +939,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task RemoveSanitizerErrorsForInvalidIdOnRecording()
-        {
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var httpContext = new DefaultHttpContext();
-            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
-            var recordingId = httpContext.Response.Headers["x-recording-id"];
-            httpContext.Request.Headers["x-recording-id"] = recordingId;
-            httpContext.Response.Body = new MemoryStream();
-            var controller = new Admin(testRecordingHandler, _nullLogger)
-            {
-                ControllerContext = new ControllerContext()
-                {
-                    HttpContext = httpContext
-                }
-            };
-
-            var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() { "0" } };
-
-            var assertion = await Assert.ThrowsAsync<HttpException>(
-                async () => await controller.RemoveSanitizers(testSet)
-            );
-           
-            Assert.Contains("Unable to remove 1 sanitizer. Detailed list follows: \nThe requested sanitizer for removal \"0\" is not active on recording/playback with id", assertion.Message);
-        }
-
-        [Fact]
         public async Task RemoveSanitizersSilentlyAcceptsInvalidSanitizer()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

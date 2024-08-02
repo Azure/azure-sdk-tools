@@ -28,8 +28,7 @@ export async function initCommand(argv: any) {
   const commit = argv["commit"];
   const repo = argv["repo"];
 
-  let rootUrl = resolvePath(outputDir);
-  const repoRoot = await getRepoRoot(rootUrl);
+  const repoRoot = await getRepoRoot(outputDir);
 
   const emitter = await getEmitterFromRepoConfig(
     joinPaths(repoRoot, "eng", "emitter-package.json"),
@@ -38,18 +37,18 @@ export async function initCommand(argv: any) {
     throw new Error("Couldn't find emitter-package.json in the repo");
   }
 
-  let isFolder = true;
+  let isUrl = true;
   if (await doesFileExist(tspConfig)) {
-    isFolder = false;
+    isUrl = false;
   }
-  if (!isFolder) {
+  if (!isUrl) {
     if (!commit || !repo) {
       Logger.error("--commit and --repo are required when --tsp-config is a local directory");
       process.exit(1);
     }
   }
 
-  if (isFolder) {
+  if (isUrl) {
     // URL scenario
     const resolvedConfigUrl = resolveTspConfigUrl(tspConfig);
     const cloneDir = await makeSparseSpecDir(repoRoot);
@@ -129,6 +128,7 @@ export async function initCommand(argv: any) {
       additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
     };
     await writeTspLocationYaml(tspLocationData, newPackageDir);
+    outputDir = newPackageDir;
   }
 
   if (!skipSyncAndGenerate) {

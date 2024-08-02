@@ -13,7 +13,7 @@ import { join, resolve } from "path";
 import { getRepoRoot } from "../src/git";
 
 export async function runCommand(workingDir: string, args: string[]): Promise<void> {
-  const baseArgs = ["tsx", "./src/index.ts", "--no-prompt"];
+  const baseArgs = ["tsx", "./src/index.ts", "--", "--no-prompt"];
   const commandArgs = baseArgs.concat(args);
   return new Promise((resolve, reject) => {
     const npm = spawn("npx", commandArgs, {

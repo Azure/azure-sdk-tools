@@ -15,6 +15,7 @@
     "build": "npm run clean && npm run build:tsc",
     "build:tsc": "tsc",
     "clean": "rimraf ./dist ./types",
+    "purge": "rimraf ./node_modules package-lock.json",
     "example": "npx tsx src/index.ts update -o ./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/",
     "prepack": "npm run build",
     "test": "mocha",

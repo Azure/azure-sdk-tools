@@ -892,7 +892,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 SessionSanitizerLock.Release();
             }
 
-            throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active at the session level.");
+            return string.Empty;
         }
 
         /// <summary>
@@ -918,7 +918,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 session.SanitizerLock.Release();
             }
 
-            throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active on recording/playback with id \"{session.SessionId}\".");
+            return string.Empty;
         }
 
         /// <summary>

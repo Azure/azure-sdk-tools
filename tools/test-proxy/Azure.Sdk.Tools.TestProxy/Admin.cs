@@ -70,7 +70,6 @@ namespace Azure.Sdk.Tools.TestProxy
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             var removedSanitizers = new List<string>();
-            var exceptionsList = new List<string>();
 
             if (sanitizerList.Sanitizers.Count == 0)
             {
@@ -78,31 +77,19 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             foreach(var sanitizerId in sanitizerList.Sanitizers) {
-                try
+                var removedId = await _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
+                if (!string.IsNullOrWhiteSpace(removedId))
                 {
-                    var removedId = await _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
                     removedSanitizers.Add(sanitizerId);
                 }
-                catch (HttpException ex) {
-                    exceptionsList.Add(ex.Message);
-                }
             }
 
-            if (exceptionsList.Count > 0)
-            {
-                var varExceptionMessage = $"Unable to remove {exceptionsList.Count} sanitizer{(exceptionsList.Count > 1 ? 's' : string.Empty)}. Detailed list follows: \n"
-                    + string.Join("\n", exceptionsList);
-                throw new HttpException(HttpStatusCode.BadRequest, varExceptionMessage);
-            }
-            else
-            {
-                var json = JsonSerializer.Serialize(new { Removed = removedSanitizers });
+            var json = JsonSerializer.Serialize(new { Removed = removedSanitizers });
 
-                Response.ContentType = "application/json";
-                Response.ContentLength = json.Length;
+            Response.ContentType = "application/json";
+            Response.ContentLength = json.Length;
 
-                await Response.WriteAsync(json);
-            }
+            await Response.WriteAsync(json);
         }
 
         [HttpGet]

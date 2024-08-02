@@ -965,7 +965,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task RemoveSanitizerErrorsForInvalidId()
+        public async Task RemoveSanitizersSilentlyAcceptsInvalidSanitizer()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -980,11 +980,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK00-1" } };
 
-            var assertion = await Assert.ThrowsAsync<HttpException>(
-                async () => await controller.RemoveSanitizers(testSet)
-            );
+            await controller.RemoveSanitizers(testSet);
 
-            Assert.Equal("Unable to remove 1 sanitizer. Detailed list follows: \nThe requested sanitizer for removal \"AZSDK00-1\" is not active at the session level.", assertion.Message);
+            Assert.Equal(200, httpContext.Response.StatusCode);
         }
 
         [Fact]

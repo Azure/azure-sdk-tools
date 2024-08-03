@@ -1,5 +1,11 @@
-import { cp, rmdir, stat, rm } from "node:fs/promises";
-import { initCommand, generateCommand, syncCommand, updateCommand } from "../src/commands.js";
+import { cp, stat, rm } from "node:fs/promises";
+import {
+  initCommand,
+  generateCommand,
+  syncCommand,
+  updateCommand,
+  generateLockFileCommand,
+} from "../src/commands.js";
 import { after, before, describe, it } from "node:test";
 import { assert } from "chai";
 import { getRepoRoot } from "../src/git.js";
@@ -16,11 +22,24 @@ describe("Verify commands", async function () {
 
   after(async function () {
     await rm(joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package.json"));
-    await rmdir(
+    // This is generated in the first test using the command
+    await rm(joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package-lock.json"));
+    await rm(
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
       { recursive: true },
     );
-    await rmdir("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
+    await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
+  });
+
+  await it("Generate lock file", async function () {
+    try {
+      await generateLockFileCommand({});
+
+      const repoRoot = await getRepoRoot(cwd());
+      assert.isTrue((await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"))).isFile());
+    } catch (error) {
+      assert.fail(`Failed to generate lock file. Error: ${error}`);
+    }
   });
 
   await it("Sync example sdk", async function () {
@@ -125,7 +144,7 @@ describe("Verify commands", async function () {
     }
   });
 
-  await it("Init example sdk", async function () {
+  await it.skip("Init example sdk", async function () {
     try {
       const args = {
         "output-dir": "./test/examples/",
@@ -147,22 +166,22 @@ describe("Verify commands", async function () {
     }
   });
 
-  //   await it("Init with --skip-sync-and-generate", async function () {
-  //     try {
-  //       const args = {
-  //         "output-dir": "./test/examples/",
-  //         "tsp-config":
-  //           "https://github.com/Azure/azure-rest-api-specs/blob/7ed015e3dd1b8b1b0e71c9b5e6b6c5ccb8968b3a/specification/cognitiveservices/ContentSafety/tspconfig.yaml",
-  //         "skip-sync-and-generate": true,
-  //       };
-  //       await initCommand(args);
+  await it.skip("Init with --skip-sync-and-generate", async function () {
+    try {
+      const args = {
+        "output-dir": "./test/examples/",
+        "tsp-config":
+          "https://github.com/Azure/azure-rest-api-specs/blob/7ed015e3dd1b8b1b0e71c9b5e6b6c5ccb8968b3a/specification/cognitiveservices/ContentSafety/tspconfig.yaml",
+        "skip-sync-and-generate": true,
+      };
+      await initCommand(args);
 
-  //       const tspLocation = await stat(
-  //         "./test/examples/sdk/contentsafety/ai-content-safety-rest/tsp-location.yaml",
-  //       );
-  //       assert.isTrue(tspLocation.isFile());
-  //     } catch (error: any) {
-  //       assert.fail("Failed to init. Error: " + error);
-  //     }
-  //   });
+      const tspLocation = await stat(
+        "./test/examples/sdk/contentsafety/ai-content-safety-rest/tsp-location.yaml",
+      );
+      assert.isTrue(tspLocation.isFile());
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
 });

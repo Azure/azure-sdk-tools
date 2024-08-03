@@ -225,7 +225,7 @@ async function generate({
   if (process.env['TSPCLIENT_FORCE_INSTALL']?.toLowerCase() === "true") {
     args.push("--force");
   }
-  await npmCommand(srcDir, args);
+  await npmCommand(tempRoot, args);
   await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {

@@ -386,15 +386,14 @@ export async function convertCommand(argv: any): Promise<void> {
 
 export async function generateLockFileCommand(argv: any) {
   const outputDir = argv["output-dir"];
-  let rootUrl = resolvePath(outputDir);
-  const repoRoot = await getRepoRoot(rootUrl);
+  const repoRoot = await getRepoRoot(outputDir);
 
   Logger.info("Generating lock file...");
   const args: string[] = ["install"];
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
     args.push("--force");
   }
-  const tempRoot = await createTempDirectory(rootUrl);
+  const tempRoot = await createTempDirectory(outputDir);
   await cp(joinPaths(repoRoot, "eng", "emitter-package.json"), joinPaths(tempRoot, "package.json"));
   await npmCommand(tempRoot, args);
   const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));

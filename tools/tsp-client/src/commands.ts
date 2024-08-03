@@ -15,6 +15,7 @@ import {
   getAdditionalDirectoryName,
   getServiceDir,
   makeSparseSpecDir,
+  getPathToDependency,
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
@@ -213,14 +214,14 @@ export async function syncCommand(argv: any) {
 
   try {
     const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
-    await cp(emitterLockPath, joinPaths(srcDir, "package-lock.json"), { recursive: true });
+    await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });
   } catch (err) {
     Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
     Logger.debug("Will attempt look for emitter-package.json...");
   }
   try {
     const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
-    await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
+    await cp(emitterPath, joinPaths(tempRoot, "package.json"), { recursive: true });
   } catch (err) {
     throw new Error(
       `Ran into the following error: ${err}\nTo continue using tsp-client, please provide a valid emitter-package.json file in the eng/ directory of the repository.`,
@@ -233,10 +234,8 @@ export async function generateCommand(argv: any) {
   const emitterOptions = argv["emitter-options"];
   const saveInputs = argv["save-inputs"];
 
-  let rootUrl = resolvePath(outputDir);
-
-  const tempRoot = joinPaths(rootUrl, "TempTypeSpecFiles");
-  const tspLocation = await readTspLocation(rootUrl);
+  const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
+  const tspLocation = await readTspLocation(outputDir);
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   if (!projectName) {
@@ -244,7 +243,7 @@ export async function generateCommand(argv: any) {
   }
   const srcDir = joinPaths(tempRoot, projectName);
   const emitter = await getEmitterFromRepoConfig(
-    joinPaths(await getRepoRoot(rootUrl), "eng", "emitter-package.json"),
+    joinPaths(await getRepoRoot(outputDir), "eng", "emitter-package.json"),
   );
   if (!emitter) {
     throw new Error("emitter is undefined");
@@ -255,7 +254,7 @@ export async function generateCommand(argv: any) {
   const args: string[] = [];
   try {
     // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
-    await stat(joinPaths(srcDir, "package-lock.json"));
+    await stat(joinPaths(tempRoot, "package-lock.json"));
     args.push("ci");
   } catch (err) {
     // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
@@ -263,14 +262,14 @@ export async function generateCommand(argv: any) {
   }
   // NOTE: This environment variable should be used for developer testing only. A force
   // install may ignore any conflicting dependencies and result in unexpected behavior.
-  dotenvConfig({ path: resolve(await getRepoRoot(rootUrl), ".env") });
+  dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
     args.push("--force");
   }
   await npmCommand(srcDir, args);
   await compileTsp({
     emitterPackage: emitter,
-    outputPath: rootUrl,
+    outputPath: outputDir,
     resolvedMainFilePath,
     saveInputs: saveInputs,
     additionalEmitterOptions: emitterOptions,
@@ -324,20 +323,33 @@ export async function convertCommand(argv: any): Promise<void> {
     readme = normalizePath(resolve(readme));
   }
 
+  // Resolve autorest dependency
+  const autorestPath = await getPathToDependency("autorest");
+  const autorestPackageJson = JSON.parse(
+    await readFile(joinPaths(autorestPath, "package.json"), "utf8"),
+  );
+  const autorestBinPath = joinPaths(autorestPath, autorestPackageJson["bin"]["autorest"]);
+
+  const autorestOpenApiToTypeSpecPath = await getPathToDependency("@autorest/openapi-to-typespec");
+
+  // Build the command to convert swagger to typespec
   const args = [
-    "autorest",
+    autorestBinPath,
     "--openapi-to-typespec",
     "--csharp=false",
     `--output-folder="${outputDir}"`,
-    "--use=@autorest/openapi-to-typespec",
+    `--use="${autorestOpenApiToTypeSpecPath}"`,
     `"${readme}"`,
   ];
+
+  // If the swagger is an ARM swagger, generate ARM metadata
   if (arm) {
+    const autorestCsharpPath = await getPathToDependency("@autorest/csharp");
     const generateMetadataCmd = [
-      "autorest",
+      autorestBinPath,
       "--csharp",
       "--max-memory-size=8192",
-      '--use="https://aka.ms/azsdk/openapi-to-typespec-csharp"',
+      `--use="${autorestCsharpPath}"`,
       `--output-folder="${outputDir}"`,
       "--mgmt-debug.only-generate-metadata",
       "--azure-arm",

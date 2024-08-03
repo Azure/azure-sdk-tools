@@ -7,7 +7,7 @@ import {
   readTspLocation,
   removeDirectory,
 } from "./fs.js";
-import { cp, mkdir, readFile, rename, stat, unlink } from "fs/promises";
+import { cp, mkdir, readFile, rename, stat, unlink, writeFile } from "fs/promises";
 import { npmCommand, nodeCommand } from "./npm.js";
 import { compileTsp, discoverMainFile, resolveTspConfigUrl, TspLocation } from "./typespec.js";
 import {
@@ -21,6 +21,7 @@ import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
 import { resolve } from "node:path";
 import { doesFileExist } from "./network.js";
+import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
 export async function initCommand(argv: any) {
   let outputDir = argv["output-dir"];
@@ -405,4 +406,19 @@ export async function generateLockFileCommand(argv: any) {
   }
   await removeDirectory(tempRoot);
   Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
+}
+
+export async function sortSwaggerCommand(argv: any): Promise<void> {
+  Logger.info("Sorting a swagger content...");
+  let swaggerFile = argv["swagger-file"];
+  if (swaggerFile === undefined || !(await doesFileExist(swaggerFile))) {
+    throw new Error(`Swagger file not found: ${swaggerFile ?? "[Not Specified]"}`);
+  }
+  swaggerFile = normalizePath(resolve(swaggerFile));
+
+  const content = await readFile(swaggerFile);
+  const document = JSON.parse(content.toString());
+  const sorted = sortOpenAPIDocument(document);
+  await writeFile(swaggerFile, JSON.stringify(sorted, null, 2));
+  Logger.info(`${swaggerFile} has been sorted.`);
 }

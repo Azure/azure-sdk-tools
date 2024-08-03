@@ -6,6 +6,7 @@ import {
   generateCommand,
   generateLockFileCommand,
   initCommand,
+  sortSwaggerCommand,
   syncCommand,
   updateCommand,
 } from "./commands.js";
@@ -202,6 +203,19 @@ const parser = yargs(hideBin(process.argv))
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);
       await generateLockFileCommand(argv);
+    },
+  )
+  .command(
+    "sort-swagger <swagger-file>",
+    "Sort a swagger file to be the same content order with TypeSpec generated swagger",
+    (yargs: any) => {
+      return yargs.positional("swagger-file", {
+        type: "string",
+        description: "Path to the swagger file",
+      });
+    },
+    async (argv: any) => {
+      await sortSwaggerCommand(argv);
     },
   )
   .demandCommand(1, "Please provide a command.")

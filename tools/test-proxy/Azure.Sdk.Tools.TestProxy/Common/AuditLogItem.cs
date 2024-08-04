@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Concurrent;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

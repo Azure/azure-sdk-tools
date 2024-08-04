@@ -416,7 +416,7 @@ namespace Azure.Sdk.Tools.TestProxy
             DebugLogger.LogTrace($"PLAYBACK START BEGIN {id}.");
 
             ModifiableRecordSession session = new ModifiableRecordSession(SanitizerRegistry, id);
-            var auditEntry = new AuditLogItem(id, $"Starting playback for path {assetsPath}, which will return recordingId {id}.");
+            var auditEntry = new AuditLogItem(id, $"Starting playback for path {sessionId}, which will return recordingId {id}.");
 
             if (mode == RecordingType.InMemory)
             {

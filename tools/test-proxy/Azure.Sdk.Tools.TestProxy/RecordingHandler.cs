@@ -16,11 +16,13 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -996,6 +998,47 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             return await SanitizerRegistry.Unregister(sanitizerId);
+        }
+
+
+        public async Task<List<string>> RegisterSanitizers(List<RecordedTestSanitizer> sanitizers, string recordingId = null)
+        {
+            var registrations = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(recordingId))
+            {
+                var session = GetActiveSession(recordingId);
+
+                await session.Session.EntryLock.WaitAsync();
+                try
+                {
+                    foreach (var sanitizer in sanitizers)
+                    {
+                        session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting registration of sanitizer {sanitizer.GetType()}"));
+                        await SanitizerRegistry.Register(session, sanitizer, shouldLock: false);
+                    }
+                }
+                finally
+                {
+                    session.Session.EntryLock.Release();
+                }
+            }
+            else
+            {
+                await SanitizerRegistry.SessionSanitizerLock.WaitAsync();
+                try { 
+                    foreach (var sanitizer in sanitizers)
+                    {
+                        registrations.Add(await SanitizerRegistry.Register(sanitizer, shouldLock: false));
+                    }
+                }
+                finally
+                {
+                    SanitizerRegistry.SessionSanitizerLock.Release();
+                }
+            }
+
+            return registrations;
         }
 
         public async Task<string> RegisterSanitizer(RecordedTestSanitizer sanitizer, string recordingId = null)

@@ -816,14 +816,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Ensuring that session level sanitizers can be identified internally
         /// </summary>
-        /// <param name="sanitizer"></param>
+        /// <param name="sanitizer">The sanitizer being registered</param>
+        /// <param name="shouldLock"></param>
         /// <returns>The Id of the newly registered sanitizer.</returns>
         /// <exception cref="HttpException"></exception>
-        public async Task<string> Register(RecordedTestSanitizer sanitizer)
+        public async Task<string> Register(RecordedTestSanitizer sanitizer, bool shouldLock = true)
         {
             var strCurrent = IdFactory.GetNextId().ToString();
 
-            await SessionSanitizerLock.WaitAsync();
+            if (shouldLock)
+            {
+                await SessionSanitizerLock.WaitAsync();
+            }
+
             try
             {
                 if (_register(sanitizer, strCurrent))
@@ -834,7 +839,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             finally
             {
-                SessionSanitizerLock.Release();
+                if (shouldLock)
+                {
+                    SessionSanitizerLock.Release();
+                }
             }
             throw new HttpException(System.Net.HttpStatusCode.InternalServerError, $"Unable to register global sanitizer id \"{strCurrent}\" with value '{JsonSerializer.Serialize(sanitizer)}'");
         }
@@ -846,13 +854,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="sanitizer"></param>
         /// <returns>The Id of the newly registered sanitizer.</returns>
         /// <exception cref="HttpException"></exception>
-        public async Task<string> Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
+        public async Task<string> Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer, bool shouldLock = true)
         {
             var strCurrent = IdFactory.GetNextId().ToString();
 
             session.AuditLog.Enqueue(new AuditLogItem(session.SessionId, $"Starting registration of sanitizerId {strCurrent}"));
 
-            await SessionSanitizerLock.WaitAsync();
+            if(shouldLock)
+            {
+                await session.Session.EntryLock.WaitAsync();
+            }
             try
             {
 
@@ -866,7 +877,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
             finally
             {
-                SessionSanitizerLock.Release();
+                if (shouldLock)
+                {
+                    session.Session.EntryLock.Release();
+                }
             }
 
             session.AuditLog.Enqueue(new AuditLogItem(session.SessionId, $"Finished registration of sanitizerId {strCurrent}"));

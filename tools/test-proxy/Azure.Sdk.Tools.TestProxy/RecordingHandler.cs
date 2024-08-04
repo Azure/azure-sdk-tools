@@ -416,6 +416,7 @@ namespace Azure.Sdk.Tools.TestProxy
             DebugLogger.LogTrace($"PLAYBACK START BEGIN {id}.");
 
             ModifiableRecordSession session = new ModifiableRecordSession(SanitizerRegistry, id);
+            session.AuditLog.Enqueue(new AuditLogItem(id, $"Starting playback for path {assetsPath}, which will return recordingId {id}."));
 
             if (mode == RecordingType.InMemory)
             {
@@ -471,6 +472,8 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
+
+            session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Stopping playback for {recordingId}."));
 
             if (!AuditSessions.TryAdd(recordingId, session.AuditLog))
             {

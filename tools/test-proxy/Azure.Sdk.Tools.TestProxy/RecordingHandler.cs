@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -80,6 +81,48 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public readonly ConcurrentDictionary<string, ModifiableRecordSession> PlaybackSessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
+
+        // as sessions are popped off, 
+        public readonly ConcurrentDictionary<string, ConcurrentQueue<AuditLogItem>> AuditSessions
+            = new ConcurrentDictionary<string, ConcurrentQueue<AuditLogItem>>();
+
+
+        /// <summary>
+        /// This exists to grab any sessions that might be ongoing. I don't have any evidence that sessions are being left behind, but
+        /// we have to have this to be certain!
+        /// </summary>
+        /// <returns></returns>
+        public List<ConcurrentQueue<AuditLogItem>> RetrieveOngoingAuditLogs()
+        {
+            List<ConcurrentQueue<AuditLogItem>> results = new List<ConcurrentQueue<AuditLogItem>>();
+
+            if (PlaybackSessions.Keys.Any())
+            {
+                foreach(var value in PlaybackSessions.Values)
+                {
+                    results.Add(value.AuditLog);
+                }
+            }
+
+            if (RecordingSessions.Keys.Any())
+            {
+                foreach (var value in RecordingSessions.Values)
+                {
+                    results.Add(value.AuditLog);
+                }
+            }
+
+            if (InMemorySessions.Keys.Any())
+            {
+                foreach (var value in InMemorySessions.Values)
+                {
+                    results.Add(value.AuditLog);
+                }
+            }
+
+            return results;
+        }
+
 
         public RecordingHandler(string targetDirectory, IAssetsStore store = null, StoreResolver storeResolver = null)
         {
@@ -429,6 +472,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
+            if (!AuditSessions.TryAdd(recordingId, session.AuditLog))
+            {
+                DebugLogger.LogError($"Unable to save audit log for {recordingId}");
+            }
+
             if (!String.IsNullOrEmpty(session.SourceRecordingId) && purgeMemoryStore)
             {
                 if (!InMemorySessions.TryGetValue(session.SourceRecordingId, out var inMemorySession))
@@ -455,6 +503,9 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
+            
+            RecordEntry nobodyEntry = RecordingHandler.CreateNoBodyRecordEntry(incomingRequest);
+            session.AuditLog.Enqueue(new AuditLogItem(recordingId, nobodyEntry.RequestUri, nobodyEntry.RequestMethod.ToString()));
 
             var sanitizers = await SanitizerRegistry.GetSanitizers(session);
 
@@ -466,6 +517,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     if (!session.IsSanitized)
                     {
+                        session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"In 'one-time' sanitization for {recordingId}. I am applying {sanitizers.Count} sanitizers."));
                         await session.Session.Sanitize(sanitizers, false);
                         session.IsSanitized = true;
                     }
@@ -473,6 +525,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 finally
                 {
                     session.Session.EntryLock.Release();
+                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Finished 'one-time' sanitization for {recordingId}. I applied {sanitizers.Count} sanitizers."));
                 }
             }
 
@@ -508,7 +561,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         outgoingResponse.ContentLength = bodyData.Length;
                     }
-
+                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Beginning body write for {recordingId}."));
                     await WriteBodyBytes(bodyData, session.PlaybackResponseTime, outgoingResponse);
                 }
 
@@ -526,6 +579,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 if (remove)
                 {
+                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Now popping entry {match.RequestUri} from entries for {recordingId}."));
                     await session.Session.Remove(match, shouldLock: false);
                 }
             }
@@ -931,6 +985,9 @@ namespace Azure.Sdk.Tools.TestProxy
             if (!string.IsNullOrWhiteSpace(recordingId))
             {
                 var session = GetActiveSession(recordingId);
+
+                session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting unregister of {sanitizerId}."));
+
                 return await SanitizerRegistry.Unregister(sanitizerId, session);
             }
 
@@ -943,6 +1000,7 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 var session = GetActiveSession(recordingId);
 
+                session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Starting registration of sanitizer {sanitizer.GetType()}"));
                 return await SanitizerRegistry.Register(session, sanitizer);
             }
 

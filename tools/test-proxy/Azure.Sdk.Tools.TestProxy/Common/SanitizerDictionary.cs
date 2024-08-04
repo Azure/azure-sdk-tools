@@ -850,6 +850,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             var strCurrent = IdFactory.GetNextId().ToString();
 
+            session.AuditLog.Enqueue(new AuditLogItem(session.SessionId, $"Starting registration of sanitizerId {strCurrent}"));
+
             await SessionSanitizerLock.WaitAsync();
             try
             {
@@ -867,6 +869,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 SessionSanitizerLock.Release();
             }
 
+            session.AuditLog.Enqueue(new AuditLogItem(session.SessionId, $"Finished registration of sanitizerId {strCurrent}"));
             return string.Empty;
         }
 
@@ -917,6 +920,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 session.Session.EntryLock.Release();
             }
+            session.AuditLog.Enqueue(new AuditLogItem(session.SessionId, $"Starting unregister of {sanitizerId}."));
 
             return string.Empty;
         }

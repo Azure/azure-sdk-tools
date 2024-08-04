@@ -416,7 +416,7 @@ namespace Azure.Sdk.Tools.TestProxy
             DebugLogger.LogTrace($"PLAYBACK START BEGIN {id}.");
 
             ModifiableRecordSession session = new ModifiableRecordSession(SanitizerRegistry, id);
-            session.AuditLog.Enqueue(new AuditLogItem(id, $"Starting playback for path {assetsPath}, which will return recordingId {id}."));
+            var auditEntry = new AuditLogItem(id, $"Starting playback for path {assetsPath}, which will return recordingId {id}.");
 
             if (mode == RecordingType.InMemory)
             {
@@ -443,6 +443,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     Path = path
                 };
+                session.AuditLog.Enqueue(auditEntry);
             }
 
             if (!PlaybackSessions.TryAdd(id, session))

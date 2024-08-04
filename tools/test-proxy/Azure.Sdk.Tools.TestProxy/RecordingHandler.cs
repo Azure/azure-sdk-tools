@@ -583,7 +583,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 if (remove)
                 {
-                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Now popping entry {match.RequestUri} from entries for {recordingId}."));
+                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Now popping entry {entry.RequestMethod} {match.RequestUri} from entries for {recordingId}."));
                     await session.Session.Remove(match, shouldLock: false);
                 }
             }

@@ -4840,7 +4840,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_error_level_not_logged(self):
         """Check that any exceptions raised aren't logged at error level in the exception block."""
-        # works with other logging levels too (e.g. warning, info etc.)
+        # works with other logging levels too (e.g. warning and info)
 
         exception_node = astroid.extract_node('''
         try:

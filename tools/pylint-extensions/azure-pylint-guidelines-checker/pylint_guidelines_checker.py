@@ -2721,6 +2721,16 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         ),
     }
 
+    def visit_functiondef(self, node):
+        for i in node.body:
+            if isinstance(i, astroid.Try):
+                self.visit_try(i)
+
+    def visit_classdef(self, node):
+        for func in node.body:
+            if isinstance(func, astroid.FunctionDef):
+                self.visit_functiondef(node)
+
     def visit_try(self, node):
         """Check that errors aren't logged in exception blocks.
            Go through each line in the exception block and make sure it hasn't been logged if exception is raised.

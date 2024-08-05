@@ -851,6 +851,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="session"></param>
         /// <param name="sanitizer"></param>
+        /// <param name="shouldLock"></param>
         /// <returns>The Id of the newly registered sanitizer.</returns>
         /// <exception cref="HttpException"></exception>
         public async Task<string> Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer, bool shouldLock = true)

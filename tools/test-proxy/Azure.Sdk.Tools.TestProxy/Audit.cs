@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpGet]
-        public async Task GetAuditLogs()
+        public async Task Logs()
         {
 
             var allAuditSessions = _recordingHandler.RetrieveOngoingAuditLogs();
@@ -47,47 +47,6 @@ namespace Azure.Sdk.Tools.TestProxy
             Response.ContentType = "text/plain";
 
             await Response.WriteAsync(stringBuilder.ToString());
-        }
-
-
-        [HttpPost]
-        public async Task Push([FromBody()] IDictionary<string, object> options = null)
-        {
-            DebugLogger.LogAdminRequestDetails(_logger, Request);
-
-            var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
-
-            await _recordingHandler.Store.Push(pathToAssets);
-        }
-
-        [HttpPost]
-        [AllowEmptyBody]
-        public async Task Stop([FromBody()] IDictionary<string, string> variables = null)
-        {
-            string id = RecordingHandler.GetHeader(Request, "x-recording-id");
-            bool save = true;
-            EntryRecordMode mode = RecordingHandler.GetRecordMode(Request);
-
-            if (mode != EntryRecordMode.Record && mode != EntryRecordMode.DontRecord)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, "When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.");
-            }
-
-            if (mode == EntryRecordMode.DontRecord)
-            {
-                save = false;
-            }
-
-            DebugLogger.LogAdminRequestDetails(_logger, Request);
-
-            await _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
-        }
-
-        public async Task HandleRequest()
-        {
-            string id = RecordingHandler.GetHeader(Request, "x-recording-id");
-
-            await _recordingHandler.HandleRecordRequestAsync(id, Request, Response);
         }
     }
 }

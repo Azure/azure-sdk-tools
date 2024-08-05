@@ -20,6 +20,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -155,6 +156,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 return;
             }
 
+
+            recordingSession.AuditLog.Enqueue(new AuditLogItem(sessionId, $"Stopping recording for {sessionId}."));
+
             var sanitizers = await SanitizerRegistry.GetSanitizers(recordingSession);
             await recordingSession.Session.Sanitize(sanitizers);
 
@@ -214,6 +218,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             var id = Guid.NewGuid().ToString();
             DebugLogger.LogTrace($"RECORD START BEGIN {id}.");
+            var auditEntry = new AuditLogItem(id, $"Starting record for path {sessionId}, which will return recordingId {id}.");
 
             await RestoreAssetsJson(assetsJson, false);
 
@@ -223,10 +228,13 @@ namespace Azure.Sdk.Tools.TestProxy
                 Client = null
             };
 
+            session.AuditLog.Enqueue(auditEntry);
+
             if (!RecordingSessions.TryAdd(id, session))
             {
                 throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new recording session under id {id}.");
             }
+
 
             DebugLogger.LogTrace($"RECORD START END {id}.");
             outgoingResponse.Headers.Add("x-recording-id", id);
@@ -238,6 +246,9 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
+
+            RecordEntry noBodyEntry = RecordingHandler.CreateNoBodyRecordEntry(incomingRequest);
+            session.AuditLog.Enqueue(new AuditLogItem(recordingId, noBodyEntry.RequestUri, noBodyEntry.RequestMethod.ToString()));
 
             var sanitizers = await SanitizerRegistry.GetSanitizers(session);
 
@@ -292,14 +303,16 @@ namespace Azure.Sdk.Tools.TestProxy
             if (mode != EntryRecordMode.DontRecord)
             {
                 await session.Session.EntryLock.WaitAsync();
-                try 
+                try
                 {
+                    session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Lock obtained. Adding entry {entry.RequestMethod} {entry.RequestUri} to session {recordingId}."));
                     session.Session.Entries.Add(entry);
                 }
                 finally
                 {
                     session.Session.EntryLock.Release();
                 }
+
 
                 Interlocked.Increment(ref Startup.RequestsRecorded);
             }
@@ -518,8 +531,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
             
-            RecordEntry nobodyEntry = RecordingHandler.CreateNoBodyRecordEntry(incomingRequest);
-            session.AuditLog.Enqueue(new AuditLogItem(recordingId, nobodyEntry.RequestUri, nobodyEntry.RequestMethod.ToString()));
+            RecordEntry noBodyEntry = RecordingHandler.CreateNoBodyRecordEntry(incomingRequest);
+            session.AuditLog.Enqueue(new AuditLogItem(recordingId, noBodyEntry.RequestUri, noBodyEntry.RequestMethod.ToString()));
 
             var sanitizers = await SanitizerRegistry.GetSanitizers(session);
 

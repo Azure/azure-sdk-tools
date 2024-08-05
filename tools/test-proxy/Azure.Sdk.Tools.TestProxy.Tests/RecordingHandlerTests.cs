@@ -273,7 +273,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await recordingHandler.StartPlaybackAsync(key, httpContext.Response, Common.RecordingType.InMemory);
             var playbackSession = httpContext.Response.Headers["x-recording-id"];
-            recordingHandler.StopPlayback(playbackSession, true);
+            await recordingHandler.StopPlayback(playbackSession, true);
 
             Assert.True(0 == recordingHandler.InMemorySessions.Count);
         }
@@ -287,7 +287,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await recordingHandler.StartPlaybackAsync(key, httpContext.Response, Common.RecordingType.InMemory);
             var playbackSession = httpContext.Response.Headers["x-recording-id"];
-            recordingHandler.StopPlayback(playbackSession, false);
+            await recordingHandler.StopPlayback(playbackSession, false);
 
             Assert.True(1 == recordingHandler.InMemorySessions.Count);
         }

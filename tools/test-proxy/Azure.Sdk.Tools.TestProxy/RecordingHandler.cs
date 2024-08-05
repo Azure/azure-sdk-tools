@@ -462,42 +462,58 @@ namespace Azure.Sdk.Tools.TestProxy
             DebugLogger.LogTrace($"PLAYBACK START END {id}.");
         }
 
-        public void StopPlayback(string recordingId, bool purgeMemoryStore = false)
+        public async Task StopPlayback(string recordingId, bool purgeMemoryStore = false)
         {
 
             var id = Guid.NewGuid().ToString();
             DebugLogger.LogTrace($"PLAYBACK STOP BEGIN {id}.");
 
-            if (!PlaybackSessions.TryRemove(recordingId, out var session))
+
+            // obtain the playbacksession so we can get grab a lock on it. if there is a streaming response we will HAVE TO WAIT for that to complete
+            // before we finish
+            if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
-            session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Stopping playback for {recordingId}."));
+            await session.Session.EntryLock.WaitAsync();
 
-            if (!AuditSessions.TryAdd(recordingId, session.AuditLog))
+            try
             {
-                DebugLogger.LogError($"Unable to save audit log for {recordingId}");
-            }
-
-            if (!String.IsNullOrEmpty(session.SourceRecordingId) && purgeMemoryStore)
-            {
-                if (!InMemorySessions.TryGetValue(session.SourceRecordingId, out var inMemorySession))
+                if (!PlaybackSessions.TryRemove(recordingId, out var removedSession))
                 {
-                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to retrieve in-memory session {session.SourceRecordingId}.");
+                    throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
+                }
+                session.AuditLog.Enqueue(new AuditLogItem(recordingId, $"Lock obtained, stopping playback for {recordingId}."));
+
+                if (!AuditSessions.TryAdd(recordingId, session.AuditLog))
+                {
+                    DebugLogger.LogError($"Unable to save audit log for {recordingId}");
                 }
 
-                Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);
-
-                if (!InMemorySessions.TryRemove(session.SourceRecordingId, out _))
+                if (!String.IsNullOrEmpty(session.SourceRecordingId) && purgeMemoryStore)
                 {
-                    throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to remove in-memory session {session.SourceRecordingId}.");
+                    if (!InMemorySessions.TryGetValue(session.SourceRecordingId, out var inMemorySession))
+                    {
+                        throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to retrieve in-memory session {session.SourceRecordingId}.");
+                    }
+
+                    Interlocked.Add(ref Startup.RequestsRecorded, -1 * inMemorySession.Session.Entries.Count);
+
+                    if (!InMemorySessions.TryRemove(session.SourceRecordingId, out _))
+                    {
+                        throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to remove in-memory session {session.SourceRecordingId}.");
+                    }
+
+                    GC.Collect();
                 }
 
-                GC.Collect();
+                DebugLogger.LogTrace($"PLAYBACK STOP END {id}.");
             }
-
-            DebugLogger.LogTrace($"PLAYBACK STOP END {id}.");
+            finally
+            {
+                session.Session.EntryLock.Release();
+            }
         }
 
         public async Task HandlePlaybackRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)

@@ -15,7 +15,7 @@ import { buildVersionProjections, getVersion } from "@typespec/versioning";
 import path from "path";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";
-import { ApiViewDocument } from "./apiview-document.js";
+import { CodeFile } from "./models/code-file.js";
 
 export interface ResolvedApiViewEmitterOptions {
   emitterOutputDir: string;
@@ -194,9 +194,10 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         await program.host.mkdirp(outputFolder);
         const outputFile = options.outputFile ?? `${namespaceString}-apiview.json`;
         const outputPath = resolvePath(outputFolder, outputFile);
+        const serialized = new CodeFile(apiview).serialize();
         await emitFile(program, {
           path: outputPath,
-          content: `${new ApiViewDocument(apiview).asString()}\n`,
+          content: JSON.stringify(serialized, null, 2),
         });
       }
     }

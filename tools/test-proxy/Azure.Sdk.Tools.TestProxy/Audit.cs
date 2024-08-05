@@ -19,13 +19,11 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Audit : ControllerBase
     {
-        private readonly ILogger _logger;
         private readonly RecordingHandler _recordingHandler;
 
-        public Audit(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
+        public Audit(RecordingHandler recordingHandler)
         {
             _recordingHandler = recordingHandler;
-            _logger = loggerFactory.CreateLogger<Record>();
         }
 
         [HttpGet]

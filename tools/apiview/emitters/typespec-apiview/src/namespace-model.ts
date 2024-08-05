@@ -19,8 +19,8 @@ import {
 } from "@typespec/compiler";
 import { caseInsensitiveSort, findNodes, generateId } from "./helpers.js";
 import { ApiView } from "./apiview.js";
-import { TokenLocation } from "./structured-token.js";
-import { NodeKind, NodeTag } from "./api-tree-node.js";
+import { TokenLocation } from "./models/structured-token.js";
+import { ApiTreeNodeKind } from "./models/api-tree-node.js";
 
 export class NamespaceModel {
   kind = SyntaxKind.NamespaceStatement;
@@ -133,7 +133,7 @@ export class NamespaceModel {
   }
 
   tokenize(apiview: ApiView) {
-    const treeNode = apiview.node(apiview, this.name, this.name, NodeKind.namespace);
+    const treeNode = apiview.node(apiview, this.name, this.name, ApiTreeNodeKind.namespace);
 
     if (this.node.kind === SyntaxKind.NamespaceStatement) {
       treeNode.tokenizeDecoratorsAndDirectives(this.node.decorators, this.node.directives, false);
@@ -148,25 +148,25 @@ export class NamespaceModel {
     }
     for (const node of this.operations.values()) {
       const nodeId = generateId(node)!;
-      const subNode = apiview.node(treeNode, nodeId, nodeId, NodeKind.method);
+      const subNode = apiview.node(treeNode, nodeId, nodeId, ApiTreeNodeKind.method);
       subNode.tokenize(node);
       subNode.blankLines(1);
     }
     for (const node of this.resources.values()) {
       const nodeId = generateId(node)!;
-      const subNode = apiview.node(treeNode, nodeId, nodeId, NodeKind.class);
+      const subNode = apiview.node(treeNode, nodeId, nodeId, ApiTreeNodeKind.class);
       subNode.tokenize(node);
       subNode.blankLines(1);
     }
     for (const node of this.models.values()) {
       const nodeId = generateId(node)!;
-      const subNode = apiview.node(treeNode, nodeId, nodeId, NodeKind.class);
+      const subNode = apiview.node(treeNode, nodeId, nodeId, ApiTreeNodeKind.class);
       subNode.tokenize(node);
       subNode.blankLines(1);
     }
     for (const node of this.aliases.values()) {
       const nodeId = generateId(node)!;
-      const subNode = apiview.node(treeNode, nodeId, nodeId, NodeKind.type);
+      const subNode = apiview.node(treeNode, nodeId, nodeId, ApiTreeNodeKind.type);
       subNode.tokenize(node);
       subNode.punctuation(";");
       subNode.blankLines(1);

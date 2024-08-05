@@ -1,24 +1,25 @@
 import { getNamespaceFullName, Namespace, navigateProgram, Program } from "@typespec/compiler";
-import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
+import { CodeDiagnostic, CodeDiagnosticLevel } from "./models/code-diagnostic.js";
 import { NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
-import { ApiTreeNode, NodeKind, NodeOptions, NodeTag } from "./api-tree-node.js";
+import { ApiTreeNode, ApiTreeNodeKind, ApiTreeNodeOptions, NodeTag } from "./models/api-tree-node.js";
+import { CodeFile } from "./models/code-file.js";
 
 export class ApiView {
   name: string;
   packageName: string;
+  packageVersion: string;
   crossLanguagePackageId: string | undefined;
   nodes: ApiTreeNode[] = [];
-  diagnostics: ApiViewDiagnostic[] = [];
-  versionString: string;
+  diagnostics: CodeDiagnostic[] = [];
 
   typeDeclarations = new Set<string>();
   includeGlobalNamespace: boolean;
 
-  constructor(name: string, packageName: string, versionString?: string, includeGlobalNamespace?: boolean) {
+  constructor(name: string, packageName: string, packageVersion?: string, includeGlobalNamespace?: boolean) {
     this.name = name;
     this.packageName = packageName;
-    this.versionString = versionString ?? "";
+    this.packageVersion = packageVersion ?? "";
     this.includeGlobalNamespace = includeGlobalNamespace ?? false;
     this.crossLanguagePackageId = packageName;
   }
@@ -31,10 +32,11 @@ export class ApiView {
    * @param options options for node creation
    * @returns the created node
    */
-  node(parent: ApiTreeNode | ApiView, name: string, id: string, kind: NodeKind, options?: NodeOptions): ApiTreeNode {
+  node(parent: ApiTreeNode | ApiView, name: string, id: string, kind: ApiTreeNodeKind, options?: ApiTreeNodeOptions) {
     const child = new ApiTreeNode(name, id, kind, {
       tags: options?.tags,
-      properties: options?.properties,
+      iconName: options?.iconName,
+      crossLanguageDefinitionId: options?.crossLanguageDefinitionId,
     });
     if (parent instanceof ApiView) {
       parent.nodes.push(child);
@@ -43,7 +45,7 @@ export class ApiView {
     }
   }
 
-  child(parent: ApiTreeNode | ApiViewDocument, name: string, id: string, tags?: Tag[]) {
+  child(parent: ApiTreeNode | CodeFile, name: string, id: string, tags?: Tag[]) {
     const child: ApiTreeNode = {
       _kind: "ApiTreeNode",
       name: name,
@@ -217,8 +219,8 @@ export class ApiView {
     });
   }
 
-  diagnostic(message: string, targetId: string, level: ApiViewDiagnosticLevel) {
-    this.diagnostics.push(new ApiViewDiagnostic(message, targetId, level));
+  diagnostic(message: string, targetId: string, level: CodeDiagnosticLevel) {
+    this.diagnostics.push(new CodeDiagnostic(message, targetId, level));
   }
 
   emit(program: Program) {

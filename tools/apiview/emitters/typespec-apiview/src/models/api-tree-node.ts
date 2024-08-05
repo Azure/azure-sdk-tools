@@ -36,71 +36,110 @@ import {
   UnionVariantNode,
   ValueOfExpressionNode,
 } from "@typespec/compiler";
-import { RenderClass, StructuredToken, TokenKind, TokenLocation, TokenOptions, TokenTag } from "./structured-token.js";
+import { StructuredToken, StructuredTokenKind, StructuredTokenRenderClass, StructuredTokenTag, TokenLocation, TokenOptions } from "./structured-token.js";
 import {
   getFullyQualifiedIdentifier,
   definitionIdFor,
   getRawText,
   generateId,
   buildTemplateString,
-} from "./helpers.js";
-import { NamespaceModel } from "./namespace-model.js";
-import { ApiView } from "./apiview.js";
+} from "../helpers.js";
+import { NamespaceModel } from "../namespace-model.js";
+import { ApiView } from "../apiview.js";
+import { ApiViewSerializable } from "../interface.js";
 
 const WHITESPACE = " ";
 
-/** Tags supported by APIView v2 */
-export enum NodeTag {
-  /** Show item as deprecated. */
-  deprecated,
-  /** Hide item from APIView. */
-  hidden,
-  /** Hide item from APIView Navigation. */
-  hideFromNav,
-  /** Ignore differences in this item when calculating diffs. */
-  skipDiff,
-}
-
 /** The kind values APIView supports for ApiTreeNodes. */
-export enum NodeKind {
-  assembly,
-  class,
-  delegate,
-  enum,
-  interface,
-  method,
-  namespace,
-  package,
-  struct,
-  type,
+export enum ApiTreeNodeKind {
+  assembly = "assembly",
+  class = "class",
+  delegate = "delegate",
+  enum = "enum",
+  interface = "interface",
+  method = "method",
+  namespace = "namespace",
+  package = "package",
+  struct = "struct",
+  type = "type",
 }
 
-/** Options when creating a new ApiTreeNode. */
-export interface NodeOptions {
-  tags?: NodeTag[];
-  properties?: Map<string, string>;
+/**
+ * Options when creating a new ApiTreeNode.
+ */
+export interface ApiTreeNodeOptions {
+  tags?: ApiTreeNodeTag[];
+  iconName?: string;
+  crossLanguageDefinitionId?: string;
+}
+
+/**
+ * Describes optional properties settable on an ApiTreeNode.
+ */
+class ApiTreeNodeProperties implements ApiViewSerializable {
+  iconName?: string;
+  crossLanguageDefinitionId?: string;
+
+  constructor(iconName?: string, crossLanguageDefinitionId?: string) {
+    this.iconName = iconName;
+    this.crossLanguageDefinitionId = crossLanguageDefinitionId;
+  }
+  
+  serialize(): object {
+    return {
+      IconName: this.iconName,
+      CrossLangDefId: this.crossLanguageDefinitionId,
+    }
+  }
+}
+
+/**
+ * Tags supported by APIView v2 ApiTreeNode.
+ */
+enum ApiTreeNodeTag {
+  /** Mark a token as deprecated. */
+  deprecated = "Deprecated",
+  /** Mark a node as hidden. */
+  hidden = "Hidden",
+  /** Indicate that a node should be omitted from the page navigation. */
+  hideFromNav = "HideFromNav",
+  /** Indicate that a node should not be used when computing a diff. */
+  skipDiff = "SkipDiff",
 }
 
 /** New-style structured APIView node. */
-export class ApiTreeNode {
+export class ApiTreeNode implements ApiViewSerializable {
   name: string;
   id: string;
-  kind: NodeKind;
-  tags?: Set<string>;
-  properties: Map<string, string>;
+  kind: ApiTreeNodeKind;
   topTokens: StructuredToken[];
   bottomTokens: StructuredToken[];
   children: ApiTreeNode[];
+  properties?: ApiTreeNodeProperties;
+  tags?: ApiTreeNodeTag[];
 
-  constructor(name: string, id: string, kind: NodeKind, options?: NodeOptions) {
+  constructor(name: string, id: string, kind: ApiTreeNodeKind, options?: ApiTreeNodeOptions) {
     this.name = name;
     this.id = id;
     this.kind = kind;
-    this.tags = new Set([...(options?.tags ?? []).toString()]);
-    this.properties = options?.properties ?? new Map<string, string>();
+    this.tags = options?.tags;
+    this.properties = new ApiTreeNodeProperties(options?.iconName, options?.crossLanguageDefinitionId);
     this.topTokens = [];
     this.bottomTokens = [];
     this.children = [];
+  }
+
+  serialize(): object {
+    return {
+      Name: this.name,
+      Id: this.id,
+      Kind: this.kind,
+      TopTokens: this.topTokens?.map((t) => t.serialize()),
+      BottomTokens: this.bottomTokens?.map((t) => t.serialize()),
+      Children: this.children?.map((c) => c.serialize()),
+      Properties: this.properties?.serialize(),
+      Tags: this.tags
+    }
   }
 
   /**
@@ -111,14 +150,18 @@ export class ApiTreeNode {
    * @param options options for node creation
    * @returns the created node
    */
-  node(parent: ApiTreeNode | ApiView, name: string, id: string, kind: NodeKind, options?: NodeOptions): ApiTreeNode {
+  node(parent: ApiTreeNode | ApiView, name: string, id: string, kind: ApiTreeNodeKind, options?: ApiTreeNodeOptions): ApiTreeNode {
     const child = new ApiTreeNode(name, id, kind, {
       tags: options?.tags,
-      properties: options?.properties,
+      iconName: options?.iconName,
+      crossLanguageDefinitionId: options?.crossLanguageDefinitionId,
     });
     if (parent instanceof ApiView) {
       parent.nodes.push(child);
     } else {
+      if (parent.children === undefined) {
+        parent.children = [];
+      }
       parent.children.push(child);
     }
     return child;
@@ -130,15 +173,8 @@ export class ApiTreeNode {
    * @param lineId an optional line id
    * @param options options you can set
    */
-  token(kind: TokenKind, options?: TokenOptions) {
-    const token: StructuredToken = {
-      kind: kind,
-      value: options?.value,
-      id: options?.lineId ?? "",
-      tags: new Set([...(options?.tags ?? []).toString()]),
-      properties: options?.properties ?? new Map<string, string>(),
-      renderClasses: new Set([...(options?.renderClasses ?? []).toString()]),
-    };
+  token(kind: StructuredTokenKind, options?: TokenOptions) {
+    const token = new StructuredToken(kind, options);
     const location = options?.location ?? TokenLocation.top;
     if (location === TokenLocation.top) {
       this.topTokens.push(token);
@@ -152,15 +188,15 @@ export class ApiTreeNode {
    * @param count number of spaces to add
    */
   whitespace(count: number = 1) {
-    this.topTokens.push(new StructuredToken(TokenKind.nonBreakingSpace, { value: WHITESPACE.repeat(count) }));
+    this.topTokens.push(new StructuredToken(StructuredTokenKind.nonBreakingSpace, { value: WHITESPACE.repeat(count) }));
   }
 
   /**
    * Ensures exactly one space.
    */
   space() {
-    if (this.topTokens[this.topTokens.length - 1]?.kind !== TokenKind.nonBreakingSpace) {
-      this.topTokens.push(new StructuredToken(TokenKind.nonBreakingSpace, { value: WHITESPACE }));
+    if (this.topTokens[this.topTokens.length - 1]?.kind !== StructuredTokenKind.nonBreakingSpace) {
+      this.topTokens.push(new StructuredToken(StructuredTokenKind.nonBreakingSpace, { value: WHITESPACE }));
     }
   }
 
@@ -168,7 +204,7 @@ export class ApiTreeNode {
    * Adds a newline token.
    */
   newline() {
-    this.topTokens.push(new StructuredToken(TokenKind.lineBreak));
+    this.topTokens.push(new StructuredToken(StructuredTokenKind.lineBreak));
   }
 
   /**
@@ -177,7 +213,7 @@ export class ApiTreeNode {
    */
   blankLines(count: number) {
     for (let i = 0; i < count; i++) {
-      this.token(TokenKind.lineBreak, { tags: [TokenTag.skipDiff], location: TokenLocation.bottom });
+      this.token(StructuredTokenKind.lineBreak, { tags: [StructuredTokenTag.skipDiff], location: TokenLocation.bottom });
     }
     // TODO: Erase this is no longer needed.
     // // count the number of trailing newlines (ignoring indent whitespace)
@@ -226,9 +262,9 @@ export class ApiTreeNode {
     if (prefixSpace) {
       this.space();
     }
-    this.token(TokenKind.content, {
+    this.token(StructuredTokenKind.content, {
       value: value,
-      renderClasses: [RenderClass.punctuation],
+      renderClasses: [StructuredTokenRenderClass.punctuation],
       location: location,
     });
     if (postfixSpace) {
@@ -241,9 +277,9 @@ export class ApiTreeNode {
    * @param text to render
    */
   text(text: string) {
-    this.token(TokenKind.content, {
+    this.token(StructuredTokenKind.content, {
       value: text,
-      renderClasses: [RenderClass.text],
+      renderClasses: [StructuredTokenRenderClass.text],
     });
   }
 
@@ -260,9 +296,9 @@ export class ApiTreeNode {
     if (prefixSpace) {
       this.space();
     }
-    this.token(TokenKind.content, {
+    this.token(StructuredTokenKind.content, {
       value: keyword,
-      renderClasses: [RenderClass.keyword],
+      renderClasses: [StructuredTokenRenderClass.keyword],
     });
     if (postfixSpace) {
       this.space();
@@ -282,9 +318,9 @@ export class ApiTreeNode {
       }
       this.typeDeclarations.add(typeId);
     }
-    this.token(TokenKind.content, {
+    this.token(StructuredTokenKind.content, {
       value: typeName,
-      renderClasses: [RenderClass.typeName],
+      renderClasses: [StructuredTokenRenderClass.typeName],
       lineId: typeId,
     });
   }
@@ -295,9 +331,9 @@ export class ApiTreeNode {
    * @param targetId the id of the target type for clickable linking
    */
   typeReference(typeName: string, targetId?: string) {
-    this.token(TokenKind.content, {
+    this.token(StructuredTokenKind.content, {
       value: typeName,
-      renderClasses: [RenderClass.typeName],
+      renderClasses: [StructuredTokenRenderClass.typeName],
       lineId: targetId,
     });
   }
@@ -307,9 +343,9 @@ export class ApiTreeNode {
    * @param name to render
    */
   member(name: string) {
-    this.token(TokenKind.content, {
+    this.token(StructuredTokenKind.content, {
       value: name,
-      renderClasses: [RenderClass.memberName],
+      renderClasses: [StructuredTokenRenderClass.memberName],
     });
   }
 
@@ -320,9 +356,9 @@ export class ApiTreeNode {
   stringLiteral(value: string) {
     const lines = value.split("\n");
     if (lines.length === 1) {
-      this.token(TokenKind.content, {
+      this.token(StructuredTokenKind.content, {
         value: `\u0022${value}\u0022`,
-        renderClasses: [RenderClass.stringLiteral],
+        renderClasses: [StructuredTokenRenderClass.stringLiteral],
       });
     } else {
       this.punctuation(`"""`);
@@ -341,8 +377,8 @@ export class ApiTreeNode {
    */
   literal(value: string) {
     this.topTokens.push(
-      new StructuredToken(TokenKind.content, {
-        renderClasses: [RenderClass.literal],
+      new StructuredToken(StructuredTokenKind.content, {
+        renderClasses: [StructuredTokenRenderClass.literal],
         value: value,
       }),
     );
@@ -357,7 +393,7 @@ export class ApiTreeNode {
       case SyntaxKind.AliasStatement:
         obj = node as AliasStatementNode;
         const aliasId = obj.id.sv;
-        const aliasNode = this.node(this, aliasId, aliasId, NodeKind.type);
+        const aliasNode = this.node(this, aliasId, aliasId, ApiTreeNodeKind.type);
         aliasNode.keyword("alias", { postfixSpace: true });
         aliasNode.typeDeclaration(aliasId, aliasId, true);
         aliasNode.tokenizeTemplateParameters(obj.templateParameters);
@@ -373,7 +409,7 @@ export class ApiTreeNode {
         obj = node as AugmentDecoratorStatementNode;
         const decoratorName = this.getNameForNode(obj.target);
         const decoratorNode = this.node(this, decoratorName, decoratorName, "decorator", {
-          tags: [NodeTag.hideFromNav],
+          tags: [ApiTreeNodeTag.hideFromNav],
         });
         decoratorNode.punctuation("@@");
         decoratorNode.tokenizeIdentifier(obj.target, "keyword");
@@ -422,7 +458,7 @@ export class ApiTreeNode {
       case SyntaxKind.DirectiveExpression:
         obj = node as DirectiveExpressionNode;
         const nodeId = generateId(node)!;
-        const directiveNode = this.node(this, nodeId, nodeId, "directive", { tags: [NodeTag.hideFromNav] });
+        const directiveNode = this.node(this, nodeId, nodeId, "directive", { tags: [ApiTreeNodeTag.hideFromNav] });
         directiveNode.keyword(`#${obj.target.sv}`, { postfixSpace: true });
         for (const arg of obj.arguments) {
           switch (arg.kind) {
@@ -734,7 +770,7 @@ export class ApiTreeNode {
 
   private tokenizeModelStatement(node: ModelStatementNode) {
     const nodeId = node.id.sv;
-    const modelNode = this.node(this, nodeId, nodeId, NodeKind.class);
+    const modelNode = this.node(this, nodeId, nodeId, ApiTreeNodeKind.class);
     modelNode.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     modelNode.keyword("model", { postfixSpace: true });
     modelNode.tokenizeIdentifier(node.id, "declaration");
@@ -762,7 +798,7 @@ export class ApiTreeNode {
 
   private tokenizeScalarStatement(node: ScalarStatementNode) {
     const nodeId = node.id.sv;
-    const scalarNode = this.node(this, nodeId, nodeId, NodeKind.type);
+    const scalarNode = this.node(this, nodeId, nodeId, ApiTreeNodeKind.type);
     scalarNode.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     scalarNode.keyword("scalar", { postfixSpace: true });
     scalarNode.tokenizeIdentifier(node.id, "declaration");
@@ -776,7 +812,7 @@ export class ApiTreeNode {
 
   private tokenizeInterfaceStatement(node: InterfaceStatementNode) {
     const nodeId = node.id.sv;
-    const interfaceNode = this.node(this, nodeId, nodeId, NodeKind.interface);
+    const interfaceNode = this.node(this, nodeId, nodeId, ApiTreeNodeKind.interface);
     interfaceNode.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     interfaceNode.keyword("interface", { postfixSpace: true });
     interfaceNode.tokenizeIdentifier(node.id, "declaration");
@@ -784,7 +820,7 @@ export class ApiTreeNode {
     for (let x = 0; x < node.operations.length; x++) {
       const op = node.operations[x];
       const opId = generateId(op)!;
-      const opNode = interfaceNode.node(interfaceNode, opId, opId, NodeKind.method);
+      const opNode = interfaceNode.node(interfaceNode, opId, opId, ApiTreeNodeKind.method);
       opNode.tokenizeOperationStatement(op, true);
       interfaceNode.blankLines(x !== node.operations.length - 1 ? 1 : 0);
     }
@@ -792,7 +828,7 @@ export class ApiTreeNode {
 
   private tokenizeEnumStatement(node: EnumStatementNode) {
     const nodeId = node.id.sv;
-    const enumNode = this.node(this, nodeId, nodeId, NodeKind.enum);
+    const enumNode = this.node(this, nodeId, nodeId, ApiTreeNodeKind.enum);
     enumNode.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     enumNode.keyword("enum", { postfixSpace: true });
     enumNode.tokenizeIdentifier(node.id, "declaration");
@@ -807,7 +843,7 @@ export class ApiTreeNode {
 
   private tokenizeUnionStatement(node: UnionStatementNode) {
     const nodeId = node.id.sv;
-    const unionNode = this.node(this, nodeId, nodeId, NodeKind.enum);
+    const unionNode = this.node(this, nodeId, nodeId, ApiTreeNodeKind.enum);
     unionNode.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     unionNode.keyword("union", { postfixSpace: true });
     unionNode.tokenizeIdentifier(node.id, "declaration");
@@ -877,7 +913,7 @@ export class ApiTreeNode {
     isOperationSignature: boolean,
     leadingNewline: boolean,
   ) {
-    const modelNode = this.node(this, "anonymous", "anonymous", NodeKind.class);
+    const modelNode = this.node(this, "anonymous", "anonymous", ApiTreeNodeKind.class);
     if (node.properties.length) {
       if (leadingNewline) {
         modelNode.blankLines(0);
@@ -928,7 +964,7 @@ export class ApiTreeNode {
 
   private tokenizeOperationStatement(node: OperationStatementNode, suppressOpKeyword: boolean = false) {
     const nodeId = node.id.sv;
-    const opNode = this.node(this, nodeId, nodeId, NodeKind.method);
+    const opNode = this.node(this, nodeId, nodeId, ApiTreeNodeKind.method);
     opNode.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     if (!suppressOpKeyword) {
       opNode.keyword("op", { postfixSpace: true });

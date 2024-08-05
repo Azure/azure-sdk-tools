@@ -151,10 +151,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             await controller.Start();
             var targetRecordingId = httpContext.Response.Headers["x-recording-id"].ToString();
-            
+
             httpContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
             await controller.Stop();
 
+            var auditSession = testRecordingHandler.AuditSessions[targetRecordingId];
+
+            Assert.NotNull(auditSession);
+            var auditResults = TestHelpers.ExhaustQueue<AuditLogItem>(auditSession);
+
+            Assert.Equal(2, auditResults.Count);
             Assert.False(testRecordingHandler.PlaybackSessions.ContainsKey(targetRecordingId));
         }
 

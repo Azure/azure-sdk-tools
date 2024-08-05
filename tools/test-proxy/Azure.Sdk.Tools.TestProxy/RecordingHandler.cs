@@ -156,8 +156,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 return;
             }
 
-
             recordingSession.AuditLog.Enqueue(new AuditLogItem(sessionId, $"Stopping recording for {sessionId}."));
+            if (!AuditSessions.TryAdd(sessionId, recordingSession.AuditLog))
+            {
+                DebugLogger.LogError($"Unable to save audit log for {sessionId}");
+            }
 
             var sanitizers = await SanitizerRegistry.GetSanitizers(recordingSession);
             await recordingSession.Session.Sanitize(sanitizers);

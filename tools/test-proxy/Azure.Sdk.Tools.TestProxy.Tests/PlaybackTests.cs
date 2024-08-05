@@ -153,7 +153,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var targetRecordingId = httpContext.Response.Headers["x-recording-id"].ToString();
             
             httpContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
-            controller.Stop();
+            await controller.Stop();
 
             Assert.False(testRecordingHandler.PlaybackSessions.ContainsKey(targetRecordingId));
         }
@@ -189,7 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await playbackController.Start();
             var targetRecordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
             playbackContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
-            playbackController.Stop();
+            await playbackController.Stop();
 
             testRecordingHandler.InMemorySessions.ContainsKey(targetRecordingId);
         }

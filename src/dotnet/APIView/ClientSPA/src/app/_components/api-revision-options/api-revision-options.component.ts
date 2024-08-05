@@ -124,15 +124,14 @@ export class ApiRevisionOptionsComponent implements OnChanges {
     });
 
     if (dropDownMenu === "active") {
-      this.activeApiRevisionsMenu = filtered;
+      this.activeApiRevisionsMenu = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.diffApiRevisionId);
       if (this.selectedActiveAPIRevision && !this.activeApiRevisionsMenu.includes(this.selectedActiveAPIRevision)) {
         this.activeApiRevisionsMenu.unshift(this.selectedActiveAPIRevision);
       }
     }
 
     if (dropDownMenu === "diff") {
-      filtered = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.activeApiRevisionId);
-      this.diffApiRevisionsMenu = filtered
+      this.diffApiRevisionsMenu = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.activeApiRevisionId);
       if (this.selectedDiffAPIRevision && !this.diffApiRevisionsMenu.includes(this.selectedDiffAPIRevision)) {
         this.diffApiRevisionsMenu.unshift(this.selectedDiffAPIRevision);
       }

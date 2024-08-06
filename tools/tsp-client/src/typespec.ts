@@ -4,7 +4,6 @@ import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
 
-
 export interface TspLocation {
   directory: string;
   commit: string;

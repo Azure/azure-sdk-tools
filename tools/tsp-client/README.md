@@ -48,6 +48,10 @@ Convert an existing swagger specification to a TypeSpec project. This command sh
 ### sort-swagger
 Sort an existing swagger specification to be the same content order with TypeSpec generated swagger. This will allow you to easily compare and identify differences between the existing swagger and TypeSpec generated one. You should run this command on existing swagger files and check them in prior to creating converted TypeSpec PRs.
 
+### generate-lock-file
+
+Generate an emitter-package-lock.json under the eng/ directory based on existing `<repo-root>/eng/emitter-package.json`.
+
 ## Options
 ```
   --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
@@ -55,8 +59,6 @@ Sort an existing swagger specification to be the same content order with TypeSpe
   --commit                  Commit to be used for project init or update        [string]
   -d, --debug               Enable debug logging                                [boolean]
   --emitter-options         The options to pass to the emitter                  [string]
-  --generate-lock-file      Generate a lock file under the eng/ directory from 
-                            an existing emitter-package.json                    [boolean]
   -h, --help                Show help                                           [boolean]
   --local-spec-repo         Path to local repository with the TypeSpec project  [string]
   --no-prompt               Skip prompting for output directory confirmation    [boolean]

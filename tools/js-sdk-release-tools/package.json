@@ -33,7 +33,7 @@
     "shelljs": "^0.8.4",
     "simple-git": "^3.5.0",
     "ts-morph": "^23.0.0",
-    "typescript-codegen-breaking-change-detector": "^0.4.4",
+    "typescript-codegen-breaking-change-detector": "^0.4.5",
     "yaml": "^1.10.2"
   },
   "devDependencies": {

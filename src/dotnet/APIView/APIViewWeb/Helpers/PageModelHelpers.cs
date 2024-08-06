@@ -299,7 +299,7 @@ namespace APIViewWeb.Helpers
             }
 
             var comments = await commentManager.GetReviewCommentsAsync(review.Id);
-            var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0].FileId, activeRevision.Language);
+            var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0], activeRevision.Language);
             var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
             var fileDiagnostics = activeRevisionReviewCodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
             var activeRevisionHtmlLines = activeRevisionRenderableCodeFile.Render(showDocumentation: showDocumentation);
@@ -313,7 +313,7 @@ namespace APIViewWeb.Helpers
                 if (apiRevisions.Where(x => x.Id == diffRevisionId).Any())
                 {
                     diffRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
-                    var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId, activeRevision.Language);
+                    var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0], activeRevision.Language);
                     var diffRevisionHTMLLines = diffRevisionRenderableCodeFile.RenderReadOnly(showDocumentation: showDocumentation);
                     var diffRevisionTextLines = diffRevisionRenderableCodeFile.RenderText(showDocumentation: showDocumentation);
 
@@ -399,7 +399,7 @@ namespace APIViewWeb.Helpers
             )
         {
             var activeRevision = await apiRevisionsManager.GetAPIRevisionAsync(user, revisionId);
-            var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0].FileId, activeRevision.Language);
+            var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0], activeRevision.Language);
             var fileDiagnostics = activeRevisionRenderableCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
             CodeLine[] activeRevisionHTMLLines;
 
@@ -411,7 +411,7 @@ namespace APIViewWeb.Helpers
             {
                 InlineDiffLine<CodeLine>[] diffLines;
                 var diffRevision = await apiRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
-                var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId, activeRevision.Language);
+                var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0], activeRevision.Language);
 
                 if (sectionKeyA != null && sectionKeyB != null)
                 {

@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.11.3" />
+    <PackageReference Include="Azure.Identity" Version="1.12.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
     <PackageReference Include="Octokit" Version="5.0.2" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />

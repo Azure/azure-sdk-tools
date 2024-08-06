@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId };
-            recordController.Stop();
+            await recordController.Stop();
 
             // apply same recordingId when starting in-memory session
             var playbackContext = new DefaultHttpContext();
@@ -175,7 +175,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId };
-            recordController.Stop();
+            await recordController.Stop();
 
             var playbackContext = new DefaultHttpContext();
             playbackContext.Request.Headers["x-recording-id"] = inMemId;

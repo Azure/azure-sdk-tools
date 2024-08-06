@@ -39,7 +39,7 @@
 /tools/mock-service-host/              @raych1 @tadelesh
 /tools/perf-automation/                @mikeharder @benbp
 /tools/pipeline-generator/             @weshaggard @benbp
-/tools/pipeline-witness/               @praveenkuttappan @weshaggard
+/tools/pipeline-witness/               @hallipr
 /tools/sdk-ai-bots/                    @raych1
 /tools/sdk-testgen/                    @raych1 @tadelesh
 /tools/test-proxy/                     @scbedd @mikeharder @benbp
@@ -59,6 +59,19 @@
 /src/dotnet/APIView                    @chidozieononiwu
 
 ###########
-# Go Client Tools
+# APIView parsers
 ###########
-/src/go                                @jhendrixMSFT @chlowell @RickWinter
+/tools/apiview/                          @chidozieononiwu
+/tools/apiview/emitters/typespec-apiview @tjprescott
+/tools/apiview/parsers/cpp-api-parser    @LarryOsterman
+/tools/apiview/parsers/csharp-api-parser @christothes
+/tools/apiview/parsers/js-api-parser     @maorleger
+/src/swift                               @tjprescott
+/src/java/apiview-java-processor         @JonathanGiles
+/src/go                                  @jhendrixMSFT @chlowell @RickWinter
+
+
+###########
+# Pylint checkers
+###########
+/tools/pylint-extensions/azure-pylint-guidelines-checker @l0lawrence

@@ -2,12 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ReviewsListComponent } from './reviews-list.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ContextMenuModule } from 'primeng/contextmenu';
-import { TableModule } from 'primeng/table';
-import { SidebarModule } from 'primeng/sidebar';
-import { DropdownModule } from 'primeng/dropdown';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MultiSelectModule } from 'primeng/multiselect';
+import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
+import { AppModule } from 'src/app/app.module';
 
 describe('ReviewsListComponent', () => {
   let component: ReviewsListComponent;
@@ -18,13 +14,8 @@ describe('ReviewsListComponent', () => {
       declarations: [ReviewsListComponent],
       imports: [
         HttpClientTestingModule,
-        ContextMenuModule,
-        TableModule,
-        SidebarModule,
-        DropdownModule,
-        ReactiveFormsModule,
-        FormsModule,
-        MultiSelectModule
+        SharedAppModule,
+        AppModule
       ]
     });
     fixture = TestBed.createComponent(ReviewsListComponent);

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "value": "ba45b233-e2ef-4169-8808-49eb0d8eba0d"
+    },
+    "groupSuffix": {
+      "value": "storage"
+    },
+    "clusterName": {
+      "value": "stress-storage"
+    },
+    "clusterLocation": {
+      "value": "southcentralus"
+    },
+    "defaultAgentPoolMinNodes": {
+      "value": 5
+    },
+    "defaultAgentPoolMaxNodes": {
+      "value": 200
+    },
+    "tags": {
+      "value": {
+        "environment": "storage",
+        "owners": "bebroder",
+        "purpose": "stress and load testing for storage SDKs - maintained by Azure SDK (devdiv)",
+        "DoNotDelete": ""
+      }
+    }
+  }
+}

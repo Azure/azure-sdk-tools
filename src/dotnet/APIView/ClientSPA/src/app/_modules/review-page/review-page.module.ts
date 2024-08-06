@@ -11,25 +11,17 @@ import { EditorModule } from 'primeng/editor';
 import { PanelModule } from 'primeng/panel';
 import { TreeSelectModule } from 'primeng/treeselect';
 import { MenuModule } from 'primeng/menu';
-import { SplitterModule } from 'primeng/splitter';
-import { SidebarModule } from 'primeng/sidebar';
 import { TimelineModule } from 'primeng/timeline';
 import { SharedAppModule } from '../shared/shared-app.module';
 import { ButtonModule } from 'primeng/button';
-import { TimeagoModule } from 'ngx-timeago';
-import { MenubarModule } from 'primeng/menubar';
 import { UiScrollModule  } from 'ngx-ui-scroll' ;
 import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-options-section/page-options-section.component';
 import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
-import { DropdownModule } from 'primeng/dropdown';
-import { FormsModule } from '@angular/forms';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { ChipModule } from 'primeng/chip';
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { MultiSelectModule } from 'primeng/multiselect';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -51,25 +43,16 @@ const routes: Routes = [
   imports: [
     SharedAppModule,
     CommonModule,
-    ChipModule,
     EditorModule,
     PanelModule,
     DialogModule,
     TreeSelectModule,
     MenuModule,
-    MenubarModule,
-    MultiSelectModule,
-    SplitterModule,
-    SidebarModule,
     TimelineModule,
     ButtonModule,
-    SelectButtonModule,
-    FormsModule,
     InputSwitchModule,
     UiScrollModule,
-    DropdownModule,
     RouterModule.forChild(routes),
-    TimeagoModule.forRoot(),
   ]
 })
 export class ReviewPageModule { }

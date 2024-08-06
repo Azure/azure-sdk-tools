@@ -24,7 +24,7 @@ namespace APIViewWeb
         public override string VersionString { get; } = "0";
         public override string ProcessName => throw new NotImplementedException();
 
-        public TypeSpecLanguageService(IConfiguration configuration, TelemetryClient telemetryClient)
+        public TypeSpecLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
             IsReviewGenByPipeline = true;
             _typeSpecSpecificPathPrefix = "/specification";

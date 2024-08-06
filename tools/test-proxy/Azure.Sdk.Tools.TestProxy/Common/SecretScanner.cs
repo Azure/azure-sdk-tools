@@ -29,37 +29,41 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             var detectedSecrets = new ConcurrentBag<Tuple<string, Detection>>();
             var total = relativePaths.Count();
             var seen = 0;
-            Console.WriteLine(string.Empty);
 
-            var options = new ParallelOptions
+            if (relativePaths.Count() > 0)
             {
-                MaxDegreeOfParallelism = Environment.ProcessorCount
-            };
+                Console.WriteLine(string.Empty);
 
-            Parallel.ForEach(relativePaths, options, (filePath) =>
-            {
-                var path = Path.Combine(assetRepoRoot, filePath);
-
-                if (File.Exists(path))
+                var options = new ParallelOptions
                 {
-                    var content = File.ReadAllText(path);
-                    var fileDetections = DetectSecrets(content);
+                    MaxDegreeOfParallelism = Environment.ProcessorCount
+                };
 
-                    if (fileDetections != null && fileDetections.Count > 0)
+                Parallel.ForEach(relativePaths, options, (filePath) =>
+                {
+                    var path = Path.Combine(assetRepoRoot, filePath);
+
+                    if (File.Exists(path))
                     {
-                        foreach (Detection detection in fileDetections)
+                        var content = File.ReadAllText(path);
+                        var fileDetections = DetectSecrets(content);
+
+                        if (fileDetections != null && fileDetections.Count > 0)
                         {
-                            detectedSecrets.Add(Tuple.Create(filePath, detection));
+                            foreach (Detection detection in fileDetections)
+                            {
+                                detectedSecrets.Add(Tuple.Create(filePath, detection));
+                            }
                         }
+
+                        Interlocked.Increment(ref seen);
+
+                        Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
                     }
+                });
 
-                    Interlocked.Increment(ref seen);
-
-                    Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
-                }
-            });
-
-            Console.WriteLine(string.Empty);
+                Console.WriteLine(string.Empty);
+            }
 
             return detectedSecrets.ToList();
         }

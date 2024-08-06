@@ -4,7 +4,7 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20240626.4'
+    default: '1.0.0-dev.20240723.1'
 
 trigger:
   branches:
@@ -165,6 +165,12 @@ extends:
                   go build
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
+              
+              - task: UseDotNet@2
+                inputs:
+                  packageType: 'sdk'
+                  useGlobalJson: true
+                  workingDirectory: $(Build.SourcesDirectory)
 
               - script: 'dotnet build $(WebProjectPath) -warnaserror'
                 displayName: 'Build and Package'
@@ -191,122 +197,141 @@ extends:
                   ArtifactName: 'APIView'
                   ArtifactPath: '$(Build.ArtifactStagingDirectory)'
 
-          # - job: 'Test'
-    
-          #   pool:
-          #     name: azsdk-pool-mms-win-2022-general
-          #     vmImage: windows-2022
-    
-          #   steps:
-          #     - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
-          #       parameters:
-          #         StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
-              
-          #     - script: |
-          #         npm install -g azurite
-          #       displayName: 'Install Azurite'
-      
-          #     - task: Powershell@2
-          #       inputs:
-          #         workingDirectory: $(Agent.TempDirectory)
-          #         filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-          #         arguments: >
-          #           -Process "azurite.cmd"
-          #           -ArgumentList "--silent"
-          #           -Port "10000"
-          #         pwsh: true
-          #       displayName: 'Start Azurite'
-      
-          #     - template: /eng/pipelines/templates/steps/install-dotnet.yml
-      
-          #     - pwsh: |
-          #         dotnet --list-runtimes
-          #         dotnet --version
-          #       displayName: 'List .NET run times'
-      
-          #     - task: GoTool@0
-          #       inputs:
-          #         version: '$(GoVersion)'
-          #       displayName: "Use Go $(GoVersion)"
-                  
-          #     - script: |
-          #         go test ./... -v
-          #       workingDirectory: $(GoParserPackagePath)
-          #       displayName: 'Test Go parser'
-                
-          #     - script: >-
-          #         dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
-          #         --logger trx --collect:"XPlat Code Coverage"
-          #       displayName: "Build & Test (Unit)"
-          #       env:
-          #         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          #         DOTNET_CLI_TELEMETRY_OPTOUT: 1
-          #         DOTNET_MULTILEVEL_LOOKUP: 0
-      
-          #     - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
-          #       condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
-          #       displayName: Generate Code Coverage Reports
-          #       inputs:
-          #         reports: $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewUnitTests\**\coverage.cobertura.xml
-          #         targetdir: $(Build.ArtifactStagingDirectory)\coverage
-          #         reporttypes: Cobertura
-          #         filefilters: +$(Build.SourcesDirectory)\src\dotnet\APIView\**
-          #         verbosity: Verbose
-      
-          #     - task: PublishCodeCoverageResults@1
-          #       condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
-          #       displayName: Publish Code Coverage Reports
-          #       inputs:
-          #         codeCoverageTool: Cobertura
-          #         summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
-      
-          #     - script: >-
-          #         dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj
-          #         --logger trx
-          #       displayName: "Build & Test (Integration)"
-          #       env:
-          #         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          #         DOTNET_CLI_TELEMETRY_OPTOUT: 1
-          #         DOTNET_MULTILEVEL_LOOKUP: 0
-          #         APIVIEW_ENDPOINT: "http://localhost:5000"
-          #         APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
-          #         APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
-              
-          #     - script: |
-          #         npm install
-          #       workingDirectory: $(WebClientProjectDirectory)
-          #       displayName: "Install Client Dependencies"
-      
-          #     - script: |
-          #         npx playwright install --with-deps
-          #       workingDirectory: $(WebClientProjectDirectory)
-          #       displayName: "Install Playwright Browsers"
-      
-          #     - script: |
-          #         npx playwright test --project=unit-tests
-          #       workingDirectory: $(WebClientProjectDirectory)
-          #       displayName: "Run Client-Side Unit Tests"
-      
-          #     - task: PublishBuildArtifacts@1
-          #       inputs:
-          #         pathtoPublish: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
-          #         artifactName: 'Client-Side Unit Test Reports'
-        
-          #     - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
-          #       - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
-          #         parameters:
-          #           NodeVersion: $(NodeVersion)
-          #           WebClientProjectDirectory: $(WebClientProjectDirectory)
-          #           AzuriteConnectionString: $(AzuriteConnectionString)
-          #           CosmosEmulatorConnectionString: $(CosmosEmulatorConnectionString)
-      
-          #     - task: PublishTestResults@2
-          #       condition: succeededOrFailed()
-          #       inputs:
-          #         testResultsFiles: '**/*.trx'
-          #         testRunTitle: 'Tests against Windows .NET'
-          #         testResultsFormat: 'VSTest'
-          #         mergeTestResults: true
+          - job: 'Test'
+
+            pool:
+              name: azsdk-pool-mms-win-2022-general
+              vmImage: windows-2022
+
+            steps:
+              - script: |
+                  npm install -g @angular/cli@16.1.8
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Angular CLI"
+
+              - script: |
+                  npm install
+                workingDirectory: $(WebClientProjectDirectory)
+                displayName: "Install npm packages"
+
+              - script: |
+                  npm install
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Client SPA Packages"
+
+              - script: |
+                  ng test --no-watch --no-progress --browsers=ChromeHeadless
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Run SPA Tests"
+              #- template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
+              #  parameters:
+              #    StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
+
+              #- script: |
+              #    npm install -g azurite
+              #  displayName: 'Install Azurite'
+
+              #- task: Powershell@2
+              #  inputs:
+              #    workingDirectory: $(Agent.TempDirectory)
+              #    filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+              #    arguments: >
+              #      -Process "azurite.cmd"
+              #      -ArgumentList "--silent"
+              #      -Port "10000"
+              #    pwsh: true
+              #  displayName: 'Start Azurite'
+
+              #- template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+              #- pwsh: |
+              #    dotnet --list-runtimes
+              #    dotnet --version
+              #  displayName: 'List .NET run times'
+
+              #- task: GoTool@0
+              #  inputs:
+              #    version: '$(GoVersion)'
+              #  displayName: "Use Go $(GoVersion)"
+              #
+              #- script: |
+              #    go test ./... -v
+              #  workingDirectory: $(GoParserPackagePath)
+              #  displayName: 'Test Go parser'
+
+              #- script: >-
+              #    dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
+              #    --logger trx --collect:"XPlat Code Coverage"
+              #  displayName: "Build & Test (Unit)"
+              #  env:
+              #    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              #    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              #    DOTNET_MULTILEVEL_LOOKUP: 0
+
+              #- task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
+              #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
+              #  displayName: Generate Code Coverage Reports
+              #  inputs:
+              #    reports: $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewUnitTests\**\coverage.cobertura.xml
+              #    targetdir: $(Build.ArtifactStagingDirectory)\coverage
+              #    reporttypes: Cobertura
+              #    filefilters: +$(Build.SourcesDirectory)\src\dotnet\APIView\**
+              #    verbosity: Verbose
+
+              #- task: PublishCodeCoverageResults@1
+              #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
+              #  displayName: Publish Code Coverage Reports
+              #  inputs:
+              #    codeCoverageTool: Cobertura
+              #    summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
+
+              #- script: >-
+              #    dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj
+              #    --logger trx
+              #  displayName: "Build & Test (Integration)"
+              #  env:
+              #    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              #    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              #    DOTNET_MULTILEVEL_LOOKUP: 0
+              #    APIVIEW_ENDPOINT: "http://localhost:5000"
+              #    APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
+              #    APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
+
+              #- script: |
+              #    npm install
+              #  workingDirectory: $(WebClientProjectDirectory)
+              #  displayName: "Install Client Dependencies"
+
+              #- script: |
+              #    npx playwright install --with-deps
+              #  workingDirectory: $(WebClientProjectDirectory)
+              #  displayName: "Install Playwright Browsers"
+
+              #- script: |
+              #    npx playwright test --project=unit-tests
+              #  workingDirectory: $(WebClientProjectDirectory)
+              #  displayName: "Run Client-Side Unit Tests"
+
+              #- task: 1ES.PublishPipelineArtifact@1
+              #  inputs:
+              #    path: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
+              #    artifact: 'Client-Side Unit Test Reports'
+
+              #- ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
+              #  - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
+              #    parameters:
+              #      NodeVersion: $(NodeVersion)
+              #      WebClientProjectDirectory: $(WebClientProjectDirectory)
+              #      AzuriteConnectionString: $(AzuriteConnectionString)
+              #      CosmosEmulatorConnectionString: $(CosmosEmulatorConnectionString)
+
+              #  - task: PublishTestResults@2
+              #    condition: succeededOrFailed()
+              #    inputs:
+              #      testResultsFiles: '**/*.trx'
+              #      testRunTitle: 'Tests against Windows .NET'
+              #      testResultsFormat: 'VSTest'
+              #      mergeTestResults: true
 
       - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         - stage: Staging_Publish
@@ -426,9 +451,9 @@ extends:
 
           variables:
             - name: 'apiUrl'
-              value: 'https://apiview.com/api/'
+              value: 'https://apiview.dev/api/'
             - name: 'webAppUrl'
-              value: 'https://apiview.com/'
+              value: 'https://apiview.dev/'
 
           jobs:
             - deployment: Publish_to_Prod

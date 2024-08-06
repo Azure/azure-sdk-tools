@@ -7,10 +7,6 @@
         }
     }
 
-    .p-sidebar-right {
-        width: 70dvw;
-    }
-
     .p-splitter-panel-nested {
         display: block;
         min-width: 0;
@@ -39,5 +35,12 @@
     .p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
         color: var(--base-text-color);;
         font-size: x-large;
+        &:hover, &:active {
+            color: var(--primary-color);
+        }
+    }
+
+    .revisions-sidebar {
+        width: 75dvw;
     }
 }

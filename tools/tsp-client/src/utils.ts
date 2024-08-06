@@ -1,7 +1,10 @@
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
-import { mkdir } from "node:fs/promises";
+import { access, constants, mkdir, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
+import { TspLocation } from "./typespec.js";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
     let additionalDirOutput = "";
@@ -39,3 +42,55 @@ export function getServiceDir(configYaml: any, emitter: string): string {
     Logger.debug(`Service directory: ${serviceDir}`)
     return serviceDir;
 }
+
+/**
+ * Returns path to a dependency package under node_modules
+ *
+ * @param dependency Name of dependency.
+ *
+ * @example
+ * ```
+ * // Prints '/home/user/foo/node_modules/@autorest/bar':
+ * console.log(getPathToDependency("@autorest/bar"));
+ * ```
+ */
+export async function getPathToDependency(dependency: string): Promise<string> {
+    // Example: /home/user/foo/node_modules/@autorest/bar/dist/index.js
+    const entrypoint = fileURLToPath(import.meta.resolve(dependency));
+
+    // Walk up directory tree to first folder containing "package.json"
+    let currentDir = dirname(entrypoint);
+    while (true) {
+        const packageJsonFile = join(currentDir, "package.json");
+        try {
+            // Throws if file cannot be read
+            await access(packageJsonFile, constants.R_OK);
+            return currentDir;
+        } catch {
+            const parentDir = dirname(currentDir);
+            if (parentDir !== currentDir) {
+                currentDir = parentDir;
+            }
+            else {
+                // Reached fs root but no package.json found
+                throw new Error(`Unable to find package.json in folder tree above '${entrypoint}'`)
+            }
+        }
+    }
+}
+
+/**
+ * Writes tsp-location.yaml file at the given projectPath. Ensures additional directories are formatted correctly.
+ *
+ * @param tspLocation TspLocation object containing tsp location information.
+ * @param projectPath Path to the project.
+ */
+export async function writeTspLocationYaml(
+    tspLocation: TspLocation,
+    projectPath: string,
+  ): Promise<void> {
+    await writeFile(
+      joinPaths(projectPath, "tsp-location.yaml"),
+      `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${formatAdditionalDirectories(tspLocation.additionalDirectories)}`,
+    );
+  }

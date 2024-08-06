@@ -394,6 +394,11 @@ namespace APIViewWeb.Helpers
                 {
                     var token = beforeTokens[beforeIndex++];
 
+                    if (codePanelRawData.ApplySkipDiff && token.TagsObj.Contains(StructuredToken.SKIPP_DIFF))
+                    {
+                        continue;
+                    }
+
                     if (token.Kind == StructuredTokenKind.LineBreak)
                     {
                         break;
@@ -416,18 +421,26 @@ namespace APIViewWeb.Helpers
 
                 if (beforeTokenRow.Count > 0)
                 {
-                    beforeTokensInProcess.Enqueue(new DiffLineInProcess() 
+                    if (!(codePanelRawData.SkipDocsWhenDiffing && beforeRowGroupId == StructuredToken.DOCUMENTATION))
                     {
-                        GroupId = beforeRowGroupId,
-                        RowOfTokens = beforeTokenRow,
-                        TokenIdsInRow = new HashSet<string>(beforeTokenIdsInRow)
-                    });
+                        beforeTokensInProcess.Enqueue(new DiffLineInProcess()
+                        {
+                            GroupId = beforeRowGroupId,
+                            RowOfTokens = beforeTokenRow,
+                            TokenIdsInRow = new HashSet<string>(beforeTokenIdsInRow)
+                        });
+                    }
                     beforeTokenIdsInRow.Clear();
                 }
 
                 while (afterIndex < afterTokens.Count)
                 {
                     var token = afterTokens[afterIndex++];
+
+                    if (codePanelRawData.ApplySkipDiff && token.TagsObj.Contains(StructuredToken.SKIPP_DIFF))
+                    {
+                        continue;
+                    }
 
                     if (token.Kind == StructuredTokenKind.LineBreak)
                     {
@@ -451,12 +464,15 @@ namespace APIViewWeb.Helpers
 
                 if (afterTokenRow.Count > 0)
                 {
-                    afterTokensInProcess.Enqueue(new DiffLineInProcess() 
+                    if (!(codePanelRawData.SkipDocsWhenDiffing && afterRowGroupId == StructuredToken.DOCUMENTATION)) 
                     {
-                        GroupId = afterRowGroupId,
-                        RowOfTokens = afterTokenRow,
-                        TokenIdsInRow = new HashSet<string>(afterTokenIdsInRow)
-                    });
+                        afterTokensInProcess.Enqueue(new DiffLineInProcess()
+                        {
+                            GroupId = afterRowGroupId,
+                            RowOfTokens = afterTokenRow,
+                            TokenIdsInRow = new HashSet<string>(afterTokenIdsInRow)
+                        });
+                    }
                     afterTokenIdsInRow.Clear();
                 }
 
@@ -541,6 +557,13 @@ namespace APIViewWeb.Helpers
                         {
                             var parentNode = codePanelData.NodeMetaDataObj[parentNodeIdHashed];
                             parentNode.IsNodeWithDiffInDescendants = true;
+
+                            if ((diffTokenRowResult.Before.Any() && !beforeRowClasses.Contains("doc")) || 
+                                (diffTokenRowResult.After.Any() && !afterRowClasses.Contains("doc")))
+                            {
+                                parentNode.IsNodeWithNoneDocDiffInDescendants = true;
+                            }
+
                             parentNodeIdHashed = parentNode.ParentNodeIdHashed;
                         }
 
@@ -722,12 +745,12 @@ namespace APIViewWeb.Helpers
                 commentsForRow.AssociatedRowPositionInGroup = rowData.RowPositionInGroup;
                 if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
                 }
                 else
                 {
                     codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
                 }
             }
         }

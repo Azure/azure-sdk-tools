@@ -31,12 +31,12 @@ namespace APIViewWeb
 
         public Task<RenderedCodeFile> GetCodeFileAsync(APIRevisionListItemModel revision, bool updateCache = true)
         {
-            return GetCodeFileAsync(revision.Id, revision.Files.Single().FileId, revision.Language, updateCache);
+            return GetCodeFileAsync(revision.Id, revision.Files.Single(), revision.Language, updateCache);
         }
 
-        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, string language, bool updateCache = true)
+        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, APICodeFileModel apiCodeFile, string language, bool updateCache = true)
         {
-            var client = GetBlobClient(revisionId, codeFileId, out var key);
+            var client = GetBlobClient(revisionId, apiCodeFile.FileId, out var key);
 
             if (_cache.TryGetValue<RenderedCodeFile>(key, out var codeFile))
             {
@@ -45,7 +45,7 @@ namespace APIViewWeb
 
             var info = await client.DownloadAsync();
 
-            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language)));
+            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: apiCodeFile.ParserStyle == ParserStyle.Tree));
 
             if (updateCache)
             {

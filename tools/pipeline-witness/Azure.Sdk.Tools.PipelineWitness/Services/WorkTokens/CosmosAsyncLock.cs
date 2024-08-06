@@ -10,16 +10,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
     {
         private readonly string id;
         private readonly PartitionKey partitionKey;
-        private readonly TimeSpan duration;
         private readonly Container container;
         private string etag;
 
-        public CosmosAsyncLock(string id, string etag, TimeSpan duration, Container container)
+        public CosmosAsyncLock(string id, string etag, Container container)
         {
             this.id = id;
             this.partitionKey = new PartitionKey(id);
             this.etag = etag;
-            this.duration = duration;
             this.container = container;
         }
 
@@ -39,12 +37,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
             }
         }
 
-        public async Task<bool> TryRenewAsync(CancellationToken cancellationToken)
+        public async Task<bool> TryExtendAsync(TimeSpan duration, CancellationToken cancellationToken)
         {
             try
             {
                 ItemResponse<CosmosLockDocument> response = await this.container.ReplaceItemAsync(
-                    new CosmosLockDocument(this.id, this.duration),
+                    new CosmosLockDocument(this.id, duration),
                     this.id,
                     this.partitionKey,
                     new ItemRequestOptions { IfMatchEtag = this.etag },

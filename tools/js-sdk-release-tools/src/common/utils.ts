@@ -93,12 +93,21 @@ export function runCommand(
     command: string,
     args: readonly string[],
     options: SpawnOptions,
-    realtimeOutput: boolean = true
+    realtimeOutput: boolean = true,
+    timeoutSeconds: number = 600 
 ): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
         let stdout = '';
         let stderr = '';
         const child = spawn(command, args, options);
+
+        let timedOut = false;
+        const timer = setTimeout(() => {
+            timedOut = true;
+            child.kill();
+            reject(new Error(`Process timed out after ${timeoutSeconds}s`));
+        }, timeoutSeconds * 1000);
+        
         child.stdout?.on('data', (data) => {
             const str = data.toString();
             stdout += str;
@@ -117,6 +126,17 @@ export function runCommand(
             } else {
                 console.log(`run command exit: ${code}`);
                 reject(new Error(`run command exit: ${code}`));
+            }
+        });
+
+        child.on('exit', (code, signal) => {
+            clearTimeout(timer);
+            if (!timedOut) {
+              if (signal) {
+                reject(new Error(`Process was killed with signal: ${signal}`));
+              } else {
+                  resolve({ stdout, stderr });
+              }
             }
         });
 

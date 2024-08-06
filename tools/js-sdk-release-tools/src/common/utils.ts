@@ -69,7 +69,7 @@ export function tryReadNpmPackageChangelog(packageFolderPath: string): string {
     try {
         if (!fs.existsSync(changelogPath)) {
             logger.logWarn(`NPM package's changelog "${changelogPath}" does not exists`);
-            return "";
+            return '';
         }
         const originalChangeLogContent = fs.readFileSync(changelogPath, { encoding: 'utf-8' });
         return originalChangeLogContent;
@@ -93,7 +93,7 @@ export function runCommand(
     command: string,
     args: readonly string[],
     options: SpawnOptions,
-    realtimeOuput: boolean = true
+    realtimeOutput: boolean = true
 ): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
         let stdout = '';
@@ -102,13 +102,13 @@ export function runCommand(
         child.stdout?.on('data', (data) => {
             const str = data.toString();
             stdout += str;
-            if (realtimeOuput) console.log(str);
+            if (realtimeOutput) console.log(str);
         });
 
         child.stderr?.on('data', (data) => {
             const str = data.toString();
             stderr += str;
-            if (realtimeOuput) console.error(str);
+            if (realtimeOutput) console.error(str);
         });
 
         child.on('close', (code) => {

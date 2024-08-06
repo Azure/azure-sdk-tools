@@ -5,6 +5,7 @@ import { access, readFile, writeFile } from 'node:fs/promises';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
 import { posix, join } from 'node:path';
 import { VersionPolicyName } from './types';
+import { remove } from 'fs-extra';
 
 interface ProjectItem {
     packageName: string;
@@ -62,9 +63,10 @@ export async function buildPackage(packageDirectory: string, versionPolicyName: 
         versionPolicyName: versionPolicyName
     });
 
-    let output: { stdout: string; stderr: string } | undefined; 
+    let output: { stdout: string; stderr: string } | undefined;
     try {
-        await runCommand(`rush`, ['update'], runCommandOptions);
+        await remove(packageDirectory);
+        output = await runCommand(`rush`, ['update'], runCommandOptions);
         logger.logInfo(`Rush update successfully.`);
         output = await runCommand('rush', ['build', '-t', name], runCommandOptions);
         logger.logInfo(`Build package "${name}" successfully.`);
@@ -81,7 +83,7 @@ export async function tryBuildSamples(packageDirectory: string) {
 
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, cwd };
-    let output: { stdout: string; stderr: string } | undefined; 
+    let output: { stdout: string; stderr: string } | undefined;
     try {
         await runCommand(`rushx`, ['build:samples'], options);
         logger.logInfo(`built samples successfully.`);

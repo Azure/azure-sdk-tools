@@ -284,6 +284,10 @@ export async function generateCommand(argv: any) {
   }
 }
 
+export async function compareCommand(argv: any) {
+  // TODO: Implement
+}
+
 export async function updateCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repo = argv["repo"];

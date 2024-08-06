@@ -54,12 +54,12 @@
     "@autorest/csharp": "https://aka.ms/azsdk/openapi-to-typespec-csharp",
     "@autorest/openapi-to-typespec": "0.9.0",
     "@azure-tools/typespec-autorest": "^0.44.0",
+    "@azure-tools/typespec-client-generator-cli": "file:azure-tools-typespec-client-generator-cli-0.11.2.tgz",
     "@azure/core-rest-pipeline": "^1.12.0",
     "@types/yargs": "^17.0.32",
     "autorest": "^3.7.1",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
-    "openapi-diff": "github:tjprescott/openapi-diff#8edec5e2d2ad0ba57e8cdebda20e7b0c6e225699",
     "prompt-sync": "^4.2.0",
     "simple-git": "^3.20.0",
     "yaml": "^2.3.1",
@@ -68,6 +68,9 @@
   "peerDependencies": {
     "@typespec/compiler": ">=0.58.0 <1.0.0"
   },
+  "bundleDependencies": [
+    "openapi-diff"
+  ],
   "mocha": {
     "extension": [
       "ts"

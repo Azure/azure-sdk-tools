@@ -165,6 +165,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             session.Session.Entries.Add(testEntry);
             await handler.StopRecording(recordingId);
 
+            // ensure that we audited properly
+            var auditSession = handler.AuditSessions[recordingId];
+            var auditItems = TestHelpers.ExhaustQueue<AuditLogItem>(auditSession);
+
+            Assert.Equal(2, auditItems.Count);
+
             // now load it, did we avoid mangling it?
             var sessionFromDisk = TestHelpers.LoadRecordSession(Path.Combine(testFolder, testName));
             var targetEntry = sessionFromDisk.Session.Entries[0];

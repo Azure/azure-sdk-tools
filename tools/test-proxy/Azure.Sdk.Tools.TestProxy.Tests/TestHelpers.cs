@@ -12,6 +12,7 @@ using System.Linq;
 using Xunit;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -34,6 +35,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public static class TestHelpers
     {
         public static readonly string DisableBranchCleanupEnvVar = "DISABLE_INTEGRATION_BRANCH_CLEANUP";
+
+        public static List<T> ExhaustQueue<T>(ConcurrentQueue<T> queue)
+        {
+            List<T> results = new List<T>();
+
+            while (queue.TryDequeue(out var item))
+            {
+                results.Add(item);
+            }
+
+            return results;
+        }
 
         public static string GetValueFromCertificateFile(string certName)
         {

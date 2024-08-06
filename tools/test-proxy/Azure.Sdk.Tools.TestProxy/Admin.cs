@@ -158,22 +158,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, "When bulk adding sanitizers, ensure there is at least one sanitizer added in each batch. Received 0 work items.");
             }
 
-            var registeredSanitizers = new List<string>();
+            // we need check if a recording id is present BEFORE the loop, as we want to encapsulate the entire
+            // sanitizer add operation in a single lock, rather than gathering and releasing a sanitizer lock
+            // for the session/recording on _each_ sanitizer addition.
 
-            // register them all
-            foreach(var sanitizer in workload)
-            {
-                if (recordingId != null)
-                {
-                    var registeredId = await _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
-                    registeredSanitizers.Add(registeredId);
-                }
-                else
-                {
-                    var registeredId = await _recordingHandler.RegisterSanitizer(sanitizer);
-                    registeredSanitizers.Add(registeredId);
-                }
-            }
+            var registeredSanitizers = await _recordingHandler.RegisterSanitizers(workload, recordingId);
 
             if (recordingId != null)
             {

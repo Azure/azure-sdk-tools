@@ -1,0 +1,8 @@
+import { GetLanguages200Response, GetLanguagesDefaultResponse, Translate200Response, TranslateDefaultResponse, Transliterate200Response, TransliterateDefaultResponse, FindSentenceBoundaries200Response, FindSentenceBoundariesDefaultResponse, LookupDictionaryEntries200Response, LookupDictionaryEntriesDefaultResponse, LookupDictionaryExamples200Response, LookupDictionaryExamplesDefaultResponse } from "./responses";
+export declare function isUnexpected(response: GetLanguages200Response | GetLanguagesDefaultResponse): response is GetLanguagesDefaultResponse;
+export declare function isUnexpected(response: Translate200Response | TranslateDefaultResponse): response is TranslateDefaultResponse;
+export declare function isUnexpected(response: Transliterate200Response | TransliterateDefaultResponse): response is TransliterateDefaultResponse;
+export declare function isUnexpected(response: FindSentenceBoundaries200Response | FindSentenceBoundariesDefaultResponse): response is FindSentenceBoundariesDefaultResponse;
+export declare function isUnexpected(response: LookupDictionaryEntries200Response | LookupDictionaryEntriesDefaultResponse): response is LookupDictionaryEntriesDefaultResponse;
+export declare function isUnexpected(response: LookupDictionaryExamples200Response | LookupDictionaryExamplesDefaultResponse): response is LookupDictionaryExamplesDefaultResponse;
+//# sourceMappingURL=isUnexpected.d.ts.map

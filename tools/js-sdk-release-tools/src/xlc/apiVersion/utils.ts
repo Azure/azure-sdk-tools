@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { getTsSourceFile } from "../../common/utils";
 import { ApiVersionType } from "../../common/types";
-import * as ts from "typescript";
+import ts from "typescript";
 import path from "node:path";
 import shell from "shelljs";
 

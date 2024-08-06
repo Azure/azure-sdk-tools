@@ -2,7 +2,14 @@
   "name": "@azure-tools/js-sdk-release-tools",
   "version": "2.7.11",
   "description": "",
+  "workspaces": [
+    "workspaces/*"
+  ],
   "scripts": {
+    "install:all": "npm install --workspaces && npm install",
+    "build:all": "npm run build --workspaces && npm run build",
+    "pack:all": "npm run pack:typescript-codegen-breaking-change-detector && npm pack",
+    "pack:typescript-codegen-breaking-change-detector": "cd workspaces/typescript-codegen-breaking-change-detector && npm pack && cd ../..",
     "dev": "tsx watch src/changelogToolCli.ts",
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",
@@ -33,15 +40,15 @@
     "shelljs": "^0.8.4",
     "simple-git": "^3.5.0",
     "ts-morph": "^23.0.0",
-    "typescript-codegen-breaking-change-detector": "^0.4.5",
+    "typescript-codegen-breaking-change-detector": "^0.4.6",
     "yaml": "^1.10.2"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
     "@types/shelljs": "^0.8.15",
     "rimraf": "^3.0.2",
-    "tsx": "^4.16.3",
-    "typescript": "^5.4.5",
+    "tsx": "^4.16.5",
+    "typescript": "5.5.3",
     "vitest": "^1.6.0"
   }
 }

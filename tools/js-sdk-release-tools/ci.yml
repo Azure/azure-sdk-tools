@@ -52,28 +52,23 @@ extends:
               displayName: 'Install Node.js'
 
             - script: |
-                npm install
-              displayName: 'npm install'
+                npm install:all
+              displayName: 'npm install:all'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
             
             - script: |
-                npm run build
-              displayName: 'npm run build'
+                npm run build:all
+              displayName: 'npm run build:all'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
             
             - script: |
                 npm run test
               displayName: 'npm run test'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
-            
-            - script: |
-                npm install
-              displayName: 'npm install'
-              workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
             - script: |
-                npm pack
-              displayName: 'npm pack'
+                npm run pack:all
+              displayName: 'npm pack:all'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
             - script: 'cp azure-tools-js-sdk-release-tools-*.tgz $(Build.ArtifactStagingDirectory)'

@@ -46,6 +46,13 @@ async function packPackage(packageDirectory: string) {
     }
 }
 
+function printErrorDetails(output: { stdout: string; stderr: string } | undefined) {
+    logger.logError(`Error details:`);
+    if (!output) return;
+    logger.logError(output?.stderr);
+    logger.logError(output?.stdout);
+}
+
 export async function buildPackage(packageDirectory: string, versionPolicyName: VersionPolicyName) {
     logger.logInfo(`Start building package in ${packageDirectory}.`);
     const { name } = await getNpmPackageInfo(packageDirectory);
@@ -55,13 +62,15 @@ export async function buildPackage(packageDirectory: string, versionPolicyName: 
         versionPolicyName: versionPolicyName
     });
 
+    let output: { stdout: string; stderr: string } | undefined; 
     try {
         await runCommand(`rush`, ['update'], runCommandOptions);
         logger.logInfo(`Rush update successfully.`);
-        await runCommand('rush', ['build', '-t', name], runCommandOptions);
+        output = await runCommand('rush', ['build', '-t', name], runCommandOptions);
         logger.logInfo(`Build package "${name}" successfully.`);
     } catch (err) {
         logger.logError(`Run command failed due to: ${(err as Error)?.stack ?? err}`);
+        printErrorDetails(output);
         throw err;
     }
 }
@@ -72,11 +81,13 @@ export async function tryBuildSamples(packageDirectory: string) {
 
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, cwd };
+    let output: { stdout: string; stderr: string } | undefined; 
     try {
         await runCommand(`rushx`, ['build:samples'], options);
         logger.logInfo(`built samples successfully.`);
     } catch (err) {
         logger.logError(`Building samples failed due to: ${(err as Error)?.stack ?? err}`);
+        printErrorDetails(output);
     }
 }
 

@@ -92,7 +92,8 @@ export async function existsAsync(path: string): Promise<boolean> {
 export function runCommand(
     command: string,
     args: readonly string[],
-    options: SpawnOptions
+    options: SpawnOptions,
+    realtimeOuput: boolean = true
 ): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
         let stdout = '';
@@ -101,13 +102,13 @@ export function runCommand(
         child.stdout?.on('data', (data) => {
             const str = data.toString();
             stdout += str;
-            console.log(str);
+            if (realtimeOuput) console.log(str);
         });
 
         child.stderr?.on('data', (data) => {
             const str = data.toString();
             stderr += str;
-            console.error(str);
+            if (realtimeOuput) console.error(str);
         });
 
         child.on('close', (code) => {

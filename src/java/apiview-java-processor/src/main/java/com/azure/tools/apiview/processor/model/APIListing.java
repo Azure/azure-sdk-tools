@@ -1,37 +1,36 @@
 package com.azure.tools.apiview.processor.model;
 
-import com.azure.json.JsonReader;
+import com.azure.json.JsonProviders;
 import com.azure.json.JsonSerializable;
-import com.azure.json.JsonToken;
 import com.azure.json.JsonWriter;
+import com.azure.tools.apiview.processor.analysers.models.Constants;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.zip.GZIPOutputStream;
+
+import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
 public class APIListing implements JsonSerializable<APIListing> {
-    private List<ChildItem> navigation;
-    private ChildItem rootNav;
+    private static final String versionString = "26";
+
     private String name;
-    private String language;
+    private Language language;
     private LanguageVariant languageVariant;
     private String packageName;
     private String packageVersion;
 
-    // This string is taken from here:
-    // https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
-    private final String versionString = "21";
-    private List<Token> tokens;
-    private List<Diagnostic> diagnostics;
-    private Map<String, String> knownTypes;
+    private final List<TreeNode> apiForest;
+    private final List<Diagnostic> diagnostics;
+    private final Map<String, String> knownTypes;
 
-    // a map of package names to a list of types within that package
-    private final Map<String, List<String>> packageNamesToTypesMap;
     private final Map<String, String> typeToPackageNameMap;
     private Pom mavenPom;
     private ApiViewProperties apiViewProperties;
@@ -39,24 +38,24 @@ public class APIListing implements JsonSerializable<APIListing> {
     public APIListing() {
         this.diagnostics = new ArrayList<>();
         this.knownTypes = new HashMap<>();
-        this.packageNamesToTypesMap = new HashMap<>();
         this.typeToPackageNameMap = new HashMap<>();
-        this.navigation = new ArrayList<>();
+        this.apiForest = new ArrayList<>();
         this.apiViewProperties = new ApiViewProperties();
     }
 
     public void setReviewName(final String name) {
         this.name = name;
-        this.rootNav = new ChildItem(name, TypeKind.ASSEMBLY);
-        this.navigation.add(rootNav);
     }
 
-    public void addChildItem(ChildItem childItem) {
-        this.rootNav.addChildItem(childItem);
+    public void addTreeNode(TreeNode node) {
+        if (node != null) {
+            node.setApiListing(this);
+        }
+        this.apiForest.add(node);
     }
 
-    public void addChildItem(String packageName, ChildItem childItem) {
-        this.rootNav.addChildItem(packageName, childItem);
+    public List<TreeNode> getApiForest() {
+        return Collections.unmodifiableList(apiForest);
     }
 
     public void addDiagnostic(Diagnostic diagnostic) {
@@ -67,11 +66,11 @@ public class APIListing implements JsonSerializable<APIListing> {
         return Collections.unmodifiableList(diagnostics);
     }
 
-    public String getLanguage() {
+    public Language getLanguage() {
         return language;
     }
 
-    public void setLanguage(final String language) {
+    public void setLanguage(final Language language) {
         this.language = language;
     }
 
@@ -99,19 +98,6 @@ public class APIListing implements JsonSerializable<APIListing> {
         this.packageVersion = packageVersion;
     }
 
-    public List<Token> getTokens() {
-        return tokens;
-    }
-
-    public void setTokens(List<Token> tokens) {
-        this.tokens = tokens;
-    }
-
-    @Override
-    public String toString() {
-        return "APIListing [rootNav = " + rootNav + ", Name = " + name + ", Tokens = " + tokens + "]";
-    }
-
     /**
      * Returns a map of type name to unique identifier, used for navigation.
      */
@@ -120,12 +106,8 @@ public class APIListing implements JsonSerializable<APIListing> {
     }
 
     public void addPackageTypeMapping(String packageName, String typeName) {
-        packageNamesToTypesMap.computeIfAbsent(packageName, name -> new ArrayList<>()).add(typeName);
+//        packageNamesToTypesMap.computeIfAbsent(packageName, name -> new ArrayList<>()).add(typeName);
         typeToPackageNameMap.put(typeName, packageName);
-    }
-
-    public Map<String, List<String>> getPackageNamesToTypesMap() {
-        return packageNamesToTypesMap;
     }
 
     public Map<String, String> getTypeToPackageNameMap() {
@@ -151,48 +133,38 @@ public class APIListing implements JsonSerializable<APIListing> {
     @Override
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         return jsonWriter.writeStartObject()
-            .writeArrayField("Navigation", navigation, JsonWriter::writeJson)
-            .writeStringField("Name", name)
-            .writeStringField("Language", language)
-            .writeStringField("LanguageVariant", Objects.toString(languageVariant, null))
-            .writeStringField("PackageName", packageName)
-            .writeStringField("PackageVersion", packageVersion)
-            .writeStringField("VersionString", versionString)
-            .writeArrayField("Tokens", tokens, JsonWriter::writeJson)
-            .writeArrayField("Diagnostics", diagnostics, JsonWriter::writeJson)
+            // Version?
+            .writeStringField(JSON_NAME_VERSION_STRING, versionString)
+            .writeStringField(JSON_NAME_NAME, name)
+            .writeStringField(JSON_NAME_LANGUAGE, language.toString())
+            .writeStringField(JSON_NAME_LANGUAGE_VARIANT, languageVariant.toString())
+            .writeStringField(JSON_NAME_PACKAGE_NAME, packageName)
+            .writeStringField(JSON_NAME_PACKAGE_VERSION, packageVersion)
+            // ServiceName?
+            // PackageDisplayName?
+            .writeArrayField(JSON_NAME_API_FOREST, apiForest, JsonWriter::writeJson)
+            .writeArrayField(JSON_NAME_DIAGNOSTICS, diagnostics, JsonWriter::writeJson)
             .writeEndObject();
     }
 
-    public static APIListing fromJson(JsonReader jsonReader) throws IOException {
-        return jsonReader.readObject(reader -> {
-            APIListing apiListing = new APIListing();
-
-            while (reader.nextToken() != JsonToken.END_OBJECT) {
-                String fieldName = reader.getFieldName();
-                reader.nextToken();
-
-                if ("Navigation".equals(fieldName)) {
-                    apiListing.navigation = reader.readArray(ChildItem::fromJson);
-                } else if ("Name".equals(fieldName)) {
-                    apiListing.name = reader.getString();
-                } else if ("Language".equals(fieldName)) {
-                    apiListing.language = reader.getString();
-                } else if ("LanguageVariant".equals(fieldName)) {
-                    apiListing.languageVariant = LanguageVariant.fromString(reader.getString());
-                } else if ("PackageName".equals(fieldName)) {
-                    apiListing.packageName = reader.getString();
-                } else if ("PackageVersion".equals(fieldName)) {
-                    apiListing.packageVersion = reader.getString();
-                } else if ("Tokens".equals(fieldName)) {
-                    apiListing.tokens = reader.readArray(Token::fromJson);
-                } else if ("Diagnostics".equals(fieldName)) {
-                    apiListing.diagnostics = reader.readArray(Diagnostic::fromJson);
-                } else {
-                    reader.skipChildren();
+    public void toFile(File outputFile, boolean gzipOutput) {
+        try {
+            // Write out to the filesystem, make the file if it doesn't exist
+            if (!outputFile.exists()) {
+                if (!outputFile.createNewFile()) {
+                    System.out.printf("Failed to create output file %s%n", outputFile);
                 }
             }
 
-            return apiListing;
-        });
+            OutputStream fileStream = Files.newOutputStream(outputFile.toPath());
+            OutputStream outputStream = gzipOutput ? new GZIPOutputStream(fileStream) : fileStream;
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+            try (JsonWriter jsonWriter = JsonProviders.createWriter(writer)) {
+                toJson(jsonWriter);
+            }
+            System.out.println("Output written to file: " + outputFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

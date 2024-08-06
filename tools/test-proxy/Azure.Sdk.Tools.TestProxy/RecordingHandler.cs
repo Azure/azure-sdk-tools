@@ -82,7 +82,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public readonly ConcurrentDictionary<string, ModifiableRecordSession> PlaybackSessions
             = new ConcurrentDictionary<string, ModifiableRecordSession>();
 
-        // as sessions are popped off, 
         public readonly ConcurrentDictionary<string, ConcurrentQueue<AuditLogItem>> AuditSessions
             = new ConcurrentDictionary<string, ConcurrentQueue<AuditLogItem>>();
 

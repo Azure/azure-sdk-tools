@@ -55,13 +55,11 @@ export class RestLevelClientChangelogPostProcessor {
   private findCompatibleNodeContext(
     inputContext: NodeContext,
     contextMapToFind: Map<string, NodeContext>,
-    checkAssignableFromInputToFound: boolean
   ): NodeContext | undefined {
     for (const [_, foundContext] of contextMapToFind) {
-      const isCompatible = checkAssignableFromInputToFound
-        ? inputContext.node.getType().isAssignableTo(foundContext.node.getType())
-        : foundContext.node.getType().isAssignableTo(inputContext.node.getType());
-      if (isCompatible) return foundContext;
+      const isCompatibleFromInputToFound = inputContext.node.getType().isAssignableTo(foundContext.node.getType())
+      const isCompatibleFromFoundToInput = foundContext.node.getType().isAssignableTo(inputContext.node.getType())
+      if (isCompatibleFromInputToFound && isCompatibleFromFoundToInput) return foundContext;
     }
     return undefined;
   }
@@ -69,14 +67,12 @@ export class RestLevelClientChangelogPostProcessor {
   private tryIgnoreInlineTypeInChangelogItem(
     inputContext: NodeContext,
     nodeContextMapToFind: Map<string, NodeContext>,
-    checkAssignableFromInputToFound: boolean,
     item: ChangelogItem
   ) {
     if (!inputContext) return;
     const foundContext = this.findCompatibleNodeContext(
       inputContext,
       nodeContextMapToFind,
-      checkAssignableFromInputToFound
     );
     if (foundContext) {
       inputContext.used = true;
@@ -108,14 +104,14 @@ export class RestLevelClientChangelogPostProcessor {
       if (item.newName) {
         const inputContext = this.getCurrentNodeContext(item.newName);
         if (!inputContext) return;
-        this.tryIgnoreInlineTypeInChangelogItem(inputContext, this.message.baseline, true, item);
+        this.tryIgnoreInlineTypeInChangelogItem(inputContext, this.message.baseline, item);
         return;
       }
 
-      // item.baselineName exists
+      // item.oldName exists
       const inputContext = this.getBaselineNodeContext(item.oldName);
       if (!inputContext) return;
-      this.tryIgnoreInlineTypeInChangelogItem(inputContext, this.message.current, false, item);
+      this.tryIgnoreInlineTypeInChangelogItem(inputContext, this.message.current,  item);
       return;
     });
   }

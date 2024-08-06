@@ -30,11 +30,12 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnGetAsync()
         {
-            APIRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(User.GetGitHubLogin());
+            var userId = User.GetGitHubLogin();
+            APIRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(userId);
 
             List<APIRevisionListItemModel> activeAPIRevs = new List<APIRevisionListItemModel>();
             List<APIRevisionListItemModel> approvedAPIRevs = new List<APIRevisionListItemModel>();
-            foreach (var apiRevison in APIRevisions.OrderByDescending(r => r.AssignedReviewers.Select(x => x.AssingedOn)))
+            foreach (var apiRevison in APIRevisions.OrderByDescending(r => r.AssignedReviewers.First(x => x.AssingedTo.Equals(userId)).AssingedOn))
             {
                 if (!apiRevison.IsApproved)
                 {

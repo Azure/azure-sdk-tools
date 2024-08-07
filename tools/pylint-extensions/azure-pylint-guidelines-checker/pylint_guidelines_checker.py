@@ -6,11 +6,11 @@
 """
 Pylint custom checkers for SDK guidelines: C4717 - C4760
 """
-
+import collections
+import importlib
 import logging
 import astroid
 from pylint.checkers import BaseChecker
-
 
 logger = logging.getLogger(__name__)
 
@@ -72,9 +72,9 @@ class ClientConstructorTakesCorrectParameters(BaseChecker):
         """
         try:
             if (
-                node.name == "__init__"
-                and node.parent.name.endswith("Client")
-                and node.parent.name not in self.ignore_clients
+                    node.name == "__init__"
+                    and node.parent.name.endswith("Client")
+                    and node.parent.name not in self.ignore_clients
             ):
                 arg_names = [argument.name for argument in node.args.args]
                 if "credential" not in arg_names:
@@ -215,10 +215,10 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
                 ]
                 for idx, method in enumerate(client_methods):
                     if (
-                        method.name.startswith("__")
-                        or "_exists" in method.name
-                        or method.name.startswith("_")
-                        or method.name.startswith("from")
+                            method.name.startswith("__")
+                            or "_exists" in method.name
+                            or method.name.startswith("_")
+                            or method.name.startswith("from")
                     ):
                         continue
                     prefix = method.name.split("_")[0]
@@ -278,9 +278,9 @@ class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
         """
         try:
             if (
-                node.parent.name.endswith("Client")
-                and node.is_method()
-                and node.parent.name not in self.ignore_clients
+                    node.parent.name.endswith("Client")
+                    and node.is_method()
+                    and node.parent.name not in self.ignore_clients
             ):
                 # Only bother checking method signatures with > 6 parameters (don't include self/cls/etc)
                 if len(node.args.args) > 6:
@@ -343,9 +343,9 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
         """
         try:
             if (
-                node.parent.name.endswith("Client")
-                and node.is_method()
-                and node.parent.name not in self.ignore_clients
+                    node.parent.name.endswith("Client")
+                    and node.is_method()
+                    and node.parent.name not in self.ignore_clients
             ):
                 if not node.name.startswith("_") or node.name == "__init__":
                     # Checks that method has python 2/3 type comments or annotations as shown here:
@@ -353,8 +353,8 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
 
                     # check for type comments
                     if (
-                        node.type_comment_args is None
-                        or node.type_comment_returns is None
+                            node.type_comment_args is None
+                            or node.type_comment_returns is None
                     ):
                         # type annotations default to a list of None when not present,
                         # so need extra logic here to check for any hints that may be present
@@ -369,7 +369,7 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
                         # node.returns is the type annotation return
                         # Note that if the method returns nothing it will be of type ast.Const.NoneType
                         if (
-                            type_annotations == [] and len(node.args.args) > 1
+                                type_annotations == [] and len(node.args.args) > 1
                         ) or node.returns is None:
                             self.add_message(
                                 msgid="client-method-missing-type-annotations",
@@ -452,20 +452,20 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
             new_path = ".".join(split_path[: len(split_path) - 1])
             if new_path.count("_") == 0:
                 if (
-                    node.parent.name.endswith("Client")
-                    and node.is_method()
-                    and not node.name.startswith("_")
-                    and node.parent.name not in self.ignore_clients
+                        node.parent.name.endswith("Client")
+                        and node.is_method()
+                        and not node.name.startswith("_")
+                        and node.parent.name not in self.ignore_clients
                 ):
                     if (
-                        node.args.kwarg
-                        and node.name not in self.ignore_functions
-                        and not node.name.endswith("client")
-                        and not self.ignore_decorators.intersection(
-                            node.decoratornames()
-                        )
-                        and "azure.core.tracing.decorator.distributed_trace"
-                        not in node.decoratornames()
+                            node.args.kwarg
+                            and node.name not in self.ignore_functions
+                            and not node.name.endswith("client")
+                            and not self.ignore_decorators.intersection(
+                        node.decoratornames()
+                    )
+                            and "azure.core.tracing.decorator.distributed_trace"
+                            not in node.decoratornames()
                     ):
                         self.add_message(
                             msgid="client-method-missing-tracing-decorator",
@@ -491,20 +491,20 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
             new_path = ".".join(split_path[: len(split_path) - 1])
             if new_path.count("_") == 0:
                 if (
-                    node.parent.name.endswith("Client")
-                    and node.is_method()
-                    and not node.name.startswith("_")
-                    and node.parent.name not in self.ignore_clients
+                        node.parent.name.endswith("Client")
+                        and node.is_method()
+                        and not node.name.startswith("_")
+                        and node.parent.name not in self.ignore_clients
                 ):
                     if (
-                        node.args.kwarg
-                        and node.name not in self.ignore_functions
-                        and not node.name.endswith("client")
-                        and not self.ignore_decorators.intersection(
-                            node.decoratornames()
-                        )
-                        and "azure.core.tracing.decorator_async.distributed_trace_async"
-                        not in node.decoratornames()
+                            node.args.kwarg
+                            and node.name not in self.ignore_functions
+                            and not node.name.endswith("client")
+                            and not self.ignore_decorators.intersection(
+                        node.decoratornames()
+                    )
+                            and "azure.core.tracing.decorator_async.distributed_trace_async"
+                            not in node.decoratornames()
                     ):
                         self.add_message(
                             msgid="client-method-missing-tracing-decorator-async",
@@ -556,9 +556,9 @@ class ClientsDoNotUseStaticMethods(BaseChecker):
         """
         try:
             if (
-                node.parent.name.endswith("Client")
-                and node.is_method()
-                and node.parent.name not in self.ignore_clients
+                    node.parent.name.endswith("Client")
+                    and node.is_method()
+                    and node.parent.name not in self.ignore_clients
             ):
                 # ignores private methods or methods that don't have any decorators
                 if not node.name.startswith("_") and node.decorators is not None:
@@ -667,9 +667,9 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
         """
         # check for correct capitalization for "Client" and whatever the first letter of the prefix is
         if (
-            "_" in node.name
-            or node.name.endswith("client")
-            or node.name[0] != node.name[0].upper()
+                "_" in node.name
+                or node.name.endswith("client")
+                or node.name[0] != node.name[0].upper()
         ):
             if not node.name.startswith("_") and node.name not in self.ignore_clients:
                 self.add_message(
@@ -698,7 +698,8 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
             # check that methods in client class do not use camelcase
             try:
                 for func in node.body:
-                    if func.name != func.name.lower() and not func.name.startswith("_") and isinstance(func, astroid.FunctionDef):
+                    if func.name != func.name.lower() and not func.name.startswith("_") and isinstance(func,
+                                                                                                       astroid.FunctionDef):
                         self.add_message(
                             msgid="client-incorrect-naming-convention",
                             node=func,
@@ -752,19 +753,19 @@ class ClientMethodsHaveKwargsParameter(BaseChecker):
         """
         try:
             if (
-                node.parent.name.endswith("Client")
-                and node.is_method()
-                and node.parent.name not in self.ignore_clients
+                    node.parent.name.endswith("Client")
+                    and node.is_method()
+                    and node.parent.name not in self.ignore_clients
             ):
                 # avoid false positive with @property
                 if node.decorators is not None:
                     if "builtins.property" in node.decoratornames():
                         return
                     if not node.name.startswith("_") and (
-                        "azure.core.tracing.decorator.distributed_trace"
-                        in node.decoratornames()
-                        or "azure.core.tracing.decorator_async.distributed_trace_async"
-                        in node.decoratornames()
+                            "azure.core.tracing.decorator.distributed_trace"
+                            in node.decoratornames()
+                            or "azure.core.tracing.decorator_async.distributed_trace_async"
+                            in node.decoratornames()
                     ):
                         if not node.args.kwarg:
                             self.add_message(
@@ -830,13 +831,13 @@ class ClientMethodNamesDoNotUseDoubleUnderscorePrefix(BaseChecker):
         """
         try:
             if (
-                node.parent.name.endswith("Client")
-                and node.is_method()
-                and node.parent.name not in self.ignore_clients
+                    node.parent.name.endswith("Client")
+                    and node.is_method()
+                    and node.parent.name not in self.ignore_clients
             ):
                 if (
-                    node.name.startswith("__")
-                    and node.name not in self.acceptable_names
+                        node.name.startswith("__")
+                        and node.name not in self.acceptable_names
                 ):
                     self.add_message(
                         msgid="client-method-name-no-double-underscore",
@@ -917,9 +918,9 @@ class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
         """
         try:
             if (
-                node.parent.name.endswith("Client")
-                and node.parent.name not in self.ignore_clients
-                and node.is_method()
+                    node.parent.name.endswith("Client")
+                    and node.parent.name not in self.ignore_clients
+                    and node.is_method()
             ):
                 if node.doc_node.value.find("code-block") != -1:
                     self.add_message(
@@ -979,13 +980,13 @@ class AsyncClientCorrectNaming(BaseChecker):
         try:
             # avoid false positive when async name is used with a base class.
             if (
-                node.name.endswith("Client")
-                and "async" in node.name.lower()
-                and "base" not in node.name.lower()
+                    node.name.endswith("Client")
+                    and "async" in node.name.lower()
+                    and "base" not in node.name.lower()
             ):
                 if (
-                    not node.name.startswith("_")
-                    and node.name not in self.ignore_clients
+                        not node.name.startswith("_")
+                        and node.name not in self.ignore_clients
                 ):
                     self.add_message(
                         msgid="async-client-bad-name", node=node, confidence=None
@@ -1041,9 +1042,9 @@ class SpecifyParameterNamesInCall(BaseChecker):
             klass = node.parent.parent.parent
             function = node.parent.parent
             if (
-                klass.name.endswith("Client")
-                and klass.name not in self.ignore_clients
-                and function.is_method()
+                    klass.name.endswith("Client")
+                    and klass.name not in self.ignore_clients
+                    and function.is_method()
             ):
                 # node.args represent positional arguments
                 if len(node.args) > 2 and node.func.attrname != "format":
@@ -1104,19 +1105,19 @@ class ClientListMethodsUseCorePaging(BaseChecker):
             iterable_return = False
             paging_method = False
             if (
-                node.parent.parent.name.endswith("Client")
-                and node.parent.parent.name not in self.ignore_clients
-                and node.parent.is_method()
+                    node.parent.parent.name.endswith("Client")
+                    and node.parent.parent.name not in self.ignore_clients
+                    and node.parent.is_method()
             ):
                 try:
                     if any(
-                        v for v in node.value.infer() if "def by_page" in v.as_string()
+                            v for v in node.value.infer() if "def by_page" in v.as_string()
                     ):
                         iterable_return = True
                 except (
-                    astroid.exceptions.InferenceError,
-                    AttributeError,
-                    TypeError,
+                        astroid.exceptions.InferenceError,
+                        AttributeError,
+                        TypeError,
                 ):  # astroid can't always infer the return
                     logger.debug(
                         "Pylint custom checker failed to check if client list method uses core paging."
@@ -1124,12 +1125,12 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                     return
 
                 if node.parent.name.startswith("list") or node.parent.name.startswith(
-                    "_list"
+                        "_list"
                 ):
                     paging_method = True
 
                 if (not paging_method and iterable_return) or (
-                    paging_method and not iterable_return
+                        paging_method and not iterable_return
                 ):
                     self.add_message(
                         msgid="client-paging-methods-use-list",
@@ -1186,9 +1187,9 @@ class ClientLROMethodsUseCorePolling(BaseChecker):
         """
         try:
             if (
-                node.parent.name.endswith("Client")
-                and node.parent.name not in self.ignore_clients
-                and node.is_method()
+                    node.parent.name.endswith("Client")
+                    and node.parent.name not in self.ignore_clients
+                    and node.is_method()
             ):
                 if node.name.startswith("begin"):
                     try:
@@ -1201,8 +1202,8 @@ class ClientLROMethodsUseCorePolling(BaseChecker):
                                 confidence=None,
                             )
                     except (
-                        astroid.exceptions.InferenceError,
-                        AttributeError,
+                            astroid.exceptions.InferenceError,
+                            AttributeError,
                     ):  # astroid can't always infer the return
                         logger.debug(
                             "Pylint custom checker failed to check if client begin method uses core polling."
@@ -1268,7 +1269,7 @@ class ClientLROMethodsUseCorrectNaming(BaseChecker):
                     # get the method in which LROPoller is returned
                     method = node.value.func.scope()
                     if not method.name.startswith(
-                        "begin"
+                            "begin"
                     ) and not method.name.startswith("_"):
                         self.add_message(
                             msgid="lro-methods-use-correct-naming",
@@ -1328,8 +1329,8 @@ class ClientConstructorDoesNotHaveConnectionStringParam(BaseChecker):
                     if func.name == "__init__":
                         for argument in func.args.args:
                             if (
-                                argument.name == "connection_string"
-                                or argument.name == "conn_str"
+                                    argument.name == "connection_string"
+                                    or argument.name == "conn_str"
                             ):
                                 self.add_message(
                                     msgid="connection-string-should-not-be-constructor-param",
@@ -1383,8 +1384,8 @@ class PackageNameDoesNotUseUnderscoreOrPeriod(BaseChecker):
                         if nod.targets[0].name == "PACKAGE_NAME":
                             package = nod.value
                             if (
-                                package.value.find(".") != -1
-                                or package.value.find("_") != -1
+                                    package.value.find(".") != -1
+                                    or package.value.find("_") != -1
                             ):
                                 self.add_message(
                                     msgid="package-name-incorrect",
@@ -1435,7 +1436,7 @@ class ServiceClientUsesNameWithClientSuffix(BaseChecker):
         try:
             # ignore base clients
             if node.file.endswith("base_client.py") or node.file.endswith(
-                "base_client_async.py"
+                    "base_client_async.py"
             ):
                 return
             if node.file.endswith("client.py") or node.file.endswith("client_async.py"):
@@ -1618,8 +1619,8 @@ class CheckDocstringParameters(BaseChecker):
         if isinstance(node, astroid.ClassDef):
             for constructor in node.body:
                 if (
-                    isinstance(constructor, astroid.FunctionDef)
-                    and constructor.name == "__init__"
+                        isinstance(constructor, astroid.FunctionDef)
+                        and constructor.name == "__init__"
                 ):
                     arg_names = [arg.name for arg in constructor.args.args]
                     method_keyword_only_args = [
@@ -1959,7 +1960,7 @@ class CheckForPolicyUse(BaseChecker):
         if node.package:  # the init file
             count = node.file.split("azure-sdk-for-python")[1].count("-")
             if node.file.split("azure-sdk-for-python")[1].count("\\") <= (
-                5 + count
+                    5 + count
             ) and node.file.split("azure-sdk-for-python")[1].count("/") <= (5 + count):
                 self.ran_at_package_level = True
 
@@ -1988,8 +1989,8 @@ class CheckForPolicyUse(BaseChecker):
                 if node.body[idx].name.find("LoggingPolicy") != -1:
                     self.has_policies.add("NetworkTraceLoggingPolicy")
                 if (
-                    "RetryPolicy" in node.body[idx].basenames
-                    or "AsyncRetryPolicy" in node.body[idx].basenames
+                        "RetryPolicy" in node.body[idx].basenames
+                        or "AsyncRetryPolicy" in node.body[idx].basenames
                 ):
                     self.has_policies.add("RetryPolicy")
                 if node.body[idx].name.find("RetryPolicy") != -1:
@@ -2007,8 +2008,8 @@ class CheckForPolicyUse(BaseChecker):
             if isinstance(node.body[idx], astroid.ImportFrom):
                 for imp, pol in enumerate(node.body[idx].names):
                     if (
-                        node.body[idx].names[imp][0].endswith("Policy")
-                        and node.body[idx].names[imp][0] not in self.has_policies
+                            node.body[idx].names[imp][0].endswith("Policy")
+                            and node.body[idx].names[imp][0] not in self.has_policies
                     ):
                         self.visit_class(node.body, node.body[idx].names[imp][0])
 
@@ -2086,8 +2087,8 @@ class CheckDocstringAdmonitionNewline(BaseChecker):
         try:
             # not every class/method will have a docstring so don't crash here, just return
             if (
-                node.doc_node.value.find("admonition") != -1
-                and node.doc_node.value.find(".. literalinclude") != -1
+                    node.doc_node.value.find("admonition") != -1
+                    and node.doc_node.value.find(".. literalinclude") != -1
             ):
                 literal_include = node.doc_node.value.split(".. literalinclude")[0]
                 chars_list = list(reversed(literal_include))
@@ -2268,8 +2269,8 @@ class CheckAPIVersion(BaseChecker):
             if node.name.endswith("Client") and node.name not in self.ignore_clients:
                 if node.doc_node:
                     if (
-                        ":keyword api_version:" in node.doc_node.value
-                        or ":keyword str api_version:" in node.doc_node.value
+                            ":keyword api_version:" in node.doc_node.value
+                            or ":keyword str api_version:" in node.doc_node.value
                     ):
                         api_version = True
                 if not api_version:
@@ -2278,8 +2279,8 @@ class CheckAPIVersion(BaseChecker):
                             if func.name == "__init__":
                                 if func.doc_node:
                                     if (
-                                        ":keyword api_version:" in func.doc_node.value
-                                        or ":keyword str api_version:" in func.doc_node.value
+                                            ":keyword api_version:" in func.doc_node.value
+                                            or ":keyword str api_version:" in func.doc_node.value
                                     ):
                                         api_version = True
                                 if not api_version:
@@ -2337,7 +2338,7 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
 
                 for nod in node.body:
                     if isinstance(nod, astroid.ImportFrom) or isinstance(
-                        nod, astroid.Import
+                            nod, astroid.Import
                     ):
                         # If the model has been aliased
                         for name in nod.names:
@@ -2441,7 +2442,6 @@ class NonAbstractTransportImport(BaseChecker):
 
 
 class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
-
     """Rule to check that we don't use raise_with_traceback from azure core."""
 
     name = "no-raise-with-traceback"
@@ -2485,7 +2485,6 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
 
 
 class NameExceedsStandardCharacterLength(BaseChecker):
-
     """Rule to check that the character length of type and property names are not over 40 characters."""
 
     name = "name-too-long"
@@ -2539,7 +2538,7 @@ class NameExceedsStandardCharacterLength(BaseChecker):
         :return: None
         """
         if len(node.name) > self.STANDARD_CHARACTER_LENGTH and not node.name.startswith(
-            "_"
+                "_"
         ):
             self.add_message(
                 msgid="name-too-long",
@@ -2549,15 +2548,15 @@ class NameExceedsStandardCharacterLength(BaseChecker):
 
         for i in node.body:
             if (
-                not (
-                    isinstance(i, astroid.FunctionDef)
-                    or isinstance(i, astroid.AsyncFunctionDef)
-                )
-                and not ignore_function
+                    not (
+                            isinstance(i, astroid.FunctionDef)
+                            or isinstance(i, astroid.AsyncFunctionDef)
+                    )
+                    and not ignore_function
             ):
                 try:
                     if len(
-                        i.name
+                            i.name
                     ) > self.STANDARD_CHARACTER_LENGTH and not i.name.startswith("_"):
                         self.add_message(
                             msgid="name-too-long",
@@ -2569,7 +2568,7 @@ class NameExceedsStandardCharacterLength(BaseChecker):
                     for j in i.targets:
                         if isinstance(j, astroid.AssignName):
                             if len(
-                                j.name
+                                    j.name
                             ) > self.STANDARD_CHARACTER_LENGTH and not j.name.startswith(
                                 "_"
                             ):
@@ -2581,7 +2580,7 @@ class NameExceedsStandardCharacterLength(BaseChecker):
                         elif isinstance(j, astroid.AssignAttr):
                             # for self.names
                             if len(
-                                j.attrname
+                                    j.attrname
                             ) > self.STANDARD_CHARACTER_LENGTH and not j.attrname.startswith(
                                 "_"
                             ):
@@ -2595,7 +2594,6 @@ class NameExceedsStandardCharacterLength(BaseChecker):
 
 
 class DeleteOperationReturnStatement(BaseChecker):
-
     """Rule to check that delete* or begin_delete* return None or LROPoller[None], respectively."""
 
     name = "delete-operation-wrong-return-type"
@@ -2624,11 +2622,11 @@ class DeleteOperationReturnStatement(BaseChecker):
                         confidence=None,
                     )
             if node.name.startswith("begin_delete") and node.parent.name.endswith(
-                "Client"
+                    "Client"
             ):
                 if (
-                    node.returns.as_string() != "LROPoller[None]"
-                    and node.returns.as_string() != "AsyncLROPoller[None]"
+                        node.returns.as_string() != "LROPoller[None]"
+                        and node.returns.as_string() != "AsyncLROPoller[None]"
                 ):
                     self.add_message(
                         msgid="delete-operation-wrong-return-type",
@@ -2639,8 +2637,54 @@ class DeleteOperationReturnStatement(BaseChecker):
             pass
 
 
-class DoNotImportLegacySix(BaseChecker):
+class ImportTypeChecker(BaseChecker):
 
+    name = 'import-type-checker'
+    msgs = {
+        'E9001': (
+            'Type %s is importable from multiple namespaces: %s',
+            'duplicate-import-type',
+            'Used when a type is importable from multiple namespaces.',
+        ),
+    }
+    options = ()
+
+    def __init__(self, linter=None):
+        super().__init__(linter)
+        self.imported_types = {}
+
+    def visit_importfrom(self, node):
+        # Handle imports like `from module import name`
+        module_name = node.modname
+        for name, alias in node.names:
+            type_name = alias or name
+            if type_name in self.imported_types:
+                self.add_message(
+                    'duplicate-import-type',
+                    node=node,
+                    args=(type_name, f'{self.imported_types[type_name]}, {module_name}')
+                )
+            else:
+                self.imported_types[type_name] = module_name
+
+    def visit_import(self, node):
+        # Handle imports like `import module`
+        for name, alias in node.names:
+            module_name = alias or name
+            if module_name in self.imported_types:
+                self.add_message(
+                    'duplicate-import-type',
+                    node=node,
+                    args=(module_name, f'{self.imported_types[module_name]}, {module_name}')
+                )
+            else:
+                self.imported_types[module_name] = module_name
+
+
+def register(linter):
+    linter.register_checker(ImportTypeChecker(linter))
+
+class DoNotImportLegacySix(BaseChecker):
     """Rule to check that libraries do not import the six package."""
 
     name = "do-not-import-legacy-six"
@@ -2674,7 +2718,6 @@ class DoNotImportLegacySix(BaseChecker):
 
 
 class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
-
     """Rule to check that we aren't importing azure.core.pipeline.transport.HttpResponse outside of Azure Core."""
 
     name = "no-legacy-azure-core-http-response-import"
@@ -2695,7 +2738,7 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
     def visit_importfrom(self, node):
         """Check that we aren't importing from azure.core.pipeline.transport import HttpResponse."""
         if node.root().name.startswith(
-            self.AZURE_CORE_NAME
+                self.AZURE_CORE_NAME
         ) or node.root().name.startswith(self.AZURE_MGMT_CORE):
             return
         if node.modname == self.AZURE_CORE_TRANSPORT_NAME:
@@ -2708,9 +2751,7 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
-
 class NoImportTypingFromTypeCheck(BaseChecker):
-
     """Rule to check that we aren't importing typing under TYPE_CHECKING."""
 
     name = "no-typing-import-in-type-check"
@@ -2749,6 +2790,7 @@ class NoImportTypingFromTypeCheck(BaseChecker):
                         )
         except:
             pass
+
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):

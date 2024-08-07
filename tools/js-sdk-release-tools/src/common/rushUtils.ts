@@ -77,7 +77,7 @@ export async function tryTestPackage(packageDirectory: string) {
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, env, cwd };
     try {
-        await runCommand(`rushx`, ['test'], options, false, 300);
+        await runCommand(`rushx`, ['test:node'], options, true, 300);
         logger.logInfo(`tested package successfully.`);
     } catch (err) {
         logger.logError(`Test package failed due to: ${(err as Error)?.stack ?? err}`);

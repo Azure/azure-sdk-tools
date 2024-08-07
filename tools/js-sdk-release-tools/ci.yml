@@ -52,8 +52,8 @@ extends:
               displayName: 'Install Node.js'
 
             - script: |
-                npm install:all
-              displayName: 'npm install:all'
+                npm run install:all
+              displayName: 'npm run install:all'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
             
             - script: |

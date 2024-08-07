@@ -144,9 +144,9 @@ export function runCommand(
             if (timer) clearTimeout(timer);
             if (!timedOut) {
               if (signal || code && code !== 0) {
-                logger.logError(`Command "${commandStr}" exited with signal: ${signal} and code: ${code}`);
+                logger.logError(`Command "${commandStr}" exited with signal: ${signal ?? 'SIGTERM'} and code: ${code}`);
                 printErrorDetails({ stdout, stderr, code });
-                reject(new Error(`Process was killed with signal: ${signal}`));
+                reject(new Error(`Process was killed with signal: ${signal ?? 'SIGTERM'}`));
               } else {
                   resolve({ stdout, stderr, code });
               }

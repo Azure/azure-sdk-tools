@@ -8,6 +8,14 @@ import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { replaceAll } from '@ts-common/azure-js-dev-tools';
 import { access } from 'node:fs/promises';
 import { SpawnOptions } from 'child_process';
+import { outputFile } from 'fs-extra';
+
+function printErrorDetails(output: { stdout: string; stderr: string, code: number | null } | undefined) {
+    logger.logError(`Error details:`);
+    if (!output) return;
+    logger.logError(output?.stderr);
+    logger.logError(output?.stdout);
+}
 
 export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['inherit', 'pipe', 'pipe'] };
 
@@ -94,15 +102,17 @@ export function runCommand(
     args: readonly string[],
     options: SpawnOptions,
     realtimeOutput: boolean = true,
-    timeoutSeconds: number = 600 
-): Promise<{ stdout: string; stderr: string }> {
+    timeoutSeconds: number | undefined = undefined 
+): Promise<{ stdout: string; stderr: string, code }> {
     return new Promise((resolve, reject) => {
         let stdout = '';
         let stderr = '';
+        const commandStr = `${command} ${args.join(' ')}`;
+        logger.logInfo(`Run command: ${commandStr}`);
         const child = spawn(command, args, options);
 
         let timedOut = false;
-        const timer = setTimeout(() => {
+        const timer = timeoutSeconds &&setTimeout(() => {
             timedOut = true;
             child.kill();
             reject(new Error(`Process timed out after ${timeoutSeconds}s`));
@@ -111,7 +121,7 @@ export function runCommand(
         child.stdout?.on('data', (data) => {
             const str = data.toString();
             stdout += str;
-            if (realtimeOutput) console.log(str);
+            if (realtimeOutput) logger.logInfo(str);
         });
 
         child.stderr?.on('data', (data) => {
@@ -122,26 +132,30 @@ export function runCommand(
 
         child.on('close', (code) => {
             if (code === 0) {
-                resolve({ stdout, stderr });
+                resolve({ stdout, stderr, code });
             } else {
-                console.log(`run command exit: ${code}`);
-                reject(new Error(`run command exit: ${code}`));
+                logger.logError(`Run command closed with code ${code}`);
+                printErrorDetails({ stdout, stderr, code });
+                reject(new Error(`Run command closed with code ${code}`));
             }
         });
 
         child.on('exit', (code, signal) => {
-            clearTimeout(timer);
+            if (timer) clearTimeout(timer);
             if (!timedOut) {
-              if (signal) {
+              if (signal || code && code !== 0) {
+                logger.logError(`Command "${commandStr}" exited with signal: ${signal} and code: ${code}`);
+                printErrorDetails({ stdout, stderr, code });
                 reject(new Error(`Process was killed with signal: ${signal}`));
               } else {
-                  resolve({ stdout, stderr });
+                  resolve({ stdout, stderr, code });
               }
             }
         });
 
         child.on('error', (err) => {
-            console.log('run command err', err);
+            logger.logError(`Received command error: ${(err as Error)?.stack ?? err}`);
+            printErrorDetails({ stdout, stderr, code: null });
             reject(err);
         });
     });

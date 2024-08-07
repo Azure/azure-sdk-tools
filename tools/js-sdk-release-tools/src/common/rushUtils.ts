@@ -5,7 +5,6 @@ import { access, readFile, writeFile } from 'node:fs/promises';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
 import { posix, join } from 'node:path';
 import { VersionPolicyName } from './types';
-import { remove } from 'fs-extra';
 
 interface ProjectItem {
     packageName: string;
@@ -36,22 +35,9 @@ async function updateRushJson(projectItem: ProjectItem) {
 async function packPackage(packageDirectory: string) {
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, cwd };
-
-    try {
-        logger.logInfo(`Start rushx pack.`);
-        await runCommand('rushx', ['pack'], options);
-        logger.logInfo(`rushx pack successfully.`);
-    } catch (err) {
-        logger.logError(`Run command failed due to: ${(err as Error)?.stack ?? err}`);
-        throw err;
-    }
-}
-
-function printErrorDetails(output: { stdout: string; stderr: string } | undefined) {
-    logger.logError(`Error details:`);
-    if (!output) return;
-    logger.logError(output?.stderr);
-    logger.logError(output?.stdout);
+    logger.logInfo(`Start rushx pack.`);
+    await runCommand('rushx', ['pack'], options);
+    logger.logInfo(`rushx pack successfully.`);
 }
 
 export async function buildPackage(packageDirectory: string, versionPolicyName: VersionPolicyName) {
@@ -62,19 +48,10 @@ export async function buildPackage(packageDirectory: string, versionPolicyName: 
         projectFolder: packageDirectory,
         versionPolicyName: versionPolicyName
     });
-
-    let output: { stdout: string; stderr: string } | undefined;
-    try {
-        await remove(packageDirectory);
-        output = await runCommand(`rush`, ['update'], runCommandOptions);
-        logger.logInfo(`Rush update successfully.`);
-        output = await runCommand('rush', ['build', '-t', name], runCommandOptions);
-        logger.logInfo(`Build package "${name}" successfully.`);
-    } catch (err) {
-        logger.logError(`Run command failed due to: ${(err as Error)?.stack ?? err}`);
-        printErrorDetails(output);
-        throw err;
-    }
+    await runCommand(`rush`, ['update'], runCommandOptions);
+    logger.logInfo(`Rush update successfully.`);
+    await runCommand('rush', ['build', '-t', name, '--verbose'], runCommandOptions);
+    logger.logInfo(`Build package "${name}" successfully.`);
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
@@ -85,11 +62,10 @@ export async function tryBuildSamples(packageDirectory: string) {
     const options = { ...runCommandOptions, cwd };
     let output: { stdout: string; stderr: string } | undefined;
     try {
-        await runCommand(`rushx`, ['build:samples'], options);
+        await runCommand(`rushx`, ['build:samples'], options, false, 300);
         logger.logInfo(`built samples successfully.`);
     } catch (err) {
         logger.logError(`Building samples failed due to: ${(err as Error)?.stack ?? err}`);
-        printErrorDetails(output);
     }
 }
 
@@ -101,7 +77,7 @@ export async function tryTestPackage(packageDirectory: string) {
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, env, cwd };
     try {
-        await runCommand(`rushx`, ['test'], options);
+        await runCommand(`rushx`, ['test'], options, false, 300);
         logger.logInfo(`tested package successfully.`);
     } catch (err) {
         logger.logError(`Test package failed due to: ${(err as Error)?.stack ?? err}`);
@@ -114,12 +90,7 @@ export async function createArtifact(packageDirectory: string) {
     const info = await getNpmPackageInfo(packageDirectory);
     const artifactName = getArtifactName(info);
     const artifactPath = posix.join(packageDirectory, artifactName);
-
-    try {
-        await access(artifactPath);
-    } catch (error) {
-        throw new Error(`Failed to find generated artifact ${artifactPath}`);
-    }
+    await access(artifactPath);
     logger.logInfo(`Creating artifact ${info.name} successfully.`);
     return artifactPath;
 }

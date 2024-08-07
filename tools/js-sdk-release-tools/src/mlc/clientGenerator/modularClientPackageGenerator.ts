@@ -5,7 +5,8 @@ import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
 import { getNpmPackageInfo } from '../../common/npmUtils';
 import { buildPackage, tryBuildSamples, createArtifact, tryTestPackage } from '../../common/rushUtils';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
-import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
+import { generateTypeScriptCodeFromTypeSpec, getGeneratedPackageDirectory } from './utils/typeSpecUtils';
+import { remove } from 'fs-extra';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -17,6 +18,9 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     logger.logInfo(`Start generating modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
     try {
+        const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory);
+        await remove(packageDirectory);
+        
         const generatedPackageDir = await generateTypeScriptCodeFromTypeSpec(options);
 
         await buildPackage(generatedPackageDir, options.versionPolicyName);

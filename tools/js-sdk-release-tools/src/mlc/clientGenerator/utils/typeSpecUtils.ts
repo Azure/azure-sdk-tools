@@ -26,7 +26,7 @@ async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<any, nu
 
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
-async function getGeneratedPackageDirectory(typeSpecDirectory: string): Promise<string> {
+export async function getGeneratedPackageDirectory(typeSpecDirectory: string): Promise<string> {
     const tspConfig = await loadTspConfig(typeSpecDirectory);
     const serviceDir = tspConfig.parameters?.['service-dir']?.default;
     if (!serviceDir) {

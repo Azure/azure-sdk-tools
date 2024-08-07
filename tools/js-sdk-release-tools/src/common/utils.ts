@@ -59,3 +59,18 @@ export function fixChangelogFormat(content: string) {
     content  = replaceAll(content, '**Other Changes**', '### Other Changes')!;
     return content;
 }
+
+export function tryReadNpmPackageChangelog(packageFolderPath: string): string {
+    const changelogPath = path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md');
+    try {
+        if (!fs.existsSync(changelogPath)) {
+            logger.logWarn(`NPM package's changelog "${changelogPath}" does not exists`);
+            return "";
+        }
+        const originalChangeLogContent = fs.readFileSync(changelogPath, { encoding: 'utf-8' });
+        return originalChangeLogContent;
+    } catch (err) {
+        logger.logWarn(`Failed to read NPM package's changelog "${changelogPath}": ${(err as Error)?.stack ?? err}`);
+        return '';
+    }
+}

@@ -1,12 +1,11 @@
 import { Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { MenuItem, MenuItemCommandEvent } from 'primeng/api';
 import { Menu } from 'primeng/menu';
-import { UserProfile } from 'src/app/_models/auth_service_models';
-import { CommentItemModel } from 'src/app/_models/review';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
-import { CodePanelRowData } from 'src/app/_models/revision';
+import { CodePanelRowData } from 'src/app/_models/codePanelModels';
+import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
   selector: 'app-comment-thread',
@@ -18,6 +17,7 @@ import { CodePanelRowData } from 'src/app/_models/revision';
 })
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
+  @Input() associatedCodeLine: CodePanelRowData | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -63,34 +63,37 @@ export class CommentThreadComponent {
       items: [{
           title: "csharp",
           label: ".NET",
-          state: {
-            repo: "azure-sdk-for-net",
-            language: "C#"
-          }
+          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "java",
           label: "Java",
+          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "python",
           label: "Python",
+          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "c",
           label: "C",
+          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "javascript",
           label: "JavaScript",
+          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "go",
           label: "Go",
+          command: (event) => this.createGitHubIssue(event),
         },
         {
           title: "cplusplus",
           label: "C++",
+          command: (event) => this.createGitHubIssue(event),
         },
       ]
     });
@@ -138,9 +141,9 @@ export class CommentThreadComponent {
     this.allowAnyOneToResolve = !this.allowAnyOneToResolve;
   }
 
-  createGitHubIsuue(title : string) {
+  createGitHubIssue(event: MenuItemCommandEvent) {
     let repo = "";
-    switch (title) {
+    switch (event.item?.title) {
       case "csharp":
         repo = "azure-sdk-for-net";
         break;
@@ -163,6 +166,24 @@ export class CommentThreadComponent {
         repo = "azure-sdk-for-cpp";
         break;
     }
+
+    const target = (event.originalEvent?.target as Element).closest("a") as Element;
+    const commentId = target.getAttribute("data-item-id");
+    const commentData = this.codePanelRowData?.comments?.find(comment => comment.id === commentId)?.commentText.replace(/<[^>]*>/g, '').trim();
+
+    console.log(this.associatedCodeLine); 
+
+    const codeLineContent = this.associatedCodeLine 
+        ? this.associatedCodeLine.rowOfTokens
+            .map(token => token.value)
+            .join('')
+        : '';
+
+    const nodeId: string = this.codePanelRowData?.nodeId ?? 'defaultNodeId';
+    const apiViewUrl = `${window.location.href.split("#")[0]}&nId=${encodeURIComponent(nodeId)}`;
+    const issueBody = encodeURIComponent(`\`\`\`${event.item?.title}\n${codeLineContent}\n\`\`\`\n#\n${commentData}\n#\n[Created from ApiView comment](${apiViewUrl})`);
+
+    window.open(`https://github.com/Azure/${repo}/issues/new?body=${issueBody}`, '_blank');
   }
 
   showReplyEditor(event: Event) {

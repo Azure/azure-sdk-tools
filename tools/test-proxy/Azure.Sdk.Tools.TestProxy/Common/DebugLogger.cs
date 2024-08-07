@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
+using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

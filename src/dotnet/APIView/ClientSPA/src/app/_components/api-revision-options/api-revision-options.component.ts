@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
+import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { APIRevision } from 'src/app/_models/revision';
 
 @Component({
@@ -42,8 +43,8 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
       if (this.apiRevisions.length > 0) {
-        let mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
-        this.mappedApiRevisions = this.identifyAndProcessSpecialAPIRevisions(mappedApiRevisions);
+        this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+        this.tagSpecialRevisions(this.mappedApiRevisions);
 
         this.activeApiRevisionsMenu = this.mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.diffApiRevisionId);
         const selectedActiveAPIRevisionindex = this.activeApiRevisionsMenu.findIndex((apiRevision: APIRevision) => apiRevision.id === this.activeApiRevisionId);
@@ -123,15 +124,14 @@ export class ApiRevisionOptionsComponent implements OnChanges {
     });
 
     if (dropDownMenu === "active") {
-      this.activeApiRevisionsMenu = filtered;
+      this.activeApiRevisionsMenu = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.diffApiRevisionId);
       if (this.selectedActiveAPIRevision && !this.activeApiRevisionsMenu.includes(this.selectedActiveAPIRevision)) {
         this.activeApiRevisionsMenu.unshift(this.selectedActiveAPIRevision);
       }
     }
 
     if (dropDownMenu === "diff") {
-      filtered = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.activeApiRevisionId);
-      this.diffApiRevisionsMenu = filtered
+      this.diffApiRevisionsMenu = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.activeApiRevisionId);
       if (this.selectedDiffAPIRevision && !this.diffApiRevisionsMenu.includes(this.selectedDiffAPIRevision)) {
         this.diffApiRevisionsMenu.unshift(this.selectedDiffAPIRevision);
       }
@@ -170,6 +170,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
       return {
         id : apiRevision.id,
         resolvedLabel: apiRevision.resolvedLabel,
+        language: apiRevision.language,
         label: apiRevision.label,
         typeClass: typeClass,
         apiRevisionType: apiRevision.apiRevisionType,
@@ -181,6 +182,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
         isApproved: apiRevision.isApproved,
         isReleased: apiRevision.isReleased,
         releasedOn: apiRevision.releasedOn,
+        changeHistory: apiRevision.changeHistory,
         isLatestGA : false,
         isLatestApproved : false,
         isLatestMain : false,
@@ -191,74 +193,92 @@ export class ApiRevisionOptionsComponent implements OnChanges {
     });
   }
 
-  identifyAndProcessSpecialAPIRevisions(mappedApiRevisions: any []) {
-    const result = [];
-    const semVarRegex = /(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?/;
+  tagSpecialRevisions(mappedApiRevisions: any []) {
+    this.tagLatestGARevision(mappedApiRevisions);
+    this.tagLatestApprovedRevision(mappedApiRevisions);
+    this.tagCurrentMainRevision(mappedApiRevisions);
+    this.tagLatestReleasedRevision(mappedApiRevisions);   
+  }
 
-    let latestGAApiRevision : any = null;
-    let latestApprovedApiRevision : any = null;
-    let currentMainApiRevision : any = null;
-    let latestReleasedApiRevision : any = null;
+  tagLatestGARevision(apiRevisions: any[]) {
+    const gaRevisions : any [] = [];
 
-    while (mappedApiRevisions.length > 0) {
-      let apiRevision = mappedApiRevisions.shift();
-
-      if (latestGAApiRevision === null) {
-        if (apiRevision.version) {
-          let versionParts = apiRevision.version.match(semVarRegex);
-
-          if (versionParts.groups?.prelabel === undefined && versionParts.groups?.prenumber === undefined &&
-            versionParts.groups?.prenumsep === undefined && versionParts.groups?.presep === undefined) {
-              apiRevision.isLatestGA = true;
-              latestGAApiRevision = apiRevision;
-              continue;
-          }
+    for (let apiRevision of apiRevisions) {
+      if (apiRevision.isReleased && apiRevision.version) {
+        const semVar = new AzureEngSemanticVersion(apiRevision.version, apiRevision.language);
+        if (semVar.versionType == "GA") {
+          apiRevision.semanticVersion = semVar;
+          gaRevisions.push(apiRevision);
         }
       }
+    }
 
-      if (latestApprovedApiRevision === null) {
-        if (apiRevision.isApproved) {
-          apiRevision.isLatestApproved = true;
-          latestApprovedApiRevision = apiRevision;
-          continue;
+    if (gaRevisions.length > 0) {
+      gaRevisions.sort((a: any, b: any) => b.semanticVersion.compareTo(a.semanticVersion));
+      gaRevisions[0].isLatestGA = true;
+      this.updateTaggedAPIRevisions(apiRevisions, gaRevisions[0]);
+      return gaRevisions[0];
+    }
+  }
+
+  tagLatestApprovedRevision(apiRevisions: any[]) {
+    const approvedRevisions : any [] = [];
+
+    for (let apiRevision of apiRevisions) {
+      if (apiRevision.isApproved && apiRevision.changeHistory.length > 0) {
+        var approval = apiRevision.changeHistory.find((change: any) => change.changeAction === 'approved');
+        if (approval) {
+          apiRevision.approvedOn = approval.changedOn;
+          approvedRevisions.push(apiRevision);
         }
       }
+    }
 
-      if (currentMainApiRevision === null) {
-        if (apiRevision.apiRevisionType === 'Automatic') {
-          apiRevision.isLatestMain = true;
-          currentMainApiRevision = apiRevision;
-          continue;
-        }
+    if (approvedRevisions.length > 0) {
+      approvedRevisions.sort((a: any, b: any) => (new Date(b.approvedOn) as any) - (new Date(a.approvedOn) as any));
+      approvedRevisions[0].isLatestApproved = true;
+      this.updateTaggedAPIRevisions(apiRevisions, approvedRevisions[0]);
+      return approvedRevisions[0];
+    }
+  }
+
+  tagCurrentMainRevision(apiRevisions: any[]) {
+    const automaticRevisions : any [] = [];
+
+    for (let apiRevision of apiRevisions) {
+      if (apiRevision.apiRevisionType === 'automatic') {
+        automaticRevisions.push(apiRevision);
       }
+    }
 
-      if (latestReleasedApiRevision === null) {
-        if (apiRevision.isReleased) {
-          apiRevision.isLatestReleased = true;
-          latestReleasedApiRevision = apiRevision;
-          continue;
-        }
+    if (automaticRevisions.length > 0) {
+      automaticRevisions.sort((a: any, b: any) => (new Date(b.lastUpdatedOn) as any) - (new Date(a.lastUpdatedOn) as any));
+      automaticRevisions[0].isLatestMain = true;
+      this.updateTaggedAPIRevisions(apiRevisions, automaticRevisions[0]);
+      return automaticRevisions[0];
+    }
+  }
+
+  tagLatestReleasedRevision(apiRevisions: any[]) {
+    const releasedRevisions : any [] = [];
+
+    for (let apiRevision of apiRevisions) {
+      if (apiRevision.isReleased) {
+        releasedRevisions.push(apiRevision);
       }
-      result.push(apiRevision);
     }
 
-    if (latestGAApiRevision) {
-      result.unshift(latestGAApiRevision);
+    if (releasedRevisions.length > 0) {
+      releasedRevisions.sort((a: any, b: any) => (new Date(b.releasedOn) as any) - (new Date(a.releasedOn) as any));
+      releasedRevisions[0].isLatestReleased = true;
+      this.updateTaggedAPIRevisions(apiRevisions, releasedRevisions[0]);
+      return releasedRevisions[0];
     }
+  }
 
-    if (latestApprovedApiRevision) {
-      result.unshift(latestApprovedApiRevision);
-    }
-
-    if (currentMainApiRevision) {
-      result.unshift(currentMainApiRevision);
-    }
-
-    if (latestReleasedApiRevision) {
-      result.unshift(latestReleasedApiRevision);
-    }
-
-    return result;
+  private updateTaggedAPIRevisions(apiRevisions: any[], taggedApiRevision: any) {
+    apiRevisions.splice(apiRevisions.indexOf(taggedApiRevision), 1)
+    apiRevisions.unshift(taggedApiRevision);
   }
 }
 

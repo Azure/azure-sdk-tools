@@ -1,6 +1,6 @@
 {
   "name": "js-sdk-release-tools",
-  "version": "2.7.15-beta",
+  "version": "2.7.16-beta",
   "description": "",
   "scripts": {
     "dev": "tsx watch src/changelogToolCli.ts",

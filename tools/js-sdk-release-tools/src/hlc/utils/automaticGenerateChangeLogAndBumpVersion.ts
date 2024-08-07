@@ -22,7 +22,7 @@ import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version";
 import { ApiVersionType } from "../../common/types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
-import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType } from '../../common/utils';
+import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../../common/utils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
@@ -66,7 +66,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
-                let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), { encoding: 'utf-8' });
+                let originalChangeLogContent = tryReadNpmPackageChangelog(packageFolderPath);
                 if(nextVersion){
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
                     shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
@@ -80,7 +80,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     const latestDate = getversionDate(npmViewResult, stableVersion);
                     const nextDate = getversionDate(npmViewResult,nextVersion);
                     if (latestDate && nextDate && latestDate <= nextDate){
-                        originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath,'changelog-temp', 'next', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                        originalChangeLogContent = tryReadNpmPackageChangelog(packageFolderPath);
                         logger.log('Need to keep previous preview changelog');
                         
                     }

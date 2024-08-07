@@ -1,8 +1,10 @@
 /// <reference lib="webworker" />
 import 'reflect-metadata';
-import { CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype, InsertCodePanelRowDataMessage, NavigationTreeNode, ReviewPageWorkerMessageDirective } from "../_models/revision";
-import { ApiTreeBuilderData, CodePanelData } from "../_models/revision";
-import { plainToClass } from 'class-transformer';
+import { ApiTreeBuilderData } from "../_models/revision";
+import { CodePanelData, CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype } from '../_models/codePanelModels';
+import { InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from '../_models/insertCodePanelRowDataMessage';
+import { NavigationTreeNode } from '../_models/navigationTreeModels';
+import { FULL_DIFF_STYLE, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
@@ -19,6 +21,9 @@ addEventListener('message', ({ data }) => {
     let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
     codePanelData = JSON.parse(jsonString);
+    if (!codePanelData?.hasDiff) {
+      apiTreeBuilderData!.diffStyle = FULL_DIFF_STYLE; // If there is no diff nodes and tree diff will not work
+    }
     
     buildCodePanelRows("root", navigationTree);
     const codePanelRowDataMessage : InsertCodePanelRowDataMessage = {
@@ -67,17 +72,18 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   let buildChildren = true;
   let addNodeToBuffer = false
  
-  if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === "trees" || apiTreeBuilderData?.diffStyle === "nodes") && !node.isNodeWithDiffInDescendants) {
+  if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === TREE_DIFF_STYLE || apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE) && 
+    (!node.isNodeWithDiffInDescendants || (!apiTreeBuilderData?.showDocumentation && !node.isNodeWithNoneDocDiffInDescendants))) {
     buildNode = false;
     buildChildren = false;
   }
 
   if (!buildNode && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && 
-    (apiTreeBuilderData?.diffStyle !== "nodes" || node.isNodeWithDiff)) {
+    (apiTreeBuilderData?.diffStyle !== NODE_DIFF_STYLE || node.isNodeWithDiff)) {
     buildNode = true;
   }
 
-  if (!node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === "nodes" && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
+  if (!node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
     addNodeToBuffer = true;
   }
 

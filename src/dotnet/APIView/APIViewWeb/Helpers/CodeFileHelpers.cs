@@ -557,6 +557,13 @@ namespace APIViewWeb.Helpers
                         {
                             var parentNode = codePanelData.NodeMetaDataObj[parentNodeIdHashed];
                             parentNode.IsNodeWithDiffInDescendants = true;
+
+                            if ((diffTokenRowResult.Before.Any() && !beforeRowClasses.Contains("doc")) || 
+                                (diffTokenRowResult.After.Any() && !afterRowClasses.Contains("doc")))
+                            {
+                                parentNode.IsNodeWithNoneDocDiffInDescendants = true;
+                            }
+
                             parentNodeIdHashed = parentNode.ParentNodeIdHashed;
                         }
 
@@ -738,12 +745,12 @@ namespace APIViewWeb.Helpers
                 commentsForRow.AssociatedRowPositionInGroup = rowData.RowPositionInGroup;
                 if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
                 }
                 else
                 {
                     codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
                 }
             }
         }

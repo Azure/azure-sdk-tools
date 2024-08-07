@@ -7,7 +7,7 @@ import { CookieService } from 'ngx-cookie-service';
   styleUrls: ['./page-options-section.component.scss']
 })
 export class PageOptionsSectionComponent implements OnInit{
-  @Input() sectionName : string | undefined;
+  @Input() sectionName : string = '';
   @Input() collapsedInput: boolean | undefined;
   sectionId: string | undefined;
   collapsed: boolean | undefined;

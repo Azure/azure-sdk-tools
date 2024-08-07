@@ -1,8 +1,8 @@
 import { mkdir, rm, stat, readFile, access } from "node:fs/promises";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
-import { TspLocation } from "./typespec.js";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
+import { TspLocation } from "./typespec.js";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -63,7 +63,7 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
   for (const lang of languages) {
     const emitter = Object.keys(obj.dependencies).find((dep: string) => dep.startsWith(lang));
     if (emitter) {
-      Logger.info(`Found emitter package ${emitter}`);
+      Logger.info(`Found emitter package ${emitter}@${obj.dependencies[emitter]}`);
       return emitter;
     }
   }

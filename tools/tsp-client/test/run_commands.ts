@@ -8,7 +8,7 @@
 // The script will throw an error if any of the commands fail.
 
 import { spawn } from "child_process";
-import { cp, unlink } from "fs/promises";
+import { cp, unlink, readFile } from "fs/promises";
 import { join, resolve } from "path";
 import { getRepoRoot } from "../src/git";
 
@@ -36,6 +36,8 @@ export async function runCommand(workingDir: string, args: string[]): Promise<vo
 }
 
 async function main() {
+  await verifySwaggerSorting();
+
   // Variables for the target directories
   const baseDir = resolve(".");
   const examplesDir = resolve("./test/examples/");
@@ -51,12 +53,15 @@ async function main() {
     "https://github.com/Azure/azure-rest-api-specs/blob/db63bea839f5648462c94e685d5cc96f8e8b38ba/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml";
 
   const emitterPackageJson = resolve("./test/utils/emitter-package.json");
+  const emitterPackageLockJson = resolve("./test/utils/emitter-package-lock.json");
 
   // Copy the emitter-package.json to the eng directory at the root of the repo
   const repoRoot = await getRepoRoot(".");
 
   await cp(emitterPackageJson, join(repoRoot, "eng/emitter-package.json"));
   console.log("emitter-package.json ---------------> copied successfully");
+  await cp(emitterPackageLockJson, join(repoRoot, "eng/emitter-package-lock.json"));
+  console.log("emitter-package-lock.json ---------------> copied successfully");
 
   // Run the init command
   await runCommand(baseDir, ["init", "-c", tspConfig, "-o", examplesDir]);
@@ -75,6 +80,35 @@ async function main() {
 
   await unlink(join(repoRoot, "eng/emitter-package.json"));
   console.log("emitter-package.json ---------------> deleted successfully");
+  await unlink(join(repoRoot, "eng/emitter-package-lock.json"));
+  console.log("emitter-package-lock.json ---------------> deleted successfully");
+}
+
+async function compareFiles(file1, file2) {
+    try {
+        const data1 = await readFile(file1, 'utf8');
+        const data2 = await readFile(file2, 'utf8');
+        return data1 === data2;
+    } catch (err) {
+        console.error('Error reading files:', err);
+        throw err;
+    }
+}
+
+async function verifySwaggerSorting() {
+    const baseDir = resolve(".");
+    const specDir = resolve("./test/examples/specification/sort-swagger");
+    const unsortedJson = join(specDir, "unsorted.json");
+    const sortedJson = join(specDir, "sorted.json");
+
+    await cp(unsortedJson, sortedJson);
+    
+    await runCommand(baseDir, ["sort-swagger", sortedJson]);
+
+    if (await compareFiles(sortedJson, join(specDir, "expected-sorted.json") ))
+      console.log("sort-swagger verified successfully");
+    else
+      console.error("\x1b[31m", "sort-swagger ---------------> verification FAILED!", "\x1b[0m");
 }
 
 main().catch((e) => {

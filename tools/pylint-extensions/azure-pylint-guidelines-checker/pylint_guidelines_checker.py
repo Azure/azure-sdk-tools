@@ -2725,7 +2725,7 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         """Check that errors aren't logged in exception blocks.
            Go through each line in the exception block and make sure it hasn't been logged if exception is raised.
         """
-        matches = ["warning", "info", "error"]
+        matches = [".warning", ".info", ".error"]
         # Get the exception block - returns a list
         except_block = node.handlers
         for nod in except_block:

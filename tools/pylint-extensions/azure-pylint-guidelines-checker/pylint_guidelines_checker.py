@@ -2673,42 +2673,6 @@ class DoNotImportLegacySix(BaseChecker):
                 )
 
 
-class DoNotImportAsyncioDirectly(BaseChecker):
-
-    """Rule to check that libraries do not import the asyncio package directly."""
-
-    name = "do-not-import-asyncio-directly"
-    priority = -1
-    # TODO Find message number
-    msgs = {
-        "C4757": (
-            "Do not import the asyncio package directly in your library",
-            "do-not-import-asyncio-directly",
-            "Do not import the asyncio package in your directly.",
-        ),
-    }
-
-    def visit_importfrom(self, node):
-        print("node")
-        """Check that we aren't importing from asyncio directly."""
-        if node.modname == "asyncio":
-            self.add_message(
-                msgid=f"do-not-import-asyncio-directly",
-                node=node,
-                confidence=None,
-            )
-
-    def visit_import(self, node):
-        """Check that we aren't importing asyncio."""
-        for name, _ in node.names:
-            if name == "asyncio":
-                self.add_message(
-                    msgid=f"do-not-import-asyncio-directly",
-                    node=node,
-                    confidence=None,
-                )
-
-
 class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
 
     """Rule to check that we aren't importing azure.core.pipeline.transport.HttpResponse outside of Azure Core."""
@@ -2784,6 +2748,43 @@ class NoImportTypingFromTypeCheck(BaseChecker):
                         )
         except:
             pass
+
+
+class DoNotImportAsyncioDirectly(BaseChecker):
+
+    """Rule to check that libraries do not import the asyncio package directly."""
+
+    name = "do-not-import-asyncio-directly"
+    priority = -1
+    # TODO Find message number
+    msgs = {
+        "C4763": (
+            "Do not import the asyncio package directly in your library",
+            "do-not-import-asyncio-directly",
+            "Do not import the asyncio package in your directly.",
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from asyncio directly."""
+        if node.modname == "asyncio":
+            self.add_message(
+                msgid=f"do-not-import-asyncio-directly",
+                node=node,
+                confidence=None,
+            )
+
+    def visit_import(self, node):
+        """Check that we aren't importing asyncio."""
+        for name, _ in node.names:
+            if name == "asyncio":
+                self.add_message(
+                    msgid=f"do-not-import-asyncio-directly",
+                    node=node,
+                    confidence=None,
+                )
+
+
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):

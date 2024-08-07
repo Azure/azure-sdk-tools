@@ -61,10 +61,6 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
         throw new Error(`readme files and typespec project info are both undefined`);
     }
 
-    if (readmeFiles && typeof readmeFiles !== 'string' && readmeFiles.length !== 1) {
-        throw new Error(`get ${readmeFiles.length} readme files`);
-    }
-
     if (typespecProjectFolder && typeof typespecProjectFolder !== 'string' && typespecProjectFolder.length !== 1) {
         throw new Error(`get ${typespecProjectFolder.length} typespec project`);
     }

@@ -45,7 +45,7 @@ export async function getLastCommitId(repository: string) {
     try {
         commitId = execSync(`git --git-dir=${path.join(repository, '.git')} log --format=%H -n 1`, {encoding: "utf8"});
     } catch (e) {
-        logger.log(`cannot get commit id from ${repository}`);
+        logger.info(`cannot get commit id from ${repository}`);
     }
     return commitId.trim();
 }

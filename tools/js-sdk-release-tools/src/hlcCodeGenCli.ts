@@ -9,7 +9,7 @@ const shell = require('shelljs');
 async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: string, use?: string, additionalArgs?: string) {
     const regexResult = /^(.*[\/\\]azure-rest-api-specs[-pr]*)[\/\\](specification.*)/.exec(absoluteReadmeMd);
     if (!regexResult || regexResult.length !== 3) {
-        logger.logError(`Cannot Parse readme file path: ${absoluteReadmeMd}`);
+        logger.error(`Cannot Parse readme file path: ${absoluteReadmeMd}`);
     } else {
         const gitCommitId = await getLastCommitId(regexResult[1]);
         await generateMgmt({

@@ -29,7 +29,7 @@ export async function generateMgmt(options: {
     skipGeneration?: boolean,
     runningEnvironment?: RunningEnvironment;
 }) {
-    logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+    logger.info(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
     let cmd = '';
     if (!options.skipGeneration) {
         cmd = `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
@@ -46,10 +46,10 @@ export async function generateMgmt(options: {
             cmd += ` ${options.additionalArgs}`;
         }
 
-        logger.logGreen('Executing command:');
-        logger.logGreen('------------------------------------------------------------');
-        logger.logGreen(cmd);
-        logger.logGreen('------------------------------------------------------------');
+        logger.info('Executing command:');
+        logger.info('------------------------------------------------------------');
+        logger.info(cmd);
+        logger.info('------------------------------------------------------------');
         try {
             execSync(cmd, {stdio: 'inherit'});
         } catch (e: any) {
@@ -63,7 +63,7 @@ export async function generateMgmt(options: {
         let outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, undefined);
 
         try {
-            logger.logGreen(`Installing dependencies for ${changedPackageDirectory}...`);
+            logger.info(`Installing dependencies for ${changedPackageDirectory}...`);
             const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
             const packageName = packageJson.name;
 
@@ -105,16 +105,16 @@ export async function generateMgmt(options: {
                 }
             }
 
-            logger.logGreen(`rush update`);
+            logger.info(`rush update`);
             execSync('rush update', {stdio: 'inherit'});
-            logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+            logger.info(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
             execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
-            logger.logGreen('Generating Changelog and Bumping Version...');
+            logger.info('Generating Changelog and Bumping Version...');
             let changelog: Changelog | undefined;
             if (!options.skipGeneration) {
                 changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
             }
-            logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
+            logger.info(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
             execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
             if (!options.skipGeneration) {
                 changeReadmeMd(packagePath);
@@ -155,8 +155,8 @@ export async function generateMgmt(options: {
                 }
             }
         } catch (e: any) {
-            logger.logError('Error:');
-            logger.logError(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            logger.error('Error:');
+            logger.error(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
             if (outputPackageInfo) {
                 outputPackageInfo.result = 'failed';
             }
@@ -170,6 +170,5 @@ export async function generateMgmt(options: {
         }
     }
 
-    logger.log(`>>>>>>>>>>>>>>>>>>> End: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
-    logger.log();
+    logger.info(`>>>>>>>>>>>>>>>>>>> End: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>\n`);
 }

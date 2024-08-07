@@ -76,7 +76,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             })
         }
     } catch (e) {
-        logger.logError((e as any)?.message);
+        logger.error((e as any)?.message);
         throw e;
     } finally {
         await restoreNodeModules(String(shell.pwd()));
@@ -94,6 +94,6 @@ const optionDefinitions = [
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
 automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
-    logger.logError(e.message);
+    logger.error(e.message);
     process.exit(1);
 });

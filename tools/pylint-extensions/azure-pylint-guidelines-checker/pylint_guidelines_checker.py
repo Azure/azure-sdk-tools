@@ -2714,22 +2714,12 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
 
     name = "do-not-log-errors-that-get-raised"
     priority = -1
-    msg = {"C4762": (
+    msgs = {"C4762": (
             "Do not log errors that get rasied in an exception block.",
             "do-not-log-errors-that-get-raised",
             "Do not log errors that get rasied in an exception block. Do not log as error, warning or info",
-        ),
-    }
-
-    def visit_functiondef(self, node):
-        for i in node.body:
-            if isinstance(i, astroid.Try):
-                self.visit_try(i)
-
-    def visit_classdef(self, node):
-        for func in node.body:
-            if isinstance(func, astroid.FunctionDef):
-                self.visit_functiondef(node)
+            ),
+            }
 
     def visit_try(self, node):
         """Check that errors aren't logged in exception blocks.
@@ -2830,8 +2820,8 @@ def register(linter):
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
-    
-    
+
+
     linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
     # Rules are disabled until false positive rate improved

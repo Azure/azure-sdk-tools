@@ -8,7 +8,7 @@ import logging
 import traceback
 from ast import literal_eval
 from azure.cosmos import CosmosClient
-from azure.identity import AzurePowerShellCredential
+from azure.identity import AzurePowerShellCredential, ChainedTokenCredential, AzureCliCredential
 from azure.storage.blob import BlobServiceClient
 
 logging.getLogger().setLevel(logging.INFO)
@@ -27,13 +27,13 @@ BACKUP_CONTAINER = "backups"
 BLOB_NAME_PATTERN ="cosmos/{0}/{1}"
 
 # Create a AzurePowerShellCredential()
-credentials = AzurePowerShellCredential()
+credential_chain = ChainedTokenCredential(AzureCliCredential(), AzurePowerShellCredential())
 
 def restore_data_from_backup(backup_storage_url, dest_url, db_name):
 
     dest_db_client = get_db_client(dest_url, db_name)
     
-    blob_service_client = BlobServiceClient(backup_storage_url, credential = credentials)
+    blob_service_client = BlobServiceClient(backup_storage_url, credential = credential_chain)
     container_client = blob_service_client.get_container_client(BACKUP_CONTAINER)
     for cosmos_container_name in COSMOS_CONTAINERS:
         # Load source records from backup file
@@ -73,7 +73,7 @@ def get_backup_contents(container_client, blob_name):
 def get_db_client(dest_url, db_name):
 
     # Create cosmosdb client for destination db
-    dest_cosmos_client = CosmosClient(dest_url, credential=credentials)
+    dest_cosmos_client = CosmosClient(dest_url, credential=credential_chain)
     if not dest_cosmos_client:
         logging.error("Failed to create cosmos client for destination db")
         exit(1)

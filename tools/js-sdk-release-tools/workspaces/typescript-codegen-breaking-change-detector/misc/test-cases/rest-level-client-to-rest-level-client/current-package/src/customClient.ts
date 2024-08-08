@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 import { getClient, ClientOptions } from "@azure-rest/core-client";
-import { logger } from "../logger";
+import { logger } from "./logger";
 import * as coreRestPipeline from "@azure/core-rest-pipeline";
-import { TextTranslationClient } from "../clientDefinitions";
+import { TextTranslationClient } from "./clientDefinitions";
 import {
   DEFAULT_SCOPE,
   TranslatorCredential,

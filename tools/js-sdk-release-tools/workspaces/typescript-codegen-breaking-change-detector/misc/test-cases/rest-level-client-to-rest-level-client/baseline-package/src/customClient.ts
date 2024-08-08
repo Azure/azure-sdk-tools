@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { getClient, ClientOptions } from "@azure-rest/core-client";
-import { logger } from "../logger";
-import * as coreRestPipeline from "@azure/core-rest-pipeline";
-import { TextTranslationClient } from "../clientDefinitions";
+import { getClient, ClientOptions } from '@azure-rest/core-client';
+import { logger } from './logger';
+import * as coreRestPipeline from '@azure/core-rest-pipeline';
+import { TextTranslationClient } from './clientDefinitions';
 import {
   DEFAULT_SCOPE,
   TranslatorCredential,
@@ -12,12 +12,12 @@ import {
   TranslatorAuthenticationPolicy,
   TranslatorAzureKeyAuthenticationPolicy,
   TranslatorTokenCredentialAuthenticationPolicy,
-} from "./authentication";
-import { AzureKeyCredential, KeyCredential, TokenCredential } from "@azure/core-auth";
+} from './custom/authentication';
+import { AzureKeyCredential, KeyCredential, TokenCredential } from '@azure/core-auth';
 
-const DEFAULT_ENPOINT = "https://api.cognitive.microsofttranslator.com";
-const PLATFORM_HOST = "cognitiveservices";
-const PLATFORM_PATH = "/translator/text/v3.0";
+const DEFAULT_ENPOINT = 'https://api.cognitive.microsofttranslator.com';
+const PLATFORM_HOST = 'cognitiveservices';
+const PLATFORM_PATH = '/translator/text/v3.0';
 
 function isKeyCredential(credential: any): credential is KeyCredential {
   return (credential as KeyCredential)?.key !== undefined;
@@ -52,11 +52,11 @@ export default function createClient(
     | TranslatorTokenCredential
     | KeyCredential
     | TokenCredential = undefined,
-  options: ClientOptions = {},
+  options: ClientOptions = {}
 ): TextTranslationClient {
   let serviceEndpoint: string;
 
-  options.apiVersion = options.apiVersion ?? "3.0";
+  options.apiVersion = options.apiVersion ?? '3.0';
 
   if (!endpoint) {
     serviceEndpoint = DEFAULT_ENPOINT;
@@ -86,31 +86,27 @@ export default function createClient(
   const client = getClient(baseUrl, options) as TextTranslationClient;
 
   if (isTranslatorKeyCredential(credential)) {
-    const mtAuthneticationPolicy = new TranslatorAuthenticationPolicy(
-      credential as TranslatorCredential,
-    );
+    const mtAuthneticationPolicy = new TranslatorAuthenticationPolicy(credential as TranslatorCredential);
     client.pipeline.addPolicy(mtAuthneticationPolicy);
   } else if (isKeyCredential(credential)) {
-    const mtKeyAuthenticationPolicy = new TranslatorAzureKeyAuthenticationPolicy(
-      credential as AzureKeyCredential,
-    );
+    const mtKeyAuthenticationPolicy = new TranslatorAzureKeyAuthenticationPolicy(credential as AzureKeyCredential);
     client.pipeline.addPolicy(mtKeyAuthenticationPolicy);
   } else if (isTokenCredential(credential)) {
     client.pipeline.addPolicy(
       coreRestPipeline.bearerTokenAuthenticationPolicy({
         credential: credential as TokenCredential,
         scopes: DEFAULT_SCOPE,
-      }),
+      })
     );
   } else if (isTranslatorTokenCredential(credential)) {
     client.pipeline.addPolicy(
       coreRestPipeline.bearerTokenAuthenticationPolicy({
         credential: (credential as TranslatorTokenCredential).tokenCredential,
         scopes: DEFAULT_SCOPE,
-      }),
+      })
     );
     client.pipeline.addPolicy(
-      new TranslatorTokenCredentialAuthenticationPolicy(credential as TranslatorTokenCredential),
+      new TranslatorTokenCredentialAuthenticationPolicy(credential as TranslatorTokenCredential)
     );
   }
 

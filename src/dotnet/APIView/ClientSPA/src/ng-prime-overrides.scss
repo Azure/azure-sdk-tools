@@ -534,6 +534,24 @@ p-contextmenusub {
     transition-duration: 0.2s;
 }
 
+.p-message .p-message-wrapper {
+    padding: 0.2rem 0.25rem;
+}
+.p-message {
+    margin: 0.1rem 0;
+}
+
+.p-message.p-message-info {
+    background: var(--alert-info-bg);
+    border: solid var(--alert-info-border-color);
+    border-width: 1px;
+    color: var(--alert-info-color);
+    .p-message-icon {
+        color: var(--alert-info-color);
+    }
+}
+
+
 p-inputswitch .p-hidden-accessible {
     position: static !important;
     height: auto !important;

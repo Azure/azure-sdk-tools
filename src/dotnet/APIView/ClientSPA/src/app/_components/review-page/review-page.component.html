@@ -41,6 +41,7 @@
                     <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel px-3">
                         <app-review-page-options
                             [isDiffView]="!!diffApiRevisionId"
+                            [contentHasDiff]="codePanelData?.hasDiff"
                             [diffStyleInput]="diffStyle!"
                             [userProfile]="userProfile"
                             [review]="review"

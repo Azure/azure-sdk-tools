@@ -27,22 +27,25 @@
             </ng-template>
         </li>
         <li class="list-group-item text-center">
-            <ng-container *ngIf="!reviewIsApproved && preferredApprovers.includes(userProfile?.userName!); else reviewApprovalHidden">
-                <span class="small text-muted">Approves First Release of the package</span>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-success" type="button"
-                        (click)="handleReviewApprovalAction()"
-                        pTooltip="Package name must be approved before first preview release of a new package." 
-                        tooltipPosition="bottom">
-                        Approve First Release
-                    </button>
-                </div>
-                <span class="small mt-2 text-muted">First Release Approval Pending</span>
+            <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
+                <span class="small text-muted mt-1" id="first-release-approval-message">Approved for First Release By: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
-            <ng-template #reviewApprovalHidden>
-                <span class="small text-muted mt-1">
-                    Approved for First Release By: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a>
-                </span>
+            <ng-template #reviewIsNotApproved>
+                <div *ngIf="preferredApprovers.includes(userProfile?.userName!); else userIsNotAPreferedApprover">
+                    <span class="small text-muted">Approves First Release of the package</span>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" type="button" id="first-release-approval-button"
+                            (click)="handleReviewApprovalAction()"
+                            pTooltip="Package name must be approved before first preview release of a new package." 
+                            tooltipPosition="bottom">
+                            Approve First Release
+                        </button>
+                    </div>
+                    <span class="small mt-2 text-muted" id="first-release-approval-message">First Release Approval Pending</span>
+                </div>
+            </ng-template>
+            <ng-template #userIsNotAPreferedApprover>
+                <span class="small mt-2 text-muted" id="first-release-approval-message">First Release Approval Pending</span>
             </ng-template>
         </li>
     </ul>
@@ -86,6 +89,7 @@
                 (onChange)="onDiffStyleChange($event)"
                 [options]="diffStyleOptions" 
                 [(ngModel)]="selectedDiffStyle"
+                [disabled]="!contentHasDiff"
                 inputId="diff-style-select"
                 optionLabel="label"
                 [style]="{'width':'100%'}"/>

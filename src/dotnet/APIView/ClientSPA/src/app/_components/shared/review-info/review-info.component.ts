@@ -1,8 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
-import { MenuItem } from 'primeng/api';
-import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
+import { UserProfile } from 'src/app/_models/userProfile';
 import { environment } from 'src/environments/environment';
 
 @Component({

@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "StructuredTokenTags.json",
+    "anyOf": [
+        {
+            "type": "string",
+            "const": "Deprecated",
+            "description": "Mark a token as deprecated"
+        },
+        {
+            "type": "string",
+            "const": "SkipDiff",
+            "description": "Indicate that a Token should not be used in computing diff"
+        }
+    ]
+}

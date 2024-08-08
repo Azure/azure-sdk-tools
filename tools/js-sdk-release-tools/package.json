@@ -1,12 +1,16 @@
 {
   "name": "js-sdk-release-tools",
-  "version": "2.7.16-beta",
+  "version": "2.7.17-beta",
   "description": "",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx watch src/changelogToolCli.ts",
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",
-    "build": "rimraf dist && tsc -p .",
+    "build": "rimraf dist && tsc -p . && npm run copy-files",
+    "copy-files": "copyfiles src/common/ciYamlTemplates/*.template.yml dist/common/ciYamlTemplates/",
     "prepack": "npm run build",
     "test": "vitest --run",
     "test:watch": "vitest",
@@ -43,6 +47,7 @@
     "@types/node": "^20.12.12",
     "@types/npmcli__package-json": "^4.0.4",
     "@types/shelljs": "^0.8.15",
+    "copyfiles": "^0.1.0",
     "nodemon": "^3.1.0",
     "rimraf": "^3.0.2",
     "ts-node": "^10.9.2",

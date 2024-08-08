@@ -79,8 +79,14 @@ async function main() {
   await runCommand(baseDir, ["convert", "-o", baseSpecDir, "--swagger-readme", mgmtSpecLink]);
 
   // Run the compare command to ensure it is working
-  // TODO: Provide actual lhs and rhs values
-  await runCommand(baseDir, ["compare", "--lhs", "TBD", "--rhs", "TBD"]);
+  await runCommand(baseDir, [
+    "compare",
+    "--lhs",
+    "/test/examples/specification/compare/lhs",
+    "--rhs",
+    "/test/examples/specification/compare/rhs",
+    "--compile-tsp",
+  ]);
 
   await unlink(join(repoRoot, "eng/emitter-package.json"));
   console.log("emitter-package.json ---------------> deleted successfully");

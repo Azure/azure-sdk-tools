@@ -1,6 +1,6 @@
 # Release
 
-## Unreleased - 0.11.0
+## 2024-08-08 - 0.11.0
 
 - Added `generate-lock-file` command, see [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for more information.
 - Removed the `--generate-lock-file` flag and replaced it with the command above.

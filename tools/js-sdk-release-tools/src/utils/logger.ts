@@ -13,11 +13,7 @@ const pipeline = winston.format((info, opts) => {
 
 export const logger = winston.createLogger({
     level: "info",
-    format: winston.format.combine(
-        winston.format.json(),
-        pipeline(),
-        winston.format.colorize()
-    ),
+    format: winston.format.combine(winston.format.json(), pipeline()),
     defaultMeta: { service: "user-service" },
 });
 

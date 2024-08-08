@@ -16,7 +16,7 @@ This is the SPA Client project for [APIView](../APIViewWeb/CONTRIBUTING.md)
     ```
 
 ### Runing SPA CLient Locally
-To run client SPA locally use the angular serve command with sll option
+To run client SPA locally use the angular serve command with ssl option
 ```
  ng serve --ssl
 ```

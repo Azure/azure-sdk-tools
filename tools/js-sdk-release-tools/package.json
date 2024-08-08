@@ -1,6 +1,6 @@
 {
   "name": "js-sdk-release-tools",
-  "version": "2.7.17-beta",
+  "version": "2.7.18-beta",
   "description": "",
   "files": [
     "dist"
@@ -10,7 +10,7 @@
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",
     "build": "rimraf dist && tsc -p . && npm run copy-files",
-    "copy-files": "copyfiles src/common/ciYamlTemplates/*.template.yml dist/common/ciYamlTemplates/",
+    "copy-files": "copyfiles -f src/common/ciYamlTemplates/*.template.yml dist/common/ciYamlTemplates/",
     "prepack": "npm run build",
     "test": "vitest --run",
     "test:watch": "vitest",

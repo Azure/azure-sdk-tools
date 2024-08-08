@@ -4,6 +4,8 @@ import { ApiVersionType } from "../../common/types";
 import ts from "typescript";
 import path from "node:path";
 import shell from "shelljs";
+import { SourceFile, SyntaxKind } from "ts-morph";
+import { IApiVersionTypeExtractor } from "../../common/interfaces";
 
 const findApiVersionInRestClientV1 = (
     clientPath: string
@@ -51,6 +53,28 @@ const findApiVersionInRestClientV2 = (clientPath: string): string | undefined =>
     return apiVersion;
 };
 
+const findApiVersionsInOperations = (
+    sourceFile: SourceFile | undefined
+): Array<string> | undefined => {
+    const interfaces = sourceFile?.getInterfaces();
+    const interfacesWithApiVersion = interfaces?.filter((itf) =>
+        itf.getProperty('"api-version"')
+    );
+    const apiVersions = interfacesWithApiVersion?.map((itf) => {
+        const property = itf.getMembers().filter((m) => {
+            const defaultValue = m.getChildrenOfKind(
+                SyntaxKind.StringLiteral
+            )[0];
+            return defaultValue && defaultValue.getText() === '"api-version"';
+        })[0];
+        const apiVersion = property
+            .getChildrenOfKind(SyntaxKind.LiteralType)[0]
+            .getText();
+        return apiVersion;
+    });
+    return apiVersions;
+};
+
 // workaround for createClient function changes it's way to setup api-version
 export const findApiVersionInRestClient = (clientPath: string): string | undefined => {
     const version2 = findApiVersionInRestClientV2(clientPath);
@@ -72,6 +96,17 @@ export const findRestClientPath = (packageRoot: string, relativeRestSrcFolder: s
     return clientPath;
 };
 
+export const findParametersPath = (packageRoot: string, relativeParametersFolder: string): string => {
+    const parametersPath = path.join(packageRoot, relativeParametersFolder);
+    const fileNames = shell.ls(parametersPath);
+    const clientFiles = fileNames.filter((f) => f === "parameters.ts");
+    if (clientFiles.length !== 1)
+        throw new Error(`Single client is supported, but found "${clientFiles}" in ${parametersPath}`);
+
+    const clientPath = path.join(parametersPath, clientFiles[0]);
+    return clientPath;
+};
+
 export const getApiVersionTypeFromRestClient = (
     packageRoot: string,
     relativeRestSrcFolder: string,
@@ -84,4 +119,21 @@ export const getApiVersionTypeFromRestClient = (
     if (apiVersion && apiVersion.indexOf("-preview") < 0)
         return ApiVersionType.Stable;
     return ApiVersionType.None;
+};
+
+export const getApiVersionTypeFromOperations = (
+    packageRoot: string,
+    relativeParametersFolder: string,
+    findPararametersPath: (packageRoot: string, relativeParametersFolder: string) => string
+): ApiVersionType => {
+    const paraPath = findPararametersPath(packageRoot, relativeParametersFolder);
+    const sourceFile = getTsSourceFile(paraPath);
+    const apiVersions = findApiVersionsInOperations(sourceFile);
+    if (!apiVersions) return ApiVersionType.None;
+    const previewVersions = apiVersions.filter(
+        (v) => v.indexOf("-preview") >= 0
+    );
+    return previewVersions.length > 0
+        ? ApiVersionType.Preview
+        : ApiVersionType.Stable;
 };

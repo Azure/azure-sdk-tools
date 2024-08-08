@@ -1,4 +1,4 @@
-<p-timeline [value]="apiRevisions">
+<p-timeline [value]="getAPIRevisionWithComments()">
     <ng-template pTemplate="marker" let-apiRevision>
         <i class="bi bi-clock-history"></i>
     </ng-template>
@@ -13,7 +13,10 @@
             <span class="emphasis-badge secondary ms-2">lastUpdated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
             <span class="ms-2" *ngIf="apiRevision.label">{{ apiRevision.label }}</span>
         </span>
-        <div *ngFor="let comment of getFilteredComments(apiRevision)">
+        <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); let isLast = last">
+            <p-divider />
+            <a class="small">{{ commentThread!.comments[0].elementId }}</a>
+            <app-comment-thread [codePanelRowData]="commentThread"></app-comment-thread>
         </div>
     </ng-template>
 </p-timeline>

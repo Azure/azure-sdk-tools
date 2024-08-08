@@ -1,1 +1,0 @@
-{"version":3,"file":"networkAnalyticsClient.d.ts","sourceRoot":"","sources":["networkAnalyticsClient.ts"],"names":[],"mappings":"AAGA,OAAO,EAAa,aAAa,EAAE,MAAM,yBAAyB,CAAC;AAEnE,OAAO,EAAE,eAAe,EAAE,MAAM,kBAAkB,CAAC;AACnD,OAAO,EAAE,uBAAuB,EAAE,MAAM,wBAAwB,CAAC;AAEjE;;;;GAIG;AACH,MAAM,CAAC,OAAO,UAAU,YAAY,CAClC,WAAW,EAAE,eAAe,EAC5B,OAAO,GAAE,aAAkB,GAC1B,uBAAuB,CA6BzB"}

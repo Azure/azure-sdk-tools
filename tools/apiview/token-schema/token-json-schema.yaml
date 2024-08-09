@@ -114,6 +114,9 @@ $defs:
         $ref: "#/$defs/TokenKind"
       value:
         type: string
+      SubKind:
+        $ref: "#/$defs/TokenSubKind"
+        description: Subkind is required when kind is TypeName or Membername
       navigateToId:
         type: string
         description: |-
@@ -168,3 +171,19 @@ $defs:
       - 5
       - 6
       - 7
+  TokenSubKind:
+    type: number
+    enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12

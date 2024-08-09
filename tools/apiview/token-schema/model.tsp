@@ -41,6 +41,8 @@ model CodeLine {
 model Token {  
   kind: TokenKind;
   value: string;
+  /** Subkind is required when kind is TypeName or Membername */
+  SubKind?: TokenSubKind;
   /** navigateToId should be set if the underlying token is required to be displayed as HREF to another type within the review.
    * For e.g. a param type which is class name in the same package
    */
@@ -79,6 +81,22 @@ enum TokenKind {
   StringLiteral: 5,
   Literal: 6,
   Comment: 7
+}
+
+enum TokenSubKind {
+  Assembly: 0,
+  NameSpace: 1,
+  Class: 2,
+  Delegate: 3,
+  Template: 4,
+  Enum: 5,
+  Interface: 6,
+  Method: 7,
+  Struct: 8,
+  Union: 9,
+  Type: 10,
+  Package: 11,
+  Member: 12
 }
 
 enum DiagnosticLevel {

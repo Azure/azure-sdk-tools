@@ -3,7 +3,6 @@ import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaDa
 import path, { join } from "path";
 import { SDKType } from "../../common/types";
 import { describe } from "node:test";
-import { mkdirSync } from "node:fs";
 import { tryReadNpmPackageChangelog } from "../../common/utils";
 import { rmdirSync, writeFileSync } from "fs";
 
@@ -34,10 +33,10 @@ describe("Breaking change detection", () => {
         expect(changelog.addedOperation.length).toBe(1);
         expect(changelog.removedOperation.length).toBe(1);
 
-        expect(changelog.addedOperation[0]).toBe(
+        expect(changelog.addedOperation[0].line).toBe(
             "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
         );
-        expect(changelog.removedOperation[0]).toBe(
+        expect(changelog.removedOperation[0].line).toBe(
             "Removed operation DataProductsCatalogs.listByResourceGroup"
         );
     });
@@ -64,10 +63,10 @@ describe("Breaking change detection", () => {
         expect(changelog.addedOperation.length).toBe(1);
         expect(changelog.removedOperation.length).toBe(1);
 
-        expect(changelog.addedOperation[0]).toBe(
+        expect(changelog.addedOperation[0].line).toBe(
             "Added operation DataProductsCatalogs.get_NEW"
         );
-        expect(changelog.removedOperation[0]).toBe(
+        expect(changelog.removedOperation[0].line).toBe(
             "Removed operation DataProductsCatalogs.get"
         );
     });
@@ -94,10 +93,10 @@ describe("Breaking change detection", () => {
         expect(changelog.addedOperation.length).toBe(1);
         expect(changelog.removedOperation.length).toBe(1);
 
-        expect(changelog.addedOperation[0]).toBe(
+        expect(changelog.addedOperation[0].line).toBe(
             "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
         );
-        expect(changelog.removedOperation[0]).toBe(
+        expect(changelog.removedOperation[0].line).toBe(
             "Removed operation DataProductsCatalogsOperations.listByResourceGroup"
         );
     });
@@ -126,13 +125,13 @@ describe("Breaking change detection", () => {
 
         expect(changelog.operationSignatureChange.length).toBe(1);
 
-        expect(changelog.addedOperationGroup[0]).toBe(
+        expect(changelog.addedOperationGroup[0].line).toBe(
             "Added operation group DataProductsCatalogs_add"
         );
-        expect(changelog.removedOperationGroup[0]).toBe(
+        expect(changelog.removedOperationGroup[0].line).toBe(
             "Removed operation group DataProductsCatalogs_remove"
         );
-        expect(changelog.operationSignatureChange[0]).toBe(
+        expect(changelog.operationSignatureChange[0].line).toBe(
             "Operation DataProductsCatalogs_sig_change.get has a new signature"
         );
     });

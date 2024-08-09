@@ -1,7 +1,8 @@
 import { expect, test } from "vitest";
-import { findApiVersionInRestClient, getApiVersionType } from "../../mlc/apiVersion/apiVersionTypeExtractor";
+import { getApiVersionType } from "../../mlc/apiVersion/apiVersionTypeExtractor";
 import { join } from "path";
 import { ApiVersionType } from "../../common/types";
+import { findApiVersionInRestClient } from "../../xlc/apiVersion/utils";
 
 test("MLC api-version Extractor: new createClient function", async () => {
     const clientPath = join(__dirname, 'testCases/new/src/rest/newClient.ts');

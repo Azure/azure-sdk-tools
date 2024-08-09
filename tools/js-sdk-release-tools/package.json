@@ -1,7 +1,7 @@
 {
   "name": "js-sdk-release-tools",
   "version": "2.7.18-beta",
-  "description": "",
+  "description": "test package",
   "files": [
     "dist"
   ],

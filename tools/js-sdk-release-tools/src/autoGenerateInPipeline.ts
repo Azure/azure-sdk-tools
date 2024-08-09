@@ -9,6 +9,7 @@ import { RunningEnvironment } from './utils/runningEnvironment';
 import { ModularClientPackageOptions, SDKType } from './common/types';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator';
 import { existsAsync } from './common/utils';
+import { loadTspConfig } from './mlc/clientGenerator/utils/typeSpecUtils';
 
 const shell = require('shelljs');
 const fs = require('fs');
@@ -28,6 +29,10 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
         return false;
     }
 
+    const tspConfig = await loadTspConfig(resolvedTspFolder);
+    if (!tspConfig?.options?.['@azure-tools/typespec-ts']?.['package-name']?.startsWith('@azure/')) {
+        return false;
+    }
     return true;
 }
 

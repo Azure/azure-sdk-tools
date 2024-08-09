@@ -13,7 +13,7 @@ const emitterName = '@azure-tools/typespec-ts';
 const messageToTspConfigSample =
     'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
 
-async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
     const configPath = join(typeSpecDirectory, 'tspconfig.yaml');
     const content = await readFile(configPath, { encoding: 'utf-8' });
     console.log('content', content.toString());

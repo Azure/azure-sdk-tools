@@ -1,0 +1,170 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: CodeFile.yaml
+type: object
+properties:
+  packageName:
+    type: string
+  packageVersion:
+    type: string
+  parserVersion:
+    type: string
+    description: version of the APIview language parser used to create token file
+  language:
+    anyOf:
+      - type: string
+        const: C
+      - type: string
+        const: C++
+      - type: string
+        const: C#
+      - type: string
+        const: Go
+      - type: string
+        const: Java
+      - type: string
+        const: JavaScript
+      - type: string
+        const: Kotlin
+      - type: string
+        const: Python
+      - type: string
+        const: Swagger
+      - type: string
+        const: Swift
+      - type: string
+        const: TypeSpec
+  languageVariant:
+    anyOf:
+      - type: string
+        const: None
+      - type: string
+        const: Spring
+      - type: string
+        const: Android
+    default: None
+    description: Language variant is applicable only for java variants
+  crossLanguagePackageId:
+    type: string
+  codeLines:
+    type: array
+    items:
+      $ref: "#/$defs/CodeLine"
+  systemComments:
+    type: array
+    items:
+      $ref: "#/$defs/CodeDiagnostic"
+    description: Add any system generated comments for the current token.
+required:
+  - packageName
+  - packageVersion
+  - parserVersion
+  - language
+  - codeLines
+description: CodeFile represents entire API review object. This will be processed to render review lines.
+$defs:
+  CodeLine:
+    type: object
+    properties:
+      lineId:
+        type: string
+        description: |-
+          lineId is only required if we need to support commenting on a line that contains this token. 
+          Usually code line for documentation or just punctuation is not required to have lineId. lineId should be a unique value within 
+          the review token file to use it assign to review comments as well as navigation Id within the review page.
+          for e.g Azure.Core.HttpHeader.Common, azure.template.template_main
+      crossLanguageId:
+        type: string
+      tokens:
+        type: array
+        items:
+          $ref: "#/$defs/Token"
+        description: list of tokens that constructs a line in API review
+      children:
+        type: array
+        items:
+          $ref: "#/$defs/CodeLine"
+        description: |-
+          Add any child lines as children. For e.g. all classes and namespace level methods are added as a children of namespace(module) level code line. 
+          Similarly all method level code lines are added as children of it's class code line.
+    required:
+      - tokens
+    description: Code line object corresponds to each line displayed on API review. If an empty line is required then add a code line object without any token.
+  CodeDiagnostic:
+    type: object
+    properties:
+      lineId:
+        type: string
+        description: Id of CodeLine object where this diagnostic needs to be displayed.
+      text:
+        type: string
+      level:
+        $ref: "#/$defs/DiagnosticLevel"
+      helpLinkUri:
+        type: string
+        format: uri
+    required:
+      - lineId
+      - text
+      - level
+    description: Code diagnostic object is to add system generated comment. It can be one of the 4 different types of system comments.
+  Token:
+    type: object
+    properties:
+      kind:
+        $ref: "#/$defs/TokenKind"
+      value:
+        type: string
+      navigateToId:
+        type: string
+        description: |-
+          navigateToId should be set if the underlying token is required to be displayed as HREF to another type within the review.
+          For e.g. a param type which is class name in the same package
+      skipDiff:
+        type: boolean
+        default: false
+        description: |-
+          set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions 
+          are usually not required to be excluded when comparing two revisions to avoid reporting them as API changes
+      isHidden:
+        type: boolean
+        default: false
+        description: This is set if API is marked as hidden
+      isDeprecated:
+        type: boolean
+        default: false
+        description: This is set if API is marked as deprecated
+      hasSuffixSpace:
+        type: boolean
+        default: true
+        description: Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name
+      isDocumentation:
+        type: boolean
+        default: false
+        description: Set isDocumentation to true if current token is part of documentation
+      languageStyleClasses:
+        type: array
+        items:
+          type: string
+        description: Language specific style css class names
+    required:
+      - kind
+      - value
+    description: Token corresponds to each component within a code line. A separate token is required for keyword, punctuation, type name, text etc.
+  DiagnosticLevel:
+    type: number
+    enum:
+      - 0
+      - 1
+      - 2
+      - 3
+  TokenKind:
+    type: number
+    enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7

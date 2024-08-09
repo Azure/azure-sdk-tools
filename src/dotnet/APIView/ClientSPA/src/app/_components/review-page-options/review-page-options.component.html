@@ -83,6 +83,11 @@
             (onChange)="onShowLeftNavigationSwitchChange($event)" />
             <label class="ms-2">Left Navigation</label>
         </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="disableCodeLinesLazyLoading"
+            (onChange)="onDisableLazyLoadingSwitchChange($event)" />
+            <label class="ms-2">Disable Lazy Loading</label>
+        </li>
         <li *ngIf="isDiffView" class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Diff Style :</label>
             <p-dropdown 
@@ -180,4 +185,14 @@
             (click)="toggleAPIRevisionApproval()"
             [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
       </div>
+</p-dialog>
+
+<p-dialog header="Disable Lazy Loading" 
+    [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
+    [style]="{ width: '30dvw' }" (onHide)="disableCodeLinesLazyLoading = userProfile?.preferences?.disableCodeLinesLazyLoading!">
+    <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
+    <div class="d-grid gap-2 mt-2">
+    <button class="btn btn-primary" type="button" (click)="disableCodeLinesLazyLoadingEmitter.emit(disableCodeLinesLazyLoading); showDisableCodeLinesLazyLoadingModal = false">Disable</button>
+    <button class="btn btn-link" type="button" (click)="showDisableCodeLinesLazyLoadingModal = false;">Cancel</button>
+    </div>
 </p-dialog>

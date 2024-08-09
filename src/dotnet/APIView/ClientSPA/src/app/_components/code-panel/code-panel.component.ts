@@ -364,7 +364,7 @@ export class CodePanelComponent implements OnChanges{
           success(data);
         },
         settings: {
-          bufferSize: 50,
+          bufferSize: (this.userProfile?.preferences.disableCodeLinesLazyLoading) ? this.codePanelRowData.length : 50,
           padding: 1,
           itemSize: 21,
           startIndex : 0,

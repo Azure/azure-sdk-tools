@@ -398,6 +398,17 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
+  handleDisableCodeLinesLazyLoadingEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.disableCodeLinesLazyLoading = state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        const currentParams = this.route.snapshot.queryParams;
+        this.updateStateBasedOnQueryParams(currentParams);
+      }
+    });
+  }
+
   handleHasActiveConversationEmitter(value: boolean) {
     this.hasActiveConversation = value;
   }

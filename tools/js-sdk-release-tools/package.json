@@ -34,6 +34,7 @@
     "simple-git": "^3.5.0",
     "ts-morph": "^12.0.0",
     "tslib": "^1.9.3",
+    "typescript": "^5.5.3",
     "yaml": "^1.10.2"
   },
   "devDependencies": {
@@ -42,7 +43,6 @@
     "nodemon": "^3.1.0",
     "rimraf": "^3.0.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   }
 }

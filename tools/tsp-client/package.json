@@ -56,7 +56,6 @@
     "@azure-tools/typespec-autorest": "^0.44.0",
     "@azure/core-rest-pipeline": "^1.12.0",
     "@types/yargs": "^17.0.32",
-    "openapi-diff": "file:./openapi-diff-1.0.0.tgz",
     "autorest": "^3.7.1",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",

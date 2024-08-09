@@ -26,7 +26,8 @@ steps:
     condition: ${{ parameters.Publish }}
 
   - pwsh: |
-      Get-ChildItem -Path $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY) | ForEach-Object { npm install $_.FullName }
+      Get-ChildItem -Path $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY) `
+        | ForEach-Object { Write-Host "npm install $($_.FullName)"; npm install $_.FullName }
     displayName: Smoke test a package installation
     condition: ${{ parameters.Publish }}
 

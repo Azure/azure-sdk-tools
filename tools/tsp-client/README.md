@@ -54,11 +54,6 @@ Generate a client library from a TypeSpec project. The `generate` command should
 
 Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag.
 
-### compare
-
-Compares two Swagger definitions to identify the relevant differences between them. This command is useful when comparing an existing Swagger definition with a TypeSpec generated one. The `compare` command requires two parameters: `--lhs` which will typically be the original hand-authored Swagger and `--rhs` which will usually be the folder containing your TypeSpec. The command will generate the Swagger and compare the two definitions. The command will ignore differences in the Swagger that don't
-correspond to differences in the service, allowing you to focus only on differences that are relevant.
-
 ### sort-swagger
 
 Sort an existing swagger specification to be the same content order with TypeSpec generated swagger. This will allow you to easily compare and identify differences between the existing swagger and TypeSpec generated one. You should run this command on existing swagger files and check them in prior to creating converted TypeSpec PRs.

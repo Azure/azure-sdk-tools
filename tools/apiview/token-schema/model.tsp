@@ -48,7 +48,7 @@ model Token {
    */
   navigateToId?: string;
   /** set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions 
-   *  are usually not required to be excluded when comparing two revisions to avoid reporting them as API changes*/
+   *  are usually excluded when comparing two revisions to avoid reporting them as API changes*/
   skipDiff?: boolean = false;
   /** This is set if API is marked as hidden */
   isHidden?: boolean = false;

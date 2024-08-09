@@ -176,7 +176,7 @@ export async function generateRLCInPipeline(options: {
             try {
                 execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath)});
             } catch (e: any) {
-                throw new Error(`Failed to codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+                throw new Error(`Failed to generate codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
             }
         }
     }

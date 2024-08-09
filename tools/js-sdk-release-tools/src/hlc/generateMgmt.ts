@@ -153,6 +153,7 @@ export async function generateMgmt(options: {
             }
         } catch (e: any) {
             logger.error(`Failed to build for readme file '${options.readmeMd}'.\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
             if (outputPackageInfo) {
                 outputPackageInfo.result = 'failed';
             }

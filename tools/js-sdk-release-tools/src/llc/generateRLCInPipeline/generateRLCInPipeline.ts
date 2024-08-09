@@ -98,6 +98,9 @@ export async function generateRLCInPipeline(options: {
                     }
                 } catch (e: any) {
                     logger.error(`Failed to parse autorestConfig from PR comment: \nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+                    
+            logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
+                logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
                     throw e;
                 }
 
@@ -243,8 +246,10 @@ export async function generateRLCInPipeline(options: {
     } catch (e: any) {
         if (options.typespecProject) {
             logger.error(`Failed to build typespec project: "${options.typespecProject}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}".`);
+            logger.error(`Please check out https://github.com/Azure/autorest.typescript/blob/main/packages/typespec-ts/CONTRIBUTING.md#how-to-debug to troubleshoot the issue.`);
         } else {
             logger.error(`Failed to build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}".`);
+            logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
         }
         if (outputPackageInfo) {
             outputPackageInfo.result = 'failed';

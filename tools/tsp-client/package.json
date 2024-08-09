@@ -60,7 +60,7 @@
     "autorest": "^3.7.1",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
-    "openapi-diff": "file:openapi-diff-1.0.0.tgz",
+    "openapi-diff": "github:tjprescott/openapi-diff#8edec5e2d2ad0ba57e8cdebda20e7b0c6e225699",
     "prompt-sync": "^4.2.0",
     "simple-git": "^3.20.0",
     "yaml": "^2.3.1",

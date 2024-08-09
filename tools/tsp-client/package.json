@@ -33,7 +33,6 @@
     "tsp-client": "cmd/tsp-client.js"
   },
   "files": [
-    "openapi-diff-1.0.0.tgz",
     "dist",
     "cmd/tsp-client.js"
   ],

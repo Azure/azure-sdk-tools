@@ -40,6 +40,7 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+            // TODO: remove it, since this function is used in pipeline.
             if(options.sdkGenerationType === "command") {
                 logger.logGreen("Run TypeSpec command directly.");
                 const copyPackageJsonName = 'emitter-package.json';
@@ -187,6 +188,10 @@ export async function generateRLCInPipeline(options: {
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
 
     try {
+        // TODO: need to refactor
+        // too tricky here, when relativePackagePath === undefined,
+        // the project should be typespec,
+        // and the changedPackageDirectories should be join(service-dir, package-dir)
         if (!packagePath || !relativePackagePath) {
             const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
             if (changedPackageDirectories.size !== 1) {
@@ -208,6 +213,7 @@ export async function generateRLCInPipeline(options: {
 
             await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
 
+            // TODO: remove it for typespec project, since no need now, the test and sample are decouple from build
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
         }
@@ -229,6 +235,7 @@ export async function generateRLCInPipeline(options: {
         logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
         execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+        // TODO: should follow: https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#how-to-create-package
         logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {

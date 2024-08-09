@@ -38,7 +38,7 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     if (BannedAssemblies.Contains(type.ContainingAssembly.Name))
                     {
-                        if (type.Name != "Utf8JsonReader" && type.Name != "Utf8JsonWriter")
+                        if (!IsUtf8JsonReaderWriter(type))
                         {
                             context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0014, symbol.Locations.First(), BannedAssembliesMessageArgs), symbol);
                         } 
@@ -88,6 +88,16 @@ namespace Azure.ClientSdk.Analyzers
                     }
                     break;
             }
+        }
+
+        private static bool IsUtf8JsonReaderWriter(ITypeSymbol type)
+        {
+            return (type.Name == "Utf8JsonReader" || type.Name == "Utf8JsonWriter") && GetFullNamespace(type.ContainingNamespace) == "System.Text.Json";
+        }
+
+        private static string GetFullNamespace(INamespaceSymbol type)
+        {
+            return type.ContainingNamespace.Name == "" ? type.Name : $"{GetFullNamespace(type.ContainingNamespace)}.{type.Name}";
         }
     }
 }

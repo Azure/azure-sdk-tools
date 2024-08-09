@@ -52,22 +52,24 @@ public enum Flavor {
         // to see if it brings in com.azure or io.clientcore libraries.
         int azureCount = 0;
         int genericCount = 0;
-        for (Dependency dependency : apiListing.getMavenPom().getDependencies()) {
-            if (dependency.getGroupId().equals(AZURE.getPackagePrefix())) {
-                // if we have azure-core, then we are an azure library and we bail
-                if (dependency.getArtifactId().equals("azure-core")) {
-                    return AZURE;
+
+        if (apiListing.getMavenPom().getDependencies() != null) {
+            for (Dependency dependency : apiListing.getMavenPom().getDependencies()) {
+                if (dependency.getGroupId().equals(AZURE.getPackagePrefix())) {
+                    // if we have azure-core, then we are an azure library and we bail
+                    if (dependency.getArtifactId().equals("azure-core")) {
+                        return AZURE;
+                    }
+                    azureCount++;
+                } else if (dependency.getGroupId().equals(GENERIC.getPackagePrefix())) {
+                    // if we have 'core', then we are a clientcore library and we bail
+                    if (dependency.getArtifactId().equals("core")) {
+                        return GENERIC;
+                    }
+                    genericCount++;
                 }
-                azureCount++;
-            } else if (dependency.getGroupId().equals(GENERIC.getPackagePrefix())) {
-                // if we have 'core', then we are a clientcore library and we bail
-                if (dependency.getArtifactId().equals("core")) {
-                    return GENERIC;
-                }
-                genericCount++;
             }
         }
-
         // see which count is greatest (and non-zero), and return that flavour. If equal, return unknown
         return azureCount > genericCount ? AZURE : genericCount > azureCount ? GENERIC : UNKNOWN;
     }

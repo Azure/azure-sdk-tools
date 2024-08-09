@@ -50,6 +50,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     } catch (err) {
         packageResult.result = 'failed';
         logger.logError(`Failed to generate package due to ${(err as Error).stack ?? err}`);
+        throw err;
     } finally {
         return packageResult;
     }

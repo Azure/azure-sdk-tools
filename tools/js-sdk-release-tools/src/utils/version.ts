@@ -59,7 +59,7 @@ export function bumpPreviewVersion(version: string, usedVersions: string[] | und
 
 export function getNewVersion(stableVersion: string | undefined, usedVersions: string[] | undefined, hasBreakingChange, isStableRelease: boolean): string {
     if (!stableVersion) {
-        logger.error(`Invalid stableVersion ${stableVersion}`);
+        logger.error(`Invalid stableVersion '${stableVersion}'.`);
         process.exit(1);
     }
     if (isStableRelease) {

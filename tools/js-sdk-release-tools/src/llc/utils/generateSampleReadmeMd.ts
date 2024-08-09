@@ -38,9 +38,6 @@ use-extension:
         fs.mkdirSync(path.join(packagePath, 'swagger'));
     }
     fs.writeFileSync(path.join(packagePath, 'swagger', 'README.md'), sampleReadme, {encoding: 'utf-8'});
-    logger.info('');
-    logger.info('-------------------------------------------------------------');
-    logger.info('');
 }
 
 export async function generateSampleReadmeMd(packageName: string, packagePath: string, options: any) {
@@ -67,7 +64,7 @@ export async function generateSampleReadmeMd(packageName: string, packagePath: s
 }
 
 export async function modifyExistingReadmeMd(packageName: string, packagePath: string) {
-    logger.info(`${packageName} is found in ${packagePath}, please confirm whether the value is expected?
+    logger.info(`'${packageName}' is found in ${packagePath}, please confirm whether the value is expected?
 If yes, please input Enter directly. If not, please enter a new value.`);
     const readme = await getConfigFromReadmeMd(path.join(packagePath, 'swagger', 'README.md'));
     const title = await getInputFromCommandWithDefaultValue('title', readme['title']);

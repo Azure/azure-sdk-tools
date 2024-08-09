@@ -5,7 +5,7 @@ import {logger} from "./utils/logger";
 
 const changelogToolCli = async (packageFolderPath: string | undefined) => {
     if (!packageFolderPath) {
-        logger.error(`invalid package path ${packageFolderPath}`);
+        logger.error(`Invalid package path '${packageFolderPath}'.`);
     } else {
         await generateChangelogAndBumpVersion(packageFolderPath);
     }

@@ -32,13 +32,13 @@ async function autoGenerate(options: any) {
         packageName = options['package-name'];
         if (!packageName || !validPackageName(packageName)) {
             if (!!packageName && !validPackageName(packageName)) {
-                logger.warn(`Your package-name ${packageName} is invalid, it should be in format @azure-rest/xxxxx.`)
+                logger.warn(`Package name '${packageName}' is invalid, it should be in format '@azure-rest/xxxxx'.`)
             }
             packageName = await getPackageNameFromCommand();
         }
         packagePath = findPackageInRepo(packageName, sdkRepo);
         if (!packagePath) {
-            logger.info(`${packageName} is first generated.`);
+            logger.info(`'${packageName}' is first generated.`);
             const rp = options['service-name']? options['service-name'] : await getInputFromCommand('service-name');
             createFolderIfNotExist(path.join(sdkRepo, 'sdk', rp));
             createFolderIfNotExist(path.join(sdkRepo, 'sdk', rp, getPackageFolderName(packageName)));
@@ -46,7 +46,7 @@ async function autoGenerate(options: any) {
             await generateSampleReadmeMd(packageName, packagePath, options);
         } else {
             if (!fs.existsSync(path.join(packagePath, 'swagger', 'README.md'))) {
-                logger.info(`${packageName} is found in ${packagePath}, but not contains swagger/README.md. Creating a sample one for quickstart.`);
+                logger.info(`'${packageName}' is found in ${packagePath}, but swagger/README.md is not found. Start to create a sample one for quickstart.`);
                 await generateSampleReadmeMd(packageName, packagePath, options);
             } else if (options['interactive']) {
                 await modifyExistingReadmeMd(packageName, packagePath);
@@ -54,16 +54,13 @@ async function autoGenerate(options: any) {
         }
     }
     if (!packageName) {
-        logger.error(`Cannot get valid package-name.`);
+        logger.error(`Package name '${packageName}' is invalid.`);
         process.exit(1);
     }
 
     await generateCodes(sdkRepo, packagePath, packageName);
     await buildGeneratedCodes(sdkRepo, packagePath, packageName);
-    logger.info(``);
-    logger.info(`----------------------------------------------------------------`);
-    logger.info(``);
-    logger.info(`RLC code is generated and build successfully, please find it in ${packagePath}`);
+    logger.info(`RLC code is generated and built successfully, please find it in '${packagePath}'`);
 }
 
 const optionDefinitions = [

@@ -41,17 +41,17 @@ export async function generateChangelog(packagePath) {
     const npm = new NPMScope({executionFolderPath: packagePath});
     const npmViewResult = await npm.view({packageName});
     if (npmViewResult.exitCode !== 0) {
-        logger.info(`${packageName} is first release, generating changelog`);
+        logger.info(`'${packageName}' is first release, start to generate changelog.`);
         generateChangelogForFirstRelease(packagePath, version);
-        logger.info(`Generate changelog successfully`);
+        logger.info(`Generated changelog successfully.`);
     } else {
         const stableVersion = getLatestStableVersion(npmViewResult);
         if (!stableVersion) {
             logger.error(`Invalid latest version ${stableVersion}`);
             process.exit(1);
         }
-        logger.info(`Package ${packageName} released is released before`);
-        logger.info('Generating changelog by comparing api.md...');
+        logger.info(`Package '${packageName}' released is released before.`);
+        logger.info('Start to generate changelog by comparing api.md.');
         try {
             await shell.mkdir(path.join(packagePath, 'changelog-temp'));
             await shell.cd(path.join(packagePath, 'changelog-temp'));
@@ -60,7 +60,7 @@ export async function generateChangelog(packagePath) {
             await shell.cd(packagePath);
             const tempReviewFolder = path.join(packagePath, 'changelog-temp', 'package', 'review');
             if (!fs.existsSync(tempReviewFolder)) {
-                logger.warn("The latest package released in NPM doesn't contain review folder, so generate changelog same as first release");
+                logger.warn("The latest package released in NPM doesn't contain review folder, so generate changelog same as first release.");
                 generateChangelogForFirstRelease(packagePath, version);
             } else {
                 const npmPackageRoot = path.join(packagePath, 'changelog-temp', 'package');
@@ -71,15 +71,15 @@ export async function generateChangelog(packagePath) {
                 const newSDKType = getSDKType(packagePath);
                 const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
-                    logger.error('Cannot generate changelog because the codes of local and npm may be the same.');
+                    logger.error('Failed to generate changelog because the codes of local and npm may be the same.');
                 } else {
                     appendChangelog(packagePath, version, changelog);
-                    logger.info('Generate changelog successfully');
+                    logger.info('Generated changelog successfully.');
                 }
             }
 
         } catch (e: any) {
-          logger.error(`Generate changelog failed: ${e.message}`);
+          logger.error(`Failed to generate changelog: ${e.message}.`);
         } finally {
             fs.rmSync(path.join(packagePath, 'changelog-temp'), { recursive: true, force: true });
             await shell.cd(jsSdkRepoPath);

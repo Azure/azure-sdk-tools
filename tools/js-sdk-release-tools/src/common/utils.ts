@@ -10,13 +10,13 @@ import { spawn, SpawnOptions } from 'child_process';
 
 function printErrorDetails(output: { stdout: string; stderr: string, code: number | null } | undefined) {
     if (!output) return;
-    logger.error(`Error summary:`);
+    logger.error(`Summary:`);
     const printErrorSummary = (content: string) => content.split('\n')
         .filter(line => line.includes('error') || line.includes('ERROR'))
         .forEach(line => logger.error(line));
     printErrorSummary(output.stderr);
     printErrorSummary(output.stdout);
-    logger.error(`Error details:`);
+    logger.error(`Details:`);
     logger.error(output.stderr);
     logger.error(output.stdout);
 }
@@ -29,7 +29,7 @@ export function getSDKType(packageRoot: string): SDKType {
     const paraPath = getClassicClientParametersPath(packageRoot);
     const exist = shell.test('-e', paraPath);
     const type = exist ? SDKType.HighLevelClient : SDKType.ModularClient;
-    logger.info(`SDK type: ${type} detected in ${packageRoot}`);
+    logger.info(`SDK type '${type}' is detected in '${packageRoot}'.`);
     return type;
 }
 
@@ -78,13 +78,13 @@ export function tryReadNpmPackageChangelog(packageFolderPath: string): string {
     const changelogPath = path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md');
     try {
         if (!fs.existsSync(changelogPath)) {
-            logger.warn(`NPM package's changelog "${changelogPath}" does not exists`);
+            logger.warn(`NPM package's changelog '${changelogPath}' does not exist.`);
             return "";
         }
         const originalChangeLogContent = fs.readFileSync(changelogPath, { encoding: 'utf-8' });
         return originalChangeLogContent;
     } catch (err) {
-        logger.warn(`Failed to read NPM package's changelog "${changelogPath}": ${(err as Error)?.stack ?? err}`);
+        logger.warn(`Failed to read NPM package's changelog '${changelogPath}': ${(err as Error)?.stack ?? err}`);
         return '';
     }
 }
@@ -100,7 +100,7 @@ export function runCommand(
         let stdout = '';
         let stderr = '';
         const commandStr = `${command} ${args.join(' ')}`;
-        logger.info(`Run command: ${commandStr}`);
+        logger.info(`Start to run command: '${commandStr}'.`);
         const child = spawn(command, args, options);
 
         let timedOut = false;
@@ -126,9 +126,9 @@ export function runCommand(
             if (code === 0) {
                 resolve({ stdout, stderr, code });
             } else {
-                logger.error(`Run command closed with code ${code}`);
+                logger.error(`Command closed with code '${code}'.`);
                 printErrorDetails({ stdout, stderr, code });
-                reject(new Error(`Run command closed with code ${code}`));
+                reject(new Error(`Command closed with code '${code}'.`));
             }
         });
 
@@ -136,9 +136,9 @@ export function runCommand(
             if (timer) clearTimeout(timer);
             if (!timedOut) {
               if (signal || code && code !== 0) {
-                logger.error(`Command "${commandStr}" exited with signal: ${signal ?? 'SIGTERM'} and code: ${code}`);
+                logger.error(`Command '${commandStr}' exited with signal '${signal ?? 'SIGTERM'}' and code ${code}.`);
                 printErrorDetails({ stdout, stderr, code });
-                reject(new Error(`Process was killed with signal: ${signal ?? 'SIGTERM'}`));
+                reject(new Error(`Process was killed with signal '${signal ?? 'SIGTERM'}'.`));
               } else {
                   resolve({ stdout, stderr, code });
               }
@@ -146,7 +146,7 @@ export function runCommand(
         });
 
         child.on('error', (err) => {
-            logger.error(`Received command error: ${(err as Error)?.stack ?? err}`);
+            logger.error((err as Error)?.stack ?? err);
             printErrorDetails({ stdout, stderr, code: null });
             reject(err);
         });

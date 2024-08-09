@@ -77,8 +77,8 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
         }
     } catch (e) {
         const packageName = outputJson.packages?.[0].packageName;
-        logger.error(`Failed to generated sdk for package ${packageName ?? ''} due to error: ${(e as Error)?.stack ?? e}`);
-        logger.error(`If the issue persists, contact the DotNet language support channel at "Language – JS ＆ TS 🥷 - Azure SDK <f44b1a95.microsoft.com@amer.teams.ms>" and include this spec pull request.`)
+        logger.error(`Failed to generate SDK for package ${"'" + packageName + "'" ?? ''} due to error: ${(e as Error)?.stack ?? e}.`);
+        logger.error(`If the issue persists, contact the support channel at "Language – JS ＆ TS 🥷 - Azure SDK <f44b1a95.microsoft.com@amer.teams.ms>" and include this spec pull request.`)
         throw e;
     } finally {
         await restoreNodeModules(String(shell.pwd()));

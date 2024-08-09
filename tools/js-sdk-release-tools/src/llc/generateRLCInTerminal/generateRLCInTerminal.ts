@@ -10,28 +10,25 @@ const shell = require('shelljs')
 export async function generateCodes(sdkRepo: string, packagePath: string, packageName: string) {
     let cmd = `autorest  --typescript README.md`;
     shell.cd(path.join(packagePath, 'swagger'));
-    logger.info('Executing command:');
-    logger.info('------------------------------------------------------------');
-    logger.info(cmd);
-    logger.info('------------------------------------------------------------');
+    logger.info(`Start to run command: ${cmd}.`);
     execSync(cmd, {stdio: 'inherit'});
-    logger.info(`Generating config files`);
+    logger.info(`Start to generate config files.`);
     shell.cd(packagePath);
     await generateExtraFiles(packagePath, packageName, sdkRepo);
 }
 
 export async function buildGeneratedCodes(sdkrepo: string, packagePath: string, packageName: string) {
     shell.cd(sdkrepo);
-    logger.info(`rush update`);
-    execSync('rush update', {stdio: 'inherit'});
-    logger.info(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+    logger.info(`Start to update rush.`);
+    execSync('rush update', {stdio: 'ignore'});
+    logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually`);
     // To build generated codes except test and sample, we need to change tsconfig.json.
     changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
     execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
     changeConfigOfTestAndSample(packagePath, ChangeModel.Revert, SdkType.Rlc);
     shell.cd(packagePath);
-    logger.info(`Generate changelog`);
+    logger.info(`Start to Generate changelog.`);
     await generateChangelog(packagePath);
-    logger.info(`Clean compiled outputs`);
+    logger.info(`Start to clean compiled outputs.`);
     execSync('rushx clean', {stdio: 'inherit'});
 }

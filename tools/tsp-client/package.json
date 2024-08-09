@@ -69,9 +69,6 @@
   "peerDependencies": {
     "@typespec/compiler": ">=0.58.0 <1.0.0"
   },
-  "bundleDependencies": [
-    "openapi-diff"
-  ],
   "mocha": {
     "extension": [
       "ts"

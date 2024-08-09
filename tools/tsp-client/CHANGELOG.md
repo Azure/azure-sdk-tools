@@ -5,7 +5,6 @@
 - Added `generate-lock-file` command, see [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for more information.
 - Removed the `--generate-lock-file` flag and replaced it with the command above.
 - Migrated tsp-client from `node:util` to `yargs` for commandline infrastructure.
-- Added `compare` command to compare a hand-authored Swagger to a TypeSpec-generated Swagger to understand the relevant differences between them.
 
 ## 2024-08-05 - 0.10.0
 

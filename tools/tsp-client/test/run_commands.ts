@@ -78,16 +78,6 @@ async function main() {
   // Run the convert command on a mgmt spec
   await runCommand(baseDir, ["convert", "-o", baseSpecDir, "--swagger-readme", mgmtSpecLink]);
 
-  // Run the compare command to ensure it is working
-  await runCommand(baseDir, [
-    "compare",
-    "--lhs",
-    "/test/examples/specification/compare/lhs",
-    "--rhs",
-    "/test/examples/specification/compare/rhs",
-    "--compile-tsp",
-  ]);
-
   await unlink(join(repoRoot, "eng/emitter-package.json"));
   console.log("emitter-package.json ---------------> deleted successfully");
   await unlink(join(repoRoot, "eng/emitter-package-lock.json"));
@@ -95,29 +85,30 @@ async function main() {
 }
 
 async function compareFiles(file1, file2) {
-  try {
-    const data1 = await readFile(file1, "utf8");
-    const data2 = await readFile(file2, "utf8");
-    return data1 === data2;
-  } catch (err) {
-    console.error("Error reading files:", err);
-    throw err;
-  }
+    try {
+        const data1 = await readFile(file1, 'utf8');
+        const data2 = await readFile(file2, 'utf8');
+        return data1 === data2;
+    } catch (err) {
+        console.error('Error reading files:', err);
+        throw err;
+    }
 }
 
 async function verifySwaggerSorting() {
-  const baseDir = resolve(".");
-  const specDir = resolve("./test/examples/specification/sort-swagger");
-  const unsortedJson = join(specDir, "unsorted.json");
-  const sortedJson = join(specDir, "sorted.json");
+    const baseDir = resolve(".");
+    const specDir = resolve("./test/examples/specification/sort-swagger");
+    const unsortedJson = join(specDir, "unsorted.json");
+    const sortedJson = join(specDir, "sorted.json");
 
-  await cp(unsortedJson, sortedJson);
+    await cp(unsortedJson, sortedJson);
+    
+    await runCommand(baseDir, ["sort-swagger", sortedJson]);
 
-  await runCommand(baseDir, ["sort-swagger", sortedJson]);
-
-  if (await compareFiles(sortedJson, join(specDir, "expected-sorted.json")))
-    console.log("sort-swagger verified successfully");
-  else console.error("\x1b[31m", "sort-swagger ---------------> verification FAILED!", "\x1b[0m");
+    if (await compareFiles(sortedJson, join(specDir, "expected-sorted.json") ))
+      console.log("sort-swagger verified successfully");
+    else
+      console.error("\x1b[31m", "sort-swagger ---------------> verification FAILED!", "\x1b[0m");
 }
 
 main().catch((e) => {

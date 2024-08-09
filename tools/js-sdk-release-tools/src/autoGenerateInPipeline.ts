@@ -23,13 +23,14 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
         return false;
     }
 
-    const resolvedTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
-    const tspConfigPath = path.join(specFolder, resolvedTspFolder, 'tspconfig.yaml');
+    const resolvedRelativeTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
+    const tspFolderFromSpecRoot = path.join(specFolder, resolvedRelativeTspFolder);
+    const tspConfigPath = path.join(tspFolderFromSpecRoot, 'tspconfig.yaml');
     if (!(await existsAsync(tspConfigPath))) {
         return false;
     }
 
-    const tspConfig = await loadTspConfig(resolvedTspFolder);
+    const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
     if (!tspConfig?.options?.['@azure-tools/typespec-ts']?.['package-name']?.startsWith('@azure/')) {
         return false;
     }

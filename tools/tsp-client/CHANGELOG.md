@@ -1,5 +1,9 @@
 # Release
 
+## 2024-08-08 - 0.11.1
+
+- Removed `compare` command.
+
 ## 2024-08-08 - 0.11.0
 
 - Added `generate-lock-file` command, see [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for more information.

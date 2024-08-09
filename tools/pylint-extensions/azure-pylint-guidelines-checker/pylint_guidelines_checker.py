@@ -2750,6 +2750,28 @@ class NoImportTypingFromTypeCheck(BaseChecker):
         except:
             pass
 
+class DoNotUseLegacyTyping(BaseChecker):
+
+    """ Rule to check that we aren't using legacy typing using comments. """
+
+    name = "do-not-use-legacy-typing"
+    priority = -1
+    msgs = {
+        "C4761": (
+            "Do not use legacy typing using comments.",
+            "do-not-use-legacy-typing",
+            "Do not use legacy typing using comments. Python 2 is no longer supported, use Python 3.9+ type hints instead.",
+        ),
+    }
+
+    def visit_functiontype(self, node):
+        """Check that we aren't using legacy typing."""
+        self.add_message(
+            msgid=f"do-not-use-legacy-typing",
+            node=node,
+            confidence=None
+        )
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2782,6 +2804,8 @@ def register(linter):
     linter.register_checker(DoNotImportLegacySix(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    linter.register_checker(DoNotUseLegacyTyping(linter))
+
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

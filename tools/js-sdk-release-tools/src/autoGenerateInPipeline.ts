@@ -76,7 +76,10 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             })
         }
     } catch (e) {
-        logger.logError((e as any)?.message);
+        const packageName = outputJson.packages?.[0].packageName;
+        logger.error(`Failed to generate SDK for package ${"'" + packageName + "'" ?? ''} due to ${(e as Error)?.stack ?? e}.`);
+        logger.error(`Please review the detail errors for potential fixes.`);
+        logger.error(`If the issue persists, contact the support channel at https://aka.ms/azsdk/js-teams-channel and include this spec pull request.`)
         throw e;
     } finally {
         await restoreNodeModules(String(shell.pwd()));
@@ -94,6 +97,6 @@ const optionDefinitions = [
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
 automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
-    logger.logError(e.message);
+    logger.error(e.message);
     process.exit(1);
 });

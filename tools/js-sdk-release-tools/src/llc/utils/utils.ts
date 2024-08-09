@@ -46,7 +46,7 @@ export function findPackageInRepo(packageName, sdkRepo) {
 export function getPackageFolderName(packageName) {
     const match = /@azure-rest\/([a-z-]+)/.exec(packageName);
     if (!match || match.length !== 2) {
-        logger.logError(`packageName ${packageName} is invalid, please input a new packageName in format "@azure-rest/*****"`);
+        logger.error(`Package name'${packageName}' is invalid, please input a new packageName in format '@azure-rest/*****'.`);
         process.exit(1);
     } else {
         const subName = match[1];
@@ -74,13 +74,15 @@ export function getRelativePackagePath(packagePath) {
 
 export function getPackagePathFromReadmePath(readmePath) {
     if (!fs.existsSync(readmePath)) {
-        logger.logError(`Invalid README.md file path: ${readmePath}`);
+        logger.error(`Invalid README.md file path '${readmePath}'.`);
+        logger.error(`Report this issue in https://aka.ms/azsdk/support/specreview-channel`);
         process.exit(1);
     } else {
         const absolutePath = path.resolve(readmePath);
         const match = /.*sdk[\/\\]+[a-zA-Z0-9-]+[\/\\]+[a-zA-Z0-9-]+/.exec(absolutePath);
         if (!match || match.length !== 1) {
-            logger.logError(`Invalid README.md file path: ${readmePath}`);
+            logger.error(`Invalid README.md file path '${readmePath}'.`);
+            logger.error(`Report this issue in https://aka.ms/azsdk/support/specreview-channel`);
             process.exit(1);
         }
         return match[0];
@@ -116,7 +118,7 @@ export async function getPackageNameFromCommand(): Promise<string> {
         if (validPackageName(packageName)) {
             return packageName;
         } else {
-            logger.logWarn('Invalid package name. It should be in format @azure-rest/xxxxx, please input a new one: ')
+            logger.warn('Invalid package name. It should be in format \'@azure-rest/xxxxx\', please input a new one.')
         }
     }
 }
@@ -147,7 +149,7 @@ export async function getInputFromCommand(parameter: string): Promise<string> {
     while (true) {
         const input = (await ask(messages[parameter].yellow)) as string;
         if (input.trim() === '') {
-            logger.logWarn('Please do not input empty string.')
+            logger.warn('Please do not input empty string.')
         } else {
             return input;
         }
@@ -155,7 +157,7 @@ export async function getInputFromCommand(parameter: string): Promise<string> {
 }
 
 export async function getInputFromCommandWithDefaultValue(parameter: string, defaultValue: string): Promise<string> {
-    const input = await ask(`${messages[parameter]}[default: ${defaultValue}]: `.yellow);
+    const input = await ask(`${messages[parameter]}[default: ${defaultValue}]: `);
     if ((input as string).trim() === '') {
         return defaultValue;
     } else {

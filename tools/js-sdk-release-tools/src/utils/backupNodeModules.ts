@@ -5,7 +5,7 @@ import { logger } from './logger';
 export async function backupNodeModules(folder: string) {
     const nodeModulesPath = path.join(folder, "node_modules");
     if (fs.existsSync(nodeModulesPath)) {
-        logger.logGreen(`rename ${nodeModulesPath} to ${nodeModulesPath}_backup`);
+        logger.info(`Start to rename '${nodeModulesPath}' to '${nodeModulesPath}_backup'.`);
         fs.renameSync(nodeModulesPath, `${nodeModulesPath}_backup`);
     }
     if ('/' === path.dirname(folder)) return;
@@ -15,7 +15,7 @@ export async function backupNodeModules(folder: string) {
 export async function restoreNodeModules(folder: string) {
     const nodeModulesPath = path.join(folder, "node_modules_backup");
     if (fs.existsSync(nodeModulesPath)) {
-        logger.logGreen(`rename ${nodeModulesPath} to ${nodeModulesPath.replace('_backup', '')}`);
+        logger.info(`Start to rename '${nodeModulesPath}' to '${nodeModulesPath.replace('_backup', '')}'.`);
         fs.renameSync(nodeModulesPath, `${nodeModulesPath.replace('_backup', '')}`);
     }
     if ('/' === path.dirname(folder)) return;

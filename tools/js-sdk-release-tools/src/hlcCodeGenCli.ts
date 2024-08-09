@@ -9,7 +9,8 @@ const shell = require('shelljs');
 async function automationGenerateInTerminal(absoluteReadmeMd: string, tag?: string, use?: string, additionalArgs?: string) {
     const regexResult = /^(.*[\/\\]azure-rest-api-specs[-pr]*)[\/\\](specification.*)/.exec(absoluteReadmeMd);
     if (!regexResult || regexResult.length !== 3) {
-        logger.logError(`Cannot Parse readme file path: ${absoluteReadmeMd}`);
+        logger.error(`Failed to parse README file path '${absoluteReadmeMd}'.`);
+        logger.error(`Ensure the READMD file '${absoluteReadmeMd}' exist and is valid. Refer to the sample file at https://github.com/Azure/azure-rest-api-specs/tree/main/documentation/samplefiles`);
     } else {
         const gitCommitId = await getLastCommitId(regexResult[1]);
         await generateMgmt({

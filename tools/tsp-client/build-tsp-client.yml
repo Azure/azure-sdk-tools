@@ -25,6 +25,11 @@ steps:
     workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
     condition: ${{ parameters.Publish }}
 
+  - bash: |
+      Get-ChildItem -Path $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY) | ForEach-Object { npm install $_.FullName }
+    displayName: Smoke test a package installation
+    condition: ${{ parameters.Publish }}
+
   - task: 1ES.PublishPipelineArtifact@1
     inputs:
       targetPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'

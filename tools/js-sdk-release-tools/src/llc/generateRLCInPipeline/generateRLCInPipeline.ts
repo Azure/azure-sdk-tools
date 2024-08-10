@@ -195,7 +195,7 @@ export async function generateRLCInPipeline(options: {
         if (!packagePath || !relativePackagePath) {
             const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
             if (changedPackageDirectories.size !== 1) {
-                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
+                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories.size}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
             }
             for (const d of changedPackageDirectories) relativePackagePath = d;
             packagePath = path.join(options.sdkRepo, relativePackagePath!);
@@ -234,7 +234,7 @@ export async function generateRLCInPipeline(options: {
         execSync('rush update', {stdio: 'inherit'});
         logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+        execSync(`rush build -t ${packageName} -v`, {stdio: 'inherit'});
         // TODO: should follow: https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#how-to-create-package
         logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});

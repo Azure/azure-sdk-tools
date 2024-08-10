@@ -10,8 +10,15 @@ import {
   syncCommand,
   updateCommand,
 } from "./commands.js";
-import { normalizePath, resolvePath } from "@typespec/compiler";
+import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import PromptSync from "prompt-sync";
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const { version } = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
 
 function commandPreamble(argv: any) {
   checkDebugLogging(argv);
@@ -49,6 +56,8 @@ export function resolveOutputDir(argv: any): string {
 }
 
 const parser = yargs(hideBin(process.argv))
+  .version(version)
+  .alias("v", "version")
   .scriptName("")
   .usage(usageText)
   .option("debug", {

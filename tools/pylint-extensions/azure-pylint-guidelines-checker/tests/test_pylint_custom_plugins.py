@@ -4834,14 +4834,12 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
 
 class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
-    """Test that any errors raised are not logged in the exception block."""
+    """Test that any errors raised are not logged at 'error' or 'warning' levels in the exception block."""
 
     CHECKER_CLASS = checker.DoNotLogErrorsEndUpRaising
 
     def test_error_level_not_logged(self):
         """Check that any exceptions raised aren't logged at error level in the exception block."""
-        # works with other logging levels too (e.g. warning and info)
-
         exception_node = astroid.extract_node('''
         try:
             add = 1 + 2
@@ -4862,8 +4860,30 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_try(exception_node)
 
+    def test_warning_level_not_logged(self):
+        """Check that any exceptions raised aren't logged at warning level in the exception block."""
+        exception_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            logger.warning(str(e))
+            raise
+        '''
+                                              )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-errors-that-get-raised",
+                line=2,
+                node=exception_node,
+                col_offset=0,
+                end_line=6,
+                end_col_offset=9,
+            )
+        ):
+            self.checker.visit_try(exception_node)
+
     def test_warning_level_logging_ok_when_no_raise(self):
-        """Check that any exceptions can be logged at error level if exception isn't raised."""
+        """Check that exceptions can be logged if the exception isn't raised."""
 
         exception_node = astroid.extract_node('''
         try:
@@ -4888,8 +4908,8 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_try(exception_node)
 
-    def test_mult_exception_blocks_seperate_raise(self):
-        """Check multiple exception blocks with seperate raise and logging is allowed."""
+    def test_mult_exception_blocks_separate_raise(self):
+        """Check multiple exception blocks with separate raise and logging is allowed."""
 
         exception_node = astroid.extract_node('''
         try:
@@ -4902,7 +4922,6 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                                               )
         with self.assertNoMessages():
             self.checker.visit_try(exception_node)
-
 
     def test_mult_exception_blocks_with_raise(self):
         """Check that multiple exception blocks with raise and logging is not allowed."""

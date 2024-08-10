@@ -2715,17 +2715,17 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
     name = "do-not-log-errors-that-get-raised"
     priority = -1
     msgs = {"C4762": (
-            "Do not log errors that get rasied in an exception block.",
+            "Do not log errors that get raised in an exception block.",
             "do-not-log-errors-that-get-raised",
-            "Do not log errors that get rasied in an exception block. Do not log as error, warning or info",
+            "Do not log errors that get raised in an exception block. Do not log at error or warning levels",
             ),
             }
 
     def visit_try(self, node):
-        """Check that errors aren't logged in exception blocks.
+        """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
            Go through each line in the exception block and make sure it hasn't been logged if exception is raised.
         """
-        matches = [".warning", ".info", ".error"]
+        matches = [".warning", ".error"]
         # Get the exception block - returns a list
         except_block = node.handlers
         for nod in except_block:

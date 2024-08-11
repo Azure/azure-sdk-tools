@@ -2750,11 +2750,11 @@ class NoImportTypingFromTypeCheck(BaseChecker):
             pass
 
 
-class DoNotImportAsyncioDirectly(BaseChecker):
+class DoNotImportAsyncio(BaseChecker):
 
     """Rule to check that libraries do not import the asyncio package directly."""
 
-    name = "do-not-import-asyncio-directly"
+    name = "do-not-import-asyncio"
     priority = -1
     # TODO Find message number
     msgs = {
@@ -2816,7 +2816,7 @@ def register(linter):
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(DoNotImportLegacySix(linter))
-    linter.register_checker(DoNotImportAsyncioDirectly(linter))
+    linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
 

@@ -4834,7 +4834,7 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
 
 class TestDoNotImportAsyncioDirectly(pylint.testutils.CheckerTestCase):
     """Test that we are blocking imports of asncio directly allowing indirect imports."""
-    CHECKER_CLASS = checker.DoNotImportAsyncioDirectly
+    CHECKER_CLASS = checker.DoNotImportAsyncio
 
     def test_disallowed_import_from(self):
         """Check that illegal imports raise warnings"""

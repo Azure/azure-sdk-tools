@@ -4830,3 +4830,8 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_import(imb)
             self.checker.visit_import(imc)
             self.checker.visit_importfrom(imd)
+
+# [Pylint] custom linter check for invalid use of @overload #3229
+# [Pylint] Custom Linter check for Exception Logging #3227
+# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+# [Pylint] Add a check for connection_verify hardcoded settings #35355

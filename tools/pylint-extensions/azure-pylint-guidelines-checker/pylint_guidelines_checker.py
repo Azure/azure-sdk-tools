@@ -2749,6 +2749,10 @@ class NoImportTypingFromTypeCheck(BaseChecker):
                         )
         except:
             pass
+# [Pylint] custom linter check for invalid use of @overload #3229
+# [Pylint] Custom Linter check for Exception Logging #3227
+# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+# [Pylint] Add a check for connection_verify hardcoded settings #35355
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
@@ -2782,6 +2786,10 @@ def register(linter):
     linter.register_checker(DoNotImportLegacySix(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    # [Pylint] custom linter check for invalid use of @overload #3229
+    # [Pylint] Custom Linter check for Exception Logging #3227
+    # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+    # [Pylint] Add a check for connection_verify hardcoded settings #35355
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

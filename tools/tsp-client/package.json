@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-client-generator-cli",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
@@ -51,14 +51,15 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "@autorest/openapi-to-typespec": "0.8.2",
     "@autorest/csharp": "https://aka.ms/azsdk/openapi-to-typespec-csharp",
+    "@autorest/openapi-to-typespec": "0.8.2",
     "@azure-tools/typespec-autorest": "^0.44.0",
     "@azure/core-rest-pipeline": "^1.12.0",
     "@types/yargs": "^17.0.32",
     "autorest": "^3.7.1",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
+    "openapi-diff": "github:tjprescott/openapi-diff#8edec5e2d2ad0ba57e8cdebda20e7b0c6e225699",
     "prompt-sync": "^4.2.0",
     "simple-git": "^3.20.0",
     "yaml": "^2.3.1",
@@ -70,6 +71,9 @@
   "mocha": {
     "extension": [
       "ts"
+    ],
+    "bundleDependency": [
+      "openapi-diff"
     ],
     "spec": "test/*.spec.ts",
     "loader": "ts-node/esm"

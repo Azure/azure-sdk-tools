@@ -224,11 +224,11 @@ export async function generateRLCInPipeline(options: {
             }
         }
 
-        logger.logGreen(`rush update...`);
-        execSync('rush update', {stdio: 'inherit'});
-        logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+        logger.logGreen(`node common/scripts/install-run-rush.js update...`);
+        execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+        logger.logGreen(`node common/scripts/install-run-rush.js build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+        execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
         logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {

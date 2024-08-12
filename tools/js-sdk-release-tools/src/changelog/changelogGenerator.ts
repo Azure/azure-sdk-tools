@@ -209,8 +209,6 @@ export class Changelog {
         const inlineMessages = messages.filter(m => m.kind === RuleMessageKind.InlineDeclarationNameSetMessage).map(m => m as InlineDeclarationNameSetMessage)
         this.processInlineMessage(inlineMessages)
     }
-    
-    private postProcessAdd
 }
 
 // todo: special rules for HLC convert to Modular, will use a more generic method to replace

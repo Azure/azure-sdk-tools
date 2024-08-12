@@ -4,7 +4,8 @@ import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
 import { posix, join } from 'node:path';
-import { VersionPolicyName } from './types';
+import { PackageResult, VersionPolicyName } from './types';
+import { glob } from 'glob'
 
 interface ProjectItem {
     packageName: string;
@@ -40,7 +41,12 @@ async function packPackage(packageDirectory: string) {
     logger.logInfo(`rushx pack successfully.`);
 }
 
-export async function buildPackage(packageDirectory: string, versionPolicyName: VersionPolicyName) {
+async function addApiViewInfo(packageDirectory: string, packageResult: PackageResult) {
+    const apiViews = await glob(posix.join(packageDirectory, 'review', '**/*.api.md'))
+    packageResult.apiViewArtifact = [...apiViews]
+}
+
+export async function buildPackage(packageDirectory: string, versionPolicyName: VersionPolicyName, packageResult: PackageResult) {
     logger.logInfo(`Start building package in ${packageDirectory}.`);
     const { name } = await getNpmPackageInfo(packageDirectory);
     await updateRushJson({
@@ -51,6 +57,7 @@ export async function buildPackage(packageDirectory: string, versionPolicyName: 
     await runCommand(`rush`, ['update'], runCommandOptions);
     logger.logInfo(`Rush update successfully.`);
     await runCommand('rush', ['build', '-t', name, '--verbose'], runCommandOptions);
+    await addApiViewInfo(packageDirectory, packageResult);
     logger.logInfo(`Build package "${name}" successfully.`);
 }
 

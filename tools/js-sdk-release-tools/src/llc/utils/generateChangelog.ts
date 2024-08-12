@@ -80,6 +80,7 @@ export async function generateChangelog(packagePath) {
 
         } catch (e: any) {
           logger.logError(`Generate changelog failed: ${e.message}`);
+          throw e;
         } finally {
             fs.rmSync(path.join(packagePath, 'changelog-temp'), { recursive: true, force: true });
             await shell.cd(jsSdkRepoPath);

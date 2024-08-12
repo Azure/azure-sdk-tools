@@ -23,11 +23,13 @@ export interface InstallInstructionsResult {
 // TODO: investigate the inconsistency to https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/GenerateOutputSchema.json
 // the PackageResult here is stricter by making some optional field to required, due to we always want the package result contains specific fields
 export interface PackageResult {
+    language: "JavaScript";
     packageName: string;
     version: string;
     path: string[];
     changelog: ChangelogResult;
     artifacts: string[];
+    apiViewArtifact: string[];
     result: 'succeeded' | 'failed' | 'warning';
     packageFolder: string;
     typespecProject?: string[];

@@ -23,7 +23,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         
         const generatedPackageDir = await generateTypeScriptCodeFromTypeSpec(options);
 
-        await buildPackage(generatedPackageDir, options.versionPolicyName);
+        await buildPackage(generatedPackageDir, options.versionPolicyName, packageResult);
 
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,

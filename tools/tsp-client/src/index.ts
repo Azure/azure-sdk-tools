@@ -19,12 +19,12 @@ import { dirname } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const { version } = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
+const packageJson = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
 
 function commandPreamble(argv: any) {
   checkDebugLogging(argv);
   printBanner();
-  yargs().showVersion();
+  Logger.info(packageJson.version);
 }
 
 /** Ensure the output directory exists and allow interactive users to confirm or override the value. */
@@ -57,7 +57,7 @@ export function resolveOutputDir(argv: any): string {
 }
 
 const parser = yargs(hideBin(process.argv))
-  .version(version)
+  .version(packageJson.version)
   .alias("v", "version")
   .scriptName("")
   .usage(usageText)
@@ -225,6 +225,7 @@ const parser = yargs(hideBin(process.argv))
       });
     },
     async (argv: any) => {
+      commandPreamble(argv);
       await sortSwaggerCommand(argv);
     },
   )

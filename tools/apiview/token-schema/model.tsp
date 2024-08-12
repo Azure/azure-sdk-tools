@@ -4,8 +4,8 @@ using TypeSpec.JsonSchema;
 
 @jsonSchema
 
-/** CodeFile represents entire API review object. This will be processed to render review lines. */
-model CodeFile {
+/** ReviewFile represents entire API review object. This will be processed to render review lines. */
+model ApiviewFile {
   packageName: string;
   packageVersion: string;
   /** version of the APIview language parser used to create token file*/
@@ -14,14 +14,14 @@ model CodeFile {
   /** Language variant is applicable only for java variants*/
   languageVariant?: "None" | "Spring" | "Android" = "None";
   crossLanguagePackageId?: string;
-  codeLines: Array<CodeLine>;
+  reviewLines: Array<ReviewLine>;
   /** Add any system generated comments for the current token. */
-  systemComments?: Array<CodeDiagnostic>;
+  systemComments?: Array<SystemComent>;
 }
 
 
 /** Code line object corresponds to each line displayed on API review. If an empty line is required then add a code line object without any token. */
-model CodeLine {
+model ReviewLine {
   /** lineId is only required if we need to support commenting on a line that contains this token. 
    *  Usually code line for documentation or just punctuation is not required to have lineId. lineId should be a unique value within 
    *  the review token file to use it assign to review comments as well as navigation Id within the review page.
@@ -30,15 +30,15 @@ model CodeLine {
   lineId?: string;
   crossLanguageId?: string;
   /** list of tokens that constructs a line in API review */
-  tokens: Array<Token>;
+  tokens: Array<ReviewToken>;
   /** Add any child lines as children. For e.g. all classes and namespace level methods are added as a children of namespace(module) level code line. 
    *  Similarly all method level code lines are added as children of it's class code line.*/
-  children?: Array<CodeLine>;
+  children?: Array<ReviewLine>;
 }
 
 
-/** Token corresponds to each component within a code line. A separate token is required for keyword, punctuation, type name, text etc. */
-model Token {  
+/** Token corresponds to each component within a review line. A separate token is required for keyword, punctuation, type name, text etc. */
+model ReviewToken {
   kind: TokenKind;
   value: string;
   /** Subkind is required when kind is TypeName or Membername */
@@ -63,12 +63,12 @@ model Token {
 }
 
 
-/** Code diagnostic object is to add system generated comment. It can be one of the 4 different types of system comments. */
-model CodeDiagnostic {
-  /** Id of CodeLine object where this diagnostic needs to be displayed. */
+/** System coment object is to add system generated comment. It can be one of the 4 different types of system comments. */
+model SystemComent {
+  /** Id of ReviewLine object where this diagnostic needs to be displayed. */
   lineId: string;
   text: string;
-  level: DiagnosticLevel;
+  level: SystemComentLevel;
   helpLinkUri?: url;
 }
 
@@ -99,9 +99,9 @@ enum TokenSubKind {
   Member: 12
 }
 
-enum DiagnosticLevel {
- Info: 0,
- Warning: 1,
- Error:	2,
- Fatal:	3
+enum SystemComentLevel {
+ Info: 1,
+ Warning: 2,
+ Error:	3,
+ Fatal:	4
 }

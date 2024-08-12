@@ -51,6 +51,10 @@ export async function generateTypeScriptCodeFromTypeSpec(options: ModularClientP
         );
         logger.logInfo(`Generated typescript code successfully.`);
 
+        // debug
+        console.log('-------------------------- package dir', getGeneratedPackageDirectory(options.typeSpecDirectory)); 
+        await runCommand('ls', [], runCommandOptions);
+
         return getGeneratedPackageDirectory(options.typeSpecDirectory);
     } catch (err) {
         logger.logError(`Run command failed due to: ${(err as Error)?.stack ?? err}`);

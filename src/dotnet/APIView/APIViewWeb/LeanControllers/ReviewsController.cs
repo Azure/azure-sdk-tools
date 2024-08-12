@@ -136,28 +136,22 @@ namespace APIViewWeb.LeanControllers
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId);
-
-                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId); 
-
-                var result = new CodePanelData();
+                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId); 
 
                 var codePanelRawData = new CodePanelRawData()
                 {
-                    APIForest = activeRevisionReviewCodeFile.APIForest,
-                    Diagnostics = activeRevisionReviewCodeFile.Diagnostics,
-                    Comments = comments,
-                    Language = activeRevisionReviewCodeFile.Language
+                    activeRevisionCodeFile = activeRevisionReviewCodeFile,
+                    Comments = comments
                 };
 
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-
-                    var diffRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
-                    codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(diffRevisionReviewCodeFile.APIForest, activeRevisionReviewCodeFile.APIForest);
+                    codePanelRawData.diffRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
                 }
 
-                result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+                // Render the code files to generate UI token tree
+                var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
                 return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
 

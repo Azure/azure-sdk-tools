@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System;
+using APIView.Model.V2;
 
 namespace APIView.TreeToken
 {
@@ -45,43 +46,6 @@ namespace APIView.TreeToken
         Removed = 3
     }
 
-    public class StructuredTokenConverter : JsonConverter<StructuredToken>
-    {
-        private readonly string _parameterSeparator;
-
-        public StructuredTokenConverter(string parameterSeparator = "\u00A0")
-        {
-            _parameterSeparator = parameterSeparator;
-        }
-
-        public override StructuredToken Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            var jObject = JsonDocument.ParseValue(ref reader).RootElement;
-            var myObject = JsonSerializer.Deserialize<StructuredToken>(jObject.GetRawText());
-
-            switch (myObject.Kind)
-            {
-                case StructuredTokenKind.LineBreak:
-                    myObject.Value = "\u000A";
-                    break;
-                case StructuredTokenKind.NonBreakingSpace:
-                    myObject.Value = "\u00A0";
-                    break;
-                case StructuredTokenKind.TabSpace:
-                    myObject.Value = "\u00A0\u00A0\u00A0\u00A0";
-                    break;
-                case StructuredTokenKind.ParameterSeparator:
-                    myObject.Value = _parameterSeparator;
-                    break;
-            }
-            return myObject;
-        }
-
-        public override void Write(Utf8JsonWriter writer, StructuredToken value, JsonSerializerOptions options)
-        {
-            JsonSerializer.Serialize(writer, value, options);
-        }
-    }
 
     /// <summary>
     /// Represents an APIView token its properties and tags for APIView parsers.
@@ -258,6 +222,56 @@ namespace APIView.TreeToken
             {
                 RenderClassesObj.Add(renderClass);
             }
+        }
+
+        public StructuredToken(ReviewToken token)
+        {
+            Value = token.Value;
+            RenderClassesObj = new HashSet<string>(token.RenderClasses);
+
+            if (token.IsDeprecated == true)
+            {
+                TagsObj.Add("Deprecated");
+            }
+
+            if (!string.IsNullOrEmpty(token.NavigateToId))
+            {
+                PropertiesObj.Add("NavigateToId", token.NavigateToId);
+            }
+
+            if (token.IsDocumentation == true)
+            {
+                TagsObj.Add(StructuredToken.DOCUMENTATION);
+            }
+            string className = StructuredToken.TEXT;
+            switch (token.Kind)
+            {
+                case TokenKind.Text:
+                    className = StructuredToken.TEXT;
+                    break;
+                case TokenKind.Punctuation:
+                    className = StructuredToken.PUNCTUATION;
+                    break;
+                case TokenKind.Keyword:
+                    className = StructuredToken.KEYWORD;
+                    break;
+                case TokenKind.TypeName:
+                    className = StructuredToken.TYPE_NAME;
+                    break;
+                case TokenKind.MemberName:
+                    className = StructuredToken.MEMBER_NAME;
+                    break;
+                case TokenKind.Comment:
+                    className = StructuredToken.COMMENT;
+                    break;
+                case TokenKind.StringLiteral:
+                    className = StructuredToken.STRING_LITERAL;
+                    break;
+                case TokenKind.Literal:
+                    className = StructuredToken.LITERAL;
+                    break;
+            }
+            RenderClassesObj.Add(className);
         }
 
 

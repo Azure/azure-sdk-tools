@@ -394,7 +394,7 @@ export class CodePanelComponent implements OnChanges{
       if (scrollIndex && this.codePanelRowData[index].nodeIdHashed !== nodeIdHashed) {
         break;
       }
-      if (this.codePanelRowData[index].nodeIdHashed === nodeIdHashed || this.codePanelRowData[index].nodeId === nodeId) {
+      if ((nodeIdHashed && this.codePanelRowData[index].nodeIdHashed === nodeIdHashed) || (nodeId && this.codePanelRowData[index].nodeId === nodeId)) {
         nodeIdHashed = this.codePanelRowData[index].nodeIdHashed;
         this.codePanelRowData[index].rowClasses = this.codePanelRowData[index].rowClasses || new Set<string>();
         this.codePanelRowData[index].rowClasses.add('active');

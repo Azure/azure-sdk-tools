@@ -1,678 +1,289 @@
 
+using ApiView;
+using APIView;
+using APIView.Model.V2;
 using APIView.TreeToken;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Helpers
 {
     public class CodeFileHelpers
     {
-        private static int _processorCount = Environment.ProcessorCount;
-        private static SemaphoreSlim _semaphore = new SemaphoreSlim(_processorCount);
-        private static ConcurrentBag<Task> _tasks = new ConcurrentBag<Task>();
-
-
         public static async Task<CodePanelData> GenerateCodePanelDataAsync(CodePanelRawData codePanelRawData)
         {
             var codePanelData = new CodePanelData();
+            var reviewLines = codePanelRawData.activeRevisionCodeFile.ReviewLines;
 
-            for (int idx = 0; idx < codePanelRawData.APIForest.Count; idx++)
+            // Create root node
+            var rootNodeId = "root";
+            if (!codePanelData.NodeMetaDataObj.ContainsKey(rootNodeId))
             {
-                var node = codePanelRawData.APIForest[idx];
-                await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, 
-                    parentNodeIdHashed: "root", nodePositionAtLevel: idx);
-            };
+                codePanelData.NodeMetaDataObj.TryAdd(rootNodeId, new CodePanelNodeMetaData());
+            }
+            var codeFile = codePanelRawData.activeRevisionCodeFile;
+            codePanelData.NodeMetaDataObj[rootNodeId].NavigationTreeNode = CreateRootNode($"{codeFile.PackageName} {codeFile.PackageVersion}", rootNodeId);
 
-            if (_processorCount > 1)
+            //Collect documentation lines from active revision
+            Dictionary<string, List<CodePanelRowData>> documentationMap = new Dictionary<string, List<CodePanelRowData>>();
+            Dictionary<string, List<CodePanelRowData>> diffDdocumentationMap = new Dictionary<string, List<CodePanelRowData>>();
+            CollectDocumentationLines(codeFile.ReviewLines, documentationMap, 1, "root");
+
+            //Calculate the diff if diff revision code file is present
+            if (codePanelRawData.diffRevisionCodeFile != null)
             {
-                await Task.WhenAll(_tasks);
+                var diffLines = codePanelRawData.diffRevisionCodeFile.ReviewLines;
+                CollectDocumentationLines(diffLines, diffDdocumentationMap, 1, "root");
+                // Check if diff is required for active revision and diff revision to avoid unnecessary diff calculation
+                bool hasSameApis = AreCodeFilesSame(codePanelRawData.activeRevisionCodeFile, codePanelRawData.diffRevisionCodeFile);
+                if(!hasSameApis)
+                {
+                    reviewLines = FindDiff(reviewLines, codePanelRawData.diffRevisionCodeFile.ReviewLines);
+                    // Remap nodeIdHashed for documentation to diff adjusted nodeIdHashed so that documentation is correctly listed on review.
+                    RemapDocumentationLines(reviewLines, documentationMap);
+                    // Remap documentation is diff revision using node hash ID for active revision. We don't need to show documentation if it's node itself is not present in active revision.
+                    RemapDocumentationLines(reviewLines, diffDdocumentationMap);
+                    codePanelData.HasDiff = true;
+                }
+                else
+                {
+                    codePanelData.HasDiff = false;
+                }
             }
 
+            int idx = 0;
+            string previousNodeHashId = "";
+            foreach(var reviewLine in reviewLines)
+            {
+                if (reviewLine.IsDocumentation) continue;
+                previousNodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: reviewLines[idx],
+                    parentNodeIdHashed: rootNodeId, nodePositionAtLevel: idx, documentationMap: documentationMap, diffDocumentationMap: diffDdocumentationMap, prevNodeHashId: previousNodeHashId);
+                idx++;
+            }
             return codePanelData;
         }
 
-        public static List<APITreeNode> ComputeAPIForestDiff(List<APITreeNode> activeAPIRevisionAPIForest, List<APITreeNode> diffAPIRevisionAPIForest)
+
+        // Creates tree reference for code line nodes in the review. This tree helps to render the code panel in the UI.
+        private static void ConnectNodeToParent(CodePanelData codePanelData, string nodeIdHashed, string parentNodeIdHashed, int nodePosition)
         {
-            List<APITreeNode> diffAPITree = new List<APITreeNode>();
-            ComputeAPITreeDiff(activeAPIRevisionAPIForest, diffAPIRevisionAPIForest, diffAPITree);
-            return diffAPITree;
-        }
-
-        private static void ComputeAPITreeDiff(List<APITreeNode> activeAPIRevisionAPIForest, List<APITreeNode> diffAPIRevisionAPIForest, List<APITreeNode> diffAPITree)
-        {           
-            var activeAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNode>(activeAPIRevisionAPIForest);
-            var diffAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNode>(diffAPIRevisionAPIForest);
-
-            var allNodesAtLevel = activeAPIRevisionAPIForest.InterleavedUnion(diffAPIRevisionAPIForest);
-            var unChangedNodesAtLevel = activeAPIRevisionTreeNodesAtLevel.Intersect(diffAPIRevisionTreeNodesAtLevel);
-            var removedNodesAtLevel = activeAPIRevisionTreeNodesAtLevel.Except(diffAPIRevisionTreeNodesAtLevel);
-            var addedNodesAtLevel = diffAPIRevisionTreeNodesAtLevel.Except(activeAPIRevisionTreeNodesAtLevel);
-
-            foreach (var node in allNodesAtLevel)
-            {
-                if (unChangedNodesAtLevel.Contains(node))
-                {
-                    var newEntry = CreateAPITreeDiffNode(node, DiffKind.Unchanged);
-                    diffAPITree.Add(newEntry);
-                }
-                else if (removedNodesAtLevel.Contains(node))
-                {
-                    var newEntry = CreateAPITreeDiffNode(node, DiffKind.Removed);
-                    diffAPITree.Add(newEntry);
-                }
-                else if (addedNodesAtLevel.Contains(node))
-                {
-                    var newEntry = CreateAPITreeDiffNode(node, DiffKind.Added);
-                    diffAPITree.Add(newEntry);
-                }
-            }
-
-            foreach (var node in unChangedNodesAtLevel)
-            {
-                var activeAPIRevisionNode = activeAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
-                var diffAPIRevisionNode = diffAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
-                var diffResultNode = diffAPITree.First(n => n.Equals(node));
-
-                diffResultNode.TopTokensObj = activeAPIRevisionNode.TopTokensObj;
-                diffResultNode.BottomTokensObj = activeAPIRevisionNode.BottomTokensObj;
-                diffResultNode.TopDiffTokens = diffAPIRevisionNode.TopTokensObj;
-                diffResultNode.BottomDiffTokens = diffAPIRevisionNode.BottomTokensObj;
-
-                var childrenResult = new List<APITreeNode>();
-                ComputeAPITreeDiff(activeAPIRevisionNode.ChildrenObj, diffAPIRevisionNode.ChildrenObj, childrenResult);
-                diffResultNode.ChildrenObj.AddRange(childrenResult);
-            };
-        }
-        public static (List<StructuredToken> Before, List<StructuredToken> After, bool HasDiff) ComputeTokenDiff(List<StructuredToken> beforeTokens, List<StructuredToken> afterTokens)
-        {
-            var diffResultA = new List<StructuredToken>();
-            var diffResultB = new List<StructuredToken>();
-            bool hasDiff = false;
-
-            var beforeTokensMap = beforeTokens.Select((token, index) => new { Key = $"{token.Id}{token.Value}{index}", Value = token })
-                                              .ToDictionary(x => x.Key, x => x.Value);
-
-            var afterTokensMap = afterTokens.Select((token, index) => new { Key = $"{token.Id}{token.Value}{index}", Value = token })
-                                            .ToDictionary(x => x.Key, x => x.Value);
-
-            foreach (var pair in beforeTokensMap)
-            {
-                if (afterTokensMap.ContainsKey(pair.Key))
-                {
-                    diffResultA.Add(new StructuredToken(pair.Value));
-                }
-                else
-                {
-                    if (afterTokens.Count > 0)
-                    {
-                        var token = new StructuredToken(pair.Value);
-                        token.RenderClassesObj.Add("diff-change");
-                        diffResultA.Add(token);
-                    }
-                    else
-                    {
-                        diffResultA.Add(new StructuredToken(pair.Value));
-                    }
-                    hasDiff = true;
-                }
-            }
-
-            foreach (var pair in afterTokensMap)
-            {
-                if (beforeTokensMap.ContainsKey(pair.Key))
-                {
-                    diffResultB.Add(new StructuredToken(pair.Value));
-                }
-                else
-                {
-                    if (beforeTokens.Count > 0)
-                    {
-                        var token = new StructuredToken(pair.Value);
-                        token.RenderClassesObj.Add("diff-change");
-                        diffResultB.Add(token);
-                    }
-                    else
-                    {
-                        diffResultB.Add(new StructuredToken(pair.Value));
-                    }
-                    hasDiff = true;
-                }
-            }
-
-            return (diffResultA, diffResultB, hasDiff);
-        }
-        private static APITreeNode CreateAPITreeDiffNode(APITreeNode node, DiffKind diffKind)
-        {
-            var result = new APITreeNode
-            {
-                Name = node.Name,
-                Id = node.Id,
-                Kind    = node.Kind,
-                TagsObj = node.TagsObj,
-                PropertiesObj = node.PropertiesObj,
-                DiffKind = diffKind
-            };
-
-            if (diffKind == DiffKind.Added || diffKind == DiffKind.Removed)
-            {
-                result.TopTokensObj = node.TopTokensObj;
-                result.BottomTokensObj = node.BottomTokensObj;
-                result.ChildrenObj = node.ChildrenObj;
-            }
-
-            return result;
-        }
-
-        private static async Task BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
-        {
-            var nodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Top, parentNodeIdHashed);
-
-            if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
-            {
-                codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
-            }
-            else
+            if (!codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
             {
                 codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
+            }
+            codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
+            codePanelData.NodeMetaDataObj[parentNodeIdHashed].ChildrenNodeIdsInOrderObj.TryAdd(nodePosition, nodeIdHashed);
+        }
+
+        private static async Task<string> BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string parentNodeIdHashed, int nodePositionAtLevel,
+            Dictionary<string, List<CodePanelRowData>> documentationMap, Dictionary<string, List<CodePanelRowData>> diffDocumentationMap, string prevNodeHashId, int indent = 1)
+        {
+            //Create hashed node ID for current review line(node)
+            var nodeIdHashed = reviewLine.GetTokenNodeIdHash(parentNodeIdHashed, nodePositionAtLevel);
+            //Create parent and child tree reference map
+            ConnectNodeToParent(codePanelData, nodeIdHashed, parentNodeIdHashed, nodePositionAtLevel);
+            
+            // Build current code line node
+            BuildNodeTokens(codePanelData, codePanelRawData, reviewLine, nodeIdHashed, indent, documentationMap, diffDocumentationMap);
+
+            //Create navigation node for current line
+            var navTreeNode = CreateNavigationNode(reviewLine, nodeIdHashed);
+            if (navTreeNode != null)
+            {
+                codePanelData.NodeMetaDataObj[nodeIdHashed].NavigationTreeNode = navTreeNode;
             }
 
-            if (codePanelData.NodeMetaDataObj.ContainsKey(parentNodeIdHashed))
+            // Process all child lines
+            int idx = 0;
+            string prevChildNodeHashId = "";
+            foreach (var childLine in reviewLine.Children)
             {
-                codePanelData.NodeMetaDataObj[parentNodeIdHashed].ChildrenNodeIdsInOrderObj.TryAdd(nodePositionAtLevel, nodeIdHashed);
-            }
-            else
-            {
-                codePanelData.NodeMetaDataObj[parentNodeIdHashed] = new CodePanelNodeMetaData();
-                codePanelData.NodeMetaDataObj[parentNodeIdHashed].ChildrenNodeIdsInOrderObj.TryAdd(nodePositionAtLevel, nodeIdHashed);
-            }
+                if (childLine.IsDocumentation) continue;
 
-            if (_processorCount > 1) // Take advantage of multi-core processors
+                prevChildNodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: childLine,
+                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, documentationMap, diffDocumentationMap, prevNodeHashId: prevChildNodeHashId, indent: indent + 1);
+                idx++;
+            };
+
+            // Set current node as bottom node if it is end of context line.
+            if (reviewLine.IsContextEndLine == true && !string.IsNullOrEmpty(prevNodeHashId))
             {
-                await _semaphore.WaitAsync();
-                var task = Task.Run(() =>
+                //Set current line as bottom token if it is end of context line.
+                codePanelData.NodeMetaDataObj[prevNodeHashId].BottomTokenNodeIdHash = nodeIdHashed;
+                //Copy added removed classes from parent node to bottom node.
+                var classes = codePanelData.NodeMetaDataObj[prevNodeHashId].CodeLinesObj.LastOrDefault()?.RowClassesObj;
+                if (classes != null)
                 {
-                    try
-                    {
-                        BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, RowOfTokensPosition.Top, indent);
-                    }
-                    finally
-                    {
-                        _semaphore.Release();
-                    }
-                });
-                _tasks.Add(task);
-            }
-            else
-            {
-                BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, RowOfTokensPosition.Top, indent);
-            }
-
-
-            if (!apiTreeNode.TagsObj.Contains("HideFromNav"))
-            {
-                var navIcon = apiTreeNode.Kind.ToLower();
-                if (apiTreeNode.PropertiesObj.ContainsKey("SubKind"))
-                {
-                    navIcon = apiTreeNode.PropertiesObj["SubKind"].ToLower();
+                    classes = classes.Where(c=> c == "added" || c == "removed").ToHashSet();
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.LastOrDefault()?.RowClassesObj.UnionWith(classes);
                 }
+            }
 
-                if (apiTreeNode.PropertiesObj.ContainsKey("IconName"))
+            return nodeIdHashed;
+        }
+
+        // Create navigation node for current line if applicable
+        private static NavigationTreeNode CreateNavigationNode(ReviewLine reviewLine, string nodeIdHashed)
+        {
+            NavigationTreeNode navTreeNode = null;
+            //Generate navigation node only from active revision
+            if (!reviewLine.IsActiveRevisionLine)
+                return navTreeNode;
+            var navToken = reviewLine.Tokens.FirstOrDefault(t => !string.IsNullOrEmpty(t.NavigationDisplayName));
+            if (navToken != null && reviewLine.IsHidden != true)
+            {
+                string navIcon = "";
+                if (navToken.RenderClasses.Count > 0)
                 {
-                    navIcon = apiTreeNode.PropertiesObj["IconName"].ToLower();
+                    navIcon = navToken.RenderClasses.First();
                 }
-
-                var navTreeNode = new NavigationTreeNode()
+                navTreeNode = new NavigationTreeNode()
                 {
-                    Label = apiTreeNode.Name,
+                    Label = navToken.NavigationDisplayName,
                     Data = new NavigationTreeNodeData()
                     {
                         NodeIdHashed = nodeIdHashed,
-                        Kind = apiTreeNode.PropertiesObj.ContainsKey("SubKind") ? apiTreeNode.PropertiesObj["SubKind"] : apiTreeNode.Kind.ToLower(),
-                        Icon = navIcon,
+                        Kind = navIcon,
+                        Icon = navIcon
                     },
                     Expanded = true,
                 };
-
-                if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
-                {
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].NavigationTreeNode = navTreeNode;
-                }
-                else 
-                {
-                    codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].NavigationTreeNode = navTreeNode;
-                }
             }
+            return navTreeNode;
+        }
 
-            for (int idx = 0; idx < apiTreeNode.ChildrenObj.Count; idx++)
+        private static NavigationTreeNode CreateRootNode(string rootName, string nodeIdHashed)
+        {
+            var rootClass = "assembly";
+            var navTreeNode = new NavigationTreeNode()
             {
-                var node = apiTreeNode.ChildrenObj[idx];
-                if (apiTreeNode.DiffKind == DiffKind.Added || apiTreeNode.DiffKind == DiffKind.Removed)
+                Label = rootName,
+                Data = new NavigationTreeNodeData()
                 {
-                    node.DiffKind = apiTreeNode.DiffKind; // Propagate the diff kind to the children
-                }
-
-                await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node,
-                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, indent: indent + 1);       
+                    NodeIdHashed = nodeIdHashed,
+                    Kind = rootClass,
+                    Icon = rootClass,
+                },
+                Expanded = true,
             };
-
-            if (apiTreeNode.BottomTokensObj.Any())
-            {
-                var bottomNodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Bottom, parentNodeIdHashed);
-                codePanelData.NodeMetaDataObj[nodeIdHashed].BottomTokenNodeIdHash = bottomNodeIdHashed;
-                if (codePanelData.NodeMetaDataObj.ContainsKey(bottomNodeIdHashed))
-                {
-                    codePanelData.NodeMetaDataObj[bottomNodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
-                }
-                else
-                {
-                    codePanelData.NodeMetaDataObj.TryAdd(bottomNodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaDataObj[bottomNodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
-                }
-
-                BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, bottomNodeIdHashed, RowOfTokensPosition.Bottom, indent);
-            }
+            return navTreeNode;
         }
 
-        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
+        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string nodeIdHashed, int indent,
+            Dictionary<string, List<CodePanelRowData>> documentationMap, Dictionary<string, List<CodePanelRowData>> diffDocumentationMap)
         {
-            if (apiTreeNode.DiffKind == DiffKind.NoneDiff)
+            // Generate code line row
+            var codePanelRow = GetCodePanelRowData(reviewLine, nodeIdHashed, indent);
+
+            // Add documentation rows to code panel data
+            if (documentationMap.ContainsKey(nodeIdHashed))
             {
-                BuildTokensForNonDiffNodes(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, linesOfTokensPosition, indent);
-            }
-            else
-            {
-                BuildTokensForDiffNodes(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, linesOfTokensPosition, indent);
-            }
-        }
-
-        private static void BuildTokensForNonDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
-        {
-            var tokensInNode = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokensObj : apiTreeNode.BottomTokensObj;
-            var addDeprecatedTagToTokens = apiTreeNode.TagsObj.Contains("Deprecated");
-
-            var tokensInRow = new List<StructuredToken>();
-            var rowClasses = new HashSet<string>();
-            var tokenIdsInRow = new HashSet<string>();
-
-            foreach (var token in tokensInNode)
-            {
-                if (token.PropertiesObj.ContainsKey("GroupId"))
+                var activeDocLines = documentationMap[nodeIdHashed];
+                var diffDocLines = diffDocumentationMap.ContainsKey(nodeIdHashed) ? diffDocumentationMap[nodeIdHashed] : new List<CodePanelRowData>();
+                var docLines = activeDocLines.InterleavedUnion(diffDocLines);
+                var docsIntersect = new HashSet<CodePanelRowData>(diffDocLines.Intersect(activeDocLines));
+                var activeDocs = new HashSet<CodePanelRowData>(activeDocLines);
+                bool skipDocDiff = diffDocLines.Count == 0 || activeDocLines.Count == 0;
+                foreach (var docRow in docLines)
                 {
-                    rowClasses.Add(token.PropertiesObj["GroupId"]);
-                }
-
-                if (addDeprecatedTagToTokens)
-                {
-                    token.TagsObj.Add("Deprecated");
-                }
-
-                if (ShouldBreakLineOnToken(token, codePanelRawData.Language))
-                {
-                    InsertNonDiffCodePanelRowData(codePanelData: codePanelData, codePanelRawData: codePanelRawData, tokensInRow: new List<StructuredToken>(tokensInRow),
-                        rowClasses: new HashSet<string>(rowClasses), tokenIdsInRow: new HashSet<string>(tokenIdsInRow), nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id,
-                        indent: indent, linesOfTokensPosition: linesOfTokensPosition, apiTreeNode: apiTreeNode);
-
-                    tokensInRow.Clear();
-                    rowClasses.Clear();
-                    tokenIdsInRow.Clear();
-
-                    if (token.Kind == StructuredTokenKind.ParameterSeparator)
+                    if(!skipDocDiff && !docsIntersect.Contains(docRow))
                     {
-                        tokensInRow.Add(
-                            new StructuredToken()
-                            {
-                                Kind = StructuredTokenKind.Content,
-                                Value = "\u00A0\u00A0\u00A0\u00A0"
-                            });
-                    }
-                }
-                else 
-                {
-                    tokensInRow.Add(token);
-                    if (!String.IsNullOrWhiteSpace(token.Id))
-                    {
-                        tokenIdsInRow.Add(token.Id);
-                    }
-                }
-            }
-
-            if (tokensInRow.Any())
-            {
-                InsertNonDiffCodePanelRowData(codePanelData: codePanelData, codePanelRawData: codePanelRawData, tokensInRow: new List<StructuredToken>(tokensInRow),
-                    rowClasses: new HashSet<string>(rowClasses), tokenIdsInRow: new HashSet<string>(tokenIdsInRow), nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id,
-                    indent: indent, linesOfTokensPosition: linesOfTokensPosition, apiTreeNode: apiTreeNode);
-
-                tokensInRow.Clear();
-                rowClasses.Clear();
-                tokenIdsInRow.Clear();
-            }
-
-            AddDiagnosticRow(codePanelData, codePanelRawData, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition);
-        }
-
-        private static void BuildTokensForDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
-        {
-            var lineGroupBuildOrder = new List<string>() { "doc" };
-            var beforeTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokensObj : apiTreeNode.BottomTokensObj;
-            var afterTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopDiffTokens : apiTreeNode.BottomDiffTokens;
-
-            if (apiTreeNode.DiffKind == DiffKind.Added)
-            {
-                afterTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokensObj : apiTreeNode.BottomTokensObj;
-                beforeTokens = new List<StructuredToken>();
-            }
-
-            var beforeTokensInProcess = new Queue<DiffLineInProcess>();
-            var afterTokensInProcess = new Queue<DiffLineInProcess>();
-
-            int beforeIndex = 0;
-            int afterIndex = 0;
-
-            while (beforeIndex < beforeTokens.Count || afterIndex < afterTokens.Count || beforeTokensInProcess.Count > 0 || afterTokensInProcess.Count > 0)
-            {
-                var beforeTokenRow = new List<StructuredToken>();
-                var afterTokenRow = new List<StructuredToken>();
-
-                var beforeRowClasses = new HashSet<string>();
-                var afterRowClasses = new HashSet<string>();
-
-                var beforeTokenIdsInRow = new HashSet<string>();
-                var afterTokenIdsInRow = new HashSet<string>();
-
-                var beforeRowGroupId = string.Empty;
-                var afterRowGroupId = string.Empty;
-
-                while (beforeIndex < beforeTokens.Count)
-                {
-                    var token = beforeTokens[beforeIndex++];
-
-                    if (codePanelRawData.ApplySkipDiff && token.TagsObj.Contains(StructuredToken.SKIPP_DIFF))
-                    {
-                        continue;
-                    }
-
-                    if (token.Kind == StructuredTokenKind.LineBreak)
-                    {
-                        break;
-                    }
-
-                    if (token.PropertiesObj.ContainsKey("GroupId"))
-                    {
-                        beforeRowGroupId = token.PropertiesObj["GroupId"];
-                    }
-                    else
-                    {
-                        beforeRowGroupId = string.Empty;
-                    }
-                    beforeTokenRow.Add(token);
-                    if (!String.IsNullOrWhiteSpace(token.Id))
-                    {
-                        beforeTokenIdsInRow.Add(token.Id);
-                    }
-                }
-
-                if (beforeTokenRow.Count > 0)
-                {
-                    if (!(codePanelRawData.SkipDocsWhenDiffing && beforeRowGroupId == StructuredToken.DOCUMENTATION))
-                    {
-                        beforeTokensInProcess.Enqueue(new DiffLineInProcess()
+                        if (activeDocs.Contains(docRow))
                         {
-                            GroupId = beforeRowGroupId,
-                            RowOfTokens = beforeTokenRow,
-                            TokenIdsInRow = new HashSet<string>(beforeTokenIdsInRow)
-                        });
-                    }
-                    beforeTokenIdsInRow.Clear();
-                }
-
-                while (afterIndex < afterTokens.Count)
-                {
-                    var token = afterTokens[afterIndex++];
-
-                    if (codePanelRawData.ApplySkipDiff && token.TagsObj.Contains(StructuredToken.SKIPP_DIFF))
-                    {
-                        continue;
-                    }
-
-                    if (token.Kind == StructuredTokenKind.LineBreak)
-                    {
-                        break;
-                    }
-
-                    if (token.PropertiesObj.ContainsKey("GroupId"))
-                    {
-                        afterRowGroupId = token.PropertiesObj["GroupId"];
-                    }
-                    else
-                    {
-                        afterRowGroupId = string.Empty;
-                    }
-                    afterTokenRow.Add(token);
-                    if (!String.IsNullOrWhiteSpace(token.Id))
-                    {
-                        afterTokenIdsInRow.Add(token.Id);
-                    }   
-                }
-
-                if (afterTokenRow.Count > 0)
-                {
-                    if (!(codePanelRawData.SkipDocsWhenDiffing && afterRowGroupId == StructuredToken.DOCUMENTATION)) 
-                    {
-                        afterTokensInProcess.Enqueue(new DiffLineInProcess()
-                        {
-                            GroupId = afterRowGroupId,
-                            RowOfTokens = afterTokenRow,
-                            TokenIdsInRow = new HashSet<string>(afterTokenIdsInRow)
-                        });
-                    }
-                    afterTokenIdsInRow.Clear();
-                }
-
-                if (beforeTokensInProcess.Count > 0 || afterTokensInProcess.Count > 0)
-                {
-                    var beforeDiffTokens = new List<StructuredToken>();
-                    var afterDiffTokens = new List<StructuredToken>();
-
-                    var beforeTokenIdsInDiffRow = new HashSet<string>();
-                    var afterTokenIdsInDiffRow = new HashSet<string>();
-
-                    if (beforeTokensInProcess.Count > 0 && afterTokensInProcess.Count > 0)
-                    {
-                        if (beforeTokensInProcess.Peek().GroupId == afterTokensInProcess.Peek().GroupId)
-                        {
-                            if (!String.IsNullOrWhiteSpace(beforeTokensInProcess.Peek().GroupId))
-                            {
-                                beforeRowClasses.Add(beforeTokensInProcess.Peek().GroupId);
-                            }
-
-                            if (!String.IsNullOrWhiteSpace(afterTokensInProcess.Peek().GroupId))
-                            {
-                                afterRowClasses.Add(afterTokensInProcess.Peek().GroupId);
-                            }
-
-                            beforeTokenIdsInDiffRow = beforeTokensInProcess.Peek().TokenIdsInRow;
-                            afterTokenIdsInDiffRow = afterTokensInProcess.Peek().TokenIdsInRow;
-                            beforeDiffTokens = beforeTokensInProcess.Dequeue().RowOfTokens;
-                            afterDiffTokens = afterTokensInProcess.Dequeue().RowOfTokens;
+                            docRow.DiffKind = DiffKind.Added;
+                            docRow.RowClassesObj.Add("added");
                         }
                         else
                         {
-                            var beforeTokenRowBuildOrder = lineGroupBuildOrder.IndexOf(beforeTokensInProcess.Peek().GroupId);
-                            var afterTokenRowBuildOrder = lineGroupBuildOrder.IndexOf(afterTokensInProcess.Peek().GroupId);
-                            if ((afterTokenRowBuildOrder < 0) || (beforeTokenRowBuildOrder >= 0 && beforeTokenRowBuildOrder < afterTokenRowBuildOrder))
-                            {
-                                if (!String.IsNullOrWhiteSpace(beforeTokensInProcess.Peek().GroupId))
-                                {
-                                    beforeRowClasses.Add(beforeTokensInProcess.Peek().GroupId);
-                                }
-                                beforeTokenIdsInDiffRow = beforeTokensInProcess.Peek().TokenIdsInRow;
-                                beforeDiffTokens = beforeTokensInProcess.Dequeue().RowOfTokens;
-                            }
-                            else
-                            {
-                                if (!String.IsNullOrWhiteSpace(afterTokensInProcess.Peek().GroupId))
-                                {
-                                    afterRowClasses.Add(afterTokensInProcess.Peek().GroupId);
-                                }
-                                afterTokenIdsInDiffRow = afterTokensInProcess.Peek().TokenIdsInRow;
-                                afterDiffTokens = afterTokensInProcess.Dequeue().RowOfTokens;
-                            }
-                        }
+                            docRow.DiffKind = DiffKind.Removed;
+                            docRow.RowClassesObj.Add("removed");
+                        }                        
                     }
-                    else if (beforeTokensInProcess.Count > 0)
-                    {
-                        if (!String.IsNullOrWhiteSpace(beforeTokensInProcess.Peek().GroupId))
-                        {
-                            beforeRowClasses.Add(beforeTokensInProcess.Peek().GroupId);
-                        }
-                        beforeTokenIdsInDiffRow = beforeTokensInProcess.Peek().TokenIdsInRow;
-                        beforeDiffTokens = beforeTokensInProcess.Dequeue().RowOfTokens;
-                    }
-                    else
-                    {
-                        if (!String.IsNullOrWhiteSpace(afterTokensInProcess.Peek().GroupId))
-                        {
-                            afterRowClasses.Add(afterTokensInProcess.Peek().GroupId);
-                        }
-                        afterTokenIdsInDiffRow = afterTokensInProcess.Peek().TokenIdsInRow;
-                        afterDiffTokens = afterTokensInProcess.Dequeue().RowOfTokens;
-                    }
-
-                    var diffTokenRowResult = ComputeTokenDiff(beforeDiffTokens, afterDiffTokens);
-
-                    if (diffTokenRowResult.HasDiff)
-                    {
-                        codePanelData.HasDiff = true;
-                        codePanelData.NodeMetaDataObj[nodeIdHashed].IsNodeWithDiff = true;
-                        var parentNodeIdHashed = codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed;
-                        while (parentNodeIdHashed != "root" && codePanelData.NodeMetaDataObj.ContainsKey(parentNodeIdHashed))
-                        {
-                            var parentNode = codePanelData.NodeMetaDataObj[parentNodeIdHashed];
-                            parentNode.IsNodeWithDiffInDescendants = true;
-
-                            if ((diffTokenRowResult.Before.Any() && !beforeRowClasses.Contains("doc")) || 
-                                (diffTokenRowResult.After.Any() && !afterRowClasses.Contains("doc")))
-                            {
-                                parentNode.IsNodeWithNoneDocDiffInDescendants = true;
-                            }
-
-                            parentNodeIdHashed = parentNode.ParentNodeIdHashed;
-                        }
-
-                        if (diffTokenRowResult.Before.Count > 0)
-                        {
-                            beforeRowClasses.Add("removed");
-                            var rowData = new CodePanelRowData()
-                            {
-                                Type = (beforeRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                                RowOfTokensObj = diffTokenRowResult.Before,
-                                NodeIdHashed = nodeIdHashed,
-                                NodeId = apiTreeNode.Id,
-                                RowClassesObj = new HashSet<string>(beforeRowClasses),
-                                RowOfTokensPosition = linesOfTokensPosition,
-                                Indent = indent,
-                                DiffKind = DiffKind.Removed
-                            };
-
-                            // Collects comments for the line, needed to set correct icons
-                            var commentsForRow = CollectUserCommentsForRow(codePanelRawData, new HashSet<string>(), apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition, rowData);
-
-                            InsertCodePanelRowData(codePanelData: codePanelData, rowData: rowData, nodeIdHashed: nodeIdHashed);
-                            beforeRowClasses.Clear();
-                        }
-
-                        if (diffTokenRowResult.After.Count > 0)
-                        {
-                            afterRowClasses.Add("added");
-                            var rowData = new CodePanelRowData()
-                            {
-                                Type = (afterRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                                RowOfTokensObj = diffTokenRowResult.After,
-                                NodeIdHashed = nodeIdHashed,
-                                NodeId = apiTreeNode.Id,
-                                RowClassesObj = new HashSet<string>(afterRowClasses),
-                                RowOfTokensPosition = linesOfTokensPosition,
-                                Indent = indent,
-                                DiffKind = DiffKind.Added
-                            };
-
-                            var commentsForRow = CollectUserCommentsForRow(codePanelRawData, afterTokenIdsInDiffRow, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition, rowData);
-                            InsertCodePanelRowData(codePanelData: codePanelData, rowData: rowData, nodeIdHashed: nodeIdHashed, commentsForRow: commentsForRow);
-                            afterRowClasses.Clear();
-                        }
-                    }
-                    else
-                    {
-                        if (diffTokenRowResult.Before.Count > 0) 
-                        {
-                            var rowData = new CodePanelRowData()
-                            {
-                                Type = (beforeRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                                RowOfTokensObj = diffTokenRowResult.Before,
-                                NodeIdHashed = nodeIdHashed,
-                                NodeId = apiTreeNode.Id,
-                                RowClassesObj = new HashSet<string>(beforeRowClasses),
-                                RowOfTokensPosition = linesOfTokensPosition,
-                                Indent = indent,
-                                DiffKind = DiffKind.Unchanged
-                            };
-                            var commentsForRow = CollectUserCommentsForRow(codePanelRawData, beforeTokenIdsInDiffRow, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition, rowData);
-                            InsertCodePanelRowData(codePanelData: codePanelData, rowData: rowData, nodeIdHashed: nodeIdHashed, commentsForRow: commentsForRow);
-                            beforeRowClasses.Clear();
-                        }
-                    }
+                    docRow.NodeId = codePanelRow.NodeId;
+                    docRow.NodeIdHashed = codePanelRow.NodeIdHashed;
+                    InsertCodePanelRowData(codePanelData: codePanelData, rowData: docRow, nodeIdHashed: nodeIdHashed);
                 }
             }
+                
+            // Get comment for current row
+            var commentsForRow = CollectUserCommentsForRow(codePanelRawData, reviewLine.LineId, nodeIdHashed, codePanelRow);
+            //Add code line and comment to code panel data
+            InsertCodePanelRowData(codePanelData: codePanelData, rowData: codePanelRow, nodeIdHashed: nodeIdHashed, commentsForRow: commentsForRow);
 
-            AddDiagnosticRow(codePanelData: codePanelData, codePanelRawData: codePanelRawData, nodeId: apiTreeNode.Id, nodeIdHashed: nodeIdHashed, linesOfTokensPosition: linesOfTokensPosition);
+            // Add diagnostic row
+            AddDiagnosticRow(codePanelData: codePanelData, codeFile: codePanelRawData.activeRevisionCodeFile, nodeId: reviewLine.LineId, nodeIdHashed: nodeIdHashed);
         }
-        
-        private static string GetTokenNodeIdHash(APITreeNode apiTreeNode, RowOfTokensPosition linesOfTokensPosition, string parentNodeIdHash)
-        {
-            var idPart = apiTreeNode.Kind;
 
-            if (apiTreeNode.PropertiesObj.ContainsKey("SubKind"))
+        private static CodePanelRowData GetCodePanelRowData(ReviewLine reviewLine, string nodeIdHashed, int indent)
+        {
+            CodePanelRowData codePanelRowData = new()
             {
-                idPart = $"{idPart}-{apiTreeNode.PropertiesObj["SubKind"]}";
+                Type = reviewLine.Tokens.Any(t => t.IsDocumentation == true)? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
+                NodeIdHashed = nodeIdHashed,
+                NodeId = reviewLine.LineId,
+                Indent = indent,
+                DiffKind = reviewLine.DiffKind,
+                IsHiddenAPI = (reviewLine.IsHidden == true)
+            };
+
+            var tokensInRow = codePanelRowData.RowOfTokensObj;
+            var rowClasses = codePanelRowData.RowClassesObj;
+
+            //Add empty line for review line without tokens
+            if (reviewLine.Tokens.Count == 0)
+            {
+                tokensInRow.Add(StructuredToken.CreateLineBreakToken());
+                return codePanelRowData;
             }
-            idPart = $"{idPart}-{apiTreeNode.Id}";
-            idPart = $"{idPart}-{apiTreeNode.DiffKind}";
-            idPart = $"{idPart}-{linesOfTokensPosition.ToString()}";
-            var hash = CreateHashFromString(idPart);
-            return hash + parentNodeIdHash.Replace("nId", "").Replace("root", ""); // Apend the parent node Id to ensure uniqueness
+
+            if(reviewLine.DiffKind == DiffKind.Added)
+            {
+                rowClasses.Add("added");
+            }
+            else if (reviewLine.DiffKind == DiffKind.Removed)
+            {
+                rowClasses.Add("removed");
+            }
+            // Convert ReviewToken to UI required StructuredToken
+            foreach (var token in reviewLine.Tokens)
+            {
+                var structuredToken = new StructuredToken(token);
+                tokensInRow.Add(structuredToken);
+
+                if (token.IsDocumentation == true)
+                {
+                    rowClasses.Add(StructuredToken.DOCUMENTATION);
+                    codePanelRowData.Type = CodePanelRowDatatype.Documentation;
+                    codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text hide";
+                }
+
+                if (token.HasSuffixSpace == true)
+                {
+                    var spaceToken = StructuredToken.CreateSpaceToken();
+                    spaceToken.Value = " ";
+                    tokensInRow.Add(spaceToken);
+                }
+            }
+            return codePanelRowData;
         }
 
-        private static string CreateHashFromString(string inputString)
-        {
-            int hash = HashCode.Combine(inputString);
-            string nodeIdhashed = "nId" + hash.ToString();
-            return nodeIdhashed;
-        }
-
-        private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, HashSet<string> tokenIdsInRow, string nodeId, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, CodePanelRowData codePanelRowData)
+        
+        private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, CodePanelRowData codePanelRowData)
         {
             var commentRowData = new CodePanelRowData();
-            //var toggleCommentClass = (codePanelRawData.Diagnostics.Any(d => d.TargetId == nodeId) && codePanelRowData.Type == CodePanelRowDatatype.CodeLine) ? "bi bi-chat-right-text show" : "";
-
-            if (tokenIdsInRow.Any())
+            if (!string.IsNullOrEmpty(nodeId) && !codePanelRowData.RowClassesObj.Contains("removed"))
             {
                 codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text can-show";
-
-                var commentsForRow = codePanelRawData.Comments.Where(c => tokenIdsInRow.Contains(c.ElementId));
+                var commentsForRow = codePanelRawData.Comments.Where(c => nodeId == c.ElementId);
                 if (commentsForRow.Any())
                 {
                     commentRowData.Type = CodePanelRowDatatype.CommentThread;
                     commentRowData.NodeIdHashed = nodeIdHashed;
                     commentRowData.NodeId = nodeId;
-                    commentRowData.RowOfTokensPosition = linesOfTokensPosition;
                     commentRowData.RowClassesObj.Add("user-comment-thread");
                     commentRowData.CommentsObj = commentsForRow.ToList();
                     codePanelRowData.ToggleCommentsClasses = codePanelRowData.ToggleCommentsClasses.Replace("can-show", "show");
@@ -686,105 +297,267 @@ namespace APIViewWeb.Helpers
             return commentRowData;
         }
 
-        private static void InsertNonDiffCodePanelRowData(CodePanelData codePanelData, CodePanelRawData codePanelRawData, List<StructuredToken> tokensInRow,
-            HashSet<string> rowClasses, HashSet<string> tokenIdsInRow, string nodeIdHashed, string nodeId, int indent, RowOfTokensPosition linesOfTokensPosition, APITreeNode apiTreeNode)
-        {
-            var rowData = new CodePanelRowData()
-            {
-                Type = (rowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                RowOfTokensObj = tokensInRow,
-                NodeIdHashed = nodeIdHashed,
-                RowClassesObj = new HashSet<string>(rowClasses),
-                NodeId = nodeId,
-                RowOfTokensPosition = linesOfTokensPosition,
-                Indent = indent,
-                DiffKind = DiffKind.NoneDiff,
-                IsHiddenAPI = apiTreeNode.TagsObj.Contains("Hidden")
-            };
-
-            // Need to collect comments before adding the row to the codePanelData
-            var commentsForRow = CollectUserCommentsForRow(codePanelRawData, tokenIdsInRow, nodeId, nodeIdHashed, linesOfTokensPosition, rowData);
-
-            InsertCodePanelRowData(codePanelData: codePanelData, rowData: rowData, nodeIdHashed: nodeIdHashed, commentsForRow: commentsForRow);
-        }
-
         private static void InsertCodePanelRowData(CodePanelData codePanelData, CodePanelRowData rowData, string nodeIdHashed, CodePanelRowData commentsForRow = null)
         {
+            if (!codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
+                codePanelData.NodeMetaDataObj[nodeIdHashed] = new CodePanelNodeMetaData();
+
             if (rowData.Type == CodePanelRowDatatype.Documentation)
-            {
-                if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
-                {
-                    rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Count();
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Add(rowData);
-                }
-                else
-                {
-                    codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Count();
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Add(rowData);
-                }
+            {                
+                rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Count();
+                codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Add(rowData);
             }
 
             if (rowData.Type == CodePanelRowDatatype.CodeLine)
             {
-                if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
+                rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
+                codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
+                if (rowData.DiffKind == DiffKind.Added || rowData.DiffKind == DiffKind.Removed)
                 {
-                    rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
-                }
-                else
-                {
-                    codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].IsNodeWithDiff = true;
+                    var parentId = codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed;
+                    while (parentId != null && parentId != "root" && codePanelData.NodeMetaDataObj.ContainsKey(parentId) 
+                        && !codePanelData.NodeMetaDataObj[parentId].IsNodeWithDiffInDescendants)
+                    {
+                        codePanelData.NodeMetaDataObj[parentId].IsNodeWithDiffInDescendants = true;
+                        codePanelData.NodeMetaDataObj[parentId].IsNodeWithNoneDocDiffInDescendants = true;
+                        parentId = codePanelData.NodeMetaDataObj[parentId].ParentNodeIdHashed;
+                    }
                 }
             }
 
             if (commentsForRow != null && commentsForRow.Type == CodePanelRowDatatype.CommentThread && commentsForRow.CommentsObj.Any())
             {
                 commentsForRow.AssociatedRowPositionInGroup = rowData.RowPositionInGroup;
-                if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
+                codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
+            }
+        }
+
+        private static void AddDiagnosticRow(CodePanelData codePanelData, CodeFile codeFile, string nodeId, string nodeIdHashed)
+        {
+            var diagnostics = codeFile.Diagnostics.Where(d => d.TargetId == nodeId);
+            foreach (var diagnostic in diagnostics)
+            {
+                var rowData = new CodePanelRowData()
                 {
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
+                    Type = CodePanelRowDatatype.Diagnostics,
+                    NodeIdHashed = nodeIdHashed,
+                    NodeId = nodeId,
+                    Diagnostics = diagnostic,
+                    RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() }
+                };
+                codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Add(rowData);
+            }
+        }
+
+        public static bool AreCodeFilesSame(CodeFile codeFileA, CodeFile codeFileB)
+        {
+            return AreReviewLinesSame(codeFileA.ReviewLines, codeFileB.ReviewLines);
+        }
+
+
+        private static bool AreReviewLinesSame(List<ReviewLine> reviewLinesA, List<ReviewLine> reviewLinesB)
+        {
+            var filteredLinesA = reviewLinesA.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation).ToList();
+            var filteredLinesB = reviewLinesB.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation).ToList();
+
+            if (filteredLinesA.Count() != filteredLinesB.Count())
+                return false;
+
+            //Verify if child lines matches
+            for (int i = 0; i < filteredLinesA.Count(); i++)
+            {
+                if (filteredLinesA[i] != filteredLinesB[i] || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
+                    return false;
+            }            
+            return true;
+        }
+
+        private static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
+        {
+            List<ReviewLine> resultLines = [];
+            Dictionary<string, int> refCountMap = [];            
+
+            //Set lines from diff revision as not from active revision
+            foreach (var line in diffLines)
+            {
+                line.IsActiveRevisionLine = false;
+            }
+
+            var intersectLines = diffLines.Intersect(activeLines);
+            var interleavedLines = diffLines.InterleavedUnion(activeLines);
+
+            foreach(var line in interleavedLines)
+            {
+                if (line.IsDocumentation || line.Processed)
+                    continue;
+                
+
+                // Current node is not in both revisions. Mark current node as added or removed and then go to next sibling.
+                // If a node is diff then no need to check it's children as they will be marked as diff as well.
+                if (!intersectLines.Contains(line))
+                {
+                    //Recursively mark line as added or removed
+                    MarkTreeNodeAsModified(line, line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+
+                    //Check if diff revision has a line at same level with same Line Id. This is to handle where a API was removed and added back in different order.
+                    // This will also ensure added and modified lines are visible next to each other in the review.
+                    var relatedLine = line.IsActiveRevisionLine ? diffLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId) :
+                        activeLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId);
+                    if (relatedLine != null)
+                    {
+                        relatedLine.Processed = true;
+                        MarkTreeNodeAsModified(relatedLine, relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                        //Identify the tokens within modified lines and highlight them in the UI
+                        FindModifiedTokens(line, relatedLine);
+                    }                    
+
+                    if (relatedLine != null)
+                    {
+                        // First add removed line and then added line
+                        resultLines.Add(line.IsActiveRevisionLine ? relatedLine : line);
+                        resultLines.Add(line.IsActiveRevisionLine ? line : relatedLine);
+                    }
+                    else
+                    {
+                        resultLines.Add(line);
+                    }
+                    continue;
+                }
+
+                var activeLine = activeLines.FirstOrDefault(l => l.LineId == line.LineId && l.Processed == false && l.Equals(line));
+                if (activeLine == null)
+                    activeLine = line;
+                //current node is present in both trees. Compare child nodes recursively
+                var diffLine = diffLines.FirstOrDefault(l => l.LineId == line.LineId && l.Processed == false && l.Equals(line));
+                var diffLineChildren = diffLine != null ? diffLine.Children: new List<ReviewLine>();
+                var resultantSubTree = FindDiff(activeLine.Children, diffLineChildren);
+                //Update new resulting subtree as children of current node
+                activeLine.Children.Clear();
+                activeLine.Children.AddRange(resultantSubTree);
+                resultLines.Add(activeLine);
+                activeLine.Processed = true;
+                if (diffLine != null)
+                    diffLine.Processed = true;
+            }
+            return resultLines;
+        }
+
+        private static void MarkTreeNodeAsModified(ReviewLine line, DiffKind diffKind)
+        {
+            line.DiffKind = diffKind;
+            foreach (var child in line.Children)
+            {
+                if(!child.IsDocumentation)
+                 MarkTreeNodeAsModified(child, diffKind);
+            }
+        }
+        /***
+         * This method collects all documentation lines from the review line and generate a CodePanelRow object for each documentation line.
+         * These documentation rows will be stored in a dictionary so it can be mapped and connected tp code line when processing code lines.
+         * */
+        private static void CollectDocumentationLines(List<ReviewLine> reviewLines, Dictionary<string,List<CodePanelRowData>> documentationRowMap, int indent, string parentNodeIdHash)
+        {
+            if(reviewLines?.Count == 0)
+                return;
+
+            List<CodePanelRowData> docRows = [];
+            // Collect all documentation line and then add it as related documentation line for the first code line after documentation so it will be correctly liked on review page.
+            int idx = 0;
+            foreach (var line in reviewLines)
+            {
+                if(line.IsDocumentation)
+                {
+                    docRows.Add(GetCodePanelRowData(line, parentNodeIdHash, indent));
+                    continue;
+                }
+
+                //Create hash id for code line and set node ID and hash Id for documentation rows
+                var nodeIdHashed = line.GetTokenNodeIdHash(parentNodeIdHash, idx);
+                docRows.ForEach( d=> { 
+                    d.NodeIdHashed = nodeIdHashed;
+                    d.NodeId = line.LineId;
+                });
+                documentationRowMap[nodeIdHashed] = docRows;
+                docRows = [];
+
+                idx++;
+                // Recursively process child node lines
+                if (line.Children.Count > 0)
+                    CollectDocumentationLines(line.Children, documentationRowMap, indent + 1, nodeIdHashed);
+            }
+        }
+
+
+        // Documentation rows are collected from active revision using node hash ID generated for corresponding code line.
+        // Hash ID uses diff kind type to generate the hashed node ID and it will be different after diff calculation for same code line token
+        // We need to remap the collected documentation to the new hashed node ID so that documentation is correctly listed on review.
+        private static void RemapDocumentationLines(List<ReviewLine> activeLines, Dictionary<string, List<CodePanelRowData>> documentationRowMap, string oldParentID = "root", string newParentId = "root")
+        {
+            int activeIdx = 0, idx = 0, diffIdx = 0;
+            foreach (var line in activeLines)
+            {
+                // Remapping of node hash ID is required only for code line
+                if (line.IsDocumentation)
+                    continue;
+
+                var diffKind = line.DiffKind;
+                line.DiffKind = DiffKind.NoneDiff;
+                var oldHashId = line.GetTokenNodeIdHash(oldParentID, activeIdx);
+                line.DiffKind = diffKind;
+                var newHashId = line.GetTokenNodeIdHash(newParentId, idx);
+
+                if (documentationRowMap.ContainsKey(oldHashId))
+                {
+                    documentationRowMap[newHashId] = documentationRowMap[oldHashId];
+                    documentationRowMap.Remove(oldHashId);
+                }
+
+                if (line.Children.Count > 0)
+                {
+                    RemapDocumentationLines(line.Children, documentationRowMap, oldHashId, newHashId);
+                }                
+                idx++;
+
+                // Move previous review line index before diff calculation based on diff type so we can calculate old HashId correctly.
+                if (line.DiffKind == DiffKind.NoneDiff)
+                {
+                    activeIdx++;
+                    diffIdx++;
+                }
+                else if(line.DiffKind == DiffKind.Added)
+                {
+                    activeIdx++;
                 }
                 else
                 {
-                    codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
+                    diffIdx++;
                 }
             }
         }
 
-        private static void AddDiagnosticRow(CodePanelData codePanelData, CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition)
+        private static void FindModifiedTokens(ReviewLine lineA, ReviewLine lineB)
         {
-            if (codePanelRawData.Diagnostics.Any(d => d.TargetId == nodeId) && linesOfTokensPosition != RowOfTokensPosition.Bottom)
+            var lineATokenMap = new Dictionary<string, ReviewToken>();
+            foreach(var token in lineA.Tokens)
             {
-                var diagnosticsForRow = codePanelRawData.Diagnostics.Where(d => d.TargetId == nodeId);
-                foreach (var diagnostic in diagnosticsForRow)
-                {
+                lineATokenMap[token.Value] = token;
+            }
+            var lineBTokenMap = new Dictionary<string, ReviewToken>();
+            foreach (var token in lineB.Tokens)
+            {
+                lineBTokenMap[token.Value] = token;
+            }
 
-                    var rowData = new CodePanelRowData()
-                    {
-                        Type = CodePanelRowDatatype.Diagnostics,
-                        NodeIdHashed = nodeIdHashed,
-                        NodeId = nodeId,
-                        RowOfTokensPosition = linesOfTokensPosition,
-                        Diagnostics = diagnostic,
-                        RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() }
-                    };
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Add(rowData);
-                }
+            foreach( var key in lineBTokenMap.Keys.Except(lineATokenMap.Keys))
+            {
+                lineBTokenMap[key].RenderClasses.Add("diff-change");
+            }
+            foreach (var key in lineATokenMap.Keys.Except(lineBTokenMap.Keys))
+            {
+                lineATokenMap[key].RenderClasses.Add("diff-change");
             }
         }
 
-        private static bool ShouldBreakLineOnToken(StructuredToken token, string language)
-        {
-            if (token.Kind == StructuredTokenKind.LineBreak ||
-                (token.Kind == StructuredTokenKind.ParameterSeparator && LanguageServiceHelpers.UseLineBreakForParameterSeparator(language)))
-            {
-                return true;
-            }
-            return false;
-        }
     }
 }

@@ -67,7 +67,7 @@ namespace CSharpAPIParser.TreeToken
         }
 
         public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis, List<DependencyInfo>? dependencies)
-        {
+        {  
             _assembly = assemblySymbol;
             var analyzer = new Analyzer();
 
@@ -749,12 +749,10 @@ namespace CSharpAPIParser.TreeToken
                     token = ReviewToken.CreateTextToken(tokenValue, hasSuffixSpace: false);
                     break;
             }
-
             if (token != null && !String.IsNullOrWhiteSpace(navigateToId))
             {
                 token.NavigateToId = navigateToId!;
             }
-
             return token;
         }
 

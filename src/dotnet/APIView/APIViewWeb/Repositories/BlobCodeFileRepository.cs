@@ -57,7 +57,7 @@ namespace APIViewWeb
             return codeFile;
         }
 
-        public async Task<CodeFile> GetCodeFileWithCompressionAsync(string revisionId, string codeFileId)
+        public async Task<CodeFile> GetCodeFileAsync(string revisionId, string codeFileId)
         {
             var client = GetBlobClient(revisionId, codeFileId, out var key);
             var info = await client.DownloadAsync();

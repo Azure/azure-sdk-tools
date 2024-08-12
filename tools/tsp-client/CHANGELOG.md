@@ -1,5 +1,23 @@
 # Release
 
+## 2024-08-08 - 0.11.1
+
+- Removed `compare` command.
+
+## 2024-08-08 - 0.11.0
+
+- Added `generate-lock-file` command, see [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for more information.
+- Removed the `--generate-lock-file` flag and replaced it with the command above.
+- Migrated tsp-client from `node:util` to `yargs` for commandline infrastructure.
+
+## 2024-08-05 - 0.10.0
+
+- Added `sort-swagger` command, see [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for more information.
+- Copy the package.json + package-lock.json directly under TempTypeSpecFiles/. (#8583)
+- Only show compile diagnostics if the `--debug` flag is passed to the command.
+- Increase minimum node version to "^18.19.0 || >=20.6.0", to ensure API import.meta.resolve() is available. (#8765)
+- Increase minimum `@typespec/compiler` version to `0.58.0`. (#8766)
+
 ## 2024-07-23 - 0.9.4
 
 - Fixed issue where one additional directory entry is treated as a string instead of an array. (#8551)

@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-client-generator-cli",
-  "version": "0.9.4",
+  "version": "0.11.1",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
@@ -15,16 +15,19 @@
     "build": "npm run clean && npm run build:tsc",
     "build:tsc": "tsc",
     "clean": "rimraf ./dist ./types",
+    "purge": "rimraf ./node_modules package-lock.json",
     "example": "npx tsx src/index.ts update -o ./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/",
     "prepack": "npm run build",
     "test": "mocha",
-    "test:commands": "npx tsx ./test/run_commands.ts"
+    "test:commands": "npx tsx ./test/run_commands.ts",
+    "tsp-client": "node cmd/tsp-client.js",
+    "watch": "tsc -p . --watch"
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "^18.19.0 || >=20.6.0"
   },
   "bin": {
     "tsp-client": "cmd/tsp-client.js"
@@ -38,7 +41,7 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.4.8",
     "@types/prompt-sync": "^4.2.1",
-    "@typespec/compiler": "0.50.0",
+    "@typespec/compiler": "^0.58.0",
     "chai": "^4.3.7",
     "mocha": "^10.5.2",
     "prettier": "^3.0.1",
@@ -50,16 +53,19 @@
   "dependencies": {
     "@autorest/openapi-to-typespec": "0.8.2",
     "@autorest/csharp": "https://aka.ms/azsdk/openapi-to-typespec-csharp",
+    "@azure-tools/typespec-autorest": "^0.44.0",
     "@azure/core-rest-pipeline": "^1.12.0",
+    "@types/yargs": "^17.0.32",
     "autorest": "^3.7.1",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
     "prompt-sync": "^4.2.0",
     "simple-git": "^3.20.0",
-    "yaml": "^2.3.1"
+    "yaml": "^2.3.1",
+    "yargs": "^17.2.1"
   },
   "peerDependencies": {
-    "@typespec/compiler": ">=0.48.1 <1.0.0"
+    "@typespec/compiler": ">=0.58.0 <1.0.0"
   },
   "mocha": {
     "extension": [

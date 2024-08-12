@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Core;
@@ -35,27 +35,27 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public override void Process(HttpMessage message)
         {
             _innerTransport.Process(message);
-            Record(message);
+            Record(message).Wait();
         }
 
         public override async ValueTask ProcessAsync(HttpMessage message)
         {
             await _innerTransport.ProcessAsync(message);
-            Record(message);
+            await Record(message);
         }
 
-        private void Record(HttpMessage message)
+        private async Task Record(HttpMessage message)
         {
             RecordEntry recordEntry = CreateEntry(message.Request, message.Response);
 
             switch (_filter(recordEntry))
             {
                 case EntryRecordMode.Record:
-                    _session.Record(recordEntry);
+                    await _session.Record(recordEntry);
                     break;
                 case EntryRecordMode.RecordWithoutRequestBody:
                     recordEntry.Request.Body = null;
-                    _session.Record(recordEntry);
+                    await _session.Record(recordEntry);
                     break;
                 default:
                     break;

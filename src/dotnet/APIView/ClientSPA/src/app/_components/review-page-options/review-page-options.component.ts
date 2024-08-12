@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { mapLanguageAliases } from 'src/app/_helpers/common-helpers';
+import { FULL_DIFF_STYLE, mapLanguageAliases, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -66,9 +66,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   selectedApprovers: string[] = [];
 
   diffStyleOptions : any[] = [
-    { label: 'Full Diff', value: "full" },
-    { label: 'Only Trees', value: "trees"},
-    { label: 'Only Nodes', value: "nodes" }
+    { label: 'Full Diff', value: FULL_DIFF_STYLE },
+    { label: 'Only Trees', value: TREE_DIFF_STYLE },
+    { label: 'Only Nodes', value: NODE_DIFF_STYLE }
   ];
   selectedDiffStyle : string = this.diffStyleOptions[0];
 

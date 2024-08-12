@@ -3,6 +3,7 @@
 ## 2024-08-12 - 0.11.2
 
 - Fix `--version` flag. (#8814)
+- Added `compare` command to compare a hand-authored Swagger to a TypeSpec-generated Swagger to understand the relevant differences between them.
 
 ## 2024-08-08 - 0.11.1
 

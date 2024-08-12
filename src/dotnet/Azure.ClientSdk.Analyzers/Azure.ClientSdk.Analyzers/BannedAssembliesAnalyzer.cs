@@ -95,9 +95,9 @@ namespace Azure.ClientSdk.Analyzers
             return (type.Name == "Utf8JsonReader" || type.Name == "Utf8JsonWriter") && GetFullNamespace(type.ContainingNamespace) == "System.Text.Json";
         }
 
-        private static string GetFullNamespace(INamespaceSymbol type)
+        private static string GetFullNamespace(INamespaceSymbol namespaceSymbol)
         {
-            return type.ContainingNamespace.Name == "" ? type.Name : $"{GetFullNamespace(type.ContainingNamespace)}.{type.Name}";
+            return namespaceSymbol.ContainingNamespace.Name == "" ? namespaceSymbol.Name : $"{GetFullNamespace(namespaceSymbol.ContainingNamespace)}.{namespaceSymbol.Name}";
         }
     }
 }

@@ -1,5 +1,9 @@
 # Release
 
+## 2024-08-12 - 0.11.2
+
+- Fix `--version` flag. (#8814)
+
 ## 2024-08-08 - 0.11.1
 
 - Removed `compare` command.

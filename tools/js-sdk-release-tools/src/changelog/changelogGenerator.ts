@@ -9,6 +9,7 @@ import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeL
 import { TSExportedMetaData } from "./extractMetaData";
 import { SDKType } from "../common/types";
 import { logger } from "../utils/logger";
+// TODO: add detection for routes and overloads in base detector
 import { detectBreakingChangesBetweenPackages, InlineDeclarationNameSetMessage, RuleMessage, RuleMessageKind } from "typescript-codegen-breaking-change-detector";
 import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor";
 

@@ -109,7 +109,13 @@ export class CommentThreadComponent {
 
   setCommentResolutionState() {
     if (this.codePanelRowData?.isResolvedCommentThread) {
-      this.threadResolvedBy = this.codePanelRowData?.commentThreadIsResolvedBy ?? this.codePanelRowData?.comments?.find(comment => comment.isResolved)?.changeHistory.find(ch => ch.changeAction === 'resolved')?.changedBy;
+      this.threadResolvedBy = this.codePanelRowData?.commentThreadIsResolvedBy;
+      if (!this.threadResolvedBy) {
+        const lastestResolvedComment = Array.from(this.codePanelRowData?.comments || []).findLast(comment => comment.isResolved && comment.changeHistory && comment.changeHistory.some(ch => ch.changeAction === 'resolved'));
+        if (lastestResolvedComment) {
+          this.threadResolvedBy = lastestResolvedComment.changeHistory.findLast(ch => ch.changeAction === 'resolved')?.changedBy;
+        }
+      }    
       this.spacingBasedOnResolvedState = 'mb-2';
       this.resolveThreadButtonText = 'Unresolve';
     }

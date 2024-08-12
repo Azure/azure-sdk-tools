@@ -43,8 +43,7 @@ async function packPackage(packageDirectory: string) {
 
 async function addApiViewInfo(packageDirectory: string, packageResult: PackageResult) {
     const apiViews = await glob(posix.join(packageDirectory, 'review', '**/*.api.md'))
-    packageResult.apiViewArtifact = [apiViews[0]]
-    // packageResult.apiViewArtifact = [...apiViews]
+    packageResult.apiViewArtifact = [...apiViews]
 }
 
 export async function buildPackage(packageDirectory: string, versionPolicyName: VersionPolicyName, packageResult: PackageResult) {

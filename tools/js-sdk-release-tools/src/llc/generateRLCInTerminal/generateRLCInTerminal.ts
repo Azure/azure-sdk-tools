@@ -20,11 +20,11 @@ export async function generateCodes(sdkRepo: string, packagePath: string, packag
 export async function buildGeneratedCodes(sdkrepo: string, packagePath: string, packageName: string) {
     shell.cd(sdkrepo);
     logger.info(`Start to update rush.`);
-    execSync('rush update', {stdio: 'ignore'});
+    execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
     logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually`);
     // To build generated codes except test and sample, we need to change tsconfig.json.
     changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
-    execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+    execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
     changeConfigOfTestAndSample(packagePath, ChangeModel.Revert, SdkType.Rlc);
     shell.cd(packagePath);
     logger.info(`Start to Generate changelog.`);

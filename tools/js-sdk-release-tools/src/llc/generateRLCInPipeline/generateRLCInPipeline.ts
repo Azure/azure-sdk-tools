@@ -64,7 +64,7 @@ export async function generateRLCInPipeline(options: {
             } else {
                 logger.info("Start to run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
-                const scriptCommand = ['pwsh', './eng/common/scripts/TypeSpec-Project-Process.ps1', tspDefDir,  options.gitCommitId, options.swaggerRepoUrl].join(" ");
+                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("./eng/common/scripts/TypeSpec-Project-Process.ps1 script is ran successfully.");
@@ -225,10 +225,10 @@ export async function generateRLCInPipeline(options: {
         }
 
         logger.info(`Start to update rush.`);
-        execSync('rush update', {stdio: 'ignore'});
+        execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+        execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
         logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {

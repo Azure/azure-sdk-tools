@@ -1,24 +1,26 @@
+<h4>Conversations</h4>
+<p-divider />
 <p-timeline [value]="getAPIRevisionWithComments()">
     <ng-template pTemplate="marker" let-apiRevision>
         <i class="bi bi-clock-history"></i>
     </ng-template>
     <ng-template pTemplate="content" let-apiRevision>
-        <div class="pb-3">
+        <div class="pb-3 conversation-group-revision-id" [attr.data-conversation-group-revision-id]="apiRevision.id">
             <span>
-                <span *ngIf="apiRevision.pullRequestNo"> {{ apiRevision.pullRequestNo }}</span>
-                <span class="emphasis-badge info ms-2">version: {{ apiRevision.packageVersion }}</span>
-                <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
-                <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
-                <span *ngIf="apiRevision.isReleased" class="emphasis-badge success ms-2">released: {{ apiRevision.releasedOn | timeago }}</span>
-                <span class="emphasis-badge secondary ms-2">created: {{ apiRevision.createdOn | timeago }}</span>
-                <span class="emphasis-badge secondary ms-2">lastUpdated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
-                <span class="ms-2" *ngIf="apiRevision.label">{{ apiRevision.label }}</span>
+                <i class="{{ getAPIRevisionTypeClass(apiRevision) }} me-2"></i>
+                <span class="me-2" *ngIf="apiRevision.pullRequestNo"> {{ apiRevision.pullRequestNo }}</span>
+                <span class="emphasis-badge info me-2">version: {{ apiRevision.packageVersion }}</span>
+                <i class="fas fa-check-circle text-success me-2" *ngIf="apiRevision.isApproved"></i>
+                <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="me-2">{{ apiRevision.createdBy }}</span>
+                <span *ngIf="apiRevision.isReleased" class="emphasis-badge success me-2">released: {{ apiRevision.releasedOn | timeago }}</span>
+                <span class="emphasis-badge secondary me-2">created: {{ apiRevision.createdOn | timeago }}</span>
+                <span class="emphasis-badge secondary me-2">lastUpdated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+                <span class="me-2" *ngIf="apiRevision.label">{{ apiRevision.label }}</span>
             </span>
-            <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); let isLast = last">
-                <p-divider />
-                <a class="small">{{ commentThread!.comments[0].elementId }}</a>
-                <app-comment-thread [codePanelRowData]="commentThread"></app-comment-thread>
-                <p-divider *ngIf="isLast" />
+            <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); let isLast = last" class="my-2 conversation-group-threads">
+                <a class="small conversation-group-element-id">{{ commentThread!.comments[0].elementId }}</a>
+                <app-comment-thread [codePanelRowData]="commentThread" [instanceLocation]='"conversations"'
+                (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"></app-comment-thread>
             </div>
         </div>
     </ng-template>

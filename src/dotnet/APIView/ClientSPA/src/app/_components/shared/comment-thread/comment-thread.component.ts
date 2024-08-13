@@ -6,6 +6,7 @@ import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { first } from 'rxjs';
 
 @Component({
   selector: 'app-comment-thread',
@@ -18,6 +19,7 @@ import { UserProfile } from 'src/app/_models/userProfile';
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
   @Input() associatedCodeLine: CodePanelRowData | undefined;
+  @Input() instanceLocation: "code-panel" | "conversations" = "code-panel";
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -111,17 +113,17 @@ export class CommentThreadComponent {
     if (this.codePanelRowData?.isResolvedCommentThread) {
       this.threadResolvedBy = this.codePanelRowData?.commentThreadIsResolvedBy;
       if (!this.threadResolvedBy) {
-        const lastestResolvedComment = Array.from(this.codePanelRowData?.comments || []).findLast(comment => comment.isResolved && comment.changeHistory && comment.changeHistory.some(ch => ch.changeAction === 'resolved'));
+        const lastestResolvedComment = Array.from(this.codePanelRowData?.comments || []).reverse().find(comment => comment.isResolved && comment.changeHistory && comment.changeHistory.some(ch => ch.changeAction === 'resolved'));
         if (lastestResolvedComment) {
-          this.threadResolvedBy = lastestResolvedComment.changeHistory.findLast(ch => ch.changeAction === 'resolved')?.changedBy;
+          this.threadResolvedBy = lastestResolvedComment.changeHistory.reverse().find(ch => ch.changeAction === 'resolved')?.changedBy;
         }
       }    
-      this.spacingBasedOnResolvedState = 'mb-2';
+      this.spacingBasedOnResolvedState = (this.instanceLocation === "code-panel") ? 'mb-2' : "";
       this.resolveThreadButtonText = 'Unresolve';
     }
     else {
       this.threadResolvedBy = '';
-      this.spacingBasedOnResolvedState = 'my-2';
+      this.spacingBasedOnResolvedState = (this.instanceLocation === "code-panel") ? 'my-2' : "";
       this.resolveThreadButtonText = 'Resolve';
     }
   }
@@ -232,6 +234,13 @@ export class CommentThreadComponent {
   saveCommentAction(event: Event) {
     const target = event.target as Element;
     const replyEditorContainer = target.closest(".reply-editor-container") as Element;
+    let revisionIdForConversationGroup: string | null | undefined = null;
+    let elementIdForConversationGroup: string | null | undefined = null;
+
+    if (this.instanceLocation === "conversations") {
+      revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
+      elementIdForConversationGroup = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+    }
 
     if (replyEditorContainer) {
       const replyEditor = this.editor.find(e => e.editorId === "replyEditor");
@@ -239,10 +248,11 @@ export class CommentThreadComponent {
       this.saveCommentActionEmitter.emit(
         { 
           nodeId: this.codePanelRowData!.nodeId,
-          nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+          nodeIdHashed: (this.instanceLocation === "conversations") ? elementIdForConversationGroup : this.codePanelRowData!.nodeIdHashed,
           commentText: content,
           allowAnyOneToResolve: this.allowAnyOneToResolve,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+          revisionIdForConversationGroup: revisionIdForConversationGroup
         }
       );
       this.codePanelRowData!.showReplyTextBox = false;
@@ -254,10 +264,11 @@ export class CommentThreadComponent {
       this.saveCommentActionEmitter.emit(
         { 
           nodeId: this.codePanelRowData!.nodeId,
-          nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+          nodeIdHashed: (this.instanceLocation === "conversations") ? elementIdForConversationGroup : this.codePanelRowData!.nodeIdHashed,
           commentId: commentId,
           commentText: content,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+          revisionIdForConversationGroup: revisionIdForConversationGroup
         }
       );
       this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;

@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AUTOMATIC_ICON, getTypeClass, MANUAL_ICON, PR_ICON } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { APIRevision } from 'src/app/_models/revision';
@@ -20,9 +21,9 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   selectedActiveAPIRevision: any;
   selectedDiffAPIRevision: any = null;
 
-  manualIcon = "fa-solid fa-arrow-up-from-bracket";
-  prIcon = "fa-solid fa-code-pull-request";
-  automaticIcon = "fa-solid fa-robot";
+  manualIcon = MANUAL_ICON;
+  prIcon = PR_ICON;
+  automaticIcon = AUTOMATIC_ICON;
 
   activeApiRevisionsSearchValue: string = '';
   diffApiRevisionsSearchValue: string = '';
@@ -155,24 +156,12 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   mapRevisionToMenu(apiRevisions: APIRevision[]) {
     return apiRevisions
       .map((apiRevision: APIRevision) => {
-      let typeClass = '';
-      switch (apiRevision.apiRevisionType) {
-        case 'manual':
-          typeClass = this.manualIcon;
-          break;
-        case 'pullRequest':
-          typeClass = this.prIcon;
-          break;
-        case 'automatic':
-          typeClass = this.automaticIcon;
-          break;
-      }
       return {
         id : apiRevision.id,
         resolvedLabel: apiRevision.resolvedLabel,
         language: apiRevision.language,
         label: apiRevision.label,
-        typeClass: typeClass,
+        typeClass: getTypeClass(apiRevision.apiRevisionType),
         apiRevisionType: apiRevision.apiRevisionType,
         version: apiRevision.packageVersion,
         prNo: apiRevision.pullRequestNo,

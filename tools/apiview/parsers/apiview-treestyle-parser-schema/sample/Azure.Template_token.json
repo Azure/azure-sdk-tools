@@ -1,0 +1,1845 @@
+{
+    "PackageName": "Azure.Template",
+    "PackageVersion": "1.0.3.0",
+    "ParserVersion": "28",
+    "Language": "C#",
+    "ReviewLines": [
+        {
+            "Tokens": [
+                {
+                    "Kind": 5,
+                    "Value": "Dependencies:",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": []
+        },
+        {
+            "LineId": "Azure.Core",
+            "Tokens": [
+                {
+                    "Kind": 5,
+                    "Value": "Azure.Core",
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 5,
+                    "Value": "-1.41.0",
+                    "SkipDiff": true,
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": []
+        },
+        {
+            "LineId": "System.Text.Json",
+            "Tokens": [
+                {
+                    "Kind": 5,
+                    "Value": "System.Text.Json",
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 5,
+                    "Value": "-4.7.2",
+                    "SkipDiff": true,
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": []
+        },
+        {
+            "Tokens": [],
+            "Children": []
+        },
+        {
+            "Tokens": [],
+            "Children": [],
+            "IsHidden": false
+        },
+        {
+            "LineId": "Azure.Template",
+            "Tokens": [
+                {
+                    "Kind": 2,
+                    "Value": "namespace",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Value": "Azure",
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": ".",
+                    "RenderClasses": []
+                },
+                {
+                    "Value": "Template",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": "{",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": [
+                {
+                    "LineId": "Azure.Template.TemplateClient",
+                    "Tokens": [
+                        {
+                            "Kind": 2,
+                            "Value": "public",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 2,
+                            "Value": "class",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 3,
+                            "Value": "TemplateClient",
+                            "NavigationDisplayName": "TemplateClient",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": [
+                                "class"
+                            ]
+                        },
+                        {
+                            "Kind": 1,
+                            "Value": "{",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [
+                        {
+                            "LineId": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClient",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "vaultBaseUrl",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TokenCredential",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "credential",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential, Azure.Template.TemplateClientOptions)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClient",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "vaultBaseUrl",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TokenCredential",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "credential",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClientOptions",
+                                    "NavigateToId": "Azure.Template.TemplateClientOptions",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "options",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.TemplateClient.TemplateClient()",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "protected",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClient",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.TemplateClient.Pipeline",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "virtual",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "HttpPipeline",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "Pipeline",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": [
+                                        "property"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "get",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "virtual",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "Response",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "GetSecret",
+                                    "RenderClasses": [
+                                        "method"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "secretName",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "RequestContext",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "context",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "virtual",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "Task",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "Response",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "GetSecretAsync",
+                                    "RenderClasses": [
+                                        "method"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "secretName",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "RequestContext",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "context",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.TemplateClient.GetSecretValue(System.String, System.Threading.CancellationToken)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "virtual",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "Response",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "SecretBundle",
+                                    "NavigateToId": "Azure.Template.Models.SecretBundle",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "GetSecretValue",
+                                    "RenderClasses": [
+                                        "method"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "secretName",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "CancellationToken",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "cancellationToken",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "=",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "default",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.TemplateClient.GetSecretValueAsync(System.String, System.Threading.CancellationToken)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "virtual",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "Task",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "Response",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "SecretBundle",
+                                    "NavigateToId": "Azure.Template.Models.SecretBundle",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "GetSecretValueAsync",
+                                    "RenderClasses": [
+                                        "method"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "secretName",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "CancellationToken",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "cancellationToken",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "=",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "default",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        }
+                    ],
+                    "IsHidden": false
+                },
+                {
+                    "Tokens": [
+                        {
+                            "Kind": 1,
+                            "Value": "}",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [],
+                    "IsHidden": false
+                },
+                {
+                    "Tokens": [],
+                    "Children": [],
+                    "IsHidden": false
+                },
+                {
+                    "LineId": "Azure.Template.TemplateClientOptions",
+                    "Tokens": [
+                        {
+                            "Kind": 2,
+                            "Value": "public",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 2,
+                            "Value": "class",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 3,
+                            "Value": "TemplateClientOptions",
+                            "NavigationDisplayName": "TemplateClientOptions",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": [
+                                "class"
+                            ]
+                        },
+                        {
+                            "Kind": 1,
+                            "Value": ":",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 3,
+                            "Value": "ClientOptions",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 1,
+                            "Value": "{",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [
+                        {
+                            "LineId": "Azure.Template.TemplateClientOptions.ServiceVersion",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "enum",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "ServiceVersion",
+                                    "NavigationDisplayName": "ServiceVersion",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": [
+                                        "enum"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [
+                                {
+                                    "LineId": "Azure.Template.TemplateClientOptions.ServiceVersion.V7_0",
+                                    "Tokens": [
+                                        {
+                                            "Kind": 4,
+                                            "Value": "V7_0",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": [
+                                                "field"
+                                            ]
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": "=",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Value": "1",
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": ",",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        }
+                                    ],
+                                    "Children": [],
+                                    "IsHidden": false
+                                }
+                            ],
+                            "IsHidden": false
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.TemplateClientOptions.TemplateClientOptions(Azure.Template.TemplateClientOptions.ServiceVersion)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClientOptions",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "ServiceVersion",
+                                    "NavigateToId": "Azure.Template.TemplateClientOptions.ServiceVersion",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "version",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "=",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "V7_0",
+                                    "RenderClasses": [
+                                        "method"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        }
+                    ],
+                    "IsHidden": false
+                },
+                {
+                    "Tokens": [
+                        {
+                            "Kind": 1,
+                            "Value": "}",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [],
+                    "IsHidden": false
+                }
+            ],
+            "IsHidden": false
+        },
+        {
+            "Tokens": [
+                {
+                    "Kind": 1,
+                    "Value": "}",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": [],
+            "IsHidden": false
+        },
+        {
+            "Tokens": [],
+            "Children": [],
+            "IsHidden": false
+        },
+        {
+            "LineId": "Azure.Template.Models",
+            "Tokens": [
+                {
+                    "Kind": 2,
+                    "Value": "namespace",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Value": "Azure",
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": ".",
+                    "RenderClasses": []
+                },
+                {
+                    "Value": "Template",
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": ".",
+                    "RenderClasses": []
+                },
+                {
+                    "Value": "Models",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": "{",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": [
+                {
+                    "LineId": "Azure.Template.Models.SecretBundle",
+                    "Tokens": [
+                        {
+                            "Kind": 2,
+                            "Value": "public",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 2,
+                            "Value": "class",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 3,
+                            "Value": "SecretBundle",
+                            "NavigationDisplayName": "SecretBundle",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": [
+                                "class"
+                            ]
+                        },
+                        {
+                            "Kind": 1,
+                            "Value": "{",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [
+                        {
+                            "LineId": "Azure.Template.Models.SecretBundle.ContentType",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "ContentType",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": [
+                                        "property"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "get",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.Models.SecretBundle.Id",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "Id",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": [
+                                        "property"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "get",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.Models.SecretBundle.Kid",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "Kid",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": [
+                                        "property"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "get",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.Models.SecretBundle.Managed",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "bool",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "?",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "Managed",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": [
+                                        "property"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "get",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.Models.SecretBundle.Tags",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "IReadOnlyDictionary",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "Tags",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": [
+                                        "property"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "get",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Azure.Template.Models.SecretBundle.Value",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "Value",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": [
+                                        "property"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "get",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        }
+                    ],
+                    "IsHidden": false
+                },
+                {
+                    "Tokens": [
+                        {
+                            "Kind": 1,
+                            "Value": "}",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [],
+                    "IsHidden": false
+                }
+            ],
+            "IsHidden": false
+        },
+        {
+            "Tokens": [
+                {
+                    "Kind": 1,
+                    "Value": "}",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": [],
+            "IsHidden": false
+        },
+        {
+            "Tokens": [],
+            "Children": [],
+            "IsHidden": false
+        },
+        {
+            "LineId": "Microsoft.Extensions.Azure",
+            "Tokens": [
+                {
+                    "Kind": 2,
+                    "Value": "namespace",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Value": "Microsoft",
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": ".",
+                    "RenderClasses": []
+                },
+                {
+                    "Value": "Extensions",
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": ".",
+                    "RenderClasses": []
+                },
+                {
+                    "Value": "Azure",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": "{",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": [
+                {
+                    "LineId": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions",
+                    "Tokens": [
+                        {
+                            "Kind": 2,
+                            "Value": "public",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 2,
+                            "Value": "static",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 2,
+                            "Value": "class",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 3,
+                            "Value": "TemplateClientBuilderExtensions",
+                            "NavigationDisplayName": "TemplateClientBuilderExtensions",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": [
+                                "class"
+                            ]
+                        },
+                        {
+                            "Kind": 1,
+                            "Value": "{",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [
+                        {
+                            "LineId": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder\u003E(TBuilder, System.String)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "static",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "IAzureClientBuilder",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClient",
+                                    "NavigateToId": "Azure.Template.TemplateClient",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClientOptions",
+                                    "NavigateToId": "Azure.Template.TemplateClientOptions",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "AddTemplateClient",
+                                    "RenderClasses": [
+                                        "method"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TBuilder",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "this",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TBuilder",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "builder",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "string",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "vaultBaseUrl",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "where",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TBuilder",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ":",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "IAzureClientFactoryBuilderWithCredential",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        },
+                        {
+                            "LineId": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder, TConfiguration\u003E(TBuilder, TConfiguration)",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "static",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "IAzureClientBuilder",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClient",
+                                    "NavigateToId": "Azure.Template.TemplateClient",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClientOptions",
+                                    "NavigateToId": "Azure.Template.TemplateClientOptions",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "AddTemplateClient",
+                                    "RenderClasses": [
+                                        "method"
+                                    ]
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TBuilder",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TConfiguration",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "(",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "this",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TBuilder",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "builder",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ",",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TConfiguration",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Value": "configuration",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ")",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "where",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TBuilder",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ":",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "IAzureClientFactoryBuilderWithConfiguration",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003C",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TConfiguration",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": "\u003E",
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false
+                        }
+                    ],
+                    "IsHidden": false
+                },
+                {
+                    "Tokens": [
+                        {
+                            "Kind": 1,
+                            "Value": "}",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [],
+                    "IsHidden": false
+                }
+            ],
+            "IsHidden": false
+        },
+        {
+            "Tokens": [
+                {
+                    "Kind": 1,
+                    "Value": "}",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": [],
+            "IsHidden": false
+        }
+    ],
+    "SystemComments": [
+        {
+            "Text": "A client type should have a public constructor with equivalent parameters that doesn\u0027t take a Azure.Core.ClientOptions-derived type as the last argument",
+            "HelpLinkUri": "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-minimal",
+            "LineId": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential)",
+            "Level": 3
+        },
+        {
+            "Text": "A client type should have a public constructor with equivalent parameters that doesn\u0027t take a Azure.Core.ClientOptions-derived type as the last argument",
+            "HelpLinkUri": "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-client-constructor-minimal",
+            "LineId": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential, Azure.Template.TemplateClientOptions)",
+            "Level": 3
+        }
+    ]
+}

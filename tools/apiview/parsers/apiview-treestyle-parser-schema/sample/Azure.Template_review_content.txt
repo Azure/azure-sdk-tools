@@ -1,0 +1,42 @@
+Dependencies: 
+Azure.Core-1.41.0 
+System.Text.Json-4.7.2 
+
+
+namespace Azure.Template { 
+    public class TemplateClient { 
+        public TemplateClient(string vaultBaseUrl, TokenCredential credential); 
+        public TemplateClient(string vaultBaseUrl, TokenCredential credential, TemplateClientOptions options); 
+        protected TemplateClient(); 
+        public virtual HttpPipeline Pipeline { get; }
+        public virtual Response GetSecret(string secretName, RequestContext context); 
+        public virtual Task<Response> GetSecretAsync(string secretName, RequestContext context); 
+        public virtual Response<SecretBundle> GetSecretValue(string secretName, CancellationToken cancellationToken = default); 
+        public virtual Task<Response<SecretBundle>> GetSecretValueAsync(string secretName, CancellationToken cancellationToken = default); 
+    } 
+
+    public class TemplateClientOptions : ClientOptions { 
+        public enum ServiceVersion { 
+            V7_0 = 1, 
+        } 
+        public TemplateClientOptions(ServiceVersion version = V7_0); 
+    } 
+} 
+
+namespace Azure.Template.Models { 
+    public class SecretBundle { 
+        public string ContentType { get; }
+        public string Id { get; }
+        public string Kid { get; }
+        public bool? Managed { get; }
+        public IReadOnlyDictionary<string, string> Tags { get; }
+        public string Value { get; }
+    } 
+} 
+
+namespace Microsoft.Extensions.Azure { 
+    public static class TemplateClientBuilderExtensions { 
+        public static IAzureClientBuilder<TemplateClient, TemplateClientOptions> AddTemplateClient<TBuilder>(this TBuilder builder, string vaultBaseUrl) where TBuilder : IAzureClientFactoryBuilderWithCredential; 
+        public static IAzureClientBuilder<TemplateClient, TemplateClientOptions> AddTemplateClient<TBuilder, TConfiguration>(this TBuilder builder, TConfiguration configuration) where TBuilder : IAzureClientFactoryBuilderWithConfiguration<TConfiguration>; 
+    } 
+} 

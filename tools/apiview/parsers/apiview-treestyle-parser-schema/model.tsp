@@ -72,7 +72,7 @@ model SystemComment {
   LineId: string;
   Text: string;
   Level: SystemCommentLevel;
-  HelpLinkUri?: url;
+  HelpLinkUri?: string;
 }
 
 enum TokenKind {

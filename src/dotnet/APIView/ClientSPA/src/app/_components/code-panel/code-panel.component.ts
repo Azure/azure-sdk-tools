@@ -146,8 +146,10 @@ export class CodePanelComponent implements OnChanges{
   }
 
   toggleNodeComments(target: Element) {
-    const nodeIdHashed = target.closest('.code-line')!.getAttribute('data-node-id');
-    const rowPositionInGroup = parseInt(target.closest('.code-line')!.getAttribute('data-row-position-in-group')!, 10);
+    const codeLine = target.closest('.code-line')!;
+    const nodeIdHashed = codeLine.getAttribute('data-node-id');
+    const rowPositionInGroup = parseInt(codeLine.getAttribute('data-row-position-in-group')!, 10);
+    const rowType = codeLine.getAttribute('data-row-type')!;
     const existingCommentThread = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.commentThread;
     const exisitngCodeLine = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.codeLines[rowPositionInGroup];
     
@@ -161,7 +163,7 @@ export class CodePanelComponent implements OnChanges{
       commentThreadRow.associatedRowPositionInGroup = rowPositionInGroup;
       this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread = {};
       this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread[rowPositionInGroup] = commentThreadRow;
-      this.insertItemsIntoScroller([commentThreadRow], nodeIdHashed!, rowPositionInGroup);
+      this.insertItemsIntoScroller([commentThreadRow], nodeIdHashed!, rowType, rowPositionInGroup);
     }
     else {
       for (let i = 0; i < this.codePanelRowData.length; i++) {
@@ -175,11 +177,13 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async toggleNodeDocumentation(target: Element) {
-    const nodeIdHashed = target.closest(".code-line")!.getAttribute('data-node-id');
+    const codeLine = target.closest('.code-line')!;
+    const nodeIdHashed = codeLine.getAttribute('data-node-id');
+    const rowType = codeLine.getAttribute('data-row-type')!;
 
     if (target.classList.contains('bi-arrow-up-square')) {
       const documentationData = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.documentation;
-      await this.insertItemsIntoScroller(documentationData!, nodeIdHashed!, -1, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
+      await this.insertItemsIntoScroller(documentationData!, nodeIdHashed!, rowType,-1, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
       target.classList.remove('bi-arrow-up-square')
       target.classList.add('bi-arrow-down-square');
     } else if (target.classList.contains('bi-arrow-down-square')) {
@@ -241,8 +245,8 @@ export class CodePanelComponent implements OnChanges{
     this.loadCodePanelViewPort();
   }
 
-  async insertItemsIntoScroller(itemsToInsert: CodePanelRowData[], nodeIdhashed: string, insertPosition : number, 
-      propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
+  async insertItemsIntoScroller(itemsToInsert: CodePanelRowData[], nodeIdhashed: string, targetRowType: string,
+      insertPosition : number, propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
     await this.codePanelRowSource?.adapter?.relax();
 
     let preData = [];
@@ -259,7 +263,7 @@ export class CodePanelComponent implements OnChanges{
           break;
         }
 
-        if (insertPosition == this.codePanelRowData[nodeIndex].rowPositionInGroup) {
+        if (insertPosition == this.codePanelRowData[nodeIndex].rowPositionInGroup && this.codePanelRowData[nodeIndex].type === targetRowType) {
           insertPositionFound = true;
         }
       }
@@ -364,7 +368,7 @@ export class CodePanelComponent implements OnChanges{
           success(data);
         },
         settings: {
-          bufferSize: 50,
+          bufferSize: (this.userProfile?.preferences.disableCodeLinesLazyLoading) ? this.codePanelRowData.length : 50,
           padding: 1,
           itemSize: 21,
           startIndex : 0,

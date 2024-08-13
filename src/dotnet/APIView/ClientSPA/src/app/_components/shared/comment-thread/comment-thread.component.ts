@@ -179,13 +179,15 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-item-id");
     const commentData = this.codePanelRowData?.comments?.find(comment => comment.id === commentId)?.commentText.replace(/<[^>]*>/g, '').trim();
 
-    console.log(this.associatedCodeLine); 
-
-    const codeLineContent = this.associatedCodeLine 
+    let codeLineContent = this.associatedCodeLine 
         ? this.associatedCodeLine.rowOfTokens
             .map(token => token.value)
             .join('')
         : '';
+
+    if (!codeLineContent) {
+      codeLineContent = this.codePanelRowData?.comments[0].elementId!;
+    }
 
     const nodeId: string = this.codePanelRowData?.nodeId ?? 'defaultNodeId';
     const apiViewUrl = `${window.location.href.split("#")[0]}&nId=${encodeURIComponent(nodeId)}`;
@@ -247,8 +249,8 @@ export class CommentThreadComponent {
       const content = replyEditor?.getEditorContent();
       this.saveCommentActionEmitter.emit(
         { 
-          nodeId: this.codePanelRowData!.nodeId,
-          nodeIdHashed: (this.instanceLocation === "conversations") ? elementIdForConversationGroup : this.codePanelRowData!.nodeIdHashed,
+          nodeId: (this.instanceLocation === "conversations") ? elementIdForConversationGroup : this.codePanelRowData!.nodeId,
+          nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentText: content,
           allowAnyOneToResolve: this.allowAnyOneToResolve,
           associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
@@ -263,8 +265,8 @@ export class CommentThreadComponent {
       const content = replyEditor?.getEditorContent();
       this.saveCommentActionEmitter.emit(
         { 
-          nodeId: this.codePanelRowData!.nodeId,
-          nodeIdHashed: (this.instanceLocation === "conversations") ? elementIdForConversationGroup : this.codePanelRowData!.nodeIdHashed,
+          nodeId: (this.instanceLocation === "conversations") ? elementIdForConversationGroup : this.codePanelRowData!.nodeId,
+          nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentId: commentId,
           commentText: content,
           associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,

@@ -20,7 +20,11 @@
             <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); let isLast = last" class="my-2 conversation-group-threads">
                 <a class="small conversation-group-element-id">{{ commentThread!.comments[0].elementId }}</a>
                 <app-comment-thread [codePanelRowData]="commentThread" [instanceLocation]='"conversations"'
-                (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"></app-comment-thread>
+                    (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
+                    (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
+                    (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
+                    (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
+                ></app-comment-thread>
             </div>
         </div>
     </ng-template>

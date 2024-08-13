@@ -4,6 +4,8 @@ import { ConversationsComponent } from './conversations.component';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
+import { APIRevision } from 'src/app/_models/revision';
+import { CommentItemModel } from 'src/app/_models/commentItemModel';
 
 describe('ConversationComponent', () => {
   let component: ConversationsComponent;
@@ -25,5 +27,81 @@ describe('ConversationComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('createCommentThreads', () => {
+    it('should group conversation by elementId and latest API revision of comments', () => {
+      const apiRevisions = [
+        {
+          id: '1',
+          createdOn: '2021-10-01T00:00:00Z'
+        },
+        {
+          id: '2',
+          createdOn: '2022-10-01T00:00:00Z'
+        },
+        {
+          id: '3',
+          createdOn: '2023-10-01T00:00:00Z'
+        },
+        {
+          id: '4',
+          createdOn: '2024-10-01T00:00:00Z'
+        }
+      ] as APIRevision[];
+
+      const comments = [
+        {
+          id: '1',
+          elementId: '1',
+          apiRevisionId: '1'
+        },
+        {
+          id: '2',
+          elementId: '2',
+          apiRevisionId: '1'
+        },
+        {
+          id: '3',
+          elementId: '3',
+          apiRevisionId: '1'
+        },
+        {
+          id: '4',
+          elementId: '1',
+          apiRevisionId: '2'
+        },
+        {
+          id: '5',
+          elementId: '2',
+          apiRevisionId: '2'
+        },
+        {
+          id: '6',
+          elementId: '3',
+          apiRevisionId: '2'
+        },
+        {
+          id: '7',
+          elementId: '2',
+          apiRevisionId: '3'
+        },
+        {
+          id: '8',
+          elementId: '2',
+          apiRevisionId: '4'
+        },
+      ] as CommentItemModel[];
+
+      component.apiRevisions = apiRevisions;
+      component.comments = comments;
+      fixture.detectChanges();
+      component.createCommentThreads();
+
+      expect(component.commentThreads.size).toBe(2);
+
+      const keys = Array.from(component.commentThreads.keys());
+      expect(keys).toEqual(['2', '4']);
+    });
   });
 });

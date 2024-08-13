@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';
@@ -6,6 +6,7 @@ import { getTypeClass } from 'src/app/_helpers/common-helpers';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { take } from 'rxjs';
 import { Review } from 'src/app/_models/review';
+import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
   selector: 'app-conversations',
@@ -16,6 +17,7 @@ export class ConversationsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];
   @Input() comments: CommentItemModel[] = [];
   @Input() review : Review | undefined = undefined;
+  @Input() userProfile : UserProfile | undefined;
 
   commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
 
@@ -30,6 +32,7 @@ export class ConversationsComponent implements OnChanges {
   }
 
   createCommentThreads() {
+    this.commentThreads = new Map<string, CodePanelRowData[]>();
     const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
     const groupedComments = this.comments
       .reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
@@ -80,25 +83,71 @@ export class ConversationsComponent implements OnChanges {
   getAPIRevisionTypeClass(apiRevision: APIRevision) {
     return getTypeClass(apiRevision.apiRevisionType);
   }
-
   
   handleSaveCommentActionEmitter(data: any) {
-    console.log(data);
-    //if (data.commentId) {
-    //  this.commentsService.updateComment(this.review?.id!, data.commentId, data.commentText).pipe(take(1)).subscribe({
-    //    next: () => {
-    //      //this.updateHasActiveConversations();
-    //    }
-    //  });
-    //}
-    //else {
-    //  this.commentsService.createComment(this.review?.id!, data.conversationGroupId!, data.nodeId, data.commentText, CommentType.APIRevision, data.allowAnyOneToResolve)
-    //    .pipe(take(1)).subscribe({
-    //        next: (response: CommentItemModel) => {
-    //          //this.updateHasActiveConversations();
-    //        }
-    //      }
-    //    );
-    //}
+    if (data.commentId) {
+      this.commentsService.updateComment(this.review?.id!, data.commentId, data.commentText).pipe(take(1)).subscribe({
+        next: () => {
+          this.comments.find(c => c.id === data.commentId)!.commentText = data.commentText;
+        }
+      });
+    }
+    else {
+      this.commentsService.createComment(this.review?.id!, data.revisionIdForConversationGroup!, data.nodeId, data.commentText, CommentType.APIRevision, data.allowAnyOneToResolve)
+        .pipe(take(1)).subscribe({
+            next: (response: CommentItemModel) => {
+              this.comments.push(response);
+              this.createCommentThreads();
+            }
+          }
+        );
+    }
+  }
+
+  handleCommentUpvoteActionEmitter(data: any){
+    this.commentsService.toggleCommentUpVote(this.review?.id!, data.commentId).pipe(take(1)).subscribe({
+      next: () => {
+        const comment = this.comments.find(c => c.id === data.commentId)
+        if (comment) {
+          if (comment.upvotes.includes(this.userProfile?.userName!)) {
+            comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
+          } else {
+            comment.upvotes.push(this.userProfile?.userName!);
+          }
+        }
+      }
+    });
+  }
+
+  handleDeleteCommentActionEmitter(data: any) {
+    this.commentsService.deleteComment(this.review?.id!, data.commentId).pipe(take(1)).subscribe({
+      next: () => {
+        this.comments = this.comments.filter(c => c.id !== data.commentId);
+        this.createCommentThreads();
+      }
+    });
+  }
+
+  handleCommentResolutionActionEmitter(data: any) {
+    if (data.action === "Resolve") {
+      this.commentsService.resolveComments(this.review?.id!, data.elementId).pipe(take(1)).subscribe({
+        next: () => {
+          this.comments.filter(c => c.elementId === data.elementId).forEach(c => {
+            c.isResolved = true;
+          });
+          this.createCommentThreads();
+        }
+      });
+    }
+    if (data.action === "Unresolve") {
+      this.commentsService.unresolveComments(this.review?.id!, data.elementId).pipe(take(1)).subscribe({
+        next: () => {
+          this.comments.filter(c => c.elementId === data.elementId).forEach(c => {
+            c.isResolved = false;
+          });
+          this.createCommentThreads();
+        }
+      });
+    }
   }
 }

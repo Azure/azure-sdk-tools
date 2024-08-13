@@ -71,101 +71,99 @@ jobs:
           pwsh --version
         displayName: Dump tool versions
 
-      # This is commented out for testing purposes.
-      # This will be uncommented in a commit prior to the merge.
-      # - ${{ each repo in parameters.Repos }}:
-      #   - task: PowerShell@2
-      #     displayName: ${{ repo }} sync eng/common branch clean-up
-      #     condition: succeededOrFailed()
-      #     continueOnError: true
-      #     inputs:
-      #       pwsh: true
-      #       workingDirectory: $(System.DefaultWorkingDirectory)
-      #       filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-      #       arguments: >
-      #         -RepoId "${{ repo }}"
-      #         -CentralRepoId "Azure/azure-sdk-tools"
-      #         -BranchRegex "^sync-eng/common.*-(?<PrNumber>\d+).*$"
-      #         -AuthToken $(azuresdk-github-pat)
-      #         -WhatIf:$${{parameters.WhatIfPreference}}
+      - ${{ each repo in parameters.Repos }}:
+        - task: PowerShell@2
+          displayName: ${{ repo }} sync eng/common branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId "${{ repo }}"
+              -CentralRepoId "Azure/azure-sdk-tools"
+              -BranchRegex "^sync-eng/common.*-(?<PrNumber>\d+).*$"
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
 
-      #   - task: PowerShell@2
-      #     displayName: ${{ repo }} sync workflow branch clean-up
-      #     condition: succeededOrFailed()
-      #     continueOnError: true
-      #     inputs:
-      #       pwsh: true
-      #       workingDirectory: $(System.DefaultWorkingDirectory)
-      #       filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-      #       arguments: >
-      #         -RepoId "${{ repo }}"
-      #         -CentralRepoId "Azure/azure-sdk-tools"
-      #         -BranchRegex "^sync-.github/workflows.*-(?<PrNumber>\d+).*$"
-      #         -AuthToken $(azuresdk-github-pat)
-      #         -WhatIf:$${{parameters.WhatIfPreference}}
+        - task: PowerShell@2
+          displayName: ${{ repo }} sync workflow branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId "${{ repo }}"
+              -CentralRepoId "Azure/azure-sdk-tools"
+              -BranchRegex "^sync-.github/workflows.*-(?<PrNumber>\d+).*$"
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
 
-      # - ${{ each repo in parameters.ForkAutomationBranches }}:
-      #   - task: PowerShell@2
-      #     displayName: ${{ repo }} automation branch clean-up
-      #     condition: succeededOrFailed()
-      #     continueOnError: true
-      #     inputs:
-      #       pwsh: true
-      #       workingDirectory: $(System.DefaultWorkingDirectory)
-      #       filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-      #       arguments: >
-      #         -RepoId "${{ repo }}"
-      #         -BranchRegex "^(increment-package-version-|fluent-lite-generation-|auto-update-|version-increment-build-|post-release-automation-|restapi_auto_|t2-).*$"
-      #         -LastCommitOlderThan ((Get-Date).AddDays(-1))
-      #         -AuthToken $(azuresdk-github-pat)
-      #         -WhatIf:$${{parameters.WhatIfPreference}}
+      - ${{ each repo in parameters.ForkAutomationBranches }}:
+        - task: PowerShell@2
+          displayName: ${{ repo }} automation branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId "${{ repo }}"
+              -BranchRegex "^(increment-package-version-|fluent-lite-generation-|auto-update-|version-increment-build-|post-release-automation-|restapi_auto_|t2-).*$"
+              -LastCommitOlderThan ((Get-Date).AddDays(-1))
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
 
-      #   - task: PowerShell@2
-      #     displayName: ${{ repo }} swagger public SDK PR and branch clean-up
-      #     condition: succeededOrFailed()
-      #     continueOnError: true
-      #     inputs:
-      #       pwsh: true
-      #       workingDirectory: $(System.DefaultWorkingDirectory)
-      #       filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-      #       arguments: >
-      #         -RepoId "${{ repo }}"
-      #         -CentralRepoId "Azure/azure-rest-api-specs"
-      #         -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
-      #         -AuthToken $(azuresdk-github-pat)
-      #         -WhatIf:$${{parameters.WhatIfPreference}}
+        - task: PowerShell@2
+          displayName: ${{ repo }} swagger public SDK PR and branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId "${{ repo }}"
+              -CentralRepoId "Azure/azure-rest-api-specs"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
 
-      # - ${{ each repo in parameters.SDKPrivate }}:
-      #   - task: PowerShell@2
-      #     displayName: ${{ repo }} swagger private SDK PR and branch clean-up
-      #     condition: succeededOrFailed()
-      #     continueOnError: true
-      #     inputs:
-      #       pwsh: true
-      #       workingDirectory: $(System.DefaultWorkingDirectory)
-      #       filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-      #       arguments: >
-      #         -RepoId "${{ repo }}"
-      #         -CentralRepoId "Azure/azure-rest-api-specs-pr"
-      #         -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
-      #         -AuthToken $(azuresdk-github-pat)
-      #         -WhatIf:$${{parameters.WhatIfPreference}}
+      - ${{ each repo in parameters.SDKPrivate }}:
+        - task: PowerShell@2
+          displayName: ${{ repo }} swagger private SDK PR and branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId "${{ repo }}"
+              -CentralRepoId "Azure/azure-rest-api-specs-pr"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
 
-      # - ${{ each repo in parameters.DailyBranchRepos }}:
-      #   - task: PowerShell@2
-      #     displayName: ${{ repo }} daily docs branch clean-up
-      #     condition: succeededOrFailed()
-      #     continueOnError: true
-      #     inputs:
-      #       pwsh: true
-      #       workingDirectory: $(System.DefaultWorkingDirectory)
-      #       filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-      #       arguments: >
-      #         -RepoId "${{ repo }}"
-      #         -BranchRegex "^daily"
-      #         -LastCommitOlderThan ((Get-Date).AddDays(-7))
-      #         -AuthToken $(azuresdk-github-pat)
-      #         -WhatIf:$${{parameters.WhatIfPreference}}
+      - ${{ each repo in parameters.DailyBranchRepos }}:
+        - task: PowerShell@2
+          displayName: ${{ repo }} daily docs branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId "${{ repo }}"
+              -BranchRegex "^daily"
+              -LastCommitOlderThan ((Get-Date).AddDays(-7))
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
 
       - ${{ each repo in parameters.RestAPISpecsDocsRepos }}:
         - task: PowerShell@2
@@ -182,6 +180,6 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -BranchRegex "^(result_)?(?!00a0dc86-3419-4dd5-b119-e83edaf17e7e)([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
-              -LastCommitOlderThan ((Get-Date).AddDays(-7))
+              -LastCommitOlderThan ((Get-Date).AddDays(-14))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

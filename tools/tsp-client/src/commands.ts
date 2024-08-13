@@ -365,6 +365,7 @@ export async function convertCommand(argv: any): Promise<void> {
       `--use="${autorestCsharpPath}"`,
       `--output-folder="${outputDir}"`,
       "--mgmt-debug.only-generate-metadata",
+      "--mgmt-debug.suppress-list-exception",
       "--azure-arm",
       "--skip-csproj",
       `"${readme}"`,

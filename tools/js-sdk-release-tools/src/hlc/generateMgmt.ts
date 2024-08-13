@@ -29,7 +29,7 @@ export async function generateMgmt(options: {
     skipGeneration?: boolean,
     runningEnvironment?: RunningEnvironment;
 }) {
-    logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+    logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
     if (!options.skipGeneration) {
         cmd = `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
@@ -46,14 +46,11 @@ export async function generateMgmt(options: {
             cmd += ` ${options.additionalArgs}`;
         }
 
-        logger.logGreen('Executing command:');
-        logger.logGreen('------------------------------------------------------------');
-        logger.logGreen(cmd);
-        logger.logGreen('------------------------------------------------------------');
+        logger.info(`Start to execute command '${cmd}'`);
         try {
             execSync(cmd, {stdio: 'inherit'});
         } catch (e: any) {
-            throw new Error(`An error occurred while generating codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            throw new Error(`Failed to generate codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
         }
     }
 
@@ -63,7 +60,7 @@ export async function generateMgmt(options: {
         let outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, undefined);
 
         try {
-            logger.logGreen(`Installing dependencies for ${changedPackageDirectory}...`);
+            logger.info(`Start to install dependencies for ${changedPackageDirectory}.`);
             const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
             const packageName = packageJson.name;
 
@@ -105,16 +102,16 @@ export async function generateMgmt(options: {
                 }
             }
 
-            logger.logGreen(`node common/scripts/install-run-rush.js update`);
+            logger.info(`Start to run command: 'rush update'.`);
             execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-            logger.logGreen(`node common/scripts/install-run-rush.js build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+            logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
             execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
-            logger.logGreen('Generating Changelog and Bumping Version...');
+            logger.info('Start to generate changelog and bump version...');
             let changelog: Changelog | undefined;
             if (!options.skipGeneration) {
                 changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
             }
-            logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`);
+            logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
             execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
             if (!options.skipGeneration) {
                 changeReadmeMd(packagePath);
@@ -155,8 +152,8 @@ export async function generateMgmt(options: {
                 }
             }
         } catch (e: any) {
-            logger.logError('Error:');
-            logger.logError(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            logger.error(`Failed to build for readme file '${options.readmeMd}'.\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
             if (outputPackageInfo) {
                 outputPackageInfo.result = 'failed';
             }
@@ -169,7 +166,5 @@ export async function generateMgmt(options: {
             }
         }
     }
-
-    logger.log(`>>>>>>>>>>>>>>>>>>> End: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
-    logger.log();
+    logger.info(`Generate SDK from '${options.readmeMd}' successfully.`);
 }

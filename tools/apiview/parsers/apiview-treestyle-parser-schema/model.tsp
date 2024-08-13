@@ -35,7 +35,7 @@ model ReviewLine {
    *  Similarly all method level code lines are added as children of it's class code line.*/
   Children?: Array<ReviewLine>;
   /** Set current line as hidden code line by default. .NET has hidden APIs and architects does not want to see them by default. */
-  ISHidden?: boolean;
+  IsHidden?: boolean;
 }
 
 
@@ -53,8 +53,6 @@ model ReviewToken {
   /** set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions 
    *  are usually excluded when comparing two revisions to avoid reporting them as API changes*/
   SkipDiff?: boolean = false;
-  /** This is set if API is marked as hidden */
-  IsHidden?: boolean = false;
   /** This is set if API is marked as deprecated */
   IsDeprecated?: boolean = false;
   /** Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name */

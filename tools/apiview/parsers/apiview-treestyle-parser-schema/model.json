@@ -129,7 +129,7 @@
                   },
                   "description": "Add any child lines as children. For e.g. all classes and namespace level methods are added as a children of namespace(module) level code line. \nSimilarly all method level code lines are added as children of it's class code line."
               },
-              "ISHidden": {
+              "IsHidden": {
                   "type": "boolean",
                   "description": "Set current line as hidden code line by default. .NET has hidden APIs and architects does not want to see them by default."
               }
@@ -184,11 +184,6 @@
                   "type": "boolean",
                   "default": false,
                   "description": "set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions \nare usually excluded when comparing two revisions to avoid reporting them as API changes"
-              },
-              "IsHidden": {
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This is set if API is marked as hidden"
               },
               "IsDeprecated": {
                   "type": "boolean",

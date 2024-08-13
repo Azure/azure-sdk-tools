@@ -105,10 +105,10 @@ export async function generateMgmt(options: {
                 }
             }
 
-            logger.logGreen(`rush update`);
-            execSync('rush update', {stdio: 'inherit'});
-            logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
-            execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+            logger.logGreen(`node common/scripts/install-run-rush.js update`);
+            execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+            logger.logGreen(`node common/scripts/install-run-rush.js build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+            execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
             logger.logGreen('Generating Changelog and Bumping Version...');
             let changelog: Changelog | undefined;
             if (!options.skipGeneration) {

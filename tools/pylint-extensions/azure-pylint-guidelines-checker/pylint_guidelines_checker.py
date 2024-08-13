@@ -2764,13 +2764,14 @@ class DoNotUseLegacyTyping(BaseChecker):
         ),
     }
 
-    def visit_functiontype(self, node):
+    def visit_functiondef(self, node):
         """Check that we aren't using legacy typing."""
-        self.add_message(
-            msgid=f"do-not-use-legacy-typing",
-            node=node,
-            confidence=None
-        )
+        if node.is_function and (node.type_comment_args or node.type_comment_returns):
+            self.add_message(
+                msgid=f"do-not-use-legacy-typing",
+                node=node,
+                confidence=None,
+            )
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):

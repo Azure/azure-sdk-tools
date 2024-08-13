@@ -4838,17 +4838,45 @@ class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
 
     def test_disallowed_typing(self):
         """Check that illegal method typing comments raise warnings"""
-        fnt = astroid.extract_node(
+        fdef = astroid.extract_node(
             """
-            def function(x):
-                # type: (str) -> str #@
+            def function(x): #@
+                # type: (str) -> str
                 pass
             """
         )
+        
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-use-legacy-typing",
-                node=fnt,
+                line=2,
+                node=fdef,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=12,
             )
         ):
-            self.checker.visit_functiontype(fnt)
+            self.checker.visit_functiondef(fdef)
+    
+    def test_allowed_typing(self):
+        """Check that allowed method typing comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x: str) -> str: #@
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+    def test_arbitrary_comments(self):
+        """Check that arbitrary comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # This is a comment
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)

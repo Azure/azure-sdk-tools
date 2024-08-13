@@ -40,6 +40,8 @@
     "semver": "^7.3.5",
     "shelljs": "^0.8.4",
     "simple-git": "^3.5.0",
+    "tslib": "^1.9.3",
+    "winston": "^3.13.1",
     "ts-morph": "^23.0.0",
     "typescript-codegen-breaking-change-detector": "^0.4.6",
     "yaml": "^1.10.2"

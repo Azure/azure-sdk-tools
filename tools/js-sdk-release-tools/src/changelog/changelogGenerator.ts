@@ -561,7 +561,7 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
             const newOpNames = operationGroupFromNew.methods.map(m => m.name);
             const newOpNameSet = new Set<string>(newOpNames);
             const unchangeOperationNames = oldOpNames.filter(opName => newOpNameSet.has(opName)).map(opName => opName);
-            logger.logWarn(`${unchangeOperationNames} operation names aren't changed, but signature may change, please check manually.`);
+            logger.warn(`'${unchangeOperationNames}' operation names aren't changed, but signature may change, please check manually.`);
             return;
         }
         
@@ -572,7 +572,7 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
             const newOpNames = operationGroupFromNew.properties.map(m => m.name);
             const newOpNameSet = new Set<string>(newOpNames);
             const unchangeOperationNames = oldOpNames.filter(opName => newOpNameSet.has(opName)).map(opName => opName);
-            logger.logWarn(`${unchangeOperationNames} operation names aren't changed, but signature may change, please check manually.`);
+            logger.warn(`'${unchangeOperationNames}' operation names aren't changed, but signature may change, please check manually.`);
             return;
         }
 

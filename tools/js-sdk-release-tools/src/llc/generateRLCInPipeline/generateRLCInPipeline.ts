@@ -18,6 +18,8 @@ import {
 } from '../utils/generateSampleReadmeMd';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile';
 import { getRelativePackagePath } from "../utils/utils";
+import { getGeneratedPackageDirectory } from "../../common/utils";
+import { remove } from 'fs-extra';
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -38,6 +40,9 @@ export async function generateRLCInPipeline(options: {
     let packagePath: string | undefined = undefined;
     let relativePackagePath: string | undefined = undefined;
     if (options.typespecProject) {
+        const generatedPackageDir = await getGeneratedPackageDirectory(options.typespecProject);
+        await remove(generatedPackageDir);
+
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
             if(options.sdkGenerationType === "command") {

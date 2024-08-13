@@ -18,6 +18,8 @@ import {
 } from '../utils/generateSampleReadmeMd';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile';
 import { getRelativePackagePath } from "../utils/utils";
+import { getGeneratedPackageDirectory } from "../../common/utils";
+import { remove } from 'fs-extra';
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -38,6 +40,10 @@ export async function generateRLCInPipeline(options: {
     let packagePath: string | undefined = undefined;
     let relativePackagePath: string | undefined = undefined;
     if (options.typespecProject) {
+        const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
+        const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject);
+        await remove(generatedPackageDir);
+
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
             if(options.sdkGenerationType === "command") {
@@ -62,12 +68,12 @@ export async function generateRLCInPipeline(options: {
                 });
                 logger.logGreen("End with TypeSpec command.");
             } else {
-                logger.logGreen("Run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
+                logger.logGreen("Run tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
-                const scriptCommand = ['pwsh', './eng/common/scripts/TypeSpec-Project-Process.ps1', tspDefDir,  options.gitCommitId, options.swaggerRepoUrl].join(" ");
+                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
                 logger.logGreen(`${scriptCommand}`);
                 execSync(scriptCommand, {stdio: 'inherit'});
-                logger.logGreen("End with ./eng/common/scripts/TypeSpec-Project-Process.ps1 script.");
+                logger.logGreen("End with tsp-client");
             } 
         }
     } else {
@@ -224,11 +230,11 @@ export async function generateRLCInPipeline(options: {
             }
         }
 
-        logger.logGreen(`rush update...`);
-        execSync('rush update', {stdio: 'inherit'});
-        logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+        logger.logGreen(`node common/scripts/install-run-rush.js update...`);
+        execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+        logger.logGreen(`node common/scripts/install-run-rush.js build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+        execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
         logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {

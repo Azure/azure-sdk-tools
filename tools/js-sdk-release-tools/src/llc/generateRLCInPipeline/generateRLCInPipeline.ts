@@ -98,9 +98,7 @@ export async function generateRLCInPipeline(options: {
                     }
                 } catch (e: any) {
                     logger.error(`Failed to parse autorestConfig from PR comment: \nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
-                    
-            logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
-                logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
+                    logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
                     throw e;
                 }
 

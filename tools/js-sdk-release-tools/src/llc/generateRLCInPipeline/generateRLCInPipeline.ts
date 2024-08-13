@@ -62,12 +62,12 @@ export async function generateRLCInPipeline(options: {
                 });
                 logger.info("End with TypeSpec command.");
             } else {
-                logger.info("Start to run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
+                logger.info("Start to generate code by tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
                 const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
-                logger.info("./eng/common/scripts/TypeSpec-Project-Process.ps1 script is ran successfully.");
+                logger.info("Generated code by tsp-client successfully.");
             } 
         }
     } else {

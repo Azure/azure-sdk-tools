@@ -4,6 +4,8 @@
 
 - Fix `--version` flag. (#8814)
 - Added `compare` command to compare a hand-authored Swagger to a TypeSpec-generated Swagger to understand the relevant differences between them.
+- Floating `@azure-tools/typespec-autorest` dependency from `>=0.44.0 <1.0.0`.
+- Bump `@autorest/openapi-to-typespec` dependency to `0.9.0`.
 
 ## 2024-08-08 - 0.11.1
 

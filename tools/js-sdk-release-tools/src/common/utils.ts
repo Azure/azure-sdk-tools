@@ -10,7 +10,6 @@ import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions } from 'child_process';
-import { outputFile } from 'fs-extra';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -19,16 +18,6 @@ const emitterName = '@azure-tools/typespec-ts';
 // TODO: remove it after we generate and use options by ourselves
 const messageToTspConfigSample =
     'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
-
-async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
-    const configPath = join(typeSpecDirectory, 'tspconfig.yaml');
-    const content = await readFile(configPath, { encoding: 'utf-8' });
-    const config = parse(content.toString());
-    if (!config) {
-        throw new Error(`Failed to parse tspconfig.yaml in ${typeSpecDirectory}`);
-    }
-    return config;
-}
 
 function printErrorDetails(output: { stdout: string; stderr: string, code: number | null } | undefined) {
     logger.logError(`Error details:`);
@@ -105,6 +94,16 @@ export function tryReadNpmPackageChangelog(packageFolderPath: string): string {
         logger.logWarn(`Failed to read NPM package's changelog "${changelogPath}": ${(err as Error)?.stack ?? err}`);
         return '';
     }
+}
+
+export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+    const configPath = join(typeSpecDirectory, 'tspconfig.yaml');
+    const content = await readFile(configPath, { encoding: 'utf-8' });
+    const config = parse(content.toString());
+    if (!config) {
+        throw new Error(`Failed to parse tspconfig.yaml in ${typeSpecDirectory}`);
+    }
+    return config;
 }
 
 // generated path is in posix format

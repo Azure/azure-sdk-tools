@@ -10,6 +10,8 @@ export class UserPreferenceModel {
     showComments: boolean
     showSystemComments: boolean
     useBetaIndexPage: boolean
+    disableCodeLinesLazyLoading: boolean
+
 
     constructor() {
         this.userName = '';
@@ -20,8 +22,10 @@ export class UserPreferenceModel {
         this.hideLeftNavigation = false;
         this.showHiddenApis = false
         this.showDocumentation = false;
-        this.showComments = false;
-        this.showSystemComments = false;
+        this.showComments = true;
+        this.showSystemComments = true;
         this.useBetaIndexPage = false;
+        this.disableCodeLinesLazyLoading = false;
+
     }
 }

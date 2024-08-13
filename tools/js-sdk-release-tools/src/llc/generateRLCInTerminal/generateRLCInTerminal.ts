@@ -22,12 +22,12 @@ export async function generateCodes(sdkRepo: string, packagePath: string, packag
 
 export async function buildGeneratedCodes(sdkrepo: string, packagePath: string, packageName: string) {
     shell.cd(sdkrepo);
-    logger.logGreen(`rush update`);
-    execSync('rush update', {stdio: 'inherit'});
-    logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+    logger.logGreen(`node common/scripts/install-run-rush.js update`);
+    execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+    logger.logGreen(`node common/scripts/install-run-rush.js build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
     // To build generated codes except test and sample, we need to change tsconfig.json.
     changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
-    execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
+    execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
     changeConfigOfTestAndSample(packagePath, ChangeModel.Revert, SdkType.Rlc);
     shell.cd(packagePath);
     logger.logGreen(`Generate changelog`);

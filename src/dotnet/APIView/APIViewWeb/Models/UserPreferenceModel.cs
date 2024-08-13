@@ -23,6 +23,7 @@ namespace APIViewWeb.Models
         internal bool? _hideRevisionsPageOptions;
         internal bool? _showComments;
         internal bool? _showSystemComments;
+        internal bool? _disableCodeLinesLazyLoading;
         internal bool? _useBetaIndexPage;
         internal string _theme;
 
@@ -130,6 +131,13 @@ namespace APIViewWeb.Models
         {
             get => _showSystemComments ?? true;
             set => _showSystemComments = value;
+        }
+
+        [Name("DisableCodeLinesLazyLoading")]
+        public bool? DisableCodeLinesLazyLoading
+        {
+            get => _disableCodeLinesLazyLoading ?? false;
+            set => _disableCodeLinesLazyLoading = value;
         }
 
         [Name("UseBetaIndexPage")]

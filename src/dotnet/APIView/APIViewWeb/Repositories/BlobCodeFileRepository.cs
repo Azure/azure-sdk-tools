@@ -57,23 +57,11 @@ namespace APIViewWeb
             return codeFile;
         }
 
-        public async Task<CodeFile> GetCodeFileWithCompressionAsync(string revisionId, string codeFileId, bool updateCache = true)
+        public async Task<CodeFile> GetCodeFileWithCompressionAsync(string revisionId, string codeFileId)
         {
             var client = GetBlobClient(revisionId, codeFileId, out var key);
-
-            if (_cache.TryGetValue<CodeFile>(key, out var codeFile))
-            {
-                return codeFile;
-            }
             var info = await client.DownloadAsync();
-            codeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: true);
-            if (updateCache)
-            {
-                using var _ = _cache.CreateEntry(key)
-                    .SetSlidingExpiration(TimeSpan.FromMinutes(10))
-                    .SetValue(codeFile);
-            }
-            return codeFile;
+            return await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: true);
         }
 
         public async Task UpsertCodeFileAsync(string revisionId, string codeFileId, CodeFile codeFile)

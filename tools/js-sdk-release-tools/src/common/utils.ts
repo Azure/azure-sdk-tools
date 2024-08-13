@@ -20,7 +20,6 @@ const messageToTspConfigSample =
 async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
     const configPath = join(typeSpecDirectory, 'tspconfig.yaml');
     const content = await readFile(configPath, { encoding: 'utf-8' });
-    console.log('content', content.toString());
     const config = parse(content.toString());
     if (!config) {
         throw new Error(`Failed to parse tspconfig.yaml in ${typeSpecDirectory}`);

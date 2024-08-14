@@ -1,12 +1,13 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';
-import { getTypeClass } from 'src/app/_helpers/common-helpers';
+import { getTypeClass, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { take } from 'rxjs';
 import { Review } from 'src/app/_models/review';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-conversations',
@@ -15,13 +16,18 @@ import { UserProfile } from 'src/app/_models/userProfile';
 })
 export class ConversationsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];
+  @Input() activeApiRevisionId: string | null = null;
   @Input() comments: CommentItemModel[] = [];
   @Input() review : Review | undefined = undefined;
   @Input() userProfile : UserProfile | undefined;
 
-  commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
+  @Output() scrollToNodeEmitter : EventEmitter<string> = new EventEmitter<string>();
+  @Output() numberOfActiveThreadsEmitter : EventEmitter<number> = new EventEmitter<number>();
 
-  constructor(private commentsService: CommentsService) { }
+  commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
+  numberOfActiveThreads: number = 0;
+
+  constructor(private commentsService: CommentsService, private route: ActivatedRoute, private router: Router) { }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['apiRevisions'] || changes['comments']) {
@@ -33,6 +39,7 @@ export class ConversationsComponent implements OnChanges {
 
   createCommentThreads() {
     this.commentThreads = new Map<string, CodePanelRowData[]>();
+    this.numberOfActiveThreads = 0;
     const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
     const groupedComments = this.comments
       .reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
@@ -65,15 +72,20 @@ export class ConversationsComponent implements OnChanges {
           codePanelRowData.comments = comments;
           codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
 
+          if (!codePanelRowData.isResolvedCommentThread) {
+            this.numberOfActiveThreads++;
+          }
+
           if (this.commentThreads.has(apiRevisionIdForThread)) {
             this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);
           }
           else {
-          this.commentThreads.set(apiRevisionIdForThread, [codePanelRowData]);
+            this.commentThreads.set(apiRevisionIdForThread, [codePanelRowData]);
           }
         }
       }
     }
+    this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
   }
 
   getAPIRevisionWithComments() {
@@ -82,6 +94,18 @@ export class ConversationsComponent implements OnChanges {
 
   getAPIRevisionTypeClass(apiRevision: APIRevision) {
     return getTypeClass(apiRevision.apiRevisionType);
+  }
+
+  navigateToCommentThreadOnRevisionPage(event: Event) {
+    const target = event.target as Element;
+    const revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
+    const elementIdForConversationGroup = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+
+    if (this.activeApiRevisionId && this.activeApiRevisionId === revisionIdForConversationGroup) {
+      this.scrollToNodeEmitter.emit(elementIdForConversationGroup);
+    } else {
+      window.open(`review/${this.review?.id}?activeApiRevisionId=${revisionIdForConversationGroup}&nId=${elementIdForConversationGroup}`, '_blank');
+    }
   }
   
   handleSaveCommentActionEmitter(data: any) {

@@ -48,6 +48,7 @@ export class ReviewPageComponent implements OnInit {
   preferredApprovers : string[] = [];
   hasFatalDiagnostics : boolean = false;
   hasActiveConversation : boolean = false;
+  numberOfActiveConversation : number = 0;
   hasHiddenAPIs : boolean = false;
   loadFailed : boolean = false;
 
@@ -104,7 +105,10 @@ export class ReviewPageComponent implements OnInit {
     this.loadPreferredApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
     this.loadComments();
+    this.createSideMenu();
+  }
 
+  createSideMenu() {
     this.sideMenu = [
       {
           icon: 'bi bi-clock-history',
@@ -112,6 +116,7 @@ export class ReviewPageComponent implements OnInit {
       },
       {
         icon: 'bi bi-chat-left-dots',
+        badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
       }
     ];
@@ -417,6 +422,16 @@ export class ReviewPageComponent implements OnInit {
 
   handleHasActiveConversationEmitter(value: boolean) {
     this.hasActiveConversation = value;
+  }
+
+  handleNumberOfActiveThreadsEmitter(value: number) {
+    this.numberOfActiveConversation = value;
+    this.createSideMenu();
+  }
+
+  handleScrollToNodeEmitter (value: string) {
+    this.conversationSidePanel = false;
+    this.codePanelComponent.scrollToNode(undefined, value);
   }
 
   checkForFatalDiagnostics() {

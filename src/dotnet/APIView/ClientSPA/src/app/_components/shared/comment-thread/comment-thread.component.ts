@@ -6,7 +6,6 @@ import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { first } from 'rxjs';
 
 @Component({
   selector: 'app-comment-thread',

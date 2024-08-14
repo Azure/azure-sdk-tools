@@ -38,10 +38,6 @@ describe('CommentThreadComponent', () => {
         changeHistory: [ {
           changeAction: 'resolved', 
           changedBy: 'test user 1',
-        },
-        {
-          changeAction: 'resolved', 
-          changedBy: 'test user 2',
         }]
       } as CommentItemModel;
       const comment2 = {

@@ -6,6 +6,8 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
 import { APIRevision } from 'src/app/_models/revision';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
 
 describe('ConversationComponent', () => {
   let component: ConversationsComponent;
@@ -19,6 +21,17 @@ describe('ConversationComponent', () => {
         ReviewPageModule,
         SharedAppModule
       ],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({ reviewId: 'test' }),
+            },
+            queryParams: of(convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' }))
+          }
+        }
+      ]
     });
     fixture = TestBed.createComponent(ConversationsComponent);
     component = fixture.componentInstance;
@@ -69,7 +82,8 @@ describe('ConversationComponent', () => {
         {
           id: '4',
           elementId: '1',
-          apiRevisionId: '2'
+          apiRevisionId: '2',
+          isResolved: true
         },
         {
           id: '5',
@@ -79,7 +93,8 @@ describe('ConversationComponent', () => {
         {
           id: '6',
           elementId: '3',
-          apiRevisionId: '2'
+          apiRevisionId: '2',
+          isResolved: true
         },
         {
           id: '7',
@@ -102,6 +117,7 @@ describe('ConversationComponent', () => {
 
       const keys = Array.from(component.commentThreads.keys());
       expect(keys).toEqual(['2', '4']);
+      expect(component.numberOfActiveThreads).toBe(1);
     });
   });
 });

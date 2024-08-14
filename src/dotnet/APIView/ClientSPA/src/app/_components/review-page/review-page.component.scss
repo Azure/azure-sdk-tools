@@ -11,6 +11,18 @@
         display: block;
         min-width: 0;
     }
+
+    .side-menu {
+        .p-menuitem-link {
+            font-size: x-large;
+        }
+        
+        p-badge {
+            position: relative;
+            left: -1.2rem;
+            top: -1.4rem;
+        }
+    }
     
     .p-menu {
         background: var(--base-fg-color);
@@ -42,9 +54,5 @@
 
     .revisions-sidebar, .conversation-sidebar {
         width: 75dvw;
-    }
-
-    .conversation-sidebar {
-        width: 60dvw;
     }
 }

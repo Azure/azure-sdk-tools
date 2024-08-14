@@ -1,5 +1,9 @@
 # Release
 
+## 2024-08-14 - 0.12.0
+
+- Check for error diagnostics are during TypeSpec compilation and error exit if found. (#8815, #8777, #8555)
+
 ## 2024-08-13 - 0.11.2
 
 - Fix `--version` flag. (#8814)

@@ -173,7 +173,7 @@ export class Changelog {
     // TODO: add modular
     public async postProcess(baselinePackageRoot: string, currentPackageRoot: string, sdkType: SDKType): Promise<void> {
         if (sdkType !== SDKType.RestLevelClient) {
-            logger.logWarn(`No need to post process changelog for ${sdkType}.`)
+            logger.warn(`No need to post process changelog for ${sdkType}.`)
             return;
         }
         try {
@@ -190,8 +190,8 @@ export class Changelog {
     }
 
     private processInlineMessage(messages: InlineDeclarationNameSetMessage[]) {
-        logger.logInfo('Before post process rename messages in changelog')
-        logger.logGreen(this.displayChangeLog());
+        logger.info('Before post process rename messages in changelog')
+        logger.info(this.displayChangeLog());
         
         if (messages.length !== 1) {
             throw new Error(`Multiple inline messages are unsupported`)
@@ -199,8 +199,8 @@ export class Changelog {
         const postProcesser = new RestLevelClientChangelogPostProcessor(this, messages[0]);
         postProcesser.run();
 
-        logger.logInfo('After post process rename messages in changelog')
-        logger.logGreen(this.displayChangeLog());
+        logger.info('After post process rename messages in changelog')
+        logger.info(this.displayChangeLog());
     }
 
     private async postProcessForRestLevelClient(messageMap: Map<string, RuleMessage[] | undefined>) {

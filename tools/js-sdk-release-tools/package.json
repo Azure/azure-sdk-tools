@@ -2,14 +2,14 @@
   "name": "@azure-tools/js-sdk-release-tools",
   "version": "2.7.11",
   "description": "",
-  "workspaces": [
-    "workspaces/*"
+  "files": [
+    "dist"
   ],
   "scripts": {
-    "install:all": "npm install --workspaces && npm install",
-    "build:all": "npm run build --workspaces && npm run build",
-    "pack:all": "npm run pack:typescript-codegen-breaking-change-detector && npm pack",
-    "pack:typescript-codegen-breaking-change-detector": "cd workspaces/typescript-codegen-breaking-change-detector && npm pack && cd ../..",
+    "install:all": "npm run install:next-detector && npm install",
+    "install:next-detector": "cd ./workspaces/typescript-codegen-breaking-change-detector/ && npm install && cd ..",
+    "build:all": "npm run install:next-detector && npm run build:next-detector && npm run build",
+    "build:next-detector": "cd workspaces/typescript-codegen-breaking-change-detector && npm run build && cd ../..",
     "dev": "tsx watch src/changelogToolCli.ts",
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",
@@ -40,10 +40,10 @@
     "semver": "^7.3.5",
     "shelljs": "^0.8.4",
     "simple-git": "^3.5.0",
-    "tslib": "^1.9.3",
-    "winston": "^3.13.1",
     "ts-morph": "^23.0.0",
-    "typescript-codegen-breaking-change-detector": "^0.4.6",
+    "tslib": "^1.9.3",
+    "typescript-codegen-breaking-change-detector": "0.4.6",
+    "winston": "^3.13.1",
     "yaml": "^1.10.2"
   },
   "devDependencies": {

@@ -39,6 +39,8 @@ namespace RandomNamespace
 
 
         [Theory]
+        [InlineData("public void JsonModelWriteCore(Utf8JsonWriter writer) {}")]
+        [InlineData("public void JsonModelCreateCore(ref Utf8JsonReader reader) {}")]
         [InlineData("internal class Class: System.IProgress<JsonElement> { public void Report (JsonElement value) {} }")]
         [InlineData("public void Report(string value) {}")]
         public async Task AZC0014NotProducedForNonPublicApisOrAllowedTypes(string usage)

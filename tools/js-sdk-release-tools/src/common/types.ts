@@ -29,7 +29,7 @@ export interface PackageResult {
     path: string[];
     changelog: ChangelogResult;
     artifacts: string[];
-    apiViewArtifact: string[];
+    apiViewArtifact: string;
     result: 'succeeded' | 'failed' | 'warning';
     packageFolder: string;
     typespecProject?: string[];

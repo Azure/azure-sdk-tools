@@ -12,7 +12,7 @@ export function initPackageResult(): PackageResult {
         version: '',
         language: 'JavaScript',
         path: ['rush.json', 'common/config/rush/pnpm-lock.yaml'],
-        apiViewArtifact: [],
+        apiViewArtifact: '',
         packageFolder: '',
         typespecProject: [],
         artifacts: [],

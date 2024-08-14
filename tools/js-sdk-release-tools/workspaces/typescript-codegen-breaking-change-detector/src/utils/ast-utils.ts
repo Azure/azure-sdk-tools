@@ -41,15 +41,18 @@ function isEnumDeclarationNode(node: TSESTree.Node): node is TSESTree.TSEnumDecl
   return node.type === TSESTree.AST_NODE_TYPES.TSEnumDeclaration;
 }
 
-function getTypeReferencesUnder(node: Node) {
+function getNewTypeReferencesUnder(node: Node, found: Set<string>) {
   const types: TypeReferenceNode[] = [];
   if (!node) return types;
   node.forEachChild((child) => {
-    if (Node.isTypeReference(child)) {
+    if (Node.isTypeReference(child) && !found.has(child.getText())) {
       types.push(child);
     }
-    const childTypeAliases = getTypeReferencesUnder(child);
-    types.push(...childTypeAliases);
+
+    const childTypes = getNewTypeReferencesUnder(child, found);
+    childTypes.forEach(c => {
+        types.push(c);
+    });
   });
   return types;
 }
@@ -58,22 +61,26 @@ function handleTypeReference<
   TEsDeclaration extends TSESTree.TSInterfaceDeclaration | TSESTree.TSTypeAliasDeclaration | TSESTree.TSEnumDeclaration,
   TDeclaration extends TypeAliasDeclaration | InterfaceDeclaration | EnumDeclaration,
 >(
-  r: TypeReferenceNode,
+  reference: TypeReferenceNode,
   scope: Scope,
   service: ParserServicesWithTypeInformation,
   list: TDeclaration[],
   findNext: (node: Node) => void,
   kind: SyntaxKind,
   typeGuardForEs: (node: TSESTree.Node) => node is TEsDeclaration,
-  typeGuardForMo: (node: Node) => node is TDeclaration
+  typeGuardForMo: (node: Node) => node is TDeclaration,
+  found: Set<string>
 ) {
-  const esDeclaration = tryFindDeclaration(r.getText(), scope, typeGuardForEs, false);
+  const esDeclaration = tryFindDeclaration(reference.getText(), scope, typeGuardForEs, false);
   if (!esDeclaration) return;
   const declaration = convertToMorphNode(esDeclaration, service).asKindOrThrow(kind);
   if (!typeGuardForMo(declaration)) {
-    throw new Error(`Failed to find expected type from reference ${r.getText()}`);
+    throw new Error(`Failed to find expected type from reference ${reference.getText()}`);
   }
+  const foundDeclarations = new Set<string>(list.map(i => i.getName()));
+  if (foundDeclarations.has(declaration.getName())) return;
   list.push(declaration);
+  found.add(declaration.getName());
   findNext(declaration);
 }
 
@@ -112,22 +119,39 @@ export function findAllRenameableDeclarationsUnder(
   node: Node,
   scope: Scope,
   service: ParserServicesWithTypeInformation
-): { interfaces: Set<InterfaceDeclaration>; typeAliases: Set<TypeAliasDeclaration>; enums: Set<EnumDeclaration> } {
-  const interfaces = new Set<InterfaceDeclaration>();
-  const typeAliases = new Set<TypeAliasDeclaration>();
-  const enums = new Set<EnumDeclaration>();
+): { interfaces: InterfaceDeclaration[]; typeAliases: TypeAliasDeclaration[]; enums: EnumDeclaration[] } {
+  return findAllRenameableDeclarationsUnderCore(node, scope, service, new Set<string>());
+}
+
+// TODO: move 
+function findAllRenameableDeclarationsUnderCore(
+  node: Node,
+  scope: Scope,
+  service: ParserServicesWithTypeInformation,
+  found: Set<string>
+): { interfaces: InterfaceDeclaration[]; typeAliases: TypeAliasDeclaration[]; enums: EnumDeclaration[] } {
+  const interfaces: InterfaceDeclaration[] = [];
+  const typeAliases: TypeAliasDeclaration[] = [];
+  const enums: EnumDeclaration[] = [];
   if (!node) return { interfaces, typeAliases, enums };
-  console.log("🚀 ~ node:", node.getText());
   const findNext = (node: Node) => {
-    const result = findAllRenameableDeclarationsUnder(node, scope, service);
-    
-    interfaces.(result.interfaces);
-    typeAliases.add(result.typeAliases);
+    const result = findAllRenameableDeclarationsUnderCore(node, scope, service, found);
+    interfaces.push(...result.interfaces);
+    typeAliases.push(...result.typeAliases);
     enums.push(...result.enums);
   };
 
-  const references = getTypeReferencesUnder(node);
+  console.log('|||||||||||||||||||||||||||||||||||||||||||')
+  console.log('|||||||||||||||||||||||||||||||||||||||||||')
+  console.log('|||||||||||||||||||||||||||||||||||||||||||')
+  console.log('****************** node', node.getText())
+  console.log('****************** found', found)
+  console.log('|||||||||||||||||||||||||||||||||||||||||||')
+  console.log('|||||||||||||||||||||||||||||||||||||||||||')
+  const references = getNewTypeReferencesUnder(node, found);
+  console.log('****************** found', found)
   references.forEach((r) => {
+  console.log('****************** ref', r.getText())
     handleTypeReference(
       r,
       scope,
@@ -136,7 +160,8 @@ export function findAllRenameableDeclarationsUnder(
       findNext,
       SyntaxKind.InterfaceDeclaration,
       isInterfaceDeclarationNode,
-      Node.isInterfaceDeclaration
+      Node.isInterfaceDeclaration,
+      found
     );
     handleTypeReference(
       r,
@@ -146,7 +171,8 @@ export function findAllRenameableDeclarationsUnder(
       findNext,
       SyntaxKind.TypeAliasDeclaration,
       isTypeAliasDeclarationNode,
-      Node.isTypeAliasDeclaration
+      Node.isTypeAliasDeclaration,
+      found
     );
     handleTypeReference(
       r,
@@ -156,7 +182,8 @@ export function findAllRenameableDeclarationsUnder(
       findNext,
       SyntaxKind.EnumDeclaration,
       isEnumDeclarationNode,
-      Node.isEnumDeclaration
+      Node.isEnumDeclaration,
+      found
     );
   });
   return { interfaces, typeAliases, enums };

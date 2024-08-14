@@ -46,7 +46,7 @@ const rule: CreateOperationRule = (baselineParsedResult: ParseForESLintResult | 
   }
   console.log('--------------start -1.1')
   const baselineGlobalScope = getGlobalScope(baselineParsedResult.scopeManager);
-  const baselineInlineDeclarationNameSet = getInlineDeclarationNameSet(baselineService, baselineGlobalScope);
+//   const baselineInlineDeclarationNameSet = getInlineDeclarationNameSet(baselineService, baselineGlobalScope);
 
   return createOperationRuleListener(
     ignoreInlineDeclarationsInOperationGroup,

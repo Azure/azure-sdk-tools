@@ -3,6 +3,7 @@ import { mkdirp, pathExists } from 'fs-extra';
 
 import { detectBreakingChangesBetweenPackages } from '../azure/detect-breaking-changes.js';
 import { join } from 'node:path';
+import { InlineDeclarationNameSetMessage } from '../azure/common/types.js';
 
 function getFormattedDate(): string {
   const today = new Date();
@@ -44,6 +45,11 @@ async function test() {
       tempFolder,
       true
     );
+    console.log('-------------')
+    const messages = ([...messagesMap][0][1] as InlineDeclarationNameSetMessage[])!
+    const currents = messages.map(m => m.current)
+    console.log(currents)
+    console.log(Object.keys(currents))
     // expect(messagesMap.size).toBe(1);
     // TODO: add more checks
 }

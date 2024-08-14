@@ -117,6 +117,7 @@ export function findAllRenameableDeclarationsUnder(
   const typeAliases: TypeAliasDeclaration[] = [];
   const enums: EnumDeclaration[] = [];
   if (!node) return { interfaces, typeAliases, enums };
+//   console.log("🚀 ~ node:", node.getText());
   const findNext = (node: Node) => {
     const result = findAllRenameableDeclarationsUnder(node, scope, service);
     interfaces.push(...result.interfaces);

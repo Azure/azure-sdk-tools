@@ -208,6 +208,7 @@ export class Changelog {
         const key = Array.from(messageMap.keys())[0]
         const messages = messageMap.get(key)!
         const inlineMessages = messages.filter(m => m.kind === RuleMessageKind.InlineDeclarationNameSetMessage).map(m => m as InlineDeclarationNameSetMessage)
+        console.log("🚀 ~ Changelog ~ postProcessForRestLevelClient ~ inlineMessages:", inlineMessages)
         this.processInlineMessage(inlineMessages)
     }
 }

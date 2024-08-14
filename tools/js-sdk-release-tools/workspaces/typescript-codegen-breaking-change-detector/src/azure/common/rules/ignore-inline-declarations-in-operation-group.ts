@@ -23,10 +23,13 @@ import { Scope } from '@typescript-eslint/scope-manager';
 import { getSettings } from '../../../utils/common-utils.js';
 
 function getInlineDeclarationNameSet(service: ParserServicesWithTypeInformation, scope: Scope) {
+  console.log('--------------start 0')
   const inlineDeclarationMap = new Map<string, NodeContext>();
   const routes = findDeclaration('Routes', scope, isInterfaceDeclarationNode);
   const moNode = convertToMorphNode(routes, service);
+  console.log('--------------start')
   const result = findAllRenameableDeclarationsUnder(moNode, scope, service);
+  console.log('--------------end')
   result.interfaces.forEach((i) => inlineDeclarationMap.set(i.getName(), { node: i, used: false }));
   result.typeAliases.forEach((t) => inlineDeclarationMap.set(t.getName(), { node: t, used: false }));
   result.enums.forEach((e) => inlineDeclarationMap.set(e.getName(), { node: e, used: false }));
@@ -34,12 +37,14 @@ function getInlineDeclarationNameSet(service: ParserServicesWithTypeInformation,
 }
 
 const rule: CreateOperationRule = (baselineParsedResult: ParseForESLintResult | undefined) => {
+  console.log('--------------start -1.01')
   if (!baselineParsedResult)
     throw new Error(`ParseForESLintResult is required in ${ignoreInlineDeclarationsInOperationGroup} rule`);
   const baselineService = baselineParsedResult.services;
   if (!isParseServiceWithTypeInfo(baselineService)) {
     throw new Error(`Failed to get ParserServicesWithTypeInformation. It indicates the parser configuration is wrong.`);
   }
+  console.log('--------------start -1.1')
   const baselineGlobalScope = getGlobalScope(baselineParsedResult.scopeManager);
   const baselineInlineDeclarationNameSet = getInlineDeclarationNameSet(baselineService, baselineGlobalScope);
 

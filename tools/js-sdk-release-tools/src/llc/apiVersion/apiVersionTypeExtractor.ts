@@ -7,6 +7,7 @@ import { findParametersPath, getApiVersionTypeFromOperations, getApiVersionTypeF
 const findRestClientPath = (packageRoot: string): string => {
     const restPath = path.join(packageRoot, "src/");
     const fileNames = shell.ls(restPath);
+    console.log("🚀 ~ findRestClientPath ~ fileNames:", fileNames)
     const clientFiles = fileNames.filter((f) => f.endsWith("Client.ts"));
     if (clientFiles.length !== 1)
         throw new Error(`Single client is supported, but found "${clientFiles}" in ${restPath}`);

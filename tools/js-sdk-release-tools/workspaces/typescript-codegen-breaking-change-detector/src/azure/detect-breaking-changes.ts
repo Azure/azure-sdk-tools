@@ -70,6 +70,7 @@ async function prepareProject(
     loadCodeFromApiView(currentPackageFolder),
     loadCodeFromApiView(baselinePackageFolder),
   ]);
+  console.log('--------------loaded api view')
 
   const relativeCurrentPath = join('current', 'review', 'index.ts');
   const relativeBaselinePath = join('baseline', 'review', 'index.ts');
@@ -81,6 +82,7 @@ async function prepareProject(
     outputFile(currentPath, currentCode, 'utf-8'),
     outputFile(baselinePath, baselineCode, 'utf-8'),
   ]);
+  console.log('--------------ourput file')
   return {
     root: tempFolder,
     baseline: {
@@ -109,6 +111,7 @@ async function parseBaselinePackage(projectContext: ProjectContext): Promise<Par
 
 async function detectBreakingChangesCore(projectContext: ProjectContext): Promise<RuleMessage[] | undefined> {
   try {
+    console.log('--------------start aaa')
     const breakingChangeResults: RuleMessage[] = [];
     const baselineParsed = await parseBaselinePackage(projectContext);
     const linter = new TSESLint.Linter({ cwd: projectContext.root });
@@ -174,7 +177,7 @@ export async function detectBreakingChangesBetweenPackages(
       const apiViewBasename = basename(relativeApiViewPath);
       const currentApiViewPath = join(currentPackageFolder!, relativeApiViewPath);
       if (!(await exists(currentApiViewPath))) throw new Error(`Failed to find API view: ${currentApiViewPath}`);
-
+      console.log('--------------prepare project')
       const projectContext = await prepareProject(currentApiViewPath, baselineApiViewPath, tempFolder!);
       const messages = await detectBreakingChangesCore(projectContext);
       return { name: apiViewBasename, messages };

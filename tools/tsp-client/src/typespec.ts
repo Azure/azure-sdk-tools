@@ -1,5 +1,14 @@
-import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions, formatDiagnostic } from "@typespec/compiler";
-import { ModuleResolutionResult, resolveModule, ResolveModuleHost } from "@typespec/compiler/module-resolver";
+import {
+  resolvePath,
+  getDirectoryPath,
+  ResolveCompilerOptionsOptions,
+  formatDiagnostic,
+} from "@typespec/compiler";
+import {
+  ModuleResolutionResult,
+  resolveModule,
+  ResolveModuleHost,
+} from "@typespec/compiler/module-resolver";
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
@@ -19,7 +28,9 @@ export function resolveTspConfigUrl(configUrl: string): {
 } {
   let resolvedConfigUrl = configUrl;
 
-  const res = configUrl.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')
+  const res = configUrl.match(
+    "^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$",
+  );
   if (res && res.groups) {
     if (res.groups["urlRoot"]! === "github") {
       resolvedConfigUrl = configUrl.replace("github.com", "raw.githubusercontent.com");
@@ -30,24 +41,23 @@ export function resolveTspConfigUrl(configUrl: string): {
       commit: res.groups!["commit"]!,
       repo: res.groups!["repo"]!,
       path: res.groups!["path"]!,
-    }
+    };
   } else {
     throw new Error(`Invalid tspconfig.yaml url: ${configUrl}`);
   }
 }
 
-
 export async function discoverMainFile(srcDir: string): Promise<string> {
-  Logger.debug(`Discovering entry file in ${srcDir}`)
+  Logger.debug(`Discovering entry file in ${srcDir}`);
   let entryTsp = "";
-  const files = await readdir(srcDir, {recursive: true });
+  const files = await readdir(srcDir, { recursive: true });
   for (const file of files) {
     if (file.includes("client.tsp") || file.includes("main.tsp")) {
       entryTsp = file;
       Logger.debug(`Found entry file: ${entryTsp}`);
       return entryTsp;
     }
-  };
+  }
   throw new Error(`No main.tsp or client.tsp found`);
 }
 
@@ -73,7 +83,7 @@ export async function compileTsp({
       "emitter-output-dir": outputDir,
     },
   };
-  const emitterOverrideOptions = overrideOptions[emitterPackage] ?? {[emitterPackage]: {}};
+  const emitterOverrideOptions = overrideOptions[emitterPackage] ?? { [emitterPackage]: {} };
   if (saveInputs) {
     emitterOverrideOptions["save-inputs"] = "true";
   }
@@ -98,21 +108,44 @@ export async function compileTsp({
   });
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
   if (diagnostics.length > 0) {
+    let errorDiagnostic = false;
     // This should not happen, but if it does, we should log it.
-    Logger.error("Diagnostics were reported while resolving compiler options. Use the `--debug` flag to see the diagnostic output.")
-    diagnostics.forEach((diagnostic) => { Logger.debug(formatDiagnostic(diagnostic)); });
-    return false;
+    Logger.warn(
+      "Diagnostics were reported while resolving compiler options. Use the `--debug` flag to see if there is warning diagnostic output.",
+    );
+    for (const diagnostic of diagnostics) {
+      if (diagnostic.severity === "error") {
+        Logger.error(formatDiagnostic(diagnostic));
+        errorDiagnostic = true;
+      } else {
+        Logger.debug(formatDiagnostic(diagnostic));
+      }
+    }
+    if (errorDiagnostic) {
+      process.exit(1);
+    }
   }
 
   const program = await compile(NodeHost, resolvedMainFilePath, options);
 
   if (program.diagnostics.length > 0) {
-    Logger.error("Diagnostics were reported during compilation. Use the `--debug` flag to see the diagnostic output.");
-    program.diagnostics.forEach((diagnostic) => { Logger.debug(formatDiagnostic(diagnostic)); });
-    return false;
-  } else {
-    Logger.success("generation complete");
+    let errorDiagnostic = false;
+    Logger.warn(
+      "Diagnostics were reported during compilation. Use the `--debug` flag to see if there is warning diagnostic output.",
+    );
+    for (const diagnostic of program.diagnostics) {
+      if (diagnostic.severity === "error") {
+        Logger.error(formatDiagnostic(diagnostic));
+        errorDiagnostic = true;
+      } else {
+        Logger.debug(formatDiagnostic(diagnostic));
+      }
+    }
+    if (errorDiagnostic) {
+      process.exit(1);
+    }
   }
+  Logger.success("generation complete");
   return true;
 }
 

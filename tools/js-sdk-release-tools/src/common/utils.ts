@@ -113,7 +113,7 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
-export async function getGeneratedPackageDirectory(typeSpecDirectory: string): Promise<string> {
+export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
     const tspConfig = await loadTspConfig(typeSpecDirectory);
     const serviceDir = tspConfig.parameters?.['service-dir']?.default;
     if (!serviceDir) {
@@ -123,7 +123,7 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string): P
     if (!packageDir) {
         throw new Error(`Misses package-dir in ${emitterName} options of tspconfig.yaml. ${messageToTspConfigSample}`);
     }
-    const packageDirFromRoot = posix.join(serviceDir, packageDir);
+    const packageDirFromRoot = posix.join(sdkRepoRoot, serviceDir, packageDir);
     return packageDirFromRoot;
 }
 

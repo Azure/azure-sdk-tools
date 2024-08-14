@@ -55,7 +55,7 @@ export async function buildPackage(packageDirectory: string, versionPolicyName: 
         projectFolder: packageDirectory,
         versionPolicyName: versionPolicyName
     });
-    // TODO: use script
+    // TODO: use rush script
     await runCommand(`rush`, ['update'], runCommandOptions);
     logger.info(`Rush update successfully.`);
     await runCommand('rush', ['build', '-t', name, '--verbose'], runCommandOptions);

@@ -123,9 +123,12 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
 
             case SDKType.ModularClient: {
                 const typeSpecDirectory = path.posix.join(specFolder, typespecProject!);
+                const sdkRepoRoot = String(shell.pwd());
                 const skip = skipGeneration ?? false;
                 const repoUrl = repoHttpsUrl;
                 const options: ModularClientPackageOptions = {
+                    sdkRepoRoot,
+                    specRepoRoot: specFolder,
                     typeSpecDirectory,
                     gitCommitId,
                     skip,

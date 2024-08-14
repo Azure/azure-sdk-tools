@@ -19,7 +19,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
     logger.info(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
     try {
-        const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory);
+        const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
         await remove(packageDirectory);
 
         const generatedPackageDir = await generateTypeScriptCodeFromTypeSpec(options);

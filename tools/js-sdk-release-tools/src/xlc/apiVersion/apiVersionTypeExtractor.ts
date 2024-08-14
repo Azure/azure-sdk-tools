@@ -4,7 +4,6 @@ import { IApiVersionTypeExtractor } from "../../common/interfaces";
 import * as mlcApi from '../../mlc/apiVersion/apiVersionTypeExtractor'
 import * as hlcApi from '../../hlc/apiVersion/apiVersionTypeExtractor'
 
-// TODO: move to x-level-client folder
 export const getApiVersionType: IApiVersionTypeExtractor = (packageRoot: string): ApiVersionType => {
     const sdkType = getSDKType(packageRoot);
     switch (sdkType) {

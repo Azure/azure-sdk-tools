@@ -45,6 +45,8 @@ export type VersionPolicyName = 'management' | 'client';
 export type EmitterName = '@azure-tools/typespec-ts' | '';
 
 export interface ModularClientPackageOptions {
+    sdkRepoRoot: string;
+    specRepoRoot: string;
     typeSpecDirectory: string;
     gitCommitId: string;
     skip: boolean;

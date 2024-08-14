@@ -41,7 +41,7 @@ export async function generateRLCInPipeline(options: {
     let relativePackagePath: string | undefined = undefined;
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
-        const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject);
+        const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
         await remove(generatedPackageDir);
 
         if (!options.skipGeneration) {

@@ -1,3 +1,4 @@
+import { posix } from 'node:path';
 import { Changelog } from '../changelog/changelogGenerator';
 import { ChangelogResult, NpmPackageInfo, PackageResult } from './types';
 
@@ -36,9 +37,10 @@ export function updateNpmPackageResult(
     typeSpecDirectory: string,
     generatedPackageDirectory: string
 ): void {
+    const posixGeneratedPackageDirectory = posix.normalize(generatedPackageDirectory);
     packageResult.packageName = npmPackageInfo.name;
     packageResult.version = npmPackageInfo.version;
-    packageResult.typespecProject = [typeSpecDirectory];
-    packageResult.packageFolder = generatedPackageDirectory;
-    packageResult.path.push(generatedPackageDirectory);
+    packageResult.typespecProject = [posix.normalize(typeSpecDirectory)];
+    packageResult.packageFolder = posixGeneratedPackageDirectory;
+    packageResult.path.push(posixGeneratedPackageDirectory);
 }

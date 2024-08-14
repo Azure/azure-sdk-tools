@@ -514,3 +514,4 @@ tools/apiview/emitters/cadl-apiview/cadl-output/
 tools/apiview/emitters/cadl-apiview/temp/
 tools/apiview/emitters/typespec-apiview/tsp-output/
 tools/apiview/emitters/typespec-apiview/temp/
+tools/js-sdk-release-tools/azure-rest-load-testing-1.0.0/

@@ -3,7 +3,7 @@ import { logger } from '../utils/logger';
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
-import { posix, join } from 'node:path';
+import { posix, join, normalize } from 'node:path';
 import { PackageResult, VersionPolicyName } from './types';
 import { glob } from 'glob'
 
@@ -42,7 +42,7 @@ async function packPackage(packageDirectory: string) {
 }
 
 async function addApiViewInfo(packageDirectory: string, packageResult: PackageResult) {
-    const apiViewPathPattern = posix.join(packageDirectory, 'review', '**/*.api.md')
+    const apiViewPathPattern = posix.join(posix.normalize(packageDirectory), 'review', '**/*.api.md')
     const apiViews = await glob(apiViewPathPattern)
     packageResult.apiViewArtifact = [...apiViews]
 }
@@ -52,7 +52,7 @@ export async function buildPackage(packageDirectory: string, versionPolicyName: 
     const { name } = await getNpmPackageInfo(packageDirectory);
     await updateRushJson({
         packageName: name,
-        projectFolder: packageDirectory,
+        projectFolder: posix.normalize(packageDirectory),
         versionPolicyName: versionPolicyName
     });
     // TODO: use rush script

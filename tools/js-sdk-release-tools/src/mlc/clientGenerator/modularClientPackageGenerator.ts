@@ -8,6 +8,7 @@ import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
 import { remove } from 'fs-extra';
 import { getGeneratedPackageDirectory } from '../../common/utils';
+import { normalize, posix, relative } from 'node:path';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -29,7 +30,9 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
         // TODO: consider to decouple version bump and changelog generation
-        const changelog = await generateChangelogAndBumpVersion(generatedPackageDir);
+        // TODO: to be compatible with current tool, input relative generated package dir
+        const relativePackagePathToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(generatedPackageDir));
+        const changelog = await generateChangelogAndBumpVersion(relativePackagePathToSdkRoot);
         updateChangelogResult(packageResult, changelog);
 
         // build sample and test package will NOT throw exceptions
@@ -40,7 +43,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         updateNpmPackageResult(packageResult, npmPackageInfo, options.typeSpecDirectory, generatedPackageDir);
 
         const artifactPath = await createArtifact(generatedPackageDir);
-        packageResult.artifacts.push(artifactPath);
+        packageResult.artifacts.push(posix.normalize(artifactPath));
 
         const ciYamlPath = await createOrUpdateCiYaml(generatedPackageDir, options.versionPolicyName, npmPackageInfo);
         packageResult.path.push(ciYamlPath);

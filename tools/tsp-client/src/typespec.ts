@@ -122,7 +122,7 @@ export async function compileTsp({
       }
     }
     if (errorDiagnostic) {
-      process.exit(1);
+      return false;
     }
   }
 
@@ -142,7 +142,7 @@ export async function compileTsp({
       }
     }
     if (errorDiagnostic) {
-      process.exit(1);
+      return false;
     }
   }
   Logger.success("generation complete");

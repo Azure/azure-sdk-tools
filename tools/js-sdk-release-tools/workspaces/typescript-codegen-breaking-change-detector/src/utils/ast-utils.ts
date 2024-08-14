@@ -112,16 +112,17 @@ export function findAllRenameableDeclarationsUnder(
   node: Node,
   scope: Scope,
   service: ParserServicesWithTypeInformation
-): { interfaces: InterfaceDeclaration[]; typeAliases: TypeAliasDeclaration[]; enums: EnumDeclaration[] } {
-  const interfaces: InterfaceDeclaration[] = [];
-  const typeAliases: TypeAliasDeclaration[] = [];
-  const enums: EnumDeclaration[] = [];
+): { interfaces: Set<InterfaceDeclaration>; typeAliases: Set<TypeAliasDeclaration>; enums: Set<EnumDeclaration> } {
+  const interfaces = new Set<InterfaceDeclaration>();
+  const typeAliases = new Set<TypeAliasDeclaration>();
+  const enums = new Set<EnumDeclaration>();
   if (!node) return { interfaces, typeAliases, enums };
-//   console.log("🚀 ~ node:", node.getText());
+  console.log("🚀 ~ node:", node.getText());
   const findNext = (node: Node) => {
     const result = findAllRenameableDeclarationsUnder(node, scope, service);
-    interfaces.push(...result.interfaces);
-    typeAliases.push(...result.typeAliases);
+    
+    interfaces.(result.interfaces);
+    typeAliases.add(result.typeAliases);
     enums.push(...result.enums);
   };
 

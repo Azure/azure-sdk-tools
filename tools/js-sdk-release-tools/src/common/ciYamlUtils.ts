@@ -126,16 +126,16 @@ export async function createOrUpdateCiYaml(
     versionPolicyName: VersionPolicyName,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
-    logger.logInfo('Create or update CI files');
+    logger.info('Start to create or update CI files');
     switch (versionPolicyName) {
         case 'management': {
             const ciPath = await createOrUpdateManagePlaneCiYaml(generatedPackageDirectory, npmPackageInfo);
-            logger.logInfo('Created or updated MPG CI files successfully.');
+            logger.info('Created or updated MPG CI files successfully.');
             return ciPath;
         }
         case 'client': {
             const ciPath = await createOrUpdateDataPlaneCiYaml(generatedPackageDirectory, npmPackageInfo);
-            logger.logInfo('Created or updated DPG CI files successfully.');
+            logger.info('Created or updated DPG CI files successfully.');
             return ciPath;
         }
         default:

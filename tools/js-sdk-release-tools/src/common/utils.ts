@@ -1,7 +1,6 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { spawn } from 'child_process';
 import { SDKType } from './types';
 import { logger } from '../utils/logger';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
@@ -10,6 +9,14 @@ import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
 import { SpawnOptions, spawn } from 'child_process';
+
+// ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
+// so do NOT change the emitter
+const emitterName = '@azure-tools/typespec-ts';
+
+// TODO: remove it after we generate and use options by ourselves
+const messageToTspConfigSample =
+    'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
 
 function printErrorDetails(output: { stdout: string; stderr: string, code: number | null } | undefined) {
     if (!output) return;
@@ -22,21 +29,6 @@ function printErrorDetails(output: { stdout: string; stderr: string, code: numbe
     logger.error(`Details:`);
     logger.error(output.stderr);
     logger.error(output.stdout);
-}
-
-// ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
-// so do NOT change the emitter
-const emitterName = '@azure-tools/typespec-ts';
-
-// TODO: remove it after we generate and use options by ourselves
-const messageToTspConfigSample =
-    'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
-
-function printErrorDetails(output: { stdout: string; stderr: string, code: number | null } | undefined) {
-    logger.logError(`Error details:`);
-    if (!output) return;
-    logger.logError(output?.stderr);
-    logger.logError(output?.stdout);
 }
 
 export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['inherit', 'pipe', 'pipe'] };
@@ -205,7 +197,7 @@ export async function existsAsync(path: string): Promise<boolean> {
         await access(path);
         return true;
     } catch (error) {
-        logger.logWarn(`Fail to find ${path} for error: ${error}`);
+        logger.warn(`Fail to find ${path} for error: ${error}`);
         return false;
     }
 }

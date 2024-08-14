@@ -8,7 +8,7 @@ import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCIn
 import { RunningEnvironment } from './utils/runningEnvironment';
 import { ModularClientPackageOptions, SDKType } from './common/types';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator';
-import { existsAsync } from './common/utils';
+import { existsAsync, loadTspConfig } from './common/utils';
 
 const shell = require('shelljs');
 const fs = require('fs');

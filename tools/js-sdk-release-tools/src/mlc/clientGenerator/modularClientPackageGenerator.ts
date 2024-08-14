@@ -16,7 +16,7 @@ import { getGeneratedPackageDirectory } from '../../common/utils';
 // it has extra steps to generate a releasable azure sdk package (no modular client's doc for now, use RLC's for now) after typescript code is generate:
 // https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md
 export async function generateAzureSDKPackage(options: ModularClientPackageOptions): Promise<PackageResult> {
-    logger.logInfo(`Start generating modular client package for azure-sdk-for-js.`);
+    logger.info(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory);
@@ -46,11 +46,11 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         packageResult.path.push(ciYamlPath);
 
         packageResult.result = 'succeeded';
-        logger.logInfo(`Generated package successfully.`);
-        logger.logInfo(`Package summary: ${JSON.stringify(packageResult, undefined, 2)}`);
+        logger.info(`Generated package successfully.`);
+        logger.info(`Package summary: ${JSON.stringify(packageResult, undefined, 2)}`);
     } catch (err) {
         packageResult.result = 'failed';
-        logger.logError(`Failed to generate package due to ${(err as Error).stack ?? err}`);
+        logger.error(`Failed to generate package due to ${(err as Error).stack ?? err}`);
         throw err;
     } finally {
         return packageResult;

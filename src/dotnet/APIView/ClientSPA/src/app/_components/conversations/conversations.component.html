@@ -15,7 +15,7 @@
                 <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="me-2">{{ apiRevision.createdBy }}</span>
                 <span *ngIf="apiRevision.isReleased" class="emphasis-badge success me-2">released: {{ apiRevision.releasedOn | timeago }}</span>
                 <span class="emphasis-badge secondary me-2">created: {{ apiRevision.createdOn | timeago }}</span>
-                <span class="emphasis-badge secondary me-2">lastUpdated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+                <span class="emphasis-badge secondary me-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
                 <span class="me-2" *ngIf="apiRevision.label">{{ apiRevision.label }}</span>
             </span>
             <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); let isLast = last" class="my-2 conversation-group-threads">

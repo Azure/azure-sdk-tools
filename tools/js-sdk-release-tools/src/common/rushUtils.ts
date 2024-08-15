@@ -36,9 +36,8 @@ async function updateRushJson(projectItem: ProjectItem) {
 
 async function packPackage(packageDirectory: string) {
     const cwd = join(packageDirectory);
-    const options = { ...runCommandOptions, cwd };
     logger.info(`Start to run rushx pack.`);
-    await runCommand('rushx', ['pack'], options);
+    await runCommand('rushx', ['pack'], { ...runCommandOptions, cwd, stdio: ['pipe', 'pipe', 'pipe'] });
     logger.info(`rushx pack successfully.`);
 }
 

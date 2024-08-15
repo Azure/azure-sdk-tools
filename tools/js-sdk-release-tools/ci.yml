@@ -67,8 +67,8 @@ extends:
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
             - script: |
-                npm run pack:all
-              displayName: 'npm pack:all'
+                npm pack
+              displayName: 'npm pack'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
             - script: 'cp azure-tools-js-sdk-release-tools-*.tgz $(Build.ArtifactStagingDirectory)'

@@ -1,6 +1,6 @@
 # Release
 
-## 2024-08-14 - 0.12.0
+## 2024-08-15 - 0.12.0
 
 - Check for error diagnostics during TypeSpec compilation and exit with error if found. (#8815, #8777, #8555)
 

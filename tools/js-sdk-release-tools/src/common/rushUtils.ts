@@ -42,12 +42,12 @@ async function packPackage(packageDirectory: string) {
     logger.info(`rushx pack successfully.`);
 }
 
-// TODO: figure out a way to workaround
-// IMPORTANT: pipeline framework doesn't support multiple api views
 async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'review', '**/*.api.md');
+    const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
     const apiViews = await glob(apiViewPathPattern);
-    // packageResult.apiViewArtifact = apiViews.join(',')
+    if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
+    if (apiViews && apiViews.length > 1) throw new Error(`Failed to exactly one API view: ${apiViews}.`);
     packageResult.apiViewArtifact = apiViews[0];
 }
 

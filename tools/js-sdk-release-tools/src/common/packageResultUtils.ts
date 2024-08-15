@@ -1,6 +1,7 @@
-import { posix } from 'node:path';
-import { Changelog } from '../changelog/changelogGenerator';
 import { ChangelogResult, NpmPackageInfo, PackageResult } from './types';
+
+import { Changelog } from '../changelog/changelogGenerator';
+import { posix } from 'node:path';
 
 export function initPackageResult(): PackageResult {
     const breakingChangeItems = [];
@@ -34,13 +35,12 @@ export function updateInstructionResult(packageResult: PackageResult, instructio
 export function updateNpmPackageResult(
     packageResult: PackageResult,
     npmPackageInfo: NpmPackageInfo,
-    typeSpecDirectory: string,
-    generatedPackageDirectory: string
+    relativeTypeSpecDirectoryToSpecRoot: string,
+    relativeGeneratedPackageDirectoryToSdkRoot: string
 ): void {
-    const posixGeneratedPackageDirectory = posix.normalize(generatedPackageDirectory);
     packageResult.packageName = npmPackageInfo.name;
     packageResult.version = npmPackageInfo.version;
-    packageResult.typespecProject = [posix.normalize(typeSpecDirectory)];
-    packageResult.packageFolder = posixGeneratedPackageDirectory;
-    packageResult.path.push(posixGeneratedPackageDirectory);
+    packageResult.typespecProject = [relativeTypeSpecDirectoryToSpecRoot];
+    packageResult.packageFolder = relativeGeneratedPackageDirectoryToSdkRoot;
+    packageResult.path.push(relativeGeneratedPackageDirectoryToSdkRoot);
 }

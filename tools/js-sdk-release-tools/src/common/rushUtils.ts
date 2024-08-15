@@ -1,11 +1,12 @@
-import { runCommand, runCommandOptions } from './utils';
-import { logger } from '../utils/logger';
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
+import { PackageResult, VersionPolicyName } from './types';
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
-import { posix, join, normalize } from 'node:path';
-import { PackageResult, VersionPolicyName } from './types';
+import { join, posix } from 'node:path';
+import { runCommand, runCommandOptions } from './utils';
+
 import { glob } from 'glob'
+import { logger } from '../utils/logger';
 
 interface ProjectItem {
     packageName: string;
@@ -41,25 +42,25 @@ async function packPackage(packageDirectory: string) {
     logger.info(`rushx pack successfully.`);
 }
 
-async function addApiViewInfo(packageDirectory: string, packageResult: PackageResult) {
-    const apiViewPathPattern = posix.join(posix.normalize(packageDirectory), 'review', '**/*.api.md')
+async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
+    const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'review', '**/*.api.md')
     const apiViews = await glob(apiViewPathPattern)
     packageResult.apiViewArtifact = apiViews.join(',')
 }
 
-export async function buildPackage(packageDirectory: string, versionPolicyName: VersionPolicyName, packageResult: PackageResult) {
-    logger.info(`Start building package in ${packageDirectory}.`);
-    const { name } = await getNpmPackageInfo(packageDirectory);
+export async function buildPackage(relativePackageDirectoryToSdkRoot: string, versionPolicyName: VersionPolicyName, packageResult: PackageResult) {
+    logger.info(`Start building package in ${relativePackageDirectoryToSdkRoot}.`);
+    const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     await updateRushJson({
         packageName: name,
-        projectFolder: posix.normalize(packageDirectory),
+        projectFolder: relativePackageDirectoryToSdkRoot,
         versionPolicyName: versionPolicyName
     });
     // TODO: use rush script
     await runCommand(`rush`, ['update'], runCommandOptions);
     logger.info(`Rush update successfully.`);
     await runCommand('rush', ['build', '-t', name, '--verbose'], runCommandOptions);
-    await addApiViewInfo(packageDirectory, packageResult);
+    await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult);
     logger.info(`Build package "${name}" successfully.`);
 }
 

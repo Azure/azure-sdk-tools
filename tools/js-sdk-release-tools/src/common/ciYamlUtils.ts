@@ -1,10 +1,11 @@
-import { readFile, writeFile } from 'fs/promises';
 import { NpmPackageInfo, VersionPolicyName } from './types';
 import { basename, join, posix } from 'path';
-import { logger } from '../utils/logger';
-import { parse, stringify } from 'yaml';
 import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils';
+import { parse, stringify } from 'yaml';
+import { readFile, writeFile } from 'fs/promises';
+
 import { existsAsync } from './utils';
+import { logger } from '../utils/logger';
 
 interface ArtifactInfo {
     name: string;
@@ -122,19 +123,25 @@ async function createOrUpdateDataPlaneCiYaml(
 }
 
 export async function createOrUpdateCiYaml(
-    generatedPackageDirectory: string,
+    relativeGeneratedPackageDirectoryToSdkRoot: string,
     versionPolicyName: VersionPolicyName,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
     logger.info('Start to create or update CI files');
     switch (versionPolicyName) {
         case 'management': {
-            const ciPath = await createOrUpdateManagePlaneCiYaml(generatedPackageDirectory, npmPackageInfo);
+            const ciPath = await createOrUpdateManagePlaneCiYaml(
+                relativeGeneratedPackageDirectoryToSdkRoot,
+                npmPackageInfo
+            );
             logger.info('Created or updated MPG CI files successfully.');
             return ciPath;
         }
         case 'client': {
-            const ciPath = await createOrUpdateDataPlaneCiYaml(generatedPackageDirectory, npmPackageInfo);
+            const ciPath = await createOrUpdateDataPlaneCiYaml(
+                relativeGeneratedPackageDirectoryToSdkRoot,
+                npmPackageInfo
+            );
             logger.info('Created or updated DPG CI files successfully.');
             return ciPath;
         }

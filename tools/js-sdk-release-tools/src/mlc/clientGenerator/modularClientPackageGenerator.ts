@@ -1,14 +1,16 @@
-import { PackageResult, ModularClientPackageOptions } from '../../common/types';
-import { logger } from '../../utils/logger';
-import { generateChangelogAndBumpVersion } from '../changlog/generateChangelog';
-import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
-import { getNpmPackageInfo } from '../../common/npmUtils';
-import { buildPackage, tryBuildSamples, createArtifact, tryTestPackage } from '../../common/rushUtils';
+import { ModularClientPackageOptions, PackageResult } from '../../common/types';
+import { buildPackage, createArtifact, tryBuildSamples, tryTestPackage } from '../../common/rushUtils';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
-import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
-import { remove } from 'fs-extra';
-import { getGeneratedPackageDirectory } from '../../common/utils';
 import { normalize, posix, relative } from 'node:path';
+
+import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
+import { generateChangelogAndBumpVersion } from '../changlog/generateChangelog';
+import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
+import { getGeneratedPackageDirectory } from '../../common/utils';
+import { getNpmPackageInfo } from '../../common/npmUtils';
+import { logger } from '../../utils/logger';
+import { remove } from 'fs-extra';
+import unixify from 'unixify';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -24,15 +26,15 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         await remove(packageDirectory);
 
         const generatedPackageDir = await generateTypeScriptCodeFromTypeSpec(options);
+        const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(generatedPackageDir));
 
-        await buildPackage(generatedPackageDir, options.versionPolicyName, packageResult);
+        await buildPackage(relativePackageDirToSdkRoot, options.versionPolicyName, packageResult);
 
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
         // TODO: consider to decouple version bump and changelog generation
         // TODO: to be compatible with current tool, input relative generated package dir
-        const relativePackagePathToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(generatedPackageDir));
-        const changelog = await generateChangelogAndBumpVersion(relativePackagePathToSdkRoot);
+        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot);
         updateChangelogResult(packageResult, changelog);
 
         // build sample and test package will NOT throw exceptions
@@ -40,12 +42,26 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         await tryTestPackage(generatedPackageDir);
 
         const npmPackageInfo = await getNpmPackageInfo(generatedPackageDir);
-        updateNpmPackageResult(packageResult, npmPackageInfo, options.typeSpecDirectory, generatedPackageDir);
+        const relativeTypeSpecDirToSpecRoot = posix.relative(
+            unixify(options.specRepoRoot),
+            unixify(options.typeSpecDirectory)
+        );
+        updateNpmPackageResult(
+            packageResult,
+            npmPackageInfo,
+            relativeTypeSpecDirToSpecRoot,
+            relativePackageDirToSdkRoot
+        );
 
         const artifactPath = await createArtifact(generatedPackageDir);
-        packageResult.artifacts.push(posix.normalize(artifactPath));
+        const relativeArtifactPath = posix.relative(unixify(options.sdkRepoRoot), unixify(artifactPath));
+        packageResult.artifacts.push(relativeArtifactPath);
 
-        const ciYamlPath = await createOrUpdateCiYaml(generatedPackageDir, options.versionPolicyName, npmPackageInfo);
+        const ciYamlPath = await createOrUpdateCiYaml(
+            relativePackageDirToSdkRoot,
+            options.versionPolicyName,
+            npmPackageInfo
+        );
         packageResult.path.push(ciYamlPath);
 
         packageResult.result = 'succeeded';

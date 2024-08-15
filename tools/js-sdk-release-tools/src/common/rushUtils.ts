@@ -43,7 +43,6 @@ async function packPackage(packageDirectory: string) {
 }
 
 async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
-    const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'review', '**/*.api.md');
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
     const apiViews = await glob(apiViewPathPattern);
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);

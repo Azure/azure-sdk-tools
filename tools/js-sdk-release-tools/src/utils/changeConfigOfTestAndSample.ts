@@ -42,6 +42,7 @@ export function changeConfigOfTestAndSample(packagePath: string, mode: ChangeMod
                 apiExtractor['mainEntryPointFilePath'] = "./types/index.d.ts";
             }
         }
+    // TODO: bug? never change the files back, since the it reads the changed files
     }  else if (mode === ChangeModel.Revert) {
         tsConfig = oriTsConfig;
         packageJson = JSON.parse(packageJsonFile);

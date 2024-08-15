@@ -28,6 +28,12 @@ jobs:
         run: git config --global core.longpaths true
         shell: pwsh
 
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/workflows
+            tools/tsp-client
+
       - name: Use Node ${{ matrix.node-version }}.x
         uses: actions/setup-node@v4
         with:

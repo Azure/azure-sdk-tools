@@ -1,0 +1,55 @@
+name: tsp-client - Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - tools/tsp-client/**
+
+jobs:
+  tsp-client:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [18.19, 20]
+        exclude:
+          - os: ubuntu-latest
+            node-version: 20
+          - os: windows-latest
+            node-version: 18.19
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - if: runner.os == 'Windows'
+        run: git config --global core.longpaths true
+        shell: pwsh
+
+      - name: Use Node ${{ matrix.node-version }}.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}.x
+
+      - run: npm ci
+        shell: pwsh
+
+      - run: npm ls -a
+        shell: pwsh
+        continue-on-error: true
+
+      - run: npm run build
+        shell: pwsh
+        working-directory: ./tools/tsp-client
+
+      - run: npm run test
+        shell: pwsh
+        working-directory: ./tools/tsp-client
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report-${{ matrix.os }}-${{ matrix.node-version }}
+          path: ./tools/tsp-client/coverage
+          if-no-files-found: ignore

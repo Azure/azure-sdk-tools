@@ -14,7 +14,7 @@ interface ProjectItem {
     versionPolicyName: string;
 }
 
-let x = "" 
+let x = '';
 
 async function updateRushJson(projectItem: ProjectItem) {
     const content = await readFile('rush.json', { encoding: 'utf-8' });
@@ -39,8 +39,8 @@ async function updateRushJson(projectItem: ProjectItem) {
 async function packPackage(packageDirectory: string) {
     // debug
     let apiViews = await glob(x);
-    console.log('-----------------api views, before pack', apiViews)
-    
+    console.log('-----------------api views, before pack', apiViews, x);
+
     const cwd = join(packageDirectory);
     logger.info(`Start to run rushx pack.`);
     // TODO: use node common/scripts/install-run-rush.js pack --to ${packageName} --verbose
@@ -49,17 +49,16 @@ async function packPackage(packageDirectory: string) {
 
     // debug
     apiViews = await glob(x);
-    console.log('-----------------api views, after pack', apiViews)
-    
+    console.log('-----------------api views, after pack', apiViews, x);
 }
 
 async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
     // debug
-    x = apiViewPathPattern
+    x = apiViewPathPattern;
     const apiViews = await glob(apiViewPathPattern);
     // debug
-    console.log('-----------------api views', apiViews)
+    console.log('-----------------api views', apiViews, x);
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     packageResult.apiViewArtifact = apiViews[0];
@@ -88,6 +87,9 @@ export async function buildPackage(
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 export async function tryBuildSamples(packageDirectory: string) {
     logger.info(`Start to build samples in ${packageDirectory}.`);
+    // debug
+    let apiViews = await glob(x);
+    console.log('-----------------api views, before sample', apiViews, x);
 
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, cwd };
@@ -98,11 +100,18 @@ export async function tryBuildSamples(packageDirectory: string) {
     } catch (err) {
         logger.error(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
     }
+
+    // debug
+    apiViews = await glob(x);
+    console.log('-----------------api views, after sample', apiViews, x);
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 export async function tryTestPackage(packageDirectory: string) {
     logger.info(`Start to test package in ${packageDirectory}.`);
+    // debug
+    let apiViews = await glob(x);
+    console.log('-----------------api views, before test', apiViews, x);
 
     const env = { ...process.env, TEST_MODE: 'record' };
     const cwd = join(packageDirectory);
@@ -113,6 +122,10 @@ export async function tryTestPackage(packageDirectory: string) {
     } catch (err) {
         logger.error(`Failed to test package due to: ${(err as Error)?.stack ?? err}`);
     }
+
+    // debug
+    apiViews = await glob(x);
+    console.log('-----------------api views, after test', apiViews, x);
 }
 
 export async function createArtifact(packageDirectory: string) {

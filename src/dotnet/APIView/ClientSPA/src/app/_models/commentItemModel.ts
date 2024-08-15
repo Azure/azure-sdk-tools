@@ -8,7 +8,7 @@ export enum CommentType {
 export class CommentItemModel {
     id: string = '';
     reviewId: string = '';
-    aPIRevisionId: string = '';
+    apiRevisionId: string = '';
     elementId: string = '';
     sectionClass: string = '';
     commentText: string = '';
@@ -28,7 +28,7 @@ export class CommentItemModel {
     constructor() {
         this.id = '';
         this.reviewId = '';
-        this.aPIRevisionId = '';
+        this.apiRevisionId = '';
         this.elementId = '';
         this.sectionClass = '';
         this.commentText = '';

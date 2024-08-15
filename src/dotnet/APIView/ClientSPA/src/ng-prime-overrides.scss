@@ -163,6 +163,10 @@ p-contextmenusub {
     outline-offset: 0.15rem;
 }
 
+.p-divider.p-divider-horizontal:before {
+    border-top: 1px solid var(--border-color);
+}
+
 .p-editor-container .p-editor-toolbar {
     background: var(--base-bg-color);
 }

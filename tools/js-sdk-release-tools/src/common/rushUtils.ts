@@ -46,7 +46,7 @@ async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, package
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
     const apiViews = await glob(apiViewPathPattern);
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
-    if (apiViews && apiViews.length > 1) throw new Error(`Failed to exactly one API view: ${apiViews}.`);
+    if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     packageResult.apiViewArtifact = apiViews[0];
 }
 

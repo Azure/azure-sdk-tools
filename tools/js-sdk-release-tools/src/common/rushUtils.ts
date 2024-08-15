@@ -14,6 +14,8 @@ interface ProjectItem {
     versionPolicyName: string;
 }
 
+let x = "" 
+
 async function updateRushJson(projectItem: ProjectItem) {
     const content = await readFile('rush.json', { encoding: 'utf-8' });
     const rushJson = parse(content.toString());
@@ -35,15 +37,29 @@ async function updateRushJson(projectItem: ProjectItem) {
 }
 
 async function packPackage(packageDirectory: string) {
+    // debug
+    let apiViews = await glob(x);
+    console.log('-----------------api views, before pack', apiViews)
+    
     const cwd = join(packageDirectory);
     logger.info(`Start to run rushx pack.`);
+    // TODO: use node common/scripts/install-run-rush.js pack --to ${packageName} --verbose
     await runCommand('rushx', ['pack'], { ...runCommandOptions, cwd, stdio: ['pipe', 'pipe', 'pipe'] });
     logger.info(`rushx pack successfully.`);
+
+    // debug
+    let apiViews = await glob(x);
+    console.log('-----------------api views, after pack', apiViews)
+    
 }
 
 async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
+    // debug
+    x = apiViewPathPattern
     const apiViews = await glob(apiViewPathPattern);
+    // debug
+    console.log('-----------------api views', apiViews)
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     packageResult.apiViewArtifact = apiViews[0];

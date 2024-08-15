@@ -92,6 +92,7 @@ export interface DictionaryTranslationOutput {
 export interface ErrorDetailsOutput {
     code: number;
     message: string;
+    recursive: Array<ErrorDetailsOutput>;
 }
 
 // @public

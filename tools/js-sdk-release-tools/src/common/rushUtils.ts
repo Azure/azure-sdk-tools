@@ -44,7 +44,7 @@ async function packPackage(packageDirectory: string) {
     const cwd = join(packageDirectory);
     logger.info(`Start to run rushx pack.`);
     // TODO: use node common/scripts/install-run-rush.js pack --to ${packageName} --verbose
-    await runCommand('rushx', ['pack'], { ...runCommandOptions, cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+    await runCommand('rushx', ['pack'], { ...runCommandOptions, cwd, stdio: ['pipe', 'pipe', 'pipe'] }, false);
     logger.info(`rushx pack successfully.`);
 
     // debug
@@ -78,7 +78,7 @@ export async function buildPackage(
         versionPolicyName: versionPolicyName
     });
     // TODO: use rush script
-    await runCommand(`rush`, ['update'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'] });
+    await runCommand(`rush`, ['update'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'] }, false);
     logger.info(`Rush update successfully.`);
     await runCommand('rush', ['build', '-t', name, '--verbose'], runCommandOptions);
     await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult);

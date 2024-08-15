@@ -4,14 +4,18 @@ import {
     InterfaceDeclaration,
     TypeAliasDeclaration
 } from "parse-ts-to-ast";
+import { InlineDeclarationNameSetMessage, RuleMessage, RuleMessageKind, detectBreakingChangesBetweenPackages } from "typescript-codegen-breaking-change-detector";
+
 import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration";
-import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
-import { TSExportedMetaData } from "./extractMetaData";
-import { SDKType } from "../common/types";
-import { logger } from "../utils/logger";
-// TODO: add detection for routes and overloads in base detector
-import { detectBreakingChangesBetweenPackages, InlineDeclarationNameSetMessage, RuleMessage, RuleMessageKind } from "typescript-codegen-breaking-change-detector";
 import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor";
+import { SDKType } from "../common/types";
+import { TSExportedMetaData } from "./extractMetaData";
+import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
+import { logger } from "../utils/logger";
+
+// TODO: add detection for routes and overloads in base detector
+
+
 
 export interface ChangelogItem {
     line: string;
@@ -208,7 +212,6 @@ export class Changelog {
         const key = Array.from(messageMap.keys())[0]
         const messages = messageMap.get(key)!
         const inlineMessages = messages.filter(m => m.kind === RuleMessageKind.InlineDeclarationNameSetMessage).map(m => m as InlineDeclarationNameSetMessage)
-        console.log("🚀 ~ Changelog ~ postProcessForRestLevelClient ~ inlineMessages:", inlineMessages)
         this.processInlineMessage(inlineMessages)
     }
 }
@@ -587,13 +590,13 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
                         const parametersOld = mOld.parameters;
                         const parametersNew = mNew.parameters;
                         if (parametersNew.length !== parametersOld.length) {
-                            operationSignatureChange.push({ line:'Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature', newName: mNew.type });
+                            operationSignatureChange.push({ line:'Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature' });
                         } else {
                             for (let index = 0; index < parametersNew.length; index++) {
                                 const pOld = parametersOld[index];
                                 const pNew = parametersNew[index];
                                 if (pOld.type !== pNew.type || pOld.isOptional !== pNew.isOptional) {
-                                    operationSignatureChange.push({ line:'Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature', newName: mNew.type });
+                                    operationSignatureChange.push({ line:'Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature', newName: pNew.type });
                                     return;
                                 }
                             }
@@ -638,8 +641,12 @@ const findClassSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: 
                 for (let index = 0; index < parametersNew.length; index++) {
                     const pOld = parametersOld[index];
                     const pNew = parametersNew[index];
-                    if (pOld.type !== pNew.type || pOld.isOptional !== pNew.isOptional) {
+                    if (pOld.isOptional !== pNew.isOptional) {
                         classSignatureChange.push({ line: 'Class ' + model + ' has a new signature' });
+                        return;
+                    }
+                    if (pOld.type !== pNew.type) {
+                        classSignatureChange.push({ line: 'Class ' + model + ' has a new signature', oldName: pOld.type, newName: pNew.type });
                         return;
                     }
                 }

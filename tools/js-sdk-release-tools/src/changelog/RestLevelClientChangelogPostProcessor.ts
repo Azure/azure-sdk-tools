@@ -1,5 +1,5 @@
-import { InlineDeclarationNameSetMessage, NodeContext } from 'typescript-codegen-breaking-change-detector';
 import { Changelog, ChangelogItem } from './changelogGenerator';
+import { InlineDeclarationNameSetMessage, NodeContext } from 'typescript-codegen-breaking-change-detector';
 
 export class RestLevelClientChangelogPostProcessor {
   private changelog: Changelog;

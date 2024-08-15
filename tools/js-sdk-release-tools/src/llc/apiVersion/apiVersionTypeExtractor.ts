@@ -1,13 +1,13 @@
-import shell from "shelljs";
-import path from "path";
+import { findParametersPath, getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient } from "../../xlc/apiVersion/utils";
+
 import { ApiVersionType } from "../../common/types";
 import { IApiVersionTypeExtractor } from "../../common/interfaces";
-import { findParametersPath, getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient } from "../../xlc/apiVersion/utils";
+import path from "path";
+import shell from "shelljs";
 
 const findRestClientPath = (packageRoot: string): string => {
     const restPath = path.join(packageRoot, "src/");
     const fileNames = shell.ls(restPath);
-    console.log("🚀 ~ findRestClientPath ~ fileNames:", fileNames)
     const clientFiles = fileNames.filter((f) => f.endsWith("Client.ts"));
     if (clientFiles.length !== 1)
         throw new Error(`Single client is supported, but found "${clientFiles}" in ${restPath}`);

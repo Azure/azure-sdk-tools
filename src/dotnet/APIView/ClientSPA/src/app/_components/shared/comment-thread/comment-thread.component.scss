@@ -1,5 +1,9 @@
 :host ::ng-deep {
     font-family: var(--font-family);
+    
+    .comment-thread-container {
+        max-width: 1000px;
+    }
 
     .user-avartar {
         border: 2px solid var(--border-color);

@@ -35,10 +35,12 @@ jobs:
 
       - run: npm ci
         shell: pwsh
+        working-directory: ./tools/tsp-client
 
       - run: npm ls -a
         shell: pwsh
         continue-on-error: true
+        working-directory: ./tools/tsp-client
 
       - run: npm run build
         shell: pwsh

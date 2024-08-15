@@ -14,14 +14,15 @@ import { MenuModule } from 'primeng/menu';
 import { TimelineModule } from 'primeng/timeline';
 import { SharedAppModule } from '../shared/shared-app.module';
 import { ButtonModule } from 'primeng/button';
+import { DividerModule } from 'primeng/divider';
 import { UiScrollModule  } from 'ngx-ui-scroll' ;
 import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-options-section/page-options-section.component';
 import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { ConversationsComponent } from 'src/app/_components/conversations/conversations.component';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -34,11 +35,12 @@ const routes: Routes = [
     ReviewInfoComponent,
     CodePanelComponent,
     CommentThreadComponent,
+    ConversationsComponent,
     PageOptionsSectionComponent,
     ReviewPageOptionsComponent,
     ApiRevisionOptionsComponent,
     MarkdownToHtmlPipe,
-    EditorComponent
+    EditorComponent,
   ],
   imports: [
     SharedAppModule,
@@ -52,6 +54,7 @@ const routes: Routes = [
     ButtonModule,
     InputSwitchModule,
     UiScrollModule,
+    DividerModule,
     RouterModule.forChild(routes),
   ]
 })

@@ -9,7 +9,14 @@
         (pageOptionsEmitter)="handlePageOptionsEmitter($event)"></app-review-info>
     <div class="mt-2" style="display: flex;">
         <div>
-            <p-menu [model]="sideMenu"></p-menu>
+            <p-menu [model]="sideMenu" class="side-menu">
+                <ng-template pTemplate="item" let-item>
+                    <a pRipple class="flex align-items-center p-menuitem-link">
+                        <span [class]="item.icon"></span>
+                        <p-badge *ngIf="item.badge" class="ml-auto" [value]="item.badge" severity="danger" />
+                    </a>
+                </ng-template>
+            </p-menu>
         </div>
         <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
             <p-splitter
@@ -34,7 +41,7 @@
                             [loadFailed]="loadFailed"
                             [showLineNumbers]="showLineNumbers" [scrollToNodeIdHashed]="scrollToNodeIdHashed"
                             [scrollToNodeId]="scrollToNodeId"
-                            (hasActiveConversation)="handleHasActiveConversationEmitter($event)"></app-code-panel>
+                            (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"></app-code-panel>
                     </div>
                 </ng-template>
                 <ng-template pTemplate>
@@ -68,9 +75,18 @@
         </div>
     </div>
 </div>
-<p-sidebar [(visible)]="revisionSideBarVisible" position="right" [modal]="true" styleClass="revisions-sidebar">
+<p-sidebar [(visible)]="revisionSidePanel!" position="right" [modal]="true" styleClass="revisions-sidebar">
     <app-revisions-list 
         [review]="review"
-        [revisionSideBarVisible]="revisionSideBarVisible"></app-revisions-list>
+        [revisionSidePanel]="revisionSidePanel!"></app-revisions-list>
+</p-sidebar>
+<p-sidebar [(visible)]="conversationSidePanel!" position="right" [modal]="true" styleClass="conversation-sidebar">
+    <app-conversations 
+        [apiRevisions]="apiRevisions"
+        [comments]="comments"
+        [review]="review"
+        [activeApiRevisionId]="activeApiRevisionId"
+        (scrollToNodeEmitter)="handleScrollToNodeEmitter($event)"
+        (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)"></app-conversations >
 </p-sidebar>
 <app-footer></app-footer>

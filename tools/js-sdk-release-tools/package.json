@@ -2,22 +2,15 @@
   "name": "@azure-tools/js-sdk-release-tools",
   "version": "2.7.11",
   "description": "",
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "install:all": "npm run install:next-detector && npm install",
-    "install:next-detector": "cd ./workspaces/typescript-codegen-breaking-change-detector/ && npm install && cd ..",
-    "build:all": "npm run install:next-detector && npm run build:next-detector && npm run build",
-    "build:next-detector": "cd workspaces/typescript-codegen-breaking-change-detector && npm run build && cd ../..",
+    "preinstall": "cd ./packages/typescript-codegen-breaking-change-detector/ && npm install && npm run build && npm pack && cd ../.. && npm install typescript-codegen-breaking-change-detector file:packages/typescript-codegen-breaking-change-detector/typescript-codegen-breaking-change-detector-0.0.0.tgz",
     "dev": "tsx watch src/changelogToolCli.ts",
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",
     "build": "rimraf dist && tsc -p .",
     "prepack": "npm run build",
     "test": "vitest --run",
-    "test:watch": "vitest",
-    "test:ci": "node dist/changelogToolCli.js src/test/testCases/ci/arm-networkanalytics"
+    "test:watch": "vitest"
   },
   "bin": {
     "changelog-tool": "./dist/changelogToolCli.js",
@@ -39,10 +32,11 @@
     "parse-ts-to-ast": "^0.1.1",
     "semver": "^7.3.5",
     "shelljs": "^0.8.4",
+    "shx": "^0.3.4",
     "simple-git": "^3.5.0",
     "ts-morph": "^23.0.0",
     "tslib": "^1.9.3",
-    "typescript-codegen-breaking-change-detector": "0.4.6",
+    "typescript-codegen-breaking-change-detector": "file:packages/typescript-codegen-breaking-change-detector/typescript-codegen-breaking-change-detector-0.0.0.tgz",
     "winston": "^3.13.1",
     "yaml": "^1.10.2"
   },

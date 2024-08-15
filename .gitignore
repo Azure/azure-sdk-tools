@@ -517,3 +517,4 @@ tools/apiview/emitters/typespec-apiview/temp/
 
 # JS SDK Release Tools
 !tools/js-sdk-release-tools/packages/*
+tools/js-sdk-release-tools/.tmp/*

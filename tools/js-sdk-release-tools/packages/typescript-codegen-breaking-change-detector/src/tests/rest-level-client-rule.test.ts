@@ -34,7 +34,7 @@ describe('detect rest level client breaking changes', async () => {
     const currentPackageFolder = join(__dirname, testCaseDir, 'current-package');
     const baselinePackageFolder = join(__dirname, testCaseDir, 'baseline-package');
     const date = getFormattedDate();
-    const tempFolder = await createTempFolder(`./tmp/temp-${date}`);
+    const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
     const messagesMap = await detectBreakingChangesBetweenPackages(
       baselinePackageFolder,
       currentPackageFolder,

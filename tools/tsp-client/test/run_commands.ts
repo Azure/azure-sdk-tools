@@ -82,9 +82,9 @@ async function main() {
   await runCommand(baseDir, [
     "compare",
     "--lhs",
-    "/test/examples/specification/compare/lhs",
+    "./test/examples/specification/compare/lhs",
     "--rhs",
-    "/test/examples/specification/compare/rhs",
+    "./test/examples/specification/compare/rhs",
     "--compile-tsp",
   ]);
 

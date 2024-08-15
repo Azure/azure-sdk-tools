@@ -30,7 +30,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() showLineNumbers: boolean = true;
   @Input() loadFailed : boolean = false;
 
-  @Output() hasActiveConversation : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 
   noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
   isLoading: boolean = true;
@@ -528,16 +528,16 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private updateHasActiveConversations() {
-    let hasActiveConversations = false;
+    let hasActiveConversation = false;
     for (let row of this.codePanelRowData) {
       if (row.type === CodePanelRowDatatype.CommentThread) {
         if (row.comments && row.comments.length > 0 && row.isResolvedCommentThread === false) {
-          hasActiveConversations = true;
+          hasActiveConversation = true;
           break;
         }
       }
     }
-    this.hasActiveConversation.emit(hasActiveConversations);
+    this.hasActiveConversationEmitter.emit(hasActiveConversation);
   }
 
   private loadCodePanelViewPort() {

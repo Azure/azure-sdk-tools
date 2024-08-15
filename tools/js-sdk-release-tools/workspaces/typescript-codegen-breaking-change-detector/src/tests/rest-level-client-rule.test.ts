@@ -1,9 +1,9 @@
-// import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { mkdirp, pathExists } from 'fs-extra';
 
-import { detectBreakingChangesBetweenPackages } from '../azure/detect-breaking-changes.js';
+import { InlineDeclarationNameSetMessage } from '../azure/common/types';
+import { detectBreakingChangesBetweenPackages } from '../azure/detect-breaking-changes';
 import { join } from 'node:path';
-import { InlineDeclarationNameSetMessage } from '../azure/common/types.js';
 
 function getFormattedDate(): string {
   const today = new Date();
@@ -28,15 +28,11 @@ async function createTempFolder(tempFolderPrefix: string): Promise<string> {
   throw new Error(`Failed to create temp folder at "${tempFolder}" for ${maxRetry} times`);
 }
 
-// describe('detect rest level client breaking changes', async () => {
-//   test('should ignore operation rename', async () => {
-    // const testCaseDir = '../../misc/test-cases/rest-level-client-to-rest-level-client/';
-    // const currentPackageFolder = join(__dirname, testCaseDir, 'current-package');
-    // const baselinePackageFolder = join(__dirname, testCaseDir, 'baseline-package');
-async function test() {
-    console.log('--------------start -1')
-    const currentPackageFolder = 'C:/Users/wanl/workspace/test-azure-sdk-for-js/sdk/loadtesting/load-testing-rest';
-    const baselinePackageFolder = 'C:/Users/wanl/workspace/wanl-fork-azure-sdk-tools/tools/js-sdk-release-tools/azure-rest-load-testing-1.0.0/package';
+describe('detect rest level client breaking changes', async () => {
+  test('should ignore operation rename', async () => {
+    const testCaseDir = '../../misc/test-cases/rest-level-client-to-rest-level-client/';
+    const currentPackageFolder = join(__dirname, testCaseDir, 'current-package');
+    const baselinePackageFolder = join(__dirname, testCaseDir, 'baseline-package');
     const date = getFormattedDate();
     const tempFolder = await createTempFolder(`./tmp/temp-${date}`);
     const messagesMap = await detectBreakingChangesBetweenPackages(
@@ -45,15 +41,7 @@ async function test() {
       tempFolder,
       true
     );
-    console.log('-------------')
-    const messages = ([...messagesMap][0][1] as InlineDeclarationNameSetMessage[])!
-    const currents = messages.map(m => m.current)
-    console.log(currents)
-    console.log(Object.keys(currents))
-    // expect(messagesMap.size).toBe(1);
+    expect(messagesMap.size).toBe(1);
     // TODO: add more checks
-}
-
-test()
-//   });
-// });
+  });
+});

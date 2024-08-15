@@ -1,6 +1,5 @@
 import { pino } from 'pino';
-
-const pretty = require('pino-pretty');
+import pretty from 'pino-pretty';
 
 const devStream = pretty({
   colorize: false,

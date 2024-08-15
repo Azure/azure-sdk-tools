@@ -1,21 +1,21 @@
 import * as parser from '@typescript-eslint/parser';
-import * as ruleIds from '../common/models/rules/rule-ids.js';
+import * as ruleIds from '../common/models/rules/rule-ids';
 
 import {
   InlineDeclarationNameSetMessage,
   LinterSettings,
   ParseForESLintResult,
   RuleMessage,
-} from './common/types.js';
+} from './common/types';
 import { Renderer, marked } from 'marked';
 import { basename, join, posix, relative } from 'node:path';
-import { devConsolelog, toPosixPath } from '../utils/common-utils.js';
+import { devConsolelog, toPosixPath } from '../utils/common-utils';
 import { exists, outputFile, readFile, remove } from 'fs-extra';
 
 import { TSESLint } from '@typescript-eslint/utils';
-import ignoreInlineDeclarationsInOperationGroup from './common/rules/ignore-inline-declarations-in-operation-group.js';
+import ignoreInlineDeclarationsInOperationGroup from './common/rules/ignore-inline-declarations-in-operation-group';
 import { glob } from 'glob';
-import { logger } from '../logging/logger.js';
+import { logger } from '../logging/logger';
 
 const tsconfig = `
 {
@@ -70,7 +70,6 @@ async function prepareProject(
     loadCodeFromApiView(currentPackageFolder),
     loadCodeFromApiView(baselinePackageFolder),
   ]);
-  console.log('--------------loaded api view')
 
   const relativeCurrentPath = join('current', 'review', 'index.ts');
   const relativeBaselinePath = join('baseline', 'review', 'index.ts');
@@ -82,7 +81,6 @@ async function prepareProject(
     outputFile(currentPath, currentCode, 'utf-8'),
     outputFile(baselinePath, baselineCode, 'utf-8'),
   ]);
-  console.log('--------------ourput file')
   return {
     root: tempFolder,
     baseline: {
@@ -111,7 +109,6 @@ async function parseBaselinePackage(projectContext: ProjectContext): Promise<Par
 
 async function detectBreakingChangesCore(projectContext: ProjectContext): Promise<RuleMessage[] | undefined> {
   try {
-    console.log('--------------start aaa')
     const breakingChangeResults: RuleMessage[] = [];
     const baselineParsed = await parseBaselinePackage(projectContext);
     const linter = new TSESLint.Linter({ cwd: projectContext.root });
@@ -177,7 +174,6 @@ export async function detectBreakingChangesBetweenPackages(
       const apiViewBasename = basename(relativeApiViewPath);
       const currentApiViewPath = join(currentPackageFolder!, relativeApiViewPath);
       if (!(await exists(currentApiViewPath))) throw new Error(`Failed to find API view: ${currentApiViewPath}`);
-      console.log('--------------prepare project')
       const projectContext = await prepareProject(currentApiViewPath, baselineApiViewPath, tempFolder!);
       const messages = await detectBreakingChangesCore(projectContext);
       return { name: apiViewBasename, messages };

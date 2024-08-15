@@ -44,3 +44,9 @@ export interface NodeContext {
   node: InterfaceDeclaration | TypeAliasDeclaration | EnumDeclaration;
   used: boolean;
 }
+
+export interface RenameAbleDeclarations {
+  interfaces: InterfaceDeclaration[];
+  typeAliases: TypeAliasDeclaration[];
+  enums: EnumDeclaration[];
+}

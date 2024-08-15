@@ -1,7 +1,7 @@
 import { ESLintUtils } from '@typescript-eslint/utils';
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint';
 import { RuleListener } from '@typescript-eslint/utils/eslint-utils';
-import { ruleDescriptions } from '../../common/models/rules/rule-descriptions.js';
+import { ruleDescriptions } from '../../common/models/rules/rule-descriptions';
 
 // TODO: provide correct endpint
 const endpoint = 'https://a.b.c/rules';

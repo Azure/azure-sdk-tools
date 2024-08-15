@@ -5,7 +5,7 @@ import { getArtifactName, getNpmPackageInfo } from './npmUtils';
 import { join, posix } from 'node:path';
 import { runCommand, runCommandOptions } from './utils';
 
-import { glob } from 'glob'
+import { glob } from 'glob';
 import { logger } from '../utils/logger';
 
 interface ProjectItem {
@@ -42,13 +42,20 @@ async function packPackage(packageDirectory: string) {
     logger.info(`rushx pack successfully.`);
 }
 
+// TODO: figure out a way to workaround
+// IMPORTANT: pipeline framework doesn't support multiple api views
 async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
-    const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'review', '**/*.api.md')
-    const apiViews = await glob(apiViewPathPattern)
-    packageResult.apiViewArtifact = apiViews.join(',')
+    const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'review', '**/*.api.md');
+    const apiViews = await glob(apiViewPathPattern);
+    // packageResult.apiViewArtifact = apiViews.join(',')
+    packageResult.apiViewArtifact = apiViews[0];
 }
 
-export async function buildPackage(relativePackageDirectoryToSdkRoot: string, versionPolicyName: VersionPolicyName, packageResult: PackageResult) {
+export async function buildPackage(
+    relativePackageDirectoryToSdkRoot: string,
+    versionPolicyName: VersionPolicyName,
+    packageResult: PackageResult
+) {
     logger.info(`Start building package in ${relativePackageDirectoryToSdkRoot}.`);
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     await updateRushJson({

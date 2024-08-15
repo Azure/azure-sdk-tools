@@ -48,7 +48,7 @@ async function packPackage(packageDirectory: string) {
     logger.info(`rushx pack successfully.`);
 
     // debug
-    let apiViews = await glob(x);
+    apiViews = await glob(x);
     console.log('-----------------api views, after pack', apiViews)
     
 }

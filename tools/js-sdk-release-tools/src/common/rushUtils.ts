@@ -62,7 +62,7 @@ export async function buildPackage(
         versionPolicyName: versionPolicyName
     });
     // TODO: use rush script
-    await runCommand(`rush`, ['update'], runCommandOptions);
+    await runCommand(`rush`, ['update'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'] });
     logger.info(`Rush update successfully.`);
     await runCommand('rush', ['build', '-t', name, '--verbose'], runCommandOptions);
     await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult);

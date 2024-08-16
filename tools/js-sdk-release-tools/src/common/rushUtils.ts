@@ -15,7 +15,8 @@ interface ProjectItem {
     versionPolicyName: string;
 }
 
-let x = '';
+const rushScript = 'common/scripts/install-run-rush.js';
+const rushxScript = 'common/scripts/install-run-rushx.js';
 
 async function updateRushJson(projectItem: ProjectItem) {
     const content = await readFile('rush.json', { encoding: 'utf-8' });
@@ -26,7 +27,7 @@ async function updateRushJson(projectItem: ProjectItem) {
     }
     const isCurrentPackageExist = projects.filter((p) => p?.['packageName'] === projectItem.packageName).length > 0;
     if (isCurrentPackageExist) {
-        logger.info(`${projectItem.packageName} exists, no need to update rush.json.`);
+        logger.info(`'${projectItem.packageName}' exists, no need to update rush.json.`);
         return;
     }
     // add new project and keep comment at the same time
@@ -37,12 +38,10 @@ async function updateRushJson(projectItem: ProjectItem) {
     logger.info('Updated rush.json successfully.');
 }
 
-async function packPackage(packageDirectory: string) {
+async function packPackage(packageDirectory: string, packageName: string) {
     const cwd = join(packageDirectory);
-    logger.info(`Start to run rushx pack.`);
-    // TODO: use node common/scripts/install-run-rush.js pack --to ${packageName} --verbose
-    await runCommand('rushx', ['pack'], { ...runCommandOptions, cwd, stdio: ['pipe', 'pipe', 'pipe'] }, false);
-    logger.info(`rushx pack successfully.`);
+    await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'], cwd }, false);
+    logger.info(`Pack '${packageName}' successfully.`);
 }
 
 async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
@@ -62,7 +61,7 @@ export async function buildPackage(
     versionPolicyName: VersionPolicyName,
     packageResult: PackageResult
 ) {
-    logger.info(`Start building package in ${relativePackageDirectoryToSdkRoot}.`);
+    logger.info(`Start building package in '${relativePackageDirectoryToSdkRoot}'.`);
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     await updateRushJson({
         packageName: name,
@@ -70,21 +69,21 @@ export async function buildPackage(
         versionPolicyName: versionPolicyName
     });
     // TODO: use rush script
-    await runCommand(`rush`, ['update'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'] }, false);
+    await runCommand(`node`, [rushScript, 'update'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'] }, false);
     logger.info(`Rush update successfully.`);
-    await runCommand('rush', ['build', '-t', name, '--verbose'], runCommandOptions);
+    await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
     await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult);
-    logger.info(`Build package "${name}" successfully.`);
+    logger.info(`Build package '${name}' successfully.`);
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 export async function tryBuildSamples(packageDirectory: string) {
-    logger.info(`Start to build samples in ${packageDirectory}.`);
+    logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, cwd };
     let output: { stdout: string; stderr: string } | undefined;
     try {
-        await runCommand(`rushx`, ['build:samples'], options, false, 300);
+        await runCommand(`node`, [rushxScript, 'build:samples'], options, false, 300);
         logger.info(`built samples successfully.`);
     } catch (err) {
         logger.error(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
@@ -93,33 +92,25 @@ export async function tryBuildSamples(packageDirectory: string) {
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 export async function tryTestPackage(packageDirectory: string) {
-    logger.info(`Start to test package in ${packageDirectory}.`);
-    // debug
-    let apiViews = await glob(x);
-    console.log('-----------------api views, before test', apiViews, x);
-
+    logger.info(`Start to test package in '${packageDirectory}'.`);
     const env = { ...process.env, TEST_MODE: 'record' };
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, env, cwd };
     try {
-        await runCommand(`rushx`, ['test:node'], options, true, 300);
+        await runCommand(`node`, [rushxScript, 'test:node'], options, true, 300);
         logger.info(`tested package successfully.`);
     } catch (err) {
         logger.error(`Failed to test package due to: ${(err as Error)?.stack ?? err}`);
     }
-
-    // debug
-    apiViews = await glob(x);
-    console.log('-----------------api views, after test', apiViews, x);
 }
 
 export async function createArtifact(packageDirectory: string) {
-    logger.info(`Start to create artifact in ${packageDirectory}`);
-    await packPackage(packageDirectory);
+    logger.info(`Start to create artifact in '${packageDirectory}'`);
     const info = await getNpmPackageInfo(packageDirectory);
+    await packPackage(packageDirectory, info.name);
     const artifactName = getArtifactName(info);
     const artifactPath = posix.join(packageDirectory, artifactName);
     await access(artifactPath);
-    logger.info(`Start to create artifact ${info.name} successfully.`);
+    logger.info(`Start to create artifact '${info.name}' successfully.`);
     return artifactPath;
 }

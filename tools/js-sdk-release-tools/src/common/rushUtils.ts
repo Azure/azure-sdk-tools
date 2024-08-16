@@ -38,31 +38,16 @@ async function updateRushJson(projectItem: ProjectItem) {
 }
 
 async function packPackage(packageDirectory: string) {
-    // debug
-    let apiViews = await glob(x);
-    console.log('-----------------api views, before pack', apiViews, x);
-
     const cwd = join(packageDirectory);
     logger.info(`Start to run rushx pack.`);
     // TODO: use node common/scripts/install-run-rush.js pack --to ${packageName} --verbose
     await runCommand('rushx', ['pack'], { ...runCommandOptions, cwd, stdio: ['pipe', 'pipe', 'pipe'] }, false);
     logger.info(`rushx pack successfully.`);
-
-    // debug
-    apiViews = await glob(x);
-    console.log('-----------------api views, after pack', apiViews, x);
 }
 
 async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
-    // debug
-    x = apiViewPathPattern;
-
     const apiViews = await glob(apiViewPathPattern);
-
-    // debug
-    console.log('-----------------api views', apiViews, x);
-
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     await ensureDir('~/.api-views-temp');
@@ -95,10 +80,6 @@ export async function buildPackage(
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 export async function tryBuildSamples(packageDirectory: string) {
     logger.info(`Start to build samples in ${packageDirectory}.`);
-    // debug
-    let apiViews = await glob(x);
-    console.log('-----------------api views, before sample', apiViews, x);
-
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, cwd };
     let output: { stdout: string; stderr: string } | undefined;
@@ -108,10 +89,6 @@ export async function tryBuildSamples(packageDirectory: string) {
     } catch (err) {
         logger.error(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
     }
-
-    // debug
-    apiViews = await glob(x);
-    console.log('-----------------api views, after sample', apiViews, x);
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure

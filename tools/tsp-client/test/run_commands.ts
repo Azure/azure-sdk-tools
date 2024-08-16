@@ -76,7 +76,14 @@ async function main() {
   await runCommand(baseDir, ["generate", "-o", constosoJsSdkDir]);
 
   // Run the convert command on a mgmt spec
-  await runCommand(baseDir, ["convert", "-o", baseSpecDir, "--arm", "--swagger-readme", mgmtSpecLink]);
+  await runCommand(baseDir, [
+    "convert",
+    "-o",
+    baseSpecDir,
+    "--arm",
+    "--swagger-readme",
+    mgmtSpecLink,
+  ]);
 
   // Run the compare command to ensure it is working
   await runCommand(baseDir, [

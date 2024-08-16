@@ -1,5 +1,9 @@
 # Release
 
+## 2024-08-16 - 0.12.1
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.9.0`.
+
 ## 2024-08-15 - 0.12.0
 
 - Check for error diagnostics during TypeSpec compilation and exit with error if found. (#8815, #8777, #8555)

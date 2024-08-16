@@ -1,10 +1,11 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
-import { PackageResult, VersionPolicyName } from './types';
 import { access, readFile, writeFile } from 'node:fs/promises';
+import { basename, join, posix } from 'node:path';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
-import { join, posix } from 'node:path';
+import { PackageResult, VersionPolicyName } from './types';
 import { runCommand, runCommandOptions } from './utils';
 
+import { copy, ensureDir } from 'fs-extra';
 import { glob } from 'glob';
 import { logger } from '../utils/logger';
 
@@ -56,12 +57,18 @@ async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, package
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
     // debug
     x = apiViewPathPattern;
+
     const apiViews = await glob(apiViewPathPattern);
+
     // debug
     console.log('-----------------api views', apiViews, x);
+
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
-    packageResult.apiViewArtifact = apiViews[0];
+    await ensureDir('~/.api-views-temp');
+    await copy(apiViews[0], '~/.api-views-temp');
+    const apiView = join('~/.api-views-temp', basename(apiViews[0]));
+    packageResult.apiViewArtifact = apiView;
 }
 
 export async function buildPackage(

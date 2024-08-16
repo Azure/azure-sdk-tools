@@ -151,10 +151,10 @@ steps:
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
         Set-PsDebug -Trace 1
-        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}${{ parameters.FilePattern }}"
-        Remove-Item -v -r -ErrorAction Ignore $repoPath
+        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
+        Remove-Item -v -r -ErrorAction Ignore "$repoPath${{ parameters.FilePattern }}"
         Copy-Item -v -r `
-          $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}${{ parameters.FilePattern }} `
+          "$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}${{ parameters.FilePattern }}" `
           $repoPath
         Get-ChildItem -r $repoPath
       displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}

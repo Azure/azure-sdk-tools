@@ -35,7 +35,7 @@
     "simple-git": "^3.5.0",
     "ts-morph": "^23.0.0",
     "tslib": "^1.9.3",
-    "typescript-codegen-breaking-change-detector": "0.4.7",
+    "typescript-codegen-breaking-change-detector": "0.4.8",
     "winston": "^3.13.1",
     "yaml": "^1.10.2"
   },

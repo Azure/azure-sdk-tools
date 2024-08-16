@@ -193,11 +193,6 @@ stages:
             vmImage: ubuntu-22.04
 
           steps:
-            - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-              parameters:
-                Paths:
-                  - ${{ parameters.DirectoryToSync }}
-
             - template: /eng/pipelines/templates/steps/sync-directory.yml
               parameters:
                 CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository

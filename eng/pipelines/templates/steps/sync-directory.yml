@@ -140,9 +140,6 @@ steps:
       Paths:
         - ${{ parameters.DirectoryToSync }}
       Repositories:
-        - Name: $(Build.Repository.Name)
-          Commitish: $(Build.SourceVersion)
-          WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)
         - ${{ each repo in parameters.Repos }}:
           - Name: ${{ parameters.PROwner }}/${{ repo }}
             Commitish: ${{ parameters.BaseBranchName }}

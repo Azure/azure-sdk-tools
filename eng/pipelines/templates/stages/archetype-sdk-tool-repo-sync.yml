@@ -13,7 +13,7 @@ parameters:
   default: ''
 - name: BaseBranchName
   type: string
-  default: $(Build.SourceBranch)
+  default: $(DefaultBranch)
 - name: Repos
   type: object
   default: []

@@ -268,7 +268,7 @@ export async function generateCommand(argv: any) {
     args.push("--force");
   }
   await npmCommand(srcDir, args);
-  await compileTsp({
+  const success = await compileTsp({
     emitterPackage: emitter,
     outputPath: outputDir,
     resolvedMainFilePath,
@@ -281,6 +281,11 @@ export async function generateCommand(argv: any) {
   } else {
     Logger.debug("Cleaning up temp directory");
     await removeDirectory(tempRoot);
+  }
+
+  if (!success) {
+    Logger.error("Failed to generate client");
+    process.exit(1);
   }
 }
 

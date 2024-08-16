@@ -15,9 +15,6 @@ interface ProjectItem {
     versionPolicyName: string;
 }
 
-const rushScript = 'common/scripts/install-run-rush.js';
-const rushxScript = 'common/scripts/install-run-rushx.js';
-
 async function updateRushJson(projectItem: ProjectItem) {
     const content = await readFile('rush.json', { encoding: 'utf-8' });
     const rushJson = parse(content.toString());
@@ -38,7 +35,7 @@ async function updateRushJson(projectItem: ProjectItem) {
     logger.info('Updated rush.json successfully.');
 }
 
-async function packPackage(packageDirectory: string, packageName: string) {
+async function packPackage(packageDirectory: string, packageName: string, rushxScript: string) {
     const cwd = join(packageDirectory);
     await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'], cwd }, false);
     logger.info(`Pack '${packageName}' successfully.`);
@@ -59,7 +56,8 @@ async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, package
 export async function buildPackage(
     relativePackageDirectoryToSdkRoot: string,
     versionPolicyName: VersionPolicyName,
-    packageResult: PackageResult
+    packageResult: PackageResult, 
+    rushScript: string
 ) {
     logger.info(`Start building package in '${relativePackageDirectoryToSdkRoot}'.`);
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
@@ -77,11 +75,10 @@ export async function buildPackage(
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
-export async function tryBuildSamples(packageDirectory: string) {
+export async function tryBuildSamples(packageDirectory: string, rushxScript: string) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, cwd };
-    let output: { stdout: string; stderr: string } | undefined;
     try {
         await runCommand(`node`, [rushxScript, 'build:samples'], options, false, 300);
         logger.info(`built samples successfully.`);
@@ -91,7 +88,7 @@ export async function tryBuildSamples(packageDirectory: string) {
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
-export async function tryTestPackage(packageDirectory: string) {
+export async function tryTestPackage(packageDirectory: string, rushxScript: string) {
     logger.info(`Start to test package in '${packageDirectory}'.`);
     const env = { ...process.env, TEST_MODE: 'record' };
     const cwd = join(packageDirectory);
@@ -104,10 +101,10 @@ export async function tryTestPackage(packageDirectory: string) {
     }
 }
 
-export async function createArtifact(packageDirectory: string) {
+export async function createArtifact(packageDirectory: string, rushxScript: string): Promise<string> {
     logger.info(`Start to create artifact in '${packageDirectory}'`);
     const info = await getNpmPackageInfo(packageDirectory);
-    await packPackage(packageDirectory, info.name);
+    await packPackage(packageDirectory, info.name, rushxScript);
     const artifactName = getArtifactName(info);
     const artifactPath = posix.join(packageDirectory, artifactName);
     await access(artifactPath);

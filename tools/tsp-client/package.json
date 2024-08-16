@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-client-generator-cli",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@autorest/csharp": "https://aka.ms/azsdk/openapi-to-typespec-csharp",
-    "@autorest/openapi-to-typespec": "0.8.2",
+    "@autorest/openapi-to-typespec": "0.9.0",
     "@azure-tools/typespec-autorest": ">=0.44.0 <1.0.0",
     "@azure/core-rest-pipeline": "^1.12.0",
     "@azure-tools/rest-api-diff": "^0.1.0",

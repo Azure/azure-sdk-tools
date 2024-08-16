@@ -66,9 +66,10 @@ async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, package
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     await ensureDir('~/.api-views-temp');
-    await copy(apiViews[0], '~/.api-views-temp');
-    const apiView = join('~/.api-views-temp', basename(apiViews[0]));
-    packageResult.apiViewArtifact = apiView;
+    const apiViewName = basename(apiViews[0]);
+    const apiViewPath = join('~/.api-views-temp', apiViewName);
+    await copy(apiViews[0], apiViewPath);
+    packageResult.apiViewArtifact = apiViewPath;
 }
 
 export async function buildPackage(

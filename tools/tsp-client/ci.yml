@@ -32,13 +32,13 @@ extends:
           - template: /eng/pipelines/templates/variables/globals.yml
           - template: /eng/pipelines/templates/variables/image.yml
           - name: NodeVersion
-            value: '18.x'
+            value: "18.x"
           - name: VAR_ARTIFACT_NAME
-            value: 'drop'
+            value: "drop"
           - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
             value: $(Build.ArtifactStagingDirectory)
         jobs:
-          - job: Build_Linux
+          - job: BuildTest_Linux
             pool:
               name: $(LINUXPOOL)
               image: $(LINUXVMIMAGE)
@@ -47,17 +47,34 @@ extends:
               - template: /tools/tsp-client/build-tsp-client.yml
                 parameters:
                   Publish: true
-          - job: Build_Windows
+
+              - script: |
+                npm run test
+              displayName: 'npm run test'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+            
+          - job: BuildTest_Windows
             pool:
               name: $(WINDOWSPOOL)
               image: $(WINDOWSVMIMAGE)
               os: windows
             steps:
               - template: /tools/tsp-client/build-tsp-client.yml
-          - job: Build_Mac
+
+              - script: |
+                npm run test
+              displayName: 'npm run test'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+
+          - job: BuildTest_Mac
             pool:
               name: $(MACPOOL)
               vmImage: $(MACVMIMAGE)
               os: macOS
             steps:
               - template: /tools/tsp-client/build-tsp-client.yml
+
+              - script: |
+                npm run test
+              displayName: 'npm run test'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client

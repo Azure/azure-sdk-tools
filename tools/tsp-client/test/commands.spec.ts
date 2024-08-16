@@ -13,23 +13,23 @@ import { cwd } from "node:process";
 import { joinPaths } from "@typespec/compiler";
 
 describe("Verify commands", async function () {
-  //   before(async function () {
-  //     await cp(
-  //       "./test/utils/emitter-package.json",
-  //       joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package.json"),
-  //     );
-  //   });
+  before(async function () {
+    await cp(
+      "./test/utils/emitter-package.json",
+      joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package.json"),
+    );
+  });
 
-  //   after(async function () {
-  //     await rm(joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package.json"));
-  //     // This is generated in the first test using the command
-  //     await rm(joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package-lock.json"));
-  //     await rm(
-  //       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
-  //       { recursive: true },
-  //     );
-  //     await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
-  //   });
+  after(async function () {
+    await rm(joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package.json"));
+    // This is generated in the first test using the command
+    await rm(joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package-lock.json"));
+    await rm(
+      "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
+      { recursive: true },
+    );
+    await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
+  });
 
   await it("Generate lock file", async function () {
     try {

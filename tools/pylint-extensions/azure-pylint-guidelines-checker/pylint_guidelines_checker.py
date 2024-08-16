@@ -2766,7 +2766,7 @@ class DoNotUseLegacyTyping(BaseChecker):
 
     def visit_functiondef(self, node):
         """Check that we aren't using legacy typing."""
-        if node.is_function and (node.type_comment_args or node.type_comment_returns):
+        if node.type_comment_args or node.type_comment_returns:
             self.add_message(
                 msgid=f"do-not-use-legacy-typing",
                 node=node,

@@ -7,7 +7,7 @@ export default defineConfig({
             "dist/**",
             "**/node_modules/**",
             "**/misc/**",
-            "packages/**/dist/**",
+            "packages/**",
         ],
     },
 });

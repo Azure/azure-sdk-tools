@@ -3,7 +3,6 @@
   "version": "2.7.11",
   "description": "",
   "scripts": {
-    "preinstall": "cd ./packages/typescript-codegen-breaking-change-detector/ && npm install && npm run build && npm pack && cd ../.. && npm install typescript-codegen-breaking-change-detector file:packages/typescript-codegen-breaking-change-detector/typescript-codegen-breaking-change-detector-0.0.0.tgz",
     "dev": "tsx watch src/changelogToolCli.ts",
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",
@@ -36,7 +35,7 @@
     "simple-git": "^3.5.0",
     "ts-morph": "^23.0.0",
     "tslib": "^1.9.3",
-    "typescript-codegen-breaking-change-detector": "file:packages/typescript-codegen-breaking-change-detector/typescript-codegen-breaking-change-detector-0.0.0.tgz",
+    "typescript-codegen-breaking-change-detector": "0.4.7",
     "winston": "^3.13.1",
     "yaml": "^1.10.2"
   },

@@ -5,7 +5,7 @@ using TypeSpec.JsonSchema;
 @jsonSchema
 
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
-model ApiViewFile {
+model CodeFile {
   PackageName: string;
   PackageVersion: string;
   /** version of the APIview language parser used to create token file*/
@@ -16,11 +16,11 @@ model ApiViewFile {
   CrossLanguagePackageId?: string;
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
-  SystemComments?: Array<SystemComment>;
+  Diagnostics?: Array<CodeDiagnostic>;
 }
 
 
-/** Code line object corresponds to each line displayed on API review. If an empty line is required then add a code line object without any token. */
+/** ReviewLine object corresponds to each line displayed on API review. If an empty line is required then add a code line object without any token. */
 model ReviewLine {
   /** lineId is only required if we need to support commenting on a line that contains this token. 
    *  Usually code line for documentation or just punctuation is not required to have lineId. lineId should be a unique value within 
@@ -43,8 +43,7 @@ model ReviewLine {
 model ReviewToken {  
   Kind: TokenKind;
   Value: string;
-  /** NavigationDisplayName can be used if parser wants to send a different shorter dispaly name to be used in navigation tree 
-   *  instead of longer text. This is optional and Value will be used in the navigation if NavigationDisplayName is not set.*/
+  /** NavigationDisplayName is used to create a tree node in the navigation panel. Navigation nodes will be created only if token contains navigation display name.*/
   NavigationDisplayName?: string;
   /** navigateToId should be set if the underlying token is required to be displayed as HREF to another type within the review.
    * For e.g. a param type which is class name in the same package
@@ -65,11 +64,14 @@ model ReviewToken {
 
 
 /** System comment object is to add system generated comment. It can be one of the 4 different types of system comments. */
-model SystemComment {
-  /** Id of ReviewLine object where this diagnostic needs to be displayed. */
-  LineId: string;
+model CodeDiagnostic {
+  //Diagnostic ID is auto generated ID by CSharp analyzer.
+  DiagnosticId?: string;
+    /** Id of ReviewLine object where this diagnostic needs to be displayed(Options*/
+  TargetId: string;
+  // Auto generated system comment to be displayed under targetted line.
   Text: string;
-  Level: SystemCommentLevel;
+  Level: CodeDiagnosticLevel;
   HelpLinkUri?: string;
 }
 
@@ -84,7 +86,7 @@ enum TokenKind {
   Comment: 7
 }
 
-enum SystemCommentLevel {
+enum CodeDiagnosticLevel {
  Info: 1,
  Warning: 2,
  Error:	3,

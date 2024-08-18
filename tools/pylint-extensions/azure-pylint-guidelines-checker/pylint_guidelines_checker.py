@@ -2760,7 +2760,7 @@ class DoNotImportAsyncio(BaseChecker):
     msgs = {
         "C4763": (
             "Do not import the asyncio package directly in your library",
-            "do-not-import-asyncio-directly",
+            "do-not-import-asyncio",
             "Do not import the asyncio package in your directly.",
         ),
     }
@@ -2769,7 +2769,7 @@ class DoNotImportAsyncio(BaseChecker):
         """Check that we aren't importing from asyncio directly."""
         if node.modname == "asyncio":
             self.add_message(
-                msgid=f"do-not-import-asyncio-directly",
+                msgid=f"do-not-import-asyncio",
                 node=node,
                 confidence=None,
             )
@@ -2779,7 +2779,7 @@ class DoNotImportAsyncio(BaseChecker):
         for name, _ in node.names:
             if name == "asyncio":
                 self.add_message(
-                    msgid=f"do-not-import-asyncio-directly",
+                    msgid=f"do-not-import-asyncio",
                     node=node,
                     confidence=None,
                 )

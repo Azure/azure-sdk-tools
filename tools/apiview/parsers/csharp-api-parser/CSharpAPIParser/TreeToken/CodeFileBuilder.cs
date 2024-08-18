@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using ApiView;
 using APIView.Analysis;
-using APIView.TreeToken;
+using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using ApiView;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -47,7 +47,7 @@ namespace CSharpAPIParser.TreeToken
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "28";
+        public const string CurrentVersion = "29";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -76,16 +76,19 @@ namespace CSharpAPIParser.TreeToken
                 analyzer.VisitAssembly(assemblySymbol);
             }
 
-            var apiTreeNode = new APITreeNode();
-            apiTreeNode.Kind = APITreeNode.ASSEMBLY;
-            apiTreeNode.Id = assemblySymbol.Name;
-            apiTreeNode.Name = assemblySymbol.Name + ".dll";
-            
+            var codeFile = new CodeFile()
+            {
+                Language = "C#",
+                ParserVersion = CurrentVersion,
+                PackageName = assemblySymbol.Name,
+                PackageVersion = assemblySymbol.Identity.Version.ToString()
+            };
+
             if (dependencies != null)
             {
-                BuildDependencies(apiTreeNode.ChildrenObj, dependencies);
+                BuildDependencies(codeFile.ReviewLines, dependencies);
             }
-            BuildInternalsVisibleToAttributes(apiTreeNode.ChildrenObj, assemblySymbol);
+            BuildInternalsVisibleToAttributes(codeFile.ReviewLines, assemblySymbol);
 
             foreach (var namespaceSymbol in SymbolOrderProvider.OrderNamespaces(EnumerateNamespaces(assemblySymbol)))
             {
@@ -93,33 +96,20 @@ namespace CSharpAPIParser.TreeToken
                 {
                     foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
                     {
-                        BuildType(apiTreeNode.ChildrenObj, namedTypeSymbol, false);
+                        BuildType(codeFile.ReviewLines, namedTypeSymbol, false);
                     }
                 }
                 else
                 {
-                    BuildNamespace(apiTreeNode.ChildrenObj, namespaceSymbol);
+                    BuildNamespace(codeFile.ReviewLines, namespaceSymbol);
                 }
             }
 
-            // Sort API Tree by name
-            apiTreeNode.SortChildren();
-
-            var treeTokenCodeFile = new CodeFile()
-            {
-                Name = $"{assemblySymbol.Name} ({assemblySymbol.Identity.Version})",
-                Language = "C#",
-                APIForest = new List<APITreeNode>() { apiTreeNode },
-                VersionString = CurrentVersion,
-                Diagnostics = analyzer.Results.ToArray(),
-                PackageName = assemblySymbol.Name,
-                PackageVersion = assemblySymbol.Identity.Version.ToString()
-            };
-
-            return treeTokenCodeFile;
+            codeFile.Diagnostics = analyzer.Results.ToArray();
+            return codeFile;
         }
 
-        public static void BuildInternalsVisibleToAttributes(List<APITreeNode> apiTree, IAssemblySymbol assemblySymbol)
+        public static void BuildInternalsVisibleToAttributes(List<ReviewLine> reviewLines, IAssemblySymbol assemblySymbol)
         {
             var assemblyAttributes = assemblySymbol.GetAttributes()
                 .Where(a =>
@@ -129,10 +119,13 @@ namespace CSharpAPIParser.TreeToken
                     !a.ConstructorArguments[0].Value?.ToString()?.Contains("DynamicProxyGenAssembly2") == true);
             if (assemblyAttributes != null && assemblyAttributes.Any())
             {
-                var apiTreeNode = new APITreeNode();
-                apiTreeNode.Kind = apiTreeNode.Name = apiTreeNode.Id = APITreeNode.INTERNALS_VISIBLE_TO;
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreateTextToken(value: "Exposes internals to:"));
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
+                reviewLines.Add(new ReviewLine()
+                {
+                    LineId = "InternalsVisibleTo",
+                    Tokens = [
+                        ReviewToken.CreateStringLiteralToken("Exposes internals to:")
+                    ]
+                });
 
                 foreach (AttributeData attribute in assemblyAttributes)
                 {
@@ -143,83 +136,106 @@ namespace CSharpAPIParser.TreeToken
                         {
                             var firstComma = param?.IndexOf(',');
                             param = firstComma > 0 ? param?[..(int)firstComma] : param;
-                            apiTreeNode.TopTokensObj.Add(StructuredToken.CreateTextToken(value: param, id: attribute.AttributeClass?.Name));
+                            reviewLines.Add(new ReviewLine()
+                            {
+                                LineId = attribute.AttributeClass?.Name,
+                                Tokens = [
+                                    ReviewToken.CreateStringLiteralToken(param)
+                                ]
+                            });
                         }
                     }
                 }
-                apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateEmptyToken());
-                apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateLineBreakToken());
-                apiTree.Add(apiTreeNode);
             }
         }
 
-        public static void BuildDependencies(List<APITreeNode> apiTree, List<DependencyInfo> dependencies)
+        public static void BuildDependencies(List<ReviewLine> reviewLines, List<DependencyInfo> dependencies)
         {
             if (dependencies != null && dependencies.Any())
             {
-                var apiTreeNode = new APITreeNode();
-                apiTreeNode.Kind = apiTreeNode.Name = apiTreeNode.Id = APITreeNode.DEPENDENCIES;
-
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreateTextToken(value: "Dependencies:"));
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
+                //Dependencies
+                var headerLine = new ReviewLine()
+                {
+                    LineId = "Dependencies"
+                };
+                var depToken = ReviewToken.CreateStringLiteralToken("Dependencies:");
+                depToken.NavigationDisplayName = "Dependencies";
+                depToken.RenderClasses.Add("dependencies");
+                headerLine.Tokens.Add(depToken);
+                reviewLines.Add(headerLine);
 
                 foreach (DependencyInfo dependency in dependencies)
                 {
-                    apiTreeNode.TopTokensObj.Add(StructuredToken.CreateTextToken(value: dependency.Name, id: dependency.Name));
-                    var dependencyVersionToken = StructuredToken.CreateTextToken(value: $"-{dependency.Version}");
-                    dependencyVersionToken.TagsObj.Add(StructuredToken.SKIPP_DIFF);
-                    apiTreeNode.TopTokensObj.Add(dependencyVersionToken);
-                    apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
+                    var versionToken = ReviewToken.CreateStringLiteralToken($"-{dependency.Version}");
+                    versionToken.SkipDiff = true;
+                    var dependencyLine = new ReviewLine()
+                    {
+                        LineId = dependency.Name,
+                        Tokens = [
+                            ReviewToken.CreateStringLiteralToken(dependency.Name, false),
+                            versionToken
+                        ]
+                    };
+                    reviewLines.Add(dependencyLine);
                 }
-                apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateEmptyToken());
-                apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateLineBreakToken());
-                apiTree.Add(apiTreeNode);
             }
         }
 
-        private void BuildNamespace(List<APITreeNode> apiTree, INamespaceSymbol namespaceSymbol)
+        private void BuildNamespace(List<ReviewLine> reviewLines, INamespaceSymbol namespaceSymbol)
         {
             bool isHidden = HasOnlyHiddenTypes(namespaceSymbol);
-
-            var apiTreeNode = new APITreeNode();
-            apiTreeNode.Id = namespaceSymbol.GetId();
-            apiTreeNode.Name = namespaceSymbol.ToDisplayString();
-            apiTreeNode.Kind = APITreeNode.NAMESPACE;
-
-            if (isHidden)
+            //Add an empty review line to add empty line in the review before current name space begins.
+            if (reviewLines.Count > 0)
             {
-                apiTreeNode.TagsObj.Add(APITreeNode.HIDDEN);
+                reviewLines.Add(new ReviewLine() { IsHidden = isHidden });
             }
-            
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreateKeywordToken(SyntaxKind.NamespaceKeyword));
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreateSpaceToken());
-            BuildNamespaceName(apiTreeNode.TopTokensObj, namespaceSymbol);
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreateSpaceToken());
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
 
+            var namespaceLine = new ReviewLine()
+            {
+                LineId = namespaceSymbol.GetId(),
+                Tokens = [
+                    ReviewToken.CreateKeywordToken("namespace")
+                ],
+                IsHidden = isHidden
+            };
+
+            BuildNamespaceName(namespaceLine, namespaceSymbol);
+            var nameSpaceToken = namespaceLine.Tokens.LastOrDefault();
+            if (nameSpaceToken != null)
+            {
+                nameSpaceToken.RenderClasses.Add("namespace");
+                nameSpaceToken.NavigationDisplayName = namespaceSymbol.ToDisplayString();
+            }
+            namespaceLine.AddSuffixSpace();
+            namespaceLine.Tokens.Add(ReviewToken.CreatePunctuationToken("{"));
+
+            // Add each members in the namespace
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
             {
-                BuildType(apiTreeNode.ChildrenObj, namedTypeSymbol, isHidden);
+                BuildType(namespaceLine.Children, namedTypeSymbol, isHidden);
             }
 
-            apiTreeNode.BottomTokensObj.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CloseBraceToken));
-            apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateLineBreakToken());
-            apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateEmptyToken());
-
-            apiTree.Add(apiTreeNode);
+            reviewLines.Add(namespaceLine);
+            reviewLines.Add(new ReviewLine()
+            {
+                Tokens = [
+                    ReviewToken.CreateStringLiteralToken("}")
+                ],
+                IsHidden = isHidden
+            });
         }
 
-        private void BuildNamespaceName(List<StructuredToken> tokenList, INamespaceSymbol namespaceSymbol)
+        private void BuildNamespaceName(ReviewLine namespaceLine, INamespaceSymbol namespaceSymbol)
         {
             if (!namespaceSymbol.ContainingNamespace.IsGlobalNamespace)
             {
-                BuildNamespaceName(tokenList, namespaceSymbol.ContainingNamespace);
-                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.DotToken));
+                BuildNamespaceName(namespaceLine, namespaceSymbol.ContainingNamespace);
+                var punctuation = ReviewToken.CreatePunctuationToken(".");
+                punctuation.HasSuffixSpace = false;
+                namespaceLine.Tokens.Add(punctuation);
             }
-            DisplayName(tokenList, namespaceSymbol, namespaceSymbol);
+            DisplayName(namespaceLine, namespaceSymbol, namespaceSymbol);
         }
-
 
         private bool HasAnyPublicTypes(INamespaceSymbol subNamespaceSymbol)
         {
@@ -231,72 +247,82 @@ namespace CSharpAPIParser.TreeToken
             return namespaceSymbol.GetTypeMembers().All(t => IsHiddenFromIntellisense(t) || !IsAccessible(t));
         }
 
-        private void BuildType(List<APITreeNode> apiTree, INamedTypeSymbol namedType, bool inHiddenScope)
+        private void BuildType(List<ReviewLine> reviewLines, INamedTypeSymbol namedType, bool inHiddenScope)
         {
             if (!IsAccessible(namedType))
             {
                 return;
             }
 
-            bool isHidden = IsHiddenFromIntellisense(namedType);
-            var apiTreeNode = new APITreeNode();
-            apiTreeNode.Kind = APITreeNode.TYPE;
-            apiTreeNode.PropertiesObj.Add(APITreeNode.SUB_KIND, namedType.TypeKind.ToString().ToLowerInvariant());
-            apiTreeNode.Id = namedType.GetId();
-            apiTreeNode.Name = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-
-            if (isHidden && !inHiddenScope)
+            bool isHidden = IsHiddenFromIntellisense(namedType) || inHiddenScope;
+            //Add empty line to separate types before current node begins
+            if (reviewLines.Count > 0)
             {
-                apiTreeNode.TagsObj.Add(APITreeNode.HIDDEN);
+                reviewLines.Add(new ReviewLine()
+                {
+                    IsHidden = isHidden
+                });
             }
 
-            BuildDocumentation(apiTreeNode.TopTokensObj, namedType);
-            BuildAttributes(apiTreeNode.TopTokensObj, namedType.GetAttributes());
-            BuildVisibility(apiTreeNode.TopTokensObj, namedType);
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreateSpaceToken());
+            var reviewLine = new ReviewLine()
+            {
+                LineId = namedType.GetId(),
+                Tokens = [],
+                IsHidden = isHidden
+            };
+
+            // Build documentation, attributes, visibility, and name
+            BuildDocumentation(reviewLines, namedType, isHidden);
+            BuildAttributes(reviewLines, namedType.GetAttributes(), isHidden);
+            BuildVisibility(reviewLine.Tokens, namedType);
 
             switch (namedType.TypeKind)
             {
                 case TypeKind.Class:
-                    BuildClassModifiers(apiTreeNode.TopTokensObj, namedType);
-                    apiTreeNode.TopTokensObj.Add(StructuredToken.CreateKeywordToken(SyntaxKind.ClassKeyword));
+                    BuildClassModifiers(reviewLine.Tokens, namedType);
+                    reviewLine.Tokens.Add(ReviewToken.CreateKeywordToken(SyntaxKind.ClassKeyword));
                     break;
                 case TypeKind.Delegate:
-                    apiTreeNode.TopTokensObj.Add(StructuredToken.CreateKeywordToken(SyntaxKind.DelegateKeyword));
+                    reviewLine.Tokens.Add(ReviewToken.CreateKeywordToken(SyntaxKind.DelegateKeyword));
                     break;
                 case TypeKind.Enum:
-                    apiTreeNode.TopTokensObj.Add(StructuredToken.CreateKeywordToken(SyntaxKind.EnumKeyword));
+                    reviewLine.Tokens.Add(ReviewToken.CreateKeywordToken(SyntaxKind.EnumKeyword));
                     break;
                 case TypeKind.Interface:
-                    apiTreeNode.TopTokensObj.Add(StructuredToken.CreateKeywordToken(SyntaxKind.InterfaceKeyword));
+                    reviewLine.Tokens.Add(ReviewToken.CreateKeywordToken(SyntaxKind.InterfaceKeyword));
                     break;
                 case TypeKind.Struct:
                     if (namedType.IsReadOnly)
                     {
-                        apiTreeNode.TopTokensObj.Add(StructuredToken.CreateKeywordToken(SyntaxKind.ReadOnlyKeyword));
-                        apiTreeNode.TopTokensObj.Add(StructuredToken.CreateSpaceToken());
+                        reviewLine.Tokens.Add(ReviewToken.CreateKeywordToken(SyntaxKind.ReadOnlyKeyword));
                     }
-                    apiTreeNode.TopTokensObj.Add(StructuredToken.CreateKeywordToken(SyntaxKind.StructKeyword));
+                    reviewLine.Tokens.Add(ReviewToken.CreateKeywordToken(SyntaxKind.StructKeyword));
                     break;
             }
 
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreateSpaceToken());
-            DisplayName(apiTreeNode.TopTokensObj, namedType, namedType);
+            DisplayName(reviewLine, namedType, namedType);
+
+            // Add navigation short name and render classes to Type name token. Navigation tree is built dynamically based on these properties
+            var typeToken = reviewLine.Tokens.FirstOrDefault(t => t.Kind == TokenKind.TypeName && string.IsNullOrEmpty(t.NavigateToId));
+            if (typeToken != null)
+            {
+                typeToken.NavigationDisplayName = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+                typeToken.RenderClasses.Add(namedType.TypeKind.ToString().ToLowerInvariant());
+                typeToken.HasSuffixSpace = true;
+            }
 
             if (namedType.TypeKind == TypeKind.Delegate)
             {
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.SemicolonToken));
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
+                reviewLine.RemoveSuffixSpace();
+                reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.SemicolonToken));
                 return;
             }
 
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreateSpaceToken());
-            BuildBaseType(apiTreeNode.TopTokensObj, namedType);
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));  
-
+            BuildBaseType(reviewLine, namedType);
+            reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
             {
-                BuildType(apiTreeNode.ChildrenObj, namedTypeSymbol, inHiddenScope || isHidden);
+                BuildType(reviewLine.Children, namedTypeSymbol, isHidden);
             }
 
             foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
@@ -313,16 +339,19 @@ namespace CSharpAPIParser.TreeToken
                         continue;
                     }
                 }
-                BuildMember(apiTreeNode.ChildrenObj, member, inHiddenScope);
+                BuildMember(reviewLine.Children, member, isHidden);
             }
-            apiTreeNode.BottomTokensObj.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CloseBraceToken));
-            apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateLineBreakToken());
-            apiTreeNode.BottomTokensObj.Add(StructuredToken.CreateEmptyToken());
-
-            apiTree.Add(apiTreeNode);
+            reviewLines.Add(reviewLine);
+            reviewLines.Add(new ReviewLine()
+            {
+                Tokens = [
+                    ReviewToken.CreateStringLiteralToken("}")
+                ],
+                IsHidden = isHidden
+            });
         }
 
-        private void BuildDocumentation(List<StructuredToken> tokenList, ISymbol symbol)
+        private void BuildDocumentation(List<ReviewLine> reviewLines, ISymbol symbol, bool isHidden)
         {
             var lines = symbol.GetDocumentationCommentXml()?.Trim().Split(_newlineChars);
 
@@ -334,48 +363,46 @@ namespace CSharpAPIParser.TreeToken
                 }
                 foreach (var line in lines)
                 {
-                    var docToken = new StructuredToken("// " + line.Trim());
-                    docToken.RenderClassesObj.Add("comment");
-                    docToken.PropertiesObj.Add(StructuredToken.GROUP_ID, StructuredToken.DOCUMENTATION);
-                    tokenList.Add(docToken);
-                    tokenList.Add(StructuredToken.CreateLineBreakToken());
+                    var docToken = ReviewToken.CreateCommentToken("// " + line.Trim());
+                    docToken.IsDocumentation = true;
+                    reviewLines.Add(new ReviewLine()
+                    {
+                        Tokens = [docToken],
+                        IsHidden = isHidden
+                    });
                 }
             }
         }
 
-        private static void BuildClassModifiers(List<StructuredToken> tokenList, INamedTypeSymbol namedType)
+        private static void BuildClassModifiers(List<ReviewToken> tokenList, INamedTypeSymbol namedType)
         {
             if (namedType.IsAbstract)
             {
-                tokenList.Add(StructuredToken.CreateKeywordToken(SyntaxKind.AbstractKeyword));
-                tokenList.Add(StructuredToken.CreateSpaceToken());
+                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.AbstractKeyword));
             }
 
             if (namedType.IsStatic)
             {
-                tokenList.Add(StructuredToken.CreateKeywordToken(SyntaxKind.StaticKeyword));
-                tokenList.Add(StructuredToken.CreateSpaceToken());
+                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.StaticKeyword));
             }
 
             if (namedType.IsSealed)
             {
-                tokenList.Add(StructuredToken.CreateKeywordToken(SyntaxKind.SealedKeyword));
-                tokenList.Add(StructuredToken.CreateSpaceToken());
+                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.SealedKeyword));
             }
         }
 
-        private void BuildBaseType(List<StructuredToken> tokenList, INamedTypeSymbol namedType)
+        private void BuildBaseType(ReviewLine reviewLine, INamedTypeSymbol namedType)
         {
             bool first = true;
 
             if (namedType.BaseType != null &&
                 namedType.BaseType.SpecialType == SpecialType.None)
             {
-                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.ColonToken));
-                tokenList.Add(StructuredToken.CreateSpaceToken());
+                reviewLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.ColonToken));
                 first = false;
-
-                DisplayName(tokenList, namedType.BaseType);
+                DisplayName(reviewLine, namedType.BaseType);
+                reviewLine.AddSuffixSpace();
             }
 
             foreach (var typeInterface in namedType.Interfaces)
@@ -384,58 +411,52 @@ namespace CSharpAPIParser.TreeToken
 
                 if (!first)
                 {
-                    tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CommaToken));
-                    tokenList.Add(StructuredToken.CreateSpaceToken());
+                    reviewLine.RemoveSuffixSpace();
+                    reviewLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CommaToken));
                 }
                 else
                 {
-                    tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.ColonToken));
-                    tokenList.Add(StructuredToken.CreateSpaceToken());
+                    reviewLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.ColonToken));
                     first = false;
                 }
-
-                DisplayName(tokenList, typeInterface);
-            }
-
-            if (!first)
-            {
-                tokenList.Add(StructuredToken.CreateSpaceToken());
+                DisplayName(reviewLine, typeInterface);
+                reviewLine.AddSuffixSpace();
             }
         }
 
-        private void BuildMember(List<APITreeNode> apiTree, ISymbol member, bool inHiddenScope)
+        private void BuildMember(List<ReviewLine> reviewLines, ISymbol member, bool inHiddenScope)
         {
-            bool isHidden = IsHiddenFromIntellisense(member);
-            var apiTreeNode = new APITreeNode();
-            apiTreeNode.Kind = APITreeNode.MEMBER;
-            apiTreeNode.PropertiesObj.Add(APITreeNode.SUB_KIND, member.Kind.ToString());
-            apiTreeNode.Id = member.GetId();
-            apiTreeNode.Name = member.ToDisplayString();
-            apiTreeNode.TagsObj.Add(APITreeNode.HIDE_FROM_NAV);
-
-            if (isHidden && !inHiddenScope)
+            bool isHidden = IsHiddenFromIntellisense(member) || inHiddenScope;
+            var reviewLine = new ReviewLine()
             {
-                apiTreeNode.TagsObj.Add(APITreeNode.HIDDEN);
-            }
+                LineId = member.GetId(),
+                IsHidden = isHidden
+            };
 
-            BuildDocumentation(apiTreeNode.TopTokensObj, member);
-            BuildAttributes(apiTreeNode.TopTokensObj, member.GetAttributes());
-            DisplayName(apiTreeNode.TopTokensObj, member);
+            BuildDocumentation(reviewLines, member, isHidden);
+            BuildAttributes(reviewLines, member.GetAttributes(), isHidden);
+            reviewLines.Add(reviewLine);
+            DisplayName(reviewLine, member);
+            reviewLine.RemoveSuffixSpace();
+
+            // Set member sub kind class for render class styling
+            var memToken = reviewLine.Tokens.FirstOrDefault(m => m.Kind == TokenKind.MemberName);
+            if (memToken != null)
+            {
+                memToken.RenderClasses.Add(member.Kind.ToString().ToLowerInvariant());
+            }
 
             if (member.Kind == SymbolKind.Field && member.ContainingType.TypeKind == TypeKind.Enum)
             {
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CommaToken));
+                reviewLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CommaToken));
             }
             else if (member.Kind != SymbolKind.Property)
             {
-                apiTreeNode.TopTokensObj.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.SemicolonToken));
+                reviewLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.SemicolonToken));
             }
-
-            apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
-            apiTree.Add(apiTreeNode);
         }
 
-        private void BuildAttributes(List<StructuredToken> tokenList, ImmutableArray<AttributeData> attributes)
+        private void BuildAttributes(List<ReviewLine> reviewLines, ImmutableArray<AttributeData> attributes, bool isHidden)
         {
             const string attributeSuffix = "Attribute";
             foreach (var attribute in attributes)
@@ -450,59 +471,61 @@ namespace CSharpAPIParser.TreeToken
                         continue;
                     }
 
+                    var attributeLine = new ReviewLine()
+                    {
+                        LineId = attribute.AttributeClass.GetId(),
+                        IsHidden = isHidden
+                    };
+
                     if (attribute.AttributeClass.DeclaredAccessibility == Accessibility.Internal || attribute.AttributeClass.DeclaredAccessibility == Accessibility.Friend)
                     {
-                        tokenList.Add(StructuredToken.CreateKeywordToken("internal"));
-                        tokenList.Add(StructuredToken.CreateSpaceToken());
+                        attributeLine.Add(ReviewToken.CreateKeywordToken("internal"));
                     }
 
-                    tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.OpenBracketToken));
+                    attributeLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBracketToken, false));
                     var name = attribute.AttributeClass.Name;
                     if (name.EndsWith(attributeSuffix))
                     {
                         name = name.Substring(0, name.Length - attributeSuffix.Length);
                     }
-                    tokenList.Add(StructuredToken.CreateTypeNameToken(name));
+                    attributeLine.Add(ReviewToken.CreateTypeNameToken(name, false));
                     if (attribute.ConstructorArguments.Any())
                     {
-                        tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.OpenParenToken));
+                        attributeLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenParenToken, false));
                         bool first = true;
 
                         foreach (var argument in attribute.ConstructorArguments)
                         {
                             if (!first)
                             {
-                                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CommaToken));
-                                tokenList.Add(StructuredToken.CreateParameterSeparatorToken());
+                                attributeLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CommaToken));
                             }
                             else
                             {
                                 first = false;
                             }
-                            BuildTypedConstant(tokenList, argument);
+                            BuildTypedConstant(attributeLine, argument);
                         }
 
                         foreach (var argument in attribute.NamedArguments)
                         {
                             if (!first)
                             {
-                                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CommaToken));
-                                tokenList.Add(StructuredToken.CreateParameterSeparatorToken());
+                                attributeLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CommaToken));
                             }
                             else
                             {
                                 first = false;
                             }
-                            tokenList.Add(StructuredToken.CreateTextToken(argument.Key));
-                            tokenList.Add(StructuredToken.CreateSpaceToken());
-                            tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.EqualsToken));
-                            tokenList.Add(StructuredToken.CreateSpaceToken());
-                            BuildTypedConstant(tokenList, argument.Value);
+                            attributeLine.Add(ReviewToken.CreateTextToken(argument.Key));
+                            attributeLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.EqualsToken));
+                            BuildTypedConstant(attributeLine, argument.Value);
                         }
-                        tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CloseParenToken));
+                        attributeLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseParenToken));
                     }
-                    tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
-                    tokenList.Add(StructuredToken.CreateLineBreakToken());
+                    attributeLine.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
+                    //Add current attribute line to review lines
+                    reviewLines.Add(attributeLine);
                 }
             }
         }
@@ -532,11 +555,12 @@ namespace CSharpAPIParser.TreeToken
         private bool IsDecoratedWithAttribute(ISymbol member, string attributeName) =>
             member.GetAttributes().Any(d => d.AttributeClass?.Name == attributeName);
 
-        private void BuildTypedConstant(List<StructuredToken> tokenList, TypedConstant typedConstant)
+        private void BuildTypedConstant(ReviewLine reviewLine, TypedConstant typedConstant)
         {
+            var tokenList = reviewLine.Tokens;
             if (typedConstant.IsNull)
             {
-                tokenList.Add(StructuredToken.CreateKeywordToken(SyntaxKind.NullKeyword));
+                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.NullKeyword, false));
             }
             else if (typedConstant.Kind == TypedConstantKind.Enum)
             {
@@ -544,18 +568,18 @@ namespace CSharpAPIParser.TreeToken
             }
             else if (typedConstant.Kind == TypedConstantKind.Type)
             {
-                tokenList.Add(StructuredToken.CreateKeywordToken(SyntaxKind.TypeOfKeyword));
-                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.OpenParenToken));
-                DisplayName(tokenList, (ITypeSymbol)typedConstant.Value!);
-                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CloseParenToken));
+                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.TypeOfKeyword, false));
+                tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenParenToken, false));
+                DisplayName(reviewLine, (ITypeSymbol)typedConstant.Value!);
+                reviewLine.RemoveSuffixSpace();
+                tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseParenToken, false));
             }
             else if (typedConstant.Kind == TypedConstantKind.Array)
             {
-                tokenList.Add(StructuredToken.CreateKeywordToken(SyntaxKind.NewKeyword));
-                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.OpenBracketToken));
-                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
-                tokenList.Add(StructuredToken.CreateSpaceToken());
-                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
+                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.NewKeyword, false));
+                tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBracketToken, false));
+                tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
+                tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
 
                 bool first = true;
 
@@ -563,43 +587,43 @@ namespace CSharpAPIParser.TreeToken
                 {
                     if (!first)
                     {
-                        tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CommaToken));
-                        tokenList.Add(StructuredToken.CreateSpaceToken());
+                        tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CommaToken));
                     }
                     else
                     {
                         first = false;
                     }
 
-                    BuildTypedConstant(tokenList, value);
+                    BuildTypedConstant(reviewLine, value);
+                    reviewLine.RemoveSuffixSpace();
                 }
-                tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.CloseBraceToken));
+                tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBraceToken, false));
             }
             else
             {
                 if (typedConstant.Value is string s)
                 {
-                    tokenList.Add(StructuredToken.CreateStringLiteralToken(ObjectDisplay.FormatLiteral(s, ObjectDisplayOptions.UseQuotes | ObjectDisplayOptions.EscapeNonPrintableCharacters)));
+                    tokenList.Add(ReviewToken.CreateStringLiteralToken(ObjectDisplay.FormatLiteral(s, ObjectDisplayOptions.UseQuotes | ObjectDisplayOptions.EscapeNonPrintableCharacters), false));
                 }
                 else
                 {
-                    tokenList.Add(StructuredToken.CreateLiteralToken(ObjectDisplay.FormatPrimitive(typedConstant.Value, ObjectDisplayOptions.None)));
+                    tokenList.Add(ReviewToken.CreateLiteralToken(ObjectDisplay.FormatPrimitive(typedConstant.Value, ObjectDisplayOptions.None), false));
                 }
             }
         }
 
-        private void BuildVisibility(List<StructuredToken> tokenList, ISymbol symbol)
+        private void BuildVisibility(List<ReviewToken> tokenList, ISymbol symbol)
         {
-            tokenList.Add(StructuredToken.CreateKeywordToken(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
+            tokenList.Add(ReviewToken.CreateKeywordToken(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
         }
 
-        private void DisplayName(List<StructuredToken> tokenList, ISymbol symbol, ISymbol? definedSymbol = null)
+        private void DisplayName(ReviewLine reviewLine, ISymbol symbol, ISymbol? definedSymbol = null)
         {
-            tokenList.Add(StructuredToken.CreateEmptyToken(id: symbol.GetId()));
+            var reviewLineTokens = reviewLine.Tokens;
+
             if (NeedsAccessibility(symbol))
             {
-                tokenList.Add(StructuredToken.CreateKeywordToken(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
-                tokenList.Add(StructuredToken.CreateSpaceToken());
+                reviewLineTokens.Add(ReviewToken.CreateKeywordToken(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
             }
             if (symbol is IPropertySymbol propSymbol && propSymbol.DeclaredAccessibility != Accessibility.Internal)
             {
@@ -615,8 +639,23 @@ namespace CSharpAPIParser.TreeToken
                             i++;
                         }
                     }
-                    tokenList.Add(MapToken(definedSymbol: definedSymbol!, symbolDisplayPart: parts[i],
-                        previousSymbolDisplayPart: previous));
+                    var previousToken = reviewLine.Tokens.LastOrDefault();
+                    //Add a new code line as child if there is a line break
+                    if (parts[i].Kind == SymbolDisplayPartKind.LineBreak)
+                    {
+                        var subLine = new ReviewLine()
+                        {
+                            LineId = definedSymbol.GetId(),
+                        };
+                        reviewLine.Children.Add(subLine);
+                        reviewLineTokens = subLine.Tokens;
+                    }
+                    var token = MapToken(definedSymbol: definedSymbol!, symbolDisplayPart: parts[i],
+                        previousSymbolDisplayPart: previous, previousToken);
+                    if (token != null)
+                    {
+                        reviewLineTokens.Add(token);
+                    }
                     previous = parts[i];
                 }
             }
@@ -625,8 +664,13 @@ namespace CSharpAPIParser.TreeToken
                 SymbolDisplayPart previous = default(SymbolDisplayPart);
                 foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
                 {
-                    tokenList.Add(MapToken(definedSymbol: definedSymbol!, symbolDisplayPart: symbolDisplayPart,
-                        previousSymbolDisplayPart: previous));
+                    var previousToken = reviewLine.Tokens.LastOrDefault();
+                    var token = MapToken(definedSymbol: definedSymbol!, symbolDisplayPart: symbolDisplayPart,
+                        previousSymbolDisplayPart: previous, previousToken: previousToken);
+                    if (token != null)
+                    {
+                        reviewLineTokens.Add(token);
+                    }
                     previous = symbolDisplayPart;
                 }
             }
@@ -647,7 +691,7 @@ namespace CSharpAPIParser.TreeToken
             };
         }
 
-        private StructuredToken MapToken(ISymbol definedSymbol, SymbolDisplayPart symbolDisplayPart, SymbolDisplayPart previousSymbolDisplayPart)
+        private ReviewToken? MapToken(ISymbol definedSymbol, SymbolDisplayPart symbolDisplayPart, SymbolDisplayPart previousSymbolDisplayPart, ReviewToken? previousToken)
         {
             string? navigateToId = null;
             var symbol = symbolDisplayPart.Symbol;
@@ -659,10 +703,9 @@ namespace CSharpAPIParser.TreeToken
                 navigateToId = symbol.GetId();
             }
 
-            var definitionId = (definedSymbol != null && SymbolEqualityComparer.Default.Equals(definedSymbol, symbol)) ? definedSymbol.GetId() : null;
             var tokenValue = symbolDisplayPart.ToString();
 
-            StructuredToken? token = null;
+            ReviewToken? token = null;
 
             switch (symbolDisplayPart.Kind)
             {
@@ -675,28 +718,21 @@ namespace CSharpAPIParser.TreeToken
                 case SymbolDisplayPartKind.ErrorTypeName:
                 case SymbolDisplayPartKind.InterfaceName:
                 case SymbolDisplayPartKind.StructName:
-                    token = StructuredToken.CreateTypeNameToken(tokenValue);
+                    token = ReviewToken.CreateTypeNameToken(tokenValue, false);
                     break;
                 case SymbolDisplayPartKind.Keyword:
-                    token = StructuredToken.CreateKeywordToken(tokenValue);
-                    break;
-                case SymbolDisplayPartKind.LineBreak:
-                    token = StructuredToken.CreateLineBreakToken();
+                    token = ReviewToken.CreateKeywordToken(tokenValue, false);
                     break;
                 case SymbolDisplayPartKind.StringLiteral:
-                    token = StructuredToken.CreateStringLiteralToken(tokenValue);
+                    token = ReviewToken.CreateStringLiteralToken(tokenValue, false);
                     break;
                 case SymbolDisplayPartKind.Punctuation:
-                    token = StructuredToken.CreatePunctuationToken(tokenValue);
+                    token = ReviewToken.CreatePunctuationToken(tokenValue, false);
                     break;
                 case SymbolDisplayPartKind.Space:
-                    if (previousSymbolDisplayPart.Kind == SymbolDisplayPartKind.Punctuation && previousSymbolDisplayPart.ToString().Equals(","))
+                    if (previousToken != null)
                     {
-                        token = StructuredToken.CreateParameterSeparatorToken();
-                    }
-                    else 
-                    {
-                        token = StructuredToken.CreateSpaceToken();
+                        previousToken.HasSuffixSpace = true;
                     }
                     break;
                 case SymbolDisplayPartKind.PropertyName:
@@ -707,23 +743,18 @@ namespace CSharpAPIParser.TreeToken
                 case SymbolDisplayPartKind.EnumMemberName:
                 case SymbolDisplayPartKind.ExtensionMethodName:
                 case SymbolDisplayPartKind.ConstantName:
-                    token = StructuredToken.CreateMemberNameToken(tokenValue);
+                    token = ReviewToken.CreateMemberNameToken(tokenValue, false);
                     break;
                 default:
-                    token = StructuredToken.CreateTextToken(tokenValue);
+                    token = ReviewToken.CreateTextToken(tokenValue, hasSuffixSpace: false);
                     break;
             }
 
-            if (!String.IsNullOrWhiteSpace(definitionId))
+            if (token != null && !String.IsNullOrWhiteSpace(navigateToId))
             {
-                token.Id = definitionId!;
+                token.NavigateToId = navigateToId!;
             }
 
-            if (!String.IsNullOrWhiteSpace(navigateToId))
-            {
-                token.PropertiesObj.Add(StructuredToken.NAVIGATE_TO_ID, navigateToId!);
-            }
-            
             return token;
         }
 
@@ -767,9 +798,9 @@ namespace CSharpAPIParser.TreeToken
 
         internal class CodeFileBuilderEnumFormatter : AbstractSymbolDisplayVisitor
         {
-            private readonly List<StructuredToken> _tokenList;
+            private readonly List<ReviewToken> _tokenList;
 
-            public CodeFileBuilderEnumFormatter(List<StructuredToken> tokenList) : base(null, SymbolDisplayFormat.FullyQualifiedFormat, false, null, 0, false)
+            public CodeFileBuilderEnumFormatter(List<ReviewToken> tokenList) : base(null, SymbolDisplayFormat.FullyQualifiedFormat, false, null, 0, false)
             {
                 _tokenList = tokenList;
             }
@@ -781,29 +812,33 @@ namespace CSharpAPIParser.TreeToken
 
             protected override void AddLiteralValue(SpecialType type, object value)
             {
-                _tokenList.Add(StructuredToken.CreateLiteralToken(ObjectDisplay.FormatPrimitive(value, ObjectDisplayOptions.None)));
+                _tokenList.Add(ReviewToken.CreateLiteralToken(ObjectDisplay.FormatPrimitive(value, ObjectDisplayOptions.None)));
             }
 
             protected override void AddExplicitlyCastedLiteralValue(INamedTypeSymbol namedType, SpecialType type, object value)
             {
-                _tokenList.Add(StructuredToken.CreateLiteralToken(ObjectDisplay.FormatPrimitive(value, ObjectDisplayOptions.None)));
+                _tokenList.Add(ReviewToken.CreateLiteralToken(ObjectDisplay.FormatPrimitive(value, ObjectDisplayOptions.None)));
             }
 
             protected override void AddSpace()
             {
-                _tokenList.Add(StructuredToken.CreateSpaceToken());
+                var lastToken = _tokenList.LastOrDefault();
+                if (lastToken != null)
+                {
+                    lastToken.HasSuffixSpace = true;
+                }
             }
 
             protected override void AddBitwiseOr()
             {
-                _tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.BarToken));
+                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken));
             }
 
             public override void VisitField(IFieldSymbol symbol)
             {
-                _tokenList.Add(StructuredToken.CreateTypeNameToken(symbol.Type.Name));
-                _tokenList.Add(StructuredToken.CreatePunctuationToken(SyntaxKind.DotToken));
-                _tokenList.Add(StructuredToken.CreateMemberNameToken(symbol.Name));
+                _tokenList.Add(ReviewToken.CreateTypeNameToken(symbol.Type.Name));
+                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.DotToken));
+                _tokenList.Add(ReviewToken.CreateMemberNameToken(symbol.Name));
             }
 
             public void Format(ITypeSymbol? type, object? typedConstantValue)

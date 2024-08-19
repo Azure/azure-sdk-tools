@@ -1,19 +1,26 @@
 using System.Reflection;
 using ApiView;
+using System;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Newtonsoft.Json.Schema;
+using Newtonsoft.Json.Linq;
+using System.Text.Json.Serialization;
+
 
 namespace CSharpAPIParserTests
 {
-    public class PackageDetailsTests
+    public class CodeFileTests
     {
-        private CodeFile codeFile;
+        private readonly CodeFile codeFile;
         public Assembly assembly { get; set; }
 
-        public PackageDetailsTests()
+        public CodeFileTests()
         {
             assembly = Assembly.Load("Azure.Template");
             var dllStream = assembly.GetFile("Azure.Template.dll");
             var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            this.codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
         }
 
         [Fact]
@@ -70,6 +77,34 @@ namespace Microsoft.Extensions.Azure {
 } 
 ";
             Assert.Equal(expected, codeFile.GetApiText());
+        }
+
+        [Fact]
+        public void TestCodeFileJsonSchema()
+        {
+            var json = JsonSerializer.Serialize(codeFile, new JsonSerializerOptions {
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
+            var schema = JSchema.Parse(TestData.TokenJsonSchema);
+            var jsonObject = JObject.Parse(json);
+
+            IList<string> validationErrors = new List<string>();
+            bool isValid = jsonObject.IsValid(schema, out validationErrors);
+            if (isValid)
+            {
+                Console.WriteLine("JSON is valid.");
+            }
+            else
+            {
+                Console.WriteLine("JSON is invalid. Errors:");
+                foreach (string error in validationErrors)
+                {
+                    Console.WriteLine(error);
+                }
+            }
+            Assert.True(isValid);
         }
     }
 }

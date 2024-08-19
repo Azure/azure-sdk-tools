@@ -54,22 +54,6 @@ namespace APIView.Model.V2
             Tokens.Add(token);
         }
 
-        public void RemoveSuffixSpace()
-        {
-            if (Tokens.Count > 0)
-            {
-                Tokens[Tokens.Count - 1].HasSuffixSpace = false;
-            }
-        }
-
-        public void AddSuffixSpace()
-        {
-            if (Tokens.Count > 0)
-            {
-                Tokens[Tokens.Count - 1].HasSuffixSpace = true;
-            }
-        }
-
         public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true)
         {
             if (skipDocs && Tokens.Count > 0 && Tokens[0].IsDocumentation == true)

@@ -47,7 +47,7 @@ namespace APIView.Model.V2
         /// <summary>
         /// Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name
         /// </summary>
-        public bool? HasSuffixSpace { get; set; }
+        public bool HasSuffixSpace { get; set; } = true;
 
         /// <summary>
         /// Set isDocumentation to true if current token is part of documentation

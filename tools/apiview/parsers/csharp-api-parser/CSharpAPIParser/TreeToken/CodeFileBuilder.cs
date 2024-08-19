@@ -206,7 +206,7 @@ namespace CSharpAPIParser.TreeToken
                 nameSpaceToken.RenderClasses.Add("namespace");
                 nameSpaceToken.NavigationDisplayName = namespaceSymbol.ToDisplayString();
             }
-            namespaceLine.AddSuffixSpace();
+            namespaceLine.Tokens.Last().HasSuffixSpace = true;
             namespaceLine.Tokens.Add(ReviewToken.CreatePunctuationToken("{"));
 
             // Add each members in the namespace
@@ -311,7 +311,7 @@ namespace CSharpAPIParser.TreeToken
 
             if (namedType.TypeKind == TypeKind.Delegate)
             {
-                reviewLine.RemoveSuffixSpace();
+                reviewLine.Tokens.Last().HasSuffixSpace = false;
                 reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.SemicolonToken));
                 return;
             }
@@ -400,7 +400,7 @@ namespace CSharpAPIParser.TreeToken
                 reviewLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.ColonToken));
                 first = false;
                 DisplayName(reviewLine, namedType.BaseType);
-                reviewLine.AddSuffixSpace();
+                reviewLine.Tokens.Last().HasSuffixSpace = true;
             }
 
             foreach (var typeInterface in namedType.Interfaces)
@@ -409,7 +409,7 @@ namespace CSharpAPIParser.TreeToken
 
                 if (!first)
                 {
-                    reviewLine.RemoveSuffixSpace();
+                    reviewLine.Tokens.Last().HasSuffixSpace = false;
                     reviewLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.CommaToken));
                 }
                 else
@@ -418,7 +418,7 @@ namespace CSharpAPIParser.TreeToken
                     first = false;
                 }
                 DisplayName(reviewLine, typeInterface);
-                reviewLine.AddSuffixSpace();
+                reviewLine.Tokens.Last().HasSuffixSpace = true;
             }
         }
 
@@ -435,7 +435,7 @@ namespace CSharpAPIParser.TreeToken
             BuildAttributes(reviewLines, member.GetAttributes(), isHidden);
             reviewLines.Add(reviewLine);
             DisplayName(reviewLine, member);
-            reviewLine.RemoveSuffixSpace();
+            reviewLine.Tokens.Last().HasSuffixSpace = false;
 
             // Set member sub kind class for render class styling
             var memToken = reviewLine.Tokens.FirstOrDefault(m => m.Kind == TokenKind.MemberName);
@@ -569,7 +569,7 @@ namespace CSharpAPIParser.TreeToken
                 tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.TypeOfKeyword, false));
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenParenToken, false));
                 DisplayName(reviewLine, (ITypeSymbol)typedConstant.Value!);
-                reviewLine.RemoveSuffixSpace();
+                reviewLine.Tokens.Last().HasSuffixSpace = false;
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseParenToken, false));
             }
             else if (typedConstant.Kind == TypedConstantKind.Array)
@@ -593,7 +593,7 @@ namespace CSharpAPIParser.TreeToken
                     }
 
                     BuildTypedConstant(reviewLine, value);
-                    reviewLine.RemoveSuffixSpace();
+                    reviewLine.Tokens.Last().HasSuffixSpace = false;
                 }
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBraceToken, false));
             }

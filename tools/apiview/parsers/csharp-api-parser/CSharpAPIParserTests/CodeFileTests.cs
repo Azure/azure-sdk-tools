@@ -82,7 +82,27 @@ namespace Microsoft.Extensions.Azure {
         [Fact]
         public void TestCodeFileJsonSchema()
         {
-            var json = JsonSerializer.Serialize(codeFile, new JsonSerializerOptions {
+            //Verify JSON file generated for Azure.Template
+            var isValid = validateSchema(codeFile);
+            Assert.True(isValid);
+        }
+
+        [Fact]
+        public void TestCodeFileJsonSchema2()
+        {
+            //Verify JSON file generated for Azure.Storage.Blobs
+            var storageAssembly = Assembly.Load("Azure.Storage.Blobs");
+            var dllStream = storageAssembly.GetFile("Azure.Storage.Blobs.dll");
+            var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            var storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            var isValid = validateSchema(storageCodeFile);
+            Assert.True(isValid);
+        }
+
+        private bool validateSchema(CodeFile codeFile)
+        {
+            var json = JsonSerializer.Serialize(codeFile, new JsonSerializerOptions
+            {
                 AllowTrailingCommas = true,
                 ReadCommentHandling = JsonCommentHandling.Skip,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -104,7 +124,7 @@ namespace Microsoft.Extensions.Azure {
                     Console.WriteLine(error);
                 }
             }
-            Assert.True(isValid);
+            return isValid;
         }
     }
 }

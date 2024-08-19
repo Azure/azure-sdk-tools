@@ -49,7 +49,7 @@ namespace APIView.Model.V2
         [JsonIgnore]
         public bool Processed { get; set; } = false;
 
-        public void Add(ReviewToken token)
+        public void AddToken(ReviewToken token)
         {
             Tokens.Add(token);
         }
@@ -70,7 +70,7 @@ namespace APIView.Model.V2
             }
         }
 
-        public void GetApiText(StringBuilder sb, int indent = 0, bool skipDocs = true)
+        public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true)
         {
             if (skipDocs && Tokens.Count > 0 && Tokens[0].IsDocumentation == true)
             {
@@ -94,22 +94,22 @@ namespace APIView.Model.V2
             sb.Append(Environment.NewLine);
             foreach (var child in Children)
             {
-                child.GetApiText(sb, indent + 1, skipDocs);
+                child.AppendApiTextToBuilder(sb, indent + 1, skipDocs);
             }
         }
 
         private string ToString(bool includeAllTokens)
         {
-            var filterdTokens = Tokens.Where(x => includeAllTokens || x.SkipDiff != true);
+            var filterdTokens = includeAllTokens ? Tokens: Tokens.Where(x => x.SkipDiff != true);
             if (!filterdTokens.Any())
             {
-                return "";
+                return string.Empty;
             }
             StringBuilder sb = new();
             foreach (var token in filterdTokens)
             {
                 sb.Append(token.Value);
-                sb.Append(token.HasSuffixSpace == true ? " " : "");
+                sb.Append(token.HasSuffixSpace == true ? " " : string.Empty);
             }
             return sb.ToString();
         }

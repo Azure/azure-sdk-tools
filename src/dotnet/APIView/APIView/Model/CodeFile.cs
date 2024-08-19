@@ -153,7 +153,7 @@ namespace ApiView
             StringBuilder sb = new();
             foreach (var line in ReviewLines)
             {
-                line.GetApiText(sb, 0, true);
+                line.AppendApiTextToBuilder(sb, 0, true);
             }
             return sb.ToString();
         }       

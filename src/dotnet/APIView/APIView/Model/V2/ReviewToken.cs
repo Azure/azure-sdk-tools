@@ -22,31 +22,38 @@ namespace APIView.Model.V2
         }
         public TokenKind Kind { get; set; }
         public string Value { get; set; }
+
         /// <summary>
         /// NavigationDisplayName property is to add a short name for the token that will be displayed in the navigation object.
         /// </summary>
         public string NavigationDisplayName { get; set; }
+
         /// <summary>
         /// navigateToId should be set if the underlying token is required to be displayed as HREF to another type within the review.
         /// </summary>
         public string NavigateToId { get; set; }
+
         /// <summary>
         /// set skipDiff to true if underlying token needs to be ignored from diff calculation. 
         /// For e.g. package metadata or dependency versions are usually not required to be excluded when comparing two revisions to avoid reporting them as API changes
         /// </summary>
         public bool? SkipDiff { get; set; }
+
         /// <summary>
         /// This is set if API is marked as deprecated
         /// </summary>
         public bool? IsDeprecated { get; set; }
+
         /// <summary>
         /// Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name
         /// </summary>
         public bool? HasSuffixSpace { get; set; }
+
         /// <summary>
         /// Set isDocumentation to true if current token is part of documentation
         /// </summary>
         public bool? IsDocumentation { get; set; }
+
         /// <summary>
         /// Language specific style css class names
         /// </summary>

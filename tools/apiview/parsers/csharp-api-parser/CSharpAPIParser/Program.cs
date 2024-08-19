@@ -75,7 +75,7 @@ public static class Program
                     Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no dll. Creating a meta package API review file.");
                     var codeFile = CreateDummyCodeFile(packageFilePath.FullName, $"Package {packageFilePath.Name} does not contain any dll to create API review.");
                     outputFileName = string.IsNullOrEmpty(outputFileName) ? nuspecEntry.Name : outputFileName;
-                    await CreateOutPutFile(OutputDirectory.FullName, outputFileName, codeFile);
+                    await CreateOutputFile(OutputDirectory.FullName, outputFileName, codeFile);
                     return;
                 }
 
@@ -128,13 +128,13 @@ public static class Program
                 Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no Assembly Symbol.");
                 var codeFile = CreateDummyCodeFile(packageFilePath.FullName, $"Package {packageFilePath.Name} does not contain any assembly symbol to create API review.");
                 outputFileName = string.IsNullOrEmpty(outputFileName) ? packageFilePath.Name : outputFileName;
-                await CreateOutPutFile(OutputDirectory.FullName, outputFileName, codeFile);
+                await CreateOutputFile(OutputDirectory.FullName, outputFileName, codeFile);
                 return;
             }
 
             var parsedFileName = string.IsNullOrEmpty(outputFileName) ? assemblySymbol.Name : outputFileName;
             var treeTokenCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies);
-            await CreateOutPutFile(OutputDirectory.FullName, parsedFileName, treeTokenCodeFile);
+            await CreateOutputFile(OutputDirectory.FullName, parsedFileName, treeTokenCodeFile);
         }
         catch (Exception ex)
         {
@@ -151,7 +151,7 @@ public static class Program
         }
     }
 
-    static async Task CreateOutPutFile(string outputPath, string outputFileNamePrefix, CodeFile apiViewFile)
+    static async Task CreateOutputFile(string outputPath, string outputFileNamePrefix, CodeFile apiViewFile)
     {
         var jsonTokenFilePath = Path.Combine(outputPath, $"{outputFileNamePrefix}.json");
         await using FileStream fileStream = new(jsonTokenFilePath, FileMode.Create, FileAccess.Write);

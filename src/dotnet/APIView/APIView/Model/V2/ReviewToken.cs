@@ -5,12 +5,13 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace APIView.Model.V2
 {
-    /*** Token corresponds to each component within a code line. A separate token is required for keyword, 
-     * punctuation, type name, text etc. */
-
+    /// <summary>
+    /// Token corresponds to each component within a code line. A separate token is required for keyword, punctuation, type name, text etc.
+    /// </summary>
     public class ReviewToken
     {
         public ReviewToken() { }
@@ -21,21 +22,34 @@ namespace APIView.Model.V2
         }
         public TokenKind Kind { get; set; }
         public string Value { get; set; }
-        /*** NavigationDisplayName property is to add a short name for the token that will be displayed in the navigation object. */
+        /// <summary>
+        /// NavigationDisplayName property is to add a short name for the token that will be displayed in the navigation object.
+        /// </summary>
         public string NavigationDisplayName { get; set; }
-        /*** navigateToId should be set if the underlying token is required to be displayed as HREF to another type within the review.
-        * For e.g. a param type which is class name in the same package */
+        /// <summary>
+        /// navigateToId should be set if the underlying token is required to be displayed as HREF to another type within the review.
+        /// </summary>
         public string NavigateToId { get; set; }
-        /*** set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions 
-        * are usually not required to be excluded when comparing two revisions to avoid reporting them as API changes*/
+        /// <summary>
+        /// set skipDiff to true if underlying token needs to be ignored from diff calculation. 
+        /// For e.g. package metadata or dependency versions are usually not required to be excluded when comparing two revisions to avoid reporting them as API changes
+        /// </summary>
         public bool? SkipDiff { get; set; }
-        /*** This is set if API is marked as deprecated */
+        /// <summary>
+        /// This is set if API is marked as deprecated
+        /// </summary>
         public bool? IsDeprecated { get; set; }
-        /*** Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name */
+        /// <summary>
+        /// Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name
+        /// </summary>
         public bool? HasSuffixSpace { get; set; }
-        /*** Set isDocumentation to true if current token is part of documentation */
+        /// <summary>
+        /// Set isDocumentation to true if current token is part of documentation
+        /// </summary>
         public bool? IsDocumentation { get; set; }
-        /*** Language specific style css class names */
+        /// <summary>
+        /// Language specific style css class names
+        /// </summary>
         public HashSet<string> RenderClasses { get; set; } = new HashSet<string>();
 
         public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true)

@@ -144,9 +144,10 @@ namespace ApiView
             await JsonSerializer.SerializeAsync(stream, this, _serializerOptions);
         }
 
-        /***GetApiText method will generate complete text representation of API surface to help generating the content.
-        * One use case of this function will be to support download request of entire API review surface.
-        */
+        /// <summary>
+        /// Generates a complete text representation of API surface to help generating the content.
+        /// One use case of this function will be to support download request of entire API review surface.
+        /// </summary>
         public string GetApiText()
         {
             StringBuilder sb = new();

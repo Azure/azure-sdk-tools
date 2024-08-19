@@ -29,7 +29,7 @@ Don't worry about indentation that will be handled by the tree structure based o
 
 ## Examples
 
-A sample token file for .NET package `Azure.Template` is present [here](./apiview-treestyle-parser-schema/sample/Azure.Template_token.json) and corresponding rendered text representation is available [here](./apiview-treestyle-parser-schema/sample/Azure.Template_review_context.txt).
+A sample token file for .NET package `Azure.Template` is present [here](./apiview-treestyle-parser-schema/sample/Azure.Template_token.json) and corresponding rendered text representation is available [here](./apiview-treestyle-parser-schema/sample/Azure.Template_review_content.txt).
 
 
 ## JSON token validation

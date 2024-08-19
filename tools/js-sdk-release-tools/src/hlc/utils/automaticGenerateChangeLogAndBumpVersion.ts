@@ -27,7 +27,7 @@ import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tr
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const ApiType = getApiVersionType(packageFolderPath);
+    const ApiType = await getApiVersionType(packageFolderPath);
     const isStableRelease = ApiType != ApiVersionType.Preview;
     const packageName = getNpmPackageName(packageFolderPath);
     const npm = new NPMScope({ executionFolderPath: packageFolderPath });

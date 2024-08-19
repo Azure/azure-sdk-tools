@@ -4,18 +4,16 @@ import {
     InterfaceDeclaration,
     TypeAliasDeclaration
 } from "parse-ts-to-ast";
+// TODO: add detection for routes and overloads in base detector
 import { InlineDeclarationNameSetMessage, RuleMessage, RuleMessageKind, detectBreakingChangesBetweenPackages } from "typescript-codegen-breaking-change-detector";
 
 import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration";
-import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor";
-import { SDKType } from "../common/types";
-import { TSExportedMetaData } from "./extractMetaData";
 import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
+import { join } from "path";
+import { SDKType } from "../common/types";
 import { logger } from "../utils/logger";
-
-// TODO: add detection for routes and overloads in base detector
-
-
+import { TSExportedMetaData } from "./extractMetaData";
+import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor";
 
 export interface ChangelogItem {
     line: string;
@@ -181,8 +179,8 @@ export class Changelog {
             return;
         }
         try {
-            const messageMap = await detectBreakingChangesBetweenPackages(baselinePackageRoot, currentPackageRoot, baselinePackageRoot, true);
-            
+            const tempFolder = join('~/.tmp-breaking-change-detect');
+            const messageMap = await detectBreakingChangesBetweenPackages(baselinePackageRoot, currentPackageRoot, tempFolder, false);
             switch (sdkType) {
                 case SDKType.RestLevelClient:
                     await this.postProcessForRestLevelClient(messageMap);

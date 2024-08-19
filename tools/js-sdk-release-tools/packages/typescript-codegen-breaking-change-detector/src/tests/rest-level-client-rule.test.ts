@@ -1,9 +1,8 @@
-import { describe, expect, test } from 'vitest';
 import { mkdirp, pathExists } from 'fs-extra';
+import { describe, expect, test } from 'vitest';
 
-import { InlineDeclarationNameSetMessage } from '../azure/common/types';
-import { detectBreakingChangesBetweenPackages } from '../azure/detect-breaking-changes';
 import { join } from 'node:path';
+import { detectBreakingChangesBetweenPackages } from '../azure/detect-breaking-changes';
 
 function getFormattedDate(): string {
   const today = new Date();

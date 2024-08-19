@@ -1,14 +1,19 @@
 import { ApiVersionType } from "../../common/types";
 import { IApiVersionTypeExtractor } from "../../common/interfaces";
-import { findParametersPath, findRestClientPath, getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient } from "../../xlc/apiVersion/utils";
+import { findParametersPath, getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils";
 
-export const getApiVersionType: IApiVersionTypeExtractor = (
+export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string
-): ApiVersionType => {
-    const relativeRestSrcFolder = "src/rest/";
-    const typeFromClient = getApiVersionTypeFromRestClient(packageRoot, relativeRestSrcFolder, findRestClientPath);
+): Promise<ApiVersionType> => {
+    let clientPattern = "src/api/*Context.ts";
+    let typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, clientPattern, tryFindRestClientPath);
     if (typeFromClient !== ApiVersionType.None) return typeFromClient;
-    const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, relativeRestSrcFolder, findParametersPath);
+
+    clientPattern = "src/rest/*Client.ts";
+    typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, clientPattern, tryFindRestClientPath);
+    if (typeFromClient !== ApiVersionType.None) return typeFromClient;
+
+    const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, clientPattern, findParametersPath);
     if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
     return ApiVersionType.Stable;
 };

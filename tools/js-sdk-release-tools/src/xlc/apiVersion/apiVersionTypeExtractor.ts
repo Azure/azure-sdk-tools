@@ -6,15 +6,15 @@ import * as hlcApi from '../../hlc/apiVersion/apiVersionTypeExtractor'
 import * as rlcApi from '../../llc/apiVersion/apiVersionTypeExtractor'
 
 // TODO: move to x-level-client folder
-export const getApiVersionType: IApiVersionTypeExtractor = (packageRoot: string): ApiVersionType => {
+export const getApiVersionType: IApiVersionTypeExtractor = async (packageRoot: string): Promise<ApiVersionType> => {
     const sdkType = getSDKType(packageRoot);
     switch (sdkType) {
         case SDKType.ModularClient:
-            return mlcApi.getApiVersionType(packageRoot);
+            return await mlcApi.getApiVersionType(packageRoot);
         case SDKType.HighLevelClient:
-            return hlcApi.getApiVersionType(packageRoot);
+            return await hlcApi.getApiVersionType(packageRoot);
         case SDKType.RestLevelClient:
-            return rlcApi.getApiVersionType(packageRoot); 
+            return await rlcApi.getApiVersionType(packageRoot); 
         default:
             console.warn(`Unsupported SDK type ${sdkType} to get detact api version`);
             return ApiVersionType.None;

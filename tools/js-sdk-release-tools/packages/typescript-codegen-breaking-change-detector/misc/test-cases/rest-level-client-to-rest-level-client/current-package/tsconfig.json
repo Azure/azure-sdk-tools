@@ -1,16 +1,9 @@
 {
+  "extends": "../../../tsconfig",
   "compilerOptions": {
-    "jsx": "preserve",
-    "target": "es5",
-    "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
-    "lib": ["es2015", "es2017", "esnext"],
-    "experimentalDecorators": true,
-  "rootDir": "."
+    "outDir": "./dist-esm",
+    "declarationDir": "./types",
+    "paths": { "@azure-rest/arm-servicefabric": ["./src/index"] }
   },
-  "include": [
-    "**/ai-translation-text.api.ts",
-  ],
-  "exclude": ["**/node_modules/**/*.*"]
+  "include": ["src/**/*.ts", "./test/**/*.ts", "samples-dev/**/*.ts"]
 }

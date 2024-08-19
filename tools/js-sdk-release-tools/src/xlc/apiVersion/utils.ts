@@ -1,11 +1,14 @@
 import { readFileSync } from "node:fs";
 import { getTsSourceFile } from "../../common/utils";
-import { ApiVersionType } from "../../common/types";
+import { ApiVersionType, SDKType } from "../../common/types";
 import ts from "typescript";
 import path from "node:path";
 import shell from "shelljs";
 import { SourceFile, SyntaxKind } from "ts-morph";
-import { IApiVersionTypeExtractor } from "../../common/interfaces";
+import { logger } from "../../utils/logger";
+import { glob } from 'glob'
+
+var unixify = require('unixify');
 
 const findApiVersionInRestClientV1 = (
     clientPath: string
@@ -85,34 +88,34 @@ export const findApiVersionInRestClient = (clientPath: string): string | undefin
     return version1;
 };
 
-export const findRestClientPath = (packageRoot: string, relativeRestSrcFolder: string): string => {
-    const restPath = path.join(packageRoot, relativeRestSrcFolder);
-    const fileNames = shell.ls(restPath);
-    const clientFiles = fileNames.filter((f) => f.endsWith("Client.ts"));
-    if (clientFiles.length !== 1)
-        throw new Error(`Single client is supported, but found "${clientFiles}" in ${restPath}`);
-
-    const clientPath = path.join(restPath, clientFiles[0]);
-    return clientPath;
-};
+export const tryFindRestClientPath = async (packageRoot: string, clientPattern: string): Promise<string | undefined> => {
+    const pattern = unixify(path.join(packageRoot, clientPattern));
+    const clientFiles = await glob(pattern);
+    if (clientFiles.length !== 1) {
+        logger.warn(`Failed to find extactly one REST client in pattern '${pattern}', got '${clientFiles}'.`);
+        return undefined;
+    }
+    return clientFiles[0];
+}; 
 
 export const findParametersPath = (packageRoot: string, relativeParametersFolder: string): string => {
     const parametersPath = path.join(packageRoot, relativeParametersFolder);
     const fileNames = shell.ls(parametersPath);
     const clientFiles = fileNames.filter((f) => f === "parameters.ts");
     if (clientFiles.length !== 1)
-        throw new Error(`Single client is supported, but found "${clientFiles}" in ${parametersPath}`);
+        throw new Error(`Expected 1 'parameters.ts' file, but found '${clientFiles}' in '${parametersPath}'.`);
 
     const clientPath = path.join(parametersPath, clientFiles[0]);
     return clientPath;
 };
 
-export const getApiVersionTypeFromRestClient = (
+export const getApiVersionTypeFromRestClient = async (
     packageRoot: string,
-    relativeRestSrcFolder: string,
-    findRestClientPath: (packageRoot: string, relativeRestSrcFolder: string) => string
-): ApiVersionType => {
-    const clientPath = findRestClientPath(packageRoot, relativeRestSrcFolder);
+    clientPattern: string,
+    findRestClientPath: (packageRoot: string, clientPattern: string) => Promise<string | undefined>
+): Promise<ApiVersionType> => {
+    const clientPath = await findRestClientPath(packageRoot, clientPattern);
+    if (!clientPath) return ApiVersionType.None;
     const apiVersion = findApiVersionInRestClient(clientPath);
     if (apiVersion && apiVersion.indexOf("-preview") >= 0)
         return ApiVersionType.Preview;

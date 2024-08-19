@@ -1,23 +1,17 @@
 # Release History
-
-## 1.0.0-beta.2 (Unreleased)
-
+    
+## 1.0.0 (2024-08-16)
+    
 ### Features Added
-- Added support for AAD authentication.
+
+  - Added operation group ClustersGet_DDD
+  - Added Interface DiagnosticsStorageAccountConfigOutput_FFF
 
 ### Breaking Changes
 
-### Bugs Fixed
-
-### Other Changes
-
-## 1.0.0-beta.1 (2023-04-18)
-Initial release
-
-### Features Added
-- Added support for Text Translation - [Translate API](https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-translate)
-- Added support for Text Transliteration - [Transliterate API](https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-transliterate)
-- Added support for Finding Sentence Boundaries - [FindSentenceBoundaries API](https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-break-sentence)
-- Added support for Getting the Supported Languages - [GetLanguages API](https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-languages)
-- Added support for Looking up the Dictionary Entries - [LookupDictionaryEntries API](https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-dictionary-lookup)
-- Added support for Looking up the Dictionary Examples - [LookupDictionaryExamples API](https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-dictionary-examples)
+  - Removed operation group ClustersGet
+  - Operation ClusterVersionsGet.get has a new signature
+  - Interface DiagnosticsStorageAccountConfig no longer has parameter protectedAccountKeyName
+  - Interface DiagnosticsStorageAccountConfig has a new required parameter protectedAccountKeyName_GGG
+  - Type of parameter diagnosticsStorageAccountConfig of interface ClusterPropertiesOutput is changed from DiagnosticsStorageAccountConfigOutput to DiagnosticsStorageAccountConfigOutput_FFF
+    

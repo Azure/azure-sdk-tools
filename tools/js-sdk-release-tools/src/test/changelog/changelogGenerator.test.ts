@@ -4,7 +4,7 @@ import path, { join } from "path";
 import { SDKType } from "../../common/types";
 import { describe } from "node:test";
 import { tryReadNpmPackageChangelog } from "../../common/utils";
-import { rmdirSync, writeFileSync } from "fs";
+import { ensureDirSync, removeSync, outputFileSync } from "fs-extra";
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
@@ -138,20 +138,21 @@ describe("Breaking change detection", () => {
 });
 
 describe("Changelog reading", () => {
-    const tempPackageFolder = `./tmp/package-${getRandomInt(10000)}`;
-    try {
         test("Read changelog that doesn't exist", () => {
-            const content = tryReadNpmPackageChangelog(tempPackageFolder);
+            const content = tryReadNpmPackageChangelog('./do/not/exist');
             expect(content).toBe("");
         });
-        const changelogPath = join(tempPackageFolder, 'CHANGELOG.md')
-        writeFileSync(changelogPath, 'aaa', 'utf-8');
     
-        test("Read changelog that exists", () => { 
-            const content = tryReadNpmPackageChangelog(tempPackageFolder);
-            expect(content).toBe("aaa");
+        test("Read changelog that exists", () => {
+            const tempPackageFolder = path.join(__dirname, `tmp/package-${getRandomInt(10000)}`);
+            try {
+                ensureDirSync(tempPackageFolder);
+                const changelogPath = path.join(tempPackageFolder, 'changelog-temp', 'package', 'CHANGELOG.md')
+                outputFileSync(changelogPath, 'aaa', 'utf-8');
+                const content = tryReadNpmPackageChangelog(tempPackageFolder);
+                expect(content).toBe("aaa");
+            } finally {
+                removeSync(tempPackageFolder);
+            }
         })
-    } finally {
-        rmdirSync(tempPackageFolder);
-    }
 });

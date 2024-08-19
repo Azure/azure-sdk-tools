@@ -90,5 +90,7 @@ enum CodeDiagnosticLevel {
  Info: 1,
  Warning: 2,
  Error:	3,
+  /** Fatal level diagnostic will block API review approval and it will show an error message to the user. Approver will have to 
+  * override fatal level system comments before approving a review.*/
  Fatal:	4
 }

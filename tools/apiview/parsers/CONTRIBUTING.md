@@ -37,7 +37,7 @@ A sample token file for .NET package `Azure.Template` is present [here](./apivie
 You can validate JSON tokens against required JSON schema using [JSON schema validator](https://www.jsonschemavalidator.net/).
 
 - Select `Custom` as schema type and copy and paste the contents in [json schema](./apiview-treestyle-parser-schema/model.json) to left panel.
-- Generate API view token file and paste generated JSON content onto right side panel to validate.
+- Generate APIView token file and paste generated JSON content onto right side panel to validate.
 
 
 ## Get help

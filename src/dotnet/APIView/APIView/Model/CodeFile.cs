@@ -2,14 +2,16 @@
 // Licensed under the MIT License.
 
 using APIView;
+using APIView.Model.V2;
 using APIView.TreeToken;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ApiView
@@ -19,17 +21,8 @@ namespace ApiView
         private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
         {
             AllowTrailingCommas = true,
-            ReadCommentHandling = JsonCommentHandling.Skip
-        };
-
-        private static readonly JsonSerializerOptions _treeStyleParserDeserializerOptions = new JsonSerializerOptions
-        {
-            Converters = { new StructuredTokenConverter() }
-        };
-
-        private static readonly JsonSerializerOptions _treeStyleParserSerializerOptions = new JsonSerializerOptions
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
         private string _versionString;
@@ -52,10 +45,18 @@ namespace ApiView
         public string PackageVersion { get; set; }
         public string CrossLanguagePackageId { get; set; }
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
+        // APIForest will be removed once server changes are added to dereference this property
         public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
         public List<CodeFileToken[]> LeafSections { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeDiagnostic[] Diagnostics { get; set; }
+        public string ParserVersion
+        {
+            get => _versionString;
+            set => _versionString = value;
+        }
+        public List<ReviewLine> ReviewLines { get; set; } = [];
+
         public override string ToString()
         {
             return new CodeFileRenderer().Render(this).CodeLines.ToString();
@@ -64,23 +65,12 @@ namespace ApiView
 
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false, bool doTreeStyleParserDeserialization = false)
         {
-            CodeFile codeFile = null;
-            if (doTreeStyleParserDeserialization)
-            {
-                using (var gzipStream = new GZipStream(stream, CompressionMode.Decompress, leaveOpen: true))
-                {
-                    codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(gzipStream, _treeStyleParserDeserializerOptions);
-                }
-            }
-            else
-            {
-                codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _serializerOptions);
-            }
+            var codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _serializerOptions);
 
             if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
                 hasSections = true;
 
-            // Spliting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
+            // Splitting out the 'leafSections' of the codeFile is done so as not to have to render large codeFiles at once
             // Rendering sections in part helps to improve page load time
             if (hasSections)
             {
@@ -151,23 +141,20 @@ namespace ApiView
 
         public async Task SerializeAsync(Stream stream)
         {
-            if (this.APIForest.Count > 0)
-            {
-                using (var tempStream = new MemoryStream())
-                {
-                    await JsonSerializer.SerializeAsync(tempStream, this, _treeStyleParserSerializerOptions);
-                    tempStream.Position = 0;
-
-                    using (var compressionStream = new GZipStream(stream, CompressionMode.Compress, leaveOpen: true))
-                    {
-                        await tempStream.CopyToAsync(compressionStream);
-                    }
-                }
-            }
-            else
-            {
-                await JsonSerializer.SerializeAsync(stream, this, _serializerOptions);
-            }
+            await JsonSerializer.SerializeAsync(stream, this, _serializerOptions);
         }
+
+        /***GetApiText method will generate complete text representation of API surface to help generating the content.
+        * One use case of this function will be to support download request of entire API review surface.
+        */
+        public string GetApiText()
+        {
+            StringBuilder sb = new();
+            foreach (var line in ReviewLines)
+            {
+                line.GetApiText(sb, 0, true);
+            }
+            return sb.ToString();
+        }       
     }
 }

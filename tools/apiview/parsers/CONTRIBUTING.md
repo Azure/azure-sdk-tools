@@ -13,11 +13,11 @@ Specifically how to create or update a language parser to produce a hierarchy of
 
 ## Key concepts
 
-APIView token schema is available in [TypeSpec](../apiview-treestyle-parser-schema/model.tsp) and [JSON](../apiview-treestyle-parser-schema/model.json). Parser needs to create a `CodeFile` object as per the schema.
+APIView token schema is available in [TypeSpec](./apiview-treestyle-parser-schema/model.tsp) and [JSON](./apiview-treestyle-parser-schema/model.json). Parser needs to create a `CodeFile` object as per the schema.
 `CodeFile` object contains a metadata about the package and array of `ReviewLine` object. Each object of review line in `CodeFile` object is a top level lines to be listed. For e.g. Top level lines are mostly namespace or module level nodes.
 Each `ReviewLine` object has children of `ReviewLine` to include sub nodes that needs to be listed in a review.
 
-A sample token file is present [here](../apiview-treestyle-parser-schema/sample/Azure.Template_token.json).
+A sample token file is present [here](./apiview-treestyle-parser-schema/sample/Azure.Template_token.json).
 
 APIView generates navigation tree based on the information in token. A token is included in the navigation tree if `NavigatonDisplayName` is set in `ReviewToken` and `LineId` is set in `ReviewLine` object that contains the `ReviewToken`
 
@@ -29,14 +29,14 @@ Don't worry about indentation that will be handled by the tree structure based o
 
 ## Examples
 
-A sample token file for .NET package `Azure.Template` is present [here](../apiview-treestyle-parser-schema/sample/Azure.Template_token.json) and corresponding rendered text representation is available [here](../apiview-treestyle-parser-schema/sample/Azure.Template_review_context.txt).
+A sample token file for .NET package `Azure.Template` is present [here](./apiview-treestyle-parser-schema/sample/Azure.Template_token.json) and corresponding rendered text representation is available [here](./apiview-treestyle-parser-schema/sample/Azure.Template_review_context.txt).
 
 
 ## JSON token validation
 
 You can validate JSON tokens against required JSON schema using [JSON schema validator](https://www.jsonschemavalidator.net/).
 
-- Select `Custom` as schema type and copy and paste the contents in [json schema](../apiview-treestyle-parser-schema/model.json) to left panel.
+- Select `Custom` as schema type and copy and paste the contents in [json schema](./apiview-treestyle-parser-schema/model.json) to left panel.
 - Generate API view token file and paste generated JSON content onto right side panel to validate.
 
 

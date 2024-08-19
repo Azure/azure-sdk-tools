@@ -34,7 +34,7 @@ model ReviewLine {
   /** Add any child lines as children. For e.g. all classes and namespace level methods are added as a children of namespace(module) level code line. 
    *  Similarly all method level code lines are added as children of it's class code line.*/
   Children?: Array<ReviewLine>;
-  /** Set current line as hidden code line by default. .NET has hidden APIs and architects does not want to see them by default. */
+  /** Set current line as hidden code line by default. .NET has hidden APIs and architects don't want to see them by default. */
   IsHidden?: boolean;
 }
 
@@ -65,11 +65,11 @@ model ReviewToken {
 
 /** System comment object is to add system generated comment. It can be one of the 4 different types of system comments. */
 model CodeDiagnostic {
-  //Diagnostic ID is auto generated ID by CSharp analyzer.
+  /** Diagnostic ID is auto generated ID by CSharp analyzer. */
   DiagnosticId?: string;
-    /** Id of ReviewLine object where this diagnostic needs to be displayed(Options*/
+    /** Id of ReviewLine object where this diagnostic needs to be displayed */
   TargetId: string;
-  // Auto generated system comment to be displayed under targetted line.
+  /** Auto generated system comment to be displayed under targeted line. */
   Text: string;
   Level: CodeDiagnosticLevel;
   HelpLinkUri?: string;

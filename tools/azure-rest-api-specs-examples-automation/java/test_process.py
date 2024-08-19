@@ -1,7 +1,7 @@
 import unittest
 
 from main import process_java_example_content
-from main import set_specs_path
+from main import _set_paths
 
 
 class TestProcess(unittest.TestCase):
@@ -268,8 +268,7 @@ package com.azure.resourcemanager.mongocluster.generated;
  */
 public final class MongoClustersListConnectionStringsSamples {
     /*
-     * x-ms-original-file: specification/mongocluster/DocumentDB.MongoCluster.Management/examples/2024-03-01-preview/
-     * MongoClusters_ListConnectionStrings.json
+     * x-ms-original-file: 2024-03-01-preview/MongoClusters_ListConnectionStrings.json
      */
     /**
      * Sample code: List the available connection strings for the Mongo Cluster resource.
@@ -284,7 +283,8 @@ public final class MongoClustersListConnectionStringsSamples {
 }
 '''
 
-        set_specs_path('c:/github/azure-rest-api-specs')
+        _set_paths('c:/github/azure-rest-api-specs',
+                    'c:/github/azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster')
         java_examples = process_java_example_content(java_code.splitlines(keepends=True),
                                                      'MongoClustersListConnectionStringsSamples')
 

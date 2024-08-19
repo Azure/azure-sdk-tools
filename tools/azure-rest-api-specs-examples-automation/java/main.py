@@ -6,15 +6,22 @@ import argparse
 import logging
 import dataclasses
 from typing import List
+import importlib.util
 
 from modules import JavaExample, JavaFormatResult
 from package import MavenPackage
 from format import JavaFormat
 
 
+spec = importlib.util.spec_from_file_location(
+  "examples_dir", "../directory/examples_dir.py")
+examples_dir = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(examples_dir)
+
 script_path: str = '.'
 tmp_path: str
 specs_path: str
+module_path: str
 
 namespace = 'com.azure.resourcemanager'
 
@@ -45,6 +52,14 @@ class AggregatedJavaExample:
     methods: List[JavaExampleMethodContent]
     class_opening: List[str] = None
     class_closing: List[str] = None
+
+
+def _set_paths(new_specs_path: str, new_module_path: str):
+    # for test
+    global specs_path
+    global module_path
+    specs_path = new_specs_path
+    module_path = new_module_path
 
 
 def get_sdk_name_from_package(package: str) -> str:
@@ -173,7 +188,7 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 example_filepath = java_example_method.example_relative_path
                 example_dir, example_filename = path.split(example_filepath)
 
-                example_dir = try_find_resource_manager_example(specs_path, example_dir, example_filename)
+                example_dir = examples_dir.try_find_resource_manager_example(specs_path, example_dir, example_filename, module_path)
 
                 # use Main as class name
                 old_class_name = class_name
@@ -189,12 +204,6 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 java_examples.append(java_example)
 
     return java_examples
-
-
-def set_specs_path(new_specs_path: str):
-    # for test
-    global specs_path
-    specs_path = new_specs_path
 
 
 def validate_java_examples(release: Release, java_examples: List[JavaExample]) -> JavaFormatResult:
@@ -285,6 +294,7 @@ def main():
     global script_path
     global tmp_path
     global specs_path
+    global module_path
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -311,6 +321,7 @@ def main():
                       config['release']['version'],
                       get_sdk_name_from_package(config['release']['package']))
 
+    module_path = path.join(sdk_path, 'sdk', release.sdk_name, release.package)
     java_examples_relative_path = path.join('sdk', release.sdk_name, release.package, 'src', 'samples')
     java_examples_path = path.join(sdk_path, java_examples_relative_path)
 

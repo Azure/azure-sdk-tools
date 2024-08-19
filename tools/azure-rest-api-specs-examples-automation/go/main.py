@@ -21,6 +21,7 @@ spec.loader.exec_module(examples_dir)
 
 script_path: str = '.'
 tmp_path: str
+specs_path: str
 sdk_package_path: str
 
 original_file_key = '// Generated from example definition: '
@@ -164,6 +165,8 @@ def process_go_example(filepath: str) -> List[GoExample]:
                 example_filepath = go_example_method.example_relative_path
                 example_dir, example_filename = path.split(example_filepath)
 
+                example_dir = examples_dir.try_find_resource_manager_example(specs_path, example_dir, example_filename, sdk_package_path)
+
                 example_lines = format_go(example_lines)
 
                 filename = example_filename.split('.')[0]
@@ -264,6 +267,7 @@ def create_go_examples(release: Release,
 def main():
     global script_path
     global tmp_path
+    global specs_path
     global sdk_package_path
 
     logging.basicConfig(level=logging.INFO,
@@ -281,6 +285,7 @@ def main():
     with open(input_json_path, 'r', encoding='utf-8') as f_in:
         config = json.load(f_in)
 
+    specs_path = config['specsPath']
     sdk_path = config['sdkPath']
     sdk_examples_path = config['sdkExamplesPath']
     tmp_path = config['tempPath']

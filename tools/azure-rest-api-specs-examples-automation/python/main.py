@@ -19,6 +19,7 @@ spec.loader.exec_module(examples_dir)
 
 script_path: str = '.'
 tmp_path: str
+specs_path: str
 sdk_package_path: str
 
 original_file_key: str = '# x-ms-original-file: '
@@ -52,6 +53,10 @@ def parse_python_example(lines: List[str]) -> Optional[PythonExample]:
     example = None
     if example_relative_path:
         example_dir, example_filename = path.split(example_relative_path)
+
+        example_dir = examples_dir.try_find_resource_manager_example(specs_path, example_dir, example_filename,
+                                                                     sdk_package_path)
+
         target_dir = (example_dir + '-python') if example_dir.endswith('/examples') \
             else example_dir.replace('/examples/', '/examples-python/')
         filename = example_filename.split('.')[0]
@@ -170,6 +175,7 @@ def get_module_relative_path(sdk_name: str, sdk_path: str) -> str:
 def main():
     global script_path
     global tmp_path
+    global specs_path
     global sdk_package_path
 
     logging.basicConfig(level=logging.INFO,
@@ -187,6 +193,7 @@ def main():
     with open(input_json_path, 'r', encoding='utf-8') as f_in:
         config = json.load(f_in)
 
+    specs_path = config['specsPath']
     sdk_path = config['sdkPath']
     sdk_examples_path = config['sdkExamplesPath']
     tmp_path = config['tempPath']

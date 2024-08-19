@@ -7,13 +7,21 @@ import argparse
 import logging
 import dataclasses
 from typing import List
+import importlib.util
 
 from models import DotNetExample
 from build import DotNetBuild
 
 
+spec = importlib.util.spec_from_file_location(
+  "examples_dir", "../directory/examples_dir.py")
+examples_dir = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(examples_dir)
+
+
 script_path: str = '.'
 tmp_path: str
+sdk_package_path: str
 
 original_file_key: str = '// Generated from example definition: '
 
@@ -261,6 +269,7 @@ def get_module_relative_path(sdk_name: str, sdk_path: str) -> str:
 def main():
     global script_path
     global tmp_path
+    global sdk_package_path
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -293,6 +302,8 @@ def main():
         # fallback to tests/Generated/Samples
         dotnet_examples_relative_path = path.join(module_relative_path_local, 'tests', 'Generated', 'Samples')
         dotnet_examples_path = path.join(sdk_path, dotnet_examples_relative_path)
+
+    sdk_package_path = path.join(sdk_path, module_relative_path_local)
 
     dotnet_module = f'{release.package},{release.version}'
 

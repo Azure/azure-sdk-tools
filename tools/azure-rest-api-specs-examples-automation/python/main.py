@@ -8,10 +8,18 @@ import argparse
 import logging
 import dataclasses
 from typing import List, Optional
+import importlib.util
+
+
+spec = importlib.util.spec_from_file_location(
+  "examples_dir", "../directory/examples_dir.py")
+examples_dir = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(examples_dir)
 
 
 script_path: str = '.'
 tmp_path: str
+sdk_package_path: str
 
 original_file_key: str = '# x-ms-original-file: '
 
@@ -162,6 +170,7 @@ def get_module_relative_path(sdk_name: str, sdk_path: str) -> str:
 def main():
     global script_path
     global tmp_path
+    global sdk_package_path
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -191,6 +200,8 @@ def main():
     module_relative_path_local = get_module_relative_path(release.package, sdk_path)
     python_examples_relative_path = path.join(module_relative_path_local, 'generated_samples')
     python_examples_path = path.join(sdk_path, python_examples_relative_path)
+
+    sdk_package_path = path.join(sdk_path, module_relative_path_local)
 
     succeeded, files = create_python_examples(release, js_module, sdk_examples_path, python_examples_path)
 

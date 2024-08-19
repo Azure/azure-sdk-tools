@@ -21,7 +21,7 @@ spec.loader.exec_module(examples_dir)
 script_path: str = '.'
 tmp_path: str
 specs_path: str
-module_path: str
+sdk_package_path: str
 
 namespace = 'com.azure.resourcemanager'
 
@@ -54,12 +54,12 @@ class AggregatedJavaExample:
     class_closing: List[str] = None
 
 
-def _set_paths(new_specs_path: str, new_module_path: str):
+def _set_paths(new_specs_path: str, new_sdk_package_path: str):
     # for test
     global specs_path
-    global module_path
+    global sdk_package_path
     specs_path = new_specs_path
-    module_path = new_module_path
+    sdk_package_path = new_sdk_package_path
 
 
 def get_sdk_name_from_package(package: str) -> str:
@@ -188,7 +188,7 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 example_filepath = java_example_method.example_relative_path
                 example_dir, example_filename = path.split(example_filepath)
 
-                example_dir = examples_dir.try_find_resource_manager_example(specs_path, example_dir, example_filename, module_path)
+                example_dir = examples_dir.try_find_resource_manager_example(specs_path, example_dir, example_filename, sdk_package_path)
 
                 # use Main as class name
                 old_class_name = class_name
@@ -294,7 +294,7 @@ def main():
     global script_path
     global tmp_path
     global specs_path
-    global module_path
+    global sdk_package_path
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -321,9 +321,10 @@ def main():
                       config['release']['version'],
                       get_sdk_name_from_package(config['release']['package']))
 
-    module_path = path.join(sdk_path, 'sdk', release.sdk_name, release.package)
     java_examples_relative_path = path.join('sdk', release.sdk_name, release.package, 'src', 'samples')
     java_examples_path = path.join(sdk_path, java_examples_relative_path)
+
+    sdk_package_path = path.join(sdk_path, 'sdk', release.sdk_name, release.package)
 
     succeeded, files = create_java_examples(release, sdk_examples_path, java_examples_path)
 

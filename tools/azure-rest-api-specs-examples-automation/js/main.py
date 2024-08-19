@@ -9,13 +9,21 @@ import logging
 import dataclasses
 from typing import List
 from enum import Enum
+import importlib.util
 
 from models import JsExample, JsLintResult
 from lint import JsLint
 
 
+spec = importlib.util.spec_from_file_location(
+  "examples_dir", "../directory/examples_dir.py")
+examples_dir = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(examples_dir)
+
+
 script_path: str = '.'
 tmp_path: str
+sdk_package_path: str
 
 original_file_key: str = '* x-ms-original-file: '
 
@@ -318,6 +326,7 @@ def get_example_folder_extension(package_type: PackageType) -> str:
 def main():
     global script_path
     global tmp_path
+    global sdk_package_path
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -355,6 +364,8 @@ def main():
     js_examples_relative_path = path.join(module_relative_path_local,
                                           'samples', sample_version, 'javascript')
     js_examples_path = path.join(sdk_path, js_examples_relative_path)
+
+    sdk_package_path = path.join(sdk_path, module_relative_path_local)
 
     succeeded, files = create_js_examples(release, js_module, sdk_examples_path, js_examples_path)
 

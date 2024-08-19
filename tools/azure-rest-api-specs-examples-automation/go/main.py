@@ -7,13 +7,21 @@ import argparse
 import logging
 import dataclasses
 from typing import List
+import importlib.util
 
 from models import GoExample, GoVetResult
 from validate import GoVet
 
 
+spec = importlib.util.spec_from_file_location(
+  "examples_dir", "../directory/examples_dir.py")
+examples_dir = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(examples_dir)
+
+
 script_path: str = '.'
 tmp_path: str
+sdk_package_path: str
 
 original_file_key = '// Generated from example definition: '
 
@@ -256,6 +264,7 @@ def create_go_examples(release: Release,
 def main():
     global script_path
     global tmp_path
+    global sdk_package_path
 
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -287,6 +296,8 @@ def main():
     go_examples_relative_path = release.package
     go_examples_path = path.join(sdk_path, go_examples_relative_path)
     go_mod_filepath = path.join(sdk_path, release.package, 'go.mod')
+
+    sdk_package_path = path.join(sdk_path, release.package)
 
     succeeded, files = create_go_examples(release, go_module, go_mod_filepath, sdk_examples_path, go_examples_path)
 

@@ -4,11 +4,11 @@ import glob
 import re
 
 
-def try_find_resource_manager_example(specs_path: str, example_dir: str, example_filename: str, module_path: str) -> str:
+def try_find_resource_manager_example(specs_path: str, example_dir: str, example_filename: str, sdk_package_path: str) -> str:
     if '/resource-manager/' not in example_dir:
         # find the corresponding example file under {specs_path}/specification/{service}/resource-manager
         try:
-            tsp_location_path = path.join(module_path, "tsp-location.yaml")
+            tsp_location_path = path.join(sdk_package_path, "tsp-location.yaml")
             if path.exists(tsp_location_path) and path.isfile(tsp_location_path):
                 # load tsp_dir from tsp-location.yaml
                 # e.g. tsp_dir = "specification/mongocluster/DocumentDB.MongoCluster.Management"

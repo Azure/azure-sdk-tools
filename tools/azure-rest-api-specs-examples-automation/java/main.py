@@ -189,7 +189,10 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 example_filepath = java_example_method.example_relative_path
                 example_dir, example_filename = path.split(example_filepath)
 
-                example_dir = examples_dir.try_find_resource_manager_example(specs_path, sdk_package_path, example_dir, example_filename)
+                try:
+                    example_dir = examples_dir.try_find_resource_manager_example(specs_path, sdk_package_path, example_dir, example_filename)
+                except NameError:
+                    pass
 
                 # use Main as class name
                 old_class_name = class_name

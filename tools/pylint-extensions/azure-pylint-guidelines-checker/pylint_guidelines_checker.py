@@ -2712,36 +2712,63 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
 
     """Rule to check that errors that get raised aren't logged"""
 
-    name = "do-not-log-errors-that-get-raised"
+    name = "do-not-log-raised-errors"
     priority = -1
     msgs = {"C4762": (
             "Do not log errors that get raised in an exception block.",
-            "do-not-log-errors-that-get-raised",
-            "Do not log errors that get raised in an exception block. Do not log at error or warning levels",
+            "do-not-log-raised-errors",
+            "Do not log errors at error or warning level when error is raised in an exception block",
             ),
             }
 
     def visit_try(self, node):
         """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
-           Go through each line in the exception block and make sure it hasn't been logged if exception is raised.
+           Go through exception block and branches and ensure error hasn't been logged if exception is raised.
+        """
+        # Return a list of exception blocks
+        except_block = node.handlers
+        # Iterate through each exception block
+        for nod in except_block:
+            # Get the nodes in each block (e.g. nodes Expr and Raise)
+            exception_block_body = nod.body
+            self.check_for_raise(exception_block_body)
+
+    def check_for_raise(self, node):
+        """ Helper function - checks for instance of 'Raise' node
+            Also checks 'If' and nested 'If' branches
+        """
+        for i in node:
+            if isinstance(i, astroid.Raise):
+                self.check_for_logging(node)
+            # Check for any nested 'If' branches
+            if isinstance(i, astroid.If):
+                self.check_for_raise(i.body)
+                # Check any 'elif' and 'else' branches
+                elif_statements = i.orelse
+                while len(elif_statements) == 1:
+                    if isinstance(elif_statements[0], astroid.If):
+                        for x in elif_statements:
+                            self.check_for_raise(x.body)
+                            elif_statements = x.orelse
+                    else:
+                        break
+                # Check 'else' body for raise
+                self.check_for_raise(elif_statements)
+
+    def check_for_logging(self, node):
+        """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
+            levels. Called from 'check_for_raise' function
         """
         matches = [".warning", ".error"]
-        # Get the exception block - returns a list
-        except_block = node.handlers
-        for nod in except_block:
-            # Split into list of strings
-            split = nod.as_string().splitlines()
-            for i in split:
-                # Search to check if 'raise' is in the exception block
-                raise_found = i.find("raise")
-                if raise_found != -1:
-                    for j in split:
-                        if any(x in j for x in matches):
-                            self.add_message(
-                            msgid=f"do-not-log-errors-that-get-raised",
-                            node=node,
-                            confidence=None,
-                            )
+        for j in node:
+            if isinstance(j, astroid.Expr):
+                expression = j.as_string()
+                if any(x in expression for x in matches):
+                    self.add_message(
+                        msgid=f"do-not-log-raised-errors",
+                        node=j,
+                        confidence=None,
+                    )
 
 
 class NoImportTypingFromTypeCheck(BaseChecker):

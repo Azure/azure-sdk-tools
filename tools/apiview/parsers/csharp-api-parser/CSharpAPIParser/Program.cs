@@ -14,6 +14,10 @@ using NuGet.Versioning;
 
 public static class Program
 {
+    // Regex parser nuget file name without extension to two groups
+    // package name and package version
+    // for e.g Azure.Core.1.0.0 to ["Azure.Core", "1.0.0"]
+    // or Azure.Storage.Blobs.12.0.0 to ["Azure.Storage.Blobs", "12.0.0"]
     private static Regex _packageNameParser = new Regex("([A-Za-z.]*[a-z]).([\\S]*)", RegexOptions.Compiled);
 
     public static int Main(string[] args)

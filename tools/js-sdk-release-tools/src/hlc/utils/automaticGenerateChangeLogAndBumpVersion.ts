@@ -20,14 +20,14 @@ import {
 } from "../../utils/version";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version";
-import { ApiVersionType } from "../../common/types"
+import { ApiVersionType, SDKType } from "../../common/types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../../common/utils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const ApiType = getApiVersionType(packageFolderPath);
+    const ApiType = await getApiVersionType(packageFolderPath);
     const isStableRelease = ApiType != ApiVersionType.Preview;
     const packageName = getNpmPackageName(packageFolderPath);
     const npm = new NPMScope({ executionFolderPath: packageFolderPath });
@@ -57,7 +57,8 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
 
             // only track2 sdk includes sdk-type with value mgmt
             const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), {encoding: 'utf-8'}))['sdk-type'];
-            if (sdkType && sdkType === 'mgmt') {
+            const clientType = getSDKType(packageFolderPath);
+            if (sdkType && sdkType === 'mgmt' || clientType === SDKType.RestLevelClient) {
                 logger.info(`Package ${packageName} released before is track2 sdk.`);
                 logger.info('Start to generate changelog by comparing api.md.');
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
@@ -100,6 +101,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     }
                     makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
+                    await changelog.postProcess(npmPackageRoot, packageFolderPath, clientType)
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
                     makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent,stableVersion);
                     logger.info('Generated changelogs and set version for track2 release successfully.');

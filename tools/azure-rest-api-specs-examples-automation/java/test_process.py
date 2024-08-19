@@ -254,7 +254,7 @@ public final class VirtualMachineScaleSetVMsStartSamples {
         self.assertEqual('specification/compute/resource-manager/Microsoft.Compute/ComputeRP/stable/2024-03-01/examples-java/virtualMachineScaleSetExamples', java_examples[1].target_dir)
         self.assertEqual('VirtualMachineScaleSetVM_Start_MinimumSet_Gen', java_examples[1].target_filename)
 
-    @unittest.skip('require call "set_specs_path" with your local azure-rest-api-specs repository')
+    @unittest.skip('require call "_set_paths" with your local azure-rest-api-specs repository and azure-sdk-for-java repository')
     def test_process_java_example_original_file_typespec(self):
         java_code = '''
 // Copyright (c) Microsoft Corporation. All rights reserved.

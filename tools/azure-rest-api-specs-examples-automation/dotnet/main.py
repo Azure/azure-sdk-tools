@@ -13,7 +13,10 @@ from models import DotNetExample
 from build import DotNetBuild
 
 
-spec = importlib.util.spec_from_file_location("examples_dir", "../directory/examples_dir.py")
+spec_location = (
+    "./directory/examples_dir.py" if path.exists("./directory/examples_dir.py") else "../directory/examples_dir.py"
+)
+spec = importlib.util.spec_from_file_location("examples_dir", spec_location)
 examples_dir = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(examples_dir)
 

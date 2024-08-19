@@ -3,9 +3,8 @@ import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaDa
 import path, { join } from "path";
 import { SDKType } from "../../common/types";
 import { describe } from "node:test";
-import { mkdirSync } from "node:fs";
 import { tryReadNpmPackageChangelog } from "../../common/utils";
-import { rmdirSync, writeFileSync } from "fs";
+import { ensureDirSync, removeSync, outputFileSync } from "fs-extra";
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
@@ -34,10 +33,10 @@ describe("Breaking change detection", () => {
         expect(changelog.addedOperation.length).toBe(1);
         expect(changelog.removedOperation.length).toBe(1);
 
-        expect(changelog.addedOperation[0]).toBe(
+        expect(changelog.addedOperation[0].line).toBe(
             "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
         );
-        expect(changelog.removedOperation[0]).toBe(
+        expect(changelog.removedOperation[0].line).toBe(
             "Removed operation DataProductsCatalogs.listByResourceGroup"
         );
     });
@@ -64,10 +63,10 @@ describe("Breaking change detection", () => {
         expect(changelog.addedOperation.length).toBe(1);
         expect(changelog.removedOperation.length).toBe(1);
 
-        expect(changelog.addedOperation[0]).toBe(
+        expect(changelog.addedOperation[0].line).toBe(
             "Added operation DataProductsCatalogs.get_NEW"
         );
-        expect(changelog.removedOperation[0]).toBe(
+        expect(changelog.removedOperation[0].line).toBe(
             "Removed operation DataProductsCatalogs.get"
         );
     });
@@ -94,10 +93,10 @@ describe("Breaking change detection", () => {
         expect(changelog.addedOperation.length).toBe(1);
         expect(changelog.removedOperation.length).toBe(1);
 
-        expect(changelog.addedOperation[0]).toBe(
+        expect(changelog.addedOperation[0].line).toBe(
             "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
         );
-        expect(changelog.removedOperation[0]).toBe(
+        expect(changelog.removedOperation[0].line).toBe(
             "Removed operation DataProductsCatalogsOperations.listByResourceGroup"
         );
     });
@@ -126,33 +125,34 @@ describe("Breaking change detection", () => {
 
         expect(changelog.operationSignatureChange.length).toBe(1);
 
-        expect(changelog.addedOperationGroup[0]).toBe(
+        expect(changelog.addedOperationGroup[0].line).toBe(
             "Added operation group DataProductsCatalogs_add"
         );
-        expect(changelog.removedOperationGroup[0]).toBe(
+        expect(changelog.removedOperationGroup[0].line).toBe(
             "Removed operation group DataProductsCatalogs_remove"
         );
-        expect(changelog.operationSignatureChange[0]).toBe(
+        expect(changelog.operationSignatureChange[0].line).toBe(
             "Operation DataProductsCatalogs_sig_change.get has a new signature"
         );
     });
 });
 
 describe("Changelog reading", () => {
-    const tempPackageFolder = `./tmp/package-${getRandomInt(10000)}`;
-    try {
         test("Read changelog that doesn't exist", () => {
-            const content = tryReadNpmPackageChangelog(tempPackageFolder);
+            const content = tryReadNpmPackageChangelog('./do/not/exist');
             expect(content).toBe("");
         });
-        const changelogPath = join(tempPackageFolder, 'CHANGELOG.md')
-        writeFileSync(changelogPath, 'aaa', 'utf-8');
     
-        test("Read changelog that exists", () => { 
-            const content = tryReadNpmPackageChangelog(tempPackageFolder);
-            expect(content).toBe("aaa");
+        test("Read changelog that exists", () => {
+            const tempPackageFolder = path.join(__dirname, `tmp/package-${getRandomInt(10000)}`);
+            try {
+                ensureDirSync(tempPackageFolder);
+                const changelogPath = path.join(tempPackageFolder, 'changelog-temp', 'package', 'CHANGELOG.md')
+                outputFileSync(changelogPath, 'aaa', 'utf-8');
+                const content = tryReadNpmPackageChangelog(tempPackageFolder);
+                expect(content).toBe("aaa");
+            } finally {
+                removeSync(tempPackageFolder);
+            }
         })
-    } finally {
-        rmdirSync(tempPackageFolder);
-    }
 });

@@ -1,5 +1,15 @@
 # Release
 
+## 2024-08-16 - 0.12.1
+
+- Added `--mgmt-debug.suppress-list-exception` flag to the ARM metadata generation command.
+- Bumped `@autorest/openapi-to-typespec` version to `0.9.0`.
+- Format updates for additional directories.
+
+## 2024-08-15 - 0.12.0
+
+- Check for error diagnostics during TypeSpec compilation and exit with error if found. (#8815, #8777, #8555)
+
 ## 2024-08-13 - 0.11.2
 
 - Fix `--version` flag. (#8814)

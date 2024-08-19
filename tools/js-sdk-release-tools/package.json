@@ -13,8 +13,7 @@
     "copy-files": "copyfiles -f src/common/ciYamlTemplates/*.template.yml dist/common/ciYamlTemplates/",
     "prepack": "npm run build",
     "test": "vitest --run",
-    "test:watch": "vitest",
-    "test:ci": "node dist/changelogToolCli.js src/test/testCases/ci/arm-networkanalytics"
+    "test:watch": "vitest"
   },
   "bin": {
     "changelog-tool": "./dist/changelogToolCli.js",
@@ -38,9 +37,11 @@
     "parse-ts-to-ast": "^0.1.1",
     "semver": "^7.3.5",
     "shelljs": "^0.8.4",
+    "shx": "^0.3.4",
     "simple-git": "^3.5.0",
-    "ts-morph": "^12.0.0",
+    "ts-morph": "^23.0.0",
     "tslib": "^1.9.3",
+    "typescript-codegen-breaking-change-detector": "0.4.11",
     "unixify": "^1.0.0",
     "winston": "^3.13.1",
     "yaml": "^1.10.2"
@@ -51,11 +52,27 @@
     "@types/npmcli__package-json": "^4.0.4",
     "@types/shelljs": "^0.8.15",
     "@types/unixify": "^1.0.2",
-    "copyfiles": "^0.1.0",
-    "nodemon": "^3.1.0",
     "rimraf": "^3.0.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
-    "vitest": "^1.6.0"
+    "tsx": "^4.16.5",
+    "typescript": "5.5.3",
+    "vitest": "2.0.5"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-android-arm-eabi": "4.20.0",
+    "@rollup/rollup-android-arm64": "4.20.0",
+    "@rollup/rollup-darwin-arm64": "4.20.0",
+    "@rollup/rollup-darwin-x64": "4.20.0",
+    "@rollup/rollup-linux-arm-gnueabihf": "4.20.0",
+    "@rollup/rollup-linux-arm-musleabihf": "4.20.0",
+    "@rollup/rollup-linux-arm64-gnu": "4.20.0",
+    "@rollup/rollup-linux-arm64-musl": "4.20.0",
+    "@rollup/rollup-linux-powerpc64le-gnu": "4.20.0",
+    "@rollup/rollup-linux-riscv64-gnu": "4.20.0",
+    "@rollup/rollup-linux-s390x-gnu": "4.20.0",
+    "@rollup/rollup-linux-x64-gnu": "4.20.0",
+    "@rollup/rollup-linux-x64-musl": "4.20.0",
+    "@rollup/rollup-win32-arm64-msvc": "4.20.0",
+    "@rollup/rollup-win32-ia32-msvc": "4.20.0",
+    "@rollup/rollup-win32-x64-msvc": "4.20.0"
   }
 }

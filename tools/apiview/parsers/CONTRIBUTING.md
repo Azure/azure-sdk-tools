@@ -13,19 +13,19 @@ Specifically how to create or update a language parser to produce a hierarchy of
 
 ## Key concepts
 
-APIView token schema is available in [TypeSpec](./apiview-treestyle-parser-schema/model.tsp) and [JSON](./apiview-treestyle-parser-schema/model.json). Parser needs to create a `CodeFile` object as per the schema.
-`CodeFile` object contains a metadata about the package and array of `ReviewLine` object. Each object of review line in `CodeFile` object is a top level lines to be listed. For e.g. Top level lines are mostly namespace or module level nodes.
+APIView token schema is available in [TypeSpec](./apiview-treestyle-parser-schema/model.tsp) and [JSON](./apiview-treestyle-parser-schema/model.json). Language parsers needs to create a `CodeFile` object as per the schema.
+`CodeFile` object contains metadata about the package and an array of `ReviewLine` objects. Each object of `ReviewLine` in `CodeFile` object is a top-level line to be listed. For e.g. Top-level lines are mostly namespace or module level nodes.
 Each `ReviewLine` object has children of `ReviewLine` to include sub nodes that needs to be listed in a review.
 
 A sample token file is present [here](./apiview-treestyle-parser-schema/sample/Azure.Template_token.json).
 
-APIView generates navigation tree based on the information in token. A token is included in the navigation tree if `NavigatonDisplayName` is set in `ReviewToken` and `LineId` is set in `ReviewLine` object that contains the `ReviewToken`
+APIView generates a navigation tree based on the information in the tokens. A token is included in the navigation tree if `NavigatonDisplayName` is set in `ReviewToken` and `LineId` is set in `ReviewLine` object that contains the `ReviewToken`
 
 
 ## Serialization
 
 Serialize the generated code file to JSON. The output file should have `.json` extension. Try to make the json as small as possible by ignoring null values and empty collections.
-Don't worry about indentation that will be handled by the tree structure based on the parent - child relationship among `ReviewLine` objects.
+Don't worry about indentation as it will be handled by the tree structure based on the parent-child relationship among `ReviewLine` objects.
 
 ## Examples
 

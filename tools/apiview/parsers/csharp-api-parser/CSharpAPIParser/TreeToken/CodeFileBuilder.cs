@@ -12,7 +12,7 @@ using ApiView;
 
 namespace CSharpAPIParser.TreeToken
 {
-    internal class CodeFileBuilder
+    public class CodeFileBuilder
     {
         private static readonly char[] _newlineChars = new char[] { '\r', '\n' };
 

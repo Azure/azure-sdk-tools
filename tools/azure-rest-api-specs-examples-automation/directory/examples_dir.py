@@ -4,7 +4,7 @@ import glob
 import re
 
 
-def try_find_resource_manager_example(specs_path: str, example_dir: str, example_filename: str, sdk_package_path: str) -> str:
+def try_find_resource_manager_example(specs_path: str, sdk_package_path: str, example_dir: str, example_filename: str) -> str:
     if '/resource-manager/' not in example_dir:
         # find the corresponding example file under {specs_path}/specification/{service}/resource-manager
         try:
@@ -45,7 +45,7 @@ def try_find_resource_manager_example(specs_path: str, example_dir: str, example
                                 example_path, _ = path.split(candidate_resource_manager_filename[0])
                                 example_dir = path.relpath(example_path, specs_path).replace('\\', '/')
         except NameError:
-            # specs_path not defined
+            # specs_path or sdk_package_path not defined
             pass
 
     return example_dir

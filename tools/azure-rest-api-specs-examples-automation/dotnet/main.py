@@ -171,7 +171,7 @@ def process_dotnet_example(filepath: str) -> List[DotNetExample]:
                 example_filepath = dotnet_example_method.example_relative_path
                 example_dir, example_filename = path.split(example_filepath)
 
-                example_dir = examples_dir.try_find_resource_manager_example(specs_path, example_dir, example_filename, sdk_package_path)
+                example_dir = examples_dir.try_find_resource_manager_example(specs_path, sdk_package_path, example_dir, example_filename)
 
                 filename = example_filename.split('.')[0]
                 # use the examples-dotnet folder for DotNet example

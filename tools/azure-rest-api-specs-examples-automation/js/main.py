@@ -189,7 +189,7 @@ def process_js_example(filepath: str, package_type: PackageType) -> List[JsExamp
                 example_filepath = js_example_method.example_relative_path
                 example_dir, example_filename = path.split(example_filepath)
 
-                example_dir = examples_dir.try_find_resource_manager_example(specs_path, example_dir, example_filename, sdk_package_path)
+                example_dir = examples_dir.try_find_resource_manager_example(specs_path, sdk_package_path, example_dir, example_filename)
 
                 example_lines = format_js(example_lines)
 

@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 
+using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace APIView.Model.V2
 {
@@ -57,7 +57,7 @@ namespace APIView.Model.V2
         /// <summary>
         /// Language specific style css class names
         /// </summary>
-        public HashSet<string> RenderClasses { get; set; } = new HashSet<string>();
+        public List<string> RenderClasses = [];
 
         public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true)
         {

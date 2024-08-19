@@ -230,8 +230,7 @@ namespace CSharpAPIParser.TreeToken
             if (!namespaceSymbol.ContainingNamespace.IsGlobalNamespace)
             {
                 BuildNamespaceName(namespaceLine, namespaceSymbol.ContainingNamespace);
-                var punctuation = ReviewToken.CreatePunctuationToken(".");
-                punctuation.HasSuffixSpace = false;
+                var punctuation = ReviewToken.CreatePunctuationToken(".", false);
                 namespaceLine.Tokens.Add(punctuation);
             }
             DisplayName(namespaceLine, namespaceSymbol, namespaceSymbol);
@@ -267,7 +266,6 @@ namespace CSharpAPIParser.TreeToken
             var reviewLine = new ReviewLine()
             {
                 LineId = namedType.GetId(),
-                Tokens = [],
                 IsHidden = isHidden
             };
 

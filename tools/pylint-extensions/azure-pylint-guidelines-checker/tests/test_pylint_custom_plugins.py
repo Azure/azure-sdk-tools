@@ -4844,7 +4844,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         try: #@
             add = 1 + 2
         except Exception as e:
-            logger.error(str(e)) #@
+            logger.ERROR(str(e)) #@
             raise
         '''
                                               )

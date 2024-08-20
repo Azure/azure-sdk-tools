@@ -2762,7 +2762,7 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         matches = [".warning", ".error"]
         for j in node:
             if isinstance(j, astroid.Expr):
-                expression = j.as_string()
+                expression = j.as_string().lower()
                 if any(x in expression for x in matches):
                     self.add_message(
                         msgid=f"do-not-log-raised-errors",

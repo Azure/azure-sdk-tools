@@ -273,7 +273,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             builder.AppendLine("Body differences:");
 
-            CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, builder);
+            request.Request.TryGetContentType(out var contentType);
+            CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, contentType, descriptionBuilder: builder);
 
             return builder.ToString();
         }

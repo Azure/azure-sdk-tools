@@ -4835,3 +4835,5 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+# [Pylint] Investigate pylint rule around missing dependency #3231

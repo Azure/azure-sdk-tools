@@ -2753,6 +2753,8 @@ class NoImportTypingFromTypeCheck(BaseChecker):
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+# [Pylint] Investigate pylint rule around missing dependency #3231
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
@@ -2790,6 +2792,8 @@ def register(linter):
     # [Pylint] Custom Linter check for Exception Logging #3227
     # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
     # [Pylint] Add a check for connection_verify hardcoded settings #35355
+    # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+    # [Pylint] Investigate pylint rule around missing dependency #3231
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

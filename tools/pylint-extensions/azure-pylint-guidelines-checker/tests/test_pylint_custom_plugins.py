@@ -4832,7 +4832,7 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(imd)
 
 
-class TestDoNotImportAsyncioDirectly(pylint.testutils.CheckerTestCase):
+class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
     """Test that we are blocking imports of asncio directly allowing indirect imports."""
     CHECKER_CLASS = checker.DoNotImportAsyncio
 
@@ -4841,7 +4841,7 @@ class TestDoNotImportAsyncioDirectly(pylint.testutils.CheckerTestCase):
         importfrom_node = astroid.extract_node("from asyncio import sleep")
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id="do-not-import-asyncio-directly",
+                    msg_id="do-not-import-asyncio",
                     line=1,
                     node=importfrom_node,
                     col_offset=0,
@@ -4856,7 +4856,7 @@ class TestDoNotImportAsyncioDirectly(pylint.testutils.CheckerTestCase):
         importfrom_node = astroid.extract_node("import asyncio")
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-import-asyncio-directly",
+                msg_id="do-not-import-asyncio",
                 line=1,
                 node=importfrom_node,
                 col_offset=0,

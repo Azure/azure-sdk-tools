@@ -46,4 +46,3 @@ export class CommentItemModel {
         this.isInEditMode = false;
     }
 }
-  

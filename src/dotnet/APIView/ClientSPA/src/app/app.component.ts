@@ -10,7 +10,7 @@ import { SignalRService } from './_services/signal-r/signal-r.service';
 export class AppComponent  implements OnInit{
   title : string = 'APIView';
 
-  constructor(private userProfileService: UserProfileService, private signalRService: SignalRService) { }
+  constructor(private userProfileService: UserProfileService) { }
 
   ngOnInit(): void {
     this.setAppTheme();

@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { ConfigService } from '../config/config.service';
-import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, } from 'src/app/_models/commentItemModel';
+import { Observable, Subject } from 'rxjs';
+import { CommentThreadUpdateAction, CommentUpdateDto } from 'src/app/_dtos/commentThreadUpdateDto';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalRService {
-  connection : signalR.HubConnection;
+  private connection : signalR.HubConnection;
+  private commentUpdates: Subject<CommentUpdateDto> = new Subject<CommentUpdateDto>();
 
   constructor(private configService: ConfigService) {
     this.connection = new signalR.HubConnectionBuilder()
@@ -45,27 +48,44 @@ export class SignalRService {
 
   handleCommentUpdated() {
     this.connection.on("CommentCreated", (comment: CommentItemModel) => {
-      console.log("Comment Created: ", comment);
+      this.commentUpdates.next({ 
+        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated, comment: comment
+      });
     });
 
     this.connection.on("CommentUpdated", (reviewId: string, commentId: string, commentText: string) => {
-      console.log("Comment Updated: ", reviewId, commentId, commentText);
+      this.commentUpdates.next({ 
+        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate, reviewId: reviewId,
+        commentId: commentId,commentText: commentText
+      });
     });
 
     this.connection.on("CommentResolved", (reviewId: string, elementId: string) => {
-      console.log("Comment Resolved: ", reviewId, elementId);
+      this.commentUpdates.next({ 
+        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved, reviewId: reviewId, elementId: elementId
+      });
     });
 
     this.connection.on("CommentUnResolved", (reviewId: string, elementId: string) => {
-      console.log("Comment UnResolved: ", reviewId, elementId);
+      this.commentUpdates.next({ 
+        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentUnResolved, reviewId: reviewId, elementId: elementId
+      });    
     });
 
     this.connection.on("CommentUpvoteToggled", (reviewId: string, commentId: string) => {
-      console.log("Comment Up Voted: ", reviewId, commentId);
+      this.commentUpdates.next({ 
+        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoted, reviewId: reviewId, commentId: commentId
+      });
     });
 
     this.connection.on("CommentDeleted", (reviewId: string, commentId: string) => {
-      console.log("Comment Deleted: ", reviewId, commentId);
+      this.commentUpdates.next({ 
+        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted, reviewId: reviewId, commentId: commentId
+      });
     });
+  }
+
+  onCommentUpdates() : Observable<CommentUpdateDto> {
+    return this.commentUpdates.asObservable();
   }
 }

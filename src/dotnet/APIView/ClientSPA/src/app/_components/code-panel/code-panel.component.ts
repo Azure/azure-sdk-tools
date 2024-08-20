@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { take } from 'rxjs/operators';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -10,6 +10,9 @@ import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { Message } from 'primeng/api/message';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { Subject } from 'rxjs';
+import { CommentThreadUpdateAction, CommentUpdateDto } from 'src/app/_dtos/commentThreadUpdateDto';
 
 @Component({
   selector: 'app-code-panel',
@@ -40,11 +43,14 @@ export class CodePanelComponent implements OnChanges{
   codePanelRowSource: IDatasource<CodePanelRowData> | undefined;
   CodePanelRowDatatype = CodePanelRowDatatype;
 
+  destroy$ = new Subject<void>();
+
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
-    private route: ActivatedRoute, private router: Router) { }
+    private signalRService: SignalRService, private route: ActivatedRoute, private router: Router) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
+    this.handleRealTimeCommentUpdates();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -527,6 +533,36 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
+  handleRealTimeCommentUpdates() {
+    this.signalRService.onCommentUpdates().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (commentUpdateDto: CommentUpdateDto) => {
+        if ((commentUpdateDto.reviewId && commentUpdateDto.reviewId == this.reviewId) ||
+          (commentUpdateDto.comment && commentUpdateDto.comment.reviewId == this.reviewId)) {
+          switch (commentUpdateDto.CommentThreadUpdateAction) {
+            case CommentThreadUpdateAction.CommentCreated:
+              console.log(commentUpdateDto);
+              break;
+            case CommentThreadUpdateAction.CommentTextUpdate:
+              console.log(commentUpdateDto);
+              break;
+            case CommentThreadUpdateAction.CommentResolved:
+              console.log(commentUpdateDto);
+              break;
+            case CommentThreadUpdateAction.CommentUnResolved:
+              console.log(commentUpdateDto);
+              break;
+            case CommentThreadUpdateAction.CommentUpVoted:
+              console.log(commentUpdateDto);
+              break;
+            case CommentThreadUpdateAction.CommentDeleted:
+              console.log(commentUpdateDto);
+              break;
+          }
+        }
+      }
+    });
+  }
+
   private updateHasActiveConversations() {
     let hasActiveConversation = false;
     for (let row of this.codePanelRowData) {
@@ -553,5 +589,10 @@ export class CodePanelComponent implements OnChanges{
     }).catch((error) => {
       console.error(error);
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

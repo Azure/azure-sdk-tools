@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Net.Mime;
 using System.Text;
 using System.Web;
 
@@ -112,7 +113,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if (!entry.IsTrack1Recording)
                 {
                     score += CompareHeaderDictionaries(request.Request.Headers, entry.Request.Headers, IgnoredHeaders, ExcludeHeaders);
-                    score += CompareBodies(request.Request.Body, entry.Request.Body);
+
+                    request.Request.TryGetContentType(out var contentType);
+
+                    score += CompareBodies(request.Request.Body, entry.Request.Body, descriptionBuilder: null, contentType: contentType);
                 }
 
                 if (score == 0)
@@ -130,7 +134,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry, entries));
         }
 
-        public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, StringBuilder descriptionBuilder = null)
+        public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, string contentType, StringBuilder descriptionBuilder = null)
         {
             if (!_compareBodies)
             {
@@ -154,7 +158,26 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return 1;
             }
 
-            if (!requestBody.SequenceEqual(recordBody))
+            if (!string.IsNullOrWhiteSpace(contentType) && contentType.Contains("json"))
+            {
+                var jsonDifferences = JsonComparer.CompareJson(requestBody, recordBody);
+
+                if (jsonDifferences.Count > 0)
+                {
+
+                    if (descriptionBuilder != null)
+                    {
+                        descriptionBuilder.AppendLine($"There are differences between request and recordentry bodies:");
+                        foreach (var jsonDifference in jsonDifferences)
+                        {
+                            descriptionBuilder.AppendLine(jsonDifference);
+                        }
+                    }
+
+                    return 1;
+                }
+            }
+            else if (!requestBody.SequenceEqual(recordBody))
             {
                 if (descriptionBuilder != null)
                 {

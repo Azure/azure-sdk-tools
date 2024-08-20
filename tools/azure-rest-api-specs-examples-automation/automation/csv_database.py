@@ -11,9 +11,9 @@ from github import GitHubRepository
 from models import Release
 
 
-example_repo: str = 'https://github.com/Azure/azure-rest-api-specs-examples'
-csvdb_folder: str = 'csvdb'
-metadata_branch: str = 'metadata'
+example_repo: str = "https://github.com/Azure/azure-rest-api-specs-examples"
+csvdb_folder: str = "csvdb"
+metadata_branch: str = "metadata"
 
 
 @dataclasses.dataclass(eq=True)
@@ -55,76 +55,79 @@ class CsvDatabase:
         self.work_dir = work_dir
         self.example_metadata_path = path.join(self.work_dir, csvdb_folder)
 
-        self.index_file_path = path.join(self.example_metadata_path, 'java-library-example-index.csv')
-        self.list_file_path = path.join(self.example_metadata_path, 'java-library-example-list.csv')
+        self.index_file_path = path.join(self.example_metadata_path, "java-library-example-index.csv")
+        self.list_file_path = path.join(self.example_metadata_path, "java-library-example-list.csv")
 
     def checkout(self):
         # checkout metadata branch from azure-rest-api-specs-examples repo
-        cmd = ['git', 'clone',
-               '--quiet',
-               '--depth', '1',
-               '--branch', metadata_branch,
-               example_repo, self.example_metadata_path]
-        logging.info(f'Checking out repository: {example_repo}, branch {metadata_branch}')
-        logging.info('Command line: ' + ' '.join(cmd))
+        cmd = [
+            "git",
+            "clone",
+            "--quiet",
+            "--depth",
+            "1",
+            "--branch",
+            metadata_branch,
+            example_repo,
+            self.example_metadata_path,
+        ]
+        logging.info(f"Checking out repository: {example_repo}, branch {metadata_branch}")
+        logging.info("Command line: " + " ".join(cmd))
         subprocess.check_call(cmd, cwd=self.work_dir)
 
     def load(self):
-        with open(self.index_file_path, 'r', newline='') as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        with open(self.index_file_path, "r", newline="") as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
             self.release_db = DatabaseInternal(csv_reader)
 
-        with open(self.list_file_path, 'r', newline='') as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        with open(self.list_file_path, "r", newline="") as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
             self.file_db = DatabaseInternal(csv_reader)
 
     def dump(self):
-        with open(self.index_file_path, 'w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            csv_writer.writerow(['id', 'name', 'language', 'tag', 'package', 'version', 'date_epoch', 'date'])
+        with open(self.index_file_path, "w", newline="") as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csv_writer.writerow(["id", "name", "language", "tag", "package", "version", "date_epoch", "date"])
             for row in self.release_db.rows:
                 csv_writer.writerow(row)
 
-        with open(self.list_file_path, 'w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            csv_writer.writerow(['id', 'file', 'release_id'])
+        with open(self.list_file_path, "w", newline="") as csv_file:
+            csv_writer = csv.writer(csv_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            csv_writer.writerow(["id", "file", "release_id"])
             for row in self.file_db.rows:
                 csv_writer.writerow(row)
 
     def commit(self, tag):
         if not self.branch:
             # git checkout new branch
-            self.date_str = datetime.now().strftime('%Y-%m-%d')
-            self.branch = f'automation-metadata-{self.date_str}'
-            cmd = ['git', 'checkout', '-b', self.branch]
-            logging.info('Command line: ' + ' '.join(cmd))
+            self.date_str = datetime.now().strftime("%Y-%m-%d")
+            self.branch = f"automation-metadata-{self.date_str}"
+            cmd = ["git", "checkout", "-b", self.branch]
+            logging.info("Command line: " + " ".join(cmd))
             subprocess.check_call(cmd, cwd=self.example_metadata_path)
 
         # git add
-        cmd = ['git', 'add', 'java-library-example-index.csv']
-        logging.info('Command line: ' + ' '.join(cmd))
+        cmd = ["git", "add", "java-library-example-index.csv"]
+        logging.info("Command line: " + " ".join(cmd))
         subprocess.check_call(cmd, cwd=self.example_metadata_path)
 
-        cmd = ['git', 'add', 'java-library-example-list.csv']
-        logging.info('Command line: ' + ' '.join(cmd))
+        cmd = ["git", "add", "java-library-example-list.csv"]
+        logging.info("Command line: " + " ".join(cmd))
         subprocess.check_call(cmd, cwd=self.example_metadata_path)
 
         # git commit
-        title = f'[Automation] Update metadata on {tag}'
-        logging.info(f'git commit: {title}')
-        cmd = ['git',
-               '-c', 'user.name=azure-sdk',
-               '-c', 'user.email=azuresdk@microsoft.com',
-               'commit', '-m', title]
-        logging.info('Command line: ' + ' '.join(cmd))
+        title = f"[Automation] Update metadata on {tag}"
+        logging.info(f"git commit: {title}")
+        cmd = ["git", "-c", "user.name=azure-sdk", "-c", "user.email=azuresdk@microsoft.com", "commit", "-m", title]
+        logging.info("Command line: " + " ".join(cmd))
         subprocess.check_call(cmd, cwd=self.example_metadata_path)
 
     def push(self, github_token: str):
         if self.branch:
-            title = f'[Automation] Update metadata on {self.date_str}'
+            title = f"[Automation] Update metadata on {self.date_str}"
             # git push
-            remote_uri = 'https://' + github_token + '@' + example_repo[len('https://'):]
-            cmd = ['git', 'push', remote_uri, self.branch]
+            remote_uri = "https://" + github_token + "@" + example_repo[len("https://") :]
+            cmd = ["git", "push", remote_uri, self.branch]
             # do not print this as it contains token
             # logging.info('Command line: ' + ' '.join(cmd))
             subprocess.check_call(cmd, cwd=self.example_metadata_path)
@@ -132,24 +135,25 @@ class CsvDatabase:
             # create github pull request
             owner = _repository_owner(example_repo)
             name = _repository_name(example_repo)
-            head = f'{owner}:{self.branch}'
+            head = f"{owner}:{self.branch}"
             repo = GitHubRepository(owner, name, github_token)
             pull_number = repo.create_pull_request(title, head, metadata_branch)
-            repo.add_label(pull_number, ['auto-merge'])
-            logging.info(f'succeeded, pull number {pull_number}')
+            repo.add_label(pull_number, ["auto-merge"])
+            logging.info(f"succeeded, pull number {pull_number}")
 
-    def new_release(self, name: str, language: str, tag: str, package: str, version: str, date: datetime,
-                    files: List[str]) -> bool:
+    def new_release(
+        self, name: str, language: str, tag: str, package: str, version: str, date: datetime, files: List[str]
+    ) -> bool:
         # add a new release and all the example files
         # return false, if release already exists in DB
 
         release_id = self._query_release(name, language)
         if release_id:
-            logging.warning(f'Release already exists for {language}#{name}')
+            logging.warning(f"Release already exists for {language}#{name}")
             return False
 
         date_epoch = int(date.timestamp())
-        date_str = datetime.fromtimestamp(date_epoch).strftime('%m/%d/%Y')
+        date_str = datetime.fromtimestamp(date_epoch).strftime("%m/%d/%Y")
 
         release_id = self.release_db.append([name, language, tag, package, version, date_epoch, date_str])
 
@@ -178,8 +182,8 @@ class CsvDatabase:
 
 
 def _repository_owner(repository: str) -> str:
-    return re.match(r'https://github.com/([^/:]+)/.*', repository).group(1)
+    return re.match(r"https://github.com/([^/:]+)/.*", repository).group(1)
 
 
 def _repository_name(repository: str) -> str:
-    return re.match(r'https://github.com/[^/:]+/(.*)', repository).group(1)
+    return re.match(r"https://github.com/[^/:]+/(.*)", repository).group(1)

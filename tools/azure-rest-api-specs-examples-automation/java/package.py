@@ -9,11 +9,11 @@ from typing import List
 from modules import JavaExample
 
 
-OS_WINDOWS = platform.system().lower() == 'windows'
+OS_WINDOWS = platform.system().lower() == "windows"
 
 
 def replace_class_name(content: str, old_class_name: str, new_class_name: str) -> str:
-    return content.replace('class ' + old_class_name + ' {', 'class ' + new_class_name + ' {', 1)
+    return content.replace("class " + old_class_name + " {", "class " + new_class_name + " {", 1)
 
 
 class MavenPackage:
@@ -34,29 +34,29 @@ class MavenPackage:
 
             filename_no = 1
             for example in examples:
-                class_name = 'Main' + str(filename_no)
-                code_path = path.join(maven_path, 'src', 'main', 'java', class_name + '.java')
+                class_name = "Main" + str(filename_no)
+                code_path = path.join(maven_path, "src", "main", "java", class_name + ".java")
                 filename_no += 1
 
-                content = replace_class_name(example.content, 'Main', class_name)
+                content = replace_class_name(example.content, "Main", class_name)
 
-                with open(code_path, 'w', encoding='utf-8') as f:
+                with open(code_path, "w", encoding="utf-8") as f:
                     f.write(content)
 
-            cmd = ['mvn' + ('.cmd' if OS_WINDOWS else ''), '--no-transfer-progress', 'package']
-            logging.info('Run mvn package')
-            logging.info('Command line: ' + ' '.join(cmd))
+            cmd = ["mvn" + (".cmd" if OS_WINDOWS else ""), "--no-transfer-progress", "package"]
+            logging.info("Run mvn package")
+            logging.info("Command line: " + " ".join(cmd))
             code = subprocess.run(cmd, cwd=maven_path).returncode
             return code == 0
 
     def __prepare_workspace(self, maven_path: str):
         # make dir for maven and src/main/java
-        java_path = path.join(maven_path, 'src', 'main', 'java')
+        java_path = path.join(maven_path, "src", "main", "java")
         os.makedirs(java_path, exist_ok=True)
 
         # create pom
-        pom_file_path = path.join(maven_path, 'pom.xml')
-        pom_str = f'''<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        pom_file_path = path.join(maven_path, "pom.xml")
+        pom_str = f"""<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.azure.resourcemanager</groupId>
@@ -90,6 +90,6 @@ class MavenPackage:
     </plugins>
   </build>
 </project>
-'''
-        with open(pom_file_path, 'w', encoding='utf-8') as f:
+"""
+        with open(pom_file_path, "w", encoding="utf-8") as f:
             f.write(pom_str)

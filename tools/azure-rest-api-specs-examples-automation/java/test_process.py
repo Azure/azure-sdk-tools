@@ -1,7 +1,12 @@
+import sys
 import unittest
+from os import path
 
 from main import process_java_example_content
 from main import _set_paths
+
+sys.path.append(path.abspath("../directory"))
+from test_examples_dir import create_mock_test_folder
 
 
 class TestProcess(unittest.TestCase):
@@ -281,9 +286,6 @@ public final class VirtualMachineScaleSetVMsStartSamples {
         )
         self.assertEqual("VirtualMachineScaleSetVM_Start_MinimumSet_Gen", java_examples[1].target_filename)
 
-    @unittest.skip(
-        'require call "_set_paths" with your local azure-rest-api-specs repository and azure-sdk-for-java repository'
-    )
     def test_process_java_example_original_file_typespec(self):
         java_code = """
 // Copyright (c) Microsoft Corporation. All rights reserved.
@@ -312,17 +314,18 @@ public final class MongoClustersListConnectionStringsSamples {
 }
 """
 
-        _set_paths(
-            "c:/github/azure-rest-api-specs",
-            "c:/github/azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster",
-        )
-        java_examples = process_java_example_content(
-            java_code.splitlines(keepends=True), "MongoClustersListConnectionStringsSamples"
-        )
+        with create_mock_test_folder() as tmp_dir_name:
+            _set_paths(
+                path.join(tmp_dir_name, "azure-rest-api-specs"),
+                path.join(tmp_dir_name, "azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster"),
+            )
+            java_examples = process_java_example_content(
+                java_code.splitlines(keepends=True), "MongoClustersListConnectionStringsSamples"
+            )
 
-        self.assertEqual(1, len(java_examples))
+            self.assertEqual(1, len(java_examples))
 
-        self.assertEqual(
-            "specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-03-01-preview/examples-java",
-            java_examples[0].target_dir,
-        )
+            self.assertEqual(
+                "specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-03-01-preview/examples-java",
+                java_examples[0].target_dir,
+            )

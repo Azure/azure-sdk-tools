@@ -93,12 +93,39 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                         break;
                     }
+                case JsonValueKind.String:
+                    {
+                        if (element1.GetString() != element2.GetString())
+                        {
+                            differences.Add($"{path}: \"{element1.GetString()}\" != \"{element2.GetString()}\"");
+                        }
+                        break;
+                    }
+                case JsonValueKind.Number:
+                    {
+                        if (element1.GetDecimal() != element2.GetDecimal())
+                        {
+                            differences.Add($"{path}: {element1.GetDecimal()} != {element2.GetDecimal()}");
+                        }
+                        break;
+                    }
+                case JsonValueKind.True:
+                case JsonValueKind.False:
+                    {
+                        if (element1.GetBoolean() != element2.GetBoolean())
+                        {
+                            differences.Add($"{path}: {element1.GetBoolean()} != {element2.GetBoolean()}");
+                        }
+                        break;
+                    }
+                case JsonValueKind.Null:
+                    {
+                        // Both are null, nothing to compare
+                        break;
+                    }
                 default:
                     {
-                        if (!element1.Equals(element2))
-                        {
-                            differences.Add($"{path}: {element1} != {element2}");
-                        }
+                        differences.Add($"{path}: Unhandled value kind {element1.ValueKind}");
                         break;
                     }
             }

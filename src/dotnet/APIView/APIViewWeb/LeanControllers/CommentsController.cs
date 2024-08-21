@@ -17,19 +17,17 @@ namespace APIViewWeb.LeanControllers
     public class CommentsController : BaseApiController
     {
         private readonly ILogger<CommentsController> _logger;
-        private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly ICommentsManager _commentsManager;
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
 
         public CommentsController(ILogger<CommentsController> logger, ICommentsManager commentManager,
-            IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<SignalRHub> signalRHubContext)
+            IReviewManager reviewManager, INotificationManager notificationManager)
         {
             _logger = logger;
             _commentsManager = commentManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
-            _signalRHubContext = signalRHubContext;
         }
 
         /// <summary>
@@ -130,8 +128,7 @@ namespace APIViewWeb.LeanControllers
             {
                 await _notificationManager.SubscribeAsync(review, User);
             }
-            await _signalRHubContext.Clients.All.SendAsync("CommentCreated", comment);
-            return CreatedAtAction("GetComments", new { reviewId = reviewId }, comment);
+             return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));
         }
 
         /// <summary>
@@ -145,7 +142,6 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> UpdateCommentTextAsync(string reviewId, string commentId, string commentText)
         {
             await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, new string[0]);
-            await _signalRHubContext.Clients.All.SendAsync("CommentUpdated", reviewId, commentId, commentText);
             return Ok();
         }
 
@@ -159,7 +155,6 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> ResolveCommentsAsync(string reviewId, string elementId)
         {
             await _commentsManager.ResolveConversation(User, reviewId, elementId);
-            await _signalRHubContext.Clients.All.SendAsync("CommentResolved", reviewId, elementId);
             return Ok();
         }
 
@@ -173,7 +168,6 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> UnResolveCommentsAsync(string reviewId, string elementId)
         {
             await _commentsManager.UnresolveConversation(User, reviewId, elementId);
-            await _signalRHubContext.Clients.All.SendAsync("CommentUnResolved", reviewId, elementId);
             return Ok();
         }
 
@@ -187,7 +181,6 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> ToggleCommentUpVoteAsync(string reviewId, string commentId)
         {
             await _commentsManager.ToggleUpvoteAsync(User, reviewId, commentId);
-            await _signalRHubContext.Clients.All.SendAsync("CommentUpvoteToggled", reviewId, commentId);
             return Ok();
         }
 
@@ -202,7 +195,6 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> DeleteCommentsAsync(string reviewId, string commentId, string elementId)
         {
             await _commentsManager.SoftDeleteCommentAsync(User, reviewId, commentId);
-            await _signalRHubContext.Clients.All.SendAsync("CommentDeleted", reviewId, commentId);
             return Ok();
         }
     }

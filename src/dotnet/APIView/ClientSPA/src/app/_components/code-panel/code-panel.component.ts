@@ -467,6 +467,7 @@ export class CodePanelComponent implements OnChanges{
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               this.addCommentToCommentThread(commentUpdates, response);
+              commentUpdates.comment = response;
               this.signalRService.pushCommentUpdates(commentUpdates);
             }
           }
@@ -475,67 +476,77 @@ export class CodePanelComponent implements OnChanges{
   }
 
   handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.reviewId!;
     this.commentsService.deleteComment(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.deleteCommentFromCommentThread(commentUpdates);
+        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
-    commentUpdates.reviewId = this.reviewId!;
-    this.signalRService.pushCommentUpdates(commentUpdates);
   }
 
   handleCommentResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
-    if (commentUpdates.CommentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
+    commentUpdates.reviewId = this.reviewId!;
+    if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
       this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
-    if (commentUpdates.CommentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
+    if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
       this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
-    commentUpdates.reviewId = this.reviewId!;
-    this.signalRService.pushCommentUpdates(commentUpdates);
   }
 
   handleCommentUpvoteActionEmitter(commentUpdates: CommentUpdatesDto){
+    commentUpdates.reviewId = this.reviewId!;
     this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
-        this.toggleCommentUpVote(commentUpdates);
+        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
-    commentUpdates.reviewId = this.reviewId!;
-    this.signalRService.pushCommentUpdates(commentUpdates);
   }
 
   handleRealTimeCommentUpdates() {
     this.signalRService.onCommentUpdates().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (commentUpdateDto: CommentUpdatesDto) => {
-        if ((commentUpdateDto.reviewId && commentUpdateDto.reviewId == this.reviewId) ||
-          (commentUpdateDto.comment && commentUpdateDto.comment.reviewId == this.reviewId)) {
-          switch (commentUpdateDto.CommentThreadUpdateAction) {
+      next: (commentUpdates: CommentUpdatesDto) => {
+        if ((commentUpdates.reviewId && commentUpdates.reviewId == this.reviewId) ||
+          (commentUpdates.comment && commentUpdates.comment.reviewId == this.reviewId)) {
+          if (!commentUpdates.nodeIdHashed || commentUpdates.associatedRowPositionInGroup == undefined) {
+            const codePanelRowData = this.findRowForCommentUpdates(commentUpdates.commentId!, commentUpdates.elementId!);
+            commentUpdates.nodeIdHashed = codePanelRowData?.nodeIdHashed;
+            commentUpdates.associatedRowPositionInGroup = codePanelRowData?.associatedRowPositionInGroup;
+          }
+
+          if (!commentUpdates.nodeIdHashed || commentUpdates.associatedRowPositionInGroup == undefined) {
+            return;
+          }
+
+          switch (commentUpdates.commentThreadUpdateAction) {
             case CommentThreadUpdateAction.CommentCreated:
-              console.log(commentUpdateDto);
+              this.addCommentToCommentThread(commentUpdates, commentUpdates.comment!);
               break;
             case CommentThreadUpdateAction.CommentTextUpdate:
-              console.log(commentUpdateDto);
+              this.updateCommentTextInCommentThread(commentUpdates);
               break;
             case CommentThreadUpdateAction.CommentResolved:
-              console.log(commentUpdateDto);
+              this.applyCommentResolutionUpdate(commentUpdates);
               break;
             case CommentThreadUpdateAction.CommentUnResolved:
-              console.log(commentUpdateDto);
+              this.applyCommentResolutionUpdate(commentUpdates);
               break;
             case CommentThreadUpdateAction.CommentUpVoteToggled:
-              console.log(commentUpdateDto);
+              this.toggleCommentUpVote(commentUpdates);
               break;
             case CommentThreadUpdateAction.CommentDeleted:
-              console.log(commentUpdateDto);
+              this.deleteCommentFromCommentThread(commentUpdates);
               break;
           }
         }
@@ -579,10 +590,12 @@ export class CodePanelComponent implements OnChanges{
 
   private addCommentToCommentThread(commentUpdates: CommentUpdatesDto, newComment: CommentItemModel) {
     const comments = this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].comments;
-    comments.push(newComment);
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].comments = [...comments]
-    this.updateItemInScroller(this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]);
-    this.updateHasActiveConversations();
+    if (!comments.some(c => c.id === newComment.id)) {
+      comments.push(newComment);
+      this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].comments = [...comments]
+      this.updateItemInScroller(this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]);
+      this.updateHasActiveConversations();
+    }
   }
 
   private deleteCommentFromCommentThread(commentUpdates: CommentUpdatesDto) {
@@ -599,7 +612,7 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = (commentUpdates.CommentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
+    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
     this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
     this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]});
     this.updateHasActiveConversations();
@@ -615,6 +628,22 @@ export class CodePanelComponent implements OnChanges{
       }
       this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
     }
+  }
+
+  private findRowForCommentUpdates(commentId: string, elementId: string) : CodePanelRowData | undefined {
+    for (const key in this.codePanelData?.nodeMetaData) {
+      const commentThreadsInNode = this.codePanelData?.nodeMetaData[key].commentThread;
+      if (commentThreadsInNode && Object.keys(commentThreadsInNode).length > 0) {
+        for (const commentThreadKey in commentThreadsInNode) {
+          for (let comment of commentThreadsInNode[commentThreadKey].comments) {
+            if (comment.id === commentId || comment.elementId === elementId) {
+              return commentThreadsInNode[commentThreadKey];
+            }
+          }
+        }
+      }
+    }
+    return undefined
   }
 
   ngOnDestroy() {

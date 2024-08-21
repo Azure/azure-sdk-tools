@@ -48,7 +48,7 @@ export class SignalRService {
 
   handleCommentUpdates() {
     this.connection.on("ReceiveCommentUpdates", (commentUpdates: CommentUpdatesDto) => {
-        this.commentUpdates.next(commentUpdates);
+      this.commentUpdates.next(commentUpdates);
     });
   }
 

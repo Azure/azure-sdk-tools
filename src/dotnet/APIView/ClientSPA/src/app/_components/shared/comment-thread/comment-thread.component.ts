@@ -205,7 +205,7 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-item-id");
     this.deleteCommentActionEmitter.emit(
       {
-        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         commentId: commentId,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
@@ -253,7 +253,7 @@ export class CommentThreadComponent {
       const content = replyEditor?.getEditorContent();
       this.saveCommentActionEmitter.emit(
         { 
-          CommentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+          commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
           nodeId: this.codePanelRowData!.nodeId,
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentText: content,
@@ -271,7 +271,7 @@ export class CommentThreadComponent {
       const content = replyEditor?.getEditorContent();
       this.saveCommentActionEmitter.emit(
         { 
-          CommentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
+          commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
           nodeId: this.codePanelRowData!.nodeId,
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentId: commentId,
@@ -290,7 +290,7 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-btn-id");
     this.commentUpvoteActionEmitter.emit(
       { 
-        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         commentId: commentId,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
@@ -312,7 +312,7 @@ export class CommentThreadComponent {
   handleThreadResolutionButtonClick(action: string) {
     this.commentResolutionActionEmitter.emit(
       { 
-        CommentThreadUpdateAction: (action == "Resolve") ? CommentThreadUpdateAction.CommentResolved  : CommentThreadUpdateAction.CommentUnResolved,
+        commentThreadUpdateAction: (action == "Resolve") ? CommentThreadUpdateAction.CommentResolved  : CommentThreadUpdateAction.CommentUnResolved,
         elementId: this.codePanelRowData!.comments[0].elementId,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,

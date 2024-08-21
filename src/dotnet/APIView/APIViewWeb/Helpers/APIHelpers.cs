@@ -73,6 +73,7 @@ namespace APIViewWeb.Helpers
     public class LeanJsonResult : JsonResult
     {
         private readonly int _statusCode;
+        private readonly string _locationUrl;
  
         private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
         {
@@ -88,6 +89,12 @@ namespace APIViewWeb.Helpers
             _statusCode = statusCode;
         }
 
+        public LeanJsonResult(object value, int statusCode, string locationUrl) : base(value)
+        {
+            _statusCode = statusCode;
+            _locationUrl = locationUrl;
+        }
+
         public override async Task ExecuteResultAsync(ActionContext context)
         {
             if (context == null)
@@ -99,6 +106,7 @@ namespace APIViewWeb.Helpers
 
             response.ContentType = !string.IsNullOrEmpty(ContentType) ? ContentType : "application/json";
             response.StatusCode = _statusCode;
+            response.Headers["Location"] = _locationUrl;
 
             var serializedValue = JsonSerializer.Serialize(Value, _serializerOptions);
             await response.WriteAsync(serializedValue);

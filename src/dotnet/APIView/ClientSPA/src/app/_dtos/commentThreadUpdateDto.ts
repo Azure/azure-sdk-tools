@@ -10,7 +10,7 @@ export enum CommentThreadUpdateAction {
 }
 
 export interface CommentUpdatesDto {
-    CommentThreadUpdateAction: CommentThreadUpdateAction;
+    commentThreadUpdateAction: CommentThreadUpdateAction;
     nodeId?: string; // effectively the same as the element id
     nodeIdHashed?: string;
     reviewId: string;

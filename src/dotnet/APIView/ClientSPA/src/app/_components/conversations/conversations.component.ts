@@ -7,7 +7,6 @@ import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { Subject, take, takeUntil } from 'rxjs';
 import { Review } from 'src/app/_models/review';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { ActivatedRoute, Router } from '@angular/router';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 
@@ -121,7 +120,7 @@ export class ConversationsComponent implements OnChanges {
       next: (commentUpdates: CommentUpdatesDto) => {
         if ((commentUpdates.reviewId && commentUpdates.reviewId == this.review?.id) ||
           (commentUpdates.comment && commentUpdates.comment.reviewId == this.review?.id)) {
-          switch ((commentUpdates.CommentThreadUpdateAction as CommentThreadUpdateAction)) {
+          switch (commentUpdates.commentThreadUpdateAction) {
             case CommentThreadUpdateAction.CommentCreated:
               this.addCommentToCommentThread(commentUpdates);
               break;
@@ -138,7 +137,7 @@ export class ConversationsComponent implements OnChanges {
               this.toggleCommentUpVote(commentUpdates);
               break;
             case CommentThreadUpdateAction.CommentDeleted:
-              this.toggleCommentUpVote(commentUpdates);
+              this.deleteCommentFromCommentThread(commentUpdates);
               break;
           }
         }
@@ -147,10 +146,12 @@ export class ConversationsComponent implements OnChanges {
   }
   
   handleSaveCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.review?.id!;
     if (commentUpdates.commentId) {
       this.commentsService.updateComment(this.review?.id!, commentUpdates.commentId, commentUpdates.commentText!).pipe(take(1)).subscribe({
         next: () => {
           this.updateCommentTextInCommentThread(commentUpdates);
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
@@ -160,62 +161,59 @@ export class ConversationsComponent implements OnChanges {
             next: (response: CommentItemModel) => {
               commentUpdates.comment = response;
               this.addCommentToCommentThread(commentUpdates);
+              this.signalRService.pushCommentUpdates(commentUpdates);
             }
           }
         );
     }
-    commentUpdates.reviewId = this.review?.id!;
-    this.signalRService.pushCommentUpdates(commentUpdates);
   }
 
   handleCommentUpvoteActionEmitter(commentUpdates: CommentUpdatesDto){
+    commentUpdates.reviewId = this.review?.id!;
     this.commentsService.toggleCommentUpVote(this.review?.id!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
-        this.toggleCommentUpVote(commentUpdates);
+        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
-    commentUpdates.reviewId = this.review?.id!;
-    this.signalRService.pushCommentUpdates(commentUpdates);
   }
 
   handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.review?.id!;
     this.commentsService.deleteComment(this.review?.id!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.deleteCommentFromCommentThread(commentUpdates);
+        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
-    commentUpdates.reviewId = this.review?.id!;
-    this.signalRService.pushCommentUpdates(commentUpdates);
   }
 
   handleCommentResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
-    if (commentUpdates.CommentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
+    commentUpdates.reviewId = this.review?.id!;
+    if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
       this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
-    if (commentUpdates.CommentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
+    if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
       this.commentsService.unresolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
-    commentUpdates.reviewId = this.review?.id!;
-    this.signalRService.pushCommentUpdates(commentUpdates);
   }
 
   private updateCommentTextInCommentThread(commentUpdates: CommentUpdatesDto) {
-    console.log("commentUpdates: ", commentUpdates);
     if (this.comments.some(c => c.id === commentUpdates.commentId!)) {
       this.comments.find(c => c.id === commentUpdates.commentId!)!.commentText = commentUpdates.commentText!;
     }
   }
 
   private addCommentToCommentThread(commentUpdates: CommentUpdatesDto) {
-    console.log("commentUpdates: ", commentUpdates);
     if (!this.comments.some(c => c.id === commentUpdates.comment!.id)) {
       this.comments.push(commentUpdates.comment!);
       this.createCommentThreads();
@@ -224,7 +222,7 @@ export class ConversationsComponent implements OnChanges {
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
     this.comments.filter(c => c.elementId === commentUpdates.elementId).forEach(c => {
-      c.isResolved = (commentUpdates.CommentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
+      c.isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
     });
     this.createCommentThreads();
   }

@@ -15,23 +15,22 @@ interface ArtifactInfo {
 const comment = '# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.\n\n';
 
 async function createOrUpdateManagePlaneCiYaml(
-    generatedPackageDirectory: string,
+    packageDirToSdkRoot: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
-    const serviceDir = posix.join(generatedPackageDirectory, '..');
-    const ciMgmtPath = posix.join(serviceDir, 'ci.mgmt.yml');
-    const serviceDirRelativeToSDKDir = basename(serviceDir);
+    const serviceDirToSDKDir = posix.join(packageDirToSdkRoot, '..');
+    const ciMgmtPath = posix.join(serviceDirToSDKDir, 'ci.mgmt.yml');
 
     if (!(await existsAsync(ciMgmtPath))) {
         await createManagementPlaneCiYaml(
-            generatedPackageDirectory,
+            packageDirToSdkRoot,
             ciMgmtPath,
-            serviceDirRelativeToSDKDir,
+            serviceDirToSDKDir,
             npmPackageInfo
         );
         return ciMgmtPath;
     }
-    await updateManagementPlaneCiYaml(generatedPackageDirectory, ciMgmtPath, npmPackageInfo);
+    await updateManagementPlaneCiYaml(packageDirToSdkRoot, ciMgmtPath, npmPackageInfo);
     return ciMgmtPath;
 }
 
@@ -93,18 +92,18 @@ function getArtifact(npmPackageInfo: NpmPackageInfo): ArtifactInfo {
 }
 
 async function createManagementPlaneCiYaml(
-    generatedPackageDirectory: string,
+    packageDirToSdkRoot: string,
     ciMgmtPath: string,
-    serviceDirRelativeToSDKDirectory: string,
+    serviceDirToSdkRoot: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<void> {
     const artifact = getArtifact(npmPackageInfo);
     const templatePath = join(__dirname, 'ciYamlTemplates/ci.mgmt.template.yml');
     const template = await readFile(templatePath, { encoding: 'utf-8' });
     const parsed = parse(template.toString());
-    parsed.trigger.paths.include = [generatedPackageDirectory, ciMgmtPath];
-    parsed.pr.paths.include = [generatedPackageDirectory, ciMgmtPath];
-    parsed.extends.parameters.ServiceDirectory = serviceDirRelativeToSDKDirectory;
+    parsed.trigger.paths.include = [packageDirToSdkRoot, ciMgmtPath];
+    parsed.pr.paths.include = [packageDirToSdkRoot, ciMgmtPath];
+    parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot;
     parsed.extends.parameters.Artifacts = [artifact];
 
     await writeCiYaml(ciMgmtPath, parsed);

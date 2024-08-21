@@ -39,7 +39,7 @@ export async function npmCommand(workingDir: string, args: string[]): Promise<vo
 }
 
 export async function nodeCommand(workingDir: string, args: string[]): Promise<void> {
-  Logger.debug("node " + args.join(' '));
+  Logger.debug("node " + args.join(" "));
 
   return new Promise((resolve, reject) => {
     const node = spawn("node", args, {

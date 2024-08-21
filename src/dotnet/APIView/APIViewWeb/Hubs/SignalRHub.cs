@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using APIViewWeb.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -25,5 +26,14 @@ namespace APIViewWeb.Hubs
                 await Clients.Others.SendAsync("ReceiveComment", reviewId, elementId, partialViewResult);
             }
         }
-    }
+
+        /// <summary>
+        /// Endpoint Consumed by Client SPA
+        /// </summary>
+        /// <returns></returns>
+        public async Task PushCommentUpdates(CommentUpdatesDto commentUpdatesDto) 
+        {
+            await Clients.All.SendAsync("ReceiveCommentUpdates", commentUpdatesDto);
+        }
+    }   
 }

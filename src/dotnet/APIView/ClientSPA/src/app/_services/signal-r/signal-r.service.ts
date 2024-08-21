@@ -3,14 +3,14 @@ import * as signalR from '@microsoft/signalr';
 import { ConfigService } from '../config/config.service';
 import { CommentItemModel, } from 'src/app/_models/commentItemModel';
 import { Observable, Subject } from 'rxjs';
-import { CommentThreadUpdateAction, CommentUpdateDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalRService {
   private connection : signalR.HubConnection;
-  private commentUpdates: Subject<CommentUpdateDto> = new Subject<CommentUpdateDto>();
+  private commentUpdates: Subject<CommentUpdatesDto> = new Subject<CommentUpdatesDto>();
 
   constructor(private configService: ConfigService) {
     this.connection = new signalR.HubConnectionBuilder()
@@ -37,7 +37,7 @@ export class SignalRService {
       await this.startConnection();
     })
     this.handleConnectionId();
-    this.handleCommentUpdated();
+    this.handleCommentUpdates();
   }
 
   handleConnectionId() {
@@ -46,46 +46,19 @@ export class SignalRService {
     });
   }
 
-  handleCommentUpdated() {
-    this.connection.on("CommentCreated", (comment: CommentItemModel) => {
-      this.commentUpdates.next({ 
-        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated, comment: comment
-      });
-    });
-
-    this.connection.on("CommentUpdated", (reviewId: string, commentId: string, commentText: string) => {
-      this.commentUpdates.next({ 
-        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate, reviewId: reviewId,
-        commentId: commentId,commentText: commentText
-      });
-    });
-
-    this.connection.on("CommentResolved", (reviewId: string, elementId: string) => {
-      this.commentUpdates.next({ 
-        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved, reviewId: reviewId, elementId: elementId
-      });
-    });
-
-    this.connection.on("CommentUnResolved", (reviewId: string, elementId: string) => {
-      this.commentUpdates.next({ 
-        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentUnResolved, reviewId: reviewId, elementId: elementId
-      });    
-    });
-
-    this.connection.on("CommentUpvoteToggled", (reviewId: string, commentId: string) => {
-      this.commentUpdates.next({ 
-        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoted, reviewId: reviewId, commentId: commentId
-      });
-    });
-
-    this.connection.on("CommentDeleted", (reviewId: string, commentId: string) => {
-      this.commentUpdates.next({ 
-        CommentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted, reviewId: reviewId, commentId: commentId
-      });
+  handleCommentUpdates() {
+    this.connection.on("ReceiveCommentUpdates", (commentUpdates: CommentUpdatesDto) => {
+        this.commentUpdates.next(commentUpdates);
     });
   }
 
-  onCommentUpdates() : Observable<CommentUpdateDto> {
+  onCommentUpdates() : Observable<CommentUpdatesDto> {
     return this.commentUpdates.asObservable();
+  }
+
+  pushCommentUpdates(commentUpdates: CommentUpdatesDto) : void {
+    if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
+      this.connection.invoke("PushCommentUpdates", commentUpdates);
+    }
   }
 }

@@ -5,15 +5,21 @@ export enum CommentThreadUpdateAction {
     CommentTextUpdate,
     CommentResolved,
     CommentUnResolved,
-    CommentUpVoted,
+    CommentUpVoteToggled,
     CommentDeleted
 }
 
-export interface CommentUpdateDto {
+export interface CommentUpdatesDto {
     CommentThreadUpdateAction: CommentThreadUpdateAction;
-    reviewId?: string;
+    nodeId?: string; // effectively the same as the element id
+    nodeIdHashed?: string;
+    reviewId: string;
+    revisionId?: string; // revision ids are used in conversation page to group comments
     commentId?: string;
     elementId?: string;
     commentText?: string;
-    comment?: CommentItemModel
+    comment?: CommentItemModel;
+    resolvedBy?: string;    
+    associatedRowPositionInGroup?: number;
+    allowAnyOneToResolve?: boolean;
 }

@@ -15,7 +15,7 @@ class PackageProps
     [boolean]$IsNewSdk
     [string]$ArtifactName
     [string]$ReleaseStatus
-    [string[]]$DependentPackages
+    [string[]]$CanaryPackages
 
     PackageProps([string]$name, [string]$version, [string]$directoryPath, [string]$serviceDirectory)
     {
@@ -129,18 +129,29 @@ function Get-PrPkgProperties([string]$InputDiffJson) {
             if ($shouldInclude) {
                 $packagesWithChanges += $pkg
 
-                if ($pkg.DependentPackages) {
-                    $dependentPackagesForInclusion += $pkg.DependentPackages
+                if ($pkg.CanaryPackages) {
+                    $dependentPackagesForInclusion += $pkg.CanaryPackages
                 }
             }
         }
     }
 
-    foreach ($addition in $dependentPackagesForInclusion) {
-        if ($lookup[$addition]) {
-            $packagesWithChanges += $lookup[$addition]
+    # there is a custom function to get dependent packages from a changed package set and diff
+    if ($DependentPackagesFromPackageSetFn -and (Test-Path "Function:$DependentPackagesFromPackageSetFn"))
+    {
+        $packagesWithChanges += &$DependentPackagesFromPackageSetFn $packagesWithChanges $diff
+    }
+    else {
+        foreach ($addition in $dependentPackagesForInclusion) {
+            $key = $addition.Replace($RepoRoot, "").SubString(1)
+
+            if ($lookup[$key]) {
+                $packagesWithChanges += $lookup[$key]
+            }
         }
     }
+
+
 
     return $packagesWithChanges
 }

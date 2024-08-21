@@ -9,7 +9,7 @@ import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
 import { getGeneratedPackageDirectory } from '../../common/utils';
 import { getNpmPackageInfo } from '../../common/npmUtils';
 import { logger } from '../../utils/logger';
-import { remove } from 'fs-extra';
+import { ensureDir, remove } from 'fs-extra';
 import unixify from 'unixify';
 
 // !!!IMPORTANT:
@@ -21,7 +21,10 @@ import unixify from 'unixify';
 export async function generateAzureSDKPackage(options: ModularClientPackageOptions): Promise<PackageResult> {
     logger.info(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
+    const tempApiViewDirectory = join(options.sdkRepoRoot, '../.api-views-temp');
     try {
+        await ensureDir(tempApiViewDirectory);
+
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
         await remove(packageDirectory);
 
@@ -30,8 +33,14 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
 
         const rushScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
         const rushxScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
-        
-        await buildPackage(relativePackageDirToSdkRoot, options.versionPolicyName, packageResult, rushScript);
+
+        await buildPackage(
+            relativePackageDirToSdkRoot,
+            options.versionPolicyName,
+            packageResult,
+            rushScript,
+            tempApiViewDirectory
+        );
 
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
@@ -75,6 +84,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         logger.error(`Failed to generate package due to ${(err as Error).stack ?? err}`);
         throw err;
     } finally {
+        if (options.local) await remove(tempApiViewDirectory);
         return packageResult;
     }
 }

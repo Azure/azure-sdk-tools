@@ -41,14 +41,17 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
     logger.info(`Pack '${packageName}' successfully.`);
 }
 
-async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, packageResult: PackageResult) {
+async function addApiViewInfo(
+    relativePackageDirectoryToSdkRoot: string,
+    packageResult: PackageResult,
+    tempApiViewDirectory: string
+) {
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
     const apiViews = await glob(apiViewPathPattern);
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
-    await ensureDir('~/.api-views-temp');
     const apiViewName = basename(apiViews[0]);
-    const apiViewPath = join('~/.api-views-temp', apiViewName);
+    const apiViewPath = join(tempApiViewDirectory, apiViewName);
     await copy(apiViews[0], apiViewPath);
     packageResult.apiViewArtifact = apiViewPath;
 }
@@ -56,8 +59,9 @@ async function addApiViewInfo(relativePackageDirectoryToSdkRoot: string, package
 export async function buildPackage(
     relativePackageDirectoryToSdkRoot: string,
     versionPolicyName: VersionPolicyName,
-    packageResult: PackageResult, 
-    rushScript: string
+    packageResult: PackageResult,
+    rushScript: string,
+    tempApiViewDirectory: string
 ) {
     logger.info(`Start building package in '${relativePackageDirectoryToSdkRoot}'.`);
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
@@ -70,7 +74,7 @@ export async function buildPackage(
     await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
     logger.info(`Rush update successfully.`);
     await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
-    await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult);
+    await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult, tempApiViewDirectory);
     logger.info(`Build package '${name}' successfully.`);
 }
 

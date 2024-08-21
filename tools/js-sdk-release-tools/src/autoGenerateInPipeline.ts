@@ -48,7 +48,7 @@ function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {
     return SDKType.RestLevelClient;
 }
 
-async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use: string | undefined, typespecEmitter: string | undefined, sdkGenerationType: string | undefined, skipBackupNodeModules: boolean) {
+async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use: string | undefined, typespecEmitter: string | undefined, sdkGenerationType: string | undefined, local: boolean) {
     // inputJson schema: https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/GenerateInputSchema.json
     // todo: add interface for the schema
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
@@ -85,7 +85,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
 
     try {
-        if (!skipBackupNodeModules) {
+        if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
         switch (sdkType) {
@@ -133,6 +133,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                     gitCommitId,
                     skip,
                     repoUrl,
+                    local,
                     // support MPG for now
                     versionPolicyName: 'management'
                 };
@@ -144,13 +145,13 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                 break;
         }
     } catch (e) {
-        const packageName = outputJson.packages?.[0].packageName;
-        logger.error(`Failed to generate SDK for package ${"'" + packageName + "'" ?? ''} due to ${(e as Error)?.stack ?? e}.`);
+        const packageNameStr =`'${outputJson.packages?.[0].packageName}'`;
+        logger.error(`Failed to generate SDK for package ${packageNameStr} due to ${(e as Error)?.stack ?? e}.`);
         logger.error(`Please review the detail errors for potential fixes.`);
         logger.error(`If the issue persists, contact the support channel at https://aka.ms/azsdk/js-teams-channel and include this spec pull request.`)
         throw e;
     } finally {
-        if (!skipBackupNodeModules) {
+        if (!local) {
             await restoreNodeModules(String(shell.pwd()));
         }
         fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, null, '  '), { encoding: 'utf-8' });
@@ -163,12 +164,13 @@ const optionDefinitions = [
     { name: 'sdkGenerationType', type: String },
     { name: 'inputJsonPath', type: String },
     { name: 'outputJsonPath', type: String },
-    // this option is used to skip backup node modules in local, do NOT set to true in sdk automation pipeline 
-    { name: 'skipBackupNodeModules', type: Boolean, defaultValue: false }
+    // this option should be only used in local run, it will skip backup node modules, etc.
+    // do NOT set to true in sdk automation pipeline 
+    { name: 'local', type: Boolean, defaultValue: false }
 ];
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.skipBackupNodeModules ?? false).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.local ?? false).catch(e => {
     logger.error(e.message);
     process.exit(1);
 });

@@ -1,6 +1,6 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
 import { access, readFile, writeFile } from 'node:fs/promises';
-import { basename, join, posix } from 'node:path';
+import { basename, join, posix, resolve } from 'node:path';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
 import { PackageResult, VersionPolicyName } from './types';
 import { runCommand, runCommandOptions } from './utils';
@@ -37,7 +37,7 @@ async function updateRushJson(projectItem: ProjectItem) {
 
 async function packPackage(packageDirectory: string, packageName: string, rushxScript: string) {
     const cwd = join(packageDirectory);
-    await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'], cwd }, false);
+    await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
     logger.info(`Pack '${packageName}' successfully.`);
 }
 
@@ -67,7 +67,7 @@ export async function buildPackage(
         versionPolicyName: versionPolicyName
     });
     // TODO: use rush script
-    await runCommand(`node`, [rushScript, 'update'], { ...runCommandOptions, stdio: ['pipe', 'pipe', 'pipe'] }, false);
+    await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
     logger.info(`Rush update successfully.`);
     await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
     await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult);
@@ -80,7 +80,7 @@ export async function tryBuildSamples(packageDirectory: string, rushxScript: str
     const cwd = join(packageDirectory);
     const options = { ...runCommandOptions, cwd };
     try {
-        await runCommand(`node`, [rushxScript, 'build:samples'], options, false, 300);
+        await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300);
         logger.info(`built samples successfully.`);
     } catch (err) {
         logger.error(`Failed to build samples due to: ${(err as Error)?.stack ?? err}`);
@@ -108,6 +108,6 @@ export async function createArtifact(packageDirectory: string, rushxScript: stri
     const artifactName = getArtifactName(info);
     const artifactPath = posix.join(packageDirectory, artifactName);
     await access(artifactPath);
-    logger.info(`Start to create artifact '${info.name}' successfully.`);
+    logger.info(`Created artifact '${info.name}' in '${resolve(artifactPath)}' successfully.`);
     return artifactPath;
 }

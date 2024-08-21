@@ -31,7 +31,7 @@ function printErrorDetails(output: { stdout: string; stderr: string, code: numbe
     logger.error(output.stdout);
 }
 
-export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['inherit', 'pipe', 'pipe'] };
+export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['pipe', 'pipe', 'pipe'] };
 
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
@@ -135,7 +135,7 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sd
 export function runCommand(
     command: string,
     args: readonly string[],
-    options: SpawnOptions,
+    options: SpawnOptions = runCommandOptions,
     realtimeOutput: boolean = true,
     timeoutSeconds: number | undefined = undefined 
 ): Promise<{ stdout: string; stderr: string, code }> {
@@ -162,7 +162,7 @@ export function runCommand(
         child.stderr?.on('data', (data) => {
             const str = data.toString();
             stderr += str;
-            if (realtimeOutput) console.error(str);
+            if (realtimeOutput) logger.error(str);
         });
 
         child.on('close', (code) => {

@@ -2749,7 +2749,55 @@ class NoImportTypingFromTypeCheck(BaseChecker):
                         )
         except:
             pass
+
+
 # [Pylint] custom linter check for invalid use of @overload #3229
+class InvalidUseOfOverload(BaseChecker):
+
+    """Rule to check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+
+    name = "invalid-use-of-overload"
+    priority = -1
+    msgs = {
+        "C4765": (
+            "Do not mix async and synchronous overloads",
+            "invalid-use-of-overload",
+            "Functions and their overloads must be either all async or all synchronous.",
+        ),
+    }
+
+    def visit_call(self, node):
+
+        klass = node.parent.parent.parent
+        # function = node.parent.parent
+        # print("Klass", klass, "\n")
+        # print(dir(klass))
+        # print()
+        print(klass.body)
+        # print(type(klass.body))
+        # print(len(klass.body))
+        print(klass.body[0])
+        print(dir(klass.body[0]))
+
+        for item in klass.body:
+            # print("DIR", dir(item))
+            try: # imports doesn't have a name
+                print("NAME", item.name)
+            except:
+                print("must be imports")
+
+    # def visit_asyncfunctiondef(self, node):
+    #     print(node)
+    #     print(dir(node))
+    #     print(node.name)
+    #
+    #
+    # def visit_functiondef(self, node):
+    #     if (node.decorators.nodes[0].name == "overload"):
+    #         print("OVERLOADED")
+    #     else:
+    #         print("n")
+
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
@@ -2786,7 +2834,7 @@ def register(linter):
     linter.register_checker(DoNotImportLegacySix(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
-    # [Pylint] custom linter check for invalid use of @overload #3229
+    linter.register_checker(InvalidUseOfOverload(linter))
     # [Pylint] Custom Linter check for Exception Logging #3227
     # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
     # [Pylint] Add a check for connection_verify hardcoded settings #35355

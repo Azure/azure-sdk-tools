@@ -47,6 +47,10 @@ export function getClassicClientParametersPath(packageRoot: string): string {
 
 export function getSDKType(packageRoot: string): SDKType {
     const paraPath = getClassicClientParametersPath(packageRoot);
+    const packageName = getNpmPackageName(packageRoot);
+    if (packageName.startsWith('@azure-rest/')) {
+        return SDKType.RestLevelClient;
+    }
     const exist = shell.test('-e', paraPath);
     const type = exist ? SDKType.HighLevelClient : SDKType.ModularClient;
     logger.info(`SDK type '${type}' is detected in '${packageRoot}'.`);

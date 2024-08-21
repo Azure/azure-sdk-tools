@@ -5,11 +5,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
+import { normalizeDirectory } from "./fs.js";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
-  let additionalDirOutput = "";
+  let additionalDirOutput = "\n";
   for (const dir of additionalDirectories ?? []) {
-    additionalDirOutput += `\n- ${dir}`;
+    additionalDirOutput += `- ${normalizeDirectory(dir)}\n`;
   }
   return additionalDirOutput;
 }

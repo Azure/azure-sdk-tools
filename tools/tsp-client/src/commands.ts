@@ -268,7 +268,7 @@ export async function generateCommand(argv: any) {
     args.push("--force");
   }
   await npmCommand(srcDir, args);
-  await compileTsp({
+  const success = await compileTsp({
     emitterPackage: emitter,
     outputPath: outputDir,
     resolvedMainFilePath,
@@ -281,6 +281,11 @@ export async function generateCommand(argv: any) {
   } else {
     Logger.debug("Cleaning up temp directory");
     await removeDirectory(tempRoot);
+  }
+
+  if (!success) {
+    Logger.error("Failed to generate client");
+    process.exit(1);
   }
 }
 
@@ -365,6 +370,7 @@ export async function convertCommand(argv: any): Promise<void> {
       `--use="${autorestCsharpPath}"`,
       `--output-folder="${outputDir}"`,
       "--mgmt-debug.only-generate-metadata",
+      "--mgmt-debug.suppress-list-exception",
       "--azure-arm",
       "--skip-csproj",
       `"${readme}"`,

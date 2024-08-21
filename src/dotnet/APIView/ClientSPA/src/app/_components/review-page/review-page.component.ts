@@ -16,6 +16,7 @@ import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, D
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
+import { CommentItemModel } from 'src/app/_models/commentItemModel';
 
 @Component({
   selector: 'app-review-page',
@@ -33,9 +34,11 @@ export class ReviewPageComponent implements OnInit {
   userProfile : UserProfile | undefined;
   review : Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
+  comments: CommentItemModel[] = [];
   activeAPIRevision : APIRevision | undefined = undefined;
   diffAPIRevision : APIRevision | undefined = undefined;
-  revisionSideBarVisible : boolean  = false;
+  revisionSidePanel : boolean | undefined = undefined;
+  conversationSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
   languageSafeName: string | undefined;
@@ -45,6 +48,7 @@ export class ReviewPageComponent implements OnInit {
   preferredApprovers : string[] = [];
   hasFatalDiagnostics : boolean = false;
   hasActiveConversation : boolean = false;
+  numberOfActiveConversation : number = 0;
   hasHiddenAPIs : boolean = false;
   loadFailed : boolean = false;
 
@@ -68,7 +72,7 @@ export class ReviewPageComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
-    private userProfileService: UserProfileService) {}
+    private userProfileService: UserProfileService, private commentsService: CommentsService) {}
 
   ngOnInit() {
     this.userProfileService.getUserProfile().subscribe(
@@ -100,11 +104,20 @@ export class ReviewPageComponent implements OnInit {
     this.loadReview(this.reviewId!);
     this.loadPreferredApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
+    this.loadComments();
+    this.createSideMenu();
+  }
 
+  createSideMenu() {
     this.sideMenu = [
       {
           icon: 'bi bi-clock-history',
-          command: () => { this.revisionSideBarVisible = !this.revisionSideBarVisible; }
+          command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
+      },
+      {
+        icon: 'bi bi-chat-left-dots',
+        badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
+        command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
       }
     ];
   }
@@ -211,6 +224,15 @@ export class ReviewPageComponent implements OnInit {
               this.diffAPIRevision = this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0];
             }
           }
+        }
+      });
+  }
+
+  loadComments() {
+    this.commentsService.getComments(this.reviewId!)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (comments: CommentItemModel[]) => {
+          this.comments = comments;
         }
       });
   }
@@ -411,6 +433,16 @@ export class ReviewPageComponent implements OnInit {
 
   handleHasActiveConversationEmitter(value: boolean) {
     this.hasActiveConversation = value;
+  }
+
+  handleNumberOfActiveThreadsEmitter(value: number) {
+    this.numberOfActiveConversation = value;
+    this.createSideMenu();
+  }
+
+  handleScrollToNodeEmitter (value: string) {
+    this.conversationSidePanel = false;
+    this.codePanelComponent.scrollToNode(undefined, value);
   }
 
   checkForFatalDiagnostics() {

@@ -108,29 +108,44 @@ export async function compileTsp({
   });
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
   if (diagnostics.length > 0) {
+    let errorDiagnostic = false;
     // This should not happen, but if it does, we should log it.
-    Logger.error(
-      "Diagnostics were reported while resolving compiler options. Use the `--debug` flag to see the diagnostic output.",
+    Logger.warn(
+      "Diagnostics were reported while resolving compiler options. Use the `--debug` flag to see if there is warning diagnostic output.",
     );
-    diagnostics.forEach((diagnostic) => {
-      Logger.debug(formatDiagnostic(diagnostic));
-    });
-    return false;
+    for (const diagnostic of diagnostics) {
+      if (diagnostic.severity === "error") {
+        Logger.error(formatDiagnostic(diagnostic));
+        errorDiagnostic = true;
+      } else {
+        Logger.debug(formatDiagnostic(diagnostic));
+      }
+    }
+    if (errorDiagnostic) {
+      return false;
+    }
   }
 
   const program = await compile(NodeHost, resolvedMainFilePath, options);
 
   if (program.diagnostics.length > 0) {
-    Logger.error(
-      "Diagnostics were reported during compilation. Use the `--debug` flag to see the diagnostic output.",
+    let errorDiagnostic = false;
+    Logger.warn(
+      "Diagnostics were reported during compilation. Use the `--debug` flag to see if there is warning diagnostic output.",
     );
-    program.diagnostics.forEach((diagnostic) => {
-      Logger.debug(formatDiagnostic(diagnostic));
-    });
-    return false;
-  } else {
-    Logger.success("generation complete");
+    for (const diagnostic of program.diagnostics) {
+      if (diagnostic.severity === "error") {
+        Logger.error(formatDiagnostic(diagnostic));
+        errorDiagnostic = true;
+      } else {
+        Logger.debug(formatDiagnostic(diagnostic));
+      }
+    }
+    if (errorDiagnostic) {
+      return false;
+    }
   }
+  Logger.success("generation complete");
   return true;
 }
 

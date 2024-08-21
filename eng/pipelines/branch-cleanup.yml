@@ -50,6 +50,11 @@ parameters:
     - MicrosoftDocs/azure-docs-sdk-node
     - MicrosoftDocs/azure-docs-sdk-python
 
+- name: RestAPISpecsDocsRepos
+  type: object
+  default:
+    - MicrosoftDocs/AzureRestPreview
+
 jobs:
   - job:
     displayName: Branch Clean-up
@@ -157,5 +162,24 @@ jobs:
               -RepoId "${{ repo }}"
               -BranchRegex "^daily"
               -LastCommitOlderThan ((Get-Date).AddDays(-7))
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
+
+      - ${{ each repo in parameters.RestAPISpecsDocsRepos }}:
+        - task: PowerShell@2
+          displayName: ${{ repo }} azure-rest-api-specs docs branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            # TODO: 00a0dc86-3419-4dd5-b119-e83edaf17e7e needs to be skipped because it's the default
+            # branch for the repository. This will be removed once the default branch has been changed
+            # to main
+            arguments: >
+              -RepoId "${{ repo }}"
+              -BranchRegex "^(result_)?(?!00a0dc86-3419-4dd5-b119-e83edaf17e7e)([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
+              -LastCommitOlderThan ((Get-Date).AddDays(-14))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

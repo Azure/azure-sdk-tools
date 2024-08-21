@@ -1,5 +1,5 @@
 import { NpmPackageInfo, VersionPolicyName } from './types';
-import { basename, join, posix } from 'path';
+import { basename, join, posix, resolve } from 'path';
 import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils';
 import { parse, stringify } from 'yaml';
 import { readFile, writeFile } from 'fs/promises';
@@ -112,6 +112,7 @@ async function createManagementPlaneCiYaml(
 async function writeCiYaml(ciMgmtPath: string, config: any) {
     const content = comment + stringify(config);
     await writeFile(ciMgmtPath, content, { encoding: 'utf-8', flush: true });
+    logger.info(`Created Management CI file '${resolve(ciMgmtPath)}' with content: \n${content}`);
 }
 
 async function createOrUpdateDataPlaneCiYaml(

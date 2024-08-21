@@ -162,7 +162,7 @@ export function runCommand(
         child.stderr?.on('data', (data) => {
             const str = data.toString();
             stderr += str;
-            if (realtimeOutput) logger.error(str);
+            if (realtimeOutput) logger.warn(str);
         });
 
         child.on('close', (code) => {

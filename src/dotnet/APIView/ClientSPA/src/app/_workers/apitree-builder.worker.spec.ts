@@ -8,6 +8,8 @@ import contentWithDiffNodes from "./test-data/content-with-diff-nodes.json";
 import contentWithDiffInOnlyDocs from "./test-data/content-with-diff-in-only-docs.json";
 import contentWithActiveOnly from "./test-data/content-with-active-revision-only.json";
 import contentWithFullDiff from "./test-data/content-with-diff-full-style.json";
+import contentWithAddedOnly from "./test-data/content-with-only-added-diff.json";
+import contentWithRemovedOnly from "./test-data/content-with-only-removed-diff.json";
  
 describe('API Tree Builder', () => {
     let httpMock: HttpTestingController;
@@ -151,7 +153,7 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.postMessage(arrayBuffer);
     });
 
-    it('test number lines without docs', (done) => {
+    it('test number lines in no diff without docs', (done) => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
           const codePanelRowData = data.payload as CodePanelRowData[];
@@ -181,6 +183,38 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.postMessage(apiTreeBuilderData);
       apiTreeBuilder.postMessage(arrayBuffer);
     });
+
+    it('test number lines in no diff with docs', (done) => {
+      apiTreeBuilder.onmessage = ({ data }) => {
+        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+          const codePanelRowData = data.payload as CodePanelRowData[];
+          expect(codePanelRowData.length).toBe(162);
+          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
+          expect(linesWithDiff.length).toBe(0);
+        }
+        done();
+      };
+
+      apiTreeBuilder.onerror = (error) => {
+        done.fail(error.message);
+      };
+  
+      const apiTreeBuilderData : ApiTreeBuilderData = {
+        diffStyle: 'full',
+        showDocumentation: true,
+        showComments: false,
+        showSystemComments: false,
+        showHiddenApis: false
+      };
+
+      const jsonString = JSON.stringify(contentWithActiveOnly);
+      const encoder = new TextEncoder();
+      const arrayBuffer = encoder.encode(jsonString).buffer;
+  
+      apiTreeBuilder.postMessage(apiTreeBuilderData);
+      apiTreeBuilder.postMessage(arrayBuffer);
+    });
+
 
     it('test diff lines in full diff without docs', (done) => {
       apiTreeBuilder.onmessage = ({ data }) => {
@@ -237,6 +271,129 @@ describe('API Tree Builder', () => {
       };
 
       const jsonString = JSON.stringify(contentWithFullDiff);
+      const encoder = new TextEncoder();
+      const arrayBuffer = encoder.encode(jsonString).buffer;
+  
+      apiTreeBuilder.postMessage(apiTreeBuilderData);
+      apiTreeBuilder.postMessage(arrayBuffer);
+    });
+
+    it('test diff lines in tree style diff without docs', (done) => {
+      apiTreeBuilder.onmessage = ({ data }) => {
+        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+          const codePanelRowData = data.payload as CodePanelRowData[];
+          expect(codePanelRowData.length).toBe(27);
+          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
+          expect(linesWithDiff.length).toBe(9);
+        }
+        done();
+      };
+
+      apiTreeBuilder.onerror = (error) => {
+        done.fail(error.message);
+      };
+  
+      const apiTreeBuilderData : ApiTreeBuilderData = {
+        diffStyle: 'trees',
+        showDocumentation: false,
+        showComments: false,
+        showSystemComments: false,
+        showHiddenApis: false
+      };
+
+      const jsonString = JSON.stringify(contentWithFullDiff);
+      const encoder = new TextEncoder();
+      const arrayBuffer = encoder.encode(jsonString).buffer;
+  
+      apiTreeBuilder.postMessage(apiTreeBuilderData);
+      apiTreeBuilder.postMessage(arrayBuffer);
+    });
+    it('test diff lines in node style diff without docs', (done) => {
+      apiTreeBuilder.onmessage = ({ data }) => {
+        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+          const codePanelRowData = data.payload as CodePanelRowData[];
+          expect(codePanelRowData.length).toBe(20);
+          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
+          expect(linesWithDiff.length).toBe(9);
+        }
+        done();
+      };
+
+      apiTreeBuilder.onerror = (error) => {
+        done.fail(error.message);
+      };
+  
+      const apiTreeBuilderData : ApiTreeBuilderData = {
+        diffStyle: 'nodes',
+        showDocumentation: false,
+        showComments: false,
+        showSystemComments: false,
+        showHiddenApis: false
+      };
+
+      const jsonString = JSON.stringify(contentWithFullDiff);
+      const encoder = new TextEncoder();
+      const arrayBuffer = encoder.encode(jsonString).buffer;
+  
+      apiTreeBuilder.postMessage(apiTreeBuilderData);
+      apiTreeBuilder.postMessage(arrayBuffer);
+    });
+
+    it('test diff lines with added diff only', (done) => {
+      apiTreeBuilder.onmessage = ({ data }) => {
+        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+          const codePanelRowData = data.payload as CodePanelRowData[];
+          expect(codePanelRowData.length).toBe(460);
+          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
+          expect(linesWithDiff.length).toBe(1);
+        }
+        done();
+      };
+
+      apiTreeBuilder.onerror = (error) => {
+        done.fail(error.message);
+      };
+  
+      const apiTreeBuilderData : ApiTreeBuilderData = {
+        diffStyle: 'full',
+        showDocumentation: false,
+        showComments: false,
+        showSystemComments: false,
+        showHiddenApis: false
+      };
+
+      const jsonString = JSON.stringify(contentWithAddedOnly);
+      const encoder = new TextEncoder();
+      const arrayBuffer = encoder.encode(jsonString).buffer;
+  
+      apiTreeBuilder.postMessage(apiTreeBuilderData);
+      apiTreeBuilder.postMessage(arrayBuffer);
+    });
+
+    it('test diff lines with removed diff only', (done) => {
+      apiTreeBuilder.onmessage = ({ data }) => {
+        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+          const codePanelRowData = data.payload as CodePanelRowData[];
+          expect(codePanelRowData.length).toBe(460);
+          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
+          expect(linesWithDiff.length).toBe(1);
+        }
+        done();
+      };
+
+      apiTreeBuilder.onerror = (error) => {
+        done.fail(error.message);
+      };
+  
+      const apiTreeBuilderData : ApiTreeBuilderData = {
+        diffStyle: 'full',
+        showDocumentation: false,
+        showComments: false,
+        showSystemComments: false,
+        showHiddenApis: false
+      };
+
+      const jsonString = JSON.stringify(contentWithRemovedOnly);
       const encoder = new TextEncoder();
       const arrayBuffer = encoder.encode(jsonString).buffer;
   

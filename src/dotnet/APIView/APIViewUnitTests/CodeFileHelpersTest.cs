@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using APIView.Model.V2;
 using APIView.TreeToken;
 using APIViewWeb.Helpers;
 using Xunit;
@@ -11,40 +12,9 @@ namespace APIViewUnitTests
     public class CodeFileHelpersTests
     {
         private readonly ITestOutputHelper _output;
-        List<APITreeNode> apiForestA = new List<APITreeNode>();
-        List<APITreeNode> apiForestB = new List<APITreeNode>();
-        List<APITreeNode> apiForestC = new List<APITreeNode>();
-        List<APITreeNode> apiForestD = new List<APITreeNode>();
 
-        List<StructuredToken> beforeTokensA = new List<StructuredToken>();
-        List<StructuredToken> afterTokensA = new List<StructuredToken>();
-        List<StructuredToken> beforeTokensB = new List<StructuredToken>();
-        List<StructuredToken> diffTokenResultA = new List<StructuredToken>();
-        List<StructuredToken> diffTokenResultB = new List<StructuredToken>();
-        List<StructuredToken> diffTokenResultC = new List<StructuredToken>();
-        List<StructuredToken> diffTokenResultD = new List<StructuredToken>();
-
-        public CodeFileHelpersTests(ITestOutputHelper output) 
+        public CodeFileHelpersTests(ITestOutputHelper output)
         {
-            // Numbers indicate tree node level, letters indicate tree node position among siblings
-            // First part is node name, second part is parent node name e.g `2A,1A` means node `2A` is child of node `1A`
-            // Start with level 1,
-
-            List<string> dataListA = new List<string> { "1A", "2A,1A", "2B,1A", "2C,1A", "2D,1A","3A,2B", "3B,2B", "3C,2B", "3A,2D", "3B,2D" };
-            List<string> dataListB = new List<string> { "1A", "2A,1A", "2B,1A", "2D,1A", "2E,1A", "3B,2B", "3C,2B", "3A,2D", "3B,2D", "3C,2D" };
-            List<string> dataListC = new List<string> { "1A", "2A,1A", "2B,1A", "2C,1A", "3A,2B" };
-            List<string> dataListD = new List<string> { "1B", "2A,1B", "2B,1B" };
-            List<string> dataListE = new List<string> { "1A", "2B,1A", "2C,1A" };
-            List<string> dataListF = new List<string> { "1B", "2B,1B", "2C,1B", "3A,2B" };
-
-            apiForestA.AddRange(this.BuildTestTree(dataListA));
-            apiForestB.AddRange(this.BuildTestTree(dataListB));
-            apiForestC.AddRange(this.BuildTestTree(dataListC));
-            apiForestC.AddRange(this.BuildTestTree(dataListD));
-            apiForestD.AddRange(this.BuildTestTree(dataListE));
-            apiForestD.AddRange(this.BuildTestTree(dataListF));
-
-            this.BuildTestTokenList();
 
             _output = output;
         }
@@ -114,159 +84,146 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public void ComputeTokenDiff_Generates_Accurate_TokenDiff()
+        public void ComputeTokenDiff_Verify_API_only_Change_dummy_data()
         {
-            /*var diffResult = CodeFileHelpers.ComputeTokenDiff(beforeTokensA, afterTokensA);
-            CompareDiffResult(diffResult.Before, diffTokenResultA);
-            CompareDiffResult(diffResult.After, diffTokenResultB);
-            Assert.True(diffResult.HasDiff);
-
-            diffResult = CodeFileHelpers.ComputeTokenDiff(beforeTokensA, beforeTokensA);
-            CompareDiffResult(diffResult.Before, diffTokenResultC);
-            CompareDiffResult(diffResult.After, diffTokenResultC);
-            Assert.False(diffResult.HasDiff);
-
-            diffResult = CodeFileHelpers.ComputeTokenDiff(beforeTokensB, beforeTokensB);
-            CompareDiffResult(diffResult.Before, diffTokenResultD);
-            CompareDiffResult(diffResult.After, diffTokenResultD);
-            Assert.False(diffResult.HasDiff);
-            */
-        }
-
-        private List<APITreeNode> BuildTestTree(List<string> data, string parentId = null)
-        {
-            List<APITreeNode> forest = new List<APITreeNode>();
-
-            foreach (var item in data)
+            var activeLines = new List<ReviewLine>();
+            activeLines.Add(new ReviewLine()
             {
-                var parts = item.Split(',');
-
-                if ((parts.Length == 1 && parentId == null) || (parts.Length > 1 && parts[1] == parentId))
+                LineId = "1A",
+                Tokens = new List<ReviewToken>()
                 {
-                    APITreeNode node = new APITreeNode { Id = parts[0] };
-                    node.PropertiesObj.Add("DiffKind", "NoneDiff");
-                    node.ChildrenObj.AddRange(BuildTestTree(data, node.Id));
-                    forest.Add(node);
-                }
-            }
-            return forest;
-        }
-        
-
-        private void BuildTestTokenList()
-        {
-            this.beforeTokensA = new List<StructuredToken>()
-            {
-                new StructuredToken() { Value = "A", Id = "1" },
-                new StructuredToken() { Value = "B", Id = "2" },
-                new StructuredToken() { Value = "D", Id = "4" },
-                new StructuredToken() { Value = "F", Id = "6" },
-                new StructuredToken() { Value = "G", Id = "7" }
-            };
-            
-            this.afterTokensA = new List<StructuredToken>()
-            {
-                new StructuredToken() { Value = "A", Id = "1" },
-                new StructuredToken() { Value = "C", Id = "3" },
-                new StructuredToken() { Value = "D", Id = "4" },
-                new StructuredToken() { Value = "G", Id = "7" }
-            };
-
-            this.diffTokenResultA = new List<StructuredToken>()
-            {
-                new StructuredToken() { Value = "A", Id = "1"  },
-                new StructuredToken() { Value = "B", Id = "2", RenderClassesObj = new HashSet<string>(){ "diff-change" } },
-                new StructuredToken() { Value = "D", Id = "4" },
-                new StructuredToken() { Value = "F", Id = "6", RenderClassesObj = new HashSet<string>(){ "diff-change" } },
-                new StructuredToken() { Value = "G", Id = "7", RenderClassesObj = new HashSet<string>(){ "diff-change" } }
-            };
-
-            this.diffTokenResultB = new List<StructuredToken>()
-            {
-                new StructuredToken() { Value = "A", Id = "1"  },
-                new StructuredToken() { Value = "C", Id = "3", RenderClassesObj = new HashSet<string>(){ "diff-change" } },
-                new StructuredToken() { Value = "D", Id = "4" },
-                new StructuredToken() { Value = "G", Id = "7", RenderClassesObj = new HashSet<string>(){ "diff-change" } }
-            };
-
-            this.diffTokenResultC = new List<StructuredToken>()
-            {
-                new StructuredToken() { Value = "A", Id = "1" },
-                new StructuredToken() { Value = "B", Id = "2" },
-                new StructuredToken() { Value = "D", Id = "4" },
-                new StructuredToken() { Value = "F", Id = "6" },
-                new StructuredToken() { Value = "G", Id = "7" }
-            };
-
-            this.beforeTokensB = new List<StructuredToken>()
-            {
-                new StructuredToken() { Value = "namespace" },
-                new StructuredToken() { Value = " " },
-                new StructuredToken() { Value = "Azure", Id = "Azure" },
-                new StructuredToken() { Value = "." },
-                new StructuredToken() { Value = "Identity", Id = "Azure.Identity" },
-                new StructuredToken() { Value = " " },
-                new StructuredToken() { Value = "{" }
-            };
-
-            this.diffTokenResultD = new List<StructuredToken>()
-            {
-                new StructuredToken() { Value = "namespace" },
-                new StructuredToken() { Value = " " },
-                new StructuredToken() { Value = "Azure", Id = "Azure" },
-                new StructuredToken() { Value = "." },
-                new StructuredToken() { Value = "Identity", Id = "Azure.Identity" },
-                new StructuredToken() { Value = " " },
-                new StructuredToken() { Value = "{" }
-            };          
-        }
-
-        private List<List<(string id, string diffKind)>> TraverseForest(List<APITreeNode> forest, bool print = false)
-        {
-            var result = new List<List<(string id, string diffKind)>>();
-            foreach (var tree in forest)
-            {
-                var treeNodeResult = new List<(string id, string diffKind)>();
-                TraverseTree(tree, treeNodeResult, print);
-                result.Add(treeNodeResult);
-            }
-            return result;
-        }
-
-        private void TraverseTree(APITreeNode node, List<(string id, string diffKind)> result, bool print = false, int level = 0)
-        {
-            if (print)
-            { 
-                var output = String.Empty;
-                if (level > 1)
+                    new ReviewToken("namespace", TokenKind.Keyword),
+                    new ReviewToken("test.core", TokenKind.Text),
+                    new ReviewToken("{", TokenKind.Punctuation){HasSuffixSpace = false}
+                },
+                Children = new List<ReviewLine>()
                 {
-                    var offset = level - 1;
-                    var offsetIndicator = Enumerable.Repeat("    ", offset).ToList();
-                    output = string.Join("", offsetIndicator);
+                    new ReviewLine()
+                    {
+                        LineId = "2A",
+                        Tokens = new List<ReviewToken>()
+                        {
+                            new ReviewToken("public", TokenKind.Keyword),
+                            new ReviewToken("class", TokenKind.Keyword),
+                            new ReviewToken("TestClass", TokenKind.Text),
+                            new ReviewToken("{", TokenKind.Punctuation){HasSuffixSpace = false}
+                        },
+                        Children = new List<ReviewLine>()
+                        {
+                            new ReviewLine()
+                            {
+                                LineId = "3A",
+                                Tokens = new List<ReviewToken>()
+                                {
+                                    new ReviewToken("public", TokenKind.Keyword),
+                                    new ReviewToken("void", TokenKind.Keyword),
+                                    new ReviewToken("TestMethod", TokenKind.Text),
+                                    new ReviewToken("()", TokenKind.Punctuation)
+                                }
+                            }
+                        }
+                    },
+                    new ReviewLine()
+                    {
+                        LineId = "2BA",
+                        Tokens = new List<ReviewToken>()
+                        {
+                            new ReviewToken("}", TokenKind.Punctuation){HasSuffixSpace = false}
+                        },
+                        IsContextEndLine = true
+                    }
                 }
-                var levelIndicator = Enumerable.Repeat("----", level).ToList();
-                output += string.Join("", levelIndicator) + node.Id;
 
-                _output.WriteLine(output);
-            }
-            result.Add((node.Id, node.PropertiesObj["DiffKind"]));
-            foreach (var child in node.ChildrenObj)
+            });
+            activeLines.Add(new ReviewLine()
             {
-                TraverseTree(child, result, print, level + 1);
+                LineId = "1B",
+                Tokens = new List<ReviewToken>()
+                {
+                    new ReviewToken("}", TokenKind.Punctuation){HasSuffixSpace = false}
+                },
+                IsContextEndLine = true
+            });
+
+            var diffLines = new List<ReviewLine>();
+            diffLines.Add(new ReviewLine()
+            {
+                LineId = "1A",
+                Tokens = new List<ReviewToken>()
+                {
+                    new ReviewToken("namespace", TokenKind.Keyword),
+                    new ReviewToken("test.core", TokenKind.Text),
+                    new ReviewToken("{", TokenKind.Punctuation){HasSuffixSpace = false}
+                },
+                Children = new List<ReviewLine>()
+                {
+                    new ReviewLine()
+                    {
+                        LineId = "2A",
+                        Tokens = new List<ReviewToken>()
+                        {
+                            new ReviewToken("public", TokenKind.Keyword),
+                            new ReviewToken("class", TokenKind.Keyword),
+                            new ReviewToken("TestClass1", TokenKind.Text),
+                            new ReviewToken("{", TokenKind.Punctuation){HasSuffixSpace = false}
+                        },
+                        Children = new List<ReviewLine>()
+                        {
+                            new ReviewLine()
+                            {
+                                LineId = "3A",
+                                Tokens = new List<ReviewToken>()
+                                {
+                                    new ReviewToken("public", TokenKind.Keyword),
+                                    new ReviewToken("void", TokenKind.Keyword),
+                                    new ReviewToken("TestMethod", TokenKind.Text),
+                                    new ReviewToken("()", TokenKind.Punctuation)
+                                }
+                            }
+                        }
+                    },
+                    new ReviewLine()
+                    {
+                        LineId = "2BA",
+                        Tokens = new List<ReviewToken>()
+                        {
+                            new ReviewToken("}", TokenKind.Punctuation){HasSuffixSpace = false}
+                        },
+                        IsContextEndLine = true
+                    }
+                }
+
+            });
+            diffLines.Add(new ReviewLine()
+            {
+                LineId = "1B",
+                Tokens = new List<ReviewToken>()
+                {
+                    new ReviewToken("}", TokenKind.Punctuation){HasSuffixSpace = false}
+                },
+                IsContextEndLine = true
+            });
+            var resultLines = CodeFileHelpers.FindDiff(activeLines, diffLines);
+            int modifiedCount = 0;
+            foreach (var l in resultLines)
+            {
+                modifiedCount += ModifiedLineCount(l);
             }
+            Assert.Equal(1, modifiedCount);
         }
 
-        private void CompareDiffResult(List<StructuredToken> result, List<StructuredToken> expected)
+        private int ModifiedLineCount(ReviewLine line)
         {
-            Assert.Equal(result.Count, expected.Count);
-            for (int i = 0; i < expected.Count; i++)
+            int count = 0;
+            if (line.DiffKind == DiffKind.Added || line.DiffKind == DiffKind.Removed)
             {
-                Assert.Equal(result[i].Id, expected[i].Id);
-                Assert.Equal(result[i].Kind, expected[i].Kind);
-                Assert.Equal(result[i].Value, expected[i].Value);
-                Assert.Equal(result[i].PropertiesObj, expected[i].PropertiesObj);
-                Assert.Equal(result[i].RenderClassesObj, expected[i].RenderClassesObj);
+                count++;
             }
+            foreach (var child in line.Children)
+            {
+                count += ModifiedLineCount(child);
+            }
+            return count;
         }
     }
 }

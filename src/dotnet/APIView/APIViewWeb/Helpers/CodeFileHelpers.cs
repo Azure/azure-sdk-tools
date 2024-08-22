@@ -37,7 +37,7 @@ namespace APIViewWeb.Helpers
             if (codePanelRawData.diffRevisionCodeFile != null)
             {
                 var diffLines = codePanelRawData.diffRevisionCodeFile.ReviewLines;
-                CollectDocumentationLines(diffLines, diffDdocumentationMap, 1, "root");
+                CollectDocumentationLines(diffLines, diffDdocumentationMap, 1, "root", true);
                 // Check if diff is required for active revision and diff revision to avoid unnecessary diff calculation
                 bool hasSameApis = AreCodeFilesSame(codePanelRawData.activeRevisionCodeFile, codePanelRawData.diffRevisionCodeFile);
                 if(!hasSameApis)
@@ -373,7 +373,7 @@ namespace APIViewWeb.Helpers
             return true;
         }
 
-        private static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
+        public static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
         {
             List<ReviewLine> resultLines = [];
             Dictionary<string, int> refCountMap = [];            
@@ -456,7 +456,7 @@ namespace APIViewWeb.Helpers
          * This method collects all documentation lines from the review line and generate a CodePanelRow object for each documentation line.
          * These documentation rows will be stored in a dictionary so it can be mapped and connected tp code line when processing code lines.
          * */
-        private static void CollectDocumentationLines(List<ReviewLine> reviewLines, Dictionary<string,List<CodePanelRowData>> documentationRowMap, int indent, string parentNodeIdHash)
+        private static void CollectDocumentationLines(List<ReviewLine> reviewLines, Dictionary<string,List<CodePanelRowData>> documentationRowMap, int indent, string parentNodeIdHash, bool enableSkipDiff = false)
         {
             if(reviewLines?.Count == 0)
                 return;
@@ -466,7 +466,9 @@ namespace APIViewWeb.Helpers
             int idx = 0;
             foreach (var line in reviewLines)
             {
-                if(line.IsDocumentation)
+                //Find if current line has at least one token that's not marked as skip from diff check
+                bool hasNonSkippedTokens = line.Tokens.Any(t => t.SkipDiff != true);
+                if(line.IsDocumentation && (!enableSkipDiff ||hasNonSkippedTokens))
                 {
                     docRows.Add(GetCodePanelRowData(line, parentNodeIdHash, indent));
                     continue;
@@ -484,7 +486,7 @@ namespace APIViewWeb.Helpers
                 idx++;
                 // Recursively process child node lines
                 if (line.Children.Count > 0)
-                    CollectDocumentationLines(line.Children, documentationRowMap, indent + 1, nodeIdHashed);
+                    CollectDocumentationLines(line.Children, documentationRowMap, indent + 1, nodeIdHashed, enableSkipDiff);
             }
         }
 

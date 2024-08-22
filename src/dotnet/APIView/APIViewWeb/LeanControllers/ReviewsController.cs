@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
+using Microsoft.Extensions.Caching.Memory;
+using System;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -46,7 +48,6 @@ namespace APIViewWeb.LeanControllers
             _userProfileRepository = userProfileRepository;
             _signalRHubContext = signalRHub;
             _env = env;
-
         }
 
         /// <summary>
@@ -128,7 +129,7 @@ namespace APIViewWeb.LeanControllers
         ///<returns></returns>
         [Route("{reviewId}/content")]
         [HttpGet]
-        public async Task<ActionResult<CodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
+        public async Task<ActionResult<CodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId,
             [FromQuery] string diffApiRevisionId = null)
         {
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
@@ -136,7 +137,8 @@ namespace APIViewWeb.LeanControllers
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId);
-                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId); 
+                var cachedCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
+                var activeRevisionReviewCodeFile = cachedCodeFile.CodeFile;
 
                 var codePanelRawData = new CodePanelRawData()
                 {
@@ -147,7 +149,8 @@ namespace APIViewWeb.LeanControllers
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-                    codePanelRawData.diffRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
+                    var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
+                    codePanelRawData.diffRevisionCodeFile = diffCodeFile.CodeFile;
                 }
 
                 // Render the code files to generate UI token tree

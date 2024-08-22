@@ -36,7 +36,10 @@ namespace APIView.Model.V2
         /// This is set if API is marked as hidden
         /// </summary>
         public bool? IsHidden { get; set; }
-
+        /// <summary>
+        /// This is set if a line is end of context. For e.g. end of a class or name space line "}"
+        /// </summary>
+        public bool? IsContextEndLine { get; set; }
         // Following properties are helper methods that's used to render review lines to UI required format.
         [JsonIgnore]
         public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;
@@ -131,9 +134,9 @@ namespace APIView.Model.V2
             return hash + parentNodeIdHash.Replace("nId", "").Replace("root", ""); // Append the parent node Id to ensure uniqueness
         }
 
-        private string CreateHashFromString(string inputString)
+        private static string CreateHashFromString(string inputString)
         {
-            int hash = HashCode.Combine(inputString);
+            int hash = inputString.GetHashCode();
             return "nId" + hash.ToString();
         }
     }

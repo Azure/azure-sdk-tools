@@ -221,7 +221,8 @@ namespace CSharpAPIParser.TreeToken
                 Tokens = [
                     ReviewToken.CreateStringLiteralToken("}")
                 ],
-                IsHidden = isHidden
+                IsHidden = isHidden,
+                IsContextEndLine = true
             });
         }
 
@@ -345,7 +346,8 @@ namespace CSharpAPIParser.TreeToken
                 Tokens = [
                     ReviewToken.CreateStringLiteralToken("}")
                 ],
-                IsHidden = isHidden
+                IsHidden = isHidden,
+                IsContextEndLine = true
             });
         }
 

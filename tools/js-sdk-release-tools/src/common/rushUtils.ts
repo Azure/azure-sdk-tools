@@ -5,7 +5,7 @@ import { getArtifactName, getNpmPackageInfo } from './npmUtils';
 import { ModularClientPackageOptions, PackageResult, VersionPolicyName } from './types';
 import { runCommand, runCommandOptions } from './utils';
 
-import { readFile } from 'fs-extra';
+import { ensureDir, readFile } from 'fs-extra';
 import { glob } from 'glob';
 import { logger } from '../utils/logger';
 
@@ -84,7 +84,10 @@ export async function buildPackage(
     await tryTestPackage(generatedPackageDir, rushxScript);
 
     // restore in temp folder
-    await writeFile(join(generatedPackageDir, 'temp', apiViewContext.name), apiViewContext.content, { encoding: 'utf-8' });
+    const tempFolder = join(generatedPackageDir, 'temp');
+    await ensureDir(tempFolder);
+    const apiViewPath = join(tempFolder, apiViewContext.name);
+    await writeFile(apiViewPath, apiViewContext.content, { encoding: 'utf-8' });
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure

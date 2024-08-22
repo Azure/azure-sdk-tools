@@ -1,11 +1,11 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
-import { access, readFile, writeFile } from 'node:fs/promises';
-import { basename, join, posix, resolve } from 'node:path';
+import { access, writeFile } from 'node:fs/promises';
+import { basename, join, normalize, posix, relative, resolve } from 'node:path';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
-import { PackageResult, VersionPolicyName } from './types';
+import { ModularClientPackageOptions, PackageResult, VersionPolicyName } from './types';
 import { runCommand, runCommandOptions } from './utils';
 
-import { copy, ensureDir } from 'fs-extra';
+import { readFile } from 'fs-extra';
 import { glob } from 'glob';
 import { logger } from '../utils/logger';
 
@@ -43,39 +43,48 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
 
 async function addApiViewInfo(
     relativePackageDirectoryToSdkRoot: string,
-    packageResult: PackageResult,
-    tempApiViewDirectory: string
-) {
+    packageResult: PackageResult
+): Promise<{ name: string; content: string }> {
     const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
     const apiViews = await glob(apiViewPathPattern);
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
-    const apiViewName = basename(apiViews[0]);
-    const apiViewPath = join(tempApiViewDirectory, apiViewName);
-    logger.info(`Start to copy '${apiViews[0]}' to '${apiViewPath}' store API view.`);
-    await copy(apiViews[0], apiViewPath);
-    packageResult.apiViewArtifact = apiViewPath;
+    packageResult.apiViewArtifact = apiViews[0];
+    const content = (await readFile(apiViews[0], { encoding: 'utf-8' })).toString();
+    const name = basename(apiViews[0]);
+    return { content, name };
 }
 
 export async function buildPackage(
-    relativePackageDirectoryToSdkRoot: string,
-    versionPolicyName: VersionPolicyName,
+    generatedPackageDir: string,
+    options: ModularClientPackageOptions,
     packageResult: PackageResult,
     rushScript: string,
-    tempApiViewDirectory: string
+    rushxScript: string
 ) {
+    const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(generatedPackageDir));
     logger.info(`Start building package in '${relativePackageDirectoryToSdkRoot}'.`);
+
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     await updateRushJson({
         packageName: name,
         projectFolder: relativePackageDirectoryToSdkRoot,
-        versionPolicyName: versionPolicyName
+        versionPolicyName: options.versionPolicyName
     });
     await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
     logger.info(`Rush update successfully.`);
+
     await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
-    await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult, tempApiViewDirectory);
+    const apiViewContext = await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult);
     logger.info(`Build package '${name}' successfully.`);
+
+    // build sample and test package will NOT throw exceptions
+    // note: these commands will delete temp folder
+    await tryBuildSamples(generatedPackageDir, rushxScript);
+    await tryTestPackage(generatedPackageDir, rushxScript);
+
+    // restore in temp folder
+    await writeFile(join(generatedPackageDir, 'temp', apiViewContext.name), apiViewContext.content, { encoding: 'utf-8' });
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure

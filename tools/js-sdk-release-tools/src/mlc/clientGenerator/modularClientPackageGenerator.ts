@@ -21,26 +21,16 @@ import unixify from 'unixify';
 export async function generateAzureSDKPackage(options: ModularClientPackageOptions): Promise<PackageResult> {
     logger.info(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
-    const tempApiViewDirectory = join(options.sdkRepoRoot, '../.api-views-temp');
     try {
-        await ensureDir(tempApiViewDirectory);
-
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
         await remove(packageDirectory);
 
         const generatedPackageDir = await generateTypeScriptCodeFromTypeSpec(options);
         const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(generatedPackageDir));
-
         const rushScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
         const rushxScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
 
-        await buildPackage(
-            relativePackageDirToSdkRoot,
-            options.versionPolicyName,
-            packageResult,
-            rushScript,
-            tempApiViewDirectory
-        );
+        await buildPackage(generatedPackageDir, options, packageResult, rushScript, rushxScript);
 
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
@@ -48,10 +38,6 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         // TODO: to be compatible with current tool, input relative generated package dir
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot);
         updateChangelogResult(packageResult, changelog);
-
-        // build sample and test package will NOT throw exceptions
-        await tryBuildSamples(generatedPackageDir, rushxScript);
-        await tryTestPackage(generatedPackageDir, rushxScript);
 
         const npmPackageInfo = await getNpmPackageInfo(generatedPackageDir);
         const relativeTypeSpecDirToSpecRoot = posix.relative(
@@ -84,14 +70,6 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         logger.error(`Failed to generate package due to ${(err as Error).stack ?? err}`);
         throw err;
     } finally {
-        if (options.local) await remove(tempApiViewDirectory);
-        
-        // debug
-        {
-            logger.info(`List api view temp folder: ${tempApiViewDirectory}`);
-            logger.debug(`debug log xxxxx`);
-            await runCommand('ls', ['-al', tempApiViewDirectory]);
-        }
         return packageResult;
     }
 }

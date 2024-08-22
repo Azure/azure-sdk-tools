@@ -51,8 +51,8 @@ async function addApiViewInfo(
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     const apiViewName = basename(apiViews[0]);
-    logger.info(`Use '${tempApiViewDirectory}' to store API view.`);
     const apiViewPath = join(tempApiViewDirectory, apiViewName);
+    logger.info(`Start to copy '${apiViews[0]}' to '${apiViewPath}' store API view.`);
     await copy(apiViews[0], apiViewPath);
     packageResult.apiViewArtifact = apiViewPath;
 }

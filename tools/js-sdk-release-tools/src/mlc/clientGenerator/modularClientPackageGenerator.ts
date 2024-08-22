@@ -6,7 +6,7 @@ import { join, normalize, posix, relative } from 'node:path';
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
 import { generateChangelogAndBumpVersion } from '../changlog/generateChangelog';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
-import { getGeneratedPackageDirectory } from '../../common/utils';
+import { getGeneratedPackageDirectory, runCommand } from '../../common/utils';
 import { getNpmPackageInfo } from '../../common/npmUtils';
 import { logger } from '../../utils/logger';
 import { ensureDir, remove } from 'fs-extra';
@@ -85,6 +85,13 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         throw err;
     } finally {
         if (options.local) await remove(tempApiViewDirectory);
+        
+        // debug
+        {
+            logger.info(`List api view temp folder: ${tempApiViewDirectory}`);
+            logger.debug(`debug log xxxxx`);
+            await runCommand('ls', ['-al', tempApiViewDirectory]);
+        }
         return packageResult;
     }
 }

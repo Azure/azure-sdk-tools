@@ -1,9 +1,10 @@
 using System.CommandLine;
 using System.IO.Compression;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using ApiView;
+using APIView.Model.V2;
 using NuGet.Common;
 using NuGet.Packaging;
 using NuGet.Protocol;
@@ -13,6 +14,12 @@ using NuGet.Versioning;
 
 public static class Program
 {
+    // Regex parser nuget file name without extension to two groups
+    // package name and package version
+    // for e.g Azure.Core.1.0.0 to ["Azure.Core", "1.0.0"]
+    // or Azure.Storage.Blobs.12.0.0 to ["Azure.Storage.Blobs", "12.0.0"]
+    private static Regex _packageNameParser = new Regex("([A-Za-z.]*[a-z]).([\\S]*)", RegexOptions.Compiled);
+
     public static int Main(string[] args)
     {
         var inputOption = new Option<FileInfo>("--packageFilePath", "C# Package (.nupkg) file").ExistingOnly();
@@ -69,7 +76,10 @@ public static class Program
 
                 if (dllEntries.Length == 0)
                 {
-                    Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no dlls.");
+                    Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no dll. Creating a meta package API review file.");
+                    var codeFile = CreateDummyCodeFile(packageFilePath.FullName, $"Package {packageFilePath.Name} does not contain any dll to create API review.");
+                    outputFileName = string.IsNullOrEmpty(outputFileName) ? nuspecEntry.Name : outputFileName;
+                    await CreateOutputFile(OutputDirectory.FullName, outputFileName, codeFile);
                     return;
                 }
 
@@ -120,24 +130,15 @@ public static class Program
             if (assemblySymbol == null)
             {
                 Console.Error.WriteLine($"PackageFile {packageFilePath.FullName} contains no Assembly Symbol.");
+                var codeFile = CreateDummyCodeFile(packageFilePath.FullName, $"Package {packageFilePath.Name} does not contain any assembly symbol to create API review.");
+                outputFileName = string.IsNullOrEmpty(outputFileName) ? packageFilePath.Name : outputFileName;
+                await CreateOutputFile(OutputDirectory.FullName, outputFileName, codeFile);
                 return;
             }
 
             var parsedFileName = string.IsNullOrEmpty(outputFileName) ? assemblySymbol.Name : outputFileName;
             var treeTokenCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies);
-            var gzipJsonTokenFilePath = Path.Combine(OutputDirectory.FullName, $"{parsedFileName}.json.tgz");
-
-
-            var options = new JsonSerializerOptions()
-            {
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            await using FileStream gzipFileStream = new FileStream(gzipJsonTokenFilePath, FileMode.Create, FileAccess.Write);
-            await using GZipStream gZipStream = new GZipStream(gzipFileStream, CompressionLevel.Optimal);
-            await JsonSerializer.SerializeAsync(gZipStream, treeTokenCodeFile, options);
-            Console.WriteLine($"TokenCodeFile File {gzipJsonTokenFilePath} Generated Successfully.");
-            Console.WriteLine();
+            await CreateOutputFile(OutputDirectory.FullName, parsedFileName, treeTokenCodeFile);
         }
         catch (Exception ex)
         {
@@ -152,6 +153,40 @@ public static class Program
                 Directory.Delete(dependencyFilesTempDir, true);
             }
         }
+    }
+
+    static async Task CreateOutputFile(string outputPath, string outputFileNamePrefix, CodeFile apiViewFile)
+    {
+        var jsonTokenFilePath = Path.Combine(outputPath, $"{outputFileNamePrefix}.json");
+        await using FileStream fileStream = new(jsonTokenFilePath, FileMode.Create, FileAccess.Write);
+        await apiViewFile.SerializeAsync(fileStream);
+        Console.WriteLine($"TokenCodeFile File {jsonTokenFilePath} Generated Successfully.");
+        Console.WriteLine();
+    }
+
+    /*** Creates dummy API review file to support meta packages.*/
+    static CodeFile CreateDummyCodeFile(string originalName, string text)
+    {
+        var packageName = Path.GetFileNameWithoutExtension(originalName);
+        var packageNameMatch = _packageNameParser.Match(packageName);
+        var packageVersion = "";
+        if (packageNameMatch.Success)
+        {
+            packageName = packageNameMatch.Groups[1].Value;
+            packageVersion = $"{packageNameMatch.Groups[2].Value}";
+        }
+
+        var codeFile = new CodeFile();
+        codeFile.PackageName = packageName;
+        codeFile.PackageVersion = packageVersion;
+        codeFile.ReviewLines.Add(new ReviewLine
+        {
+            Tokens = new List<ReviewToken>
+            {
+                ReviewToken.CreateTextToken(text)
+            }
+        });
+        return codeFile;
     }
 
     static bool IsNuget(string name)

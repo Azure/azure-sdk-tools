@@ -316,7 +316,7 @@ namespace APIViewWeb.Helpers
                 {
                     codePanelData.NodeMetaDataObj[nodeIdHashed].IsNodeWithDiff = true;
                     var parentId = codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed;
-                    while (parentId != null && parentId != "root" && codePanelData.NodeMetaDataObj.ContainsKey(parentId) 
+                    while (parentId != null && !parentId.Equals("root") && codePanelData.NodeMetaDataObj.ContainsKey(parentId) 
                         && !codePanelData.NodeMetaDataObj[parentId].IsNodeWithDiffInDescendants)
                     {
                         codePanelData.NodeMetaDataObj[parentId].IsNodeWithDiffInDescendants = true;
@@ -367,7 +367,7 @@ namespace APIViewWeb.Helpers
             //Verify if child lines matches
             for (int i = 0; i < filteredLinesA.Count(); i++)
             {
-                if (filteredLinesA[i] != filteredLinesB[i] || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
+                if (!filteredLinesA[i].Equals(filteredLinesB[i]) || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
                     return false;
             }            
             return true;

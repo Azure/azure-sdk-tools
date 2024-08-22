@@ -210,7 +210,7 @@ namespace CSharpAPIParser.TreeToken
             namespaceLine.Tokens.Add(ReviewToken.CreatePunctuationToken("{"));
 
             // Add each members in the namespace
-            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
+            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()).OrderBy(s => s.GetId()))
             {
                 BuildType(namespaceLine.Children, namedTypeSymbol, isHidden);
             }

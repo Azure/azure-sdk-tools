@@ -177,7 +177,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
     if (bottomTokenNode.codeLines) {
       bottomTokenNode.codeLines.forEach((codeLine, index) => {
-        appendToggleDocumentationClass(node, codeLine, index);
+        codeLine.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);

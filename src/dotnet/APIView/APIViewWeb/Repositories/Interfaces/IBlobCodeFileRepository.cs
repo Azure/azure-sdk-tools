@@ -9,8 +9,8 @@ namespace APIViewWeb.Repositories
     {
         public Task<RenderedCodeFile> GetCodeFileAsync(APIRevisionListItemModel revision, bool updateCache = true);
         public Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, APICodeFileModel apiCodeFile, string language, bool updateCache = true);
-        public Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, bool updateCache = true, bool doTreeStyleParserDeserialization = true);
         public Task UpsertCodeFileAsync(string revisionId, string codeFileId, CodeFile codeFile);
         public Task DeleteCodeFileAsync(string revisionId, string codeFileId);
+        public Task<CodeFile> GetCodeFileFromStorageAsync(string revisionId, string codeFileId, bool doTreeStyleParserDeserialization = true);
     }
 }

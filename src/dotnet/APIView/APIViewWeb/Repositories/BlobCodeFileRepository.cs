@@ -36,12 +36,7 @@ namespace APIViewWeb
 
         public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, APICodeFileModel apiCodeFile, string language, bool updateCache = true)
         {
-            return await GetCodeFileAsync(revisionId, apiCodeFile.FileId, updateCache, apiCodeFile.ParserStyle == ParserStyle.Tree);
-        }
-
-        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, bool updateCache = true, bool doTreeStyleParserDeserialization = true)
-        {
-            var client = GetBlobClient(revisionId, codeFileId, out var key);
+            var client = GetBlobClient(revisionId, apiCodeFile.FileId, out var key);
             if (_cache.TryGetValue<RenderedCodeFile>(key, out var codeFile))
             {
                 return codeFile;
@@ -49,7 +44,7 @@ namespace APIViewWeb
 
             var info = await client.DownloadAsync();
 
-            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization));
+            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, false));
 
             if (updateCache)
             {
@@ -57,6 +52,14 @@ namespace APIViewWeb
                 .SetSlidingExpiration(TimeSpan.FromMinutes(10))
                 .SetValue(codeFile);
             }
+            return codeFile;
+        }
+
+        public async Task<CodeFile> GetCodeFileFromStorageAsync(string revisionId, string codeFileId, bool doTreeStyleParserDeserialization = true)
+        {
+            var client = GetBlobClient(revisionId, codeFileId, out var key);
+            var info = await client.DownloadAsync();
+            var codeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization);
             return codeFile;
         }
 

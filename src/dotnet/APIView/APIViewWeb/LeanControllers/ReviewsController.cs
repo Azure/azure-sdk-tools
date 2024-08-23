@@ -137,8 +137,7 @@ namespace APIViewWeb.LeanControllers
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId);
-                var cachedCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
-                var activeRevisionReviewCodeFile = cachedCodeFile.CodeFile;
+                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
 
                 var codePanelRawData = new CodePanelRawData()
                 {
@@ -149,8 +148,7 @@ namespace APIViewWeb.LeanControllers
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-                    var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
-                    codePanelRawData.diffRevisionCodeFile = diffCodeFile.CodeFile;
+                    codePanelRawData.diffRevisionCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
                 }
 
                 // Render the code files to generate UI token tree

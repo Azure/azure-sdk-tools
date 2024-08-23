@@ -303,7 +303,6 @@ namespace CSharpAPIParser.TreeToken
                 reviewLine.Tokens.Last().HasSuffixSpace = false;
                 reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.SemicolonToken));
                 reviewLines.Add(reviewLine);
-                reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = reviewLine.LineId });
                 return;
             }
 

@@ -21,6 +21,7 @@ export async function generateTypeScriptCodeFromTypeSpec(options: ModularClientP
                 '--commit',
                 options.gitCommitId
             ],
+            { shell: true, stdio: 'inherit' }
         );
         logger.info(`Generated typescript code successfully.`);
 

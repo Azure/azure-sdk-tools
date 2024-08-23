@@ -703,7 +703,7 @@ namespace APIViewWeb.Managers
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            return await _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            return _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
         }
 
         /// <summary>
@@ -733,7 +733,7 @@ namespace APIViewWeb.Managers
                     await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
                     // update only version string
                     file.VersionString = codeFile.VersionString;
-                    if (codeFile.APIForest.Count > 0) {
+                    if (codeFile.ReviewLines.Count > 0) {
                         file.ParserStyle = ParserStyle.Tree;
                     }
                     await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);

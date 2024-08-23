@@ -23,12 +23,6 @@ namespace APIViewWeb.LeanModels
         CommentThread
     }
 
-    public enum RowOfTokensPosition
-    {
-        Top,
-        Bottom
-    }
-
     public class ReviewContentModel
     {
         public ReviewListItemModel Review { get; set; }
@@ -75,12 +69,5 @@ namespace APIViewWeb.LeanModels
         [JsonIgnore]
         public List<NavigationTreeNode> ChildrenObj { get; set; } = new List<NavigationTreeNode>();
         public List<NavigationTreeNode> Children => ChildrenObj.Count > 0 ? ChildrenObj : null;
-    }
-
-    public class DiffLineInProcess
-    {
-        public string GroupId { get; set; }
-        public List<StructuredToken> RowOfTokens { get; set; } = new List<StructuredToken>();
-        public HashSet<string> TokenIdsInRow { get; set; } = new HashSet<string>();
     }
 }

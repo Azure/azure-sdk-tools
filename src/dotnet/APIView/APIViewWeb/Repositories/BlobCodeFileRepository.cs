@@ -36,8 +36,12 @@ namespace APIViewWeb
 
         public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, APICodeFileModel apiCodeFile, string language, bool updateCache = true)
         {
-            var client = GetBlobClient(revisionId, apiCodeFile.FileId, out var key);
+            return await GetCodeFileAsync(revisionId, apiCodeFile.FileId, updateCache, apiCodeFile.ParserStyle == ParserStyle.Tree);
+        }
 
+        public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, bool updateCache = true, bool doTreeStyleParserDeserialization = true)
+        {
+            var client = GetBlobClient(revisionId, codeFileId, out var key);
             if (_cache.TryGetValue<RenderedCodeFile>(key, out var codeFile))
             {
                 return codeFile;
@@ -45,23 +49,15 @@ namespace APIViewWeb
 
             var info = await client.DownloadAsync();
 
-            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: apiCodeFile.ParserStyle == ParserStyle.Tree));
+            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization));
 
             if (updateCache)
             {
                 using var _ = _cache.CreateEntry(key)
                 .SetSlidingExpiration(TimeSpan.FromMinutes(10))
                 .SetValue(codeFile);
-            }            
-
+            }
             return codeFile;
-        }
-
-        public async Task<CodeFile> GetCodeFileWithCompressionAsync(string revisionId, string codeFileId)
-        {
-            var client = GetBlobClient(revisionId, codeFileId, out var key);
-            var info = await client.DownloadAsync();
-            return await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: true);
         }
 
         public async Task UpsertCodeFileAsync(string revisionId, string codeFileId, CodeFile codeFile)

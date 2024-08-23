@@ -3,16 +3,18 @@ using APIView;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using APIView.Model.V2;
+using ApiView;
+using Microsoft.CodeAnalysis;
+using System.Text;
 
 namespace APIViewWeb.LeanModels
 {
-
     public class CodePanelRawData
     {
         public IEnumerable<CommentItemModel> Comments { get; set; } = new List<CommentItemModel>();
-        public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
-        public CodeDiagnostic[] Diagnostics { get; set; } = new CodeDiagnostic[0];
-        public string Language { get; set; }
+        public CodeFile activeRevisionCodeFile{ get; set; }
+        public CodeFile diffRevisionCodeFile { get; set; }
         public bool ApplySkipDiff { get; set; }
         public bool SkipDocsWhenDiffing { get; set; }
     }
@@ -28,7 +30,6 @@ namespace APIViewWeb.LeanModels
         public string NodeIdHashed { get; set; }
         public int RowPositionInGroup { get; set; } // The position / index of the row within the group of similar rows
         public int AssociatedRowPositionInGroup { get; set; } // For comment threads, this is the position of the associated code line within the group of similar rows
-        public RowOfTokensPosition RowOfTokensPosition { get; set; }
         [JsonIgnore]
         public HashSet<string> RowClassesObj { get; set; } = new HashSet<string>();
         public HashSet<string> RowClasses => RowClassesObj.Count > 0 ? RowClassesObj : null;
@@ -43,6 +44,27 @@ namespace APIViewWeb.LeanModels
         public bool IsResolvedCommentThread { get; set; }
         public bool IsHiddenAPI { get; set; }
 
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach(var token in RowOfTokensObj)
+            {
+                sb.Append(token.Value);
+            }
+            return sb.ToString();
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is CodePanelRowData other)
+            {
+                return ToString() == other.ToString();
+            }
+            return false;
+        }
+        public override int GetHashCode()
+        {
+            return ToString().GetHashCode();
+        }
     }
 
     public class CodePanelNodeMetaData
@@ -57,13 +79,13 @@ namespace APIViewWeb.LeanModels
         public List<CodePanelRowData> CodeLinesObj { get; set; } = new List<CodePanelRowData>();
         public List<CodePanelRowData> CodeLines => CodeLinesObj.Count > 0 ? CodeLinesObj : null;
         [JsonIgnore]
-        public ConcurrentDictionary<int, CodePanelRowData> CommentThreadObj { get; set; } = new ConcurrentDictionary<int, CodePanelRowData>(); //Dictionary key map to the index of the code line within this node which the comment thread is mapped to
-        public ConcurrentDictionary<int, CodePanelRowData> CommentThread => CommentThreadObj.Count > 0 ? CommentThreadObj : null;
+        public Dictionary<int, CodePanelRowData> CommentThreadObj { get; set; } = []; //Dictionary key map to the index of the code line within this node which the comment thread is mapped to
+        public Dictionary<int, CodePanelRowData> CommentThread => CommentThreadObj.Count > 0 ? CommentThreadObj : null;
         public NavigationTreeNode NavigationTreeNode { get; set; }
         public string ParentNodeIdHashed { get; set; }
         [JsonIgnore]
-        public ConcurrentDictionary<int, string> ChildrenNodeIdsInOrderObj { get; set; } = new ConcurrentDictionary<int, string>();
-        public ConcurrentDictionary<int, string> ChildrenNodeIdsInOrder => ChildrenNodeIdsInOrderObj.Count > 0 ? ChildrenNodeIdsInOrderObj : null;
+        public Dictionary<int, string> ChildrenNodeIdsInOrderObj { get; set; } = [];
+        public Dictionary<int, string> ChildrenNodeIdsInOrder => ChildrenNodeIdsInOrderObj.Count > 0 ? ChildrenNodeIdsInOrderObj : null;
         public bool IsNodeWithDiff { get; set; }
         public bool IsNodeWithDiffInDescendants { get; set; }
         public bool IsNodeWithNoneDocDiffInDescendants { get; set; }
@@ -73,8 +95,8 @@ namespace APIViewWeb.LeanModels
     public class CodePanelData
     {
         [JsonIgnore]
-        public ConcurrentDictionary<string, CodePanelNodeMetaData> NodeMetaDataObj { get; set; } = new ConcurrentDictionary<string, CodePanelNodeMetaData>();
-        public ConcurrentDictionary<string, CodePanelNodeMetaData> NodeMetaData => NodeMetaDataObj.Count > 0 ? NodeMetaDataObj : null;
+        public Dictionary<string, CodePanelNodeMetaData> NodeMetaDataObj { get; set; } = new Dictionary<string, CodePanelNodeMetaData>();
+        public Dictionary<string, CodePanelNodeMetaData> NodeMetaData => NodeMetaDataObj.Count > 0 ? NodeMetaDataObj : null;
         public bool HasDiff { get; set; } = false;
     }
 }

@@ -67,7 +67,7 @@ namespace CSharpAPIParser.TreeToken
         }
 
         public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis, List<DependencyInfo>? dependencies)
-        {
+        {  
             _assembly = assemblySymbol;
             var analyzer = new Analyzer();
 
@@ -210,7 +210,7 @@ namespace CSharpAPIParser.TreeToken
             namespaceLine.Tokens.Add(ReviewToken.CreatePunctuationToken("{"));
 
             // Add each members in the namespace
-            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
+            foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()).OrderBy(s => s.GetId()))
             {
                 BuildType(namespaceLine.Children, namedTypeSymbol, isHidden);
             }
@@ -749,12 +749,10 @@ namespace CSharpAPIParser.TreeToken
                     token = ReviewToken.CreateTextToken(tokenValue, hasSuffixSpace: false);
                     break;
             }
-
             if (token != null && !String.IsNullOrWhiteSpace(navigateToId))
             {
                 token.NavigateToId = navigateToId!;
             }
-
             return token;
         }
 

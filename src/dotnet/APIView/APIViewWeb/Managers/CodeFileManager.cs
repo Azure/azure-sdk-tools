@@ -197,8 +197,8 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="codeFileA"></param>
         /// <param name="codeFileB"></param>
-        /// <returns></returns>
-        public async Task<bool> AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
+        /// <returns>bool</returns>
+        public bool AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
         {
             if (codeFileA.CodeFile.VersionString != codeFileA.CodeFile.VersionString)
             {
@@ -207,16 +207,7 @@ namespace APIViewWeb.Managers
 
             if (LanguageServiceHelpers.UseTreeStyleParser(codeFileA.CodeFile.Language))
             {
-                var diffTree = CodeFileHelpers.ComputeAPIForestDiff(codeFileA.CodeFile.APIForest, codeFileB.CodeFile.APIForest);
-                var codePanelRawData = new CodePanelRawData()
-                {
-                    APIForest = diffTree,
-                    Language = codeFileA.CodeFile.Language,
-                    SkipDocsWhenDiffing = true,
-                    ApplySkipDiff = true
-                };
-                var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
-                return !result.HasDiff;
+                return CodeFileHelpers.AreCodeFilesSame(codeFileA.CodeFile, codeFileB.CodeFile);
             }
             else
             {
@@ -242,7 +233,7 @@ namespace APIViewWeb.Managers
             return result;
         }
 
-        private void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)
+        private static void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)
         {
             file.Language = codeFile.Language;
             file.LanguageVariant = codeFile.LanguageVariant;
@@ -251,7 +242,7 @@ namespace APIViewWeb.Managers
             file.PackageName = codeFile.PackageName;
             file.PackageVersion = codeFile.PackageVersion;
             file.CrossLanguagePackageId = codeFile.CrossLanguagePackageId;
-            file.ParserStyle = (codeFile.APIForest.Count > 0) ? ParserStyle.Tree : ParserStyle.Flat;
+            file.ParserStyle = (codeFile.ReviewLines.Count > 0) ? ParserStyle.Tree : ParserStyle.Flat;
         }
     }
 }

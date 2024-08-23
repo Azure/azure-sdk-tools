@@ -65,8 +65,11 @@ addEventListener('message', ({ data }) => {
   }
 });
 
-function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTreeNode []) {
+function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTreeNode [], isParentNodeWithDiff: boolean = false) {
   const node = codePanelData?.nodeMetaData[nodeIdHashed]!;
+
+  if(node.isProcessed)
+    return;
 
   let buildNode = true;
   let buildChildren = true;
@@ -83,7 +86,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     buildNode = true;
   }
 
-  if (!node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
+  if (isParentNodeWithDiff && !node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
     addNodeToBuffer = true;
   }
 
@@ -116,8 +119,8 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   if (node.codeLines) {
     node.codeLines.forEach((codeLine, index) => {
       if (shouldAppendIfRowIsHiddenAPI(codeLine)) {
-        if (index === node.codeLines.length - 1 && node.diagnostics && node.diagnostics.length > 0) { // last row of toptoken codeLines
-          codeLine.toggleCommentsClasses = codeLine.toggleCommentsClasses.replace("can-show", "show").replace("hide", "show"); // show comment indicatior node has diagnostic comments
+        if (index === node.codeLines.length - 1 && node.diagnostics && node.diagnostics.length > 0) { // last row of top token codeLines
+          codeLine.toggleCommentsClasses = codeLine.toggleCommentsClasses.replace("can-show", "show").replace("hide", "show"); // show comment indicator node has diagnostic comments
         }
         codeLine.rowClasses = new Set<string>(codeLine.rowClasses); // Ensure that the rowClasses is a Set
         appendToggleDocumentationClass(node, codeLine, index);
@@ -152,11 +155,12 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     });
   }
   
+
   if (buildChildren) {
     let orderIndex = 0;
     while (node.childrenNodeIdsInOrder && orderIndex in node.childrenNodeIdsInOrder) {
       let childNodeIdHashed = node.childrenNodeIdsInOrder[orderIndex];
-      buildCodePanelRows(childNodeIdHashed, navigationChildren);
+      buildCodePanelRows(childNodeIdHashed, navigationChildren, node.isNodeWithDiff || node.isNodeWithDiffInDescendants);
       orderIndex++;
     }
   }
@@ -173,18 +177,19 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
     if (bottomTokenNode.codeLines) {
       bottomTokenNode.codeLines.forEach((codeLine, index) => {
-        appendToggleDocumentationClass(node, codeLine, index);
+        codeLine.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);
         }
       });
     }
+    bottomTokenNode.isProcessed = true;
   }
 }
 
 function appendToggleDocumentationClass(node: CodePanelNodeMetaData, codePanelRow: CodePanelRowData, index: number) {
-  if (node.documentation && node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0 && codePanelRow.rowOfTokensPosition === "top") {
+  if (node.documentation && node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0) {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show`;
   } else {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;

@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
+using Microsoft.Extensions.Caching.Memory;
+using System;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -46,7 +48,6 @@ namespace APIViewWeb.LeanControllers
             _userProfileRepository = userProfileRepository;
             _signalRHubContext = signalRHub;
             _env = env;
-
         }
 
         /// <summary>
@@ -128,7 +129,7 @@ namespace APIViewWeb.LeanControllers
         ///<returns></returns>
         [Route("{reviewId}/content")]
         [HttpGet]
-        public async Task<ActionResult<CodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
+        public async Task<ActionResult<CodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId,
             [FromQuery] string diffApiRevisionId = null)
         {
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
@@ -136,28 +137,24 @@ namespace APIViewWeb.LeanControllers
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId);
-
-                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId); 
-
-                var result = new CodePanelData();
+                var cachedCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
+                var activeRevisionReviewCodeFile = cachedCodeFile.CodeFile;
 
                 var codePanelRawData = new CodePanelRawData()
                 {
-                    APIForest = activeRevisionReviewCodeFile.APIForest,
-                    Diagnostics = activeRevisionReviewCodeFile.Diagnostics,
-                    Comments = comments,
-                    Language = activeRevisionReviewCodeFile.Language
+                    activeRevisionCodeFile = activeRevisionReviewCodeFile,
+                    Comments = comments
                 };
 
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-
-                    var diffRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
-                    codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(diffRevisionReviewCodeFile.APIForest, activeRevisionReviewCodeFile.APIForest);
+                    var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
+                    codePanelRawData.diffRevisionCodeFile = diffCodeFile.CodeFile;
                 }
 
-                result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+                // Render the code files to generate UI token tree
+                var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
                 return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
 

@@ -61,7 +61,7 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount);
+                    await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, false);
                     await ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
                 }
                 catch (Exception ex)

@@ -711,8 +711,9 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="revision"></param>
         /// <param name="languageService"></param>
+        /// <param name="verifyUpgradabilityOnly"> </param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService)
+        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, bool verifyUpgradabilityOnly)
         {
             foreach (var file in revision.Files)
             {

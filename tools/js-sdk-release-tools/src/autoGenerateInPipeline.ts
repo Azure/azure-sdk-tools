@@ -145,7 +145,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                 break;
         }
     } catch (e) {
-        const packageNameStr =`'${outputJson.packages?.[0].packageName}'`;
+        const packageNameStr =`'${outputJson.packages?.[0]?.packageName}'`;
         logger.error(`Failed to generate SDK for package ${packageNameStr} due to ${(e as Error)?.stack ?? e}.`);
         logger.error(`Please review the detail errors for potential fixes.`);
         logger.error(`If the issue persists, contact the support channel at https://aka.ms/azsdk/js-teams-channel and include this spec pull request.`)

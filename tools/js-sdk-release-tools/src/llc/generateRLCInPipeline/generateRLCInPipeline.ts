@@ -45,7 +45,7 @@ export async function generateRLCInPipeline(options: {
         await remove(generatedPackageDir);
 
         if (!options.skipGeneration) {
-            logger.info(`Start to generate SDK from '${options.typespecProject}'.`);
+            logger.info(`Start to generate rest level client SDK from '${options.typespecProject}'.`);
             // TODO: remove it, since this function is used in pipeline.
             if(options.sdkGenerationType === "command") {
                 logger.info("Start to run TypeSpec command directly.");
@@ -238,7 +238,7 @@ export async function generateRLCInPipeline(options: {
         execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
+        execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
         logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {

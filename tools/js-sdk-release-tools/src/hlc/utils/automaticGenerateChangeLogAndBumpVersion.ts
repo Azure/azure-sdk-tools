@@ -90,7 +90,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 }
                 originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
-                    logger.error('Failed to generate changelog because the codes of local and npm may be the same.');
+                    logger.warn('Failed to generate changelog because the codes of local and npm may be the same.');
                     logger.info('Start to bump a fix version.');
                     const oriPackageJson = execSync(`git show HEAD:${path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'package.json')).replace(/\\/g, '/')}`, {encoding: 'utf-8'});
                     const oriVersion = JSON.parse(oriPackageJson).version;

@@ -71,6 +71,16 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   if(node.isProcessed)
     return;
 
+  //If current node is related like attribute and then related node is not modified then skip current node in tree and node view
+  if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && apiTreeBuilderData?.diffStyle !== FULL_DIFF_STYLE)
+  {
+    let relatedNode = codePanelData?.nodeMetaData[node.relatedNodeIdHash]!;
+    if (!relatedNode.isNodeWithDiff || !node.isNodeWithDiffInDescendants)
+    {
+      return;
+    }
+  }
+
   let buildNode = true;
   let buildChildren = true;
   let addNodeToBuffer = false
@@ -80,7 +90,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     buildNode = false;
     buildChildren = false;
   }
-
+    
   if (!buildNode && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && 
     (apiTreeBuilderData?.diffStyle !== NODE_DIFF_STYLE || node.isNodeWithDiff)) {
     buildNode = true;

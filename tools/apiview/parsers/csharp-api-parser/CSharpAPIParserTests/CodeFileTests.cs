@@ -13,27 +13,36 @@ namespace CSharpAPIParserTests
 {
     public class CodeFileTests
     {
-        private readonly CodeFile codeFile;
-        public Assembly assembly { get; set; }
+        private readonly CodeFile templateCodeFile;
+        private Assembly templateAssembly { get; set; }
+
+        private readonly CodeFile storageCodeFile;
+        public Assembly storageAssembly { get; set; }
 
         public CodeFileTests()
         {
-            assembly = Assembly.Load("Azure.Template");
-            var dllStream = assembly.GetFile("Azure.Template.dll");
+            templateAssembly = Assembly.Load("Azure.Template");
+            var dllStream = templateAssembly.GetFile("Azure.Template.dll");
             var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            this.codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            this.templateCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+
+            //Verify JSON file generated for Azure.Storage.Blobs
+            this.storageAssembly = Assembly.Load("Azure.Storage.Blobs");
+            dllStream = storageAssembly.GetFile("Azure.Storage.Blobs.dll");
+            assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            this.storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
         }
 
         [Fact]
         public void TestPackageName()
         {
-            Assert.Equal("Azure.Template", codeFile.PackageName);
+            Assert.Equal("Azure.Template", templateCodeFile.PackageName);
         }
 
         [Fact]
         public void TestTopLevelReviewLineCount()
         {
-            Assert.Equal(8, codeFile.ReviewLines.Count());
+            Assert.Equal(9, templateCodeFile.ReviewLines.Count());
         }
 
         [Fact]
@@ -55,8 +64,10 @@ namespace CSharpAPIParserTests
         public enum ServiceVersion { 
             V7_0 = 1, 
         } 
+
         public TemplateClientOptions(ServiceVersion version = V7_0); 
     } 
+
 } 
 
 namespace Azure.Template.Models { 
@@ -68,6 +79,7 @@ namespace Azure.Template.Models {
         public IReadOnlyDictionary<string, string> Tags { get; }
         public string Value { get; }
     } 
+
 } 
 
 namespace Microsoft.Extensions.Azure { 
@@ -75,27 +87,24 @@ namespace Microsoft.Extensions.Azure {
         public static IAzureClientBuilder<TemplateClient, TemplateClientOptions> AddTemplateClient<TBuilder>(this TBuilder builder, string vaultBaseUrl) where TBuilder : IAzureClientFactoryBuilderWithCredential; 
         public static IAzureClientBuilder<TemplateClient, TemplateClientOptions> AddTemplateClient<TBuilder, TConfiguration>(this TBuilder builder, TConfiguration configuration) where TBuilder : IAzureClientFactoryBuilderWithConfiguration<TConfiguration>; 
     } 
+
 } 
+
 ";
-            Assert.Equal(expected, codeFile.GetApiText());
+            Assert.Equal(expected, templateCodeFile.GetApiText());
         }
 
         [Fact]
         public void TestCodeFileJsonSchema()
         {
             //Verify JSON file generated for Azure.Template
-            var isValid = validateSchema(codeFile);
+            var isValid = validateSchema(templateCodeFile);
             Assert.True(isValid);
         }
 
         [Fact]
         public void TestCodeFileJsonSchema2()
         {
-            //Verify JSON file generated for Azure.Storage.Blobs
-            var storageAssembly = Assembly.Load("Azure.Storage.Blobs");
-            var dllStream = storageAssembly.GetFile("Azure.Storage.Blobs.dll");
-            var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            var storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
             var isValid = validateSchema(storageCodeFile);
             Assert.True(isValid);
         }
@@ -131,19 +140,61 @@ namespace Microsoft.Extensions.Azure {
         [Fact]
         public void TestNavigatonNodeHasRenderingClass()
         {
-            var jsonString = JsonSerializer.Serialize(codeFile);
+            var jsonString = JsonSerializer.Serialize(templateCodeFile);
             var parsedCodeFile = JsonSerializer.Deserialize<CodeFile>(jsonString);
             Assert.Equal(8, CountNavigationNodes(parsedCodeFile.ReviewLines));
         }
 
-        private int  CountNavigationNodes(List<ReviewLine> lines)
+        private int CountNavigationNodes(List<ReviewLine> lines)
         {
             int count = 0;
             foreach (var line in lines)
             {
-                var navTokens = line.Tokens.Where(x=> x.NavigationDisplayName != null);
+                var navTokens = line.Tokens.Where(x => x.NavigationDisplayName != null);
                 count += navTokens.Count(x => x.RenderClasses.Any());
                 count += CountNavigationNodes(line.Children);
+            }
+            return count;
+        }
+
+        [Fact]
+        public void VerifyAttributeHAsRelatedLine()
+        {            
+            Assert.Equal(11, CountAttributeRelatedToProperty(storageCodeFile.ReviewLines));
+        }
+
+        private int CountAttributeRelatedToProperty(List<ReviewLine> lines)
+        {
+            int count = 0;
+
+            foreach (var line in lines)
+            {
+                if(line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute.") && !string.IsNullOrEmpty(line.RelatedToLine))
+                {
+                    count++;
+                }
+
+                count += CountAttributeRelatedToProperty(line.Children);
+            }
+            return count;
+        }
+
+        [Fact]
+        public void verifyHiddenApiCount()
+        {
+            Assert.Equal(4, CountHiddenApiInBlobDownloadInfo(storageCodeFile.ReviewLines));
+        }
+
+        private int CountHiddenApiInBlobDownloadInfo(List<ReviewLine> lines)
+        {
+            int count = 0;
+            foreach (var line in lines)
+            {
+                if (line.LineId != null && line.LineId.StartsWith("Azure.Storage.Blobs.Models.BlobDownloadInfo") && line.IsHidden == true)
+                {
+                    count++;
+                }
+                count += CountHiddenApiInBlobDownloadInfo(line.Children);
             }
             return count;
         }

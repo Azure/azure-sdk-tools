@@ -90,6 +90,7 @@ namespace APIViewWeb.LeanModels
         public bool IsNodeWithDiffInDescendants { get; set; }
         public bool IsNodeWithNoneDocDiffInDescendants { get; set; }
         public string BottomTokenNodeIdHash { get; set; }
+        public string RelatedNodeIdHash { get; set; }
     }
 
     public class CodePanelData
@@ -98,5 +99,55 @@ namespace APIViewWeb.LeanModels
         public Dictionary<string, CodePanelNodeMetaData> NodeMetaDataObj { get; set; } = new Dictionary<string, CodePanelNodeMetaData>();
         public Dictionary<string, CodePanelNodeMetaData> NodeMetaData => NodeMetaDataObj.Count > 0 ? NodeMetaDataObj : null;
         public bool HasDiff { get; set; } = false;
+        [JsonIgnore]
+        public Dictionary<string, string> LineIdToNodeIdHashed { get; set; } = new Dictionary<string, string>();
+        [JsonIgnore]
+        public Dictionary<string, List<CodePanelRowData>> ActiveDocumentationMap { get; set; } = new Dictionary<string, List<CodePanelRowData>>();
+        [JsonIgnore]
+        public Dictionary<string, List<CodePanelRowData>> DiffDocumentationMap { get; set; } = new Dictionary<string, List<CodePanelRowData>>();
+
+        public void AddLineIdNodeHashMapping(string lineId, string nodeId)
+        {
+            if (!string.IsNullOrEmpty(lineId) && !string.IsNullOrEmpty(nodeId))
+            {
+                LineIdToNodeIdHashed[lineId] = nodeId;
+            }
+        }
+
+        public string GetNodeIdHashFromLineId(string lineId)
+        {
+            if (!string.IsNullOrEmpty(lineId) && LineIdToNodeIdHashed.ContainsKey(lineId))
+            {
+                return LineIdToNodeIdHashed[lineId];
+            }
+            return string.Empty;
+        }
+
+        public void SetLineAsRelated(string nodeIdHashed, string relatedLine)
+        {
+            var relatedNodeHashId = GetNodeIdHashFromLineId(relatedLine);
+            if (!string.IsNullOrEmpty(relatedNodeHashId) && NodeMetaDataObj.ContainsKey(nodeIdHashed))
+            {
+                NodeMetaDataObj[nodeIdHashed].RelatedNodeIdHash = relatedNodeHashId;
+            }
+        }
+
+        public void AddNavigation(string nodeIdHash, NavigationTreeNode node)
+        {
+            if (!string.IsNullOrEmpty(nodeIdHash) && node != null)
+            {
+                NodeMetaDataObj[nodeIdHash].NavigationTreeNode = node;
+            }
+        }
+
+        public void ConnectNodeToParent(string nodeIdHashed, string parentNodeIdHashed, int nodePosition)
+        {
+            if (!NodeMetaDataObj.ContainsKey(nodeIdHashed))
+            {
+                NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+            }
+            NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
+            NodeMetaDataObj[parentNodeIdHashed].ChildrenNodeIdsInOrderObj.TryAdd(nodePosition, nodeIdHashed);
+        }
     }
 }

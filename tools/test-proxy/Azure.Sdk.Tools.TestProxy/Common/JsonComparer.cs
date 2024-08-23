@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Text;
 using System.Text.Json;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
@@ -7,12 +10,32 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     {
         public static List<string> CompareJson(byte[] json1, byte[] json2)
         {
-            // Deserialize the byte arrays to JsonDocument
-            JsonDocument doc1 = JsonDocument.Parse(json1);
-            JsonDocument doc2 = JsonDocument.Parse(json2);
-
-            // Compare the JSON objects
             var differences = new List<string>();
+            JsonDocument doc1;
+            JsonDocument doc2;
+
+            // Deserialize the byte arrays to JsonDocument
+            try
+            {
+                doc1 = JsonDocument.Parse(json1);
+            }
+            catch(Exception ex)
+            {
+                differences.Add($"Unable to parse the request json body. Content \"{Encoding.UTF8.GetString(json1)}.\" Exception: {ex.Message}");
+                return differences;
+            }
+
+            try
+            {
+                doc2 = JsonDocument.Parse(json2);
+            }
+            
+            catch (Exception ex)
+            {
+                differences.Add($"Unable to parse the record json body. Content \"{Encoding.UTF8.GetString(json2)}.\" Exception: {ex.Message}");
+                return differences;
+            }
+
             CompareElements(doc1.RootElement, doc2.RootElement, differences, "");
 
             return differences;

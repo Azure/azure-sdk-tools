@@ -57,7 +57,7 @@ namespace APIView.Model.V2
         /// <summary>
         /// Language specific style css class names
         /// </summary>
-        public List<string> RenderClasses = [];
+        public List<string> RenderClasses { get; set; } = [];
 
         public static ReviewToken CreateTextToken(string value, string navigateToId = null, bool hasSuffixSpace = true)
         {

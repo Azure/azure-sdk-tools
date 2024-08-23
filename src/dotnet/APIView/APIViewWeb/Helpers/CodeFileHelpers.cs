@@ -509,7 +509,7 @@ namespace APIViewWeb.Helpers
                 line.DiffKind = diffKind;
                 var newHashId = line.GetTokenNodeIdHash(newParentId, idx);
 
-                if (documentationRowMap.ContainsKey(oldHashId))
+                if (documentationRowMap.ContainsKey(oldHashId) && !newHashId.Equals(oldHashId))
                 {
                     documentationRowMap[newHashId] = documentationRowMap[oldHashId];
                     documentationRowMap.Remove(oldHashId);

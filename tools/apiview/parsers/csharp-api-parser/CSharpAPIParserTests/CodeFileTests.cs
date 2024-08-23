@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;
 using System.Text.Json.Serialization;
+using APIView.Model.V2;
 
 
 namespace CSharpAPIParserTests
@@ -125,6 +126,26 @@ namespace Microsoft.Extensions.Azure {
                 }
             }
             return isValid;
+        }
+
+        [Fact]
+        public void TestNavigatonNodeHasRenderingClass()
+        {
+            var jsonString = JsonSerializer.Serialize(codeFile);
+            var parsedCodeFile = JsonSerializer.Deserialize<CodeFile>(jsonString);
+            Assert.Equal(8, CountNavigationNodes(parsedCodeFile.ReviewLines));
+        }
+
+        private int  CountNavigationNodes(List<ReviewLine> lines)
+        {
+            int count = 0;
+            foreach (var line in lines)
+            {
+                var navTokens = line.Tokens.Where(x=> x.NavigationDisplayName != null);
+                count += navTokens.Count(x => x.RenderClasses.Any());
+                count += CountNavigationNodes(line.Children);
+            }
+            return count;
         }
     }
 }

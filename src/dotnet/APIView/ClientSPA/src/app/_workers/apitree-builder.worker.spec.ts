@@ -64,7 +64,7 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
           const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(21);
+          expect(codePanelRowData.length).toBe(24);
           const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
           expect(linesWithDiff.length).toBe(6);
         }
@@ -95,7 +95,7 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
           const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(171);
+          expect(codePanelRowData.length).toBe(174);
           const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
           expect(linesWithDiff.length).toBe(152);
         }
@@ -312,7 +312,7 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
           const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(20);
+          expect(codePanelRowData.length).toBe(21);
           const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
           expect(linesWithDiff.length).toBe(9);
         }

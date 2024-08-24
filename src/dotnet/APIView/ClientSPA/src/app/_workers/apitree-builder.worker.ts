@@ -16,6 +16,7 @@ let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
 let hasHiddenAPI: boolean = false;
 let visibleNodes: Set<string> = new Set<string>();
+let addPostDiffContext: boolean = false;
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
@@ -58,6 +59,7 @@ addEventListener('message', ({ data }) => {
     diffBuffer = [];
     apiTreeBuilderData = null;
     visibleNodes = new Set<string>();
+    addPostDiffContext = false;
   }
   else {
     apiTreeBuilderData = data;
@@ -142,8 +144,17 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
         if (buildNode) {
           codePanelRowData.push(codeLine);
           visibleNodes.add(nodeIdHashed);
+          addPostDiffContext = true;
         }
         if (addNodeToBuffer) {
+          // We should add immediate 3 lines as context post a changed line
+          if (addPostDiffContext && diffBuffer.length === 3)
+          {
+            codePanelRowData.push(...diffBuffer);
+            diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
+            diffBuffer = [];
+            addPostDiffContext = false;
+          }
           diffBuffer.push(codeLine);
           addJustDiffBuffer();
         }

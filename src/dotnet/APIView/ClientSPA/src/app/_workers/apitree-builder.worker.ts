@@ -15,6 +15,7 @@ let lineNumber: number = 0;
 let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
 let hasHiddenAPI: boolean = false;
+let visibleNodes: Set<string> = new Set<string>();
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
@@ -56,6 +57,7 @@ addEventListener('message', ({ data }) => {
     navigationTree = [];
     diffBuffer = [];
     apiTreeBuilderData = null;
+    visibleNodes = new Set<string>();
   }
   else {
     apiTreeBuilderData = data;
@@ -72,10 +74,11 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     return;
 
   //If current node is related like attribute and then related node is not modified then skip current node in tree and node view
-  if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && apiTreeBuilderData?.diffStyle !== FULL_DIFF_STYLE)
+  if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && 
+    (apiTreeBuilderData?.diffStyle == TREE_DIFF_STYLE || apiTreeBuilderData?.diffStyle == NODE_DIFF_STYLE))
   {
     let relatedNode = codePanelData?.nodeMetaData[node.relatedNodeIdHash]!;
-    if (!relatedNode.isNodeWithDiff || !node.isNodeWithDiffInDescendants)
+    if (!relatedNode.isNodeWithDiff && !node.isNodeWithDiffInDescendants && !visibleNodes.has(node.relatedNodeIdHash))
     {
       return;
     }
@@ -110,6 +113,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if ((!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && node.isNodeWithDiff) {
     codePanelRowData.push(...diffBuffer);
+    diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
     diffBuffer = [];
   }
 
@@ -137,6 +141,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);
+          visibleNodes.add(nodeIdHashed);
         }
         if (addNodeToBuffer) {
           diffBuffer.push(codeLine);
@@ -191,6 +196,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);
+          visibleNodes.add(codeLine.nodeIdHashed);
         }
       });
     }

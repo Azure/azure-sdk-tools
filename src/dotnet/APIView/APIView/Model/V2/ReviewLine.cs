@@ -43,7 +43,7 @@ namespace APIView.Model.V2
         /// This is to set a line as related to another line. So when a related line is hidden in node or tree view then current line will also be hidden
         /// for e.g. an attribute like or notation line will be set as related to that API or class line.
         /// </summary>
-        public string? RelatedToLine { get; set; }
+        public string RelatedToLine { get; set; }
         // Following properties are helper methods that's used to render review lines to UI required format.
         [JsonIgnore]
         public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;

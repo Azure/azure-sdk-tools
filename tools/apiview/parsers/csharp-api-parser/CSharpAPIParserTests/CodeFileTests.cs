@@ -7,34 +7,105 @@ using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;
 using System.Text.Json.Serialization;
 using APIView.Model.V2;
+using Microsoft.CodeAnalysis;
 
 
 namespace CSharpAPIParserTests
 {
     public class CodeFileTests
     {
-        private readonly CodeFile codeFile;
-        public Assembly assembly { get; set; }
+        private readonly CodeFile templateCodeFile;
+        private Assembly templateAssembly { get; set; }
+        private readonly CodeFile storageCodeFile;
+        public Assembly storageAssembly { get; set; }
 
         public CodeFileTests()
         {
-            assembly = Assembly.Load("Azure.Template");
-            var dllStream = assembly.GetFile("Azure.Template.dll");
+            templateAssembly = Assembly.Load("Azure.Template");
+            var dllStream = templateAssembly.GetFile("Azure.Template.dll");
             var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            this.codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            this.templateCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+
+            //Verify JSON file generated for Azure.Storage.Blobs
+            this.storageAssembly = Assembly.Load("Azure.Storage.Blobs");
+            dllStream = storageAssembly.GetFile("Azure.Storage.Blobs.dll");
+            assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            this.storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
         }
 
         [Fact]
         public void TestPackageName()
         {
-            Assert.Equal("Azure.Template", codeFile.PackageName);
+            Assert.Equal("Azure.Template", templateCodeFile.PackageName);
+        }
+
+        [Fact]
+        public void TestPackageVersion()
+        {
+            Assert.Equal("12.21.2.0", storageCodeFile.PackageVersion);
+        }
+
+        [Fact]
+        public void TestLanguage()
+        {
+            Assert.Equal("C#", storageCodeFile.Language);
         }
 
         [Fact]
         public void TestTopLevelReviewLineCount()
         {
-            Assert.Equal(8, codeFile.ReviewLines.Count());
+            Assert.Equal(8, templateCodeFile.ReviewLines.Count());
         }
+
+        [Fact]
+        public void TestClassReviewLineWithoutBase()
+        {
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient").FirstOrDefault();
+            Assert.NotNull(classLine);
+            Assert.Equal(4, classLine.Tokens.Count());
+            Assert.Equal("public class BlobServiceClient {", classLine.ToString().Trim());
+        }
+
+        [Fact]
+        public void TestClassReviewLineWithBase()
+        {
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs.Models").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.Models.BlobDownloadInfo").FirstOrDefault();
+            Assert.NotNull(classLine);
+            Assert.Equal(6, classLine.Tokens.Count());
+            Assert.Equal("public class BlobDownloadInfo : IDisposable {", classLine.ToString().Trim());
+        }
+
+        [Fact]
+        public void TestMultipleKeywords()
+        {
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs.Models").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.Models.AccessTier").FirstOrDefault();
+            Assert.NotNull(classLine);
+            Assert.Equal(10, classLine.Tokens.Count());
+            Assert.Equal("public readonly struct AccessTier : IEquatable<AccessTier> {", classLine.ToString().Trim());
+        }
+
+        [Fact]
+        public void TestApiReviewLine()
+        {
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient").FirstOrDefault();
+            Assert.NotNull(classLine);
+            var methodLine = classLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient.BlobServiceClient(System.String)").FirstOrDefault();
+            Assert.Equal(7, methodLine.Tokens.Count());
+            Assert.Equal("public BlobServiceClient(string connectionString);", methodLine.ToString().Trim());
+        }
+
 
         [Fact]
         public void TestAPIReviewContent()
@@ -77,14 +148,14 @@ namespace Microsoft.Extensions.Azure {
     } 
 } 
 ";
-            Assert.Equal(expected, codeFile.GetApiText());
+            Assert.Equal(expected, templateCodeFile.GetApiText());
         }
 
         [Fact]
         public void TestCodeFileJsonSchema()
         {
             //Verify JSON file generated for Azure.Template
-            var isValid = validateSchema(codeFile);
+            var isValid = validateSchema(templateCodeFile);
             Assert.True(isValid);
         }
 
@@ -129,9 +200,9 @@ namespace Microsoft.Extensions.Azure {
         }
 
         [Fact]
-        public void TestNavigatonNodeHasRenderingClass()
+        public void TestNavigationNodeHasRenderingClass()
         {
-            var jsonString = JsonSerializer.Serialize(codeFile);
+            var jsonString = JsonSerializer.Serialize(templateCodeFile);
             var parsedCodeFile = JsonSerializer.Deserialize<CodeFile>(jsonString);
             Assert.Equal(8, CountNavigationNodes(parsedCodeFile.ReviewLines));
         }

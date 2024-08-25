@@ -399,7 +399,7 @@ namespace APIViewWeb.Managers
         /// <param name="backgroundBatchProcessCount"></param>
         /// <param name="verifyUpgradabilityOnly"></param>
         /// <returns></returns>
-        public async Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount, bool verifyUpgradabilityOnly)
+        public async Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount, bool verifyUpgradabilityOnly, string packageNameFilterForUpgrade = "")
         {
             // verifyUpgradabilityOnly is set when we need to run the upgrade in read only mode to recreate code files
             // But review code file or metadata in the DB will not be updated
@@ -423,6 +423,7 @@ namespace APIViewWeb.Managers
                 // If review is updated using devops pipeline then batch process update review requests
                 if (languageService.IsReviewGenByPipeline)
                 {
+                    _telemetryClient.TrackTrace($"{language} uses sandboxing pipeline to upgrade API revisions. Upgrade eligibility test is not yet supported for {language}.");
                     // Do not run sandboxing based upgrade during verify upgradability only mode
                     // This requires some changes in the pipeline to support this mode
                     if (!verifyUpgradabilityOnly)
@@ -433,7 +434,10 @@ namespace APIViewWeb.Managers
                 else
                 {
                     var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
-
+                    if (!string.IsNullOrEmpty(packageNameFilterForUpgrade))
+                    {
+                        reviews = reviews.Where(r => r.PackageName == packageNameFilterForUpgrade);
+                    }
                     foreach (var review in reviews)
                     {
                         var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);

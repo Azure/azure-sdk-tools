@@ -21,6 +21,8 @@ namespace APIViewWeb.HostedServices
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
         private readonly int _backgroundBatchProcessCount;
         private readonly TelemetryClient _telemetryClient;
+        private readonly bool _isUpgradeTestEnabled;
+        private readonly string _packageNameFilterForUpgrade;
 
         public ReviewBackgroundHostedService(
             IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager,
@@ -34,6 +36,17 @@ namespace APIViewWeb.HostedServices
             if (bool.TryParse(configuration["BackgroundTaskDisabled"], out bool taskDisabled))
             {
                 _isDisabled = taskDisabled;
+            }
+
+            if (bool.TryParse(configuration["ReviewUpgradabilityTestEnabled"], out bool upgradeTestEnabled))
+            {
+                _isUpgradeTestEnabled = upgradeTestEnabled;
+            }
+
+            var packageNameFilterForUpgrade = configuration["PackageNameFilterForReviewUpgrade"];
+            if (!string.IsNullOrEmpty(packageNameFilterForUpgrade))
+            {
+                _packageNameFilterForUpgrade = packageNameFilterForUpgrade;
             }
 
             var gracePeriod = configuration["ArchiveReviewGracePeriodInMonths"];
@@ -61,7 +74,7 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, false);
+                    await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, _isUpgradeTestEnabled, _packageNameFilterForUpgrade);
                     await ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
                 }
                 catch (Exception ex)

@@ -151,6 +151,20 @@ namespace CSharpAPIParserTests
             }
         }
 
+        [Fact]
+        public void TestHiddenAPI()
+        {
+            var apiText = "protected static BlobServiceClient CreateClient(Uri serviceUri, BlobClientOptions options, HttpPipelinePolicy authentication, HttpPipeline pipeline);";
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient").FirstOrDefault();
+            Assert.NotNull(classLine);
+            var hiddenApis = classLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient.CreateClient(System.Uri, Azure.Storage.Blobs.BlobClientOptions, Azure.Core.Pipeline.HttpPipelinePolicy, Azure.Core.Pipeline.HttpPipeline)").FirstOrDefault();
+            Assert.NotNull(hiddenApis);
+            Assert.Equal(18, hiddenApis.Tokens.Count());
+            Assert.Equal(apiText, hiddenApis.ToString().Trim());
+        }
 
         [Fact]
         public void TestAPIReviewContent()

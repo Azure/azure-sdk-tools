@@ -75,7 +75,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   if(node.isProcessed)
     return;
 
-  //If current node is related like attribute and then related node is not modified then skip current node in tree and node view
+  //If current node is related line attribute and then related node is not modified then skip current node in tree and node view
   if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && 
     (apiTreeBuilderData?.diffStyle == TREE_DIFF_STYLE || apiTreeBuilderData?.diffStyle == NODE_DIFF_STYLE))
   {

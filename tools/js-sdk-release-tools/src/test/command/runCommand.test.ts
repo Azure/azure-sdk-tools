@@ -9,5 +9,7 @@ describe('Run command', () => {
         const result = await runCommand('echo 123', [], runCommandOptions, false);
         expect(result.stdout.replaceAll('\r', '').replaceAll('\n', '')).toBe('123');
     });
-  
+    test('Inherit stdio should not throw error', async () => {
+        await expect(runCommand('echo 123', [], { shell: true, stdio: 'inherit' }, false)).resolves.not.toThrow();
+    });
 });

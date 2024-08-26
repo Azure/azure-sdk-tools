@@ -167,8 +167,6 @@ export async function runCommand(
     logger.info(`Start to run command: '${commandStr}'.`);
     const child = spawn(command, args, options);
 
-    if (!child.stdout || !child.stderr) throw new Error('Failed to get stdout or stderr from child process.');
-
     let timedOut = false;
     const timer =
         timeoutSeconds &&
@@ -178,16 +176,16 @@ export async function runCommand(
             throw new Error(`Process timed out after ${timeoutSeconds}s`);
         }, timeoutSeconds * 1000);
 
-    child.stdout.setEncoding('utf8');
-    child.stderr.setEncoding('utf8');
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
     
-    child.stdout.on('data', (data) => {
+    child.stdout?.on('data', (data) => {
         const str = data.toString();
         stdout += str;
         if (realtimeOutput) logger.info(str);
     });
 
-    child.stderr.on('data', (data) => {
+    child.stderr?.on('data', (data) => {
         const str = data.toString();
         stderr += str;
         if (realtimeOutput) logger.warn(str);
@@ -210,6 +208,7 @@ export async function runCommand(
     child.on('close', (exitCode) => {
         if (exitCode === 0) {
             resolve();
+            logger.info(`Command '${commandStr}' closed with code '${exitCode}'.`);
             return;
         }
         code = exitCode;

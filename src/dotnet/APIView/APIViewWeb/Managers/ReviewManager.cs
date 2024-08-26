@@ -398,7 +398,7 @@ namespace APIViewWeb.Managers
         /// <param name="updateDisabledLanguages"></param>
         /// <param name="backgroundBatchProcessCount"></param>
         /// <param name="verifyUpgradabilityOnly"></param>
-        /// <param name="packageNameFilterForUpgrade"
+        /// <param name="packageNameFilterForUpgrade"></param>
         /// <returns></returns>
         public async Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount, bool verifyUpgradabilityOnly, string packageNameFilterForUpgrade = "")
         {

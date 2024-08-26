@@ -36,6 +36,12 @@ model ReviewLine {
   Children?: Array<ReviewLine>;
   /** Set current line as hidden code line by default. .NET has hidden APIs and architects don't want to see them by default. */
   IsHidden?: boolean;
+  /** Set current line as context end line. For e.g. line with token } or empty line after the class to mark end of context. */
+  IsContextEndLine?: boolean;
+  /** Set ID of related line to ensure current line is not visible when a related line is hidden.
+   * One e.g. is a code line for class attribute should set class line's Line ID as related line ID.
+  */
+  RelatedToLine?: string;
 }
 
 

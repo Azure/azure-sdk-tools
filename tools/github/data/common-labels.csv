@@ -86,6 +86,7 @@ Consumption - Billing,"All issues in consumption where billing/price-related dat
 Consumption - UsageDetailsAndExport,"All issues in consumption for usage details API and exports API.",e99695
 Consumption - RIandShowBack,"All issues in consumption associated with Reservation and ShowBack.",e99695
 Container Instances,,e99695
+Container Orchestrator Runtime,,e99695
 Container Registry,,e99695
 Container Service,,e99695
 Cosmos,,e99695

@@ -18,18 +18,38 @@ const emitterName = '@azure-tools/typespec-ts';
 const messageToTspConfigSample =
     'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
 
-function printErrorDetails(output: { stdout: string; stderr: string, code: number | null } | undefined, printDetails: boolean = false) {
+function removeLastNewline(line: string): string {
+    return line.replace(/\n$/, '')
+}
+
+function printErrorDetails(
+    output: { stdout: string; stderr: string; code: number | null } | undefined,
+    printDetails: boolean = false
+) {
     if (!output) return;
+    const getErrorSummary = (content: string) =>
+        content
+            .split('\n')
+            .filter((line) => line.includes('error') || line.includes('ERROR'))
+            .map((line) => `  ${line}\n`);
+    let summary = [...getErrorSummary(output.stderr), ...getErrorSummary(output.stdout)];
+    logger.error(`Exit code: ${output.code}`);
+    if (summary.length > 0) {
     logger.error(`Summary:`);
-    const printErrorSummary = (content: string) => content.split('\n')
-        .filter(line => line.includes('error') || line.includes('ERROR'))
-        .forEach(line => logger.error(line));
-    printErrorSummary(output.stderr);
-    printErrorSummary(output.stdout);
+        summary.forEach((line) => logger.error(removeLastNewline(line)));
+    }
     if (printDetails) {
+        const stderr = removeLastNewline(output.stderr);
+        const stdout = removeLastNewline(output.stdout);
         logger.error(`Details:`);
-        logger.error(output.stderr);
-        logger.error(output.stdout);
+        if (stderr) {
+            logger.error(`  stderr:`);
+            logger.error(`    ${stderr}`);
+        }
+        if (stdout) {
+            logger.error(`  stdout:`);
+            logger.error(`    ${stdout}`);
+        }
     }
 }
 
@@ -140,12 +160,14 @@ export async function runCommand(
     options: SpawnOptions = runCommandOptions,
     realtimeOutput: boolean = true,
     timeoutSeconds: number | undefined = undefined
-): Promise<{ stdout: string; stderr: string; code }> {
+): Promise<{ stdout: string; stderr: string; code: number | null }> {
     let stdout = '';
     let stderr = '';
     const commandStr = `${command} ${args.join(' ')}`;
     logger.info(`Start to run command: '${commandStr}'.`);
     const child = spawn(command, args, options);
+
+    if (!child.stdout || !child.stderr) throw new Error('Failed to get stdout or stderr from child process.');
 
     let timedOut = false;
     const timer =
@@ -156,47 +178,54 @@ export async function runCommand(
             throw new Error(`Process timed out after ${timeoutSeconds}s`);
         }, timeoutSeconds * 1000);
 
-    child.stdout?.on('data', (data) => {
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    
+    child.stdout.on('data', (data) => {
         const str = data.toString();
         stdout += str;
         if (realtimeOutput) logger.info(str);
     });
 
-    child.stderr?.on('data', (data) => {
+    child.stderr.on('data', (data) => {
         const str = data.toString();
         stderr += str;
         if (realtimeOutput) logger.warn(str);
     });
 
-    child.on('close', (code) => {
-        if (code === 0) return { stdout, stderr, code };
-        else {
-            logger.error(`Command closed with code '${code}'.`);
-            printErrorDetails({ stdout, stderr, code }, !realtimeOutput);
-            throw new Error(`Command closed with code '${code}'.`);
-        }
+    let resolve: (value: void | PromiseLike<void>) => void;
+    let reject: (reason?: any) => void;
+    const promise = new Promise<void>((res, rej) => {
+        resolve = res;
+        reject = rej;
     });
-
-    child.on('exit', (code, signal) => {
+    let code: number | null = 0;
+    
+    child.on('exit', (exitCode, signal) => {
         if (timer) clearTimeout(timer);
-        if (!timedOut) {
-            if (signal || (code && code !== 0)) {
-                logger.error(`Command '${commandStr}' exited with signal '${signal ?? 'SIGTERM'}' and code ${code}.`);
-                printErrorDetails({ stdout, stderr, code }, !realtimeOutput);
-                throw new Error(`Process was killed with signal '${signal ?? 'SIGTERM'}'.`);
-            } else {
-                return { stdout, stderr, code };
-            }
-        }
+        if (timedOut || !signal) { return; }
+        logger.error(`Command '${commandStr}' exited with signal '${signal ?? 'SIGTERM'}' and code ${exitCode}.`);
     });
 
+    child.on('close', (exitCode) => {
+        if (exitCode === 0) {
+            resolve();
+            return;
+        }
+        code = exitCode;
+        logger.error(`Command closed with code '${exitCode}'.`);
+        printErrorDetails({ stdout, stderr, code: exitCode }, !realtimeOutput);
+        reject(Error(`Command closed with code '${exitCode}'.`));
+    });
+    
     child.on('error', (err) => {
         logger.error((err as Error)?.stack ?? err);
         printErrorDetails({ stdout, stderr, code: null }, !realtimeOutput);
-        throw err;
+        reject(err);
     });
 
-    return { stdout, stderr, code: 0 };
+    await promise;
+    return {stdout, stderr, code};
 }
 
 export async function existsAsync(path: string): Promise<boolean> {

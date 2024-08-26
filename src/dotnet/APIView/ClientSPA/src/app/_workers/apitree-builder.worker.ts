@@ -15,6 +15,8 @@ let lineNumber: number = 0;
 let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
 let hasHiddenAPI: boolean = false;
+let visibleNodes: Set<string> = new Set<string>();
+let addPostDiffContext: boolean = false;
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
@@ -56,6 +58,8 @@ addEventListener('message', ({ data }) => {
     navigationTree = [];
     diffBuffer = [];
     apiTreeBuilderData = null;
+    visibleNodes = new Set<string>();
+    addPostDiffContext = false;
   }
   else {
     apiTreeBuilderData = data;
@@ -71,6 +75,17 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   if(node.isProcessed)
     return;
 
+  //If current node is related line attribute and then related node is not modified then skip current node in tree and node view
+  if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && 
+    (apiTreeBuilderData?.diffStyle == TREE_DIFF_STYLE || apiTreeBuilderData?.diffStyle == NODE_DIFF_STYLE))
+  {
+    let relatedNode = codePanelData?.nodeMetaData[node.relatedNodeIdHash]!;
+    if (!relatedNode.isNodeWithDiff && !node.isNodeWithDiffInDescendants && !visibleNodes.has(node.relatedNodeIdHash))
+    {
+      return;
+    }
+  }
+
   let buildNode = true;
   let buildChildren = true;
   let addNodeToBuffer = false
@@ -80,7 +95,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     buildNode = false;
     buildChildren = false;
   }
-
+    
   if (!buildNode && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && 
     (apiTreeBuilderData?.diffStyle !== NODE_DIFF_STYLE || node.isNodeWithDiff)) {
     buildNode = true;
@@ -100,6 +115,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if ((!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && node.isNodeWithDiff) {
     codePanelRowData.push(...diffBuffer);
+    diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
     diffBuffer = [];
   }
 
@@ -127,8 +143,18 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);
+          visibleNodes.add(nodeIdHashed);
+          addPostDiffContext = true;
         }
         if (addNodeToBuffer) {
+          // We should add immediate 3 lines as context post a changed line
+          if (addPostDiffContext && diffBuffer.length === 3)
+          {
+            codePanelRowData.push(...diffBuffer);
+            diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
+            diffBuffer = [];
+            addPostDiffContext = false;
+          }
           diffBuffer.push(codeLine);
           addJustDiffBuffer();
         }
@@ -181,6 +207,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);
+          visibleNodes.add(codeLine.nodeIdHashed);
         }
       });
     }

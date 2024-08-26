@@ -72,6 +72,7 @@ export class CodePanelNodeMetaData {
   isNodeWithNoneDocDiffInDescendants : boolean;
   bottomTokenNodeIdHash: string;
   isProcessed: boolean;
+  relatedNodeIdHash: string;
   
   constructor() {
     this.documentation = [];
@@ -86,5 +87,6 @@ export class CodePanelNodeMetaData {
     this.isNodeWithNoneDocDiffInDescendants = false;
     this.bottomTokenNodeIdHash = '';
     this.isProcessed = false;
+    this.relatedNodeIdHash = '';
   }
 }

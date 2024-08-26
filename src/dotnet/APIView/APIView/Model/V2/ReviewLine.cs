@@ -39,6 +39,11 @@ namespace APIView.Model.V2
         /// This is set if a line is end of context. For e.g. end of a class or name space line "}"
         /// </summary>
         public bool? IsContextEndLine { get; set; }
+        /// <summary>
+        /// This is to set a line as related to another line. So when a related line is hidden in node or tree view then current line will also be hidden
+        /// for e.g. an attribute line or notation line will be set as related to that API or class line.
+        /// </summary>
+        public string RelatedToLine { get; set; }
         // Following properties are helper methods that's used to render review lines to UI required format.
         [JsonIgnore]
         public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;

@@ -178,18 +178,13 @@ namespace CSharpAPIParser.TreeToken
                     };
                     reviewLines.Add(dependencyLine);
                 }
+                reviewLines.Add(new ReviewLine() { RelatedToLine = headerLine.LineId });
             }
         }
 
         private void BuildNamespace(List<ReviewLine> reviewLines, INamespaceSymbol namespaceSymbol)
         {
             bool isHidden = HasOnlyHiddenTypes(namespaceSymbol);
-            //Add an empty review line to add empty line in the review before current name space begins.
-            if (reviewLines.Count > 0)
-            {
-                reviewLines.Add(new ReviewLine() { IsHidden = isHidden });
-            }
-
             var namespaceLine = new ReviewLine()
             {
                 LineId = namespaceSymbol.GetId(),
@@ -224,6 +219,8 @@ namespace CSharpAPIParser.TreeToken
                 IsHidden = isHidden,
                 IsContextEndLine = true
             });
+            //Add an empty line in the review after current name space.
+            reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = namespaceLine.LineId});
         }
 
         private void BuildNamespaceName(ReviewLine namespaceLine, INamespaceSymbol namespaceSymbol)
@@ -255,15 +252,6 @@ namespace CSharpAPIParser.TreeToken
             }
 
             bool isHidden = IsHiddenFromIntellisense(namedType) || inHiddenScope;
-            //Add empty line to separate types before current node begins
-            if (reviewLines.Count > 0)
-            {
-                reviewLines.Add(new ReviewLine()
-                {
-                    IsHidden = isHidden
-                });
-            }
-
             var reviewLine = new ReviewLine()
             {
                 LineId = namedType.GetId(),
@@ -271,8 +259,8 @@ namespace CSharpAPIParser.TreeToken
             };
 
             // Build documentation, attributes, visibility, and name
-            BuildDocumentation(reviewLines, namedType, isHidden);
-            BuildAttributes(reviewLines, namedType.GetAttributes(), isHidden);
+            BuildDocumentation(reviewLines, namedType, isHidden, namedType.GetId());
+            BuildAttributes(reviewLines, namedType.GetAttributes(), isHidden, namedType.GetId());
             BuildVisibility(reviewLine.Tokens, namedType);
 
             switch (namedType.TypeKind)
@@ -314,6 +302,7 @@ namespace CSharpAPIParser.TreeToken
             {
                 reviewLine.Tokens.Last().HasSuffixSpace = false;
                 reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.SemicolonToken));
+                reviewLines.Add(reviewLine);
                 return;
             }
 
@@ -349,9 +338,10 @@ namespace CSharpAPIParser.TreeToken
                 IsHidden = isHidden,
                 IsContextEndLine = true
             });
+            reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = reviewLine.LineId });
         }
 
-        private void BuildDocumentation(List<ReviewLine> reviewLines, ISymbol symbol, bool isHidden)
+        private void BuildDocumentation(List<ReviewLine> reviewLines, ISymbol symbol, bool isHidden, string relatedTo)
         {
             var lines = symbol.GetDocumentationCommentXml()?.Trim().Split(_newlineChars);
 
@@ -368,7 +358,8 @@ namespace CSharpAPIParser.TreeToken
                     reviewLines.Add(new ReviewLine()
                     {
                         Tokens = [docToken],
-                        IsHidden = isHidden
+                        IsHidden = isHidden,
+                        RelatedToLine = relatedTo
                     });
                 }
             }
@@ -433,8 +424,8 @@ namespace CSharpAPIParser.TreeToken
                 IsHidden = isHidden
             };
 
-            BuildDocumentation(reviewLines, member, isHidden);
-            BuildAttributes(reviewLines, member.GetAttributes(), isHidden);
+            BuildDocumentation(reviewLines, member, isHidden, member.GetId());
+            BuildAttributes(reviewLines, member.GetAttributes(), isHidden, member.GetId());
             reviewLines.Add(reviewLine);
             DisplayName(reviewLine, member);
             reviewLine.Tokens.Last().HasSuffixSpace = false;
@@ -456,7 +447,7 @@ namespace CSharpAPIParser.TreeToken
             }
         }
 
-        private void BuildAttributes(List<ReviewLine> reviewLines, ImmutableArray<AttributeData> attributes, bool isHidden)
+        private void BuildAttributes(List<ReviewLine> reviewLines, ImmutableArray<AttributeData> attributes, bool isHidden, string relatedTo)
         {
             const string attributeSuffix = "Attribute";
             foreach (var attribute in attributes)
@@ -473,7 +464,9 @@ namespace CSharpAPIParser.TreeToken
 
                     var attributeLine = new ReviewLine()
                     {
-                        LineId = attribute.AttributeClass.GetId(),
+                        // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
+                        // So, using a unique id for attribute line
+                        LineId = $"{attribute.AttributeClass.GetId()}.{relatedTo}",
                         IsHidden = isHidden
                     };
 
@@ -524,6 +517,7 @@ namespace CSharpAPIParser.TreeToken
                         attributeLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseParenToken));
                     }
                     attributeLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
+                    attributeLine.RelatedToLine = relatedTo;
                     //Add current attribute line to review lines
                     reviewLines.Add(attributeLine);
                 }

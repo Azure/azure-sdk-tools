@@ -189,8 +189,10 @@ namespace CSharpAPIParserTests
         public enum ServiceVersion { 
             V7_0 = 1, 
         } 
+
         public TemplateClientOptions(ServiceVersion version = V7_0); 
     } 
+
 } 
 
 namespace Azure.Template.Models { 
@@ -202,6 +204,7 @@ namespace Azure.Template.Models {
         public IReadOnlyDictionary<string, string> Tags { get; }
         public string Value { get; }
     } 
+
 } 
 
 namespace Microsoft.Extensions.Azure { 
@@ -209,7 +212,9 @@ namespace Microsoft.Extensions.Azure {
         public static IAzureClientBuilder<TemplateClient, TemplateClientOptions> AddTemplateClient<TBuilder>(this TBuilder builder, string vaultBaseUrl) where TBuilder : IAzureClientFactoryBuilderWithCredential; 
         public static IAzureClientBuilder<TemplateClient, TemplateClientOptions> AddTemplateClient<TBuilder, TConfiguration>(this TBuilder builder, TConfiguration configuration) where TBuilder : IAzureClientFactoryBuilderWithConfiguration<TConfiguration>; 
     } 
+
 } 
+
 ";
             Assert.Equal(expected, templateCodeFile.GetApiText());
         }
@@ -219,7 +224,7 @@ namespace Microsoft.Extensions.Azure {
         public void TestCodeFileJsonSchema(CodeFile codeFile)
         {
             //Verify JSON file generated for Azure.Template
-            var isValid = validateSchema(codeFile);
+            var isValid = validateSchema(templateCodeFile);
             Assert.True(isValid);
         }
 
@@ -259,14 +264,56 @@ namespace Microsoft.Extensions.Azure {
             Assert.Equal(8, CountNavigationNodes(parsedCodeFile.ReviewLines));
         }
 
-        private int  CountNavigationNodes(List<ReviewLine> lines)
+        private int CountNavigationNodes(List<ReviewLine> lines)
         {
             int count = 0;
             foreach (var line in lines)
             {
-                var navTokens = line.Tokens.Where(x=> x.NavigationDisplayName != null);
+                var navTokens = line.Tokens.Where(x => x.NavigationDisplayName != null);
                 count += navTokens.Count(x => x.RenderClasses.Any());
                 count += CountNavigationNodes(line.Children);
+            }
+            return count;
+        }
+
+        [Fact]
+        public void VerifyAttributeHAsRelatedLine()
+        {            
+            Assert.Equal(11, CountAttributeRelatedToProperty(storageCodeFile.ReviewLines));
+        }
+
+        private int CountAttributeRelatedToProperty(List<ReviewLine> lines)
+        {
+            int count = 0;
+
+            foreach (var line in lines)
+            {
+                if(line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute.") && !string.IsNullOrEmpty(line.RelatedToLine))
+                {
+                    count++;
+                }
+
+                count += CountAttributeRelatedToProperty(line.Children);
+            }
+            return count;
+        }
+
+        [Fact]
+        public void verifyHiddenApiCount()
+        {
+            Assert.Equal(4, CountHiddenApiInBlobDownloadInfo(storageCodeFile.ReviewLines));
+        }
+
+        private int CountHiddenApiInBlobDownloadInfo(List<ReviewLine> lines)
+        {
+            int count = 0;
+            foreach (var line in lines)
+            {
+                if (line.LineId != null && line.LineId.StartsWith("Azure.Storage.Blobs.Models.BlobDownloadInfo") && line.IsHidden == true)
+                {
+                    count++;
+                }
+                count += CountHiddenApiInBlobDownloadInfo(line.Children);
             }
             return count;
         }

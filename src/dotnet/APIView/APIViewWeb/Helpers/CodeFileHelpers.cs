@@ -21,32 +21,27 @@ namespace APIViewWeb.Helpers
 
             // Create root node
             var rootNodeId = "root";
-            if (!codePanelData.NodeMetaDataObj.ContainsKey(rootNodeId))
-            {
-                codePanelData.NodeMetaDataObj.TryAdd(rootNodeId, new CodePanelNodeMetaData());
-            }
+            codePanelData.NodeMetaDataObj[rootNodeId] = new CodePanelNodeMetaData();
             var codeFile = codePanelRawData.activeRevisionCodeFile;
-            codePanelData.NodeMetaDataObj[rootNodeId].NavigationTreeNode = CreateRootNode($"{codeFile.PackageName} {codeFile.PackageVersion}", rootNodeId);
+            codePanelData.AddNavigation(rootNodeId, CreateRootNode($"{codeFile.PackageName} {codeFile.PackageVersion}", rootNodeId));
 
             //Collect documentation lines from active revision
-            Dictionary<string, List<CodePanelRowData>> documentationMap = new Dictionary<string, List<CodePanelRowData>>();
-            Dictionary<string, List<CodePanelRowData>> diffDdocumentationMap = new Dictionary<string, List<CodePanelRowData>>();
-            CollectDocumentationLines(codeFile.ReviewLines, documentationMap, 1, "root");
+            CollectDocumentationLines(codeFile.ReviewLines, codePanelData.ActiveDocumentationMap, 1, "root");
 
             //Calculate the diff if diff revision code file is present
             if (codePanelRawData.diffRevisionCodeFile != null)
             {
                 var diffLines = codePanelRawData.diffRevisionCodeFile.ReviewLines;
-                CollectDocumentationLines(diffLines, diffDdocumentationMap, 1, "root", true);
+                CollectDocumentationLines(diffLines, codePanelData.DiffDocumentationMap, 1, "root", true);
                 // Check if diff is required for active revision and diff revision to avoid unnecessary diff calculation
                 bool hasSameApis = AreCodeFilesSame(codePanelRawData.activeRevisionCodeFile, codePanelRawData.diffRevisionCodeFile);
                 if(!hasSameApis)
                 {
                     reviewLines = FindDiff(reviewLines, codePanelRawData.diffRevisionCodeFile.ReviewLines);
                     // Remap nodeIdHashed for documentation to diff adjusted nodeIdHashed so that documentation is correctly listed on review.
-                    RemapDocumentationLines(reviewLines, documentationMap);
+                    RemapDocumentationLines(reviewLines, codePanelData.ActiveDocumentationMap);
                     // Remap documentation is diff revision using node hash ID for active revision. We don't need to show documentation if it's node itself is not present in active revision.
-                    RemapDocumentationLines(reviewLines, diffDdocumentationMap);
+                    RemapDocumentationLines(reviewLines, codePanelData.DiffDocumentationMap);
                     codePanelData.HasDiff = true;
                 }
                 else
@@ -56,56 +51,60 @@ namespace APIViewWeb.Helpers
             }
 
             int idx = 0;
-            string previousNodeHashId = "";
-            foreach(var reviewLine in reviewLines)
+            string nodeHashId = "";
+            Dictionary<string,string> relatedLineMap = new Dictionary<string, string>();
+            foreach (var reviewLine in reviewLines)
             {
                 if (reviewLine.IsDocumentation) continue;
-                previousNodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: reviewLines[idx],
-                    parentNodeIdHashed: rootNodeId, nodePositionAtLevel: idx, documentationMap: documentationMap, diffDocumentationMap: diffDdocumentationMap, prevNodeHashId: previousNodeHashId);
-                idx++;
+                nodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: reviewLines[idx],
+                    parentNodeIdHashed: rootNodeId, nodePositionAtLevel: idx, prevNodeHashId: nodeHashId, relatedLineMap: relatedLineMap);
+                idx++;                
+            }
+
+            //Set related line's node ID hashed in tree metadata
+            foreach(var key in relatedLineMap.Keys)
+            {
+                codePanelData.SetLineAsRelated(key, relatedLineMap[key]);
             }
             return codePanelData;
         }
 
 
-        // Creates tree reference for code line nodes in the review. This tree helps to render the code panel in the UI.
-        private static void ConnectNodeToParent(CodePanelData codePanelData, string nodeIdHashed, string parentNodeIdHashed, int nodePosition)
-        {
-            if (!codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
-            {
-                codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-            }
-            codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
-            codePanelData.NodeMetaDataObj[parentNodeIdHashed].ChildrenNodeIdsInOrderObj.TryAdd(nodePosition, nodeIdHashed);
-        }
-
         private static async Task<string> BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string parentNodeIdHashed, int nodePositionAtLevel,
-            Dictionary<string, List<CodePanelRowData>> documentationMap, Dictionary<string, List<CodePanelRowData>> diffDocumentationMap, string prevNodeHashId, int indent = 1)
+            string prevNodeHashId, Dictionary<string, string> relatedLineMap, int indent = 1)
         {
             //Create hashed node ID for current review line(node)
             var nodeIdHashed = reviewLine.GetTokenNodeIdHash(parentNodeIdHashed, nodePositionAtLevel);
+            codePanelData.AddLineIdNodeHashMapping(reviewLine.LineId, nodeIdHashed);
             //Create parent and child tree reference map
-            ConnectNodeToParent(codePanelData, nodeIdHashed, parentNodeIdHashed, nodePositionAtLevel);
-            
+            codePanelData.ConnectNodeToParent(nodeIdHashed, parentNodeIdHashed, nodePositionAtLevel);
+
+            //Populate the map of nodeHashId to it's related line ID
+            // This is later used to set related line's node ID hashed in tree metadata since related tree node is built after current node.
+            if (!string.IsNullOrEmpty(reviewLine.RelatedToLine))
+            {
+                relatedLineMap[nodeIdHashed] = reviewLine.RelatedToLine;
+            }
+
             // Build current code line node
-            BuildNodeTokens(codePanelData, codePanelRawData, reviewLine, nodeIdHashed, indent, documentationMap, diffDocumentationMap);
+            BuildNodeTokens(codePanelData, codePanelRawData, reviewLine, nodeIdHashed, indent);
 
             //Create navigation node for current line
             var navTreeNode = CreateNavigationNode(reviewLine, nodeIdHashed);
             if (navTreeNode != null)
             {
-                codePanelData.NodeMetaDataObj[nodeIdHashed].NavigationTreeNode = navTreeNode;
+                codePanelData.AddNavigation(nodeIdHashed, navTreeNode);
             }
 
             // Process all child lines
             int idx = 0;
-            string prevChildNodeHashId = "";
+            string childNodeHashId = "";            
             foreach (var childLine in reviewLine.Children)
             {
                 if (childLine.IsDocumentation) continue;
 
-                prevChildNodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: childLine,
-                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, documentationMap, diffDocumentationMap, prevNodeHashId: prevChildNodeHashId, indent: indent + 1);
+                childNodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: childLine,
+                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, prevNodeHashId: childNodeHashId, relatedLineMap: relatedLineMap, indent: indent + 1);                
                 idx++;
             };
 
@@ -173,17 +172,16 @@ namespace APIViewWeb.Helpers
             return navTreeNode;
         }
 
-        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string nodeIdHashed, int indent,
-            Dictionary<string, List<CodePanelRowData>> documentationMap, Dictionary<string, List<CodePanelRowData>> diffDocumentationMap)
+        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string nodeIdHashed, int indent)
         {
             // Generate code line row
             var codePanelRow = GetCodePanelRowData(reviewLine, nodeIdHashed, indent);
 
             // Add documentation rows to code panel data
-            if (documentationMap.ContainsKey(nodeIdHashed))
+            if (codePanelData.ActiveDocumentationMap.ContainsKey(nodeIdHashed))
             {
-                var activeDocLines = documentationMap[nodeIdHashed];
-                var diffDocLines = diffDocumentationMap.ContainsKey(nodeIdHashed) ? diffDocumentationMap[nodeIdHashed] : new List<CodePanelRowData>();
+                var activeDocLines = codePanelData.ActiveDocumentationMap[nodeIdHashed];
+                var diffDocLines = codePanelData.DiffDocumentationMap.ContainsKey(nodeIdHashed) ? codePanelData.DiffDocumentationMap[nodeIdHashed] : new List<CodePanelRowData>();
                 var docLines = activeDocLines.InterleavedUnion(diffDocLines);
                 var docsIntersect = new HashSet<CodePanelRowData>(diffDocLines.Intersect(activeDocLines));
                 var activeDocs = new HashSet<CodePanelRowData>(activeDocLines);

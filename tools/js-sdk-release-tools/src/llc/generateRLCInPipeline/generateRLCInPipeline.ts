@@ -264,6 +264,7 @@ export async function generateRLCInPipeline(options: {
         if (outputPackageInfo) {
             outputPackageInfo.result = 'failed';
         }
+        throw e;
     } finally {
         if (options.outputJson && outputPackageInfo) {
             options.outputJson.packages.push(outputPackageInfo);

@@ -94,18 +94,18 @@ namespace APIViewWeb.Managers
             var review = await _reviewRepository.GetReviewAsync(reviewId);
             if (PageModelHelpers.IsUserSubscribed(user, review.Subscribers))
             {
-                if (state == false)
+                if (state == true)
                 {
-                    return; // already unsubscribed
+                    return; // already subscribed
                 }
 
                 await UnsubscribeAsync(review, user);
             }
             else
             {
-                if (state == true)
+                if (state == false)
                 {
-                    return; // already subscribed
+                    return; // already unsubscribed
                 }
 
                 await SubscribeAsync(review, user);

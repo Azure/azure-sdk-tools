@@ -106,27 +106,29 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['diffStyleInput']) {
+    if (changes['diffStyleInput'] && changes['diffStyleInput'].currentValue != undefined) {
       this.setSelectedDiffStyle();
     }
 
-    if (changes['userProfile']) {
+    if (changes['userProfile'] && changes['userProfile'].currentValue != undefined) {
+      this.setSubscribeSwitch();
+      this.setMarkedAsViewSwitch();
       this.setPageOptionValues();
     }
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
-      this.markedAsViewSwitch = this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!);
+      this.setMarkedAsViewSwitch();
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
     }
 
-    if (changes['diffAPIRevision']) {
+    if (changes['diffAPIRevision'] && changes['diffAPIRevision'].currentValue != undefined) {
       this.setAPIRevisionApprovalStates();
     }
 
-    if (changes['review']) {
-      this.subscribeSwitch = this.review!.subscribers.includes(this.userProfile?.userName!);
+    if (changes['review'] && changes['review'].currentValue != undefined) { 
+      this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
     }
   }
@@ -297,6 +299,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
         }
       });
     }
+  }
+  
+  setSubscribeSwitch() {
+    this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
+  }
+
+  setMarkedAsViewSwitch() {
+    this.markedAsViewSwitch = (this.activeAPIRevision && this.userProfile)? this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!): this.markedAsViewSwitch;
   }
 
   handleAPIRevisionApprovalAction() {

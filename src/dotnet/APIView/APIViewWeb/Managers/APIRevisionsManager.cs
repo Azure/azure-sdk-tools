@@ -772,7 +772,7 @@ namespace APIViewWeb.Managers
         public async Task AutoArchiveAPIRevisions(int archiveAfterMonths)
         {
             var lastUpdatedDate = DateTime.Now.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
-            var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.PullRequest);
+            var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
 
             // Find all inactive reviews
             foreach (var apiRevision in manualRevisions)

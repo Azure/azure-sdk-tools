@@ -7,42 +7,167 @@ using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;
 using System.Text.Json.Serialization;
 using APIView.Model.V2;
+using Microsoft.CodeAnalysis;
+using NuGet.ContentModel;
 
 
 namespace CSharpAPIParserTests
 {
     public class CodeFileTests
     {
-        private readonly CodeFile templateCodeFile;
-        private Assembly templateAssembly { get; set; }
+        static CodeFile templateCodeFile;
+        static Assembly templateAssembly { get; set; }
+        static CodeFile storageCodeFile;
+        static Assembly storageAssembly { get; set; }
+        static CodeFile coreCodeFile;
+        static Assembly coreAssembly { get; set; }
 
-        private readonly CodeFile storageCodeFile;
-        public Assembly storageAssembly { get; set; }
-
-        public CodeFileTests()
+        public CodeFileTests() { }
+        static CodeFileTests()
         {
             templateAssembly = Assembly.Load("Azure.Template");
             var dllStream = templateAssembly.GetFile("Azure.Template.dll");
             var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            this.templateCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            templateCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
 
-            //Verify JSON file generated for Azure.Storage.Blobs
-            this.storageAssembly = Assembly.Load("Azure.Storage.Blobs");
+            storageAssembly = Assembly.Load("Azure.Storage.Blobs");
             dllStream = storageAssembly.GetFile("Azure.Storage.Blobs.dll");
             assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            this.storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+
+            coreAssembly = Assembly.Load("Azure.Core");
+            dllStream = coreAssembly.GetFile("Azure.Core.dll");
+            assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            coreCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+        }
+
+        public static IEnumerable<object[]> CodeFiles => new List<object[]>
+        {
+            new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0", 8},
+            new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0", 14},
+            new object[] { coreCodeFile, "Azure.Core", "1.42.0.0", 26},
+        };
+
+        [Theory]
+        [MemberData(nameof(CodeFiles))]
+        public void TestPackageMetadata(CodeFile codeFile, string expectedPackageName, string expectedVersion, int expectedNumberOfTopLines)
+        {
+            Assert.Equal(expectedPackageName, codeFile.PackageName);
+            Assert.Equal(expectedVersion, codeFile.PackageVersion);
+            Assert.Equal("C#", codeFile.Language);
+            Assert.Equal(expectedNumberOfTopLines, codeFile.ReviewLines.Count);
         }
 
         [Fact]
-        public void TestPackageName()
+        public void TestClassReviewLineWithoutBase()
         {
-            Assert.Equal("Azure.Template", templateCodeFile.PackageName);
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient").FirstOrDefault();
+            Assert.NotNull(classLine);
+            Assert.Equal(4, classLine.Tokens.Count());
+            Assert.Equal("public class BlobServiceClient {", classLine.ToString().Trim());
         }
 
         [Fact]
-        public void TestTopLevelReviewLineCount()
+        public void TestClassReviewLineWithBase()
         {
-            Assert.Equal(9, templateCodeFile.ReviewLines.Count());
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs.Models").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.Models.BlobDownloadInfo").FirstOrDefault();
+            Assert.NotNull(classLine);
+            Assert.Equal(6, classLine.Tokens.Count());
+            Assert.Equal("public class BlobDownloadInfo : IDisposable {", classLine.ToString().Trim());
+        }
+
+        [Fact]
+        public void TestMultipleKeywords()
+        {
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs.Models").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.Models.AccessTier").FirstOrDefault();
+            Assert.NotNull(classLine);
+            Assert.Equal(10, classLine.Tokens.Count());
+            Assert.Equal("public readonly struct AccessTier : IEquatable<AccessTier> {", classLine.ToString().Trim());
+        }
+
+        [Fact]
+        public void TestApiReviewLine()
+        {
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient").FirstOrDefault();
+            Assert.NotNull(classLine);
+            var methodLine = classLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient.BlobServiceClient(System.String)").FirstOrDefault();
+            Assert.Equal(7, methodLine.Tokens.Count());
+            Assert.Equal("public BlobServiceClient(string connectionString);", methodLine.ToString().Trim());
+        }
+
+        [Fact]
+        public void TestApiReviewLineMoreParams()
+        {
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient").FirstOrDefault();
+            Assert.NotNull(classLine);
+            var methodLine = classLine.Children.Where(lines => lines.LineId.Contains("UndeleteBlobContainerAsync")).FirstOrDefault();
+            Assert.NotNull(methodLine);
+            Assert.Equal(23, methodLine.Tokens.Count);
+            Assert.Equal("public virtual Task<Response<BlobContainerClient>> UndeleteBlobContainerAsync(string deletedContainerName, string deletedContainerVersion, CancellationToken cancellationToken = default);", methodLine.ToString().Trim());
+        }
+
+        public static IEnumerable<object[]> PackageCodeFiles => new List<object[]>
+        {
+            new object[] { templateCodeFile },
+            new object[] { storageCodeFile },
+            new object[] { coreCodeFile }
+        };
+
+        [Theory]
+        [MemberData(nameof(PackageCodeFiles))]
+        public void TestAllClassesHaveEndOfContextLine(CodeFile codeFile)
+        {
+            // If current line is for class then next line at same level is expected to be a end of context line
+            var lines = codeFile.ReviewLines;
+            foreach(var namespaceLine in lines)
+            {
+                Assert.NotNull(namespaceLine);
+                bool expectEndOfContext = false;
+                var classLines = namespaceLine.Children;
+                for (int i = 0; i < classLines.Count; i++)
+                {
+                    if (expectEndOfContext)
+                    {
+                        Assert.True(classLines[i].IsContextEndLine == true);
+                        expectEndOfContext = false;
+                        continue;
+                    }
+
+                    expectEndOfContext = classLines[i].Tokens.Any(t => (t.RenderClasses.Contains("class") ||
+                        t.RenderClasses.Contains("struct") ||
+                        t.RenderClasses.Contains("interface")) && !classLines[i].Tokens.Any(t => t.Value == "abstract"));
+                }
+            }            
+        }
+
+        [Fact]
+        public void TestHiddenAPI()
+        {
+            var apiText = "protected static BlobServiceClient CreateClient(Uri serviceUri, BlobClientOptions options, HttpPipelinePolicy authentication, HttpPipeline pipeline);";
+            var lines = storageCodeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Storage.Blobs").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient").FirstOrDefault();
+            Assert.NotNull(classLine);
+            var hiddenApis = classLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient.CreateClient(System.Uri, Azure.Storage.Blobs.BlobClientOptions, Azure.Core.Pipeline.HttpPipelinePolicy, Azure.Core.Pipeline.HttpPipeline)").FirstOrDefault();
+            Assert.NotNull(hiddenApis);
+            Assert.Equal(18, hiddenApis.Tokens.Count());
+            Assert.Equal(apiText, hiddenApis.ToString().Trim());
         }
 
         [Fact]
@@ -94,18 +219,12 @@ namespace Microsoft.Extensions.Azure {
             Assert.Equal(expected, templateCodeFile.GetApiText());
         }
 
-        [Fact]
-        public void TestCodeFileJsonSchema()
+        [Theory]
+        [MemberData(nameof(PackageCodeFiles))]
+        public void TestCodeFileJsonSchema(CodeFile codeFile)
         {
             //Verify JSON file generated for Azure.Template
             var isValid = validateSchema(templateCodeFile);
-            Assert.True(isValid);
-        }
-
-        [Fact]
-        public void TestCodeFileJsonSchema2()
-        {
-            var isValid = validateSchema(storageCodeFile);
             Assert.True(isValid);
         }
 
@@ -138,7 +257,7 @@ namespace Microsoft.Extensions.Azure {
         }
 
         [Fact]
-        public void TestNavigatonNodeHasRenderingClass()
+        public void TestNavigationNodeHasRenderingClass()
         {
             var jsonString = JsonSerializer.Serialize(templateCodeFile);
             var parsedCodeFile = JsonSerializer.Deserialize<CodeFile>(jsonString);

@@ -452,7 +452,7 @@ namespace APIViewWeb.Managers
                                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                                 try
                                 {
-                                    await Task.Delay(500);
+                                    await Task.Delay(100);
                                     await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, verifyUpgradabilityOnly);
                                 }
                                 catch (Exception e)

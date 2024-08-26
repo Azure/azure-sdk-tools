@@ -15,47 +15,46 @@ namespace CSharpAPIParserTests
 {
     public class CodeFileTests
     {
-        private readonly CodeFile templateCodeFile;
-        private Assembly templateAssembly { get; set; }
-        private readonly CodeFile storageCodeFile;
-        public Assembly storageAssembly { get; set; }
-        private readonly CodeFile coreCodeFile;
-        public Assembly coreAssembly { get; set; }
+        static CodeFile templateCodeFile;
+        static Assembly templateAssembly { get; set; }
+        static CodeFile storageCodeFile;
+        static Assembly storageAssembly { get; set; }
+        static CodeFile coreCodeFile;
+        static Assembly coreAssembly { get; set; }
 
-        public CodeFileTests()
+        public CodeFileTests() { }
+        static CodeFileTests()
         {
             templateAssembly = Assembly.Load("Azure.Template");
             var dllStream = templateAssembly.GetFile("Azure.Template.dll");
             var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            this.templateCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            templateCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
 
-            this.storageAssembly = Assembly.Load("Azure.Storage.Blobs");
+            storageAssembly = Assembly.Load("Azure.Storage.Blobs");
             dllStream = storageAssembly.GetFile("Azure.Storage.Blobs.dll");
             assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            this.storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
 
-            this.coreAssembly = Assembly.Load("Azure.Core");
+            coreAssembly = Assembly.Load("Azure.Core");
             dllStream = coreAssembly.GetFile("Azure.Core.dll");
             assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            this.coreCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+            coreCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
         }
 
-        [Fact]
-        public void TestPackageName()
+        public static IEnumerable<object[]> CodeFiles => new List<object[]>
         {
-            Assert.Equal("Azure.Template", templateCodeFile.PackageName);
-        }
+            new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0"},
+            new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0"},
+            new object[] { coreCodeFile, "Azure.Core", "1.42.0.0"},
+        };
 
-        [Fact]
-        public void TestPackageVersion()
+        [Theory]
+        [MemberData(nameof(CodeFiles))]
+        public void TestPackageMetadata(CodeFile codeFile, string expectedPackageName, string expectedVersion)
         {
-            Assert.Equal("12.21.2.0", storageCodeFile.PackageVersion);
-        }
-
-        [Fact]
-        public void TestLanguage()
-        {
-            Assert.Equal("C#", storageCodeFile.Language);
+            Assert.Equal(expectedPackageName, codeFile.PackageName);
+            Assert.Equal(expectedVersion, codeFile.PackageVersion);
+            Assert.Equal("C#", codeFile.Language);
         }
 
         [Fact]
@@ -127,28 +126,38 @@ namespace CSharpAPIParserTests
             Assert.Equal("public virtual Task<Response<BlobContainerClient>> UndeleteBlobContainerAsync(string deletedContainerName, string deletedContainerVersion, CancellationToken cancellationToken = default);", methodLine.ToString().Trim());
         }
 
-        [Fact]
-        public void TestAllClassesHaveEndOfContextLine()
+        public static IEnumerable<object[]> PackageCodeFiles => new List<object[]>
+        {
+            new object[] { templateCodeFile },
+            new object[] { storageCodeFile },
+            new object[] { coreCodeFile }
+        };
+
+        [Theory]
+        [MemberData(nameof(PackageCodeFiles))]
+        public void TestAllClassesHaveEndOfContextLine(CodeFile codeFile)
         {
             // If current line is for class then next line at same level is expected to be a end of context line
-            var lines = coreCodeFile.ReviewLines;
-            var namespaceLine = lines.Where(lines => lines.LineId == "Azure").FirstOrDefault();
-            Assert.NotNull(namespaceLine);
-            bool expectEndOfContext = false;
-            var classLines = namespaceLine.Children;
-            for (int i = 0; i < classLines.Count; i++)
+            var lines = codeFile.ReviewLines;
+            foreach(var namespaceLine in lines)
             {
-                if (expectEndOfContext)
+                Assert.NotNull(namespaceLine);
+                bool expectEndOfContext = false;
+                var classLines = namespaceLine.Children;
+                for (int i = 0; i < classLines.Count; i++)
                 {
-                    Assert.True(classLines[i].IsContextEndLine == true);
-                    expectEndOfContext = false;
-                    continue;
-                }
+                    if (expectEndOfContext)
+                    {
+                        Assert.True(classLines[i].IsContextEndLine == true);
+                        expectEndOfContext = false;
+                        continue;
+                    }
 
-                expectEndOfContext = classLines[i].Tokens.Any(t=> (t.RenderClasses.Contains("class") ||
-                    t.RenderClasses.Contains("struct") ||
-                    t.RenderClasses.Contains("interface")) && !classLines[i].Tokens.Any( t=>t.Value == "abstract"));
-            }
+                    expectEndOfContext = classLines[i].Tokens.Any(t => (t.RenderClasses.Contains("class") ||
+                        t.RenderClasses.Contains("struct") ||
+                        t.RenderClasses.Contains("interface")) && !classLines[i].Tokens.Any(t => t.Value == "abstract"));
+                }
+            }            
         }
 
         [Fact]
@@ -210,23 +219,12 @@ namespace Microsoft.Extensions.Azure {
             Assert.Equal(expected, templateCodeFile.GetApiText());
         }
 
-        [Fact]
-        public void TestCodeFileJsonSchema()
+        [Theory]
+        [MemberData(nameof(PackageCodeFiles))]
+        public void TestCodeFileJsonSchema(CodeFile codeFile)
         {
             //Verify JSON file generated for Azure.Template
-            var isValid = validateSchema(templateCodeFile);
-            Assert.True(isValid);
-        }
-
-        [Fact]
-        public void TestCodeFileJsonSchema2()
-        {
-            //Verify JSON file generated for Azure.Storage.Blobs
-            var storageAssembly = Assembly.Load("Azure.Storage.Blobs");
-            var dllStream = storageAssembly.GetFile("Azure.Storage.Blobs.dll");
-            var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
-            var storageCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
-            var isValid = validateSchema(storageCodeFile);
+            var isValid = validateSchema(codeFile);
             Assert.True(isValid);
         }
 

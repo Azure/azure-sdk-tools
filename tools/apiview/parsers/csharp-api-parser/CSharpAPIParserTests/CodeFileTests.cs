@@ -43,24 +43,19 @@ namespace CSharpAPIParserTests
 
         public static IEnumerable<object[]> CodeFiles => new List<object[]>
         {
-            new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0"},
-            new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0"},
-            new object[] { coreCodeFile, "Azure.Core", "1.42.0.0"},
+            new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0", 8},
+            new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0", 14},
+            new object[] { coreCodeFile, "Azure.Core", "1.42.0.0", 26},
         };
 
         [Theory]
         [MemberData(nameof(CodeFiles))]
-        public void TestPackageMetadata(CodeFile codeFile, string expectedPackageName, string expectedVersion)
+        public void TestPackageMetadata(CodeFile codeFile, string expectedPackageName, string expectedVersion, int expectedNumberOfTopLines)
         {
             Assert.Equal(expectedPackageName, codeFile.PackageName);
             Assert.Equal(expectedVersion, codeFile.PackageVersion);
             Assert.Equal("C#", codeFile.Language);
-        }
-
-        [Fact]
-        public void TestTopLevelReviewLineCount()
-        {
-            Assert.Equal(8, templateCodeFile.ReviewLines.Count());
+            Assert.Equal(expectedNumberOfTopLines, codeFile.ReviewLines.Count);
         }
 
         [Fact]

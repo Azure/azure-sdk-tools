@@ -64,7 +64,7 @@ export async function getLatestCodegen(packagePath) {
 }
 
 export function getRelativePackagePath(packagePath) {
-    const match = /.*[\/\\](sdk[\/\\][a-zA-Z0-9-]+[\/\\][a-zA-Z0-9-]+)/.exec(packagePath);
+    const match = /.*[\/\\](sdk[\/\\][a-zA-Z0-9-.]+[\/\\][a-zA-Z0-9-]+)/.exec(packagePath);
     if (!!match && match.length == 2) {
         return match[1].replace(/\\/g, '/');
     } else {

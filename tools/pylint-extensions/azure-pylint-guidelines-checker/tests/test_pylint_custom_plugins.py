@@ -4052,18 +4052,31 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
     def test_disallowed_imports(self):
         """Check that illegal imports raise warnings"""
         # Blocked import ouside of core.
-        import_node = astroid.extract_node("import requests")
+        requests_import_node = astroid.extract_node("import requests")
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="networking-import-outside-azure-core-transport",
                 line=1,
-                node=import_node,
+                node=requests_import_node,
                 col_offset=0,
                 end_line=1,
                 end_col_offset=15,
             )
         ):
-            self.checker.visit_import(import_node)
+            self.checker.visit_import(requests_import_node)
+
+        httpx_import_node = astroid.extract_node("import httpx")
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="networking-import-outside-azure-core-transport",
+                line=1,
+                node=httpx_import_node,
+                col_offset=0,
+                end_line=1,
+                end_col_offset=12,
+            )
+        ):
+            self.checker.visit_import(httpx_import_node)
 
         # blocked import from outside of core.
         importfrom_node = astroid.extract_node("from aiohttp import get")

@@ -121,11 +121,11 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sd
     const tspConfig = await loadTspConfig(typeSpecDirectory);
     const serviceDir = tspConfig.parameters?.['service-dir']?.default;
     if (!serviceDir) {
-        throw new Error(`Misses service-dir in parameters section of tspconfig.yaml. ${messageToTspConfigSample}`);
+        throw new Error(`Miss service-dir in parameters section of tspconfig.yaml. ${messageToTspConfigSample}`);
     }
     const packageDir = tspConfig.options?.[emitterName]?.['package-dir'];
     if (!packageDir) {
-        throw new Error(`Misses package-dir in ${emitterName} options of tspconfig.yaml. ${messageToTspConfigSample}`);
+        throw new Error(`Miss package-dir in ${emitterName} options of tspconfig.yaml. ${messageToTspConfigSample}`);
     }
     const packageDirFromRoot = posix.join(sdkRepoRoot, serviceDir, packageDir);
     return packageDirFromRoot;

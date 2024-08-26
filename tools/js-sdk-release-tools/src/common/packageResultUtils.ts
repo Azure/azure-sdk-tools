@@ -1,7 +1,6 @@
 import { ChangelogResult, NpmPackageInfo, PackageResult } from './types';
 
 import { Changelog } from '../changelog/changelogGenerator';
-import { posix } from 'node:path';
 
 export function initPackageResult(): PackageResult {
     const breakingChangeItems = [];
@@ -9,7 +8,8 @@ export function initPackageResult(): PackageResult {
     const content = '';
     const changelogInfo: ChangelogResult = { content, hasBreakingChange, breakingChangeItems };
     const packageInfo: PackageResult = {
-        packageName: '',
+        // pipeline framework limit, it cannot handle result with empty string
+        packageName: 'default',
         version: '',
         language: 'JavaScript',
         path: ['rush.json', 'common/config/rush/pnpm-lock.yaml'],

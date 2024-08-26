@@ -1,13 +1,14 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
+import { ModularClientPackageOptions, PackageResult, VersionPolicyName } from './types';
 import { access, writeFile } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
+import { ensureDir, readFile } from 'fs-extra';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
-import { ModularClientPackageOptions, PackageResult, VersionPolicyName } from './types';
 import { runCommand, runCommandOptions } from './utils';
 
-import { ensureDir, readFile } from 'fs-extra';
 import { glob } from 'glob';
 import { logger } from '../utils/logger';
+import unixify from 'unixify';
 
 interface ProjectItem {
     packageName: string;
@@ -68,7 +69,7 @@ export async function buildPackage(
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     await updateRushJson({
         packageName: name,
-        projectFolder: relativePackageDirectoryToSdkRoot,
+        projectFolder: unixify(relativePackageDirectoryToSdkRoot),
         versionPolicyName: options.versionPolicyName
     });
     await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);

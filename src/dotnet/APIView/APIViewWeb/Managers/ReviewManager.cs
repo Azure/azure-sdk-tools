@@ -397,14 +397,24 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="updateDisabledLanguages"></param>
         /// <param name="backgroundBatchProcessCount"></param>
+        /// <param name="verifyUpgradabilityOnly"></param>
+        /// <param name="packageNameFilterForUpgrade"></param>
         /// <returns></returns>
-        public async Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount)
+        public async Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount, bool verifyUpgradabilityOnly, string packageNameFilterForUpgrade = "")
         {
+            // verifyUpgradabilityOnly is set when we need to run the upgrade in read only mode to recreate code files
+            // But review code file or metadata in the DB will not be updated
+            // This flag is set only to make sure revisions are upgradable to the latest version of the parser
+            if(verifyUpgradabilityOnly)
+            {
+                _telemetryClient.TrackTrace("Running background task to verify review upgradability only.");
+            }
+
             foreach (var language in LanguageService.SupportedLanguages)
             {
                 if (updateDisabledLanguages.Contains(language))
                 {
-                    _telemetryClient.TrackTrace("Background task to update API review at startup is disabled for langauge " + language);
+                    _telemetryClient.TrackTrace("Background task to update API review at startup is disabled for language " + language);
                     continue;
                 }
                 var languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices);
@@ -414,16 +424,24 @@ namespace APIViewWeb.Managers
                 // If review is updated using devops pipeline then batch process update review requests
                 if (languageService.IsReviewGenByPipeline)
                 {
-                    await UpdateReviewsUsingPipeline(language, languageService, backgroundBatchProcessCount);
+                    _telemetryClient.TrackTrace($"{language} uses sandboxing pipeline to upgrade API revisions. Upgrade eligibility test is not yet supported for {language}.");
+                    // Do not run sandboxing based upgrade during verify upgradability only mode
+                    // This requires some changes in the pipeline to support this mode
+                    if (!verifyUpgradabilityOnly)
+                    {
+                        await UpdateReviewsUsingPipeline(language, languageService, backgroundBatchProcessCount);
+                    }                    
                 }
                 else
                 {
                     var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
-
+                    if (!string.IsNullOrEmpty(packageNameFilterForUpgrade))
+                    {
+                        reviews = reviews.Where(r => r.PackageName == packageNameFilterForUpgrade);
+                    }
                     foreach (var review in reviews)
                     {
                         var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-
                         foreach (var revision in revisions)
                         {
                             if (
@@ -434,8 +452,8 @@ namespace APIViewWeb.Managers
                                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                                 try
                                 {
-                                    await Task.Delay(500);
-                                    await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService);
+                                    await Task.Delay(100);
+                                    await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, verifyUpgradabilityOnly);
                                 }
                                 catch (Exception e)
                                 {

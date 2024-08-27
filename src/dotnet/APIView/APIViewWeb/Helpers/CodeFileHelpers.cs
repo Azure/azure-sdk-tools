@@ -333,6 +333,9 @@ namespace APIViewWeb.Helpers
 
         private static void AddDiagnosticRow(CodePanelData codePanelData, CodeFile codeFile, string nodeId, string nodeIdHashed)
         {
+            if (codeFile.Diagnostics == null || codeFile.Diagnostics.Length == 0)
+                return;
+
             var diagnostics = codeFile.Diagnostics.Where(d => d.TargetId == nodeId);
             foreach (var diagnostic in diagnostics)
             {

@@ -18,6 +18,8 @@ const emitterName = '@azure-tools/typespec-ts';
 const messageToTspConfigSample =
     'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
 
+const errorKeywordsInLowercase = new Set<string>(['error', 'err_pnpm_no_matching_version']);
+
 function removeLastNewline(line: string): string {
     return line.replace(/\n$/, '')
 }
@@ -30,7 +32,12 @@ function printErrorDetails(
     const getErrorSummary = (content: string) =>
         content
             .split('\n')
-            .filter((line) => line.includes('error') || line.includes('ERROR'))
+            .filter((line) => {
+                for (const keyword of errorKeywordsInLowercase) {
+                    if (line.toLowerCase().includes(keyword)) return true;
+                }
+                return false;
+            })
             .map((line) => `  ${line}\n`);
     let summary = [...getErrorSummary(output.stderr), ...getErrorSummary(output.stdout)];
     logger.error(`Exit code: ${output.code}`);

@@ -44,29 +44,17 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
 
 async function addApiViewInfo(
     packageDirectory: string,
+    sdkRoot: string,
     packageResult: PackageResult
 ): Promise<{ name: string; content: string }> {
     const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**/*.api.json');
     const apiViews = await glob(apiViewPathPattern);
     if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${apiViewPathPattern}'. cwd: ${process.cwd()}`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
-    packageResult.apiViewArtifact = apiViews[0];
+    packageResult.apiViewArtifact = relative(sdkRoot, apiViews[0]);
     const content = (await readFile(apiViews[0], { encoding: 'utf-8' })).toString();
     const name = basename(apiViews[0]);
     return { content, name };
-}
-
-export async function extractApiView(getGeneratedPackageDirectory: string, originalVersion: string, rushScript: string, rushxScript: string) {
-    logger.info(`Start to extract api view.`);
-    logger.info(`Start to rush update.`);
-    await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
-    logger.info(`Rush update successfully.`);
-
-    const cwd = getGeneratedPackageDirectory;
-    const options = { ...runCommandOptions, cwd };
-
-    await runCommand(`node`, [rushxScript, 'extract-api'], options, false);
-    logger.info(`Extracted api view successfully.`);
 }
 
 export async function buildPackage(
@@ -92,7 +80,7 @@ export async function buildPackage(
 
     logger.info(`Start to build package '${name}'.`);
     await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
-    const apiViewContext = await addApiViewInfo(packageDirectory, packageResult);
+    const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, packageResult);
     logger.info(`Build package '${name}' successfully.`);
 
     // build sample and test package will NOT throw exceptions

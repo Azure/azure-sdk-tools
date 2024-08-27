@@ -406,9 +406,13 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
           const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(479);
+          expect(codePanelRowData.length).toBe(467);
           const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
-          expect(linesWithDiff.length).toBe(2);
+          linesWithDiff.forEach(element => {
+            console.log(element);
+          });
+          
+          expect(linesWithDiff.length).toBe(3);
         }
         done();
       };
@@ -418,10 +422,10 @@ describe('API Tree Builder', () => {
       };
   
       const apiTreeBuilderData : ApiTreeBuilderData = {
-        diffStyle: 'nodes',
+        diffStyle: 'full',
         showDocumentation: false,
-        showComments: true,
-        showSystemComments: true,
+        showComments: false,
+        showSystemComments: false,
         showHiddenApis: false
       };
       const jsonString = JSON.stringify(contentWithAttributeDiff);

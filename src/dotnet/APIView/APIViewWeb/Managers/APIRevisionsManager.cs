@@ -725,12 +725,12 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.FileId);
-                    // file.Name property has been repurposed to store package name and version string
-                    // This is causing issue when updating review using latest parser since it expects Name field as file name
-                    // We have added a new property FileName which is only set for new reviews
-                    // All older reviews needs to be handled by checking review name field
-                    var fileName = file.FileName ?? file.FileId;
-                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, false);
+                    if (string.IsNullOrEmpty(file.FileName))
+                    {
+                        _telemetryClient.TrackTrace($"Revision does not have original file name to update API revision. Revision Id: {revision.Id}");
+                        continue;
+                    }
+                    var codeFile = await languageService.GetCodeFileAsync(file.FileName, fileOriginal, false);
                     if (!verifyUpgradabilityOnly)
                     {
                         await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);

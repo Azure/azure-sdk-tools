@@ -43,9 +43,9 @@ namespace CSharpAPIParserTests
 
         public static IEnumerable<object[]> CodeFiles => new List<object[]>
         {
-            new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0", 8},
-            new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0", 14},
-            new object[] { coreCodeFile, "Azure.Core", "1.42.0.0", 26},
+            new object[] { templateCodeFile, "Azure.Template" , "1.0.3.0", 9},
+            new object[] { storageCodeFile , "Azure.Storage.Blobs", "12.21.2.0", 15},
+            new object[] { coreCodeFile, "Azure.Core", "1.42.0.0", 27},
         };
 
         [Theory]
@@ -103,6 +103,7 @@ namespace CSharpAPIParserTests
             var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient").FirstOrDefault();
             Assert.NotNull(classLine);
             var methodLine = classLine.Children.Where(lines => lines.LineId == "Azure.Storage.Blobs.BlobServiceClient.BlobServiceClient(System.String)").FirstOrDefault();
+            Assert.NotNull(methodLine);
             Assert.Equal(7, methodLine.Tokens.Count());
             Assert.Equal("public BlobServiceClient(string connectionString);", methodLine.ToString().Trim());
         }
@@ -224,7 +225,7 @@ namespace Microsoft.Extensions.Azure {
         public void TestCodeFileJsonSchema(CodeFile codeFile)
         {
             //Verify JSON file generated for Azure.Template
-            var isValid = validateSchema(templateCodeFile);
+            var isValid = validateSchema(codeFile);
             Assert.True(isValid);
         }
 
@@ -261,6 +262,7 @@ namespace Microsoft.Extensions.Azure {
         {
             var jsonString = JsonSerializer.Serialize(templateCodeFile);
             var parsedCodeFile = JsonSerializer.Deserialize<CodeFile>(jsonString);
+            Assert.NotNull(parsedCodeFile);
             Assert.Equal(8, CountNavigationNodes(parsedCodeFile.ReviewLines));
         }
 
@@ -316,6 +318,32 @@ namespace Microsoft.Extensions.Azure {
                 count += CountHiddenApiInBlobDownloadInfo(line.Children);
             }
             return count;
+        }
+
+        [Fact]
+        public void VerifyObsoleteMemberIsHidden()
+        {
+            var attestationAssembly = Assembly.Load("Azure.Security.Attestation");
+            var dllStream = attestationAssembly.GetFile("Azure.Security.Attestation.dll");
+            var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            var codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+
+            var lines = codeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Security.Attestation").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId == "Azure.Security.Attestation.AttestationResult").FirstOrDefault();
+            Assert.NotNull(classLine);
+
+            var obsoleteMethods = classLine.Children.Where(line => line.ToString().StartsWith("[Obsolete("));
+            Assert.NotEmpty(obsoleteMethods);
+            //Make sure member lines are marked as hidden if it has obsolete attribute
+            foreach (var method in obsoleteMethods)
+            {
+                Assert.True(method.IsHidden);
+                Assert.NotNull(method.RelatedToLine);
+                var relatedLine = classLine.Children.Where(line => line.LineId == method.RelatedToLine).FirstOrDefault();
+                Assert.True(relatedLine?.IsHidden);
+            }
         }
     }
 }

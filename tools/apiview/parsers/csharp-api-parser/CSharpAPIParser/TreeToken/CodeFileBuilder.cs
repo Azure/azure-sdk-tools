@@ -119,13 +119,14 @@ namespace CSharpAPIParser.TreeToken
                     !a.ConstructorArguments[0].Value?.ToString()?.Contains("DynamicProxyGenAssembly2") == true);
             if (assemblyAttributes != null && assemblyAttributes.Any())
             {
-                reviewLines.Add(new ReviewLine()
+                var internalVisibleLine = new ReviewLine()
                 {
                     LineId = "InternalsVisibleTo",
                     Tokens = [
                         ReviewToken.CreateStringLiteralToken("Exposes internals to:")
                     ]
-                });
+                };
+                reviewLines.Add(internalVisibleLine);
 
                 foreach (AttributeData attribute in assemblyAttributes)
                 {
@@ -146,6 +147,8 @@ namespace CSharpAPIParser.TreeToken
                         }
                     }
                 }
+                // Add an empty line after internals visible to section
+                reviewLines.Add(new ReviewLine() { RelatedToLine = internalVisibleLine.LineId });
             }
         }
 

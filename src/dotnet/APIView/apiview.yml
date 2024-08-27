@@ -242,12 +242,21 @@ extends:
               #    pwsh: true
               #  displayName: 'Start Azurite'
 
-              #- template: /eng/pipelines/templates/steps/install-dotnet.yml
+              - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-              #- pwsh: |
-              #    dotnet --list-runtimes
-              #    dotnet --version
-              #  displayName: 'List .NET run times'
+              - pwsh: |
+                  dotnet --list-runtimes
+                  dotnet --version
+                displayName: 'List .NET run times'
+
+              - script: >-
+                 dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
+                 --logger trx --collect:"XPlat Code Coverage"
+                displayName: "Build & Test (APIViewUnitTests)"
+                env:
+                  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                  DOTNET_MULTILEVEL_LOOKUP: 0
 
               #- task: GoTool@0
               #  inputs:
@@ -257,16 +266,7 @@ extends:
               #- script: |
               #    go test ./... -v
               #  workingDirectory: $(GoParserPackagePath)
-              #  displayName: 'Test Go parser'
-
-              #- script: >-
-              #    dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
-              #    --logger trx --collect:"XPlat Code Coverage"
-              #  displayName: "Build & Test (Unit)"
-              #  env:
-              #    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              #    DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              #    DOTNET_MULTILEVEL_LOOKUP: 0
+              #  displayName: 'Test Go parser'              
 
               #- task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
               #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))

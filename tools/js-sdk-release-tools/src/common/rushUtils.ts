@@ -1,8 +1,8 @@
 import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify } from 'comment-json';
-import { ModularClientPackageOptions, PackageResult, VersionPolicyName } from './types';
-import { access, writeFile } from 'node:fs/promises';
+import { ModularClientPackageOptions, PackageResult } from './types';
+import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
-import { ensureDir, readFile } from 'fs-extra';
+import { ensureDir, readFile, writeFile } from 'fs-extra';
 import { getArtifactName, getNpmPackageInfo } from './npmUtils';
 import { runCommand, runCommandOptions } from './utils';
 
@@ -32,7 +32,7 @@ async function updateRushJson(projectItem: ProjectItem) {
     const newProjects = assign(projects, [...projects, projectItem]);
     const newRushJson = assign(rushJson, { ...(rushJson as CommentObject), projects: newProjects });
     const newRushJsonContent = stringify(newRushJson, undefined, 2);
-    writeFile('rush.json', newRushJsonContent, { encoding: 'utf-8' });
+    writeFile('rush.json', newRushJsonContent, { encoding: 'utf-8', flush: true });
     logger.info('Updated rush.json successfully.');
 }
 
@@ -43,12 +43,12 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
 }
 
 async function addApiViewInfo(
-    relativePackageDirectoryToSdkRoot: string,
+    packageDirectory: string,
     packageResult: PackageResult
 ): Promise<{ name: string; content: string }> {
-    const apiViewPathPattern = posix.join(relativePackageDirectoryToSdkRoot, 'temp', '**/*.api.json');
+    const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**/*.api.json');
     const apiViews = await glob(apiViewPathPattern);
-    if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views.`);
+    if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${apiViewPathPattern}'. cwd: ${process.cwd()}`);
     if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
     packageResult.apiViewArtifact = apiViews[0];
     const content = (await readFile(apiViews[0], { encoding: 'utf-8' })).toString();
@@ -56,14 +56,27 @@ async function addApiViewInfo(
     return { content, name };
 }
 
+export async function extractApiView(getGeneratedPackageDirectory: string, originalVersion: string, rushScript: string, rushxScript: string) {
+    logger.info(`Start to extract api view.`);
+    logger.info(`Start to rush update.`);
+    await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
+    logger.info(`Rush update successfully.`);
+
+    const cwd = getGeneratedPackageDirectory;
+    const options = { ...runCommandOptions, cwd };
+
+    await runCommand(`node`, [rushxScript, 'extract-api'], options, false);
+    logger.info(`Extracted api view successfully.`);
+}
+
 export async function buildPackage(
-    generatedPackageDir: string,
+    packageDirectory: string,
     options: ModularClientPackageOptions,
     packageResult: PackageResult,
     rushScript: string,
     rushxScript: string
 ) {
-    const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(generatedPackageDir));
+    const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
     logger.info(`Start building package in '${relativePackageDirectoryToSdkRoot}'.`);
 
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
@@ -72,29 +85,32 @@ export async function buildPackage(
         projectFolder: unixify(relativePackageDirectoryToSdkRoot),
         versionPolicyName: options.versionPolicyName
     });
+
+    logger.info(`Start to rush update.`);
     await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
     logger.info(`Rush update successfully.`);
 
+    logger.info(`Start to build package '${name}'.`);
     await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
-    const apiViewContext = await addApiViewInfo(relativePackageDirectoryToSdkRoot, packageResult);
+    const apiViewContext = await addApiViewInfo(packageDirectory, packageResult);
     logger.info(`Build package '${name}' successfully.`);
 
     // build sample and test package will NOT throw exceptions
     // note: these commands will delete temp folder
-    await tryBuildSamples(generatedPackageDir, rushxScript);
-    await tryTestPackage(generatedPackageDir, rushxScript);
+    await tryBuildSamples(packageDirectory, rushxScript);
+    await tryTestPackage(packageDirectory, rushxScript);
 
     // restore in temp folder
-    const tempFolder = join(generatedPackageDir, 'temp');
+    const tempFolder = join(packageDirectory, 'temp');
     await ensureDir(tempFolder);
     const apiViewPath = join(tempFolder, apiViewContext.name);
-    await writeFile(apiViewPath, apiViewContext.content, { encoding: 'utf-8' });
+    await writeFile(apiViewPath, apiViewContext.content, { encoding: 'utf-8', flush: true });
 }
 
 // no exception will be thrown, since we don't want it stop sdk generation. sdk author will need to resolve the failure
 export async function tryBuildSamples(packageDirectory: string, rushxScript: string) {
     logger.info(`Start to build samples in '${packageDirectory}'.`);
-    const cwd = join(packageDirectory);
+    const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
     try {
         await runCommand(`node`, [rushxScript, 'build:samples'], options, true, 300);

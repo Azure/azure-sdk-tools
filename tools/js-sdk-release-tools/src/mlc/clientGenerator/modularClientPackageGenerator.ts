@@ -1,5 +1,5 @@
 import { ModularClientPackageOptions, PackageResult } from '../../common/types';
-import { buildPackage, createArtifact, tryBuildSamples, tryTestPackage } from '../../common/rushUtils';
+import { buildPackage, createArtifact, extractApiView, tryBuildSamples, tryTestPackage } from '../../common/rushUtils';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
 import { join, normalize, posix, relative } from 'node:path';
 
@@ -11,7 +11,7 @@ import { getNpmPackageInfo } from '../../common/npmUtils';
 import { logger } from '../../utils/logger';
 import { ensureDir, remove } from 'fs-extra';
 import unixify from 'unixify';
-
+        
 // !!!IMPORTANT:
 // this function should be used ONLY in
 //   1. the CodeGen pipeline of azure-rest-api-specs pull request for generating packages in azure-sdk-for-js
@@ -21,16 +21,19 @@ import unixify from 'unixify';
 export async function generateAzureSDKPackage(options: ModularClientPackageOptions): Promise<PackageResult> {
     logger.info(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
+    const rushScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
+    const rushxScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
+
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
+        const originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
+
         await remove(packageDirectory);
 
-        const generatedPackageDir = await generateTypeScriptCodeFromTypeSpec(options);
-        const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(generatedPackageDir));
-        const rushScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
-        const rushxScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
-
-        await buildPackage(generatedPackageDir, options, packageResult, rushScript, rushxScript);
+        await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo.version, packageDirectory);
+        const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
+        
+        await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
 
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
@@ -39,7 +42,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot);
         updateChangelogResult(packageResult, changelog);
 
-        const npmPackageInfo = await getNpmPackageInfo(generatedPackageDir);
+        const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(
             unixify(options.specRepoRoot),
             unixify(options.typeSpecDirectory)
@@ -51,7 +54,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
             relativePackageDirToSdkRoot
         );
 
-        const artifactPath = await createArtifact(generatedPackageDir, rushxScript);
+        const artifactPath = await createArtifact(packageDirectory, rushxScript);
         const relativeArtifactPath = posix.relative(unixify(options.sdkRepoRoot), unixify(artifactPath));
         packageResult.artifacts.push(relativeArtifactPath);
 

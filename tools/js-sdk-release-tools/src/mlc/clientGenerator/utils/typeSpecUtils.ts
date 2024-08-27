@@ -2,8 +2,19 @@ import { join } from 'path';
 import { ModularClientPackageOptions } from '../../../common/types';
 import { getGeneratedPackageDirectory, runCommand, runCommandOptions } from '../../../common/utils';
 import { logger } from '../../../utils/logger';
+import { load } from '@npmcli/package-json';
 
-export async function generateTypeScriptCodeFromTypeSpec(options: ModularClientPackageOptions): Promise<string> {
+export async function updatePackageVersion(packageDirectory: string, version: string): Promise<void> {
+    const packageJson = await load(packageDirectory);
+    packageJson.content.version = version;
+    packageJson.save();
+}
+
+export async function generateTypeScriptCodeFromTypeSpec(
+    options: ModularClientPackageOptions,
+    originalVersion: string,
+    packageDirectory: string
+): Promise<void> {
     const tspConfigPath = join(options.typeSpecDirectory, 'tspconfig.yaml');
     logger.info('Start to generate code by tsp-client.');
     await runCommand(
@@ -23,7 +34,7 @@ export async function generateTypeScriptCodeFromTypeSpec(options: ModularClientP
         { shell: true, stdio: 'inherit' },
         false
     );
-    logger.info(`Generated typescript code successfully.`);
 
-    return getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
+    await updatePackageVersion(packageDirectory, originalVersion);
+    logger.info(`Generated typescript code successfully.`);
 }

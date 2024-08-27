@@ -39,6 +39,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="SampleTestFiles\azure.data.tables.12.9.0.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleTestFiles\azure.data.tables.12.9.0_dep_diff.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleTestFiles\azure.data.tables.12.9.0_altered.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleTestFiles\azure.data.tables.12.9.1.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleTestFiles\TokenFileWithSectionsRevision3.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

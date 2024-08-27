@@ -10,6 +10,7 @@ import contentWithActiveOnly from "./test-data/content-with-active-revision-only
 import contentWithFullDiff from "./test-data/content-with-diff-full-style.json";
 import contentWithAddedOnly from "./test-data/content-with-only-added-diff.json";
 import contentWithRemovedOnly from "./test-data/content-with-only-removed-diff.json";
+import contentWithAttributeDiff from "./test-data/content-with-attribute-diff-only.json";
  
 describe('API Tree Builder', () => {
     let httpMock: HttpTestingController;
@@ -394,6 +395,36 @@ describe('API Tree Builder', () => {
       };
 
       const jsonString = JSON.stringify(contentWithRemovedOnly);
+      const encoder = new TextEncoder();
+      const arrayBuffer = encoder.encode(jsonString).buffer;
+  
+      apiTreeBuilder.postMessage(apiTreeBuilderData);
+      apiTreeBuilder.postMessage(arrayBuffer);
+    });
+
+    it('Test Only Attribute line diff', (done) => {
+      apiTreeBuilder.onmessage = ({ data }) => {
+        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+          const codePanelRowData = data.payload as CodePanelRowData[];
+          expect(codePanelRowData.length).toBe(479);
+          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
+          expect(linesWithDiff.length).toBe(2);
+        }
+        done();
+      };
+  
+      apiTreeBuilder.onerror = (error) => {
+        done.fail(error.message);
+      };
+  
+      const apiTreeBuilderData : ApiTreeBuilderData = {
+        diffStyle: 'nodes',
+        showDocumentation: false,
+        showComments: true,
+        showSystemComments: true,
+        showHiddenApis: false
+      };
+      const jsonString = JSON.stringify(contentWithAttributeDiff);
       const encoder = new TextEncoder();
       const arrayBuffer = encoder.encode(jsonString).buffer;
   

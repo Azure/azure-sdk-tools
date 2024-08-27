@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using A;
+using ApiView;
 using APIView.Model.V2;
 using APIView.TreeToken;
 using APIViewWeb.Helpers;
+using APIViewWeb.LeanModels;
+using SharpCompress.Common;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -209,7 +214,7 @@ namespace APIViewUnitTests
             {
                 modifiedCount += ModifiedLineCount(l);
             }
-            Assert.Equal(1, modifiedCount);
+            Assert.Equal(4, modifiedCount);
         }
 
         private int ModifiedLineCount(ReviewLine line)
@@ -224,6 +229,124 @@ namespace APIViewUnitTests
                 count += ModifiedLineCount(child);
             }
             return count;
+        }
+
+        [Fact]
+        public async void VerifyRenderedCodeFile()
+        {
+            var testCodeFilePath = Path.Combine("SampleTestFiles", "azure.data.tables.12.9.0.json");
+            FileInfo fileInfo = new FileInfo(testCodeFilePath);
+            var codeFile = await CodeFile.DeserializeAsync(fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+            CodePanelRawData codePanelRawData = new CodePanelRawData()
+            {
+                activeRevisionCodeFile = codeFile
+            };
+            //Verify total lines in rendered output
+            var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+            Assert.NotNull(result);
+            Assert.Equal(false, result.HasDiff);
+            Assert.Equal(478, result.NodeMetaData.Count);
+
+            //Expected top level nodes 16
+            Assert.Equal(16, result.NodeMetaData["root"].ChildrenNodeIdsInOrder.Count);
+
+            //Verify rendered result has no diff when comparing same API code files
+            FileInfo fileInfoB = new FileInfo(testCodeFilePath);
+            var codeFileB = await CodeFile.DeserializeAsync(fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+            codePanelRawData.diffRevisionCodeFile = codeFileB;
+            result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+            Assert.NotNull(result);
+            Assert.Equal(false, result.HasDiff);
+
+            //Verify system generated comments
+            Assert.Equal(15, result.NodeMetaData.Values.Select(v => v.DiagnosticsObj.Count).Sum());
+        }
+
+        [Fact]
+        public async void VerifyCompareDiffApiSurface()
+        {
+            var testCodeFilePath = Path.Combine("SampleTestFiles", "azure.data.tables.12.9.0.json");
+            FileInfo fileInfo = new FileInfo(testCodeFilePath);
+            var codeFile = await CodeFile.DeserializeAsync(fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+            CodePanelRawData codePanelRawData = new CodePanelRawData()
+            {
+                activeRevisionCodeFile = codeFile
+            };
+            var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+            Assert.NotNull(result);
+            Assert.Equal(false, result.HasDiff);
+            Assert.Equal(478, result.NodeMetaData.Count);
+
+            //Expected top level nodes 16
+            Assert.Equal(16, result.NodeMetaData["root"].ChildrenNodeIdsInOrder.Count);
+
+            //Verify rendered result has no diff when comparing different API code files
+            testCodeFilePath = Path.Combine("SampleTestFiles", "azure.data.tables.12.9.1.json");
+            FileInfo fileInfoB = new FileInfo(testCodeFilePath);
+            var codeFileB = await CodeFile.DeserializeAsync(fileInfoB.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+            codePanelRawData.diffRevisionCodeFile = codeFileB;
+            result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+            Assert.NotNull(result);
+            Assert.Equal(true, result.HasDiff);
+            // Thre is only one API line change difference between 12.9.1 and 12.9.0
+            Assert.Equal(1, result.NodeMetaData.Values.Count(m => m.IsNodeWithDiff));
+        }
+
+        [Fact]
+        public async void VerifyAttributeLineChangeOnly()
+        {
+            var testCodeFilePath = Path.Combine("SampleTestFiles", "azure.data.tables.12.9.0.json");
+            FileInfo fileInfo = new FileInfo(testCodeFilePath);
+            var codeFile = await CodeFile.DeserializeAsync(fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+            CodePanelRawData codePanelRawData = new CodePanelRawData()
+            {
+                activeRevisionCodeFile = codeFile
+            };
+            var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+            Assert.NotNull(result);
+            Assert.Equal(false, result.HasDiff);
+            Assert.Equal(478, result.NodeMetaData.Count);
+
+            //Expected top level nodes 16
+            Assert.Equal(16, result.NodeMetaData["root"].ChildrenNodeIdsInOrder.Count);
+
+            //Verify rendered result has no diff when comparing different API code files
+            testCodeFilePath = Path.Combine("SampleTestFiles", "azure.data.tables.12.9.0_altered.json");
+            FileInfo fileInfoB = new FileInfo(testCodeFilePath);
+            var codeFileB = await CodeFile.DeserializeAsync(fileInfoB.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+            codePanelRawData.diffRevisionCodeFile = codeFileB;
+            result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+            Assert.NotNull(result);
+            Assert.Equal(true, result.HasDiff);
+            // Thre is only one API line change difference between 12.9.1 and 12.9.0
+            Assert.Equal(2, result.NodeMetaData.Values.Count(m => m.IsNodeWithDiff));
+            var modifiedLines = result.NodeMetaData.Values.Where(m => m.IsNodeWithDiff);
+            var changedTexts = new HashSet<string> (modifiedLines.Select(l => l.CodeLines.FirstOrDefault().ToString().Trim()));
+            Assert.Contains("[Flags]", changedTexts);
+            Assert.Contains("[FlagsModified]", changedTexts);
+        }
+
+        [Fact]
+        public async void VerifySameApiwithDependencyVersionChange()
+        {
+            var testCodeFilePath = Path.Combine("SampleTestFiles", "azure.data.tables.12.9.0.json");
+            FileInfo fileInfo = new FileInfo(testCodeFilePath);
+            var codeFile = await CodeFile.DeserializeAsync(fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+            CodePanelRawData codePanelRawData = new CodePanelRawData()
+            {
+                activeRevisionCodeFile = codeFile
+            };
+
+            //Verify rendered result has no diff when comparing different API code files
+            testCodeFilePath = Path.Combine("SampleTestFiles", "azure.data.tables.12.9.0_dep_diff.json");
+            FileInfo fileInfoB = new FileInfo(testCodeFilePath);
+            var codeFileB = await CodeFile.DeserializeAsync(fileInfoB.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+            codePanelRawData.diffRevisionCodeFile = codeFileB;
+            var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+            Assert.NotNull(result);
+            //Dependency version change(marked as skip from diff )should not be considered as diff
+            Assert.Equal(false, result.HasDiff);
+            Assert.Equal(478, result.NodeMetaData.Count);
         }
     }
 }

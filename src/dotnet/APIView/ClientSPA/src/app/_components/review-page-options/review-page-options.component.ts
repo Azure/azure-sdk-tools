@@ -9,6 +9,8 @@ import { ConfigService } from 'src/app/_services/config/config.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { take } from 'rxjs';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { PullRequestsService } from 'src/app/_services/pull-requests/pull-requests.service';
+import { PullRequestModel } from 'src/app/_models/pullRequestModel';
 
 @Component({
   selector: 'app-review-page-options',
@@ -65,6 +67,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
 
+  associatedPullRequests  : PullRequestModel[] = [];
+  pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
+
   //Approvers Options
   selectedApprovers: string[] = [];
 
@@ -87,7 +92,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     private configService: ConfigService, 
     private route: ActivatedRoute, 
     private router: Router, 
-    private apiRevisionsService: RevisionsService) { }
+    private apiRevisionsService: RevisionsService, private pullRequestService: PullRequestsService) { }
 
   ngOnInit() {
     this.setSelectedDiffStyle();
@@ -111,6 +116,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.markedAsViewSwitch = this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!);
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.setAPIRevisionApprovalStates();
+      this.setPullRequestsInfo();
     }
 
     if (changes['diffAPIRevision']) {
@@ -262,6 +268,26 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     }
   }
 
+  setPullRequestsInfo() {
+    if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') { 
+      this.pullRequestService.getAssociatedPullRequests(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
+        next: (response: PullRequestModel[]) => {
+          this.associatedPullRequests = response;
+        }
+      });
+
+      this.pullRequestService.getPullRequestsOfAssociatedAPIRevisions(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
+        next: (response: PullRequestModel[]) => {
+          for (const pr of response) {
+            if (pr.reviewId != this.activeAPIRevision?.reviewId) {
+              this.pullRequestsOfAssociatedAPIRevisions.push(pr);
+            }
+          }
+        }
+      });
+    }
+  }
+
   handleAPIRevisionApprovalAction() {
     if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
       this.showAPIRevisionApprovalModal = true;
@@ -276,6 +302,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
 
   toggleAPIRevisionApproval() {
     this.apiRevisionApprovalEmitter.emit(true);
+  }
+
+  getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
+    return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**

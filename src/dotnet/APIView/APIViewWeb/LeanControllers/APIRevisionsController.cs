@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Managers;
 using System.Collections.Generic;
+using APIViewWeb.Models;
+using System.Linq;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -17,17 +19,17 @@ namespace APIViewWeb.LeanControllers
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
-
+        private readonly IPullRequestManager _pullRequestManager;
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
-            IReviewManager reviewManager,
-            IAPIRevisionsManager apiRevisionsManager,
-            INotificationManager notificationManager)
+            IReviewManager reviewManager, IPullRequestManager pullRequestManager,
+            IAPIRevisionsManager apiRevisionsManager, INotificationManager notificationManager)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
+            _pullRequestManager = pullRequestManager;
         }
 
         /// <summary>

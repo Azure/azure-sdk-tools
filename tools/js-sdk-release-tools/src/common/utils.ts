@@ -44,11 +44,11 @@ function printErrorDetails(
         logger.error(`Details:`);
         if (stderr) {
             logger.error(`  stderr:`);
-            logger.error(`    ${stderr}`);
+            stderr.split('\n').forEach((line) => logger.warn(`    ${line}`));
         }
         if (stdout) {
             logger.error(`  stdout:`);
-            logger.error(`    ${stdout}`);
+            stdout.split('\n').forEach((line) => logger.warn(`    ${line}`));
         }
     }
 }

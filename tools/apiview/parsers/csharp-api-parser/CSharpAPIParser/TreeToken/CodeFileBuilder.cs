@@ -517,8 +517,10 @@ namespace CSharpAPIParser.TreeToken
                             attributeLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.EqualsToken));
                             BuildTypedConstant(attributeLine, argument.Value);
                         }
+                        attributeLine.Tokens.Last().HasSuffixSpace = false;
                         attributeLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseParenToken));
                     }
+                    attributeLine.Tokens.Last().HasSuffixSpace = false;
                     attributeLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
                     attributeLine.RelatedToLine = relatedTo;
                     //Add current attribute line to review lines
@@ -826,14 +828,14 @@ namespace CSharpAPIParser.TreeToken
 
             protected override void AddBitwiseOr()
             {
-                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken));
+                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken, false));
             }
 
             public override void VisitField(IFieldSymbol symbol)
             {
-                _tokenList.Add(ReviewToken.CreateTypeNameToken(symbol.Type.Name));
-                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.DotToken));
-                _tokenList.Add(ReviewToken.CreateMemberNameToken(symbol.Name));
+                _tokenList.Add(ReviewToken.CreateTypeNameToken(symbol.Type.Name, false));
+                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.DotToken, false));
+                _tokenList.Add(ReviewToken.CreateMemberNameToken(symbol.Name, false));
             }
 
             public void Format(ITypeSymbol? type, object? typedConstantValue)

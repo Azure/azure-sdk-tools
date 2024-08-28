@@ -47,7 +47,7 @@ namespace CSharpAPIParser.TreeToken
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "29";
+        public const string CurrentVersion = "29.1";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -298,9 +298,7 @@ namespace CSharpAPIParser.TreeToken
             {
                 typeToken.NavigationDisplayName = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
                 typeToken.RenderClasses.Add(namedType.TypeKind.ToString().ToLowerInvariant());
-                typeToken.HasSuffixSpace = true;
             }
-
             if (namedType.TypeKind == TypeKind.Delegate)
             {
                 reviewLine.Tokens.Last().HasSuffixSpace = false;
@@ -309,6 +307,7 @@ namespace CSharpAPIParser.TreeToken
                 return;
             }
 
+            reviewLine.Tokens.Last().HasSuffixSpace = true;
             BuildBaseType(reviewLine, namedType);
             reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
@@ -517,8 +516,10 @@ namespace CSharpAPIParser.TreeToken
                             attributeLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.EqualsToken));
                             BuildTypedConstant(attributeLine, argument.Value);
                         }
+                        attributeLine.Tokens.Last().HasSuffixSpace = false;
                         attributeLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseParenToken));
                     }
+                    attributeLine.Tokens.Last().HasSuffixSpace = false;
                     attributeLine.AddToken(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
                     attributeLine.RelatedToLine = relatedTo;
                     //Add current attribute line to review lines
@@ -573,7 +574,7 @@ namespace CSharpAPIParser.TreeToken
             }
             else if (typedConstant.Kind == TypedConstantKind.Array)
             {
-                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.NewKeyword, false));
+                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.NewKeyword));
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBracketToken, false));
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
@@ -826,14 +827,16 @@ namespace CSharpAPIParser.TreeToken
 
             protected override void AddBitwiseOr()
             {
+                if(_tokenList.Count > 0)
+                    _tokenList.Last().HasSuffixSpace = true;
                 _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken));
             }
 
             public override void VisitField(IFieldSymbol symbol)
             {
-                _tokenList.Add(ReviewToken.CreateTypeNameToken(symbol.Type.Name));
-                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.DotToken));
-                _tokenList.Add(ReviewToken.CreateMemberNameToken(symbol.Name));
+                _tokenList.Add(ReviewToken.CreateTypeNameToken(symbol.Type.Name, false));
+                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.DotToken, false));
+                _tokenList.Add(ReviewToken.CreateMemberNameToken(symbol.Name, false));
             }
 
             public void Format(ITypeSymbol? type, object? typedConstantValue)

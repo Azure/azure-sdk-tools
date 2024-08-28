@@ -2639,9 +2639,9 @@ class DeleteOperationReturnStatement(BaseChecker):
 
 class ImportTypeChecker(BaseChecker):
 
-    name = 'import-type-checker'
+    name = 'duplicate-import-type'
     msgs = {
-        'E9001': (
+        'C4764': (
             'Type %s is importable from multiple namespaces: %s',
             'duplicate-import-type',
             'Used when a type is importable from multiple namespaces.',
@@ -2680,9 +2680,6 @@ class ImportTypeChecker(BaseChecker):
             else:
                 self.imported_types[module_name] = module_name
 
-
-def register(linter):
-    linter.register_checker(ImportTypeChecker(linter))
 
 class DoNotImportLegacySix(BaseChecker):
     """Rule to check that libraries do not import the six package."""
@@ -2824,6 +2821,7 @@ def register(linter):
     linter.register_checker(DoNotImportLegacySix(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    linter.register_checker(ImportTypeChecker(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

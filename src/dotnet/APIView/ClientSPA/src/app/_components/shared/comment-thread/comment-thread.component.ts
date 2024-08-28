@@ -6,6 +6,7 @@ import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 
 @Component({
   selector: 'app-comment-thread',
@@ -202,10 +203,14 @@ export class CommentThreadComponent {
   deleteComment(event: MenuItemCommandEvent) {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
-    this.deleteCommentActionEmitter.emit({ 
-      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-      commentId: commentId,
-      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup});
+    this.deleteCommentActionEmitter.emit(
+      {
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
+        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+        commentId: commentId,
+        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+      } as CommentUpdatesDto
+    );
   }
 
   showEditEditor = (event: MenuItemCommandEvent) => {
@@ -248,13 +253,15 @@ export class CommentThreadComponent {
       const content = replyEditor?.getEditorContent();
       this.saveCommentActionEmitter.emit(
         { 
-          nodeId: (this.instanceLocation === "conversations") ? elementIdForConversationGroup : this.codePanelRowData!.nodeId,
+          commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+          nodeId: this.codePanelRowData!.nodeId,
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentText: content,
           allowAnyOneToResolve: this.allowAnyOneToResolve,
           associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-          revisionIdForConversationGroup: revisionIdForConversationGroup
-        }
+          elementId: elementIdForConversationGroup,
+          revisionId: revisionIdForConversationGroup
+        } as CommentUpdatesDto
       );
       this.codePanelRowData!.showReplyTextBox = false;
     } else {
@@ -264,13 +271,15 @@ export class CommentThreadComponent {
       const content = replyEditor?.getEditorContent();
       this.saveCommentActionEmitter.emit(
         { 
-          nodeId: (this.instanceLocation === "conversations") ? elementIdForConversationGroup : this.codePanelRowData!.nodeId,
+          commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
+          nodeId: this.codePanelRowData!.nodeId,
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentId: commentId,
           commentText: content,
           associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-          revisionIdForConversationGroup: revisionIdForConversationGroup
-        }
+          elementId: elementIdForConversationGroup,
+          revisionId: revisionIdForConversationGroup
+        } as CommentUpdatesDto
       );
       this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
     }
@@ -281,10 +290,11 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-btn-id");
     this.commentUpvoteActionEmitter.emit(
       { 
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         commentId: commentId,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-      }
+      } as CommentUpdatesDto
     );
   }
 
@@ -302,11 +312,12 @@ export class CommentThreadComponent {
   handleThreadResolutionButtonClick(action: string) {
     this.commentResolutionActionEmitter.emit(
       { 
+        commentThreadUpdateAction: (action == "Resolve") ? CommentThreadUpdateAction.CommentResolved  : CommentThreadUpdateAction.CommentUnResolved,
         elementId: this.codePanelRowData!.comments[0].elementId,
-        action: action,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-      }
+        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+        resolvedBy: this.userProfile?.userName
+      } as CommentUpdatesDto
     );
   }
 }

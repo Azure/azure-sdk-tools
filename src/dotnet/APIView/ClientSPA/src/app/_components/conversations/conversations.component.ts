@@ -2,12 +2,13 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';
-import { getTypeClass, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
+import { getTypeClass } from 'src/app/_helpers/common-helpers';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
-import { take } from 'rxjs';
+import { Subject, take, takeUntil } from 'rxjs';
 import { Review } from 'src/app/_models/review';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 
 @Component({
   selector: 'app-conversations',
@@ -27,7 +28,13 @@ export class ConversationsComponent implements OnChanges {
   commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
   numberOfActiveThreads: number = 0;
 
-  constructor(private commentsService: CommentsService, private route: ActivatedRoute, private router: Router) { }
+  destroy$ = new Subject<void>();
+
+  constructor(private commentsService: CommentsService, private signalRService: SignalRService) { }
+
+  ngOnInit() {
+    this.handleRealTimeCommentUpdates();
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['apiRevisions'] || changes['comments']) {
@@ -107,71 +114,137 @@ export class ConversationsComponent implements OnChanges {
       window.open(`review/${this.review?.id}?activeApiRevisionId=${revisionIdForConversationGroup}&nId=${elementIdForConversationGroup}`, '_blank');
     }
   }
+
+  handleRealTimeCommentUpdates() {
+    this.signalRService.onCommentUpdates().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (commentUpdates: CommentUpdatesDto) => {
+        if ((commentUpdates.reviewId && commentUpdates.reviewId == this.review?.id) ||
+          (commentUpdates.comment && commentUpdates.comment.reviewId == this.review?.id)) {
+          switch (commentUpdates.commentThreadUpdateAction) {
+            case CommentThreadUpdateAction.CommentCreated:
+              this.addCommentToCommentThread(commentUpdates);
+              break;
+            case CommentThreadUpdateAction.CommentTextUpdate:
+              this.updateCommentTextInCommentThread(commentUpdates);
+              break;
+            case CommentThreadUpdateAction.CommentResolved:
+              this.applyCommentResolutionUpdate(commentUpdates);
+              break;
+            case CommentThreadUpdateAction.CommentUnResolved:
+              this.applyCommentResolutionUpdate(commentUpdates);
+              break;
+            case CommentThreadUpdateAction.CommentUpVoteToggled:
+              this.toggleCommentUpVote(commentUpdates);
+              break;
+            case CommentThreadUpdateAction.CommentDeleted:
+              this.deleteCommentFromCommentThread(commentUpdates);
+              break;
+          }
+        }
+      }
+    });
+  }
   
-  handleSaveCommentActionEmitter(data: any) {
-    if (data.commentId) {
-      this.commentsService.updateComment(this.review?.id!, data.commentId, data.commentText).pipe(take(1)).subscribe({
+  handleSaveCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.review?.id!;
+    if (commentUpdates.commentId) {
+      this.commentsService.updateComment(this.review?.id!, commentUpdates.commentId, commentUpdates.commentText!).pipe(take(1)).subscribe({
         next: () => {
-          this.comments.find(c => c.id === data.commentId)!.commentText = data.commentText;
+          this.updateCommentTextInCommentThread(commentUpdates);
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
     else {
-      this.commentsService.createComment(this.review?.id!, data.revisionIdForConversationGroup!, data.nodeId, data.commentText, CommentType.APIRevision, data.allowAnyOneToResolve)
+      this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
-              this.comments.push(response);
-              this.createCommentThreads();
+              commentUpdates.comment = response;
+              this.addCommentToCommentThread(commentUpdates);
+              this.signalRService.pushCommentUpdates(commentUpdates);
             }
           }
         );
     }
   }
 
-  handleCommentUpvoteActionEmitter(data: any){
-    this.commentsService.toggleCommentUpVote(this.review?.id!, data.commentId).pipe(take(1)).subscribe({
+  handleCommentUpvoteActionEmitter(commentUpdates: CommentUpdatesDto){
+    commentUpdates.reviewId = this.review?.id!;
+    this.commentsService.toggleCommentUpVote(this.review?.id!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
-        const comment = this.comments.find(c => c.id === data.commentId)
-        if (comment) {
-          if (comment.upvotes.includes(this.userProfile?.userName!)) {
-            comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
-          } else {
-            comment.upvotes.push(this.userProfile?.userName!);
-          }
-        }
+        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
   }
 
-  handleDeleteCommentActionEmitter(data: any) {
-    this.commentsService.deleteComment(this.review?.id!, data.commentId).pipe(take(1)).subscribe({
+  handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.review?.id!;
+    this.commentsService.deleteComment(this.review?.id!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
-        this.comments = this.comments.filter(c => c.id !== data.commentId);
-        this.createCommentThreads();
+        this.deleteCommentFromCommentThread(commentUpdates);
+        this.signalRService.pushCommentUpdates(commentUpdates);
       }
     });
   }
 
-  handleCommentResolutionActionEmitter(data: any) {
-    if (data.action === "Resolve") {
-      this.commentsService.resolveComments(this.review?.id!, data.elementId).pipe(take(1)).subscribe({
+  handleCommentResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.review?.id!;
+    if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
+      this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
-          this.comments.filter(c => c.elementId === data.elementId).forEach(c => {
-            c.isResolved = true;
-          });
-          this.createCommentThreads();
+          this.applyCommentResolutionUpdate(commentUpdates);
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
-    if (data.action === "Unresolve") {
-      this.commentsService.unresolveComments(this.review?.id!, data.elementId).pipe(take(1)).subscribe({
+    if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
+      this.commentsService.unresolveComments(this.review?.id!, commentUpdates.elementId!).pipe(take(1)).subscribe({
         next: () => {
-          this.comments.filter(c => c.elementId === data.elementId).forEach(c => {
-            c.isResolved = false;
-          });
-          this.createCommentThreads();
+          this.applyCommentResolutionUpdate(commentUpdates);
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     }
+  }
+
+  private updateCommentTextInCommentThread(commentUpdates: CommentUpdatesDto) {
+    if (this.comments.some(c => c.id === commentUpdates.commentId!)) {
+      this.comments.find(c => c.id === commentUpdates.commentId!)!.commentText = commentUpdates.commentText!;
+    }
+  }
+
+  private addCommentToCommentThread(commentUpdates: CommentUpdatesDto) {
+    if (!this.comments.some(c => c.id === commentUpdates.comment!.id)) {
+      this.comments.push(commentUpdates.comment!);
+      this.createCommentThreads();
+    }
+  }
+
+  private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
+    this.comments.filter(c => c.elementId === commentUpdates.elementId).forEach(c => {
+      c.isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
+    });
+    this.createCommentThreads();
+  }
+
+  private deleteCommentFromCommentThread(commentUpdates: CommentUpdatesDto) {
+    this.comments = this.comments.filter(c => c.id !== commentUpdates.commentId);
+    this.createCommentThreads();
+  }
+
+  private toggleCommentUpVote(commentUpdates: CommentUpdatesDto) {
+    const comment = this.comments.find(c => c.id === commentUpdates.commentId)
+    if (comment) {
+      if (comment.upvotes.includes(this.userProfile?.userName!)) {
+        comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
+      } else {
+        comment.upvotes.push(this.userProfile?.userName!);
+      }
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

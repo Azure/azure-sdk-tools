@@ -281,7 +281,7 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         if not node.decorators:
             return False
         for decorator in node.decorators.nodes:
-            if decorator.name == "property":
+            if isinstance(decorator, astroid.nodes.Name) and decorator.name == "property":
                 return True
         return False
 
@@ -2885,7 +2885,7 @@ def register(linter):
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))
-    # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
+    linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
 
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))

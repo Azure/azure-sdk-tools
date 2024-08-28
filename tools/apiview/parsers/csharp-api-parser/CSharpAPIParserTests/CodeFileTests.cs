@@ -345,5 +345,25 @@ namespace Microsoft.Extensions.Azure {
                 Assert.True(relatedLine?.IsHidden);
             }
         }
+
+        [Fact]
+        public void VerifyTemplateClassLine()
+        {
+            var coreExprAssembly = Assembly.Load("Azure.Core.Expressions.DataFactory");
+            var dllStream = coreExprAssembly.GetFile("Azure.Core.Expressions.DataFactory.dll");
+            var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            var codeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, true, null);
+
+            var lines = codeFile.ReviewLines;
+            var namespaceLine = lines.Where(lines => lines.LineId == "Azure.Core.Expressions.DataFactory").FirstOrDefault();
+            Assert.NotNull(namespaceLine);
+            var classLine = namespaceLine.Children.Where(lines => lines.LineId.StartsWith("Azure.Core.Expressions.DataFactory.DataFactoryElement")).FirstOrDefault();
+            Assert.NotNull(classLine);
+            Assert.Equal("public sealed class DataFactoryElement<T> {", classLine.ToString().Trim());
+
+            var methodLine = classLine.Children.Where(lines => lines.LineId == "Azure.Core.Expressions.DataFactory.DataFactoryElement<T>.FromKeyVaultSecret(Azure.Core.Expressions.DataFactory.DataFactoryKeyVaultSecret)").FirstOrDefault();
+            Assert.NotNull(methodLine);
+            Assert.Equal("public static DataFactoryElement<string?> FromKeyVaultSecret(DataFactoryKeyVaultSecret secret);", methodLine.ToString().Trim());
+        }
     }
 }

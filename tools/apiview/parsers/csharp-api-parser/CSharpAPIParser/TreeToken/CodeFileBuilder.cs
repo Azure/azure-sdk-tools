@@ -298,9 +298,7 @@ namespace CSharpAPIParser.TreeToken
             {
                 typeToken.NavigationDisplayName = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
                 typeToken.RenderClasses.Add(namedType.TypeKind.ToString().ToLowerInvariant());
-                typeToken.HasSuffixSpace = true;
             }
-
             if (namedType.TypeKind == TypeKind.Delegate)
             {
                 reviewLine.Tokens.Last().HasSuffixSpace = false;
@@ -309,6 +307,7 @@ namespace CSharpAPIParser.TreeToken
                 return;
             }
 
+            reviewLine.Tokens.Last().HasSuffixSpace = true;
             BuildBaseType(reviewLine, namedType);
             reviewLine.Tokens.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))

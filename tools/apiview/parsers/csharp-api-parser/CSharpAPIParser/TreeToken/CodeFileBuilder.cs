@@ -575,7 +575,7 @@ namespace CSharpAPIParser.TreeToken
             }
             else if (typedConstant.Kind == TypedConstantKind.Array)
             {
-                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.NewKeyword, false));
+                tokenList.Add(ReviewToken.CreateKeywordToken(SyntaxKind.NewKeyword));
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBracketToken, false));
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.CloseBracketToken));
                 tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.OpenBraceToken));
@@ -828,7 +828,9 @@ namespace CSharpAPIParser.TreeToken
 
             protected override void AddBitwiseOr()
             {
-                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken, false));
+                if(_tokenList.Count > 0)
+                    _tokenList.Last().HasSuffixSpace = true;
+                _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken));
             }
 
             public override void VisitField(IFieldSymbol symbol)

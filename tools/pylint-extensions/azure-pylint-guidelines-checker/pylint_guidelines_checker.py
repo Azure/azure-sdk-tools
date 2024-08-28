@@ -2753,7 +2753,6 @@ class NoImportTypingFromTypeCheck(BaseChecker):
 
 # [Pylint] custom linter check for invalid use of @overload #3229
 class InvalidUseOfOverload(BaseChecker):
-
     """Rule to check that use of the @overload decorator matches the async/sync nature of the underlying function"""
 
     name = "invalid-use-of-overload"
@@ -2767,36 +2766,49 @@ class InvalidUseOfOverload(BaseChecker):
     }
 
     def visit_call(self, node):
-
         klass = node.parent.parent.parent
-        # function = node.parent.parent
-        # print("Klass", klass, "\n")
-        # print(dir(klass))
-        # print()
-        print(klass.body)
-        # print(type(klass.body))
-        # print(len(klass.body))
-        print(klass.body[0])
-        print(dir(klass.body[0]))
+        functions = []
 
+        # Obtain a list of all functions and function names
         for item in klass.body:
-            # print("DIR", dir(item))
-            try: # imports doesn't have a name
-                print("NAME", item.name)
-            except:
-                print("must be imports")
+            if hasattr(item, 'name'):
+                functions.append(item)
 
-    # def visit_asyncfunctiondef(self, node):
-    #     print(node)
-    #     print(dir(node))
-    #     print(node.name)
-    #
-    #
-    # def visit_functiondef(self, node):
-    #     if (node.decorators.nodes[0].name == "overload"):
-    #         print("OVERLOADED")
-    #     else:
-    #         print("n")
+        # Count up overloaded functions
+        overloadedfunctions = {}
+        for item in functions:
+            if item.name in overloadedfunctions:
+                overloadedfunctions[item.name].append(item)
+            else:
+                overloadedfunctions[item.name] = [item]
+
+        # Loop through the overloaded functions and check they are the same type
+        for funct in overloadedfunctions.values():
+            functionIsAsync = None
+
+            for item in funct:
+                print("Function Async", functionIsAsync)
+                if (functionIsAsync == None):
+                    if (item.__class__ == astroid.nodes.AsyncFunctionDef):
+                        functionIsAsync = True
+                    elif (item.__class__ == astroid.nodes.FunctionDef):
+                        if (item.returns == None):
+                            functionIsAsync = False
+                        # Check to see if it contains subscript value=<Name.Awaitable l.9 at 0x7a343a66be30>
+                        else:
+                            # TODO might contain subscript awaitable update later
+                            functionIsAsync = False
+                # funcitonIsAsync is not none and there are functions to compare to
+                else:
+                    if (item.__class__ == astroid.nodes.AsyncFunctionDef):
+                        if (functionIsAsync == False):
+                            print("there is a miss match of async and sync functions")
+                    elif (item.__class__ == astroid.nodes.FunctionDef):
+                        # TODO add checks for subscript awaitable here
+                        if (functionIsAsync == True):
+                            print("there is a miss match of async and sync functions")
+
+
 
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228

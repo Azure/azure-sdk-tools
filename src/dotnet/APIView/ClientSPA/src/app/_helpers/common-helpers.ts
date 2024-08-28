@@ -9,6 +9,13 @@ export const NODE_DIFF_STYLE = "nodes";
 export const MANUAL_ICON = "fa-solid fa-arrow-up-from-bracket";
 export const PR_ICON = "fa-solid fa-code-pull-request";
 export const AUTOMATIC_ICON = "fa-solid fa-robot";
+export const DIFF_ADDED = "added";
+export const DIFF_REMOVED = "removed";
+
+export enum CodeLineRowNavigationDirection {
+  prev = 0,
+  next
+}
 
 export function getLanguageCssSafeName(language: string): string {
   switch (language.toLowerCase()) {

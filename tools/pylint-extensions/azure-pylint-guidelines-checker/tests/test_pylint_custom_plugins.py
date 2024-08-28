@@ -512,6 +512,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(function_node)
 
     def test_ignores_private_method(self):
         class_node, function_node = astroid.extract_node(
@@ -524,6 +525,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(function_node)
 
     def test_ignores_if_exists_suffix(self):
         class_node, function_node = astroid.extract_node(
@@ -536,6 +538,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(function_node)
 
     def test_ignores_from_prefix(self):
         class_node, function_node = astroid.extract_node(
@@ -548,23 +551,11 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(function_node)
 
     def test_ignores_approved_prefix_names(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-            func_node_g,
-            func_node_h,
-            func_node_i,
-            func_node_j,
-            func_node_k,
-            func_node_l,
-        ) = astroid.extract_node(
+        # TODO: convert to parametrized test
+        class_node, *func_nodes = astroid.extract_node(
             """
         class SomeClient(): #@
             def create_configuration(self): #@
@@ -596,6 +587,8 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
+            for node in func_nodes:
+                self.checker.visit_functiondef(node)
 
     def test_ignores_non_client_with_unapproved_prefix_names(self):
         class_node, function_node = astroid.extract_node(
@@ -608,21 +601,25 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(function_node)
 
     def test_ignores_nested_function_with_unapproved_prefix_names(self):
-        class_node, function_node = astroid.extract_node(
+        class_node, function_node, nested_function_node = astroid.extract_node(
             """
             class SomeClient(): #@
                 def create_configuration(self, **kwargs): #@
-                    def nested(hello, world):
+                    def nested(hello, world): #@
                         pass
             """
         )
 
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(function_node)
+            self.checker.visit_functiondef(nested_function_node)
 
     def test_finds_unapproved_prefix_names(self):
+        # TODO: convert to parametrized test
         (
             class_node,
             func_node_a,
@@ -642,7 +639,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             func_node_o,
             func_node_p,
         ) = astroid.extract_node(
-            """
+        """
         class SomeClient(): #@
             @distributed_trace
             def build_configuration(self): #@
@@ -683,6 +680,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_a.name,
                 line=4,
                 node=func_node_a,
                 col_offset=4,
@@ -691,6 +689,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_b.name,
                 line=6,
                 node=func_node_b,
                 col_offset=4,
@@ -699,6 +698,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_c.name,
                 line=8,
                 node=func_node_c,
                 col_offset=4,
@@ -707,6 +707,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_d.name,
                 line=10,
                 node=func_node_d,
                 col_offset=4,
@@ -715,6 +716,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_e.name,
                 line=12,
                 node=func_node_e,
                 col_offset=4,
@@ -723,6 +725,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_f.name,
                 line=14,
                 node=func_node_f,
                 col_offset=4,
@@ -731,6 +734,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_g.name,
                 line=16,
                 node=func_node_g,
                 col_offset=4,
@@ -739,6 +743,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_h.name,
                 line=18,
                 node=func_node_h,
                 col_offset=4,
@@ -747,6 +752,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_i.name,
                 line=20,
                 node=func_node_i,
                 col_offset=4,
@@ -755,6 +761,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_j.name,
                 line=22,
                 node=func_node_j,
                 col_offset=4,
@@ -763,6 +770,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_k.name,
                 line=24,
                 node=func_node_k,
                 col_offset=4,
@@ -771,6 +779,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_l.name,
                 line=26,
                 node=func_node_l,
                 col_offset=4,
@@ -779,6 +788,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_m.name,
                 line=28,
                 node=func_node_m,
                 col_offset=4,
@@ -787,6 +797,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_n.name,
                 line=30,
                 node=func_node_n,
                 col_offset=4,
@@ -795,6 +806,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_o.name,
                 line=32,
                 node=func_node_o,
                 col_offset=4,
@@ -803,6 +815,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
+                args=func_node_p.name,
                 line=34,
                 node=func_node_p,
                 col_offset=4,
@@ -811,6 +824,63 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
         ):
             self.checker.visit_classdef(class_node)
+            nodes = [
+                func_node_a,
+                func_node_b,
+                func_node_c,
+                func_node_d,
+                func_node_e,
+                func_node_f,
+                func_node_g,
+                func_node_h,
+                func_node_i,
+                func_node_j,
+                func_node_k,
+                func_node_l,
+                func_node_m,
+                func_node_n,
+                func_node_o,
+                func_node_p,
+            ]
+            for node in nodes:
+                self.checker.visit_functiondef(node)
+
+    def test_ignores_property(self):
+        class_node, property_node = astroid.extract_node(
+        """
+        class SomeClient(): #@
+            @property
+            def thing(self): #@
+                pass
+        """
+        )
+
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(property_node)
+
+    def test_finds_short_name(self):
+        class_node, func_node = astroid.extract_node(
+        """
+        class SomeClient(): #@
+            def close(self): #@
+                pass
+        """
+        )
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="short-client-method-name",
+                args=func_node.name,
+                line=3,
+                node=func_node,
+                col_offset=4,
+                end_line=3,
+                end_col_offset=13,
+            )
+        ):
+            self.checker.visit_classdef(class_node)
+            self.checker.visit_functiondef(func_node)
 
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_design.html#service-operations"
@@ -3141,7 +3211,10 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="package-name-incorrect", line=0, node=module_node, col_offset=0,
+                msg_id="package-name-incorrect",
+                line=0,
+                node=module_node,
+                col_offset=0,
             )
         ):
             self.checker.visit_module(module_node)
@@ -3186,7 +3259,10 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         module_node.body = [client_node]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-suffix-needed", line=0, node=module_node, col_offset=0,
+                msg_id="client-suffix-needed",
+                line=0,
+                node=module_node,
+                col_offset=0,
             )
         ):
             self.checker.visit_module(module_node)
@@ -4313,7 +4389,6 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
 
 
 class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
-
     """Test that we are checking the return type of delete functions is correct"""
 
     CHECKER_CLASS = checker.DeleteOperationReturnStatement
@@ -4390,7 +4465,6 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
 
 
 class TestDocstringParameters(pylint.testutils.CheckerTestCase):
-
     """Test that we are checking the docstring is correct"""
 
     CHECKER_CLASS = checker.CheckDocstringParameters
@@ -4801,7 +4875,7 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
         importfrom_node = astroid.extract_node(
-        """
+            """
             from typing import TYPE_CHECKING
 
             if TYPE_CHECKING:
@@ -4830,6 +4904,7 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_import(imb)
             self.checker.visit_import(imc)
             self.checker.visit_importfrom(imd)
+
 
 # [Pylint] custom linter check for invalid use of @overload #3229
 # [Pylint] Custom Linter check for Exception Logging #3227

@@ -2638,7 +2638,6 @@ class DeleteOperationReturnStatement(BaseChecker):
 
 
 class ImportTypeChecker(BaseChecker):
-
     name = 'duplicate-import-type'
     msgs = {
         'C4764': (
@@ -2679,6 +2678,10 @@ class ImportTypeChecker(BaseChecker):
                 )
             else:
                 self.imported_types[module_name] = module_name
+                
+    def close(self):
+        # Reset imported types when moving to a new file
+        self.imported_types.clear()
 
 
 class DoNotImportLegacySix(BaseChecker):

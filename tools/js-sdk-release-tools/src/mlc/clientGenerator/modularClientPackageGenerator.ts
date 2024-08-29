@@ -1,4 +1,4 @@
-import { ModularClientPackageOptions, PackageResult } from '../../common/types';
+import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types';
 import { buildPackage, createArtifact } from '../../common/rushUtils';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
 import { join, normalize, posix, relative } from 'node:path';
@@ -9,7 +9,7 @@ import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
 import { getGeneratedPackageDirectory } from '../../common/utils';
 import { getNpmPackageInfo } from '../../common/npmUtils';
 import { logger } from '../../utils/logger';
-import { remove } from 'fs-extra';
+import { exists, remove } from 'fs-extra';
 import unixify from 'unixify';
 
 // !!!IMPORTANT:
@@ -26,11 +26,13 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
 
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
-        const originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
+        const packageJsonPath = join(packageDirectory, 'package.json');
+        let originalNpmPackageInfo: undefined | NpmPackageInfo;
+        if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
         await remove(packageDirectory);
 
-        await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo.version, packageDirectory);
+        await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
         const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
 
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);

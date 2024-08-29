@@ -12,7 +12,7 @@ export async function updatePackageVersion(packageDirectory: string, version: st
 
 export async function generateTypeScriptCodeFromTypeSpec(
     options: ModularClientPackageOptions,
-    originalVersion: string,
+    originalVersion: string | undefined,
     packageDirectory: string
 ): Promise<void> {
     const tspConfigPath = join(options.typeSpecDirectory, 'tspconfig.yaml');
@@ -35,6 +35,6 @@ export async function generateTypeScriptCodeFromTypeSpec(
         false
     );
 
-    await updatePackageVersion(packageDirectory, originalVersion);
+    if (originalVersion) await updatePackageVersion(packageDirectory, originalVersion);
     logger.info(`Generated typescript code successfully.`);
 }

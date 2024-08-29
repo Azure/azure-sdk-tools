@@ -1,7 +1,7 @@
 {
-  "name": "js-sdk-release-tools",
+  "name": "@azure-tools/js-sdk-release-tools",
   "version": "2.7.12",
-  "description": "test package",
+  "description": "",
   "files": [
     "dist"
   ],

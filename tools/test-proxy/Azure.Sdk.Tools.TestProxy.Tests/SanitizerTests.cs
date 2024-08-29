@@ -4,6 +4,8 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Primitives;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,6 +27,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public string lookaheadReplaceRegex = @"[a-z]+(?=\.(?:table|blob|queue)\.core\.windows\.net)";
         public string capturingGroupReplaceRegex = @"https\:\/\/(?<account>[a-z]+)\.(?:table|blob|queue)\.core\.windows\.net";
         public string scopeClean = @"scope\=(?<scope>[^&]*)";
+
+
+        [Fact]
+        public void RecordingHandlerDecompressPythonGzip()
+        {
+            string badString = "57-48-2B-CA-CF-55-48-AF-CA-2C-00-00-00-00-FF-FF-03-00-64-AA-8E-B5-0F-00-00-00";
+            byte[] badData = badString
+            .Split('-')
+            .Select(byteValue => Convert.ToByte(byteValue, 16))
+            .ToArray();
+
+            var memoryStream = new MemoryStream(badData);
+
+            StringValues encodingValues = new StringValues("gzip");
+
+            var result = CompressionUtilities.DecompressBodyCore(memoryStream, encodingValues);
+        }
+
 
         [Fact]
         public async void OauthResponseSanitizerCleansV2AuthRequest()

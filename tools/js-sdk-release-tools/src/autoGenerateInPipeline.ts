@@ -5,84 +5,35 @@ import { generateMgmt } from './hlc/generateMgmt';
 import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules';
 import { logger } from './utils/logger';
 import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline';
-import { RunningEnvironment } from './utils/runningEnvironment';
 import { ModularClientPackageOptions, SDKType } from './common/types';
 import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator';
-import { existsAsync, loadTspConfig } from './common/utils';
+import { parseInputJson } from './utils/generateInputUtils';
 
 const shell = require('shelljs');
 const fs = require('fs');
 
-async function isManagementPlaneModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {
-    if (Array.isArray(typespecProjectFolder) && (typespecProjectFolder as string[]).length !== 1) {
-        throw new Error(`Unexpected typespecProjectFolder length: ${(typespecProjectFolder as string[]).length} (expect 1)`);
-    }
-
-    if (!typespecProjectFolder) {
-        return false;
-    }
-
-    const resolvedRelativeTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
-    const tspFolderFromSpecRoot = path.join(specFolder, resolvedRelativeTspFolder);
-    const tspConfigPath = path.join(tspFolderFromSpecRoot, 'tspconfig.yaml');
-    if (!(await existsAsync(tspConfigPath))) {
-        return false;
-    }
-
-    const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
-    if (tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary'] !== true) {
-        return false;
-    }
-    return true;
-}
-
-
-// TODO: consider add stricter rules for RLC in when update SDK automation for RLC
-function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {
-    if (isMgmtWithHLC) {
-        return SDKType.HighLevelClient;
-    }
-    if (isMgmtWithModular) {
-        return SDKType.ModularClient;
-    }
-    return SDKType.RestLevelClient;
-}
-
-async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use: string | undefined, typespecEmitter: string | undefined, sdkGenerationType: string | undefined, local: boolean) {
-    // inputJson schema: https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/GenerateInputSchema.json
-    // todo: add interface for the schema
+async function automationGenerateInPipeline(
+    inputJsonPath: string,
+    outputJsonPath: string,
+    use: string | undefined,
+    typespecEmitter: string | undefined,
+    sdkGenerationType: string | undefined,
+    local: boolean
+) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
-    const specFolder: string = inputJson['specFolder'];
-    const readmeFiles: string[] | string | undefined = inputJson['relatedReadmeMdFiles'] ? inputJson['relatedReadmeMdFiles'] : inputJson['relatedReadmeMdFile'];
-    const typespecProjectFolder: string[] | string | undefined = inputJson['relatedTypeSpecProjectFolder'];
-    const gitCommitId: string = inputJson['headSha'];
-    const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
-    const autorestConfig: string | undefined = inputJson['autorestConfig'];
-    const downloadUrlPrefix: string | undefined = inputJson.installInstructionInput?.downloadUrlPrefix;
-    // TODO: consider remove it, since it's not defined in inputJson schema
-    const skipGeneration: boolean | undefined = inputJson['skipGeneration'];
-
-    if (!readmeFiles && !typespecProjectFolder) {
-        throw new Error(`readme files and typespec project info are both undefined`);
-    }
-
-    if (typespecProjectFolder && typeof typespecProjectFolder !== 'string' && typespecProjectFolder.length !== 1) {
-        throw new Error(`get ${typespecProjectFolder.length} typespec project`);
-    }
-
-    const isTypeSpecProject = !!typespecProjectFolder;
-
-    const packages: any[] = [];
-    const outputJson = {
-        packages: packages,
-        language: 'JavaScript',
-    };
-    const readmeMd = isTypeSpecProject ? undefined : typeof readmeFiles === 'string' ? readmeFiles : readmeFiles![0];
-    const typespecProject = isTypeSpecProject ? typeof typespecProjectFolder === 'string' ? typespecProjectFolder : typespecProjectFolder![0] : undefined;
-    const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
-    const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
-    const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
-    const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
+    const {
+        sdkType,
+        specFolder,
+        readmeMd,
+        gitCommitId,
+        outputJson,
+        repoHttpsUrl,
+        downloadUrlPrefix,
+        skipGeneration,
+        runningEnvironment,
+        typespecProject,
+        autorestConfig
+    } = await parseInputJson(inputJson);
 
     try {
         if (!local) {
@@ -145,10 +96,12 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                 break;
         }
     } catch (e) {
-        const packageNameStr =`'${outputJson.packages?.[0]?.packageName}' `;
+        const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);
         logger.error(`Please review the detail errors for potential fixes.`);
-        logger.error(`If the issue persists, contact the support channel at https://aka.ms/azsdk/js-teams-channel and include this spec pull request.`)
+        logger.error(
+            `If the issue persists, contact the support channel at https://aka.ms/azsdk/js-teams-channel and include this spec pull request.`
+        );
         throw e;
     } finally {
         if (!local) {

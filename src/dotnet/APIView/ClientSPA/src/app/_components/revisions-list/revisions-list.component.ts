@@ -506,7 +506,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
           `Run <code>dotnet pack</code>`, 
           `Upload the resulting .nupkg file.`
         ];
-        this.acceptedFilesForReviewUpload = ".nupkg";
+        this.acceptedFilesForReviewUpload = ".nupkg, .dll";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;

@@ -2787,26 +2787,27 @@ class InvalidUseOfOverload(BaseChecker):
             functionIsAsync = None
 
             for item in funct:
-                print("Function Async", functionIsAsync)
-                if (functionIsAsync == None):
-                    if (item.__class__ == astroid.nodes.AsyncFunctionDef):
-                        functionIsAsync = True
-                    elif (item.__class__ == astroid.nodes.FunctionDef):
-                        if (item.returns == None):
-                            functionIsAsync = False
-                        # Check to see if it contains subscript value=<Name.Awaitable l.9 at 0x7a343a66be30>
-                        else:
-                            # TODO might contain subscript awaitable update later
-                            functionIsAsync = False
-                # funcitonIsAsync is not none and there are functions to compare to
+                if functionIsAsync is None:
+                    functionIsAsync = self.is_function_async(item)
                 else:
-                    if (item.__class__ == astroid.nodes.AsyncFunctionDef):
-                        if (functionIsAsync == False):
-                            print("there is a miss match of async and sync functions")
-                    elif (item.__class__ == astroid.nodes.FunctionDef):
-                        # TODO add checks for subscript awaitable here
-                        if (functionIsAsync == True):
-                            print("there is a miss match of async and sync functions")
+                    if functionIsAsync != self.is_function_async(item):
+                        self.add_message(
+                            msgid=f"invalid-use-of-overload",
+                            node=node,
+                            confidence=None,
+                        )
+
+    def is_function_async(self, node):
+        if node.__class__ == astroid.nodes.AsyncFunctionDef:
+            return True
+        elif node.__class__ == astroid.nodes.FunctionDef:
+            if node.returns is None:
+                return False
+            else:
+                if node.returns.value.name == "Awaitable":
+                    return True
+                else:
+                    return False
 
 
 

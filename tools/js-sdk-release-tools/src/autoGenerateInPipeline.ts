@@ -38,7 +38,7 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
 
 
 // TODO: consider add stricter rules for RLC in when update SDK automation for RLC
-function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {
+function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {    
     if (isMgmtWithHLC) {
         return SDKType.HighLevelClient;
     }
@@ -48,7 +48,7 @@ function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {
     return SDKType.RestLevelClient;
 }
 
-async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use: string | undefined, typespecEmitter: string | undefined, sdkGenerationType: string | undefined, local: boolean) {
+export async function parseInputJson(inputJsonPath: string) {
     // inputJson schema: https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/GenerateInputSchema.json
     // todo: add interface for the schema
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
@@ -79,10 +79,47 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     };
     const readmeMd = isTypeSpecProject ? undefined : typeof readmeFiles === 'string' ? readmeFiles : readmeFiles![0];
     const typespecProject = isTypeSpecProject ? typeof typespecProjectFolder === 'string' ? typespecProjectFolder : typespecProjectFolder![0] : undefined;
+    const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
+    
     const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
     const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
-    const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
     const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
+    return {
+        sdkType,
+        specFolder,
+        gitCommitId,
+        repoHttpsUrl,
+        autorestConfig,
+        downloadUrlPrefix,
+        readmeMd,
+        outputJson,
+        skipGeneration,
+        runningEnvironment,
+        typespecProject
+    };
+}
+
+async function automationGenerateInPipeline(
+    inputJsonPath: string,
+    outputJsonPath: string,
+    use: string | undefined,
+    typespecEmitter: string | undefined,
+    sdkGenerationType: string | undefined,
+    local: boolean
+) {
+    const {
+        sdkType,
+        specFolder,
+        readmeMd,
+        gitCommitId,
+        outputJson,
+        repoHttpsUrl,
+        downloadUrlPrefix,
+        skipGeneration,
+        runningEnvironment,
+        typespecProject,
+        autorestConfig
+    } = await parseInputJson(inputJsonPath);
 
     try {
         if (!local) {
@@ -145,10 +182,12 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                 break;
         }
     } catch (e) {
-        const packageNameStr =`'${outputJson.packages?.[0]?.packageName}' `;
+        const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);
         logger.error(`Please review the detail errors for potential fixes.`);
-        logger.error(`If the issue persists, contact the support channel at https://aka.ms/azsdk/js-teams-channel and include this spec pull request.`)
+        logger.error(
+            `If the issue persists, contact the support channel at https://aka.ms/azsdk/js-teams-channel and include this spec pull request.`
+        );
         throw e;
     } finally {
         if (!local) {

@@ -5,6 +5,7 @@
 
 import astroid
 import pylint.testutils
+import pytest
 import requests
 import os
 
@@ -18,125 +19,75 @@ TEST_FOLDER = os.path.abspath(os.path.join(__file__, ".."))
 class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveTracingDecorators
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "test_client_methods_have_tracing_decorators.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_constructor(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        function_node = setup.body[3].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method_async(self, setup):
+        function_node = setup.body[3].body[2]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_methods_with_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator import distributed_trace
-        class SomeClient(): #@
-            @distributed_trace
-            def create_configuration(self, **kwargs): #@
-                pass
-            @distributed_trace
-            def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace
-            def list_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_decorators(self, setup):
+        func_node_a = setup.body[3].body[3]
+        func_node_b = setup.body[3].body[4]
+        func_node_c = setup.body[3].body[5]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_async_methods_with_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator_async import distributed_trace_async
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def create_configuration(self, **kwargs): #@
-                pass
-            @distributed_trace_async
-            async def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace_async
-            async def list_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_async_methods_with_decorators(self, setup):
+        func_node_a = setup.body[3].body[6]
+        func_node_b = setup.body[3].body[7]
+        func_node_c = setup.body[3].body[8]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_sync_decorator_on_async_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator import distributed_trace
-        class SomeClient(): #@
-            @distributed_trace
-            async def create_configuration(self, **kwargs): #@
-                pass
-            @distributed_trace
-            async def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace
-            async def list_thing(self, **kwargs): #@
-                pass
-        """
-        )
+    def test_finds_sync_decorator_on_async_method(self, setup):
+        func_node_a = setup.body[3].body[9]
+        func_node_b = setup.body[3].body[10]
+        func_node_c = setup.body[3].body[11]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=5,
+                line=41,
                 node=func_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=41,
                 end_col_offset=34,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=8,
+                line=45,
                 node=func_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=45,
                 end_col_offset=23,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=11,
+                line=49,
                 node=func_node_c,
                 col_offset=4,
-                end_line=11,
+                end_line=49,
                 end_col_offset=24,
             ),
         ):
@@ -144,45 +95,33 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_async_decorator_on_sync_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator_async import distributed_trace_async
-        class SomeClient(): #@
-            @distributed_trace_async
-            def create_configuration(self, **kwargs): #@
-                pass
-            @distributed_trace_async
-            def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace_async
-            def list_thing(self, **kwargs): #@
-                pass
-        """
-        )
+    def test_finds_async_decorator_on_sync_method(self, setup):
+        func_node_a = setup.body[3].body[12]
+        func_node_b = setup.body[3].body[13]
+        func_node_c = setup.body[3].body[14]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=5,
+                line=53,
                 node=func_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=53,
                 end_col_offset=28,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=8,
+                line=57,
                 node=func_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=57,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=11,
+                line=61,
                 node=func_node_c,
                 col_offset=4,
-                end_line=11,
+                end_line=61,
                 end_col_offset=18,
             ),
         ):
@@ -190,61 +129,23 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_other_decorators(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator import distributed_trace
-        class SomeClient(): #@
-            @classmethod
-            @distributed_trace
-            def download_thing(self, some, **kwargs): #@
-                pass
-
-            @distributed_trace
-            @decorator
-            def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_decorators(self, setup):
+        func_node_a = setup.body[3].body[15]
+        func_node_b = setup.body[3].body[16]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
 
-    def test_ignores_other_decorators_async(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator_async import distributed_trace_async
-        class SomeClient(): #@
-            @classmethod
-            @distributed_trace_async
-            async def download_thing(self, some, **kwargs): #@
-                pass
-
-            @distributed_trace_async
-            @decorator
-            async def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_decorators_async(self, setup):
+        func_node_a = setup.body[3].body[17]
+        func_node_b = setup.body[3].body[18]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
 
-    def test_ignores_non_client_method(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def download_thing(self, some, **kwargs): #@
-                pass
-            
-            @classmethod
-            async def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_method(self, setup):
+        func_node_a = setup.body[4].body[0]
+        func_node_b = setup.body[4].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)

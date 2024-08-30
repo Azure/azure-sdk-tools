@@ -1068,131 +1068,72 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(
-    pylint.testutils.CheckerTestCase
-):
+class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientHasKwargsInPoliciesForCreateConfigurationMethod
 
-    def test_ignores_config_policies_with_kwargs(self):
-        function_node_a, function_node_b = astroid.extract_node(
-            """
-        def create_configuration(self, **kwargs): #@
-            config = Configuration(**kwargs)
-            config.headers_policy = StorageHeadersPolicy(**kwargs)
-            config.user_agent_policy = StorageUserAgentPolicy(**kwargs)
-            config.retry_policy = kwargs.get('retry_policy') or ExponentialRetry(**kwargs)
-            config.redirect_policy = RedirectPolicy(**kwargs)
-            config.logging_policy = StorageLoggingPolicy(**kwargs)
-            config.proxy_policy = ProxyPolicy(**kwargs)
-            return config
-
-        @staticmethod
-        def create_config(credential, api_version=None, **kwargs): #@
-            # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
-            if api_version is None:
-                api_version = KeyVaultClient.DEFAULT_API_VERSION
-            config = KeyVaultClient.get_configuration_class(api_version, aio=False)(credential, **kwargs)
-            config.authentication_policy = ChallengeAuthPolicy(credential, **kwargs)
-            return config
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_has_kwargs_in_policies_for_create_config_method.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_config_policies_with_kwargs(self, setup):
+        function_node_a = setup.body[4].body[0]
+        function_node_b = setup.body[4].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_config_policies_without_kwargs(self):
-        (
-            function_node_a,
-            policy_a,
-            policy_b,
-            policy_c,
-            function_node_b,
-            policy_d,
-        ) = astroid.extract_node(
-            """
-        def create_configuration(self, **kwargs): #@
-            config = Configuration(**kwargs)
-            config.headers_policy = StorageHeadersPolicy(**kwargs)
-            config.user_agent_policy = StorageUserAgentPolicy() #@
-            config.retry_policy = kwargs.get('retry_policy') or ExponentialRetry(**kwargs)
-            config.redirect_policy = RedirectPolicy(**kwargs)
-            config.logging_policy = StorageLoggingPolicy() #@
-            config.proxy_policy = ProxyPolicy() #@
-            return config
-
-        @staticmethod
-        def create_config(credential, api_version=None, **kwargs): #@
-            # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
-            if api_version is None:
-                api_version = KeyVaultClient.DEFAULT_API_VERSION
-            config = KeyVaultClient.get_configuration_class(api_version, aio=False)(credential, **kwargs)
-            config.authentication_policy = ChallengeAuthPolicy(credential) #@
-            return config
-        """
-        )
-
+    def test_finds_config_policies_without_kwargs(self, setup):
+        function_node_a = setup.body[5].body[0]
+        policy_a = setup.body[5].body[0].body[2]
+        policy_b = setup.body[5].body[0].body[5]
+        policy_c = setup.body[5].body[0].body[6]
+        function_node_b = setup.body[5].body[1]
+        policy_d = setup.body[5].body[1].body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="config-missing-kwargs-in-policy",
-                line=5,
+                line=35,
                 node=policy_a,
-                col_offset=4,
-                end_line=5,
-                end_col_offset=55,
+                col_offset=8,
+                end_line=35,
+                end_col_offset=59,
             ),
             pylint.testutils.MessageTest(
                 msg_id="config-missing-kwargs-in-policy",
-                line=8,
+                line=38,
                 node=policy_b,
-                col_offset=4,
-                end_line=8,
-                end_col_offset=50,
+                col_offset=8,
+                end_line=38,
+                end_col_offset=54,
             ),
             pylint.testutils.MessageTest(
                 msg_id="config-missing-kwargs-in-policy",
-                line=9,
+                line=39,
                 node=policy_c,
-                col_offset=4,
-                end_line=9,
-                end_col_offset=39,
+                col_offset=8,
+                end_line=39,
+                end_col_offset=43,
             ),
             pylint.testutils.MessageTest(
                 msg_id="config-missing-kwargs-in-policy",
-                line=18,
+                line=48,
                 node=policy_d,
-                col_offset=4,
-                end_line=18,
-                end_col_offset=66,
+                col_offset=8,
+                end_line=48,
+                end_col_offset=70,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_ignores_policies_outside_create_config(self):
-        function_node_a, function_node_b = astroid.extract_node(
-            """
-        def _configuration(self, **kwargs): #@
-            config = Configuration(**kwargs)
-            config.headers_policy = StorageHeadersPolicy(**kwargs)
-            config.user_agent_policy = StorageUserAgentPolicy(**kwargs)
-            config.retry_policy = kwargs.get('retry_policy') or ExponentialRetry()
-            config.redirect_policy = RedirectPolicy()
-            config.logging_policy = StorageLoggingPolicy()
-            config.proxy_policy = ProxyPolicy()
-            return config
-
-        @staticmethod
-        def some_other_method(credential, api_version=None, **kwargs): #@
-            # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
-            if api_version is None:
-                api_version = KeyVaultClient.DEFAULT_API_VERSION
-            config = KeyVaultClient.get_configuration_class(api_version, aio=False)(credential)
-            config.authentication_policy = ChallengeAuthPolicy(credential)
-            return config
-        """
-        )
-
+    def test_ignores_policies_outside_create_config(self, setup):
+        function_node_a = setup.body[6].body[0]
+        function_node_b = setup.body[6].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
@@ -1555,7 +1496,7 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_class_constant(self):
+    def test_finds_incorrectly_named_class_constant1(self):
         class_node, const_a = astroid.extract_node(
             """
         class SomeClient(): #@

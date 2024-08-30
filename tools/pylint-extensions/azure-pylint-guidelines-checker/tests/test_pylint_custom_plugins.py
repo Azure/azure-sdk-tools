@@ -1152,156 +1152,82 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
 class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientUsesCorrectNamingConventions
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_uses_correct_naming_conventions.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_constructor(self, setup):
+        class_node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_internal_client(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class _BaseSomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_internal_client(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_private_method(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _private_method(self, **kwargs): #@
-                pass
-            async def _another_private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        class_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_client(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            pass
-        """
-        )
-
+    def test_ignores_correct_client(self, setup):
+        class_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_non_client(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def download_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client(self, setup):
+        class_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_method_names(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def from_connection_string(self, **kwargs): #@
-                pass
-            def get_thing(self, **kwargs): #@
-                pass
-            def delete_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_correct_method_names(self, setup):
+        class_node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_method_names_async(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def from_connection_string(self, **kwargs): #@
-                pass
-            def get_thing(self, **kwargs): #@
-                pass
-            def delete_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_correct_method_names_async(self, setup):
+        class_node = setup.body[6]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_class_constant(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            MAX_SIZE = 14
-            MIN_SIZE = 2
-        """
-        )
-
+    def test_ignores_correct_class_constant(self, setup):
+        class_node = setup.body[7]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_client(self):
-        class_node_a, class_node_b, class_node_c = astroid.extract_node(
-            """
-        class some_client(): #@
-            pass
-        class Some_Client(): #@
-            pass
-        class someClient(): #@
-            pass
-        """
-        )
-
+    def test_finds_incorrectly_named_client(self, setup):
+        class_node_a = setup.body[8]
+        class_node_b = setup.body[9]
+        class_node_c  = setup.body[10]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=2,
+                line=64,
                 node=class_node_a,
                 col_offset=0,
-                end_line=2,
+                end_line=64,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=4,
+                line=68,
                 node=class_node_b,
                 col_offset=0,
-                end_line=4,
+                end_line=68,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=6,
+                line=72,
                 node=class_node_c,
                 col_offset=0,
-                end_line=6,
+                end_line=72,
                 end_col_offset=16,
             ),
         ):
@@ -1309,201 +1235,152 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(class_node_b)
             self.checker.visit_classdef(class_node_c)
 
-    def test_finds_incorrectly_named_methods(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def Create_Config(self): #@
-                pass
-            def getThing(self): #@
-                pass
-            def List_thing(self): #@
-                pass
-            def UpsertThing(self): #@
-                pass
-            def set_Thing(self): #@
-                pass
-            def Updatething(self): #@
-                pass
-        """
-        )
-
+    def test_finds_incorrectly_named_methods(self , setup):
+        class_node = setup.body[11]
+        func_node_a = setup.body[11].body[0]
+        func_node_b = setup.body[11].body[1]
+        func_node_c = setup.body[11].body[2]
+        func_node_d = setup.body[11].body[3]
+        func_node_e = setup.body[11].body[4]
+        func_node_f = setup.body[11].body[5]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=3,
+                line=78,
                 node=func_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=78,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=5,
+                line=81,
                 node=func_node_b,
                 col_offset=4,
-                end_line=5,
+                end_line=81,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=7,
+                line=84,
                 node=func_node_c,
                 col_offset=4,
-                end_line=7,
+                end_line=84,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=9,
+                line=87,
                 node=func_node_d,
                 col_offset=4,
-                end_line=9,
+                end_line=87,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=11,
+                line=90,
                 node=func_node_e,
                 col_offset=4,
-                end_line=11,
+                end_line=90,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=13,
+                line=93,
                 node=func_node_f,
                 col_offset=4,
-                end_line=13,
+                end_line=93,
                 end_col_offset=19,
             ),
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_methods_async(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def Create_Config(self): #@
-                pass
-            async def getThing(self): #@
-                pass
-            async def List_thing(self): #@
-                pass
-            async def UpsertThing(self): #@
-                pass
-            async def set_Thing(self): #@
-                pass
-            async def Updatething(self): #@
-                pass
-        """
-        )
-
+    def test_finds_incorrectly_named_methods_async(self, setup):
+        class_node = setup.body[12]
+        func_node_a = setup.body[12].body[0]
+        func_node_b = setup.body[12].body[1]
+        func_node_c = setup.body[12].body[2]
+        func_node_d = setup.body[12].body[3]
+        func_node_e = setup.body[12].body[4]
+        func_node_f = setup.body[12].body[5]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=3,
+                line=99,
                 node=func_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=99,
                 end_col_offset=27,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=5,
+                line=102,
                 node=func_node_b,
                 col_offset=4,
-                end_line=5,
+                end_line=102,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=7,
+                line=105,
                 node=func_node_c,
                 col_offset=4,
-                end_line=7,
+                end_line=105,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=9,
+                line=108,
                 node=func_node_d,
                 col_offset=4,
-                end_line=9,
+                end_line=108,
                 end_col_offset=25,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=11,
+                line=111,
                 node=func_node_e,
                 col_offset=4,
-                end_line=11,
+                end_line=111,
                 end_col_offset=23,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=13,
+                line=114,
                 node=func_node_f,
                 col_offset=4,
-                end_line=13,
+                end_line=114,
                 end_col_offset=25,
             ),
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_class_constant(self):
-        class_node, const_a, const_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            max_size = 14 #@
-            min_size = 2 #@
-        """
-        )
-
+    def test_finds_incorrectly_named_class_constant(self, setup):
+        class_node = setup.body[13]
+        const_a = setup.body[13].body[0]
+        const_b = setup.body[13].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=3,
+                line=120,
                 node=const_a,
                 col_offset=4,
-                end_line=3,
+                end_line=120,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=4,
+                line=121,
                 node=const_b,
                 col_offset=4,
-                end_line=4,
+                end_line=121,
                 end_col_offset=16,
             ),
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_class_constant1(self):
-        class_node, const_a = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            __doc__ = "Some docstring" #@
-        """
-        )
-
+    def test_ignores_docstrings(self, setup):
+        class_node = setup.body[14]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 

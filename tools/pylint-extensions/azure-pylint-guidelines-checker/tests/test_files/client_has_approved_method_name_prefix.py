@@ -1,26 +1,31 @@
 from azure.core.tracing.decorator import distributed_trace
 
 
+# test_ignores_constructor
 class SomeClient():  # @
     def __init__(self, **kwargs):  # @
         pass
 
 
+# test_ignores_private_method
 class Some1Client():  # @
     def _private_method(self, **kwargs):  # @
         pass
 
 
+# test_ignores_if_exists_suffix
 class Some2Client():  # @
     def check_if_exists(self, **kwargs):  # @
         pass
 
 
+# test_ignores_from_prefix
 class Some3Client():  # @
     def from_connection_string(self, **kwargs):  # @
         pass
 
 
+# test_ignores_approved_prefix_names
 class Some4Client():  # @
     def create_configuration(self):  # @
         pass
@@ -59,17 +64,20 @@ class Some4Client():  # @
         pass
 
 
+# test_ignores_non_client_with_unapproved_prefix_names
 class SomethingElse():  # @
     def download_thing(self, some, **kwargs):  # @
         pass
 
 
+# test_ignores_nested_function_with_unapproved_prefix_names
 class Some5Client():  # @
     def create_configuration(self, **kwargs):  # @
         def nested(hello, world):
             pass
 
 
+# test_finds_unapproved_prefix_names
 class Some6Client():  # @
     @distributed_trace
     def build_configuration(self):  # @

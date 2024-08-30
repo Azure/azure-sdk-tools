@@ -68,26 +68,26 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=41,
+                line=47,
                 node=func_node_a,
                 col_offset=4,
-                end_line=41,
+                end_line=47,
                 end_col_offset=34,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=45,
+                line=51,
                 node=func_node_b,
                 col_offset=4,
-                end_line=45,
+                end_line=51,
                 end_col_offset=23,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=49,
+                line=55,
                 node=func_node_c,
                 col_offset=4,
-                end_line=49,
+                end_line=55,
                 end_col_offset=24,
             ),
         ):
@@ -102,26 +102,26 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=53,
+                line=60,
                 node=func_node_a,
                 col_offset=4,
-                end_line=53,
+                end_line=60,
                 end_col_offset=28,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=57,
+                line=64,
                 node=func_node_b,
                 col_offset=4,
-                end_line=57,
+                end_line=64,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=61,
+                line=68,
                 node=func_node_c,
                 col_offset=4,
-                end_line=61,
+                end_line=68,
                 end_col_offset=18,
             ),
         ):
@@ -211,26 +211,26 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=43,
+                line=49,
                 node=func_node_a,
                 col_offset=4,
-                end_line=43,
+                end_line=49,
                 end_col_offset=35,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=47,
+                line=53,
                 node=func_node_b,
                 col_offset=4,
-                end_line=47,
+                end_line=53,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=51,
+                line=57,
                 node=func_node_c,
                 col_offset=4,
-                end_line=51,
+                end_line=57,
                 end_col_offset=25,
             ),
         ):
@@ -245,26 +245,26 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=55,
+                line=62,
                 node=func_node_a,
                 col_offset=4,
-                end_line=55,
+                end_line=62,
                 end_col_offset=29,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=59,
+                line=66,
                 node=func_node_b,
                 col_offset=4,
-                end_line=59,
+                end_line=66,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=63,
+                line=70,
                 node=func_node_c,
                 col_offset=4,
-                end_line=63,
+                end_line=70,
                 end_col_offset=19,
             ),
         ):
@@ -370,130 +370,130 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=75,
+                line=83,
                 node=func_node_a,
                 col_offset=4,
-                end_line=75,
+                end_line=83,
                 end_col_offset=27,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=78,
+                line=86,
                 node=func_node_b,
                 col_offset=4,
-                end_line=78,
+                end_line=86,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=81,
+                line=89,
                 node=func_node_c,
                 col_offset=4,
-                end_line=81,
+                end_line=89,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=84,
+                line=92,
                 node=func_node_d,
                 col_offset=4,
-                end_line=84,
+                end_line=92,
                 end_col_offset=20,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=87,
+                line=95,
                 node=func_node_e,
                 col_offset=4,
-                end_line=87,
+                end_line=95,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=90,
+                line=98,
                 node=func_node_f,
                 col_offset=4,
-                end_line=90,
+                end_line=98,
                 end_col_offset=29,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=93,
+                line=101,
                 node=func_node_g,
                 col_offset=4,
-                end_line=93,
+                end_line=101,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=96,
+                line=104,
                 node=func_node_h,
                 col_offset=4,
-                end_line=96,
+                end_line=104,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=99,
+                line=107,
                 node=func_node_i,
                 col_offset=4,
-                end_line=99,
+                end_line=107,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=102,
+                line=110,
                 node=func_node_j,
                 col_offset=4,
-                end_line=102,
+                end_line=110,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=105,
+                line=113,
                 node=func_node_k,
                 col_offset=4,
-                end_line=105,
+                end_line=113,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=108,
+                line=116,
                 node=func_node_l,
                 col_offset=4,
-                end_line=108,
+                end_line=116,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=111,
+                line=119,
                 node=func_node_m,
                 col_offset=4,
-                end_line=111,
+                end_line=119,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=114,
+                line=122,
                 node=func_node_n,
                 col_offset=4,
-                end_line=114,
+                end_line=122,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=117,
+                line=125,
                 node=func_node_o,
                 col_offset=4,
-                end_line=117,
+                end_line=125,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=120,
+                line=128,
                 node=func_node_p,
                 col_offset=4,
-                end_line=120,
+                end_line=128,
                 end_col_offset=21,
             ),
         ):
@@ -511,108 +511,75 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientConstructorTakesCorrectParameters
 
-    def test_finds_correct_params(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, thing_url, credential, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_constructor_takes_correct_parameters.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_finds_correct_params(self, setup):
+        function_node = setup.body[0].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_non_constructor_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def create_configuration(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_constructor_methods(self, setup):
+        function_node = setup.body[0].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_non_client_constructor_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def __init__(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_constructor_methods(self, setup):
+        function_node = setup.body[1].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_constructor_without_kwargs(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, thing_url, credential=None): #@
-                pass
-        """
-        )
-
+    def test_finds_constructor_without_kwargs(self, setup):
+        function_node = setup.body[2].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="missing-client-constructor-parameter-kwargs",
-                line=3,
+                line=19,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=19,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_constructor_without_credentials(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, thing_url, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_finds_constructor_without_credentials(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="missing-client-constructor-parameter-credential",
-                line=3,
+                line=25,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=25,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_constructor_with_no_params(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self): #@
-                pass
-        """
-        )
-
+    def test_finds_constructor_with_no_params(self, setup):
+        function_node = setup.body[4].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="missing-client-constructor-parameter-credential",
-                line=3,
+                line=31,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=31,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="missing-client-constructor-parameter-kwargs",
-                line=3,
+                line=31,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=31,
                 end_col_offset=16,
             ),
         ):

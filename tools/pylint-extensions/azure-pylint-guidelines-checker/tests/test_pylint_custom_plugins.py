@@ -22,7 +22,7 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "test_client_methods_have_tracing_decorators.py")
+            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_tracing_decorators.py")
         )
         node = astroid.parse(file.read())
         file.close()
@@ -165,7 +165,7 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "test_clients_do_not_use_static_methods.py")
+            os.path.join(TEST_FOLDER, "test_files", "clients_do_not_use_static_methods.py")
         )
         node = astroid.parse(file.read())
         file.close()
@@ -305,312 +305,195 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
 class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientHasApprovedMethodNamePrefix
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_has_approved_method_name_prefix.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_constructor(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_private_method(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        class_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_if_exists_suffix(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def check_if_exists(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_if_exists_suffix(self, setup):
+        class_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_from_prefix(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def from_connection_string(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_from_prefix(self, setup):
+        class_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_approved_prefix_names(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-            func_node_g,
-            func_node_h,
-            func_node_i,
-            func_node_j,
-            func_node_k,
-            func_node_l,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def create_configuration(self): #@
-                pass
-            def get_thing(self): #@
-                pass
-            def list_thing(self): #@
-                pass
-            def upsert_thing(self): #@
-                pass
-            def set_thing(self): #@
-                pass
-            def update_thing(self): #@
-                pass
-            def replace_thing(self): #@
-                pass
-            def append_thing(self): #@
-                pass
-            def add_thing(self): #@
-                pass
-            def delete_thing(self): #@
-                pass
-            def remove_thing(self): #@
-                pass
-            def begin_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_approved_prefix_names(self, setup):
+        class_node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_non_client_with_unapproved_prefix_names(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def download_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_with_unapproved_prefix_names(self, setup):
+        class_node = setup.body[6]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_nested_function_with_unapproved_prefix_names(self):
-        class_node, function_node = astroid.extract_node(
-            """
-            class SomeClient(): #@
-                def create_configuration(self, **kwargs): #@
-                    def nested(hello, world):
-                        pass
-            """
-        )
-
+    def test_ignores_nested_function_with_unapproved_prefix_names(self, setup):
+        class_node = setup.body[7]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_finds_unapproved_prefix_names(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-            func_node_g,
-            func_node_h,
-            func_node_i,
-            func_node_j,
-            func_node_k,
-            func_node_l,
-            func_node_m,
-            func_node_n,
-            func_node_o,
-            func_node_p,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def build_configuration(self): #@
-                pass
-            def generate_thing(self): #@
-                pass
-            def make_thing(self): #@
-                pass
-            def insert_thing(self): #@
-                pass
-            def put_thing(self): #@
-                pass
-            def creates_configuration(self): #@
-                pass
-            def gets_thing(self): #@
-                pass
-            def lists_thing(self): #@
-                pass
-            def upserts_thing(self): #@
-                pass
-            def sets_thing(self): #@
-                pass
-            def updates_thing(self): #@
-                pass
-            def replaces_thing(self): #@
-                pass
-            def appends_thing(self): #@
-                pass
-            def adds_thing(self): #@
-                pass
-            def deletes_thing(self): #@
-                pass
-            def removes_thing(self): #@
-                pass
-        """
-        )
-
+    def test_finds_unapproved_prefix_names(self, setup):
+        class_node = setup.body[8]
+        func_node_a = setup.body[8].body[0]
+        func_node_b = setup.body[8].body[1]
+        func_node_c = setup.body[8].body[2]
+        func_node_d = setup.body[8].body[3]
+        func_node_e = setup.body[8].body[4]
+        func_node_f = setup.body[8].body[5]
+        func_node_g = setup.body[8].body[6]
+        func_node_h = setup.body[8].body[7]
+        func_node_i = setup.body[8].body[8]
+        func_node_j = setup.body[8].body[9]
+        func_node_k = setup.body[8].body[10]
+        func_node_l = setup.body[8].body[11]
+        func_node_m = setup.body[8].body[12]
+        func_node_n = setup.body[8].body[13]
+        func_node_o = setup.body[8].body[14]
+        func_node_p = setup.body[8].body[15]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=4,
+                line=75,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
+                end_line=75,
                 end_col_offset=27,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=6,
+                line=78,
                 node=func_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=78,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=8,
+                line=81,
                 node=func_node_c,
                 col_offset=4,
-                end_line=8,
+                end_line=81,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=10,
+                line=84,
                 node=func_node_d,
                 col_offset=4,
-                end_line=10,
+                end_line=84,
                 end_col_offset=20,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=12,
+                line=87,
                 node=func_node_e,
                 col_offset=4,
-                end_line=12,
+                end_line=87,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=14,
+                line=90,
                 node=func_node_f,
                 col_offset=4,
-                end_line=14,
+                end_line=90,
                 end_col_offset=29,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=16,
+                line=93,
                 node=func_node_g,
                 col_offset=4,
-                end_line=16,
+                end_line=93,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=18,
+                line=96,
                 node=func_node_h,
                 col_offset=4,
-                end_line=18,
+                end_line=96,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=20,
+                line=99,
                 node=func_node_i,
                 col_offset=4,
-                end_line=20,
+                end_line=99,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=22,
+                line=102,
                 node=func_node_j,
                 col_offset=4,
-                end_line=22,
+                end_line=102,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=24,
+                line=105,
                 node=func_node_k,
                 col_offset=4,
-                end_line=24,
+                end_line=105,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=26,
+                line=108,
                 node=func_node_l,
                 col_offset=4,
-                end_line=26,
+                end_line=108,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=28,
+                line=111,
                 node=func_node_m,
                 col_offset=4,
-                end_line=28,
+                end_line=111,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=30,
+                line=114,
                 node=func_node_n,
                 col_offset=4,
-                end_line=30,
+                end_line=114,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=32,
+                line=117,
                 node=func_node_o,
                 col_offset=4,
-                end_line=32,
+                end_line=117,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=34,
+                line=120,
                 node=func_node_p,
                 col_offset=4,
-                end_line=34,
+                end_line=120,
                 end_col_offset=21,
             ),
         ):

@@ -162,230 +162,133 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
 class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientsDoNotUseStaticMethods
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "test_clients_do_not_use_static_methods.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_constructor(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        function_node = setup.body[3].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            async def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method_async(self, setup):
+        function_node = setup.body[3].body[2]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_methods_with_other_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def create_configuration(self): #@
-                pass
-            @distributed_trace
-            def get_thing(self): #@
-                pass
-            @distributed_trace
-            def list_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_other_decorators(self, setup):
+        func_node_a = setup.body[3].body[3]
+        func_node_b = setup.body[3].body[4]
+        func_node_c = setup.body[3].body[5]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_async_methods_with_other_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def create_configuration(self): #@
-                pass
-            @distributed_trace_async
-            async def get_thing(self): #@
-                pass
-            @distributed_trace_async
-            async def list_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_async_methods_with_other_decorators(self, setup):
+        func_node_a = setup.body[3].body[6]
+        func_node_b = setup.body[3].body[7]
+        func_node_c = setup.body[3].body[8]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_staticmethod_on_async_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            async def create_configuration(self): #@
-                pass
-            @staticmethod
-            async def get_thing(self): #@
-                pass
-            @staticmethod
-            async def list_thing(self): #@
-                pass
-        """
-        )
+    def test_finds_staticmethod_on_async_method(self, setup):
+        func_node_a = setup.body[3].body[9]
+        func_node_b = setup.body[3].body[10]
+        func_node_c = setup.body[3].body[11]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=4,
+                line=43,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
-                end_col_offset=34,
+                end_line=43,
+                end_col_offset=35,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=7,
+                line=47,
                 node=func_node_b,
                 col_offset=4,
-                end_line=7,
-                end_col_offset=23,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="client-method-should-not-use-static-method",
-                line=10,
-                node=func_node_c,
-                col_offset=4,
-                end_line=10,
+                end_line=47,
                 end_col_offset=24,
             ),
+            pylint.testutils.MessageTest(
+                msg_id="client-method-should-not-use-static-method",
+                line=51,
+                node=func_node_c,
+                col_offset=4,
+                end_line=51,
+                end_col_offset=25,
+            ),
         ):
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_staticmethod_on_sync_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            def create_configuration(self): #@
-                pass
-            @staticmethod
-            def get_thing(self): #@
-                pass
-            @staticmethod
-            def list_thing(self): #@
-                pass
-        """
-        )
+    def test_finds_staticmethod_on_sync_method(self, setup):
+        func_node_a = setup.body[3].body[12]
+        func_node_b = setup.body[3].body[13]
+        func_node_c = setup.body[3].body[14]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=4,
+                line=55,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
-                end_col_offset=28,
+                end_line=55,
+                end_col_offset=29,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=7,
+                line=59,
                 node=func_node_b,
                 col_offset=4,
-                end_line=7,
-                end_col_offset=17,
+                end_line=59,
+                end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=10,
+                line=63,
                 node=func_node_c,
                 col_offset=4,
-                end_line=10,
-                end_col_offset=18,
+                end_line=63,
+                end_col_offset=19,
             ),
         ):
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_other_multiple_decorators(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @classmethod
-            @distributed_trace
-            def download_thing(self, some, **kwargs): #@
-                pass
-
-            @distributed_trace
-            @decorator
-            def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_multiple_decorators(self, setup):
+        func_node_a = setup.body[3].body[15]
+        func_node_b = setup.body[3].body[16]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
 
-    def test_ignores_other_multiple_decorators_async(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @classmethod
-            @distributed_trace_async
-            async def download_thing(self, some, **kwargs): #@
-                pass
-
-            @distributed_trace_async
-            @decorator
-            async def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_multiple_decorators_async(self, setup):
+        func_node_a = setup.body[3].body[17]
+        func_node_b = setup.body[3].body[18]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
 
-    def test_ignores_non_client_method(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            @staticmethod
-            def download_thing(self, some, **kwargs): #@
-                pass
-
-            @staticmethod
-            async def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_method(self, setup):
+        func_node_a = setup.body[4].body[0]
+        func_node_b = setup.body[4].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)

@@ -51,6 +51,22 @@
     </ul>
 </app-page-options-section>
 
+<app-page-options-section *ngIf="associatedPullRequests.length > 0" sectionName="Associated Pull Requests">
+    <ul class="list-group">
+        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
+            <a href="https://github.com/{{pullRequest.repoName}}/pull/{{pullRequest.pullRequestNumber}}" target="_blank">{{pullRequest.repoName}}/{{pullRequest.pullRequestNumber}}</a>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0" sectionName="Associated API Revisions" [collapsedInput]="true">
+    <ul class="list-group">
+        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
+            <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank">{{pullRequest.language}}/{{pullRequest.packageName}}</a>
+        </li>
+    </ul>
+</app-page-options-section>
+
 <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
         <li class="list-group-item">

@@ -1396,153 +1396,91 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
 class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveKwargsParameter
 
-    def test_ignores_private_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _create_configuration(self): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_kwargs_param.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_methods(self, setup):
+        function_node = setup.body[2].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_properties(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @property
-            def key_id(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_properties(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_properties_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @property
-            async def key_id(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_properties_async(self, setup):
+        function_node = setup.body[4].body[0]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def create_configuration(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node = setup.body[5].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_methods_with_kwargs(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace
-            def remove_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_kwargs(self, setup):
+        function_node_a = setup.body[6].body[0]
+        function_node_b = setup.body[6].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_missing_kwargs(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator import distributed_trace
-        
-        class SomeClient(): #@
-            @distributed_trace
-            def get_thing(self): #@
-                pass
-            @distributed_trace
-            def remove_thing(self): #@
-                pass
-        """
-        )
-
+    def test_finds_missing_kwargs(self, setup):
+        function_node_a = setup.body[7].body[0]
+        function_node_b = setup.body[7].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-kwargs",
-                line=6,
+                line=44,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=44,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-kwargs",
-                line=9,
+                line=48,
                 node=function_node_b,
                 col_offset=4,
-                end_line=9,
+                end_line=48,
                 end_col_offset=20,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_ignores_methods_with_kwargs_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def get_thing(self, **kwargs): #@
-                pass
-            async def remove_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_kwargs_async(self, setup):
+        function_node_a = setup.body[8].body[0]
+        function_node_b = setup.body[8].body[1]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_finds_missing_kwargs_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator_async import distributed_trace_async
-        
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def get_thing(self): #@
-                pass
-            @distributed_trace_async
-            async def remove_thing(self): #@
-                pass
-        """
-        )
-
+    def test_finds_missing_kwargs_async(self, setup):
+        function_node_a = setup.body[9].body[0]
+        function_node_b = setup.body[9].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-kwargs",
-                line=6,
+                line=64,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=64,
                 end_col_offset=23,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-kwargs",
-                line=9,
+                line=68,
                 node=function_node_b,
                 col_offset=4,
-                end_line=9,
+                end_line=68,
                 end_col_offset=26,
             ),
         ):

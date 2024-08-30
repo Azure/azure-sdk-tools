@@ -837,373 +837,223 @@ class TestClientMethodsUseKwargsWithMultipleParameters(pylint.testutils.CheckerT
 class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveTypeAnnotations
 
-    def test_ignores_correct_type_annotations(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict) -> int: #@
-                pass
-            async def do_thing(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict) -> int: #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_type_annotations.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_correct_type_annotations(self, setup):
+        function_node_a = setup.body[1].body[0]
+        function_node_b = setup.body[1].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_ignores_correct_type_comments(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing_a(self, one, two, three, four, five): #@
-                # type: (str, str, str, str, str) -> None
-                pass
-
-            def do_thing_b(self, one, two):  # type: (str, str) -> int #@
-                pass
-
-            def do_thing_c(self, #@
-                           one,  # type: str
-                           two,  # type: str
-                           three,  # type: str
-                           four,  # type: str
-                           five  # type: str
-                           ):
-                # type: (...) -> int
-                pass
-        """
-        )
-
+    def test_ignores_correct_type_comments(self, setup):
+        function_node_a = setup.body[1].body[2]
+        function_node_b = setup.body[1].body[3]
+        function_node_c = setup.body[1].body[4]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
             self.checker.visit_functiondef(function_node_c)
 
-    def test_ignores_correct_type_comments_async(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing_a(self, one, two, three, four, five): #@
-                # type: (str, str, str, str, str) -> None
-                pass
-
-            async def do_thing_b(self, one, two):  # type: (str, str) -> int #@
-                pass
-
-            async def do_thing_c(self, #@
-                           one,  # type: str
-                           two,  # type: str
-                           three,  # type: str
-                           four,  # type: str
-                           five  # type: str
-                           ):
-                # type: (...) -> int
-                pass
-        """
-        )
-
+    def test_ignores_correct_type_comments_async(self, setup):
+        function_node_a = setup.body[1].body[5]
+        function_node_b = setup.body[1].body[6]
+        function_node_c = setup.body[1].body[7]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
             self.checker.visit_asyncfunctiondef(function_node_c)
 
-    def test_ignores_no_parameter_method_with_annotations(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing_a(self): #@
-                # type: () -> None
-                pass
-
-            def do_thing_b(self) -> None: #@
-                pass
-        """
-        )
-
+    def test_ignores_no_parameter_method_with_annotations(self, setup):
+        function_node_a = setup.body[1].body[8]
+        function_node_b = setup.body[1].body[9]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_ignores_no_parameter_method_with_annotations_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing_a(self): #@
-                # type: () -> None
-                pass
-
-            async def do_thing_b(self) -> None: #@
-                pass
-        """
-        )
-
+    def test_ignores_no_parameter_method_with_annotations_async(self, setup):
+        function_node_a = setup.body[1].body[10]
+        function_node_b = setup.body[1].body[11]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_finds_no_parameter_method_without_annotations(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self): #@
-                pass
-            async def do_thing(self): #@
-                pass
-        """
-        )
-
+    def test_finds_no_parameter_method_without_annotations(self, setup):
+        function_node_a = setup.body[2].body[0]
+        function_node_b = setup.body[2].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=67,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=67,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=5,
+                line=70,
                 node=function_node_b,
                 col_offset=4,
-                end_line=5,
+                end_line=70,
                 end_col_offset=22,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_method_missing_annotations(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self, one, two, three): #@
-                pass
-        """
-        )
-
+    def test_finds_method_missing_annotations(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=76,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=76,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_method_missing_annotations_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing(self, one, two, three): #@
-                pass
-        """
-        )
-
+    def test_finds_method_missing_annotations_async(self, setup):
+        function_node = setup.body[4].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=82,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=82,
                 end_col_offset=22,
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_finds_constructor_without_annotations(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, one, two, three, four, five): #@
-                pass
-        """
-        )
-
+    def test_finds_constructor_without_annotations(self, setup):
+        function_node = setup.body[5].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=88,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=88,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_missing_return_annotation_but_has_type_hints(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing_a(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict): #@
-                pass
-
-            def do_thing_b(self, one, two, three, four, five): #@
-                # type: (str, str, str, str, str)
-                pass
-        """
-        )
-
+    def test_finds_missing_return_annotation_but_has_type_hints(self, setup):
+        function_node_a = setup.body[6].body[0]
+        function_node_b = setup.body[6].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=94,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=94,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=6,
+                line=97,
                 node=function_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=97,
                 end_col_offset=18,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_missing_return_annotation_but_has_type_hints_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing_a(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict): #@
-                pass
-
-            async def do_thing_b(self, one, two, three, four, five): #@
-                # type: (str, str, str, str, str)
-                pass
-        """
-        )
-
+    def test_finds_missing_return_annotation_but_has_type_hints_async(self, setup):
+        function_node_a = setup.body[7].body[0]
+        function_node_b = setup.body[7].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=104,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=104,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=6,
+                line=107,
                 node=function_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=107,
                 end_col_offset=24,
             ),
         ):
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_finds_missing_annotations_but_has_return_hint(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing_a(self, one, two, three, four, five) -> None: #@
-                pass
-
-            def do_thing_b(self, one, two, three, four, five): #@
-                # type: -> None
-                pass
-        """
-        )
-
+    def test_finds_missing_annotations_but_has_return_hint(self, setup):
+        function_node_a = setup.body[8].body[0]
+        function_node_b = setup.body[8].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=114,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=114,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=6,
+                line=117,
                 node=function_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=117,
                 end_col_offset=18,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_missing_annotations_but_has_return_hint_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing_a(self, one, two, three, four, five) -> None: #@
-                pass
-
-            async def do_thing_b(self, one, two, three, four, five): #@
-                # type: -> None
-                pass
-        """
-        )
-
+    def test_finds_missing_annotations_but_has_return_hint_async(self, setup):
+        function_node_a = setup.body[9].body[0]
+        function_node_b = setup.body[9].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=124,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=124,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=6,
+                line=127,
                 node=function_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=127,
                 end_col_offset=24,
             ),
         ):
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def do_thing(self, one, two, three, four, five, six): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node = setup.body[10].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def _do_thing(self, one, two, three, four, five, six): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_methods(self, setup):
+        function_node = setup.body[10].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 

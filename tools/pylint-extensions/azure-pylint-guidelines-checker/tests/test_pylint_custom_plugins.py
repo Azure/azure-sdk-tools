@@ -596,63 +596,33 @@ class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCa
         assert response.http_response.status_code == 200
 
 
-class TestClientMethodsUseKwargsWithMultipleParameters(
-    pylint.testutils.CheckerTestCase
-):
+class TestClientMethodsUseKwargsWithMultipleParameters(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsUseKwargsWithMultipleParameters
 
-    def test_ignores_method_abiding_to_guidelines(self):
-        (
-            class_node,
-            function_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-            function_node_e,
-            function_node_f,
-            function_node_g,
-            function_node_h,
-            function_node_i,
-            function_node_j,
-            function_node_k,
-            function_node_l,
-            function_node_m,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def do_thing(): #@
-                pass
-            def do_thing_a(self): #@
-                pass
-            def do_thing_b(self, one): #@
-                pass
-            def do_thing_c(self, one, two): #@
-                pass
-            def do_thing_d(self, one, two, three): #@
-                pass
-            def do_thing_e(self, one, two, three, four): #@
-                pass
-            def do_thing_f(self, one, two, three, four, five): #@
-                pass
-            def do_thing_g(self, one, two, three, four, five, six=6): #@
-                pass
-            def do_thing_h(self, one, two, three, four, five, six=6, seven=7): #@
-                pass
-            def do_thing_i(self, one, two, three, four, five, *, six=6, seven=7): #@
-                pass
-            def do_thing_j(self, one, two, three, four, five, *, six=6, seven=7): #@
-                pass
-            def do_thing_k(self, one, two, three, four, five, **kwargs): #@
-                pass
-            def do_thing_l(self, one, two, three, four, five, *args, **kwargs): #@
-                pass
-            def do_thing_m(self, one, two, three, four, five, *args, six, seven=7, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_methods_use_kwargs_with_multiple_parameters.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_method_abiding_to_guidelines(self, setup):
+        function_node = setup.body[2].body[0]
+        function_node_a = setup.body[2].body[1]
+        function_node_b = setup.body[2].body[2]
+        function_node_c = setup.body[2].body[3]
+        function_node_d = setup.body[2].body[4]
+        function_node_e = setup.body[2].body[5]
+        function_node_f = setup.body[2].body[6]
+        function_node_g = setup.body[2].body[7]
+        function_node_h = setup.body[2].body[8]
+        function_node_i = setup.body[2].body[9]
+        function_node_j = setup.body[2].body[10]
+        function_node_k = setup.body[2].body[11]
+        function_node_l = setup.body[2].body[12]
+        function_node_m = setup.body[2].body[13]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
             self.checker.visit_functiondef(function_node_a)
@@ -669,58 +639,21 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
             self.checker.visit_functiondef(function_node_l)
             self.checker.visit_functiondef(function_node_m)
 
-    def test_ignores_method_abiding_to_guidelines_async(self):
-        (
-            class_node,
-            function_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-            function_node_e,
-            function_node_f,
-            function_node_g,
-            function_node_h,
-            function_node_i,
-            function_node_j,
-            function_node_k,
-            function_node_l,
-            function_node_m,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def do_thing(): #@
-                pass
-            async def do_thing_a(self): #@
-                pass
-            async def do_thing_b(self, one): #@
-                pass
-            async def do_thing_c(self, one, two): #@
-                pass
-            async def do_thing_d(self, one, two, three): #@
-                pass
-            async def do_thing_e(self, one, two, three, four): #@
-                pass
-            async def do_thing_f(self, one, two, three, four, five): #@
-                pass
-            async def do_thing_g(self, one, two, three, four, five, six=6): #@
-                pass
-            async def do_thing_h(self, one, two, three, four, five, six=6, seven=7): #@
-                pass
-            async def do_thing_i(self, one, two, three, four, five, *, six=6, seven=7): #@
-                pass
-            async def do_thing_j(self, one, two, three, four, five, *, six=6, seven=7): #@
-                pass
-            async def do_thing_k(self, one, two, three, four, five, **kwargs): #@
-                pass
-            async def do_thing_l(self, one, two, three, four, five, *args, **kwargs): #@
-                pass
-            async def do_thing_m(self, one, two, three, four, five, *args, six, seven=7, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_method_abiding_to_guidelines_async(self, setup):
+        function_node = setup.body[3].body[0]
+        function_node_a = setup.body[3].body[1]
+        function_node_b = setup.body[3].body[2]
+        function_node_c = setup.body[3].body[3]
+        function_node_d = setup.body[3].body[4]
+        function_node_e = setup.body[3].body[5]
+        function_node_f = setup.body[3].body[6]
+        function_node_g = setup.body[3].body[7]
+        function_node_h = setup.body[3].body[8]
+        function_node_i = setup.body[3].body[9]
+        function_node_j = setup.body[3].body[10]
+        function_node_k = setup.body[3].body[11]
+        function_node_l = setup.body[3].body[12]
+        function_node_m = setup.body[3].body[13]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
             self.checker.visit_asyncfunctiondef(function_node_a)
@@ -737,92 +670,69 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
             self.checker.visit_asyncfunctiondef(function_node_l)
             self.checker.visit_asyncfunctiondef(function_node_m)
 
-    def test_finds_methods_with_too_many_positional_args(self):
-        (
-            class_node,
-            function_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-            function_node_e,
-            function_node_f,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def do_thing(self, one, two, three, four, five, six): #@
-                pass
-            def do_thing_a(self, one, two, three, four, five, six, seven=7): #@
-                pass
-            def do_thing_b(self, one, two, three, four, five, six, *, seven): #@
-                pass
-            def do_thing_c(self, one, two, three, four, five, six, *, seven, eight, nine): #@
-                pass
-            def do_thing_d(self, one, two, three, four, five, six, **kwargs): #@
-                pass
-            def do_thing_e(self, one, two, three, four, five, six, *args, seven, eight, nine): #@
-                pass
-            def do_thing_f(self, one, two, three, four, five, six, *args, seven=7, eight=8, nine=9): #@
-                pass
-        """
-        )
-
+    def test_finds_methods_with_too_many_positional_args(self, setup):
+        function_node = setup.body[4].body[0]
+        function_node_a = setup.body[4].body[1]
+        function_node_b = setup.body[4].body[2]
+        function_node_c = setup.body[4].body[3]
+        function_node_d = setup.body[4].body[4]
+        function_node_e = setup.body[4].body[5]
+        function_node_f = setup.body[4].body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=4,
+                line=100,
                 node=function_node,
                 col_offset=4,
-                end_line=4,
+                end_line=100,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=6,
+                line=103,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=103,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=8,
+                line=106,
                 node=function_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=106,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=10,
+                line=109,
                 node=function_node_c,
                 col_offset=4,
-                end_line=10,
+                end_line=109,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=12,
+                line=112,
                 node=function_node_d,
                 col_offset=4,
-                end_line=12,
+                end_line=112,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=14,
+                line=115,
                 node=function_node_e,
                 col_offset=4,
-                end_line=14,
+                end_line=115,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=16,
+                line=118,
                 node=function_node_f,
                 col_offset=4,
-                end_line=16,
+                end_line=118,
                 end_col_offset=18,
             ),
         ):
@@ -834,92 +744,69 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
             self.checker.visit_functiondef(function_node_e)
             self.checker.visit_functiondef(function_node_f)
 
-    def test_finds_methods_with_too_many_positional_args_async(self):
-        (
-            class_node,
-            function_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-            function_node_e,
-            function_node_f,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def do_thing(self, one, two, three, four, five, six): #@
-                pass
-            async def do_thing_a(self, one, two, three, four, five, six, seven=7): #@
-                pass
-            async def do_thing_b(self, one, two, three, four, five, six, *, seven): #@
-                pass
-            async def do_thing_c(self, one, two, three, four, five, six, *, seven, eight, nine): #@
-                pass
-            async def do_thing_d(self, one, two, three, four, five, six, **kwargs): #@
-                pass
-            async def do_thing_e(self, one, two, three, four, five, six, *args, seven, eight, nine): #@
-                pass
-            async def do_thing_f(self, one, two, three, four, five, six, *args, seven=7, eight=8, nine=9): #@
-                pass
-        """
-        )
-
+    def test_finds_methods_with_too_many_positional_args_async(self, setup):
+        function_node = setup.body[5].body[0]
+        function_node_a = setup.body[5].body[1]
+        function_node_b = setup.body[5].body[2]
+        function_node_c = setup.body[5].body[3]
+        function_node_d = setup.body[5].body[4]
+        function_node_e = setup.body[5].body[5]
+        function_node_f = setup.body[5].body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=4,
+                line=125,
                 node=function_node,
                 col_offset=4,
-                end_line=4,
+                end_line=125,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=6,
+                line=128,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=128,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=8,
+                line=131,
                 node=function_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=131,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=10,
+                line=134,
                 node=function_node_c,
                 col_offset=4,
-                end_line=10,
+                end_line=134,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=12,
+                line=137,
                 node=function_node_d,
                 col_offset=4,
-                end_line=12,
+                end_line=137,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=14,
+                line=140,
                 node=function_node_e,
                 col_offset=4,
-                end_line=14,
+                end_line=140,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=16,
+                line=143,
                 node=function_node_f,
                 col_offset=4,
-                end_line=16,
+                end_line=143,
                 end_col_offset=24,
             ),
         ):
@@ -931,19 +818,9 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
             self.checker.visit_asyncfunctiondef(function_node_e)
             self.checker.visit_asyncfunctiondef(function_node_f)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def do_thing(self, one, two, three, four, five, six): #@
-                pass
-            
-            @distributed_trace_async
-            async def do_thing(self, one, two, three, four, five, six): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node_a = setup.body[6].body[0]
+        function_node_b = setup.body[6].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)

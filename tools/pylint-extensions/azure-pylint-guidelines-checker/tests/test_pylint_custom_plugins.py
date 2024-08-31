@@ -2410,7 +2410,6 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
             ) 
           """
         )
-
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
@@ -2443,7 +2442,6 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
             ) 
           """
         )
-
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
@@ -2474,7 +2472,6 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
             ) 
           """
         )
-
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
@@ -2502,98 +2499,64 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
 class TestCheckEnum(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckEnum
 
-    def test_ignore_normal_class(self):
-        class_node = astroid.extract_node(
-            """
-               class SomeClient(object):
-                    my_list = []
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_enum.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignore_normal_class(self, setup):
+        class_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_enum_capitalized_violation_python_two(self):
-        class_node = astroid.extract_node(
-            """
-            from enum import Enum
-            from six import with_metaclass
-            from azure.core import CaseInsensitiveEnumMeta
-
-            class MyBadEnum(with_metaclass(CaseInsensitiveEnumMeta, str, Enum)): 
-                One = "one"
-              """
-        )
-
+    def test_enum_capitalized_violation_python_two(self, setup):
+        class_node = setup.body[4]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="enum-must-be-uppercase",
-                line=7,
+                line=13,
                 node=class_node.body[0].targets[0],
                 col_offset=4,
-                end_line=7,
+                end_line=13,
                 end_col_offset=7,
             )
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_enum_capitalized_violation_python_three(self):
-        class_node = astroid.extract_node(
-            """
-            from enum import Enum
-            from azure.core import CaseInsensitiveEnumMeta
-
-            class MyBadEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta): 
-                One = "one"
-            
-            """
-        )
-
+    def test_enum_capitalized_violation_python_three(self, setup):
+        class_node = setup.body[5]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="enum-must-be-uppercase",
-                line=6,
+                line=18,
                 node=class_node.body[0].targets[0],
                 col_offset=4,
-                end_line=6,
+                end_line=18,
                 end_col_offset=7,
             )
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_inheriting_case_insensitive_violation(self):
-        class_node = astroid.extract_node(
-            """
-            from enum import Enum
-
-            class MyGoodEnum(str, Enum): 
-                ONE = "one"
-            """
-        )
-
+    def test_inheriting_case_insensitive_violation(self, setup):
+        class_node = setup.body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="enum-must-inherit-case-insensitive-enum-meta",
-                line=4,
+                line=22,
                 node=class_node,
                 col_offset=0,
-                end_line=4,
+                end_line=22,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_acceptable_python_three(self):
-        class_node = astroid.extract_node(
-            """
-            from enum import Enum
-            from azure.core import CaseInsensitiveEnumMeta
-
-            class MyGoodEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta): 
-                ONE = "one"
-            """
-        )
-
+    def test_acceptable_python_three(self, setup):
+        class_node = setup.body[7]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 

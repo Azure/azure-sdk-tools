@@ -1204,7 +1204,7 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
     def test_finds_incorrectly_named_client(self, setup):
         class_node_a = setup.body[8]
         class_node_b = setup.body[9]
-        class_node_c  = setup.body[10]
+        class_node_c = setup.body[10]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
@@ -1235,7 +1235,7 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(class_node_b)
             self.checker.visit_classdef(class_node_c)
 
-    def test_finds_incorrectly_named_methods(self , setup):
+    def test_finds_incorrectly_named_methods(self, setup):
         class_node = setup.body[11]
         func_node_a = setup.body[11].body[0]
         func_node_b = setup.body[11].body[1]
@@ -1847,74 +1847,50 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientLROMethodsUseCorePolling
 
-    def test_ignores_private_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _begin_thing(self): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_LRO_methods_use_core_polling.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_methods(self, setup):
+        function_node = setup.body[2].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def begin_things(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_methods_return_LROPoller(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def begin_thing(self): #@
-                return LROPoller()
-            @distributed_trace
-            def begin_thing2(self): #@
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method)
-        """
-        )
-
+    def test_ignores_methods_return_LROPoller(self, setup):
+        function_node_a = setup.body[4].body[0]
+        function_node_b = setup.body[4].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_method_returning_something_else(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def begin_thing(self): #@
-                return list()
-            def begin_thing2(self): #@
-                return {}
-        """
-        )
-
+    def test_finds_method_returning_something_else(self, setup):
+        function_node_a = setup.body[5].body[0]
+        function_node_b = setup.body[5].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-lro-methods-use-polling",
-                line=3,
+                line=29,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=29,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-lro-methods-use-polling",
-                line=5,
+                line=32,
                 node=function_node_b,
                 col_offset=4,
-                end_line=5,
+                end_line=32,
                 end_col_offset=20,
             ),
         ):

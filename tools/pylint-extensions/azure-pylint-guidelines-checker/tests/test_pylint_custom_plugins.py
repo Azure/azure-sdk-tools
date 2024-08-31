@@ -1499,72 +1499,46 @@ class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
 class TestAsyncClientCorrectNaming(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.AsyncClientCorrectNaming
 
-    def test_ignores_private_client(self):
-        class_node = astroid.extract_node(
-            """
-        class _AsyncBaseSomeClient(): #@
-            def create_configuration(self):
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "async_client_correct_naming.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_client(self, setup):
+        class_node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_client(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def create_configuration(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_correct_client(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_async_base_named_client(self):
-        class_node_a = astroid.extract_node(
-            """
-        class AsyncSomeClientBase(): #@
-            def get_thing(self, **kwargs):
-                pass
-        """
-        )
-
+    def test_ignores_async_base_named_client(self, setup):
+        class_node_a = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node_a)
 
-    def test_finds_incorrectly_named_client(self):
-        class_node_a = astroid.extract_node(
-            """
-        class AsyncSomeClient(): #@
-            def get_thing(self, **kwargs):
-                pass
-        """
-        )
-
+    def test_finds_incorrectly_named_client(self, setup):
+        class_node_a = setup.body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="async-client-bad-name",
-                line=2,
+                line=20,
                 node=class_node_a,
                 col_offset=0,
-                end_line=2,
+                end_line=20,
                 end_col_offset=21,
             ),
         ):
             self.checker.visit_classdef(class_node_a)
 
-    def test_ignores_non_client(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def create_configuration(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client(self, setup):
+        class_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 

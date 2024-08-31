@@ -1909,90 +1909,59 @@ class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
 class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientLROMethodsUseCorrectNaming
 
-    def test_ignores_private_methods(self):
-        class_node, return_node = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def _do_thing(self): 
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method) #@
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_LRO_methods_use_correct_naming.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_methods(self, setup):
+        class_node = setup.body[2]
+        return_node = setup.body[2].body[0].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_return(return_node)
 
-    def test_ignores_non_client_methods(self):
-        class_node, return_node = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomethingElse(): #@
-            def begin_things(self):
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method) #@
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        class_node = setup.body[3]
+        return_node = setup.body[3].body[0].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_return(return_node)
 
-    def test_ignores_methods_return_LROPoller_and_correctly_named(self):
-        class_node, return_node_a, return_node_b = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def begin_thing(self):
-                return LROPoller() #@
-            @distributed_trace
-            def begin_thing2(self):
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method) #@
-        """
-        )
-
+    def test_ignores_methods_return_LROPoller_and_correctly_named(self, setup):
+        class_node = setup.body[4]
+        return_node_a = setup.body[4].body[0].body[0]
+        return_node_b = setup.body[4].body[1].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_return(return_node_a)
             self.checker.visit_return(return_node_b)
 
-    def test_finds_incorrectly_named_method_returning_LROPoller(self):
-        (
-            class_node,
-            function_node_a,
-            return_node_a,
-            function_node_b,
-            return_node_b,
-        ) = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def poller_thing(self): #@
-                return LROPoller() #@
-            @distributed_trace
-            def start_thing2(self): #@
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method) #@
-        """
-        )
-
+    def test_finds_incorrectly_named_method_returning_LROPoller(self, setup):
+        class_node = setup.body[5]
+        function_node_a = setup.body[5].body[0]
+        return_node_a = setup.body[5].body[0].body[0]
+        function_node_b = setup.body[5].body[1]
+        return_node_b = setup.body[5].body[1].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="lro-methods-use-correct-naming",
-                line=5,
+                line=28,
                 node=function_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=28,
                 end_col_offset=20,
             ),
             pylint.testutils.MessageTest(
                 msg_id="lro-methods-use-correct-naming",
-                line=8,
+                line=32,
                 node=function_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=32,
                 end_col_offset=20,
             ),
         ):

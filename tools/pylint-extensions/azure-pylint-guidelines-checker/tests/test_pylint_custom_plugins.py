@@ -1590,108 +1590,67 @@ class TestFileHasCopyrightHeader(pylint.testutils.CheckerTestCase):
 class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.SpecifyParameterNamesInCall
 
-    def test_ignores_call_with_only_two_unnamed_params(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self):
-                self._client.thing(one, two) #@
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "specify_parameter_names_in_call.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_call_with_only_two_unnamed_params(self, setup):
+        call_node = setup.body[0].body[0].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
-    def test_ignores_call_with_two_unnamed_params_and_one_named(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self):
-                self._client.thing(one, two, three=3) #@
-        """
-        )
-
+    def test_ignores_call_with_two_unnamed_params_and_one_named(self, setup):
+        call_node = setup.body[0].body[1].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
-    def test_ignores_call_from_non_client(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def do_thing(self):
-                self._other.thing(one, two, three) #@
-        """
-        )
-
+    def test_ignores_call_from_non_client(self, setup):
+        call_node = setup.body[1].body[0].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
-    def test_ignores_call_with_named_params(self):
-        class_node, call_node_a, call_node_b, call_node_c = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def do_thing_a(self):
-                self._other.thing(one=one, two=two, three=three) #@
-            def do_thing_b(self):
-                self._other.thing(zero, number, one=one, two=two, three=three) #@
-            def do_thing_c(self):
-                self._other.thing(zero, one=one, two=two, three=three) #@      
-        """
-        )
-
+    def test_ignores_call_with_named_params(self, setup):
+        call_node_a = setup.body[2].body[0].body[0].value
+        call_node_b = setup.body[2].body[1].body[0].value
+        call_node_c = setup.body[2].body[2].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node_a)
             self.checker.visit_call(call_node_b)
             self.checker.visit_call(call_node_c)
 
-    def test_ignores_non_client_function_call(self):
-        call_node = astroid.extract_node(
-            """
-        def do_thing():
-            self._client.thing(one, two, three) #@
-        """
-        )
-
+    def test_ignores_non_client_function_call(self, setup):
+        call_node = setup.body[3].body[0].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
-    def test_finds_call_with_more_than_two_unnamed_params(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self):
-                self._client.thing(one, two, three) #@
-        """
-        )
-
+    def test_finds_call_with_more_than_two_unnamed_params(self, setup):
+        call_node = setup.body[4].body[0].body[0].value
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="specify-parameter-names-in-call",
-                line=4,
+                line=38,
                 node=call_node,
                 col_offset=8,
-                end_line=4,
+                end_line=38,
                 end_col_offset=43,
             ),
         ):
             self.checker.visit_call(call_node)
 
-    def test_finds_call_with_more_than_two_unnamed_params_and_some_named(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self):
-                self._client.thing(one, two, three, four=4, five=5) #@
-        """
-        )
-
+    def test_finds_call_with_more_than_two_unnamed_params_and_some_named(self, setup):
+        call_node = setup.body[5].body[0].body[0].value
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="specify-parameter-names-in-call",
-                line=4,
+                line=44,
                 node=call_node,
                 col_offset=8,
-                end_line=4,
+                end_line=44,
                 end_col_offset=59,
             ),
         ):

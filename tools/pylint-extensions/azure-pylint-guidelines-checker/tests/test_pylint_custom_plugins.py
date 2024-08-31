@@ -2272,256 +2272,125 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.Check
 class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckDocstringAdmonitionNewline
 
-    def test_ignores_correct_admonition_statement_in_function(self):
-        function_node = astroid.extract_node(
-            """
-            def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_docstring_admonition_newline.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_correct_admonition_statement_in_function(self, setup):
+        function_node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_function_with_comments(self):
-        function_node = astroid.extract_node(
-            """
-            def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_function_with_comments(self, setup):
+        function_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_bad_admonition_statement_in_function(self):
-        function_node = astroid.extract_node(
-            """
-            def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_bad_admonition_statement_in_function(self, setup):
+        function_node = setup.body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=24,
                 node=function_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=24,
+                end_col_offset=17,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_bad_admonition_statement_in_function_with_comments(self):
-        function_node = astroid.extract_node(
-            """
-            def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_bad_admonition_statement_in_function_with_comments(self, setup):
+        function_node = setup.body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=32,
                 node=function_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=32,
+                end_col_offset=17,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_function_async(self):
-        function_node = astroid.extract_node(
-            """
-            async def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_function_async(self, setup):
+        function_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_function_with_comments_async(self):
-        function_node = astroid.extract_node(
-            """
-            async def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-                      
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_function_with_comments_async(self, setup):
+        function_node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_bad_admonition_statement_in_function_async(self):
-        function_node = astroid.extract_node(
-            """
-            async def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_bad_admonition_statement_in_function_async(self, setup):
+        function_node = setup.body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=64,
                 node=function_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=22,
+                end_line=64,
+                end_col_offset=23,
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_bad_admonition_statement_in_function_with_comments_async(self):
-        function_node = astroid.extract_node(
-            """
-            async def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_bad_admonition_statement_in_function_with_comments_async(self, setup):
+        function_node = setup.body[7]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=72,
                 node=function_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=22,
+                end_line=72,
+                end_col_offset=23,
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_class(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''docstring
-                .. admonition:: Example:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-                def __init__(self):
-                    pass
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_class(self, setup):
+        class_node = setup.body[8]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_admonition_statement_in_class_with_comments(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-                def __init__(self):
-                    pass
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_class_with_comments(self, setup):
+        class_node = setup.body[9]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_bad_admonition_statement_in_class(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''docstring
-                .. admonition:: Example:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-                def __init__(self):
-                    pass
-            """
-        )
-
+    def test_bad_admonition_statement_in_class(self, setup):
+        class_node = setup.body[10]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=110,
                 node=class_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=110,
+                end_col_offset=17,
             )
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_bad_admonition_statement_in_class_with_comments(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-                def __init__(self):
-                    pass
-            """
-        )
-
+    def test_bad_admonition_statement_in_class_with_comments(self, setup):
+        class_node = setup.body[11]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=121,
                 node=class_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=121,
+                end_col_offset=17,
             )
         ):
             self.checker.visit_classdef(class_node)

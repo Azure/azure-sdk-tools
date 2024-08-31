@@ -2613,18 +2613,17 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
 class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckAPIVersion
 
-    def test_api_version_violation(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''
-                   :param str something: something
-                '''
-                def __init__(self, something, **kwargs):
-                    pass
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_API_version.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_api_version_violation(self, setup):
+        class_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-accepts-api-version-keyword",
@@ -2637,19 +2636,8 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_api_version_acceptable(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''
-                   :param str something: something 
-                   :keyword str api_version: api_version
-                '''
-                def __init__(self, something, **kwargs):
-                    pass
-            """
-        )
-
+    def test_api_version_acceptable(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 

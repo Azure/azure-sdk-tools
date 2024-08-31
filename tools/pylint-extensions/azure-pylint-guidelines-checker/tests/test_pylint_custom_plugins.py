@@ -1668,180 +1668,110 @@ class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
 class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientListMethodsUseCorePaging
 
-    def test_ignores_private_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _list_thing(self): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_list_methods_use_core_paging.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_methods(self, setup):
+        function_node = setup.body[5].body[0]
         with self.assertNoMessages():
             self.checker.visit_return(function_node.body[0])
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def list_things(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node = setup.body[6].body[0]
         with self.assertNoMessages():
             self.checker.visit_return(function_node.body[0])
 
-    def test_ignores_methods_return_ItemPaged(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.paging import ItemPaged
-        
-        class SomeClient(): #@
-            def list_thing(self): #@
-                return ItemPaged()
-            @distributed_trace
-            def list_thing2(self): #@
-                return ItemPaged(
-                    command, prefix=name_starts_with, results_per_page=results_per_page,
-                    page_iterator_class=BlobPropertiesPaged)
-        """
-        )
-
+    def test_ignores_methods_return_ItemPaged(self, setup):
+        function_node_a = setup.body[7].body[0]
+        function_node_b = setup.body[7].body[1]
         with self.assertNoMessages():
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
-    def test_ignores_methods_return_AsyncItemPaged(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.async_paging import AsyncItemPaged
-        
-        class SomeClient(): #@
-            async def list_thing(self): #@
-                return AsyncItemPaged()
-            @distributed_trace
-            def list_thing2(self): #@
-                return AsyncItemPaged(
-                    command, prefix=name_starts_with, results_per_page=results_per_page,
-                    page_iterator_class=BlobPropertiesPaged)
-        """
-        )
-
+    def test_ignores_methods_return_AsyncItemPaged(self, setup):
+        function_node_a = setup.body[8].body[0]
+        function_node_b = setup.body[8].body[1]
         with self.assertNoMessages():
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
-    def test_finds_method_returning_something_else(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def list_thing(self): #@
-                return list()
-            def list_thing2(self): #@
-                return LROPoller()
-        """
-        )
-
+    def test_finds_method_returning_something_else(self, setup):
+        function_node_a = setup.body[9].body[0]
+        function_node_b = setup.body[9].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=5,
+                line=47,
                 node=function_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=47,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=7,
+                line=50,
                 node=function_node_b,
                 col_offset=4,
-                end_line=7,
+                end_line=50,
                 end_col_offset=19,
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
-    def test_finds_method_returning_something_else_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        from typing import list
-        
-        class SomeClient(): #@
-            async def list_thing(self, **kwargs): #@
-                return list()
-            async def list_thing2(self, **kwargs): #@
-                return LROPoller()
-        """
-        )
-
+    def test_finds_method_returning_something_else_async(self, setup):
+        function_node_a = setup.body[10].body[0]
+        function_node_b = setup.body[10].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=6,
+                line=56,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=56,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=8,
+                line=59,
                 node=function_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=59,
                 end_col_offset=25,
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
-    def test_finds_return_ItemPaged_not_list(self):
-        class_node, function_node_a = astroid.extract_node(
-            """
-        from azure.core.paging import ItemPaged
-        
-        class SomeClient(): #@
-            def some_thing(self): #@
-                return ItemPaged()
-        """
-        )
-
+    def test_finds_return_ItemPaged_not_list(self, setup):
+        function_node_a = setup.body[11].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=5,
+                line=65,
                 node=function_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=65,
                 end_col_offset=18,
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
 
-    def test_finds_return_AsyncItemPaged_not_list(self):
-        class_node, function_node_a = astroid.extract_node(
-            """
-        from azure.core.async_paging import AsyncItemPaged
-        
-        class SomeClient(): #@
-            async def some_thing(self): #@
-                return AsyncItemPaged()
-        """
-        )
-
+    def test_finds_return_AsyncItemPaged_not_list(self, setup):
+        function_node_a = setup.body[12].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=5,
+                line=71,
                 node=function_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=71,
                 end_col_offset=24,
             ),
         ):

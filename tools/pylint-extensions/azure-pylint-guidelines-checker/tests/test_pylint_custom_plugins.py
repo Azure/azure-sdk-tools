@@ -1978,73 +1978,52 @@ class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestClientConstructorDoesNotHaveConnectionStringParam(
-    pylint.testutils.CheckerTestCase
-):
+class TestClientConstructorDoesNotHaveConnectionStringParam(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientConstructorDoesNotHaveConnectionStringParam
 
-    def test_ignores_client_with_no_conn_str_in_constructor(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self): 
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_constructor_does_not_have_connection_string_param.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_client_with_no_conn_str_in_constructor(self, setup):
+        class_node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def __init__(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_finds_client_method_using_conn_str_in_constructor_a(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, connection_string):
-                return list()
-        """
-        )
-
+    def test_finds_client_method_using_conn_str_in_constructor_a(self, setup):
+        class_node = setup.body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="connection-string-should-not-be-constructor-param",
-                line=2,
+                line=14,
                 node=class_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=14,
+                end_col_offset=17,
             ),
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_client_method_using_conn_str_in_constructor_b(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, conn_str):
-                return list()
-        """
-        )
-
+    def test_finds_client_method_using_conn_str_in_constructor_b(self, setup):
+        class_node = setup.body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="connection-string-should-not-be-constructor-param",
-                line=2,
+                line=20,
                 node=class_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=20,
+                end_col_offset=17,
             ),
         ):
             self.checker.visit_classdef(class_node)

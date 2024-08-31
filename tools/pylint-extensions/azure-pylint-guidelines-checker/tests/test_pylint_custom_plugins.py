@@ -2124,168 +2124,94 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         assert response.http_response.status_code == 200
 
 
-class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
-    pylint.testutils.CheckerTestCase
-):
+class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodNamesDoNotUseDoubleUnderscorePrefix
 
-    def test_ignores_repr(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __repr__(self): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_method_names_do_not_use_double_underscore_prefix.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_repr(self, setup):
+        function_node = setup.body[2].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_constructor(self, setup):
+        function_node = setup.body[2].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_other_dunder(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __enter__(self): #@
-                pass
-            def __exit__(self): #@
-                pass
-            def __aenter__(self): #@
-                pass
-            def __aexit__(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_dunder(self, setup):
+        function_node_a = setup.body[2].body[2]
+        function_node_b = setup.body[2].body[3]
+        function_node_c = setup.body[2].body[4]
+        function_node_d = setup.body[2].body[5]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
             self.checker.visit_functiondef(function_node_c)
             self.checker.visit_functiondef(function_node_d)
 
-    def test_ignores_private_method(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        function_node = setup.body[2].body[6]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            async def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method_async(self, setup):
+        function_node = setup.body[2].body[7]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_methods_with_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def create_configuration(self): #@
-                pass
-            @distributed_trace
-            def get_thing(self): #@
-                pass
-            @distributed_trace
-            def list_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_decorators(self, setup):
+        func_node_a = setup.body[2].body[8]
+        func_node_b = setup.body[2].body[9]
+        func_node_c = setup.body[2].body[10]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_async_methods_with_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def create_configuration(self): #@
-                pass
-            @distributed_trace_async
-            async def get_thing(self): #@
-                pass
-            @distributed_trace_async
-            async def list_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_async_methods_with_decorators(self, setup):
+        func_node_a = setup.body[2].body[8]
+        func_node_b = setup.body[2].body[9]
+        func_node_c = setup.body[2].body[10]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_double_underscore_on_async_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            async def __create_configuration(self): #@
-                pass
-            @staticmethod
-            async def __get_thing(self): #@
-                pass
-            @staticmethod
-            async def __list_thing(self): #@
-                pass
-        """
-        )
+    def test_finds_double_underscore_on_async_method(self, setup):
+        func_node_a = setup.body[3].body[0]
+        func_node_b = setup.body[3].body[1]
+        func_node_c = setup.body[3].body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=4,
+                line=67,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
+                end_line=67,
                 end_col_offset=36,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=7,
+                line=71,
                 node=func_node_b,
                 col_offset=4,
-                end_line=7,
+                end_line=71,
                 end_col_offset=25,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=10,
+                line=75,
                 node=func_node_c,
                 col_offset=4,
-                end_line=10,
+                end_line=75,
                 end_col_offset=26,
             ),
         ):
@@ -2293,44 +2219,33 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_double_underscore_on_sync_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            def __create_configuration(self): #@
-                pass
-            @staticmethod
-            def __get_thing(self): #@
-                pass
-            @staticmethod
-            def __list_thing(self): #@
-                pass
-        """
-        )
+    def test_finds_double_underscore_on_sync_method(self, setup):
+        func_node_a = setup.body[4].body[0]
+        func_node_b = setup.body[4].body[1]
+        func_node_c = setup.body[4].body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=4,
+                line=82,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
+                end_line=82,
                 end_col_offset=30,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=7,
+                line=86,
                 node=func_node_b,
                 col_offset=4,
-                end_line=7,
+                end_line=86,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=10,
+                line=90,
                 node=func_node_c,
                 col_offset=4,
-                end_line=10,
+                end_line=90,
                 end_col_offset=20,
             ),
         ):
@@ -2338,19 +2253,9 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_non_client_method(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            @staticmethod
-            def __download_thing(self, some, **kwargs): #@
-                pass
-
-            @staticmethod
-            async def __do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
+    def test_ignores_non_client_method(self, setup):
+        func_node_a = setup.body[5].body[0]
+        func_node_b = setup.body[5].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)

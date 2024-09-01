@@ -239,16 +239,10 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
     priority = -1
     msgs = {
         "C5000": (
-            "%s: Client is not using an approved method name prefix. See details:"
-            " https://azure.github.io/azure-sdk/python_design.html#service-operations",
+            "%s",
             "unapproved-client-method-name-prefix",
             "All clients should use the preferred verbs for method names.",
         ),
-        "C5001": (
-            "%s: Client is using short method names",
-            "short-client-method-name",
-            "Client method names should be descriptive.",
-        )
     }
 
     ignore_clients = [
@@ -271,6 +265,15 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         "delete",
         "remove",
         "begin",
+        "upload",
+        "download",
+        "close",
+        "cancel",
+        "clear",
+        "subscribe",
+        "send",
+        "query",
+        "analyze",
     ]
 
     def __init__(self, linter=None):
@@ -284,6 +287,13 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
             if isinstance(decorator, astroid.nodes.Name) and decorator.name == "property":
                 return True
         return False
+
+    def _get_namespace(self, node):
+        path = node.root().file.split("/")
+        if len(path) == 1:
+            return self.process_class.name
+        namespace = ".".join(path[path.index("azure"):-1]) + "." + self.process_class.name
+        return namespace
 
     def visit_classdef(self, node):
         if node.name.endswith("Client") and node.name not in self.ignore_clients:
@@ -302,17 +312,10 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         
         # check for approved prefix
         parts = node.name.split("_")
-        if len(parts) < 2 and parts[0].lower() not in self.approved_prefixes:
-            self.add_message(
-                msgid="short-client-method-name",
-                args=node.name,
-                node=node,
-                confidence=None,
-            )
-        elif parts[0].lower() not in self.approved_prefixes:
+        if parts[0].lower() not in self.approved_prefixes:
             self.add_message(
                 msgid="unapproved-client-method-name-prefix",
-                args=node.name,
+                args=self._get_namespace(node) + "::" + node.name,
                 node=node,
                 confidence=None,
             )

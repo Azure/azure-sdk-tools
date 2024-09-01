@@ -680,7 +680,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_a.name,
+                args="SomeClient::" + func_node_a.name,
                 line=4,
                 node=func_node_a,
                 col_offset=4,
@@ -689,7 +689,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_b.name,
+                args="SomeClient::" + func_node_b.name,
                 line=6,
                 node=func_node_b,
                 col_offset=4,
@@ -698,7 +698,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_c.name,
+                args="SomeClient::" + func_node_c.name,
                 line=8,
                 node=func_node_c,
                 col_offset=4,
@@ -707,7 +707,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_d.name,
+                args="SomeClient::" + func_node_d.name,
                 line=10,
                 node=func_node_d,
                 col_offset=4,
@@ -716,7 +716,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_e.name,
+                args="SomeClient::" + func_node_e.name,
                 line=12,
                 node=func_node_e,
                 col_offset=4,
@@ -725,7 +725,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_f.name,
+                args="SomeClient::" + func_node_f.name,
                 line=14,
                 node=func_node_f,
                 col_offset=4,
@@ -734,7 +734,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_g.name,
+                args="SomeClient::" + func_node_g.name,
                 line=16,
                 node=func_node_g,
                 col_offset=4,
@@ -743,7 +743,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_h.name,
+                args="SomeClient::" + func_node_h.name,
                 line=18,
                 node=func_node_h,
                 col_offset=4,
@@ -752,7 +752,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_i.name,
+                args="SomeClient::" + func_node_i.name,
                 line=20,
                 node=func_node_i,
                 col_offset=4,
@@ -761,7 +761,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_j.name,
+                args="SomeClient::" + func_node_j.name,
                 line=22,
                 node=func_node_j,
                 col_offset=4,
@@ -770,7 +770,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_k.name,
+                args="SomeClient::" + func_node_k.name,
                 line=24,
                 node=func_node_k,
                 col_offset=4,
@@ -779,7 +779,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_l.name,
+                args="SomeClient::" + func_node_l.name,
                 line=26,
                 node=func_node_l,
                 col_offset=4,
@@ -788,7 +788,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_m.name,
+                args="SomeClient::" + func_node_m.name,
                 line=28,
                 node=func_node_m,
                 col_offset=4,
@@ -797,7 +797,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_n.name,
+                args="SomeClient::" + func_node_n.name,
                 line=30,
                 node=func_node_n,
                 col_offset=4,
@@ -806,7 +806,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_o.name,
+                args="SomeClient::" + func_node_o.name,
                 line=32,
                 node=func_node_o,
                 col_offset=4,
@@ -815,7 +815,7 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                args=func_node_p.name,
+                args="SomeClient::" + func_node_p.name,
                 line=34,
                 node=func_node_p,
                 col_offset=4,
@@ -858,29 +858,6 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_functiondef(property_node)
-
-    def test_finds_short_name(self):
-        class_node, func_node = astroid.extract_node(
-        """
-        class SomeClient(): #@
-            def close(self): #@
-                pass
-        """
-        )
-
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="short-client-method-name",
-                args=func_node.name,
-                line=3,
-                node=func_node,
-                col_offset=4,
-                end_line=3,
-                end_col_offset=13,
-            )
-        ):
-            self.checker.visit_classdef(class_node)
-            self.checker.visit_functiondef(func_node)
 
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_design.html#service-operations"

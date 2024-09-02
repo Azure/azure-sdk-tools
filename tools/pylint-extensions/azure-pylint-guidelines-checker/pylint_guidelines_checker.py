@@ -2759,7 +2759,7 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
             levels. Called from 'check_for_raise' function
         """
-        matches = [".warning", ".error"]
+        matches = [".warning", ".error", ".exception"]
         for j in node:
             if isinstance(j, astroid.Expr):
                 expression = j.as_string().lower()

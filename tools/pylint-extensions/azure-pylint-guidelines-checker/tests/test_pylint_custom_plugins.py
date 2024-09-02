@@ -2820,20 +2820,24 @@ class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.NoAzureCoreTracebackUseRaiseFrom
 
-    def test_raise_traceback(self):
-        node = astroid.extract_node(
-            """
-        from azure.core.exceptions import DeserializationError, SerializationError, raise_with_traceback
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "no_azure_core_traceback_use_raise_from.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_raise_traceback(self, setup):
+        node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-raise-with-traceback",
-                line=2,
+                line=1,
                 node=node,
                 col_offset=0,
-                end_line=2,
+                end_line=1,
                 end_col_offset=96,
             )
         ):

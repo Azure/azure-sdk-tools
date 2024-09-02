@@ -3265,16 +3265,18 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.NoImportTypingFromTypeCheck
 
-    def test_disallowed_import_from(self):
-        """Check that illegal imports raise warnings"""
-        import_node = astroid.extract_node(
-            """
-            from typing import TYPE_CHECKING
-
-            if TYPE_CHECKING:
-                from typing import Any #@
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "no_typing_under_type_checking.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_import_from(self, setup):
+        """Check that illegal imports raise warnings"""
+        import_node = setup.body[1].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-typing-import-in-type-check",
@@ -3287,56 +3289,34 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_importfrom(import_node)
 
-    def test_disallowed_import_from_extensions(self):
+    def test_disallowed_import_from_extensions(self, setup):
         """Check that illegal imports raise warnings"""
-        import_node = astroid.extract_node(
-            """
-            from typing import TYPE_CHECKING
-
-            if TYPE_CHECKING:
-                import typing_extensions #@
-            """
-        )
+        import_node = setup.body[2].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-typing-import-in-type-check",
-                line=5,
+                line=9,
                 node=import_node,
                 col_offset=4,
-                end_line=5,
+                end_line=9,
                 end_col_offset=28,
             )
         ):
             self.checker.visit_import(import_node)
 
-    def test_allowed_imports(self):
+    def test_allowed_imports(self, setup):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
-        importfrom_node = astroid.extract_node(
-        """
-            from typing import TYPE_CHECKING
-
-            if TYPE_CHECKING:
-
-                from math import PI
-            """
-        )
+        importfrom_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_allowed_import_else(self):
+    def test_allowed_import_else(self, setup):
         """Check that illegal imports raise warnings"""
-        ima, imb, imc, imd = astroid.extract_node(
-            """
-            if sys.version_info >= (3, 9):
-                from collections.abc import MutableMapping
-            else:
-                from typing import MutableMapping #@
-                import typing #@
-                import typing_extensions #@
-                from typing_extensions import Protocol #@
-            """
-        )
+        ima = setup.body[4].orelse[0]
+        imb = setup.body[4].orelse[1]
+        imc = setup.body[4].orelse[2]
+        imd = setup.body[4].orelse[3]
         with self.assertNoMessages():
             self.checker.visit_importfrom(ima)
             self.checker.visit_import(imb)
@@ -3347,5 +3327,4 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
-# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
 # [Pylint] Investigate pylint rule around missing dependency #3231

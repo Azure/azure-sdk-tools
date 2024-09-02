@@ -2823,7 +2823,7 @@ class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "no_azure_core_traceback_use_raise_from.py")
+            os.path.join(TEST_FOLDER, "test_files", "raise_with_traceback.py")
         )
         node = astroid.parse(file.read())
         file.close()
@@ -2852,7 +2852,7 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
     @pytest.fixture(scope="class")
     def setup(self):
         file = open(
-            os.path.join(TEST_FOLDER, "test_files", "name_exceeds_standard_character_length.py")
+            os.path.join(TEST_FOLDER, "test_files", "type_property_name_length.py")
         )
         node = astroid.parse(file.read())
         file.close()
@@ -2951,78 +2951,54 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
 
 
 class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
-
     """Test that we are checking the return type of delete functions is correct"""
 
     CHECKER_CLASS = checker.DeleteOperationReturnStatement
 
-    def test_begin_delete_operation_incorrect_return(self):
-        node = astroid.extract_node(
-            """
-            from azure.core.polling import LROPoller 
-            from typing import Any
-            class MyClient():
-                def begin_delete_some_function(self, **kwargs)  -> LROPoller[Any]: #@
-                    return LROPoller[Any]
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "delete_operation_return_type.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_begin_delete_operation_incorrect_return(self, setup):
+        node = setup.body[2].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="delete-operation-wrong-return-type",
-                line=5,
+                line=7,
                 node=node,
                 col_offset=4,
-                end_line=5,
+                end_line=7,
                 end_col_offset=34,
             )
         ):
             self.checker.visit_functiondef(node)
 
-    def test_delete_operation_incorrect_return(self):
-        node = astroid.extract_node(
-            """
-            from azure.core.polling import LROPoller 
-            from typing import Any
-            class MyClient():
-                def delete_some_function(self, **kwargs)  -> str: #@
-                    return "hello"
-        """
-        )
+    def test_delete_operation_incorrect_return(self, setup):
+        node = setup.body[2].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="delete-operation-wrong-return-type",
-                line=5,
+                line=11,
                 node=node,
                 col_offset=4,
-                end_line=5,
+                end_line=11,
                 end_col_offset=28,
             )
         ):
             self.checker.visit_functiondef(node)
 
-    def test_delete_operation_correct_return(self):
-        node = astroid.extract_node(
-            """
-            from azure.core.polling import LROPoller 
-            from typing import Any
-            class MyClient():
-                def delete_some_function(self, **kwargs)  -> None: #@
-                    return None
-        """
-        )
+    def test_delete_operation_correct_return(self, setup):
+        node = setup.body[2].body[2]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_begin_delete_operation_correct_return(self):
-        node = astroid.extract_node(
-            """
-            from azure.core.polling import LROPoller 
-            from typing import Any
-            class MyClient():
-                def begin_delete_some_function(self, **kwargs)  -> LROPoller[None]: #@
-                    return LROPoller[None]
-        """
-        )
+    def test_begin_delete_operation_correct_return(self, setup):
+        node = setup.body[2].body[3]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 

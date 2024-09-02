@@ -5108,3 +5108,55 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.checker.visit_try(try_node)
+
+    def test_for_and_nested_for_branches_exception_logged(self):
+        try_node, expression_node_a, expression_node_b = astroid.extract_node(
+            '''
+                try: #@
+                    add = 1 + 2
+                except Exception as e:
+                    y = 3
+                    for x in y:
+                        logging.error(f"F: {e}") #@
+                        raise SystemError("Uh oh!") from e
+                    if e.code == "Retryable":
+                        for z in y:
+                            logging.error(f"F: {e}") #@
+                            raise SystemError("Uh oh!") from e
+            ''')
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=7,
+                    node=expression_node_a.parent,
+                    col_offset=8,
+                    end_line=7,
+                    end_col_offset=32,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=11,
+                    node=expression_node_b.parent,
+                    col_offset=12,
+                    end_line=11,
+                    end_col_offset=36,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_for_and_nested_for_branches_exception_not_logged(self):
+        try_node, expression_node_a, expression_node_b = astroid.extract_node(
+            '''
+                try: #@
+                    add = 1 + 2
+                except Exception as e:
+                    y = 3
+                    for x in y:
+                        logging.error(f"F: {e}") #@
+                    if e.code == "Retryable":
+                        for z in y:
+                            logging.error(f"F: {e}") #@
+            ''')
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+

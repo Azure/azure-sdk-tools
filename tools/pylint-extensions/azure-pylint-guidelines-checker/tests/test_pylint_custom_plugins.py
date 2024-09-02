@@ -3160,47 +3160,54 @@ class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.DoNotImportLegacySix
 
-    def test_disallowed_import_from(self):
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_import_legacy_six.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_import_from(self, setup):
         """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node("from six import with_metaclass")
+        importfrom_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-import-legacy-six",
-                line=1,
+                line=2,
                 node=importfrom_node,
                 col_offset=0,
-                end_line=1,
+                end_line=2,
                 end_col_offset=30,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_disallowed_import(self):
+    def test_disallowed_import(self, setup):
         """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node("import six")
+        importfrom_node = setup.body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-import-legacy-six",
-                line=1,
+                line=5,
                 node=importfrom_node,
                 col_offset=0,
-                end_line=1,
+                end_line=5,
                 end_col_offset=10,
             )
         ):
             self.checker.visit_import(importfrom_node)
 
-    def test_allowed_imports(self):
+    def test_allowed_imports(self, setup):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
-        importfrom_node = astroid.extract_node("from math import PI")
+        importfrom_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # from import not in the blocked list.
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline import Pipeline"
-        )
+        importfrom_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 

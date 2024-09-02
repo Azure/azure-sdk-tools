@@ -3009,260 +3009,146 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.CheckDocstringParameters
 
-    def test_docstring_vararg(self):
-        node = astroid.extract_node(
-            # Check that we recognize *args as param in docstring
-            """
-            def function_foo(x, y, *z):
-                '''
-                :param x: x
-                :type x: str
-                :param str y: y
-                :param str z: z
-                '''
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_docstring_vararg(self, setup):
+        # Check that we recognize *args as param in docstring
+        node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_vararg_keyword_args(self):
+    def test_docstring_vararg_keyword_args(self, setup):
         # Check that we recognize keyword-only args after *args in docstring
-        node = astroid.extract_node(
-            """
-            def function_foo(x, y, *z, a="Hello", b="World"):
-                '''
-                :param x: x
-                :type x: str
-                :param str y: y
-                :param str z: z
-                :keyword str a: a
-                :keyword str b: b
-                '''
-            """
-        )
+        node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_varag_no_type(self):
+    def test_docstring_varag_no_type(self, setup):
         # Error on documenting keyword only args as param after *args in docstring
-        node = astroid.extract_node(
-            """
-            def function_foo(*x):
-                '''
-                :param x: x
-                :keyword z: z
-                :paramtype z: str
-                '''
-            """
-        )
+        node = setup.body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-keyword-should-match-keyword-only",
-                line=2,
+                line=24,
                 node=node,
                 args="z",
                 col_offset=0,
-                end_line=2,
+                end_line=24,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="docstring-missing-type",
-                line=2,
+                line=24,
                 args="x",
                 node=node,
                 col_offset=0,
-                end_line=2,
+                end_line=24,
                 end_col_offset=16,
             ),
         ):
             self.checker.visit_functiondef(node)
 
-    def test_docstring_class_paramtype(self):
-        node = astroid.extract_node(
-            """
-            class MyClass(): #@
-                def function_foo(**kwargs): #@
-                    '''
-                    :keyword z: z
-                    :paramtype z: str
-                    '''
-                
-                def function_boo(**kwargs): #@
-                    '''
-                    :keyword z: z
-                    :paramtype z: str
-                    '''
-            """
-        )
+    def test_docstring_class_paramtype(self, setup):
+        function_node_a = setup.body[3].body[0]
+        function_node_b = setup.body[3].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-keyword-should-match-keyword-only",
-                line=3,
-                node=node[1],
+                line=34,
+                node=function_node_a,
                 args="z",
                 col_offset=4,
-                end_line=3,
+                end_line=34,
                 end_col_offset=20,
             ),
         ):
-            self.checker.visit_functiondef(node[1])
+            self.checker.visit_functiondef(function_node_a)
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-keyword-should-match-keyword-only",
-                line=9,
-                node=node[2],
+                line=40,
+                node=function_node_b,
                 args="z",
                 col_offset=4,
-                end_line=9,
+                end_line=40,
                 end_col_offset=20,
             ),
         ):
-            self.checker.visit_functiondef(node[2])
+            self.checker.visit_functiondef(function_node_b)
 
-    def test_docstring_property_decorator(self):
-        node = astroid.extract_node(
-            """
-            from typing import Dict
-            
-            @property
-            def function_foo(self) -> Dict[str,str]:
-                '''The current headers collection.
-                :rtype: dict[str, str]
-                '''
-                return {"hello": "world"}
-            """
-        )
+    def test_docstring_property_decorator(self, setup):
+        node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_no_property_decorator(self):
-        node = astroid.extract_node(
-            """
-            from typing import Dict
-            def function_foo(self) -> Dict[str,str]:
-                '''The current headers collection.
-                :rtype: dict[str, str]
-                '''
-                return {"hello": "world"}
-            """
-        )
+    def test_docstring_no_property_decorator(self, setup):
+        node = setup.body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-missing-return",
-                line=3,
+                line=60,
                 args=None,
                 node=node,
                 col_offset=0,
-                end_line=3,
+                end_line=60,
                 end_col_offset=16,
             ),
         ):
             self.checker.visit_functiondef(node)
 
-    def test_docstring_type_has_space(self):
+    def test_docstring_type_has_space(self, setup):
         # Don't error if there is extra spacing in the type
-        node = astroid.extract_node(
-            """
-            def function_foo(x):
-                '''
-                :param dict[str, int] x: x
-                '''
-            """
-        )
+        node = setup.body[7]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_type_has_many_spaces(self):
+    def test_docstring_type_has_many_spaces(self, setup):
         # Don't error if there is extra spacing around the type
-        node = astroid.extract_node(
-            """
-            def function_foo(x):
-                '''
-                :param  dict[str, int]  x: x
-                '''
-            """
-        )
+        node = setup.body[8]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_raises(self):
-        node = astroid.extract_node(
-            """
-            def function_foo():
-                '''
-                :raises: ValueError
-                '''
-                print("hello")
-                raise ValueError("hello")
-            """
-        )
+    def test_docstring_raises(self, setup):
+        node = setup.body[9]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_keyword_only(self):
-        node = astroid.extract_node(
-            """
-            def function_foo(self, x, *, z, y=None):
-                '''
-                :param x: x
-                :type x: str
-                :keyword str y: y
-                :keyword str z: z
-                '''
-                print("hello")
-            """
-        )
+    def test_docstring_keyword_only(self, setup):
+        node = setup.body[10]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_correct_rtype(self):
-        node = astroid.extract_node(
-            """
-            def function_foo(self, x, *, z, y=None) -> str:
-                '''
-                :param x: x
-                :type x: str
-                :keyword str y: y
-                :keyword str z: z
-                :rtype: str
-                '''
-                print("hello")
-            """
-        )
+    def test_docstring_correct_rtype(self, setup):
+        node = setup.body[11]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_class_type(self):
-        node = astroid.extract_node(
-            """
-            def function_foo(self, x, y):
-                '''
-                :param x: x
-                :type x: :class:`azure.core.credentials.AccessToken`
-                :param y: y
-                :type y: str
-                :rtype: :class:`azure.core.credentials.AccessToken`
-                '''
-                print("hello")
-            """
-        )
+    def test_docstring_class_type(self, setup):
+        node = setup.body[12]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-type-do-not-use-class",
-                line=2,
+                line=114,
                 args="x",
                 node=node,
                 col_offset=0,
-                end_line=2,
+                end_line=114,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="docstring-type-do-not-use-class",
-                line=2,
+                line=114,
                 args="rtype",
                 node=node,
                 col_offset=0,
-                end_line=2,
+                end_line=114,
                 end_col_offset=16,
             ),
         ):

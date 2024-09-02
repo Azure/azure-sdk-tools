@@ -1,231 +1,319 @@
-| Namespace | Method | Count |
-|---|---|---|
-| ReceiveClient | settle_messages | 12 |
-| WebPubSubClient | unsubscribe | 7 |
-| ChatCompletionsClient | complete | 6 |
-| ImageEmbeddingsClient | embed | 4 |
-| FaceClient | detect_from_url | 4 |
-| EmbeddingsClient | embed | 4 |
-| TableClient | submit_transaction | 3 |
-| CallAutomationClient | start_recording | 3 |
-| WebSiteManagementClient | models | 2 |
-| WebPubSubClient | is_connected | 2 |
-| VnetClient | models | 2 |
-| TextAnalyticsClient | detect_language | 2 |
-| TemplateSpecsClient | models | 2 |
-| SubscriptionClient | models | 2 |
-| StorageManagementClient | models | 2 |
-| SourceControlConfigurationClient | models | 2 |
-| ServiceBusManagementClient | models | 2 |
-| ResourcePrivateLinkClient | models | 2 |
-| ResourceManagementClient | models | 2 |
-| ResourceHealthMgmtClient | models | 2 |
-| ReceiveClient | receive_messages_iter | 2 |
-| ReceiveClient | receive_message_batch | 2 |
-| QueueClient | receive_messages | 2 |
-| PolicyClient | models | 2 |
-| PhoneNumbersClient | search_operator_information | 2 |
-| PersonalizerClient | rank | 2 |
-| MonitorManagementClient | models | 2 |
-| ManagementLockClient | models | 2 |
-| ManagementLinkClient | models | 2 |
-| ManagedServiceIdentityClient | models | 2 |
-| ManagedIdentityClient | request_token | 2 |
-| KeyVaultManagementClient | models | 2 |
-| IotHubClient | models | 2 |
-| FeatureClient | models | 2 |
-| EventHubManagementClient | models | 2 |
-| EdgeOrderManagementClient | models | 2 |
-| DnsManagementClient | models | 2 |
-| DeploymentStacksClient | models | 2 |
-| DeploymentScriptsClient | models | 2 |
-| DataBoxManagementClient | models | 2 |
-| DataBoxEdgeManagementClient | models | 2 |
-| ContainerServiceFleetMgmtClient | models | 2 |
-| ContainerServiceClient | models | 2 |
-| ContainerRegistryManagementClient | models | 2 |
-| ContainerClient | walk_blobs | 2 |
-| ContainerClient | find_blobs_by_tags | 2 |
-| ComputeManagementClient | models | 2 |
-| ChangesClient | models | 2 |
-| BlobServiceClient | find_blobs_by_tags | 2 |
-| AzureRedHatOpenShiftClient | models | 2 |
-| AzureDigitalTwinsManagementClient | models | 2 |
-| AuthorizationManagementClient | models | 2 |
-| AppPlatformManagementClient | models | 2 |
-| ApplicationInsightsManagementClient | models | 2 |
-| ApplicationClient | models | 2 |
-| AppConfigurationManagementClient | models | 2 |
-| AMQPClient | open | 2 |
-| AMQPClient | mgmt_request | 2 |
-| AMQPClient | do_work | 2 |
-| AMQPClient | client_ready | 2 |
-| AMQPClient | auth_complete | 2 |
-| WebPubSubClient | open | 1 |
-| WebPubSubClient | leave_group | 1 |
-| WebPubSubClient | join_group | 1 |
-| VSCodeClient | invoke_dev_container | 1 |
-| TextAnalyticsClient | sentiment | 1 |
-| TextAnalyticsClient | recognize_pii_entities | 1 |
-| TextAnalyticsClient | recognize_linked_entities | 1 |
-| TextAnalyticsClient | recognize_entities | 1 |
-| TextAnalyticsClient | key_phrases | 1 |
-| TextAnalyticsClient | extract_key_phrases | 1 |
-| TextAnalyticsClient | entities | 1 |
-| StorageClient | exists | 1 |
-| ShareServiceClient | undelete_share | 1 |
-| ShareLeaseClient | renew | 1 |
-| ShareLeaseClient | release | 1 |
-| ShareLeaseClient | change | 1 |
-| ShareLeaseClient | break_lease | 1 |
-| ShareLeaseClient | acquire | 1 |
-| ShareFileClient | start_copy_from_url | 1 |
-| ShareFileClient | resize_file | 1 |
-| ShareFileClient | rename_file | 1 |
-| ShareFileClient | exists | 1 |
-| ShareFileClient | acquire_lease | 1 |
-| ShareFileClient | abort_copy | 1 |
-| ShareDirectoryClient | rename_directory | 1 |
-| ShareDirectoryClient | exists | 1 |
-| ShareClient | acquire_lease | 1 |
-| ServiceManagementClient | with_filter | 1 |
-| ServiceManagementClient | wait_for_operation_status_success_default_callback | 1 |
-| ServiceManagementClient | wait_for_operation_status_progress_default_callback | 1 |
-| ServiceManagementClient | wait_for_operation_status_failure_default_callback | 1 |
-| ServiceManagementClient | wait_for_operation_status | 1 |
-| ServiceManagementClient | timeout | 1 |
-| ServiceManagementClient | should_use_requests | 1 |
-| ServiceManagementClient | perform_put | 1 |
-| ServiceManagementClient | perform_post | 1 |
-| ServiceManagementClient | perform_get | 1 |
-| ServiceManagementClient | perform_delete | 1 |
-| SecretClient | restore_secret_backup | 1 |
-| SecretClient | purge_deleted_secret | 1 |
-| SecretClient | backup_secret | 1 |
-| SearchIndexerClient | run_indexer | 1 |
-| SearchIndexerClient | reset_skills | 1 |
-| SearchIndexerClient | reset_indexer | 1 |
-| SearchIndexerClient | reset_documents | 1 |
-| SearchClient | suggest | 1 |
-| SearchClient | search | 1 |
-| SearchClient | merge_or_upload_documents | 1 |
-| SearchClient | merge_documents | 1 |
-| SearchClient | index_documents | 1 |
-| SearchClient | autocomplete | 1 |
-| SchemaRegistryClient | register_schema | 1 |
-| RemoteRenderingClient | stop_rendering_session | 1 |
-| QueueClient | receive_message | 1 |
-| QueueClient | peek_messages | 1 |
-| PersonalizerClient | reward_multi_slot | 1 |
-| PersonalizerClient | reward | 1 |
-| PersonalizerClient | rank_multi_slot | 1 |
-| PersonalizerClient | activate_multi_slot | 1 |
-| PersonalizerClient | activate | 1 |
-| PersonalizerAdministrationClient | reset_policy | 1 |
-| PersonalizerAdministrationClient | reset_model | 1 |
-| PersonalizerAdministrationClient | import_model | 1 |
-| PersonalizerAdministrationClient | export_model | 1 |
-| PersonalizerAdministrationClient | apply_from_evaluation | 1 |
-| PathClient | acquire_lease | 1 |
-| MsalClient | post | 1 |
-| MetricsAdvisorAdministrationClient | refresh_data_feed_ingestion | 1 |
-| KeyClient | rotate_key | 1 |
-| KeyClient | restore_key_backup | 1 |
-| KeyClient | release_key | 1 |
-| KeyClient | purge_deleted_key | 1 |
-| KeyClient | import_key | 1 |
-| KeyClient | backup_key | 1 |
-| HTTPClient | perform_request | 1 |
-| FormRecognizerClient | train_custom_model | 1 |
-| FileSystemClient | exists | 1 |
-| FileSystemClient | acquire_lease | 1 |
-| FileStorageClient | exists | 1 |
-| FaceClient | detect | 1 |
-| EventHubProducerClient | flush | 1 |
-| EventHubConsumerClient | receive_batch | 1 |
-| EventHubConsumerClient | receive | 1 |
-| DockerClient | logs | 1 |
-| DigitalTwinsClient | publish_telemetry | 1 |
-| DigitalTwinsClient | publish_component_telemetry | 1 |
-| DigitalTwinsClient | decommission_model | 1 |
-| DataLakeServiceClient | undelete_file_system | 1 |
-| DataLakeLeaseClient | renew | 1 |
-| DataLakeLeaseClient | release | 1 |
-| DataLakeLeaseClient | change | 1 |
-| DataLakeLeaseClient | break_lease | 1 |
-| DataLakeLeaseClient | acquire | 1 |
-| DataLakeFileClient | rename_file | 1 |
-| DataLakeFileClient | flush_data | 1 |
-| DataLakeFileClient | exists | 1 |
-| DataLakeDirectoryClient | rename_directory | 1 |
-| DataLakeDirectoryClient | exists | 1 |
-| CryptographyClient | wrap_key | 1 |
-| CryptographyClient | verify | 1 |
-| CryptographyClient | unwrap_key | 1 |
-| CryptographyClient | sign | 1 |
-| CryptographyClient | encrypt | 1 |
-| CryptographyClient | decrypt | 1 |
-| ContainerClient | exists | 1 |
-| ContainerClient | acquire_lease | 1 |
-| CommunicationIdentityClient | revoke_tokens | 1 |
-| CertificateClient | restore_certificate_backup | 1 |
-| CertificateClient | purge_deleted_certificate | 1 |
-| CertificateClient | merge_certificate | 1 |
-| CertificateClient | import_certificate | 1 |
-| CertificateClient | backup_certificate | 1 |
-| CallConnectionClient | unhold | 1 |
-| CallConnectionClient | transfer_call_to_participant | 1 |
-| CallConnectionClient | stop_transcription | 1 |
-| CallConnectionClient | stop_hold_music | 1 |
-| CallConnectionClient | stop_continuous_dtmf_recognition | 1 |
-| CallConnectionClient | start_transcription | 1 |
-| CallConnectionClient | start_recognizing_media | 1 |
-| CallConnectionClient | start_hold_music | 1 |
-| CallConnectionClient | start_continuous_dtmf_recognition | 1 |
-| CallConnectionClient | play_media_to_all | 1 |
-| CallConnectionClient | play_media | 1 |
-| CallConnectionClient | mute_participant | 1 |
-| CallConnectionClient | hold | 1 |
-| CallConnectionClient | hang_up | 1 |
-| CallAutomationClient | stop_recording | 1 |
-| CallAutomationClient | resume_recording | 1 |
-| CallAutomationClient | reject_call | 1 |
-| CallAutomationClient | redirect_call | 1 |
-| CallAutomationClient | pause_recording | 1 |
-| CallAutomationClient | answer_call | 1 |
-| BlobStorageClient | exists | 1 |
-| BlobServiceClient | undelete_container | 1 |
-| BlobLeaseClient | renew | 1 |
-| BlobLeaseClient | release | 1 |
-| BlobLeaseClient | change | 1 |
-| BlobLeaseClient | break_lease | 1 |
-| BlobLeaseClient | acquire | 1 |
-| BlobClient | undelete_blob | 1 |
-| BlobClient | start_copy_from_url | 1 |
-| BlobClient | stage_block_from_url | 1 |
-| BlobClient | stage_block | 1 |
-| BlobClient | seal_append_blob | 1 |
-| BlobClient | resize_blob | 1 |
-| BlobClient | exists | 1 |
-| BlobClient | commit_block_list | 1 |
-| BlobClient | acquire_lease | 1 |
-| BlobClient | abort_copy | 1 |
-| AzureOpenAIClient | bounded_chat_completion | 1 |
-| AzureAppConfigurationClient | recover_snapshot | 1 |
-| AzureAppConfigurationClient | archive_snapshot | 1 |
-| AugLoopClient | setup_session_after_init | 1 |
-| AugLoopClient | reconnect_and_attempt_session_init | 1 |
-| AttestationClient | attest_tpm | 1 |
-| AttestationClient | attest_sgx_enclave | 1 |
-| AttestationClient | attest_open_enclave | 1 |
-| AttestationAdministrationClient | reset_policy | 1 |
-| AnonymousACRExchangeClient | exchange_refresh_token_for_access_token | 1 |
-| AIClient | build_index_on_cloud | 1 |
-| ACRExchangeClient | exchange_refresh_token_for_access_token | 1 |
-| ACRExchangeClient | exchange_aad_token_for_refresh_token | 1 |
-| AadClient | obtain_token_on_behalf_of | 1 |
-| AadClient | obtain_token_by_refresh_token | 1 |
-| AadClient | obtain_token_by_jwt_assertion | 1 |
-| AadClient | obtain_token_by_client_secret | 1 |
-| AadClient | obtain_token_by_client_certificate | 1 |
-| AadClient | obtain_token_by_authorization_code | 1 |
+| Namespace | Method |
+|---|---|
+| azure.ai.generative.evaluate._client.AzureOpenAIClient | bounded_chat_completion |
+| azure.ai.generative.synthetic.simulator._conversation.AugLoopClient | reconnect_and_attempt_session_init |
+| azure.ai.generative.synthetic.simulator._conversation.AugLoopClient | setup_session_after_init |
+| azure.ai.inference.ChatCompletionsClient | complete |
+| azure.ai.inference.ChatCompletionsClient | complete |
+| azure.ai.inference.ChatCompletionsClient | complete |
+| azure.ai.inference.ChatCompletionsClient | complete |
+| azure.ai.inference.ChatCompletionsClient | complete |
+| azure.ai.inference.ChatCompletionsClient | complete |
+| azure.ai.inference.EmbeddingsClient | embed |
+| azure.ai.inference.EmbeddingsClient | embed |
+| azure.ai.inference.EmbeddingsClient | embed |
+| azure.ai.inference.EmbeddingsClient | embed |
+| azure.ai.inference.ImageEmbeddingsClient | embed |
+| azure.ai.inference.ImageEmbeddingsClient | embed |
+| azure.ai.inference.ImageEmbeddingsClient | embed |
+| azure.ai.inference.ImageEmbeddingsClient | embed |
+| azure.ai.resources.client.AIClient | build_index_on_cloud |
+| azure.appconfiguration.AzureAppConfigurationClient | archive_snapshot |
+| azure.appconfiguration.AzureAppConfigurationClient | recover_snapshot |
+| azure.mgmt.appconfiguration.AppConfigurationManagementClient | models |
+| azure.mgmt.appconfiguration.aio.AppConfigurationManagementClient | models |
+| azure.mgmt.applicationinsights.ApplicationInsightsManagementClient | models |
+| azure.mgmt.applicationinsights.aio.ApplicationInsightsManagementClient | models |
+| azure.mgmt.appplatform.AppPlatformManagementClient | models |
+| azure.mgmt.appplatform.aio.AppPlatformManagementClient | models |
+| azure.mgmt.web.WebSiteManagementClient | models |
+| azure.mgmt.web.aio.WebSiteManagementClient | models |
+| azure.security.attestation.AttestationAdministrationClient | reset_policy |
+| azure.security.attestation.AttestationClient | attest_sgx_enclave |
+| azure.security.attestation.AttestationClient | attest_open_enclave |
+| azure.security.attestation.AttestationClient | attest_tpm |
+| azure.mgmt.authorization.AuthorizationManagementClient | models |
+| azure.mgmt.authorization.aio.AuthorizationManagementClient | models |
+| azure.cognitiveservices.formrecognizer.FormRecognizerClient | train_custom_model |
+| azure.cognitiveservices.language.textanalytics.TextAnalyticsClient | detect_language |
+| azure.cognitiveservices.language.textanalytics.TextAnalyticsClient | entities |
+| azure.cognitiveservices.language.textanalytics.TextAnalyticsClient | key_phrases |
+| azure.cognitiveservices.language.textanalytics.TextAnalyticsClient | sentiment |
+| azure.cognitiveservices.personalizer.PersonalizerClient | rank |
+| azure.communication.callautomation.CallAutomationClient | answer_call |
+| azure.communication.callautomation.CallAutomationClient | redirect_call |
+| azure.communication.callautomation.CallAutomationClient | reject_call |
+| azure.communication.callautomation.CallAutomationClient | start_recording |
+| azure.communication.callautomation.CallAutomationClient | start_recording |
+| azure.communication.callautomation.CallAutomationClient | start_recording |
+| azure.communication.callautomation.CallAutomationClient | stop_recording |
+| azure.communication.callautomation.CallAutomationClient | pause_recording |
+| azure.communication.callautomation.CallAutomationClient | resume_recording |
+| azure.communication.callautomation.CallConnectionClient | hang_up |
+| azure.communication.callautomation.CallConnectionClient | transfer_call_to_participant |
+| azure.communication.callautomation.CallConnectionClient | play_media |
+| azure.communication.callautomation.CallConnectionClient | play_media_to_all |
+| azure.communication.callautomation.CallConnectionClient | start_recognizing_media |
+| azure.communication.callautomation.CallConnectionClient | start_continuous_dtmf_recognition |
+| azure.communication.callautomation.CallConnectionClient | stop_continuous_dtmf_recognition |
+| azure.communication.callautomation.CallConnectionClient | mute_participant |
+| azure.communication.callautomation.CallConnectionClient | start_hold_music |
+| azure.communication.callautomation.CallConnectionClient | stop_hold_music |
+| azure.communication.callautomation.CallConnectionClient | start_transcription |
+| azure.communication.callautomation.CallConnectionClient | stop_transcription |
+| azure.communication.callautomation.CallConnectionClient | hold |
+| azure.communication.callautomation.CallConnectionClient | unhold |
+| azure.communication.identity.CommunicationIdentityClient | revoke_tokens |
+| azure.communication.phonenumbers.PhoneNumbersClient | search_operator_information |
+| azure.communication.phonenumbers.aio.PhoneNumbersClient | search_operator_information |
+| azure.mgmt.compute.ComputeManagementClient | models |
+| azure.mgmt.compute.aio.ComputeManagementClient | models |
+| azure.containerregistry.ACRExchangeClient | exchange_aad_token_for_refresh_token |
+| azure.containerregistry.ACRExchangeClient | exchange_refresh_token_for_access_token |
+| azure.containerregistry.AnonymousACRExchangeClient | exchange_refresh_token_for_access_token |
+| azure.mgmt.containerregistry.ContainerRegistryManagementClient | models |
+| azure.mgmt.containerregistry.aio.ContainerRegistryManagementClient | models |
+| azure.mgmt.containerservice.ContainerServiceClient | models |
+| azure.mgmt.containerservice.aio.ContainerServiceClient | models |
+| azure.mgmt.containerservicefleet.ContainerServiceFleetMgmtClient | models |
+| azure.mgmt.containerservicefleet.aio.ContainerServiceFleetMgmtClient | models |
+| azure.servicemanagement._http._HTTPClient | perform_request |
+| azure.servicemanagement._ServiceManagementClient | should_use_requests |
+| azure.servicemanagement._ServiceManagementClient | with_filter |
+| azure.servicemanagement._ServiceManagementClient | timeout |
+| azure.servicemanagement._ServiceManagementClient | perform_get |
+| azure.servicemanagement._ServiceManagementClient | perform_put |
+| azure.servicemanagement._ServiceManagementClient | perform_post |
+| azure.servicemanagement._ServiceManagementClient | perform_delete |
+| azure.servicemanagement._ServiceManagementClient | wait_for_operation_status_progress_default_callback |
+| azure.servicemanagement._ServiceManagementClient | wait_for_operation_status_success_default_callback |
+| azure.servicemanagement._ServiceManagementClient | wait_for_operation_status_failure_default_callback |
+| azure.servicemanagement._ServiceManagementClient | wait_for_operation_status |
+| azure.mgmt.databox.DataBoxManagementClient | models |
+| azure.mgmt.databox.aio.DataBoxManagementClient | models |
+| azure.mgmt.databoxedge.DataBoxEdgeManagementClient | models |
+| azure.mgmt.databoxedge.aio.DataBoxEdgeManagementClient | models |
+| azure.digitaltwins.core.DigitalTwinsClient | publish_telemetry |
+| azure.digitaltwins.core.DigitalTwinsClient | publish_component_telemetry |
+| azure.digitaltwins.core.DigitalTwinsClient | decommission_model |
+| azure.mgmt.digitaltwins.AzureDigitalTwinsManagementClient | models |
+| azure.mgmt.digitaltwins.aio.AzureDigitalTwinsManagementClient | models |
+| azure.mgmt.edgeorder.EdgeOrderManagementClient | models |
+| azure.mgmt.edgeorder.aio.EdgeOrderManagementClient | models |
+| azure.eventhub.EventHubConsumerClient | receive |
+| azure.eventhub.EventHubConsumerClient | receive_batch |
+| azure.eventhub.EventHubProducerClient | flush |
+| azure.eventhub._pyamqp.AMQPClient | open |
+| azure.eventhub._pyamqp.AMQPClient | auth_complete |
+| azure.eventhub._pyamqp.AMQPClient | client_ready |
+| azure.eventhub._pyamqp.AMQPClient | do_work |
+| azure.eventhub._pyamqp.AMQPClient | mgmt_request |
+| azure.eventhub._pyamqp.ReceiveClient | receive_message_batch |
+| azure.eventhub._pyamqp.ReceiveClient | receive_messages_iter |
+| azure.eventhub._pyamqp.ReceiveClient | settle_messages |
+| azure.eventhub._pyamqp.ReceiveClient | settle_messages |
+| azure.eventhub._pyamqp.ReceiveClient | settle_messages |
+| azure.eventhub._pyamqp.ReceiveClient | settle_messages |
+| azure.eventhub._pyamqp.ReceiveClient | settle_messages |
+| azure.eventhub._pyamqp.ReceiveClient | settle_messages |
+| azure.mgmt.eventhub.EventHubManagementClient | models |
+| azure.mgmt.eventhub.aio.EventHubManagementClient | models |
+| azure.ai.vision.face.FaceClient | detect_from_url |
+| azure.ai.vision.face.FaceClient | detect_from_url |
+| azure.ai.vision.face.FaceClient | detect_from_url |
+| azure.ai.vision.face.FaceClient | detect_from_url |
+| azure.ai.vision.face.FaceClient | detect |
+| azure.identity._internal.AadClient | obtain_token_by_authorization_code |
+| azure.identity._internal.AadClient | obtain_token_by_client_certificate |
+| azure.identity._internal.AadClient | obtain_token_by_client_secret |
+| azure.identity._internal.AadClient | obtain_token_by_jwt_assertion |
+| azure.identity._internal.AadClient | obtain_token_by_refresh_token |
+| azure.identity._internal.AadClient | obtain_token_on_behalf_of |
+| azure.identity._internal.ManagedIdentityClient | request_token |
+| azure.identity._internal.MsalClient | post |
+| azure.mgmt.iothub.IotHubClient | models |
+| azure.mgmt.iothub.aio.IotHubClient | models |
+| azure.keyvault.certificates.CertificateClient | purge_deleted_certificate |
+| azure.keyvault.certificates.CertificateClient | import_certificate |
+| azure.keyvault.certificates.CertificateClient | backup_certificate |
+| azure.keyvault.certificates.CertificateClient | restore_certificate_backup |
+| azure.keyvault.certificates.CertificateClient | merge_certificate |
+| azure.keyvault.keys.KeyClient | purge_deleted_key |
+| azure.keyvault.keys.KeyClient | backup_key |
+| azure.keyvault.keys.KeyClient | restore_key_backup |
+| azure.keyvault.keys.KeyClient | import_key |
+| azure.keyvault.keys.KeyClient | release_key |
+| azure.keyvault.keys.KeyClient | rotate_key |
+| azure.keyvault.keys.crypto.CryptographyClient | encrypt |
+| azure.keyvault.keys.crypto.CryptographyClient | decrypt |
+| azure.keyvault.keys.crypto.CryptographyClient | wrap_key |
+| azure.keyvault.keys.crypto.CryptographyClient | unwrap_key |
+| azure.keyvault.keys.crypto.CryptographyClient | sign |
+| azure.keyvault.keys.crypto.CryptographyClient | verify |
+| azure.keyvault.secrets.SecretClient | backup_secret |
+| azure.keyvault.secrets.SecretClient | restore_secret_backup |
+| azure.keyvault.secrets.SecretClient | purge_deleted_secret |
+| azure.mgmt.keyvault.KeyVaultManagementClient | models |
+| azure.mgmt.keyvault.aio.KeyVaultManagementClient | models |
+| azure.mgmt.kubernetesconfiguration.SourceControlConfigurationClient | models |
+| azure.mgmt.kubernetesconfiguration.aio.SourceControlConfigurationClient | models |
+| azure.ai.metricsadvisor.MetricsAdvisorAdministrationClient | refresh_data_feed_ingestion |
+| azure.ai.ml.identity._internal.ManagedIdentityClient | request_token |
+| azure.ai.ml._artifacts.BlobStorageClient | exists |
+| azure.ai.ml._artifacts._gen2_storage_helper.py.Gen2StorageClient | exists |
+| azure.ai.ml._artifacts.FileStorageClient | exists |
+| azure.ai.ml._local_endpoints.DockerClient | logs |
+| azure.ai.ml._local_endpoints.vscode_debug.VSCodeClient | invoke_dev_container |
+| azure.mgmt.monitor.MonitorManagementClient | models |
+| azure.mgmt.monitor.aio.MonitorManagementClient | models |
+| azure.mgmt.dns.DnsManagementClient | models |
+| azure.mgmt.dns.aio.DnsManagementClient | models |
+| azure.ai.personalizer.PersonalizerAdministrationClient | export_model |
+| azure.ai.personalizer.PersonalizerAdministrationClient | import_model |
+| azure.ai.personalizer.PersonalizerAdministrationClient | reset_model |
+| azure.ai.personalizer.PersonalizerAdministrationClient | reset_policy |
+| azure.ai.personalizer.PersonalizerAdministrationClient | apply_from_evaluation |
+| azure.ai.personalizer.PersonalizerClient | rank |
+| azure.ai.personalizer.PersonalizerClient | reward |
+| azure.ai.personalizer.PersonalizerClient | activate |
+| azure.ai.personalizer.PersonalizerClient | rank_multi_slot |
+| azure.ai.personalizer.PersonalizerClient | reward_multi_slot |
+| azure.ai.personalizer.PersonalizerClient | activate_multi_slot |
+| azure.mgmt.redhatopenshift.AzureRedHatOpenShiftClient | models |
+| azure.mgmt.redhatopenshift.aio.AzureRedHatOpenShiftClient | models |
+| azure.mixedreality.remoterendering.RemoteRenderingClient | stop_rendering_session |
+| azure.mgmt.resourcehealth.ResourceHealthMgmtClient | models |
+| azure.mgmt.resourcehealth.aio.ResourceHealthMgmtClient | models |
+| azure.mgmt.msi.aio.ManagedServiceIdentityClient | models |
+| azure.mgmt.msi.ManagedServiceIdentityClient | models |
+| azure.mgmt.resource.changes.ChangesClient | models |
+| azure.mgmt.resource.changes.aio.ChangesClient | models |
+| azure.mgmt.resource.deploymentscripts.DeploymentScriptsClient | models |
+| azure.mgmt.resource.deploymentscripts.aio.DeploymentScriptsClient | models |
+| azure.mgmt.resource.deploymentstacks.DeploymentStacksClient | models |
+| azure.mgmt.resource.deploymentstacks.aio.DeploymentStacksClient | models |
+| azure.mgmt.resource.features.FeatureClient | models |
+| azure.mgmt.resource.features.aio.FeatureClient | models |
+| azure.mgmt.resource.links.ManagementLinkClient | models |
+| azure.mgmt.resource.links.aio.ManagementLinkClient | models |
+| azure.mgmt.resource.locks.ManagementLockClient | models |
+| azure.mgmt.resource.locks.aio.ManagementLockClient | models |
+| azure.mgmt.resource.managedapplications.ApplicationClient | models |
+| azure.mgmt.resource.managedapplications.aio.ApplicationClient | models |
+| azure.mgmt.resource.policy.PolicyClient | models |
+| azure.mgmt.resource.policy.aio.PolicyClient | models |
+| azure.mgmt.resource.privatelinks.ResourcePrivateLinkClient | models |
+| azure.mgmt.resource.privatelinks.aio.ResourcePrivateLinkClient | models |
+| azure.mgmt.resource.resources.ResourceManagementClient | models |
+| azure.mgmt.resource.resources.aio.ResourceManagementClient | models |
+| azure.mgmt.resource.subscriptions.SubscriptionClient | models |
+| azure.mgmt.resource.subscriptions.aio.SubscriptionClient | models |
+| azure.mgmt.resource.templatespecs.TemplateSpecsClient | models |
+| azure.mgmt.resource.templatespecs.aio.TemplateSpecsClient | models |
+| azure.schemaregistry.SchemaRegistryClient | register_schema |
+| azure.search.documents.SearchClient | search |
+| azure.search.documents.SearchClient | suggest |
+| azure.search.documents.SearchClient | autocomplete |
+| azure.search.documents.SearchClient | merge_documents |
+| azure.search.documents.SearchClient | merge_or_upload_documents |
+| azure.search.documents.SearchClient | index_documents |
+| azure.search.documents.indexes.SearchIndexerClient | run_indexer |
+| azure.search.documents.indexes.SearchIndexerClient | reset_indexer |
+| azure.search.documents.indexes.SearchIndexerClient | reset_documents |
+| azure.search.documents.indexes.SearchIndexerClient | reset_skills |
+| azure.mgmt.servicebus.ServiceBusManagementClient | models |
+| azure.mgmt.servicebus.aio.ServiceBusManagementClient | models |
+| azure.servicebus._pyamqp.AMQPClient | open |
+| azure.servicebus._pyamqp.AMQPClient | auth_complete |
+| azure.servicebus._pyamqp.AMQPClient | client_ready |
+| azure.servicebus._pyamqp.AMQPClient | do_work |
+| azure.servicebus._pyamqp.AMQPClient | mgmt_request |
+| azure.servicebus._pyamqp.ReceiveClient | receive_message_batch |
+| azure.servicebus._pyamqp.ReceiveClient | receive_messages_iter |
+| azure.servicebus._pyamqp.ReceiveClient | settle_messages |
+| azure.servicebus._pyamqp.ReceiveClient | settle_messages |
+| azure.servicebus._pyamqp.ReceiveClient | settle_messages |
+| azure.servicebus._pyamqp.ReceiveClient | settle_messages |
+| azure.servicebus._pyamqp.ReceiveClient | settle_messages |
+| azure.servicebus._pyamqp.ReceiveClient | settle_messages |
+| azure.mgmt.storage.StorageManagementClient | models |
+| azure.mgmt.storage.aio.StorageManagementClient | models |
+| azure.storage.blob.BlobServiceClient | find_blobs_by_tags |
+| azure.storage.blob.BlobServiceClient | undelete_container |
+| azure.storage.blob.ContainerClient | acquire_lease |
+| azure.storage.blob.ContainerClient | exists |
+| azure.storage.blob.ContainerClient | walk_blobs |
+| azure.storage.blob.ContainerClient | find_blobs_by_tags |
+| azure.storage.blob.BlobLeaseClient | acquire |
+| azure.storage.blob.BlobLeaseClient | renew |
+| azure.storage.blob.BlobLeaseClient | release |
+| azure.storage.blob.BlobLeaseClient | change |
+| azure.storage.blob.BlobLeaseClient | break_lease |
+| azure.storage.blob.BlobClient | undelete_blob |
+| azure.storage.blob.BlobClient | exists |
+| azure.storage.blob.BlobClient | start_copy_from_url |
+| azure.storage.blob.BlobClient | abort_copy |
+| azure.storage.blob.BlobClient | acquire_lease |
+| azure.storage.blob.BlobClient | stage_block |
+| azure.storage.blob.BlobClient | stage_block_from_url |
+| azure.storage.blob.BlobClient | commit_block_list |
+| azure.storage.blob.BlobClient | resize_blob |
+| azure.storage.blob.BlobClient | seal_append_blob |
+| azure.storage.blob.aio.BlobServiceClient | find_blobs_by_tags |
+| azure.storage.blob.aio.ContainerClient | walk_blobs |
+| azure.storage.blob.aio.ContainerClient | find_blobs_by_tags |
+| azure.storage.filedatalake.DataLakeLeaseClient | acquire |
+| azure.storage.filedatalake.DataLakeLeaseClient | renew |
+| azure.storage.filedatalake.DataLakeLeaseClient | release |
+| azure.storage.filedatalake.DataLakeLeaseClient | change |
+| azure.storage.filedatalake.DataLakeLeaseClient | break_lease |
+| azure.storage.filedatalake.DataLakeFileClient | flush_data |
+| azure.storage.filedatalake.DataLakeFileClient | exists |
+| azure.storage.filedatalake.DataLakeFileClient | rename_file |
+| azure.storage.filedatalake.DataLakeServiceClient | undelete_file_system |
+| azure.storage.filedatalake.DataLakeDirectoryClient | exists |
+| azure.storage.filedatalake.DataLakeDirectoryClient | rename_directory |
+| azure.storage.filedatalake.PathClient | acquire_lease |
+| azure.storage.filedatalake.FileSystemClient | acquire_lease |
+| azure.storage.filedatalake.FileSystemClient | exists |
+| azure.storage.fileshare.ShareLeaseClient | acquire |
+| azure.storage.fileshare.ShareLeaseClient | renew |
+| azure.storage.fileshare.ShareLeaseClient | release |
+| azure.storage.fileshare.ShareLeaseClient | change |
+| azure.storage.fileshare.ShareLeaseClient | break_lease |
+| azure.storage.fileshare.ShareDirectoryClient | rename_directory |
+| azure.storage.fileshare.ShareDirectoryClient | exists |
+| azure.storage.fileshare.ShareFileClient | acquire_lease |
+| azure.storage.fileshare.ShareFileClient | exists |
+| azure.storage.fileshare.ShareFileClient | start_copy_from_url |
+| azure.storage.fileshare.ShareFileClient | abort_copy |
+| azure.storage.fileshare.ShareFileClient | rename_file |
+| azure.storage.fileshare.ShareFileClient | resize_file |
+| azure.storage.fileshare.ShareServiceClient | undelete_share |
+| azure.storage.fileshare.ShareClient | acquire_lease |
+| azure.storage.queue.QueueClient | receive_message |
+| azure.storage.queue.QueueClient | receive_messages |
+| azure.storage.queue.QueueClient | peek_messages |
+| azure.storage.queue.aio.QueueClient | receive_messages |
+| azure.synapse.managedprivateendpoints.VnetClient | models |
+| azure.synapse.managedprivateendpoints.aio.VnetClient | models |
+| azure.data.tables.TableClient | submit_transaction |
+| azure.data.tables.TableClient | submit_transaction |
+| azure.data.tables.TableClient | submit_transaction |
+| azure.ai.textanalytics.TextAnalyticsClient | detect_language |
+| azure.ai.textanalytics.TextAnalyticsClient | recognize_entities |
+| azure.ai.textanalytics.TextAnalyticsClient | recognize_pii_entities |
+| azure.ai.textanalytics.TextAnalyticsClient | recognize_linked_entities |
+| azure.ai.textanalytics.TextAnalyticsClient | extract_key_phrases |
+| azure.messaging.webpubsubclient.WebPubSubClient | join_group |
+| azure.messaging.webpubsubclient.WebPubSubClient | leave_group |
+| azure.messaging.webpubsubclient.WebPubSubClient | is_connected |
+| azure.messaging.webpubsubclient.WebPubSubClient | open |
+| azure.messaging.webpubsubclient.WebPubSubClient | unsubscribe |
+| azure.messaging.webpubsubclient.WebPubSubClient | unsubscribe |
+| azure.messaging.webpubsubclient.WebPubSubClient | unsubscribe |
+| azure.messaging.webpubsubclient.WebPubSubClient | unsubscribe |
+| azure.messaging.webpubsubclient.WebPubSubClient | unsubscribe |
+| azure.messaging.webpubsubclient.WebPubSubClient | unsubscribe |
+| azure.messaging.webpubsubclient.WebPubSubClient | unsubscribe |
+| azure.messaging.webpubsubclient.aio.WebPubSubClient | is_connected |

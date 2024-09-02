@@ -1,218 +1,229 @@
-|Method|Message|Count|
-|------|-------|-----|
-|close|too-short|777|
-|send_request|bad-prefix|121|
-|models|too-short|74|
-|settle_messages|bad-prefix|12|
-|exists|too-short|10|
-|embed|too-short|8|
-|unsubscribe|too-short|7|
-|subscribe|too-short|7|
-|download_blob|bad-prefix|7|
-|complete|too-short|6|
-|acquire_lease|bad-prefix|6|
-|send_event|bad-prefix|5|
-|send_to_group|bad-prefix|4|
-|send_message|bad-prefix|4|
-|find_blobs_by_tags|bad-prefix|4|
-|detect_from_url|bad-prefix|4|
-|upload|too-short|3|
-|renew|too-short|3|
-|release|too-short|3|
-|open|too-short|3|
-|download|too-short|3|
-|change|too-short|3|
-|acquire|too-short|3|
-|upload_file|bad-prefix|3|
-|upload_blob|bad-prefix|3|
-|submit_transaction|bad-prefix|3|
-|start_recording|bad-prefix|3|
-|break_lease|bad-prefix|3|
-|send|too-short|2|
-|rank|too-short|2|
-|walk_blobs|bad-prefix|2|
-|start_copy_from_url|bad-prefix|2|
-|search_operator_information|bad-prefix|2|
-|reset_policy|bad-prefix|2|
-|request_token|bad-prefix|2|
-|rename_file|bad-prefix|2|
-|rename_directory|bad-prefix|2|
-|receive_messages_iter|bad-prefix|2|
-|receive_messages|bad-prefix|2|
-|receive_message_batch|bad-prefix|2|
-|query_twins|bad-prefix|2|
-|query_tables|bad-prefix|2|
-|query_resource|bad-prefix|2|
-|query_entities|bad-prefix|2|
-|query_databases|bad-prefix|2|
-|mgmt_request|bad-prefix|2|
-|is_connected|bad-prefix|2|
-|exchange_refresh_token_for_access_token|bad-prefix|2|
-|do_work|bad-prefix|2|
-|download_file|bad-prefix|2|
-|detect_language|bad-prefix|2|
-|close_handle|bad-prefix|2|
-|close_all_handles|bad-prefix|2|
-|client_ready|bad-prefix|2|
-|auth_complete|bad-prefix|2|
-|abort_copy|bad-prefix|2|
-|verify|too-short|1|
-|unhold|too-short|1|
-|timeout|too-short|1|
-|suggest|too-short|1|
-|sign|too-short|1|
-|sentiment|too-short|1|
-|search|too-short|1|
-|reward|too-short|1|
-|receive|too-short|1|
-|query|too-short|1|
-|post|too-short|1|
-|logs|too-short|1|
-|hold|too-short|1|
-|flush|too-short|1|
-|entities|too-short|1|
-|encrypt|too-short|1|
-|detect|too-short|1|
-|decrypt|too-short|1|
-|autocomplete|too-short|1|
-|analyze|too-short|1|
-|activate|too-short|1|
-|wrap_key|bad-prefix|1|
-|with_filter|bad-prefix|1|
-|wait_for_operation_status_success_default_callback|bad-prefix|1|
-|wait_for_operation_status_progress_default_callback|bad-prefix|1|
-|wait_for_operation_status_failure_default_callback|bad-prefix|1|
-|wait_for_operation_status|bad-prefix|1|
-|upload_range_from_url|bad-prefix|1|
-|upload_range|bad-prefix|1|
-|upload_pages_from_url|bad-prefix|1|
-|upload_page|bad-prefix|1|
-|upload_documents|bad-prefix|1|
-|upload_dir|bad-prefix|1|
-|upload_data|bad-prefix|1|
-|upload_blob_from_url|bad-prefix|1|
-|unwrap_key|bad-prefix|1|
-|undelete_share|bad-prefix|1|
-|undelete_file_system|bad-prefix|1|
-|undelete_container|bad-prefix|1|
-|undelete_blob|bad-prefix|1|
-|transfer_call_to_participant|bad-prefix|1|
-|train_custom_model|bad-prefix|1|
-|stop_transcription|bad-prefix|1|
-|stop_rendering_session|bad-prefix|1|
-|stop_recording|bad-prefix|1|
-|stop_hold_music|bad-prefix|1|
-|stop_continuous_dtmf_recognition|bad-prefix|1|
-|start_transcription|bad-prefix|1|
-|start_recognizing_media|bad-prefix|1|
-|start_hold_music|bad-prefix|1|
-|start_continuous_dtmf_recognition|bad-prefix|1|
-|stage_block_from_url|bad-prefix|1|
-|stage_block|bad-prefix|1|
-|should_use_requests|bad-prefix|1|
-|setup_session_after_init|bad-prefix|1|
-|send_typing_notification|bad-prefix|1|
-|send_signal_message|bad-prefix|1|
-|send_signal_and_wait_for_annotation|bad-prefix|1|
-|send_request_headers|bad-prefix|1|
-|send_request_body|bad-prefix|1|
-|send_read_receipt|bad-prefix|1|
-|send_message_to_al|bad-prefix|1|
-|send_dtmf_tones|bad-prefix|1|
-|send_batch|bad-prefix|1|
-|seal_append_blob|bad-prefix|1|
-|run_indexer|bad-prefix|1|
-|rotate_key|bad-prefix|1|
-|reward_multi_slot|bad-prefix|1|
-|revoke_tokens|bad-prefix|1|
-|resume_recording|bad-prefix|1|
-|restore_secret_backup|bad-prefix|1|
-|restore_key_backup|bad-prefix|1|
-|restore_certificate_backup|bad-prefix|1|
-|resize_file|bad-prefix|1|
-|resize_blob|bad-prefix|1|
-|reset_skills|bad-prefix|1|
-|reset_model|bad-prefix|1|
-|reset_indexer|bad-prefix|1|
-|reset_documents|bad-prefix|1|
-|release_key|bad-prefix|1|
-|reject_call|bad-prefix|1|
-|register_schema|bad-prefix|1|
-|refresh_data_feed_ingestion|bad-prefix|1|
-|redirect_call|bad-prefix|1|
-|recover_snapshot|bad-prefix|1|
-|reconnect_and_attempt_session_init|bad-prefix|1|
-|recognize_pii_entities|bad-prefix|1|
-|recognize_linked_entities|bad-prefix|1|
-|recognize_entities|bad-prefix|1|
-|receive_message|bad-prefix|1|
-|receive_batch|bad-prefix|1|
-|rank_multi_slot|bad-prefix|1|
-|query_workspace|bad-prefix|1|
-|query_resources|bad-prefix|1|
-|query_file|bad-prefix|1|
-|query_blob|bad-prefix|1|
-|query_batch|bad-prefix|1|
-|purge_deleted_secret|bad-prefix|1|
-|purge_deleted_key|bad-prefix|1|
-|purge_deleted_certificate|bad-prefix|1|
-|publish_telemetry|bad-prefix|1|
-|publish_component_telemetry|bad-prefix|1|
-|play_media_to_all|bad-prefix|1|
-|play_media|bad-prefix|1|
-|perform_request|bad-prefix|1|
-|perform_put|bad-prefix|1|
-|perform_post|bad-prefix|1|
-|perform_get|bad-prefix|1|
-|perform_delete|bad-prefix|1|
-|peek_messages|bad-prefix|1|
-|pause_recording|bad-prefix|1|
-|obtain_token_on_behalf_of|bad-prefix|1|
-|obtain_token_by_refresh_token|bad-prefix|1|
-|obtain_token_by_jwt_assertion|bad-prefix|1|
-|obtain_token_by_client_secret|bad-prefix|1|
-|obtain_token_by_client_certificate|bad-prefix|1|
-|obtain_token_by_authorization_code|bad-prefix|1|
-|mute_participant|bad-prefix|1|
-|merge_or_upload_documents|bad-prefix|1|
-|merge_documents|bad-prefix|1|
-|merge_certificate|bad-prefix|1|
-|leave_group|bad-prefix|1|
-|key_phrases|bad-prefix|1|
-|join_group|bad-prefix|1|
-|invoke_dev_container|bad-prefix|1|
-|index_documents|bad-prefix|1|
-|import_model|bad-prefix|1|
-|import_key|bad-prefix|1|
-|import_certificate|bad-prefix|1|
-|hang_up|bad-prefix|1|
-|flush_data|bad-prefix|1|
-|extract_key_phrases|bad-prefix|1|
-|export_model|bad-prefix|1|
-|exchange_aad_token_for_refresh_token|bad-prefix|1|
-|download_recording|bad-prefix|1|
-|decommission_model|bad-prefix|1|
-|commit_block_list|bad-prefix|1|
-|clear_range|bad-prefix|1|
-|clear_page|bad-prefix|1|
-|clear_messages|bad-prefix|1|
-|cancel_translation|bad-prefix|1|
-|cancel_certificate_operation|bad-prefix|1|
-|cancel_all_media_operations|bad-prefix|1|
-|cancel_add_participant_operation|bad-prefix|1|
-|build_index_on_cloud|bad-prefix|1|
-|bounded_chat_completion|bad-prefix|1|
-|backup_secret|bad-prefix|1|
-|backup_key|bad-prefix|1|
-|backup_certificate|bad-prefix|1|
-|attest_tpm|bad-prefix|1|
-|attest_sgx_enclave|bad-prefix|1|
-|attest_open_enclave|bad-prefix|1|
-|archive_snapshot|bad-prefix|1|
-|apply_from_evaluation|bad-prefix|1|
-|answer_call|bad-prefix|1|
-|analyze_with_custom_model|bad-prefix|1|
-|analyze_text|bad-prefix|1|
-|analyze_sentiment|bad-prefix|1|
-|analyze_from_url|bad-prefix|1|
-|activate_multi_slot|bad-prefix|1|
+| ReceiveClient::settle_messages | 12 |
+| WebPubSubClient::unsubscribe | 7 |
+| ChatCompletionsClient::complete | 6 |
+| ImageEmbeddingsClient::embed | 4 |
+| FaceClient::detect_from_url | 4 |
+| EmbeddingsClient::embed | 4 |
+| TableClient::submit_transaction | 3 |
+| CallAutomationClient::start_recording | 3 |
+| WebSiteManagementClient::models | 2 |
+| WebPubSubClient::is_connected | 2 |
+| VnetClient::models | 2 |
+| TextAnalyticsClient::detect_language | 2 |
+| TemplateSpecsClient::models | 2 |
+| SubscriptionClient::models | 2 |
+| StorageManagementClient::models | 2 |
+| SourceControlConfigurationClient::models | 2 |
+| ServiceBusManagementClient::models | 2 |
+| ResourcePrivateLinkClient::models | 2 |
+| ResourceManagementClient::models | 2 |
+| ResourceHealthMgmtClient::models | 2 |
+| ReceiveClient::receive_messages_iter | 2 |
+| ReceiveClient::receive_message_batch | 2 |
+| QueueClient::receive_messages | 2 |
+| PolicyClient::models | 2 |
+| PhoneNumbersClient::search_operator_information | 2 |
+| PersonalizerClient::rank | 2 |
+| MonitorManagementClient::models | 2 |
+| ManagementLockClient::models | 2 |
+| ManagementLinkClient::models | 2 |
+| ManagedServiceIdentityClient::models | 2 |
+| ManagedIdentityClient::request_token | 2 |
+| KeyVaultManagementClient::models | 2 |
+| IotHubClient::models | 2 |
+| FeatureClient::models | 2 |
+| EventHubManagementClient::models | 2 |
+| EdgeOrderManagementClient::models | 2 |
+| DnsManagementClient::models | 2 |
+| DeploymentStacksClient::models | 2 |
+| DeploymentScriptsClient::models | 2 |
+| DataBoxManagementClient::models | 2 |
+| DataBoxEdgeManagementClient::models | 2 |
+| ContainerServiceFleetMgmtClient::models | 2 |
+| ContainerServiceClient::models | 2 |
+| ContainerRegistryManagementClient::models | 2 |
+| ContainerClient::walk_blobs | 2 |
+| ContainerClient::find_blobs_by_tags | 2 |
+| ComputeManagementClient::models | 2 |
+| ChangesClient::models | 2 |
+| BlobServiceClient::find_blobs_by_tags | 2 |
+| AzureRedHatOpenShiftClient::models | 2 |
+| AzureDigitalTwinsManagementClient::models | 2 |
+| AuthorizationManagementClient::models | 2 |
+| AppPlatformManagementClient::models | 2 |
+| ApplicationInsightsManagementClient::models | 2 |
+| ApplicationClient::models | 2 |
+| AppConfigurationManagementClient::models | 2 |
+| AMQPClient::open | 2 |
+| AMQPClient::mgmt_request | 2 |
+| AMQPClient::do_work | 2 |
+| AMQPClient::client_ready | 2 |
+| AMQPClient::auth_complete | 2 |
+| WebPubSubClient::open | 1 |
+| WebPubSubClient::leave_group | 1 |
+| WebPubSubClient::join_group | 1 |
+| VSCodeClient::invoke_dev_container | 1 |
+| TextAnalyticsClient::sentiment | 1 |
+| TextAnalyticsClient::recognize_pii_entities | 1 |
+| TextAnalyticsClient::recognize_linked_entities | 1 |
+| TextAnalyticsClient::recognize_entities | 1 |
+| TextAnalyticsClient::key_phrases | 1 |
+| TextAnalyticsClient::extract_key_phrases | 1 |
+| TextAnalyticsClient::entities | 1 |
+| StorageClient::exists | 1 |
+| ShareServiceClient::undelete_share | 1 |
+| ShareLeaseClient::renew | 1 |
+| ShareLeaseClient::release | 1 |
+| ShareLeaseClient::change | 1 |
+| ShareLeaseClient::break_lease | 1 |
+| ShareLeaseClient::acquire | 1 |
+| ShareFileClient::start_copy_from_url | 1 |
+| ShareFileClient::resize_file | 1 |
+| ShareFileClient::rename_file | 1 |
+| ShareFileClient::exists | 1 |
+| ShareFileClient::acquire_lease | 1 |
+| ShareFileClient::abort_copy | 1 |
+| ShareDirectoryClient::rename_directory | 1 |
+| ShareDirectoryClient::exists | 1 |
+| ShareClient::acquire_lease | 1 |
+| ServiceManagementClient::with_filter | 1 |
+| ServiceManagementClient::wait_for_operation_status_success_default_callback | 1 |
+| ServiceManagementClient::wait_for_operation_status_progress_default_callback | 1 |
+| ServiceManagementClient::wait_for_operation_status_failure_default_callback | 1 |
+| ServiceManagementClient::wait_for_operation_status | 1 |
+| ServiceManagementClient::timeout | 1 |
+| ServiceManagementClient::should_use_requests | 1 |
+| ServiceManagementClient::perform_put | 1 |
+| ServiceManagementClient::perform_post | 1 |
+| ServiceManagementClient::perform_get | 1 |
+| ServiceManagementClient::perform_delete | 1 |
+| SecretClient::restore_secret_backup | 1 |
+| SecretClient::purge_deleted_secret | 1 |
+| SecretClient::backup_secret | 1 |
+| SearchIndexerClient::run_indexer | 1 |
+| SearchIndexerClient::reset_skills | 1 |
+| SearchIndexerClient::reset_indexer | 1 |
+| SearchIndexerClient::reset_documents | 1 |
+| SearchClient::suggest | 1 |
+| SearchClient::search | 1 |
+| SearchClient::merge_or_upload_documents | 1 |
+| SearchClient::merge_documents | 1 |
+| SearchClient::index_documents | 1 |
+| SearchClient::autocomplete | 1 |
+| SchemaRegistryClient::register_schema | 1 |
+| RemoteRenderingClient::stop_rendering_session | 1 |
+| QueueClient::receive_message | 1 |
+| QueueClient::peek_messages | 1 |
+| PersonalizerClient::reward_multi_slot | 1 |
+| PersonalizerClient::reward | 1 |
+| PersonalizerClient::rank_multi_slot | 1 |
+| PersonalizerClient::activate_multi_slot | 1 |
+| PersonalizerClient::activate | 1 |
+| PersonalizerAdministrationClient::reset_policy | 1 |
+| PersonalizerAdministrationClient::reset_model | 1 |
+| PersonalizerAdministrationClient::import_model | 1 |
+| PersonalizerAdministrationClient::export_model | 1 |
+| PersonalizerAdministrationClient::apply_from_evaluation | 1 |
+| PathClient::acquire_lease | 1 |
+| MsalClient::post | 1 |
+| MetricsAdvisorAdministrationClient::refresh_data_feed_ingestion | 1 |
+| KeyClient::rotate_key | 1 |
+| KeyClient::restore_key_backup | 1 |
+| KeyClient::release_key | 1 |
+| KeyClient::purge_deleted_key | 1 |
+| KeyClient::import_key | 1 |
+| KeyClient::backup_key | 1 |
+| HTTPClient::perform_request | 1 |
+| FormRecognizerClient::train_custom_model | 1 |
+| FileSystemClient::exists | 1 |
+| FileSystemClient::acquire_lease | 1 |
+| FileStorageClient::exists | 1 |
+| FaceClient::detect | 1 |
+| EventHubProducerClient::flush | 1 |
+| EventHubConsumerClient::receive_batch | 1 |
+| EventHubConsumerClient::receive | 1 |
+| DockerClient::logs | 1 |
+| DigitalTwinsClient::publish_telemetry | 1 |
+| DigitalTwinsClient::publish_component_telemetry | 1 |
+| DigitalTwinsClient::decommission_model | 1 |
+| DataLakeServiceClient::undelete_file_system | 1 |
+| DataLakeLeaseClient::renew | 1 |
+| DataLakeLeaseClient::release | 1 |
+| DataLakeLeaseClient::change | 1 |
+| DataLakeLeaseClient::break_lease | 1 |
+| DataLakeLeaseClient::acquire | 1 |
+| DataLakeFileClient::rename_file | 1 |
+| DataLakeFileClient::flush_data | 1 |
+| DataLakeFileClient::exists | 1 |
+| DataLakeDirectoryClient::rename_directory | 1 |
+| DataLakeDirectoryClient::exists | 1 |
+| CryptographyClient::wrap_key | 1 |
+| CryptographyClient::verify | 1 |
+| CryptographyClient::unwrap_key | 1 |
+| CryptographyClient::sign | 1 |
+| CryptographyClient::encrypt | 1 |
+| CryptographyClient::decrypt | 1 |
+| ContainerClient::exists | 1 |
+| ContainerClient::acquire_lease | 1 |
+| CommunicationIdentityClient::revoke_tokens | 1 |
+| CertificateClient::restore_certificate_backup | 1 |
+| CertificateClient::purge_deleted_certificate | 1 |
+| CertificateClient::merge_certificate | 1 |
+| CertificateClient::import_certificate | 1 |
+| CertificateClient::backup_certificate | 1 |
+| CallConnectionClient::unhold | 1 |
+| CallConnectionClient::transfer_call_to_participant | 1 |
+| CallConnectionClient::stop_transcription | 1 |
+| CallConnectionClient::stop_hold_music | 1 |
+| CallConnectionClient::stop_continuous_dtmf_recognition | 1 |
+| CallConnectionClient::start_transcription | 1 |
+| CallConnectionClient::start_recognizing_media | 1 |
+| CallConnectionClient::start_hold_music | 1 |
+| CallConnectionClient::start_continuous_dtmf_recognition | 1 |
+| CallConnectionClient::play_media_to_all | 1 |
+| CallConnectionClient::play_media | 1 |
+| CallConnectionClient::mute_participant | 1 |
+| CallConnectionClient::hold | 1 |
+| CallConnectionClient::hang_up | 1 |
+| CallAutomationClient::stop_recording | 1 |
+| CallAutomationClient::resume_recording | 1 |
+| CallAutomationClient::reject_call | 1 |
+| CallAutomationClient::redirect_call | 1 |
+| CallAutomationClient::pause_recording | 1 |
+| CallAutomationClient::answer_call | 1 |
+| BlobStorageClient::exists | 1 |
+| BlobServiceClient::undelete_container | 1 |
+| BlobLeaseClient::renew | 1 |
+| BlobLeaseClient::release | 1 |
+| BlobLeaseClient::change | 1 |
+| BlobLeaseClient::break_lease | 1 |
+| BlobLeaseClient::acquire | 1 |
+| BlobClient::undelete_blob | 1 |
+| BlobClient::start_copy_from_url | 1 |
+| BlobClient::stage_block_from_url | 1 |
+| BlobClient::stage_block | 1 |
+| BlobClient::seal_append_blob | 1 |
+| BlobClient::resize_blob | 1 |
+| BlobClient::exists | 1 |
+| BlobClient::commit_block_list | 1 |
+| BlobClient::acquire_lease | 1 |
+| BlobClient::abort_copy | 1 |
+| AzureOpenAIClient::bounded_chat_completion | 1 |
+| AzureAppConfigurationClient::recover_snapshot | 1 |
+| AzureAppConfigurationClient::archive_snapshot | 1 |
+| AugLoopClient::setup_session_after_init | 1 |
+| AugLoopClient::reconnect_and_attempt_session_init | 1 |
+| AttestationClient::attest_tpm | 1 |
+| AttestationClient::attest_sgx_enclave | 1 |
+| AttestationClient::attest_open_enclave | 1 |
+| AttestationAdministrationClient::reset_policy | 1 |
+| AnonymousACRExchangeClient::exchange_refresh_token_for_access_token | 1 |
+| AIClient::build_index_on_cloud | 1 |
+| ACRExchangeClient::exchange_refresh_token_for_access_token | 1 |
+| ACRExchangeClient::exchange_aad_token_for_refresh_token | 1 |
+| AadClient::obtain_token_on_behalf_of | 1 |
+| AadClient::obtain_token_by_refresh_token | 1 |
+| AadClient::obtain_token_by_jwt_assertion | 1 |
+| AadClient::obtain_token_by_client_secret | 1 |
+| AadClient::obtain_token_by_client_certificate | 1 |
+| AadClient::obtain_token_by_authorization_code | 1 |

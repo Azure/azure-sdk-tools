@@ -58,7 +58,7 @@ A sample token file for .NET package `Azure.Template` is present [here](./apivie
 
 See following sample API review lines and corresponding `ReviewLine` token.
 
-`namespace Azure.Data.Tables `
+`namespace Azure.Data.Tables {`
 <details>
 <summary>Click here to see json</summary>
 

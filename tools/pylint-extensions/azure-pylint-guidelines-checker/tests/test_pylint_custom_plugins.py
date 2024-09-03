@@ -4831,7 +4831,48 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_import(imc)
             self.checker.visit_importfrom(imd)
 
-# [Pylint] custom linter check for invalid use of @overload #3229
+
+class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
+    """Test that use of the @overload decorator matches the async/sync nature of the underlying function"""
+
+    CHECKER_CLASS = checker.InvalidUseOfOverload
+
+
+    def test_valid_use_overload(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "invalid_use_of_overload_acceptable.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        with self.assertNoMessages():
+            self.checker.visit_call(node)
+
+
+    def test_invalid_use_overload(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "invalid_use_of_overload_violation.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="invalid-use-of-overload",
+                line=0,
+                node=node,
+                col_offset=0,
+            )
+        ):
+            self.checker.visit_call(node)
+
+
+
+
+
+
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355

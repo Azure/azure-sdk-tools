@@ -1,34 +1,55 @@
-# Variables defined in pipeline definition
-# DevOpsProject - public, internal
-# Branch - main
-# Prefix - net, python, js, java, <lang>-pr
-# RepositoryName - azure-sdk-for-<lang>
-# DevOpsPath - $(Prefix)\pr
-# ServiceDirectory - "", keyvault, storage, etc.
-# PipelineConvention - ci, up, tests, testsweekly, upweekly
-# AdditionalOptions - potentially add variablegroups via "--variablegroups x"
-
 pr: none
-
 trigger: none
 
+parameters:
+- name: Branch
+  type: string
+  default: main
+- name: Prefix
+  type: string
+  default: '<lang>-pr'
+- name: RepositoryName
+  type: string
+  default: azure-sdk-for-<lang>
+- name: ServiceDirectory
+  type: string
+  default: '<service directory under sdk>'
+- name: DevOpsPath
+  type: string
+  default: '<lang> | <lang>/pr'
+- name: PipelineConvention
+  type: string
+  default: <ci | up | tests | testsweekly | upweekly>
+- name: AdditionalOptions
+  type: string
+  default: ''
+
 variables:
-  NugetSecurityAnalysisWarningLevel: none
-  skipComponentGovernanceDetection: true
-  DevOpsOrg: azure-sdk
-  PathFilter: $(Pipeline.Workspace)/$(RepositoryName)/sdk/$(ServiceDirectory)
+- template: /eng/pipelines/templates/variables/image.yml
+- name: NugetSecurityAnalysisWarningLevel
+  value: none
+- name: skipComponentGovernanceDetection
+  value: true
 
 jobs:
 - job: GeneratePipeline
   pool:
-    name: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: ubuntu-22.04
+    name: $(LINUXPOOL)
+    vmImage: $(LINUXVMIMAGE)
   steps:
-  - checkout: none
+  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+    parameters:
+      Repositories:
+        - Name: Azure/${{ parameters.RepositoryName }}
+          WorkingDirectory: $(Pipeline.Workspace)/${{ parameters.RepositoryName }}
+      Paths:
+        - 'sdk/**/*.yml'
+        - '!sdk/**/test-recordings/*'
+        - '!sdk/**/recordings/*'
+        - '!sdk/**/SessionRecords/*'
+        - '!sdk/**/session-records/*'
   - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
-  - script: |
-      git clone --filter=blob:none --branch $(Branch) https://$(azuresdk-github-pat)@github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
-    displayName: 'Clone repository: $(RepositoryName)'
+  - template: /eng/common/pipelines/templates/steps/set-default-branch.yml  
   - task: AzureCLI@2
     inputs:
       azureSubscription: 'opensource-api-connection'
@@ -36,16 +57,16 @@ jobs:
       scriptLocation: inlineScript
       inlineScript: >
         $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-        --organization $(DevOpsOrg)
-        --project $(DevOpsProject)
-        --prefix $(Prefix)
-        --devopspath "$(DevOpsPath)"
-        --path $(PathFilter)
+        --organization azure-sdk
+        --project ${{ parameters.DevOpsProject }}
+        --prefix ${{ parameters.Prefix }}
+        --devopspath "${{ parameters.DevOpsPath }}"
+        --path "$(Pipeline.Workspace)/${{ parameters.RepositoryName }})/sdk/${{ parameters.ServiceDirectory }}"
         --endpoint Azure
-        --repository Azure/$(RepositoryName)
-        --convention $(PipelineConvention)
+        --repository Azure/${{ parameters.RepositoryName }}
+        --convention ${{ parameters.PipelineConvention }}
         --agentpool Hosted
-        --branch refs/heads/$(Branch)
+        --branch refs/heads/${{ parameters.Branch }}
         --debug
-        $(AdditionalOptions)
+        ${{ parameters.AdditionalOptions }}
     displayName: 'Generate pipeline'

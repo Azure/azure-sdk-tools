@@ -5,7 +5,6 @@
     "PackageName": "Azure.Template",
     "PackageVersion": "1.0.3.0",
     "Tokens": [],
-    "APIForest": [],
     "Diagnostics": [
         {
             "DiagnosticId": "AZC0007",

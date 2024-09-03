@@ -2741,19 +2741,11 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
             if isinstance(i, astroid.Raise):
                 self.check_for_logging(node)
             # Check for any nested 'If' branches
-            if isinstance(i, astroid.If) or isinstance(i, astroid.For):
+            if isinstance(i, astroid.If):
                 self.check_for_raise(i.body)
-                # Check any 'elif', 'else' or 'for' branches
-                orelse_statements = i.orelse
-                while len(orelse_statements) == 1:
-                    if isinstance(orelse_statements[0], astroid.If):
-                        for x in orelse_statements:
-                            self.check_for_raise(x.body)
-                            orelse_statements = x.orelse
-                    else:
-                        break
-                # Check 'else' body for raise
-                self.check_for_raise(orelse_statements)
+
+                # Check any 'elif' or 'else' branches
+                self.check_for_raise(i.orelse)
 
     def check_for_logging(self, node):
         """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'

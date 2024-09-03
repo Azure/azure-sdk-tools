@@ -166,7 +166,6 @@ Network,,e99695
 Network - Application Gateway,,e99695
 Network - Bastion,,e99695
 Network - CDN,,e99695
-Network - Cloud,,e99695
 Network - DDoS Protection,,e99695
 Network - DNS,,e99695
 Network - ExpressRoute,,e99695
@@ -184,6 +183,7 @@ Network - Virtual WAN,,e99695
 Notification Hub,,e99695
 OpenAI,,e99695
 Operations Management,,e99695
+Operator Nexus - Network Cloud,,e99695
 Peering,,e99695
 Policy,,e99695
 Policy Insights,,e99695

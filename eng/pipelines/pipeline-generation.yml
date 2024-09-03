@@ -24,8 +24,6 @@ parameters:
     default: 76
   - name: APIReview_AutoCreate_Configurations
     default: 93
-  - name: Cache_Secrets_for_CPP
-    default: 117
 
 jobs:
 - job: GeneratePipelines
@@ -87,7 +85,6 @@ jobs:
           ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
           ${{ parameters.APIReview_AutoCreate_Configurations }}
           ${{ parameters.Secrets_for_Resource_Provisioner }}
-          ${{ parameters.Cache_Secrets_for_CPP }}
       iOS:
         RepositoryName: azure-sdk-for-ios
         Prefix: ios

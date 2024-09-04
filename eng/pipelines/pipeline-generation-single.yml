@@ -5,24 +5,12 @@ parameters:
 - name: Branch
   type: string
   default: main
-- name: Prefix
-  type: string
-  default: '<lang>-pr'
 - name: RepositoryName
   type: string
   default: azure-sdk-for-<lang>
-- name: ServiceDirectory
+- name: RepositoryPath
   type: string
-  default: '<service directory under sdk>'
-- name: DevOpsPath
-  type: string
-  default: '<lang> | <lang>/pr'
-- name: PipelineConvention
-  type: string
-  default: <ci | up | tests | testsweekly | upweekly>
-- name: AdditionalOptions
-  type: string
-  default: ''
+  default: 'sdk/<service>'
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
@@ -30,6 +18,7 @@ variables:
   value: none
 - name: skipComponentGovernanceDetection
   value: true
+- name: AdditionalOptions
 
 jobs:
 - job: GeneratePipeline
@@ -37,36 +26,7 @@ jobs:
     name: $(LINUXPOOL)
     vmImage: $(LINUXVMIMAGE)
   steps:
-  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+  - template: /eng/common/pipelines/templates/jobs/prepare-pipelines.yml
     parameters:
-      Repositories:
-        - Name: Azure/${{ parameters.RepositoryName }}
-          WorkingDirectory: $(Pipeline.Workspace)/${{ parameters.RepositoryName }}
-      Paths:
-        - 'sdk/**/*.yml'
-        - '!sdk/**/test-recordings/*'
-        - '!sdk/**/recordings/*'
-        - '!sdk/**/SessionRecords/*'
-        - '!sdk/**/session-records/*'
-  - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
-  - template: /eng/common/pipelines/templates/steps/set-default-branch.yml  
-  - task: AzureCLI@2
-    inputs:
-      azureSubscription: 'opensource-api-connection'
-      scriptType: pscore
-      scriptLocation: inlineScript
-      inlineScript: >
-        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-        --organization azure-sdk
-        --project ${{ parameters.DevOpsProject }}
-        --prefix ${{ parameters.Prefix }}
-        --devopspath "${{ parameters.DevOpsPath }}"
-        --path "$(Pipeline.Workspace)/${{ parameters.RepositoryName }})/sdk/${{ parameters.ServiceDirectory }}"
-        --endpoint Azure
-        --repository Azure/${{ parameters.RepositoryName }}
-        --convention ${{ parameters.PipelineConvention }}
-        --agentpool Hosted
-        --branch refs/heads/${{ parameters.Branch }}
-        --debug
-        ${{ parameters.AdditionalOptions }}
-    displayName: 'Generate pipeline'
+      Repository: Azure/${{ parameters.RepositoryName }}
+      RepositoryPath: ${{ parameters.RepositoryPath }}

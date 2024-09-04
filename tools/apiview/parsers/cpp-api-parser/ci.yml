@@ -34,7 +34,7 @@ stages:
           name: azsdk-pool-mms-win-2022-general
           os: windows
           demands:
-          - ImageOverride -equals 1espt-win-2022-cpp-rollback
+          - ImageOverride -equals azsdk-pool-mms-win-2022-1espt
 
         steps:
           - pwsh: |

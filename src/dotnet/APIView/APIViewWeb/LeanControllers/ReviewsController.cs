@@ -27,13 +27,15 @@ namespace APIViewWeb.LeanControllers
         public readonly UserPreferenceCache _preferenceCache;
         private readonly ICosmosUserProfileRepository _userProfileRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly INotificationManager _notificationManager;
         private readonly IWebHostEnvironment _env;
 
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
             IConfiguration configuration, UserPreferenceCache preferenceCache,
-            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub, IWebHostEnvironment env)
+            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub,
+            INotificationManager notificationManager, IWebHostEnvironment env)
         {
             _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
@@ -44,6 +46,7 @@ namespace APIViewWeb.LeanControllers
             _preferenceCache = preferenceCache;
             _userProfileRepository = userProfileRepository;
             _signalRHubContext = signalRHub;
+            _notificationManager = notificationManager;
             _env = env;
         }
 
@@ -115,6 +118,20 @@ namespace APIViewWeb.LeanControllers
         {
             var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
             return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA toggling Subscription to a review
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="state"></param> true = subscribe, false = unsubscribe
+        /// <returns></returns>
+        [HttpPost("{reviewId}/toggleSubscribe", Name = "ToggleSubscribe")]
+        public async Task<ActionResult<APIRevisionListItemModel>> ToggleSubscribeAsync(string reviewId, [FromQuery] bool state)
+        {
+            string userName = User.GetGitHubLogin();
+            await _notificationManager.ToggleSubscribedAsync(User, reviewId, state);
+            return Ok();
         }
 
         ///<summary>

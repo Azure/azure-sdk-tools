@@ -125,7 +125,7 @@ stages:
                     inputs:
                       command: publish
                       publishDirectory: $(Pipeline.Workspace)/release-artifacts
-                      vstsFeedPublish: 'public/AzureSDKForCpp'
+                      vstsFeedPublish: 'public/azure-sdk-for-cpp'
                       vstsFeedPackagePublish: 'parseazuresdkcpp'
                       versionOption: minor
                       packagePublishDescription: 'Azure C++ SDK API View Parser.'

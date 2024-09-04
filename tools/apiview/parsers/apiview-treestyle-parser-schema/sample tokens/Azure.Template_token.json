@@ -49,7 +49,7 @@
                 },
                 {
                     "Kind": 5,
-                    "Value": "-1.41.0",
+                    "Value": "-1.34.0",
                     "SkipDiff": true,
                     "HasSuffixSpace": true,
                     "RenderClasses": []
@@ -79,7 +79,7 @@
         {
             "Tokens": [],
             "Children": [],
-            "IsHidden": false
+            "RelatedToLine": "Dependencies"
         },
         {
             "LineId": "Azure.Template",
@@ -130,7 +130,8 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "RelatedToLine": "Azure.Template.TemplateClient"
                 },
                 {
                     "Tokens": [
@@ -143,7 +144,8 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "RelatedToLine": "Azure.Template.TemplateClient"
                 },
                 {
                     "LineId": "Azure.Template.TemplateClient",
@@ -188,7 +190,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential)"
                         },
                         {
                             "Tokens": [
@@ -201,7 +204,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential)"
                         },
                         {
                             "Tokens": [
@@ -214,7 +218,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential)"
                         },
                         {
                             "Tokens": [
@@ -227,7 +232,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential)"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential)",
@@ -307,7 +313,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential, Azure.Template.TemplateClientOptions)"
                         },
                         {
                             "Tokens": [
@@ -320,7 +327,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential, Azure.Template.TemplateClientOptions)"
                         },
                         {
                             "Tokens": [
@@ -333,7 +341,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential, Azure.Template.TemplateClientOptions)"
                         },
                         {
                             "Tokens": [
@@ -346,7 +355,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential, Azure.Template.TemplateClientOptions)"
                         },
                         {
                             "Tokens": [
@@ -359,7 +369,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential, Azure.Template.TemplateClientOptions)"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClient.TemplateClient(System.String, Azure.Core.TokenCredential, Azure.Template.TemplateClientOptions)",
@@ -458,7 +469,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.TemplateClient()"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClient.TemplateClient()",
@@ -508,7 +520,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.Pipeline"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClient.Pipeline",
@@ -578,7 +591,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -591,7 +605,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -604,7 +619,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -617,7 +633,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -630,7 +647,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -643,7 +661,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -656,7 +675,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -669,7 +689,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -682,7 +703,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -695,7 +717,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -708,7 +731,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -721,7 +745,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -734,7 +759,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -747,7 +773,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -760,7 +787,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -773,7 +801,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -786,150 +815,22 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// This sample shows how to call GetSecret and parse the result.",
+                                    "Value": "// This sample shows how to call GetSecret with required parameters and parse the result.",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// \u003Ccode\u003E\u003C![CDATA[",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// TokenCredential credential = new DefaultAzureCredential();",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// TemplateClient client = new TemplateClient(\u0022\u003CVaultBaseUrl\u003E\u0022, credential);",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// ",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// Response response = client.GetSecret(\u0022\u003CsecretName\u003E\u0022, null);",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// ",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// JsonElement result = JsonDocument.Parse(response.ContentStream).RootElement;",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// Console.WriteLine(result.ToString());",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// ]]\u003E\u003C/code\u003E",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// This sample shows how to call GetSecret with all parameters and parse the result.",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -942,59 +843,36 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// TokenCredential credential = new DefaultAzureCredential();",
+                                    "Value": "// var credential = new DefaultAzureCredential();",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// TemplateClient client = new TemplateClient(\u0022\u003CVaultBaseUrl\u003E\u0022, credential);",
+                                    "Value": "// var client = new TemplateClient(\u0022\u003CvaultBaseUrl\u003E\u0022, credential);",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// ",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// Response response = client.GetSecret(\u0022\u003CsecretName\u003E\u0022, null);",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1007,7 +885,36 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 7,
+                                    "Value": "// Response response = client.GetSecret(\u0022\u003CsecretName\u003E\u0022, new RequestContext());",
+                                    "HasSuffixSpace": true,
+                                    "IsDocumentation": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 7,
+                                    "Value": "// ",
+                                    "HasSuffixSpace": true,
+                                    "IsDocumentation": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1020,7 +927,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1033,7 +941,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1046,7 +955,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1059,20 +969,22 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// Console.WriteLine(result.GetProperty(\u0022tags\u0022).GetProperty(\u0022\u003Ckey\u003E\u0022).ToString());",
+                                    "Value": "// Console.WriteLine(result.GetProperty(\u0022tags\u0022).GetProperty(\u0022\u003Ctest\u003E\u0022).ToString());",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1085,7 +997,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1098,20 +1011,36 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// ]]\u003E\u003C/code\u003E\u003C/example\u003E",
+                                    "Value": "// ]]\u003E\u003C/code\u003E",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 7,
+                                    "Value": "// \u003C/example\u003E",
+                                    "HasSuffixSpace": true,
+                                    "IsDocumentation": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClient.GetSecret(System.String, Azure.RequestContext)",
@@ -1205,7 +1134,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1218,7 +1148,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1231,7 +1162,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1244,7 +1176,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1257,7 +1190,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1270,7 +1204,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1283,7 +1218,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1296,7 +1232,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1309,7 +1246,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1322,7 +1260,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1335,7 +1274,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1348,7 +1288,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1361,7 +1302,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1374,7 +1316,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1387,7 +1330,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1400,7 +1344,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1413,150 +1358,22 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// This sample shows how to call GetSecretAsync and parse the result.",
+                                    "Value": "// This sample shows how to call GetSecretAsync with required parameters and parse the result.",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// \u003Ccode\u003E\u003C![CDATA[",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// TokenCredential credential = new DefaultAzureCredential();",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// TemplateClient client = new TemplateClient(\u0022\u003CVaultBaseUrl\u003E\u0022, credential);",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// ",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// Response response = await client.GetSecretAsync(\u0022\u003CsecretName\u003E\u0022, null);",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// ",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// JsonElement result = JsonDocument.Parse(response.ContentStream).RootElement;",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// Console.WriteLine(result.ToString());",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// ]]\u003E\u003C/code\u003E",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// This sample shows how to call GetSecretAsync with all parameters and parse the result.",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1569,59 +1386,36 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// TokenCredential credential = new DefaultAzureCredential();",
+                                    "Value": "// var credential = new DefaultAzureCredential();",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// TemplateClient client = new TemplateClient(\u0022\u003CVaultBaseUrl\u003E\u0022, credential);",
+                                    "Value": "// var client = new TemplateClient(\u0022\u003CvaultBaseUrl\u003E\u0022, credential);",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// ",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
-                        },
-                        {
-                            "Tokens": [
-                                {
-                                    "Kind": 7,
-                                    "Value": "// Response response = await client.GetSecretAsync(\u0022\u003CsecretName\u003E\u0022, null);",
-                                    "HasSuffixSpace": true,
-                                    "IsDocumentation": true,
-                                    "RenderClasses": []
-                                }
-                            ],
-                            "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1634,7 +1428,36 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 7,
+                                    "Value": "// Response response = await client.GetSecretAsync(\u0022\u003CsecretName\u003E\u0022, new RequestContext());",
+                                    "HasSuffixSpace": true,
+                                    "IsDocumentation": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 7,
+                                    "Value": "// ",
+                                    "HasSuffixSpace": true,
+                                    "IsDocumentation": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1647,7 +1470,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1660,7 +1484,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1673,7 +1498,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1686,20 +1512,22 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// Console.WriteLine(result.GetProperty(\u0022tags\u0022).GetProperty(\u0022\u003Ckey\u003E\u0022).ToString());",
+                                    "Value": "// Console.WriteLine(result.GetProperty(\u0022tags\u0022).GetProperty(\u0022\u003Ctest\u003E\u0022).ToString());",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1712,7 +1540,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
@@ -1725,20 +1554,36 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "Tokens": [
                                 {
                                     "Kind": 7,
-                                    "Value": "// ]]\u003E\u003C/code\u003E\u003C/example\u003E",
+                                    "Value": "// ]]\u003E\u003C/code\u003E",
                                     "HasSuffixSpace": true,
                                     "IsDocumentation": true,
                                     "RenderClasses": []
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 7,
+                                    "Value": "// \u003C/example\u003E",
+                                    "HasSuffixSpace": true,
+                                    "IsDocumentation": true,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [],
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClient.GetSecretAsync(System.String, Azure.RequestContext)",
@@ -1850,7 +1695,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretValue(System.String, System.Threading.CancellationToken)"
                         },
                         {
                             "Tokens": [
@@ -1863,7 +1709,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretValue(System.String, System.Threading.CancellationToken)"
                         },
                         {
                             "Tokens": [
@@ -1876,7 +1723,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretValue(System.String, System.Threading.CancellationToken)"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClient.GetSecretValue(System.String, System.Threading.CancellationToken)",
@@ -2001,7 +1849,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretValueAsync(System.String, System.Threading.CancellationToken)"
                         },
                         {
                             "Tokens": [
@@ -2014,7 +1863,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretValueAsync(System.String, System.Threading.CancellationToken)"
                         },
                         {
                             "Tokens": [
@@ -2027,7 +1877,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClient.GetSecretValueAsync(System.String, System.Threading.CancellationToken)"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClient.GetSecretValueAsync(System.String, System.Threading.CancellationToken)",
@@ -2172,12 +2023,14 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "IsContextEndLine": true
                 },
                 {
                     "Tokens": [],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "RelatedToLine": "Azure.Template.TemplateClient"
                 },
                 {
                     "Tokens": [
@@ -2190,7 +2043,8 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "RelatedToLine": "Azure.Template.TemplateClientOptions"
                 },
                 {
                     "LineId": "Azure.Template.TemplateClientOptions",
@@ -2247,7 +2101,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClientOptions.ServiceVersion"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClientOptions.ServiceVersion",
@@ -2292,7 +2147,8 @@
                                         }
                                     ],
                                     "Children": [],
-                                    "IsHidden": false
+                                    "IsHidden": false,
+                                    "RelatedToLine": "Azure.Template.TemplateClientOptions.ServiceVersion.V7_0"
                                 },
                                 {
                                     "LineId": "Azure.Template.TemplateClientOptions.ServiceVersion.V7_0",
@@ -2340,7 +2196,14 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "IsContextEndLine": true
+                        },
+                        {
+                            "Tokens": [],
+                            "Children": [],
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClientOptions.ServiceVersion"
                         },
                         {
                             "Tokens": [
@@ -2353,7 +2216,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.TemplateClientOptions.TemplateClientOptions(Azure.Template.TemplateClientOptions.ServiceVersion)"
                         },
                         {
                             "LineId": "Azure.Template.TemplateClientOptions.TemplateClientOptions(Azure.Template.TemplateClientOptions.ServiceVersion)",
@@ -2432,7 +2296,14 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "IsContextEndLine": true
+                },
+                {
+                    "Tokens": [],
+                    "Children": [],
+                    "IsHidden": false,
+                    "RelatedToLine": "Azure.Template.TemplateClientOptions"
                 }
             ],
             "IsHidden": false
@@ -2447,12 +2318,14 @@
                 }
             ],
             "Children": [],
-            "IsHidden": false
+            "IsHidden": false,
+            "IsContextEndLine": true
         },
         {
             "Tokens": [],
             "Children": [],
-            "IsHidden": false
+            "IsHidden": false,
+            "RelatedToLine": "Azure.Template"
         },
         {
             "LineId": "Azure.Template.Models",
@@ -2515,7 +2388,8 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "RelatedToLine": "Azure.Template.Models.SecretBundle"
                 },
                 {
                     "LineId": "Azure.Template.Models.SecretBundle",
@@ -2560,7 +2434,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.Models.SecretBundle.ContentType"
                         },
                         {
                             "LineId": "Azure.Template.Models.SecretBundle.ContentType",
@@ -2624,7 +2499,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.Models.SecretBundle.Id"
                         },
                         {
                             "LineId": "Azure.Template.Models.SecretBundle.Id",
@@ -2688,7 +2564,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.Models.SecretBundle.Kid"
                         },
                         {
                             "LineId": "Azure.Template.Models.SecretBundle.Kid",
@@ -2752,7 +2629,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.Models.SecretBundle.Managed"
                         },
                         {
                             "LineId": "Azure.Template.Models.SecretBundle.Managed",
@@ -2822,7 +2700,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.Models.SecretBundle.Tags"
                         },
                         {
                             "LineId": "Azure.Template.Models.SecretBundle.Tags",
@@ -2916,7 +2795,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Azure.Template.Models.SecretBundle.Value"
                         },
                         {
                             "LineId": "Azure.Template.Models.SecretBundle.Value",
@@ -2982,7 +2862,14 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "IsContextEndLine": true
+                },
+                {
+                    "Tokens": [],
+                    "Children": [],
+                    "IsHidden": false,
+                    "RelatedToLine": "Azure.Template.Models.SecretBundle"
                 }
             ],
             "IsHidden": false
@@ -2997,12 +2884,14 @@
                 }
             ],
             "Children": [],
-            "IsHidden": false
+            "IsHidden": false,
+            "IsContextEndLine": true
         },
         {
             "Tokens": [],
             "Children": [],
-            "IsHidden": false
+            "IsHidden": false,
+            "RelatedToLine": "Azure.Template.Models"
         },
         {
             "LineId": "Microsoft.Extensions.Azure",
@@ -3065,7 +2954,8 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "RelatedToLine": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions"
                 },
                 {
                     "LineId": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions",
@@ -3116,7 +3006,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder\u003E(TBuilder, System.String)"
                         },
                         {
                             "Tokens": [
@@ -3129,7 +3020,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder\u003E(TBuilder, System.String)"
                         },
                         {
                             "Tokens": [
@@ -3142,7 +3034,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder\u003E(TBuilder, System.String)"
                         },
                         {
                             "LineId": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder\u003E(TBuilder, System.String)",
@@ -3316,7 +3209,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder, TConfiguration\u003E(TBuilder, TConfiguration)"
                         },
                         {
                             "Tokens": [
@@ -3329,7 +3223,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder, TConfiguration\u003E(TBuilder, TConfiguration)"
                         },
                         {
                             "Tokens": [
@@ -3342,7 +3237,8 @@
                                 }
                             ],
                             "Children": [],
-                            "IsHidden": false
+                            "IsHidden": false,
+                            "RelatedToLine": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder, TConfiguration\u003E(TBuilder, TConfiguration)"
                         },
                         {
                             "LineId": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions.AddTemplateClient\u003CTBuilder, TConfiguration\u003E(TBuilder, TConfiguration)",
@@ -3548,7 +3444,14 @@
                         }
                     ],
                     "Children": [],
-                    "IsHidden": false
+                    "IsHidden": false,
+                    "IsContextEndLine": true
+                },
+                {
+                    "Tokens": [],
+                    "Children": [],
+                    "IsHidden": false,
+                    "RelatedToLine": "Microsoft.Extensions.Azure.TemplateClientBuilderExtensions"
                 }
             ],
             "IsHidden": false
@@ -3563,7 +3466,14 @@
                 }
             ],
             "Children": [],
-            "IsHidden": false
+            "IsHidden": false,
+            "IsContextEndLine": true
+        },
+        {
+            "Tokens": [],
+            "Children": [],
+            "IsHidden": false,
+            "RelatedToLine": "Microsoft.Extensions.Azure"
         }
     ]
 }

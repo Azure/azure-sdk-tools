@@ -154,6 +154,16 @@
     </ul>
 </app-page-options-section>
 
+<app-page-options-section sectionName="Review Options">
+    <ul class="list-group">
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="subscribeSwitch"
+            (onChange)="onSubscribeSwitchChange($event)" />
+            <label class="ms-2">Subscribe</label>
+        </li>
+    </ul>
+</app-page-options-section>
+
 <app-page-options-section sectionName="Change History" [collapsedInput]="true">
     <ul class="list-group">
         <li class="list-group-item change-history">

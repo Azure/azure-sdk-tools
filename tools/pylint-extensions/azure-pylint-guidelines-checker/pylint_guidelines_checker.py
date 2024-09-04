@@ -2638,50 +2638,95 @@ class DeleteOperationReturnStatement(BaseChecker):
 
 
 class ImportTypeChecker(BaseChecker):
-    name = 'duplicate-import-type'
+    """Checker to ensure no type is imported from more than one module in the same package,
+    except for clients in sync/async namespaces."""
+
+    name = "import-type-checker"
+    priority = -1
     msgs = {
-        'C4764': (
-            'Type %s is importable from multiple namespaces: %s',
-            'duplicate-import-type',
-            'Used when a type is importable from multiple namespaces.',
+        "C4764": (
+            "Type %s is imported multiple times from different modules: %s and %s",
+            "duplicate-import-type",
+            "Used when a type is imported multiple times, even from different modules, within the same package.",
         ),
     }
-    options = ()
 
-    def __init__(self, linter=None):
-        super().__init__(linter)
-        self.imported_types = {}
+    def visit_module(self, node):
+        """Initialize the dictionary for tracking imports at the start of processing each file."""
+        self.imported_entities = {}
+        self.dunder_all_exports = set()
 
     def visit_importfrom(self, node):
-        # Handle imports like `from module import name`
+        """Check for duplicate imports from different modules within the same package."""
+        if self._is_inside_exception_or_conditional(node):
+            # Ignore imports inside conditional or try/except blocks
+            return
+
         module_name = node.modname
         for name, alias in node.names:
-            type_name = alias or name
-            if type_name in self.imported_types:
-                self.add_message(
-                    'duplicate-import-type',
-                    node=node,
-                    args=(type_name, f'{self.imported_types[type_name]}, {module_name}')
-                )
-            else:
-                self.imported_types[type_name] = module_name
+            entity_name = alias or name
 
-    def visit_import(self, node):
-        # Handle imports like `import module`
-        for name, alias in node.names:
-            module_name = alias or name
-            if module_name in self.imported_types:
-                self.add_message(
-                    'duplicate-import-type',
-                    node=node,
-                    args=(module_name, f'{self.imported_types[module_name]}, {module_name}')
-                )
+            # Check if the entity has already been imported
+            if entity_name in self.imported_entities:
+                # Special case for clients with sync/async namespaces
+                if not (
+                    self._is_client(entity_name)
+                    and self._is_sync_async_namespace(self.imported_entities[entity_name], module_name)
+                ):
+                    if self.imported_entities[entity_name] != module_name:
+                        self.add_message(
+                            "duplicate-import-type",
+                            node=node,
+                            args=(entity_name, self.imported_entities[entity_name], module_name),
+                        )
             else:
-                self.imported_types[module_name] = module_name
-                
+                # Record the entity and its module
+                self.imported_entities[entity_name] = module_name
+
+    def visit_assign(self, node):
+        """Check assignments to __all__ to ensure no duplicate exports."""
+        if (
+            hasattr(node.targets[0], 'name') and node.targets[0].name == '__all__'
+        ):
+            if hasattr(node.value, 'elts'):
+                for item in node.value.elts:
+                    if hasattr(item, 'value'):
+                        exported_name = item.value
+                        if exported_name in self.dunder_all_exports:
+                            self.add_message(
+                                "duplicate-import-type",
+                                node=node,
+                                args=(exported_name, "previous module", "this module"),
+                            )
+                        else:
+                            self.dunder_all_exports.add(exported_name)
+
+    def _is_client(self, name):
+        """Determine if the name represents a client class."""
+        return name.endswith("Client")
+
+    def _is_sync_async_namespace(self, module1, module2):
+        """Check if the modules are in sync/async namespaces."""
+        sync_async_modules = {"sync", "async"}
+        return (
+            sync_async_modules & set(module1.split(".")) and
+            sync_async_modules & set(module2.split("."))
+        )
+
+    def _is_inside_exception_or_conditional(self, node):
+        """Check if the given node is inside a conditional statement or try/except block."""
+        parent = node.parent
+        while parent:
+            # Check for parent nodes that are If or Try statements
+            if parent.is_statement and parent.__class__.__name__ in {'If', 'TryExcept', 'Try'}:
+                return True
+            parent = parent.parent
+        return False
+
     def close(self):
-        # Reset imported types when moving to a new file
-        self.imported_types.clear()
+        """Reset the imported entities dictionary after processing a file."""
+        self.imported_entities.clear()
+        self.dunder_all_exports.clear()
 
 
 class DoNotImportLegacySix(BaseChecker):

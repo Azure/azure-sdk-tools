@@ -4658,6 +4658,7 @@ class TestImportTypeChecker(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ImportTypeChecker
 
     def test_finds_duplicate_imports(self):
+        """Test that the checker correctly finds duplicate imports of the same type within the same file."""
         node = astroid.parse("""
             from module_a import MyClass
             from module_b import MyClass
@@ -4666,9 +4667,9 @@ class TestImportTypeChecker(pylint.testutils.CheckerTestCase):
                 MessageTest(
                     msg_id='duplicate-import-type',
                     line=3,
-                    node=node.body[1],
-                    args=('MyClass', 'module_a, module_b'),
-                    col_offset=0,  # Adjust the col_offset to match the actual value
+                    node=node.body[1],  # Points to the second 'from ... import' statement
+                    args=('MyClass', 'module_a', 'module_b'),
+                    col_offset=0,
                     end_line=3,
                     end_col_offset=28
                 )
@@ -4676,9 +4677,32 @@ class TestImportTypeChecker(pylint.testutils.CheckerTestCase):
             self.walk(node)
 
     def test_no_duplicates(self):
+        """Test that the checker does not raise errors when there are no duplicate imports."""
         node = astroid.parse("""
             from module_a import MyClass
             from module_b import AnotherClass
+        """)
+        with self.assertNoMessages():
+            self.walk(node)
+
+    def test_ignore_imports_in_if_statement(self):
+        """Test that the checker does not raise errors for duplicate imports inside an if statement."""
+        node = astroid.parse("""
+            if sys.version_info >= (3, 8):
+                from module_a import MyClass
+            else:
+                from module_b import MyClass
+        """)
+        with self.assertNoMessages():
+            self.walk(node)
+
+    def test_ignore_imports_in_try_except(self):
+        """Test that the checker does not raise errors for duplicate imports inside a try/except block."""
+        node = astroid.parse("""
+            try:
+                from module_a import MyClass
+            except ImportError:
+                from module_b import MyClass
         """)
         with self.assertNoMessages():
             self.walk(node)

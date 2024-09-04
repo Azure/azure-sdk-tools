@@ -13,7 +13,7 @@ Specifically how to create or update a language parser to produce a hierarchy of
 
 ## Key concepts
 
-APIView token schema is available in [TypeSpec](./apiview-treestyle-parser-schema/model.tsp) and [JSON](./apiview-treestyle-parser-schema/model.json). APIView requires all languages parser to create a JSON file as per the above mentioned schema to render the API review correctly. Navigation panel is automatically created based on the information in the tokens. Following are the main objects in the JSON schema.
+APIView token schema is available in [TypeSpec](./apiview-treestyle-parser-schema/main.tsp) and [JSON](./apiview-treestyle-parser-schema/CodeFile.json). APIView requires all languages parser to create a JSON file as per the above mentioned schema to render the API review correctly. Navigation panel is automatically created based on the information in the tokens. Following are the main objects in the JSON schema.
 
 - CodeFile
 - ReviewLine
@@ -22,7 +22,7 @@ APIView token schema is available in [TypeSpec](./apiview-treestyle-parser-schem
 
 ### CodeFile
 
-The `CodeFile` object represents the entire API review, which is rendered on the APIView tool. So the goal of language parser is to create a `CodeFile` object as per the [TypeSpec schema](./apiview-treestyle-parser-schema/model.tsp).
+The `CodeFile` object represents the entire API review, which is rendered on the APIView tool. So the goal of language parser is to create a `CodeFile` object as per the [TypeSpec schema](./apiview-treestyle-parser-schema/main.tsp).
 
 `CodeFile` object contains an array of `ReviewLine` object, an array of `CodeDiagnostic` and some metadata about the package for e.g. package name, package version, language etc.  
 
@@ -37,7 +37,7 @@ If a review line is related to another line at same level then id of related lin
 
 ### ReviewToken
 
-A review line contains a list of `ReviewToken` and each `ReviewToken` represents a keyword, punctuation, text, type name etc. `ReviewToken` object also has a property that controls whether a space is required on review page after the current content. If the underlying content should act as an HREF then parser should set `NavigateToId` to the line ID of the target review line. `ReviewToken` can also be marked to be skipped from diff calculations when comparing two revisions by setting `SkipDiff` property of review token to true. For more information, refer the schema of `ReviewToken` in [TypeSpec schema](./apiview-treestyle-parser-schema/model.tsp)
+A review line contains a list of `ReviewToken` and each `ReviewToken` represents a keyword, punctuation, text, type name etc. `ReviewToken` object also has a property that controls whether a space is required on review page after the current content. If the underlying content should act as an HREF then parser should set `NavigateToId` to the line ID of the target review line. `ReviewToken` can also be marked to be skipped from diff calculations when comparing two revisions by setting `SkipDiff` property of review token to true. For more information, refer the schema of `ReviewToken` in [TypeSpec schema](./apiview-treestyle-parser-schema/main.tsp)
 
 ### CodeDiagnostic
 
@@ -56,11 +56,9 @@ Don't worry about indentation as it will be handled by the tree structure based 
 
 A sample token file for .NET package `Azure.Template` is present [here](./apiview-treestyle-parser-schema/sample/Azure.Template_token.json) and corresponding rendered text representation is available [here](./apiview-treestyle-parser-schema/sample/Azure.Template_review_content.txt).
 
-See following sample API review lines and corresponding `ReviewLine` token.
+See following sample API review line and corresponding `ReviewLine` token.
 
-`namespace Azure.Data.Tables {`
-<details>
-<summary>Click here to see json</summary>
+API Review Line: `namespace Azure.Data.Tables {`
 
 ```json
 {
@@ -91,15 +89,14 @@ See following sample API review lines and corresponding `ReviewLine` token.
   "Children": [],
   "IsHidden": false
 }
-  ```
-</details>
+```
 
 
 ## JSON token validation
 
 You can validate JSON tokens against required JSON schema using [JSON schema validator](https://www.jsonschemavalidator.net/).
 
-- Select `Custom` as schema type and copy and paste the contents in [json schema](./apiview-treestyle-parser-schema/model.json) to left panel.
+- Select `Custom` as schema type and copy and paste the contents in [json schema](./apiview-treestyle-parser-schema/CodeFile.json) to left panel.
 - Generate APIView token file and paste generated JSON content onto right side panel to validate.
 
 ## Get help

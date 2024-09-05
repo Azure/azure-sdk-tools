@@ -15,6 +15,12 @@ func TestName(t *testing.T) {
 		modulePath, moduleRoot, pkgPath, want string
 	}{
 		{
+			modulePath: "test_major_version/v2",
+			moduleRoot: "testdata/test_major_version",
+			pkgPath:    "subpackage",
+			want:       "test_major_version/subpackage",
+		},
+		{
 			modulePath: "test_package_name",
 			moduleRoot: "testdata/test_package_name/test_package_name@v1.0.0",
 			want:       "test_package_name",

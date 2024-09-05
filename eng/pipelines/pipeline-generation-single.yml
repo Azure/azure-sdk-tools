@@ -20,12 +20,7 @@ variables:
   value: true
 
 jobs:
-- job: GeneratePipeline
-  pool:
-    name: $(LINUXPOOL)
-    vmImage: $(LINUXVMIMAGE)
-  steps:
-  - template: /eng/common/pipelines/templates/jobs/prepare-pipelines.yml
-    parameters:
-      Repository: Azure/${{ parameters.RepositoryName }}
-      RepositoryPath: ${{ parameters.RepositoryPath }}
+- template: /eng/common/pipelines/templates/jobs/prepare-pipelines.yml
+  parameters:
+    Repository: Azure/${{ parameters.RepositoryName }}
+    RepositoryPath: ${{ parameters.RepositoryPath }}

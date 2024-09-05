@@ -134,7 +134,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if (node.codeLines) {
     node.codeLines.forEach((codeLine, index) => {
-      if (shouldAppendIfRowIsHiddenAPI(codeLine)) {
+      if (shouldAppendIfRowIsHiddenAPI(codeLine) || node.isNodeWithDiff) {
         if (index === node.codeLines.length - 1 && node.diagnostics && node.diagnostics.length > 0) { // last row of top token codeLines
           codeLine.toggleCommentsClasses = codeLine.toggleCommentsClasses.replace("can-show", "show").replace("hide", "show"); // show comment indicator node has diagnostic comments
         }

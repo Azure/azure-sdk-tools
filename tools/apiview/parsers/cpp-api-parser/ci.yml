@@ -32,9 +32,10 @@ stages:
         timeoutInMinutes: 300
         pool:
           name: azsdk-pool-mms-win-2022-general
+          image: windows-2022
           os: windows
-          demands:
-          - ImageOverride -equals azsdk-pool-mms-win-2022-1espt
+          # demands:
+          # - ImageOverride -equals azsdk-pool-mms-win-2022-1espt
 
         steps:
           - pwsh: |

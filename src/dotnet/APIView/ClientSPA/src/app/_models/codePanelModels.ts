@@ -57,6 +57,7 @@ export class CodePanelRowData {
 export interface CodePanelData {
   nodeMetaData: { [key: string]: CodePanelNodeMetaData };
   hasDiff: boolean;
+  hasHiddenAPIThatIsDiff: boolean;
 }
   
 export class CodePanelNodeMetaData {

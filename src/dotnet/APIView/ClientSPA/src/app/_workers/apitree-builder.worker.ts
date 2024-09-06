@@ -43,7 +43,7 @@ addEventListener('message', ({ data }) => {
 
     const hasHiddenAPIMessage : InsertCodePanelRowDataMessage = {
       directive: ReviewPageWorkerMessageDirective.SetHasHiddenAPIFlag,
-      payload: hasHiddenAPI
+      payload: hasHiddenAPI,
     };
     postMessage(hasHiddenAPIMessage);
 
@@ -203,11 +203,13 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
     if (bottomTokenNode.codeLines) {
       bottomTokenNode.codeLines.forEach((codeLine, index) => {
-        codeLine.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
-        setLineNumber(codeLine);
-        if (buildNode) {
-          codePanelRowData.push(codeLine);
-          visibleNodes.add(codeLine.nodeIdHashed);
+        if (shouldAppendIfRowIsHiddenAPI(codeLine)) {
+          codeLine.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
+          setLineNumber(codeLine);
+          if (buildNode) {
+            codePanelRowData.push(codeLine);
+            visibleNodes.add(codeLine.nodeIdHashed);
+          }
         }
       });
     }
@@ -246,7 +248,7 @@ function addJustDiffBuffer() {
 function shouldAppendIfRowIsHiddenAPI(row: CodePanelRowData) {
   if (row.isHiddenAPI) {
     hasHiddenAPI = true;
-    return apiTreeBuilderData?.showHiddenApis;
+    return apiTreeBuilderData?.showHiddenApis || codePanelData?.hasHiddenAPIThatIsDiff;
   } else {
     return true;
   }

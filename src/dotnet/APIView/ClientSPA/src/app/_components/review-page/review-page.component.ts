@@ -51,6 +51,7 @@ export class ReviewPageComponent implements OnInit {
   hasActiveConversation : boolean = false;
   numberOfActiveConversation : number = 0;
   hasHiddenAPIs : boolean = false;
+  hasHiddenAPIThatIsDiff : boolean = false;
   loadFailed : boolean = false;
 
   showLeftNavigation : boolean = true;
@@ -165,6 +166,7 @@ export class ReviewPageComponent implements OnInit {
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelData) {
         this.codePanelData = data.payload as CodePanelData;
+        this.hasHiddenAPIThatIsDiff = this.codePanelData.hasHiddenAPIThatIsDiff;
         this.workerService.terminateWorker();
       }
     });

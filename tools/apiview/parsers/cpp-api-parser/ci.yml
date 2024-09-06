@@ -76,14 +76,8 @@ stages:
             # This step is idempotent and can be run multiple times in cases of
             # failure and partial execution.
             retryCountOnTaskFailure: 3
-          # - pwsh: |
-          #     ls ${env:VCPKG_ROOT}
-          #     ./vcpkg/vcpkg.exe install atlmfc:x64-windows
-          #   displayName: Install atlmfc.
-          #   workingDirectory: '$(Build.SourcesDirectory)'
-          #   condition: succeeded()
           - pwsh: |
-              cmake.exe -G "Visual Studio 17 2022" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
+              cmake.exe -G "Visual Studio 16 2019" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
             displayName: Cmake Generate.
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             condition: succeeded()

@@ -145,7 +145,7 @@ async function detectBreakingChangesCore(projectContext: ProjectContext): Promis
     );
     return breakingChangeResults;
   } catch (err) {
-    logger.error(`Failed to detect breaking changes due to ${(err as Error).stack ?? err}`);
+    logger.error(`Failed to detect breaking changes due to ${(err as Error)?.stack ?? err}`);
     return undefined;
   }
 }

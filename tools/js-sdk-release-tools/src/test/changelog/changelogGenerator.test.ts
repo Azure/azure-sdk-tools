@@ -5,10 +5,7 @@ import { SDKType } from "../../common/types";
 import { describe } from "node:test";
 import { tryReadNpmPackageChangelog } from "../../common/utils";
 import { ensureDirSync, removeSync, outputFileSync } from "fs-extra";
-
-function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
-}
+import { getRandomInt } from "../utils/utils";
 
 describe("Breaking change detection", () => {
     test("HLC -> Modular: Rename", async () => {

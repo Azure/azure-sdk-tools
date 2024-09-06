@@ -153,9 +153,21 @@ namespace ApiView
             StringBuilder sb = new();
             foreach (var line in ReviewLines)
             {
-                line.AppendApiTextToBuilder(sb, 0, true);
+                line.AppendApiTextToBuilder(sb, 0, true, GetIndentationForLanguage(Language));
             }
             return sb.ToString();
-        }       
+        }
+
+        public static int GetIndentationForLanguage(string language)
+        {
+            switch (language)
+            {
+                case "C++":
+                case "C":
+                    return 2;
+                default:
+                    return 4;
+            }
+        }
     }
 }

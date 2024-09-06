@@ -8,6 +8,7 @@ import logging
 import traceback
 from ast import literal_eval
 from azure.cosmos import CosmosClient
+from azure.identity import AzurePowerShellCredential, ChainedTokenCredential, AzureCliCredential
 from azure.storage.blob import BlobServiceClient
 
 logging.getLogger().setLevel(logging.INFO)
@@ -25,13 +26,14 @@ COSMOS_CONTAINERS = ["Reviews", "Comments", "PullRequests", "APIRevisions", "Mig
 BACKUP_CONTAINER = "backups"
 BLOB_NAME_PATTERN ="cosmos/{0}/{1}"
 
+# Create a AzurePowerShellCredential()
+credential_chain = ChainedTokenCredential(AzureCliCredential(), AzurePowerShellCredential())
 
+def restore_data_from_backup(backup_storage_url, dest_url, db_name):
 
-def restore_data_from_backup(connection_string, dest_url, dest_key, db_name):    
-
-    dest_db_client = get_db_client(dest_url, dest_key, db_name)
+    dest_db_client = get_db_client(dest_url, db_name)
     
-    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    blob_service_client = BlobServiceClient(backup_storage_url, credential = credential_chain)
     container_client = blob_service_client.get_container_client(BACKUP_CONTAINER)
     for cosmos_container_name in COSMOS_CONTAINERS:
         # Load source records from backup file
@@ -68,10 +70,10 @@ def get_backup_contents(container_client, blob_name):
 
 
 # Create cosmosdb clients
-def get_db_client(dest_url, dest_key, db_name):
+def get_db_client(dest_url, db_name):
 
     # Create cosmosdb client for destination db
-    dest_cosmos_client = CosmosClient(dest_url, credential=dest_key)
+    dest_cosmos_client = CosmosClient(dest_url, credential=credential_chain)
     if not dest_cosmos_client:
         logging.error("Failed to create cosmos client for destination db")
         exit(1)
@@ -83,7 +85,7 @@ def get_db_client(dest_url, dest_key, db_name):
         dest_db_client = dest_cosmos_client.get_database_client(db_name)
         logging.info("Created database clients")
     except:
-        logging.error("Failed to create databae client using CosmosClient")
+        logging.error("Failed to create database client using CosmosClient")
         traceback.print_exc()
         exit(1)
     return dest_db_client
@@ -122,19 +124,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--backup-connection-string",
+        "--backup-storage-url",
         required=True,
-        help=("Connection string to backup storage account"),
+        help=("URL to backup storage account"),
     )
     parser.add_argument(
         "--dest-url",
         required=True,
         help=("URL to destination cosmosdb"),
-    )
-    parser.add_argument(
-        "--dest-key",
-        required=True,
-        help=("Destination cosmosdb account key"),
     )
     parser.add_argument(
         "--db-name",
@@ -145,4 +142,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logging.info("Syncing database..")
-    restore_data_from_backup(args.backup_connection_string, args.dest_url, args.dest_key, args.db_name)
+    restore_data_from_backup(args.backup_storage_url, args.dest_url, args.db_name)

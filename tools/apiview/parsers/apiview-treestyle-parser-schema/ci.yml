@@ -51,11 +51,10 @@ jobs:
     workingDirectory: tools/apiview/parsers/apiview-treestyle-parser-schema
     displayName: "Build APIView Token Schema"
 
-  - pwsh:
-      $changes = @(git status -s | ? {$_.EndsWith("CodeFile.json")})
-      if ($changes.Count -gt 0) {
-        Write-Host "TypeSpec and json schema for APIView token are not in sync. Run `tsp compile .` in tools/apiview/parsers/apiview-treestyle-parser-schema to generate the latest json schema and include in the pull request."
-        exit 1
+  - pwsh: |
+      git diff --exit-code CodeFile.json
+      if($LastExitCode -ne 0) {
+        Write-Error "CodeFile.json is not in sync with the TypeSpec APIView schema in main.tsp.Compile TypeSpec schema by running 'tsp compile .' in directory 'tools/apiview/parsers/apiview-treestyle-parser-schema' and include updated json schema in the PR."
       }
       Write-Host "TypeSpec and json schema for APIView token are in sync"
     displayName: "Check if TypeSpec and json schema are in sync"

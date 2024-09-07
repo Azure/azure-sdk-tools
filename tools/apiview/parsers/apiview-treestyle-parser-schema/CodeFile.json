@@ -1,111 +1,117 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "CodeFile.json",
-    "type": "object",
-    "properties": {
-        "PackageName": {
-            "type": "string"
-        },
-        "PackageVersion": {
-            "type": "string"
-        },
-        "ParserVersion": {
-            "type": "string",
-            "description": "version of the APIview language parser used to create token file"
-        },
-        "Language": {
-            "anyOf": [
-                {
-                    "type": "string",
-                    "const": "C"
-                },
-                {
-                    "type": "string",
-                    "const": "C++"
-                },
-                {
-                    "type": "string",
-                    "const": "C#"
-                },
-                {
-                    "type": "string",
-                    "const": "Go"
-                },
-                {
-                    "type": "string",
-                    "const": "Java"
-                },
-                {
-                    "type": "string",
-                    "const": "JavaScript"
-                },
-                {
-                    "type": "string",
-                    "const": "Kotlin"
-                },
-                {
-                    "type": "string",
-                    "const": "Python"
-                },
-                {
-                    "type": "string",
-                    "const": "Swagger"
-                },
-                {
-                    "type": "string",
-                    "const": "Swift"
-                },
-                {
-                    "type": "string",
-                    "const": "TypeSpec"
-                }
-            ]
-        },
-        "LanguageVariant": {
-            "anyOf": [
-                {
-                    "type": "string",
-                    "const": "None"
-                },
-                {
-                    "type": "string",
-                    "const": "Spring"
-                },
-                {
-                    "type": "string",
-                    "const": "Android"
-                }
-            ],
-            "default": "None",
-            "description": "Language variant is applicable only for java variants"
-        },
-        "CrossLanguagePackageId": {
-            "type": "string"
-        },
-        "ReviewLines": {
-            "type": "array",
-            "items": {
-                "$ref": "#/$defs/ReviewLine"
-            }
-        },
-        "Diagnostics": {
-            "type": "array",
-            "items": {
-                "$ref": "#/$defs/CodeDiagnostic"
-            },
-            "description": "Add any system generated comments. Each comment is linked to review line ID"
-        }
-    },
-    "required": [
-        "PackageName",
-        "PackageVersion",
-        "ParserVersion",
-        "Language",
-        "ReviewLines"
-    ],
-    "description": "ReviewFile represents entire API review object. This will be processed to render review lines.",
     "$defs": {
+        "CodeFile": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "CodeFile.json",
+            "type": "object",
+            "properties": {
+                "PackageName": {
+                    "type": "string"
+                },
+                "PackageVersion": {
+                    "type": "string"
+                },
+                "ParserVersion": {
+                    "type": "string",
+                    "description": "version of the APIview language parser used to create token file"
+                },
+                "Language": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "C"
+                        },
+                        {
+                            "type": "string",
+                            "const": "C++"
+                        },
+                        {
+                            "type": "string",
+                            "const": "C#"
+                        },
+                        {
+                            "type": "string",
+                            "const": "Go"
+                        },
+                        {
+                            "type": "string",
+                            "const": "Java"
+                        },
+                        {
+                            "type": "string",
+                            "const": "JavaScript"
+                        },
+                        {
+                            "type": "string",
+                            "const": "Kotlin"
+                        },
+                        {
+                            "type": "string",
+                            "const": "Python"
+                        },
+                        {
+                            "type": "string",
+                            "const": "Swagger"
+                        },
+                        {
+                            "type": "string",
+                            "const": "Swift"
+                        },
+                        {
+                            "type": "string",
+                            "const": "TypeSpec"
+                        }
+                    ]
+                },
+                "LanguageVariant": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "const": "None"
+                        },
+                        {
+                            "type": "string",
+                            "const": "Spring"
+                        },
+                        {
+                            "type": "string",
+                            "const": "Android"
+                        }
+                    ],
+                    "default": "None",
+                    "description": "Language variant is applicable only for java variants"
+                },
+                "CrossLanguagePackageId": {
+                    "type": "string"
+                },
+                "ReviewLines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "ReviewLine.json"
+                    }
+                },
+                "Diagnostics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "CodeDiagnostic.json"
+                    },
+                    "description": "Add any system generated comments. Each comment is linked to review line ID"
+                }
+            },
+            "required": [
+                "PackageName",
+                "PackageVersion",
+                "ParserVersion",
+                "Language",
+                "ReviewLines"
+            ],
+            "description": "ReviewFile represents entire API review object. This will be processed to render review lines."
+        },
         "ReviewLine": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "ReviewLine.json",
             "type": "object",
             "properties": {
                 "LineId": {
@@ -118,14 +124,14 @@
                 "Tokens": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ReviewToken"
+                        "$ref": "ReviewToken.json"
                     },
                     "description": "list of tokens that constructs a line in API review"
                 },
                 "Children": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/ReviewLine"
+                        "$ref": "ReviewLine.json"
                     },
                     "description": "Add any child lines as children. For e.g. all classes and namespace level methods are added as a children of namespace(module) level code line. \nSimilarly all method level code lines are added as children of it's class code line."
                 },
@@ -147,40 +153,13 @@
             ],
             "description": "ReviewLine object corresponds to each line displayed on API review. If an empty line is required then add a code line object without any token."
         },
-        "CodeDiagnostic": {
-            "type": "object",
-            "properties": {
-                "DiagnosticId": {
-                    "type": "string",
-                    "description": "Diagnostic ID is auto generated ID by CSharp analyzer."
-                },
-                "TargetId": {
-                    "type": "string",
-                    "description": "Id of ReviewLine object where this diagnostic needs to be displayed"
-                },
-                "Text": {
-                    "type": "string",
-                    "description": "Auto generated system comment to be displayed under targeted line."
-                },
-                "Level": {
-                    "$ref": "#/$defs/CodeDiagnosticLevel"
-                },
-                "HelpLinkUri": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "TargetId",
-                "Text",
-                "Level"
-            ],
-            "description": "System comment object is to add system generated comment. It can be one of the 4 different types of system comments."
-        },
         "ReviewToken": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "ReviewToken.json",
             "type": "object",
             "properties": {
                 "Kind": {
-                    "$ref": "#/$defs/TokenKind"
+                    "$ref": "TokenKind.json"
                 },
                 "Value": {
                     "type": "string"
@@ -227,16 +206,9 @@
             ],
             "description": "Token corresponds to each component within a code line. A separate token is required for keyword, punctuation, type name, text etc."
         },
-        "CodeDiagnosticLevel": {
-            "type": "number",
-            "enum": [
-                1,
-                2,
-                3,
-                4
-            ]
-        },
         "TokenKind": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "TokenKind.json",
             "type": "number",
             "enum": [
                 0,
@@ -247,6 +219,48 @@
                 5,
                 6,
                 7
+            ]
+        },
+        "CodeDiagnostic": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "CodeDiagnostic.json",
+            "type": "object",
+            "properties": {
+                "DiagnosticId": {
+                    "type": "string",
+                    "description": "Diagnostic ID is auto generated ID by CSharp analyzer."
+                },
+                "TargetId": {
+                    "type": "string",
+                    "description": "Id of ReviewLine object where this diagnostic needs to be displayed"
+                },
+                "Text": {
+                    "type": "string",
+                    "description": "Auto generated system comment to be displayed under targeted line."
+                },
+                "Level": {
+                    "$ref": "CodeDiagnosticLevel.json"
+                },
+                "HelpLinkUri": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "TargetId",
+                "Text",
+                "Level"
+            ],
+            "description": "System comment object is to add system generated comment. It can be one of the 4 different types of system comments."
+        },
+        "CodeDiagnosticLevel": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "CodeDiagnosticLevel.json",
+            "type": "number",
+            "enum": [
+                1,
+                2,
+                3,
+                4
             ]
         }
     }

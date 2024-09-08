@@ -2040,12 +2040,17 @@ class TestClientConstructorDoesNotHaveConnectionStringParam(pylint.testutils.Che
 class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.PackageNameDoesNotUseUnderscoreOrPeriod
 
-    def test_package_name_acceptable(self):
-        package_name = astroid.extract_node(
-            """
-        PACKAGE_NAME = "correct-package-name"        
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "package_name_does_not_use_underscore_or_period.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_package_name_acceptable(self, setup):
+        package_name = setup.body[0]
         module_node = astroid.Module(name="node", file="setup.py")
         module_node.doc_node = """ """
         module_node.body = [package_name]
@@ -2053,16 +2058,11 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
         with self.assertNoMessages():
             self.checker.visit_module(module_node)
 
-    def test_package_name_violation(self):
-        package_name = astroid.extract_node(
-            """
-        PACKAGE_NAME = "incorrect.package-name"        
-        """
-        )
+    def test_package_name_violation(self, setup):
+        package_name = setup.body[1]
         module_node = astroid.Module(name="node", file="setup.py")
         module_node.doc_node = """ """
         module_node.body = [package_name]
-
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="package-name-incorrect", line=0, node=module_node, col_offset=0,

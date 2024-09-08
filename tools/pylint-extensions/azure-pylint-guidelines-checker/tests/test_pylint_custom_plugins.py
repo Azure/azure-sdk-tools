@@ -2396,17 +2396,17 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
 class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckNamingMismatchGeneratedCode
 
-    def test_import_naming_mismatch_violation(self):
-        import_one = astroid.extract_node("import Something")
-        import_two = astroid.extract_node("import Something2 as SomethingTwo")
-        assign_one = astroid.extract_node(
-            """
-            __all__ =(
-            "Something",
-            "SomethingTwo", 
-            ) 
-          """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_naming_mismatch_generated_code.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_import_naming_mismatch_violation(self, setup):
+        import_one, import_two, assign_one = setup.body[0], setup.body[1], setup.body[2]
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
@@ -2417,28 +2417,17 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="naming-mismatch",
-                line=4,
+                line=7,
                 node=err_node,
-                col_offset=0,
-                end_line=4,
-                end_col_offset=14,
+                col_offset=4,
+                end_line=7,
+                end_col_offset=18,
             )
         ):
             self.checker.visit_module(module_node)
 
-    def test_import_from_naming_mismatch_violation(self):
-        import_one = astroid.extract_node("import Something")
-        import_two = astroid.extract_node(
-            "from Something2 import SomethingToo as SomethingTwo"
-        )
-        assign_one = astroid.extract_node(
-            """
-            __all__ =(
-            "Something",
-            "SomethingTwo", 
-            ) 
-          """
-        )
+    def test_import_from_naming_mismatch_violation(self, setup):
+        import_one, import_two, assign_one = setup.body[0], setup.body[3], setup.body[2]
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
@@ -2449,26 +2438,17 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="naming-mismatch",
-                line=4,
+                line=7,
                 node=err_node,
-                col_offset=0,
-                end_line=4,
-                end_col_offset=14,
+                col_offset=4,
+                end_line=7,
+                end_col_offset=18,
             )
         ):
             self.checker.visit_module(module_node)
 
-    def test_naming_mismatch_acceptable(self):
-        import_one = astroid.extract_node("import Something")
-        import_two = astroid.extract_node("import Something2 as SomethingTwo")
-        assign_one = astroid.extract_node(
-            """
-            __all__ =(
-            "Something",
-            "Something2", 
-            ) 
-          """
-        )
+    def test_naming_mismatch_acceptable(self, setup):
+        import_one, import_two, assign_one = setup.body[0], setup.body[1], setup.body[4]
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]

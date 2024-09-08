@@ -14,6 +14,7 @@ export class Review {
   isDeleted: boolean
   isApproved: boolean
   changeHistory: ChangeHistory[]
+  subscribers: string[]
 
   constructor() {
     this.id = ''
@@ -23,6 +24,7 @@ export class Review {
     this.isDeleted = false
     this.isApproved = false
     this.changeHistory = []
+    this.subscribers = []
   }
 }
 

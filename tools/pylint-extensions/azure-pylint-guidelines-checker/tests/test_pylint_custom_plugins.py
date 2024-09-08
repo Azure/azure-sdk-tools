@@ -2082,14 +2082,17 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
 class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ServiceClientUsesNameWithClientSuffix
 
-    def test_client_suffix_acceptable(self):
-        client_node = astroid.extract_node(
-            """
-        class MyClient():
-            def __init__(self):
-                pass       
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "service_client_uses_name_with_client_suffix.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_client_suffix_acceptable(self, setup):
+        client_node = setup.body[0]
         module_node = astroid.Module(name="node", file="_my_client.py")
         module_node.doc_node = """ """
         module_node.body = [client_node]
@@ -2097,14 +2100,8 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         with self.assertNoMessages():
             self.checker.visit_module(module_node)
 
-    def test_client_suffix_violation(self):
-        client_node = astroid.extract_node(
-            """
-        class Violation():
-            def __init__(self):
-                pass       
-        """
-        )
+    def test_client_suffix_violation(self, setup):
+        client_node = setup.body[1]
         module_node = astroid.Module(name="node", file="_my_client.py")
         module_node.doc_node = """ """
         module_node.body = [client_node]

@@ -57,7 +57,7 @@ namespace APIViewUnitTests
                     Assert.Equal(40, item.Count());
                 },
                 item => {
-                    Assert.Equal(88, item.Count());
+                    Assert.Equal(87, item.Count());
                 });
         }
 

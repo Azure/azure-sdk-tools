@@ -45,7 +45,10 @@ describe("Verify commands", async function () {
   await it("Sync example sdk", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        "output-dir": joinPaths(
+          cwd(),
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
       };
       await syncCommand(args);
     } catch (error) {
@@ -60,7 +63,7 @@ describe("Verify commands", async function () {
   await it("Sync example sdk with local spec", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/sdk/local-spec-sdk",
+        "output-dir": joinPaths(cwd(), "./test/examples/sdk/local-spec-sdk"),
         "local-spec-repo":
           "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
       };
@@ -75,7 +78,10 @@ describe("Verify commands", async function () {
   await it("Generate example sdk", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        "output-dir": joinPaths(
+          cwd(),
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
         "save-inputs": true,
       };
       await generateCommand(args);
@@ -91,7 +97,10 @@ describe("Verify commands", async function () {
   await it("Update example sdk", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        "output-dir": joinPaths(
+          cwd(),
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
         "save-inputs": true,
       };
       await updateCommand(args);
@@ -103,7 +112,10 @@ describe("Verify commands", async function () {
   await it("Update example sdk & pass tspconfig.yaml", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        "output-dir": joinPaths(
+          cwd(),
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
         "tsp-config":
           "https://github.com/Azure/azure-rest-api-specs/blob/db63bea839f5648462c94e685d5cc96f8e8b38ba/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml",
         "save-inputs": true,
@@ -117,7 +129,10 @@ describe("Verify commands", async function () {
   await it("Update example sdk & pass commit", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        "output-dir": joinPaths(
+          cwd(),
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
         commit: "db63bea839f5648462c94e685d5cc96f8e8b38ba",
         "save-inputs": true,
       };
@@ -130,7 +145,10 @@ describe("Verify commands", async function () {
   await it("Update example sdk & pass only --repo", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        "output-dir": joinPaths(
+          cwd(),
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
         repo: "foo",
         "save-inputs": true,
       };
@@ -147,7 +165,7 @@ describe("Verify commands", async function () {
   await it.skip("Init example sdk", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/",
+        "output-dir": joinPaths(cwd(), "./test/examples/"),
         "tsp-config":
           "https://github.com/Azure/azure-rest-api-specs/blob/7ed015e3dd1b8b1b0e71c9b5e6b6c5ccb8968b3a/specification/cognitiveservices/ContentSafety/tspconfig.yaml",
       };
@@ -169,7 +187,7 @@ describe("Verify commands", async function () {
   await it.skip("Init with --skip-sync-and-generate", async function () {
     try {
       const args = {
-        "output-dir": "./test/examples/",
+        "output-dir": joinPaths(cwd(), "./test/examples/"),
         "tsp-config":
           "https://github.com/Azure/azure-rest-api-specs/blob/7ed015e3dd1b8b1b0e71c9b5e6b6c5ccb8968b3a/specification/cognitiveservices/ContentSafety/tspconfig.yaml",
         "skip-sync-and-generate": true,

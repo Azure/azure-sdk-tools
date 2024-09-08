@@ -2376,7 +2376,7 @@ class NonCoreNetworkImport(BaseChecker):
             "This import is only allowed in azure.core.pipeline.transport.",
         ),
     }
-    BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
+    BLOCKED_MODULES = ["aiohttp", "requests", "trio", "httpx"]
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
 
     def visit_import(self, node):
@@ -2756,6 +2756,29 @@ class NoImportTypingFromTypeCheck(BaseChecker):
 # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
 # [Pylint] Investigate pylint rule around missing dependency #3231
 
+class DoNotUseLegacyTyping(BaseChecker):
+
+    """ Rule to check that we aren't using legacy typing using comments. """
+
+    name = "do-not-use-legacy-typing"
+    priority = -1
+    msgs = {
+        "C4761": (
+            "Do not use legacy typing using comments.",
+            "do-not-use-legacy-typing",
+            "Do not use legacy typing using comments. Python 2 is no longer supported, use Python 3.9+ type hints instead.",
+        ),
+    }
+
+    def visit_functiondef(self, node):
+        """Check that we aren't using legacy typing."""
+        if node.type_comment_args or node.type_comment_returns:
+            self.add_message(
+                msgid=f"do-not-use-legacy-typing",
+                node=node,
+                confidence=None,
+            )
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2788,6 +2811,8 @@ def register(linter):
     linter.register_checker(DoNotImportLegacySix(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    linter.register_checker(DoNotUseLegacyTyping(linter))
+
     # [Pylint] custom linter check for invalid use of @overload #3229
     # [Pylint] Custom Linter check for Exception Logging #3227
     # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228

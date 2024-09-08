@@ -2686,11 +2686,15 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
 
     def test_disallowed_imports(self, setup):
         """Check that illegal imports raise warnings"""
+        # Blocked import ouside of core.
+        requests_import_node = astroid.extract_node("import requests")
         # Blocked import outside of core.
         import_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="networking-import-outside-azure-core-transport",
+                line=1,
+                node=requests_import_node,
                 line=2,
                 node=import_node,
                 col_offset=0,
@@ -2698,7 +2702,20 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
                 end_col_offset=15,
             )
         ):
-            self.checker.visit_import(import_node)
+            self.checker.visit_import(requests_import_node)
+
+        httpx_import_node = astroid.extract_node("import httpx")
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="networking-import-outside-azure-core-transport",
+                line=1,
+                node=httpx_import_node,
+                col_offset=0,
+                end_line=1,
+                end_col_offset=12,
+            )
+        ):
+            self.checker.visit_import(httpx_import_node)
 
         # blocked import from outside of core.
         importfrom_node = setup.body[1]
@@ -3299,6 +3316,56 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_import(imb)
             self.checker.visit_import(imc)
             self.checker.visit_importfrom(imd)
+
+class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed legacy typing practices"""
+
+    CHECKER_CLASS = checker.DoNotUseLegacyTyping
+
+    def test_disallowed_typing(self):
+        """Check that illegal method typing comments raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # type: (str) -> str
+                pass
+            """
+        )
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-legacy-typing",
+                line=2,
+                node=fdef,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=12,
+            )
+        ):
+            self.checker.visit_functiondef(fdef)
+
+    def test_allowed_typing(self):
+        """Check that allowed method typing comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x: str) -> str: #@
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+    def test_arbitrary_comments(self):
+        """Check that arbitrary comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # This is a comment
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
 
 # [Pylint] custom linter check for invalid use of @overload #3229
 # [Pylint] Custom Linter check for Exception Logging #3227

@@ -1,5 +1,9 @@
 # Release History
 
+## 0.5.0 (unreleased)
+
+- Feature: Add `httpx` as an import flagged by C4749(networking-import-outside-azure-core-transport)
+
 ## 0.4.1 (2024-04-17)
 
 - Bug fix for typing under TYPE_CHECKING block.

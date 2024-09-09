@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         }
 
                         // There are PRs coming from bots, specifically the microsoft-github-policy-service bot.
-                        // Don't add the triage lables or comment if the PR was created by a bot.
+                        // Don't add the triage labels or comment if the PR was created by a bot.
                         if (prEventPayload.Sender.Type != AccountType.Bot)
                         {
                             // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission

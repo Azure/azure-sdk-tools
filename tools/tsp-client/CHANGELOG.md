@@ -1,5 +1,10 @@
 # Release
 
+## 2024-09-09 - 0.13.0
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.0`.
+- Removed the dependency `@autorest/csharp`.
+
 ## 2024-08-30 - 0.12.2
 
 - Bumped `@autorest/openapi-to-typespec` version to `0.9.1`.

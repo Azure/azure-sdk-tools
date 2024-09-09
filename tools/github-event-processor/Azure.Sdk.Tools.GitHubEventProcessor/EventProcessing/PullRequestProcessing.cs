@@ -33,7 +33,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Conditions: Pull request has no labels
         /// Resulting Action: 
         ///     Evaluate the path for each file in the PR, if the path has a label, add the label to the issue
-        ///     If the sender is not a Collaborator OR, if they are a collaborator without Write/Admin permissions
+        ///     If the sender is not a known bot
+        ///       If the sender is not a Collaborator OR, if they are a collaborator without Write/Admin permissions
         ///         Add "customer-reported" label
         ///         Add "Community Contribution" label
         ///         Create issue comment: "Thank you for your contribution @{issueAuthor} ! We will review the pull request and get back to you soon."
@@ -59,17 +60,22 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             }
                         }
 
-                        // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission
-                        bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, prEventPayload.PullRequest.User.Login);
-                        if (!isMemberOfOrg)
+                        // There are PRs coming from bots, specifically the microsoft-github-policy-service bot.
+                        // Don't add the triage lables or comment if the PR was created by a bot.
+                        if (prEventPayload.Sender.Type != AccountType.Bot)
                         {
-                            bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
-                            if (!hasAdminOrWritePermission)
+                            // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission
+                            bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, prEventPayload.PullRequest.User.Login);
+                            if (!isMemberOfOrg)
                             {
-                                gitHubEventClient.AddLabel(TriageLabelConstants.CustomerReported);
-                                gitHubEventClient.AddLabel(TriageLabelConstants.CommunityContribution);
-                                string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
-                                gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
+                                bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
+                                if (!hasAdminOrWritePermission)
+                                {
+                                    gitHubEventClient.AddLabel(TriageLabelConstants.CustomerReported);
+                                    gitHubEventClient.AddLabel(TriageLabelConstants.CommunityContribution);
+                                    string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
+                                    gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
+                                }
                             }
                         }
                     }

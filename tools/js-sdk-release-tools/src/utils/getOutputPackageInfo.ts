@@ -4,7 +4,8 @@ export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | un
     let outputPackageInfo: any;
     if (runningEnvironment === RunningEnvironment.SwaggerSdkAutomation) {
         outputPackageInfo = {
-            "packageName": "",
+            // pipeline framework limit, it cannot handle result with empty string
+            "packageName": "default",
             "path": [
                 'rush.json',
                 'common/config/rush/pnpm-lock.yaml'
@@ -23,7 +24,8 @@ export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | un
         }
     } else if (runningEnvironment === RunningEnvironment.SdkGeneration) {
         outputPackageInfo = {
-            "packageName": "",
+            // pipeline framework limit, it cannot handle result with empty string
+            "packageName": "default",
             "path": [
                 'rush.json',
                 'common/config/rush/pnpm-lock.yaml'

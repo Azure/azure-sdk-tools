@@ -47,7 +47,7 @@ describe("Verify other utils functions", function () {
 
   it("Check formatAdditionalDirectories", function () {
     const result = formatAdditionalDirectories(["/specification/foo", "/specification/bar"]);
-    const expected = "\n- /specification/foo\n- /specification/bar";
+    const expected = "\n- /specification/foo\n- /specification/bar\n";
     assert.equal(result, expected);
   });
 });

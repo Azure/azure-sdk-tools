@@ -38,7 +38,7 @@ namespace APIViewWeb
             originalName = originalName.Replace(" ", "_").Replace("(", "").Replace(")","");
             var originalFilePath = Path.Combine(tempDirectory, originalName);
 
-            var jsonFilePath = (LanguageServiceHelpers.UseTreeStyleParser(this.Name)) ? Path.ChangeExtension(originalFilePath, ".json.tgz") : Path.ChangeExtension(originalFilePath, ".json");
+            var jsonFilePath = Path.ChangeExtension(originalFilePath, ".json");
 
             using (var file = File.Create(originalFilePath))
             {

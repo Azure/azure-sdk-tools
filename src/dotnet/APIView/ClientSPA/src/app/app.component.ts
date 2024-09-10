@@ -1,5 +1,6 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { UserProfileService } from './_services/user-profile/user-profile.service';
+import { SignalRService } from './_services/signal-r/signal-r.service';
 
 @Component({
   selector: 'app-root',

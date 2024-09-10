@@ -6,6 +6,9 @@ parameters:
 - name: DirectoryToSync
   type: string
   default: .github/workflows
+- name: FilePattern
+  type: string
+  default: '/*event*'
 - name: Repos
   type: object
   default:
@@ -28,10 +31,11 @@ pr:
       - main
   paths:
     include:
-      - .github/workflows
+      - .github/workflows/*event*
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml
   parameters:
     DirectoryToSync: ${{ parameters.DirectoryToSync }}
+    FilePattern: ${{ parameters.FilePattern }}
     Repos: ${{ parameters.Repos }}

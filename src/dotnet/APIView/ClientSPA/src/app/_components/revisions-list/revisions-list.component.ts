@@ -504,9 +504,9 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       case "C#":
         this.createRevisionInstruction = [
           `Run <code>dotnet pack</code>`, 
-          `Upload the resulting .nupkg file.`
+          `Upload the resulting .nupkg or .dll file.`
         ];
-        this.acceptedFilesForReviewUpload = ".nupkg";
+        this.acceptedFilesForReviewUpload = ".nupkg, .dll";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
@@ -584,14 +584,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         break;
       case "Json":
         this.createRevisionInstruction = [
-          `Upload JSON API review token file.`
+          `Upload .json API review token file.`
         ];
-        this.acceptedFilesForReviewUpload = ".json, .tgz";
+        this.acceptedFilesForReviewUpload = ".json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
       default:
-        this.createRevisionInstruction = []
+        this.createRevisionInstruction = [];
+        this.acceptedFilesForReviewUpload = undefined;
     }
 
     if (this.revisionCreationFileUpload) {    

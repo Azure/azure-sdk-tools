@@ -110,7 +110,7 @@
         }
 
         &.hidden-api .code-line-content {
-            filter: brightness(60%) saturate(60%);
+            filter: var(--hidden-api-filter);
         }
 
         .diff-change {

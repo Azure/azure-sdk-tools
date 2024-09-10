@@ -721,7 +721,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // no changes should be committed
                 var pendingChanges = store.DetectPendingChanges(parsedConfiguration);
-                Assert.Equal(2, pendingChanges.Count());
+                Assert.Equal(3, pendingChanges.Count());
 
                 // now double check the actual scan results to ensure they are where we expect
                 var detectedSecrets = store.SecretScanner.DiscoverSecrets(parsedConfiguration.AssetsRepoLocation, pendingChanges);

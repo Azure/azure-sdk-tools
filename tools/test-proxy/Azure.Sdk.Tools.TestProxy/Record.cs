@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         [HttpPost]
         [AllowEmptyBody]
-        public void Stop([FromBody()] IDictionary<string, string> variables = null)
+        public async Task Stop([FromBody()] IDictionary<string, string> variables = null)
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
             bool save = true;
@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             DebugLogger.LogAdminRequestDetails(_logger, Request);
 
-            _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
+            await _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
         }
 
         public async Task HandleRequest()

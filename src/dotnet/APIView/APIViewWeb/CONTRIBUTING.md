@@ -169,6 +169,9 @@ If any of the above steps is showing errors, following are the items to check:
 
 - Verify and ensure cosmos DB instance has all 3 containers as per the instructions above and verify partition key for each of them.
 
+### SPA Client
+
+APIView uses a SPA (Single Page Application) for part of its user interface. If adding completely new pages please make the contributions to the SPA client. See [SPA Client Contributing Doc](../ClientSPA/CONTRIBUTING.md) for more information.
 
 Happy coding!!!!
 

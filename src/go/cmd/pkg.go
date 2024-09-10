@@ -51,8 +51,11 @@ type Pkg struct {
 }
 
 // NewPkg loads the package in the specified directory.
-// It's required there is only one package in the directory.
-func NewPkg(dir, modulePath string) (*Pkg, error) {
+//
+//   - dir is the directory containing the package
+//   - modulePath is the import path of the module containing the package
+//   - moduleRoot is the root directory of the module on disk i.e., the directory containing its go.mod
+func NewPkg(dir, modulePath, moduleRoot string) (*Pkg, error) {
 	pk := &Pkg{
 		modulePath:  modulePath,
 		c:           newContent(),
@@ -61,12 +64,8 @@ func NewPkg(dir, modulePath string) (*Pkg, error) {
 	}
 	modulePathWithoutVersion := strings.TrimSuffix(versionReg.ReplaceAllString(modulePath, "/"), "/")
 	moduleName := filepath.Base(modulePathWithoutVersion)
-	if _, after, found := strings.Cut(dir, moduleName); found {
-		pk.relName = moduleName
-		if after != "" {
-			pk.relName += after
-		}
-		pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
+	if _, after, found := strings.Cut(dir, moduleRoot); found {
+		pk.relName = strings.ReplaceAll(moduleName+after, "\\", "/")
 	} else {
 		return nil, errors.New(dir + " isn't part of module " + moduleName)
 	}

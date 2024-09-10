@@ -69,3 +69,9 @@
 /src/swift                               @tjprescott
 /src/java/apiview-java-processor         @JonathanGiles
 /src/go                                  @jhendrixMSFT @chlowell @RickWinter
+
+
+###########
+# Pylint checkers
+###########
+/tools/pylint-extensions/azure-pylint-guidelines-checker @l0lawrence

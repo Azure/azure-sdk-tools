@@ -242,7 +242,7 @@ namespace APIViewWeb
         /// <returns></returns>
         public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName)
         {
-            var query = "SELECT * FROM Revisions r WHERE ARRAY_CONTAINS(r.AssignedReviewers, { 'AssingedTo': '" + userName + "' }, true)";
+            var query = "SELECT * FROM Revisions r WHERE r.IsDeleted = false and ARRAY_CONTAINS(r.AssignedReviewers, { 'AssingedTo': '" + userName + "' }, true)";
 
             var apiRevisions = new List<APIRevisionListItemModel>();
             var queryDefinition = new QueryDefinition(query).WithParameter("@userName", userName);

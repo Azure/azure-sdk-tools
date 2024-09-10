@@ -8,6 +8,10 @@ using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Managers;
 using System.Collections.Generic;
+using APIViewWeb.Models;
+using System.Linq;
+using APIViewWeb.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -17,17 +21,19 @@ namespace APIViewWeb.LeanControllers
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
-
+        private readonly IPullRequestManager _pullRequestManager;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
-            IReviewManager reviewManager,
-            IAPIRevisionsManager apiRevisionsManager,
-            INotificationManager notificationManager)
+            IReviewManager reviewManager, IPullRequestManager pullRequestManager,
+            IAPIRevisionsManager apiRevisionsManager, INotificationManager notificationManager, IHubContext<SignalRHub> signalRHub)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
+            _signalRHubContext = signalRHub;
+            _pullRequestManager = pullRequestManager;
         }
 
         /// <summary>
@@ -109,8 +115,10 @@ namespace APIViewWeb.LeanControllers
             (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, reviewId, apiRevisionId);
             if (updateReview)
             {
-                await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+                var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+                await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             }
+            await _signalRHubContext.Clients.All.SendAsync("APIRevisionUpdated", apiRevision);
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }
 

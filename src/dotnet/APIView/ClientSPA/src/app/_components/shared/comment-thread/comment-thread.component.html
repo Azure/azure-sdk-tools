@@ -1,7 +1,7 @@
 <div *ngIf="codePanelRowData!.isResolvedCommentThread" class="resolution-info">
     <small class="d-flex align-items-center">This thread is marked resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}&nbsp;Resolved</span></small>
 </div>
-<div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" class="border rounded {{spacingBasedOnResolvedState}} py-2">
+<div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container">
     <p-timeline [value]="codePanelRowData!.comments">
         <ng-template pTemplate="marker" let-comment>
             <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>

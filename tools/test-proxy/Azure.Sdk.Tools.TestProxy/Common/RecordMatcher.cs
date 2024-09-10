@@ -112,7 +112,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 if (!entry.IsTrack1Recording)
                 {
                     score += CompareHeaderDictionaries(request.Request.Headers, entry.Request.Headers, IgnoredHeaders, ExcludeHeaders);
-                    score += CompareBodies(request.Request.Body, entry.Request.Body);
+
+                    request.Request.TryGetContentType(out var contentType);
+
+                    score += CompareBodies(request.Request.Body, entry.Request.Body, descriptionBuilder: null, contentType: contentType);
                 }
 
                 if (score == 0)
@@ -130,7 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry, entries));
         }
 
-        public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, StringBuilder descriptionBuilder = null)
+        public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, string contentType, StringBuilder descriptionBuilder = null)
         {
             if (!_compareBodies)
             {
@@ -154,27 +157,50 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return 1;
             }
 
+
             if (!requestBody.SequenceEqual(recordBody))
             {
-                if (descriptionBuilder != null)
+                // we just failed sequence equality, before erroring, lets check if we're a json body and check for property equality
+                if (!string.IsNullOrWhiteSpace(contentType) && contentType.Contains("json"))
                 {
-                    var minLength = Math.Min(requestBody.Length, recordBody.Length);
-                    int i;
-                    for (i = 0; i < minLength - 1; i++)
+                    var jsonDifferences = JsonComparer.CompareJson(requestBody, recordBody);
+
+                    if (jsonDifferences.Count > 0)
                     {
-                        if (requestBody[i] != recordBody[i])
+
+                        if (descriptionBuilder != null)
                         {
-                            break;
+                            descriptionBuilder.AppendLine($"There are differences between request and recordentry bodies:");
+                            foreach (var jsonDifference in jsonDifferences)
+                            {
+                                descriptionBuilder.AppendLine(jsonDifference);
+                            }
                         }
+
+                        return 1;
                     }
-                    descriptionBuilder.AppendLine($"Request and record bodies do not match at index {i}:");
-                    var before = Math.Max(0, i - 10);
-                    var afterRequest = Math.Min(i + 20, requestBody.Length);
-                    var afterResponse = Math.Min(i + 20, recordBody.Length);
-                    descriptionBuilder.AppendLine($"     request: \"{Encoding.UTF8.GetString(requestBody, before, afterRequest - before)}\"");
-                    descriptionBuilder.AppendLine($"     record:  \"{Encoding.UTF8.GetString(recordBody, before, afterResponse - before)}\"");
+                } 
+                else {
+                    if (descriptionBuilder != null)
+                    {
+                        var minLength = Math.Min(requestBody.Length, recordBody.Length);
+                        int i;
+                        for (i = 0; i < minLength - 1; i++)
+                        {
+                            if (requestBody[i] != recordBody[i])
+                            {
+                                break;
+                            }
+                        }
+                        descriptionBuilder.AppendLine($"Request and record bodies do not match at index {i}:");
+                        var before = Math.Max(0, i - 10);
+                        var afterRequest = Math.Min(i + 20, requestBody.Length);
+                        var afterResponse = Math.Min(i + 20, recordBody.Length);
+                        descriptionBuilder.AppendLine($"     request: \"{Encoding.UTF8.GetString(requestBody, before, afterRequest - before)}\"");
+                        descriptionBuilder.AppendLine($"     record:  \"{Encoding.UTF8.GetString(recordBody, before, afterResponse - before)}\"");
+                    }
+                    return 1;
                 }
-                return 1;
             }
 
             return 0;
@@ -250,7 +276,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             builder.AppendLine("Body differences:");
 
-            CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, builder);
+            request.Request.TryGetContentType(out var contentType);
+            CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, contentType, descriptionBuilder: builder);
 
             return builder.ToString();
         }

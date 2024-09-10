@@ -8,19 +8,25 @@ using TypeSpec.Http;
 namespace AzureSphereManagementClient;
 
 interface OperationsOperations {
-  @doc("List the operations for the provider")
+  /**
+   * List the operations for the provider
+   */
   @route("/providers/Microsoft.AzureSphere/operations")
   @get
-  List is Azure.Core.Foundations.Operation<{}, OperationListResult>;
+  list is Azure.Core.Foundations.Operation<{}, OperationListResult>;
 }
 
 interface CatalogsOperations {
-  @doc("List Catalog resources by subscription ID")
+  /**
+   * List Catalog resources by subscription ID
+   */
   @route("/subscriptions/{subscriptionId}/providers/Microsoft.AzureSphere/catalogs")
   @get
-  ListBySubscription is Azure.Core.Foundations.Operation<
+  listBySubscription is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
@@ -28,17 +34,23 @@ interface CatalogsOperations {
     CatalogListResult
   >;
 
-  @doc("List Catalog resources by resource group")
+  /**
+   * List Catalog resources by resource group
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs")
   @get
-  ListByResourceGroup is Azure.Core.Foundations.Operation<
+  listByResourceGroup is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
@@ -47,23 +59,31 @@ interface CatalogsOperations {
     CatalogListResult
   >;
 
-  @doc("Get a Catalog")
+  /**
+   * Get a Catalog
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}")
   @get
-  Get is Azure.Core.Foundations.Operation<
+  get is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -71,79 +91,107 @@ interface CatalogsOperations {
     Catalog
   >;
 
-  @doc("Create a Catalog")
+  /**
+   * Create a Catalog
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}")
   @put
-  CreateOrUpdate is Azure.Core.Foundations.Operation<
+  createOrUpdate is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Resource create parameters.")
+      /**
+       * Resource create parameters.
+       */
       @body
       resource: Catalog;
     },
     Catalog
   >;
 
-  @doc("Update a Catalog")
+  /**
+   * Update a Catalog
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}")
   @patch
-  Update is Azure.Core.Foundations.Operation<
+  update is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("The resource properties to be updated.")
+      /**
+       * The resource properties to be updated.
+       */
       @body
       properties: CatalogUpdate;
     },
     Catalog
   >;
 
-  @doc("Delete a Catalog")
+  /**
+   * Delete a Catalog
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}")
   @delete
-  Delete is Azure.Core.Foundations.Operation<
+  delete is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -151,23 +199,31 @@ interface CatalogsOperations {
     void
   >;
 
-  @doc("Counts devices in catalog.")
+  /**
+   * Counts devices in catalog.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/countDevices")
   @post
-  CountDevices is Azure.Core.Foundations.Operation<
+  countDevices is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -175,39 +231,55 @@ interface CatalogsOperations {
     CountDevicesResponse
   >;
 
-  @doc("Lists deployments for catalog.")
+  /**
+   * Lists deployments for catalog.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/listDeployments")
   @post
-  ListDeployments is Azure.Core.Foundations.Operation<
+  listDeployments is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Filter the result list using the given expression")
+      /**
+       * Filter the result list using the given expression
+       */
       @query("$filter")
       filter?: string;
 
-      @doc("The number of result items to return.")
+      /**
+       * The number of result items to return.
+       */
       @query("$top")
       top?: int32;
 
-      @doc("The number of result items to skip.")
+      /**
+       * The number of result items to skip.
+       */
       @query("$skip")
       skip?: int32;
 
-      @doc("The maximum number of result items per page.")
+      /**
+       * The maximum number of result items per page.
+       */
       @query("$maxpagesize")
       maxpagesize?: int32;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -215,83 +287,117 @@ interface CatalogsOperations {
     DeploymentListResult
   >;
 
-  @doc("List the device groups for the catalog.")
+  /**
+   * List the device groups for the catalog.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/listDeviceGroups")
   @post
-  ListDeviceGroups is Azure.Core.Foundations.Operation<
+  listDeviceGroups is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Filter the result list using the given expression")
+      /**
+       * Filter the result list using the given expression
+       */
       @query("$filter")
       filter?: string;
 
-      @doc("The number of result items to return.")
+      /**
+       * The number of result items to return.
+       */
       @query("$top")
       top?: int32;
 
-      @doc("The number of result items to skip.")
+      /**
+       * The number of result items to skip.
+       */
       @query("$skip")
       skip?: int32;
 
-      @doc("The maximum number of result items per page.")
+      /**
+       * The maximum number of result items per page.
+       */
       @query("$maxpagesize")
       maxpagesize?: int32;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("List device groups for catalog.")
+      /**
+       * List device groups for catalog.
+       */
       @body
       listDeviceGroupsRequest: ListDeviceGroupsRequest;
     },
     DeviceGroupListResult
   >;
 
-  @doc("Lists device insights for catalog.")
+  /**
+   * Lists device insights for catalog.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/listDeviceInsights")
   @post
-  ListDeviceInsights is Azure.Core.Foundations.Operation<
+  listDeviceInsights is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Filter the result list using the given expression")
+      /**
+       * Filter the result list using the given expression
+       */
       @query("$filter")
       filter?: string;
 
-      @doc("The number of result items to return.")
+      /**
+       * The number of result items to return.
+       */
       @query("$top")
       top?: int32;
 
-      @doc("The number of result items to skip.")
+      /**
+       * The number of result items to skip.
+       */
       @query("$skip")
       skip?: int32;
 
-      @doc("The maximum number of result items per page.")
+      /**
+       * The maximum number of result items per page.
+       */
       @query("$maxpagesize")
       maxpagesize?: int32;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -299,39 +405,55 @@ interface CatalogsOperations {
     PagedDeviceInsight
   >;
 
-  @doc("Lists devices for catalog.")
+  /**
+   * Lists devices for catalog.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/listDevices")
   @post
-  ListDevices is Azure.Core.Foundations.Operation<
+  listDevices is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Filter the result list using the given expression")
+      /**
+       * Filter the result list using the given expression
+       */
       @query("$filter")
       filter?: string;
 
-      @doc("The number of result items to return.")
+      /**
+       * The number of result items to return.
+       */
       @query("$top")
       top?: int32;
 
-      @doc("The number of result items to skip.")
+      /**
+       * The number of result items to skip.
+       */
       @query("$skip")
       skip?: int32;
 
-      @doc("The maximum number of result items per page.")
+      /**
+       * The maximum number of result items per page.
+       */
       @query("$maxpagesize")
       maxpagesize?: int32;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -339,28 +461,38 @@ interface CatalogsOperations {
     DeviceListResult
   >;
 
-  @doc("Creates an image. Use this action when the image ID is unknown.")
+  /**
+   * Creates an image. Use this action when the image ID is unknown.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/uploadImage")
   @post
-  UploadImage is Azure.Core.Foundations.Operation<
+  uploadImage is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Image upload request body.")
+      /**
+       * Image upload request body.
+       */
       @body
       uploadImageRequest: Image;
     },
@@ -369,39 +501,55 @@ interface CatalogsOperations {
 }
 
 interface CertificatesOperations {
-  @doc("List Certificate resources by Catalog")
+  /**
+   * List Certificate resources by Catalog
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/certificates")
   @get
-  ListByCatalog is Azure.Core.Foundations.Operation<
+  listByCatalog is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Filter the result list using the given expression")
+      /**
+       * Filter the result list using the given expression
+       */
       @query("$filter")
       filter?: string;
 
-      @doc("The number of result items to return.")
+      /**
+       * The number of result items to return.
+       */
       @query("$top")
       top?: int32;
 
-      @doc("The number of result items to skip.")
+      /**
+       * The number of result items to skip.
+       */
       @query("$skip")
       skip?: int32;
 
-      @doc("The maximum number of result items per page.")
+      /**
+       * The maximum number of result items per page.
+       */
       @query("$maxpagesize")
       maxpagesize?: int32;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -409,97 +557,123 @@ interface CertificatesOperations {
     CertificateListResult
   >;
 
-  @doc("Get a Certificate")
+  /**
+   * Get a Certificate
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/certificates/{serialNumber}")
   @get
-  Get is Azure.Core.Foundations.Operation<
+  get is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("""
-Serial number of the certificate. Use '.default' to get current active
-certificate.
-""")
+      /**
+       * Serial number of the certificate. Use '.default' to get current active
+       * certificate.
+       */
       @path
       serialNumber: string;
     },
     Certificate
   >;
 
-  @doc("Retrieves cert chain.")
+  /**
+   * Retrieves cert chain.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/certificates/{serialNumber}/retrieveCertChain")
   @post
-  RetrieveCertChain is Azure.Core.Foundations.Operation<
+  retrieveCertChain is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("""
-Serial number of the certificate. Use '.default' to get current active
-certificate.
-""")
+      /**
+       * Serial number of the certificate. Use '.default' to get current active
+       * certificate.
+       */
       @path
       serialNumber: string;
     },
     CertificateChainResponse
   >;
 
-  @doc("Gets the proof of possession nonce.")
+  /**
+   * Gets the proof of possession nonce.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/certificates/{serialNumber}/retrieveProofOfPossessionNonce")
   @post
-  RetrieveProofOfPossessionNonce is Azure.Core.Foundations.Operation<
+  retrieveProofOfPossessionNonce is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("""
-Serial number of the certificate. Use '.default' to get current active
-certificate.
-""")
+      /**
+       * Serial number of the certificate. Use '.default' to get current active
+       * certificate.
+       */
       @path
       serialNumber: string;
 
-      @doc("Proof of possession nonce request body ")
+      /**
+       * Proof of possession nonce request body
+       */
       @body
       proofOfPossessionNonceRequest: ProofOfPossessionNonceRequest;
     },
@@ -508,39 +682,55 @@ certificate.
 }
 
 interface ImagesOperations {
-  @doc("List Image resources by Catalog")
+  /**
+   * List Image resources by Catalog
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/images")
   @get
-  ListByCatalog is Azure.Core.Foundations.Operation<
+  listByCatalog is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Filter the result list using the given expression")
+      /**
+       * Filter the result list using the given expression
+       */
       @query("$filter")
       filter?: string;
 
-      @doc("The number of result items to return.")
+      /**
+       * The number of result items to return.
+       */
       @query("$top")
       top?: int32;
 
-      @doc("The number of result items to skip.")
+      /**
+       * The number of result items to skip.
+       */
       @query("$skip")
       skip?: int32;
 
-      @doc("The maximum number of result items per page.")
+      /**
+       * The maximum number of result items per page.
+       */
       @query("$maxpagesize")
       maxpagesize?: int32;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -548,88 +738,120 @@ interface ImagesOperations {
     ImageListResult
   >;
 
-  @doc("Get a Image")
+  /**
+   * Get a Image
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/images/{imageName}")
   @get
-  Get is Azure.Core.Foundations.Operation<
+  get is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Image name. Use an image GUID for GA versions of the API.")
+      /**
+       * Image name. Use an image GUID for GA versions of the API.
+       */
       @path
       imageName: string;
     },
     Image
   >;
 
-  @doc("Create a Image")
+  /**
+   * Create a Image
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/images/{imageName}")
   @put
-  CreateOrUpdate is Azure.Core.Foundations.Operation<
+  createOrUpdate is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Image name. Use an image GUID for GA versions of the API.")
+      /**
+       * Image name. Use an image GUID for GA versions of the API.
+       */
       @path
       imageName: string;
 
-      @doc("Resource create parameters.")
+      /**
+       * Resource create parameters.
+       */
       @body
       resource: Image;
     },
     Image
   >;
 
-  @doc("Delete a Image")
+  /**
+   * Delete a Image
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/images/{imageName}")
   @delete
-  Delete is Azure.Core.Foundations.Operation<
+  delete is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Image name. Use an image GUID for GA versions of the API.")
+      /**
+       * Image name. Use an image GUID for GA versions of the API.
+       */
       @path
       imageName: string;
     },
@@ -638,23 +860,31 @@ interface ImagesOperations {
 }
 
 interface ProductsOperations {
-  @doc("List Product resources by Catalog")
+  /**
+   * List Product resources by Catalog
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products")
   @get
-  ListByCatalog is Azure.Core.Foundations.Operation<
+  listByCatalog is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
@@ -662,31 +892,39 @@ interface ProductsOperations {
     ProductListResult
   >;
 
-  @doc("""
-Get a Product. '.default' and '.unassigned' are system defined values and
-cannot be used for product name.
-""")
+  /**
+   * Get a Product. '.default' and '.unassigned' are system defined values and
+   * cannot be used for product name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}")
   @get
-  Get is Azure.Core.Foundations.Operation<
+  get is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
@@ -694,103 +932,131 @@ cannot be used for product name.
     Product
   >;
 
-  @doc("""
-Create a Product. '.default' and '.unassigned' are system defined values and
-cannot be used for product name.
-""")
+  /**
+   * Create a Product. '.default' and '.unassigned' are system defined values and
+   * cannot be used for product name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}")
   @put
-  CreateOrUpdate is Azure.Core.Foundations.Operation<
+  createOrUpdate is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Resource create parameters.")
+      /**
+       * Resource create parameters.
+       */
       @body
       resource: Product;
     },
     Product
   >;
 
-  @doc("""
-Update a Product. '.default' and '.unassigned' are system defined values and
-cannot be used for product name.
-""")
+  /**
+   * Update a Product. '.default' and '.unassigned' are system defined values and
+   * cannot be used for product name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}")
   @patch
-  Update is Azure.Core.Foundations.Operation<
+  update is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("The resource properties to be updated.")
+      /**
+       * The resource properties to be updated.
+       */
       @body
       properties: ProductUpdate;
     },
     Product | void
   >;
 
-  @doc("""
-Delete a Product. '.default' and '.unassigned' are system defined values and
-cannot be used for product name'
-""")
+  /**
+   * Delete a Product. '.default' and '.unassigned' are system defined values and
+   * cannot be used for product name'
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}")
   @delete
-  Delete is Azure.Core.Foundations.Operation<
+  delete is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
@@ -798,31 +1064,39 @@ cannot be used for product name'
     void
   >;
 
-  @doc("""
-Counts devices in product. '.default' and '.unassigned' are system defined
-values and cannot be used for product name.
-""")
+  /**
+   * Counts devices in product. '.default' and '.unassigned' are system defined
+   * values and cannot be used for product name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/countDevices")
   @post
-  CountDevices is Azure.Core.Foundations.Operation<
+  countDevices is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
@@ -830,31 +1104,39 @@ values and cannot be used for product name.
     CountDevicesResponse
   >;
 
-  @doc("""
-Generates default device groups for the product. '.default' and '.unassigned'
-are system defined values and cannot be used for product name.
-""")
+  /**
+   * Generates default device groups for the product. '.default' and '.unassigned'
+   * are system defined values and cannot be used for product name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/generateDefaultDeviceGroups")
   @post
-  GenerateDefaultDeviceGroups is Azure.Core.Foundations.Operation<
+  generateDefaultDeviceGroups is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
@@ -864,47 +1146,63 @@ are system defined values and cannot be used for product name.
 }
 
 interface DeviceGroupsOperations {
-  @doc("""
-List DeviceGroup resources by Product. '.default' and '.unassigned' are system
-defined values and cannot be used for product name.
-""")
+  /**
+   * List DeviceGroup resources by Product. '.default' and '.unassigned' are system
+   * defined values and cannot be used for product name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups")
   @get
-  ListByProduct is Azure.Core.Foundations.Operation<
+  listByProduct is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Filter the result list using the given expression")
+      /**
+       * Filter the result list using the given expression
+       */
       @query("$filter")
       filter?: string;
 
-      @doc("The number of result items to return.")
+      /**
+       * The number of result items to return.
+       */
       @query("$top")
       top?: int32;
 
-      @doc("The number of result items to skip.")
+      /**
+       * The number of result items to skip.
+       */
       @query("$skip")
       skip?: int32;
 
-      @doc("The maximum number of result items per page.")
+      /**
+       * The maximum number of result items per page.
+       */
       @query("$maxpagesize")
       maxpagesize?: int32;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
@@ -912,36 +1210,46 @@ defined values and cannot be used for product name.
     DeviceGroupListResult
   >;
 
-  @doc("""
-Get a DeviceGroup. '.default' and '.unassigned' are system defined values and
-cannot be used for product or device group name.
-""")
+  /**
+   * Get a DeviceGroup. '.default' and '.unassigned' are system defined values and
+   * cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}")
   @get
-  Get is Azure.Core.Foundations.Operation<
+  get is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
@@ -949,118 +1257,152 @@ cannot be used for product or device group name.
     DeviceGroup
   >;
 
-  @doc("""
-Create a DeviceGroup. '.default' and '.unassigned' are system defined values
-and cannot be used for product or device group name.
-""")
+  /**
+   * Create a DeviceGroup. '.default' and '.unassigned' are system defined values
+   * and cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}")
   @put
-  CreateOrUpdate is Azure.Core.Foundations.Operation<
+  createOrUpdate is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("Resource create parameters.")
+      /**
+       * Resource create parameters.
+       */
       @body
       resource: DeviceGroup;
     },
     DeviceGroup
   >;
 
-  @doc("""
-Update a DeviceGroup. '.default' and '.unassigned' are system defined values
-and cannot be used for product or device group name.
-""")
+  /**
+   * Update a DeviceGroup. '.default' and '.unassigned' are system defined values
+   * and cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}")
   @patch
-  Update is Azure.Core.Foundations.Operation<
+  update is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("The resource properties to be updated.")
+      /**
+       * The resource properties to be updated.
+       */
       @body
       properties: DeviceGroupUpdate;
     },
     DeviceGroup | void
   >;
 
-  @doc("""
-Delete a DeviceGroup. '.default' and '.unassigned' are system defined values
-and cannot be used for product or device group name.
-""")
+  /**
+   * Delete a DeviceGroup. '.default' and '.unassigned' are system defined values
+   * and cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}")
   @delete
-  Delete is Azure.Core.Foundations.Operation<
+  delete is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
@@ -1068,77 +1410,99 @@ and cannot be used for product or device group name.
     void
   >;
 
-  @doc("""
-Bulk claims the devices. Use '.unassigned' or '.default' for the device group
-and product names when bulk claiming devices to a catalog only.
-""")
+  /**
+   * Bulk claims the devices. Use '.unassigned' or '.default' for the device group
+   * and product names when bulk claiming devices to a catalog only.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/claimDevices")
   @post
-  ClaimDevices is Azure.Core.Foundations.Operation<
+  claimDevices is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("Bulk claim devices request body.")
+      /**
+       * Bulk claim devices request body.
+       */
       @body
       claimDevicesRequest: ClaimDevicesRequest;
     },
     void
   >;
 
-  @doc("""
-Counts devices in device group. '.default' and '.unassigned' are system defined
-values and cannot be used for product or device group name.
-""")
+  /**
+   * Counts devices in device group. '.default' and '.unassigned' are system defined
+   * values and cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/countDevices")
   @post
-  CountDevices is Azure.Core.Foundations.Operation<
+  countDevices is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
@@ -1148,52 +1512,70 @@ values and cannot be used for product or device group name.
 }
 
 interface DeploymentsOperations {
-  @doc("""
-List Deployment resources by DeviceGroup. '.default' and '.unassigned' are
-system defined values and cannot be used for product or device group name.
-""")
+  /**
+   * List Deployment resources by DeviceGroup. '.default' and '.unassigned' are
+   * system defined values and cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/deployments")
   @get
-  ListByDeviceGroup is Azure.Core.Foundations.Operation<
+  listByDeviceGroup is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Filter the result list using the given expression")
+      /**
+       * Filter the result list using the given expression
+       */
       @query("$filter")
       filter?: string;
 
-      @doc("The number of result items to return.")
+      /**
+       * The number of result items to return.
+       */
       @query("$top")
       top?: int32;
 
-      @doc("The number of result items to skip.")
+      /**
+       * The number of result items to skip.
+       */
       @query("$skip")
       skip?: int32;
 
-      @doc("The maximum number of result items per page.")
+      /**
+       * The maximum number of result items per page.
+       */
       @query("$maxpagesize")
       maxpagesize?: int32;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
@@ -1201,136 +1583,168 @@ system defined values and cannot be used for product or device group name.
     DeploymentListResult
   >;
 
-  @doc("""
-Get a Deployment. '.default' and '.unassigned' are system defined values and
-cannot be used for product or device group name.
-""")
+  /**
+   * Get a Deployment. '.default' and '.unassigned' are system defined values and
+   * cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/deployments/{deploymentName}")
   @get
-  Get is Azure.Core.Foundations.Operation<
+  get is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("""
-Deployment name. Use .default for deployment creation and to get the current
-deployment for the associated device group.
-""")
+      /**
+       * Deployment name. Use .default for deployment creation and to get the current
+       * deployment for the associated device group.
+       */
       @path
       deploymentName: string;
     },
     Deployment
   >;
 
-  @doc("""
-Create a Deployment. '.default' and '.unassigned' are system defined values and
-cannot be used for product or device group name.
-""")
+  /**
+   * Create a Deployment. '.default' and '.unassigned' are system defined values and
+   * cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/deployments/{deploymentName}")
   @put
-  CreateOrUpdate is Azure.Core.Foundations.Operation<
+  createOrUpdate is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("""
-Deployment name. Use .default for deployment creation and to get the current
-deployment for the associated device group.
-""")
+      /**
+       * Deployment name. Use .default for deployment creation and to get the current
+       * deployment for the associated device group.
+       */
       @path
       deploymentName: string;
 
-      @doc("Resource create parameters.")
+      /**
+       * Resource create parameters.
+       */
       @body
       resource: Deployment;
     },
     Deployment
   >;
 
-  @doc("""
-Delete a Deployment. '.default' and '.unassigned' are system defined values and
-cannot be used for product or device group name.
-""")
+  /**
+   * Delete a Deployment. '.default' and '.unassigned' are system defined values and
+   * cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/deployments/{deploymentName}")
   @delete
-  Delete is Azure.Core.Foundations.Operation<
+  delete is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("""
-Deployment name. Use .default for deployment creation and to get the current
-deployment for the associated device group.
-""")
+      /**
+       * Deployment name. Use .default for deployment creation and to get the current
+       * deployment for the associated device group.
+       */
       @path
       deploymentName: string;
     },
@@ -1339,36 +1753,46 @@ deployment for the associated device group.
 }
 
 interface DevicesOperations {
-  @doc("""
-List Device resources by DeviceGroup. '.default' and '.unassigned' are system
-defined values and cannot be used for product or device group name.
-""")
+  /**
+   * List Device resources by DeviceGroup. '.default' and '.unassigned' are system
+   * defined values and cannot be used for product or device group name.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/devices")
   @get
-  ListByDeviceGroup is Azure.Core.Foundations.Operation<
+  listByDeviceGroup is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
@@ -1376,41 +1800,53 @@ defined values and cannot be used for product or device group name.
     DeviceListResult
   >;
 
-  @doc("""
-Get a Device. Use '.unassigned' or '.default' for the device group and product
-names when a device does not belong to a device group and product.
-""")
+  /**
+   * Get a Device. Use '.unassigned' or '.default' for the device group and product
+   * names when a device does not belong to a device group and product.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/devices/{deviceName}")
   @get
-  Get is Azure.Core.Foundations.Operation<
+  get is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("Device name")
+      /**
+       * Device name
+       */
       @pattern("^[a-zA-Z0-9-]{128}$")
       @path
       deviceName: string;
@@ -1418,130 +1854,172 @@ names when a device does not belong to a device group and product.
     Device
   >;
 
-  @doc("""
-Create a Device. Use '.unassigned' or '.default' for the device group and
-product names to claim a device to the catalog only.
-""")
+  /**
+   * Create a Device. Use '.unassigned' or '.default' for the device group and
+   * product names to claim a device to the catalog only.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/devices/{deviceName}")
   @put
-  CreateOrUpdate is Azure.Core.Foundations.Operation<
+  createOrUpdate is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("Device name")
+      /**
+       * Device name
+       */
       @pattern("^[a-zA-Z0-9-]{128}$")
       @path
       deviceName: string;
 
-      @doc("Resource create parameters.")
+      /**
+       * Resource create parameters.
+       */
       @body
       resource: Device;
     },
     Device
   >;
 
-  @doc("""
-Update a Device. Use '.unassigned' or '.default' for the device group and
-product names to move a device to the catalog level.
-""")
+  /**
+   * Update a Device. Use '.unassigned' or '.default' for the device group and
+   * product names to move a device to the catalog level.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/devices/{deviceName}")
   @patch
-  Update is Azure.Core.Foundations.Operation<
+  update is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("Device name")
+      /**
+       * Device name
+       */
       @pattern("^[a-zA-Z0-9-]{128}$")
       @path
       deviceName: string;
 
-      @doc("The resource properties to be updated.")
+      /**
+       * The resource properties to be updated.
+       */
       @body
       properties: DeviceUpdate;
     },
     Device | void
   >;
 
-  @doc("Delete a Device")
+  /**
+   * Delete a Device
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/devices/{deviceName}")
   @delete
-  Delete is Azure.Core.Foundations.Operation<
+  delete is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("Device name")
+      /**
+       * Device name
+       */
       @pattern("^[a-zA-Z0-9-]{128}$")
       @path
       deviceName: string;
@@ -1549,47 +2027,61 @@ product names to move a device to the catalog level.
     void
   >;
 
-  @doc("""
-Generates the capability image for the device. Use '.unassigned' or '.default'
-for the device group and product names to generate the image for a device that
-does not belong to a specific device group and product.
-""")
+  /**
+   * Generates the capability image for the device. Use '.unassigned' or '.default'
+   * for the device group and product names to generate the image for a device that
+   * does not belong to a specific device group and product.
+   */
   @route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AzureSphere/catalogs/{catalogName}/products/{productName}/deviceGroups/{deviceGroupName}/devices/{deviceName}/generateCapabilityImage")
   @post
-  GenerateCapabilityImage is Azure.Core.Foundations.Operation<
+  generateCapabilityImage is Azure.Core.Foundations.Operation<
     {
-      @doc("The ID of the target subscription.")
+      /**
+       * The ID of the target subscription.
+       */
       @minLength(1)
       @path
       subscriptionId: string;
 
-      @doc("The name of the resource group. The name is case insensitive.")
+      /**
+       * The name of the resource group. The name is case insensitive.
+       */
       @maxLength(90)
       @minLength(1)
       @path
       resourceGroupName: string;
 
-      @doc("Name of catalog")
+      /**
+       * Name of catalog
+       */
       @pattern("^[A-Za-z0-9_-]{1,50}$")
       @path
       catalogName: string;
 
-      @doc("Name of product.")
+      /**
+       * Name of product.
+       */
       @pattern("^[\\w][\\w\\s]{1,48}[\\w]$|^\\.default$|^\\.unassigned$")
       @path
       productName: string;
 
-      @doc("Name of device group.")
+      /**
+       * Name of device group.
+       */
       @pattern("^[A-Za-z0-9]{1,2}$|^[A-Za-z0-9][A-Za-z0-9\\s]{1,48}[A-Za-z0-9]$|^\\.default$|^\\.unassigned$")
       @path
       deviceGroupName: string;
 
-      @doc("Device name")
+      /**
+       * Device name
+       */
       @pattern("^[a-zA-Z0-9-]{128}$")
       @path
       deviceName: string;
 
-      @doc("Generate capability image request body.")
+      /**
+       * Generate capability image request body.
+       */
       @body
       generateDeviceCapabilityRequest: GenerateCapabilityImageRequest;
     },

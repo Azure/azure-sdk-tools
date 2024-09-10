@@ -703,7 +703,7 @@ namespace APIViewWeb.Managers
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            return await _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            return _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
         }
 
         /// <summary>
@@ -711,8 +711,9 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="revision"></param>
         /// <param name="languageService"></param>
+        /// <param name="verifyUpgradabilityOnly"> </param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService)
+        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, bool verifyUpgradabilityOnly)
         {
             foreach (var file in revision.Files)
             {
@@ -724,24 +725,35 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.FileId);
-                    // file.Name property has been repurposed to store package name and version string
-                    // This is causing issue when updating review using latest parser since it expects Name field as file name
-                    // We have added a new property FileName which is only set for new reviews
-                    // All older reviews needs to be handled by checking review name field
-                    var fileName = file.FileName ?? file.Name;
-                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, false);
-                    await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
-                    // update only version string
-                    file.VersionString = codeFile.VersionString;
-                    if (codeFile.APIForest.Count > 0) {
-                        file.ParserStyle = ParserStyle.Tree;
+                    if (string.IsNullOrEmpty(file.FileName))
+                    {
+                        _telemetryClient.TrackTrace($"Revision does not have original file name to update API revision. Revision Id: {revision.Id}");
+                        continue;
                     }
-                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
-                    _telemetryClient.TrackTrace($"Successfully Updated {revision.Language} revision with id {revision.Id}");
+                    var codeFile = await languageService.GetCodeFileAsync(file.FileName, fileOriginal, false);
+                    if (!verifyUpgradabilityOnly)
+                    {
+                        await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
+                        // update only version string
+                        file.VersionString = codeFile.VersionString;
+                        if (codeFile.ReviewLines.Count > 0)
+                        {
+                            file.ParserStyle = ParserStyle.Tree;
+                        }
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                        _telemetryClient.TrackTrace($"Successfully Updated {revision.Language} revision with id {revision.Id}");
+                    }
+                    else
+                    {
+                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {codeFile.PackageName} can be upgraded using new parser version.");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _telemetryClient.TrackTrace($"Failed to update {revision.Language} revision with id {revision.Id}");
+                    if (!verifyUpgradabilityOnly)
+                        _telemetryClient.TrackTrace($"Failed to update {revision.Language} revision with id {revision.Id}");
+                    else
+                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {file.PackageName} cannot be upgraded using new parser version.");
                     _telemetryClient.TrackException(ex);
                 }
             }

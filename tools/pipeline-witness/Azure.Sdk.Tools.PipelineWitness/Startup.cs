@@ -37,6 +37,7 @@ public static class Startup
         builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
         builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
         builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
+        builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureSettings>();
 
         builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
         builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
@@ -66,6 +67,8 @@ public static class Startup
         builder.Services.AddHostedService<RunCompleteQueueWorker>(settings.GitHubActionRunsWorkerCount);
 
         builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+        builder.Services.AddHostedService<MissingGitHubActionsWorker>();
+        builder.Services.AddHostedService<MissingAzurePipelineRunsWorker>();
     }
 
     private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService

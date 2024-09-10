@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { APIRevision, ParserStyle } from 'src/app/_models/revision';
+import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
 
 

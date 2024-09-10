@@ -4,6 +4,7 @@ import { ApiTreeBuilderData } from "../_models/revision";
 import { CodePanelData, CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype } from '../_models/codePanelModels';
 import { InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from '../_models/insertCodePanelRowDataMessage';
 import { NavigationTreeNode } from '../_models/navigationTreeModels';
+import { FULL_DIFF_STYLE, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
@@ -14,12 +15,17 @@ let lineNumber: number = 0;
 let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
 let hasHiddenAPI: boolean = false;
+let visibleNodes: Set<string> = new Set<string>();
+let addPostDiffContext: boolean = false;
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
     let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
     codePanelData = JSON.parse(jsonString);
+    if (!codePanelData?.hasDiff) {
+      apiTreeBuilderData!.diffStyle = FULL_DIFF_STYLE; // If there is no diff nodes and tree diff will not work
+    }
     
     buildCodePanelRows("root", navigationTree);
     const codePanelRowDataMessage : InsertCodePanelRowDataMessage = {
@@ -52,6 +58,8 @@ addEventListener('message', ({ data }) => {
     navigationTree = [];
     diffBuffer = [];
     apiTreeBuilderData = null;
+    visibleNodes = new Set<string>();
+    addPostDiffContext = false;
   }
   else {
     apiTreeBuilderData = data;
@@ -61,25 +69,39 @@ addEventListener('message', ({ data }) => {
   }
 });
 
-function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTreeNode []) {
+function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTreeNode [], isParentNodeWithDiff: boolean = false) {
   const node = codePanelData?.nodeMetaData[nodeIdHashed]!;
+
+  if(node.isProcessed)
+    return;
+
+  //If current node is related line attribute and then related node is not modified then skip current node in tree and node view
+  if (node.relatedNodeIdHash && !node.isNodeWithDiff && !node.isNodeWithDiffInDescendants && 
+    (apiTreeBuilderData?.diffStyle == TREE_DIFF_STYLE || apiTreeBuilderData?.diffStyle == NODE_DIFF_STYLE))
+  {
+    let relatedNode = codePanelData?.nodeMetaData[node.relatedNodeIdHash]!;
+    if (!relatedNode.isNodeWithDiff && !node.isNodeWithDiffInDescendants && !visibleNodes.has(node.relatedNodeIdHash))
+    {
+      return;
+    }
+  }
 
   let buildNode = true;
   let buildChildren = true;
   let addNodeToBuffer = false
  
-  if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === "trees" || apiTreeBuilderData?.diffStyle === "nodes") && 
+  if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === TREE_DIFF_STYLE || apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE) && 
     (!node.isNodeWithDiffInDescendants || (!apiTreeBuilderData?.showDocumentation && !node.isNodeWithNoneDocDiffInDescendants))) {
     buildNode = false;
     buildChildren = false;
   }
-
+    
   if (!buildNode && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && 
-    (apiTreeBuilderData?.diffStyle !== "nodes" || node.isNodeWithDiff)) {
+    (apiTreeBuilderData?.diffStyle !== NODE_DIFF_STYLE || node.isNodeWithDiff)) {
     buildNode = true;
   }
 
-  if (!node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === "nodes" && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
+  if (isParentNodeWithDiff && !node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === NODE_DIFF_STYLE && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
     addNodeToBuffer = true;
   }
 
@@ -93,6 +115,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if ((!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && node.isNodeWithDiff) {
     codePanelRowData.push(...diffBuffer);
+    diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
     diffBuffer = [];
   }
 
@@ -112,16 +135,26 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   if (node.codeLines) {
     node.codeLines.forEach((codeLine, index) => {
       if (shouldAppendIfRowIsHiddenAPI(codeLine)) {
-        if (index === node.codeLines.length - 1 && node.diagnostics && node.diagnostics.length > 0) { // last row of toptoken codeLines
-          codeLine.toggleCommentsClasses = codeLine.toggleCommentsClasses.replace("can-show", "show").replace("hide", "show"); // show comment indicatior node has diagnostic comments
+        if (index === node.codeLines.length - 1 && node.diagnostics && node.diagnostics.length > 0) { // last row of top token codeLines
+          codeLine.toggleCommentsClasses = codeLine.toggleCommentsClasses.replace("can-show", "show").replace("hide", "show"); // show comment indicator node has diagnostic comments
         }
         codeLine.rowClasses = new Set<string>(codeLine.rowClasses); // Ensure that the rowClasses is a Set
         appendToggleDocumentationClass(node, codeLine, index);
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);
+          visibleNodes.add(nodeIdHashed);
+          addPostDiffContext = true;
         }
         if (addNodeToBuffer) {
+          // We should add immediate 3 lines as context post a changed line
+          if (addPostDiffContext && diffBuffer.length === 3)
+          {
+            codePanelRowData.push(...diffBuffer);
+            diffBuffer.map(row => visibleNodes.add(row.nodeIdHashed));
+            diffBuffer = [];
+            addPostDiffContext = false;
+          }
           diffBuffer.push(codeLine);
           addJustDiffBuffer();
         }
@@ -148,11 +181,12 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     });
   }
   
+
   if (buildChildren) {
     let orderIndex = 0;
     while (node.childrenNodeIdsInOrder && orderIndex in node.childrenNodeIdsInOrder) {
       let childNodeIdHashed = node.childrenNodeIdsInOrder[orderIndex];
-      buildCodePanelRows(childNodeIdHashed, navigationChildren);
+      buildCodePanelRows(childNodeIdHashed, navigationChildren, node.isNodeWithDiff || node.isNodeWithDiffInDescendants);
       orderIndex++;
     }
   }
@@ -169,18 +203,20 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
     if (bottomTokenNode.codeLines) {
       bottomTokenNode.codeLines.forEach((codeLine, index) => {
-        appendToggleDocumentationClass(node, codeLine, index);
+        codeLine.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
         setLineNumber(codeLine);
         if (buildNode) {
           codePanelRowData.push(codeLine);
+          visibleNodes.add(codeLine.nodeIdHashed);
         }
       });
     }
+    bottomTokenNode.isProcessed = true;
   }
 }
 
 function appendToggleDocumentationClass(node: CodePanelNodeMetaData, codePanelRow: CodePanelRowData, index: number) {
-  if (node.documentation && node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0 && codePanelRow.rowOfTokensPosition === "top") {
+  if (node.documentation && node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0) {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show`;
   } else {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;

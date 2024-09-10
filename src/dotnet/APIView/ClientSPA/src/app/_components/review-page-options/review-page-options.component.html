@@ -51,6 +51,22 @@
     </ul>
 </app-page-options-section>
 
+<app-page-options-section *ngIf="associatedPullRequests.length > 0" sectionName="Associated Pull Requests">
+    <ul class="list-group">
+        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
+            <a href="https://github.com/{{pullRequest.repoName}}/pull/{{pullRequest.pullRequestNumber}}" target="_blank">{{pullRequest.repoName}}/{{pullRequest.pullRequestNumber}}</a>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0" sectionName="Associated API Revisions" [collapsedInput]="true">
+    <ul class="list-group">
+        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
+            <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank">{{pullRequest.language}}/{{pullRequest.packageName}}</a>
+        </li>
+    </ul>
+</app-page-options-section>
+
 <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
         <li class="list-group-item">
@@ -82,6 +98,11 @@
             <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch"
             (onChange)="onShowLeftNavigationSwitchChange($event)" />
             <label class="ms-2">Left Navigation</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="disableCodeLinesLazyLoading"
+            (onChange)="onDisableLazyLoadingSwitchChange($event)" />
+            <label class="ms-2">Disable Lazy Loading</label>
         </li>
         <li *ngIf="isDiffView" class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Diff Style :</label>
@@ -133,6 +154,16 @@
     </ul>
 </app-page-options-section>
 
+<app-page-options-section sectionName="Review Options">
+    <ul class="list-group">
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="subscribeSwitch"
+            (onChange)="onSubscribeSwitchChange($event)" />
+            <label class="ms-2">Subscribe</label>
+        </li>
+    </ul>
+</app-page-options-section>
+
 <app-page-options-section sectionName="Change History" [collapsedInput]="true">
     <ul class="list-group">
         <li class="list-group-item change-history">
@@ -180,4 +211,14 @@
             (click)="toggleAPIRevisionApproval()"
             [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
       </div>
+</p-dialog>
+
+<p-dialog header="Disable Lazy Loading" 
+    [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
+    [style]="{ width: '30dvw' }" (onHide)="disableCodeLinesLazyLoading = userProfile?.preferences?.disableCodeLinesLazyLoading!">
+    <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
+    <div class="d-grid gap-2 mt-2">
+    <button class="btn btn-primary" type="button" (click)="disableCodeLinesLazyLoadingEmitter.emit(disableCodeLinesLazyLoading); showDisableCodeLinesLazyLoadingModal = false">Disable</button>
+    <button class="btn btn-link" type="button" (click)="showDisableCodeLinesLazyLoadingModal = false;">Cancel</button>
+    </div>
 </p-dialog>

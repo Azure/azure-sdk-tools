@@ -16,6 +16,8 @@ import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, D
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
+import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 
 @Component({
   selector: 'app-review-page',
@@ -33,9 +35,11 @@ export class ReviewPageComponent implements OnInit {
   userProfile : UserProfile | undefined;
   review : Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
+  comments: CommentItemModel[] = [];
   activeAPIRevision : APIRevision | undefined = undefined;
   diffAPIRevision : APIRevision | undefined = undefined;
-  revisionSideBarVisible : boolean  = false;
+  revisionSidePanel : boolean | undefined = undefined;
+  conversationSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
   languageSafeName: string | undefined;
@@ -45,6 +49,7 @@ export class ReviewPageComponent implements OnInit {
   preferredApprovers : string[] = [];
   hasFatalDiagnostics : boolean = false;
   hasActiveConversation : boolean = false;
+  numberOfActiveConversation : number = 0;
   hasHiddenAPIs : boolean = false;
   loadFailed : boolean = false;
 
@@ -68,7 +73,7 @@ export class ReviewPageComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
-    private userProfileService: UserProfileService, private commentsService: CommentsService) {}
+    private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService) {}
 
   ngOnInit() {
     this.userProfileService.getUserProfile().subscribe(
@@ -88,7 +93,6 @@ export class ReviewPageComponent implements OnInit {
           this.showLineNumbers = false;
         }
       });
-
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const navigationState = this.router.getCurrentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
@@ -101,11 +105,22 @@ export class ReviewPageComponent implements OnInit {
     this.loadReview(this.reviewId!);
     this.loadPreferredApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
+    this.loadComments();
+    this.createSideMenu();
+    this.handleRealTimeReviewUpdates();
+    this.handleRealTimeAPIRevisionUpdates();
+  }
 
+  createSideMenu() {
     this.sideMenu = [
       {
           icon: 'bi bi-clock-history',
-          command: () => { this.revisionSideBarVisible = !this.revisionSideBarVisible; }
+          command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
+      },
+      {
+        icon: 'bi bi-chat-left-dots',
+        badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
+        command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
       }
     ];
   }
@@ -212,6 +227,15 @@ export class ReviewPageComponent implements OnInit {
               this.diffAPIRevision = this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0];
             }
           }
+        }
+      });
+  }
+
+  loadComments() {
+    this.commentsService.getComments(this.reviewId!)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (comments: CommentItemModel[]) => {
+          this.comments = comments;
         }
       });
   }
@@ -366,6 +390,10 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
+  handleSubscribeEmitter(state: boolean) {
+    this.reviewsService.toggleReviewSubscriptionByUser(this.reviewId!, state).pipe(take(1)).subscribe();
+  }
+
   handleApiRevisionApprovalEmitter(value: boolean) {
     if (value) {
       this.apiRevisionsService.toggleAPIRevisionApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
@@ -399,8 +427,56 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
+  handleDisableCodeLinesLazyLoadingEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.disableCodeLinesLazyLoading = state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        const currentParams = this.route.snapshot.queryParams;
+        this.updateStateBasedOnQueryParams(currentParams);
+      }
+    });
+  }
+
   handleHasActiveConversationEmitter(value: boolean) {
     this.hasActiveConversation = value;
+  }
+
+  handleNumberOfActiveThreadsEmitter(value: number) {
+    this.numberOfActiveConversation = value;
+    this.createSideMenu();
+  }
+
+  handleScrollToNodeEmitter (value: string) {
+    this.conversationSidePanel = false;
+    this.codePanelComponent.scrollToNode(undefined, value);
+  }
+
+  handleRealTimeReviewUpdates() {
+    this.signalRService.onReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (updatedReview: Review) => {
+        if (updatedReview.id === this.reviewId) {
+          this.review = updatedReview;
+        }
+      }
+    });
+  }
+
+  handleRealTimeAPIRevisionUpdates() {
+    this.signalRService.onAPIRevisionUpdates().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (updatedAPIRevision: APIRevision) => {
+        if (updatedAPIRevision.reviewId === this.reviewId) {
+          const apiRevisionIndex = this.apiRevisions.findIndex(x => x.id === updatedAPIRevision.id);
+          if (apiRevisionIndex > -1) {
+            this.apiRevisions[apiRevisionIndex] = updatedAPIRevision;
+          }
+
+          if (updatedAPIRevision.id === this.activeApiRevisionId) {
+            this.activeAPIRevision = updatedAPIRevision;
+          }
+        }
+      }
+    });
   }
 
   checkForFatalDiagnostics() {

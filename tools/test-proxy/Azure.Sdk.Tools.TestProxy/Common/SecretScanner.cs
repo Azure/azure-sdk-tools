@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -41,24 +42,27 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 Parallel.ForEach(relativePaths, options, (filePath) =>
                 {
-                    var path = Path.Combine(assetRepoRoot, filePath);
+                    if (!filePath.StartsWith("D")) {
+                        var isolatedPath = filePath.Trim().TrimStart('?', 'M').Trim();
+                        var path = Path.Combine(assetRepoRoot, isolatedPath);
 
-                    if (File.Exists(path))
-                    {
-                        var content = File.ReadAllText(path);
-                        var fileDetections = DetectSecrets(content);
-
-                        if (fileDetections != null && fileDetections.Count > 0)
+                        if (File.Exists(path))
                         {
-                            foreach (Detection detection in fileDetections)
+                            var content = File.ReadAllText(path);
+                            var fileDetections = DetectSecrets(content);
+
+                            if (fileDetections != null && fileDetections.Count > 0)
                             {
-                                detectedSecrets.Add(Tuple.Create(filePath, detection));
+                                foreach (Detection detection in fileDetections)
+                                {
+                                    detectedSecrets.Add(Tuple.Create(filePath, detection));
+                                }
                             }
+
+                            Interlocked.Increment(ref seen);
+
+                            Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
                         }
-
-                        Interlocked.Increment(ref seen);
-
-                        Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
                     }
                 });
 

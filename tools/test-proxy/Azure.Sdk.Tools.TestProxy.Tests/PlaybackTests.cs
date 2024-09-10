@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId };
-            recordController.Stop();
+            await recordController.Stop();
 
             // apply same recordingId when starting in-memory session
             var playbackContext = new DefaultHttpContext();
@@ -151,10 +151,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             await controller.Start();
             var targetRecordingId = httpContext.Response.Headers["x-recording-id"].ToString();
-            
-            httpContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
-            controller.Stop();
 
+            httpContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
+            await controller.Stop();
+
+            var auditSession = testRecordingHandler.AuditSessions[targetRecordingId];
+
+            Assert.NotNull(auditSession);
+            var auditResults = TestHelpers.ExhaustQueue<AuditLogItem>(auditSession);
+
+            Assert.Equal(2, auditResults.Count);
             Assert.False(testRecordingHandler.PlaybackSessions.ContainsKey(targetRecordingId));
         }
 
@@ -175,7 +181,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordController.Start();
             var inMemId = recordContext.Response.Headers["x-recording-id"].ToString();
             recordContext.Request.Headers["x-recording-id"] = new string[] { inMemId };
-            recordController.Stop();
+            await recordController.Stop();
 
             var playbackContext = new DefaultHttpContext();
             playbackContext.Request.Headers["x-recording-id"] = inMemId;
@@ -189,7 +195,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await playbackController.Start();
             var targetRecordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
             playbackContext.Request.Headers["x-recording-id"] = new string[] { targetRecordingId };
-            playbackController.Stop();
+            await playbackController.Stop();
 
             testRecordingHandler.InMemorySessions.ContainsKey(targetRecordingId);
         }

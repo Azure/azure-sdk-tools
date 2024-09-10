@@ -59,9 +59,14 @@ func NewModule(dir string) (*Module, error) {
 	if err != nil {
 		return nil, err
 	}
+	name := filepath.Base(dir)
+	if before, _, found := strings.Cut(name, "@"); found {
+		// dir is in the module cache, something like "/home/me/go/pkg/mod/github.com/Foo/bar@v1.0.0"
+		name = before
+	}
 	m := Module{
 		ModFile:  mf,
-		Name:     filepath.Base(dir),
+		Name:     name,
 		Packages: map[string]*Pkg{},
 	}
 
@@ -84,7 +89,7 @@ func NewModule(dir string) (*Module, error) {
 					return filepath.SkipDir
 				}
 			}
-			p, err := NewPkg(path, m.ModFile.Module.Mod.Path)
+			p, err := NewPkg(path, m.ModFile.Module.Mod.Path, dir)
 			if err == nil {
 				m.Packages[baseImportPath+p.Name()] = p
 			} else if !errors.Is(err, ErrNoPackages) {

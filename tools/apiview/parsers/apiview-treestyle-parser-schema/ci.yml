@@ -1,0 +1,61 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/apiview/parsers/apiview-treestyle-parser-schema
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/apiview/parsers/apiview-treestyle-parser-schema
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
+
+variables:
+  NodeVersion: '18.x'
+
+jobs:
+- job: CompileApiViewTokenSchema
+  displayName: 'Compile and Emit APIView Token Schema'
+
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: $(NodeVersion)
+    displayName: "Use Node $(NodeVersion)"
+
+  - script: |
+      npm install
+    workingDirectory: tools/apiview/parsers/apiview-treestyle-parser-schema
+    displayName: "Install npm packages"
+
+  - script: |
+      npx tsp compile .
+    workingDirectory: tools/apiview/parsers/apiview-treestyle-parser-schema
+    displayName: "Build APIView Token Schema"
+
+  - pwsh: |
+      git diff --exit-code CodeFile.json
+      if($LastExitCode -ne 0) {
+        Write-Error "CodeFile.json is not in sync with the TypeSpec APIView schema in main.tsp.Compile TypeSpec schema by running 'tsp compile .' in directory 'tools/apiview/parsers/apiview-treestyle-parser-schema' and include updated json schema in the PR."
+      }
+      Write-Host "TypeSpec and json schema for APIView token are in sync"
+    displayName: "Check if TypeSpec and json schema are in sync"
+    workingDirectory: tools/apiview/parsers/apiview-treestyle-parser-schema

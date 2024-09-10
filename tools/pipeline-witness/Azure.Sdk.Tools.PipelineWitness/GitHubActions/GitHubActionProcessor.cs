@@ -66,6 +66,32 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
         }
 
+        public async Task<string[]> GetRunBlobNamesAsync(string repository, DateTimeOffset minTime, DateTimeOffset maxTime, CancellationToken cancellationToken)
+        {
+            DateTimeOffset minDay = minTime.ToUniversalTime().Date;
+            DateTimeOffset maxDay = maxTime.ToUniversalTime().Date;
+
+            DateTimeOffset[] days = Enumerable.Range(0, (int)(maxDay - minDay).TotalDays + 1)
+                .Select(offset => minDay.AddDays(offset))
+                .ToArray();
+
+            List<string> blobNames = [];
+
+            foreach (DateTimeOffset day in days)
+            {
+                string blobPrefix = $"{repository}/{day:yyyy/MM/dd}/".ToLower();
+
+                AsyncPageable<BlobItem> blobs = this.runsContainerClient.GetBlobsAsync(prefix: blobPrefix, cancellationToken: cancellationToken);
+                
+                await foreach (BlobItem blob in blobs)
+                {
+                    blobNames.Add(blob.Name);
+                }
+            }
+
+            return blobNames.ToArray();
+        }
+
         public string GetRunBlobName(WorkflowRun run)
         {
             string repository = run.Repository.FullName;

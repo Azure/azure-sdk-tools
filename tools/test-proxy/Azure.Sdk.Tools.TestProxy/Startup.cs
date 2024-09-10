@@ -207,11 +207,6 @@ namespace Azure.Sdk.Tools.TestProxy
                     });
             });
 
-            services.Configure<KestrelServerOptions>(options =>
-            {
-                options.AllowSynchronousIO = true;
-            });
-
             services.AddControllers(options =>
             {
                 options.InputFormatters.Add(new EmptyBodyFormatter());

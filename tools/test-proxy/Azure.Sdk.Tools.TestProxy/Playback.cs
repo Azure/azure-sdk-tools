@@ -55,14 +55,14 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void Stop()
+        public async Task Stop()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
 
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
             bool.TryParse(RecordingHandler.GetHeader(Request, "x-purge-inmemory-recording", true), out var shouldPurgeRecording);
 
-            _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
+            await _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
         }
 
         [HttpPost]

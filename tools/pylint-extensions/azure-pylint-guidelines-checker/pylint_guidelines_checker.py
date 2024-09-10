@@ -2708,6 +2708,60 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
+class DoNotLogErrorsEndUpRaising(BaseChecker):
+
+    """Rule to check that errors that get raised aren't logged"""
+
+    name = "do-not-log-raised-errors"
+    priority = -1
+    msgs = {"C4762": (
+            "Do not log errors that get raised in an exception block.",
+            "do-not-log-raised-errors",
+            "Do not log errors at error or warning level when error is raised in an exception block",
+            ),
+            }
+
+    def visit_try(self, node):
+        """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
+           Go through exception block and branches and ensure error hasn't been logged if exception is raised.
+        """
+        # Return a list of exception blocks
+        except_block = node.handlers
+        # Iterate through each exception block
+        for nod in except_block:
+            # Get the nodes in each block (e.g. nodes Expr and Raise)
+            exception_block_body = nod.body
+            self.check_for_raise(exception_block_body)
+
+    def check_for_raise(self, node):
+        """ Helper function - checks for instance of 'Raise' node
+            Also checks 'If' and nested 'If' branches
+        """
+        for i in node:
+            if isinstance(i, astroid.Raise):
+                self.check_for_logging(node)
+            # Check for any nested 'If' branches
+            if isinstance(i, astroid.If):
+                self.check_for_raise(i.body)
+
+                # Check any 'elif' or 'else' branches
+                self.check_for_raise(i.orelse)
+
+    def check_for_logging(self, node):
+        """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
+            levels. Called from 'check_for_raise' function
+        """
+        matches = [".warning", ".error", ".exception"]
+        for j in node:
+            if isinstance(j, astroid.Expr):
+                expression = j.as_string().lower()
+                if any(x in expression for x in matches):
+                    self.add_message(
+                        msgid=f"do-not-log-raised-errors",
+                        node=j,
+                        confidence=None,
+                    )
+
 
 class NoImportTypingFromTypeCheck(BaseChecker):
 
@@ -2825,6 +2879,9 @@ def register(linter):
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
+
+
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

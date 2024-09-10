@@ -23,7 +23,7 @@ pr:
 
 variables:
   ArtifactName: 'apiview'
-  VcpkgRelease: '2023.06.20'
+  VcpkgRelease: '2024.08.23'
 
 stages:
   - stage: 'Build'
@@ -33,8 +33,6 @@ stages:
         pool:
           name: azsdk-pool-mms-win-2022-general
           os: windows
-          demands:
-          - ImageOverride -equals 1espt-win-2022-cpp-rollback
 
         steps:
           - pwsh: |

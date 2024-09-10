@@ -3314,8 +3314,49 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(imd)
 
 
-class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
+class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed legacy typing practices"""
 
+    CHECKER_CLASS = checker.DoNotUseLegacyTyping
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_do_not_use_legacy_typing.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_typing(self, setup):
+        """Check that illegal method typing comments raise warnings"""
+        fdef = setup.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-legacy-typing",
+                line=2,
+                node=fdef,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=12,
+            )
+        ):
+            self.checker.visit_functiondef(fdef)
+
+    def test_allowed_typing(self, setup):
+        """Check that allowed method typing comments don't raise warnings"""
+        fdef = setup.body[1]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+    def test_arbitrary_comments(self, setup):
+        """Check that arbitrary comments don't raise warnings"""
+        fdef = setup.body[2]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+
+class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
     """Test that any errors raised are not logged at 'error' or 'warning' levels in the exception block."""
 
     CHECKER_CLASS = checker.DoNotLogErrorsEndUpRaising
@@ -3329,16 +3370,16 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
             logger.ERROR(str(e)) #@
             raise
         '''
-                                              )
+                                                         )
         with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="do-not-log-raised-errors",
-                line=5,
-                node=expression_node.parent,
-                col_offset=4,
-                end_line=5,
-                end_col_offset=24,
-            )
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=5,
+                    node=expression_node.parent,
+                    col_offset=4,
+                    end_line=5,
+                    end_col_offset=24,
+                )
         ):
             self.checker.visit_try(try_node)
 
@@ -3351,16 +3392,16 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
             logger.warning(str(e)) #@
             raise
         '''
-                                                               )
+                                                         )
         with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="do-not-log-raised-errors",
-                line=5,
-                node=expression_node.parent,
-                col_offset=4,
-                end_line=5,
-                end_col_offset=26,
-            )
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=5,
+                    node=expression_node.parent,
+                    col_offset=4,
+                    end_line=5,
+                    end_col_offset=26,
+                )
         ):
             self.checker.visit_try(try_node)
 
@@ -3373,7 +3414,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         except Exception as e:
             logger.warning(str(e))
         '''
-                                              )
+                                        )
         with self.assertNoMessages():
             self.checker.visit_try(try_node)
 
@@ -3386,7 +3427,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         except Exception as e:
             raise
         '''
-                                              )
+                                        )
         with self.assertNoMessages():
             self.checker.visit_try(try_node)
 
@@ -3401,7 +3442,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         except OtherException as x:
             logger.error(str(x))
         '''
-                                              )
+                                        )
         with self.assertNoMessages():
             self.checker.visit_try(try_node)
 
@@ -3417,7 +3458,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
             logger.error(str(x)) #@
             raise
         '''
-                                              )
+                                                         )
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
@@ -3486,20 +3527,20 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                     end_col_offset=82,
                 ),
                 pylint.testutils.MessageTest(
-                msg_id="do-not-log-raised-errors",
-                line=9,
-                node=expression_node_b.parent,
-                col_offset=8,
-                end_line=9,
-                end_col_offset=65,
+                    msg_id="do-not-log-raised-errors",
+                    line=9,
+                    node=expression_node_b.parent,
+                    col_offset=8,
+                    end_line=9,
+                    end_col_offset=65,
                 ),
                 pylint.testutils.MessageTest(
-                msg_id="do-not-log-raised-errors",
-                line=12,
-                node=expression_node_c.parent,
-                col_offset=8,
-                end_line=12,
-                end_col_offset=38,
+                    msg_id="do-not-log-raised-errors",
+                    line=12,
+                    node=expression_node_c.parent,
+                    col_offset=8,
+                    end_line=12,
+                    end_col_offset=38,
                 )
         ):
             self.checker.visit_try(try_node)
@@ -3520,7 +3561,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                     else:
                         logging.error(f"Unexpected error occurred: {e}") #@
                         raise SystemError("Uh oh!") from e 
-                         
+
             ''')
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
@@ -3590,48 +3631,6 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.checker.visit_try(try_node)
-
-
-class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
-    """Test that we are blocking disallowed legacy typing practices"""
-
-    CHECKER_CLASS = checker.DoNotUseLegacyTyping
-
-    @pytest.fixture(scope="class")
-    def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "check_do_not_use_legacy_typing.py")
-        )
-        node = astroid.parse(file.read())
-        file.close()
-        return node
-
-    def test_disallowed_typing(self, setup):
-        """Check that illegal method typing comments raise warnings"""
-        fdef = setup.body[0]
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="do-not-use-legacy-typing",
-                line=2,
-                node=fdef,
-                col_offset=0,
-                end_line=2,
-                end_col_offset=12,
-            )
-        ):
-            self.checker.visit_functiondef(fdef)
-
-    def test_allowed_typing(self, setup):
-        """Check that allowed method typing comments don't raise warnings"""
-        fdef = setup.body[1]
-        with self.assertNoMessages():
-            self.checker.visit_functiondef(fdef)
-
-    def test_arbitrary_comments(self, setup):
-        """Check that arbitrary comments don't raise warnings"""
-        fdef = setup.body[2]
-        with self.assertNoMessages():
-            self.checker.visit_functiondef(fdef)
 
 # [Pylint] custom linter check for invalid use of @overload #3229
 # [Pylint] Custom Linter check for Exception Logging #3227

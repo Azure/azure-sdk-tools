@@ -1,5 +1,5 @@
 param(
-    [array]$Repositories = @(
+    [array]$BaseRepositories = @(
         'Azure/azure-sdk-tools'
         'Azure/azure-sdk'
         'Azure/azure-sdk-for-go'
@@ -13,14 +13,18 @@ param(
         'Azure/azure-sdk-for-ios'
         'Azure/azure-sdk-for-android'
         'Azure/azure-dev'
-        'Azure/azure-rest-api-specs'
         'Azure/typespec-azure'
         'Microsoft/typespec'
     ),
+    [array]$ExtraRepositories = @(
+        'Azure/azure-rest-api-specs'
+        'Azure/azure-rest-api-specs-pr'
+    ),
     [int]$LookbackWeeks = 52,
-    [int]$Limit = 5000
+    [int]$Limit = 6000
 )
 
+Set-StrictMode -Version 3
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $true
 
@@ -33,14 +37,21 @@ function Get-PRHistory([array]$_repositories, [int32]$_lookbackWeeks, [int]$_lim
     $allPRs = @()
 
     foreach ($repo in $_repositories) {
-        $prs = gh pr list -s all --limit $_limit --json author,createdAt --repo $repo
+        $prs = gh pr list -s all --limit $_limit --json author,createdAt,mergedAt --repo $repo
         $parsed = @($prs | ConvertFrom-Json -AsHashtable)
         Write-Host "Found $($parsed.Length) PRs for $repo"
-        $allPRs += $parsed | % { @{ 'author' = $_.author.login; 'created' = (Get-Date $_.createdAt) } }
+        $allPRs += $parsed `
+                    | ForEach-Object {
+                        @{
+                            'author' = $_.author.login
+                            'created' = (Get-Date $_.createdAt)
+                            'merged' = ($_.mergedAt -ne $null ? (Get-Date $_.mergedAt) : $null)
+                        }
+                    }
     }
 
     $negativeLookback = -$_lookbackDays
-    $recentPRs = $allPRs | ? { $_.created -gt ([datetime]::Now.AddDays($negativeLookback)) }
+    $recentPRs = $allPRs | Where-Object { $_.created -gt ([datetime]::Now.AddDays($negativeLookback)) }
 
     return $recentPRs
 }
@@ -55,13 +66,11 @@ function incrementBucket($hash, [object]$bucketKey) {
     }
 }
 
-function Get-DevAndPRCounts([array]$_repositories, [int32]$_lookbackWeeks, [int]$_limit) {
-    $weekHash = [ordered]@{}
+function Get-DevAndPRCounts([array]$pullRequests) {
+    $weekHash = [ordered]@{}  # make ordered for ease of printing results in sequence
     $authorHash = @{}
 
-    $recentPRs = Get-PRHistory $_repositories $_lookbackWeeks $_limit
-
-    foreach ($pr in $recentPRs) {
+    foreach ($pr in $pullRequests) {
         $weekOfYear = $calendar.GetWeekOfYear($pr.created, 0, 0)
         # Ignore current week, first week, and last week as they may be incomplete or slow and will skew the average
         if ($weekOfYear -in @($currentWeek, 1, 52)) { continue }
@@ -73,14 +82,77 @@ function Get-DevAndPRCounts([array]$_repositories, [int32]$_lookbackWeeks, [int]
     [int]$weeklyAverage = $weeklySum / $weekHash.Keys.Count  # cast to [int] for rounding
     $authorSum = $authorHash.Keys.Count
 
-    write-host $authorHash.Keys
     return $weekHash, $weeklyAverage, $authorSum
 }
 
-$weekHash, $weeklyAverage, $authorSum = Get-DevAndPRCounts $Repositories $LookbackWeeks $Limit
-Write-Host "-> PRs per week"
-Write-Host $weekHash
+function Get-PRCompletionTimeHours([array]$pullRequests) {
+    $sumHours = 0
+    foreach ($pr in $pullRequests) {
+        if (!$pr.merged) {
+            continue
+        }
+        $sumHours += ($pr.merged - $pr.created).TotalHours
+    }
+
+    $averageHours = ($sumHours / $pullRequests.Count) -as [int]
+    return $averageHours, ($averageHours / 24)
+}
+
+$recentPRsBase = Get-PRHistory $BaseRepositories $LookbackWeeks $Limit
+$weekHashBase, $weeklyAverageBase, $authorSumBase = Get-DevAndPRCounts $recentPRsBase
+$completionHoursBase, $completionDaysBase = Get-PRCompletionTimeHours $recentPRsBase
+
+if ($ExtraRepositories) {
+    $recentPRsExtra = Get-PRHistory $ExtraRepositories $LookbackWeeks $Limit
+    $weekHashExtra, $weeklyAverageExtra, $authorSumExtra = Get-DevAndPRCounts $recentPRsExtra
+    $completionHoursExtra, $completionDaysExtra = Get-PRCompletionTimeHours $recentPRsExtra
+
+    $weekHashAll, $weeklyAverageAll, $authorSumAll = Get-DevAndPRCounts ($recentPRsBase + $recentPRsExtra)
+    $completionHoursAll, $completionDaysAll = Get-PRCompletionTimeHours ($recentPRsBase + $recentPRsExtra)
+}
+
+Write-Host "-> PRs per week - Base repos [week, count]"
+$msg = ""
+foreach ($key in $weekHashBase.Keys) {
+    $msg += "[$key, $($weekHashBase[[object]$key])] "
+}
+Write-Host $msg
+
+if ($ExtraRepositories) {
+    Write-Host "-> PRs per week - Extra repos [week, count]"
+    $msg = ""
+    foreach ($key in $weekHashBase.Keys) {
+        $msg += "[$key, $($weekHashExtra[[object]$key])] "
+    }
+    Write-Host $msg
+    Write-Host "-> PRs per week - All repos [week, count]"
+    $msg = ""
+    foreach ($key in $weekHashBase.Keys) {
+        $msg += "[$key, $($weekHashAll[[object]$key])] "
+    }
+    Write-Host $msg
+}
 Write-Host "-> Average PRs per week"
-Write-Host $weeklyAverage
+Write-Host "Base repos: $weeklyAverageBase"
+if ($ExtraRepositories) {
+    Write-Host "Extra repos: $weeklyAverageExtra"
+    Write-Host "All repos: $weeklyAverageAll"
+}
 Write-Host "-> Total authors"
-Write-Host $authorSum
+Write-Host "Base repos: $authorSumBase"
+if ($ExtraRepositories) {
+    Write-Host "Extra repos: $authorSumExtra"
+    Write-Host "All repos: $authorSumAll"
+}
+Write-Host "-> Average completion time (hours)"
+Write-Host "Base repos: $completionHoursBase"
+if ($ExtraRepositories) {
+    Write-Host "Extra repos: $completionHoursExtra"
+    Write-Host "All repos: $completionHoursAll"
+}
+Write-Host "-> Average completion time (days)"
+Write-Host "Base repos: $completionDaysBase"
+if ($ExtraRepositories) {
+    Write-Host "Extra repos: $completionDaysExtra"
+    Write-Host "All repos: $completionDaysAll"
+}

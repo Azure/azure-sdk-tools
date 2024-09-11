@@ -567,7 +567,7 @@ export class CodePanelComponent implements OnChanges{
   navigateToCommentThread(direction: CodeLineRowNavigationDirection) {
     const findNextCommentThread = (index: number) : CodePanelRowData | undefined => {
       while (index < this.codePanelRowData.length) {
-        if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread) {
+        if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
           this.commentThreadNavaigationPointer = index;
           return this.codePanelRowData[index];
         }
@@ -578,7 +578,7 @@ export class CodePanelComponent implements OnChanges{
 
     const findPrevCommentthread = (index: number) : CodePanelRowData | undefined => {
       while (index < this.codePanelRowData.length && index >= 0) {
-        if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread) {
+        if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
           this.commentThreadNavaigationPointer = index;
           return this.codePanelRowData[index];
         }

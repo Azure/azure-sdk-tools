@@ -3361,273 +3361,182 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.DoNotLogErrorsEndUpRaising
 
-    def test_error_level_not_logged(self):
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_log_errors_end_up_raising.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_error_level_not_logged(self, setup):
         """Check that any exceptions raised aren't logged at error level in the exception block."""
-        try_node, expression_node = astroid.extract_node('''
-        try: #@
-            add = 1 + 2
-        except Exception as e:
-            logger.ERROR(str(e)) #@
-            raise
-        '''
-                                                         )
+        try_node, expression_node = setup.body[1].body[0], setup.body[1].body[0].handlers[0].body[0]
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=5,
-                    node=expression_node.parent,
-                    col_offset=4,
-                    end_line=5,
-                    end_col_offset=24,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_warning_level_not_logged(self):
-        """Check that any exceptions raised aren't logged at warning level in the exception block."""
-        try_node, expression_node = astroid.extract_node('''
-        try: #@
-            add = 1 + 2
-        except Exception as e:
-            logger.warning(str(e)) #@
-            raise
-        '''
-                                                         )
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=5,
-                    node=expression_node.parent,
-                    col_offset=4,
-                    end_line=5,
-                    end_col_offset=26,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_warning_level_logging_ok_when_no_raise(self):
-        """Check that exceptions can be logged if the exception isn't raised."""
-
-        try_node = astroid.extract_node('''
-        try:
-            add = 1 + 2
-        except Exception as e:
-            logger.warning(str(e))
-        '''
-                                        )
-        with self.assertNoMessages():
-            self.checker.visit_try(try_node)
-
-    def test_unlogged_exception_block(self):
-        """Check that exceptions raised without logging are allowed."""
-
-        try_node = astroid.extract_node('''
-        try:
-            add = 1 + 2
-        except Exception as e:
-            raise
-        '''
-                                        )
-        with self.assertNoMessages():
-            self.checker.visit_try(try_node)
-
-    def test_mult_exception_blocks_separate_raise(self):
-        """Check multiple exception blocks with separate raise and logging is allowed."""
-
-        try_node = astroid.extract_node('''
-        try:
-            add = 1 + 2
-        except Exception as e:
-            raise
-        except OtherException as x:
-            logger.error(str(x))
-        '''
-                                        )
-        with self.assertNoMessages():
-            self.checker.visit_try(try_node)
-
-    def test_mult_exception_blocks_with_raise(self):
-        """Check that multiple exception blocks with raise and logging is not allowed."""
-
-        try_node, expression_node = astroid.extract_node('''
-        try: #@
-            add = 1 + 2
-        except Exception as e:
-            raise
-        except OtherException as x:
-            logger.error(str(x)) #@
-            raise
-        '''
-                                                         )
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=7,
-                    node=expression_node.parent,
-                    col_offset=4,
-                    end_line=7,
-                    end_col_offset=24,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_implicit_else_exception_logged(self):
-        """Check that any exceptions raised in branches aren't logged at error level."""
-        try_node, expression_node = astroid.extract_node(
-            '''
-                try: #@
-                    add = 1 + 2
-                except Exception as e:
-                    if e.code == "Retryable":
-                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart")
-                        return True
-                    elif Exception != BaseException:
-                        logging.error(f"System shutting down due to error: {e}.")
-                        return False
-                    logging.error(f"Unexpected error occurred: {e}") #@
-                    raise SystemError("Uh oh!") from e
-            ''')
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=11,
-                    node=expression_node.parent,
-                    col_offset=4,
-                    end_line=11,
-                    end_col_offset=52,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_branch_exceptions_logged(self):
-        """Check that any exceptions raised in if branches aren't logged at error level."""
-        try_node, expression_node_a, expression_node_b, expression_node_c = astroid.extract_node(
-            '''
-                try: #@
-                    add = 1 + 2
-                except Exception as e:
-                    if e.code == "Retryable":
-                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart") #@
-                        raise SystemError("Uh oh!") from e
-                    elif Exception != BaseException:
-                        logging.error(f"System shutting down due to error: {e}.") #@
-                        raise SystemError("Uh oh!") from e
-                    elif e.code == "Second elif branch":
-                        logging.error(f"Second: {e}.") #@
-                        raise SystemError("Uh oh!") from e
-                    logging.error(f"Unexpected error occurred: {e}")  
-            ''')
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=6,
-                    node=expression_node_a.parent,
-                    col_offset=8,
-                    end_line=6,
-                    end_col_offset=82,
-                ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
                     line=9,
-                    node=expression_node_b.parent,
+                    node=expression_node,
                     col_offset=8,
                     end_line=9,
-                    end_col_offset=65,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=12,
-                    node=expression_node_c.parent,
-                    col_offset=8,
-                    end_line=12,
-                    end_col_offset=38,
+                    end_col_offset=29,
                 )
         ):
             self.checker.visit_try(try_node)
 
-    def test_explicit_else_branch_exception_logged(self):
-        """Check that any exceptions raised in else branches aren't logged at error level."""
-        try_node, expression_node = astroid.extract_node(
-            '''
-                try: #@
-                    add = 1 + 2
-                except Exception as e:
-                    if e.code == "Retryable":
-                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart")
-                        return True
-                    elif Exception != BaseException:
-                        logging.error(f"System shutting down due to error: {e}.")
-                        return False
-                    else:
-                        logging.error(f"Unexpected error occurred: {e}") #@
-                        raise SystemError("Uh oh!") from e 
-
-            ''')
+    def test_warning_level_not_logged(self, setup):
+        """Check that any exceptions raised aren't logged at warning level in the exception block."""
+        try_node, expression_node = setup.body[2].body[0], setup.body[2].body[0].handlers[0].body[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=12,
-                    node=expression_node.parent,
+                    line=18,
+                    node=expression_node,
                     col_offset=8,
-                    end_line=12,
+                    end_line=18,
+                    end_col_offset=31,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_warning_level_logging_ok_when_no_raise(self, setup):
+        """Check that exceptions can be logged if the exception isn't raised."""
+        try_node = setup.body[3].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_unlogged_exception_block(self, setup):
+        """Check that exceptions raised without logging are allowed."""
+        try_node = setup.body[4].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_mult_exception_blocks_separate_raise(self, setup):
+        """Check multiple exception blocks with separate raise and logging is allowed."""
+        try_node = setup.body[5].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_mult_exception_blocks_with_raise(self, setup):
+        """Check that multiple exception blocks with raise and logging is not allowed."""
+        try_node, expression_node = setup.body[6].body[0], setup.body[6].body[0].handlers[1].body[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=55,
+                    node=expression_node,
+                    col_offset=8,
+                    end_line=55,
+                    end_col_offset=29,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_implicit_else_exception_logged(self, setup):
+        """Check that any exceptions raised in branches aren't logged at error level."""
+        try_node, expression_node = setup.body[7].body[0], setup.body[7].body[0].handlers[0].body[1]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=70,
+                    node=expression_node,
+                    col_offset=8,
+                    end_line=70,
                     end_col_offset=56,
                 )
         ):
             self.checker.visit_try(try_node)
 
-    def test_extra_nested_branches_exception_logged(self):
-        """Check that any exceptions raised in else branches aren't logged at error level."""
-        try_node, expression_node_a, expression_node_b, expression_node_c, expression_node_d = astroid.extract_node(
-            '''
-                try: #@
-                    add = 1 + 2
-                except Exception as e:
-                    if e.code == "Retryable":
-                        if e.code == "A":
-                            logging.warning(f"A: {e}") #@
-                            raise SystemError("Uh oh!") from e
-                        elif e.code == "E":
-                            logging.warning(f"E: {e}") #@
-                            raise SystemError("Uh oh!") from e
-                        else:
-                            logging.warning(f"F: {e}") #@
-                            raise SystemError("Uh oh!") from e
-                    else:
-                        logging.error(f"Unexpected error occurred: {e}") #@
-                        raise SystemError("Uh oh!") from e 
-            ''')
+    def test_branch_exceptions_logged(self, setup):
+        """Check that any exceptions raised in if branches aren't logged at error level."""
+        try_node = setup.body[8].body[0]
+        expression_node_a = setup.body[8].body[0].handlers[0].body[0].body[0]
+        expression_node_b = setup.body[8].body[0].handlers[0].body[0].orelse[0].body[0]
+        expression_node_c = setup.body[8].body[0].handlers[0].body[0].orelse[0].orelse[0].body[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=7,
-                    node=expression_node_a.parent,
+                    line=80,
+                    node=expression_node_a,
                     col_offset=12,
-                    end_line=7,
-                    end_col_offset=38,
+                    end_line=80,
+                    end_col_offset=86,
                 ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=10,
-                    node=expression_node_b.parent,
+                    line=83,
+                    node=expression_node_b,
                     col_offset=12,
-                    end_line=10,
-                    end_col_offset=38,
+                    end_line=83,
+                    end_col_offset=69,
                 ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=13,
-                    node=expression_node_c.parent,
+                    line=86,
+                    node=expression_node_c,
                     col_offset=12,
-                    end_line=13,
-                    end_col_offset=38,
+                    end_line=86,
+                    end_col_offset=42,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_explicit_else_branch_exception_logged(self, setup):
+        """Check that any exceptions raised in else branches aren't logged at error level."""
+        try_node = setup.body[9].body[0]
+        expression_node = setup.body[9].body[0].handlers[0].body[0].orelse[0].orelse[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=103,
+                    node=expression_node,
+                    col_offset=12,
+                    end_line=103,
+                    end_col_offset=60,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_extra_nested_branches_exception_logged(self, setup):
+        """Check that any exceptions raised in nested branches aren't logged at warning level."""
+        try_node = setup.body[10].body[0]
+        expression_node_a = setup.body[10].body[0].handlers[0].body[0].body[0].body[0]
+        expression_node_b = setup.body[10].body[0].handlers[0].body[0].body[0].orelse[0].body[0]
+        expression_node_c = setup.body[10].body[0].handlers[0].body[0].body[0].orelse[0].orelse[0]
+        expression_node_d = setup.body[10].body[0].handlers[0].body[0].orelse[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=114,
+                    node=expression_node_a,
+                    col_offset=16,
+                    end_line=114,
+                    end_col_offset=42,
                 ),
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",
-                    line=16,
-                    node=expression_node_d.parent,
-                    col_offset=8,
-                    end_line=16,
-                    end_col_offset=56,
+                    line=117,
+                    node=expression_node_b,
+                    col_offset=16,
+                    end_line=117,
+                    end_col_offset=42,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=120,
+                    node=expression_node_c,
+                    col_offset=16,
+                    end_line=120,
+                    end_col_offset=42,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=123,
+                    node=expression_node_d,
+                    col_offset=12,
+                    end_line=123,
+                    end_col_offset=60,
                 )
         ):
             self.checker.visit_try(try_node)

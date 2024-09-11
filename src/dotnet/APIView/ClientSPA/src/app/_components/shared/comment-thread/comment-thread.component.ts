@@ -26,7 +26,7 @@ export class CommentThreadComponent {
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentResolutionActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
-  @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+  @Output() commentThreadNavaigationEmitter : EventEmitter<any> = new EventEmitter<any>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -333,5 +333,14 @@ export class CommentThreadComponent {
         resolvedBy: this.userProfile?.userName
       } as CommentUpdatesDto
     );
+  }
+
+  handleCommentThreadNavaigation(event: Event, direction: CodeLineRowNavigationDirection) {
+    const target = (event.target as Element).closest(".user-comment-thread")?.parentNode as Element;
+    const targetIndex = target.getAttribute("data-sid");
+    this.commentThreadNavaigationEmitter.emit({
+      commentThreadNavaigationPointer: targetIndex,
+      direction: direction
+    });
   }
 }

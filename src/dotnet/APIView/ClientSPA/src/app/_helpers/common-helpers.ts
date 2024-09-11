@@ -1,3 +1,5 @@
+import { CodePanelRowData, CodePanelRowDatatype } from "../_models/codePanelModels";
+
 export const REVIEW_ID_ROUTE_PARAM = "reviewId";
 export const ACTIVE_API_REVISION_ID_QUERY_PARAM = "activeApiRevisionId";
 export const DIFF_API_REVISION_ID_QUERY_PARAM = "diffApiRevisionId";
@@ -55,4 +57,9 @@ export function getTypeClass(type: string): string {
       break;
   }
   return result;
+}
+
+
+export function isDiffRow(row: CodePanelRowData) {
+  return row.type === CodePanelRowDatatype.CodeLine && (row.diffKind === DIFF_REMOVED || row.diffKind === DIFF_ADDED);
 }

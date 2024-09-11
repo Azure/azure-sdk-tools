@@ -1,10 +1,10 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CodeLineRowNavigationDirection, DIFF_ADDED, DIFF_REMOVED, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, isDiffRow, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
@@ -564,93 +564,47 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
-  navigateToCommentThread(direction: CodeLineRowNavigationDirection) {
-    const findNextCommentThread = (index: number) : CodePanelRowData | undefined => {
-      while (index < this.codePanelRowData.length) {
-        if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
-          this.commentThreadNavaigationPointer = index;
-          return this.codePanelRowData[index];
-        }
-        index++;
-      }
-      return undefined;
-    }
+  handleCommentThreadNavaigationEmitter(event: any) {
+    this.commentThreadNavaigationPointer = Number(event.commentThreadNavaigationPointer);
+    this.navigateToCommentThread(event.direction);
+  }
 
-    const findPrevCommentthread = (index: number) : CodePanelRowData | undefined => {
-      while (index < this.codePanelRowData.length && index >= 0) {
-        if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
-          this.commentThreadNavaigationPointer = index;
-          return this.codePanelRowData[index];
-        }
-        index--;
-      }
-      return undefined;
-    }
+  navigateToCommentThread(direction: CodeLineRowNavigationDirection) {
     const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
     let navigateToRow : CodePanelRowData | undefined = undefined;
     if (direction == CodeLineRowNavigationDirection.next) {
       const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ? 
         this.commentThreadNavaigationPointer + 1 : firstVisible;
-      navigateToRow = findNextCommentThread(startIndex);
+      navigateToRow = this.findNextCommentThread(startIndex);
     }
     else {
       const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ? 
         this.commentThreadNavaigationPointer - 1 : lastVisible;
-      navigateToRow = findPrevCommentthread(startIndex);
+      navigateToRow = this.findPrevCommentthread(startIndex);
     }
 
     if (navigateToRow) {
       this.scrollToNode(navigateToRow.nodeIdHashed);
     }
     else {
-      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: 'No more comments to navigate to.', key: 'bl', life: 3000 });
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: 'No more active comments threads to navigate to.', key: 'bl', life: 3000 });
     }
   }
 
   navigateToDiffNode(direction: CodeLineRowNavigationDirection) {
-    const findNextDiffNode = (index: number) : CodePanelRowData | undefined => {
-      let checkForDiffNode = (this.isDiffRow(this.codePanelRowData[index])) ? false : true;
-      while (index < this.codePanelRowData.length) {
-        if (!checkForDiffNode && !this.isDiffRow(this.codePanelRowData[index])) {
-          checkForDiffNode = true;
-        }
-        if (checkForDiffNode && this.isDiffRow(this.codePanelRowData[index])) {
-          this.diffNodeNavaigationPointer = index;
-          return this.codePanelRowData[index];
-        }
-        index++;
-      }
-      return undefined;
-    }
-
-    const findPrevDiffNode = (index: number) : CodePanelRowData | undefined => {
-      let checkForDiffNode = (this.isDiffRow(this.codePanelRowData[index])) ? false : true;
-      while (index < this.codePanelRowData.length && index >= 0) {
-        if (!checkForDiffNode && !this.isDiffRow(this.codePanelRowData[index])) {
-          checkForDiffNode = true;
-        }
-        if (checkForDiffNode && this.isDiffRow(this.codePanelRowData[index])) {
-          this.diffNodeNavaigationPointer = index;
-          return this.codePanelRowData[index];
-        }
-        index--;
-      }
-      return undefined;
-    }
-
     const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
     let navigateToRow : CodePanelRowData | undefined = undefined;
     if (direction == CodeLineRowNavigationDirection.next) {
       const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ? 
         this.diffNodeNavaigationPointer : firstVisible;
-      navigateToRow = findNextDiffNode(startIndex);
+      navigateToRow = this.findNextDiffNode(startIndex);
     }
     else {
       const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ? 
         this.diffNodeNavaigationPointer: lastVisible;
-      navigateToRow = findPrevDiffNode(startIndex);
+      navigateToRow = this.findPrevDiffNode(startIndex);
     }
 
     if (navigateToRow) {
@@ -661,8 +615,56 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
-  private isDiffRow(row: CodePanelRowData) {
-    return row.type === CodePanelRowDatatype.CodeLine && (row.diffKind === DIFF_REMOVED || row.diffKind === DIFF_ADDED);
+  private findNextCommentThread (index: number) : CodePanelRowData | undefined {
+    while (index < this.codePanelRowData.length) {
+      if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
+        this.commentThreadNavaigationPointer = index;
+        return this.codePanelRowData[index];
+      }
+      index++;
+    }
+    return undefined;
+  }
+
+  private findPrevCommentthread (index: number) : CodePanelRowData | undefined {
+    while (index < this.codePanelRowData.length && index >= 0) {
+      if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
+        this.commentThreadNavaigationPointer = index;
+        return this.codePanelRowData[index];
+      }
+      index--;
+    }
+    return undefined;
+  }
+
+  private findNextDiffNode (index: number) : CodePanelRowData | undefined {
+    let checkForDiffNode = (isDiffRow(this.codePanelRowData[index])) ? false : true;
+    while (index < this.codePanelRowData.length) {
+      if (!checkForDiffNode && !isDiffRow(this.codePanelRowData[index])) {
+        checkForDiffNode = true;
+      }
+      if (checkForDiffNode && isDiffRow(this.codePanelRowData[index])) {
+        this.diffNodeNavaigationPointer = index;
+        return this.codePanelRowData[index];
+      }
+      index++;
+    }
+    return undefined;
+  }
+
+  private findPrevDiffNode (index: number) : CodePanelRowData | undefined {
+    let checkForDiffNode = (isDiffRow(this.codePanelRowData[index])) ? false : true;
+    while (index < this.codePanelRowData.length && index >= 0) {
+      if (!checkForDiffNode && !isDiffRow(this.codePanelRowData[index])) {
+        checkForDiffNode = true;
+      }
+      if (checkForDiffNode && isDiffRow(this.codePanelRowData[index])) {
+        this.diffNodeNavaigationPointer = index;
+        return this.codePanelRowData[index];
+      }
+      index--;
+    }
+    return undefined;
   }
 
   private updateHasActiveConversations() {

@@ -119,8 +119,7 @@ export function fixChangelogFormat(content: string) {
     return content;
 }
 
-export function tryReadNpmPackageChangelog(packageFolderPath: string): string {
-    const changelogPath = path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md');
+export function tryReadNpmPackageChangelog(changelogPath: string): string {
     try {
         if (!fs.existsSync(changelogPath)) {
             logger.warn(`NPM package's changelog '${changelogPath}' does not exist.`);

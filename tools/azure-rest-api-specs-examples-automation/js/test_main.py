@@ -1,16 +1,24 @@
 import unittest
-from main import get_js_example_method, get_sample_version, get_module_relative_path, \
-    break_down_aggregated_js_example, format_js, create_js_examples, Release, PackageType
+from main import (
+    get_js_example_method,
+    get_sample_version,
+    get_module_relative_path,
+    break_down_aggregated_js_example,
+    format_js,
+    create_js_examples,
+    Release,
+    PackageType,
+)
 
 
 class TestMain(unittest.TestCase):
 
     def test_get_sample_version(self):
-        self.assertEqual('v3', get_sample_version('3.0.0'))
-        self.assertEqual('v3-beta', get_sample_version('3.0.0-beta.3'))
+        self.assertEqual("v3", get_sample_version("3.0.0"))
+        self.assertEqual("v3-beta", get_sample_version("3.0.0-beta.3"))
 
     def test_get_js_example_method(self):
-        code = '''const { StorSimpleManagementClient } = require("@azure/arm-storsimple1200series");
+        code = """const { StorSimpleManagementClient } = require("@azure/arm-storsimple1200series");
 const { DefaultAzureCredential } = require("@azure/identity");
 
 /**
@@ -44,7 +52,7 @@ async function managersUploadRegistrationCertificate() {
 }
 
 managersUploadRegistrationCertificate().catch(console.error);
-'''
+"""
 
         lines = code.splitlines(keepends=True)
 
@@ -53,7 +61,7 @@ managersUploadRegistrationCertificate().catch(console.error);
         self.assertIsNotNone(js_example_method.line_end)
 
     def test_break_down_aggregated_js_example(self):
-        code = '''const { StorageManagementClient } = require("@azure/arm-storage");
+        code = """const { StorageManagementClient } = require("@azure/arm-storage");
 const { DefaultAzureCredential } = require("@azure/identity");
 
 /**
@@ -93,22 +101,31 @@ async function getContainers() {
 }
 
 getContainers().catch(console.error);
-'''
+"""
 
         lines = code.splitlines(keepends=True)
 
         aggregated_js_example = break_down_aggregated_js_example(lines)
         self.assertEqual(2, len(aggregated_js_example.methods))
 
-        self.assertEqual('* This sample demonstrates how to Gets properties of a specified container.', aggregated_js_example.methods[0].content[1].strip())
-        self.assertEqual('async function getBlobContainersGetWithAllowProtectedAppendWritesAll() {', aggregated_js_example.methods[0].content[6].strip())
-        self.assertEqual('getBlobContainersGetWithAllowProtectedAppendWritesAll().catch(console.error);', aggregated_js_example.methods[0].content[-1].strip())
+        self.assertEqual(
+            "* This sample demonstrates how to Gets properties of a specified container.",
+            aggregated_js_example.methods[0].content[1].strip(),
+        )
+        self.assertEqual(
+            "async function getBlobContainersGetWithAllowProtectedAppendWritesAll() {",
+            aggregated_js_example.methods[0].content[6].strip(),
+        )
+        self.assertEqual(
+            "getBlobContainersGetWithAllowProtectedAppendWritesAll().catch(console.error);",
+            aggregated_js_example.methods[0].content[-1].strip(),
+        )
 
-        self.assertEqual('async function getContainers() {', aggregated_js_example.methods[1].content[6].strip())
-        self.assertEqual('getContainers().catch(console.error);', aggregated_js_example.methods[1].content[-1].strip())
+        self.assertEqual("async function getContainers() {", aggregated_js_example.methods[1].content[6].strip())
+        self.assertEqual("getContainers().catch(console.error);", aggregated_js_example.methods[1].content[-1].strip())
 
     def test_break_down_aggregated_js_example_new_style_multiple(self):
-        code = '''const { SynapseManagementClient } = require("@azure/arm-synapse");
+        code = """const { SynapseManagementClient } = require("@azure/arm-synapse");
 const { DefaultAzureCredential } = require("@azure/identity");
 require("dotenv").config();
 
@@ -251,17 +268,20 @@ async function main() {
 }
 
 main().catch(console.error);
-'''
+"""
 
         lines = code.splitlines(keepends=True)
 
         aggregated_js_example = break_down_aggregated_js_example(lines)
         self.assertEqual(4, len(aggregated_js_example.methods))
 
-        self.assertEqual('async function createOrUpdateDataMaskingRuleForDefaultMax() {', aggregated_js_example.methods[0].content[6].strip())
+        self.assertEqual(
+            "async function createOrUpdateDataMaskingRuleForDefaultMax() {",
+            aggregated_js_example.methods[0].content[6].strip(),
+        )
 
     def test_break_down_aggregated_js_example_new_style_single(self):
-        code = '''const { SynapseManagementClient } = require("@azure/arm-synapse");
+        code = """const { SynapseManagementClient } = require("@azure/arm-synapse");
 const { DefaultAzureCredential } = require("@azure/identity");
 require("dotenv").config();
 
@@ -295,7 +315,7 @@ async function main() {
 }
 
 main().catch(console.error);
-'''
+"""
 
         lines = code.splitlines(keepends=True)
 
@@ -304,15 +324,16 @@ main().catch(console.error);
 
         self.assertEqual(3, len(aggregated_js_example.class_opening))
 
-        self.assertEqual('async function listAuditSettingsOfADatabase() {',
-                         aggregated_js_example.methods[0].content[6].strip())
-        self.assertEqual('}', aggregated_js_example.methods[0].content[-1].rstrip())
+        self.assertEqual(
+            "async function listAuditSettingsOfADatabase() {", aggregated_js_example.methods[0].content[6].strip()
+        )
+        self.assertEqual("}", aggregated_js_example.methods[0].content[-1].rstrip())
 
         example_lines = aggregated_js_example.class_opening + aggregated_js_example.methods[0].content
         example_lines = format_js(example_lines)
 
     def test_get_js_example_method_new_require_newline(self):
-        code = '''const {
+        code = """const {
   AppComplianceAutomationToolForMicrosoft365,
 } = require("@azure/arm-appcomplianceautomation");
 const { DefaultAzureCredential } = require("@azure/identity");
@@ -338,29 +359,27 @@ async function main() {
 }
 
 main().catch(console.error);
-'''
+"""
 
         lines = code.splitlines(keepends=True)
 
         aggregated_js_example = break_down_aggregated_js_example(lines)
         example_lines = aggregated_js_example.class_opening + aggregated_js_example.methods[0].content
         example_lines = format_js(example_lines)
-        self.assertTrue(example_lines[0].startswith('const {'))
+        self.assertTrue(example_lines[0].startswith("const {"))
 
     @unittest.skip
     def test_get_module_relative_path(self):
-        sdk_path = 'c:/github/azure-sdk-for-js'
-        sdk_name = 'mysql-flexible'
+        sdk_path = "c:/github/azure-sdk-for-js"
+        sdk_name = "mysql-flexible"
         module_relative_path = get_module_relative_path(sdk_name, PackageType.HLC, sdk_path)
-        self.assertEqual('sdk/mysql/azure-mysql-flexible', module_relative_path)
+        self.assertEqual("sdk/mysql/azure-mysql-flexible", module_relative_path)
 
     @unittest.skip
     def test_create_js_examples(self):
-        release = Release('@azure/arm-policyinsights_6.0.0-beta.1',
-                          '@azure/arm-policyinsights',
-                          '6.0.0-beta.1')
-        js_module = f'{release.package}@{release.version}'
-        sdk_examples_path = 'c:/github/azure-rest-api-specs-examples'
-        js_examples_path = 'c:/github/azure-sdk-for-js/sdk/policyinsights/arm-policyinsights/samples/v6-beta/javascript'
+        release = Release("@azure/arm-policyinsights_6.0.0-beta.1", "@azure/arm-policyinsights", "6.0.0-beta.1")
+        js_module = f"{release.package}@{release.version}"
+        sdk_examples_path = "c:/github/azure-rest-api-specs-examples"
+        js_examples_path = "c:/github/azure-sdk-for-js/sdk/policyinsights/arm-policyinsights/samples/v6-beta/javascript"
         succeeded, files = create_js_examples(release, js_module, sdk_examples_path, js_examples_path)
         self.assertTrue(succeeded)

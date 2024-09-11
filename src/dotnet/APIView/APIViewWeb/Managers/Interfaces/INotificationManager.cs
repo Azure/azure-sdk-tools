@@ -12,7 +12,7 @@ namespace APIViewWeb.Managers
         public Task NotifyUserOnCommentTag(CommentItemModel comment);
         public Task NotifyApproversOfReview(ClaimsPrincipal user, string apiRevisionId, HashSet<string> reviewers);
         public Task NotifySubscribersOnNewRevisionAsync(ReviewListItemModel review, APIRevisionListItemModel revision, ClaimsPrincipal user);
-        public Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId);
+        public Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId, bool? state = null);
         public Task SubscribeAsync(ReviewListItemModel review, ClaimsPrincipal user);
         public Task UnsubscribeAsync(ReviewListItemModel review, ClaimsPrincipal user);
     }

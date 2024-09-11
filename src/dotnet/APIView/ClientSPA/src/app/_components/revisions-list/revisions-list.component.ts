@@ -21,7 +21,7 @@ import { environment } from 'src/environments/environment';
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
-  @Input() revisionSideBarVisible : boolean = false;
+  @Input() revisionSidePanel : boolean = false;
 
   @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
 
@@ -110,7 +110,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       this.showDiffButton = false;
     }
 
-    if (changes['revisionSideBarVisible'] && changes['revisionSideBarVisible'].currentValue == false) {
+    if (changes['revisionSidePanel'] && changes['revisionSidePanel'].currentValue == false) {
       this.createRevisionSidebarVisible = false;
       this.optionsSidebarVisible = false;
     }
@@ -504,9 +504,9 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       case "C#":
         this.createRevisionInstruction = [
           `Run <code>dotnet pack</code>`, 
-          `Upload the resulting .nupkg file.`
+          `Upload the resulting .nupkg or .dll file.`
         ];
-        this.acceptedFilesForReviewUpload = ".nupkg";
+        this.acceptedFilesForReviewUpload = ".nupkg, .dll";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
@@ -584,14 +584,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         break;
       case "Json":
         this.createRevisionInstruction = [
-          `Upload JSON API review token file.`
+          `Upload .json API review token file.`
         ];
-        this.acceptedFilesForReviewUpload = ".json, .tgz";
+        this.acceptedFilesForReviewUpload = ".json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
       default:
-        this.createRevisionInstruction = []
+        this.createRevisionInstruction = [];
+        this.acceptedFilesForReviewUpload = undefined;
     }
 
     if (this.revisionCreationFileUpload) {    

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace APIViewWeb.LeanModels
 {
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     [JsonConverter(typeof(StringEnumConverter))]
     public enum CommentType
     {
@@ -14,6 +15,7 @@ namespace APIViewWeb.LeanModels
 
     public class CommentItemModel
     {
+        [System.Text.Json.Serialization.JsonPropertyName("id")]
         [JsonProperty("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }

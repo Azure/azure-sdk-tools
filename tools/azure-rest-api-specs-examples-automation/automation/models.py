@@ -15,11 +15,11 @@ class OperationConfiguration:
 
     @property
     def repository_owner(self) -> str:
-        return re.match(r'https://github.com/([^/:]+)/.*', self.sdk_examples_repository).group(1)
+        return re.match(r"https://github.com/([^/:]+)/.*", self.sdk_examples_repository).group(1)
 
     @property
     def repository_name(self) -> str:
-        return re.match(r'https://github.com/[^/:]+/(.*)', self.sdk_examples_repository).group(1)
+        return re.match(r"https://github.com/[^/:]+/(.*)", self.sdk_examples_repository).group(1)
 
 
 @dataclasses.dataclass(eq=True, frozen=True)
@@ -45,11 +45,11 @@ class SdkConfiguration:
 
     @property
     def repository_owner(self) -> str:
-        return re.match(r'https://github.com/([^/:]+)/.*', self.repository).group(1)
+        return re.match(r"https://github.com/([^/:]+)/.*", self.repository).group(1)
 
     @property
     def repository_name(self) -> str:
-        return re.match(r'https://github.com/[^/:]+/(.*)', self.repository).group(1)
+        return re.match(r"https://github.com/[^/:]+/(.*)", self.repository).group(1)
 
 
 @dataclasses.dataclass(eq=True, frozen=True)

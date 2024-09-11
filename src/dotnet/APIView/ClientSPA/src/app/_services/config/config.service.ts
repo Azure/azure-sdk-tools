@@ -10,6 +10,7 @@ export class ConfigService {
   private assetsPath : string = environment.assetsPath;
   private config: any = {
     apiUrl : "api/",
+    hubUrl : "hubs/",
     webAppUrl : "http://localhost:5000/"
   };
 
@@ -24,6 +25,10 @@ export class ConfigService {
 
   get apiUrl() : string {
     return this.config.apiUrl;
+  }
+
+  get hubUrl() : string {
+    return this.config.hubUrl;
   }
 
   get webAppUrl () : string {

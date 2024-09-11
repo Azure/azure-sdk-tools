@@ -89,7 +89,7 @@ func NewModule(dir string) (*Module, error) {
 					return filepath.SkipDir
 				}
 			}
-			p, err := NewPkg(path, m.ModFile.Module.Mod.Path)
+			p, err := NewPkg(path, m.ModFile.Module.Mod.Path, dir)
 			if err == nil {
 				m.Packages[baseImportPath+p.Name()] = p
 			} else if !errors.Is(err, ErrNoPackages) {

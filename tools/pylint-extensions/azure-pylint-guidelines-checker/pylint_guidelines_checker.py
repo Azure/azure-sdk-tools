@@ -2376,7 +2376,7 @@ class NonCoreNetworkImport(BaseChecker):
             "This import is only allowed in azure.core.pipeline.transport.",
         ),
     }
-    BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
+    BLOCKED_MODULES = ["aiohttp", "requests", "trio", "httpx"]
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
 
     def visit_import(self, node):
@@ -2708,6 +2708,63 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
+
+class DoNotLogErrorsEndUpRaising(BaseChecker):
+
+    """Rule to check that errors that get raised aren't logged"""
+
+    name = "do-not-log-raised-errors"
+    priority = -1
+    msgs = {"C4762": (
+            "Do not log errors that get raised in an exception block.",
+            "do-not-log-raised-errors",
+            "Do not log errors at error or warning level when error is raised in an exception block",
+            ),
+            }
+
+    def visit_try(self, node):
+        """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
+           Go through exception block and branches and ensure error hasn't been logged if exception is raised.
+        """
+        # Return a list of exception blocks
+        except_block = node.handlers
+        # Iterate through each exception block
+        for nod in except_block:
+            # Get the nodes in each block (e.g. nodes Expr and Raise)
+            exception_block_body = nod.body
+            self.check_for_raise(exception_block_body)
+
+    def check_for_raise(self, node):
+        """ Helper function - checks for instance of 'Raise' node
+            Also checks 'If' and nested 'If' branches
+        """
+        for i in node:
+            if isinstance(i, astroid.Raise):
+                self.check_for_logging(node)
+            # Check for any nested 'If' branches
+            if isinstance(i, astroid.If):
+                self.check_for_raise(i.body)
+
+                # Check any 'elif' or 'else' branches
+                self.check_for_raise(i.orelse)
+
+    def check_for_logging(self, node):
+        """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
+            levels. Called from 'check_for_raise' function
+        """
+        matches = [".warning", ".error", ".exception"]
+        for j in node:
+            if isinstance(j, astroid.Expr):
+                expression = j.as_string().lower()
+                if any(x in expression for x in matches):
+                    self.add_message(
+                        msgid=f"do-not-log-raised-errors",
+                        node=j,
+                        confidence=None,
+                    )
+
+
+
 class NoImportTypingFromTypeCheck(BaseChecker):
 
     """Rule to check that we aren't importing typing under TYPE_CHECKING."""
@@ -2750,6 +2807,29 @@ class NoImportTypingFromTypeCheck(BaseChecker):
             pass
 
 
+class DoNotUseLegacyTyping(BaseChecker):
+
+    """ Rule to check that we aren't using legacy typing using comments. """
+
+    name = "do-not-use-legacy-typing"
+    priority = -1
+    msgs = {
+        "C4761": (
+            "Do not use legacy typing using comments.",
+            "do-not-use-legacy-typing",
+            "Do not use legacy typing using comments. Python 2 is no longer supported, use Python 3.9+ type hints instead.",
+        ),
+    }
+
+    def visit_functiondef(self, node):
+        """Check that we aren't using legacy typing."""
+        if node.type_comment_args or node.type_comment_returns:
+            self.add_message(
+                msgid=f"do-not-use-legacy-typing",
+                node=node,
+                confidence=None,
+            )
+
 class DoNotImportAsyncio(BaseChecker):
 
     """Rule to check that libraries do not import the asyncio package directly."""
@@ -2773,7 +2853,7 @@ class DoNotImportAsyncio(BaseChecker):
                 node=node,
                 confidence=None,
             )
-
+              
     def visit_import(self, node):
         """Check that we aren't importing asyncio."""
         for name, _ in node.names:
@@ -2783,6 +2863,7 @@ class DoNotImportAsyncio(BaseChecker):
                     node=node,
                     confidence=None,
                 )
+
 
 
 
@@ -2819,9 +2900,14 @@ def register(linter):
     linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    linter.register_checker(DoNotUseLegacyTyping(linter))
+
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
+
+
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

@@ -106,6 +106,22 @@ export class ReviewsService {
     });
   }
 
+  toggleReviewSubscriptionByUser(reviewId: string, state: boolean) {
+    let params = new HttpParams();
+    params = params.append('state', state.toString());
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+   
+    return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/toggleSubscribe`, {},
+    { 
+      headers: headers,
+      params: params,
+      withCredentials: true
+    });
+  }
+
   getReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) : Observable<ArrayBuffer>{
     let params = new HttpParams();
     if (activeApiRevisionId) {

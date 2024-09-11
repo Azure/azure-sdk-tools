@@ -37,7 +37,6 @@ namespace APIViewWeb
         public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, APICodeFileModel apiCodeFile, string language, bool updateCache = true)
         {
             var client = GetBlobClient(revisionId, apiCodeFile.FileId, out var key);
-
             if (_cache.TryGetValue<RenderedCodeFile>(key, out var codeFile))
             {
                 return codeFile;
@@ -45,34 +44,22 @@ namespace APIViewWeb
 
             var info = await client.DownloadAsync();
 
-            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: apiCodeFile.ParserStyle == ParserStyle.Tree));
+            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, false));
 
             if (updateCache)
             {
                 using var _ = _cache.CreateEntry(key)
                 .SetSlidingExpiration(TimeSpan.FromMinutes(10))
                 .SetValue(codeFile);
-            }            
-
+            }
             return codeFile;
         }
 
-        public async Task<CodeFile> GetCodeFileWithCompressionAsync(string revisionId, string codeFileId, bool updateCache = true)
+        public async Task<CodeFile> GetCodeFileFromStorageAsync(string revisionId, string codeFileId, bool doTreeStyleParserDeserialization = true)
         {
             var client = GetBlobClient(revisionId, codeFileId, out var key);
-
-            if (_cache.TryGetValue<CodeFile>(key, out var codeFile))
-            {
-                return codeFile;
-            }
             var info = await client.DownloadAsync();
-            codeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization: true);
-            if (updateCache)
-            {
-                using var _ = _cache.CreateEntry(key)
-                    .SetSlidingExpiration(TimeSpan.FromMinutes(10))
-                    .SetValue(codeFile);
-            }
+            var codeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization);
             return codeFile;
         }
 

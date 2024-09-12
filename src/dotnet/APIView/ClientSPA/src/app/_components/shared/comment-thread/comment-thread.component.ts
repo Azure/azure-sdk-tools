@@ -7,6 +7,7 @@ import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
 
 @Component({
   selector: 'app-comment-thread',
@@ -25,6 +26,7 @@ export class CommentThreadComponent {
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentResolutionActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() commentThreadNavaigationEmitter : EventEmitter<any> = new EventEmitter<any>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -42,6 +44,11 @@ export class CommentThreadComponent {
   threadResolvedAndExpanded : boolean = false;
   spacingBasedOnResolvedState: string = 'my-2';
   resolveThreadButtonText : string = 'Resolve';
+
+  floatItemStart : string = ""
+  floatItemEnd : string = ""
+
+  CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
   constructor(private userProfileService: UserProfileService) { }
 
@@ -126,6 +133,12 @@ export class CommentThreadComponent {
       this.spacingBasedOnResolvedState = (this.instanceLocation === "code-panel") ? 'my-2' : "";
       this.resolveThreadButtonText = 'Resolve';
     }
+    this.setCssPropertyBasedonInstance();
+  }
+
+  setCssPropertyBasedonInstance() {
+    this.floatItemStart = (this.instanceLocation === 'code-panel') ? "float-start" : "";
+    this.floatItemEnd = (this.instanceLocation === 'code-panel') ? "float-end" : "";
   }
 
   getCommentActionMenuContent(commentId: string) {
@@ -307,6 +320,7 @@ export class CommentThreadComponent {
       this.threadResolvedStateToggleText = 'Show';
       this.threadResolvedStateToggleIcon = 'bi-arrows-expand';
     }
+    this.setCssPropertyBasedonInstance();
   }
 
   handleThreadResolutionButtonClick(action: string) {
@@ -319,5 +333,14 @@ export class CommentThreadComponent {
         resolvedBy: this.userProfile?.userName
       } as CommentUpdatesDto
     );
+  }
+
+  handleCommentThreadNavaigation(event: Event, direction: CodeLineRowNavigationDirection) {
+    const target = (event.target as Element).closest(".user-comment-thread")?.parentNode as Element;
+    const targetIndex = target.getAttribute("data-sid");
+    this.commentThreadNavaigationEmitter.emit({
+      commentThreadNavaigationPointer: targetIndex,
+      direction: direction
+    });
   }
 }

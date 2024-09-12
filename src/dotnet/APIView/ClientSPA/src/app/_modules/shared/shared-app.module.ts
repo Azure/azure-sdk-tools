@@ -21,6 +21,7 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessagesModule } from 'primeng/messages';
 import { BadgeModule } from 'primeng/badge';
+import { ToastModule } from 'primeng/toast';
  
 
 @NgModule({

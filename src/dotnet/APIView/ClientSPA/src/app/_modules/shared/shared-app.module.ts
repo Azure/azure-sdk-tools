@@ -22,6 +22,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessagesModule } from 'primeng/messages';
 import { BadgeModule } from 'primeng/badge';
 import { ToastModule } from 'primeng/toast';
+import { MenuModule } from 'primeng/menu';
+import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/review-info.component';
+import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
  
 
 @NgModule({
@@ -29,6 +32,8 @@ import { ToastModule } from 'primeng/toast';
     NavBarComponent,
     FooterComponent,
     RevisionsListComponent,
+    ReviewInfoComponent,
+    ApiRevisionOptionsComponent,
     LanguageNamesPipe,
     LastUpdatedOnPipe,
     ApprovalPipe
@@ -37,6 +42,8 @@ import { ToastModule } from 'primeng/toast';
     NavBarComponent,
     FooterComponent,
     RevisionsListComponent,
+    ReviewInfoComponent,
+    ApiRevisionOptionsComponent,
     LanguageNamesPipe,
     LastUpdatedOnPipe,
     ApprovalPipe,
@@ -46,6 +53,7 @@ import { ToastModule } from 'primeng/toast';
     ChipModule,
     DropdownModule,
     MenubarModule,
+    MenuModule,
     MessagesModule,
     MultiSelectModule,
     FormsModule,
@@ -65,6 +73,7 @@ import { ToastModule } from 'primeng/toast';
     ChipModule,
     DropdownModule,
     MenubarModule,
+    MenuModule,
     MessagesModule,
     MultiSelectModule,
     FormsModule,

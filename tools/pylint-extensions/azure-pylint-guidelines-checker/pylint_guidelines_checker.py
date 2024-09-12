@@ -2803,12 +2803,7 @@ class NoImportTypingFromTypeCheck(BaseChecker):
                         )
         except:
             pass
-# [Pylint] custom linter check for invalid use of @overload #3229
-# [Pylint] Custom Linter check for Exception Logging #3227
-# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-# [Pylint] Add a check for connection_verify hardcoded settings #35355
-# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
-# [Pylint] Investigate pylint rule around missing dependency #3231
+
 
 class DoNotUseLegacyTyping(BaseChecker):
 
@@ -2832,6 +2827,63 @@ class DoNotUseLegacyTyping(BaseChecker):
                 node=node,
                 confidence=None,
             )
+
+
+# [Pylint] custom linter check for invalid use of @overload #3229
+
+
+class DoNotLogExceptions(BaseChecker):
+
+    """Rule to check that exceptions aren't logged"""
+
+    name = "do-not-log-exceptions"
+    priority = -1
+    msgs = {"C4766": (
+            "Do not log exceptions.",
+            "do-not-log-exceptions",
+            "Do not log exceptions, it can reveal sensitive information",
+            ),
+            }
+
+    def visit_try(self, node):
+        """Check that exceptions aren't logged in exception blocks.
+           Go through exception block and branches and ensure error hasn't been logged.
+        """
+        # Return a list of exception blocks
+        except_block = node.handlers
+        # Iterate through each exception block
+        for nod in except_block:
+            # Get the nodes in each block (e.g. nodes Expr and Raise)
+            exception_name = nod.name.name
+            self.check_for_logging(nod.body, exception_name)
+
+    def check_for_logging(self, node, exception_name):
+        """ Helper function - checks nodes to see if logging has occurred at all
+            levels.
+        """
+        levels_matches = [".warning", ".error", ".info", ".debug"]
+        function_matches = ["str", "repr"]
+        for j in node:
+            if isinstance(j, astroid.Expr):
+                expression = j.as_string().lower()
+                if any(x in expression for x in levels_matches) and any(x in expression for x in function_matches)\
+                        and exception_name in expression:
+                    self.add_message(
+                        msgid=f"do-not-log-exceptions",
+                        node=j,
+                        confidence=None,
+                    )
+            if isinstance(j, astroid.If):
+                self.check_for_logging(j.body, exception_name)
+                # Check any 'elif' or 'else' branches
+                self.check_for_logging(j.orelse, exception_name)
+
+
+# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+# [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+# [Pylint] Investigate pylint rule around missing dependency #3231
+
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
@@ -2866,6 +2918,8 @@ def register(linter):
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
+    linter.register_checker(DoNotLogExceptions(linter))
 
     # [Pylint] custom linter check for invalid use of @overload #3229
     # [Pylint] Custom Linter check for Exception Logging #3227
@@ -2877,8 +2931,6 @@ def register(linter):
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
 
-
-    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

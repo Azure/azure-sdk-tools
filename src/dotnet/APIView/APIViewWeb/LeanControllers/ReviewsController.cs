@@ -12,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
 
 namespace APIViewWeb.LeanControllers
@@ -28,13 +27,15 @@ namespace APIViewWeb.LeanControllers
         public readonly UserPreferenceCache _preferenceCache;
         private readonly ICosmosUserProfileRepository _userProfileRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly INotificationManager _notificationManager;
         private readonly IWebHostEnvironment _env;
 
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
             IConfiguration configuration, UserPreferenceCache preferenceCache,
-            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub, IWebHostEnvironment env)
+            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub,
+            INotificationManager notificationManager, IWebHostEnvironment env)
         {
             _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
@@ -45,8 +46,8 @@ namespace APIViewWeb.LeanControllers
             _preferenceCache = preferenceCache;
             _userProfileRepository = userProfileRepository;
             _signalRHubContext = signalRHub;
+            _notificationManager = notificationManager;
             _env = env;
-
         }
 
         /// <summary>
@@ -116,7 +117,22 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
         {
             var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+            await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA toggling Subscription to a review
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="state"></param> true = subscribe, false = unsubscribe
+        /// <returns></returns>
+        [HttpPost("{reviewId}/toggleSubscribe", Name = "ToggleSubscribe")]
+        public async Task<ActionResult<APIRevisionListItemModel>> ToggleSubscribeAsync(string reviewId, [FromQuery] bool state)
+        {
+            string userName = User.GetGitHubLogin();
+            await _notificationManager.ToggleSubscribedAsync(User, reviewId, state);
+            return Ok();
         }
 
         ///<summary>
@@ -128,7 +144,7 @@ namespace APIViewWeb.LeanControllers
         ///<returns></returns>
         [Route("{reviewId}/content")]
         [HttpGet]
-        public async Task<ActionResult<CodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
+        public async Task<ActionResult<CodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId,
             [FromQuery] string diffApiRevisionId = null)
         {
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
@@ -136,28 +152,22 @@ namespace APIViewWeb.LeanControllers
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId);
-
-                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId); 
-
-                var result = new CodePanelData();
+                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
 
                 var codePanelRawData = new CodePanelRawData()
                 {
-                    APIForest = activeRevisionReviewCodeFile.APIForest,
-                    Diagnostics = activeRevisionReviewCodeFile.Diagnostics,
-                    Comments = comments,
-                    Language = activeRevisionReviewCodeFile.Language
+                    activeRevisionCodeFile = activeRevisionReviewCodeFile,
+                    Comments = comments
                 };
 
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-
-                    var diffRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
-                    codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(diffRevisionReviewCodeFile.APIForest, activeRevisionReviewCodeFile.APIForest);
+                    codePanelRawData.diffRevisionCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
                 }
 
-                result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+                // Render the code files to generate UI token tree
+                var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
                 return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
 

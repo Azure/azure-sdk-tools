@@ -10,8 +10,8 @@ describe('RevisionsService', () => {
 
   beforeEach(() => {
     const configServiceMock = {
-      apiUrl: 'http://localhost:5000/',
-      loadConfig: () => of({ apiUrl: 'http://localhost:3000/' }) 
+      apiUrl: 'http://localhost:5000/api',
+      loadConfig: () => of({ apiUrl: 'http://localhost:5000/api' }) 
     };
 
     TestBed.configureTestingModule({

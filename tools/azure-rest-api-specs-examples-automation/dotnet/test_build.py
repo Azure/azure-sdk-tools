@@ -8,7 +8,7 @@ from models import DotNetExample
 class TestDotNetBuild(unittest.TestCase):
 
     def test_example(self):
-        code = '''using System;
+        code = """using System;
 using System.Threading.Tasks;
 using System.Xml;
 using Azure;
@@ -38,16 +38,16 @@ VirtualMachineResource result = await virtualMachine.GetAsync();
 VirtualMachineData resourceData = result.Data;
 // for demo we just print out the id
 Console.WriteLine($"Succeeded on id: {resourceData.Id}");
-'''
+"""
 
-        tmp_path = path.abspath('.')
-        dotnet_examples = [DotNetExample('code', '', code)]
-        dotnet_build = DotNetBuild(tmp_path, 'Azure.ResourceManager.Compute', '1.0.1', dotnet_examples)
+        tmp_path = path.abspath(".")
+        dotnet_examples = [DotNetExample("code", "", code)]
+        dotnet_build = DotNetBuild(tmp_path, "Azure.ResourceManager.Compute", "1.0.1", dotnet_examples)
         result = dotnet_build.build()
         self.assertTrue(result.succeeded)
 
     def test_invalid(self):
-        code = '''using System;
+        code = """using System;
 using System.Threading.Tasks;
 using System.Xml;
 using Azure;
@@ -64,10 +64,10 @@ string resourceGroupName = "myResourceGroup";
 string vmName = "myVM";
 ResourceIdentifier virtualMachineResourceId = VirtualMachineResource.CreateResourceIdentifier(subscriptionId, resourceGroupName, vmName);
 VirtualMachineResource virtualMachine = client.GetVirtualMachineResource(virtualMachineResourceId);
-'''
+"""
 
-        tmp_path = path.abspath('.')
-        dotnet_examples = [DotNetExample('code', '', code)]
-        dotnet_build = DotNetBuild(tmp_path, 'Azure.ResourceManager.Compute', '1.0.1', dotnet_examples)
+        tmp_path = path.abspath(".")
+        dotnet_examples = [DotNetExample("code", "", code)]
+        dotnet_build = DotNetBuild(tmp_path, "Azure.ResourceManager.Compute", "1.0.1", dotnet_examples)
         result = dotnet_build.build()
         self.assertFalse(result.succeeded)

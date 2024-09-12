@@ -180,7 +180,7 @@
             <p-fileUpload
                 #revisionCreationFileUpload name="selectedFile"
                 *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'"
-                chooseLabel="Select {{ acceptedFilesForReviewUpload }} File to Upload" [customUpload]="true"
+                chooseLabel="Select File" [customUpload]="true"
                 [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0" 
                 accept="{{acceptedFilesForReviewUpload}}" class="mt-2" (onSelect)="onFileSelect($event)">
                 <ng-template pTemplate="content">

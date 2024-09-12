@@ -1,11 +1,10 @@
 import { expect, test } from "vitest";
 import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
-import path, { join } from "path";
+import path from "path";
 import { SDKType } from "../../common/types";
 import { describe } from "node:test";
 import { tryReadNpmPackageChangelog } from "../../common/utils";
-import { ensureDirSync, removeSync, outputFileSync } from "fs-extra";
-import { getRandomInt } from "../utils/utils";
+import { removeSync, outputFileSync } from "fs-extra";
 
 describe("Breaking change detection", () => {
     test("HLC -> Modular: Rename", async () => {
@@ -136,20 +135,18 @@ describe("Breaking change detection", () => {
 
 describe("Changelog reading", () => {
         test("Read changelog that doesn't exist", () => {
-            const content = tryReadNpmPackageChangelog('./do/not/exist');
+            const content = tryReadNpmPackageChangelog('./do/not/exist/CHANGELOG.md');
             expect(content).toBe("");
         });
     
         test("Read changelog that exists", () => {
-            const tempPackageFolder = path.join(__dirname, `tmp/package-${getRandomInt(10000)}`);
+            const changelogPath = path.join('CHANGELOG.md')
             try {
-                ensureDirSync(tempPackageFolder);
-                const changelogPath = path.join(tempPackageFolder, 'changelog-temp', 'package', 'CHANGELOG.md')
                 outputFileSync(changelogPath, 'aaa', 'utf-8');
-                const content = tryReadNpmPackageChangelog(tempPackageFolder);
+                const content = tryReadNpmPackageChangelog(changelogPath);
                 expect(content).toBe("aaa");
             } finally {
-                removeSync(tempPackageFolder);
+                removeSync(changelogPath);
             }
         })
 });

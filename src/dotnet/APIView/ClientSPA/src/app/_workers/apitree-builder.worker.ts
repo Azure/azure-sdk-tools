@@ -4,7 +4,7 @@ import { ApiTreeBuilderData } from "../_models/revision";
 import { CodePanelData, CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype } from '../_models/codePanelModels';
 import { InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from '../_models/insertCodePanelRowDataMessage';
 import { NavigationTreeNode } from '../_models/navigationTreeModels';
-import { FULL_DIFF_STYLE, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
+import { DIFF_ADDED, DIFF_REMOVED, FULL_DIFF_STYLE, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from '../_helpers/common-helpers';
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
@@ -224,9 +224,9 @@ function appendToggleDocumentationClass(node: CodePanelNodeMetaData, codePanelRo
 }
 
 function setLineNumber(row: CodePanelRowData) {
-  if (row.diffKind === "removed") {
+  if (row.diffKind === DIFF_REMOVED) {
     row.lineNumber = ++lineNumber;
-  } else if (row.diffKind === "added") {
+  } else if (row.diffKind === DIFF_ADDED) {
     lineNumber++;
     diffLineNumber++;
     row.lineNumber = diffLineNumber;

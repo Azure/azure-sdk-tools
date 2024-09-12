@@ -1,7 +1,8 @@
-<div *ngIf="codePanelRowData!.isResolvedCommentThread" class="resolution-info">
-    <small class="d-flex align-items-center">This thread is marked resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}&nbsp;Resolved</span></small>
+<div *ngIf="codePanelRowData!.isResolvedCommentThread" class="resolution-info {{ floatItemStart }}">
+    <small class="d-flex align-items-center">This thread is marked resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}&nbsp;Resolved</span>
+    </small>
 </div>
-<div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container">
+<div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container {{ floatItemStart }}">
     <p-timeline [value]="codePanelRowData!.comments">
         <ng-template pTemplate="marker" let-comment>
             <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
@@ -72,4 +73,8 @@
         </div>
         <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(resolveThreadButtonText)" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">{{resolveThreadButtonText}} Conversation</button>
     </div>
+</div>
+<div *ngIf="instanceLocation === 'code-panel' && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">
+    <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.prev)"><i class="bi bi-arrow-up"></i></button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="bottom" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.next)"><i class="bi bi-arrow-down"></i></button>
 </div>

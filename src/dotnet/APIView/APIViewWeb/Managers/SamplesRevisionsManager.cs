@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
 using APIViewWeb.Repositories;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Helpers;
+using System;
+using System.Linq;
 
 namespace APIViewWeb.Managers
 {
@@ -36,9 +39,32 @@ namespace APIViewWeb.Managers
             _commentsManager = commentManager;
         }
 
+        public async Task<SamplesRevisionModel> GetSamplesRevisionAsync(string reviewId, string samplesRevisionId)
+        {
+            return await _samplesRevisionsRepository.GetSamplesRevisionAsync(reviewId, samplesRevisionId);
+        }
+
         public async Task<IEnumerable<SamplesRevisionModel>> GetSamplesRevisionsAsync(string reviewId)
         {
             return await _samplesRevisionsRepository.GetSamplesRevisionsAsync(reviewId);
+        }
+
+        /// <summary>
+        /// Retrieve Revisions from the Revisions container in CosmosDb after applying filter to the query.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="pageParams"></param> Contains pagination info
+        /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
+        /// <returns></returns>
+        public async Task<PagedList<SamplesRevisionModel>> GetSamplesRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, FilterAndSortParams filterAndSortParams)
+        {
+            return await _samplesRevisionsRepository.GetSamplesRevisionsAsync(user, pageParams, filterAndSortParams);
+        }
+
+        public async Task<SamplesRevisionModel> GetLatestSampleRevisionsAsync(string reviewId)
+        {
+            var samplesRevisions = await _samplesRevisionsRepository.GetSamplesRevisionsAsync(reviewId);
+            return samplesRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
         }
 
         public async Task<string> GetSamplesRevisionContentAsync(string fileId)
@@ -85,6 +111,18 @@ namespace APIViewWeb.Managers
             var reader = new StreamReader(fileStream);
             var sample = reader.ReadToEnd();
             return await UpsertSamplesRevisionsAsync(user, reviewId, sample, revisionTitle, FileName);
+        }
+
+        public async Task UpdateSamplesRevisionAsync(ClaimsPrincipal user, string reviewId, string sampleRevisionId, string newContent = null, string newTitle = null)
+        {
+            var samplesRevision = await _samplesRevisionsRepository.GetSamplesRevisionAsync(reviewId, sampleRevisionId);
+            await AssertUsageSampleOwnerAsync(user, samplesRevision);
+            
+            samplesRevision.Title = newTitle;
+            var originalStream = new MemoryStream(Encoding.UTF8.GetBytes(newContent));
+
+            await _samplesRevisionsRepository.UpsertSamplesRevisionAsync(samplesRevision);
+            await _sampleFilesRepository.UploadUsageSampleAsync(samplesRevision.OriginalFileId, originalStream);
         }
 
         public async Task UpdateSamplesRevisionTitle(string reviewId, string sampleId, string newTitle)

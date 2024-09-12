@@ -24,7 +24,7 @@ namespace APIViewWeb.Repositories
         /// <param name="pageParams"></param> Contains paginationinfo
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
-        public Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, APIRevisionsFilterAndSortParams filterAndSortParams);
+        public Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, FilterAndSortParams filterAndSortParams);
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb for a given reviewId

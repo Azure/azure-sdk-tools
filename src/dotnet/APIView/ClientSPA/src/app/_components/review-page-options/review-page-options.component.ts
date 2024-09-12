@@ -1,12 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
+import { InputSwitchChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, mapLanguageAliases, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
-import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { take } from 'rxjs';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { PullRequestsService } from 'src/app/_services/pull-requests/pull-requests.service';
@@ -99,7 +99,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     private configService: ConfigService, 
     private route: ActivatedRoute, 
     private router: Router, 
-    private apiRevisionsService: RevisionsService, private pullRequestService: PullRequestsService) { }
+    private apiRevisionsService: APIRevisionsService, private pullRequestService: PullRequestsService) { }
 
   ngOnInit() {
     this.setSelectedDiffStyle();
@@ -155,7 +155,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
  * Callback for commentSwitch Change
  * @param event the Filter event
  */
-  onCommentsSwitchChange(event: InputSwitchOnChangeEvent) {
+  onCommentsSwitchChange(event: InputSwitchChangeEvent) {
     this.updateRoute();
     this.showCommentsEmitter.emit(event.checked);
   }
@@ -164,7 +164,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   * Callback for systemCommentSwitch Change
   * @param event the Filter event
   */
-  onShowSystemCommentsSwitchChange(event: InputSwitchOnChangeEvent) {
+  onShowSystemCommentsSwitchChange(event: InputSwitchChangeEvent) {
     this.updateRoute();
     this.showSystemCommentsEmitter.emit(event.checked);
   }
@@ -173,7 +173,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   * Callback for showDocumentationSwitch Change
   * @param event the Filter event
   */
-  onShowDocumentationSwitchChange(event: InputSwitchOnChangeEvent) {
+  onShowDocumentationSwitchChange(event: InputSwitchChangeEvent) {
     this.updateRoute();
     this.showDocumentationEmitter.emit(event.checked);
   }
@@ -182,7 +182,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   * Callback for showLeftnavigationSwitch Change
   * @param event the Filter event
   */
-  onShowLeftNavigationSwitchChange(event: InputSwitchOnChangeEvent) {
+  onShowLeftNavigationSwitchChange(event: InputSwitchChangeEvent) {
     this.showLeftNavigationEmitter.emit(event.checked);
   }
 
@@ -190,7 +190,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   * Disable Lazy Loading
   * @param event the Filter event
   */
-  onDisableLazyLoadingSwitchChange(event: InputSwitchOnChangeEvent) {
+  onDisableLazyLoadingSwitchChange(event: InputSwitchChangeEvent) {
     if (event.checked) {
       this.showDisableCodeLinesLazyLoadingModal = true;
     } else {
@@ -203,7 +203,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   * Callback for markedAsViewSwitch Change
   * @param event the Filter event
   */
-  onMarkedAsViewedSwitchChange(event: InputSwitchOnChangeEvent) {
+  onMarkedAsViewedSwitchChange(event: InputSwitchChangeEvent) {
     this.markAsViewedEmitter.emit(event.checked);
   }
 
@@ -211,7 +211,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   * Callback for markedAsViewSwitch Change
   * @param event the Filter event
   */
-  onSubscribeSwitchChange(event: InputSwitchOnChangeEvent) {
+  onSubscribeSwitchChange(event: InputSwitchChangeEvent) {
     this.subscribeEmitter.emit(event.checked);
   }
 
@@ -219,7 +219,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
    * Callback for showLineNumbersSwitch Change
    * @param event the Filter event
    */
-  onShowLineNumbersSwitchChange(event: InputSwitchOnChangeEvent) {
+  onShowLineNumbersSwitchChange(event: InputSwitchChangeEvent) {
     this.showLineNumbersEmitter.emit(event.checked);
   }
 
@@ -227,7 +227,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
    * Callback for showHiddenAPISwitch Change
    * @param event the Filter event
    */
-  onShowHiddenAPISwitchChange(event: InputSwitchOnChangeEvent) {
+  onShowHiddenAPISwitchChange(event: InputSwitchChangeEvent) {
     this.showHiddenAPIEmitter.emit(event.checked);
   }
 

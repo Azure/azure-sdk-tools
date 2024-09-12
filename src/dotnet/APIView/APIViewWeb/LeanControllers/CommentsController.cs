@@ -35,11 +35,12 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="isDeleted"></param>
+        /// <param name="commentType"></param>
         /// <returns></returns>
         [HttpGet("{reviewId}", Name = "GetComments")]
-        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetCommentsAsync(string reviewId, bool isDeleted = false)
+        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
         {
-            var comments = await _commentsManager.GetCommentsAsync(reviewId, isDeleted);
+            var comments = await _commentsManager.GetCommentsAsync(reviewId, isDeleted, commentType);
             return new LeanJsonResult(comments, StatusCodes.Status200OK);
         }
 
@@ -96,6 +97,7 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionId"></param>
+        /// <param name="sampleRevisionId"></param>
         /// <param name="elementId"></param>
         /// <param name="commentText"></param>
         /// <param name="commentType"></param>
@@ -103,9 +105,11 @@ namespace APIViewWeb.LeanControllers
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]
         public async Task<ActionResult> CreateCommentAsync(
-            string reviewId, string apiRevisionId, string elementId, string commentText, CommentType commentType, bool resolutionLocked = false)
+            string reviewId, string elementId, string commentText,
+            CommentType commentType, string apiRevisionId = null, string sampleRevisionId = null,
+            bool resolutionLocked = false)
         {
-            if (string.IsNullOrEmpty(commentText))
+            if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
             {
                 return new BadRequestResult();
             }
@@ -114,6 +118,7 @@ namespace APIViewWeb.LeanControllers
             {
                 ReviewId = reviewId,
                 APIRevisionId = apiRevisionId,
+                SampleRevisionId = sampleRevisionId,
                 ElementId = elementId,
                 CommentText = commentText,
                 ResolutionLocked = resolutionLocked,

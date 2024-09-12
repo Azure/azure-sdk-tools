@@ -143,10 +143,8 @@ namespace APIViewWeb.LeanModels
     }
 
 
-    public class SamplesRevisionModel
+    public class SamplesRevisionModel : BaseListitemModel
     {
-        [JsonProperty("id")]
-        public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
         public string FileId { get; set; } = IdHelper.GenerateId();
         public string OriginalFileId { get; set; } = IdHelper.GenerateId();

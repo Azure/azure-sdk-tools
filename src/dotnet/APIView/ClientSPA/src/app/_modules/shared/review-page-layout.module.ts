@@ -10,10 +10,11 @@ import { PanelModule } from 'primeng/panel';
 import { MenuModule } from 'primeng/menu';
 import { TimelineModule } from 'primeng/timeline';
 import { DividerModule } from 'primeng/divider';
-import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
+import { RevisionOptionsComponent } from 'src/app/_components/revision-options/revision-options.component';
 import { SharedAppModule } from './shared-app.module';
 import { CommonModule } from '@angular/common'; 
-import { RevisionPageComponent } from 'src/app/_components/revision-page/revision-page.component';
+import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-options-section/page-options-section.component';
+import { NavBarComponent } from 'src/app/_components/shared/nav-bar/nav-bar.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { RevisionPageComponent } from 'src/app/_components/revision-page/revisio
     CommentThreadComponent,
     ConversationsComponent,
     ReviewPageLayoutComponent,
-    ApiRevisionOptionsComponent,
+    RevisionOptionsComponent,
+    PageOptionsSectionComponent,
     MarkdownToHtmlPipe,
     EditorComponent,
   ],
@@ -29,8 +31,9 @@ import { RevisionPageComponent } from 'src/app/_components/revision-page/revisio
     ReviewInfoComponent,
     CommentThreadComponent,
     ConversationsComponent,
+    PageOptionsSectionComponent,
     ReviewPageLayoutComponent,
-    ApiRevisionOptionsComponent,
+    RevisionOptionsComponent,
     MarkdownToHtmlPipe,
     EditorComponent,
     SharedAppModule,

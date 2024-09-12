@@ -34,7 +34,7 @@ $vcpkgBinarySourceSas = New-AzStorageContainerSASToken `
     -Name $StorageContainerName `
     -Permission "rwcl" `
     -Context $ctx `
-    -ExpiryTime (Get-Date).AddHours(1)
+    -ExpiryTime (Get-Date).AddDays(1) # Set timeout to 1 day as some of these vcpkg builds can take a few hours at least
 
 Write-Host "Ensure redaction of SAS tokens in logs" 
 Write-Host "##vso[task.setvariable variable=VCPKG_BINARY_SAS_TOKEN;issecret=true;]$vcpkgBinarySourceSas"

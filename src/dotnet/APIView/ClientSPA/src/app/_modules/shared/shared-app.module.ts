@@ -25,6 +25,7 @@ import { ToastModule } from 'primeng/toast';
 import { MenuModule } from 'primeng/menu';
 import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/review-info.component';
 import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
+import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-page-layout/review-page-layout.component';
  
 
 @NgModule({
@@ -34,6 +35,7 @@ import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-op
     RevisionsListComponent,
     ReviewInfoComponent,
     ApiRevisionOptionsComponent,
+    ReviewPageLayoutComponent,
     LanguageNamesPipe,
     LastUpdatedOnPipe,
     ApprovalPipe
@@ -44,6 +46,7 @@ import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-op
     RevisionsListComponent,
     ReviewInfoComponent,
     ApiRevisionOptionsComponent,
+    ReviewPageLayoutComponent,
     LanguageNamesPipe,
     LastUpdatedOnPipe,
     ApprovalPipe,

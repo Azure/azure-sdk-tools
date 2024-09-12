@@ -1,31 +1,41 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AUTOMATIC_ICON, getTypeClass, MANUAL_ICON, PR_ICON } from 'src/app/_helpers/common-helpers';
-import { getQueryParams } from 'src/app/_helpers/router-helpers';
+import { ACTIVE_API_REVISION_ID_QUERY_PARAM, ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { APIRevision } from 'src/app/_models/revision';
+import { SamplesRevision } from 'src/app/_models/samples';
 
 @Component({
-  selector: 'app-api-revision-options',
-  templateUrl: './api-revision-options.component.html',
-  styleUrls: ['./api-revision-options.component.scss']
+  selector: 'app-revision-options',
+  templateUrl: './revision-options.component.html',
+  styleUrls: ['./revision-options.component.scss']
 })
-export class ApiRevisionOptionsComponent implements OnChanges {
+export class RevisionOptionsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];
   @Input() activeApiRevisionId: string | null = '';
+  @Input() activeSamplesRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
+  @Input() samplesRevisions: SamplesRevision[] = [];
 
   mappedApiRevisions: any[] = [];
   activeApiRevisionsMenu: any[] = [];
+  activeSamplesRevisionsMenu: any[] = [];
   diffApiRevisionsMenu: any[] = [];
   selectedActiveAPIRevision: any;
+  selectedActiveSamplesRevision: any;
   selectedDiffAPIRevision: any = null;
 
   manualIcon = MANUAL_ICON;
   prIcon = PR_ICON;
   automaticIcon = AUTOMATIC_ICON;
+  
+  ACTIVE_API_REVISION_SELECT : string = 'active-api';
+  ACTIVE_SAMPLES_REVISION_SELECT : string = 'active-samples';
+  DIFF_API_REVISION_SELECT : string = 'diff-api';
 
   activeApiRevisionsSearchValue: string = '';
+  activeSamplesRevisionsSearchValue: string = '';
   diffApiRevisionsSearchValue: string = '';
 
   activeApiRevisionsFilterValue: string | undefined = '';
@@ -41,7 +51,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
-  ngOnChanges(changes: SimpleChanges): void {
+  ngOnChanges(changes: SimpleChanges) {
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
       if (this.apiRevisions.length > 0) {
         this.mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
@@ -61,95 +71,129 @@ export class ApiRevisionOptionsComponent implements OnChanges {
         }
       }
     }
+
+    if (changes['samplesRevisions'] || changes['activeSamplesRevisionId']) {
+      if (this.samplesRevisions.length > 0) {
+        this.activeSamplesRevisionsMenu = this.samplesRevisions;
+        this.selectedActiveSamplesRevision = this.samplesRevisions.find((samplesRevision: SamplesRevision) => samplesRevision.id === this.activeSamplesRevisionId);
+      }
+    }
   }
 
   activeApiRevisionSearchFunction(event: KeyboardEvent) {
     this.activeApiRevisionsSearchValue = (event.target as HTMLInputElement).value;
-    this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, "active");
+    this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, this.ACTIVE_API_REVISION_SELECT);
+  }
+
+  activeSamplesRevisionSearchFunction(event: KeyboardEvent) {
+    this.activeSamplesRevisionsSearchValue = (event.target as HTMLInputElement).value;
+    this.searchAndFilterDropdown(this.activeSamplesRevisionsSearchValue, undefined, this.ACTIVE_SAMPLES_REVISION_SELECT);
   }
 
   activeApiRevisionFilterFunction(event: any) {
     this.activeApiRevisionsFilterValue = event.value;
-    this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, "active");
+    this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, this.ACTIVE_API_REVISION_SELECT);
   }
 
   activeApiRevisionChange(event: any) {
     let newQueryParams = getQueryParams(this.route);
-    newQueryParams['activeApiRevisionId'] = event.value.id;
+    newQueryParams[ACTIVE_API_REVISION_ID_QUERY_PARAM] = event.value.id;
+    this.router.navigate([], { queryParams: newQueryParams });
+  }
+
+  activeSamplesRevisionChange(event: any) {
+    let newQueryParams = getQueryParams(this.route);
+    newQueryParams[ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM] = event.value.id;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 
   diffApiRevisionSearchFunction(event: KeyboardEvent) {
     this.diffApiRevisionsSearchValue = (event.target as HTMLInputElement).value;
-    this.searchAndFilterDropdown(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue, "diff");
+    this.searchAndFilterDropdown(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue, this.DIFF_API_REVISION_SELECT);
   }
 
   diffApiRevisionFilterFunction(event: any) {
     this.diffApiRevisionsFilterValue = event.value;
-    this.searchAndFilterDropdown(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue, "diff");
+    this.searchAndFilterDropdown(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue, this.DIFF_API_REVISION_SELECT);
   }
 
   diffApiRevisionChange(event: any) {
     let newQueryParams = getQueryParams(this.route);
-    newQueryParams['diffApiRevisionId'] = event.value?.id;
+    newQueryParams[DIFF_API_REVISION_ID_QUERY_PARAM] = event.value?.id;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 
   diffApiRevisionClear(event: any) {
     let newQueryParams = getQueryParams(this.route);
-    newQueryParams['diffApiRevisionId'] = null;
-    newQueryParams['diffStyle'] = null;
+    newQueryParams[DIFF_API_REVISION_ID_QUERY_PARAM] = null;
+    newQueryParams[DIFF_STYLE_QUERY_PARAM] = null;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 
   searchAndFilterDropdown(searchValue : string, filterValue  : string | undefined, dropDownMenu : string) {
-    let filtered = this.mappedApiRevisions.filter((apiRevision: APIRevision) => {
-      switch (filterValue) {
-        case 'pullRequest':
-          return apiRevision.apiRevisionType === 'pullRequest';
-        case 'manual':
-          return apiRevision.apiRevisionType === 'manual';
-        case 'automatic':
-          return apiRevision.apiRevisionType === 'automatic';
-        case 'released':
-          return apiRevision.isReleased;
-        case 'approved':
-          return apiRevision.isApproved;
-        default:
-          return true;
-      }
-    });
-    
-    filtered = filtered.filter((apiRevision: APIRevision) => {
-      return apiRevision.resolvedLabel.toLowerCase().includes(searchValue.toLowerCase());
-    });
+    let filtered = [];
+    if (dropDownMenu === this.ACTIVE_API_REVISION_SELECT || dropDownMenu === this.DIFF_API_REVISION_SELECT) {
+      filtered = this.mappedApiRevisions.filter((apiRevision: APIRevision) => {
+        switch (filterValue) {
+          case 'pullRequest':
+            return apiRevision.apiRevisionType === 'pullRequest';
+          case 'manual':
+            return apiRevision.apiRevisionType === 'manual';
+          case 'automatic':
+            return apiRevision.apiRevisionType === 'automatic';
+          case 'released':
+            return apiRevision.isReleased;
+          case 'approved':
+            return apiRevision.isApproved;
+          default:
+            return true;
+        }
+      });
+      
+      filtered = filtered.filter((apiRevision: APIRevision) => {
+        return apiRevision.resolvedLabel.toLowerCase().includes(searchValue.toLowerCase());
+      });
 
-    if (dropDownMenu === "active") {
-      this.activeApiRevisionsMenu = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.diffApiRevisionId);
-      if (this.selectedActiveAPIRevision && !this.activeApiRevisionsMenu.includes(this.selectedActiveAPIRevision)) {
-        this.activeApiRevisionsMenu.unshift(this.selectedActiveAPIRevision);
+      if (dropDownMenu === this.ACTIVE_API_REVISION_SELECT) {
+        this.activeApiRevisionsMenu = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.diffApiRevisionId);
+        if (this.selectedActiveAPIRevision && !this.activeApiRevisionsMenu.includes(this.selectedActiveAPIRevision)) {
+          this.activeApiRevisionsMenu.unshift(this.selectedActiveAPIRevision);
+        }
       }
-    }
 
-    if (dropDownMenu === "diff") {
-      this.diffApiRevisionsMenu = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.activeApiRevisionId);
-      if (this.selectedDiffAPIRevision && !this.diffApiRevisionsMenu.includes(this.selectedDiffAPIRevision)) {
-        this.diffApiRevisionsMenu.unshift(this.selectedDiffAPIRevision);
+      if (dropDownMenu === this.DIFF_API_REVISION_SELECT) {
+        this.diffApiRevisionsMenu = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.activeApiRevisionId);
+        if (this.selectedDiffAPIRevision && !this.diffApiRevisionsMenu.includes(this.selectedDiffAPIRevision)) {
+          this.diffApiRevisionsMenu.unshift(this.selectedDiffAPIRevision);
+        }
+      }
+    } else {
+      filtered = this.activeSamplesRevisionsMenu.filter((samplesRevision: SamplesRevision) => {
+        return samplesRevision.title.toLowerCase().includes(searchValue.toLowerCase());
+      });
+
+      if (dropDownMenu === this.ACTIVE_SAMPLES_REVISION_SELECT) {
+        this.activeSamplesRevisionsMenu = filtered.filter((samplesRevision: APIRevision) => samplesRevision.id !== this.activeSamplesRevisionId);
       }
     }
   }
 
   resetDropDownFilter(dropDownMenu: string) {
-    if (dropDownMenu === "active") {
+    if (dropDownMenu === this.ACTIVE_API_REVISION_SELECT) {
       this.activeApiRevisionsSearchValue = '';
       this.activeApiRevisionsFilterValue = '';
-      this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, "active");
+      this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, this.ACTIVE_API_REVISION_SELECT);
     }
 
-    if (dropDownMenu === "diff") {
+    if (dropDownMenu === this.DIFF_API_REVISION_SELECT) {
       this.diffApiRevisionsSearchValue = '';
       this.diffApiRevisionsFilterValue = '';
-      this.searchAndFilterDropdown(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue, "diff");
+      this.searchAndFilterDropdown(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue, this.DIFF_API_REVISION_SELECT);
+    }
+
+    if (dropDownMenu === this.ACTIVE_SAMPLES_REVISION_SELECT) {
+      this.activeSamplesRevisionId = '';
+      this.searchAndFilterDropdown(this.activeSamplesRevisionsSearchValue, undefined, this.ACTIVE_SAMPLES_REVISION_SELECT);
     }
   }
 

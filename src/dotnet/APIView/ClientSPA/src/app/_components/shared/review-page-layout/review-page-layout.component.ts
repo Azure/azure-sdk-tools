@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
+import { SamplesRevision } from 'src/app/_models/samples';
 import { UserProfile } from 'src/app/_models/userProfile';
 
 @Component({
@@ -14,7 +15,9 @@ export class ReviewPageLayoutComponent {
   @Input() userProfile : UserProfile | undefined;
   @Input() sideMenu: MenuItem[] | undefined;
   @Input() apiRevisions: APIRevision[] = [];
+  @Input() samplesRevisions: SamplesRevision[] = [];
   @Input() activeApiRevisionId: string | null = '';
+  @Input() activeSamplesRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
   @Input() showPageoptionsButton: boolean = false;
 

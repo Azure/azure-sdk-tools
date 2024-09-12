@@ -10,7 +10,7 @@ import { APIRevision } from 'src/app/_models/revision';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
-import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 
@@ -75,7 +75,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
-  constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService,
+  constructor(private apiRevisionsService: APIRevisionsService, private userProfileService: UserProfileService,
     private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
     private route: ActivatedRoute, private messageService: MessageService) { }
 

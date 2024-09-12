@@ -6,6 +6,7 @@
     $base-bg-color: #fbfaff;
     --base-bg-color: #{$base-bg-color};
     --base-fg-color: #{tint-color($base-bg-color, 100%)};
+    --editor-bg-color: #fafafa;
     $base-text-color: #212529;
     --base-text-color: #{$base-text-color};
     --text-muted-color: #{tint-color($base-text-color, 30%)};
@@ -92,6 +93,7 @@
     $base-bg-color: #010409;
     --base-bg-color: #{$base-bg-color};
     --base-fg-color: #{tint-color($base-bg-color, 5%)};
+    --editor-bg-color: #1e1e1e;
     $base-text-color: #c9d1d9;
     --base-text-color: #{$base-text-color};
     --text-muted-color: #{shade-color($base-text-color, 30%)};
@@ -181,6 +183,7 @@
     $base-bg-color: #1a1a1a;
     --base-bg-color: #{$base-bg-color};
     --base-fg-color: #2b2b2b;
+    --editor-bg-color: #1e1e1e;
     $base-text-color: #A9B7C6;
     --base-text-color: #{$base-text-color};
     --text-muted-color: #{shade-color($base-text-color, 30%)};

@@ -70,7 +70,7 @@ namespace APIViewWeb.Managers
         /// <param name="pageParams"></param> Contains paginationinfo
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
-        public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, APIRevisionsFilterAndSortParams filterAndSortParams)
+        public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, FilterAndSortParams filterAndSortParams)
         {
             var revisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(user, pageParams, filterAndSortParams);
             List<APIRevisionListItemModel> upgradedList = [];

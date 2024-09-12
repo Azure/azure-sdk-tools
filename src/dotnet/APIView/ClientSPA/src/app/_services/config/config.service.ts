@@ -1,12 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs';
+import { BehaviorSubject, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ConfigService {
+  private appTheme = new BehaviorSubject<string>('light-theme');
+  appTheme$ = this.appTheme.asObservable();
+
   private assetsPath : string = environment.assetsPath;
   private config: any = {
     apiUrl : "api/",
@@ -21,6 +24,10 @@ export class ConfigService {
       map((config: any) => {
         this.config = config;
       }));
+  }
+
+  setAppTheme(value: string) {
+    this.appTheme.next(value);
   }
 
   get apiUrl() : string {

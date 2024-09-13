@@ -175,6 +175,7 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
     properties: {
       groupId: 'blob'
       privateLinkResourceId: logsStorageAccount.id
+      requestMessage: ''
     }
   }
 }

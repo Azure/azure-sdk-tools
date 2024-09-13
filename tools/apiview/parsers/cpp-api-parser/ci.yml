@@ -128,12 +128,12 @@ stages:
                       vstsFeedPackagePublish: 'parseazuresdkcpp'
                       versionOption: minor
                       packagePublishDescription: 'Azure C++ SDK API View Parser.'
-                  - task: UniversalPackages@0
-                    displayName: Publish Private ApiView Parser
-                    inputs:
-                      command: publish
-                      publishDirectory: $(Pipeline.Workspace)/release-artifacts
-                      vstsFeedPublish: 'internal/AzureSDKForCpp'
-                      vstsFeedPackagePublish: 'parseazuresdkcpp'
-                      versionOption: minor
-                      packagePublishDescription: 'Azure C++ SDK API View Parser.'
+                  # - task: UniversalPackages@0
+                  #   displayName: Publish Private ApiView Parser
+                  #   inputs:
+                  #     command: publish
+                  #     publishDirectory: $(Pipeline.Workspace)/release-artifacts
+                  #     vstsFeedPublish: 'internal/AzureSDKForCpp'
+                  #     vstsFeedPackagePublish: 'parseazuresdkcpp'
+                  #     versionOption: minor
+                  #     packagePublishDescription: 'Azure C++ SDK API View Parser.'

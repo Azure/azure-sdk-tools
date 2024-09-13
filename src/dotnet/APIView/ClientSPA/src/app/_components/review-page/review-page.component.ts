@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { Subject, take, takeUntil } from 'rxjs';
-import { getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision, ApiTreeBuilderData } from 'src/app/_models/revision';
@@ -17,6 +17,7 @@ import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 
 @Component({
   selector: 'app-review-page',
@@ -72,7 +73,7 @@ export class ReviewPageComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
-    private userProfileService: UserProfileService, private commentsService: CommentsService) {}
+    private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService) {}
 
   ngOnInit() {
     this.userProfileService.getUserProfile().subscribe(
@@ -106,6 +107,8 @@ export class ReviewPageComponent implements OnInit {
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
     this.loadComments();
     this.createSideMenu();
+    this.handleRealTimeReviewUpdates();
+    this.handleRealTimeAPIRevisionUpdates();
   }
 
   createSideMenu() {
@@ -435,6 +438,14 @@ export class ReviewPageComponent implements OnInit {
     });
   }
 
+  handleCommentThreadNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+    this.codePanelComponent.navigateToCommentThread(direction);
+  }
+
+  handleDiffNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+    this.codePanelComponent.navigateToDiffNode(direction);
+  }
+
   handleHasActiveConversationEmitter(value: boolean) {
     this.hasActiveConversation = value;
   }
@@ -447,6 +458,33 @@ export class ReviewPageComponent implements OnInit {
   handleScrollToNodeEmitter (value: string) {
     this.conversationSidePanel = false;
     this.codePanelComponent.scrollToNode(undefined, value);
+  }
+
+  handleRealTimeReviewUpdates() {
+    this.signalRService.onReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (updatedReview: Review) => {
+        if (updatedReview.id === this.reviewId) {
+          this.review = updatedReview;
+        }
+      }
+    });
+  }
+
+  handleRealTimeAPIRevisionUpdates() {
+    this.signalRService.onAPIRevisionUpdates().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (updatedAPIRevision: APIRevision) => {
+        if (updatedAPIRevision.reviewId === this.reviewId) {
+          const apiRevisionIndex = this.apiRevisions.findIndex(x => x.id === updatedAPIRevision.id);
+          if (apiRevisionIndex > -1) {
+            this.apiRevisions[apiRevisionIndex] = updatedAPIRevision;
+          }
+
+          if (updatedAPIRevision.id === this.activeApiRevisionId) {
+            this.activeAPIRevision = updatedAPIRevision;
+          }
+        }
+      }
+    });
   }
 
   checkForFatalDiagnostics() {

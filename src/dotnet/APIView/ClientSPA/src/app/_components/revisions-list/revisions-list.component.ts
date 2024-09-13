@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MenuItem, SortEvent } from 'primeng/api';
+import { MenuItem, MessageService, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { Pagination } from 'src/app/_models/pagination';
@@ -75,7 +75,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService,
     private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
-    private router: Router) { }
+    private router: Router, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.createRevisionFilters();
@@ -483,6 +483,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         },
         error: (error: any) => {
           this.creatingRevision = false;
+          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to create new API Revision', key: 'bl', life: 3000 });
         }
       });
     }
@@ -504,9 +505,9 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       case "C#":
         this.createRevisionInstruction = [
           `Run <code>dotnet pack</code>`, 
-          `Upload the resulting .nupkg file.`
+          `Upload the resulting .nupkg or .dll file.`
         ];
-        this.acceptedFilesForReviewUpload = ".nupkg";
+        this.acceptedFilesForReviewUpload = ".nupkg, .dll";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
@@ -584,14 +585,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         break;
       case "Json":
         this.createRevisionInstruction = [
-          `Upload JSON API review token file.`
+          `Upload .json API review token file.`
         ];
-        this.acceptedFilesForReviewUpload = ".json, .tgz";
+        this.acceptedFilesForReviewUpload = ".json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
       default:
-        this.createRevisionInstruction = []
+        this.createRevisionInstruction = [];
+        this.acceptedFilesForReviewUpload = undefined;
     }
 
     if (this.revisionCreationFileUpload) {    

@@ -1,3 +1,10 @@
+import "@typespec/json-schema";
+
+using TypeSpec.JsonSchema;
+
+@jsonSchema
+namespace Schemas;
+
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
 model CodeFile {
   PackageName: string;

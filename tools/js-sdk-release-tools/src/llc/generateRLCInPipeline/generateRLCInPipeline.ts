@@ -41,11 +41,12 @@ export async function generateRLCInPipeline(options: {
     let relativePackagePath: string | undefined = undefined;
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
-        const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject);
+        const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
         await remove(generatedPackageDir);
 
         if (!options.skipGeneration) {
-            logger.info(`Start to generate SDK from '${options.typespecProject}'.`);
+            logger.info(`Start to generate rest level client SDK from '${options.typespecProject}'.`);
+            // TODO: remove it, since this function is used in pipeline.
             if(options.sdkGenerationType === "command") {
                 logger.info("Start to run TypeSpec command directly.");
                 const copyPackageJsonName = 'emitter-package.json';
@@ -191,10 +192,14 @@ export async function generateRLCInPipeline(options: {
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
 
     try {
+        // TODO: need to refactor
+        // too tricky here, when relativePackagePath === undefined,
+        // the project should be typespec,
+        // and the changedPackageDirectories should be join(service-dir, package-dir)
         if (!packagePath || !relativePackagePath) {
             const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
             if (changedPackageDirectories.size !== 1) {
-                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
+                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories.size}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
             }
             for (const d of changedPackageDirectories) relativePackagePath = d;
             packagePath = path.join(options.sdkRepo, relativePackagePath!);
@@ -212,6 +217,7 @@ export async function generateRLCInPipeline(options: {
 
             await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
 
+            // TODO: remove it for typespec project, since no need now, the test and sample are decouple from build
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
         }
@@ -232,7 +238,7 @@ export async function generateRLCInPipeline(options: {
         execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
+        execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
         logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
@@ -258,6 +264,7 @@ export async function generateRLCInPipeline(options: {
         if (outputPackageInfo) {
             outputPackageInfo.result = 'failed';
         }
+        throw e;
     } finally {
         if (options.outputJson && outputPackageInfo) {
             options.outputJson.packages.push(outputPackageInfo);

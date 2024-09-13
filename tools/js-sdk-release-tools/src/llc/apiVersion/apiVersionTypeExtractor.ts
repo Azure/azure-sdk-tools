@@ -14,7 +14,8 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
     typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, clientPattern, tryFindRestClientPath);
     if (typeFromClient !== ApiVersionType.None) return typeFromClient;
     
-    const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, clientPattern, findParametersPath);
+    const parametersFolder = "src/";
+    const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, parametersFolder, findParametersPath);
     if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
     return ApiVersionType.Stable;
 };

@@ -1,3 +1,5 @@
+import { CodePanelRowData, CodePanelRowDatatype } from "../_models/codePanelModels";
+
 export const REVIEW_ID_ROUTE_PARAM = "reviewId";
 export const ACTIVE_API_REVISION_ID_QUERY_PARAM = "activeApiRevisionId";
 export const DIFF_API_REVISION_ID_QUERY_PARAM = "diffApiRevisionId";
@@ -9,6 +11,13 @@ export const NODE_DIFF_STYLE = "nodes";
 export const MANUAL_ICON = "fa-solid fa-arrow-up-from-bracket";
 export const PR_ICON = "fa-solid fa-code-pull-request";
 export const AUTOMATIC_ICON = "fa-solid fa-robot";
+export const DIFF_ADDED = "added";
+export const DIFF_REMOVED = "removed";
+
+export enum CodeLineRowNavigationDirection {
+  prev = 0,
+  next
+}
 
 export function getLanguageCssSafeName(language: string): string {
   switch (language.toLowerCase()) {
@@ -48,4 +57,9 @@ export function getTypeClass(type: string): string {
       break;
   }
   return result;
+}
+
+
+export function isDiffRow(row: CodePanelRowData) {
+  return row.type === CodePanelRowDatatype.CodeLine && (row.diffKind === DIFF_REMOVED || row.diffKind === DIFF_ADDED);
 }

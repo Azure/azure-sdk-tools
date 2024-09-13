@@ -25,6 +25,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         public TimeSpan CooldownPeriod { get; set; }
 
         /// <summary>
+        /// Gets or sets the amount of history to process in each iteration
+        /// </summary>
+        public TimeSpan LookbackPeriod { get; set; }
+
+        /// <summary>
         /// Gets or sets the name of the distributed lock
         /// </summary>
         public string LockName { get; set; }

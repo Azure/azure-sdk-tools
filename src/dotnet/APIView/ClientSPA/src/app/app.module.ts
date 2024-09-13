@@ -8,6 +8,7 @@ import { AppComponent } from './app.component';
 import { IndexPageComponent } from './_components/index-page/index-page.component';
 import { ReviewsListComponent } from './_components/reviews-list/reviews-list.component';
 import { TabMenuModule } from 'primeng/tabmenu';
+import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { BadgeModule } from 'primeng/badge';
 import { Observable } from 'rxjs';
@@ -15,6 +16,7 @@ import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
 import { SharedAppModule } from './_modules/shared/shared-app.module';
 import { HttpErrorInterceptorService } from './_services/http-error-interceptor/http-error-interceptor.service';
+import { MessageService } from 'primeng/api';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -36,6 +38,7 @@ export function initializeApp(configService: ConfigService) {
     BrowserAnimationsModule,
     TabMenuModule,
     ToolbarModule,
+    ToastModule,
     HttpClientModule,
   ],
   providers: [
@@ -51,6 +54,7 @@ export function initializeApp(configService: ConfigService) {
       useClass: HttpErrorInterceptorService,
       multi: true
     },
+    MessageService,
     CookieService
   ],
   bootstrap: [AppComponent]

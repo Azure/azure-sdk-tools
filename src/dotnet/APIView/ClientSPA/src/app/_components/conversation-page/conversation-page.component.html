@@ -1,8 +1,11 @@
 <app-review-page-layout
     [review]="review"
     [sideMenu]="sideMenu">
-    <app-conversations
-        [apiRevisions]="apiRevisions"
-        [comments]="comments"
-        [userProfile]="userProfile"></app-conversations>
+    <div class="conversation-panel border rounded p-3">
+        <app-conversations
+            [apiRevisions]="apiRevisions"
+            [comments]="comments"
+            [userProfile]="userProfile">
+        </app-conversations>
+    </div>
 </app-review-page-layout>

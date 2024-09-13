@@ -11,7 +11,8 @@ const routes: Routes = [
      runGuardsAndResolvers: 'always',
      canActivate: [AuthGuard],
      children: [
-      { path: '*/:reviewId', loadChildren: () => import('./_modules/review-page/review-page.module').then(m => m.ReviewPageModule) }, // Lazy load review page module
+      { path: 'review/:reviewId', loadChildren: () => import('./_modules/review-page.module').then(m => m.ReviewPageModule) }, // Lazy load review page module
+      { path: 'conversation/:reviewId', loadChildren: () => import('./_modules/conversation-page.module').then(m => m.ConversationPageModule) }
      ]
   },
   { path: '**', component: IndexPageComponent, pathMatch: 'full' }

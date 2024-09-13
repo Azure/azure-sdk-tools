@@ -1,8 +1,4 @@
-import { takeUntil } from "rxjs";
 import { CodePanelRowData, CodePanelRowDatatype } from "../_models/codePanelModels";
-import { ReviewsService } from "../_services/reviews/reviews.service";
-import { Review } from "../_models/review";
-import { Subject } from "@microsoft/signalr";
 
 export const REVIEW_ID_ROUTE_PARAM = "reviewId";
 export const ACTIVE_API_REVISION_ID_QUERY_PARAM = "activeApiRevisionId";

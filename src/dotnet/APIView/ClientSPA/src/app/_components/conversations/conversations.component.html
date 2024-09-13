@@ -1,5 +1,3 @@
-<h4>Conversations</h4>
-<p-divider />
 <p *ngIf="commentThreads.size === 0">This Review has no comments</p>
 <p-timeline [value]="getAPIRevisionWithComments()">
     <ng-template pTemplate="marker" let-apiRevision>

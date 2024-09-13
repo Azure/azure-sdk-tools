@@ -21,7 +21,6 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessagesModule } from 'primeng/messages';
 import { BadgeModule } from 'primeng/badge';
-import { MenuModule } from 'primeng/menu';
  
 
 @NgModule({
@@ -58,8 +57,8 @@ import { MenuModule } from 'primeng/menu';
     InputTextModule,
   ],
   imports: [
-    BadgeModule,
     CommonModule,
+    BadgeModule,
     ContextMenuModule,
     TableModule,
     ChipModule,

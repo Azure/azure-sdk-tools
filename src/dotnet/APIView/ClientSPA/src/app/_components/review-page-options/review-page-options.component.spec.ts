@@ -8,7 +8,7 @@ import { HttpErrorInterceptorService } from 'src/app/_services/http-error-interc
 import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
+import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { UserProfile } from 'src/app/_models/userProfile';
 
 describe('ReviewPageOptionsComponent', () => {

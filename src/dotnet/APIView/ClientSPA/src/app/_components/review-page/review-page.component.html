@@ -70,6 +70,8 @@
         [revisionSidePanel]="revisionSidePanel!"></app-revisions-list>
 </p-sidebar>
 <p-sidebar [(visible)]="conversationSidePanel!" position="right" [modal]="true" styleClass="conversation-sidebar">
+    <h4>Conversations</h4>
+    <p-divider />
     <app-conversations 
         [apiRevisions]="apiRevisions"
         [comments]="comments"

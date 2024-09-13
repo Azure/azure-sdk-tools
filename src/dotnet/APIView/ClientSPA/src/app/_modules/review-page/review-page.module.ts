@@ -20,20 +20,30 @@ import { EditorComponent } from 'src/app/_components/shared/editor/editor.compon
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { ConversationsComponent } from 'src/app/_components/conversations/conversations.component';
+import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-page-layout/review-page-layout.component';
+import { ConversationPageComponent } from 'src/app/_components/conversation-page/conversation-page.component';
+import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/review-info.component';
+import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
+import { MenuModule } from 'primeng/menu';
 
 const routes: Routes = [
-  { path: '', component: ReviewPageComponent }
+  { path: 'review/:reviewId', component: ReviewPageComponent },
+  { path: 'conversation/:reviewId', component: ConversationPageComponent }
 ];
 
 @NgModule({
   declarations: [
     ReviewPageComponent,
     ReviewNavComponent,
+    ReviewInfoComponent,
     CodePanelComponent,
     CommentThreadComponent,
     ConversationsComponent,
+    ConversationPageComponent,
     PageOptionsSectionComponent,
     ReviewPageOptionsComponent,
+    ApiRevisionOptionsComponent,
+    ReviewPageLayoutComponent,
     MarkdownToHtmlPipe,
     EditorComponent,
   ],
@@ -44,6 +54,7 @@ const routes: Routes = [
     PanelModule,
     DialogModule,
     TreeSelectModule,
+    MenuModule,
     TimelineModule,
     ButtonModule,
     InputSwitchModule,

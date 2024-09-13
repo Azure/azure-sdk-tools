@@ -21,11 +21,7 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessagesModule } from 'primeng/messages';
 import { BadgeModule } from 'primeng/badge';
-import { ToastModule } from 'primeng/toast';
 import { MenuModule } from 'primeng/menu';
-import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/review-info.component';
-import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
-import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-page-layout/review-page-layout.component';
  
 
 @NgModule({
@@ -33,9 +29,6 @@ import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-pag
     NavBarComponent,
     FooterComponent,
     RevisionsListComponent,
-    ReviewInfoComponent,
-    ApiRevisionOptionsComponent,
-    ReviewPageLayoutComponent,
     LanguageNamesPipe,
     LastUpdatedOnPipe,
     ApprovalPipe
@@ -44,9 +37,6 @@ import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-pag
     NavBarComponent,
     FooterComponent,
     RevisionsListComponent,
-    ReviewInfoComponent,
-    ApiRevisionOptionsComponent,
-    ReviewPageLayoutComponent,
     LanguageNamesPipe,
     LastUpdatedOnPipe,
     ApprovalPipe,
@@ -56,7 +46,6 @@ import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-pag
     ChipModule,
     DropdownModule,
     MenubarModule,
-    MenuModule,
     MessagesModule,
     MultiSelectModule,
     FormsModule,
@@ -76,7 +65,6 @@ import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-pag
     ChipModule,
     DropdownModule,
     MenubarModule,
-    MenuModule,
     MessagesModule,
     MultiSelectModule,
     FormsModule,

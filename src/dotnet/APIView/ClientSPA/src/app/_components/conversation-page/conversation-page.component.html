@@ -1,3 +1,8 @@
 <app-review-page-layout
     [review]="review"
-    [sideMenu]="sideMenu"></app-review-page-layout>
+    [sideMenu]="sideMenu">
+    <app-conversations
+        [apiRevisions]="apiRevisions"
+        [comments]="comments"
+        [userProfile]="userProfile"></app-conversations>
+</app-review-page-layout>

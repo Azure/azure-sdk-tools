@@ -3,9 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/common-helpers';
+import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { Review } from 'src/app/_models/review';
+import { APIRevision } from 'src/app/_models/revision';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
+import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 
 @Component({
@@ -18,27 +22,37 @@ export class ConversationPageComponent {
   review : Review | undefined = undefined;
   userProfile : UserProfile | undefined;
   sideMenu: MenuItem[] | undefined;
+  comments: CommentItemModel[] = [];
+  apiRevisions: APIRevision[] = [];
+
+  apiRevisionPageSize = 50;
 
   private destroy$ = new Subject<void>();
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private userProfileService: UserProfileService) {}
+  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private userProfileService: UserProfileService,
+    private apiRevisionsService: RevisionsService, private commentsService: CommentsService
+  ) {}
 
   ngOnInit() {
     this.userProfileService.getUserProfile().subscribe();
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
     this.createSideMenu();
     this.loadReview(this.reviewId!);
+    this.loadAPIRevisions(0, this.apiRevisionPageSize);
+    this.loadComments();
   }
 
   createSideMenu() {
     this.sideMenu = [
       {
-        icon: 'bi bi-clock-history',
-        //command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
+        icon: 'bi bi-braces',
+        tooltip: 'API',
+        //command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
       },
       {
-        icon: 'bi bi-chat-left-dots',
-        //command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
+        icon: 'bi bi-clock-history',
+        tooltip: 'Revisions',
+        //command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
       }
     ];
   }
@@ -50,5 +64,24 @@ export class ConversationPageComponent {
           this.review = review;
         }
     });
+  }
+
+  loadAPIRevisions(noOfItemsRead : number, pageSize: number) {
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined, 
+      undefined, "createdOn", undefined, undefined, undefined, true)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response: any) => {
+          this.apiRevisions = response.result;
+        }
+      });
+  }
+
+  loadComments() {
+    this.commentsService.getComments(this.reviewId!)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (comments: CommentItemModel[]) => {
+          this.comments = comments;
+        }
+      });
   }
 }

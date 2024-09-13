@@ -74,7 +74,7 @@ stages:
             # failure and partial execution.
             retryCountOnTaskFailure: 3
           - pwsh: |
-              cmake.exe -G "Visual Studio 16 2019" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
+              cmake.exe -G "Visual Studio 17 2022" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
             displayName: Cmake Generate.
             workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
             condition: succeeded()
@@ -119,11 +119,20 @@ stages:
                   - download: current
                     artifact: release-artifacts
                   - task: UniversalPackages@0
-                    displayName: Publish ApiView Parser.
+                    displayName: Publish Public ApiView Parser
                     inputs:
                       command: publish
                       publishDirectory: $(Pipeline.Workspace)/release-artifacts
                       vstsFeedPublish: 'public/azure-sdk-for-cpp'
+                      vstsFeedPackagePublish: 'parseazuresdkcpp'
+                      versionOption: minor
+                      packagePublishDescription: 'Azure C++ SDK API View Parser.'
+                  - task: UniversalPackages@0
+                    displayName: Publish Private ApiView Parser
+                    inputs:
+                      command: publish
+                      publishDirectory: $(Pipeline.Workspace)/release-artifacts
+                      vstsFeedPublish: 'internal/AzureSDKForCpp'
                       vstsFeedPackagePublish: 'parseazuresdkcpp'
                       versionOption: minor
                       packagePublishDescription: 'Azure C++ SDK API View Parser.'

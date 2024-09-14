@@ -14,6 +14,9 @@ import { SpawnOptions, spawn } from 'child_process';
 // so do NOT change the emitter
 const emitterName = '@azure-tools/typespec-ts';
 
+// 15 minutes in milliseconds unit
+export const defaultChildProcessTimeout = 15 * 60 * 1000;
+
 // TODO: remove it after we generate and use options by ourselves
 const messageToTspConfigSample =
     'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';

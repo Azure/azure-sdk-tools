@@ -56,43 +56,60 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
             foreach (string ownerAndRepository in repositories)
             {
-                string owner = ownerAndRepository.Split('/')[0];
-                string repository = ownerAndRepository.Split('/')[1];
-
-                string[] knownBlobs = await this.processor.GetRunBlobNamesAsync(ownerAndRepository, runMinTime, runMaxTime, cancellationToken);
-
-                WorkflowRunsResponse listRunsResponse = await this.client.Actions.Workflows.Runs.List(owner, repository, new WorkflowRunsRequest
+                try
                 {
-                    Created = $"{runMinTime:o}..{runMaxTime:o}",
-                    Status = CheckRunStatusFilter.Completed,
-                });
+                    string owner = ownerAndRepository.Split('/')[0];
+                    string repository = ownerAndRepository.Split('/')[1];
 
-                var skipCount = 0;
-                var enqueueCount = 0;
+                    string[] knownBlobs = await this.processor.GetRunBlobNamesAsync(ownerAndRepository, runMinTime, runMaxTime, cancellationToken);
 
-                foreach (WorkflowRun run in listRunsResponse.WorkflowRuns)
-                {
-                    var blobName = this.processor.GetRunBlobName(run);
+                    WorkflowRunsResponse listRunsResponse;
 
-                    if (knownBlobs.Contains(blobName, StringComparer.InvariantCultureIgnoreCase))
+                    try
                     {
-                        skipCount++;
+                        listRunsResponse = await this.client.Actions.Workflows.Runs.List(owner, repository, new WorkflowRunsRequest
+                        {
+                            Created = $"{runMinTime:o}..{runMaxTime:o}",
+                            Status = CheckRunStatusFilter.Completed,
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        this.logger.LogError(ex, "Error listing runs for repository {Repository}", ownerAndRepository);
                         continue;
                     }
+                
+                    var skipCount = 0;
+                    var enqueueCount = 0;
 
-                    var queueMessage = new RunCompleteQueueMessage
+                    foreach (WorkflowRun run in listRunsResponse.WorkflowRuns)
                     {
-                        Owner = owner,
-                        Repository = repository,
-                        RunId = run.Id
-                    };
+                        var blobName = this.processor.GetRunBlobName(run);
 
-                    this.logger.LogInformation("Enqueuing missing run {Repository} {RunId} for processing", ownerAndRepository, run.Id);
-                    await this.queue.EnqueueMessageAsync(queueMessage);
-                    enqueueCount++;
+                        if (knownBlobs.Contains(blobName, StringComparer.InvariantCultureIgnoreCase))
+                        {
+                            skipCount++;
+                            continue;
+                        }
+
+                        var queueMessage = new RunCompleteQueueMessage
+                        {
+                            Owner = owner,
+                            Repository = repository,
+                            RunId = run.Id
+                        };
+
+                        this.logger.LogInformation("Enqueuing missing run {Repository} {RunId} for processing", ownerAndRepository, run.Id);
+                        await this.queue.EnqueueMessageAsync(queueMessage);
+                        enqueueCount++;
+                    }
+
+                    this.logger.LogInformation("Enqueued {EnqueueCount} missing runs, skipped {SkipCount} existing runs in repository {Repository}", enqueueCount, skipCount, ownerAndRepository);
                 }
-
-                this.logger.LogInformation("Enqueued {EnqueueCount} missing runs, skipped {SkipCount} existing runs in repository {Repository}", enqueueCount, skipCount, ownerAndRepository);
+                catch (Exception ex)
+                {
+                    this.logger.LogError(ex, "Error processing repository {Repository}", ownerAndRepository);
+                }
             }
         }
 

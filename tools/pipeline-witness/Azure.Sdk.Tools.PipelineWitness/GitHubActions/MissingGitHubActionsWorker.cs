@@ -63,21 +63,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
                     string[] knownBlobs = await this.processor.GetRunBlobNamesAsync(ownerAndRepository, runMinTime, runMaxTime, cancellationToken);
 
-                    WorkflowRunsResponse listRunsResponse;
-
-                    try
+                    WorkflowRunsResponse listRunsResponse = await this.client.Actions.Workflows.Runs.List(owner, repository, new WorkflowRunsRequest
                     {
-                        listRunsResponse = await this.client.Actions.Workflows.Runs.List(owner, repository, new WorkflowRunsRequest
-                        {
-                            Created = $"{runMinTime:o}..{runMaxTime:o}",
-                            Status = CheckRunStatusFilter.Completed,
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        this.logger.LogError(ex, "Error listing runs for repository {Repository}", ownerAndRepository);
-                        continue;
-                    }
+                        Created = $"{runMinTime:o}..{runMaxTime:o}",
+                        Status = CheckRunStatusFilter.Completed,
+                    });
                 
                     var skipCount = 0;
                     var enqueueCount = 0;

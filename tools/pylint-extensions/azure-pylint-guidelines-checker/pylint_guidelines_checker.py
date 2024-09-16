@@ -2829,6 +2829,41 @@ class DoNotUseLegacyTyping(BaseChecker):
             )
 
 
+class DoNotImportAsyncio(BaseChecker):
+
+    """Rule to check that libraries do not import the asyncio package directly."""
+
+    name = "do-not-import-asyncio"
+    priority = -1
+    # TODO Find message number
+    msgs = {
+        "C4763": (
+            "Do not import the asyncio package directly in your library",
+            "do-not-import-asyncio",
+            "Do not import the asyncio package in your directly.",
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from asyncio directly."""
+        if node.modname == "asyncio":
+            self.add_message(
+                msgid=f"do-not-import-asyncio",
+                node=node,
+                confidence=None,
+            )
+
+    def visit_import(self, node):
+        """Check that we aren't importing asyncio."""
+        for name, _ in node.names:
+            if name == "asyncio":
+                self.add_message(
+                    msgid=f"do-not-import-asyncio",
+                    node=node,
+                    confidence=None,
+                )
+
+
 # [Pylint] custom linter check for invalid use of @overload #3229
 
 
@@ -2920,6 +2955,7 @@ def register(linter):
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(DoNotImportLegacySix(linter))
+    linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))

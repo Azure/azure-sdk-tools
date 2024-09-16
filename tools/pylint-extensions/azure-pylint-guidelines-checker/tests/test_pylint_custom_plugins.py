@@ -4846,6 +4846,55 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(imd)
 
 
+class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking imports of asncio directly allowing indirect imports."""
+    CHECKER_CLASS = checker.DoNotImportAsyncio
+
+    def test_disallowed_import_from(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("from asyncio import sleep")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-import-asyncio",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                    end_line=1,
+                    end_col_offset=25,
+                )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_disallowed_import(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("import asyncio")
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-import-asyncio",
+                line=1,
+                node=importfrom_node,
+                col_offset=0,
+                end_line=1,
+                end_col_offset=14,
+            )
+        ):
+            self.checker.visit_import(importfrom_node)
+
+    def test_allowed_imports(self):
+        """Check that allowed imports don't raise warnings."""
+        # import not in the blocked list.
+        importfrom_node = astroid.extract_node("from math import PI")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # from import not in the blocked list.
+        importfrom_node = astroid.extract_node(
+            "from azure.core.pipeline import Pipeline"
+        )
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+
 class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     """Test that any errors raised are not logged at 'error' or 'warning' levels in the exception block."""
@@ -5355,4 +5404,6 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
 # [Pylint] Investigate pylint rule around missing dependency #3231
+
+
 

@@ -2614,7 +2614,7 @@ class DeleteOperationReturnStatement(BaseChecker):
         try:
             if node.returns.as_string() == "None":
                 # If there are residual comment typehints or no return value,
-                # we dont want to throw an error
+                # we don't want to throw an error
                 return
             if node.name.startswith("delete") and node.parent.name.endswith("Client"):
                 if node.returns.as_string() != "None":
@@ -2963,10 +2963,8 @@ def register(linter):
     linter.register_checker(DoNotLogExceptions(linter))
 
     # [Pylint] custom linter check for invalid use of @overload #3229
-    # [Pylint] Custom Linter check for Exception Logging #3227
     # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
     # [Pylint] Add a check for connection_verify hardcoded settings #35355
-    # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
     # [Pylint] Investigate pylint rule around missing dependency #3231
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

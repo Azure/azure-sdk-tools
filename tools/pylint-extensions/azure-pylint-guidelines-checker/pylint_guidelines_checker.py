@@ -2708,7 +2708,6 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
-
 class DoNotLogErrorsEndUpRaising(BaseChecker):
 
     """Rule to check that errors that get raised aren't logged"""
@@ -2829,6 +2828,7 @@ class DoNotUseLegacyTyping(BaseChecker):
                 confidence=None,
             )
 
+
 class DoNotImportAsyncio(BaseChecker):
 
     """Rule to check that libraries do not import the asyncio package directly."""
@@ -2862,8 +2862,6 @@ class DoNotImportAsyncio(BaseChecker):
                     node=node,
                     confidence=None,
                 )
-
-
 
 
 # [Pylint] custom linter check for invalid use of @overload #3229
@@ -2908,6 +2906,7 @@ def register(linter):
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
     # [Pylint] custom linter check for invalid use of @overload #3229
     # [Pylint] Custom Linter check for Exception Logging #3227
@@ -2919,8 +2918,6 @@ def register(linter):
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
 
-
-    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

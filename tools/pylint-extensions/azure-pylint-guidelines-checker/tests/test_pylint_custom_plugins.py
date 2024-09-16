@@ -5343,6 +5343,14 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_try(try_node)
 
+    def test_guidelines_link_active(self):
+        url = "https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info"
+        config = Configuration()
+        client = PipelineClient(url, config=config)
+        request = client.get(url)
+        response = client._pipeline.run(request)
+        assert response.http_response.status_code == 200
+
 
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355

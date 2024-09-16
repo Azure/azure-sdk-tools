@@ -2839,9 +2839,10 @@ class DoNotLogExceptions(BaseChecker):
     name = "do-not-log-exceptions"
     priority = -1
     msgs = {"C4766": (
-            "Do not log exceptions.",
+            "Do not log exceptions. See Details:",
+            "https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info"
             "do-not-log-exceptions",
-            "Do not log exceptions, it can reveal sensitive information",
+            "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
             ),
             }
 

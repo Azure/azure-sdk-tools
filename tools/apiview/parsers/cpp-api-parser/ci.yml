@@ -119,15 +119,26 @@ stages:
                   - checkout: none
                   - download: current
                     artifact: release-artifacts
-                  - task: UniversalPackages@0
+                  - task: AzurePowerShell@5
                     displayName: Publish Public ApiView Parser
                     inputs:
-                      command: publish
-                      publishDirectory: $(Pipeline.Workspace)/release-artifacts
-                      vstsFeedPublish: 'public/azure-sdk-for-cpp'
-                      vstsFeedPackagePublish: 'parseazuresdkcpp'
-                      versionOption: minor
-                      packagePublishDescription: 'Azure C++ SDK API View Parser.'
+                      azureSubscription: 'Azure SDK Artifacts'
+                      ScriptType: 'InlineScript'
+                      azurePowerShellVersion: LatestVersion 
+                      pwsh: true
+                      Inline: |
+                        azcopy copy "$(Pipeline.Workspace)/release-artifacts" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp" --recursive
+                    env:
+                      AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
+                  # - task: UniversalPackages@0
+                  #   displayName: Publish Public ApiView Parser
+                  #   inputs:
+                  #     command: publish
+                  #     publishDirectory: $(Pipeline.Workspace)/release-artifacts
+                  #     vstsFeedPublish: 'public/azure-sdk-for-cpp'
+                  #     vstsFeedPackagePublish: 'parseazuresdkcpp'
+                  #     versionOption: minor
+                  #     packagePublishDescription: 'Azure C++ SDK API View Parser.'
                   # - task: UniversalPackages@0
                   #   displayName: Publish Private ApiView Parser
                   #   inputs:

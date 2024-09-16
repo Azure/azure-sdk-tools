@@ -40,10 +40,23 @@ def test_logging_str_exception_branches():
         add = 1 + 2
     except Exception as ex:
         if ex.code == "Retryable":
-            logging.warning(str(ex))
+            logging.error(str(ex))
             return True
         elif Exception != BaseException:
-            logging.error(repr(ex))
+            logging.warning(repr(ex))
             return False
         else:
-            logging.error(logging.info(str(ex)))  # @
+            logging.info(str(ex))  # @
+
+
+# test_other_logging_fails
+def test_other_logging_fails():
+    try:  # @
+        add = 1 + 2
+    except Exception as ex:
+        if ex.code == "Retryable":
+            logging.error("Something went wrong: {ex}. Try again")
+            return True
+        else:
+            logging.warning(ex)
+            return False

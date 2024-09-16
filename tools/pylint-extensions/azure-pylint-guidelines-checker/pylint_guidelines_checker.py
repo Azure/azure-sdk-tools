@@ -2853,7 +2853,7 @@ class DoNotLogExceptions(BaseChecker):
         except_block = node.handlers
         # Iterate through each exception block
         for nod in except_block:
-            # Get the nodes in each block (e.g. nodes Expr and Raise)
+            # Get the nodes in each block
             exception_name = nod.name.name
             self.check_for_logging(nod.body, exception_name)
 
@@ -2862,17 +2862,21 @@ class DoNotLogExceptions(BaseChecker):
             levels.
         """
         levels_matches = [".warning", ".error", ".info", ".debug"]
-        function_matches = ["str", "repr"]
         for j in node:
             if isinstance(j, astroid.Expr):
                 expression = j.as_string().lower()
-                if any(x in expression for x in levels_matches) and any(x in expression for x in function_matches)\
-                        and exception_name in expression:
-                    self.add_message(
-                        msgid=f"do-not-log-exceptions",
-                        node=j,
-                        confidence=None,
-                    )
+                if any(x in expression for x in levels_matches):
+                    delimiters = [".", "(", "{", "}", ")", "\""]
+                    for delimiter in delimiters:
+                        expression = " ".join(expression.split(delimiter))
+                    expression1 = expression.split()
+                    # check for presence of exception name
+                    if exception_name in expression1:
+                        self.add_message(
+                            msgid=f"do-not-log-exceptions",
+                            node=j,
+                            confidence=None,
+                        )
             if isinstance(j, astroid.If):
                 self.check_for_logging(j.body, exception_name)
                 # Check any 'elif' or 'else' branches

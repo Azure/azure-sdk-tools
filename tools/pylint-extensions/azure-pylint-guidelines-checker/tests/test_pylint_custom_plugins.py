@@ -5297,7 +5297,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=error_node,
                 col_offset=12,
                 end_line=43,
-                end_col_offset=36,
+                end_col_offset=34,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5305,7 +5305,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=warning_node,
                 col_offset=12,
                 end_line=46,
-                end_col_offset=35,
+                end_col_offset=37,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5313,7 +5313,32 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=info_node,
                 col_offset=12,
                 end_line=49,
-                end_col_offset=48,
+                end_col_offset=33,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_other_logging_fails(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[5].body[0]
+        error_node = setup.body[5].body[0].handlers[0].body[0].body[0]
+        warning_node = setup.body[5].body[0].handlers[0].body[0].orelse[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=58,
+                node=error_node,
+                col_offset=12,
+                end_line=58,
+                end_col_offset=66,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=61,
+                node=warning_node,
+                col_offset=12,
+                end_line=61,
+                end_col_offset=31,
             )
         ):
             self.checker.visit_try(try_node)
@@ -5321,6 +5346,5 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
 
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
-# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
 # [Pylint] Investigate pylint rule around missing dependency #3231
 

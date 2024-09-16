@@ -14,6 +14,9 @@ import { SpawnOptions, spawn } from 'child_process';
 // so do NOT change the emitter
 const emitterName = '@azure-tools/typespec-ts';
 
+// 1 hour in milliseconds unit
+export const defaultChildProcessTimeout = 60 * 60 * 1000;
+
 // TODO: remove it after we generate and use options by ourselves
 const messageToTspConfigSample =
     'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
@@ -119,8 +122,7 @@ export function fixChangelogFormat(content: string) {
     return content;
 }
 
-export function tryReadNpmPackageChangelog(packageFolderPath: string): string {
-    const changelogPath = path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md');
+export function tryReadNpmPackageChangelog(changelogPath: string): string {
     try {
         if (!fs.existsSync(changelogPath)) {
             logger.warn(`NPM package's changelog '${changelogPath}' does not exist.`);

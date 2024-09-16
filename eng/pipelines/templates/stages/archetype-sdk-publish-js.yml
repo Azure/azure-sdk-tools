@@ -16,6 +16,7 @@ parameters:
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
+    GenerateBaselines: true
     stages:
       - ${{ parameters.BuildStages }}
 

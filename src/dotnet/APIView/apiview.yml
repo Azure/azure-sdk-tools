@@ -41,6 +41,7 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
+    GenerateBaselines: true
     stages:
       - stage: 'Build'
         displayName: 'Build and Test'
@@ -98,7 +99,7 @@ extends:
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
-          
+
               - script: |
                   npm install -g @angular/cli@16.1.8
                 workingDirectory: $(SPAClientProjectDirectory)
@@ -165,7 +166,7 @@ extends:
                   go build
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
-              
+
               - task: UseDotNet@2
                 inputs:
                   packageType: 'sdk'
@@ -266,7 +267,7 @@ extends:
               #- script: |
               #    go test ./... -v
               #  workingDirectory: $(GoParserPackagePath)
-              #  displayName: 'Test Go parser'              
+              #  displayName: 'Test Go parser'
 
               #- task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
               #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
@@ -278,11 +279,10 @@ extends:
               #    filefilters: +$(Build.SourcesDirectory)\src\dotnet\APIView\**
               #    verbosity: Verbose
 
-              #- task: PublishCodeCoverageResults@1
+              #- task: PublishCodeCoverageResults@2
               #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
               #  displayName: Publish Code Coverage Reports
               #  inputs:
-              #    codeCoverageTool: Cobertura
               #    summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
 
               #- script: >-
@@ -389,7 +389,7 @@ extends:
                     call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
-      
+
       - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI

@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { Subject, take, takeUntil } from 'rxjs';
-import { getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision, ApiTreeBuilderData } from 'src/app/_models/revision';
@@ -436,6 +436,14 @@ export class ReviewPageComponent implements OnInit {
         this.updateStateBasedOnQueryParams(currentParams);
       }
     });
+  }
+
+  handleCommentThreadNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+    this.codePanelComponent.navigateToCommentThread(direction);
+  }
+
+  handleDiffNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
+    this.codePanelComponent.navigateToDiffNode(direction);
   }
 
   handleHasActiveConversationEmitter(value: boolean) {

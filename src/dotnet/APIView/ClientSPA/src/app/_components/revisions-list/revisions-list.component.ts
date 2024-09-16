@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MenuItem, SortEvent } from 'primeng/api';
+import { MenuItem, MessageService, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { Pagination } from 'src/app/_models/pagination';
@@ -75,7 +75,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService,
     private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
-    private router: Router) { }
+    private router: Router, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.createRevisionFilters();
@@ -483,6 +483,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         },
         error: (error: any) => {
           this.creatingRevision = false;
+          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to create new API Revision', key: 'bl', life: 3000 });
         }
       });
     }

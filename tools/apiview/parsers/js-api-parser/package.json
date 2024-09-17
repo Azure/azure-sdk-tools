@@ -7,13 +7,13 @@
     "registry": "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/"
   },
   "dependencies": {
-    "@microsoft/api-extractor-model": "^7.28.2",
-    "js-tokens": "^8.0.0"
+    "@microsoft/api-extractor-model": "^7.29.8",
+    "js-tokens": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",
     "ts-node": "^10.0.0",
-    "typescript": "~5.2.0"
+    "typescript": "~5.6.2"
   },
   "scripts": {
     "build": "tsc -p ."

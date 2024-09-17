@@ -11,7 +11,6 @@ import { UiScrollModule  } from 'ngx-ui-scroll' ;
 import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-options-section/page-options-section.component';
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { SharedAppModule } from './shared/shared-app.module';
 import { ReviewPageLayoutModule } from './shared/review-page-layout.module';
 
 const routes: Routes = [

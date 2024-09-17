@@ -1,6 +1,8 @@
 import { ActivatedRoute } from "@angular/router";
 import { SCROLL_TO_NODE_QUERY_PARAM } from "./common-helpers";
 
+export const REVIEW_PAGE_ROUTE_REGEX = "\/[a-z]+?\/[a-zA-Z0-9]+";
+
 export function getQueryParams(route: ActivatedRoute, excludedKeys: string[] = [SCROLL_TO_NODE_QUERY_PARAM]) {
   return route.snapshot.queryParamMap.keys.reduce((params: { [key: string]: any; }, key) => {
     if (!excludedKeys.includes(key)) {

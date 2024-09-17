@@ -1,7 +1,7 @@
 <app-review-page-layout
     [review]="review"
     [sideMenu]="sideMenu">
-    <div class="conversation-panel border rounded p-3">
+    <div class="conversation-panel overflow-auto border rounded py-3">
         <app-conversations
             [apiRevisions]="apiRevisions"
             [comments]="comments"

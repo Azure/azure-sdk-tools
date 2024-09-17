@@ -498,8 +498,8 @@ export class ReviewPageComponent implements OnInit {
         break;
       }
     }
-  } 
-
+  }
+  
   ngOnDestroy() {
     this.workerService.terminateWorker();
     this.destroy$.next();

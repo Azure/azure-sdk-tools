@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MenuItem, MessageService, SortEvent } from 'primeng/api';
@@ -22,6 +22,8 @@ import { environment } from 'src/environments/environment';
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
   @Input() revisionSidePanel : boolean = false;
+
+  @Output() apiRevisionsEmitter : EventEmitter<APIRevision[]> = new EventEmitter<APIRevision[]>();
 
   @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
 
@@ -152,7 +154,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
             this.pagination = response.pagination;
             this.totalNumberOfRevisions = this.pagination?.totalCount!;
           }
-
+          this.apiRevisionsEmitter.emit(this.revisions);
           this.setCreateRevisionLanguageBasedOnReview();
         }
       }

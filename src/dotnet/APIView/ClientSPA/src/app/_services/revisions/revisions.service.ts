@@ -6,6 +6,7 @@ import { Observable, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/_models/pagination';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
+import { REVIEW_PAGE_ROUTE_REGEX } from 'src/app/_helpers/router-helpers';
 
 
 @Injectable({
@@ -127,7 +128,7 @@ export class RevisionsService {
   }
 
   openDiffOfAPIRevisions(activeAPIRevision: APIRevision, diffAPIRevision: APIRevision, currentRoute: string) {
-    const target = (currentRoute.includes("review")) ? '_self' : '_blank';
+    const target = (currentRoute.match(REVIEW_PAGE_ROUTE_REGEX)) ? '_self' : '_blank';
 
     if (activeAPIRevision.files[0].parserStyle === "tree") {
       window.open(`/review/${activeAPIRevision.reviewId}?activeApiRevisionId=${activeAPIRevision.id}&diffApiRevisionId=${diffAPIRevision.id}`, target);
@@ -137,7 +138,8 @@ export class RevisionsService {
   }
 
   openAPIRevisionPage(apiRevision: APIRevision, currentRoute: string) {
-    const target = (currentRoute.includes("review")) ? '_self' : '_blank';
+    console.log(currentRoute);
+    const target = (currentRoute.match(REVIEW_PAGE_ROUTE_REGEX)) ? '_self' : '_blank';
 
     if (apiRevision.files[0].parserStyle === "tree") {
       window.open(`/review/${apiRevision.reviewId}?activeApiRevisionId=${apiRevision.id}`, target);

@@ -12,8 +12,8 @@ import { TimelineModule } from 'primeng/timeline';
 import { DividerModule } from 'primeng/divider';
 import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
 import { SharedAppModule } from './shared-app.module';
-import { CommonModule } from '@angular/common';
- 
+import { CommonModule } from '@angular/common'; 
+import { RevisionPageComponent } from 'src/app/_components/revision-page/revision-page.component';
 
 @NgModule({
   declarations: [

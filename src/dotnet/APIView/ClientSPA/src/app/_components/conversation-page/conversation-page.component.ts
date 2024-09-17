@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/common-helpers';
@@ -30,11 +30,15 @@ export class ConversationPageComponent {
   private destroy$ = new Subject<void>();
 
   constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private userProfileService: UserProfileService,
-    private apiRevisionsService: RevisionsService, private commentsService: CommentsService
+    private apiRevisionsService: RevisionsService, private commentsService: CommentsService, private router: Router
   ) {}
 
   ngOnInit() {
-    this.userProfileService.getUserProfile().subscribe();
+    this.userProfileService.getUserProfile().subscribe(
+      (userProfile : any) => {
+        this.userProfile = userProfile;
+      }
+    );
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
     this.createSideMenu();
     this.loadReview(this.reviewId!);
@@ -47,12 +51,12 @@ export class ConversationPageComponent {
       {
         icon: 'bi bi-braces',
         tooltip: 'API',
-        //command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
+        command: () => this.openLatestAPIReivisonForReview()
       },
       {
         icon: 'bi bi-clock-history',
         tooltip: 'Revisions',
-        //command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
+        command: () => this.router.navigate([`/revision/${this.reviewId}`])
       }
     ];
   }
@@ -73,7 +77,7 @@ export class ConversationPageComponent {
         next: (response: any) => {
           this.apiRevisions = response.result;
         }
-      });
+    });
   }
 
   loadComments() {
@@ -82,6 +86,11 @@ export class ConversationPageComponent {
         next: (comments: CommentItemModel[]) => {
           this.comments = comments;
         }
-      });
+    });
+  }
+
+  openLatestAPIReivisonForReview() {
+    const apiRevision = this.apiRevisions.find(x => x.apiRevisionType === "Automatic") ?? this.apiRevisions[0];
+    this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.router.url);
   }
 }

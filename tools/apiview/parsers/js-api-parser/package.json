@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsc -p .",
     "format": "prettier --write ./*.{js,ts}",
-    "lint": "eslint"
+    "lint": "eslint ./*.ts"
   },
   "keywords": [],
   "author": "azure-sdk",

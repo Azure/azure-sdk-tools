@@ -1,6 +1,6 @@
 import { ApiViewTokenKind, IApiViewToken } from "./models";
 
-const jsTokens = require("js-tokens");
+import jsTokens from "js-tokens";
 const ANNOTATION_TOKEN = "@";
 
 export class TokensBuilder {
@@ -170,7 +170,7 @@ export class TokensBuilder {
                 this.indent();
             }
 
-            var tokens: any[] = Array.from(jsTokens(line));
+            const tokens: jsTokens.Token[] = Array.from(jsTokens(line));
             tokens.forEach((token) => {
                 if (this.keywords.indexOf(token.value) > 0) {
                     this.keyword(token.value);

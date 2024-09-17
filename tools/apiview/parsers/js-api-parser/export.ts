@@ -52,8 +52,8 @@ function appendMembers(
         }
     }
 
-    var navigationItem: IApiViewNavItem;
-    var typeKind: string;
+    let navigationItem: IApiViewNavItem;
+    let typeKind: string;
 
     switch (item.kind) {
         case ApiItemKind.Interface:
@@ -116,14 +116,14 @@ function getReleaseTag(
 
 const apiModel = new ApiModel();
 const fileName = process.argv[2];
-var PackageversionString = "";
+let packageVersionString = "";
 if (fileName.includes("_")) {
-    PackageversionString = fileName.split("_").pop().replace(".api.json", "");
+    packageVersionString = fileName.split("_").pop().replace(".api.json", "");
 }
 apiModel.loadPackage(fileName);
 
-var navigation: IApiViewNavItem[] = [];
-var builder = new TokensBuilder();
+const navigation: IApiViewNavItem[] = [];
+const builder = new TokensBuilder();
 
 for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
@@ -133,18 +133,18 @@ for (const modelPackage of apiModel.packages) {
     }
 }
 
-var name = apiModel.packages[0].name;
-if (PackageversionString != "") {
-    name += "(" + PackageversionString + ")";
+let name = apiModel.packages[0].name;
+if (packageVersionString != "") {
+    name += "(" + packageVersionString + ")";
 }
-var apiViewFile: IApiViewFile = {
+const apiViewFile: IApiViewFile = {
     Name: name,
     Navigation: navigation,
     Tokens: builder.tokens,
     PackageName: apiModel.packages[0].name,
     VersionString: "1.0.8",
     Language: "JavaScript",
-    PackageVersion: PackageversionString,
+    PackageVersion: packageVersionString,
 };
 
 writeFile(process.argv[3], JSON.stringify(apiViewFile), (err) => {

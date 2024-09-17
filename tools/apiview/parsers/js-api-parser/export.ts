@@ -4,39 +4,50 @@ import {
     ApiItemKind,
     ApiDeclaredItem,
     ExcerptTokenKind,
-    ReleaseTag
-  } from '@microsoft/api-extractor-model';
+    ReleaseTag,
+} from "@microsoft/api-extractor-model";
 
-import { writeFile } from 'fs';
+import { writeFile } from "fs";
 
-import { IApiViewFile, IApiViewNavItem } from './models';
-import { TokensBuilder } from './tokensBuilder';
+import { IApiViewFile, IApiViewNavItem } from "./models";
+import { TokensBuilder } from "./tokensBuilder";
 
-function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], item: ApiItem)
-{
+function appendMembers(
+    builder: TokensBuilder,
+    navigation: IApiViewNavItem[],
+    item: ApiItem,
+) {
     builder.lineId(item.canonicalReference.toString());
     builder.indent();
     const releaseTag = getReleaseTag(item);
     const parentReleaseTag = getReleaseTag(item.parent);
-    if(releaseTag && releaseTag !== parentReleaseTag) {
-        if(item.parent.kind === ApiItemKind.EntryPoint) {
+    if (releaseTag && releaseTag !== parentReleaseTag) {
+        if (item.parent.kind === ApiItemKind.EntryPoint) {
             builder.newline();
         }
         builder.annotate(releaseTag);
     }
 
     if (item instanceof ApiDeclaredItem) {
-        if ( item.kind === ApiItemKind.Namespace) {
-            builder.splitAppend(`declare namespace ${item.displayName} `, item.canonicalReference.toString(), item.displayName);
+        if (item.kind === ApiItemKind.Namespace) {
+            builder.splitAppend(
+                `declare namespace ${item.displayName} `,
+                item.canonicalReference.toString(),
+                item.displayName,
+            );
         }
         for (const token of item.excerptTokens) {
-            if (token.kind === ExcerptTokenKind.Reference)
-            {
-                builder.typeReference(token.canonicalReference.toString(), token.text);
-            }
-            else
-            {
-                builder.splitAppend(token.text, item.canonicalReference.toString(), item.displayName);
+            if (token.kind === ExcerptTokenKind.Reference) {
+                builder.typeReference(
+                    token.canonicalReference.toString(),
+                    token.text,
+                );
+            } else {
+                builder.splitAppend(
+                    token.text,
+                    item.canonicalReference.toString(),
+                    item.displayName,
+                );
             }
         }
     }
@@ -44,71 +55,56 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
     var navigationItem: IApiViewNavItem;
     var typeKind: string;
 
-    switch (item.kind)
-    {
+    switch (item.kind) {
         case ApiItemKind.Interface:
         case ApiItemKind.Class:
         case ApiItemKind.Namespace:
         case ApiItemKind.Enum:
             typeKind = item.kind.toLowerCase();
-            break
+            break;
         case ApiItemKind.TypeAlias:
             typeKind = "struct";
-            break
+            break;
     }
 
-    if (typeKind)
-    {
+    if (typeKind) {
         navigationItem = {
             Text: item.displayName,
             NavigationId: item.canonicalReference.toString(),
             Tags: {
-                "TypeKind": typeKind
+                TypeKind: typeKind,
             },
-            ChildItems: []
+            ChildItems: [],
         };
         navigation.push(navigationItem);
     }
 
-    if (item.kind === ApiItemKind.Interface ||
+    if (
+        item.kind === ApiItemKind.Interface ||
         item.kind === ApiItemKind.Class ||
         item.kind === ApiItemKind.Namespace ||
-        item.kind === ApiItemKind.Enum)
-    {
-        if (item.members.length > 0)
-        {
-            builder
-                .punct("{")
-                .newline()
-                .incIndent()
+        item.kind === ApiItemKind.Enum
+    ) {
+        if (item.members.length > 0) {
+            builder.punct("{").newline().incIndent();
 
             for (const member of item.members) {
-                appendMembers(builder,navigationItem.ChildItems, member);
+                appendMembers(builder, navigationItem.ChildItems, member);
             }
 
-            builder
-                .decIndent()
-                .indent()
-                .punct("}")
-                .newline();
+            builder.decIndent().indent().punct("}").newline();
+        } else {
+            builder.punct("{").space().punct("}").newline();
         }
-        else
-        {
-            builder
-                .punct("{")
-                .space()
-                .punct("}")
-                .newline();
-        }
-    }
-    else
-    {
+    } else {
         builder.newline();
     }
 }
 
-function getReleaseTag(item: ApiItem & {releaseTag?: ReleaseTag}): "alpha" | "beta" | undefined {
-    switch(item.releaseTag) {
+function getReleaseTag(
+    item: ApiItem & { releaseTag?: ReleaseTag },
+): "alpha" | "beta" | undefined {
+    switch (item.releaseTag) {
         case ReleaseTag.Beta:
             return "beta";
         case ReleaseTag.Alpha:
@@ -121,8 +117,7 @@ function getReleaseTag(item: ApiItem & {releaseTag?: ReleaseTag}): "alpha" | "be
 const apiModel = new ApiModel();
 const fileName = process.argv[2];
 var PackageversionString = "";
-if (fileName.includes("_"))
-{
+if (fileName.includes("_")) {
     PackageversionString = fileName.split("_").pop().replace(".api.json", "");
 }
 apiModel.loadPackage(fileName);
@@ -139,9 +134,8 @@ for (const modelPackage of apiModel.packages) {
 }
 
 var name = apiModel.packages[0].name;
-if (PackageversionString != "")
-{
-    name += "(" +PackageversionString + ")";
+if (PackageversionString != "") {
+    name += "(" + PackageversionString + ")";
 }
 var apiViewFile: IApiViewFile = {
     Name: name,
@@ -150,12 +144,12 @@ var apiViewFile: IApiViewFile = {
     PackageName: apiModel.packages[0].name,
     VersionString: "1.0.8",
     Language: "JavaScript",
-    PackageVersion: PackageversionString
-}
+    PackageVersion: PackageversionString,
+};
 
-writeFile(process.argv[3], JSON.stringify(apiViewFile), err => {
+writeFile(process.argv[3], JSON.stringify(apiViewFile), (err) => {
     if (err) {
         console.error(err);
         return;
-    };
-})
+    }
+});

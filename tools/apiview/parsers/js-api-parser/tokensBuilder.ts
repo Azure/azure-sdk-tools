@@ -1,11 +1,9 @@
-
-import {ApiViewTokenKind, IApiViewToken} from './models';
+import { ApiViewTokenKind, IApiViewToken } from "./models";
 
 const jsTokens = require("js-tokens");
 const ANNOTATION_TOKEN = "@";
 
-export class TokensBuilder
-{
+export class TokensBuilder {
     tokens: IApiViewToken[] = [];
     indentString: string = "";
     keywords: string[] = [
@@ -71,7 +69,8 @@ export class TokensBuilder
         "from",
         "of",
         "keyof",
-        "readonly"];
+        "readonly",
+    ];
 
     annotate(value: string): TokensBuilder {
         this.tokens.push({
@@ -79,120 +78,103 @@ export class TokensBuilder
             Value: `${ANNOTATION_TOKEN}${value}`,
         });
 
-        this.newline().indent()
+        this.newline().indent();
         return this;
     }
 
-    indent(): TokensBuilder
-    {
+    indent(): TokensBuilder {
         this.tokens.push({
             Kind: ApiViewTokenKind.Whitespace,
-            Value: this.indentString
+            Value: this.indentString,
         });
         return this;
     }
 
-    incIndent(): TokensBuilder
-    {
-        this.indentString = ' '.repeat(this.indentString.length + 4);
+    incIndent(): TokensBuilder {
+        this.indentString = " ".repeat(this.indentString.length + 4);
         return this;
     }
 
-    decIndent(): TokensBuilder
-    {
-        this.indentString = ' '.repeat(this.indentString.length - 4);
+    decIndent(): TokensBuilder {
+        this.indentString = " ".repeat(this.indentString.length - 4);
         return this;
     }
 
-    newline(): TokensBuilder
-    {
+    newline(): TokensBuilder {
         this.tokens.push({
-            Kind: ApiViewTokenKind.Newline
+            Kind: ApiViewTokenKind.Newline,
         });
         return this;
     }
 
-    lineId(id: string): TokensBuilder
-    {
+    lineId(id: string): TokensBuilder {
         this.tokens.push({
             Kind: ApiViewTokenKind.LineIdMarker,
-            DefinitionId: id
+            DefinitionId: id,
         });
         return this;
     }
 
-    typeReference(id: string, name: string): TokensBuilder
-    {
+    typeReference(id: string, name: string): TokensBuilder {
         this.tokens.push({
             Kind: ApiViewTokenKind.TypeName,
             NavigateToId: id,
-            Value: name
+            Value: name,
         });
         return this;
     }
 
-    space(s: string = " "): TokensBuilder
-    {
+    space(s: string = " "): TokensBuilder {
         this.tokens.push({
             Kind: ApiViewTokenKind.Whitespace,
-            Value: s
+            Value: s,
         });
         return this;
     }
 
-    punct(s: string): TokensBuilder
-    {
+    punct(s: string): TokensBuilder {
         this.tokens.push({
             Kind: ApiViewTokenKind.Punctuation,
-            Value: s
+            Value: s,
         });
         return this;
     }
 
-    string(s: string): TokensBuilder
-    {
+    string(s: string): TokensBuilder {
         this.tokens.push({
             Kind: ApiViewTokenKind.StringLiteral,
-            Value: s
+            Value: s,
         });
         return this;
     }
 
-    text(s: string): TokensBuilder
-    {
+    text(s: string): TokensBuilder {
         this.tokens.push({
             Kind: ApiViewTokenKind.Text,
-            Value: s
+            Value: s,
         });
         return this;
     }
 
-    keyword(s: string): TokensBuilder
-    {
+    keyword(s: string): TokensBuilder {
         this.tokens.push({
             Kind: ApiViewTokenKind.Keyword,
-            Value: s
+            Value: s,
         });
         return this;
     }
 
-    splitAppend(s: string, currentTypeId: string, currentTypeName: string)
-    {
-        s.split("\n").forEach((line, index, array)  => {
-            if (index > 0)
-            {
+    splitAppend(s: string, currentTypeId: string, currentTypeName: string) {
+        s.split("\n").forEach((line, index, array) => {
+            if (index > 0) {
                 this.indent();
             }
 
             var tokens: any[] = Array.from(jsTokens(line));
-            tokens.forEach(token =>
-            {
-                if (this.keywords.indexOf(token.value) > 0)
-                {
+            tokens.forEach((token) => {
+                if (this.keywords.indexOf(token.value) > 0) {
                     this.keyword(token.value);
-                }
-                else if (token.value === currentTypeName)
-                {
+                } else if (token.value === currentTypeName) {
                     if (currentTypeId.match(/.*:member(\(\d+\))*$/)) {
                         this.tokens.push({
                             Kind: ApiViewTokenKind.MemberName,
@@ -206,27 +188,18 @@ export class TokensBuilder
                             Value: token.value,
                         });
                     }
-                }
-                else if (token.type === "StringLiteral")
-                {
+                } else if (token.type === "StringLiteral") {
                     this.string(token.value);
-                }
-                else if (token.type === "Punctuator")
-                {
+                } else if (token.type === "Punctuator") {
                     this.punct(token.value);
-                }
-                else if (token.type === "WhiteSpace")
-                {
+                } else if (token.type === "WhiteSpace") {
                     this.space(token.value);
-                }
-                else
-                {
+                } else {
                     this.text(token.value);
                 }
             });
 
-            if (index < array.length - 1)
-            {
+            if (index < array.length - 1) {
                 this.newline();
             }
         });

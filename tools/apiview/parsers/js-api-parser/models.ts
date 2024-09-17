@@ -1,4 +1,3 @@
-
 export declare const enum ApiViewTokenKind {
     Text = 0,
     Newline = 1,
@@ -8,7 +7,7 @@ export declare const enum ApiViewTokenKind {
     LineIdMarker = 5, // use this if there are no visible tokens with ID on the line but you still want to be able to leave a comment for it
     TypeName = 6,
     MemberName = 7,
-    StringLiteral = 8
+    StringLiteral = 8,
 }
 
 export declare interface IApiViewFile {

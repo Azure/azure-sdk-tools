@@ -8,21 +8,21 @@ from models import GoExample
 class TestGoVet(unittest.TestCase):
 
     def test_example(self):
-        code = '''package main
+        code = """package main
 import "fmt"
 func main() {
     fmt.Println("hello world")
 }
-'''
+"""
 
-        tmp_path = path.abspath('.')
-        go_examples = [GoExample('code', '', code)]
-        go_vet = GoVet(tmp_path, 'rsc.io/quote@v1.5.2', '', go_examples)
+        tmp_path = path.abspath(".")
+        go_examples = [GoExample("code", "", code)]
+        go_vet = GoVet(tmp_path, "rsc.io/quote@v1.5.2", "", go_examples)
         result = go_vet.vet()
         self.assertTrue(result.succeeded)
 
     def test_package_v2(self):
-        code = r'''package armcompute_test
+        code = r"""package armcompute_test
 import (
 	"context"
 	"log"
@@ -52,9 +52,9 @@ func ExampleDisksClient_BeginRevokeAccess() {
 		log.Fatalf("failed to pull the result: %v", err)
 	}
 }
-'''
+"""
 
-        go_mod = r'''module github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v2
+        go_mod = r"""module github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v2
 
 go 1.18
 
@@ -85,11 +85,15 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
-'''
+"""
 
-        tmp_path = path.abspath('.')
-        go_examples = [GoExample('code', '', code)]
-        go_vet = GoVet(tmp_path, 'github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v2@v2.0.0',
-                       go_mod, go_examples)
+        tmp_path = path.abspath(".")
+        go_examples = [GoExample("code", "", code)]
+        go_vet = GoVet(
+            tmp_path,
+            "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v2@v2.0.0",
+            go_mod,
+            go_examples,
+        )
         result = go_vet.vet()
         self.assertTrue(result.succeeded)

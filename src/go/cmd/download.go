@@ -139,13 +139,14 @@ func mustEscape(modPath string) string {
 // downloadDir creates a directory to store downloaded module zips and source.
 // Callers are responsible for removing the directory when they're done with it.
 func downloadDir() (string, error) {
-	root, err := os.UserHomeDir()
+	root := os.TempDir()
+	err := os.MkdirAll(root, 0700)
 	if err != nil {
-		root = os.TempDir()
+		return "", fmt.Errorf("failed to create root directory %q for downloads: %w", root, err)
 	}
 	d, err := os.MkdirTemp(root, "apiviewgo")
 	if err != nil {
-		err = fmt.Errorf("failed to create download directory: %w", err)
+		err = fmt.Errorf("failed to create download directory %q: %w", d, err)
 	}
 	return d, err
 }

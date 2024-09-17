@@ -86,4 +86,20 @@ describe('ReviewPageOptionsComponent', () => {
       expect(message.textContent).toEqual("First Release Approval Pending");
     });
   });
+
+  describe('Page Option Values', () => {
+    it('Should set Page Option Defaults when UserProfile is undefined', () => {
+      component.userProfile = undefined;
+      component.ngOnInit();
+      expect(component.userProfile).toBeUndefined();
+      expect(component.showCommentsSwitch).toEqual(true);
+      expect(component.showSystemCommentsSwitch).toEqual(true);
+      expect(component.showDocumentationSwitch).toEqual(true);
+      expect(component.showHiddenAPISwitch).toEqual(false);
+      expect(component.showLeftNavigationSwitch).toEqual(true);
+      expect(component.markedAsViewSwitch).toEqual(false);
+      expect(component.showLineNumbersSwitch).toEqual(true);
+      expect(component.disableCodeLinesLazyLoading).toEqual(false);
+    })
+  });
 });

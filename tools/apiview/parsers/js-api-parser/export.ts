@@ -142,7 +142,7 @@ const apiViewFile: IApiViewFile = {
     Navigation: navigation,
     Tokens: builder.tokens,
     PackageName: apiModel.packages[0].name,
-    VersionString: "1.0.8",
+    VersionString: "2.0.0",
     Language: "JavaScript",
     PackageVersion: packageVersionString,
 };

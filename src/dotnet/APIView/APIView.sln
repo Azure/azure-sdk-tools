@@ -23,7 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpAPIParserTests", "..\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestReferenceWithInternalsVisibleTo", "..\Azure.ClientSdk.Analyzers\TestReferenceWithInternalsVisibleTo\TestReferenceWithInternalsVisibleTo.csproj", "{0FE36A2D-EB25-4119-A7DA-2605BB2516C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIViewJsonValidator", "APIViewJsonValidator\APIViewJsonValidator.csproj", "{424B9F9A-1518-40C3-B7D3-88B53A038A23}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIViewJsonUtility", "APIViewJsonValidator\APIViewJsonUtility.csproj", "{424B9F9A-1518-40C3-B7D3-88B53A038A23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

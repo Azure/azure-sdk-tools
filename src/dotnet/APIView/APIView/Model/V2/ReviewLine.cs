@@ -56,6 +56,10 @@ namespace APIView.Model.V2
         [JsonIgnore]
         public bool Processed { get; set; } = false;
 
+        [JsonIgnore]
+        public int Indent {  get; set; }
+        [JsonIgnore]
+        public ReviewLine parentLine { get; set; }
         public void AddToken(ReviewToken token)
         {
             Tokens.Add(token);

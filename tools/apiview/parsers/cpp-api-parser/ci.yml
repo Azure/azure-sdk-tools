@@ -127,7 +127,7 @@ stages:
                       azurePowerShellVersion: LatestVersion 
                       pwsh: true
                       Inline: |
-                        azcopy copy "$(Pipeline.Workspace)/release-artifacts" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp" --recursive
+                        azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp" --recursive
                     env:
                       AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
                   # - task: UniversalPackages@0

@@ -95,11 +95,5 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                 } while(!string.IsNullOrEmpty(continuationToken));
             }
         }
-
-        protected override Task ProcessExceptionAsync(Exception ex)
-        {
-            this.logger.LogError(ex, "Error processing missing builds");
-            return Task.CompletedTask;
-        }
     }
 }

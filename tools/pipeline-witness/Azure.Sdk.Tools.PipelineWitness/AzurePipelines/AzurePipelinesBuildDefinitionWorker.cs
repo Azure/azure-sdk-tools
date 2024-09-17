@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
@@ -37,12 +36,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             {
                 await this.runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
             }
-        }
-
-        protected override Task ProcessExceptionAsync(Exception ex)
-        {
-            this.logger.LogError(ex, "Error processing build definitions");
-            return Task.CompletedTask;
         }
     }
 }

@@ -1,4 +1,4 @@
-# Test file for InvalidUseOfOverload checker
+# Test file for InvalidUseOfOverload checker - testing what mypy doesn't pick up
 
 from typing import Awaitable, overload, Union
 

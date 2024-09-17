@@ -2773,7 +2773,8 @@ class InvalidUseOfOverload(BaseChecker):
 
         # Obtain a list of all functions and function names
         functions = []
-        if klass is not None:
+        try:
+            klass.body
             for item in klass.body:
                 if hasattr(item, 'name'):
                     functions.append(item)
@@ -2801,6 +2802,9 @@ class InvalidUseOfOverload(BaseChecker):
                                     node=node,
                                     confidence=None,
                                 )
+        except:
+            pass
+
 
     def is_function_async(self, node):
         """Check if a function is async"""
@@ -2814,8 +2818,6 @@ class InvalidUseOfOverload(BaseChecker):
                     return True
             except:
                 return False
-
-
 
 
 # [Pylint] Custom Linter check for Exception Logging #3227

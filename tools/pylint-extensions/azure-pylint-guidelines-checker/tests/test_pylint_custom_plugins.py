@@ -4851,26 +4851,25 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
 
 
     def test_invalid_use_overload(self):
-        file = open(
-            os.path.join(
-                TEST_FOLDER, "test_files", "invalid_use_of_overload_violation.py"
+        violation_viles = ["_1", "_2"]
+        for violation in violation_viles:
+
+            file = open(
+                os.path.join(
+                    TEST_FOLDER, "test_files", "invalid_use_of_overload_violation"+violation+".py"
+                )
             )
-        )
-        node = astroid.parse(file.read())
-        file.close()
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="invalid-use-of-overload",
-                line=0,
-                node=node,
-                col_offset=0,
-            )
-        ):
-            self.checker.visit_call(node)
-
-
-
-
+            node = astroid.parse(file.read())
+            file.close()
+            with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="invalid-use-of-overload",
+                    line=0,
+                    node=node,
+                    col_offset=0,
+                ),
+            ):
+                self.checker.visit_call(node)
 
 
 # [Pylint] Custom Linter check for Exception Logging #3227

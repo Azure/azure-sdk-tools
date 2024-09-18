@@ -147,12 +147,12 @@ namespace ApiView
         /// Generates a complete text representation of API surface to help generating the content.
         /// One use case of this function will be to support download request of entire API review surface.
         /// </summary>
-        public string GetApiText()
+        public string GetApiText(bool skipDocs = true)
         {
             StringBuilder sb = new();
             foreach (var line in ReviewLines)
             {
-                line.AppendApiTextToBuilder(sb, 0, true, GetIndentationForLanguage(Language));
+                line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language));
             }
             return sb.ToString();
         }
@@ -179,6 +179,7 @@ namespace ApiView
             bool skipDiff = false;
             bool isDeprecated = false;
             bool skipIndent = false;
+            string className = "";
             //Process all navigation items in old model to generate a map
             GetNavigationMap(navigationItems, Navigation);
 
@@ -205,7 +206,10 @@ namespace ApiView
                     case CodeFileTokenKind.HiddenApiRangeEnd:
                         isHidden = false; break;
                     case CodeFileTokenKind.Keyword:
-                        token = ReviewToken.CreateKeywordToken(oldToken.Value, false); 
+                        token = ReviewToken.CreateKeywordToken(oldToken.Value, false);
+                        var keywordValue = oldToken.Value.ToLower();
+                        if (keywordValue == "class" || keywordValue == "enum" || keywordValue == "struct" || keywordValue == "interface" || keywordValue == "type" || keywordValue == "namespace")
+                            className = keywordValue;
                         break;
                     case CodeFileTokenKind.Comment:
                         token = ReviewToken.CreateCommentToken(oldToken.Value, false); 
@@ -218,9 +222,9 @@ namespace ApiView
                         break;
                     case CodeFileTokenKind.TypeName:
                         token = ReviewToken.CreateTypeNameToken(oldToken.Value, false);
-                        //Set Navigation display name
-                        if (!string.IsNullOrEmpty(oldToken.DefinitionId) && navigationItems.ContainsKey(oldToken.DefinitionId))
-                            token.NavigationDisplayName = navigationItems[oldToken.DefinitionId];
+                        if (currentLineTokens.Any(t => t.Kind == TokenKind.Keyword && t.Value.ToLower() == className))
+                            token.RenderClasses.Add(className);
+                        className = "";
                         break;
                     case CodeFileTokenKind.MemberName:
                         token = ReviewToken.CreateMemberNameToken(oldToken.Value, false); 

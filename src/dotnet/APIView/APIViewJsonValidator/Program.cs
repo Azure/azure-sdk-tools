@@ -73,7 +73,7 @@ public static class Program
     private static async Task GenerateReviewTextFromJson(Stream stream, string outputFilePath)
     {
         var codeFile = await CodeFile.DeserializeAsync(stream, false, true);
-        string apiOutput = codeFile.GetApiText();
+        string apiOutput = codeFile.GetApiText(false);
         await File.WriteAllTextAsync(outputFilePath, apiOutput);
     }
 
@@ -94,7 +94,6 @@ public static class Program
         {
             codeFile.ConvertToTreeTokenModel();
             Console.WriteLine("Converted APIView token model to new schema");
-            codeFile.Navigation = null;
             codeFile.Tokens = null;
             using var fileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write);
             await codeFile.SerializeAsync(fileStream);

@@ -105,6 +105,9 @@ namespace APIViewWeb.LeanModels
         public Dictionary<string, List<CodePanelRowData>> ActiveDocumentationMap { get; set; } = new Dictionary<string, List<CodePanelRowData>>();
         [JsonIgnore]
         public Dictionary<string, List<CodePanelRowData>> DiffDocumentationMap { get; set; } = new Dictionary<string, List<CodePanelRowData>>();
+        [JsonIgnore]
+        public List<NavigationTreeNode> NavigationTreeNodesObj { get; set; } = [];
+        public NavigationTreeNode[] NavigationTreeNodes => NavigationTreeNodesObj != null ? NavigationTreeNodesObj.ToArray() : null;
 
         public void AddLineIdNodeHashMapping(string lineId, string nodeId)
         {

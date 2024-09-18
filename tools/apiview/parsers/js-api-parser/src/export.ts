@@ -7,7 +7,7 @@ import {
   ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
-import { writeFile } from "fs/promises";
+import { writeFile } from "node:fs/promises";
 
 import { IApiViewFile, IApiViewNavItem } from "./models";
 import { TokensBuilder } from "./tokensBuilder";
@@ -102,62 +102,66 @@ function getReleaseTag(item: ApiItem & { releaseTag?: ReleaseTag }): "alpha" | "
   }
 }
 
-const apiModel = new ApiModel();
-const fileName = process.argv[2];
-let packageVersionString = "";
-if (fileName.includes("_")) {
-  packageVersionString = fileName.split("_").pop().replace(".api.json", "");
-}
-apiModel.loadPackage(fileName);
+async function main() {
+  const apiModel = new ApiModel();
+  const fileName = process.argv[2];
+  let packageVersionString = "";
+  if (fileName.includes("_")) {
+    packageVersionString = fileName.split("_").pop().replace(".api.json", "");
+  }
+  apiModel.loadPackage(fileName);
 
-const navigation: IApiViewNavItem[] = [];
-const builder = new TokensBuilder();
+  const navigation: IApiViewNavItem[] = [];
+  const builder = new TokensBuilder();
 
-for (const modelPackage of apiModel.packages) {
-  for (const entryPoint of modelPackage.entryPoints) {
-    for (const member of entryPoint.members) {
-      appendMembers(builder, navigation, member);
+  for (const modelPackage of apiModel.packages) {
+    for (const entryPoint of modelPackage.entryPoints) {
+      for (const member of entryPoint.members) {
+        appendMembers(builder, navigation, member);
+      }
     }
   }
-}
 
-let name = apiModel.packages[0].name;
-if (packageVersionString != "") {
-  name += "(" + packageVersionString + ")";
-}
-const apiViewFile: IApiViewFile = {
-  Name: name,
-  Navigation: navigation,
-  Tokens: builder.tokens,
-  PackageName: apiModel.packages[0].name,
-  VersionString: "2.0.0",
-  Language: "JavaScript",
-  PackageVersion: packageVersionString,
-};
+  let name = apiModel.packages[0].name;
+  if (packageVersionString != "") {
+    name += "(" + packageVersionString + ")";
+  }
+  const apiViewFile: IApiViewFile = {
+    Name: name,
+    Navigation: navigation,
+    Tokens: builder.tokens,
+    PackageName: apiModel.packages[0].name,
+    VersionString: "2.0.0",
+    Language: "JavaScript",
+    PackageVersion: packageVersionString,
+  };
 
-const result = JSON.stringify(
-  GenerateApiview({
-    meta: {
-      Name: name,
-      PackageName: apiModel.packages[0].name,
-      PackageVersion: packageVersionString,
-      ParserVersion: "2.0.0",
-      Language: "JavaScript",
-    },
-    packageJson: {
-      dependencies: {},
-    },
-    apiModels: [
-      {
-        subpath: "<default>",
-        api: apiModel,
+  const result = JSON.stringify(
+    GenerateApiview({
+      meta: {
+        Name: name,
+        PackageName: apiModel.packages[0].name,
+        PackageVersion: packageVersionString,
+        ParserVersion: "2.0.0",
+        Language: "JavaScript",
       },
-    ],
-  }),
-);
+      packageJson: {
+        dependencies: {},
+      },
+      apiModels: [
+        {
+          subpath: "<default>",
+          api: apiModel,
+        },
+      ],
+    }),
+  );
 
-writeFile(process.argv[3], JSON.stringify(apiViewFile)).catch(console.error);
-const v2FileName = process.argv[3].endsWith(".json")
-  ? process.argv[3].replace(".json", ".v2.json")
-  : process.argv[3] + ".v2.json";
-writeFile(v2FileName, result).catch(console.error);
+  await writeFile(process.argv[3], JSON.stringify(apiViewFile));
+  const v2FileName = process.argv[3].endsWith(".json")
+    ? process.argv[3].replace(".json", ".v2.json")
+    : process.argv[3] + ".v2.json";
+  await writeFile(v2FileName, result);
+}
+
+main().catch(console.error);

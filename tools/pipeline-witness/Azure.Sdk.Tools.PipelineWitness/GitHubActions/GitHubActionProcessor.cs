@@ -510,7 +510,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
         private async Task<Workflow> GetWorkflowAsync(WorkflowRun run)
         {
-            Workflow workflow = await this.client.Actions.Workflows.Get(run.Repository.Owner.Name, run.Repository.Name, run.WorkflowId);
+            Workflow workflow = await this.client.Actions.Workflows.Get(run.Repository.Owner.Login, run.Repository.Name, run.WorkflowId);
             return workflow;
         }
 

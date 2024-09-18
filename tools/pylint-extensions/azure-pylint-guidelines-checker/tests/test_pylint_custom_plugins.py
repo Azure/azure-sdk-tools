@@ -5262,7 +5262,7 @@ class TestImportTypeChecker(pylint.testutils.CheckerTestCase):
                     args=('BlobServiceClient', 'azure.storage.blob'),
                     col_offset=0,
                     end_line=3,
-                    end_col_offset=43
+                    end_col_offset=41
                 )
         ):
             self.walk(node)

@@ -16,13 +16,16 @@
     "@types/node": "^18.0.0",
     "eslint": "^9.10.0",
     "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.0.0",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.6.0"
   },
   "scripts": {
-    "build": "tsc -p .",
-    "format": "prettier --write ./*.{js,ts}",
+    "build": "npm run clean && tsc -p .",
+    "watch": "tsc -p . -watch",
+    "clean": "rimraf dist/",
+    "format": "prettier --write ./src ./*.{js,mjs,json}",
     "lint": "eslint ./*.ts"
   },
   "keywords": [],

@@ -8,8 +8,7 @@ param webAppName string
 param subnetId string
 param appIdentityPrincipalId string
 param useVnet bool
-
-var kustoScript = loadTextContent('../artifacts/merged.kql')
+param forceUpdateTag string = utcNow()
 
 // Storage Account for output blobs
 resource logsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
@@ -185,8 +184,8 @@ resource kustoScriptInvocation 'Microsoft.Kusto/clusters/databases/scripts@2022-
   name: 'intitializeDatabase'
   parent: kustoCluster::database
   properties: {
-      scriptContent: kustoScript
-      forceUpdateTag: uniqueString(kustoScript)
+      scriptContent: loadTextContent('../artifacts/merged.kql')
+      forceUpdateTag: forceUpdateTag
   }
 }
 

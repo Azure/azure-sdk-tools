@@ -18,7 +18,7 @@ public static class Program
         jsonFilePath.IsRequired = true;
         var outputDir = new Option<DirectoryInfo>("--outputDir", "Path to the output Directory(Optional).");
         var dumpOption = new Option<bool>("--dumpApiText", "Dump the API text to a txt file.");
-        var convertOption = new Option<bool>("--convertToTree", "Convert old APIView token model to new tree token model.");
+        var convertOption = new Option<bool>("--convertToTree", "Convert APIView flat token model into a parent - child token model");
 
         var rootCommand = new RootCommand("Generate API review output from token JSON file to verify the input json file")
         {
@@ -43,7 +43,7 @@ public static class Program
                 {
 
                     var outputFilePath = Path.Combine(outputFileDirectory, jsonFilePath.Name.Replace(".json", ".txt"));
-                    Console.WriteLine($"Dumping API text to {outputFilePath}");
+                    Console.WriteLine($"Writing API text to {outputFilePath}");
                     using (var stream = jsonFilePath.OpenRead())
                     {
                         await GenerateReviewTextFromJson(stream, outputFilePath);
@@ -53,7 +53,7 @@ public static class Program
                 if (convertOption)
                 {
                     var outputFilePath = Path.Combine(outputFileDirectory, jsonFilePath.Name.Replace(".json", "_new.json"));
-                    Console.WriteLine($"Converting old Json API view tokens to new Json model API tokens. New json file: {outputFilePath}");
+                    Console.WriteLine($"Converting previous Json APIView flat tokens to new Json parent - child token model. New file: {outputFilePath}");
                     using (var stream = jsonFilePath.OpenRead())
                     {
                         await ConvertToTreeModel(stream, outputFilePath);
@@ -86,18 +86,18 @@ public static class Program
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Input json is probably not using old token model. Error reading input json file. : {ex.Message}");
+            Console.Error.WriteLine($"Input json is probably not using flat token model. Error reading input json file. : {ex.Message}");
             throw;
         }
 
         if(codeFile != null)
         {
             codeFile.ConvertToTreeTokenModel();
-            Console.WriteLine("Converted APIView token model to new schema");
+            Console.WriteLine("Converted APIView token model to parent - child token model");
             codeFile.Tokens = null;
             using var fileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write);
             await codeFile.SerializeAsync(fileStream);
-            Console.WriteLine($"New APIView json token file generated at {outputFilePath}");
+            Console.WriteLine($"New APIView json parent - child token model file generated at {outputFilePath}");
         }        
     }
 }

@@ -2703,7 +2703,6 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
-
 class DoNotLogErrorsEndUpRaising(BaseChecker):
     """Rule to check that errors that get raised aren't logged"""
 
@@ -2757,24 +2756,24 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                         confidence=None,
                     )
 
+
 class ImportTypeChecker(BaseChecker):
-     """Checker to ensure no type is imported from the same module more than once within the same file,
+    """Checker to ensure no type is imported from the same module more than once within the same file,
     while allowing imports of the same type from different namespaces (e.g., sync and async clients)."""
 
-     name = "import-type-checker"
-     priority = -1
-     msgs = {
-         "C4764": (
-             "Type %s is imported multiple times from the same module: %s",
-             "duplicate-import-type",
-             "Used when a type is imported multiple times from the same module within the same file.",
-            ),
-      }
+    name = "import-type-checker"
+    priority = -1
+    msgs = {
+        "C4764": (
+            "Type %s is imported multiple times from the same module: %s",
+            "duplicate-import-type",
+            "Used when a type is imported multiple times from the same module within the same file.",
+        ),
+    }
 
     def visit_module(self, node):
         """Initialize the dictionary for tracking imports at the start of processing each file."""
         self.imported_entities = {}
-
 
     def visit_importfrom(self, node):
         """Check for duplicate imports from the same module within the same file."""
@@ -2861,7 +2860,6 @@ class NoImportTypingFromTypeCheck(BaseChecker):
             pass
 
 
-
 class DoNotUseLegacyTyping(BaseChecker):
     """ Rule to check that we aren't using legacy typing using comments. """
 
@@ -2883,7 +2881,6 @@ class DoNotUseLegacyTyping(BaseChecker):
                 node=node,
                 confidence=None,
             )
-
 
 
 # if a linter is registered in this function then it will be checked with pylint

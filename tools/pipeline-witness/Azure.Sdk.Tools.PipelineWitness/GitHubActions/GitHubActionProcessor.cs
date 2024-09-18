@@ -44,14 +44,18 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         private readonly BlobContainerClient stepsContainerClient;
         private readonly BlobContainerClient logsContainerClient;
 
-        public GitHubActionProcessor(ILogger<GitHubActionProcessor> logger, BlobServiceClient blobServiceClient, ICredentialStore credentials)
+        public GitHubActionProcessor(ILogger<GitHubActionProcessor> logger, BlobServiceClient blobServiceClient, GitHubClient githubClient)
         {
+            ArgumentNullException.ThrowIfNull(githubClient);
+            ArgumentNullException.ThrowIfNull(blobServiceClient);
+            ArgumentNullException.ThrowIfNull(githubClient);
+
             this.logger = logger;
             this.logsContainerClient = blobServiceClient.GetBlobContainerClient(LogsContainerName);
             this.runsContainerClient = blobServiceClient.GetBlobContainerClient(RunsContainerName);
             this.jobsContainerClient = blobServiceClient.GetBlobContainerClient(JobsContainerName);
             this.stepsContainerClient = blobServiceClient.GetBlobContainerClient(StepsContainerName);
-            this.client = new GitHubClient(new ProductHeaderValue("PipelineWitness", "1.0"), credentials);
+            this.client = githubClient;
         }
 
         public async Task ProcessAsync(string owner, string repository, long runId)

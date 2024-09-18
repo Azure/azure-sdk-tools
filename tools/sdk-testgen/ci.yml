@@ -63,9 +63,8 @@ stages:
             inputs:
               testRunner: JUnit
               testResultsFiles: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/junit.xml
-          - task: PublishCodeCoverageResults@1
+          - task: PublishCodeCoverageResults@2
             inputs:
-              codeCoverageTool: Cobertura
               summaryFileLocation: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage/cobertura-coverage.xml
               reportDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage
 

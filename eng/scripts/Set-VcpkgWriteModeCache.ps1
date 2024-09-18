@@ -1,7 +1,7 @@
 param(
-    [string] $StorageAccountName = 'cppvcpkgcache'
+    [string] $StorageAccountName = 'cppvcpkgcache',
+    [string] $StorageContainerName = 'public-vcpkg-container'
 )
-
 
 ."$PSScriptRoot/../common/scripts/Helpers/PSModule-Helpers.ps1"
 
@@ -31,14 +31,14 @@ $ctx = New-AzStorageContext `
     -UseConnectedAccount
 
 $vcpkgBinarySourceSas = New-AzStorageContainerSASToken `
-    -Name $StorageAccountName `
-    -Permission "rwc" `
+    -Name $StorageContainerName `
+    -Permission "rwcl" `
     -Context $ctx `
-    -ExpiryTime (Get-Date).AddHours(1)
+    -ExpiryTime (Get-Date).AddDays(1) # Set timeout to 1 day as some of these vcpkg builds can take a few hours at least
 
 Write-Host "Ensure redaction of SAS tokens in logs" 
 Write-Host "##vso[task.setvariable variable=VCPKG_BINARY_SAS_TOKEN;issecret=true;]$vcpkgBinarySourceSas"
 
 Write-Host "Setting vcpkg binary cache to read and write"
-Write-Host "##vso[task.setvariable variable=VCPKG_BINARY_SOURCES_SECRET;issecret=true;]clear;x-azblob,https://cppvcpkgcache.blob.core.windows.net/public-vcpkg-container,$vcpkgBinarySourceSas,readwrite"
-Write-Host "##vso[task.setvariable variable=X_VCPKG_ASSET_SOURCES_SECRET;issecret=true;]clear;x-azurl,https://cppvcpkgcache.blob.core.windows.net/public-vcpkg-asset-container/,?$vcpkgBinarySourceSas,readwrite"
+Write-Host "##vso[task.setvariable variable=VCPKG_BINARY_SOURCES_SECRET;issecret=true;]clear;x-azblob,https://cppvcpkgcache.blob.core.windows.net/$StorageContainerName,$vcpkgBinarySourceSas,readwrite"
+Write-Host "##vso[task.setvariable variable=X_VCPKG_ASSET_SOURCES_SECRET;issecret=true;]clear;x-azurl,https://cppvcpkgcache.blob.core.windows.net/$StorageContainerName,$vcpkgBinarySourceSas,readwrite"

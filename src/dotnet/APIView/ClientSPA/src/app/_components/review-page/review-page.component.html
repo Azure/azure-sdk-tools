@@ -58,6 +58,7 @@
                             [hasFatalDiagnostics]="hasFatalDiagnostics"
                             [hasActiveConversation]="hasActiveConversation"
                             [hasHiddenAPIs]="hasHiddenAPIs"
+                            [hasHiddenAPIThatIsDiff]="hasHiddenAPIThatIsDiff"
                             (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
                             (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
                             (showCommentsEmitter)="handleShowCommentsEmitter($event)"
@@ -69,7 +70,9 @@
                             (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
                             (reviewApprovalEmitter)="handleReviewApprovalEmitter($event)"
                             (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
-                            (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"></app-review-page-options>
+                            (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
+                            (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)"
+                            (diffNavaigationEmitter)="handleDiffNavaigationEmitter($event)"></app-review-page-options>
                     </div>
                 </ng-template>
             </p-splitter>

@@ -38,7 +38,8 @@ public static class Program
 
             try
             {
-                var outputFileDirectory = outputDir?.FullName ?? jsonFilePath.Directory.FullName;
+                var outputFileDirectory = outputDir?.FullName ?? jsonFilePath.Directory?.FullName;
+                outputFileDirectory = outputFileDirectory == null? Path.GetTempPath() : outputFileDirectory;
                 if (dumpOption)
                 {
 
@@ -79,25 +80,23 @@ public static class Program
 
     private static async Task ConvertToTreeModel(Stream stream, string outputFilePath)
     {
-        CodeFile codeFile = null;
         try
         {
-            codeFile = await CodeFile.DeserializeAsync(stream, false, false);
+            var codeFile = await CodeFile.DeserializeAsync(stream, false, false);
+            if (codeFile != null)
+            {
+                codeFile.ConvertToTreeTokenModel();
+                Console.WriteLine("Converted APIView token model to parent - child token model");
+                codeFile.Tokens = null;
+                using var fileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write);
+                await codeFile.SerializeAsync(fileStream);
+                Console.WriteLine($"New APIView json parent - child token model file generated at {outputFilePath}");
+            }
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Input json is probably not using flat token model. Error reading input json file. : {ex.Message}");
             throw;
-        }
-
-        if(codeFile != null)
-        {
-            codeFile.ConvertToTreeTokenModel();
-            Console.WriteLine("Converted APIView token model to parent - child token model");
-            codeFile.Tokens = null;
-            using var fileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write);
-            await codeFile.SerializeAsync(fileStream);
-            Console.WriteLine($"New APIView json parent - child token model file generated at {outputFilePath}");
-        }        
+        }               
     }
 }

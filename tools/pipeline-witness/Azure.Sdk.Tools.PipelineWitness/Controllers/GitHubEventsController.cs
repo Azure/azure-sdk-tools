@@ -83,16 +83,27 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
 
             if (action == "completed")
             {
-                var queueMessage = new RunCompleteQueueMessage
+                string owner = eventMessage.GetProperty("repository").GetProperty("owner").GetProperty("login").GetString();
+                string repository = eventMessage.GetProperty("repository").GetProperty("name").GetString();
+                long runId = eventMessage.GetProperty("workflow_run").GetProperty("id").GetInt64();
+
+                if (this.settings.GitHubRepositories.Contains($"{owner}/{repository}", StringComparer.InvariantCultureIgnoreCase))
                 {
-                    Owner = eventMessage.GetProperty("repository").GetProperty("owner").GetProperty("login").GetString(),
-                    Repository = eventMessage.GetProperty("repository").GetProperty("name").GetString(),
-                    RunId = eventMessage.GetProperty("workflow_run").GetProperty("id").GetInt64(),
-                };
-
-                this.logger.LogInformation("Enqueuing GitHubRunCompleteMessage for {Owner}/{Repository} run {RunId}", queueMessage.Owner, queueMessage.Repository, queueMessage.RunId);
-
-                await this.queueClient.SendMessageAsync(JsonSerializer.Serialize(queueMessage));
+                    this.logger.LogInformation("Enqueuing GitHubRunCompleteMessage for {Owner}/{Repository} run {RunId}", owner, repository, runId);
+                    
+                    var queueMessage = new RunCompleteQueueMessage
+                    {
+                        Owner = owner,
+                        Repository = repository,
+                        RunId = runId,
+                    };
+                    
+                    await this.queueClient.SendMessageAsync(JsonSerializer.Serialize(queueMessage));
+                }
+                else
+                {
+                    this.logger.LogInformation("Skipping message for unknown repostory {Owner}/{Repository}", owner, repository);
+                }
             }
 
             return Ok();

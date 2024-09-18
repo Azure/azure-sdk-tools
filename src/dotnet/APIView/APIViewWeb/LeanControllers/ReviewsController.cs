@@ -117,6 +117,7 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
         {
             var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+            await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
         }
 

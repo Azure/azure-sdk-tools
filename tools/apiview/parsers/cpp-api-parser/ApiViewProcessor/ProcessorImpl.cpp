@@ -9,18 +9,12 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <ostream>
 
 using namespace clang;
 using namespace clang::tooling;
 
 using namespace nlohmann;
-
-inline std::string_view stringFromU8string(std::u8string const& str)
-{
-  return std::string_view(reinterpret_cast<const char*>(str.data()), str.size());
-}
 
 std::vector<std::filesystem::path> GatherSubdirectories(std::filesystem::path const& path)
 {
@@ -234,7 +228,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
     }
     llvm::outs() << llvm::raw_ostream::Colors::CYAN << "No source files specified"
                  << llvm::raw_ostream::Colors::RESET << " collecting all files under "
-                 << stringFromU8string(m_currentSourceRoot.u8string()) << "\n";
+                 << m_currentSourceRoot.string() << "\n";
     auto subdirectories = GatherSubdirectories(m_currentSourceRoot);
     for (auto& subdirectory : subdirectories)
     {
@@ -255,7 +249,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
             else
             {
               llvm::outs() << llvm::raw_ostream::Colors::GREEN << "Skipping file "
-                           << stringFromU8string(absoluteEntry.u8string())
+                           << absoluteEntry.string()
                            << llvm::raw_ostream::Colors::RESET << "\n";
             }
           }
@@ -291,8 +285,8 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
   auto fileEntry = namedDecl->getASTContext().getSourceManager().getFileEntryForID(fileId);
   if (fileEntry)
   {
-    if (fileEntry->getName().startswith_insensitive(
-            stringFromU8string(m_processorImpl->CurrentSourceRoot().u8string())))
+    if (fileEntry->getName().starts_with_insensitive(
+            m_processorImpl->CurrentSourceRoot().string()))
     {
       // If the file containing the type is within the source root, we want to consider the type.
       shouldCollect = true;
@@ -371,12 +365,12 @@ public:
       {
         std::vector<std::string> commandLine{defaultCommandLine};
         // Add the source location to the include paths.
-        commandLine.push_back("-I" + std::string(stringFromU8string(m_sourceLocation.u8string())));
+        commandLine.push_back("-I" + m_sourceLocation.string());
         // Add any additional include directories (as absolute paths).
         for (auto const& arg : m_additionalIncludePaths)
         {
-          std::string includePath{static_cast<std::string>(
-              stringFromU8string(std::filesystem::absolute(arg).u8string()))};
+          std::string includePath{
+              std::filesystem::absolute(arg).string()};
           commandLine.push_back("-I" + includePath);
           llvm::outs() << "Adding include directory: " << includePath << "\n";
         }
@@ -386,12 +380,12 @@ public:
           commandLine.push_back(arg);
         }
 
-        commandLine.push_back(std::string(stringFromU8string(file.u8string())));
+        commandLine.push_back(file.string());
 
         std::vector<CompileCommand> rv;
         rv.push_back(CompileCommand(
-            stringFromU8string(m_sourceLocation.u8string()),
-            stringFromU8string(file.u8string()),
+            m_sourceLocation.string(),
+            file.string(),
             commandLine,
             ""));
         return rv;
@@ -428,13 +422,13 @@ int ApiViewProcessorImpl::ProcessApiView()
   tempFile /= "TempSourceFile.cpp";
 
   std::ofstream sourceFileAggregate(
-      static_cast<std::string>(stringFromU8string(tempFile.u8string())),
+      static_cast<std::string>(tempFile.string()),
       std::ios::out | std::ios::trunc);
   for (const auto& file : m_filesToCompile)
   {
-    assert(file.u8string().find(m_currentSourceRoot.u8string()) == 0);
+    assert(file.string().find(m_currentSourceRoot.string()) == 0);
     auto relativeFile = static_cast<std::string>(
-        stringFromU8string(file.u8string().erase(0, m_currentSourceRoot.u8string().size() + 1)));
+        file.string().erase(0, m_currentSourceRoot.string().size() + 1));
     std::string quotedFile = replaceAll(relativeFile, "\\", "/");
     sourceFileAggregate << "#include \"" << quotedFile << "\"" << std::endl;
   }
@@ -448,7 +442,7 @@ int ApiViewProcessorImpl::ProcessApiView()
 
   std::vector<std::string> sourceFiles;
   sourceFiles.push_back(
-      std::string(stringFromU8string(std::filesystem::absolute(tempFile).u8string())));
+      std::filesystem::absolute(tempFile).string());
 
   ClangTool tool(compileDb, sourceFiles);
   //  AzureClassesDiagnostics diagnosticsConsumer;

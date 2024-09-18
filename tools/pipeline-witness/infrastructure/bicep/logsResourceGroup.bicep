@@ -136,6 +136,9 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
   identity: {
     type: 'SystemAssigned'
   }
+  tags: {
+    'NRMS.KustoPlatform.Classification.1P': 'Corp'
+  }
   properties: {
     trustedExternalTenants: []
     optimizedAutoscale: {
@@ -172,6 +175,7 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
     properties: {
       groupId: 'blob'
       privateLinkResourceId: logsStorageAccount.id
+      requestMessage: ''
     }
   }
 }
@@ -248,7 +252,7 @@ resource gitHubKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments
 // namespace, we need an event hub per table, so we split our tables across two namespaces.
 // https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-quotas
 module devOpsTables 'tableResources.bicep' = {
-  name: 'devOpsTables'
+  name: '${deployment().name}-devOpsTables'
   scope: resourceGroup()
   dependsOn:[ kustoScriptInvocation ]
   params: {
@@ -296,7 +300,7 @@ module devOpsTables 'tableResources.bicep' = {
 }
 
 module gitHubTables 'tableResources.bicep' = {
-  name: 'gitHubTables'
+  name: '${deployment().name}-gitHubTables'
   scope: resourceGroup()
   dependsOn:[ kustoScriptInvocation ]
   params: {

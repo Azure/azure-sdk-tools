@@ -2,8 +2,8 @@
 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
 </div>
-<p-messages *ngIf="codePanelData && !isLoading && isDiffView && !codePanelData?.hasDiff" [(value)]="noDiffInContentMessage" [closable]="false" />
 <div *ngIf="codePanelRowSource;" class="viewport {{languageSafeName!}}" (click)="onCodePanelItemClick($event)">
+  <p-messages class="sticky-top" *ngIf="showNoDiffInContentMessage()" [(value)]="noDiffInContentMessage" [closable]="false" />
   <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
     [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">
@@ -30,7 +30,9 @@
         (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
         (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
         (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
-        (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"></app-comment-thread>
+        (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
+        (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)">
+      </app-comment-thread>
     </ng-container>
   </div>
 </div>

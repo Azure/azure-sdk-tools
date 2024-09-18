@@ -1,15 +1,16 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, isDiffRow, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { Message } from 'primeng/api/message';
+import { MessageService } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
@@ -35,7 +36,9 @@ export class CodePanelComponent implements OnChanges{
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 
+  
   noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
+
   isLoading: boolean = true;
   codeWindowHeight: string | undefined = undefined;
   codePanelRowDataIndicesMap = new Map<string, number>();
@@ -45,8 +48,11 @@ export class CodePanelComponent implements OnChanges{
 
   destroy$ = new Subject<void>();
 
+  commentThreadNavaigationPointer: number | undefined = undefined;
+  diffNodeNavaigationPointer: number | undefined = undefined;
+
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
-    private signalRService: SignalRService, private route: ActivatedRoute, private router: Router) { }
+    private signalRService: SignalRService, private route: ActivatedRoute, private router: Router, private messageService: MessageService) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
@@ -169,7 +175,7 @@ export class CodePanelComponent implements OnChanges{
       commentThreadRow.associatedRowPositionInGroup = rowPositionInGroup;
       this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread = {};
       this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread[rowPositionInGroup] = commentThreadRow;
-      this.insertItemsIntoScroller([commentThreadRow], nodeIdHashed!, rowType, rowPositionInGroup);
+      this.insertItemsIntoScroller([commentThreadRow], nodeIdHashed!, rowType, rowPositionInGroup, "toggleCommentsClasses", "can-show", "show");
     }
     else {
       for (let i = 0; i < this.codePanelRowData.length; i++) {
@@ -189,22 +195,10 @@ export class CodePanelComponent implements OnChanges{
 
     if (target.classList.contains('bi-arrow-up-square')) {
       const documentationData = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.documentation;
-      await this.insertItemsIntoScroller(documentationData!, nodeIdHashed!, rowType,-1, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
-      target.classList.remove('bi-arrow-up-square')
-      target.classList.add('bi-arrow-down-square');
+      await this.insertItemsIntoScroller(documentationData!, nodeIdHashed!, rowType, -1, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
     } else if (target.classList.contains('bi-arrow-down-square')) {
       await this.removeItemsFromScroller(nodeIdHashed!, CodePanelRowDatatype.Documentation, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square");
-      target.classList.remove('bi-arrow-down-square')
-      target.classList.add('bi-arrow-up-square');
     }
-  }
-
-  toggleLineActionIcon(iconClassToremove: string, iconClassToAdd: string, 
-    codeLineData: CodePanelRowData, codeLineDataProperty: string) : CodePanelRowData {
-    if (codeLineDataProperty === "toggleDocumentationClasses") {
-      codeLineData.toggleDocumentationClasses = codeLineData.toggleDocumentationClasses?.replace(iconClassToremove, iconClassToAdd);
-    }
-    return codeLineData;
   }
 
   async insertRowTypeIntoScroller(codePanelRowDatatype:  CodePanelRowDatatype) {
@@ -279,7 +273,13 @@ export class CodePanelComponent implements OnChanges{
     let postData = this.codePanelRowData.slice(nodeIndex);
 
     if (propertyToChange && iconClassToremove && iconClassToAdd) {
-      postData[0] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, postData[0], propertyToChange);
+      if (propertyToChange === "toggleDocumentationClasses") {
+        postData[0].toggleDocumentationClasses = postData[0].toggleDocumentationClasses?.replace(iconClassToremove, iconClassToAdd);
+      }
+  
+      if (propertyToChange === "toggleCommentsClasses") {
+        preData[preData.length - 1].toggleCommentsClasses = preData[preData.length - 1].toggleCommentsClasses?.replace(iconClassToremove, iconClassToAdd);
+      }
     }
 
     this.codePanelRowData = [
@@ -330,10 +330,19 @@ export class CodePanelComponent implements OnChanges{
           filteredCodeLinesData.push(this.codePanelRowData[i]);
       }
       else {
-        if (propertyToChange && iconClassToremove && iconClassToAdd) {
-          this.codePanelRowData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codePanelRowData[i], propertyToChange);
-        }
         indexesToRemove.push(i);
+      }
+    }
+
+    if (propertyToChange && iconClassToremove && iconClassToAdd) {
+      if (propertyToChange === "toggleDocumentationClasses") {
+        const index = indexesToRemove[0];
+        filteredCodeLinesData[index].toggleDocumentationClasses = filteredCodeLinesData[index].toggleDocumentationClasses?.replace(iconClassToremove, iconClassToAdd);
+      }
+  
+      if (propertyToChange === "toggleCommentsClasses") {
+        const index = indexesToRemove[0] - 1;
+        filteredCodeLinesData[index].toggleCommentsClasses = filteredCodeLinesData[index].toggleCommentsClasses?.replace(iconClassToremove, iconClassToAdd);
       }
     }
 
@@ -350,6 +359,7 @@ export class CodePanelComponent implements OnChanges{
     if (updateData.type === CodePanelRowDatatype.CommentThread) {
       filterdData = filterdData.filter(row => row.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup);
     }
+
     filterdData[0] = updateData;
       
     await this.codePanelRowSource?.adapter?.relax();
@@ -412,7 +422,10 @@ export class CodePanelComponent implements OnChanges{
       index++;
     }
     if (scrollIndex) {
-      this.codePanelRowSource?.adapter?.reload(scrollIndex);
+      let scrollPadding = 0;
+      scrollPadding = (this.showNoDiffInContentMessage()) ? scrollPadding + 2 : scrollPadding;
+
+      this.codePanelRowSource?.adapter?.reload(scrollIndex - scrollPadding);
       let newQueryParams = getQueryParams(this.route);
       newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
       this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
@@ -435,7 +448,7 @@ export class CodePanelComponent implements OnChanges{
     if (commentsInNode && commentsInNode.hasOwnProperty(commentUpdates.associatedRowPositionInGroup)) {
       const commentThread = commentsInNode[commentUpdates.associatedRowPositionInGroup];
       if (!commentThread.comments || commentThread.comments.length === 0) {
-        this.removeItemsFromScroller(commentUpdates.nodeIdHashed, CodePanelRowDatatype.CommentThread, undefined, undefined, undefined, commentUpdates.associatedRowPositionInGroup);
+        this.removeItemsFromScroller(commentUpdates.nodeIdHashed, CodePanelRowDatatype.CommentThread, "toggleCommentsClasses", "show", "can-show", commentUpdates.associatedRowPositionInGroup);
         this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed].commentThread = [];
       }
       else {
@@ -554,6 +567,113 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
+  handleCommentThreadNavaigationEmitter(event: any) {
+    this.commentThreadNavaigationPointer = Number(event.commentThreadNavaigationPointer);
+    this.navigateToCommentThread(event.direction);
+  }
+
+  navigateToCommentThread(direction: CodeLineRowNavigationDirection) {
+    const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
+    const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
+    let navigateToRow : CodePanelRowData | undefined = undefined;
+    if (direction == CodeLineRowNavigationDirection.next) {
+      const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ? 
+        this.commentThreadNavaigationPointer + 1 : firstVisible;
+      navigateToRow = this.findNextCommentThread(startIndex);
+    }
+    else {
+      const startIndex = (this.commentThreadNavaigationPointer && this.commentThreadNavaigationPointer >= firstVisible && this.commentThreadNavaigationPointer <= lastVisible) ? 
+        this.commentThreadNavaigationPointer - 1 : lastVisible;
+      navigateToRow = this.findPrevCommentthread(startIndex);
+    }
+
+    if (navigateToRow) {
+      this.scrollToNode(navigateToRow.nodeIdHashed);
+    }
+    else {
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: 'No more active comments threads to navigate to.', key: 'bl', life: 3000 });
+    }
+  }
+
+  navigateToDiffNode(direction: CodeLineRowNavigationDirection) {
+    const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
+    const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
+    let navigateToRow : CodePanelRowData | undefined = undefined;
+    if (direction == CodeLineRowNavigationDirection.next) {
+      const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ? 
+        this.diffNodeNavaigationPointer : firstVisible;
+      navigateToRow = this.findNextDiffNode(startIndex);
+    }
+    else {
+      const startIndex = (this.diffNodeNavaigationPointer && this.diffNodeNavaigationPointer >= firstVisible && this.diffNodeNavaigationPointer <= lastVisible) ? 
+        this.diffNodeNavaigationPointer: lastVisible;
+      navigateToRow = this.findPrevDiffNode(startIndex);
+    }
+
+    if (navigateToRow) {
+      this.scrollToNode(navigateToRow.nodeIdHashed);
+    }
+    else {
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: 'No more diffs to navigate to.', key: 'bl', life: 3000 });
+    }
+  }
+
+  private findNextCommentThread (index: number) : CodePanelRowData | undefined {
+    while (index < this.codePanelRowData.length) {
+      if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
+        this.commentThreadNavaigationPointer = index;
+        return this.codePanelRowData[index];
+      }
+      index++;
+    }
+    return undefined;
+  }
+
+  private findPrevCommentthread (index: number) : CodePanelRowData | undefined {
+    while (index < this.codePanelRowData.length && index >= 0) {
+      if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
+        this.commentThreadNavaigationPointer = index;
+        return this.codePanelRowData[index];
+      }
+      index--;
+    }
+    return undefined;
+  }
+
+  private findNextDiffNode (index: number) : CodePanelRowData | undefined {
+    let checkForDiffNode = (isDiffRow(this.codePanelRowData[index])) ? false : true;
+    while (index < this.codePanelRowData.length) {
+      if (!checkForDiffNode && !isDiffRow(this.codePanelRowData[index])) {
+        checkForDiffNode = true;
+      }
+      if (checkForDiffNode && isDiffRow(this.codePanelRowData[index])) {
+        this.diffNodeNavaigationPointer = index;
+        return this.codePanelRowData[index];
+      }
+      index++;
+    }
+    return undefined;
+  }
+
+  private findPrevDiffNode (index: number) : CodePanelRowData | undefined {
+    let checkForDiffNode = (isDiffRow(this.codePanelRowData[index])) ? false : true;
+    while (index < this.codePanelRowData.length && index >= 0) {
+      if (!checkForDiffNode && !isDiffRow(this.codePanelRowData[index])) {
+        checkForDiffNode = true;
+      }
+      if (checkForDiffNode && isDiffRow(this.codePanelRowData[index])) {
+        this.diffNodeNavaigationPointer = index;
+        return this.codePanelRowData[index];
+      }
+      index--;
+    }
+    return undefined;
+  }
+  
+  showNoDiffInContentMessage() {
+    return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
+  }
+
   private updateHasActiveConversations() {
     let hasActiveConversation = false;
     for (let row of this.codePanelRowData) {
@@ -589,12 +709,27 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private addCommentToCommentThread(commentUpdates: CommentUpdatesDto, newComment: CommentItemModel) {
-    const comments = this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].comments;
-    if (!comments.some(c => c.id === newComment.id)) {
-      comments.push(newComment);
-      this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].comments = [...comments]
-      this.updateItemInScroller(this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]);
+    const commentThreadsForNode = this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread;
+    if (!commentThreadsForNode) {
+      this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread = {};
+      const commentThreadRow = new CodePanelRowData();
+      commentThreadRow.type = CodePanelRowDatatype.CommentThread;
+      commentThreadRow.rowClasses = new Set<string>(['user-comment-thread']);
+      commentThreadRow.nodeIdHashed = commentUpdates.nodeIdHashed!;
+      commentThreadRow.associatedRowPositionInGroup = commentUpdates.associatedRowPositionInGroup!;
+      commentThreadRow.comments = [newComment];
+      this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!] = commentThreadRow;
+      this.insertItemsIntoScroller([commentThreadRow], commentThreadRow.nodeIdHashed!, CodePanelRowDatatype.CodeLine, commentThreadRow.associatedRowPositionInGroup, "toggleCommentsClasses", "can-show", "show");
       this.updateHasActiveConversations();
+    }
+    else if (commentThreadsForNode.hasOwnProperty(commentUpdates.associatedRowPositionInGroup!)) {
+      let comments = commentThreadsForNode[commentUpdates.associatedRowPositionInGroup!].comments;
+      if (!comments.some(c => c.id === newComment.id)) {
+        comments.push(newComment);
+        this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].comments = [...comments]
+        this.updateItemInScroller(this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]);
+        this.updateHasActiveConversations();
+      }
     }
   }
 
@@ -603,7 +738,7 @@ export class CodePanelComponent implements OnChanges{
     this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].comments = comments.filter(c => c.id !== commentUpdates.commentId);
 
     if (this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].comments.length === 0) {
-      this.removeItemsFromScroller(commentUpdates.nodeIdHashed!, CodePanelRowDatatype.CommentThread, undefined, undefined, undefined, commentUpdates.associatedRowPositionInGroup);
+      this.removeItemsFromScroller(commentUpdates.nodeIdHashed!, CodePanelRowDatatype.CommentThread, "toggleCommentsClasses", "show", "can-show", commentUpdates.associatedRowPositionInGroup);
       this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread = {};
     } else {
       this.updateItemInScroller(this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]);

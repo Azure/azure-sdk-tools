@@ -7,7 +7,7 @@ import {
   readTspLocation,
   removeDirectory,
 } from "./fs.js";
-import { cp, mkdir, readFile, rename, stat, unlink, writeFile } from "fs/promises";
+import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import { npmCommand, nodeCommand } from "./npm.js";
 import { compileTsp, discoverMainFile, resolveTspConfigUrl, TspLocation } from "./typespec.js";
 import {
@@ -360,35 +360,7 @@ export async function convertCommand(argv: any): Promise<void> {
     `"${readme}"`,
   ];
 
-  // If the swagger is an ARM swagger, generate ARM metadata
   if (arm) {
-    const autorestCsharpPath = await getPathToDependency("@autorest/csharp");
-    const generateMetadataCmd = [
-      autorestBinPath,
-      "--csharp",
-      "--max-memory-size=8192",
-      `--use="${autorestCsharpPath}"`,
-      `--output-folder="${outputDir}"`,
-      "--mgmt-debug.only-generate-metadata",
-      "--mgmt-debug.suppress-list-exception",
-      "--azure-arm",
-      "--skip-csproj",
-      `"${readme}"`,
-    ];
-    try {
-      await nodeCommand(outputDir, generateMetadataCmd);
-    } catch (err) {
-      Logger.error(`Error occurred while attempting to generate ARM metadata: ${err}`);
-      process.exit(1);
-    }
-    try {
-      await rename(joinPaths(outputDir, "metadata.json"), joinPaths(outputDir, "resources.json"));
-    } catch (err) {
-      Logger.error(
-        `Error occurred while attempting to rename metadata.json to resources.json: ${err}`,
-      );
-      process.exit(1);
-    }
     args.push("--isArm");
   }
   await nodeCommand(outputDir, args);

@@ -14,6 +14,7 @@ import {RunningEnvironment} from "../utils/runningEnvironment";
 import {getOutputPackageInfo} from "../utils/getOutputPackageInfo";
 import {getReleaseTool} from "./utils/getReleaseTool";
 import { addApiViewInfo } from "../utils/addApiViewInfo";
+import { defaultChildProcessTimeout } from '../common/utils'
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -48,7 +49,8 @@ export async function generateMgmt(options: {
 
         logger.info(`Start to execute command '${cmd}'`);
         try {
-            execSync(cmd, {stdio: 'inherit'});
+            
+            execSync(cmd, {stdio: 'inherit', timeout: defaultChildProcessTimeout});
         } catch (e: any) {
             throw new Error(`Failed to generate codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
         }

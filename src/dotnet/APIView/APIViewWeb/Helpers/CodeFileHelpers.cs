@@ -27,13 +27,13 @@ namespace APIViewWeb.Helpers
             codePanelData.AddNavigation(rootNodeId, CreateRootNode($"{codeFile.PackageName} {codeFile.PackageVersion}", rootNodeId));
 
             //Collect documentation lines from active revision
-            CollectDocumentationLines(codeFile.ReviewLines, codePanelData.ActiveDocumentationMap, 1, "root");
+            CollectDocumentationLines(codePanelData, codeFile.ReviewLines, codePanelData.ActiveDocumentationMap, 1, "root");
 
             //Calculate the diff if diff revision code file is present
             if (codePanelRawData.diffRevisionCodeFile != null)
             {
                 var diffLines = codePanelRawData.diffRevisionCodeFile.ReviewLines;
-                CollectDocumentationLines(diffLines, codePanelData.DiffDocumentationMap, 1, "root", true);
+                CollectDocumentationLines(codePanelData, diffLines, codePanelData.DiffDocumentationMap, 1, "root", true);
                 // Check if diff is required for active revision and diff revision to avoid unnecessary diff calculation
                 bool hasSameApis = AreCodeFilesSame(codePanelRawData.activeRevisionCodeFile, codePanelRawData.diffRevisionCodeFile);
                 if (!hasSameApis)
@@ -179,7 +179,7 @@ namespace APIViewWeb.Helpers
         private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string nodeIdHashed, int indent)
         {
             // Generate code line row
-            var codePanelRow = GetCodePanelRowData(reviewLine, nodeIdHashed, indent);
+            var codePanelRow = GetCodePanelRowData(codePanelData, reviewLine, nodeIdHashed, indent);
 
             // Add documentation rows to code panel data
             if (codePanelData.ActiveDocumentationMap.ContainsKey(nodeIdHashed))
@@ -220,7 +220,7 @@ namespace APIViewWeb.Helpers
             AddDiagnosticRow(codePanelData: codePanelData, codeFile: codePanelRawData.activeRevisionCodeFile, nodeId: reviewLine.LineId, nodeIdHashed: nodeIdHashed);
         }
 
-        private static CodePanelRowData GetCodePanelRowData(ReviewLine reviewLine, string nodeIdHashed, int indent)
+        private static CodePanelRowData GetCodePanelRowData(CodePanelData codePanelData, ReviewLine reviewLine, string nodeIdHashed, int indent)
         {
             CodePanelRowData codePanelRowData = new()
             {
@@ -242,14 +242,14 @@ namespace APIViewWeb.Helpers
                 return codePanelRowData;
             }
 
-            if (reviewLine.DiffKind == DiffKind.Added)
+            if(reviewLine.DiffKind == DiffKind.Added || reviewLine.DiffKind == DiffKind.Removed)
             {
-                rowClasses.Add("added");
+                rowClasses.Add(reviewLine.DiffKind.ToString().ToLower());
+                if (codePanelRowData.IsHiddenAPI) {
+                    codePanelData.HasHiddenAPIThatIsDiff = true;
+                }
             }
-            else if (reviewLine.DiffKind == DiffKind.Removed)
-            {
-                rowClasses.Add("removed");
-            }
+
             // Convert ReviewToken to UI required StructuredToken
             foreach (var token in reviewLine.Tokens)
             {
@@ -290,6 +290,7 @@ namespace APIViewWeb.Helpers
                     commentRowData.CommentsObj = commentsForRow.ToList();
                     codePanelRowData.ToggleCommentsClasses = codePanelRowData.ToggleCommentsClasses.Replace("can-show", "show");
                     commentRowData.IsResolvedCommentThread = commentsForRow.Any(c => c.IsResolved);
+                    commentRowData.IsHiddenAPI = codePanelRowData.IsHiddenAPI;
                 }
             }
             else
@@ -461,7 +462,7 @@ namespace APIViewWeb.Helpers
          * This method collects all documentation lines from the review line and generate a CodePanelRow object for each documentation line.
          * These documentation rows will be stored in a dictionary so it can be mapped and connected tp code line when processing code lines.
          * */
-        private static void CollectDocumentationLines(List<ReviewLine> reviewLines, Dictionary<string, List<CodePanelRowData>> documentationRowMap, int indent, string parentNodeIdHash, bool enableSkipDiff = false)
+        private static void CollectDocumentationLines(CodePanelData codePanelData, List<ReviewLine> reviewLines, Dictionary<string,List<CodePanelRowData>> documentationRowMap, int indent, string parentNodeIdHash, bool enableSkipDiff = false)
         {
             if (reviewLines?.Count == 0)
                 return;
@@ -475,7 +476,7 @@ namespace APIViewWeb.Helpers
                 bool hasNonSkippedTokens = line.Tokens.Any(t => t.SkipDiff != true);
                 if (line.IsDocumentation && (!enableSkipDiff || hasNonSkippedTokens))
                 {
-                    docRows.Add(GetCodePanelRowData(line, parentNodeIdHash, indent));
+                    docRows.Add(GetCodePanelRowData(codePanelData, line, parentNodeIdHash, indent));
                     continue;
                 }
 
@@ -492,7 +493,7 @@ namespace APIViewWeb.Helpers
                 idx++;
                 // Recursively process child node lines
                 if (line.Children.Count > 0)
-                    CollectDocumentationLines(line.Children, documentationRowMap, indent + 1, nodeIdHashed, enableSkipDiff);
+                    CollectDocumentationLines(codePanelData, line.Children, documentationRowMap, indent + 1, nodeIdHashed, enableSkipDiff);
             }
         }
 

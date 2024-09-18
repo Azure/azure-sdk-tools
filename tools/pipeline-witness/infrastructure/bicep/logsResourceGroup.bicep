@@ -252,7 +252,7 @@ resource gitHubKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments
 // namespace, we need an event hub per table, so we split our tables across two namespaces.
 // https://learn.microsoft.com/en-us/azure/event-hubs/event-hubs-quotas
 module devOpsTables 'tableResources.bicep' = {
-  name: 'devOpsTables'
+  name: '${deployment().name}-devOpsTables'
   scope: resourceGroup()
   dependsOn:[ kustoScriptInvocation ]
   params: {
@@ -300,7 +300,7 @@ module devOpsTables 'tableResources.bicep' = {
 }
 
 module gitHubTables 'tableResources.bicep' = {
-  name: 'gitHubTables'
+  name: '${deployment().name}-gitHubTables'
   scope: resourceGroup()
   dependsOn:[ kustoScriptInvocation ]
   params: {

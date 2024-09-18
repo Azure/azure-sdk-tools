@@ -95,7 +95,7 @@ stages:
         scriptType: pscore
         scriptLocation: inlineScript
         inlineScript: |
-          $jwt_accessToken = az account get-access-token --resource "api://2789159d-8d8b-4d13-b90b-ca29c1707afd" --query "accessToken" --output tsv
+          $jwt_accessToken = az account get-access-token --resource "api://2efaf292-00a0-426c-ba7d-f5d2b214b8fc" --query "accessToken" --output tsv
           Write-Host "##vso[task.setvariable variable=opensource-api-token;isSecret=true]$jwt_accessToken"
 
     - ${{ each subscription in parameters.Subscriptions }}:

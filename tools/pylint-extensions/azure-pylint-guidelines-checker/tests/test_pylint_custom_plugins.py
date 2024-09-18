@@ -5228,7 +5228,7 @@ class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
 
 class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
 
-    """Test that any errors raised are not logged at 'error' or 'warning' levels in the exception block."""
+    """Test that any errors are not logged in exception blocks."""
 
     CHECKER_CLASS = checker.DoNotLogExceptions
 
@@ -5255,7 +5255,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=error_node,
                 col_offset=8,
                 end_line=9,
-                end_col_offset=40,
+                end_col_offset=39,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5263,7 +5263,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=warning_node,
                 col_offset=8,
                 end_line=10,
-                end_col_offset=32,
+                end_col_offset=31,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5271,7 +5271,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=info_node,
                 col_offset=8,
                 end_line=11,
-                end_col_offset=29,
+                end_col_offset=28,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5279,7 +5279,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=debug_node,
                 col_offset=8,
                 end_line=12,
-                end_col_offset=30,
+                end_col_offset=29,
             )
         ):
             self.checker.visit_try(try_node)
@@ -5298,7 +5298,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=error_node,
                 col_offset=8,
                 end_line=20,
-                end_col_offset=31,
+                end_col_offset=30,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5306,7 +5306,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=warning_node,
                 col_offset=8,
                 end_line=21,
-                end_col_offset=33,
+                end_col_offset=32,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5314,7 +5314,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=info_node,
                 col_offset=8,
                 end_line=22,
-                end_col_offset=30,
+                end_col_offset=29,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5322,7 +5322,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=debug_node,
                 col_offset=8,
                 end_line=23,
-                end_col_offset=31,
+                end_col_offset=30,
             )
         ):
             self.checker.visit_try(try_node)
@@ -5346,7 +5346,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=error_node,
                 col_offset=12,
                 end_line=43,
-                end_col_offset=34,
+                end_col_offset=33,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5354,7 +5354,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=warning_node,
                 col_offset=12,
                 end_line=46,
-                end_col_offset=37,
+                end_col_offset=36,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5362,7 +5362,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=info_node,
                 col_offset=12,
                 end_line=49,
-                end_col_offset=33,
+                end_col_offset=32,
             )
         ):
             self.checker.visit_try(try_node)
@@ -5379,7 +5379,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=error_node,
                 col_offset=12,
                 end_line=58,
-                end_col_offset=66,
+                end_col_offset=65,
             ),
             pylint.testutils.MessageTest(
                 msg_id="do-not-log-exceptions",
@@ -5387,9 +5387,21 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 node=warning_node,
                 col_offset=12,
                 end_line=61,
-                end_col_offset=31,
+                end_col_offset=30,
             )
         ):
+            self.checker.visit_try(try_node)
+
+    def test_no_logging_ok(self, setup):
+        """Check that no logging is ok in the exception block."""
+        try_node = setup.body[6].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_logging_without_exception_name(self, setup):
+        """Check that logging without exception name is ok in the exception block."""
+        try_node = setup.body[7].body[0]
+        with self.assertNoMessages():
             self.checker.visit_try(try_node)
 
     def test_guidelines_link_active(self):

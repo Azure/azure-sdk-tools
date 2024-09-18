@@ -2874,8 +2874,8 @@ class DoNotLogExceptions(BaseChecker):
     name = "do-not-log-exceptions"
     priority = -1
     msgs = {"C4766": (
-            "Do not log exceptions. See Details:",
-            "https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info"
+            "Do not log exceptions. See Details:"
+            " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
             "do-not-log-exceptions",
             "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
             ),
@@ -2890,8 +2890,9 @@ class DoNotLogExceptions(BaseChecker):
         # Iterate through each exception block
         for nod in except_block:
             # Get the nodes in each block
-            exception_name = nod.name.name
-            self.check_for_logging(nod.body, exception_name)
+            if nod.name is not None:
+                exception_name = nod.name.name
+                self.check_for_logging(nod.body, exception_name)
 
     def check_for_logging(self, node, exception_name):
         """ Helper function - checks nodes to see if logging has occurred at all
@@ -2901,8 +2902,13 @@ class DoNotLogExceptions(BaseChecker):
         for j in node:
             if isinstance(j, astroid.Expr):
                 expression = j.as_string().lower()
-                if any(x in expression for x in levels_matches):
-                    delimiters = [".", "(", "{", "}", ")", "\""]
+                if any(x in expression for x in levels_matches) and "logger" in expression:
+                    end_finder = expression.rfind("'")
+                    delimiters = ["(", "{", "}", ")", "\"", "=", ",", "'"]
+                    if end_finder != -1:
+                        expression_a = expression[end_finder + 1:]
+                        if len(expression_a) > 1:
+                            expression = expression_a
                     for delimiter in delimiters:
                         expression = " ".join(expression.split(delimiter))
                     expression1 = expression.split()

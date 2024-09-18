@@ -1,4 +1,4 @@
-import logging
+from plugin import logger
 
 
 # test_logging_levels_logged_str_exception
@@ -6,10 +6,10 @@ def test_logging_levels_logged_str_exception():
     try:  # @
         add = 1 + 2
     except Exception as ex:
-        logging.error("Error" + str(ex))  # @
-        logging.warning(str(ex))
-        logging.info(str(ex))
-        logging.debug(str(ex))
+        logger.error("Error" + str(ex))  # @
+        logger.warning(str(ex))
+        logger.info(str(ex))
+        logger.debug(str(ex))
 
 
 # test_logging_levels_logged_repr_exception
@@ -17,10 +17,10 @@ def test_logging_levels_logged_repr_exception():
     try:  # @
         add = 1 + 2
     except Exception as ex:
-        logging.error(repr(ex))  # @
-        logging.warning(repr(ex))
-        logging.info(repr(ex))
-        logging.debug(repr(ex))
+        logger.error(repr(ex))  # @
+        logger.warning(repr(ex))
+        logger.info(repr(ex))
+        logger.debug(repr(ex))
 
 
 # test_regular_logging_ok
@@ -28,10 +28,10 @@ def test_regular_logging_ok():
     try:  # @
         add = 1 + 2
     except Exception as ex:
-        logging.error("Example 1")  # @
-        logging.warning("This is another example")
-        logging.info("Random logging")
-        logging.debug("Logging")
+        logger.error("Example 1")  # @
+        logger.warning("This is another example")
+        logger.info("Random logging")
+        logger.debug("Logging")
 
 
 # test_logging_str_exception_branches
@@ -40,13 +40,13 @@ def test_logging_str_exception_branches():
         add = 1 + 2
     except Exception as ex:
         if ex.code == "Retryable":
-            logging.error(str(ex))
+            logger.error(str(ex))
             return True
         elif Exception != BaseException:
-            logging.warning(repr(ex))
+            logger.warning(repr(ex))
             return False
         else:
-            logging.info(str(ex))  # @
+            logger.info(str(ex))  # @
 
 
 # test_other_logging_fails
@@ -55,8 +55,31 @@ def test_other_logging_fails():
         add = 1 + 2
     except Exception as ex:
         if ex.code == "Retryable":
-            logging.error("Something went wrong: {ex}. Try again")
+            logger.error("Something went wrong: {ex}. Try again")
             return True
         else:
-            logging.warning(ex)
+            logger.warning(ex)
             return False
+
+
+# test_no_logging_ok
+def test_no_logging_ok():
+    try:
+        add = 1 + 2
+    except Exception as ex:
+        self.errors.appendleft(ex)
+
+
+# test_logging_without_exception_name
+def test_logging_without_exception_name():
+    try:
+        add = 1 + 2
+    except Exception as exception:
+        if exception.code == "Retryable":
+            _LOGGER.info(
+                "%r returns an exception %r", self._container_id, last_exception
+            )
+        else:
+            module_logger.debug("Skipping file upload, reason:  %s", str(e.reason))
+
+

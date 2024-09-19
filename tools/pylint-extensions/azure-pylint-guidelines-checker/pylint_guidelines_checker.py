@@ -2708,7 +2708,6 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
-
 class DoNotLogErrorsEndUpRaising(BaseChecker):
 
     """Rule to check that errors that get raised aren't logged"""
@@ -2762,7 +2761,6 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                         node=j,
                         confidence=None,
                     )
-
 
 
 class NoImportTypingFromTypeCheck(BaseChecker):
@@ -2830,6 +2828,7 @@ class DoNotUseLegacyTyping(BaseChecker):
                 confidence=None,
             )
 
+
 class DoNotImportAsyncio(BaseChecker):
 
     """Rule to check that libraries do not import the asyncio package directly."""
@@ -2853,7 +2852,7 @@ class DoNotImportAsyncio(BaseChecker):
                 node=node,
                 confidence=None,
             )
-              
+
     def visit_import(self, node):
         """Check that we aren't importing asyncio."""
         for name, _ in node.names:
@@ -2865,6 +2864,12 @@ class DoNotImportAsyncio(BaseChecker):
                 )
 
 
+# [Pylint] custom linter check for invalid use of @overload #3229
+# [Pylint] Custom Linter check for Exception Logging #3227
+# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+# [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+# [Pylint] Investigate pylint rule around missing dependency #3231
 
 
 # if a linter is registered in this function then it will be checked with pylint
@@ -2901,13 +2906,18 @@ def register(linter):
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
+    # [Pylint] custom linter check for invalid use of @overload #3229
+    # [Pylint] Custom Linter check for Exception Logging #3227
+    # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+    # [Pylint] Add a check for connection_verify hardcoded settings #35355
+    # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+    # [Pylint] Investigate pylint rule around missing dependency #3231
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
 
-
-    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

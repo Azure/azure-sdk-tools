@@ -55,7 +55,7 @@ export class RevisionPageComponent {
 
   openLatestAPIReivisonForReview() {
     const apiRevision = this.apiRevisions.find(x => x.apiRevisionType === "Automatic") ?? this.apiRevisions[0];
-    this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.router.url);
+    this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.route);
   }
 
   handleApiRevisionsEmitter(apiRevisions: APIRevision[]) {

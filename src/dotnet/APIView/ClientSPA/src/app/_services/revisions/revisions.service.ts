@@ -1,13 +1,13 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, take } from 'rxjs';
 
 
 import { PaginatedResult } from 'src/app/_models/pagination';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
-import { REVIEW_PAGE_ROUTE_REGEX } from 'src/app/_helpers/router-helpers';
-
+import { ActivatedRoute } from '@angular/router';
+import { INDEX_PAGE_NAME } from 'src/app/_helpers/router-helpers';
 
 @Injectable({
   providedIn: 'root'
@@ -127,25 +127,30 @@ export class RevisionsService {
     });
   }
 
-  openDiffOfAPIRevisions(activeAPIRevision: APIRevision, diffAPIRevision: APIRevision, currentRoute: string) {
-    const target = (currentRoute.match(REVIEW_PAGE_ROUTE_REGEX)) ? '_self' : '_blank';
-
-    if (activeAPIRevision.files[0].parserStyle === "tree") {
-      window.open(`/review/${activeAPIRevision.reviewId}?activeApiRevisionId=${activeAPIRevision.id}&diffApiRevisionId=${diffAPIRevision.id}`, target);
-    } else {
-      window.open(this.configService.webAppUrl + `Assemblies/Review/${activeAPIRevision.reviewId}?revisionId=${activeAPIRevision.id}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevision.id}`, target);
-    }
+  openDiffOfAPIRevisions(activeAPIRevision: APIRevision, diffAPIRevision: APIRevision, currentRoute: ActivatedRoute) {
+    this.isIndexPage(currentRoute).pipe(take(1)).subscribe(
+      isIndexPage => {
+        const target = isIndexPage ? '_blank' : '_self';
+        if (activeAPIRevision.files[0].parserStyle === "tree") {
+          window.open(`/review/${activeAPIRevision.reviewId}?activeApiRevisionId=${activeAPIRevision.id}&diffApiRevisionId=${diffAPIRevision.id}`, target);
+        } else {
+          window.open(this.configService.webAppUrl + `Assemblies/Review/${activeAPIRevision.reviewId}?revisionId=${activeAPIRevision.id}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevision.id}`, target);
+        }
+      }
+    );
   }
 
-  openAPIRevisionPage(apiRevision: APIRevision, currentRoute: string) {
-    console.log(currentRoute);
-    const target = (currentRoute.match(REVIEW_PAGE_ROUTE_REGEX)) ? '_self' : '_blank';
-
-    if (apiRevision.files[0].parserStyle === "tree") {
-      window.open(`/review/${apiRevision.reviewId}?activeApiRevisionId=${apiRevision.id}`, target);
-    } else {
-      window.open(this.configService.webAppUrl + `Assemblies/Review/${apiRevision.reviewId}?revisionId=${apiRevision.id}`, target);
-    }
+  openAPIRevisionPage(apiRevision: APIRevision, currentRoute: ActivatedRoute) {
+    this.isIndexPage(currentRoute).pipe(take(1)).subscribe(
+      isIndexPage => {
+        const target = isIndexPage ? '_blank' : '_self';
+        if (apiRevision.files[0].parserStyle === "tree") {
+          window.open(`/review/${apiRevision.reviewId}?activeApiRevisionId=${apiRevision.id}`, target);
+        } else {
+          window.open(this.configService.webAppUrl + `Assemblies/Review/${apiRevision.reviewId}?revisionId=${apiRevision.id}`, target);
+        }
+      }
+    );
   }
 
   updateSelectedReviewers(reviewId: string, apiRevisionId: string, reviewers: Set<string>): Observable<APIRevision> {
@@ -159,5 +164,15 @@ export class RevisionsService {
       headers: headers,
       withCredentials: true,
     });
+  }
+
+  private isIndexPage(currentRoute: ActivatedRoute): Observable<boolean> {
+    return currentRoute.data.pipe(
+      map(data => {
+        const pageName = data['pageName'];
+        console.log("Page Name", pageName);
+        return data['pageName'] === INDEX_PAGE_NAME;
+      })
+    );
   }
 }

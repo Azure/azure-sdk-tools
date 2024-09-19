@@ -30,7 +30,7 @@ export class ConversationPageComponent {
   private destroy$ = new Subject<void>();
 
   constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private userProfileService: UserProfileService,
-    private apiRevisionsService: RevisionsService, private commentsService: CommentsService, private router: Router
+    private apiRevisionsService: RevisionsService, private commentsService: CommentsService
   ) {}
 
   ngOnInit() {
@@ -52,11 +52,6 @@ export class ConversationPageComponent {
         icon: 'bi bi-braces',
         tooltip: 'API',
         command: () => this.openLatestAPIReivisonForReview()
-      },
-      {
-        icon: 'bi bi-clock-history',
-        tooltip: 'Revisions',
-        command: () => this.router.navigate([`/revision/${this.reviewId}`])
       }
     ];
   }
@@ -91,6 +86,6 @@ export class ConversationPageComponent {
 
   openLatestAPIReivisonForReview() {
     const apiRevision = this.apiRevisions.find(x => x.apiRevisionType === "Automatic") ?? this.apiRevisions[0];
-    this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.router.url);
+    this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.route);
   }
 }

@@ -67,6 +67,12 @@ Sort an existing swagger specification to be the same content order with TypeSpe
 
 Generate an emitter-package-lock.json under the eng/ directory based on existing `<repo-root>/eng/emitter-package.json`.
 
+### combine-swaggers
+
+Combine 2 or more existing swagger specifications into a single swagger specification. The contents will be in the same order as a TypeSpec generated swagger.
+
+This only merges the contents of top-level fields in the swagger specs. For array values, contents will be concatenated. No array value deduplication occurs. For object values, both objects will be merged. A warning will be logged if the same key exists in both object values.
+
 ## Options
 
 ```

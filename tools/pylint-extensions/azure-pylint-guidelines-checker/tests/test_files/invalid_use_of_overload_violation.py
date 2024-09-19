@@ -15,3 +15,17 @@ async def double(a: Union[str, int]) -> int:
     if isinstance(a, str):
         return len(a)*2
     return a * 2
+
+
+@overload
+def doubleAgain(a: str):
+    ...
+
+@overload
+def doubleAgain(a: int):
+    ...
+
+async def doubleAgain(a: Union[str, int]) -> int:
+    if isinstance(a, str):
+        return len(a)*2
+    return a * 2

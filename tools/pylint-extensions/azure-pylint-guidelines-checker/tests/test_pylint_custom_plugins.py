@@ -4837,7 +4837,6 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.InvalidUseOfOverload
 
-
     def test_valid_use_overload(self):
         file = open(
             os.path.join(
@@ -4847,29 +4846,37 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
         node = astroid.parse(file.read())
         file.close()
         with self.assertNoMessages():
-            self.checker.visit_call(node)
+            self.checker.visit_module(node)
 
 
     def test_invalid_use_overload(self):
-        violation_viles = ["_1", "_2"]
-        for violation in violation_viles:
-
-            file = open(
-                os.path.join(
-                    TEST_FOLDER, "test_files", "invalid_use_of_overload_violation"+violation+".py"
-                )
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "invalid_use_of_overload_violation.py"
             )
-            node = astroid.parse(file.read())
-            file.close()
-            with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="invalid-use-of-overload",
-                    line=0,
-                    node=node,
-                    col_offset=0,
-                ),
-            ):
-                self.checker.visit_call(node)
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        children = list(node.get_children())
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="invalid-use-of-overload",
+                line=11,
+                node=children[2],
+                col_offset=0,
+                end_line=11,
+                end_col_offset=10,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="invalid-use-of-overload",
+                line=28,
+                node=children[6],
+                col_offset=0,
+                end_line=28,
+                end_col_offset=21,
+            ),
+        ):
+            self.checker.visit_module(node)
 
 
 # [Pylint] Custom Linter check for Exception Logging #3227

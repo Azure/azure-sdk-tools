@@ -2764,7 +2764,7 @@ class InvalidUseOfOverload(BaseChecker):
         ),
     }
 
-    def visit_call(self, node):
+    def visit_module(self, node):
         """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
         try:
             klass = node.parent.parent.parent
@@ -2787,6 +2787,7 @@ class InvalidUseOfOverload(BaseChecker):
                 else:
                     overloadedfunctions[item.name] = [item]
 
+
             # Loop through the overloaded functions and check they are the same type
             for funct in overloadedfunctions.values():
                 if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
@@ -2795,11 +2796,12 @@ class InvalidUseOfOverload(BaseChecker):
                     for item in funct:
                         if function_is_async is None:
                             function_is_async = self.is_function_async(item)
+
                         else:
                             if function_is_async != self.is_function_async(item):
                                 self.add_message(
                                     msgid=f"invalid-use-of-overload",
-                                    node=node,
+                                    node=item,
                                     confidence=None,
                                 )
         except:
@@ -2807,17 +2809,20 @@ class InvalidUseOfOverload(BaseChecker):
 
 
     def is_function_async(self, node):
-        """Check if a function is async"""
-        if node.__class__ == astroid.nodes.AsyncFunctionDef:
+        try:
+            str(node.__class__).index("Async")
             return True
-        if node.__class__ == astroid.nodes.FunctionDef:
+        except:
             if node.returns is None:
                 return False
             try:
                 if node.returns.value.name == "Awaitable":
                     return True
+                else:
+                    return False
             except:
                 return False
+
 
 
 # [Pylint] Custom Linter check for Exception Logging #3227

@@ -2787,8 +2787,7 @@ class ImportTypeChecker(BaseChecker):
 
             # Check if the entity has already been imported from the same base namespace
             if entity_name in self.imported_entities:
-                if self._get_base_namespace(self.imported_entities[entity_name]) == self._get_base_namespace(
-                        module_name):
+                if self.imported_entities[entity_name] == module_name:
                     # The same entity is imported again from the same base namespace
                     self.add_message(
                         "duplicate-import-type",

@@ -5296,4 +5296,3 @@ class TestImportTypeChecker(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.walk(node)
-            

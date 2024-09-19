@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { CodeFile, PackageJson, ReviewLine, ReviewToken, TokenKind } from "./models";
+import { CodeFile, ReviewLine, ReviewToken, TokenKind } from "./models";
 import {
   ApiDeclaredItem,
   ApiDocumentedItem,
@@ -20,11 +20,6 @@ interface Metadata {
   Language: "JavaScript";
 }
 
-interface SubpathExport {
-  subpath: string;
-  api: ApiModel;
-}
-
 // key: item's canonical reference, value: sub paths that include it
 const exported = new Map<string, Set<string>>();
 
@@ -33,6 +28,14 @@ function emptyLine(relatedToLine?: string): ReviewLine {
 }
 
 function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<string, string>) {
+  if (!dependencies) {
+    return;
+  }
+  const keys = Object.keys(dependencies);
+  if (keys.length === 0) {
+    return;
+  }
+
   const header: ReviewLine = {
     LineId: "Dependencies",
     Tokens: [
@@ -57,7 +60,6 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
       SkipDiff: true,
     };
     const dependencyLine: ReviewLine = {
-      LineId: dependency,
       Tokens: [nameToken, { Kind: TokenKind.Punctuation, Value: ":" }, versionToken],
     };
     dependencyLines.push(dependencyLine);
@@ -67,34 +69,33 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
   reviewLines.push(emptyLine(header.LineId));
 }
 
-function buildSubpathExports(reviewLines: ReviewLine[], subpaths: SubpathExport[]) {
-  for (const subpath of subpaths) {
-    const exportLine: ReviewLine = {
-      LineId: `Subpath-export-${subpath.subpath}`,
-      Tokens: [
-        {
-          Kind: TokenKind.StringLiteral,
-          Value: ` "${subpath.subpath}"`,
-          NavigationDisplayName: `"${subpath.subpath}" subpath export`,
-        },
-      ],
-      Children: [],
-    };
+function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
+  for (const modelPackage of apiModel.packages) {
+    for (const entryPoint of modelPackage.entryPoints) {
+      const subpath = entryPoint.name.length > 0 ? entryPoint.name : "<default>";
+      const exportLine: ReviewLine = {
+        LineId: `Subpath-export-${subpath}`,
+        Tokens: [
+          {
+            Kind: TokenKind.StringLiteral,
+            Value: ` "${subpath}"`,
+            NavigationDisplayName: `"${subpath}" subpath export`,
+          },
+        ],
+        Children: [],
+      };
 
-    for (const modelPackage of subpath.api.packages) {
-      for (const entryPoint of modelPackage.entryPoints) {
-        for (const member of entryPoint.members) {
-          const canonicalRef = member.canonicalReference.toString();
-          const containingExport = exported.get(canonicalRef) ?? new Set<string>();
-          if (!containingExport.has(subpath.subpath)) {
-            containingExport.add(subpath.subpath);
-            exported.set(canonicalRef, containingExport);
-          }
-          buildMember(exportLine.Children!, member);
+      for (const member of entryPoint.members) {
+        const canonicalRef = member.canonicalReference.toString();
+        const containingExport = exported.get(canonicalRef) ?? new Set<string>();
+        if (!containingExport.has(subpath)) {
+          containingExport.add(subpath);
+          exported.set(canonicalRef, containingExport);
         }
+        buildMember(exportLine.Children!, member);
       }
+      reviewLines.push(exportLine);
     }
-    reviewLines.push(exportLine);
   }
 }
 
@@ -133,7 +134,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
       // TODO: we don't usually use namespace in SDK, but... build namespace header here
     }
 
-    let itemKind: string = "unknown";
+    let itemKind: string = "";
     switch (item.kind) {
       case ApiItemKind.Interface:
       case ApiItemKind.Class:
@@ -179,15 +180,16 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
         Tokens: [{ Kind: TokenKind.Punctuation, Value: `}` }],
         RelatedToLine: line.LineId,
       });
+    } else {
+      reviewLines.push({
+        Tokens: [
+          { Kind: TokenKind.Punctuation, Value: `{`, HasSuffixSpace: true },
+          { Kind: TokenKind.Punctuation, Value: `}` },
+        ],
+      });
     }
   } else {
     reviewLines.push(line);
-    reviewLines.push({
-      Tokens: [
-        { Kind: TokenKind.Punctuation, Value: `{`, HasSuffixSpace: true },
-        { Kind: TokenKind.Punctuation, Value: `}` },
-      ],
-    });
   }
 
   // TODO: closing line of namespace
@@ -199,20 +201,20 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
 function buildReview(
   review: ReviewLine[],
   dependencies: Record<string, string>,
-  apiModels: { subpath: string; api: ApiModel }[],
+  apiModel: ApiModel,
 ) {
-  // buildDependencies(review, dependencies);
-  buildSubpathExports(review, apiModels);
+  buildDependencies(review, dependencies);
+  buildSubpathExports(review, apiModel);
 }
 
 export function GenerateApiview(options: {
   meta: Metadata;
-  packageJson: PackageJson;
-  apiModels: { subpath: string; api: ApiModel }[];
+  dependencies: Record<string, string>;
+  apiModel: ApiModel;
 }): CodeFile {
-  const { meta, packageJson, apiModels } = options;
+  const { meta, dependencies, apiModel } = options;
   const review: ReviewLine[] = [];
-  buildReview(review, packageJson.dependencies, apiModels);
+  buildReview(review, dependencies, apiModel);
 
   return {
     ...meta,

@@ -7,7 +7,7 @@ import {
   ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 
 import { IApiViewFile, IApiViewNavItem } from "./models";
 import { TokensBuilder } from "./tokensBuilder";
@@ -136,6 +136,9 @@ async function main() {
     PackageVersion: packageVersionString,
   };
 
+  const apiJson = JSON.parse((await readFile(fileName, { encoding: "utf-8"})));
+  const dependencies = apiJson.metadata.dependencies;
+
   const result = JSON.stringify(
     GenerateApiview({
       meta: {
@@ -145,15 +148,8 @@ async function main() {
         ParserVersion: "2.0.0",
         Language: "JavaScript",
       },
-      packageJson: {
-        dependencies: {},
-      },
-      apiModels: [
-        {
-          subpath: "<default>",
-          api: apiModel,
-        },
-      ],
+      dependencies,
+      apiModel,
     }),
   );
 

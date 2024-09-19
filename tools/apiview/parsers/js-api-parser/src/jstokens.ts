@@ -98,8 +98,10 @@ export function splitAndBuild(
         const t: ReviewToken = {
           Kind: TokenKind.TypeName,
           Value: token.value,
-          RenderClasses: [memberKind],
         };
+        if (memberKind !== "") {
+          t.RenderClasses = [memberKind];
+        }
         if (!isTypeMember(currentTypeid)) {
           t.NavigateToId = currentTypeid;
           t.NavigationDisplayName = token.value;

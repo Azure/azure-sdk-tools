@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Azure.Storage.Queues.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Octokit;
 
 namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 {
@@ -16,11 +18,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
     {
         private readonly ILogger logger;
         private readonly GitHubActionProcessor processor;
+        private readonly GitHubClient githubClient;
 
         public RunCompleteQueueWorker(
             ILogger<RunCompleteQueueWorker> logger,
             GitHubActionProcessor processor,
             QueueServiceClient queueServiceClient,
+            GitHubClient githubClient,
             TelemetryClient telemetryClient,
             IOptionsMonitor<PipelineWitnessSettings> options)
             : base(
@@ -32,6 +36,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         {
             this.logger = logger;
             this.processor = processor;
+            this.githubClient = githubClient;
         }
 
         internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
@@ -40,7 +45,29 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
             var githubMessage = JsonSerializer.Deserialize<RunCompleteQueueMessage>(message.MessageText);
 
-            await this.processor.ProcessAsync(githubMessage.Owner, githubMessage.Repository, githubMessage.RunId);
+            try
+            {
+                await this.processor.ProcessAsync(githubMessage.Owner, githubMessage.Repository, githubMessage.RunId);
+            }
+            catch(RateLimitExceededException ex)
+            {
+                this.logger.LogError(ex, "Rate limit exceeded while processing run {RunId}", githubMessage.RunId);
+
+                try
+                {
+                    var rateLimit = await this.githubClient.RateLimit.GetRateLimits();
+                    this.logger.LogInformation("Rate limit details: {RateLimit}", rateLimit.Resources);
+                }
+                catch (Exception rateLimitException)
+                {
+                    this.logger.LogError(rateLimitException, "Error logging rate limit details");
+                }
+
+                var resetRemaining = ex.Reset - DateTimeOffset.UtcNow;
+
+                throw new PauseProcessingException(resetRemaining);
+            }
+
         }
     }
 }

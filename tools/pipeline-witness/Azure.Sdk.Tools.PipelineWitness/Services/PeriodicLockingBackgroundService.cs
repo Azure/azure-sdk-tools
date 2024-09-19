@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
+using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -51,19 +52,21 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                         var localCancellation = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
 
                         // concurrently process and keep the lock alive
-                        var processTask = ProcessAsync(localCancellation.Token);
+                        var processTask = SafelyProcessAsync(localCancellation.Token);
                         var renewLockTask = RenewLockAsync(asyncLock, this.lockDuration, localCancellation.Token);
-                        await Task.WhenAny(processTask, renewLockTask);
+
+                        Task.WaitAny([processTask, renewLockTask], stoppingToken);
 
                         // whichever task completes first, cancel the other, then wait for both to complete
                         localCancellation.Cancel();
-                        await Task.WhenAll(processTask, renewLockTask);
 
-                        // awaiting processTask will have thrown an exception if it failed
+                        Task.WaitAll([processTask, renewLockTask], stoppingToken);
 
                         // if processTask completed successfully, attemt to extend the lock for the cooldown period
                         // the cooldown period prevents the process from running too frequently
-                        await asyncLock.TryExtendAsync(this.cooldownDuration, stoppingToken);
+                        var (success, cooldown) = await processTask;
+                        
+                        await asyncLock.TryExtendAsync(cooldown, stoppingToken);
                         asyncLock.ReleaseOnDispose = false;
                     }
                     else
@@ -71,9 +74,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                         this.logger.LogInformation("Lock {LockName} not acquired", this.lockName);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException && !stoppingToken.IsCancellationRequested)
                 {
-                    await ProcessExceptionAsync(ex);
+                    // outside of a lock, we can't set the cooldown period on the lock, so we ignore the cooldown period in the return value
+                   this.logger.LogError(ex, "Error processing");
                 }
 
                 // Remove the time spent processing from the wait time to maintain the loop period
@@ -85,8 +89,36 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             }
         }
 
-        protected abstract Task ProcessExceptionAsync(Exception ex);
 
+        /// <summary>
+        /// Call ProcessAsync and log any exception that occurs
+        /// </summary>
+        private async Task<(bool Success, TimeSpan PauseDuration)> SafelyProcessAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await ProcessAsync(cancellationToken).ConfigureAwait(false);
+                return (true, this.cooldownDuration);
+            }
+            catch (PauseProcessingException ex)
+            {
+                if (ex.InnerException != null)
+                {
+                    this.logger.LogError(ex.InnerException, "ProcessAsync threw exception");
+                }
+
+                return (false, ex.PauseDuration);
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "ProcessAsync threw exception");
+                return (false, TimeSpan.Zero);
+            }
+        }
+
+        /// <summary>
+        /// The main process for the defived class
+        /// </summary>
         protected abstract Task ProcessAsync(CancellationToken cancellationToken);
 
         private async Task RenewLockAsync(IAsyncLock asyncLock, TimeSpan duration, CancellationToken cancellationToken)

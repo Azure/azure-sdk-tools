@@ -1,6 +1,7 @@
 parameters:
   Repos: []
   DirectoryToSync: eng/common
+  FilePattern: ''
   CommitMessage: commit-message-not-set
   UpstreamBranchName: branch-name-not-set
   BaseBranchName: $(DefaultBranch)
@@ -27,7 +28,6 @@ steps:
 
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
-        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         if (Test-Path '$(PatchFilesLocation)')
         {
           pushd ${{ repo }}
@@ -152,9 +152,9 @@ steps:
     - pwsh: |
         Set-PsDebug -Trace 1
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
-        Remove-Item -v -r -ErrorAction Ignore $repoPath
+        Remove-Item -v -r -ErrorAction Ignore "$repoPath${{ parameters.FilePattern }}"
         Copy-Item -v -r `
-          $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }} `
+          "$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}${{ parameters.FilePattern }}" `
           $repoPath
         Get-ChildItem -r $repoPath
       displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}

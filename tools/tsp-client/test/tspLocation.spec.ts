@@ -28,9 +28,7 @@ describe("Verify tsp-location.yaml", function () {
       directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
       commit: "1234567",
       repo: "foo",
-      additionalDirectories: [
-        "specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
-      ],
+      additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
     };
     await writeTspLocationYaml(tspLocation, "./test/examples/");
 

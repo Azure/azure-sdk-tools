@@ -1,14 +1,16 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { FULL_DIFF_STYLE, mapLanguageAliases, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, mapLanguageAliases, NODE_DIFF_STYLE, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { take } from 'rxjs';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { PullRequestsService } from 'src/app/_services/pull-requests/pull-requests.service';
+import { PullRequestModel } from 'src/app/_models/pullRequestModel';
 
 @Component({
   selector: 'app-review-page-options',
@@ -27,6 +29,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
+  @Input() hasHiddenAPIThatIsDiff : boolean = false;
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -34,10 +37,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showHiddenAPIEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() disableCodeLinesLazyLoadingEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() subscribeEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+  @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
+
 
   webAppUrl : string = this.configService.webAppUrl
   
@@ -47,7 +55,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   showHiddenAPISwitch : boolean = false;
   showLeftNavigationSwitch : boolean = true;
   markedAsViewSwitch : boolean = false;
+  subscribeSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
+  disableCodeLinesLazyLoading: boolean = false;
 
   canToggleApproveAPIRevision: boolean = false;
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
@@ -55,12 +65,17 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   apiRevisionApprovalBtnClass: string = '';
   apiRevisionApprovalBtnLabel: string = '';
   showAPIRevisionApprovalModal: boolean = false;
+  showDisableCodeLinesLazyLoadingModal: boolean = false;
   overrideActiveConversationforApproval : boolean = false;
   overrideFatalDiagnosticsforApproval : boolean = false;
   
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
+
+  associatedPullRequests  : PullRequestModel[] = [];
+  pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
+  CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
   //Approvers Options
   selectedApprovers: string[] = [];
@@ -84,25 +99,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     private configService: ConfigService, 
     private route: ActivatedRoute, 
     private router: Router, 
-    private apiRevisionsService: RevisionsService) { }
+    private apiRevisionsService: RevisionsService, private pullRequestService: PullRequestsService) { }
 
   ngOnInit() {
     this.setSelectedDiffStyle();
-    this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
-    this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
-    this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
-    this.showHiddenAPISwitch = this.userProfile?.preferences.showHiddenApis ?? false;
-
-    if (this.userProfile?.preferences.hideLeftNavigation != undefined) {
-      this.showLeftNavigationSwitch = !(this.userProfile?.preferences.hideLeftNavigation);
-    } else {
-      this.showLeftNavigationSwitch = false;
-    }
-    if (this.userProfile?.preferences.hideLineNumbers){
-      this.showLineNumbersSwitch = false;
-    } else {
-      this.showLineNumbersSwitch = true;
-    }
+    this.setPageOptionValues();
 
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
     this.setAPIRevisionApprovalStates();
@@ -110,40 +111,34 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['diffStyleInput']) {
+    if (changes['diffStyleInput'] && changes['diffStyleInput'].currentValue != undefined) {
       this.setSelectedDiffStyle();
     }
 
-    if (changes['userProfile']) {
-      this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
-      this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
-      this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
-      this.showHiddenAPISwitch = this.userProfile?.preferences.showHiddenApis ?? false;
-
-      if (this.userProfile?.preferences.hideLeftNavigation != undefined) {
-        this.showLeftNavigationSwitch = !(this.userProfile?.preferences.hideLeftNavigation);
-      } else {
-        this.showLeftNavigationSwitch = false;
-      }
-      if (this.userProfile?.preferences.hideLineNumbers){
-        this.showLineNumbersSwitch = false;
-     } else {
-      this.showLineNumbersSwitch = true;
-     }
+    if (changes['userProfile'] && changes['userProfile'].currentValue != undefined) {
+      this.setSubscribeSwitch();
+      this.setMarkedAsViewSwitch();
+      this.setPageOptionValues();
     }
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
-      this.markedAsViewSwitch = this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!);
+      this.setMarkedAsViewSwitch();
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.setAPIRevisionApprovalStates();
+      this.setPullRequestsInfo();
     }
 
-    if (changes['diffAPIRevision']) {
+    if (changes['diffAPIRevision'] && changes['diffAPIRevision'].currentValue != undefined) {
       this.setAPIRevisionApprovalStates();
     }
 
-    if (changes['review']) {
+    if (changes['review'] && changes['review'].currentValue != undefined) { 
+      this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
+    }
+
+    if (changes['hasHiddenAPIThatIsDiff']) {
+      this.setPageOptionValues();
     }
   }
 
@@ -192,11 +187,32 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   }
 
   /**
+  * Disable Lazy Loading
+  * @param event the Filter event
+  */
+  onDisableLazyLoadingSwitchChange(event: InputSwitchOnChangeEvent) {
+    if (event.checked) {
+      this.showDisableCodeLinesLazyLoadingModal = true;
+    } else {
+      this.disableCodeLinesLazyLoadingEmitter.emit(event.checked);
+    }
+  }
+  
+
+  /**
   * Callback for markedAsViewSwitch Change
   * @param event the Filter event
   */
   onMarkedAsViewedSwitchChange(event: InputSwitchOnChangeEvent) {
     this.markAsViewedEmitter.emit(event.checked);
+  }
+
+  /**
+  * Callback for markedAsViewSwitch Change
+  * @param event the Filter event
+  */
+  onSubscribeSwitchChange(event: InputSwitchOnChangeEvent) {
+    this.subscribeEmitter.emit(event.checked);
   }
 
   /**
@@ -241,6 +257,16 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.selectedDiffStyle = (inputDiffStyle) ? inputDiffStyle : this.diffStyleOptions[0];
   }
 
+  setPageOptionValues() {
+    this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
+    this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
+    this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
+    this.disableCodeLinesLazyLoading = this.userProfile?.preferences.disableCodeLinesLazyLoading ?? this.disableCodeLinesLazyLoading;
+    this.showLineNumbersSwitch = (this.userProfile?.preferences.hideLineNumbers) ? false : this.showLineNumbersSwitch;
+    this.showLeftNavigationSwitch = (this.userProfile?.preferences.hideLeftNavigation) ? false : this.showLeftNavigationSwitch;
+    this.showHiddenAPISwitch = (this.userProfile?.preferences.showHiddenApis || this.hasHiddenAPIThatIsDiff || this.showHiddenAPISwitch) ? true : false;
+  }
+
   setAPIRevisionApprovalStates() {
     this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
     const isActiveAPIRevisionAhead = (!this.diffAPIRevision) ? true : ((new Date(this.activeAPIRevision?.createdOn!)) > (new Date(this.diffAPIRevision?.createdOn!)));
@@ -264,6 +290,34 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     }
   }
 
+  setPullRequestsInfo() {
+    if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') { 
+      this.pullRequestService.getAssociatedPullRequests(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
+        next: (response: PullRequestModel[]) => {
+          this.associatedPullRequests = response;
+        }
+      });
+
+      this.pullRequestService.getPullRequestsOfAssociatedAPIRevisions(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
+        next: (response: PullRequestModel[]) => {
+          for (const pr of response) {
+            if (pr.reviewId != this.activeAPIRevision?.reviewId) {
+              this.pullRequestsOfAssociatedAPIRevisions.push(pr);
+            }
+          }
+        }
+      });
+    }
+  }
+  
+  setSubscribeSwitch() {
+    this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
+  }
+
+  setMarkedAsViewSwitch() {
+    this.markedAsViewSwitch = (this.activeAPIRevision && this.userProfile)? this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!): this.markedAsViewSwitch;
+  }
+
   handleAPIRevisionApprovalAction() {
     if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
       this.showAPIRevisionApprovalModal = true;
@@ -278,6 +332,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
 
   toggleAPIRevisionApproval() {
     this.apiRevisionApprovalEmitter.emit(true);
+  }
+
+  getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
+    return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**

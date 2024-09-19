@@ -1,5 +1,3 @@
-using CSharpAPIParser;
-
 namespace CSharpAPIParserTests
 {
     public class ProgramTests

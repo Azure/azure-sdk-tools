@@ -20,6 +20,8 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessagesModule } from 'primeng/messages';
+import { BadgeModule } from 'primeng/badge';
+import { ToastModule } from 'primeng/toast';
  
 
 @NgModule({
@@ -38,6 +40,7 @@ import { MessagesModule } from 'primeng/messages';
     LanguageNamesPipe,
     LastUpdatedOnPipe,
     ApprovalPipe,
+    BadgeModule,
     ContextMenuModule,
     TableModule,
     ChipModule,
@@ -52,9 +55,10 @@ import { MessagesModule } from 'primeng/messages';
     SplitterModule,
     SidebarModule,
     TimeagoModule,
-    InputTextModule
+    InputTextModule,
   ],
   imports: [
+    BadgeModule,
     CommonModule,
     ContextMenuModule,
     TableModule,

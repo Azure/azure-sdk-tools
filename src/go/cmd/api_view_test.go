@@ -290,6 +290,15 @@ func TestAliasDiagnostics(t *testing.T) {
 	}
 }
 
+func TestMajorVersion(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_major_version"))
+	require.NoError(t, err)
+	require.Equal(t, "Go", review.Language)
+	require.Equal(t, "test_major_version", review.Name)
+	require.Equal(t, 1, len(review.Navigation))
+	require.Equal(t, "test_major_version/subpackage", review.Navigation[0].Text)
+}
+
 func TestVars(t *testing.T) {
 	review, err := createReview(filepath.Clean("testdata/test_vars"))
 	require.NoError(t, err)

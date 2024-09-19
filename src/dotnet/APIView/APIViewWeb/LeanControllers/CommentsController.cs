@@ -1,8 +1,10 @@
 using APIViewWeb.Helpers;
+using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -19,8 +21,8 @@ namespace APIViewWeb.LeanControllers
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
 
-        public CommentsController(ILogger<CommentsController> logger,
-            ICommentsManager commentManager, IReviewManager reviewManager, INotificationManager notificationManager)
+        public CommentsController(ILogger<CommentsController> logger, ICommentsManager commentManager,
+            IReviewManager reviewManager, INotificationManager notificationManager)
         {
             _logger = logger;
             _commentsManager = commentManager;
@@ -126,7 +128,7 @@ namespace APIViewWeb.LeanControllers
             {
                 await _notificationManager.SubscribeAsync(review, User);
             }
-            return CreatedAtAction("GetComments", new { reviewId = reviewId }, comment);
+             return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));
         }
 
         /// <summary>

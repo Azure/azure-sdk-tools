@@ -35,12 +35,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="hasWriteOrAdmin">Whether or not the PR creator has write or admin permissions</param>
         [Category("static")]
         [NonParallelizable]
-        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.On, true, true)]
-        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.Off, false, false)]
-        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.On, true, false)]
-        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.On, false, true)]
-        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.On, false, false)]
-        public async Task TestPullRequestTriage(string rule, string payloadFile, RuleState ruleState, bool isMemberOfOrg, bool hasWriteOrAdmin)
+        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.On, true, true, false)]
+        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.Off, false, false, false)]
+        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.On, true, false, false)]
+        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.On, false, true, false)]
+        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_no_labels.json", RuleState.On, false, false, false)]
+        [TestCase(RulesConstants.PullRequestTriage, "Tests.JsonEventPayloads/PullRequestTriage_pr_opened_by_bot_no_labels.json", RuleState.On, false, false, true)]
+        public async Task TestPullRequestTriage(string rule, string payloadFile, RuleState ruleState, bool isMemberOfOrg, bool hasWriteOrAdmin, bool prCreatedByBot)
         {
             var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
             mockGitHubEventClient.RulesConfiguration.Rules[rule] = ruleState;
@@ -68,13 +69,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
             if (RuleState.On == ruleState)
             {
-                // Regardless of whether or not the user has Write or Admin permissions, the prFiles should cause 4 labels to get added
-                // which means an issueUpdate will be created
+                // Regardless of whether or not the user has Write or Admin permissions, or the PR is created by a BOT, the prFiles should
+                // cause 4 labels to get added which means an issueUpdate will be created
                 int expectedUpdates = 1;
-
-                if (hasWriteOrAdmin || isMemberOfOrg)
+                if (prCreatedByBot)
                 {
-                    // There should be one update, an IssueUpdate with the NoRecentActivity label removed
+                    // There should be one update, an IssueUpdate with the PR labels for files in the PR
+                    Assert.AreEqual(expectedUpdates, totalUpdates, $"The number of updates for a PR created by a BOT user should have been {expectedUpdates} but was instead, {totalUpdates}");
+                }
+                else if (hasWriteOrAdmin || isMemberOfOrg)
+                {
+                    // There should be one update, an IssueUpdate with the PR labels for files in the PR
                     Assert.AreEqual(expectedUpdates, totalUpdates, $"The number of updates for a user having Write or Admin permission or being a member of Azure org should have been {expectedUpdates} but was instead, {totalUpdates}");
                 }
                 // If the user doesn't have Write or Admin permissions then "customer-reported" and "Community Contribution" labels
@@ -92,9 +97,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(label), $"Labels to add should contain {label} which should have been added because of the file paths in the PR but was not.");
                 }
 
+                // If the PR was created by a bot, CustomerReported and CommunityContribution labels and commend should not be added
+                if (prCreatedByBot)
+                {
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CustomerReported), $"User that created the PR was a BOT, IssueUpdate should not contain {TriageLabelConstants.CustomerReported}.");
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CommunityContribution), $"User that created the PR was a BOT, IssueUpdate should not contain {TriageLabelConstants.CommunityContribution}.");
+                    Assert.AreEqual(0, mockGitHubEventClient.GetComments().Count, "User that created the PR was a BOT, there should not have been a comment added.");
+
+                }
                 // If the user is not part of the Azure org AND they don't have write or admin collaborator permissions
                 // then customer-reported and community-contribution labels should have been added along with a comment
-                if (!isMemberOfOrg && !hasWriteOrAdmin)
+                else if (!isMemberOfOrg && !hasWriteOrAdmin)
                 {
                     Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CustomerReported), $"User does not have write or admin permission, IssueUpdate should contain {TriageLabelConstants.CustomerReported}.");
                     Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CommunityContribution), $"User does not have write or admin permission, IssueUpdate should contain {TriageLabelConstants.CommunityContribution}.");

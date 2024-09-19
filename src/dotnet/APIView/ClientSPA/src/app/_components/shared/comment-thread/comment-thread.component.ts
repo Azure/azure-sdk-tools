@@ -6,6 +6,8 @@ import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
 
 @Component({
   selector: 'app-comment-thread',
@@ -18,11 +20,13 @@ import { UserProfile } from 'src/app/_models/userProfile';
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
   @Input() associatedCodeLine: CodePanelRowData | undefined;
+  @Input() instanceLocation: "code-panel" | "conversations" = "code-panel";
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentResolutionActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() commentThreadNavaigationEmitter : EventEmitter<any> = new EventEmitter<any>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -40,6 +44,11 @@ export class CommentThreadComponent {
   threadResolvedAndExpanded : boolean = false;
   spacingBasedOnResolvedState: string = 'my-2';
   resolveThreadButtonText : string = 'Resolve';
+
+  floatItemStart : string = ""
+  floatItemEnd : string = ""
+
+  CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
   constructor(private userProfileService: UserProfileService) { }
 
@@ -109,15 +118,27 @@ export class CommentThreadComponent {
 
   setCommentResolutionState() {
     if (this.codePanelRowData?.isResolvedCommentThread) {
-      this.threadResolvedBy = this.codePanelRowData?.commentThreadIsResolvedBy ?? this.codePanelRowData?.comments?.find(comment => comment.isResolved)?.changeHistory.find(ch => ch.changeAction === 'resolved')?.changedBy;
-      this.spacingBasedOnResolvedState = 'mb-2';
+      this.threadResolvedBy = this.codePanelRowData?.commentThreadIsResolvedBy;
+      if (!this.threadResolvedBy) {
+        const lastestResolvedComment = Array.from(this.codePanelRowData?.comments || []).reverse().find(comment => comment.isResolved && comment.changeHistory && comment.changeHistory.some(ch => ch.changeAction === 'resolved'));
+        if (lastestResolvedComment) {
+          this.threadResolvedBy = lastestResolvedComment.changeHistory.reverse().find(ch => ch.changeAction === 'resolved')?.changedBy;
+        }
+      }    
+      this.spacingBasedOnResolvedState = (this.instanceLocation === "code-panel") ? 'mb-2' : "";
       this.resolveThreadButtonText = 'Unresolve';
     }
     else {
       this.threadResolvedBy = '';
-      this.spacingBasedOnResolvedState = 'my-2';
+      this.spacingBasedOnResolvedState = (this.instanceLocation === "code-panel") ? 'my-2' : "";
       this.resolveThreadButtonText = 'Resolve';
     }
+    this.setCssPropertyBasedonInstance();
+  }
+
+  setCssPropertyBasedonInstance() {
+    this.floatItemStart = (this.instanceLocation === 'code-panel') ? "float-start" : "";
+    this.floatItemEnd = (this.instanceLocation === 'code-panel') ? "float-end" : "";
   }
 
   getCommentActionMenuContent(commentId: string) {
@@ -171,13 +192,15 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-item-id");
     const commentData = this.codePanelRowData?.comments?.find(comment => comment.id === commentId)?.commentText.replace(/<[^>]*>/g, '').trim();
 
-    console.log(this.associatedCodeLine); 
-
-    const codeLineContent = this.associatedCodeLine 
+    let codeLineContent = this.associatedCodeLine 
         ? this.associatedCodeLine.rowOfTokens
             .map(token => token.value)
             .join('')
         : '';
+
+    if (!codeLineContent) {
+      codeLineContent = this.codePanelRowData?.comments[0].elementId!;
+    }
 
     const nodeId: string = this.codePanelRowData?.nodeId ?? 'defaultNodeId';
     const apiViewUrl = `${window.location.href.split("#")[0]}&nId=${encodeURIComponent(nodeId)}`;
@@ -193,10 +216,14 @@ export class CommentThreadComponent {
   deleteComment(event: MenuItemCommandEvent) {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
-    this.deleteCommentActionEmitter.emit({ 
-      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-      commentId: commentId,
-      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup});
+    this.deleteCommentActionEmitter.emit(
+      {
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
+        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+        commentId: commentId,
+        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+      } as CommentUpdatesDto
+    );
   }
 
   showEditEditor = (event: MenuItemCommandEvent) => {
@@ -226,18 +253,28 @@ export class CommentThreadComponent {
   saveCommentAction(event: Event) {
     const target = event.target as Element;
     const replyEditorContainer = target.closest(".reply-editor-container") as Element;
+    let revisionIdForConversationGroup: string | null | undefined = null;
+    let elementIdForConversationGroup: string | null | undefined = null;
+
+    if (this.instanceLocation === "conversations") {
+      revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
+      elementIdForConversationGroup = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+    }
 
     if (replyEditorContainer) {
       const replyEditor = this.editor.find(e => e.editorId === "replyEditor");
       const content = replyEditor?.getEditorContent();
       this.saveCommentActionEmitter.emit(
         { 
+          commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
           nodeId: this.codePanelRowData!.nodeId,
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentText: content,
           allowAnyOneToResolve: this.allowAnyOneToResolve,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-        }
+          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+          elementId: elementIdForConversationGroup,
+          revisionId: revisionIdForConversationGroup
+        } as CommentUpdatesDto
       );
       this.codePanelRowData!.showReplyTextBox = false;
     } else {
@@ -247,12 +284,15 @@ export class CommentThreadComponent {
       const content = replyEditor?.getEditorContent();
       this.saveCommentActionEmitter.emit(
         { 
+          commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
           nodeId: this.codePanelRowData!.nodeId,
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentId: commentId,
           commentText: content,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-        }
+          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+          elementId: elementIdForConversationGroup,
+          revisionId: revisionIdForConversationGroup
+        } as CommentUpdatesDto
       );
       this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
     }
@@ -263,10 +303,11 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-btn-id");
     this.commentUpvoteActionEmitter.emit(
       { 
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         commentId: commentId,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-      }
+      } as CommentUpdatesDto
     );
   }
 
@@ -279,16 +320,27 @@ export class CommentThreadComponent {
       this.threadResolvedStateToggleText = 'Show';
       this.threadResolvedStateToggleIcon = 'bi-arrows-expand';
     }
+    this.setCssPropertyBasedonInstance();
   }
 
   handleThreadResolutionButtonClick(action: string) {
     this.commentResolutionActionEmitter.emit(
       { 
+        commentThreadUpdateAction: (action == "Resolve") ? CommentThreadUpdateAction.CommentResolved  : CommentThreadUpdateAction.CommentUnResolved,
         elementId: this.codePanelRowData!.comments[0].elementId,
-        action: action,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-      }
+        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+        resolvedBy: this.userProfile?.userName
+      } as CommentUpdatesDto
     );
+  }
+
+  handleCommentThreadNavaigation(event: Event, direction: CodeLineRowNavigationDirection) {
+    const target = (event.target as Element).closest(".user-comment-thread")?.parentNode as Element;
+    const targetIndex = target.getAttribute("data-sid");
+    this.commentThreadNavaigationEmitter.emit({
+      commentThreadNavaigationPointer: targetIndex,
+      direction: direction
+    });
   }
 }

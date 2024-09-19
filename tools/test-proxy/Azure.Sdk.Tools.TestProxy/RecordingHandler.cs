@@ -239,7 +239,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
 
             DebugLogger.LogTrace($"RECORD START END {id}.");
-            outgoingResponse.Headers.Add("x-recording-id", id);
+            outgoingResponse.Headers.Append("x-recording-id", id);
         }
 
         public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
@@ -328,7 +328,7 @@ namespace Azure.Sdk.Tools.TestProxy
             foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
             {
                 var values = new StringValues(header.Value.ToArray());
-                outgoingResponse.Headers.Add(header.Key, values);
+                outgoingResponse.Headers.Append(header.Key, values);
                 entry.Response.Headers.Add(header.Key, values);
             }
 
@@ -445,7 +445,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 await RestoreAssetsJson(assetsPath, true);
                 var path = await GetRecordingPath(sessionId, assetsPath);
                 var base64path = Convert.ToBase64String(Encoding.UTF8.GetBytes(path));
-                outgoingResponse.Headers.Add("x-base64-recording-file-location", base64path);
+                outgoingResponse.Headers.Append("x-base64-recording-file-location", base64path);
                 if (!File.Exists(path))
                 {
                     throw new TestRecordingMismatchException($"Recording file path {path} does not exist.");
@@ -465,11 +465,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new playback session under id {id}.");
             }
 
-            outgoingResponse.Headers.Add("x-recording-id", id);
+            outgoingResponse.Headers.Append("x-recording-id", id);
 
 
             var json = JsonSerializer.Serialize(session.Session.Variables);
-            outgoingResponse.Headers.Add("Content-Type", "application/json");
+            outgoingResponse.Headers.Append("Content-Type", "application/json");
 
             // Write to the response
             await outgoingResponse.WriteAsync(json);
@@ -577,7 +577,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 foreach (var header in match.Response.Headers)
                 {
-                    outgoingResponse.Headers.Add(header.Key, header.Value.ToArray());
+                    outgoingResponse.Headers.Append(header.Key, header.Value.ToArray());
                 }
 
                 outgoingResponse.Headers.Remove("Transfer-Encoding");

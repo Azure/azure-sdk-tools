@@ -50,7 +50,7 @@ parameters:
       #   SubscriptionConfigurations:
       #     - $(sub-config-communication-int-test-resources-common)
       - DisplayName: AzureCloud ACS - Resource Cleanup
-        ServiceConnection: azure-sdk-tests-communications
+        ServiceConnection: azure-sdk-tests-communication
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources)
           - $(sub-config-communication-services-cloud-test-resources-common)

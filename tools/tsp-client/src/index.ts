@@ -2,6 +2,7 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { checkDebugLogging, Logger, printBanner, usageText } from "./log.js";
 import {
+    combineSwaggersCommand,
   compareCommand,
   convertCommand,
   generateCommand,
@@ -239,6 +240,20 @@ const parser = yargs(hideBin(process.argv))
       argv["output-dir"] = resolveOutputDir(argv);
       const rawArgs = process.argv.slice(3);
       await compareCommand(argv, rawArgs);
+    },
+  )
+  .command(
+    "combine-swaggers <swagger-files..>",
+    "Combine multiple swagger files into a single swagger file.",
+    (yargs: any) => {
+      return yargs.positional("swagger-files", {
+        type: "string",
+        description: "Path to the swagger file",
+      });
+    },
+    async (argv: any) => {
+        argv["output-dir"] = resolveOutputDir(argv);
+        await combineSwaggersCommand(argv);
     },
   )
   .demandCommand(1, "Please provide a command.")

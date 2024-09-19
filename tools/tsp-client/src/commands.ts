@@ -3,6 +3,7 @@ import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import {
   createTempDirectory,
+  ensureDirectory,
   getEmitterFromRepoConfig,
   readTspLocation,
   removeDirectory,
@@ -411,4 +412,83 @@ export async function sortSwaggerCommand(argv: any): Promise<void> {
   const sorted = sortOpenAPIDocument(document);
   await writeFile(swaggerFile, JSON.stringify(sorted, null, 2));
   Logger.info(`${swaggerFile} has been sorted.`);
+}
+
+export async function combineSwaggersCommand(argv: any): Promise<void> {
+    Logger.info("Combining multiple swagger files into a single file...");
+    const outputDir = argv["output-dir"];
+    const swaggerFiles = argv["swagger-files"];
+    const swaggerFileCount = swaggerFiles?.length ?? 0;
+    if (swaggerFileCount <= 1) {
+        throw new Error(`2 or more swagger files must be specified, ${swaggerFileCount} provided.`);
+    }
+
+    await ensureDirectory(outputDir);
+    
+    const documents = [];
+    for (const file of swaggerFiles) {
+        if (!(await doesFileExist(file))) {
+            throw new Error(`Swagger file not found: ${file}`);
+        }
+        try {
+            const content = await readFile(file);
+            const document = JSON.parse(content.toString());
+            documents.push(document);
+        } catch (err) {
+            throw new Error(`Failed to parse swagger file: ${file}. Error: ${err}`);
+        }
+    }
+
+    // Merge contents 1 level deep
+    const combined = documents.reduce((a: Record<string | number, any>, b: Record<string | number, any>) => {
+        const result = { ...a };
+        for (const [key, value] of Object.entries(b)) {
+            // if the key doesn't exist in result, just set it to b's value
+            if (!(key in result || typeof result[key] === "undefined" || result[key] === null)) {
+                result[key] = value;
+                continue;
+            }
+    
+            // when b value is null and any a value exists, ignore b value
+            if (value === null) {
+                continue;
+            }
+    
+            // if both values are arrays, merge them
+            if (Array.isArray(result[key]) && Array.isArray(value)) {
+                result[key] = [...result[key], ...value];
+                continue;
+            }
+    
+            // if both values are objects, merge them
+            if (typeof result[key] === "object" && typeof value === "object") {
+                // Warn if a key exists in both objects since one may be replaced by the other
+                for (const k of Object.keys(value)) {
+                    if (k in result[key] && result[key][k] !== value[k]) {
+                        Logger.warn(`Key ${key}.${k} exists in both objects, value from first object will be replaced.`);
+                        result[key][k] = value[k];
+                    }
+                }
+                continue;
+            }
+    
+            // At this point remaining values should be scalars - confirm they match
+            if (result[key] === value) {
+                continue;
+            }
+    
+            // Encountered different values for the same field, unable to merge
+            Logger.warn(`Scalar value mismatch for key: ${key}, ${result[key]} !== ${value}`);
+        }
+    
+        return result;
+    });
+
+    // sort the file
+    const sorted = sortOpenAPIDocument(combined);
+    
+    // merge files
+    const outputFile = resolvePath(outputDir, "combined.json");
+    await writeFile(outputFile, JSON.stringify(sorted, null, 2));
+    Logger.info(`${outputFile} has been created.`);
 }

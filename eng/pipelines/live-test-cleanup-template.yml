@@ -31,7 +31,7 @@ steps:
       EnvVars:
         Pool: $(Pool)
 
-  - ${{ if eq('true', parameters.ServiceConnection) }}:
+  - ${{ if ne(parameters.ServiceConnection, '') }}:
     - task: AzurePowerShell@5
       inputs:
         azureSubscription: ${{ parameters.ServiceConnection }}

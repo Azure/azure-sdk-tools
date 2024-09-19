@@ -2,6 +2,7 @@ using System.CommandLine.Invocation;
 using System.Text;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
+using TimeProvider = Azure.Sdk.Tools.SecretRotation.Core.TimeProvider;
 
 namespace Azure.Sdk.Tools.SecretManagement.Cli.Commands;
 

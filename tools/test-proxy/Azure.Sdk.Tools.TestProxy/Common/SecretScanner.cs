@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Console;
-using Microsoft.Build.Tasks;
 using Microsoft.Security.Utilities;
 
 namespace Azure.Sdk.Tools.TestProxy.Common

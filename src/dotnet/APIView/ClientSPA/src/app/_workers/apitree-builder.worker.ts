@@ -27,17 +27,21 @@ addEventListener('message', ({ data }) => {
     if (!codePanelData?.hasDiff) {
       apiTreeBuilderData!.diffStyle = FULL_DIFF_STYLE; // If there is no diff nodes and tree diff will not work
     }
-    
-    if (codePanelData?.navigationTreeNodes && codePanelData?.navigationTreeNodes.length > 0)
-    {
-      isNavigationTreeCreated = true;
-      navigationTree = codePanelData?.navigationTreeNodes;
-    }
+        
     buildCodePanelRows("root", navigationTree);
     const codePanelRowDataMessage : InsertCodePanelRowDataMessage = {
       directive: ReviewPageWorkerMessageDirective.UpdateCodePanelRowData,
       payload: codePanelRowData
     };
+
+    if (codePanelData?.navigationTreeNodes && codePanelData?.navigationTreeNodes.length > 0)
+    {
+      isNavigationTreeCreated = true;
+      navigationTree = codePanelData?.navigationTreeNodes;
+      //Remove navigation nodes for nodes that are not visible in diff style view
+      navigationTree.forEach(node => FilterVisibleNavigationNodes(node));
+      navigationTree = navigationTree.filter(n => n.visible);
+    }
 
     postMessage(codePanelRowDataMessage);
 
@@ -258,5 +262,19 @@ function shouldAppendIfRowIsHiddenAPI(row: CodePanelRowData) {
     return apiTreeBuilderData?.showHiddenApis || codePanelData?.hasHiddenAPIThatIsDiff;
   } else {
     return true;
+  }
+}
+
+function FilterVisibleNavigationNodes(node: NavigationTreeNode) {
+  // Recursively perform a bottom up traversal and trim down any invisible nodes
+  if (node.children) {
+    for (let child of node.children) {
+      FilterVisibleNavigationNodes(child);
+    }
+    node.children = node.children.filter(c => c.visible);
+  }
+
+  if (visibleNodes.has(node.data.nodeIdHashed) || (node.children && node.children.some(c => c.visible))) {
+    node.visible = true;
   }
 }

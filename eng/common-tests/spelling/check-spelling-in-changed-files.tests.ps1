@@ -8,6 +8,16 @@ Describe 'Spell checking' -Tag 'UnitTest' {
         Push-Location $workingDirectory | Out-Null
         git init
 
+        # Set up git user information for this specific repo if no user
+        # information is set globally. Windows DevOps machines do not have a
+        # global git identity set.
+        if (!(git config --get user.email)) {
+            git config user.email "test@contoso.com"
+        }
+        if (!(git config --get user.name)) {
+            git config user.name "Test User"
+        }
+
         New-Item -ItemType Directory -Force -Path "./excluded"
         New-Item -ItemType Directory -Force -Path "./included"
         New-Item -ItemType Directory -Force -Path "./.vscode"

@@ -29,3 +29,4 @@ jobs:
   - template: /eng/common/pipelines/templates/jobs/prepare-pipelines.yml
     parameters:
       Repository: ${{ repo }}
+      RepositoryCommitish: main

@@ -4,7 +4,7 @@ Describe 'Tool Version' {
         $expectedPackageVersion = '6.31.2'
 
         # Act
-        $actual = &"$PSScriptRoot/../spelling/Invoke-Cspell.ps1" `
+        $actual = &"$PSScriptRoot/../../common/spelling/Invoke-Cspell.ps1" `
             -JobType '--version'
 
         # Assert

@@ -62,7 +62,7 @@ Describe 'Spell checking' {
         git commit -m "One change"
 
         # Act
-        &"$PSScriptRoot/check-spelling-in-changed-files.ps1" `
+        &"$PSScriptRoot/../../common/scripts/check-spelling-in-changed-files.ps1" `
             -CspellConfigPath "./.vscode/cspell.json" `
             -SpellCheckRoot "./" `
             -ExitWithError `
@@ -80,7 +80,7 @@ Describe 'Spell checking' {
         git commit -m "One change"
 
         # Act
-        &"$PSScriptRoot/check-spelling-in-changed-files.ps1" `
+        &"$PSScriptRoot/../../common/scripts/check-spelling-in-changed-files.ps1" `
             -CspellConfigPath "./.vscode/cspell.json" `
             -SpellCheckRoot "./" `
             -ExitWithError `
@@ -98,7 +98,7 @@ Describe 'Spell checking' {
         git commit -m "One change"
 
         # Act
-        &"$PSScriptRoot/check-spelling-in-changed-files.ps1" `
+        &"$PSScriptRoot/../../common/scripts/check-spelling-in-changed-files.ps1" `
             -CspellConfigPath "./.vscode/cspell.json" `
             -SpellCheckRoot "./" `
             -ExitWithError `
@@ -120,7 +120,7 @@ Describe 'Spell checking' {
         git commit -m "Second change"
 
         # Act
-        &"$PSScriptRoot/check-spelling-in-changed-files.ps1" `
+        &"$PSScriptRoot/../../common/scripts/check-spelling-in-changed-files.ps1" `
             -CspellConfigPath "./.vscode/cspell.json" `
             -SpellCheckRoot "./" `
             -ExitWithError `
@@ -146,7 +146,7 @@ Describe 'Spell checking' {
         git commit -m "Second change"
 
         # Act
-        &"$PSScriptRoot/check-spelling-in-changed-files.ps1" `
+        &"$PSScriptRoot/../../common/scripts/check-spelling-in-changed-files.ps1" `
             -CspellConfigPath "./.vscode/cspell.json" `
             -SpellCheckRoot "./" `
             -ExitWithError `
@@ -164,7 +164,7 @@ Describe 'Spell checking' {
         git commit -m "One change"
 
         # Act
-        &"$PSScriptRoot/check-spelling-in-changed-files.ps1" `
+        &"$PSScriptRoot/../../common/scripts/check-spelling-in-changed-files.ps1" `
             -CspellConfigPath "./.vscode/cspell.json" `
             -SpellCheckRoot "./" `
             -SourceCommittish (git rev-parse HEAD) `

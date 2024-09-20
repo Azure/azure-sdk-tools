@@ -10,7 +10,7 @@ parameters:
   default: 'sdk/<service>'
 - name: RepositoryCommitish
   type: string
-  default: $(Build.SourceVersion)
+  default: main
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml

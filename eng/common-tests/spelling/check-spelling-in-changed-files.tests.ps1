@@ -39,12 +39,22 @@ Describe 'Spell checking' -Tag 'UnitTest' {
 
         git add -A
         git commit -m "Init"
+
+        # This forces normal Write-Error behavior (as seen on desktop) for
+        # errors encountered during testing of
+        # check-spelling-in-changed-files.ps1. Setting this keeps errors out of
+        # the DevOps logs for successful tests. Any errors produced by these
+        # tests are expected or will result in test failures.
+        $OriginalTeamProjectId = $env:SYSTEM_TEAMPROJECTID
+        $env:SYSTEM_TEAMPROJECTID = $null
     }
 
     AfterAll {
         Pop-Location | Out-Null
         Write-Host "Remove  test temp dir: $workingDirectory"
         Remove-Item -Path $workingDirectory -Recurse -Force | Out-Null
+
+        $env:SYSTEM_TEAMPROJECTID = $OriginalTeamProjectId
     }
 
     BeforeEach {

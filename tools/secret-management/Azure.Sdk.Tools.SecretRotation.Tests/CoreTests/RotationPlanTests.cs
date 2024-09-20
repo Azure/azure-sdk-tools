@@ -1,6 +1,5 @@
 using Azure.Sdk.Tools.SecretRotation.Core;
 using Microsoft.Extensions.Logging;
-using TimeProvider = Azure.Sdk.Tools.SecretRotation.Core.TimeProvider;
 
 namespace Azure.Sdk.Tools.SecretRotation.Tests.CoreTests;
 
@@ -59,7 +58,7 @@ public class RotationPlanTests
 
         var rotationPlan = new RotationPlan(
             Mock.Of<ILogger>(),
-            Mock.Of<TimeProvider>(x => x.GetCurrentDateTimeOffset() == staticTestTime),
+            Mock.Of<TimeProvider>(x => x.GetUtcNow() == staticTestTime),
             "TestPlan",
             Mock.Of<SecretStore>(),
             Mock.Of<SecretStore>(x => x.GetCurrentStateAsync() == Task.FromResult(primaryState)),
@@ -102,7 +101,7 @@ public class RotationPlanTests
 
         var rotationPlan = new RotationPlan(
             Mock.Of<ILogger>(),
-            Mock.Of<TimeProvider>(x => x.GetCurrentDateTimeOffset() == staticTestTime),
+            Mock.Of<TimeProvider>(x => x.GetUtcNow() == staticTestTime),
             "TestPlan",
             Mock.Of<SecretStore>(),
             Mock.Of<SecretStore>(
@@ -162,7 +161,7 @@ public class RotationPlanTests
 
         var rotationPlan = new RotationPlan(
             Mock.Of<ILogger>(),
-            Mock.Of<TimeProvider>(x => x.GetCurrentDateTimeOffset() == staticTestTime),
+            Mock.Of<TimeProvider>(x => x.GetUtcNow() == staticTestTime),
             "TestPlan",
             originStore,
             primaryStore,

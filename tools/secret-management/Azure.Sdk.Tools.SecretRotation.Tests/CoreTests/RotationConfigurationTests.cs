@@ -1,7 +1,6 @@
 using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
 using Microsoft.Extensions.Logging;
-using TimeProvider = Azure.Sdk.Tools.SecretRotation.Core.TimeProvider;
 
 namespace Azure.Sdk.Tools.SecretRotation.Tests.CoreTests;
 
@@ -159,7 +158,7 @@ public class RotationConfigurationTests
         RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
 
         // Act
-        IEnumerable<RotationPlan> plans = configuration.GetAllRotationPlans(Mock.Of<ILogger>(), new TimeProvider());
+        IEnumerable<RotationPlan> plans = configuration.GetAllRotationPlans(Mock.Of<ILogger>(), TimeProvider.System);
 
         Assert.AreEqual(1, plans.Count());
     }

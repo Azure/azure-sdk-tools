@@ -2,7 +2,6 @@ using System.CommandLine.Invocation;
 using System.Text;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
-using TimeProvider = Azure.Sdk.Tools.SecretRotation.Core.TimeProvider;
 
 namespace Azure.Sdk.Tools.SecretManagement.Cli.Commands;
 
@@ -15,7 +14,7 @@ public class StatusCommand : RotationCommandBase
     protected override async Task HandleCommandAsync(ILogger logger, RotationConfiguration rotationConfiguration,
         InvocationContext invocationContext)
     {
-        var timeProvider = new TimeProvider();
+        var timeProvider = TimeProvider.System;
         RotationPlan[] plans = rotationConfiguration.GetAllRotationPlans(logger, timeProvider).ToArray();
 
         logger.LogInformation($"Getting status for {plans.Length} plans");

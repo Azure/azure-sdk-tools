@@ -3,7 +3,6 @@ using System.CommandLine.Invocation;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
 using Microsoft.Extensions.Logging;
-using TimeProvider = Azure.Sdk.Tools.SecretRotation.Core.TimeProvider;
 
 namespace Azure.Sdk.Tools.SecretManagement.Cli.Commands;
 
@@ -24,7 +23,7 @@ public class RotateCommand : RotationCommandBase
         bool onlyRotateExpiring = invocationContext.ParseResult.GetValueForOption(this.expiringOption);
         bool whatIf = invocationContext.ParseResult.GetValueForOption(this.whatIfOption);
 
-        var timeProvider = new TimeProvider();
+        var timeProvider = TimeProvider.System;
 
         IEnumerable<RotationPlan> plans = rotationConfiguration.GetAllRotationPlans(logger, timeProvider);
         bool success = true;

@@ -2,15 +2,15 @@ pr: none
 trigger: none
 
 parameters:
-- name: Branch
-  type: string
-  default: main
 - name: RepositoryName
   type: string
   default: azure-sdk-for-<lang>
 - name: RepositoryPath
   type: string
   default: 'sdk/<service>'
+- name: RepositoryCommitish
+  type: string
+  default: $(Build.SourceVersion)
 
 variables:
 - template: /eng/pipelines/templates/variables/image.yml
@@ -24,3 +24,4 @@ jobs:
   parameters:
     Repository: Azure/${{ parameters.RepositoryName }}
     RepositoryPath: ${{ parameters.RepositoryPath }}
+    RepositoryCommitish: ${{ paramters.RepositoryCommitish }}

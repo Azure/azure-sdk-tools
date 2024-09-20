@@ -1,4 +1,4 @@
-Describe 'Spell checking' {
+Describe 'Spell checking' -Tag 'UnitTest' {
     BeforeAll {
         $workingDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
 

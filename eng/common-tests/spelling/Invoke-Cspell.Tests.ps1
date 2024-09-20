@@ -1,5 +1,5 @@
 Describe 'Tool Version' {
-    It 'Should have the correct version' {
+    It 'Should have the correct version' -Tag 'UnitTest' {
         # Arrange
         $expectedPackageVersion = '6.31.2'
 

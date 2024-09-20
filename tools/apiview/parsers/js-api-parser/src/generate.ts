@@ -9,8 +9,9 @@ import {
   ApiItemKind,
   ApiModel,
   ExcerptTokenKind,
+  ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { splitAndBuild } from "./jstokens";
+import { buildToken, splitAndBuild } from "./jstokens";
 
 interface Metadata {
   Name: string;
@@ -39,28 +40,28 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
   const header: ReviewLine = {
     LineId: "Dependencies",
     Tokens: [
-      {
+      buildToken({
         Kind: TokenKind.StringLiteral,
         Value: "Dependencies:",
         NavigationDisplayName: "Dependencies",
         RenderClasses: ["dependencies"],
-      },
+      }),
     ],
   };
 
   const dependencyLines: ReviewLine[] = [];
   for (const dependency of Object.keys(dependencies)) {
-    const nameToken: ReviewToken = {
+    const nameToken: ReviewToken = buildToken({
       Kind: TokenKind.StringLiteral,
       Value: dependency,
-    };
-    const versionToken: ReviewToken = {
+    });
+    const versionToken: ReviewToken = buildToken({
       Kind: TokenKind.StringLiteral,
       Value: ` ${dependencies[dependency]}`,
       SkipDiff: true,
-    };
+    });
     const dependencyLine: ReviewLine = {
-      Tokens: [nameToken, { Kind: TokenKind.Punctuation, Value: ":" }, versionToken],
+      Tokens: [nameToken, buildToken({ Kind: TokenKind.Punctuation, Value: ":" }), versionToken],
     };
     dependencyLines.push(dependencyLine);
   }
@@ -76,11 +77,11 @@ function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
       const exportLine: ReviewLine = {
         LineId: `Subpath-export-${subpath}`,
         Tokens: [
-          {
+          buildToken({
             Kind: TokenKind.StringLiteral,
             Value: ` "${subpath}"`,
             NavigationDisplayName: `"${subpath}" subpath export`,
-          },
+          }),
         ],
         Children: [],
       };
@@ -103,17 +104,37 @@ function buildDocumentation(reviewLines: ReviewLine[], member: ApiItem, relatedT
   if (member instanceof ApiDocumentedItem) {
     const lines = member.tsdocComment?.emitAsTsdoc().split("\n");
     for (const l of lines ?? []) {
-      const docToken: ReviewToken = {
+      const docToken: ReviewToken = buildToken({
         Kind: TokenKind.Comment,
         IsDocumentation: true,
         Value: l,
-      };
+      });
       reviewLines.push({
         Tokens: [docToken],
         RelatedToLine: relatedTo,
       });
     }
   }
+}
+
+function getReleaseTag(item: ApiItem & { releaseTag?: ReleaseTag }): string | undefined {
+  switch (item.releaseTag) {
+    case ReleaseTag.Beta:
+      return "beta";
+    case ReleaseTag.Alpha:
+      return "alpha";
+    default:
+      return undefined;
+  }
+}
+
+const ANNOTATION_TOKEN = "@";
+function buildReleaseTag(reviewLines: ReviewLine[], tag: string): void {
+  const tagToken = buildToken({
+    Kind: TokenKind.StringLiteral,
+    Value: `${ANNOTATION_TOKEN}${tag}`,
+  });
+  reviewLines.push({ Tokens: [tagToken] });
 }
 
 function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
@@ -124,21 +145,31 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     Tokens: [],
   };
 
-  // TODO: uncomment
-  // buildDocumentation(reviewLines, item, itemId);
+  buildDocumentation(reviewLines, item, itemId);
 
-  // TODO: add release tag
+  const releaseTag = getReleaseTag(item);
+  const parentReleaseTag = getReleaseTag(item.parent);
+  if (releaseTag && releaseTag !== parentReleaseTag) {
+    buildReleaseTag(reviewLines, releaseTag);
+  }
 
   if (item instanceof ApiDeclaredItem) {
     if (item.kind === ApiItemKind.Namespace) {
-      // TODO: we don't usually use namespace in SDK, but... build namespace header here
+      line.Tokens.push(
+        ...splitAndBuild(
+          `declare namespace ${item.displayName} `,
+          itemId,
+          item.displayName,
+          "namespace",
+        ),
+      );
     }
 
     let itemKind: string = "";
     switch (item.kind) {
       case ApiItemKind.Interface:
       case ApiItemKind.Class:
-      case ApiItemKind.Namespace: // TODO: why namespace again in old code?
+      case ApiItemKind.Namespace:
       case ApiItemKind.Enum:
         itemKind = item.kind.toLowerCase();
         break;
@@ -152,11 +183,11 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
 
     for (const excerpt of item.excerptTokens) {
       if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-        const token: ReviewToken = {
+        const token = buildToken({
           Kind: TokenKind.TypeName,
           NavigateToId: excerpt.canonicalReference.toString(),
           Value: excerpt.text,
-        };
+        });
         line.Tokens.push(token);
       } else {
         line.Tokens.push(...splitAndBuild(excerpt.text, itemId, item.displayName, itemKind));
@@ -171,20 +202,21 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     item.kind === ApiItemKind.Enum
   ) {
     if (item.members.length > 0) {
-      line.Tokens.push({ Kind: TokenKind.Punctuation, Value: `{` });
+      line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: `{` }));
       for (const member of item.members) {
         buildMember(line.Children!, member);
       }
       reviewLines.push(line);
       reviewLines.push({
-        Tokens: [{ Kind: TokenKind.Punctuation, Value: `}` }],
+        Tokens: [buildToken({ Kind: TokenKind.Punctuation, Value: `}` })],
         RelatedToLine: line.LineId,
       });
     } else {
+      reviewLines.push(line);
       reviewLines.push({
         Tokens: [
-          { Kind: TokenKind.Punctuation, Value: `{`, HasSuffixSpace: true },
-          { Kind: TokenKind.Punctuation, Value: `}` },
+          buildToken({ Kind: TokenKind.Punctuation, Value: `{`, HasSuffixSpace: true }),
+          buildToken({ Kind: TokenKind.Punctuation, Value: `}` }),
         ],
       });
     }
@@ -192,9 +224,8 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     reviewLines.push(line);
   }
 
-  // TODO: closing line of namespace
   if (item instanceof ApiDeclaredItem && item.kind === ApiItemKind.Namespace) {
-    reviewLines.push(emptyLine(/* line id of the namespace line */));
+    reviewLines.push(emptyLine(line.LineId));
   }
 }
 

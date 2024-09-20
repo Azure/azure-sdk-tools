@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import jsTokens from "js-tokens";
-import { ReviewToken, TokenKind } from "./models";
+import { type ReviewToken, TokenKind } from "./models";
 
 const JS_KEYWORDS = new Set<string>([
   "break",
@@ -78,6 +78,13 @@ function isTypeMember(id: string): boolean {
   return id.endsWith(":member");
 }
 
+export function buildToken(options: ReviewToken): ReviewToken {
+  return {
+    ...options,
+    HasSuffixSpace: options.HasSuffixSpace ?? false,
+  };
+}
+
 export function splitAndBuild(
   s: string,
   currentTypeid: string,
@@ -89,41 +96,45 @@ export function splitAndBuild(
   for (const l of lines) {
     const tokens: jsTokens.Token[] = Array.from(jsTokens(l));
     for (const token of tokens) {
+      let reviewToken: ReviewToken | undefined;
       if (isKeyword(token.value)) {
-        reviewTokens.push({
+        reviewToken = buildToken({
           Kind: TokenKind.Keyword,
           Value: token.value,
         });
       } else if (token.value === currentTypeName) {
-        const t: ReviewToken = {
+        reviewToken = buildToken({
           Kind: TokenKind.TypeName,
           Value: token.value,
-        };
+        });
         if (memberKind !== "") {
-          t.RenderClasses = [memberKind];
+          reviewToken.RenderClasses = [memberKind];
         }
         if (!isTypeMember(currentTypeid)) {
-          t.NavigateToId = currentTypeid;
-          t.NavigationDisplayName = token.value;
+          reviewToken.NavigateToId = currentTypeid;
+          reviewToken.NavigationDisplayName = token.value;
         }
-        reviewTokens.push(t);
       } else if (token.type === "StringLiteral") {
-        reviewTokens.push({
+        reviewToken = buildToken({
           Kind: TokenKind.StringLiteral,
           Value: token.value,
         });
       } else if (token.type === "Punctuator") {
-        reviewTokens.push({
+        reviewToken = buildToken({
           Kind: TokenKind.Punctuation,
           Value: token.value,
         });
       } else if (token.type === "WhiteSpace" && reviewTokens.length > 0) {
         reviewTokens[reviewTokens.length - 1].HasSuffixSpace = true;
       } else if (token.type !== "WhiteSpace") {
-        reviewTokens.push({
+        reviewToken = buildToken({
           Kind: TokenKind.Text,
           Value: token.value,
         });
+      }
+
+      if (token.type !== "WhiteSpace") {
+        reviewTokens.push(reviewToken);
       }
     }
   }

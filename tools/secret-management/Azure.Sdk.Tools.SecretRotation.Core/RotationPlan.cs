@@ -54,7 +54,7 @@ public class RotationPlan
         using IDisposable? loggingScope = this.logger.BeginScope(operationId);
         this.logger.LogInformation("\nProcessing rotation plan '{PlanName}'", Name);
 
-        DateTimeOffset shouldRotateDate = this.timeProvider.GetCurrentDateTimeOffset().Add(RotationThreshold);
+        DateTimeOffset shouldRotateDate = this.timeProvider.GetUtcNow().Add(RotationThreshold);
 
         this.logger.LogInformation("Getting current state of plan");
 
@@ -88,7 +88,7 @@ public class RotationPlan
     {
         try
         {
-            DateTimeOffset invocationTime = this.timeProvider.GetCurrentDateTimeOffset();
+            DateTimeOffset invocationTime = this.timeProvider.GetUtcNow();
 
             SecretState primaryStoreState = await PrimaryStore.GetCurrentStateAsync();
 
@@ -106,9 +106,9 @@ public class RotationPlan
 
             SecretState[] allStates = secondaryStoreStates.Prepend(primaryStoreState).ToArray();
 
-            DateTimeOffset rotationThresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(RotationThreshold);
+            DateTimeOffset rotationThresholdDate = this.timeProvider.GetUtcNow().Add(RotationThreshold);
 
-            DateTimeOffset warningThresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(WarningThreshold);
+            DateTimeOffset warningThresholdDate = this.timeProvider.GetUtcNow().Add(WarningThreshold);
 
             DateTimeOffset? minExpirationDate = allStates
                 .Where(x => x.ExpirationDate.HasValue)
@@ -159,7 +159,7 @@ public class RotationPlan
          *     A user can combine origin and primary only when origin can be marked as complete in some way (e.g. Key Vault Certificates can be tagged)
          */
 
-        DateTimeOffset invocationTime = this.timeProvider.GetCurrentDateTimeOffset();
+        DateTimeOffset invocationTime = this.timeProvider.GetUtcNow();
 
         SecretValue newValue = await OriginateNewValueAsync(operationId, invocationTime, currentState, whatIf);
         // TODO: some providers will issue secrets for longer than we requested. Should we propagate the real expiration date, or the desired expiration date?
@@ -244,7 +244,7 @@ public class RotationPlan
 
     private async Task RevokeRotationArtifactsAsync(bool whatIf)
     {
-        DateTimeOffset invocationTime = this.timeProvider.GetCurrentDateTimeOffset();
+        DateTimeOffset invocationTime = this.timeProvider.GetUtcNow();
 
         IEnumerable<SecretState> rotationArtifacts = await PrimaryStore.GetRotationArtifactsAsync();
 

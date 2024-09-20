@@ -24,4 +24,4 @@ jobs:
   parameters:
     Repository: Azure/${{ parameters.RepositoryName }}
     RepositoryPath: ${{ parameters.RepositoryPath }}
-    RepositoryCommitish: ${{ paramters.RepositoryCommitish }}
+    RepositoryCommitish: ${{ parameters.RepositoryCommitish }}

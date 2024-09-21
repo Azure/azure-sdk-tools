@@ -296,10 +296,16 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         return namespace
 
     def visit_classdef(self, node):
+        # TODO: ignore classes with leading "_"
+        # TODO: ignore classes in private namespaces. i.e.:
+        #   - azure.ai.ml.identity._internal.ManagedIdentityClient
+        #   - azure.servicebus._pyamqp.ReceiveClient
         if node.name.endswith("Client") and node.name not in self.ignore_clients:
             self.process_class = node
 
     def visit_functiondef(self, node):
+        # TODO: ignore "models" if it's namespace starts with "azure.mgmt"
+        # TODO: order the output list alphabetically by method name
         if any((
             self.process_class is None, # not in a client class
             node.name.startswith("_"), # private method

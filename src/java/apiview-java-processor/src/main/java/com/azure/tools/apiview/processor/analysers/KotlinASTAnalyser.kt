@@ -19,7 +19,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
     private var indent: Int = 0
     private val knownTypes = mutableMapOf<String, Documentable>()
 
-    val BLOCKED_ANNOTATIONS: Set<String> = HashSet(Arrays.asList("ServiceMethod", "SuppressWarnings"))
+    val BLOCKED_ANNOTATIONS: Set<String> = setOf("ServiceMethod", "SuppressWarnings")
 
     companion object {
         @JvmStatic

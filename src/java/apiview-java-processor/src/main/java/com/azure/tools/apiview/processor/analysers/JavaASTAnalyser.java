@@ -105,8 +105,6 @@ public class JavaASTAnalyser implements Analyser {
     public static final String MODULE_INFO_KEY = "module-info";
 
     private static final boolean SHOW_JAVADOC = true;
-    public static final Set<String> BLOCKED_ANNOTATIONS =
-        new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
 
     private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
     private static final JavaParserAdapter JAVA_8_PARSER;

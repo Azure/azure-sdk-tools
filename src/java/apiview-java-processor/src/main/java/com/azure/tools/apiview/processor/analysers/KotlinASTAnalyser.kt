@@ -2,58 +2,14 @@ package com.azure.tools.apiview.processor.analysers
 
 import com.azure.tools.apiview.processor.analysers.util.ASTUtils
 import com.azure.tools.apiview.processor.analysers.util.TokenModifier
-import com.azure.tools.apiview.processor.model.APIListing
-import com.azure.tools.apiview.processor.model.ChildItem
-import com.azure.tools.apiview.processor.model.Token
-import com.azure.tools.apiview.processor.model.TokenKind
-import com.azure.tools.apiview.processor.model.TypeKind
+import com.azure.tools.apiview.processor.model.*
 import com.jetbrains.rd.util.firstOrNull
-import org.jetbrains.dokka.DokkaConfigurationImpl
-import org.jetbrains.dokka.DokkaGenerator
-import org.jetbrains.dokka.DokkaSourceSetID
-import org.jetbrains.dokka.DokkaSourceSetImpl
-import org.jetbrains.dokka.CoreExtensions
+import org.jetbrains.dokka.*
 import org.jetbrains.dokka.base.generation.SingleModuleGeneration
 import org.jetbrains.dokka.base.signatures.KotlinSignatureUtils.dri
 import org.jetbrains.dokka.links.DRI
-import org.jetbrains.dokka.model.Annotations
-import org.jetbrains.dokka.model.AnnotationParameterValue
-import org.jetbrains.dokka.model.AnnotationValue
-import org.jetbrains.dokka.model.ArrayValue
-import org.jetbrains.dokka.model.Bound
-import org.jetbrains.dokka.model.DAnnotation
-import org.jetbrains.dokka.model.DClass
-import org.jetbrains.dokka.model.DEnum
-import org.jetbrains.dokka.model.DFunction
-import org.jetbrains.dokka.model.DInterface
-import org.jetbrains.dokka.model.DObject
-import org.jetbrains.dokka.model.Documentable
-import org.jetbrains.dokka.model.DPackage
-import org.jetbrains.dokka.model.DParameter
-import org.jetbrains.dokka.model.DProperty
-import org.jetbrains.dokka.model.DTypeParameter
-import org.jetbrains.dokka.model.EnumValue
-import org.jetbrains.dokka.model.GenericTypeConstructor
-import org.jetbrains.dokka.model.Invariance
-import org.jetbrains.dokka.model.LiteralValue
-import org.jetbrains.dokka.model.Nullable
-import org.jetbrains.dokka.model.PrimitiveJavaType
-import org.jetbrains.dokka.model.Projection
-import org.jetbrains.dokka.model.SourceSetDependent
-import org.jetbrains.dokka.model.StringValue
-import org.jetbrains.dokka.model.TypeConstructorWithKind
-import org.jetbrains.dokka.model.TypeParameter
-import org.jetbrains.dokka.model.Void
-import org.jetbrains.dokka.model.WithSources
-import org.jetbrains.dokka.model.doc.Description
-import org.jetbrains.dokka.model.doc.DocTag
-import org.jetbrains.dokka.model.doc.DocumentationLink
-import org.jetbrains.dokka.model.doc.DocumentationNode
-import org.jetbrains.dokka.model.doc.I
-import org.jetbrains.dokka.model.doc.Param
-import org.jetbrains.dokka.model.doc.Property
-import org.jetbrains.dokka.model.doc.Sample
-import org.jetbrains.dokka.model.doc.Text
+import org.jetbrains.dokka.model.*
+import org.jetbrains.dokka.model.doc.*
 import org.jetbrains.dokka.utilities.DokkaConsoleLogger
 import org.jetbrains.dokka.utilities.LoggingLevel
 import java.io.File
@@ -62,6 +18,8 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
 
     private var indent: Int = 0
     private val knownTypes = mutableMapOf<String, Documentable>()
+
+    val BLOCKED_ANNOTATIONS: Set<String> = HashSet(Arrays.asList("ServiceMethod", "SuppressWarnings"))
 
     companion object {
         @JvmStatic
@@ -833,7 +791,7 @@ class KotlinASTAnalyser(private val apiListing: APIListing) {
         annotations
             .filter {
                 val id = it.dri.classNames
-                !JavaASTAnalyser.BLOCKED_ANNOTATIONS.contains(id) && id?.startsWith("Json") == false
+                !BLOCKED_ANNOTATIONS.contains(id) && id?.startsWith("Json") == false
             }
             .sortedBy { it.dri.classNames }
             .forEach {

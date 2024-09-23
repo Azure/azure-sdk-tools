@@ -1,8 +1,6 @@
-﻿
-@using APIViewWeb.Models
-@using System
-@using System.Text.RegularExpressions
+
 @model (IEnumerable<string> All, IEnumerable<string> Selected)
+
 @if (Model.All.Any())
 {
     @foreach (var item in Model.All.OrderBy(x => x))

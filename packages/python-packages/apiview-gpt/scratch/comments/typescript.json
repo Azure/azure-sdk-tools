@@ -1,0 +1,104 @@
+[
+    {
+        "language": "typescript",
+        "badCode": "class ExampleClient { \n constructor (connectionString: string, options: ExampleClientOptions); \n constructor (url: string, options: ExampleClientOptions); \n  constructor (urlOrCS: string, options: ExampleClientOptions) { \n} \n}",
+        "goodCode": "class ExampleClient { \n constructor (url: string, options: ExampleClientOptions) { \n } \n static fromConnectionString(connectionString: string, options: ExampleClientOptions) { \n} \n}",
+        "guidelineIds": ["typescript_design.html#ts-use-overloads-over-unions"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "function getItems(name: string, options?: itemsOptions): Promise<Items>;\n interface itemsOptions { extensions?: configuration[];  }",
+        "goodCode": "function getItems(name: string, options?: getItemsOptions): Promise<Items>;\n interface getItemsOptions { extensions?: configuration[];  }",
+        "guidelineIds": ["typescript_design.html#ts-naming-options"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "containerClient.deleteContainer();",
+        "goodCode": "containerClient.delete();",
+        "guidelineIds": ["typescript_design.html#ts-approved-verbs", "typescript_design.html#ts-naming-drop-noun"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "containerClient.createOrUpdate();",
+        "goodCode": "containerClient.upsert();",
+        "guidelineIds": ["typescript_design.html#ts-approved-verbs"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "function listItems() {\n return Rx.Observable.of(/* ... */)\n  }",
+        "goodCode": "async function* listItems() {\n for (const item of items) { \n yield item;\n  }\n }",
+        "guidelineIds": ["typescript_design.html#ts-use-async-functions"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "function listItems() {\n    // fetch items\n    for (const item of items) {\n        callback (item);\n    }\n}",
+        "goodCode": "async function* listItems() {\n for (const item of items) { \n yield item;\n  }\n }",
+        "guidelineIds": ["typescript_design.html#ts-use-async-functions"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "function listItems() {\n return {\n nextItem() { /*...*/ } \n  }\n  }",
+        "goodCode": "function* listItems() {\n    /* .... */\n}",
+        "comment": "Prefer a generator function over an iterator object."
+    },
+    {
+        "language": "typescript",
+        "badCode": "async function getItems(): PagedAsyncIterableIterator<Item, Page>{}",
+        "goodCode": "async function listItems(): PagedAsyncIterableIterator<Item, Page>{}",
+        "guidelineIds": ["typescript_design.html#ts-pagination-provide-list"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "export class ServiceClient {\n    // client constructors have overloads for handling different\n    // authentication schemes.\n    constructor(connectionString: string, options?: ServiceClientOptions);\n    constructor(host: string, credential: TokenCredential, options?: ServiceClientOptions);\n    constructor(...) { }\n\n    // Service methods. Options take at least an abortSignal.\n    async createItem(options?: CreateItemOptions): CreateItemResponse;\n    async deleteItem(options?: DeleteItemOptions): DeleteItemResponse;\n    // Simple paginated API\n    listItems(): PagedAsyncIterableIterator<Item, ItemPage> { }\n\n    // Clients for sub-resources\n    getItemClient(itemName: string) { }\n}",
+        "comment": "This is a service client class because it has a variety of methods that call APIs. The class name should end in 'Client'.",
+        "guidelineIds": ["typescript_design.html#ts-apisurface-serviceclientnaming"]
+    },
+    {
+        "language":"typescript",
+        "badCode": "interface EventModel {\n    /* ... */\n}",
+        "goodCode": "interface Event {\n    /* ... */\n}",
+        "comment": "If an interface represents an entity transferred to and from an Azure service and can be round-tripped, it should use the simplest name that corresponds to the entity, without any extraneous suffixes.",
+        "guidelineIds": ["typescript_design.html#ts-model-types-use-good-name"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "interface ConfigurationSetting {\n    key: string;\n    value: string;\n    lastModifiedOn: Date; // less important and less frequently used\n    receivedOn: Date; // less important and less frequently used\n   etag: string; // less important and less frequently used\n}",
+        "goodCode": "interface ConfigurationSettingDetails {\n    lastModifiedOn: Date;\n    receivedOn: Date;\n    etag: string;\n}\n\ninterface ConfigurationSetting {\n    key: string;\n    value: string;\n    details: ConfigurationSettingDetails;\n}",
+        "guidelineIds": ["typescript_design.html#ts-model-types-use-details"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "Foo",
+        "comment": "Only use if this represents the full data of the resource. It should be able to be used in create, update, and get operations.",
+        "guidelineIds": ["typescript_design.html#ts-model-types-partial-naming"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "FooDetails",
+        "comment": "Use for less important details about a resource. Must be attached to 'Foo.details'",
+        "guidelineIds": ["typescript_design.html#ts-model-types-partial-naming"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "FooItem",
+        "comment": "A single instance of 'Foo' when returned from an enumeration.",
+        "guidelineIds": ["typescript_design.html#ts-model-types-partial-naming"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "OperationFooOptions",
+        "comment": "Optional parameters that apply only to a single operation.",
+        "guidelineIds": ["typescript_design.html#ts-model-types-partial-naming"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "OperationFooResult",
+        "comment": "Used when the operation returns a partial or different set of data for a single operation. If it returns all of the properties of 'Foo', then just use 'Foo'.",
+        "guidelineIds": ["typescript_design.html#ts-model-types-partial-naming"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "interface ConfigurationSetting {\n    key: string;\n    value: string;\n    details: ConfigurationSettingDetails;\n}",
+        "comment": "This is model data, which we represent in TypeScript as an interface. It is not a client class and should not follow client conventions."
+    }
+]

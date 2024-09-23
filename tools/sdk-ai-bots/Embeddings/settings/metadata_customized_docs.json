@@ -1,0 +1,62 @@
+{
+  "ci-fix.md": {
+    "title": "CI Fix Guide",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/ci-fix.md"
+  },
+  "Getting-started-with-TypeSpec-specifications.md": {
+    "title": "What is a TypeSpec Specification?",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/Getting-started-with-TypeSpec-specifications.md"
+  },
+  "Semantic-and-Model-Violations-Reference.md": {
+    "title": "Semantic and Model Violations Reference",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/Semantic-and-Model-Violations-Reference.md"
+  },
+  "lintdiff-rules.md": {
+    "title": "Azure Rules",
+    "url": "https://github.com/Azure/azure-openapi-validator/blob/main/docs/rules.md"
+  },
+  "typespec-rest-api-dev-process.md": {
+    "title": "Azure Rest API, SDK development process with TypeSpec",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/typespec-rest-api-dev-process.md"
+  },
+  "typespec-structure-guidelines.md": {
+    "title": "Repository Guidelines for TypeSpec projects",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/typespec-structure-guidelines.md"
+  },
+  "onboard-dpg-in-sdkautomation-README.md": {
+    "title": "Service Onboard DPG with Swagger CI Pipeline",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/onboard-dpg-in-sdkautomation/README.md"
+  },
+  "rules-for-release-request.md": {
+    "title": "Some guidance and rules when you fill the release issue",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/release-request/rules-for-release-request.md"
+  },
+  "configure-go-sdk.md": {
+    "title": "Readme Configuration Guide for Azure SDK for Go",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/code-gen/configure-go-sdk.md"
+  },
+  "configure-python-sdk.md": {
+    "title": "Readme Configuration Guide for Azure SDK for Python",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/code-gen/configure-python-sdk.md"
+  },
+  "configure-typescript-sdk.md": {
+    "title": "Readme Configuration Guide for Azure SDK for Javascript (Typescript)",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/code-gen/configure-typescript-sdk.md"
+  },
+  "autorest-extensions-readme.md": {
+    "title": "AutoRest Extensions for OpenAPI 2.0",
+    "url": "https://github.com/Azure/autorest/blob/main/docs/extensions/readme.md"
+  },
+  "control_plane_template.md": {
+    "title": "Control plane pull request template",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/.github/PULL_REQUEST_TEMPLATE/control_plane_template.md"
+  },
+  "data_plane_template.md": {
+    "title": "Data plane pull request template",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/.github/PULL_REQUEST_TEMPLATE/data_plane_template.md"
+  },
+  "directory-structure.md": {
+    "title": "azure-rest-api-specs repos directory structure",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/directory-structure.md"
+  }
+}

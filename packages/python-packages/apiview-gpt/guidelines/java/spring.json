@@ -1,0 +1,97 @@
+[
+  {
+    "id": "java_spring.html#java-spring-namespaces",
+    "category": "Namespaces",
+    "text": "DO ensure all Java packages are named using the form com.azure.spring.<group>.<service>[.<feature>]."
+  },
+  {
+    "id": "java_spring.html#java-spring-same-group",
+    "category": "Namespaces",
+    "text": "DO use the same group, service, and feature naming as is used by the underlying Java client library."
+  },
+  {
+    "id": "java_spring.html#java-spring-implementation",
+    "category": "Namespaces",
+    "text": "DO put all non-public API under an implementation package under the root namespace."
+  },
+  {
+    "id": "java_spring.html#java-spring-maven-groupid",
+    "category": "Maven",
+    "text": "DO use the group ID of com.azure.spring."
+  },
+  {
+    "id": "java_spring.html#java-spring-maven-artifactid",
+    "category": "Maven",
+    "text": "DO specify the artifactId to be of the form azure-spring-boot-starter-<group>-<service>[-<feature>], for example, azure-spring-boot-starter-storage-blob or azure-spring-boot-starter-security-keyvault-secrets.\nFor Spring data abstraction, the artifactId should be of the form azure-spring-data-<group>-<service>[-<feature>].\nFor Spring cloud starters, the artifactId should be of the form azure-spring-cloud-starter-<group>-<service>[-<feature>]."
+  },
+  {
+    "id": "java_spring.html#java-spring-azure-sdk-bom",
+    "category": "Maven",
+    "text": "DO include a dependencyManagement dependency on the Azure Java SDK BOM, so that users who use Azure Spring libraries can bring in additional dependencies on other Azure Java client libraries without needing to choose versions.\n\nSpring Cloud for Azure modules must be versioned in a way that enables the following goals:\nEach Spring Cloud for Azure module must be able to release at different release cadences.\nEach Spring Cloud for Azure module must have full semantic versioning for major, minor, and patch versions, in all releases. Versioning must not be tied to the Spring dependency version as in earlier iterations of the Azure Spring Cloud for Azure modules.\nAllow developers to easily choose Spring Cloud for Azure modules which work together."
+  },
+  {
+    "id": "java_spring.html#java-spring-supported-versions",
+    "category": "Versioning",
+    "text": "DO ensure that all releases of a Spring Cloud for Azure module support all active versions (as of the time of release) of the corresponding Spring API."
+  },
+  {
+    "id": "java_spring.html#java-spring-deps",
+    "category": "Versioning",
+    "text": "DO add latest release version of Spring API dependencies in the Spring Cloud for Azure module POM files, it is the users responsibility to override the Spring API version via Spring BOM."
+  },
+  {
+    "id": "java_spring.html#java-spring-classifiers",
+    "category": "Versioning",
+    "text": "DO add Maven classifiers to releases if a Spring Cloud for Azure module cannot support all active versions of the corresponding Spring API. For example, if a Spring Cloud for Azure module needs to support Spring Boot 2.2.x and 2.3.x, but cannot due to technical contraints, two versions of the Spring Cloud for Azure module must be released, with classifiers springboot_2_2 and springboot_2_3."
+  },
+  {
+    "id": "java_spring.html#java-spring-bom",
+    "category": "Versioning",
+    "text": "DO provide a Spring Cloud for Azure modules BOM for users. This BOM must contain versions of all Spring Cloud for Azure modules that are known to work together (and have a single set of dependency versions). It must also include appropriate references to Azure Java SDK."
+  },
+  {
+    "id": "java_spring.html#java-spring-bom-docs",
+    "category": "Versioning",
+    "text": "DO encourage users to use the Spring Cloud for Azure modules BOM for their chosen version of Spring rather than specific versions of each Spring Cloud for Azure module, such that they need not worry about Maven classifiers and other versioning issues."
+  },
+  {
+    "id": "java_spring.html#java-spring-dependency-approval",
+    "category": "Dependencies",
+    "text": "DO NOT introduce dependencies on libraries, or change dependency versions, without discussion with the Java architect. Each dependency must receive explicit approval and be added to the dependency allow list before it may be used."
+  },
+  {
+    "id": "java_spring.html#java-spring-dependency-conflicts",
+    "category": "Dependencies",
+    "text": "DO NOT introduce dependencies on library versions that conflict with the transitive dependencies of Spring libraries."
+  },
+  {
+    "id": "java_spring.html#java-spring-com-azure-deps",
+    "category": "Dependencies",
+    "text": "DO make use of com.azure client libraries only - do not mix older com.microsoft.azure client libraries into the dependency hierarchy."
+  },
+  {
+    "id": "java_spring.html#java-spring-dependency-minimal",
+    "category": "Dependencies",
+    "text": "DO keep dependencies to the minimal required set."
+  },
+  {
+    "id": "java_spring.html#java-spring-logging",
+    "category": "Logging",
+    "text": "DO NOT use the ClientLogger logging APIs."
+  },
+  {
+    "id": "java_spring.html#java-spring-tracing",
+    "category": "Tracing",
+    "text": "DO ensure that all Azure Spring libraries fully integrate with the tracing capabilities available in the Azure Java client libraries."
+  },
+  {
+    "id": "java_spring.html#java-spring-tracing-sleuth",
+    "category": "Tracing",
+    "text": "DO ensure that all Azure Spring libraries work appropriately with Spring Sleuth, and that tracing information is appropriately exported."
+  },
+  {
+    "id": "java_spring.html#java-spring-performance-baseline",
+    "category": "Performance",
+    "text": "DO ensure, through appropriate benchmarks (developed in conjuction with the Java SDK team) that performance of all Spring libraries is at an equivalent level to the same operation being performed directly through the Java client library."
+  }
+]

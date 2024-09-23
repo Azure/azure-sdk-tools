@@ -1,36 +1,108 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using APIViewWeb.Filters;
-using APIViewWeb.Repositories;
+using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Controllers
 {
     public class ReviewController : Controller
     {
-        private readonly ReviewManager _reviewManager;
-        private readonly ILogger _logger;
+        private readonly IReviewManager _reviewManager;
+        private readonly IAPIRevisionsManager _apiRevisionManager;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly TelemetryClient _telemetryClient;
 
-        public ReviewController(ReviewManager reviewManager, ILogger<ReviewController> logger)
+        public ReviewController(IReviewManager reviewManager,
+            IAPIRevisionsManager apiRevisionManager, IHubContext<SignalRHub> signalRHubContext,
+            TelemetryClient telemetryClient)
         {
             _reviewManager = reviewManager;
-            _logger = logger;
+            _apiRevisionManager = apiRevisionManager;
+            _signalRHubContext = signalRHubContext;
+            _telemetryClient = telemetryClient;
         }
 
         [HttpGet]
         public async Task<ActionResult> UpdateApiReview(string repoName, string artifactPath, string buildId, string project = "internal")
         {
-            await _reviewManager.UpdateReviewCodeFiles(repoName, buildId, artifactPath, project);
+            await _apiRevisionManager.UpdateAPIRevisionCodeFileAsync(repoName, buildId, artifactPath, project);
             return Ok();
+        }
+
+        [NonAction]
+        [HttpPost]
+        public async Task GenerateAIReview(
+            [FromQuery] string reviewId, [FromQuery]string revisionId = null)
+        {
+            var review = await _reviewManager.GetReviewAsync(User, reviewId);
+            var latestAPIRevision = await _apiRevisionManager.GetLatestAPIRevisionsAsync(reviewId: review.Id);
+            var apiRevison = latestAPIRevision;
+
+            if (!string.IsNullOrEmpty(revisionId))
+            {
+                apiRevison = await _apiRevisionManager.GetAPIRevisionAsync(user: User, apiRevisionId: revisionId);
+            }
+
+            var isLatestAPIRevision = (apiRevison.Id == latestAPIRevision.Id);
+
+            await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Generating, isLatestAPIRevision);
+
+            try {
+                var commentsGenerated = await _reviewManager.GenerateAIReview(reviewId, revisionId);
+                await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Succeeded, isLatestAPIRevision, commentsGenerated);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackTrace("Error generating AI review" + ex.Message, SeverityLevel.Error);
+                await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Error, isLatestAPIRevision, errorMessage: ex.Message);
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> ApprovePackageName(string id)
+        {
+            await _reviewManager.ApproveReviewAsync(user: User, reviewId: id);
+            return RedirectToPage("/Assemblies/Review",  new { id = id });
+        }
+
+        private async Task SendAIReviewGenerationStatus(ReviewListItemModel review, string reviewId,
+            string revisionId, AIReviewGenerationStatus status, bool isLatestAPIRevision, int? noOfCommentsGenerated = null,
+            string errorMessage = null)
+        {
+            var notification = new AIReviewGenerationNotificationModel
+            {
+                ReviewId = reviewId,
+                RevisionId = revisionId,
+                IsLatestRevision = isLatestAPIRevision,
+                Status = status
+            };
+
+            switch (status)
+            {
+                case AIReviewGenerationStatus.Generating:
+                    notification.Message = "Generating Review. ";
+                    notification.Level = NotificatonLevel.Info;
+                    break;
+                case AIReviewGenerationStatus.Succeeded:
+                    notification.Message = $"Succeeded! {noOfCommentsGenerated} comment(s) added.";
+                    notification.Level = NotificatonLevel.Info;
+                    break;
+                case AIReviewGenerationStatus.Error:
+                    notification.Message = $"{errorMessage}";
+                    notification.Level = NotificatonLevel.Error;
+                    break;
+            }
+            await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveAIReviewGenerationStatus", notification);
         }
     }
 }

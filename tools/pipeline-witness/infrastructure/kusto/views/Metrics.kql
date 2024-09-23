@@ -1,4 +1,4 @@
-.create-or-alter materialized-view with (docstring = 'Log extracted metrics') Metrics on table BuildLogLine
+.create-or-alter materialized-view with (folder='', docstring='Log extracted metrics') Metrics on table BuildLogLine
 {
 BuildLogLine
     | where Message has_all ("logmetric", "name", "value", "timestamp")

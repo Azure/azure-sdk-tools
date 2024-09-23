@@ -1,5 +1,7 @@
-﻿using System;
+using System;
+using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,11 +11,34 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.HttpClientSample
     {
         static async Task Main(string[] args)
         {
-            var httpClient = new HttpClient(new FaultInjectionClientHandler(new Uri("http://localhost:7777")));
+            var directClient = new HttpClient();
+            var faultInjectionClient = new HttpClient(new FaultInjectionClientHandler(new Uri("http://localhost:7777")))
+            {
+                // Short timeout for testing no response
+                Timeout = TimeSpan.FromSeconds(10)
+            };
 
-            Console.WriteLine("Sending request...");
-            var response = await httpClient.GetAsync("https://www.example.org");
-            Console.WriteLine(response.StatusCode);
+            Console.WriteLine("Sending request directly...");
+            await Test(directClient);
+
+            Console.WriteLine("Sending request through fault injector...");
+            await Test(faultInjectionClient);
+        }
+
+        private static async Task Test(HttpClient client)
+        {
+            var baseUrl = "http://localhost:5000";
+
+            var uploadStream = new LoggingStream(new MemoryStream(Encoding.UTF8.GetBytes(new string('a', 10 * 1024 * 1024))));
+
+            var response = await client.PutAsync(baseUrl + "/upload", new StreamContent(uploadStream));
+
+            var content = await response.Content.ReadAsStringAsync();
+            var shortContent = (content.Length <= 40 ? content : content.Substring(0, 40) + "...");
+
+            Console.WriteLine($"Status: {response.StatusCode}");
+            Console.WriteLine($"Content: {shortContent}");
+            Console.WriteLine($"Length: {content.Length}");
         }
 
         class FaultInjectionClientHandler : HttpClientHandler
@@ -50,6 +75,59 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.HttpClientSample
                 request.RequestUri = faultInjectorUriBuilder.Uri;
 
                 return base.SendAsync(request, cancellationToken);
+            }
+        }
+
+        class LoggingStream : Stream
+        {
+            private readonly Stream _stream;
+            private long _totalBytesRead;
+
+            public LoggingStream(Stream stream)
+            {
+                _stream = stream;
+            }
+
+            public override bool CanRead => _stream.CanRead;
+
+            public override bool CanSeek => _stream.CanSeek;
+
+            public override bool CanWrite => _stream.CanWrite;
+
+            public override long Length => _stream.Length;
+
+            public override long Position
+            {
+                get => _stream.Position;
+                set => _stream.Position = value;
+            }
+
+            public override void Flush()
+            {
+                _stream.Flush();
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                var bytesRead = _stream.Read(buffer, offset, count);
+                _totalBytesRead += bytesRead;
+                Console.WriteLine($"Read(buffer: byte[{buffer.Length}], offset: {offset}, count: {count}) => {bytesRead} (total {_totalBytesRead})");
+                return bytesRead;
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                return _stream.Seek(offset, origin);
+            }
+
+            public override void SetLength(long value)
+            {
+                _stream.SetLength(value);
+            }
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                _stream.Write(buffer, offset, count);
             }
         }
     }

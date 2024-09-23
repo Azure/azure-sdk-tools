@@ -1,0 +1,66 @@
+@import "../shared/mixins.scss";
+
+#revisions-main-container {
+    @include main-content-container;
+
+    .revisions-list-container {
+        .card {
+            cursor: pointer;
+        }
+
+        .card:hover {
+            box-shadow: var(--box-shadow-link) !important;
+        }
+    }
+}
+
+.revisions-list-container {
+    overflow: auto;
+    height: 78dvh;
+
+    .revision-actions {
+        align-self: center;
+        margin-right: 15px;
+        display: none;
+    }
+
+    .revision-indicator-checks, .revision-actions {
+        align-self: center;
+        margin-right: 20px;
+    }
+
+    .card {
+        flex-direction: row;
+        overflow: hidden;
+        background-color: var(--base-fg-color);
+
+        .card-body {
+            padding: 0.5rem 0.75rem;
+            font-size: small;
+        }
+
+        img {
+            width: 80px;
+            height: 80px;
+        }
+
+        .edit-revision-label {
+            max-width: 500px;
+        }
+    }
+
+    .card.True {
+        @include review-approval-border;
+    }
+}
+
+.revisions-list-container > .card:hover {
+    .revision-actions {
+        display: inline-flex;
+    }
+}
+
+.badge.text-bg-success.shipped-badge {
+    background-color: green;
+    font-size: small;
+}

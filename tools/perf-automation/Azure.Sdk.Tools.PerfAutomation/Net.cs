@@ -12,32 +12,56 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected override Language Language => Language.Net;
 
+        private string CoreTestFrameworkProjectFile =>
+            Path.Combine(WorkingDirectory, "sdk", "core", "Azure.Core.TestFramework", "src", "Azure.Core.TestFramework.csproj");
+
         // Azure.Core.TestFramework.TestEnvironment requires publishing under the "artifacts" folder to find the repository root.
         private string PublishDirectory => Path.Join(WorkingDirectory, "artifacts", "perf");
 
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            bool debug)
         {
             var projectFile = Path.Combine(WorkingDirectory, project);
 
+            await UpdatePackageVersions(projectFile, packageVersions);
+
+            // All perf projects reference Azure.Core.TestFramework.  Update it to ensure consistent versions.
+            await UpdatePackageVersions(CoreTestFrameworkProjectFile, packageVersions);
+
+            Util.DeleteIfExists(PublishDirectory);
+
+            var additionalBuildArguments = "";
+            if (packageVersions.Values.Contains(Program.PackageVersionSource))
+            {
+                // Force all transitive dependencies to use project references, to ensure all packages are built from source.
+                // The default is for transitive dependencies to use package references to the latest published version.
+                additionalBuildArguments += "-p:UseProjectReferenceToAzureClients=true";
+            }
+
+            // Disable source link, since it's not needed for perf runs, and also fails in sparse checkout repos
+            var processArguments = $"publish -c release -f net{languageVersion}.0 -o {PublishDirectory} -p:EnableSourceLink=false {additionalBuildArguments} {project}";
+
+            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory);
+
+            return (result.StandardOutput, result.StandardError, null);
+        }
+
+        private static async Task UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions)
+        {
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
 
             var projectContents = File.ReadAllText(projectFile);
-            var additionalBuildArguments = String.Empty;
 
             foreach (var v in packageVersions)
             {
                 var packageName = v.Key;
                 var packageVersion = v.Value;
 
-                if (packageVersion == Program.PackageVersionSource)
-                {
-                    // Force all transitive dependencies to use project references, to ensure all packages are build from source.
-                    // The default is for transitive dependencies to use package references to the latest published version.
-                    additionalBuildArguments = "-p:UseProjectReferenceToAzureClients=true";
-                }
-                else
-                {
+                if (packageVersion != Program.PackageVersionSource) {
                     // TODO: Use XmlDocument instead of Regex
 
                     // Existing reference might be to package or project:
@@ -58,8 +82,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     }
                     else
                     {
-                        throw new InvalidOperationException(
-                            $"Project file {projectFile} does not contain existing package or project reference to {packageName}");
+                        continue;
                     }
 
                     projectContents = Regex.Replace(
@@ -71,27 +94,26 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
 
-            File.WriteAllText(projectFile, projectContents);
-
-            Util.DeleteIfExists(PublishDirectory);
-
-            // Disable source link, since it's not needed for perf runs, and also fails in sparse checkout repos
-            var processArguments = $"publish -c release -f {languageVersion} -o {PublishDirectory} -p:EnableSourceLink=false {additionalBuildArguments} {project}";
-
-            var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory);
-
-            return (result.StandardOutput, result.StandardError, null);
+            await File.WriteAllTextAsync(projectFile, projectContents);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
+        public override async Task<IterationResult> RunAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            string testName,
+            string arguments,
+            bool profile,
+            string profilerOptions,
+            object context)
         {
             var dllName = Path.GetFileNameWithoutExtension(project) + ".dll";
             var dllPath = Path.Combine(PublishDirectory, dllName);
 
-            var processArguments = $"{dllPath} {testName} {arguments}";
-
-            var result = await Util.RunAsync("dotnet", processArguments, WorkingDirectory, throwOnError: false);
+            var result = profile
+                ? await Util.RunAsync("dotnet-trace", $"collect --format NetTrace --show-child-io --output {GetProfileOutputFile(testName, arguments)} -- dotnet {dllPath} {testName} {arguments}", WorkingDirectory, throwOnError: false)
+                : await Util.RunAsync("dotnet", $"{dllPath} {testName} {arguments}", WorkingDirectory, throwOnError: false);
 
             // Completed 693,696 operations in a weighted-average of 1.00s (692,328.31 ops/s, 0.000 s/op)
             var match = Regex.Match(result.StandardOutput, @"\((.*) ops/s", RegexOptions.IgnoreCase | RegexOptions.RightToLeft);
@@ -109,6 +131,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 StandardError = result.StandardError,
                 StandardOutput = result.StandardOutput,
             };
+        }
+
+        private string GetProfileOutputFile(string testName, string arguments)
+        {
+            var fileName = $"{testName}_{arguments.Replace(" --", "_").Replace("--", "_").Replace(" ", "-")}_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.nettrace";
+            return Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory), fileName));
         }
 
         // === Versions ===
@@ -169,13 +197,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
         public override Task CleanupAsync(string project)
         {
             Util.DeleteIfExists(PublishDirectory);
-
-            var projectFile = Path.Combine(WorkingDirectory, project);
-
-            // Restore backup
-            File.Move(projectFile + ".bak", projectFile, overwrite: true);
-
+            RestoreBackup(CoreTestFrameworkProjectFile);
+            RestoreBackup(Path.Combine(WorkingDirectory, project));
             return Task.CompletedTask;
+        }
+
+        private static void RestoreBackup(string projectFile)
+        {
+            File.Move(projectFile + ".bak", projectFile, overwrite: true);
         }
     }
 }

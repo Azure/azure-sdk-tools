@@ -9,9 +9,10 @@
 import abc
 from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
+import datetime
 from enum import Enum, EnumMeta
 import functools
-from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, TypeAlias
+from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, ClassVar
 
 from ._mixin import MixinWithOverloads
 
@@ -30,6 +31,31 @@ def another_decorator(value):
             return value
         return wrapper
     return decorator
+
+def get_id(self):
+    return self.__id
+
+def add_id(cls):
+    cls_init = cls.__init__
+
+    def __init__(self, id, *args, **kwargs):
+        self.__id = id
+        self.get_id = get_id
+        cls_init(self, *args, **kwargs)
+
+    cls.__init__ = __init__
+    return cls
+
+
+@add_id
+class ClassWithDecorators:
+    pass
+
+
+class ClassWithIvarsAndCvars:
+    captain: str = "Picard"                 # instance var w/ default
+    damage: int                             # instance var w/out default
+    stats: ClassVar[Dict[str, int]] = {}    # class var
 
 
 class PublicCaseInsensitiveEnumMeta(EnumMeta):
@@ -115,6 +141,8 @@ class PublicPrivateClass:
 
     public_var: str = "SOMEVAL"
 
+    public_datetime: datetime.datetime
+
     _private_var: str
 
     public_dict: dict = {"a": "b"}
@@ -189,6 +217,33 @@ class SomethingWithOverloads:
         ...
 
     def something(self, id: int | str, *args, **kwargs) -> str:
+        return str(id)
+
+
+class SomethingAsyncWithOverloads:
+
+    @overload
+    async def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int:
+        ...
+
+    @overload
+    async def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]:
+        ...
+
+    async def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]:
+        if isinstance(input, Sequence):
+            return [i * 2 for i in input]
+        return input * 2
+
+    @overload
+    async def something(self, id: str, *args, **kwargs) -> str:
+        ...
+
+    @overload
+    async def something(self, id: int, *args, **kwargs) -> str:
+        ...
+
+    async def something(self, id: int | str, *args, **kwargs) -> str:
         return str(id)
 
 

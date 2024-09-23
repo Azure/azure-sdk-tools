@@ -7,7 +7,7 @@
 * No response. Then either wait indefinitely, close (TCP FIN), or abort (TCP RST).
 
 ## Installation
-1. [Install .Net](https://dotnet.microsoft.com/download)
+1. [Install .NET](https://dotnet.microsoft.com/download)
 
 2. Install http-fault-injector
 ```

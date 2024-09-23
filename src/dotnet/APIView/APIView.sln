@@ -5,7 +5,7 @@ VisualStudioVersion = 17.2.32602.215
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIView", "APIView\APIView.csproj", "{F3B9015F-4C33-4861-A3D6-E6AAE4C7772A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewUnitTests", "APIViewTest\APIViewUnitTests.csproj", "{6CFB86FC-D34B-4408-8FB8-649EC2880DB3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewUnitTests", "APIViewUnitTests\APIViewUnitTests.csproj", "{6CFB86FC-D34B-4408-8FB8-649EC2880DB3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewWeb", "APIViewWeb\APIViewWeb.csproj", "{F604E06C-B8E7-49EF-960C-F2CF87E2C1A5}"
 EndProject
@@ -13,12 +13,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ClientSdk.Analyzers",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ClientSdk.Analyzers.Tests", "..\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.Tests\Azure.ClientSdk.Analyzers.Tests.csproj", "{09661CDE-E40B-4892-86DC-6DD79A279220}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C929DF77-7A16-43BB-AE1C-4E5F9D89E281}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewIntegrationTests", "APIViewIntegrationTests\APIViewIntegrationTests.csproj", "{8C53BC0C-DEEC-4810-A0D8-A232A25BA4B7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIViewUITests", "APIViewUITests\APIViewUITests.csproj", "{7246F62A-99BF-4C4F-B9AD-1996166E767E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpAPIParser", "..\..\..\tools\apiview\parsers\csharp-api-parser\CSharpAPIParser\CSharpAPIParser.csproj", "{0D5CD780-15F9-49F5-9C4F-126D8224A31E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpAPIParserTests", "..\..\..\tools\apiview\parsers\csharp-api-parser\CSharpAPIParserTests\CSharpAPIParserTests.csproj", "{4F057169-032D-4971-B7D9-71AF850D411E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestReferenceWithInternalsVisibleTo", "..\Azure.ClientSdk.Analyzers\TestReferenceWithInternalsVisibleTo\TestReferenceWithInternalsVisibleTo.csproj", "{0FE36A2D-EB25-4119-A7DA-2605BB2516C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIViewJsonUtility", "APIViewJsonUtility\APIViewJsonUtility.csproj", "{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,6 +55,26 @@ Global
 		{8C53BC0C-DEEC-4810-A0D8-A232A25BA4B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C53BC0C-DEEC-4810-A0D8-A232A25BA4B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C53BC0C-DEEC-4810-A0D8-A232A25BA4B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7246F62A-99BF-4C4F-B9AD-1996166E767E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7246F62A-99BF-4C4F-B9AD-1996166E767E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7246F62A-99BF-4C4F-B9AD-1996166E767E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7246F62A-99BF-4C4F-B9AD-1996166E767E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D5CD780-15F9-49F5-9C4F-126D8224A31E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D5CD780-15F9-49F5-9C4F-126D8224A31E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D5CD780-15F9-49F5-9C4F-126D8224A31E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D5CD780-15F9-49F5-9C4F-126D8224A31E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F057169-032D-4971-B7D9-71AF850D411E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F057169-032D-4971-B7D9-71AF850D411E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F057169-032D-4971-B7D9-71AF850D411E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F057169-032D-4971-B7D9-71AF850D411E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FE36A2D-EB25-4119-A7DA-2605BB2516C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FE36A2D-EB25-4119-A7DA-2605BB2516C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FE36A2D-EB25-4119-A7DA-2605BB2516C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FE36A2D-EB25-4119-A7DA-2605BB2516C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

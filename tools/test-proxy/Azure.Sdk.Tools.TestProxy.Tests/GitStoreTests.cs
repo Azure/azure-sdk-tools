@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Store;
 using System;
@@ -6,6 +6,10 @@ using System.IO;
 using System.Threading.Tasks;
 using Xunit;
 using System.Text.Json;
+using System.Linq;
+using System.ComponentModel;
+using Azure.Sdk.tools.TestProxy.Common;
+using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -20,7 +24,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         }
 
-        public override bool TryRun(string arguments, GitAssetsConfiguration config, out CommandResult result)
+        public override bool TryRun(string arguments, string workingDirectory, out CommandResult result)
         {
             result = new CommandResult()
             {
@@ -183,31 +187,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
 
         [Fact]
-        public void ResolveAssetsJsonFindsAssetsAboveTargetFolder()
-        {
-            string[] folderStructure = new string[]
-            {
-                AssetsJson,
-                "folder1",
-            };
-
-            var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
-            try
-            {
-                var evaluationDirectory = Path.Join(testFolder, "folder1");
-
-                var path = _defaultStore.ResolveAssetsJson(evaluationDirectory);
-
-                Assert.Equal(Path.Join(testFolder, "assets.json"), path);
-            }
-            finally
-            {
-                DirectoryHelper.DeleteGitDirectory(testFolder);
-            }
-
-        }
-
-        [Fact]
         public void ResolveAssetsJsonThrowsOnUnableToLocate()
         {
             var testFolder = TestHelpers.DescribeTestFolder(null, new string[] { }, malformedJson:String.Empty);
@@ -364,11 +343,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, folderStructure);
             try
             {
-                var jsonFileLocation = Path.Join(testFolder, targetRelPath, AssetsJson);
+                var jsonFileLocation = new NormalizedString(Path.Join(testFolder, targetRelPath, AssetsJson));
 
                 var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
-                Assert.Equal(Path.Join(targetRelPath, AssetsJson), parsedConfiguration.AssetsJsonRelativeLocation);
-                Assert.Equal(jsonFileLocation, parsedConfiguration.AssetsJsonLocation);
+                Assert.Equal(new NormalizedString(Path.Join(targetRelPath, AssetsJson)), parsedConfiguration.AssetsJsonRelativeLocation.ToString());
+                Assert.Equal(jsonFileLocation, parsedConfiguration.AssetsJsonLocation.ToString());
             }
             finally
             {
@@ -459,10 +438,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("assets.json", false, "./")]
-        [InlineData("assets.json", true, "python/recordings")]
-        [InlineData("sdk/storage/assets.json", false, "sdk/storage")]
-        [InlineData("sdk/storage/assets.json", true, "python/recordings/sdk/storage")]
+        [InlineData("assets.json", false, "./ eng/ .gitignore")]
+        [InlineData("assets.json", true, "python/recordings eng/ .gitignore")]
+        [InlineData("sdk/storage/assets.json", false, "sdk/storage eng/ .gitignore")]
+        [InlineData("sdk/storage/assets.json", true, "python/recordings/sdk/storage eng/ .gitignore")]
         public async Task ResolveCheckPathsResolvesProperly(string assetsJsonPath, bool includePrefix, string expectedResult)
         {
             var expectedPaths = new string[]
@@ -473,15 +452,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, expectedPaths);
             try
             {
-                string configLocation;
+                NormalizedString configLocation;
 
                 if (assetsJsonPath == "assets.json")
                 {
-                    configLocation = testFolder;
+                    configLocation = new NormalizedString(testFolder);
                 }
                 else
                 {
-                    configLocation = Path.Join(testFolder, assetsJsonPath);
+                    configLocation = new NormalizedString(Path.Join(testFolder, assetsJsonPath));
                 }
 
                 var configuration = await _defaultStore.ParseConfigurationFile(configLocation);
@@ -550,7 +529,122 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        [Fact(Skip ="Skipping because we don't have an integration test suite working yet.")]
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""python/recordings"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tables89f51431""
+        }")]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""python"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tables4f724f0c""
+        }")]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": """",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tablesdd6aec01""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task GetPathResolves(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                Path.Combine("sdk", "tables", GitStoretests.AssetsJson)
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: false);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, "sdk/tables", GitStoretests.AssetsJson);
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                await _defaultStore.Restore(jsonFileLocation);
+
+                var result = await _defaultStore.GetPath(jsonFileLocation);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
+
+                Assert.True(File.Exists(Path.Combine(result, "sdk", "tables", "azure-data-tables", "tests", "recordings", "test_retry.pyTestStorageRetrytest_retry_on_server_error.json")));
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipFact]
+        [Trait("Category", "Integration")]
+        public async Task BreadCrumbMaintainsMultipleBreadCrumbs()
+        {
+            var inputJson = @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": """",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""python/tables"",
+              ""Tag"": ""python/tablesdd6aec01""
+            }";
+
+            var target1 = Path.Combine("sdk", "tables", GitStoretests.AssetsJson);
+            var target2 = Path.Combine("sdk", GitStoretests.AssetsJson);
+            var target3 = Path.Combine(GitStoretests.AssetsJson);
+
+            var folderStructure = new string[]
+            {
+                target1,
+                target2,
+                target3
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: false);
+
+            try
+            {
+                var assetStore = (await _defaultStore.ParseConfigurationFile(Path.Join(testFolder, target1))).ResolveAssetsStoreLocation();
+
+                var breadCrumbs = new List<string>();
+
+                // run 3 restore operations
+                foreach (var assetsJson in folderStructure)
+                {
+                    var jsonFileLocation = Path.Join(testFolder, assetsJson);
+                    var parsedJson = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                    var breadCrumbFile = Path.Join(assetStore.ToString(), "breadcrumb", $"{parsedJson.AssetRepoShortHash}.breadcrumb");
+
+                    breadCrumbs.Add(breadCrumbFile);
+
+                    await _defaultStore.Restore(jsonFileLocation);
+                    TestHelpers.CheckBreadcrumbAgainstAssetsConfig(parsedJson);
+                }
+
+                // double verify they are where we expect
+                foreach(var crumbFile in breadCrumbs)
+                {
+                    Assert.True(File.Exists(crumbFile));
+                }
+
+                // we have already validated that each tag contains what we expect, just confirm we aren't eliminating lines now.
+                Assert.Equal(3, breadCrumbs.Count());
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [Fact(Skip = "Skipping because we don't have an integration test suite working yet.")]
         public async Task GitCallHonorsLocalCredential()
         {
             var testFolder = TestHelpers.DescribeTestFolder(DefaultAssets, basicFolderStructure);

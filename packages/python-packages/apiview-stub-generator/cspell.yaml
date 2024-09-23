@@ -1,0 +1,14 @@
+version: "0.2"
+language: en
+allowCompoundWords: true
+dictionaries:
+  - python
+words:
+  - apiview
+  - ivar
+  - pylintrc
+  - rcfile
+  - rtype
+
+
+

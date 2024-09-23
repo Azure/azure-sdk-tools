@@ -12,9 +12,11 @@
     "sourceMap": true,
     "baseUrl": ".",
     "noImplicitAny": false,
+    "typeRoots": ["./node_modules/@types"],
     "types": [
       "webpack-env",
-      "jquery"
+      "jquery",
+      "node"
     ],
     "paths": {
       "@/*": [

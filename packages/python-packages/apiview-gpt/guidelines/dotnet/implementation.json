@@ -1,0 +1,412 @@
+[
+  {
+    "id": "dotnet_implementation.html#dotnet-http-pipeline-policy-inherit",
+    "category": "Using HttpPipelinePolicy",
+    "text": "DO inherit from HttpPipelinePolicy if the policy implementation calls asynchronous APIs.\n\nSee an example here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/Pipeline/BearerTokenAuthenticationPolicy.cs) "
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-sync-http-pipeline-policy-inherit",
+    "category": "Using HttpPipelinePolicy",
+    "text": "DO inherit from HttpPipelineSynchronousPolicy if the policy implementation calls only synchronous APIs.\n\nSee an example here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/Pipeline/Internal/ClientRequestIdPolicy.cs) "
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-http-pipeline-thread-safety",
+    "category": "Using HttpPipelinePolicy",
+    "text": "DO ensure ProcessAsync and Process methods are thread safe.\n\nHttpMessage, Request, and Response don't have to be thread-safe.\n\nPublic service methods should follow the below parameter presence and ordering guidelines."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-type",
+    "category": "Parameter presence and ordering",
+    "text": "\nLRO Qualifier: This indicates if the user wants to wait for the LRO to simply start or wait for completion.\n\nIf present this DO be the type defined in Azure.Core here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/WaitUntil.cs) \nIf present this DO be a required parameter.\nIf present this DO be the first parameter.\nFor LRO this YOU SHOULD be the present.\n\n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-type",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be the type defined in Azure.Core here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/WaitUntil.cs) "
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-required",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be a required parameter."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-required",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be the first parameter."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-presence",
+    "category": "Parameter presence and ordering",
+    "text": "For LRO this YOU SHOULD be the present."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-path-ordering",
+    "category": "Parameter presence and ordering",
+    "text": "\nRequired Path: These are parameters that will go in the path of the URI.\n\nThese DO be sorted based on their order in the URI so they match.\nSometimes these YOU MAY be omitted as public method parameters when the context is known by the enclosing class such as ResourceGroup.Get (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/resourcemanager/Azure.ResourceManager/src/Resources/Generated/ResourceGroupResource.cs#L127) \n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-path-ordering",
+    "category": "Parameter presence and ordering",
+    "text": "These DO be sorted based on their order in the URI so they match."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-path-omit",
+    "category": "Parameter presence and ordering",
+    "text": "Sometimes these YOU MAY be omitted as public method parameters when the context is known by the enclosing class such as ResourceGroup.Get (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/resourcemanager/Azure.ResourceManager/src/Resources/Generated/ResourceGroupResource.cs#L127) "
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-order",
+    "category": "Parameter presence and ordering",
+    "text": "\nRequired Query / Header: These are simple options that can be set as headers or query params in the request.  Typically primitive types or collections that can be transformed into delimited strings.\n\nAny required query or header parameters DO come before the body parameter since the body parameter can be optional.\n\n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-order",
+    "category": "Parameter presence and ordering",
+    "text": "Any required query or header parameters DO come before the body parameter since the body parameter can be optional."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-body-required-for-put",
+    "category": "Parameter presence and ordering",
+    "text": "\nBody: This is typically found in PUT or POST methods and is object passed as the content of the HTTP request.\n\nFor PUT this DO be a required parameter.\n\n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-body-required-for-put",
+    "category": "Parameter presence and ordering",
+    "text": "For PUT this DO be a required parameter."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-content-type-type",
+    "category": "Parameter presence and ordering",
+    "text": "\nContentType: Defines the content type.\n\nIf present this DO be the type defined in Azure.Core here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/ContentType.cs) \nIf present this DO be an optional parameter.\n\n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-content-type-type",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be the type defined in Azure.Core here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/ContentType.cs) "
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-content-type-optional",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be an optional parameter."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-property-bag",
+    "category": "Parameter presence and ordering",
+    "text": "\nOptional Query / Header: These are simple options that can be set as headers or query params in the request.  Typically primitive types or lists that can be transformed into delimited strings.\n\nYOU SHOULD combine these into a property bag when there are more than 2 total including the required ones in item 3 of this list.\n\nThe property bag DO be required if it includes required query or header parameters from item 3 of this list.  In this case the property bag will replace the parameter at position 3 and position 5 will no longer be present.\nIf a method grew exceeded the threshold over time then an overload with the property bag YOU SHOULD be provided leaving the old methods in place.\n\n\n\n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-property-bag",
+    "category": "Parameter presence and ordering",
+    "text": "YOU SHOULD combine these into a property bag when there are more than 2 total including the required ones in item 3 of this list.\n\nThe property bag DO be required if it includes required query or header parameters from item 3 of this list.  In this case the property bag will replace the parameter at position 3 and position 5 will no longer be present.\nIf a method grew exceeded the threshold over time then an overload with the property bag YOU SHOULD be provided leaving the old methods in place.\n\n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-property-bag-required",
+    "category": "Parameter presence and ordering",
+    "text": "The property bag DO be required if it includes required query or header parameters from item 3 of this list.  In this case the property bag will replace the parameter at position 3 and position 5 will no longer be present."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-property-bag-overload",
+    "category": "Parameter presence and ordering",
+    "text": "If a method grew exceeded the threshold over time then an overload with the property bag YOU SHOULD be provided leaving the old methods in place."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-request-context",
+    "category": "Parameter presence and ordering",
+    "text": "\nRequest Context: This is normally a CancellationToken and is defined as the last parameter.\n\nWhen more context is needed than just a CancellationToken such as DPG you YOU MAY use the RequestContext (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/RequestContext.cs) defined in Azure.Core.\nThis DO always exist in one of the two forms and be defined as an optional parameter.\n\n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-request-context",
+    "category": "Parameter presence and ordering",
+    "text": "When more context is needed than just a CancellationToken such as DPG you YOU MAY use the RequestContext (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/RequestContext.cs) defined in Azure.Core."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-request-context-presence",
+    "category": "Parameter presence and ordering",
+    "text": "This DO always exist in one of the two forms and be defined as an optional parameter.\n\nLRO Qualifier: This indicates if the user wants to wait for the LRO to simply start or wait for completion."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-type",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be the type defined in Azure.Core here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/WaitUntil.cs) "
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-required",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be a required parameter."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-required",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be the first parameter."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-lro-qualifier-presence",
+    "category": "Parameter presence and ordering",
+    "text": "For LRO this YOU SHOULD be the present.\n\nRequired Path: These are parameters that will go in the path of the URI."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-path-ordering",
+    "category": "Parameter presence and ordering",
+    "text": "These DO be sorted based on their order in the URI so they match."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-path-omit",
+    "category": "Parameter presence and ordering",
+    "text": "Sometimes these YOU MAY be omitted as public method parameters when the context is known by the enclosing class such as ResourceGroup.Get (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/resourcemanager/Azure.ResourceManager/src/Resources/Generated/ResourceGroupResource.cs#L127) \n\nRequired Query / Header: These are simple options that can be set as headers or query params in the request.  Typically primitive types or collections that can be transformed into delimited strings."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-order",
+    "category": "Parameter presence and ordering",
+    "text": "Any required query or header parameters DO come before the body parameter since the body parameter can be optional.\n\nBody: This is typically found in PUT or POST methods and is object passed as the content of the HTTP request."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-body-required-for-put",
+    "category": "Parameter presence and ordering",
+    "text": "For PUT this DO be a required parameter.\n\nContentType: Defines the content type."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-content-type-type",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be the type defined in Azure.Core here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/ContentType.cs) "
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-content-type-optional",
+    "category": "Parameter presence and ordering",
+    "text": "If present this DO be an optional parameter.\n\nOptional Query / Header: These are simple options that can be set as headers or query params in the request.  Typically primitive types or lists that can be transformed into delimited strings."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-property-bag",
+    "category": "Parameter presence and ordering",
+    "text": "YOU SHOULD combine these into a property bag when there are more than 2 total including the required ones in item 3 of this list.\n\nThe property bag DO be required if it includes required query or header parameters from item 3 of this list.  In this case the property bag will replace the parameter at position 3 and position 5 will no longer be present.\nIf a method grew exceeded the threshold over time then an overload with the property bag YOU SHOULD be provided leaving the old methods in place.\n\n"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-property-bag-required",
+    "category": "Parameter presence and ordering",
+    "text": "The property bag DO be required if it includes required query or header parameters from item 3 of this list.  In this case the property bag will replace the parameter at position 3 and position 5 will no longer be present."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-property-bag-overload",
+    "category": "Parameter presence and ordering",
+    "text": "If a method grew exceeded the threshold over time then an overload with the property bag YOU SHOULD be provided leaving the old methods in place."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-query-header-property-bag-required",
+    "category": "Parameter presence and ordering",
+    "text": "The property bag DO be required if it includes required query or header parameters from item 3 of this list.  In this case the property bag will replace the parameter at position 3 and position 5 will no longer be present."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-property-bag-overload",
+    "category": "Parameter presence and ordering",
+    "text": "If a method grew exceeded the threshold over time then an overload with the property bag YOU SHOULD be provided leaving the old methods in place.\n\nRequest Context: This is normally a CancellationToken and is defined as the last parameter."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-request-context",
+    "category": "Parameter presence and ordering",
+    "text": "When more context is needed than just a CancellationToken such as DPG you YOU MAY use the RequestContext (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/src/RequestContext.cs) defined in Azure.Core."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-request-context-presence",
+    "category": "Parameter presence and ordering",
+    "text": "This DO always exist in one of the two forms and be defined as an optional parameter.\n\nIn addition to general parameter validation guidelines:"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-parameter-validation-class",
+    "category": "Parameter validation {#dotnet-parameters}",
+    "text": "DO NOT define your own parameter validation class.\n\nUse the Argument class in Azure.Core or even \"extend\" it (it's a partial class included as source) with project-specific argument assertions.\nJust add the following to your project to include it:\n\n```xml\n&lt;!-- Import Azure.Core properties if not already imported. --&gt;\n&lt;Import Project=\"$(MSBuildThisFileDirectory)..\\..\\..\\core\\Azure.Core\\src\\Azure.Core.props\" /&gt;\n&lt;ItemGroup&gt;\n    &lt;Compile Include=\"$(AzureCoreSharedSources)Argument.cs\" /&gt;\n&lt;/ItemGroup&gt;\n\n```\n\nSee remarks on the Argument class for more detail."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-json-use-system-text-json",
+    "category": "JSON Serialization",
+    "text": "DO use System.Text.Json (https://www.nuget.org/packages/System.Text.Json) package to write and read JSON content."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-json-use-utf8jsonwriter",
+    "category": "JSON Serialization",
+    "text": "YOU SHOULD use Utf8JsonWriter to write JSON payloads:\n\n```csharp\nvar json = new Utf8JsonWriter(writer);\njson.WriteStartObject();\njson.WriteString(\"value\", setting.Value);\njson.WriteString(\"content_type\", setting.ContentType);\njson.WriteEndObject();\njson.Flush();\nwritten = (int)json.BytesWritten;\n\n```"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-json-use-jsondocument",
+    "category": "JSON Serialization",
+    "text": "YOU SHOULD use JsonDocument to read JSON payloads:\n\n```csharp\nusing (JsonDocument json = await JsonDocument.ParseAsync(content, default, cancellationToken).ConfigureAwait(false))\n{\n    JsonElement root = json.RootElement;\n\n    var setting = new ConfigurationSetting();\n\n    // required property\n    setting.Key = root.GetProperty(\"key\").GetString();\n\n    // optional property\n    if (root.TryGetProperty(\"last_modified\", out JsonElement lastModified)) {\n        if(lastModified.Type == JsonValueType.Null) {\n            setting.LastModified = null;\n        }\n        else {\n            setting.LastModified = DateTimeOffset.Parse(lastModified.GetString());\n        }\n    }\n    ...\n\n    return setting;\n}\n\n```"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-json-use-utf8jsonreader",
+    "category": "JSON Serialization",
+    "text": "YOU SHOULD consider using Utf8JsonReader to read JSON payloads.\n\nUtf8JsonReader is faster than JsonDocument but much less convenient to use."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-json-serialization-resilience",
+    "category": "JSON Serialization",
+    "text": "DO make your serialization and deserialization code version resilient.\n\nOptional JSON properties should be deserialized into nullable model properties.\n\nAs described in general enumeration guidelines, you should use enum types whenever passing or deserializing a well-known set of values to or from the service.\nThere may be times, however, where a readonly struct is necessary to capture an extensible value from the service even if well-known values are defined,\nor to pass back to the service those same or other user-supplied values:\nThe value is retrieved and deserialized from service, and may contain a value not supported by the client library.\nThe value is roundtripped: the value is retrieved and deserialized from the service, and may later be serialized and sent back to the server.\n\nIn those cases, you should define a structure that:\nIs readonly.\nImplements IEquatable<T> that compares only the string value.\nStores only the string value.\nDefines static properties with well-known values.\nDefines equality, inequality, and an implicit cast-from-string operators.\nOverrides Equals, GetHashCode, and ToString methods.\nEquals(object) and GetHashCode should be attributed with EditorBrowsable(EditorBrowsableState.Never).\n\nType of value comparison should be selected on per-service basis, if the service is inconsistent with how string values are returned the case-insensitive comparison is allowed.\n\nThe following example implements these requirements and should be used as a template:\n\n```csharp\n/// &lt;summary&gt;\n/// An algorithm used for encryption and decryption\n/// &lt;/summary&gt;\npublic partial readonly struct EncryptionAlgorithm : IEquatable&lt;EncryptionAlgorithm&gt;\n{\n    internal const string Rsa15Value = \"RSA1_5\";\n    internal const string RsaOaepValue = \"RSA-OAEP\";\n    internal const string RsaOaep256Value = \"RSA-OAEP-256\";\n\n    private readonly string _value;\n\n    /// &lt;summary&gt;\n    /// Initializes a new instance of the &lt;see cref=\"EncryptionAlgorithm\"/&gt; structure.\n    /// &lt;/summary&gt;\n    /// &lt;param name=\"value\"&gt;The string value of the instance.&lt;/param&gt;\n    public EncryptionAlgorithm(string value)\n    {\n        _value = value ?? throw new ArgumentNullException(nameof(value));\n    }\n\n    /// &lt;summary&gt;\n    /// RSA1_5\n    /// &lt;/summary&gt;\n    public static EncryptionAlgorithm Rsa15 { get; } = new EncryptionAlgorithm(Rsa15Value);\n\n    /// &lt;summary&gt;\n    /// RSA-OAEP\n    /// &lt;/summary&gt;\n    public static EncryptionAlgorithm RsaOaep { get; } = new EncryptionAlgorithm(RsaOaepValue);\n\n    /// &lt;summary&gt;\n    /// RSA-OAEP256\n    /// &lt;/summary&gt;\n    public static EncryptionAlgorithm RsaOaep256 { get; } = new EncryptionAlgorithm(RsaOaep256Value);\n\n    /// &lt;summary&gt;\n    /// Determines if two &lt;see cref=\"EncryptionAlgorithm\"/&gt; values are the same.\n    /// &lt;/summary&gt;\n    /// &lt;param name=\"left\"&gt;The first &lt;see cref=\"EncryptionAlgorithm\"/&gt; to compare.&lt;/param&gt;\n    /// &lt;param name=\"right\"&gt;The second &lt;see cref=\"EncryptionAlgorithm\"/&gt; to compare.&lt;/param&gt;\n    /// &lt;returns&gt;True if &lt;paramref name=\"left\"/&gt; and &lt;paramref name=\"right\"/&gt; are the same; otherwise, false.&lt;/returns&gt;\n    public static bool operator ==(EncryptionAlgorithm left, EncryptionAlgorithm right) =&gt; left.Equals(right);\n\n    /// &lt;summary&gt;\n    /// Determines if two &lt;see cref=\"EncryptionAlgorithm\"/&gt; values are different.\n    /// &lt;/summary&gt;\n    /// &lt;param name=\"left\"&gt;The first &lt;see cref=\"EncryptionAlgorithm\"/&gt; to compare.&lt;/param&gt;\n    /// &lt;param name=\"right\"&gt;The second &lt;see cref=\"EncryptionAlgorithm\"/&gt; to compare.&lt;/param&gt;\n    /// &lt;returns&gt;True if &lt;paramref name=\"left\"/&gt; and &lt;paramref name=\"right\"/&gt; are different; otherwise, false.&lt;/returns&gt;\n    public static bool operator !=(EncryptionAlgorithm left, EncryptionAlgorithm right) =&gt; !left.Equals(right);\n\n    /// &lt;summary&gt;\n    /// Converts a string to a &lt;see cref=\"EncryptionAlgorithm\"/&gt;.\n    /// &lt;/summary&gt;\n    /// &lt;param name=\"value\"&gt;The string value to convert.&lt;/param&gt;\n    public static implicit operator EncryptionAlgorithm(string value) =&gt; new EncryptionAlgorithm(value);\n\n    /// &lt;inheritdoc/&gt;\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override bool Equals(object obj) =&gt; obj is EncryptionAlgorithm other &amp;&amp; Equals(other);\n\n    /// &lt;inheritdoc/&gt;\n    public bool Equals(EncryptionAlgorithm other) =&gt; string.Equals(_value, other._value, StringComparison.Ordinal);\n\n    /// &lt;inheritdoc/&gt;\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override int GetHashCode() =&gt; _value?.GetHashCode() ?? 0;\n\n    /// &lt;inheritdoc/&gt;\n    public override string ToString() =&gt; _value;\n\n    // Attach extra information to to structs using factory methods:\n    internal RSAEncryptionPadding GetRsaEncryptionPadding() =&gt; _value switch\n    {\n        Rsa15Value =&gt; RSAEncryptionPadding.Pkcs1,\n        RsaOaepValue =&gt; RSAEncryptionPadding.OaepSHA1,\n        RsaOaep256Value =&gt; RSAEncryptionPadding.OaepSHA256,\n        _ =&gt; null,\n    };\n}\n\n```"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-enums-values-define",
+    "category": "Constant values for enumeration-like structures {#dotnet-enums-values}",
+    "text": "YOU SHOULD define a nested static class named Values with public constants if and only if extensible enum values must be used as constant expressions, for example:\nAttribute values\nDefault parameter values\nSwitch statements and expressions\n\n```csharp\npublic partial readonly struct EncryptionAlgorithm : IEquatable&lt;EncryptionAlgorithm&gt;\n{\n    /// &lt;summary&gt;\n    /// The values of all declared &lt;see cref=\"EncryptionAlgorithm\"/&gt; properties as string constants.\n    /// &lt;/summary&gt;\n    public static class Values\n    {\n        /// &lt;summary&gt;\n        /// RSA1_5\n        /// &lt;/summary&gt;\n        public const string Rsa15 = EncryptionAlgorithm.Rsa15Value;\n\n        /// &lt;summary&gt;\n        /// RSA-OAEP\n        /// &lt;/summary&gt;\n        public const string RsaOaep = EncryptionAlgorithm.RsaOaepValue;\n\n        /// &lt;summary&gt;\n        /// RSA-OAEP256\n        /// &lt;/summary&gt;\n        public const string RsaOaep256 = EncryptionAlgorithm.RsaOaep256Value;\n    }\n}\n\n```"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-enums-values-test",
+    "category": "Constant values for enumeration-like structures {#dotnet-enums-values}",
+    "text": "DO define tests to ensure extensible enum properties and defined Values constants declare the same names and define the same values. See here (https://github.com/Azure/azure-sdk-for-net/blob/322f6952e4946229949bd3375f5eb6120895fd2f/sdk/search/Azure.Search.Documents/tests/Models/LexicalAnalyzerNameTests.cs#L14-L29) for an example.\n\nSubtypes of Operation<T> are returned from service client methods invoking long running operations (LROs), as described in Methods Invoking Long Running Operations."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-lro-return",
+    "category": "Implementing Subtypes of Operation<T> {#dotnet-implement-operation}",
+    "text": "DO check the value of HasCompleted in subclass implementations of UpdateStatus and UpdateStatusAsync and immediately return the result of GetRawResponse if it is true.\n\n```csharp\npublic override Response UpdateStatus(\n    CancellationToken cancellationToken = default) =&gt;\n    UpdateStatusAsync(false, cancellationToken).EnsureCompleted();\n\npublic override async ValueTask&lt;Response&gt; UpdateStatusAsync(\n    CancellationToken cancellationToken = default) =&gt;\n    await UpdateStatusAsync(true, cancellationToken).ConfigureAwait(false);\n\nprivate async Task&lt;Response&gt; UpdateStatusAsync(bool async, CancellationToken cancellationToken)\n{\n    // Short-circuit when already completed (which improves mocking scenarios that won't have a client).\n    if (HasCompleted)\n    {\n        return GetRawResponse();\n    }\n\n    // some service operation call here, which the above check avoids if the operation has already completed.\n    ...\n\n```"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-lro-return",
+    "category": "Implementing Subtypes of Operation<T> {#dotnet-implement-operation}",
+    "text": "DO throw from methods on Operation<T> subclasses in the following scenarios.\nIf an underlying service operation call from UpdateStatus, WaitForCompletion, or WaitForCompletionAsync throws, re-throw RequestFailedException or its subtype.\nIf the operation completes with a non-success result, throw RequestFailedException or its subtype from UpdateStatus, WaitForCompletion, or WaitForCompletionAsync.\n\nInclude any relevant error state information in the exception details.\n\n\nInclude any relevant error state information in the exception details.\nInclude any relevant error state information in the exception details.\n\n```csharp\nprivate async ValueTask&lt;Response&gt; UpdateStatusAsync(bool async, CancellationToken cancellationToken)\n{\n    ...\n\n        try\n        {\n            Response&lt;ExampleOperationResult&gt; update = async\n                ? await _serviceClient.GetExampleResultAsync(new Guid(Id), cancellationToken).ConfigureAwait(false)\n                : _serviceClient.GetExampleResult(new Guid(Id), cancellationToken);\n\n            _response = update.GetRawResponse();\n\n            if (update.Value.Status == OperationStatus.Succeeded)\n            {\n                // we need to first assign a value and then mark the operation as completed to avoid race conditions\n                _value = ConvertValue(update.Value.ExampleResult.PageResults, update.Value.ExampleResult.ReadResults);\n                _hasCompleted = true;\n            }\n            else if (update.Value.Status == OperationStatus.Failed)\n            {\n                _requestFailedException = await ClientCommon\n                    .CreateExceptionForFailedOperationAsync(async, _diagnostics, _response, update.Value.AnalyzeResult.Errors)\n                    .ConfigureAwait(false);\n                _hasCompleted = true;\n\n                // the operation didn't throw, but it completed with a non-success result.\n                throw _requestFailedException;\n            }\n        }\n        catch (Exception e)\n        {\n            scope.Failed(e);\n            throw;\n        }\n    }\n\n    return GetRawResponse();\n}\n\n```\nIf the Value property is evaluated after the operation failed (HasValue is false and HasCompleted is true) throw the same exception as the one thrown when the operation failed.\n\n```csharp\npublic override FooResult Value\n{\n    get\n    {\n        if (HasCompleted &amp;&amp; !HasValue)\n#pragma warning disable CA1065 // Do not raise exceptions in unexpected locations\n\n            // throw the exception captured when the operation failed.\n            throw _requestFailedException;\n\n#pragma warning restore CA1065 // Do not raise exceptions in unexpected locations\n        else\n            return OperationHelpers.GetValue(ref _value);\n    }\n}\n\n```\nIf the Value property is evaluated before the operation is complete (HasCompleted is false) throw InvalidOperationException.\n\nThe exception message should be: \"The operation has not yet completed.\"\n\n\nThe exception message should be: \"The operation has not yet completed.\"\nThe exception message should be: \"The operation has not yet completed.\"\n\n```csharp\n// start the operation.\nExampleOperation operation = await client.StartExampleOperationAsync(someParameter);\n\nif (!operation.HasCompleted)\n{\n    // attempt to get the Value property before the operation has completed.\n    ExampleOperationResult myResult = operation.Value;  //throws InvalidOperationException.\n}\nelse if (!operation.HasValue)\n{\n    // attempt to get the Value property after the operation has completed unsuccessfully.\n    ExampleOperationResult myResult = operation.Value;  //throws RequestFailedException.\n}\n\n```\n\nTODO: Add discussion on configuration environment variables to parallel that of other languages\n\nRequest logging will be done automatically by the HttpPipeline.  If a client library needs to add custom logging, follow the same guidelines and mechanisms as the pipeline logging mechanism.  If a client library wants to do custom logging, the designer of the library must ensure that the logging mechanism is pluggable in the same way as the HttpPipeline logging policy."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-logging-follow-guidelines",
+    "category": "Logging",
+    "text": "DO follow the logging section of the Azure SDK General Guidelines if logging directly (as opposed to through the HttpPipeline).\n\nAzure SDKs use EventSource library as a logging mechanism.\nMost Azure SDKs with client methods that make a service request and deserialize the response won't need to define EventSource of their own as Azure.Core would provide HTTP request logging, retry logging etc. and the failures would be surfaced to customers as Exceptions.\nYou should only log information that is not possible to infer from the result returned by the client.\n\nFor example:\n\u2714 GOOD Azure.Identity logging which credential type was selected when using DefaultAzureCredential - it's impossible to determine from the returned AccessToken with credential was used to retrieve it.\n\u2714 GOOD Azure.Security.KeyVault logging whether an encryption operation was performed locally or remotely - the client can decide to run encryption locally or remotely depending on key properties, the decision is invisible to consumer.\n\u274cBAD Logging properties of the request or response - Azure-Core already does this as part of the pipeline.\n\u274cBAD Logging exception details before throwing - customers would be able to decide if they want the exception to be logged or not."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource",
+    "category": "EventSource",
+    "text": "DO use EventSource library (https://github.com/microsoft/dotnet-samples/blob/master/Microsoft.Diagnostics.Tracing/EventSource/docs/EventSource.md) to produce diagnostic events."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-type-name",
+    "category": "EventSource",
+    "text": "DO use the package name with EventSource suffix for the class name (i.e. . AzureCoreEventSource for Azure.Core package)."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-base-class",
+    "category": "EventSource",
+    "text": "DO use the AzureEventSource as the base class."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-logging-guidelines",
+    "category": "EventSource",
+    "text": "DO follow the logging guidelines when implementing an [Package]EventSource."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-single",
+    "category": "EventSource",
+    "text": "DO have a single [Package]EventSource type per library."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-internal",
+    "category": "EventSource",
+    "text": "DO define [Package]EventSource class as internal sealed."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-singleton",
+    "category": "EventSource",
+    "text": "DO define and use a singleton instance of [Package]EventSource:"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-name",
+    "category": "EventSource",
+    "text": "DO set [Package]EventSource name to package name replacing . with - (i.e. . Azure-Core for Azure.Core package)"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-event-message",
+    "category": "EventSource",
+    "text": "DO have Message property of EventAttribute set for all events."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-public-api",
+    "category": "EventSource",
+    "text": "DO treat [Package]EventSource name, guid, event id and parameters as public API and follow the appropriate versioning rules."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-is-enabled",
+    "category": "EventSource",
+    "text": "YOU SHOULD check IsEnabled property before doing expensive work (formatting parameters, calling ToString, allocations etc.)"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-event-param-exception",
+    "category": "EventSource",
+    "text": "DO NOT define events with Exception parameters as they are not supported by EventSource."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-test",
+    "category": "EventSource",
+    "text": "DO have a test that asserts [Package]EventSource name, guid and generates the manifest to verify that event source is correctly defined."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-test-events",
+    "category": "EventSource",
+    "text": "DO test that expected events are produced when appropriate. TestEventListener class can be used to collect events. Make sure you mark the test as [NonParallelizable]."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-thrown-exceptions",
+    "category": "EventSource",
+    "text": "YOU SHOULD avoid logging exceptions that are going to get thrown to user code anyway."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-eventsource-event-size-limit",
+    "category": "EventSource",
+    "text": "YOU SHOULD be aware of event size limit of 64K.\n\n<code>[Test]\npublic void MatchesNameAndGuid()\n{\n    // Arrange &amp; Act\n    Type eventSourceType = typeof(AzureCoreEventSource);\n\n    // Assert\n    Assert.NotNull(eventSourceType);\n    Assert.AreEqual(\"Azure-Core\", EventSource.GetName(eventSourceType));\n    Assert.AreEqual(Guid.Parse(\"1015ab6c-4cd8-53d6-aec3-9b937011fa95\"), EventSource.GetGuid(eventSourceType));\n    Assert.IsNotEmpty(EventSource.GenerateManifest(eventSourceType, \"assemblyPathToIncludeInManifest\"));\n}\n</code>\n\nSample EventSource declaration:\n\n```C#\n\n[EventSource(Name = EventSourceName)]\ninternal sealed class AzureCoreEventSource : AzureEventSource\n{\n    private const string EventSourceName = \"Azure-Core\";\n\n    // Having event ids defined as const makes it easy to keep track of them\n    private const int MessageSentEventId = 0;\n    private const int ClientClosingEventId = 1;\n\n    public static AzureCoreEventSource Shared { get; } = new AzureCoreEventSource();\n\n    private AzureCoreEventSource() : base(EventSourceName) { }\n\n    [NonEvent]\n    public void MessageSent(Guid clientId, string messageBody)\n    {\n        // We are calling Guid.ToString make sure anyone is listening before spending resources\n        if (IsEnabled(EventLevel.Informational, EventKeywords.None))\n        {\n            MessageSent(clientId.ToString(\"N\"), messageBody);\n        }\n    }\n\n    // In this example we don't do any expensive parameter formatting so we can avoid extra method and IsEnabled check\n\n    [Event(ClientClosingEventId, Level = EventLevel.Informational, Message = \"Client {0} is closing the connection.\")]\n    public void ClientClosing(string clientId)\n    {\n        WriteEvent(ClientClosingEventId, clientId);\n    }\n\n    [Event(MessageSentEventId, Level = EventLevel.Informational, Message = \"Client {0} sent message with body '{1}'\")]\n    private void MessageSent(string clientId, string messageBody)\n    {\n        WriteEvent(MessageSentEventId, clientId, messageBody);\n    }\n}\n\n```\n\nDistributed tracing allows customers to observe public API methods that are called and network calls that are made from Azure SDK libraries.  With these traces, customers can view the timing of these calls and any errors that occurred.\n\nDistributed traces for network calls are sent automatically by the HttpPipeline in Azure.Core.  Library authors must trace public service methods using ClientDiagnostics.CreateScope.  The .NET Activity types are used for this internally by the ClientDiagnostics via .NET DiagnosticSource (https://github.com/dotnet/runtime/blob/main/src/libraries/System.Diagnostics.DiagnosticSource/src/DiagnosticSourceUsersGuide.md) or ActivitySource (https://docs.microsoft.com/dotnet/core/diagnostics/distributed-tracing-instrumentation-walkthroughs) "
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing",
+    "category": "Distributed Tracing {#dotnet-distributedtracing}",
+    "text": "DO follow [General Distributed Tracing Guidance]({{ site.baseurl }}/general_implementation.html#distributed-tracing)."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-opentelemetry",
+    "category": "Distributed Tracing {#dotnet-distributedtracing}",
+    "text": "DO support distributed tracing by using ClientDiagnostics and DiagnosticScope"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-new-span-per-method-failure",
+    "category": "Distributed Tracing {#dotnet-distributedtracing}",
+    "text": "DO If method throws exception, record exception on scope using scope.Failed(ex). Do not record exception if exception is handled within service method."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-suppress-client-spans-for-inner-methods",
+    "category": "Distributed Tracing {#dotnet-distributedtracing}",
+    "text": "DO enable inner client scope suppression when creating ClientDiagnostics by setting corresponding suppression flag to true. Client libraries that currently don't suppress inner client scopes must keep the flag value default (null) for backward compatibility reasons."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-tracing-sources",
+    "category": "Distributed Tracing {#dotnet-distributedtracing}",
+    "text": "DO NOT use DiagnosticSource, or ActivitySource API directly from client libraries. Activity can be used directly when DiagnosticScope does not expose corresponding APIs.\n\nTODO: Add guidance regarding user agent strings\n\nAll Azure client libraries ship with a set of extension methods that provide integration with ASP.NET Core applications by registering clients with DependencyInjection container, flowing Azure SDK logs to ASP.NET Core logging subsystem and providing ability to use configuration subsystem for client configuration (for more examples see https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/core/Microsoft.Extensions.Azure)"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-builder-class-name",
+    "category": "Integration with ASP.NET Core",
+    "text": "DO provide a single *ClientBuilderExtensions class for every Azure SDK client library that contains client types. Name of the type should use the same prefix as the *ClientOptions class used across the library. For example: SecretClientBuilderExtensions, BlobClientBuilderExtensions"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-client-builder-class-namespace",
+    "category": "Integration with ASP.NET Core",
+    "text": "DO use Microsoft.Extensions.Azure as a namespace."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-client-builder-class-service-client",
+    "category": "Integration with ASP.NET Core",
+    "text": "DO provide integration extension methods for every top level client type users are expected to start with in the main namespace. Do not include integration extension methods for secondary clients, child clients, or clients in advanced namespaces."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-client-builder-extension-name",
+    "category": "Integration with ASP.NET Core",
+    "text": "DO name extension methods as Add[ClientName] for example. Add AddSecretsClient, AddBlobServiceClient."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-client-builder-overloads",
+    "category": "Integration with ASP.NET Core",
+    "text": "DO provide an overload for every set of constructor parameters."
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-client-builder-overload-normal",
+    "category": "Integration with ASP.NET Core",
+    "text": "DO provide extension method for IAzureClientFactoryBuilder interface for constructors that don't take TokenCredentials. Extension method should take same set of parameters as constructor and call into builder.RegisterClientFactory\n\nSample implementation:\n\n```C#\npublic static IAzureClientBuilder&lt;ConfigurationClient, ConfigurationClientOptions&gt; AddConfigurationClient&lt;TBuilder&gt;(this TBuilder builder, string connectionString)\n    where TBuilder : IAzureClientFactoryBuilder\n{\n    return builder.RegisterClientFactory&lt;ConfigurationClient, ConfigurationClientOptions&gt;(options =&gt; new ConfigurationClient(connectionString, options));\n}\n\n```"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-client-builder-overload-tokencredential",
+    "category": "Integration with ASP.NET Core",
+    "text": "DO provide extension method for IAzureClientFactoryBuilderWithCredential interface for constructors that take TokenCredentials. Extension method should take same set of parameters as constructor except the TokenCredential and call into builder.RegisterClientFactory overload that provides the token credential as part of factory lambda.\n\nSample implementation:\n\n```C#\npublic static IAzureClientBuilder&lt;SecretClient, SecretClientOptions&gt; AddSecretClient&lt;TBuilder&gt;(this TBuilder builder, Uri vaultUri)\n     where TBuilder : IAzureClientFactoryBuilderWithCredential\n{\n    return builder.RegisterClientFactory&lt;SecretClient, SecretClientOptions&gt;((options, cred) =&gt; new SecretClient(vaultUri, cred, options));\n}\n\n```"
+  },
+  {
+    "id": "dotnet_implementation.html#dotnet-client-builder-overload-configuration",
+    "category": "Integration with ASP.NET Core",
+    "text": "DO provide extension method for IAzureClientFactoryBuilderWithConfiguration<TConfiguration> that takes TConfiguration configuration. This overload would allow customers to pass in a IConfiguration object and create client dynamically based on configuration values.\n\nSample implementation:\n\n```C#\npublic static IAzureClientBuilder&lt;SecretClient, SecretClientOptions&gt; AddSecretClient&lt;TBuilder, TConfiguration&gt;(this TBuilder builder, TConfiguration configuration)\n    where TBuilder : IAzureClientFactoryBuilderWithConfiguration&lt;TConfiguration&gt;\n{\n    return builder.RegisterClientFactory&lt;SecretClient, SecretClientOptions&gt;(configuration);\n}\n\n```\n\n[.NET Framework Design Guidelines]: https://docs.microsoft.com/dotnet/standard/design-guidelines/\n[.NET Framework Constructor Design]: https://docs.microsoft.com/dotnet/standard/design-guidelines/constructor\n[Azure Application Configuration service]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/appconfiguration/Azure.Data.AppConfiguration\n[Azure.Core]: https://www.nuget.org/packages/Azure.Core/\n[Moq]: https://github.com/moq/moq4\n[adparch]: https://github.com/azure/azure-sdk/issues\n[.NET Standard 2.0]: https://docs.microsoft.com/dotnet/standard/net-standard\n[azure/azure-sdk-for-net]: https://github.com/azure/azure-sdk-for-net\n[.NET Target Framework Monikers]: https://learn.microsoft.com/dotnet/standard/frameworks"
+  }
+]

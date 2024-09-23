@@ -1,0 +1,44 @@
+.namespace-view {
+    font-size: 14px;
+    font-family: monospace;
+    padding-right: 10px
+}
+
+.nav-list {
+    list-style-type: none;
+    padding-left: 0px;
+}
+
+.nav-list-children {
+    list-style-type: none;
+    text-overflow: ellipsis;
+    padding-left: 0;
+    margin-bottom: 0 !important; // prevents flickering in stickySidebar
+}
+
+.nav-list-children > li {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-list-group .nav-list-children {
+    padding-left: 14px;
+}
+
+.nav-list-toggle {
+    padding-left: 14px;
+    background: url(/icons/down.png) center left no-repeat;
+}
+
+.nav-list-collapsed > .nav-list-toggle {
+    background: url(/icons/right.png) center left no-repeat;
+}
+
+.nav-list-collapsed > .nav-list-children {
+    display: none;
+}
+
+.navbar-expand-sm .navbar-nav .dropdown-menu {
+    z-index: 1030;
+}

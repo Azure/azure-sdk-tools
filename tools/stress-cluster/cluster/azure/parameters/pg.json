@@ -14,19 +14,17 @@
     "clusterLocation": {
       "value": "westus3"
     },
-    "staticTestSecretsKeyvaultName": {
-      "value": "stress-secrets-pg"
+    "defaultAgentPoolMinNodes": {
+      "value": 6
     },
-    "staticTestSecretsKeyvaultGroup": {
-      "value": "rg-stress-secrets-pg"
-    },
-    "enableHighMemAgentPool": {
-        "value": true
+    "defaultAgentPoolMaxNodes": {
+      "value": 20
     },
     "tags": {
       "value": {
         "environment": "pg",
-        "owners": "bebroder"
+        "owners": "bebroder, albertcheng",
+        "DoNotDelete": ""
       }
     }
   }

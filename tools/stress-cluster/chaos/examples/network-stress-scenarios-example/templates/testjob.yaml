@@ -10,9 +10,9 @@ spec:
   nodeSelector:
     sku: 'default'
   containers:
-    - name: network-example
-      command: ["bash", "poll.sh"]
+    - name: {{ .Stress.Scenario }}
+      command: ["bash", "poll.sh", "{{ .Stress.subdomain }}"]
       imagePullPolicy: Always
-      image: {{ .Values.image }}
+      image: {{ .Stress.imageTag }}
       {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}

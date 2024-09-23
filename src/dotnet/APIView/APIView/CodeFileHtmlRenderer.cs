@@ -21,7 +21,7 @@ namespace ApiView
         public static CodeFileHtmlRenderer Normal { get; } = new CodeFileHtmlRenderer(false);
         public static CodeFileHtmlRenderer ReadOnly { get; } = new CodeFileHtmlRenderer(true);
 
-        protected override void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
+        protected override void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken, bool isHiddenApiToken)
         {
             if (token.Value == null)
             {
@@ -53,6 +53,11 @@ namespace ApiView
             if (isDeprecatedToken)
             {
                 elementClass += " deprecated";
+            }
+
+            if (isHiddenApiToken)
+            {
+                elementClass += " hidden-api";
             }
 
             string href = null;

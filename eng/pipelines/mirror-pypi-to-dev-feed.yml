@@ -21,8 +21,8 @@ jobs:
     displayName: Mirror From PyPI
 
     pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: MMSUbuntu20.04
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml
@@ -34,12 +34,11 @@ jobs:
 
       - script: |
           set -e
-          pip install -r $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages_requirements.txt
+          python -m pip install -r $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages_requirements.txt
         displayName: Install Requirements
 
       - pwsh: |
-          $configurations = '${{ convertToJson(parameters.PackageSpecifiers) }}' -replace '\\', '/' -replace '"', '`"'
-          python $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages.py $configurations --dest-dir='$(Build.ArtifactStagingDirectory)'
+          python $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages.py ${{ parameters.PackageSpecifiers }} --dest-dir='$(Build.ArtifactStagingDirectory)'
         displayName: 'Download Targeted Packages'
 
       - task: TwineAuthenticate@0
@@ -57,7 +56,7 @@ jobs:
           $results = Get-ChildItem -Force -Path $(Build.ArtifactStagingDirectory)
           foreach ($file in $results) {
             Write-Host "Uploading $file"
-            
+
             twine upload --repository "${{ parameters.DevFeed }}" --config-file $(PYPIRC_PATH) $($file.FullName)
           }
         displayName: 'Publish Packages to Dev Feed'

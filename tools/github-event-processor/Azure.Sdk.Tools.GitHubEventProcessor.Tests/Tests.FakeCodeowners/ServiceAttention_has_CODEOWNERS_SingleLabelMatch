@@ -1,0 +1,34 @@
+################
+# FAKE Codeownrs file for testing purposes
+################
+
+# ServiceLabel: %FakeLabel0 %Service Attention
+/files/filePath0/           @FakeUser0
+# ServiceLabel: %FakeLabel1 %Service Attention
+/files/filePath1/           @FakeUser1 @FakeUser11
+# ServiceLabel: %FakeLabel2 %Service Attention
+/files/filePath2/           @FakeUser2 @FakeUser12
+# ServiceLabel: %FakeLabel3 %Service Attention
+/files/filePath3/           @FakeUser3
+# ServiceLabel: %FakeLabel4 %Service Attention
+/files/filePath4/           @FakeUser4 @FakeUser14 @FakeUser24
+# ServiceLabel: %FakeLabel5 %Service Attention
+/files/filePath5/           @FakeUser5
+# ServiceLabel: %FakeLabel6 %Service Attention
+/files/filePath6/           @FakeUser6
+# ServiceLabel: %FakeLabel7 %Service Attention
+/files/filePath7/           @FakeUser7 @FakeUser17
+# ServiceLabel: %FakeLabel8 %Service Attention
+/files/filePath8/           @FakeUser8
+# The payload coming in has FakeLabel9, FakeLabel4 and FakeLabel1.
+# Since the match looks for a ServiceLabel entry that is fully included
+# in the Issue's payload, from the last->first of the entries,
+# FakeLabel9 is the first match
+# ServiceLabel: %FakeLabel9 %Service Attention
+/files/filePath9/           @FakeUser9
+
+# ServiceLabel: %FakeLabel5 %FakeLabel8 %Service Attention
+# ServiceOwners: @FakeUser4 @FakeUser9
+
+# ServiceLabel: %FakeLabel10 %FakeLabel4 %Service Attention
+# ServiceOwners: @FakeUser4 @FakeUser10

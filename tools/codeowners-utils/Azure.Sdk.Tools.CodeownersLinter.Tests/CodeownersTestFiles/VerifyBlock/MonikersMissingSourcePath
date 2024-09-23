@@ -1,0 +1,19 @@
+# Test for error reporting. Monikers that need to be part of a block that ends in a source/path owner
+# PRLabel: %TestLabel1
+
+# Same scenario as above but with invalid/missing labels that shouldn't prevent the block
+# formatting error from being reported
+# PRLabel: TestLabelBad
+
+# PRLabel:
+
+# ServiceLabel, whether a label is declared or whether the label is valid or not, needs to be
+# part of a block that ends in a source path/owner line, a ServiceOwner line or /<NotInRepo>/
+# ServiceLabel: TestLabel1
+
+# Same scenario as above but with invalid/missing labels that shouldn't prevent the block
+# formatting error from being reported
+# ServiceLabel: %TestLabelBad
+
+# ServiceLabel: 
+

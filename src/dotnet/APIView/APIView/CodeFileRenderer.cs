@@ -1,12 +1,11 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
+using APIView.Model;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace ApiView
 {
@@ -14,24 +13,38 @@ namespace ApiView
     {
         public static CodeFileRenderer Instance = new CodeFileRenderer();
 
-        public CodeLine[] Render(CodeFile file, bool enableSkipDiff = false)
+        public RenderResult Render(CodeFile file, bool showDocumentation = false, bool enableSkipDiff = false)
         {
-            var list = new List<CodeLine>();
-            Render(list, file.Tokens, enableSkipDiff);
-            return list.ToArray();
+            var codeLines = new List<CodeLine>();
+            var sections = new Dictionary<int,TreeNode<CodeLine>>();
+            Render(codeLines, file.Tokens, showDocumentation, enableSkipDiff, sections);
+            return new RenderResult(codeLines.ToArray(), sections);
         }
 
-        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool enableSkipDiff)
+        public CodeLine[] Render(CodeFileToken[] tokens, bool showDocumentation = false, bool enableSkipDiff = false)
+        {
+            var codeLines = new List<CodeLine>();
+            var sections = new Dictionary<int, TreeNode<CodeLine>>();
+            Render(codeLines, tokens, showDocumentation, enableSkipDiff, sections);
+            return codeLines.ToArray();
+        }
+
+        private void Render(List<CodeLine> list, IEnumerable<CodeFileToken> node, bool showDocumentation, bool enableSkipDiff, Dictionary<int,TreeNode<CodeLine>> sections)
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
+            string currentCrossLangId = null;
+            string currentTableId = null;
             bool isDocumentationRange = false;
+            bool isHiddenApiToken = false;
             bool isDeprecatedToken = false;
             bool isSkipDiffRange = false;
-            Stack<NodeInProcess> nodesInProcess = new Stack<NodeInProcess>();
-            string lastHeadingEncountered = null;
-            HashSet<string> lineIds = new HashSet<string>(); // Used to ensure there are no duplicate IDs
-            int indentSize = 0;
+            Stack<SectionType> nodesInProcess = new Stack<SectionType>();
+            int lineNumber = 0;
+            (int Count, int Curr) tableColumnCount = (0, 0);
+            (int Count, int Curr) tableRowCount = (0, 0);
+            TreeNode<CodeLine> section = null;
+            int leafSectionPlaceHolderNumber = 0;
 
             foreach (var token in node)
             {
@@ -39,35 +52,13 @@ namespace ApiView
                 if (enableSkipDiff && isSkipDiffRange && token.Kind != CodeFileTokenKind.SkipDiffRangeEnd)
                     continue;
 
-                switch(token.Kind)
+                if (!showDocumentation && isDocumentationRange && token.Kind != CodeFileTokenKind.DocumentRangeEnd)
+                    continue;
+
+                switch (token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        string lineClass = "";
-                        if (nodesInProcess.Count > 0)
-                        {
-                            var nodesInProcessAsArray = nodesInProcess.ToArray();
-                            for (int i = 0; i < nodesInProcessAsArray.Length; i++)
-                            {
-                                var classPrefix = SanitizeLineClass(nodesInProcessAsArray[i].classPrefix);
-                                if (i == 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
-                                {
-                                    lineClass += (classPrefix + "-heading ");
-                                }
-                                else if (i > 0 && nodesInProcessAsArray[i].classSuffix.Equals("heading"))
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    lineClass += (classPrefix + "-content ");
-                                }
-                            }
-                            lineClass = lineClass.Trim();
-                        }
-
-                        list.Add(new CodeLine(stringBuilder.ToString(), currentId, lineClass, indentSize, isDocumentationRange));
-                        currentId = null;
-                        stringBuilder.Clear();
+                        CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, ref currentCrossLangId, isDocumentationRange, isHiddenApiToken);
                         break;
 
                     case CodeFileTokenKind.DocumentRangeStart:
@@ -78,6 +69,14 @@ namespace ApiView
                     case CodeFileTokenKind.DocumentRangeEnd:
                         CloseDocumentationRange(stringBuilder);
                         isDocumentationRange = false;
+                        break;
+
+                    case CodeFileTokenKind.HiddenApiRangeStart:
+                        isHiddenApiToken = true;
+                        break;
+
+                    case CodeFileTokenKind.HiddenApiRangeEnd:
+                        isHiddenApiToken = false;
                         break;
 
                     case CodeFileTokenKind.DeprecatedRangeStart:
@@ -97,89 +96,128 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.FoldableSectionHeading:
-                        nodesInProcess.Push(new NodeInProcess(token.Value, "heading"));
-                        lastHeadingEncountered = token.Value;
-                        RenderToken(token, stringBuilder, isDeprecatedToken);
+                        nodesInProcess.Push(SectionType.Heading);
+                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                        currentCrossLangId = (token.CrossLanguageDefinitionId != null) ? token.CrossLanguageDefinitionId : currentCrossLangId;
+                        RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentStart:
-                        nodesInProcess.Push(new NodeInProcess(lastHeadingEncountered, "content"));
-                        indentSize++;
+                        nodesInProcess.Push(SectionType.Content);
                         break;
 
                     case CodeFileTokenKind.FoldableSectionContentEnd:
+                        section = (section.IsRoot) ? section : section.Parent;
                         nodesInProcess.Pop();
-                        if (nodesInProcess.Peek().classSuffix.Equals("heading"))
+                        if (nodesInProcess.Peek().Equals(SectionType.Heading))
                         {
                             nodesInProcess.Pop();
                         }
-                        indentSize--;
-                        break;
-                    default:
-                        if (token.DefinitionId != null)
+                        if (nodesInProcess.Count == 0 && section != null)
                         {
-                            currentId = token.DefinitionId;
+                            sections.Add(sections.Count, section);
+                            section = null;
                         }
-                        RenderToken(token, stringBuilder, isDeprecatedToken);
                         break;
-                }                
-            }
-        }
 
-        private string SanitizeLineClass(string lineClass)
-        {
-            if (!String.IsNullOrEmpty(lineClass))
-            {
-                var result = lineClass.ToLower();
-                result = Regex.Replace(result, "[^a-z_0-9-]", "");
-                result = Regex.Replace(result, "^[0-9]+", "");
-                result = Regex.Replace(result, "//s+", "");
-                return result;
-            }
-            return lineClass;
-        }
+                    case CodeFileTokenKind.TableBegin:
+                        currentTableId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                        break;
 
-        private string SanitizeLineId(string lineId, HashSet<string> lineIds)
-        {
-            int resultAsInt;
-            if (Int32.TryParse(lineId, out resultAsInt))
-            {
-                return resultAsInt.ToString();
-            }
+                    case CodeFileTokenKind.TableColumnCount:
+                        tableColumnCount.Count = Convert.ToInt16(token.Value);
+                        tableColumnCount.Curr = 0;
+                        break;
 
-            // Ensure the id is valid html id
-            if (!String.IsNullOrWhiteSpace(lineId))
-            {
-                var result = lineId.ToLower();
-                result = Regex.Replace(result, "[^a-z_0-9-:.]", "");
-                result = Regex.Replace(result, "^[0-9]+", "");
-                result = Regex.Replace(result, "//s+", "");
+                    case CodeFileTokenKind.TableRowCount:
+                        tableRowCount.Count = Convert.ToInt16(token.Value);
+                        tableRowCount.Curr = 0;
+                        break;
 
-                // Remove duplicates by appending or incrementing a number as suffix of string
-                if (lineIds.Contains(result))
-                {
-                    do
-                    {
-                        var suffixCount = Regex.Match(result, "[0-9]+$").Value;
-                        if (!String.IsNullOrWhiteSpace(suffixCount))
+                    case CodeFileTokenKind.TableColumnName:
+                        if (tableColumnCount.Curr == 0)
                         {
-                            int suffixCountAsInt = Int32.Parse(suffixCount);
-                            result = Regex.Replace(result, $"{suffixCount}$", $"{++suffixCountAsInt}");
+                            stringBuilder.Append($"<ul class=\"list-group list-group-horizontal\">");
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
+                            stringBuilder.Append("</strong></li>");
+                            tableColumnCount.Curr++;
+                        }
+                        else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
+                        {
+                            currentId = $"{currentTableId}-th";
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
+                            stringBuilder.Append("</strong></li>");
+                            stringBuilder.Append("</ul>");
+                            tableColumnCount.Curr = 0;
+                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, ref currentCrossLangId, isDocumentationRange, isHiddenApiToken);
                         }
                         else
                         {
-                            result += $"_1";
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
+                            RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
+                            stringBuilder.Append("</strong></li>");
+                            tableColumnCount.Curr++;
                         }
-                    }
-                    while (lineIds.Contains(result));
+                        break;
+
+                    case CodeFileTokenKind.TableCellBegin:
+                        if (tableColumnCount.Curr == 0)
+                        {
+                            stringBuilder.Append($"<ul class=\"list-group list-group-horizontal\">");
+                            stringBuilder.Append($"<li class=\"list-group-item\">");
+                            tableColumnCount.Curr++;
+                        }
+                        else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
+                        {
+                            currentId = $"{currentTableId}-tr-{tableRowCount.Curr + 1}";
+                            stringBuilder.Append($"<li class=\"list-group-item\">");
+                            tableColumnCount.Curr = 0;
+                            tableRowCount.Curr++;
+                        }
+                        else
+                        {
+                            stringBuilder.Append($"<li class=\"list-group-item\">");
+                            tableColumnCount.Curr++;
+                        }
+                        break;
+
+                    case CodeFileTokenKind.TableCellEnd:
+                        stringBuilder.Append("</li>");
+                        if (tableColumnCount.Curr == 0)
+                        {
+                            stringBuilder.Append("</ul>");
+                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, ref currentCrossLangId, isDocumentationRange, isHiddenApiToken);
+                        }
+                        break;
+
+                    case CodeFileTokenKind.TableEnd:
+                        break;
+
+                    case CodeFileTokenKind.LeafSectionPlaceholder:
+                        stringBuilder.Append(token.Value);
+                        leafSectionPlaceHolderNumber = (int)token.NumberOfLinesinLeafSection;
+                        break;
+
+                    case CodeFileTokenKind.ExternalLinkStart:
+                        stringBuilder.Append($"<a target=\"_blank\" href=\"{token.Value}\">");
+                        break;
+
+                    case CodeFileTokenKind.ExternalLinkEnd:
+                        stringBuilder.Append("</a>");
+                        break;
+
+                    default:
+                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                        currentCrossLangId = (token.CrossLanguageDefinitionId != null) ? token.CrossLanguageDefinitionId : currentCrossLangId;
+                        RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
+                        break;
                 }
-                lineIds.Add(result);
-                return result;
             }
-            return lineId;
         }
 
-        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken)
+        protected virtual void RenderToken(CodeFileToken token, StringBuilder stringBuilder, bool isDeprecatedToken, bool isHiddenApiToken)
         {
             if (token.Value != null)
             {
@@ -191,17 +229,68 @@ namespace ApiView
         // These methods should not render anything for text renderer so keeping it empty
         protected virtual void StartDocumentationRange(StringBuilder stringBuilder) { }
         protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
+
+        private void CaptureCodeLine(List<CodeLine> list, Dictionary<int, TreeNode<CodeLine>> sections, Stack<SectionType> nodesInProcess,
+             ref TreeNode<CodeLine> section, StringBuilder stringBuilder, ref int lineNumber, ref int leafSectionPlaceHolderNumber, ref string currentId, ref string currentCrossLangId,
+             bool isDocumentationRange = false, bool isHiddenApiToken = false)
+        {
+            int? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count : null;
+            CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, currentCrossLangId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiToken);
+            if (leafSectionPlaceHolderNumber != 0)
+            {
+                lineNumber += leafSectionPlaceHolderNumber - 1;
+                leafSectionPlaceHolderNumber = 0;
+            }
+            if (nodesInProcess.Count > 0)
+            {
+                if (nodesInProcess.Peek().Equals(SectionType.Heading))
+                {
+                    if (section == null)
+                    {
+                        section = new TreeNode<CodeLine>(codeLine);
+                        list.Add(codeLine);
+                    }
+                    else
+                    {
+                        section = section.AddChild(codeLine);
+                    }
+                }
+                else
+                {
+                    section.AddChild(codeLine);
+                }
+            }
+            else
+            {
+                if (section != null)
+                {
+                    sections.Add(sections.Count, section);
+                    section = null;
+                }
+                list.Add(codeLine);
+            }
+            currentId = null;
+            stringBuilder.Clear();
+        }
     }
 
-    public struct NodeInProcess
+ 
+
+    public struct RenderResult
     {
-        public NodeInProcess(string prefix, string suffix)
+        public RenderResult(CodeLine[] codeLines, Dictionary<int,TreeNode<CodeLine>> sections)
         {
-            classPrefix = prefix;
-            classSuffix = suffix;
+            CodeLines = codeLines;
+            Sections = sections;
         }
 
-        public string classPrefix { get; }
-        public string classSuffix { get; }
+        public CodeLine[] CodeLines { get; }
+        public Dictionary<int, TreeNode<CodeLine>> Sections { get; }
+    }
+
+    enum SectionType
+    {
+        Heading,
+        Content
     }
 }

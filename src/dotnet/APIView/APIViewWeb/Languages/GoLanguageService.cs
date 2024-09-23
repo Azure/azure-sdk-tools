@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -7,15 +7,22 @@ using System.IO.Compression;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
     public class GoLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "Go";
-        public override string Extension { get; } = ".gosource";
+        public override string [] Extensions { get; } = { ".gosource" };
         public override string ProcessName { get; } = "apiviewgo";
-        public override string VersionString { get; } = "1";
+        public override string VersionString { get; } = "2";
+
+        public GoLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
+        {
+        }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {
@@ -36,7 +43,7 @@ namespace APIViewWeb
             zipStream.Position = 0;
             var archive = new ZipArchive(zipStream);            
             archive.ExtractToDirectory(tempDirectory);
-            var packageRootDirectory = originalFilePath.Replace(Extension, "");
+            var packageRootDirectory = originalFilePath.Replace(Extensions[0], "");
 
             try
             {
@@ -62,7 +69,7 @@ namespace APIViewWeb
 
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
+                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;

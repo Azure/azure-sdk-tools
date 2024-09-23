@@ -26,13 +26,13 @@
 
 import Foundation
 
-class InitializersTestClass {
+public class InitializersTestClass {
 
     // Throwing initializer
 
-    init(withThrowable: String) throws {}
+    public init(withThrowable: String) throws {}
 
     // Failable initializer
 
-    init?(withFailable: String) {}
+    public init?(withFailable: String) {}
 }

@@ -1,0 +1,86 @@
+parameters:
+  # Provde a list of repos
+  # Example:
+  #   Azure/azure-rest-api-specs-pr:
+  #     Branch: main
+  #     TargetBranches:
+  #       RPSaaSDev:
+  #         Theirs: "**"
+  #         Ours: "specification"
+  #         Merge: "specification/common-types, custom-words.txt"
+  #         AcceptTheirsForFinalMerge: true
+  #       RPSaaSDev:
+  #         Theirs: "**"
+  #         Ours: "specification"
+  #         Merge: "specification/common-types, custom-words.txt"
+  #         AcceptTheirsForFinalMerge: true
+  - name: Repos
+    type: object
+  - name: GH_TOKEN
+    type: string
+  - name: WorkingDirectory
+    type: string
+    default: $(System.DefaultWorkingDirectory)
+
+steps:
+
+- ${{ each repo in parameters.Repos }}:
+  - pwsh: |
+      git clone --filter=tree:0 "https://${{ parameters.GH_TOKEN }}@github.com/${{ repo.key }}.git" ${{ repo.key }}
+    displayName: Clone ${{ repo.key }}
+    workingDirectory: ${{ parameters.WorkingDirectory }}
+
+  - ${{ each target in repo.value.TargetBranches }}:
+    - pwsh: |
+        Write-Host "git checkout ${{ target.key }}"
+        git checkout ${{ target.key }}
+
+        # Need to checkout the new branch before the merge in order to preserve the merge commit
+        $mergeBranch = "merge-${{ repo.value.Branch }}-to-${{ target.key }}"
+        Write-Host "git checkout -b $mergeBranch"
+        git checkout -b $mergeBranch
+      displayName: Checkout ${{ target.key }}
+      workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
+
+    - task: PowerShell@2
+      displayName: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
+      continueOnError: true
+      inputs:
+        pwsh: true
+        workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
+        filePath: eng/scripts/Merge-Branch.ps1
+        arguments: >
+          -Verbose
+          -SourceBranch ${{ repo.value.Branch }}
+          -Theirs ${{ coalesce(target.value.Theirs, '@()') }}
+          -Ours ${{ coalesce(target.value.Ours, '@()') }}
+          -Merge ${{ coalesce(target.value.Merge, '@()') }}
+          -AcceptTheirsForFinalMerge $${{ coalesce(target.value.AcceptTheirsForFinalMerge, 'false') }}
+
+    - pwsh: |
+        $mergeBranch = (git rev-parse --abbrev-ref HEAD)
+        $commitMessage = "Merge branch ${{ repo.value.Branch }} into ${{ target.key }}"
+
+        Write-Host "git diff --name-status --cached --exit-code"
+        git diff --name-status --cached --exit-code
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host "No changed files in this merge so skipping pull request."
+          exit 0
+        }
+
+        Write-Host "git -c user.name='azure-sdk' -c user.email='azuresdk@microsoft.com' commit -m $commitMessage"
+        git -c user.name='azure-sdk' -c user.email='azuresdk@microsoft.com' commit -m $commitMessage
+
+        Write-Host "git push origin $mergeBranch -f"
+        git push origin $mergeBranch -f
+
+        Write-Host "gh pr create --base ${{ target.key }} --head  --reviewer weshaggard --repo ${{ repo.key }} --body $commitMessage --title $commitMessage"
+        gh pr create --base ${{ target.key }} --head $mergeBranch --reviewer weshaggard --repo ${{ repo.key }} --body $commitMessage --title $commitMessage
+
+        Write-Host "gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}"
+        gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}
+      displayName: Create Pull Request for merge
+      continueOnError: true
+      workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
+      env:
+        GH_TOKEN: $(azuresdk-github-pat)

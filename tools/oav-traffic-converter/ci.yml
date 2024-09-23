@@ -22,79 +22,44 @@ pr:
 
 variables:
   NodeVersion: '16.x'
-  VAR_ARIFACT_NAME: "drop"
   VAR_BUILD_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
   NugetSecurityAnalysisWarningLevel: 'none'
 
-stages:
-  - stage: InstallAndTest
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
+  parameters:
+    BuildStageName: Test
+    ArtifactName: drop
+    PackageJsonPath: $(Build.SourcesDirectory)/tools/oav-traffic-converter
+    BuildStages:
+    - stage: InstallAndTest
 
-    pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: MMSUbuntu20.04
+      variables:
+        - template: /eng/pipelines/templates/variables/image.yml
 
-    jobs:
-      - job: Test
-
-        steps:
-        - task: NodeTool@0
-          inputs:
-            versionSpec: '$(NodeVersion)'
-          displayName: 'Use Node $(NodeVersion)'
-
-        - script: |
-            npm install
-            npm run build
-            npm pack
-            cp azure-tools-oav-traffic-converter-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)
-          displayName: 'Package into Artifact Dir'
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/oav-traffic-converter
-
-        - task: PublishBuildArtifacts@1
-          inputs:
-            PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
-            ArtifactName: '$(VAR_ARIFACT_NAME)'
-            publishLocation: 'Container'
-        
-  - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
-    - stage: Release
-      dependsOn: InstallAndTest
-      condition: succeeded()
       pool:
-        name: azsdk-pool-mms-ubuntu-2004-general
-        vmImage: MMSUbuntu20.04
+        name: $(LINUXPOOL)
+        image: $(LINUXVMIMAGE)
+        os: linux
 
       jobs:
-      - job: approve
-        pool: server
-        steps:
-        - task: ManualValidation@0
-          inputs:
-            notifyUsers: 'Click to approve if it''s an expected public release.'
-      - job: release
-        dependsOn: approve
-        condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
-        steps:
-        - task: NodeTool@0
-          inputs:
-            versionSpec: '$(NodeVersion)'
-          displayName: 'Install Node.js'
-        - task: DownloadBuildArtifacts@0
-          inputs:
-            buildType: 'current'
-            downloadType: 'single'
-            artifactName: '$(VAR_ARIFACT_NAME)'
-            downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - job: Test
 
-        - script: |
-            echo -e "\e[32m[$(date -u)] LOG: publish the package"
-            echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc 
-            for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARIFACT_NAME)/*.tgz
-            do
-              echo -e "\e[32m[$(date -u)] LOG: File: $file"
-              npm publish $file --access public || { echo 'publish $file failed' ; exit 1; }
-            done
-            rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
-          displayName: Publish
-          workingDirectory: $(System.DefaultWorkingDirectory)/tools/
+          steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(NodeVersion)'
+            displayName: 'Use Node $(NodeVersion)'
 
+          - script: |
+              npm install
+              npm run build
+              npm pack
+              cp azure-tools-oav-traffic-converter-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)
+            displayName: 'Package into Artifact Dir'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/oav-traffic-converter
+
+          - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+            parameters:
+              ArtifactName: 'drop'
+              ArtifactPath: $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'

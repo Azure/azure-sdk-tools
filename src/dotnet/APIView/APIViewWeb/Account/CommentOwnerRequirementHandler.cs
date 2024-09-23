@@ -1,7 +1,8 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Threading.Tasks;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 
@@ -15,7 +16,7 @@ namespace APIViewWeb
             {
                 if (requirement is CommentOwnerRequirement)
                 {
-                    if (((CommentModel)context.Resource).Username == context.User.GetGitHubLogin())
+                    if (((CommentItemModel)context.Resource).CreatedBy == context.User.GetGitHubLogin())
                     {
                         context.Succeed(requirement);
                     }

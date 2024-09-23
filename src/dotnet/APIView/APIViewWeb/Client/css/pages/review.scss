@@ -1,0 +1,151 @@
+@import "../shared/mixins.scss";
+
+#review-info-bar > .SumoSelect:nth-of-type(even) {
+    width: 20%;
+}
+
+#review-info-bar > .SumoSelect:nth-of-type(odd) {
+    width: 10%;
+}
+
+#revision-select ~ .optWrapper {
+    width: auto;
+    min-width: 250px;
+}
+
+#diff-select ~ .optWrapper {
+    width: auto;
+    min-width: 250px;
+}
+
+#revision-select {
+    width: 20%;
+}
+
+#diff-select {
+    width: 20%;
+}
+
+.breadcrumb .icon-language {
+    min-height: 20px;
+    width: 20px;
+}
+
+#review-left {
+    max-width: none;
+    min-width: 10px;
+    height: calc(100vh - 135px);
+    overflow: auto;
+    max-height: 100vh;
+    padding: 5px 0px 5px 10px;
+    background-color: var(--base-fg-color);
+}
+
+#review-main-container {
+    @include main-content-container;
+}
+
+#review-right {
+    max-width: 100%;
+    min-width: 100px;
+    height: calc(100vh - 135px);
+    padding: 0px;
+    overflow: auto;
+    background-color: var(--base-fg-color);
+    scroll-behavior: smooth;
+    contain: size layout paint;
+}
+
+.review-approved {
+    @include review-approval-border;
+    border-radius: 3px;
+}
+
+.show-diffonly-switch, .show-documentation-switch {
+    color: var(--base-text-color) !important;
+}
+
+.gutter {
+    &:hover {
+        background-color: var(--base-fg-color);
+    }
+
+    &.gutter-horizontal {
+        cursor: col-resize;
+    }
+}
+
+.option-approved > label, .option-pending > label {
+    font-size: small;
+}
+
+.option-approved > label::after {
+    content: "";
+    font-family: "FontAwesome";
+    margin-left: 10px;
+    color: var(--success-color);
+    font-size: medium;
+}
+
+.form-check.override-check {
+    padding-left: 4rem;
+    padding-bottom: 1.5rem;
+}
+
+.modal-body.check-description {
+    padding-bottom: .5rem;
+}
+
+.form-check.convo-check {
+    padding-left: 4rem;
+    padding-bottom: 1.5rem;
+}
+
+.modal-body.convo-label {
+    padding-bottom: 0;
+}
+
+.modal-body.convo-label.combo-check {
+    padding-top: 0;
+}
+
+.approval-list-group-item {
+    list-style-type: none;
+}
+
+.revision-title {
+    margin-bottom: 0;
+}
+
+.revision-info {
+    display: inline-block;
+    padding-left: 5px;
+}
+
+.status-icon {
+    font-size: 0.8em;
+
+    &.deleted {
+        color: black;
+    }
+
+    &.approval-reverted {
+        color: red;
+    }
+
+    &.created {
+        color: darkorange;
+    }
+
+    &.approved {
+        color: forestgreen;
+    }
+
+    &.undeleted {
+        color: yellow;
+    }
+}
+
+.revision-info:last-child {
+    margin-left: 17px;
+}

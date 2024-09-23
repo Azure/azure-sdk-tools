@@ -26,7 +26,7 @@
 
 import Foundation
 
-public class PropertiesTestStruct {
+public class PropertiesTestClass {
 
     public var totalSteps: Int = 0 {
         willSet(newTotalSteps) {
@@ -45,13 +45,14 @@ public class PropertiesTestStruct {
         return "test"
     }
 
+    private var _secretValue: String = ""
     public var someReadWrite: String {
         get {
             return "test"
         }
 
         set {
-            self = newValue
+            self._secretValue = newValue
         }
     }
 }

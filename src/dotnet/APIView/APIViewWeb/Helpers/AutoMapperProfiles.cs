@@ -1,6 +1,6 @@
-﻿using APIViewWeb.Models;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Models;
 using AutoMapper;
-using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace APIViewWeb.Helpers
 {
@@ -9,14 +9,22 @@ namespace APIViewWeb.Helpers
         public AutoMapperProfiles()
         {
             CreateMap<UserPreferenceModel, UserPreferenceModel>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom((src, dest) => src.UserName != null ? src.UserName : dest.UserName))
-                .ForMember(dest => dest.Language, opt => opt.MapFrom((src, dest) => src.Language != null ? src.Language : dest.Language))
-                .ForMember(dest => dest.FilterType, opt => opt.MapFrom((src, dest) => src.FilterType != null ? src.FilterType : dest.FilterType))
-                .ForMember(dest => dest.State, opt => opt.MapFrom((src, dest) => src.State != null ? src.State : dest.State))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom((src, dest) => src.Status != null ? src.Status : dest.Status))
-                .ForMember(dest => dest.HideLineNumbers, opt => opt.MapFrom((src, dest) => src.HideLineNumbers != null ? src.HideLineNumbers : dest.HideLineNumbers))
-                .ForMember(dest => dest.HideLeftNavigation, opt => opt.MapFrom((src, dest) => src.HideLeftNavigation != null ? src.HideLeftNavigation : dest.HideLeftNavigation))
-                .ForMember(dest => dest.Theme, opt => opt.MapFrom((src, dest) => src.Theme != null ? src.Theme : dest.Theme));
+                .ForMember(dest => dest.Language, opt => opt.MapFrom((src, dest) => src._language != null ? src._language : dest._language))
+                .ForMember(dest => dest.ApprovedLanguages, opt => opt.MapFrom((src, dest) => src._approvedLanguages != null ? src._approvedLanguages : dest._approvedLanguages))
+                .ForMember(dest => dest.APIRevisionType, opt => opt.MapFrom((src, dest) => src._apiRevisionType != null ? src._apiRevisionType : dest._apiRevisionType))
+                .ForMember(dest => dest.State, opt => opt.MapFrom((src, dest) => src._state != null ? src._state : dest._state))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom((src, dest) => src._status != null ? src._status : dest._status))
+                .ForMember(dest => dest.HideLineNumbers, opt => opt.MapFrom((src, dest) => src._hideLineNumbers != null ? src._hideLineNumbers : dest._hideLineNumbers))
+                .ForMember(dest => dest.HideLeftNavigation, opt => opt.MapFrom((src, dest) => src._hideLeftNavigation != null ? src._hideLeftNavigation : dest._hideLeftNavigation))
+                .ForMember(dest => dest.Theme, opt => opt.MapFrom((src, dest) => src._theme != null ? src._theme : dest._theme))
+                .ForMember(dest => dest.ShowHiddenApis, opt => opt.MapFrom((src, dest) => src._showHiddenApis != null ? src._showHiddenApis : dest._showHiddenApis))
+                .ForMember(dest => dest.HideReviewPageOptions, opt => opt.MapFrom((src, dest) => src._hideReviewPageOptions != null ? src._hideReviewPageOptions : dest._hideReviewPageOptions))
+                .ForMember(dest => dest.HideIndexPageOptions, opt => opt.MapFrom((src, dest) => src._hideIndexPageOptions != null ? src._hideIndexPageOptions : dest._hideIndexPageOptions))
+                .ForMember(dest => dest.HideSamplesPageOptions, opt => opt.MapFrom((src, dest) => src._hideSamplesPageOptions != null ? src._hideSamplesPageOptions : dest._hideSamplesPageOptions))
+                .ForMember(dest => dest.HideRevisionsPageOptions, opt => opt.MapFrom((src, dest) => src._hideRevisionsPageOptions != null ? src._hideRevisionsPageOptions : dest._hideRevisionsPageOptions))
+                .ForMember(dest => dest.ShowComments, opt => opt.MapFrom((src, dest) => src._showComments != null ? src._showComments : dest._showComments))
+                .ForMember(dest => dest.ShowSystemComments, opt => opt.MapFrom((src, dest) => src._showSystemComments != null ? src._showSystemComments : dest._showSystemComments))
+                .ForMember(dest => dest.UseBetaIndexPage, opt => opt.MapFrom((src, dest) => src._useBetaIndexPage != null ? src._useBetaIndexPage : dest._useBetaIndexPage));
         }
     }
 }

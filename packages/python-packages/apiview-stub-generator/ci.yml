@@ -1,0 +1,41 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - packages/python-packages/apiview-stub-generator
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - packages/python-packages/apiview-stub-generator
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
+  parameters:
+    PythonVersion: '3.10'
+    PackagePath: 'packages/python-packages/apiview-stub-generator'
+    FeedName: 'public/azure-sdk-for-python'
+    ArtifactName: 'apiviewparserpython'
+    PackageName: 'Python API View Parser'
+    TestSteps:
+    - script: |
+        python $(Build.SourcesDirectory)/eng/scripts/python_version_check.py
+      displayName: 'Verify Python APIView version consistency'
+
+    - script: |
+        cd $(Build.SourcesDirectory)/packages/python-packages/apiview-stub-generator
+        python -m pip install tox
+        tox -e pytest,stubgen
+      displayName: Run APIView tests

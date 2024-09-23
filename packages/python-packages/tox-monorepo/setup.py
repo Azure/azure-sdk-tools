@@ -27,11 +27,11 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
-    install_requires=["tox >= 3.12.0"],
+    install_requires=["tox<4.0.0,>=3.12.0"],
     entry_points={"tox": ["monorepo=tox_monorepo:monorepo"]},
     classifiers=[
         "Framework :: tox",
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 7 - Inactive",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",

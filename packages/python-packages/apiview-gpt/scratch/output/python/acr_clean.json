@@ -1,0 +1,26 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [],
+            "line_no": 21,
+            "bad_code": "class azure.containerregistry.ArtifactManifestProperties:",
+            "suggestion": "class azure.containerregistry.ArtifactManifest:",
+            "comment": "The suffix 'Properties' is not helpful. Favor the simpler term 'ArtifactManifest' instead."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 66,
+            "bad_code": "class azure.containerregistry.ArtifactTagProperties:",
+            "suggestion": "class azure.containerregistry.ArtifactTag:",
+            "comment": "The suffix 'Properties' is not helpful. Favor the simpler term 'ArtifactTag' instead."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 300,
+            "bad_code": "class azure.containerregistry.RepositoryProperties:",
+            "suggestion": "class azure.containerregistry.Repository:",
+            "comment": "The suffix 'Properties' is not helpful. Favor the simpler term 'Repository' instead."
+        }
+    ]
+}

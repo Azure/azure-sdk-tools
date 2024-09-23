@@ -1,0 +1,60 @@
+parameters:
+- name: 'containers'
+  type: object
+  default:
+  - originals
+  - codefiles
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+stages:
+  - stage: 'Main'
+    jobs:
+      - job: 'BlobCopy'
+        displayName: 'Sync API reviews'
+        pool:
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: windows-2022
+
+        steps:
+        - pwsh: |
+            Invoke-WebRequest -MaximumRetryCount 10 -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile "azcopy.zip" | Wait-Process;
+            Expand-Archive -Path "azcopy.zip" -DestinationPath "$(Build.BinariesDirectory)/azcopy/"
+          workingDirectory: $(Build.BinariesDirectory)
+          displayName: Download and Extract azcopy Zip
+
+        - ${{ each c in parameters.containers }}:
+          - task: AzurePowerShell@5
+            displayName: Copy Blobs in ${{c}}
+            inputs:
+              azureSubscription: 'Azure SDK Engineering System'
+              ScriptType: 'InlineScript'
+              azurePowerShellVersion: LatestVersion
+              workingDirectory: $(Build.BinariesDirectory)
+              pwsh: true
+              Inline: |
+                $azcopy = $(Resolve-Path "$(Build.BinariesDirectory)/azcopy/azcopy_windows_amd64_*/azcopy.exe")[0]
+                $sourceUrl = "https://$(apiview-prod-storageaccount).blob.core.windows.net/${{c}}"
+                $destUrl = "https://$(apiview-staging-storageaccount).blob.core.windows.net/${{c}}"
+                &($azcopy) sc $sourceUrl $destUrl --recursive=true
+            env:
+              AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
+
+        - template: /eng/pipelines/templates/steps/use-python-version.yml
+          parameters:
+            versionSpec: '3.10'
+
+        - task: AzurePowerShell@5
+          displayName: Sync CosmosDB
+          inputs:
+            azureSubscription: 'Azure SDK Engineering System'
+            ScriptType: 'InlineScript'
+            azurePowerShellVersion: LatestVersion
+            workingDirectory: $(Build.BinariesDirectory)
+            pwsh: true
+            Inline: |
+              cd $(Build.SourcesDirectory)/eng/scripts/python/apiview-syncdb/
+              python -m pip install -r requirements.txt
+              python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --db-name $(apiview-cosmosdb-name) --backup-storage-url $(apiview-cosmos-backup-url)
+              exit $LASTEXITCODE

@@ -1,0 +1,160 @@
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">What to Upload</h5>
+        <div class="d-none" id="csharp-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Run
+                        <code>dotnet pack</code>
+                    </li>
+                    Upload the resulting .nupkg file.
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="java-help">
+            <p class="card-text">
+                Run a <code>mvn package</code> build on your project, which will generate a number of build artifacts in the <code>/target</code> directory. In there, find the file ending <code>sources.jar</code>, and select it.
+            </p>
+        </div>
+        <div class="d-none" id="c-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Install clang 10 or later.
+                    </li>
+                    <li>
+                        Run
+                        <code>clang [inputs like az_*.h] -Xclang -ast-dump=json -I ..\..\..\core\core\inc -I "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\VC\Tools\MSVC\14.26.28801\include\" > az_core.ast</code>
+                    </li>
+                    <li>
+                        Archive the file <code>Compress-Archive az_core.ast -DestinationPath az_core.zip</code>
+                    </li>
+                    <li>
+                        Upload the resulting archive.
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="python-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Generate wheel for the package.
+                        <code>python setup.py bdist_wheel -d [dest_folder]</code>
+                    </li>
+                    <li>
+                        Upload generated whl file
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="javascript-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Use <code>api-extractor</code> to generate a <a href="https://api-extractor.com/pages/setup/generating_docs/">docModel file</a>
+                    </li>
+                    <li>
+                        Upload generated api.json file
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="cpp-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Generate a token file using the <a href="https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/cpp-api-parser#readme">C++ parser</a>
+                    </li>
+                    <li>
+                        Upload the token file generated.
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="go-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Archive source module directory in which go.mod is present. <code>Compress-Archive ./sdk/azcore -DestinationPath azcore.zip</code>
+                    </li>
+                    <li>
+                        Rename the file <code>Rename-Item azcore.zip -NewName  azcore.gosource</code>
+                    </li>
+                    <li>
+                        Upload the resulting archive.
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="protocol-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Upload generated yml file from autorest
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="swift-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Generate JSON file for the source by running Swift APIView parser in XCode.
+                        More information is available here on <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/swift/README.md">Swift API parser</a>
+                    </li>
+                    <li>
+                        Upload generated JSON
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="swagger-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        Rename swagger json to replace file extension to .swagger  <code>Rename-Item PetSwagger.json -NewName PetSwagger.swagger</code>
+                    </li>
+                    <li>
+                        Upload renamed swagger file
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="typespec-help">
+            <p class="card-text">
+                TypeSpec review can be generated manually using one of the following options.
+                <ol>
+                    <li>
+                        <strong>Option 1:</strong> Create API review using a link to TypeSpec project. Provide the URL to project and click Upload.
+                    </li>
+                    <li>
+                        <strong>Option 2:</strong> Create API review file locally using following steps.
+                        <ul>
+                            <li>
+                                Install  <code>@@azure-tools/typespec-apiview</code>
+                            </li>
+                            <li>
+                                Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "@@azure-tools/typespec-apiview"</code>
+                            </li>
+                            <li>
+                                Select Json as the language option in Create review page.
+                            </li>
+                            <li>
+                                Upload the JSON file that is emitted.
+                            </li>
+                        </ul>
+                    </li>
+                </ol>
+            </p>
+        </div>
+        <div class="d-none" id="json-help">
+            <p class="card-text">
+                <ol>
+                    Upload JSON API review token file.
+                </ol>
+            </p>
+        </div>
+    </div>
+</div>

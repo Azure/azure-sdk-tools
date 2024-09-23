@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,20 +20,23 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public Exception CommandException;
     }
 
+
     /// <summary>
     /// This class offers an easy wrapper abstraction for shelling out to git.
     /// </summary>
     public class GitProcessHandler
     {
+        public const int RETRY_INTERMITTENT_FAILURE_COUNT = 3;
         /// <summary>
         /// Internal class to hold the minimum supported version of git. If that
         /// version changes we only need to change it here.
         /// </summary>
         class GitMinVersion
         {
-            // The minimum version of git supported is 2.37.0 due to cone/non-cone options for sparse-checkout
+            // As per https://github.com/Azure/azure-sdk-tools/issues/4146, the min version of git
+            // that supports what we need is 2.25.0.
             public static int Major = 2;
-            public static int Minor = 37;
+            public static int Minor = 25;
             public static int Patch = 0;
             public static string minVersionString = $"{Major}.{Minor}.{Patch}";
         }
@@ -94,7 +96,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
         public virtual CommandResult Run(string arguments, GitAssetsConfiguration config)
         {
-            return Run(arguments, config.AssetsRepoLocation);
+            return Run(arguments, config.AssetsRepoLocation.ToString());
         }
 
         /// <summary>
@@ -106,6 +108,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <exception cref="GitProcessException">Throws GitProcessException on returnCode != 0 OR if an unexpected exception is thrown during invocation.</exception>
         public virtual CommandResult Run(string arguments, string workingDirectory)
         {
+            // Surface an easy to understand error when we shoot ourselves in the foot
+            if (arguments.StartsWith("git"))
+            {
+                throw new Exception("GitProcessHandler commands should not start with 'git'");
+            }
+
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(workingDirectory);
             processStartInfo.Arguments = arguments;
 
@@ -120,28 +128,75 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
-                    DebugLogger.LogInformation($"git {arguments}");
-                    var process = Process.Start(processStartInfo);
-                    string stdOut = process.StandardOutput.ReadToEnd();
-                    string stdErr = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
-
-                    int returnCode = process.ExitCode;
-
-                    DebugLogger.LogDebug($"StdOut: {stdOut}");
-                    DebugLogger.LogDebug($"StdErr: {stdErr}");
-                    DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-
-                    result.ExitCode = process.ExitCode;
-                    result.StdErr = stdErr;
-                    result.StdOut = stdOut;
-
-                    if (result.ExitCode != 0)
+                    int attempts = 1;
+                    while (attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
-                        throw new GitProcessException(result);
+                        DebugLogger.LogInformation($"git {arguments}");
+
+                        var output = new List<string>();
+                        var error = new List<string>();
+
+                        using (var process = new Process())
+                        {
+                            process.StartInfo = processStartInfo;
+
+                            process.OutputDataReceived += (s, e) =>
+                            {
+                                lock (output)
+                                {
+                                    output.Add(e.Data);
+                                }
+                            };
+
+                            process.ErrorDataReceived += (s, e) =>
+                            {
+                                lock (error)
+                                {
+                                    error.Add(e.Data);
+                                }
+                            };
+
+                            process.Start();
+                            process.BeginErrorReadLine();
+                            process.BeginOutputReadLine();
+                            process.WaitForExit();
+
+                            int returnCode = process.ExitCode;
+                            var stdOut = string.Join(Environment.NewLine, output);
+                            var stdError = string.Join(Environment.NewLine, error);
+
+                            DebugLogger.LogDebug($"StdOut: {stdOut}");
+                            DebugLogger.LogDebug($"StdErr: {stdError}");
+                            DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                            result.ExitCode = process.ExitCode;
+                            result.StdErr = string.Join(Environment.NewLine, stdError);
+                            result.StdOut = string.Join(Environment.NewLine, stdOut);
+
+                            if (result.ExitCode == 0)
+                            {
+                                break;
+                            }
+                            var continueToAttempt = IsRetriableGitError(result);
+
+                            if (!continueToAttempt)
+                            {
+                                throw new GitProcessException(result);
+                            }
+
+                            DebugLogger.LogInformation($"Retrying git command {arguments} in {workingDirectory} after {attempts} attempts.");
+
+                            attempts++;
+
+                            if (continueToAttempt && attempts < RETRY_INTERMITTENT_FAILURE_COUNT)
+                            {
+                                Task.Delay(attempts * 2 * 1000).Wait();
+                            }
+                        }
                     }
                 }
+                // exceptions caught here will be to do with inability to start the git process
+                // otherwise all "error" states should be handled by the output to stdErr and non-zero exitcode.
                 catch (Exception e)
                 {
                     DebugLogger.LogDebug(e.Message);
@@ -157,44 +212,145 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Invokes git binary against a GitAssetsConfiguration.
+        /// This function evaluates a git command invocation result. The result of "yes you should retry this" only occurs
+        /// when the necessary data is available. Otherwise we default to NOT retry.
+        ///
+        /// Check Azure/azure-sdk-tools#5660 for additional detail on occurrence.
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="arguments"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        public virtual bool TryRun(string arguments, GitAssetsConfiguration config, out CommandResult result)
+        public bool IsRetriableGitError(CommandResult result)
         {
-            ProcessStartInfo processStartInfo = CreateGitProcessInfo(config.AssetsRepoLocation);
+            if (result.ExitCode != 0) {
+                // we cannot evaluate an empty stderr to see if it is retriable
+                if (string.IsNullOrEmpty(result.StdErr))
+                {
+                    return false;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': The requested URL returned error: 429
+                if (result.StdErr.Contains("The requested URL returned error: 429"))
+                {
+                    return true;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443 after 21019 ms: Couldn't connect to server
+                var regex = new Regex(@"Failed to connect to github.com port 443 after [\d]+ ms: Couldn't connect to server");
+                if (regex.IsMatch(result.StdErr))
+                {
+                    return true;
+                }
+
+                // Unable to write data to the transport connection: Connection reset by peer.
+                // Unable to read data from the transport connection: Connection reset by peer.
+                // Connection reset by peer
+                if (result.StdErr.ToLower().Contains("connection reset"))
+                {
+                    return true;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Operation timed out
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Connection timed out
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Recv failure: Operation timed out
+                if (result.StdErr.Contains("timed out"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Invokes git binary against a GitAssetsConfiguration.
+        /// </summary>
+        /// <param name="arguments"></param>
+        /// <param name="workingDirectory"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public virtual bool TryRun(string arguments, string workingDirectory, out CommandResult result)
+        {
+            // Surface an easy to understand error when we shoot ourselves in the foot
+            if (arguments.StartsWith("git"))
+            {
+                throw new Exception("GitProcessHandler commands should not start with 'git'");
+            }
+
+            ProcessStartInfo processStartInfo = CreateGitProcessInfo(workingDirectory);
             processStartInfo.Arguments = arguments;
             var commandResult = new CommandResult();
 
-            var queue = AssetTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
+            var queue = AssetTasks.GetOrAdd(workingDirectory, new TaskQueue());
 
             queue.Enqueue(() =>
             {
                 try
                 {
-                    DebugLogger.LogInformation($"git {arguments}");
-                    var process = Process.Start(processStartInfo);
-                    string stdOut = process.StandardOutput.ReadToEnd();
-                    string stdErr = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
-
-                    int returnCode = process.ExitCode;
-
-                    DebugLogger.LogDebug($"StdOut: {stdOut}");
-                    DebugLogger.LogDebug($"StdErr: {stdErr}");
-                    DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-                    commandResult = new CommandResult()
+                    int attempts = 1;
+                    bool continueToAttempt = true;
+                    while (continueToAttempt && attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
-                        ExitCode = process.ExitCode,
-                        StdErr = stdErr,
-                        StdOut = stdOut,
-                        Arguments = arguments
-                    };
+                        DebugLogger.LogInformation($"git {arguments}");
+                        var output = new List<string>();
+                        var error = new List<string>();
+
+                        using (var process = new Process())
+                        {
+                            process.StartInfo = processStartInfo;
+
+                            process.OutputDataReceived += (s, e) =>
+                            {
+                                lock (output)
+                                {
+                                    output.Add(e.Data);
+                                }
+                            };
+
+                            process.ErrorDataReceived += (s, e) =>
+                            {
+                                lock (error)
+                                {
+                                    error.Add(e.Data);
+                                }
+                            };
+
+                            process.Start();
+                            process.BeginErrorReadLine();
+                            process.BeginOutputReadLine();
+                            process.WaitForExit();
+
+                            int returnCode = process.ExitCode;
+                            var stdOut = string.Join(Environment.NewLine, output);
+                            var stdError = string.Join(Environment.NewLine, error);
+
+                            DebugLogger.LogDebug($"StdOut: {stdOut}");
+                            DebugLogger.LogDebug($"StdErr: {stdError}");
+                            DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                            commandResult = new CommandResult()
+                            {
+                                ExitCode = process.ExitCode,
+                                StdErr = stdError,
+                                StdOut = stdOut,
+                                Arguments = arguments
+                            };
+
+                            if (commandResult.ExitCode == 0)
+                            {
+                                break;
+                            }
+                            continueToAttempt = IsRetriableGitError(commandResult);
+
+                            attempts++;
+                            if (continueToAttempt && attempts < RETRY_INTERMITTENT_FAILURE_COUNT)
+                            {
+                                Task.Delay(attempts * 2 * 1000).Wait();
+                            }
+                        }
+                    }
                 }
+                // exceptions caught here will be to do with inability to start the git process
+                // otherwise all "error" states should be handled by the output to stdErr and non-zero exitcode.
                 catch (Exception e)
                 {
                     DebugLogger.LogDebug(e.Message);
@@ -218,9 +374,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Verify that the version of git running on the machine is greater equal the git minimum version. 
+        /// Verify that the version of git running on the machine is greater equal the git minimum version.
         /// This is more for the people running the CLI/TestProxy locally than for lab machines which seem
-        /// to be running on the latest, released versions. The reason is that any git version less than 
+        /// to be running on the latest, released versions. The reason is that any git version less than
         /// 2.37.0 won't have the cone/no-cone options used by sparse-checkout.
         /// </summary>
         /// <exception cref="GitProcessException">Thrown by the internal call to Run.</exception>
@@ -273,7 +429,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 // In theory we shouldn't get here. If git isn't installed or on the path, the Run command should throw.
                 throw new GitVersionException($"Unable to determine the local git version from the returned version string '{localGitVersion}'. Please ensure that git is installed on the machine and has been added to the PATH.");
-            }    
+            }
         }
     }
 }

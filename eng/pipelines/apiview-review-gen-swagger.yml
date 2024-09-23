@@ -1,0 +1,42 @@
+pr: none
+
+trigger: none
+
+pool:
+  name: azsdk-pool-mms-win-2022-general
+  vmImage: windows-2022
+
+variables:
+  SwaggerParserInstallPath: $(Pipeline.Workspace)/SwaggerApiParser
+
+jobs:
+- job: CreateSwaggerReviewCodeFile
+  displayName: 'Create Swagger API review token file'
+
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+  steps:
+  - script: |
+      mkdir SwaggerApiParser
+    workingDirectory: $(Pipeline.Workspace)
+    displayName: Setup working directory for Swagger Parser.
+
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+  - script: >
+      dotnet tool install
+      Azure.Sdk.Tools.SwaggerApiParser
+      --version $(SWAGGER_API_PARSER_VERSION)
+      --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
+      --tool-path $(SwaggerParserInstallPath)
+    workingDirectory: $(SwaggerParserInstallPath)
+    displayName: 'Install Swagger APIView Parser'
+
+  - template: /eng/pipelines/templates/steps/apiview-review-gen.yml
+    parameters:
+      Reviews: $(Reviews)
+      APIViewURL: $(APIViewURL)
+      StorageContainerUrl: $(StorageContainerUrl)
+      ApiviewGenScript: './Create-Apiview-Token-Swagger.ps1'
+      ParserPath: $(SwaggerParserInstallPath)/SwaggerApiParser

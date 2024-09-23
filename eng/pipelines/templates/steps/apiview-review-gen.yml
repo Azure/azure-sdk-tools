@@ -1,7 +1,7 @@
 parameters:
   - name: Reviews
     type: string
-    default: ''  
+    default: ''
   - name: APIViewURL
     type: string
     default: ''
@@ -11,21 +11,28 @@ parameters:
   - name: ApiviewGenScript
     type: string
     default: ''
+  - name: ParserPath
+    type: string
+    default: ''
 
 steps:
-- task: Powershell@2
+- task: AzurePowerShell@5
   displayName: 'Generate APIView Token files'
-  condition: succeededOrFailed()
   inputs:
-    pwsh: true
-    filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-Files.ps1
-    arguments: >
+    azureSubscription: 'Azure SDK Engineering System'
+    ScriptType: 'FilePath'
+    ScriptPath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-Files.ps1
+    ScriptArguments: >
       -ReviewDetailsJson "${{ parameters.Reviews }}"
       -StagingPath "$(Build.ArtifactStagingDirectory)"
       -WorkingDir "$(Pipeline.Workspace)"
-      -StorageBaseUrl "${{parameters.StorageContainerUrl}}"
-      -ApiviewGenScript "${{parameters.ApiviewGenScript}}"
-      -ContainerSas "$(apiview-originals-sas)"
+      -StorageBaseUrl "${{ parameters.StorageContainerUrl }}"
+      -ApiviewGenScript "${{ parameters.ApiviewGenScript }}"
+      -ParserPath "${{ parameters.ParserPath }}"
+    azurePowerShellVersion: latestVersion
+    pwsh: true
+  env:
+    AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
 
 - task: PublishBuildArtifacts@1
   inputs:
@@ -34,9 +41,9 @@ steps:
 
 - task: Powershell@2
   displayName: 'Send Request to APIView to Update Token files'
-  condition: succeededOrFailed()
   inputs:
     pwsh: true
     filePath: $(Build.SourcesDirectory)/eng/scripts/Apiview-Update-Generated-Review.ps1
     arguments: >
       -BuildId $(Build.BuildId)
+      -ApiviewUpdateUrl "${{ parameters.APIViewURL}}/review/UpdateApiReview"

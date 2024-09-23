@@ -1,0 +1,13 @@
+{
+    "name": "@azure-samples/test",
+    "private": true,
+    "version": "1.0.0",
+    "engines": {
+        "node": ">=12.0.0"
+    },
+    "author": "Microsoft Corporation",
+    "license": "MIT",
+    "dependencies": {
+        "@azure/core-rest-pipeline": "latest"
+    }
+}

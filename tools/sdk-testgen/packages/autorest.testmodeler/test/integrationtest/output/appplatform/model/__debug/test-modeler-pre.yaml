@@ -3669,9 +3669,6 @@ schemas:
                         usage:
                           - output
                           - input
-                        extensions:
-                          x-internal-autorest-anonymous-schema:
-                            anonymous: true
                         language:
                           default:
                             name: NetworkProfileOutboundIPs

@@ -1,0 +1,123 @@
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - eng/packages/python-packages/doc-warden
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - eng/packages/python-packages/doc-warden
+
+variables:
+- template: /eng/pipelines/templates/variables/globals.yml
+
+jobs:
+- job: 'Build'
+
+  pool:
+    name: azsdk-pool-mms-ubuntu-2204-general
+    vmImage: ubuntu-22.04
+
+  steps:
+  - task: UsePythonVersion@0
+    displayName: 'Use Python 3.6'
+    inputs:
+      versionSpec: 3.6
+
+  - script: |
+     python -m pip install setuptools 
+     python -m pip install wheel twine readme-renderer[md]
+    displayName: 'Prep Environment'
+
+  - script: |
+      cd $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
+      python setup.py bdist_wheel -d $(Build.ArtifactStagingDirectory)/warden
+      python setup.py sdist -d $(Build.ArtifactStagingDirectory)/warden --format zip
+    displayName: 'Build Package'
+
+  - task: CopyFiles@2
+    displayName: 'Copy files for github release'
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)'
+      Contents: 'scripts/**/*.py'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/sdk-tools'
+  
+  - task: ArchiveFiles@2
+    displayName: 'Archive files for GitHub release'
+    inputs:
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/sdk-tools'
+      includeRootFolder: false
+      archiveFile: '$(Build.ArtifactStagingDirectory)/sdk-tools.zip'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifacts'
+    condition: succeededOrFailed()
+
+  - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+    # ComponentGovernance is currently unable to run on pull requests of public projects. Running on non-PR
+    # builds should be sufficient.
+    condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'PullRequest'))
+    displayName: 'Component Detection'
+
+- job: 'Test'
+  
+  dependsOn: 'Build'
+
+  pool:
+    name: azsdk-pool-mms-ubuntu-2204-general
+    vmImage: ubuntu-22.04
+
+  steps:
+
+  - task: UsePythonVersion@0
+    displayName: 'Use Python 3.6'
+    inputs:
+      versionSpec: 3.6
+
+  - script: |
+      python -m pip install setuptools 
+      python -m pip install wheel twine readme-renderer[md]
+
+      cd $(Build.SourcesDirectory)
+      mkdir sdk-for-js
+      mkdir sdk-for-python
+      mkdir sdk-for-java
+      mkdir sdk-for-net
+
+      git clone https://github.com/Azure/azure-sdk-for-java.git sdk-for-java
+      git clone https://github.com/Azure/azure-sdk-for-js.git sdk-for-js
+      git clone https://github.com/Azure/azure-sdk-for-python.git sdk-for-python
+      git clone https://github.com/Azure/azure-sdk-for-net.git sdk-for-net
+    displayName: 'Setup Environment'
+
+  - script: |
+      python -m pip install -e $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
+    displayName: 'Install doc-warden'
+
+  - script: |
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-net  -c $(Build.SourcesDirectory)/sdk-for-net/eng/.docsettings.yml
+    displayName: 'Ensure .NET Backwards Compat'
+
+  - script: |
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o
+    displayName: 'Ensure Java Backwards Compat'
+
+  - script: |
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o -c $(Build.SourcesDirectory)/sdk-for-python/eng/.docsettings.yml
+    displayName: 'Ensure Python Backwards Compat'
+
+  - script: |
+      ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o -c $(Build.SourcesDirectory)/sdk-for-js/eng/.docsettings.yml
+    displayName: 'Ensure JS Backwards Compat'

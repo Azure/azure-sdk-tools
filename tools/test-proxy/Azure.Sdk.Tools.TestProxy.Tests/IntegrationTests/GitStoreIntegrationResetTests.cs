@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 1 - Changes to existing files only are detected and overridden with Reset response Y
-        // 1. Restore from Tag language/tables_fc54d0
+        // 1. Restore from Tag python/tables_fc54d0
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update one or more files, incrementing their version
         // 4. Expect: files updated should be at version 2
@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""language/tables_fc54d0""
+              ""Tag"": ""python/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
@@ -92,6 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {
@@ -100,7 +101,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 2 - Changes to existing files only are detected and retained with Reset response N
-        // 1. Restore from Tag language/tables_fc54d0
+        // 1. Restore from Tag python/tables_fc54d0
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update one or more files, incrementing their version
         // 4. Expect: files updated should be at version 2
@@ -113,7 +114,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""language/tables_fc54d0""
+              ""Tag"": ""python/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario2(string inputJson)
@@ -135,7 +136,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
@@ -157,6 +158,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
 
             }
             finally
@@ -166,7 +168,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 3 - Restore from Tag, add and remove files, Reset response Y
-        // 1. Restore from Tag language/tables_9e81fb
+        // 1. Restore from Tag python/tables_9e81fb
         // 2. Expect: 4 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
@@ -179,7 +181,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""language/tables_9e81fb""
+              ""Tag"": ""python/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)
@@ -201,7 +203,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // Verify files from Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -232,6 +234,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
 
             }
             finally
@@ -241,7 +244,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 4 - Restore from Tag, add and remove files, Reset response N
-        // 1. Restore from Tag language/tables_9e81fb
+        // 1. Restore from Tag python/tables_9e81fb
         // 2. Expect: 4 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
@@ -254,7 +257,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""language/tables_9e81fb""
+              ""Tag"": ""python/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario4(string inputJson)
@@ -276,7 +279,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // Verify files from Tag
                 Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -306,6 +309,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
 
             }
             finally
@@ -315,7 +319,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         // Scenario 5 - Restore from Tag, add and remove files, Reset response N, then Reset response Y
-        // 1. Restore from Tag language/tables_9e81fb
+        // 1. Restore from Tag python/tables_9e81fb
         // 2. Expect: 3 files with versions they were checked in with
         // 3. Update add/remove files
         // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
@@ -352,7 +356,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // Verify files from Tag
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
@@ -394,6 +398,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally
             {

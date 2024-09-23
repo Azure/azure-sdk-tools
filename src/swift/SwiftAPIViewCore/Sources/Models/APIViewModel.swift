@@ -25,7 +25,8 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import AST
+import SwiftSyntax
+
 
 class APIViewModel: Tokenizable, Encodable {
 
@@ -60,7 +61,10 @@ class APIViewModel: Tokenizable, Encodable {
     let indentSpaces = 4
 
     /// Access modifier to expose via APIView
-    static let publicModifiers: [AccessLevelModifier] = [.public, .open]
+    static let publicModifiers: [AccessLevel] = [.public, .open]
+
+    /// sentinel value for unresolved type references
+    static let unresolved = "__UNRESOLVED__"
 
     /// Tracks assigned definition IDs so they can be linked
     private var definitionIds = Set<String>()
@@ -72,15 +76,15 @@ class APIViewModel: Tokenizable, Encodable {
     
     // MARK: Initializers
 
-    init(name: String, packageName: String, versionString: String, statements: [Statement]) {
+    init(name: String, packageName: String, versionString: String, statements: [CodeBlockItemSyntax.Item]) {
         self.name = name
         self.versionString = versionString
         self.packageName = packageName
         navigation = [NavigationToken]()
         tokens = [Token]()
         model = PackageModel(name: packageName, statements: statements)
-        self.tokenize(apiview: self)
-        model.navigationTokenize(apiview: self)
+        self.tokenize(apiview: self, parent: nil)
+        model.navigationTokenize(apiview: self, parent: nil)
     }
 
     // MARK: Codable
@@ -104,7 +108,7 @@ class APIViewModel: Tokenizable, Encodable {
         try container.encode(versionString, forKey: .versionString)
     }
 
-    func tokenize(apiview a: APIViewModel) {
+    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
         // Renders the APIView "preamble"
         let bundle = Bundle(for: Swift.type(of: self))
         let versionKey = "CFBundleShortVersionString"
@@ -112,7 +116,7 @@ class APIViewModel: Tokenizable, Encodable {
         a.text("Package parsed using Swift APIView (version \(apiViewVersion))")
         a.newline()
         a.blankLines(set: 2)
-        model.tokenize(apiview: a)
+        model.tokenize(apiview: a, parent: parent)
     }
 
     // MARK: Token Emitters
@@ -182,32 +186,38 @@ class APIViewModel: Tokenizable, Encodable {
 
     func whitespace(count: Int = 1) {
         // don't double up on whitespace
-        guard tokens.last?.kind != .whitespace else { return }
+        guard tokens.lastVisible != .whitespace else { return }
         let value = String(repeating: " ", count: count)
         let item = Token(definitionId: nil, navigateToId: nil, value: value, kind: .whitespace)
         add(token: item)
     }
 
-    func punctuation(_ value: String, prefixSpace: Bool = false, postfixSpace: Bool=false) {
+    func punctuation(_ value: String, spacing: SpacingKind) {
         checkIndent()
-        if prefixSpace {
+        if spacing  == .TrimLeft {
+            self.trim()
+        }
+        if [SpacingKind.Leading, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
         let item = Token(definitionId: nil, navigateToId: nil, value: value, kind: .punctuation)
         add(token: item)
-        if postfixSpace {
+        if [SpacingKind.Trailing, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
     }
 
-    func keyword(_ keyword: String, prefixSpace: Bool = false, postfixSpace: Bool = false) {
+    func keyword(_ keyword: String, spacing: SpacingKind) {
         checkIndent()
-        if prefixSpace {
+        if spacing  == .TrimLeft {
+            self.trim()
+        }
+        if [SpacingKind.Leading, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
         let item = Token(definitionId: nil, navigateToId: nil, value: keyword, kind: .keyword)
         add(token: item)
-        if postfixSpace {
+        if [SpacingKind.Trailing, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
     }
@@ -222,7 +232,8 @@ class APIViewModel: Tokenizable, Encodable {
     /// Register the declaration of a new type
     func typeDeclaration(name: String, definitionId: String?) {
         guard let definitionId = definitionId else {
-            SharedLogger.fail("Type declaration '\(name)' does not have a definition ID.")
+            SharedLogger.warn("Type declaration '\(name)' does not have a definition ID. APIView linking and commenting will not work correclty.")
+            return
         }
         checkIndent()
         let item = Token(definitionId: definitionId, navigateToId: definitionId, value: name, kind: .typeName)
@@ -230,27 +241,50 @@ class APIViewModel: Tokenizable, Encodable {
         add(token: item)
     }
 
+    func findNonFunctionParent(from item: DeclarationModel?) -> DeclarationModel? {
+        guard let item = item else { return nil }
+        switch item.kind {
+        case .method:
+            // look to the parent of the function
+            return findNonFunctionParent(from: (item.parent as? DeclarationModel))
+        default:
+            return item
+        }
+    }
+
     /// Link to a registered type
-    func typeReference(name: String) {
+    func typeReference(name: String, parent: DeclarationModel?) {
         checkIndent()
-        // TODO: Ensure this works for dotted names
-        let matches: [String]
-        if name.contains(".") {
-            matches = definitionIds.filter { $0.hasSuffix(name) }
-        } else {
-            // if type does not contain a dot, then suffix is insufficient
-            // we must completely match the final segment of the type name
-            matches = definitionIds.filter { $0.split(separator: ".").last! == name }
+        if name == "IncomingAudioStream" {
+            let test = "best"
         }
-        guard matches.count < 2 else {
-            SharedLogger.fail("Found \(matches.count) matches for \(name).")
-        }
-        let linkId = matches.first
+        let linkId = definitionId(for: name, withParent: parent) ?? APIViewModel.unresolved
         let item = Token(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)
         add(token: item)
     }
 
+    func definitionId(for val: String, withParent parent: DeclarationModel?) -> String? {
+        var matchVal = val
+        if !matchVal.contains("."), let parentObject = findNonFunctionParent(from: parent), let parentDefId = parentObject.definitionId {
+            // if a plain, undotted name is provided, try to append the parent prefix
+            matchVal = "\(parentDefId).\(matchVal)"
+        }
+        let matches: [String]
+        if matchVal.contains(".") {
+            matches = definitionIds.filter { $0.hasSuffix(matchVal) }
+        } else {
+            // if type does not contain a dot, then suffix is insufficient
+            // we must completely match the final segment of the type name
+            matches = definitionIds.filter { $0.split(separator: ".").last! == matchVal }
+        }
+        if matches.count > 1 {
+            SharedLogger.warn("Found \(matches.count) matches for \(matchVal). Using \(matches.first!). Swift APIView may not link correctly.")
+        }
+        return matches.first
+    }
+
     func member(name: String, definitionId: String? = nil) {
+        checkIndent()
         let item = Token(definitionId: definitionId, navigateToId: nil, value: name, kind: .memberName)
         add(token: item)
     }
@@ -299,15 +333,47 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Constructs a definition ID and ensures it is unique.
     func defId(forName name: String, withPrefix prefix: String?) -> String {
-        let defId = prefix != nil ? "\(prefix!).\(name)" : name
-        if defId.contains(" ") {
-            SharedLogger.fail("Definition ID should not contain whitespace: \(defId)")
-        }
+        var defId = prefix != nil ? "\(prefix!).\(name)" : name
+        defId = defId.filter { !$0.isWhitespace }
         if self.definitionIds.contains(defId) {
-            // FIXME: Change back to fail
-            SharedLogger.warn("Duplicate definition ID: \(defId). Will result in duplicate comments.")
+            SharedLogger.warn("Duplicate definition ID: \(defId). APIView will display duplicate comments.")
         }
         definitionIds.insert(defId)
         return defId
+    }
+
+    /// Trims whitespace tokens
+    func trim(removeNewlines: Bool = false) {
+        var lineIds = [Token]()
+        while (!tokens.isEmpty) {
+            var continueTrim = true
+            if let kind = tokens.last?.kind {
+                switch kind {
+                case .whitespace:
+                    _ = tokens.popLast()
+                case .newline:
+                    if removeNewlines {
+                        _ = tokens.popLast()
+                    } else {
+                        continueTrim = false
+                    }
+                case .lineIdMarker:
+                    if let popped = tokens.popLast() {
+                        lineIds.append(popped)
+                    }
+                default:
+                    continueTrim = false
+                }
+            }
+            if !continueTrim {
+                break
+            }
+        }
+        // reappend the line id tokens
+        while (!lineIds.isEmpty) {
+            if let popped = lineIds.popLast() {
+                tokens.append(popped)
+            }
+        }
     }
 }

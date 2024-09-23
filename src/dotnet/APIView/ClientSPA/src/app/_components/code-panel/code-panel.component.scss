@@ -1,0 +1,259 @@
+
+@import "../../../../../APIViewWeb/Client/css/shared/mixins.scss";
+
+:host ::ng-deep {
+    @include glow;
+
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    display: block;
+
+    .viewport {
+        overflow: auto;
+        height: calc(100vh - 132px);
+        will-change: scroll-position, contents;
+    }
+
+    .code-line {
+        display: grid;
+        --max-cell-width: 0px;
+        grid-template-columns: minmax(auto, max-content) 1fr;
+        width: 500% !important;
+
+        &.diagnostics {
+            padding-left: calc(var(--max-line-number-width) + 50px);
+
+            &.error {
+                background-color: var(--alert-error-bg);
+                color: var(--alert-error-color);
+                border-top: 1px solid var(--alert-error-border-color);
+                border-bottom: 1px solid var(--alert-error-border-color);
+                a {
+                    font-weight: bold;
+                    text-decoration: underline;
+                    color: var(--alert-error-link-color);
+                }
+            }
+            &.warning {
+                background-color: var(--alert-warn-bg);
+                color: var(--alert-warn-color);
+                border-top: 1px solid var(--alert-warn-border-color);
+                border-bottom: 1px solid var(--alert-warn-border-color);
+                a {
+                    font-weight: bold;
+                    text-decoration: underline;
+                    color: var(--alert-warn-link-color);
+                }
+            }
+            &.info {
+                background-color: var(--alert-info-bg);
+                color: var(--alert-info-color);
+                border-top: 1px solid var(--alert-info-border-color);
+                border-bottom: 1px solid var(--alert-info-border-color);
+                a {
+                    font-weight: bold;
+                    text-decoration: underline;
+                    color: var(--alert-info-link-color);
+                }
+            }
+        }
+        
+        &.user-comment-thread {
+            padding-left: calc(var(--max-line-number-width) + 20px);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+
+            .user-comment-content {
+                width: 1000px;
+                position: sticky;
+                left: calc(var(--max-line-number-width) + 50px)
+            }
+        }
+
+        &.user-comment-thread:hover .comment-thread-navigation {
+            display: block;
+        }
+
+        &.added {
+            background-color: rgba(0, 255, 0, 0.25);
+            .code-line-content::before {
+                content: '+';
+                left: 0;
+                position: absolute;
+                color: var(--text-muted-color);
+                margin-left: 2px;
+            }
+
+            .line-number.first {
+                visibility: hidden;
+            }
+        }
+    
+        &.removed {
+            background-color: rgba(255, 0, 0, 0.25);
+            .code-line-content::before {
+                content: '-';
+                left: 0;
+                position: absolute;
+                color: var(--text-muted-color);
+                margin-left: 2px;
+            }
+
+            .line-number.second {
+                visibility: hidden;
+            }
+        }
+
+        &.added .line-actions, &.removed .line-actions {
+            background-color: var(--dark-overlay) 
+        }
+
+        &.active, &.active .line-actions {
+            animation: glow normal 1.5s ease-in-out;
+        }
+
+        &.hidden-api .code-line-content {
+            filter: var(--hidden-api-filter);
+        }
+
+        .diff-change {
+            background-color: var(--dark-overlay);
+            border-radius: 2px;
+            padding-left: 2px;
+            padding-right: 2px;
+        }
+    }
+
+    .code-line:hover {
+        .toggle-documentation-btn.can-show {
+            color: inherit;
+        }
+
+        .toggle-user-comments-btn.can-show {
+            color: inherit;
+        } 
+    }
+    
+    .code-line-content {
+        grid-column: 2;
+        position: relative; 
+        white-space: pre;
+    }
+
+    .line-number {
+        display: inline-block;
+        min-width: var(--max-line-number-width);
+    }
+
+    .line-actions {
+        grid-column: 1;
+        text-align: right;
+        white-space: nowrap;
+        padding-left: 5px;
+        padding-right: 5px;
+        border-right: 1px solid var(--border-color);
+        cursor: pointer;
+        position: sticky;
+        left: 0;
+        background-color: var(--base-fg-color);
+        z-index: 1000;
+
+        span:not(:last-child) {
+            margin-right: 5px;
+        }
+    }
+
+    .toggle-documentation-btn {
+        color: transparent;
+        &.hide {
+            visibility: invisible;
+        }
+    }
+
+    .toggle-user-comments-btn {
+        color: transparent;
+        &.hide {
+            visibility: invisible;
+        }
+
+        &.show {
+            color: inherit;
+        }
+    }
+
+    .comment {
+        color: var(--code-comment);
+    }
+
+    .keyword {
+        color: var(--keyword-color);
+    }
+
+    .tname {
+        color: var(--class-color);
+    }
+
+    .mname {
+        color: var(--name-color);
+    }
+
+    .enum {
+        color: var(--enum-color);
+    }
+
+    .literal .sliteral {
+        color: var(--literal-color);
+    }
+
+    .url-token {
+        color: var(--link-color);
+    }
+
+    .nav-token:hover , .url-token:hover {
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .deprecated-token {
+        text-decoration: line-through;
+    }
+
+
+    .java {
+        .javadoc {
+            color: var(--java-doc-color);
+            font-style: italic !important;
+        }
+        
+        .comment {
+            color: var(--java-comment-color);
+            font-style: italic !important;
+        }
+
+        .fieldName, .enumConstant {
+            color: var(--java-field-name-color);
+        }
+        
+        .methodName {
+            color: var(--java-method-name-color);
+        }
+
+        .keyword {
+            color: var(--java-keyword-color);
+        }
+
+        .annotationName {
+            color: var(--java-anotation-name-color);
+        }
+
+        .stringLiteral {
+            color: var(--java-string-literal-color);
+        }
+
+        .number {
+            color: var(--java-number-color);
+        }
+    }
+
+}

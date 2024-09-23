@@ -1,0 +1,15 @@
+.create-merge table PackageReleaseData (
+    Date: datetime,
+    Package: string,
+    Version: string,
+    Language: string,
+    Properties: string
+) with (folder='Dashboards', docstring='')
+
+.create-or-alter table PackageReleaseData ingestion json mapping 'PackageReleaseData_mapping' ```[
+    { "column": "Date", "path": "$['date']" },
+    { "column": "Package", "path": "$['package']" },
+    { "column": "Version", "path": "$['version']" },
+    { "column": "Language", "path": "$['language']" },
+    { "column": "Properties", "path": "$['properties']" }
+]```

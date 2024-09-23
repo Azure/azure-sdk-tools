@@ -1,0 +1,39 @@
+parameters:
+  - name: Publish
+    type: boolean
+    default: false
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '$(NodeVersion)'
+    displayName: 'Install Node.js'
+
+  - bash: |
+      npm ci
+    displayName: 'npm ci'
+    workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+
+  - bash: |
+      npm pack
+    displayName: 'npm pack'
+    workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+    condition: ${{ parameters.Publish }}
+
+  - bash: 'cp azure-tools-typespec-client-generator-cli-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+    displayName: 'copy to staging dir'
+    workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+    condition: ${{ parameters.Publish }}
+
+  - pwsh: |
+      Get-ChildItem -Path $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY) `
+        | ForEach-Object { Write-Host "npm install $($_.FullName)"; npm install $_.FullName }
+    displayName: Smoke test a package installation
+    condition: ${{ parameters.Publish }}
+
+  - task: 1ES.PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+      artifactName: '$(VAR_ARTIFACT_NAME)'
+    condition: ${{ parameters.Publish }}
+

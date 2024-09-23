@@ -18,23 +18,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestFuncDecl(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_funcDecl"), "output")
+	p, err := createReview(filepath.Clean("testdata/test_func_decl"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := os.ReadFile("./output/testfuncdecl.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(p.Tokens) != 41 {
+	if len(p.Tokens) != 42 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
-	if p.Name != "testfuncdecl" {
+	if p.Name != "test_func_decl" {
 		t.Fatal("unexpected package name")
 	}
 	if len(p.Navigation) != 1 {
@@ -46,23 +37,14 @@ func TestFuncDecl(t *testing.T) {
 }
 
 func TestInterface(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_interface"), "output")
+	p, err := createReview(filepath.Clean("testdata/test_interface"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := os.ReadFile("./output/testinterface.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(p.Tokens) != 55 {
+	if len(p.Tokens) != 46 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
-	if p.Name != "testinterface" {
+	if p.Name != "test_interface" {
 		t.Fatal("unexpected package name")
 	}
 	if len(p.Navigation) != 1 {
@@ -73,58 +55,55 @@ func TestInterface(t *testing.T) {
 	}
 }
 
+func TestMultiModule(t *testing.T) {
+	for _, path := range []string{
+		"testdata/test_multi_module",
+		"testdata/test_multi_module/A",
+		"testdata/test_multi_module/A/B",
+	} {
+		t.Run(path, func(t *testing.T) {
+			p, err := createReview(filepath.Clean(path))
+			require.NoError(t, err)
+			require.Equal(t, 1, len(p.Navigation), "review should include only one package")
+			require.Equal(t, filepath.Base(path), p.Navigation[0].Text, "review includes the wrong module")
+		})
+	}
+}
+
 func TestStruct(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_struct"), "output")
+	p, err := createReview(filepath.Clean("testdata/test_struct"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := os.ReadFile("./output/teststruct.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(p.Tokens) != 69 {
+	if len(p.Tokens) != 68 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
-	if p.Name != "teststruct" {
+	if p.Name != "test_struct" {
 		t.Fatal("unexpected package name")
 	}
 	if len(p.Navigation) != 1 {
 		t.Fatal("nagivation slice length should only be one for one package")
 	}
-	if len(p.Navigation[0].ChildItems) != 2 {
+	if len(p.Navigation[0].ChildItems) != 1 {
 		t.Fatal("nagivation slice length should include link for ctor and struct")
 	}
 }
 
 func TestConst(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_const"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/testconst.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_const"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(p.Tokens) != 76 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
-	if p.Name != "testconst" {
+	if p.Name != "test_const" {
 		t.Fatal("unexpected package name")
 	}
 	if len(p.Navigation) != 1 {
 		t.Fatal("nagivation slice length should only be one for one package")
 	}
-	if len(p.Navigation[0].ChildItems) != 3 {
+	if len(p.Navigation[0].ChildItems) != 4 {
 		t.Fatal("unexpected child navigation items length")
 	}
 }
@@ -183,11 +162,28 @@ func TestDiagnostics(t *testing.T) {
 	}
 }
 
-func TestAliasDefinitions(t *testing.T) {
-	priorValue := sdkDirName
-	sdkDirName = "testdata"
-	defer func() { sdkDirName = priorValue }()
+func TestExternalModule(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_external_module"))
+	require.NoError(t, err)
+	require.Equal(t, 1, len(review.Diagnostics))
+	require.Equal(t, aliasFor+"github.com/Azure/azure-sdk-for-go/sdk/azcore.Policy", review.Diagnostics[0].Text)
+	require.Equal(t, 1, len(review.Navigation))
+	require.Equal(t, 1, len(review.Navigation[0].ChildItems))
+	foundDo, foundPolicy := false, false
+	for _, token := range review.Tokens {
+		if token.DefinitionID != nil && *token.DefinitionID == "test_external_module.MyPolicy" {
+			require.Equal(t, "MyPolicy", token.Value)
+			foundPolicy = true
+		} else if token.Value == "Do" {
+			foundDo = true
+			require.Contains(t, *token.DefinitionID, "MyPolicy")
+		}
+	}
+	require.True(t, foundDo, "missing MyPolicy.Do()")
+	require.True(t, foundPolicy, "missing MyPolicy type")
+}
 
+func TestAliasDefinitions(t *testing.T) {
 	for _, test := range []struct {
 		name, path, sourceName string
 		diagLevel              DiagnosticLevel
@@ -196,7 +192,7 @@ func TestAliasDefinitions(t *testing.T) {
 			diagLevel:  DiagnosticLevelWarning,
 			name:       "service_group",
 			path:       "testdata/test_service_group/group/test_alias_export",
-			sourceName: "github.com/Azure/azure-sdk-for-go/sdk/test_service_group/group/internal.Foo",
+			sourceName: "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_service_group/group/internal.Foo",
 		},
 		{
 			diagLevel:  DiagnosticLevelInfo,
@@ -208,11 +204,13 @@ func TestAliasDefinitions(t *testing.T) {
 			diagLevel:  DiagnosticLevelWarning,
 			name:       "external_package",
 			path:       "testdata/test_external_alias_exporter",
-			sourceName: "github.com/Azure/azure-sdk-for-go/sdk/test_external_alias_source.Foo",
+			sourceName: "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_external_alias_source.Foo",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			review, err := createReview(filepath.Clean(test.path))
+			p, err := filepath.Abs(test.path)
+			require.NoError(t, err)
+			review, err := createReview(p)
 			require.NoError(t, err)
 			require.Equal(t, "Go", review.Language)
 			require.Equal(t, 1, len(review.Diagnostics))
@@ -231,10 +229,6 @@ func TestAliasDefinitions(t *testing.T) {
 }
 
 func TestRecursiveAliasDefinitions(t *testing.T) {
-	priorValue := sdkDirName
-	sdkDirName = "testdata"
-	defer func() { sdkDirName = priorValue }()
-
 	for _, test := range []struct {
 		name, path, sourceName string
 		diagLevel              DiagnosticLevel
@@ -293,5 +287,55 @@ func TestAliasDiagnostics(t *testing.T) {
 				t.Fatalf("unexpected diagnostic level %d", diagnostic.Level)
 			}
 		}
+	}
+}
+
+func TestMajorVersion(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_major_version"))
+	require.NoError(t, err)
+	require.Equal(t, "Go", review.Language)
+	require.Equal(t, "test_major_version", review.Name)
+	require.Equal(t, 1, len(review.Navigation))
+	require.Equal(t, "test_major_version/subpackage", review.Navigation[0].Text)
+}
+
+func TestVars(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_vars"))
+	require.NoError(t, err)
+	require.NotZero(t, review)
+	countSomeChoice := 0
+	hasHTTPClient := false
+	for i := range review.Tokens {
+		if review.Tokens[i].Value == "SomeChoice" && review.Tokens[i-1].Value == "*" {
+			countSomeChoice++
+		} else if review.Tokens[i].Value == "http.Client" && review.Tokens[i-1].Value == "*" {
+			hasHTTPClient = true
+		}
+	}
+	require.EqualValues(t, 2, countSomeChoice)
+	require.True(t, hasHTTPClient)
+}
+
+func Test_getPackageNameFromModPath(t *testing.T) {
+	require.EqualValues(t, "foo", getPackageNameFromModPath("foo"))
+	require.EqualValues(t, "foo", getPackageNameFromModPath("foo/v2"))
+	require.EqualValues(t, "sdk/foo", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo"))
+	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar"))
+	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar/v5"))
+}
+
+func TestDeterministicOutput(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		review1, err := createReview(filepath.Clean("testdata/test_multi_recursive_alias"))
+		require.NoError(t, err)
+		review2, err := createReview(filepath.Clean("testdata/test_multi_recursive_alias"))
+		require.NoError(t, err)
+
+		output1, err := json.MarshalIndent(review1, "", " ")
+		require.NoError(t, err)
+		output2, err := json.MarshalIndent(review2, "", " ")
+		require.NoError(t, err)
+
+		require.EqualValues(t, string(output1), string(output2))
 	}
 }

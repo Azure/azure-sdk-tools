@@ -1,0 +1,42 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/pylint-extensions/azure-pylint-guidelines-checker
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/pylint-extensions/azure-pylint-guidelines-checker
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
+  parameters:
+    PythonVersion: '3.10.9'
+    PackagePath: 'tools/pylint-extensions/azure-pylint-guidelines-checker'
+    FeedName: 'public/azure-sdk-for-python'
+    ArtifactName: 'azsdkpylintplugin'
+    PackageName: 'Azure SDK Pylint Plugin'
+    TestSteps:
+    - script: |
+        python -m pip install -r dev_requirements.txt
+        python -m pip install -e .
+      displayName: 'Install Test Requirements'
+      workingDirectory: $(Build.SourcesDirectory)/tools/pylint-extensions/azure-pylint-guidelines-checker
+
+    - script: |
+        pytest .
+      displayName: 'Test Python Linter'
+      workingDirectory: $(Build.SourcesDirectory)/tools/pylint-extensions/azure-pylint-guidelines-checker

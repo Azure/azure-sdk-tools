@@ -1,0 +1,31 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/secret-management
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/secret-management
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/secret-management
+    # Sodium.Core dependency is not strong name signed. Skip validation in order to sign secret cli.
+    RequireStrongNames: false
+    # This tool contains native binaries that cause sybmol publishing to fail so disable the symbols for this tool package
+    ShouldPublishSymbols: false

@@ -1,0 +1,67 @@
+# Release History
+
+## 1.3.0 (12-12-2023)
++ Support local schema reference in another referred swagger file
+
+## 1.2.0 (11-29-2023)
++ Added API version as PackageVersion in code file.
+
+## 1.1.0 (6-26-2023)
++ Disabled flatteneing of nested model.
++ Updated definitions to include models all referenced models
++ Included definations referenced in external files
++ Ensure enum values are parsed
++ Ensure all inline schema is parsed
++ Handle allOf an additional Properties
++ Ensure definiton Properties are sorted
+
+## 1.0.9 (5-22-2023)
++ Support schema for parameters referenced in relative files
+
+## 1.0.8 (3-1-2023)
+
++ Skip any invalid swagger file path when generating API review
+
+## 1.0.7 (2-9-2023)
+
++ Support header parameter in operation parameters
++ Support header response in operation responses
++ For schemaCache, use absolute path as key
+
+## 1.0.6 (2-2-2023)
+
++ Remove APIView and APIViewWeb dependency 
++ Fix don't resolve response issue
++ Add null check for array item
+
+## 1.0.5 (1-18-2023)
+
++ Fix root schema circular reference issue by adding root schema ref in refChain.
+
+## 1.0.4 (11-28-2022)
+
++ Fix expand array reference issues in definition section. Do not expand array reference in definitions.
++ To keep APIView revision consistent. Json serialization use alwaysMultiline option.
++ Remove unused code and comments.
+
+
+## 1.0.3 (11-17-2022)
+
++ Remove trailing colon from API path
++ Support operation level parameters
++ Fix circular reference issue for cross file reference schema
+
+
+## Version 1.0.2 (11-8-2022)
++ Add null check when cannot resolve reference from schema cache.
++ Change enum type to JsonElement to support different enum type like, string, boolean, int
+
+## Version 1.0.1 (10-31-2022)
+
++ Fix missing first property for definition
++ Fix wrong "required" property in xMsParameterizedHost parameters by resolving parameter reference
++ Show enum type for definition
++ Support resolve definition files from common types file.
+
+## Version 1.0.0 (10-5-2022)
+Initial release.

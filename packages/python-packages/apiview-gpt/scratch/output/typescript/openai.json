@@ -1,0 +1,23 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-model-types-use-good-name"
+            ],
+            "line_no": 151,
+            "bad_code": "export interface ImageLocation {\n    url: string;\n}",
+            "suggestion": "The interface should represent a complete entity that can be round-tripped to the service. If 'ImageLocation' is not a complete entity, consider renaming it or adding more properties to make it complete.",
+            "comment": "The interface 'ImageLocation' does not seem to represent a complete entity that can be round-tripped to the service."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-use-overloads-over-unions"
+            ],
+            "line_no": 159,
+            "bad_code": "constructor(endpoint: string, credential: KeyCredential, options?: OpenAIClientOptions);\nconstructor(endpoint: string, credential: TokenCredential, options?: OpenAIClientOptions);\nconstructor(openAiApiKey: KeyCredential, options?: OpenAIClientOptions);",
+            "suggestion": "constructor(endpoint: string, credential: KeyCredential | TokenCredential, options?: OpenAIClientOptions);\nstatic fromApiKey(openAiApiKey: KeyCredential, options?: OpenAIClientOptions);",
+            "comment": "The constructors are overloaded with different types of parameters which can lead to confusion and potential misuse. It's better to use union types for the `credential` parameter and provide a static method for the API key constructor."
+        }
+    ]
+}

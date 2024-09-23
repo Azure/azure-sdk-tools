@@ -109,5 +109,17 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the directory where profiles should be written to during performance testing.
+        /// 
+        /// The directory is based on the repository root folder.
+        /// </summary>
+        /// <param name="repoRoot">The repository root folder path.</param>
+        /// <returns>The directory where profiles should be written.</returns>
+        public static string GetProfileDirectory(string repoRoot)
+        {
+            return Path.Combine(repoRoot, "profile");
+        }
     }
 }

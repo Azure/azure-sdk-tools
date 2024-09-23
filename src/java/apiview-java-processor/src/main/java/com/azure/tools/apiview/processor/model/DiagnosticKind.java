@@ -1,6 +1,5 @@
-package com.azure.tools.apiview.processor.model;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+package com.azure.tools.apiview.processor.model;
 
 public enum DiagnosticKind {
     ERROR(3),       // red
@@ -13,7 +12,19 @@ public enum DiagnosticKind {
         this.level = level;
     }
 
-    @JsonValue
+    public static DiagnosticKind fromInt(int level) {
+        switch (level) {
+            case 3:
+                return ERROR;
+            case 2:
+                return WARNING;
+            case 1:
+                return INFO;
+            default:
+                return null;
+        }
+    }
+
     public int getLevel() {
         return level;
     }

@@ -3,8 +3,8 @@ pr: none
 trigger: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2004-general
-  vmImage: MMSUbuntu20.04
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
 
 parameters:
   - name: Reviews
@@ -19,8 +19,8 @@ parameters:
 
 variables:
   PythonIndexUrl: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
-  PythonVersion: '3.10.2'
-  ApiStubVersion: '0.3.1'
+  PythonVersion: '3.10'
+  ApiStubVersion: '0.3.12'
 
 jobs:
 - job: CreatePythonReviewCodeFile
@@ -35,13 +35,13 @@ jobs:
       versionSpec: '$(PythonVersion)'
 
   - script: |
-      pip install virtualenv aiohttp chardet trio
-      pip install api-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
-    displayName: 'Install api-stub-generator'
+      python -m pip install virtualenv aiohttp chardet trio
+      python -m pip install apiview-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
+    displayName: 'Install apiview-stub-generator'
 
   - template: /eng/pipelines/templates/steps/apiview-review-gen.yml
     parameters:
-      Reviews: ${{ parameters.Reviews }}
-      APIViewURL: ${{ parameters.APIViewURL }}
-      StorageContainerUrl: ${{ parameters.StorageContainerUrl }}
+      Reviews: $(Reviews)
+      APIViewURL: $(APIViewURL)
+      StorageContainerUrl: $(StorageContainerUrl)
       ApiviewGenScript: './Create-Apiview-Token-Python.ps1'

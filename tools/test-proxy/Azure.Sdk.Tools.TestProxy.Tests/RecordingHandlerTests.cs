@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -22,11 +23,14 @@ using Azure.Core;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
+        private int DefaultExtensionCount { get { return new RecordingHandler(null).SanitizerRegistry.DefaultSanitizerList.Count; } }
+
         #region helpers and private test fields
         private HttpContext GenerateHttpRequestContext(string[] headerValueStrings)
         {
@@ -60,7 +64,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
-        public JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
+        public static JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
         {
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
@@ -77,7 +81,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Default = IncludeTransforms | IncludeSanitizers | IncludeMatcher
         }
 
-        private void _checkDefaultExtensions(RecordingHandler handlerForTest, CheckSkips skipsToCheck = CheckSkips.Default)
+        private async Task _checkDefaultExtensions(RecordingHandler handlerForTest, CheckSkips skipsToCheck = CheckSkips.Default)
         {
             if (skipsToCheck.HasFlag(CheckSkips.IncludeTransforms))
             {
@@ -95,10 +99,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (skipsToCheck.HasFlag(CheckSkips.IncludeSanitizers))
             {
-                Assert.Equal(3, handlerForTest.Sanitizers.Count);
-                Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
-                Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[1]);
-                Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[2]);
+                
+                var sanitizers = await handlerForTest.SanitizerRegistry.GetSanitizers();
+
+                Assert.Equal(DefaultExtensionCount, sanitizers.Count);
+                Assert.IsType<RecordedTestSanitizer>(sanitizers[0]);
+                Assert.IsType<GeneralRegexSanitizer>(sanitizers[1]);
+                Assert.IsType<GeneralRegexSanitizer>(sanitizers[2]);
+                Assert.IsType<BodyKeySanitizer>(sanitizers[108]);
             }
         }
         #endregion
@@ -159,35 +167,35 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestResetAfterAddition()
+        public async Task TestResetAfterAddition()
         {
             // arrange
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
             // act
-            testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
+            await testRecordingHandler.SanitizerRegistry.Register(new BodyRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.Matcher = new BodilessMatcher();
             testRecordingHandler.Transforms.Add(new ApiVersionTransform());
-            testRecordingHandler.SetDefaultExtensions();
+            await testRecordingHandler.SetDefaultExtensions();
 
             //assert
-            _checkDefaultExtensions(testRecordingHandler);
+            await _checkDefaultExtensions(testRecordingHandler);
         }
 
         [Fact]
-        public void TestResetAfterRemoval()
+        public async Task TestResetAfterRemoval()
         {
             // arrange
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
             // act
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             testRecordingHandler.Matcher = null;
             testRecordingHandler.Transforms.Clear();
-            testRecordingHandler.SetDefaultExtensions();
+            await testRecordingHandler.SetDefaultExtensions();
 
             //assert
-            _checkDefaultExtensions(testRecordingHandler);
+            await _checkDefaultExtensions(testRecordingHandler);
         }
 
         [Fact]
@@ -198,18 +206,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-
-            testRecordingHandler.Sanitizers.Clear();
-            testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
-            testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
-            testRecordingHandler.SetDefaultExtensions(recordingId);
+            await testRecordingHandler.SanitizerRegistry.Clear();
+            await testRecordingHandler.SanitizerRegistry.Register(new BodyRegexSanitizer("sanitized", ".*"));
+            await testRecordingHandler.RegisterSanitizer(new GeneralRegexSanitizer("sanitized", ".*"), recordingId);
+            await testRecordingHandler.SetDefaultExtensions(recordingId);
             var session = testRecordingHandler.RecordingSessions.First().Value;
+            var recordingSanitizers = testRecordingHandler.SanitizerRegistry.GetSanitizers(session);
+            var sessionSanitizers = await testRecordingHandler.SanitizerRegistry.GetSanitizers();
 
             // session sanitizer is still set to a single one
-            Assert.Single(testRecordingHandler.Sanitizers);
-            Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers[0]);
-            _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
-            Assert.Empty(session.AdditionalSanitizers);
+            Assert.Single(sessionSanitizers);
+            Assert.IsType<BodyRegexSanitizer>(sessionSanitizers[0]);
+            await _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
+            Assert.Equal(session.AppliedSanitizers, testRecordingHandler.SanitizerRegistry.SessionSanitizers);
             Assert.Empty(session.AdditionalTransforms);
             Assert.Null(session.CustomMatcher);
         }
@@ -222,22 +231,22 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            testRecordingHandler.Sanitizers.Clear();
-            testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
+            await testRecordingHandler.SanitizerRegistry.Clear();
+            await testRecordingHandler.SanitizerRegistry.Register(new BodyRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.Transforms.Clear();
-            testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
-            testRecordingHandler.SetDefaultExtensions(recordingId);
+            await testRecordingHandler.RegisterSanitizer(new GeneralRegexSanitizer("sanitized", ".*"), recordingId);
+            await testRecordingHandler.SetDefaultExtensions(recordingId);
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
             // check that the individual session had reset sanitizers
-            Assert.Empty(session.AdditionalSanitizers);
+            Assert.Equal(await testRecordingHandler.SanitizerRegistry.GetSanitizers(), await testRecordingHandler.SanitizerRegistry.GetSanitizers(session));
 
             // stop the recording to clear out the session cache
-            testRecordingHandler.StopRecording(recordingId);
+            await testRecordingHandler.StopRecording(recordingId);
 
             // then verify that the session level is NOT reset.
-            Assert.Single(testRecordingHandler.Sanitizers);
-            Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers.First());
+            Assert.Single(await testRecordingHandler.SanitizerRegistry.GetSanitizers());
+            Assert.IsType<BodyRegexSanitizer>((await testRecordingHandler.SanitizerRegistry.GetSanitizers()).First());
         }
 
         [Fact]
@@ -248,8 +257,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            var assertion = Assert.Throws<HttpException>(
-                () => testRecordingHandler.SetDefaultExtensions()
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await testRecordingHandler.SetDefaultExtensions()
             );
 
             Assert.StartsWith("There are a total of 1 active sessions. Remove these sessions before hitting Admin/Reset.", assertion.Message);
@@ -264,7 +273,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await recordingHandler.StartPlaybackAsync(key, httpContext.Response, Common.RecordingType.InMemory);
             var playbackSession = httpContext.Response.Headers["x-recording-id"];
-            recordingHandler.StopPlayback(playbackSession, true);
+            await recordingHandler.StopPlayback(playbackSession, true);
 
             Assert.True(0 == recordingHandler.InMemorySessions.Count);
         }
@@ -278,7 +287,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await recordingHandler.StartPlaybackAsync(key, httpContext.Response, Common.RecordingType.InMemory);
             var playbackSession = httpContext.Response.Headers["x-recording-id"];
-            recordingHandler.StopPlayback(playbackSession, false);
+            await recordingHandler.StopPlayback(playbackSession, false);
 
             Assert.True(1 == recordingHandler.InMemorySessions.Count);
         }
@@ -328,7 +337,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
-            recordingHandler.StopRecording(sessionId);
+            await recordingHandler.StopRecording(sessionId);
 
             try
             {
@@ -351,7 +360,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
-            recordingHandler.StopRecording(sessionId);
+            await recordingHandler.StopRecording(sessionId);
 
 
             try
@@ -384,7 +393,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             CreateRecordModeRequest(httpContext, "request-body");
 
             await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response);
-            recordingHandler.StopRecording(sessionId);
+            await recordingHandler.StopRecording(sessionId);
 
             try
             {
@@ -432,7 +441,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"value\" }");
             await recordingHandler.HandleRecordRequestAsync(sessionId, httpContext.Request, httpContext.Response);
 
-            recordingHandler.StopRecording(sessionId);
+            await recordingHandler.StopRecording(sessionId);
 
             try
             {
@@ -441,7 +450,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var record = RecordSession.Deserialize(doc.RootElement);
                 Assert.Single(record.Entries);
                 var entry = record.Entries.First();
-                Assert.Equal("value", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
+                Assert.Equal("Sanitized", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
                 Assert.Equal(MockHttpHandler.DefaultResponse, Encoding.UTF8.GetString(entry.Response.Body));
             }
             finally
@@ -536,7 +545,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await recordingHandler.StartRecordingAsync(pathToRecording, startHttpContext.Response);
             var sessionId = startHttpContext.Response.Headers["x-recording-id"].ToString();
 
-            recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>(dict));
+            await recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>(dict));
             var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
 
             Assert.Equal(dict.Count, storedVariables.Count);
@@ -557,7 +566,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
-            recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>());
+            await recordingHandler.StopRecording(sessionId, variables: new SortedDictionary<string, string>());
 
             var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
 
@@ -574,7 +583,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             await recordingHandler.StartRecordingAsync(pathToRecording, httpContext.Response);
             var sessionId = httpContext.Response.Headers["x-recording-id"].ToString();
-            recordingHandler.StopRecording(sessionId, variables: null);
+            await recordingHandler.StopRecording(sessionId, variables: null);
 
             var storedVariables = TestHelpers.LoadRecordSession(Path.Combine(tmpPath, pathToRecording)).Session.Variables;
 
@@ -617,7 +626,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             request.Path = uri.PathAndQuery;
             request.Headers["x-recording-upstream-base-uri"] = uri.AbsoluteUri;
 
-            var entry = await RecordingHandler.CreateEntryAsync(request);
+            var entry = (await RecordingHandler.CreateEntryAsync(request)).Item1;
             Assert.Equal(uri.AbsoluteUri, entry.RequestUri);
         }
 
@@ -696,6 +705,128 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
+        [Fact]
+        public async Task TestRecordWithGZippedContent()
+        {
+            var httpContext = new DefaultHttpContext();
+            var bodyBytes = Encoding.UTF8.GetBytes("{\"hello\":\"world\"}");
+            var mockClient = new HttpClient(new MockHttpHandler(bodyBytes, "application/json", "gzip"));
+            var path = Directory.GetCurrentDirectory();
+            var recordingHandler = new RecordingHandler(path)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
+
+            var relativePath = "recordings/gzip";
+            var fullPathToRecording = Path.Combine(path, relativePath) + ".json";
+
+            await recordingHandler.StartRecordingAsync(relativePath, httpContext.Response);
+
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            httpContext.Request.ContentType = "application/json";
+            httpContext.Request.Headers["Content-Encoding"] = "gzip";
+            httpContext.Request.ContentLength = 0;
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
+            httpContext.Request.Method = "GET";
+            httpContext.Request.Body = new MemoryStream(CompressionUtilities.CompressBody(bodyBytes, httpContext.Request.Headers));
+
+            await recordingHandler.HandleRecordRequestAsync(recordingId, httpContext.Request, httpContext.Response);
+            await recordingHandler.StopRecording(recordingId);
+
+            try
+            {
+                using var fileStream = File.Open(fullPathToRecording, FileMode.Open);
+                using var doc = JsonDocument.Parse(fileStream);
+                var record = RecordSession.Deserialize(doc.RootElement);
+                var entry = record.Entries.First();
+                Assert.Equal("{\"hello\":\"world\"}", Encoding.UTF8.GetString(entry.Request.Body));
+                Assert.Equal("{\"hello\":\"world\"}", Encoding.UTF8.GetString(entry.Response.Body));
+            }
+            finally
+            {
+                File.Delete(fullPathToRecording);
+            }
+        }
+
+        [Fact]
+        public async Task RecordingHandlerIsThreadSafe()
+        {
+            var bodyBytes = Encoding.UTF8.GetBytes("{\"hello\":\"world\"}");
+            var mockClient = new HttpClient(new MockHttpHandler(bodyBytes));
+            var path = Directory.GetCurrentDirectory();
+            var recordingHandler = new RecordingHandler(path)
+            {
+                RedirectableClient = mockClient,
+                RedirectlessClient = mockClient
+            };
+
+            var httpContext = new DefaultHttpContext();
+            await recordingHandler.StartRecordingAsync("threadSafe", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+
+            var requests = new List<Task>();
+            var requestCount = 100;
+
+            for (int i = 0; i < requestCount; i++)
+            {
+                httpContext = new DefaultHttpContext();
+                httpContext.Request.ContentType = "application/json";
+                httpContext.Request.ContentLength = 0;
+                httpContext.Request.Headers["x-recording-id"] = recordingId;
+                httpContext.Request.Headers["x-recording-upstream-base-uri"] = "http://example.org";
+                httpContext.Request.Method = "GET";
+                httpContext.Request.Body = new MemoryStream(bodyBytes);
+                requests.Add(recordingHandler.HandleRecordRequestAsync(recordingId, httpContext.Request, httpContext.Response));
+            }
+
+            await Task.WhenAll(requests);
+            var session = recordingHandler.RecordingSessions.First().Value;
+            Assert.Equal(requestCount, session.Session.Entries.Count);
+        }
+
+        #region ByteManipulation
+
+        private const string longBody = @"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
+            ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+            aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
+            eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+            mollit anim id est laborum.";
+
+        [Theory]
+        [InlineData("", 1)]
+        [InlineData("small body", 5)]
+        [InlineData("this is a body", 3)]
+        [InlineData("This is a little bit longer of a body that we are dividing in 2", 2)]
+        [InlineData(longBody, 5)]
+        [InlineData(longBody, 1)]
+        [InlineData(longBody, 10)]
+        public void TestGetBatches(string input, int batchCount)
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var bodyData = Encoding.UTF8.GetBytes(input);
+
+            var chunks = testRecordingHandler.GetBatches(bodyData, batchCount);
+
+            int bodyPosition = 0;
+
+            // ensure that all bytes are accounted for across the batches
+            foreach(var chunk in chunks)
+            {
+                for (int j = 0; j < chunk.Length; j++)
+                {
+                    Assert.Equal(chunk[j], bodyData[bodyPosition]);
+                    bodyPosition++;
+                }
+            }
+
+            Assert.Equal(bodyPosition, bodyData.Length);
+        }
+
+        #endregion
+
         #region SetRecordingOptions
         [Theory]
         [InlineData("{ \"HandleRedirects\": \"true\"}", true)]
@@ -713,7 +844,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void TestSetRecordingOptionsHandlesValidRedirectSetting(string body, bool expectedSetting)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var httpContext = new DefaultHttpContext();
             Dictionary<string, object> inputBody = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
 
             testRecordingHandler.SetRecordingOptions(inputBody);
@@ -729,7 +859,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public void TestSetRecordingOptionsThrowsOnInvalidRedirectSetting(string body, string errorText)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            var httpContext = new DefaultHttpContext();
 
             Dictionary<string, object> inputBody = null;
             if (!string.IsNullOrWhiteSpace(body))
@@ -979,17 +1108,44 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     internal class MockHttpHandler : HttpMessageHandler
     {
         public const string DefaultResponse = "default response";
+        private readonly byte[] _responseContent;
+        private readonly string _contentType;
+        private readonly string _contentEncoding;
 
-        public MockHttpHandler()
+        public MockHttpHandler(byte[] responseContent = default, string contentType = default, string contentEncoding = default)
         {
+            _responseContent = responseContent ?? Encoding.UTF8.GetBytes(DefaultResponse);
+            _contentType = contentType ?? "application/json";
+            _contentEncoding = contentEncoding;
         }
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
 
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            // should not throw as stream should not be disposed
+            var content = await request.Content.ReadAsStringAsync();
+            Assert.NotEmpty(content);
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+            // simulate some IO
+            await Task.Delay(100, cancellationToken);
+
+            // we need to set the content before the content headers as otherwise they will be cleared out after setting content.
+            if (_contentEncoding == "gzip")
             {
-                Content = new StringContent(DefaultResponse)
-            });
+                response.Content = new ByteArrayContent(CompressionUtilities.CompressBodyCore(_responseContent, _contentEncoding));
+            }
+            else
+            {
+                response.Content = new ByteArrayContent(_responseContent);
+            }
+
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue(_contentType);
+            if (_contentEncoding != null)
+            {
+                response.Content.Headers.ContentEncoding.Add(_contentEncoding);
+            }
+
+            return response;
         }
     }
 }

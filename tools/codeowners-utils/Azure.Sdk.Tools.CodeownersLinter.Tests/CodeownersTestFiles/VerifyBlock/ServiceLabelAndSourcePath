@@ -1,0 +1,3 @@
+# A ServiceLabel block ending in a source path/owner line should have no errors
+# ServiceLabel: %TestLabel4
+/sdk/someFakePath @TestOwner0

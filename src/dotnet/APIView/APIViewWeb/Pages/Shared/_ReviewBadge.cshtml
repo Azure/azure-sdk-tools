@@ -1,0 +1,179 @@
+@using APIViewWeb;
+@using System;
+@using System.Text.RegularExpressions;
+@using APIViewWeb.Helpers;
+@using APIViewWeb.LeanModels;
+@using APIViewWeb.Models;
+@model ReviewBadgeModel;
+
+<div class="col-md-11">
+    <div class="input-group input-group-sm" id="review-info-bar">
+        @{
+            var packageName = Model.Review.PackageName;
+        }
+        @if (Model.Review.Language != null)
+        {
+            string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(Model.Review.Language);
+            string langVariant = String.Empty;
+            @if (Model.ActiveAPIRevision != default(APIRevisionListItemModel) && !string.IsNullOrEmpty(Model.ActiveAPIRevision.Files.First().LanguageVariant) && Model.ActiveAPIRevision.Files.First().LanguageVariant.ToLower() != "default")
+            {
+                langVariant = @Model.ActiveAPIRevision.Files.First().LanguageVariant.ToLower();
+                iconClassName += "-" + @Model.ActiveAPIRevision.Files.First().LanguageVariant.ToLower();
+            }
+            <span role="img" class="input-group-text icon-language p-1 @iconClassName" aria-label="@Model.Review.Language @langVariant"></span>
+        }
+        @{
+            var packageFieldWidth = 3;
+            if (packageName != null)
+            {
+                packageFieldWidth += packageName.Length;
+            }
+        }
+        <input type="text" class="form-control fw-bold" style="max-width: @(packageFieldWidth)ch; font-family: monospace;" value="@(packageName ?? "")" aria-label="Package Name of Review" readonly>
+        @if (packageName != null)
+        {
+            @if (Model.Review.IsApproved)
+            {
+                <span class="input-group-text" data-bs-toggle="tooltip" title="Approved for First Release">
+                    <i class="fa-regular fa-circle-check text-success"></i>
+                </span>
+            }
+        }
+
+        @if (Model.APIRevisions != null && Model.ActiveAPIRevision != null)
+        {
+            <span class="input-group-text">Revision:</span>
+            <select id="revision-type-select" aria-label="Revision Type Select">
+                @foreach (var apiRevisionType in Model.APIRevisions.Select(r => r.APIRevisionType).Distinct())
+                {
+                    if (apiRevisionType == Model.ActiveAPIRevision.APIRevisionType)
+                    {
+                        <option selected value="@apiRevisionType">@apiRevisionType.ToString()</option>
+                    }
+                    else
+                    {
+                        <option value="@apiRevisionType">@apiRevisionType.ToString()</option>
+                    }
+                }
+            </select>
+            <select id="revision-select" aria-label="Revision Select">
+                @{
+
+                    var revisionsToSelectFrom = Model.APIRevisions.Where(r => r.APIRevisionType == Model.ActiveAPIRevision.APIRevisionType);
+                    (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
+                        revisions: revisionsToSelectFrom,
+                        activeRevision: Model.ActiveAPIRevision,
+                        diffRevision: default(APIRevisionListItemModel),
+                        forDiff: false,
+                        showDocumentation: (bool)Model.ShowDocumentation,
+                        showDiffOnly: (bool)Model.ShowDiffOnly
+                    );
+                }
+                <partial name="Shared/_RevisionSelectPickerPartial" model="revisionSelectModel" />
+            </select>
+
+            @if (@Model.APIRevisions.Count() > 1)
+            {
+                var diffRevisionType = (Model.APIRevisions.Any(r => r.APIRevisionType == APIRevisionType.Automatic)) ? APIRevisionType.Automatic : Model.APIRevisions.First().APIRevisionType;
+                @if (Model.DiffAPIRevision != null)
+                {
+                    // Diff revision is null if someone reuses an old URL with a deleted revision as  diff revision
+                    // Users copy and shares diff URL to approvers and sometimes they delete and recreate the revision which makes the diff revision null
+                    diffRevisionType = Model.DiffAPIRevision.APIRevisionType;
+
+                    var urlValue = @Url.ActionLink("Review", "Assemblies", new
+                    {
+                        id = Model.Review.Id,
+                        revisionId = Model.ActiveAPIRevision.Id,
+                        diffRevisionId = Model.DiffAPIRevision,
+                        doc = (bool)Model.ShowDocumentation,
+                        diffOnly = (bool)Model.ShowDiffOnly
+                    });
+                    <a class="input-group-text" href="@urlValue">Diff With:</a>
+                }
+                else
+                {
+
+                    var diffRevisionForButton = Model.APIRevisions.Where(r => r.APIRevisionType == diffRevisionType);
+                    var urlValue = @Url.ActionLink("Review", "Assemblies", new
+                    {
+                        id = Model.Review.Id,
+                        revisionId = Model.ActiveAPIRevision.Id,
+                        diffRevisionId = diffRevisionForButton.First().Id,
+                        doc = (bool)Model.ShowDocumentation,
+                        diffOnly = (bool)Model.ShowDiffOnly
+                    });
+                    <a class="input-group-text" href="@urlValue">Diff:</a>
+                }
+                <select id="diff-revision-type-select" aria-label="Revision Type Select">
+                    @foreach (var apiRevisionType in Model.APIRevisions.Select(r => r.APIRevisionType).Distinct())
+                    {
+                        if (apiRevisionType == diffRevisionType)
+                        {
+                            <option selected value="@apiRevisionType">@apiRevisionType</option>
+                        }
+                        else
+                        {
+                            <option value="@apiRevisionType">@apiRevisionType</option>
+                        }
+                    }
+                </select>
+                <select id="diff-select" aria-label="Diff Select">
+                    @{
+                        var diffRevisionsToSelectFrom = Model.APIRevisions.Where(r => r.APIRevisionType == diffRevisionType && r.Id != Model.ActiveAPIRevision.Id);
+                        (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) diffRevisionSelectModel = (
+                        revisions: diffRevisionsToSelectFrom,
+                        activeRevision: Model.ActiveAPIRevision,
+                        diffRevision: Model.DiffAPIRevision,
+                        forDiff: true,
+                        showDocumentation: (bool)Model.ShowDocumentation,
+                        showDiffOnly: (bool)Model.ShowDiffOnly
+                        );
+                    }
+                    <partial name="Shared/_RevisionSelectPickerPartial" model="diffRevisionSelectModel" />
+                </select>
+            }
+        }
+    </div>
+</div>
+<div class="col-1">
+    @if (TempData["page"].Equals("api"))
+    {
+        if (Model.UserPreference != null && Model.UserPreference.HideReviewPageOptions.HasValue && Model.UserPreference.HideReviewPageOptions == true)
+        {
+            <input type="checkbox" class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
+        }
+        else
+        {
+            <input type="checkbox" checked class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
+        }
+        <label class="btn btn-outline-primary float-end" accesskey="m" for="review-right-offcanvas-toggle"><i class="fa fa-bars"></i></label>
+    }
+    @if (TempData["page"].Equals("revisions"))
+    {
+        if (Model.UserPreference != null && Model.UserPreference.HideRevisionsPageOptions.HasValue && Model.UserPreference.HideRevisionsPageOptions == true)
+        {
+            <input type="checkbox" class="btn-check" id="revisions-right-offcanvas-toggle" autocomplete="off">
+        }
+        else
+        {
+            <input type="checkbox" checked class="btn-check" id="revisions-right-offcanvas-toggle" autocomplete="off">
+        }
+        <label class="btn btn-outline-primary float-end" accesskey="m" for="revisions-right-offcanvas-toggle"><i class="fa fa-bars"></i></label>
+    }
+    @if (TempData["page"].Equals("samples"))
+    {
+        if (Model.UserPreference != null && Model.UserPreference.HideSamplesPageOptions.HasValue && Model.UserPreference.HideSamplesPageOptions == true)
+        {
+            <input type="checkbox" class="btn-check" id="samples-right-offcanvas-toggle" autocomplete="off">
+        }
+        else
+        {
+            <input type="checkbox" checked class="btn-check" id="samples-right-offcanvas-toggle" autocomplete="off">
+        }
+        <label class="btn btn-outline-primary float-end" accesskey="m" for="samples-right-offcanvas-toggle"><i class="fa fa-bars"></i></label>
+    }
+</div>
+
+
+

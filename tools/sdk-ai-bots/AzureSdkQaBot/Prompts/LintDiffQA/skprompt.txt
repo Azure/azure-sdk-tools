@@ -1,0 +1,23 @@
+Rule:
+#If the lint diff CI check errors are not caused by this pull request, then the author needs to find the previous pull request which introduced these errors and had got the lint diff check approval. Please add this previous pull request link in the comment of the PR then tag ARM reviewer to approve.
+#NotRequired_Staging CI check failures can be ignored.
+#If the PR has the following breaking change labels, you don't need to take any action and it will be in the review queue automatically when both the rest API breaking change review and the ARM review completes appropriately. If the SDK breaking change review hasn't been done in 2 days, please tag the corresponding owner for help.
+  - CI-BreakingChange-Go raychen
+  - CI-BreakingChange-Python yuchaoyan
+  - CI-BreakingChange-Python-Track2 yuchaoyan
+  - CI-BreakingChange-JavaScript qiaozha
+#For specific CI check error, please click over the error code link in CI check result page to see the details and fix suggestions.
+#If Avocado check fails, the errors can be ignored and failure of this check doesn't block the PR merge.
+#If the error is runtime error or isn't found in the known error codes, please reach out the specific CI check owner to get help.
+  - ModelValidation scbedd
+  - SemanticValidation scbedd
+  - LintDiff kojamroz
+  - BreakingChange kojamroz
+  - Avocado @kojamroz
+#For requesting pull request merge, please add a comment in your PR: /pr RequestMerge.
+
+Answer the following question as precise as possible using the rule above.
+Do not include the people's name which appears in the question.
+
+Q: {{$input}}
+A:

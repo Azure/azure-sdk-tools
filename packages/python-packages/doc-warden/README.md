@@ -108,11 +108,11 @@ When should we expect a readme and/or changelog to be present?
 * At the root of the repo (Readme only)
 * Associated with a `package` directory (Readme and Changelog)
 
-#### .Net
+#### .NET
 
 A package directory is indicated by:
 
-* a `*,csproj` file under the `sdk` directory
+* a `*.csproj` file under the `sdk` directory
     * Note that this is just a proxy. `warden` attempts to omit test projects by convention.
 
 
@@ -224,7 +224,7 @@ the `package_indexing_exclusion_list` array members to enable just this sort of 
 
 `package_indexing_traversal_stops` is used during parse of .NET language repos _only_. This is due to how the discovery logic for readme and changelog is implemented for .NET projects. Specifically, readmes for a .csproj are often a couple directories up from their parent .csproj location!
 
-For .net, `warden` will traverse **up** one directory at a time, looking for the readme and changelog files in each traversed directory. `warden` will continue to traverse until...
+For .NET, `warden` will traverse **up** one directory at a time, looking for the readme and changelog files in each traversed directory. `warden` will continue to traverse until...
 
 1. It discovers a folder with a `.sln` within it
 2. It encounters a folder that exactly matches one present in `package_indexing_traversal_stops`

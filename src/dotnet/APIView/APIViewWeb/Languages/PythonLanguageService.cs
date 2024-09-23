@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -6,27 +6,30 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
     public class PythonLanguageService : LanguageProcessor
     {
-        public override string Name { get; } = "Python";
-        public override string Extension { get; } = ".whl";
-        public override string VersionString { get; } = "0.3.3";
-
         private readonly string _pythonExecutablePath;
+        private readonly TelemetryClient _telemetryClient;
+        public override string Name { get; } = "Python";
+        public override string[] Extensions { get; } = { ".whl" };
+        public override string VersionString { get; } = "0.3.12";
         public override string ProcessName => _pythonExecutablePath;
 
-        static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
-
-        public PythonLanguageService(IConfiguration configuration)
+        public PythonLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";
+            _telemetryClient = telemetryClient;
+
+            // Check if sandboxing is disabled for python
+            bool.TryParse(configuration["ReviewGenByPipelineDisabledForPython"], out bool _isDisabledForPython);
+            // Enable sandboxing when it's not disabled for python
+            IsReviewGenByPipeline = ! _isDisabledForPython;
         }
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
@@ -63,7 +66,7 @@ namespace APIViewWeb
                 _telemetryClient.TrackEvent("Completed Python process run to parse " + originalName);
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
+                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;
@@ -72,7 +75,7 @@ namespace APIViewWeb
             catch(Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                throw ex;
+                throw;
             }
             finally
             {

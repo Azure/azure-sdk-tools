@@ -16,8 +16,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         protected override Language Language => Language.Python;
 
+        private static int profileCount = 0;
+
         public override async Task<(string output, string error, object context)> SetupAsync(
-            string project, string languageVersion, string primaryPackage, IDictionary<string, string> packageVersions)
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            bool debug)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
             var env = Path.Combine(projectDirectory, _env);
@@ -28,7 +34,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var errorBuilder = new StringBuilder();
 
             // On Windows, always use "python".  On Unix-like systems, specify the major and minor versions, e.g "python3.7".
-            var systemPython = Util.IsWindows ? "python" : "python" + Regex.Match(languageVersion, @"^\d+\.\d+").Value;
+            var systemPython = Util.IsWindows ? "python" : "python" + languageVersion;
 
             // Create venv
             await Util.RunAsync(systemPython, $"-m venv {_env}", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
@@ -51,7 +57,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     if (packageName == primaryPackage)
                     {
-                        await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                        await Util.RunAsync(pip, "install .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
                     }
                     // TODO: Consider installing source versions of non-primary packages.  Would require finding package in source tree.
                     //       So far, this seems unnecessary, since dev-requirements.txt usually includes core.
@@ -65,8 +71,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (outputBuilder.ToString(), errorBuilder.ToString(), null);
         }
 
-        public override async Task<IterationResult> RunAsync(string project, string languageVersion,
-            string primaryPackage, IDictionary<string, string> packageVersions, string testName, string arguments, object context)
+        public override async Task<IterationResult> RunAsync(
+            string project,
+            string languageVersion,
+            string primaryPackage,
+            IDictionary<string, string> packageVersions,
+            string testName,
+            string arguments,
+            bool profile,
+            string profilerOptions,
+            object context)
         {
             var projectDirectory = Path.Combine(WorkingDirectory, project);
 
@@ -80,6 +94,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var pipListResult = await Util.RunAsync(pip, "list", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             var runtimePackageVersions = GetRuntimePackageVersions(pipListResult.StandardOutput);
 
+            if (profile)
+            {
+                var formattedArgs = arguments.Replace(" --", "_").Replace("--", "_").Replace(" ", "-");
+                var profileFilename = $"{packageVersions[primaryPackage]}_{testName}_{formattedArgs}_{profileCount++}.pstats";
+                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory), profileFilename));
+
+                arguments += $" --profile --profile-path {profileOutputPath}";
+            }
             var processResult = await Util.RunAsync(
                 perfstress,
                 $"{testName} {arguments}",

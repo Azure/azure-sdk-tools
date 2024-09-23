@@ -1,0 +1,98 @@
+parameters:
+  - name: TestingDataContainer
+    type: string
+    default: 'https://apiviewuitest.blob.core.windows.net/testingdata'
+  - name: NodeVersion
+    type: string
+    default: ''
+  - name: WebClientProjectDirectory
+    type: string
+    default: ''
+  - name: AzuriteConnectionString
+    type: string
+    default: ''
+  - name: CosmosEmulatorConnectionString
+    type: string
+    default: ''
+  
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '${{ parameters.NodeVersion }}'
+  displayName: 'Use NodeJS ${{ parameters.NodeVersion }}'
+
+- script: |
+    npm install
+  workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
+  displayName: "Install npm packages"
+
+- script: |
+    npm run-script build
+  workingDirectory: '${{ parameters.WebClientProjectDirectory }}'
+  displayName: "Build client assets"
+
+- task: Powershell@2
+  inputs:
+    filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+    arguments: >
+      -Process "dotnet"
+      -ArgumentList "run --project $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\APIViewWeb.csproj"
+      -Port "5000"
+    pwsh: true
+  displayName: 'Start APIView Application'
+  env:
+    APIVIEW_BLOB__CONNECTIONSTRING: '${{ parameters.AzuriteConnectionString }}'
+    APIVIEW_COSMOS__CONNECTIONSTRING: '${{ parameters.CosmosEmulatorConnectionString }}'
+    APIVIEW_GITHUB__CLIENTID: $(apiview-github-clientid)
+    APIVIEW_GITHUB__CLIENTSECRET: $(apiview-github-clientsecret)
+    APIVIEW_AUTHENTICATIONSCHEME: "Test"
+    APIVIEW_SENDGRID__KEY: "Test"
+    APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
+    APIVIEW_APPCONFIG: "$(apiview-appconfig-connectionstring)"
+    AZURE_CLIENT_ID: "$(apiview-appconfig-client-id)"
+    AZURE_TENANT_ID: "$(apiview-appconfig-tenant-id)"
+    AZURE_CLIENT_SECRET: "$(apiview-appconfig-client-secret)"
+    APIVIEW_APPROVERS: "azure-sdk"
+    BackgroundTaskDisabled: "false"
+    PullRequestBackgroundTaskDisabled: "true"
+
+- pwsh: |
+    azcopy cp '${{ parameters.TestingDataContainer }}/*' '$(Build.BinariesDirectory)' --recursive=true
+  displayName: 'Copy from Test Files From Blob'
+  env:
+    AZCOPY_AUTO_LOGIN_TYPE: SPN
+    AZCOPY_SPA_APPLICATION_ID: $(apiviewstorageaccess-application-id)
+    AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
+
+# Should remove Selenium Tests once converted to Playwright   
+- task: DotNetCoreCLI@2
+  displayName: 'Build & Test (UI)'
+  env:
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    DOTNET_MULTILEVEL_LOOKUP: 0
+    APIVIEW_APIKEY: "$(azuresdk-apiview-apikey)"
+    APIVIEW_URI: "http://localhost:5000/AutoReview/UploadAutoReview"
+    APIVIEW_TESTPKGPATH: "$(Build.BinariesDirectory)"
+    APIVIEW_ENDPOINT: "http://localhost:5000"
+    APIVIEW_BLOB__CONNECTIONSTRING: '${{ parameters.AzuriteConnectionString }}'
+    APIVIEW_COSMOS__CONNECTIONSTRING: '${{ parameters.CosmosEmulatorConnectionString }}'
+  inputs:
+    command: test
+    projects: src/dotnet/APIView/**/APIViewUITests.csproj
+    arguments: --logger trx
+    publishTestResults: false
+
+- script: |
+    npx playwright test --project=end-to-end-tests
+  workingDirectory: $(WebClientProjectDirectory)
+  displayName: "Run Client-Side End-to-End Tests"
+  env:
+    "BASE_URL": "http://localhost:5000"
+    "FIXTURE_DIR": "$(Build.BinariesDirectory)"
+    "APIVIEW_API_KEY": "$(azuresdk-apiview-apikey)"
+
+- task: 1ES.PublishPipelineArtifact@1
+  inputs:
+    path: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
+    artifact: 'Client-Side Test Reports'

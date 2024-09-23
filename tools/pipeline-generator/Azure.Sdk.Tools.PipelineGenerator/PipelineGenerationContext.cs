@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Services.AppAuthentication;
+using Azure.Identity;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
@@ -20,7 +21,6 @@ namespace PipelineGenerator
     {
         private string organization;
         private string project;
-        private string patvar;
         private string endpoint;
         private string agentPool;
         private int[] variableGroups;
@@ -30,12 +30,11 @@ namespace PipelineGenerator
             ILogger logger,
             string organization,
             string project,
-            string patvar,
             string endpoint,
             string repository,
             string branch,
             string agentPool,
-            string[] variableGroups,
+            int[] variableGroups,
             string devOpsPath,
             string prefix,
             bool whatIf,
@@ -46,12 +45,11 @@ namespace PipelineGenerator
             this.logger = logger;
             this.organization = organization;
             this.project = project;
-            this.patvar = patvar;
             this.endpoint = endpoint;
             this.Repository = repository;
             this.Branch = branch;
             this.agentPool = agentPool;
-            this.variableGroups = ParseIntArray(variableGroups);
+            this.variableGroups = variableGroups;
             this.devOpsPath = devOpsPath;
             this.Prefix = prefix;
             this.WhatIf = whatIf;
@@ -70,29 +68,19 @@ namespace PipelineGenerator
         public int[] VariableGroups => this.variableGroups;
         public string DevOpsPath => string.IsNullOrEmpty(this.devOpsPath) ? Prefix : this.devOpsPath;
 
-        private int[] ParseIntArray(string[] strs)
-            => strs.Select(str => int.Parse(str)).ToArray();
-
         private VssConnection cachedConnection;
 
         private async Task<VssConnection> GetConnectionAsync()
         {
             if (cachedConnection == null)
             {
-                VssCredentials credentials;
-                if (string.IsNullOrWhiteSpace(patvar))
-                {
-                    var azureTokenProvider = new AzureServiceTokenProvider();
-                    var authenticationResult = await azureTokenProvider.GetAuthenticationResultAsync("499b84ac-1321-427f-aa17-267ca6975798");
-                    credentials = new VssAadCredential(new VssAadToken(authenticationResult.TokenType, authenticationResult.AccessToken));
-                }
-                else
-                {
-                    var pat = Environment.GetEnvironmentVariable(patvar);
-                    credentials = new VssBasicCredential("nobody", pat);
-                }
-
-                cachedConnection = new VssConnection(new Uri(organization), credentials);
+                var azureCredential = new ChainedTokenCredential(
+                    new AzureCliCredential(),
+                    new AzurePowerShellCredential()
+                );
+                var devopsCredential = new VssAzureIdentityCredential(azureCredential);
+                cachedConnection = new VssConnection(new Uri(organization), devopsCredential);
+                await cachedConnection.ConnectAsync();
             }
 
             return cachedConnection;
@@ -135,7 +123,7 @@ namespace PipelineGenerator
 
         private ServiceEndpointHttpClient cachedServiceEndpointClient;
 
-        private async Task<ServiceEndpointHttpClient> GetServiceEndpointClientAsync(CancellationToken cancellationToken)
+        public async Task<ServiceEndpointHttpClient> GetServiceEndpointClientAsync(CancellationToken cancellationToken)
         {
             if (cachedServiceEndpointClient == null)
             {

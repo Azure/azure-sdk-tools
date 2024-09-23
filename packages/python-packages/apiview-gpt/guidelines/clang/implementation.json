@@ -1,0 +1,412 @@
+[
+  {
+    "id": "clang_implementation.html#clang-objmodel-nohiding",
+    "category": "Service Methods",
+    "text": "DO NOT hide the members of a struct that supports stack allocation, except in the above way.  This can result in alignment problems and missed optimization opportunities.\n\nYou must always have an initialization function. This function will take a block of allocated memory of the correct size and alignment and turn it into a valid object instance, setting fields to default values and processing initialization parameters."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-init",
+    "category": "Initialization and destruction",
+    "text": "DO name initialization functions with the form az_<libname>_init_...."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-ready",
+    "category": "Initialization and destruction",
+    "text": "DO ensure that the object is \"ready to use\" after a call to the init function for the object.\n\nIf there is more than one way to initialize an object, you should define multiple initialization functions with different names. For example:\n\n{% highlight c %}\nvoid az_widgets_client_init(az_widgets_client* client);\nvoid az_kwidgets_client_init_with_sides(az_widgets_client* client, int num_sides, az_widgets_side* sides);\n{% endhighlight %}\n\nIf initialization could fail (for example, during parameter validation), ensure the init function returns an az_result to indicate error conditions.\n\nA possible implementation of these initialization functions would be:\n\n{% highlight c %}\nvoid az_widgets_client_init(az_widgets_client* client) {\nmemset(client, 0, sizeof(az_widgets_client));\n}\n\nvoid az_widgets_client_init_with_sides(az_widgets_client* client,\nint num_sides, az_widgets_side* sides) {\naz_widgets_client_init(herd);\nherd->sides = sides;\nherd->num_sides = num_sides;\n}\n{% endhighlight %}\n\nSimilarly to allocation, a type can have a destruction function. However only types that own a resource (such as memory), or require special cleanup (like securely zeroing their memory) need a destruction function."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-prefer-nonalloc",
+    "category": "Initialization and destruction",
+    "text": "YOU SHOULD prefer non-allocating types and methods.\n\nYour library should not allocate memory if possible.  It should be possible to use the client library without any allocations, deferring all allocations to the client program.\n\nAllocation should be separated from initialization, unless there's an extremely good reason to tie them together. In general we want to let the user allocate their own memory. You only need an allocation function if you intend to hide the size and alignment of the object from the user."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-alloc1",
+    "category": "Allocation and deallocation",
+    "text": "DO name the allocation and deallocation functions as az_<libname>_(de)allocate_<objtype>.\n\nNote that this is the opposite of the pattern for other methods.  Allocation functions do not operate on a value of <objtype>.  Rather they create and destroy such values."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-alloc2",
+    "category": "Allocation and deallocation",
+    "text": "DO provide an allocation and deallocation function for opaque types."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-alloc3",
+    "category": "Allocation and deallocation",
+    "text": "YOU SHOULD take a set of allocation callbacks as a parameter to the allocation and deallocation functions for an opaque type.  Use the library default allocation functions if the allocation callback parameter is NULL."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-alloc4",
+    "category": "Allocation and deallocation",
+    "text": "YOU SHOULD NOT store a pointer to the allocation callbacks inside the memory returned by the allocation function.  You may store such a pointer for debugging purposes.\n\nThe intent is to allow storing a pointer to the allocation callbacks to ensure the same set of callbacks is used for allocation and deallocation.  However, it is not allowed to change the ABI of the returned object to do this.  You need to store the callbacks before or after the pointer returned to the caller.\n\nTODO: Rationalize this - do we store or not store?"
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-alloc5",
+    "category": "Allocation and deallocation",
+    "text": "DO NOT return any errors from the deallocation function.  It is impossible to write leak-free programs if deallocation and cleanup functions can fail.\n\nFor example:\n\n{% highlight c %}\n#include <stdint.h>\ntypedef struct az_widget_client az_widget_client;\n\naz_result az_widgets_allocate_client(az_widgets_client** herd, az_allocation_callbacks* alloc);\nvoid az_widgets_deallocate_client(az_widgets_client* herd, az_allocation_callbacks* alloc);\n{% endhighlight %}\n\n{% highlight c %}\n#include \"herd.h\"\ntypedef struct az_widgets_client {\nuint16_t num_sides;\naz_widgets_side* sides;\nbool was_frobnicated;\n} az_widgets_client;\n\naz_result az_widgets_allocate_client(az_widgets_client** client, az_allocation_callbacks* alloc) {\nif(!alloc) {\n*client = az_default_alloc(sizeof(az_widgets_client));\n} else {\n*client = alloc->allocate(sizeof(az_widgets_herd));\n}\nif(!*client) {\nreturn AZ_ERROR_ALLOCATION_ERROR;\n}\nreturn AZ_OK;\n}\n\nvoid az_widgets_deallocate_client(az_widgets_client* client, az_allocation_callbacks* alloc) {\nif(!alloc) {\naz_default_deallocate(client);\n} else {\nalloc->deallocate(client);\n}\n}\n{% endhighlight %}\n\nThe initialization function should take a set of allocation callbacks and store them inside the object instance."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-initalloc1",
+    "category": "Initialization for objects that allocate",
+    "text": "DO take a set of allocation / deallocation callbacks in the init function of objects owning inner pointers."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-initalloc2",
+    "category": "Initialization for objects that allocate",
+    "text": "YOU SHOULD NOT allocate different inner pointers with different sets of allocation callbacks.  Use a single allocation callback."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-destroyalloc1",
+    "category": "Destruction for objects that allocate",
+    "text": "DO name destruction functions az_<libname>_<objtype>_destroy."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-destroyalloc2",
+    "category": "Destruction for objects that allocate",
+    "text": "DO NOT take allocation callbacks in the destruction function.\n\nThe reason one would take an allocation callback parameter in the destruction function is to save space by not storing it in the object instance. The reason we prohibit this is that it means an object that owns a pointer to another object must then take two allocation parameters in its destroy function."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-destroyalloc3",
+    "category": "Destruction for objects that allocate",
+    "text": "DO NOT return any errors in the destruction function.  It's impossible to write leak-free programs if deallocation / cleanup functions can fail.\n\nThe destruction function should follow this pattern:\n\n{% highlight c %}\nvoid az_widgets_client_destroy(az_widgets_client* client);\n{% endhighlight %}\n\nThe following is a possible implementation of a destruction function for the widgets client object:\n\n{% highlight c %}\nvoid az_widgets_client_destroy(az_widgets_client* client) {\nif(client->alloc) {\nclient->alloc->deallocate(sides);\n}\naz_string_destroy(client->str);\nclient->num_sides = 0;\nclient->alloc = 0;\n}\n{% endhighlight %}\n\nTo define a method on an object simply define a function taking a pointer to that object as its first parameter. For example:\n\n{% highlight c %}\n/**\n@brief add a side to the widget\n@memberof az_widgets_client\n\n@param[in] herd - the herd\n@param[in] [transfer none] side - the side to add\n@return Any errors\n@retval AZ_OK on success\n@retval AZ_ERROR_NO_MEMORY if a reallocation of the internal\n\n                       array failed\n\n\n\n<code>                       array failed\n</code>\n\n/\naz_result az_widgets_client_add_side(az_widgets_client client, az_widgets_side* side);\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-memberof",
+    "category": "Methods on objects",
+    "text": "DO use @memberof to indicate a function is associated with a class."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-firstparam",
+    "category": "Methods on objects",
+    "text": "DO provide the class object as the first parameter to a function associated with the class.\n\nSometimes a function will take a large number of parameters, many of which have sane defaults.  In this case you should pass them via a struct. Default arguments should be represented by \"zero\". If the function is a method then the first parameter should still be a pointer to the object type the method is associated with.\n\nFor example the previous az_widgets_client_init_with_sides function could be defined instead as:\n\n{% highlight c %}\ntypedef struct az_widgets_client_init_with_sides_options {\nint num_sides;\naz_widgets_side* sides;\nbool was_frobnicated;\n} az_widgets_client_init_with_sides_options;\nvoid az_widgets_client_init_with_sides(az_widgets_client* client, const az_widgets_client_init_with_sides_options* options);\n{% endhighlight %}\n\nand would be called from user code like:\n\n{% highlight c %}\nint main() {\naz_widgets_client client = { 0 };\naz_widgets_client_init_with_sides_options options =\naz_widgets_client_init_with_sides_default_options();\naz_widgets_client_init_with_sides(&client, NULL);\n}\n{% endhighlight %}\n\nNote that the num_sides and sides parameters are left as default.\n\nIf the params parameter is NULL then the az_widgets_client_init_with_sides function should assume the defaults for all parameters.\n\nIf a function takes both optional and non-optional parameters then prefer passing the non-optional ones as parameters and the optional ones by struct."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-manyparams",
+    "category": "Functions with many parameters",
+    "text": "DO use a struct to encapsulate parameters if the number of parameters is greater than 5."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-manyparams2",
+    "category": "Functions with many parameters",
+    "text": "DO NOT include the class object in the encapsulating paramter struct.\n\nIf a method could require allocating memory then it should use the most relevant set of allocation callbacks. For example the az_widgets_client_add_side method may need to allocate or re-allocate the array of sides.  It should use the az_widgets_client allocators.  On the other hand the method:\n\n{% highlight c %}\nvoid az_widgets_client_set_str(az_widgets_client* herd, const char* str);\n{% endhighlight %}\n\nwould likely use the allocation callbacks inside the client->str structure.\n\nTODO: Rationalize advice here.  Earlier, we said don't include allocators inside the structure.\n\nCallback functions should be defined to take a pointer to the \"sender\" object as the first argument and a void pointer to user data as the last argument. Any additional arguments, if any, should be contextual data needed by the callback. For example say we had an object az_widgets_client that could make requests to be handled in a callback and we represent the response as an object az_response. We might define the following:\n\n{% highlight c %}\ntypedef bool (az_widgets_response_callback)(az_widgets_client client,\naz_response* resp,\nvoid* user_data);\nvoid az_widgets_client_set_response_callback(az_widgets_client* client,\naz_widgets_response_callback callback,\nvoid* user_data);\n{% endhighlight %}\n\nClient code would use this in the following manner:\n\n{% highlight c %}\ntypedef struct user_data {\nint some_int;\n} user_data;\n\nbool handle_resp(az_widgets_client* client,\naz_response* resp,\nvoid* user) {\nuser_data* data = user;\n/* do things with parameters */\nreturn true;\n}\n\nint main() {\nuser_data d = {.some_int = 5};\naz_widgets_client client = { 0 };\naz_widgets_client_init(&client);\naz_widgets_client_set_response_callback(&client, &handle_resp, &d);\n/* do something that triggers the callback */\n\n/* unset the callback if we don't want to handle it anymore */\naz_widgets_client_set_response_callback(&client, NULL, NULL);\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-callback-userdata",
+    "category": "Callbacks",
+    "text": "DO include a user_data parameter on all callbacks."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-callback-deref",
+    "category": "Callbacks",
+    "text": "DO NOT de-reference the user data pointer from inside the library.\n\nDiscriminated unions can be useful for grouping information in a struct. However, C does not provide a standard way of defining discriminated unions.  Use the following:\n\n{% highlight c %}\ntypedef struct discriminated_union {\nenum {\ndiscriminated_union_tag_int,\ndiscriminated_union_tag_float,\ndiscriminated_union_tag_double\n} tag;\nunion {\nint the_int;\nfloat the_float;\ndouble the_double;\n} value;\n} discriminated_union;\n{% endhighlight %}\n\nThis syntax is supported on all C99 compilers as it adheres to strict C99 syntax. Access the inner member using union_value.value.the_int (as an example).\n\nThe nested enum and union should never have a tag name as this is always an extension.  It is a user error to access the union without checking its tag first.\n\nTODO: This is duplicated from the design.md.\n\nThe service client will have several methods that perform requests on the service.  Service parameters are directly passed across the wire to an Azure service.  Client parameters are not passed directly to the service, but used within the client library to fulfill the request.  Examples of client parameters include values that are used to construct a URI, or a file that needs to be uploaded to storage."
+  },
+  {
+    "id": "clang_implementation.html#clang-params-client-validation",
+    "category": "Parameter Validation",
+    "text": "DO validate client parameters."
+  },
+  {
+    "id": "clang_implementation.html#clang-params-server-validation",
+    "category": "Parameter Validation",
+    "text": "DO NOT validate service parameters.  This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters."
+  },
+  {
+    "id": "clang_implementation.html#clang-params-check-devex",
+    "category": "Parameter Validation",
+    "text": "DO validate the developer experience when the service parameters are invalid to ensure appropriate error messages are generated by the service.  If the developer experience is compromised due to service-side error messages, work with the service team to correct prior to release.\n\nSometimes a function will take a large number of parameters, many of which have sane defaults.  In this case you should pass them via a struct. Default arguments should be represented by \"zero\". If the function is a method then the first parameter should still be a pointer to the object type the method is associated with.\n\nFor example the previous az_widgets_client_init_with_sides function could be defined instead as:\n\n{% highlight c %}\ntypedef struct az_widgets_client_init_with_sides_options {\nint num_sides;\naz_widgets_side* sides;\nbool was_frobnicated;\n} az_widgets_client_init_with_sides_options;\nvoid az_widgets_client_init_with_sides(az_widgets_client* client, const az_widgets_client_init_with_sides_options* options);\n{% endhighlight %}\n\nand would be called from user code like:\n\n{% highlight c %}\nint main() {\naz_widgets_client client = { 0 };\naz_widgets_client_init_with_sides_options options =\naz_widgets_client_init_with_sides_default_options();\naz_widgets_client_init_with_sides(&client, NULL);\n}\n{% endhighlight %}\n\nNote that the num_sides and sides parameters are left as default.\n\nIf the params parameter is NULL then the az_widgets_client_init_with_sides function should assume the defaults for all parameters.\n\nIf a function takes both optional and non-optional parameters then prefer passing the non-optional ones as parameters and the optional ones by struct."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-manyparams",
+    "category": "Functions with many parameters",
+    "text": "DO use a struct to encapsulate parameters if the number of parameters is greater than 5."
+  },
+  {
+    "id": "clang_implementation.html#clang-objmodel-manyparams2",
+    "category": "Functions with many parameters",
+    "text": "DO NOT include the class object in the encapsulating paramter struct.\n\nRequests to the service fall into two basic groups - methods that make a single logical request, or a deterministic sequence of requests.  An example of a single logical request is a request that may be retried inside the operation.  An example of a deterministic sequence of requests is a paged operation.\n\nThe logical entity is a protocol neutral representation of a response. For HTTP, the logical entity may combine data from headers, body and the status line. A common example is exposing an ETag header as a property on the logical entity in addition to any deserialized content from the body."
+  },
+  {
+    "id": "clang_implementation.html#clang-return-logical-entities",
+    "category": "Serialization",
+    "text": "DO optimize for returning the logical entity for a given request. The logical entity MUST represent the information needed in the 99%+ case."
+  },
+  {
+    "id": "clang_implementation.html#clang-return-expose-raw",
+    "category": "Serialization",
+    "text": "DO make it possible for a developer to get access to the complete response, including the status line, headers and body. The client library MUST follow the language specific guidance for accomplishing this.\n\nFor example, you may choose to do something similar to the following:\n\n{% highlight c %}\ntypedef struct az_json_short_item {\n// JSON decoded structure.\n} az_json_short_item;\n\ntypedef struct az_json_short_paged_results {\nuint32 size;\naz_json_short_item *items;\n} az_json_short_paged_results;\n\ntypedef struct az_json_short_raw_paged_results {\nhttp_headers *headers;\nuint16 status_code;\nuint8_t raw_body;\naz_json_short_paged_results results;\n} az_json_short_raw_paged_results;\n\naz_json_short_paged_results* az_json_get_short_list_items(client, /* extra params /);\naz_json_short_raw_paged_results az_json_get_short_list_items_with_response(client, /* extra params */);\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-return-document-raw-stream",
+    "category": "Serialization",
+    "text": "DO document and provide examples on how to access the raw and streamed response for a given request, where exposed by the client library.  We do not expect all methods to expose a streamed response.\n\nFor methods that combine multiple requests into a single call:"
+  },
+  {
+    "id": "clang_implementation.html#clang-return-no-headers-if-confusing",
+    "category": "Serialization",
+    "text": "DO NOT return headers and other per-request metadata unless it is obvious as to which specific HTTP request the methods return value corresponds to."
+  },
+  {
+    "id": "clang_implementation.html#clang-expose-data-for-composite-failures",
+    "category": "Serialization",
+    "text": "DO provide enough information in failure cases for an application to take appropriate corrective action.\n\nTODO: This section is not applicable for the Embedded C SDK.\n\nTODO: Add discussion on configuration environment variables to parallel that of other languages\n\nClient libraries must support robust logging mechanisms so that the consumer can adequately diagnose issues and quickly determine whether the issue is in the consumer code, client library code, or service.\n\nIn general, our advice to consumers of these libraries is to establish logging in their preferred manner at the WARNING level or above in production to capture problems with the application, and this level should be enough for customer support situations.  Informational or verbose logging can be enabled on a case-by-case basis to assist with issue resolution."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-use-azurecore",
+    "category": "Logging",
+    "text": "DO use the Azure Core library for logging.\n\nTODO: The Azure Core logging library does not exist yet."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-pluggable-logger",
+    "category": "Logging",
+    "text": "DO support pluggable log handlers."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-console-logger",
+    "category": "Logging",
+    "text": "DO make it easy for a consumer to enable logging output to the console. The specific steps required to enable logging to the console must be documented."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-levels",
+    "category": "Logging",
+    "text": "DO use one of the following log levels when emitting logs: Verbose (details), Informational (things happened), Warning (might be a problem or not), and Error."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-failure",
+    "category": "Logging",
+    "text": "DO use the Error logging level for failures that the application is unlikely to recover from (out of memory, etc.)."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-warning",
+    "category": "Logging",
+    "text": "DO use the Warning logging level when a function fails to perform its intended task. This generally means that the function will raise an exception.  Do not include occurrences of self-healing events (for example, when a request will be automatically retried)."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-slowlinks",
+    "category": "Logging",
+    "text": "YOU MAY log the request and response (see below) at the Warning when a request/response cycle (to the start of the response body) exceeds a service-defined threshold.  The threshold should be chosen to minimize false-positives and identify service issues."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-info",
+    "category": "Logging",
+    "text": "DO use the Informational logging level when a function operates normally."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-verbose",
+    "category": "Logging",
+    "text": "DO use the Verbose logging level for detailed troubleshooting scenarios. This is primarily intended for developers or system administrators to diagnose specific failures."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-exclude",
+    "category": "Logging",
+    "text": "DO NOT log payloads or HTTP header/query parameter values that aren't on the service provided allow list.  For header/query parameters not on the allow list use the value <REDACTED> in place of the real value."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-requests",
+    "category": "Logging",
+    "text": "DO log request line and headers as an Informational message. The log should include the following information:\nThe HTTP method.\nThe URL.\nThe query parameters (redacted if not in the allow-list).\nThe request headers (redacted if not in the allow-list).\nAn SDK provided request ID for correlation purposes.\nThe number of times this request has been attempted."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-responses",
+    "category": "Logging",
+    "text": "DO log response line and headers as an Informational message.  The format of the log should be the following:\nThe SDK provided request ID (see above).\nThe status code.\nAny message provided with the status code.\nThe response headers (redacted if not in the allow-list).\nThe time period between the first attempt of the request and the first byte of the body."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-cancellations",
+    "category": "Logging",
+    "text": "DO log an Informational message if a service call is cancelled.  The log should include:\nThe SDK provided request ID (see above).\nThe reason for the cancellation (if available)."
+  },
+  {
+    "id": "clang_implementation.html#clang-logging-exceptions",
+    "category": "Logging",
+    "text": "DO log exceptions thrown as a Warning level message. If the log level set to Verbose, append stack trace information to the message.\n\nTODO: Implement the spirit of the general guidelines for distributed tracing.\n\nTODO: Distributed Tracing is explicitly removed?\n\nTODO: Add details about how telemetry is not supported in the Embedded C SDK.\n\nWe believe testing is a part of the development process, so we expect unit and integration tests to be a part of the source code.  All components must be covered by automated testing, and developers should strive to test corner cases and main flows for every use case.\n\nAll code should contain, at least, requirements, unit tests, end-to-end tests, and samples. The requirements description should be placed in the unit test file, on top of the test function that verifies the requirement. The unit test name should be placed in the code as a comment, together with the code that implements that functionality. For example:\n\nAPI source code file:\n{% highlight c %}\nvoid foo_tcp_manager_destroy(TCP_HANDLE handle)\n{\nif(handle == NULL)\n{\n/[foo_tcp_manager_destroy_does_nothing_on_null_handle]/\nLogError(\"handle cannot be NULL\");\n}\nelse\n{\nTCP_INSTANCE* instance = (TCP_INSTANCE*)handle;\n\n<code>    /*[foo_tcp_manager_destroy_succeed_on_free_all_resources]*/\n    netif_remove(&amp;(instance-&gt;lpc_netif));\n    free(instance);\n}\n</code>\n\n}\n{% endhighlight %}\n\nUnit test file:\n{% highlight c %}\n/* If the provided TCP_HANDLE is NULL, the foo_tcp_manager_destroy shall do nothing. */\nTEST_FUNCTION(foo_tcp_manager_destroy_does_nothing_on_null_handle)\n{\n///arrange\n\n<code>///act\nfoo_tcp_manager_destroy(NULL);\n\n///assert\n\n///cleanup\n</code>\n\n}\n\n/* The foo_tcp_manager_destroy shall free all resources allocated by the tcpip. */\nTEST_FUNCTION(foo_tcp_manager_destroy_succeed_on_free_all_resources)\n{\n///arrange\nTCP_HANDLE handle = foo_tcp_manager_create();\numock_c_reset_all_calls();\nSTRICT_EXPECTED_CALL(netif_remove(IGNORED_PTR_ARG));\nSTRICT_EXPECTED_CALL(free(handle));\n\n<code>///act\nfoo_tcp_manager_destroy(handle);\n\n///assert\nASSERT_ARE_EQUAL(char_ptr, umock_c_get_expected_calls(), umock_c_get_actual_calls());\n\n///cleanup\n</code>\n\n}\n{% endhighlight %}\n\nIf a single unit test tests more than one requirement, it should be sequentially enumerated in the unit test file, and the same number should be added to the test name in the code comment. For example:\n\nAPI source code file:\n{% highlight c %}\n/[foo_tcp_manager_create_createAndReturnInstanceSucceed_1]/\nTCP_INSTANCE* instance = (TCP_INSTANCE*)malloc(sizeof(TCP_INSTANCE));\n{% endhighlight %}\n\nUnit test file:\n{% highlight c %}\n/[1]The foo_tcp_manager_create shall create a new instance of the TCP_INSTANCE\nand return it as TCP_HANDLE./\n/[2]The foo_tcp_manager_create shall initialize the tcpip thread./\n/[3]The foo_tcp_manager_create shall initialize the netif with default\ngateway, ip address, and net mask by calling netif_add./\n/[4]The foo_tcp_manager_create shall set the netif defaults by calling\nnetif_set_default and netif_set_up./\n/[5]If dhcp is enabled, the foo_tcp_manager_create shall start it by calling dhcp_start./\nTEST_FUNCTION(foo_tcp_manager_create_createAndReturnInstanceSucceed)\n{\n...\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-testing-valgrind",
+    "category": "Testing",
+    "text": "DO NOT have any memory leaks. Run samples and unit tests with valgrind (http://www.valgrind.org/downloads/current.html)  Unit tests and e2e tests are valgrind verified at the gate."
+  },
+  {
+    "id": "clang_implementation.html#clang-testing-unittests",
+    "category": "Testing",
+    "text": "DO unit test your API with ccputest (https://cpputest.github.io/)  a unit testing and mocking framework for C and C++."
+  },
+  {
+    "id": "clang_implementation.html#clang-testing-cmake-unit-tests",
+    "category": "Testing",
+    "text": "DO automatically run unit tests when building your client library; i.e. make unit tests part of your continuous integration (CI)"
+  },
+  {
+    "id": "clang_implementation.html#clang-testing-code-coverage",
+    "category": "Testing",
+    "text": "DO maintain a minimum 80% code coverage with unit tests.\n\nWe use a common build and test pipeline to provide for automatic distribution of client libraries.  To support this, we need common tooling."
+  },
+  {
+    "id": "clang_implementation.html#clang-tooling-cmake",
+    "category": "Tooling",
+    "text": "DO use CMake (https://CMake.org/) v3.7 for your project build system.\n\nVersion 3.7 is the minimum version installed on the Azure Pipelines Microsoft hosted agents\n(https://docs.microsoft.com/azure/devops/pipelines/agents/hosted)"
+  },
+  {
+    "id": "clang_implementation.html#clang-tooling-cmake-targets",
+    "category": "Tooling",
+    "text": "DO include the following standard targets:\nbuild to build the library\ntest to run the unit test suite\ndocs to generate reference documentation\nall to run all three targets\n\nInclude other targets as they appear useful during the development process."
+  },
+  {
+    "id": "clang_implementation.html#clang-tooling-minimize-variants",
+    "category": "Tooling",
+    "text": "YOU SHOULD Minimize build variants.\nIn particular do not add build options that change the client library ABI or API.\n\nTODO: Should we advise using valgrind, cppcheck, or other analysis tools (static or dynamic)?"
+  },
+  {
+    "id": "clang_implementation.html#clang-tooling-cmake-settings1",
+    "category": "Tooling",
+    "text": "DO use hidden visibility when building dynamic libraries. For CMake:\n\n{% highlight cmake %}\nset(CMAKE_C_VISIBILITY_PRESET hidden)\nset(CMAKE_VISIBILITY_INLINES_HIDDEN ON)\n{% endhighlight %}\n\nThis allows you to use an export macro to export symbols. For example:\n\n{% highlight c %}\n#ifndef APPCONF_EXPORT_H\n#define APPCONF_EXPORT_H\n\n#ifdef APPCONF_STATIC_DEFINE\n\n#else\n\n<code>    /* We are building this library */\n</code>\n\n<code>    /* We are using this library */\n</code>\n\n#endif\n\n#ifndef APPCONF_DEPRECATED\n\n#endif\n\n#ifndef APPCONF_DEPRECATED_EXPORT\n\n#endif\n\n#ifndef APPCONF_DEPRECATED_NO_EXPORT\n\n#endif\n\n#if 0 /* DEFINE_NO_DEPRECATED */\n\n#endif\n\n#endif /* APPCONF_EXPORT_H */\n{% endhighlight %}\n\nCMake will automatically generate an appropriate export header:\n\n{% highlight cmake %}\ninclude(GenerateExportHeader)\ngenerate_export_header(appconf\nEXPORT_FILE_NAME az/appconf_export.h)\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-tooling-clang-format",
+    "category": "endif",
+    "text": "DO use clang-format (http://clang.llvm.org/docs/ClangFormat.html) for formatting, with the following command-line options:\n\n{% highlight bash %}\nclang-format -style=file -i  ...\n{% endhighlight %}\n\nUsing -i does an in-place edit of the files for style.  There is a Visual Studio extension (https://marketplace.visualstudio.com/items?itemName=LLVMExtensions.llvm-toolchain) that binds Ctrl-R Ctrl-F to this operation. Visual Studio 2019 includes this functionality by default.\n\nTODO: Decide on exact formatting standards to use and include here."
+  },
+  {
+    "id": "clang_implementation.html#clang-tooling-cmake-docs",
+    "category": "endif",
+    "text": "DO generate API documentation with doxygen.\nFor example in CMake:\n\n{% highlight cmake %}\nfind_package(Doxygen REQUIRED doxygen)\nset(DOXYGEN_GENERATE_HTML YES)\nset(DOXYGEN_GENERATE_XML YES)\nset(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)\nset(DOXYGEN_EXTRACT_PACKAGE YES)\nset(DOXYGEN_SIMPLE_STRUCTS YES)\nset(DOXYGEN_TYPEDEF_HIDES_STRUCT NO)\n\ndoxygen_add_docs(doxygen\n${PROJECT_SOURCE_DIR}/inc\n${PROJECT_SOURCE_DIR}/src\n${PROJECT_SOURCE_DIR}/doc\nCOMMENT \"generate docs\")\n{% endhighlight %}\n\nNotice that:\nWe use find_package() to find doxygen\nWe use the DOXYGEN_<PREF> CMake variables instead of writing your own doxyfile.\nWe set OPTIMIZE_OUTPUT_FOR_C in order to get more C appropriate output.\nWe use doxygen_add_docs to add the target, this will generate a doxyfile for you."
+  },
+  {
+    "id": "clang_implementation.html#clang-tooling-cmake-samples",
+    "category": "endif",
+    "text": "DO provide a CMake option of the form <SDK_NAME>_BUILD_SAMPLES that includes all samples in the build.  For example:\n\n{% highlight cmake %}\nif(AZURE_APPCONF_BUILD_SAMPLES)\nadd_subdirectory(samples)\nendif()\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-tooling-cmake-no-samples-by-default",
+    "category": "endif",
+    "text": "DO NOT install samples by default."
+  },
+  {
+    "id": "clang_implementation.html#clang-format-clang",
+    "category": "Formatting",
+    "text": "DO use clang-format (http://clang.llvm.org/docs/ClangFormat.html) for formatting your code. Use the common clang-format options from Engineering Systems.\n\nIn general, clang-format will format your code correctly and ensure consistency. However, these are few additional  rules to keep in mind."
+  },
+  {
+    "id": "clang_implementation.html#clang-format-clang-loops",
+    "category": "Formatting",
+    "text": "DO place all conditional or loop statements on one line, or add braces to identify the conditional/looping block.\n\n{%highlight c %}\nif (meow == 0) purr += 1; // OK\nif (meow == 0) {\npurr += 1; // OK\n}\nif (meow == 0) { purr += 1; } // OK (although will probably be changed by clang-format)\nif (meow == 0)\npurr += 1; // NOT OK\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-format-clang-closing-braces",
+    "category": "Formatting",
+    "text": "DO add comments to closing braces.  Adding a comment to closing braces can help when you are reading code because you don't have to find the begin brace to know what is going on.\n\n{% highlight c %}\nwhile (1) {\nif (valid) {\n...\n} /* if valid */\nelse {\n\n<code>} /* not valid */\n</code>\n\n} /* end forever */\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-format-clang-closing-endif",
+    "category": "Formatting",
+    "text": "DO add comments to closing preprocessor directives to make them easier to understand.  For example:\n\n{% highlight c %}\n#if BEGIN_CODE\n\n#ifndef INTERNAL_CODE\n\n#endif /* INTERNAL_CODE */\n\n#endif /* BEGIN_CODE */\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-format-clang-space-return",
+    "category": "Formatting",
+    "text": "YOU SHOULD NOT use parens in return statements when it isn't necessary."
+  },
+  {
+    "id": "clang_implementation.html#clang-format-clang-no-yoda",
+    "category": "Formatting",
+    "text": "DO place constants on the right of comparisons. For example if (a == 0) and not if (0 == a)"
+  },
+  {
+    "id": "clang_implementation.html#clang-format-clang-comment-fallthru",
+    "category": "Formatting",
+    "text": "DO include a comment for falling through a non-empty case statement.  For example:\n\n{% highlight c %}\nswitch (...) {\ncase 1:\ndo_something();\nbreak;\ncase 2:\ndo_something_else();\n/* fall through */\ncase 3:\n{\nint v;\n\n<code>        do_something_more(v);\n    }\n    break;\ndefault:\n    log(LOG_DEBUG, \"default case reached\");\n</code>\n\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-format-clang-no-goto",
+    "category": "Formatting",
+    "text": "YOU SHOULD NOT use goto statements.  The main place where goto statements can be usefully employed is to break out of several levels of switch, for, or while nesting, although the need to do such a thing may indicate that the inner constructs should be broken out into a separate function with a success/failure return code.  When a goto is necessary, the accompanying label should be alone on a line and to the left of the code that follows.  The goto should be commented as to its utility and purpose."
+  },
+  {
+    "id": "clang_implementation.html#clang-init-all-vars",
+    "category": "Complexity Management",
+    "text": "YOU SHOULD Initialize all variables. Only leave them\nuninitialized if there is a real performance reason to do so. Use static and dynamic analysis tools to\ncheck for uninitialized access. You may leave \"result\" variables uninitialized so long as they clearly do\nnot escape from the innermost lexical scope."
+  },
+  {
+    "id": "clang_implementation.html#clang-function-size",
+    "category": "Complexity Management",
+    "text": "YOU SHOULD limit function bodies to one page of code (40 lines, approximately)."
+  },
+  {
+    "id": "clang_implementation.html#clang-document-null-bodies",
+    "category": "Complexity Management",
+    "text": "DO document null statements.  Always document a null body for a for or while statement so that it is clear the null body is intentional."
+  },
+  {
+    "id": "clang_implementation.html#clang-use-explicit-compares",
+    "category": "Complexity Management",
+    "text": "DO use explicit comparisons when testing for failure.  Use if (FAIL != f()) rather than if (f()), even though FAIL may have the value 0 which C considers to be false.  An explicit test will help you out later when somebody decides that a failure return should be -1 instead of 0.\n\nExplicit comparison should be used even if the comparison value will never change.  e.g. if (!(bufsize % sizeof(int))) should be written as if (0 == (bufsize % sizeof(int)) to reflect the numeric (not boolean) nature of the test.\n\nA frequent trouble spot is using strcmp to test for string equality.  You should never use a default action.  The preferred approach is to use an inline function:\n\n{% highlight c %}\ninline bool string_equal(char *a, char *b) {\nreturn (0 == strcmp(a, b));\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-embedded-assign",
+    "category": "Complexity Management",
+    "text": "~ Should\nYOU SHOULD NOT use embedded assignments.  There is a time and a place for embedded assignment statements.  In some constructs, there is no better way to accomplish the results without making the code bulkier and less readable.\n\n{% highlight c %}\nwhile (EOF != (c = getchar())) {\n/* process the character */\n}\n{% endhighlight %}\n\nHowever, one should consider the tradeoff between increased speed and decreased maintainability that results when embedded assignments are used in artificial places."
+  },
+  {
+    "id": "clang_implementation.html#clang-design-mm-allocation",
+    "category": "Memory management",
+    "text": "DO let the caller allocate memory, then pass a pointer to it to the functions; e.g. int az_iot_create_client(az_iot_client* client);.\n\nThe developer could then write code similar to:\n\n{% highlight c %}\naz_iot_client client; /* or allocate dynamically with malloc() if needed */\n\n/* init client, if needed */\nclient.id = 0;\nclient.name = NULL;\n\nif (az_iot_create_client(client) != 0)\n{\n/ handle error */\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-design-mm-allocation2",
+    "category": "Memory management",
+    "text": "YOU SHOULD If you must allocate memory within the client library,\ndo so using user-overridable functions.\n\n{% highlight c %}\n/**\n@brief   uLib malloc\n\nDefines the malloc function that the ulib shall use as its own way to dynamically allocate\n\n memory from the HEAP. For simplicity, it can be defined as the malloc(size) from the `stdlib.h`.\n\n\n\n<code> memory from the HEAP. For simplicity, it can be defined as the malloc(size) from the `stdlib.h`.\n</code>\n\n*/\n#define AZ_IOT_MALLOC(size)    malloc(size)\n\n/**\n@brief   uLib free\n\nDefines the free function that the ulib shall use as its own way to release memory dynamic\n\n allocated in the HEAP. For simplicity, it can be defined as the free(ptr) from the `stdlib.h`.\n\n\n\n<code> allocated in the HEAP. For simplicity, it can be defined as the free(ptr) from the `stdlib.h`.\n</code>\n\n*/\n#define AZ_IOT_FREE(ptr)       free(ptr)\n{% endhighlight %}\n\nTODO: Should this be in azure core, or specific to a library?"
+  },
+  {
+    "id": "clang_implementation.html#clang-no-ms-secure-functions",
+    "category": "Secure functions",
+    "text": "YOU SHOULD NOT use Microsoft security enhanced versions of CRT functions (https://docs.microsoft.com/cpp/c-runtime-library/security-enhanced-versions-of-crt-functions) to implement APIs that need to be portable across many platforms. Such code is not portable and is not C99 compatible. Adding that code to your API will complicate the implementation with little to no gain from the security side. See arguments against (http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1967.htm) \n\nTODO: Verify with the security team, and what are the alternatives?"
+  },
+  {
+    "id": "clang_implementation.html#clang-test-implicit-assign",
+    "category": "Miscellaneous",
+    "text": "DO NOT use implicit assignment inside a test.  This is generally an accidental omission of the second = of the logical compare. The following is confusing and prone to error.\n\n{% highlight c %}\nif (a = b) { ... }\n{% endhighlight %}\n\nDoes the programmer really mean assignment here? Sometimes yes, but usually no. Instead use explicit tests and avoid assignment with an implicit test. The recommended form is to do the assignment before doing the test:\n\n{% highlight c %}\na = b;\nif (a) { ... }\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-no-register",
+    "category": "Miscellaneous",
+    "text": "DO use the register sparingly to indicate the variables that you think are most critical.  Modern compilers will put variables in registers automatically.  In extreme cases, mark the 2-4 most critical values as register and mark the rest as REGISTER. The latter can be #defined to register on those machines with many registers."
+  },
+  {
+    "id": "clang_implementation.html#clang-be-const-correct",
+    "category": "Miscellaneous",
+    "text": "DO be const correct.  C provides the const keyword to allow passing as parameters objects that cannot change to indicate when a method doesn't modify its object. Using const in all the right places is called \"const correctness.\""
+  },
+  {
+    "id": "clang_implementation.html#clang-use-hashif",
+    "category": "Miscellaneous",
+    "text": "DO use #if instead of #ifdef.  For example:\n\n{% highlight c %}\n// Bad example\n#ifdef DEBUG\ntemporary_debugger_break();\n#endif\n{% endhighlight %}\n\nSomeone else might compile the code with turned-of debug info like:\n\n{% highlight c %}\ncc -c lurker.cc -DDEBUG=0\n{% endhighlight %}\n\nAlway use #if if you have to use the preprocessor. This works fine, and does the right thing, even if DEBUG is not defined at all (!)\n\n{% highlight c %}\n// Good example\n#if DEBUG\ntemporary_debugger_break();\n#endif\n{% endhighlight %}\n\nIf you really need to test whether a symbol is defined or not, test it with the defined() construct, which allows you to add more things later to the conditional without editing text that's already in the program:\n\n{% highlight c %}\n#if !defined(USER_NAME)\n#define USER_NAME \"john smith\"\n#endif\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_implementation.html#clang-large-comments",
+    "category": "Miscellaneous",
+    "text": "DO\nUse #if to comment out large code blocks.\n\nSometimes large blocks of code need to be commented out for testing.  The easiest way to do this is with an #if 0 block:\n\n{% highlight c %}\nvoid example()\n{\ngreat looking code\n\n<code>#if 0\n  many lines  of code\n#endif\n\nmore code\n</code>\n\n}\n{% endhighlight %}\n\nYou can't use /**/ style comments because comments can't contain comments and a large block of your code will probably contain connects.\n\nDo not use #if 0 directly.  Instead, use descriptive macro names:\n\n{% highlight c %}\n#if NOT_YET_IMPLEMENTED\n#if OBSOLETE\n#if TEMP_DISABLED\n{% endhighlight %}\n\nAlways add a short comment explaining why it is commented out."
+  },
+  {
+    "id": "clang_implementation.html#clang-",
+    "category": "Miscellaneous",
+    "text": "DO NOT put data definitions in header files.  For example, this should be avoided:\n\n{% highlight c %}\n/* aheader.h */\nint x = 0;\n{% endhighlight %}\n\nIt's bad magic to have space consuming code silently inserted through the innocent use of header files.  It's not common practice to define variables in the header file, so it will not occur to developers to look for this when there are problems.  Instead, define the variable once in a source file and then use an extern statement to reference it in the header file."
+  },
+  {
+    "id": "clang_implementation.html#clang-no-magic-numbers",
+    "category": "Miscellaneous",
+    "text": "DO NOT use magic numbers. A magic number is a bare naked number used in source code. It's magic because no-one will know what it means after a while.  This significantly reduces maintainability. For example:\n\n{% highlight c %}\n// Don't write this.\nif      (22 == foo) { start_thermo_nuclear_war(); }\nelse if (19 == foo) { refund_lots_money(); }\nelse if (16 == foo) { infinite_loop(); }\nelse                { cry_cause_im_lost(); }\n{% endhighlight %}\n\nInstead of magic numbers, use a real name that means something. You can use #define, constants, or enums as names. For example:\n\n{% highlight c %}\n// These are good ideas.\n#define   PRESIDENT_WENT_CRAZY  (22)\nconst int WE_GOOFED= 19;\nenum  {\nTHEY_DIDNT_PAY= 16\n};\n\nif      (PRESIDENT_WENT_CRAZY == foo) { start_thermo_nuclear_war(); }\nelse if (WE_GOOFED            == foo) { refund_lots_money(); }\nelse if (THEY_DIDNT_PAY       == foo) { infinite_loop(); }\nelse                                  { happy_days_i_know_why_im_here(); }\n{% endhighlight %}\n\nPrefer enum values since the debugger can display the label and value and no memory is allocated.  If you use const, memory is allocated.  If you use #define, the debugger cannot display the label."
+  },
+  {
+    "id": "clang_implementation.html#clang-check-syscall-errors",
+    "category": "Miscellaneous",
+    "text": "DO check every system call for an error return, unless you know you wish to ignore errors. For example, printf returns an error code but it is rarely relevant. Cast the return to (void) if you do not care about the error code.\n\n{% highlight c %}\n(void)printf(\"The return type is ignored\");\n{% endhighlight %}\n~"
+  },
+  {
+    "id": "clang_implementation.html#clang-include-errorstr",
+    "category": "Miscellaneous",
+    "text": "DO include the system error text when reporting system error messages."
+  },
+  {
+    "id": "clang_implementation.html#clang-check-malloc",
+    "category": "Miscellaneous",
+    "text": "DO check every call to malloc or realloc.\n\nWe recommend that you use a library-specific wrapper for memory allocation calls that always do the right thing."
+  }
+]

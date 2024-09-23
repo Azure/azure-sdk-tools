@@ -26,7 +26,8 @@ pr:
       - tools/sdk-testgen
 
 pool:
-  vmImage: "ubuntu-latest"
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
 
 variables:
   NugetSecurityAnalysisWarningLevel: "none"
@@ -62,9 +63,8 @@ stages:
             inputs:
               testRunner: JUnit
               testResultsFiles: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/junit.xml
-          - task: PublishCodeCoverageResults@1
+          - task: PublishCodeCoverageResults@2
             inputs:
-              codeCoverageTool: Cobertura
               summaryFileLocation: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage/cobertura-coverage.xml
               reportDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage
 
@@ -80,17 +80,6 @@ stages:
           - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages
             artifact: packages
             displayName: Publish packages(.tgz) as pipeline artifacts
-      - job: Testmodeler
-        displayName: "TestModeler"
-        steps:
-          - script: |
-              npm ci
-            displayName: "npm ci"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/autorest.testmodeler
-          - script: |
-              npm run test
-            displayName: "npm run test"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/autorest.testmodeler
 
   - ${{if eq(variables['Build.Reason'], 'Manual')}}:
     - stage: release

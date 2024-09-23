@@ -1,6 +1,56 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Mon, 22 Aug 2022 03:25:13 GMT and should not be manually modified.
+This log was last generated on Thu, 14 May 2024 08:36:29 GMT and should not be manually modified.
+
+## 2.6.2
+Thu, 14 May 2024 08:36:29 GMT
+
+### Patches
+
+- Update dependencies
+
+## 2.6.1
+Fri, 21 Jul 2023 08:36:29 GMT
+
+### Patches
+
+- Support DataFactoryKeyVaultSecretReference of DataFactoryElement
+
+## 2.6.0
+Mon, 19 Jun 2023 08:50:04 GMT
+
+### Minor changes
+
+- Support DataFactoryElement
+
+## 2.5.2
+Wed, 14 Jun 2023 08:54:31 GMT
+
+### Patches
+
+- Upgrade m4 core version.
+
+## 2.5.1
+Mon, 13 Mar 2023 02:20:40 GMT
+
+### Patches
+
+- fix a bug of parsing body parameter and add eslint
+
+## 2.5.0
+Thu, 02 Feb 2023 09:40:48 GMT
+
+### Patches
+
+- Use webpack and remove npm-shrinkwrap.json
+- Update dependency semver ranges
+
+## 2.4.0
+Mon, 12 Dec 2022 06:18:04 GMT
+
+### Patches
+
+- Upgrade @autorest/codemodel to 4.19.2, and use modelerfour@4.25.0
 
 ## 2.3.2
 Mon, 22 Aug 2022 03:25:13 GMT

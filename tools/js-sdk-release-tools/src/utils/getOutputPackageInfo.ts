@@ -1,16 +1,14 @@
 import {RunningEnvironment} from "./runningEnvironment";
 
-export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | undefined, readmeMd?: string) {
+export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | undefined, readmeMd: string | undefined, typespecProject: string | undefined) {
     let outputPackageInfo: any;
     if (runningEnvironment === RunningEnvironment.SwaggerSdkAutomation) {
         outputPackageInfo = {
-            "packageName": "",
+            // pipeline framework limit, it cannot handle result with empty string
+            "packageName": "default",
             "path": [
                 'rush.json',
                 'common/config/rush/pnpm-lock.yaml'
-            ],
-            "readmeMd": [
-                readmeMd
             ],
             "changelog": {
                 "content": "",
@@ -19,9 +17,15 @@ export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | un
             "artifacts": [],
             "result": "succeeded"
         };
+        if (typespecProject) {
+            outputPackageInfo['typespecProject'] = [typespecProject];
+        } else {
+            outputPackageInfo['readmeMd'] = [readmeMd];
+        }
     } else if (runningEnvironment === RunningEnvironment.SdkGeneration) {
         outputPackageInfo = {
-            "packageName": "",
+            // pipeline framework limit, it cannot handle result with empty string
+            "packageName": "default",
             "path": [
                 'rush.json',
                 'common/config/rush/pnpm-lock.yaml'

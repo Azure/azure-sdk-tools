@@ -14,24 +14,30 @@ pr:
     include:
       - /packages/java-packages/codesnippet-maven-plugin/
 
-stages:
-  - stage: Validate
-    jobs:
-      - job: Validate
-        variables:
-          - template: /eng/pipelines/templates/variables/globals.yml
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: Validate
+        jobs:
+          - job: Validate
+            variables:
+              - template: /eng/pipelines/templates/variables/globals.yml
+              - template: /eng/pipelines/templates/variables/image.yml
 
-        pool:
-          name: azsdk-pool-mms-ubuntu-2004-general
+            pool:
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
 
-        steps:
-          - task: Maven@3
-            displayName: 'Validate Build'
-            inputs:
-              mavenPomFile: 'packages/java-packages/codesnippet-maven-plugin/pom.xml'
-              goals: 'clean install'
-              options: '--batch-mode -Dmaven.wagon.httpconnectionManager.ttlSeconds=60 --no-transfer-progress'
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.8'
-              jdkArchitectureOption: 'x64'
-              publishJUnitResults: false
+            steps:
+              - task: Maven@3
+                displayName: 'Validate Build'
+                inputs:
+                  mavenPomFile: 'packages/java-packages/codesnippet-maven-plugin/pom.xml'
+                  goals: 'clean install'
+                  options: '--batch-mode -Dmaven.wagon.httpconnectionManager.ttlSeconds=60 --no-transfer-progress'
+                  javaHomeOption: 'JDKVersion'
+                  jdkVersionOption: '1.8'
+                  jdkArchitectureOption: 'x64'
+                  publishJUnitResults: false

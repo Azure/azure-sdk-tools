@@ -22,6 +22,19 @@ using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using APIViewWeb.HostedServices;
 using APIViewWeb.Filters;
+using APIViewWeb.Account;
+using APIView.Identity;
+using APIViewWeb.Managers;
+using APIViewWeb.Hubs;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using APIViewWeb.LeanControllers;
+using APIViewWeb.MiddleWare;
+using Microsoft.OpenApi.Models;
+using System.IO;
+using Microsoft.Azure.Cosmos;
+using APIViewWeb.Managers.Interfaces;
+using Azure.Identity;
 
 namespace APIViewWeb
 {
@@ -38,12 +51,14 @@ namespace APIViewWeb
             VersionHash = indexOfPlus == -1 ? "dev" : version.Substring(indexOfPlus + 1);
         }
 
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
+            Environment = environment;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -62,9 +77,13 @@ namespace APIViewWeb
                 .GetSection("Github")
                 .Bind(options));
 
+#pragma warning disable ASP5001 // Type or member is obsolete
+#pragma warning disable CS0618 // Type or member is obsolete
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Latest)
                 .AddRazorRuntimeCompilation();
+#pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning restore ASP5001 // Type or member is obsolete
 
             services.AddRazorPages(options =>
             {
@@ -72,18 +91,29 @@ namespace APIViewWeb
                 options.Conventions.AddPageRoute("/Assemblies/Index", "");
             });
 
-            services.AddSingleton<BlobCodeFileRepository>();
-            services.AddSingleton<BlobOriginalsRepository>();
-            services.AddSingleton<CosmosReviewRepository>();
-            services.AddSingleton<CosmosCommentsRepository>();
-            services.AddSingleton<CosmosPullRequestsRepository>();
-            services.AddSingleton<DevopsArtifactRepository>();
+            services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
+            services.AddSingleton<IBlobOriginalsRepository, BlobOriginalsRepository>();
+            services.AddSingleton<IBlobUsageSampleRepository, BlobUsageSampleRepository>();
 
-            services.AddSingleton<ReviewManager>();
-            services.AddSingleton<CommentsManager>();
-            services.AddSingleton<NotificationManager>();
-            services.AddSingleton<PullRequestManager>();
-            services.AddSingleton<PackageNameManager>();
+            services.AddSingleton<ICosmosReviewRepository,CosmosReviewRepository>();
+            services.AddSingleton<ICosmosAPIRevisionsRepository, CosmosAPIRevisionsRepository>();
+            services.AddSingleton<ICosmosCommentsRepository, CosmosCommentsRepository>();
+            services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
+            services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
+            services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
+            services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
+            services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
+
+            services.AddSingleton<IReviewManager, ReviewManager>();
+            services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
+            services.AddSingleton<ICommentsManager, CommentsManager>();
+            services.AddSingleton<INotificationManager, NotificationManager>();
+            services.AddSingleton<IPullRequestManager, PullRequestManager>();
+            services.AddSingleton<IPackageNameManager, PackageNameManager>();
+            services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
+            services.AddSingleton<ICodeFileManager, CodeFileManager>();
+            services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IAICommentsManager, AICommentsManager>();
             services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -98,8 +128,17 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, SwaggerLanguageService>();
             services.AddSingleton<LanguageService, SwiftLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
+            services.AddSingleton<LanguageService, TypeSpecLanguageService>();
 
-            services.AddAuthentication(options =>
+            if (Environment.IsDevelopment() && Configuration["AuthenticationScheme"] == "Test")
+            {
+                services.AddAuthentication("Test")
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", options => { });
+                services.AddSingleton<IStartupFilter, UITestsStartUpFilter>();
+            }
+            else
+            {
+                services.AddAuthentication(options =>
                 {
                     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -181,20 +220,68 @@ namespace APIViewWeb
                         }
                     };
                 });
+            }
 
             services.AddAuthorization();
-            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
+            services.AddCors(options => {
+                options.AddPolicy("AllowCredentials", builder =>
+                {
+                    string [] origins = new string[] { 
+                        "https://localhost:4200",
+                        "https://spa.apiviewuxtest.com",
+                        "https://spa.apiviewstagingtest.com",
+                        "https://spa.apiview.dev"
 
+                    };
+                    builder.WithOrigins(origins)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials()
+                        .SetPreflightMaxAge(TimeSpan.FromHours(20));
+                });
+            });
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, APIRevisionOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, PullRequestPermissionRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, AutoAPIRevisionModifierRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
+            services.AddSingleton<CosmosClient>(x =>
+            {
+                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential());
+            });
+
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
+            services.AddHostedService<LinesWithDiffBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+
+            services.AddControllersWithViews()
+                .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
+                .PartManager.ApplicationParts.Add(new AssemblyPart(typeof(BaseApiController).Assembly));
+            services.AddSignalR(options => {
+                options.EnableDetailedErrors = true;
+                options.MaximumReceiveMessageSize =  1024 * 1024;
+            });
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "APIView API",
+                    Description = "API Endpoints for consuming APIView application",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Azure SDK Engineering Systems",
+                        Url = new Uri("https://teams.microsoft.com/l/channel/19%3a3adeba4aa1164f1c889e148b1b3e3ddd%40thread.skype/APIView?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47")
+                    }
+                });
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+            });
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
@@ -246,14 +333,18 @@ namespace APIViewWeb
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseCors("AllowCredentials");
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<SwaggerAuthMiddleware>();
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
                 endpoints.MapDefaultControllerRoute();
+                endpoints.MapHub<SignalRHub>("hubs/notification");
             });
         }
     }

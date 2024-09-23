@@ -1,0 +1,43 @@
+@import "../shared/mixins.scss";
+
+#samples-main-container {
+    @include main-content-container;
+}
+
+#edit-samples-context, #upload-samples-context {
+    @include offcanvas-context-large
+}
+
+.samples-center {
+    overflow: auto;
+    height: calc(100vh - 120px);
+    padding: 0px;
+    background-color: var(--base-fg-color);
+    scroll-behavior: smooth;
+    contain: size layout paint;
+}
+
+.usage-sample + .border + .rounded {
+    margin-top: 15px !important;
+}
+
+.usage-sample .code-line {
+    padding: 0px;
+    margin: 0px;
+    font-size: 85%;
+    line-height: 10px;
+}
+
+.usage-sample .line-number {
+    font-size: 125%;
+}
+
+.usage-sample .internal {
+    display: inline-block;
+}
+
+.edit-samples-content {
+    textarea {
+        height: 60dvh;
+    }
+}

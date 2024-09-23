@@ -1,22 +1,40 @@
-﻿@model IEnumerable<APIView.NavigationItem>
+@using APIViewWeb.Models
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using APIViewWeb.Helpers
+@model IEnumerable<APIView.NavigationItem>
+@{
+    bool hasSections = ViewBag.HasSections;
+    bool isChildNavigation = ViewBag.IsChildNavigation ?? false;
+    string navListGroupClass = (hasSections && isChildNavigation) ? "nav-list-group nav-list-collapsed" : "nav-list-group";
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel;
+    var languageCssSafename = TempData["LanguageCssSafeName"] as string;
+
+}
 
 <ul class="nav-list-children">
         @foreach (var item in Model)
         {
-            <li class="nav-list-group">
+            var elementNavListClass = navListGroupClass;
+            if (item.IsHiddenApi)
+            {
+                elementNavListClass += PageModelHelpers.GetHiddenApiClass(userPreference);
+            }
+            <li class="@elementNavListClass">
                 <span class="nav-list-toggle @(item.ChildItems.Any() ? "":"invisible")"></span>
 
                 @if (item.Tags != null && item.Tags.ContainsKey("TypeKind"))
                 {
-                    <span class="icon icon-@item.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
+                <span class="@languageCssSafename-variant icon-@item.Tags.GetValueOrDefault("TypeKind")">&nbsp;&nbsp;</span>
                 }
                 else
                 {
-                    <span class="icon icon-unknown">&nbsp;&nbsp;</span>
+                <span class="@languageCssSafename-variant icon-unknown">&nbsp;&nbsp;</span>
                 }
 
                 <a href="#@item.NavigationId" title="@item.Text">@item.Text</a>
-
+                @{
+                    ViewBag.IsChildNavigation = true;
+                }
                 <partial name="Shared/Navigation" model="item.ChildItems"/>
             </li>
         }

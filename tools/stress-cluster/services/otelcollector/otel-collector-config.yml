@@ -1,0 +1,28 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+ 
+processors:
+  batch:
+ 
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, azuremonitor]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [azuremonitor]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, azuremonitor]
+
+exporters:
+  debug:
+    verbosity: "${env:OTEL_LOG_LEVEL}"
+  azuremonitor:
+    connection_string: "${env:APPLICATIONINSIGHTS_CONNECTION_STRING}"

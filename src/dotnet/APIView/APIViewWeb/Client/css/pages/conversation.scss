@@ -1,0 +1,11 @@
+@import "../shared/mixins.scss";
+
+#conversation-main-container {
+    @include main-content-container;
+}
+
+.conversiation-center {
+    overflow: auto;
+    color: var(--base-text-color);
+    height: calc(100vh - 145px);
+}

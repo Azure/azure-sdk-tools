@@ -1,0 +1,95 @@
+@using APIViewWeb.Helpers
+@using APIViewWeb.LeanModels;
+@model (ReviewListItemModel review, IEnumerable<APIRevisionListItemModel> APIRevisions, APIRevisionListItemModel activeAPIRevision, APIRevisionListItemModel diffAPIRevision)
+<div class="row g-4">
+    <div class="col mx-3">
+        <form>
+            <div class="d-grid gap-2">
+                @if (Model.activeAPIRevision != null)
+                {
+                    <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#add-apirevision-context" aria-controls="add-apirevision-context">Add APIRevision</button>
+                }
+                <div class="btn-group" role="group" aria-label="APIRevisions Select">
+                    <input type="checkbox" class="btn-check" id="manual-apirevisions-check" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="manual-apirevisions-check">Manual</label>
+
+                    <input type="checkbox" class="btn-check" id="automatic-apirevisions-check" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="automatic-apirevisions-check">Automatic</label>
+
+                    <input type="checkbox" class="btn-check" id="pullrequest-apirevisions-check" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="pullrequest-apirevisions-check">Pull Request</label>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="search" placeholder="Search.." class="form-control" id="apiRevisions-search" aria-label="apirevision search">
+                </div>
+            </div>
+        </form>
+
+        <div class="api-revisions revisions-list-container p-2">
+            @foreach (var apiRevision in Model.APIRevisions)
+            {
+                <div class="card @apiRevision.IsApproved my-2" data-id="@apiRevision.Id">
+                    <img username="@apiRevision.CreatedBy" size="105" aria-label="GitHub User Avatar" />
+                    <div class="card-body">
+                        <h6 class="card-title">@apiRevision.Label</h6>
+                        @if (User.GetGitHubLogin() == apiRevision.CreatedBy)
+                        {
+                            <div class="input-group input-group-sm mb-1 edit-revision-label d-none">
+                                <input type="text" class="form-control" value="@apiRevision.Label" aria-label="Edit APIRevison Label">
+                                <button class="input-group-text enter-rename"><i class="bi bi-check"></i></button>
+                                <button class="input-group-text cancel-rename"><i class="bi bi-x"></i></button>
+                            </div>
+                        }
+                        <p class="card-subtitle mb-1 text-body-secondary"><b>Created: </b><span date="@apiRevision.CreatedOn"></span> , <b>By: </b>@apiRevision.CreatedBy , <b>Updated: </b><span date="@apiRevision.LastUpdatedOn"></span></p>
+                        <p class="card-subtitle mb-1 text-body-secondary"><b>Type: </b>@apiRevision.APIRevisionType , <b>Version: </b>@apiRevision.Files[0].PackageVersion @if (apiRevision.IsReleased) { <span class="badge text-bg-success shipped-badge">Shipped</span> } </p>
+                    </div>
+                    <div class="revision-actions">
+                        <div class="btn-group animate__animated animate__fadeIn" role="group" aria-label="apiRevision action buttons">
+                            @if (Model.activeAPIRevision != null)
+                            {
+                                @if (apiRevision.Id != Model.activeAPIRevision.Id && (Model.diffAPIRevision == null || Model.diffAPIRevision.Id != apiRevision.Id))
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>
+                                }
+                                @if ((Model.diffAPIRevision == null || Model.diffAPIRevision.Id != apiRevision.Id) && Model.activeAPIRevision.Id != apiRevision.Id)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>
+                                }
+                                @if (Model.diffAPIRevision != null && apiRevision.Id == Model.diffAPIRevision.Id)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary clear-diff" data-bs-toggle="tooltip" title="Clear Diff"><i class="bi bi-file-earmark-minus"></i></button>
+                                }
+
+                            }
+                            @if (User.GetGitHubLogin() == apiRevision.CreatedBy)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary rename" data-bs-toggle="tooltip" title="Rename"><i class="bi bi-pencil-square"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-primary delete" data-bs-toggle="tooltip" title="Delete"><i class="bi bi-x-circle text-danger"></i></button>
+                            }
+                        </div>
+                    </div>
+                    <div class="revision-indicator-checks animate__animated animate__slideInLeft">
+                        @if (apiRevision.IsApproved)
+                        {
+                            <i class="fas fa-check-circle text-success mr-1"></i>
+                        }
+                        @if (Model.activeAPIRevision != null)
+                        {
+                            @if (apiRevision.Id == Model.activeAPIRevision.Id)
+                            {
+                                <i class="bi bi-clock-history active-rev mr-1"></i>
+                            }
+                            @if (Model.diffAPIRevision != null && Model.diffAPIRevision.Id == apiRevision.Id)
+                            {
+                                <i class="bi bi-file-diff diff-rev mr-1"></i>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<partial name="_AddAPIRevisionsPartial" model="Model.review" />

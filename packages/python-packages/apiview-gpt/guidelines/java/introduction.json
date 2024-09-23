@@ -1,0 +1,867 @@
+[
+  {
+    "id": "java_introduction.html#java-general-follow-general-guidelines",
+    "category": "General Guidelines",
+    "text": "DO follow the [General Azure SDK Guidelines]."
+  },
+  {
+    "id": "java_introduction.html#java-general-repository",
+    "category": "General Guidelines",
+    "text": "DO locate all source code in the [azure/azure-sdk-for-java] GitHub repository.\n\nCurrently, this document describes guidelines for client libraries exposing HTTP services, with a small amount of guidance for AMQP-based services. If your service is not HTTP-based, please contact the Azure SDK Architecture Board (https://azure.github.io/azure-sdk/policies_reviewprocess.html) for guidance.\n\nAzure services are exposed to Java developers as one or more service client types and a set of supporting types.\n\nService clients are the main starting points for developers calling Azure services with the Azure SDK. Each client library should have at least one client in its main namespace, so it\u2019s easy to discover. The guidelines in this section describe patterns for the design of a service client. Because in Java both synchronous and asynchronous service clients are required, the sections below are organized into general service client guidance, followed by sync- and async-specific guidance.\n\nThere exists a distinction that must be made clear with service clients: not all classes that perform HTTP (or otherwise) requests to a service are automatically designated as a service client. A service client designation is only applied to classes that are able to be directly constructed because they are uniquely represented on the service. Additionally, a service client designation is only applied if there is a specific scenario that applies where the direct creation of the client is appropriate. If a resource can not be uniquely identified or there is no need for direct creation of the type, then the service client designation should not apply."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-name",
+    "category": "Service Client",
+    "text": "DO name service client types with the Client suffix (for example, ConfigurationClient)."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-annotation",
+    "category": "Service Client",
+    "text": "DO annotate all service clients with the @ServiceClient annotation."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-namespace",
+    "category": "Service Client",
+    "text": "DO place service client types that the consumer is most likely to interact with in the root package of the client library (for example, com.azure.<group>.servicebus). Specialized service clients should be placed in sub-packages."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-immutable",
+    "category": "Service Client",
+    "text": "DO ensure that all service client classes are immutable and stateless upon instantiation."
+  },
+  {
+    "id": "java_introduction.html#java-network-separate-packages",
+    "category": "Service Client",
+    "text": "DO have separate service clients for sync and async APIs."
+  },
+  {
+    "id": "java_introduction.html#java-sync-client-name",
+    "category": "Sync Service Clients",
+    "text": "DO offer a sync service client named <ServiceName>Client. More than one service client may be offered for a single service. An example of a sync client is shown below:\n\n```java\n// Copyright (c) Microsoft Corporation. All rights reserved.\n// Licensed under the MIT License.\n\npackage com.azure.&lt;group&gt;.&lt;service_name&gt;;\n\n@ServiceClient(\n    builder = &lt;service_name&gt;ClientBuilder.class,\n    serviceInterfaces = &lt;service_name&gt;Service.class)\npublic final class &lt;service_name&gt;Client {\n\n    // internally, sync API can defer to async API with sync-over-async\n    private final &lt;service_name&gt;AsyncClient client;\n\n    // package-private constructors only - all instantiation is done with builders\n    &lt;service_name&gt;Client(&lt;service_name&gt;AsyncClient client) {\n        this.client = client;\n    }\n\n    // service methods...\n\n    // A single response API\n    public Response&lt;&lt;model&gt;&gt; &lt;service_operation&gt;(&lt;parameters&gt;) {\n        // deferring to async client internally\n        return client.&lt;service_operation&gt;(&lt;parameters&gt;).block();\n    }\n\n    // A non-paginated sync list API (refer to pagination section for more details)\n    public IterableStream&lt;&lt;model&gt;&gt; list&lt;service_operation&gt;(&lt;parameters&gt;) {\n        // ...\n    }\n\n    // A paginated sync list API (refer to pagination section for more details)\n    public PagedIterable&lt;&lt;model&gt;&gt; list&lt;service_operation&gt;(&lt;parameters&gt;) {\n        // ...\n    }\n\n    // other members\n    \u2026\n}\n\n```\n\nRefer to the [ConfigurationClient class] for a fully built-out example of how a sync client should be constructed."
+  },
+  {
+    "id": "java_introduction.html#java-async-client-name",
+    "category": "Async Service Clients",
+    "text": "DO offer an async service client named <ServiceName>AsyncClient. More than one service client may be offered for a single service. An example of an async client is shown below:\n\n```java\n// Copyright (c) Microsoft Corporation. All rights reserved.\n// Licensed under the MIT License.\n\npackage com.azure.&lt;group&gt;.&lt;service_name&gt;;\n\n@ServiceClient(\n    builder = &lt;service_name&gt;ClientBuilder.class,\n    serviceInterfaces = &lt;service_name&gt;Service.class,\n    isAsync = true)\npublic final class &lt;service_name&gt;AsyncClient {\n\n    // package-private constructors only - all instantiation is done with builders\n    &lt;service_name&gt;Client(&lt;parameters&gt;) {\n        // ...\n    }\n\n    // service methods...\n\n    // A single response API\n    public Mono&lt;Response&lt;&lt;model&gt;&gt;&gt; &lt;service_operation&gt;(&lt;parameters&gt;) {\n        // ...\n    }\n\n    // A paginated response API\n    public PagedFlux&lt;&lt;model&gt;&gt; list&lt;service_operation&gt;(&lt;parameters&gt;) {\n        // ...\n    }\n\n    // other members\n    ...\n}\n\n```\n\nRefer to the [ConfigurationAsyncClient class] for a fully built-out example of how an async client should be constructed."
+  },
+  {
+    "id": "java_introduction.html#java-async-framework",
+    "category": "Async Service Clients",
+    "text": "DO use [Project Reactor] to provide consumers with a high-quality async API."
+  },
+  {
+    "id": "java_introduction.html#java-async-other-frameworks",
+    "category": "Async Service Clients",
+    "text": "DO NOT use any other async APIs, such as CompletableFuture or [RxJava]."
+  },
+  {
+    "id": "java_introduction.html#java-async-streaming",
+    "category": "Async Service Clients",
+    "text": "DO NOT write custom APIs for streaming or async operations. Make use of the existing functionality offered in the Azure core library. Discuss proposed changes to the Azure core library with the [Architecture Board]. Refer to the Azure Core Types section for more information."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-constructors",
+    "category": "Service Client Creation",
+    "text": "DO NOT provide any public or protected constructors in the service client. Keep visibility to a minimum by using package-private constructors that may only be called by types in the same package, and then enable instantiation of the service client through the use of service client builders, detailed below."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-fluent-builder",
+    "category": "Service Client Creation",
+    "text": "DO offer a fluent builder API for constructing service clients named <service_name>ClientBuilder, which must support building a sync service client instance and an async service client instance (where appropriate). It must offer buildClient() and buildAsyncClient() API to create a synchronous and asynchronous service client instance, respectively. Shown in the first code sample below is a generalized template, and following that is a stripped-down example builder.\n\n```java\n// Copyright (c) Microsoft Corporation. All rights reserved.\n// Licensed under the MIT License.\npackage com.azure.&lt;group&gt;.&lt;service_name&gt;;\n\n// Template of how a builder should look\n@ServiceClientBuilder(serviceClients = {&lt;service_name&gt;Client.class, &lt;service_name&gt;AsyncClient.class})\npublic final class &lt;service_name&gt;ClientBuilder {\n\n    // private fields for all settable parameters\n    ...\n\n    // This is the public constructor used to create the service client, so a public access modifier\n    // makes sense here. This is required, and it is intended to prevent any public constructors\n    // in the service client itself, because we do not want to allow users to create a service client\n    // directly.\n    public &lt;service_name&gt;ClientBuilder() {\n        // any initialization necessary for the builder\n    }\n\n    // The buildClient() method returns a new instance of the sync client each time it is called\n    public &lt;service_name&gt;Client buildClient() {\n        // create an async client and pass that into the sync client for sync-over-async impl\n        return new &lt;service_name&gt;Client(buildAsync());\n    }\n\n    // The buildAsyncClient() method returns a new instance of the async client each time it is called\n    public &lt;service_name&gt;Client buildAsyncClient() {\n        // configuration of pipeline, etc\n        ...\n\n        // instantiate new async client instance\n        return new &lt;service_name&gt;AsyncClient(serviceEndpoint, pipeline);\n    }\n\n    // fluent API, each returning 'this', and one for each parameter to configure\n    public &lt;service_name&gt;ClientBuilder &lt;property&gt;(&lt;parameter&gt;) {\n        builder.&lt;property&gt;(&lt;parameter&gt;);\n        return this;\n    }\n}\n\n```\n\n```java\n// Copyright (c) Microsoft Corporation. All rights reserved.\n// Licensed under the MIT License.\npackage com.azure.data.appconfiguration;\n\n// concrete example of a builder\n@ServiceClientBuilder(serviceClients = {ConfigurationAsyncClient.class, ConfigurationClient.class})\npublic final class ConfigurationClientBuilder {\n    private String endpoint;\n    private TokenCredential tokenCredential;\n    private ConfigurationServiceVersion version = ConfigurationServiceVersion.getLatest();\n    // other fields and its setters are omitted for brevity\n\n    // public constructor - this is the only available front door to creating a service client instance\n    public ConfigurationClientBuilder() {\n        // empty constructor\n    }\n\n    // The buildClient() method returns a new instance of the sync client each time it is called\n    public ConfigurationClient buildClient() {\n        // create an async client and pass that into the sync client for sync-over-async impl\n        return new ConfigurationClient(buildAsyncClient());\n    }\n\n    // The buildAsyncClient() method returns a new instance of the async client each time it is called\n    public ConfigurationAsyncClient buildAsyncClient() {\n        // configuration of pipeline, etc\n        HttpPipeline pipeline = buildOrGetHttpPipeline();\n\n        // instantiate new async client instance\n        return new ConfigurationAsyncClient(endpoint, pipeline, serviceVersion);\n    }\n\n    // fluent APIs, each returning 'this', and one for each parameter to configure\n\n    public ConfigurationClientBuilder endpoint(String endpoint) {\n        try {\n            new URL(endpoint);\n        } catch (MalformedURLException ex) {\n            throw logger.logExceptionAsWarning(new IllegalArgumentException(\"'endpoint' must be a valid URL\"));\n        }\n        this.endpoint = endpoint;\n        return this;\n    }\n\n    public ConfigurationClientBuilder credential(TokenCredential tokenCredential) {\n        // token credential can not be null value\n        this.tokenCredential = Objects.requireNonNull(tokenCredential);\n        return this;\n    }\n\n    public ConfigurationClientBuilder serviceVersion(ConfigurationServiceVersion version) {\n        this.version = version;\n        return this;\n    }\n\n}\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-service-client-fluent-builder-multiple-clients",
+    "category": "Service Client Creation",
+    "text": "DO offer build method 'overloads' for when a builder can build multiple client types. These methods must be named in the form build<client>Client() and build<client>AsyncClient(). For example, buildBlobClient() and buildBlobAsyncClient()."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-builder-annotation",
+    "category": "Service Client Creation",
+    "text": "DO annotate service client builders with the @ServiceClientBuilder annotation, setting the annotation parameters appropriately for the service client (e.g. async is true for async service clients)."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-builder-consistency",
+    "category": "Service Client Creation",
+    "text": "DO ensure consistency across all HTTP-based client libraries, by using the following names for client builder fluent API:\n\n| Name                 | Intent                                                                                                 |\n|----------------------|--------------------------------------------------------------------------------------------------------|\n| addPolicy          | Adds a policy to the set of existing policies (assumes no custom pipeline is set).                     |\n| buildAsyncClient   | Creates a new async client on each call.                                                           |\n| buildClient        | Creates a new sync client on each call.                                                            |\n| clientOptions      | Allows the user to set a variety of client-related options, such as user-agent string, headers, etc.   |\n| configuration      | Sets the configuration store that is used during construction of the service client.                   |\n| connectionString   | Sets the connection string to use for authenticating HTTP requests (only applicable if the Azure portal offers it for the service). |\n| credential         | Sets the credential to use when authenticating HTTP requests.                                          |\n| endpoint           | URL to send HTTP requests to.                                                                          |\n| httpClient         | Sets the HTTP client to use.                                                                           |\n| httpLogOptions     | Configuration for HTTP logging level, header redaction, etc.                                           |\n| pipeline           | Sets the HTTP pipeline to use.                                                                         |\n| retryPolicy        | Sets the retry policy to use (using the RetryPolicy type).                                           |\n| serviceVersion     | Sets the service version to use. This must be a type implementing ServiceVersion.     |\n\nendpoint may be renamed if a more user-friendly name can be justified. For example, a blob storage library developer may consider using new BlobClientBuilder.blobUrl(..). In this case, the endpoint API should be removed."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-builder-consistency-amqp",
+    "category": "Service Client Creation",
+    "text": "DO ensure consistency across all AMQP-based client libraries, by using the following names for client builder fluent API:\n\n| Name                       | Intent                                                                                                 |\n|----------------------------|--------------------------------------------------------------------------------------------------------|\n| build<Type>AsyncClient   | Creates a new async client on each call.                                                           |\n| build<Type>Client        | Creates a new sync client on each call.                                                            |\n| configuration            | Sets the configuration store that is used during construction of the service client.                   |\n| credential               | Sets the credential to use when authenticating AMQP requests.                                          |\n| connectionString         | Sets the connection string to use for authenticating AMQP requests (only applicable if the Azure portal offers it for the service). |\n| transportType            | Sets the preferred transport type to AMQP or Web Sockets that the client should use.                   |\n| retry                    | Sets the retry policy to use (using the AmqpRetryOptions type).                                      |\n| proxyOptions             | Sets the proxy connection settings.                                                                    |\n| serviceVersion           | Sets the service version to use. This must be a type implementing ServiceVersion.     |"
+  },
+  {
+    "id": "java_introduction.html#java-service-client-builder-state",
+    "category": "Service Client Creation",
+    "text": "DO throw an IllegalStateException from the builder method when it receives mutually exclusive arguments.  The consumer is over-specifying builder arguments, some of which will necessarily be ignored. The error message in the exception must clearly outline the issue."
+  },
+  {
+    "id": "java_introduction.html#java-client-construction",
+    "category": "Service Client Creation",
+    "text": "DO allow the consumer to construct a service client with the minimal information needed to connect and authenticate to the service."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-builder-validity",
+    "category": "Service Client Creation",
+    "text": "DO ensure the builder will instantiate a service client into a valid state.  Throw an IllegalStateException when the user calls the build*() methods with a configuration that is incomplete or invalid."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-highest-api",
+    "category": "Service Versions",
+    "text": "DO call the highest supported service API version by default, and ensure this is clearly documented."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-select-api-version",
+    "category": "Service Versions",
+    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the service client, as shown above in the service client creation section.\n\nUse a builder parameter called serviceVersion on the client builder type (as specified above)."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-service-version-spec",
+    "category": "Service Versions",
+    "text": "DO specify a service version as an enum implementing the ServiceVersion interface. For example, the following is a code snippet from the ConfigurationServiceVersion:\n\n```java\npublic enum ConfigurationServiceVersion implements ServiceVersion {\n    V1_0(\"1.0\");\n\n    private final String version;\n\n    ConfigurationServiceVersion(String version) {\n        this.version = version;\n    }\n\n    @Override\n    public String getVersion() {\n        return this.version;\n    }\n\n    /**\n     * Gets the latest service version supported by this client library\n     *\n     * @return the latest {@link ConfigurationServiceVersion}\n     */\n    public static ConfigurationServiceVersion getLatest() {\n        return V1_0;\n    }\n}\n\n```\n\nThis can then be called by the developer as such:\n\n```java\npublic class UserApplication {\n    public static void main(String args[]) {\n        ConfigurationClient client = new ConfigurationClientBuilder()\n            .credential(&lt;tokenCredential&gt;)\n            .endpoint(\"&lt;endpoint&gt;\")\n            .serviceVersion(ConfigurationServiceVersion.V1_0) // set the version to V1\n            .buildClient();\n\n        // calls V1 service API\n        ConfigurationSetting setting = client.getConfigurationSetting(\"name\", \"label\");\n    }\n}\n\n```\n\nService methods are methods that invoke operations on a service. They are commonly found on classes suffixed with Client, but can also be found on other resource classes that are vended by a client."
+  },
+  {
+    "id": "java_introduction.html#java-async-suffix",
+    "category": "Service Methods",
+    "text": "DO NOT use the suffix Async in methods that do operations asynchronously. Let the fact the user has an instance of an 'async client' provide this context."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-verbs",
+    "category": "Service Methods",
+    "text": "DO prefer the use of the following terms for CRUD operations:\n\n|Verb              |Parameters        |Returns                 |Comments                                                                                                                |\n|------------------|------------------|------------------------|------------------------------------------------------------------------------------------------------------------------|\n| upsert<noun>   |key, item         |Updated or created item |Create new item or update existing item. Verb is primarily used in database-like services.                              |\n| set<noun>      |key, item         |Updated or created item |Create new item or update existing item. Verb is primarily used for dictionary-like properties of a service.            |\n| create<noun>   |key, item         |Created item            |Create new item. Fails if item already exists.                                                                          |\n| update<noun>   |key, partial item |Updated item            |Fails if item doesn't exist.                                                                                            |\n| replace<noun>  |key, item         |Replace existing item   |Completely replaces an existing item. Fails if the item doesn't exist.                                                  |\n| delete<noun>   |key               |Deleted item, or null |Delete an existing item. Will succeed even if item didn't exist. Deleted item may be returned, if service supports it.  |\n| add<noun>      |index, item       |Added item              |Add item to a collection. Item will be added last, or into the index position specified.                                |\n| get<noun>      |key               |Item                    |Will return null if item doesn't exist.                                                                                |\n| list<noun>     |                  |Items                   |Return list of items. Returns empty list if no items exist.                                                             |\n| <noun>Exists   |key               |boolean               |Return true if the item exists.                                                                                       |"
+  },
+  {
+    "id": "java_introduction.html#java-service-client-flexibility",
+    "category": "Service Methods",
+    "text": "YOU SHOULD remain flexible and use names best suited for developer experience.  Don't let the naming rules result in non-idiomatic naming patterns.  For example, Java developers prefer list operations over getAll operations.\n\nOne of the Azure Core types is com.azure.core.util.Context, which acts as an append-only key-value map, and which by default is empty. The Context allows end users of the API to modify the outgoing requests to Azure on a per-method call basis, for example to enable distributed tracing."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-context",
+    "category": "Service Methods",
+    "text": "DO provide an overload method that takes a com.azure.core.util.Context argument for each service operation in sync clients only. The Context argument must be the last argument into the service method (except where varargs are used). If a service method has multiple overloads, only the 'maximal' overloads need to have the Context argument. A maximal overload is one that has a full set of arguments.  It may not be necessary to offer a 'Context overload' in all cases.  We prefer a minimal API surface, but Context must always be supported.\n\n```java\ngetFoo()\ngetFoo(x)\ngetFoo(x, y)\ngetFoo(x, y, z) // maximal overload\ngetFoo(a)       // maximal overload\n\n// this will result in the following two methods being required\n// (replacing the two maximal overloads above)\ngetFoo(x, y, z, Context)\ngetFoo(a, Context)\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-service-client-context-async",
+    "category": "Service Methods",
+    "text": "DO NOT include overloads that take Context in async clients.  Async clients use the [subscriber context built into Reactor Flux and Mono APIs][reactor-context].\n\nClients often have non-service methods, for accessing details such as the service version, http pipeline, and so on. There may also be API that offers users the ability to create specialized sub-clients. These sub-clients"
+  },
+  {
+    "id": "java_introduction.html#java-service-client-method-naming",
+    "category": "Non-Service Methods",
+    "text": "DO use standard JavaBean naming prefixes for all methods that are not service methods."
+  },
+  {
+    "id": "java_introduction.html#java-service-client-vend-prefix",
+    "category": "Non-Service Methods",
+    "text": "DO prefix methods in sync clients that create or vend sub-clients with get and suffix with Client. For example, container.getBlobClient(). Similarly, prefix methods in async clients that create or vend sub-clients with get and suffix with AsyncClient. For example, container.getBlobAsyncClient(). Keep in mind the guidance in the service client section, as it cannot be assumed that the Client suffix applies to another client-like class vended by a client. The Client suffix is only applicable in certain situations, and therefore, methods should not be named get*Client if the type is not a client."
+  },
+  {
+    "id": "java_introduction.html#java-no-cancellation",
+    "category": "Cancellation",
+    "text": "DO NOT provide any API that accepts a cancellation token, in both sync and async clients. Cancellation isn't a common pattern in Java. Developers who use our client libraries, and who need to cancel requests, should use the async API instead, where they can unsubscribe from a publisher to cancel the request.\n\nRequests to the service fall into two basic groups: methods that make a single logical request, and methods that make a deterministic sequence of requests.  An example of a single logical request is a request that may be retried inside the operation.  An example of a deterministic sequence of requests is a paged operation.\n\nThe logical entity is a protocol neutral representation of a response. The logical entity may combine data from headers, body, and the status line. For example, you may expose an ETag header as a property on the logical entity.  Response<T> is the 'complete response'. It contains HTTP headers, status code, and the T object (a deserialized object created from the response body). The T object would be the 'logical entity'."
+  },
+  {
+    "id": "java_introduction.html#java-response-logical-entity",
+    "category": "Return Types",
+    "text": "DO return the logical entity (i.e. the T) for all synchronous service methods."
+  },
+  {
+    "id": "java_introduction.html#java-response-async-logical-entity",
+    "category": "Return Types",
+    "text": "DO return the logical entity (i.e. the T) wrapped inside a Mono for all asynchronous service methods that make network requests.\n\nReturn Response<T> on the maximal overload for a service method with WithResponse appended to the name.  For example:\n\n```java\nFoo foo = client.getFoo(a);\nFoo foo = client.getFoo(a, b);\nFoo foo = client.getFoo(a, b, c, context); // This is the maximal overload, so it is replaced with the 'withResponse' 'overload' below\nResponse&lt;Foo&gt; response = client.getFooWithResponse(a, b, c, context);\n\n```\n\nFor methods that combine multiple requests into a single call:"
+  },
+  {
+    "id": "java_introduction.html#java-response-headers",
+    "category": "Return Types",
+    "text": "DO NOT return headers and other per-request metadata unless it's obvious which specific HTTP request the methods return value corresponds to."
+  },
+  {
+    "id": "java_introduction.html#java-response-errors",
+    "category": "Return Types",
+    "text": "DO provide enough information in failure cases for a developer to take appropriate corrective action, including a message describing what went wrong and details on the corrective actions to take.\n\nService methods fall into two main groups when it comes to the number and complexity of parameters they accept:\nService Methods with simple inputs, simple methods for short\nService Methods with complex inputs, complex methods for short\n\nSimple methods are methods that take up to six parameters, with most of the parameters being simple primitive types. Complex methods are methods that take a larger number of parameters and typically correspond to REST APIs with complex request payloads.\n\nSimple methods should follow standard Java best practices for parameter list and overload design.\n\nComplex methods should introduce an option parameter to represent the request payload. Consideration can subsequently be made for providing simpler convenience overloads for the most common scenarios. This is referred to in this document as the 'options pattern', and is demonstrated in the code below:\n\n```java\npublic class BlobContainerClient {\n\n    // simple service methods\n    public BlobInfo uploadBlob(String blobName, byte[] content);\n    public Response&lt;BlobInfo&gt; uploadBlobWithResponse(String blobName, byte[] content, Context context);\n\n    // complex service methods, note the introduction of the 'CreateBlobOptions' type\n    public BlobInfo createBlob(CreateBlobOptions options);\n    public Response&lt;BlobInfo&gt; createBlobWithResponse(CreateBlobOptions options, Context context);\n\n    // convenience overload[s]\n    public BlobInfo createBlob(String blobName);\n}\n\n@Fluent\npublic class CreateBlobOptions {\n    private String blobName;\n    private PublicAccessType access;\n    private Map&lt;String, String&gt; metadata;\n\n    // Constructor enforces the requirement that blobName is always set\n    public CreateBlobOptions(String blobName) {\n        this.blobName = blobName;\n    }\n\n    public String getBlobName() {\n        return blobName;\n    }\n\n    public CreateBlobOptions setAccess(PublicAccessType access) {\n        this.access = access;\n        return this;\n    }\n\n    public PublicAccessType getAccess() {\n        return access;\n    }\n\n    public CreateBlobOptions setMetadata(Map&lt;String, String&gt; metadata) {\n        this.metadata = metadata;\n        return this;\n    }\n\n    public Map&lt;String, String&gt; getMetadata() {\n        return metadata;\n    }\n}\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-params-complex-naming",
+    "category": "Option Parameters",
+    "text": "DO name the options type after the name of the service method it is used for, such that the type is named <operation>Options. For example, above the method was createBlob, and so the options type was named CreateBlobOptions."
+  },
+  {
+    "id": "java_introduction.html#java-params-complex",
+    "category": "Option Parameters",
+    "text": "DO use the options parameter pattern for complex service methods."
+  },
+  {
+    "id": "java_introduction.html#java-params-complex-growth",
+    "category": "Option Parameters",
+    "text": "YOU MAY use the options parameter pattern for simple service methods that you expect to grow in the future."
+  },
+  {
+    "id": "java_introduction.html#java-params-simple-overloads",
+    "category": "Option Parameters",
+    "text": "YOU MAY add simple overloads of methods using the options parameter pattern.\n\nIf in common scenarios, users are likely to pass just a small subset of what the options parameter represents, consider adding an overload with a parameter list representing just this subset."
+  },
+  {
+    "id": "java_introduction.html#java-params-complex-overloads",
+    "category": "Option Parameters",
+    "text": "DO NOT introduce method overloads that take a subset of the parameters as well as the options parameter, except for parameters that are for client-side use only (e.g. Context, timeout, etc)."
+  },
+  {
+    "id": "java_introduction.html#java-params-complex-withResponse",
+    "category": "Option Parameters",
+    "text": "DO use the options parameter type, if it exists, for all *WithResponse methods. If no options parameter type exists, do not create one solely for the *WithResponse method."
+  },
+  {
+    "id": "java_introduction.html#java-params-options-package",
+    "category": "Option Parameters",
+    "text": "DO place all options types in a root-level models package, to prevent too many root-level packages and to make use of the existing models package used by other model types."
+  },
+  {
+    "id": "java_introduction.html#java-params-options-design",
+    "category": "Option Parameters",
+    "text": "DO design options types with the same design guidance as given below for model class types, namely fluent setters for optional arguments, using the standard JavaBean naming convention of get*, set*, and is*. Additionally, there may be constructor overloads for each combination of required arguments."
+  },
+  {
+    "id": "java_introduction.html#java-params-options-ctor",
+    "category": "Option Parameters",
+    "text": "YOU MAY introduce constructor overloads for each combination of required arguments (in a similar manner to required properties on model types).\n\nThe service client will have methods that send requests to the service. These methods take two kinds of parameters: service parameters and client parameters. Service parameters are sent across the wire to the service as URL segments, query parameters, request header values, and request bodies (typically JSON or XML). Client parameters are used solely within the client library and are not sent to the service; examples are path parameters, Context or file paths. If, for example, a path parameter is not validated, it could result in sending a request to a malformed URL, which could prevent the service from having the opportunity to do validation on it."
+  },
+  {
+    "id": "java_introduction.html#java-params-client-validation",
+    "category": "Parameter Validation",
+    "text": "DO validate client parameters. This includes checks for null values for required path parameters, and checks for empty string values if a required path parameter declares a minLength greater than zero."
+  },
+  {
+    "id": "java_introduction.html#java-params-service-validation",
+    "category": "Parameter Validation",
+    "text": "DO NOT validate service parameters. This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters."
+  },
+  {
+    "id": "java_introduction.html#java-params-test-devex",
+    "category": "Parameter Validation",
+    "text": "DO test the developer experience when invalid service parameters are passed in. Ensure clear error messages are generated by the service. If the developer experience is inadequate, work with the service team to correct the problem.\n\nMany Azure REST APIs return collections of data in batches or pages. A client library will expose such APIs as special enumerable types PagedIterable<T> or PagedFlux<T> (or one of their parent types), for synchronous and asynchronous APIs, respectively. These types are located in the azure-core library."
+  },
+  {
+    "id": "java_introduction.html#java-pagination-pagediterable",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO return PagedIterable<T> from service methods in synchronous that return a collection of items. For example, the configuration service sync client should offer the following API:\n\n```java\npublic final class ConfigurationClient {\n    // synchronous API returning a PagedIterable of ConfigurationSetting instances\n    public PagedIterable&lt;ConfigurationSetting&gt; listSettings(...) {\n        ...\n    }\n}\n\n```\n\nPagedIterable allows developers to write code that works using the standard for loop syntax (as it is an Iterable), and also to work with a Java Stream (as there is a stream() method). Consumers may also call streamByPage() and iterableByPage() methods to work on page boundaries. Subclasses of these types are acceptable as return types too, so long as the naming convention generally follows the pattern <serviceName>PagedIterable or <operation>PagedFlux."
+  },
+  {
+    "id": "java_introduction.html#java-pagination-collections",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO NOT return other collection types for sync APIs that return collections (for example, do not return List, Stream, Iterable, or Iterator)."
+  },
+  {
+    "id": "java_introduction.html#java-pagination-pagedflux",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO return PagedFlux<T> (or an appropriately-named subclass) for asynchronous APIs that expose a collection of items. Even if the service does not support pagination, always return PagedFlux<T>, as it allows for consumers to retrieve response information in a consistent manner.\n\n```java\npublic final class ConfigurationAsyncClient {\n\n    // asynchronous API returning a PagedFlux of ConfigurationSetting instances\n    public PagedFlux&lt;ConfigurationSetting&gt; listSettings(SettingSelector options, Context context) {\n        // The first lambda is a Supplier&lt;PagedResponse&lt;T&gt;&gt; returning the first page of results\n        // as a Mono&lt;PagedResponse&lt;T&gt;&gt;.\n        // The second lambda is a Function&lt;String, Mono&lt;PagedResponse&lt;T&gt;&gt;&gt;, returning a\n        // Mono&lt;PagedResponse&lt;T&gt;&gt; representing a page based on the provided continuationToken.\n        return new PagedFlux&lt;&gt;(\n            () -&gt; listFirstPageSettings(options, context),\n            continuationToken -&gt; listNextPageSettings(contextWithSpanName, continuationToken));\n    }\n}\n\n```\n\nConsumers of this API can consume individual items by treating the response as a Flux<T>:\n\n```java\nclient.listSettings(..)\n      .subscribe(item -&gt; System.out.println(\"Processing item \" + item));\n\n```\n\nThe consumer may process items page-by-page instead:\n\n```java\nclient.listSettings(..)\n      .byPage()\n      .subscribe(page -&gt; {\n        // page is a PagedResponse, which implements Page and Response, so there exists:\n        //  * List&lt;T&gt; of items,\n        //  * continuationToken (represented as a String),\n        //  * Status code,\n        //  * HTTP headers,\n        //  * HTTP request\n        System.out.println(\"Processing page \" + page)\n});\n\n```\n\nThe PagedFlux.byPage() offers an overload to accept a continuationToken string, which will begin the returned Flux at the page specified by this token."
+  },
+  {
+    "id": "java_introduction.html#java-pagination-subtypes",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "YOU MAY subclass the azure-core paged and iterable APIs, where appropriate, to offer additional, service specific API to users. If this is done, the subtype must be named as it currently is, prefixed with the name of the service. For example, SearchPagedFlux and SearchPagedIterable. Subtypes are expected to be placed within a util package existing within the root package.\n\nSome service operations, known as Long Running Operations or LROs take a long time (up to hours or days). Such operations do not return their result immediately, but rather are started, their progress is polled, and finally the result of the operation is retrieved.\n\nThe azure-core library exposes types that make supporting LROs simpler, most notably SyncPoller<T> and PollerFlux<T>, for synchronous and asynchronous clients, respectively. These classes represent a LRO and support operations for polling and waiting for status changes, and retrieving the final operation result."
+  },
+  {
+    "id": "java_introduction.html#java-lro-poller-class",
+    "category": "Methods Invoking Long-Running Operations",
+    "text": "DO use the SyncPoller and PollerFlux to represent long-running operations. The long-running operation API pattern is:\n\n```java\n// sync client\npublic final class &lt;service_name&gt;Client {\n    // SyncPoller&lt;T, U&gt; is a type in azure core\n    // T is the type of long-running operation poll response value\n    // U is the type of the final result of long-running operation\n    public SyncPoller&lt;T, U&gt; begin&lt;operation_name&gt;(&lt;parameters&gt;) {\n        PollerFlux&lt;&gt; asyncPoller = asyncClient.begin&lt;operation_name&gt;(&lt;parameters&gt;);\n        return asyncPoller.getSyncPoller();\n    }\n}\n\n```\n\n```java\n// Async client\npublic final class &lt;service_name&gt;AsyncClient {\n    // PollerFlux&lt;T, U&gt; is a type in azure core\n    // T is the type of long-running operation poll response value\n    // U is the type of the final result of long-running operation\n    public PollerFlux&lt;T, U&gt; begin&lt;operation_name&gt;(&lt;parameters&gt;) {\n        return new PollerFlux&lt;&gt;(...);\n    }\n}\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-lro-prefix",
+    "category": "Methods Invoking Long-Running Operations",
+    "text": "DO prefix method names which return a poller with the begin prefix."
+  },
+  {
+    "id": "java_introduction.html#java-lro-continuation",
+    "category": "Methods Invoking Long-Running Operations",
+    "text": "DO provide a way to instantiate a poller with the serialized state of another poller to begin where it left off, for example by passing the state as a parameter to the same method which started the operation, or by directly instantiating a poller with that state."
+  },
+  {
+    "id": "java_introduction.html#java-lro-no-void-terminal-state",
+    "category": "Methods Invoking Long-Running Operations",
+    "text": "DO NOT specify any poller (SyncPoller or PollerFlux) with a terminal state (i.e. the U in SyncPoller<T, U> or PollerFlux<T, U>) as being void. This does not benefit users, as it is typically their desire to inspect the terminal state for some quality, and by being void we are making this inspection more difficult than necessary.\n\nConditional requests (https://developer.mozilla.org/docs/Web/HTTP/Conditional_requests) are normally performed using HTTP headers.  The primary usage provides headers that match the ETag to some known value.  The ETag is an opaque identifier that represents a single version of a resource. For example, adding the following header will translate to \"if the record's version, specified by the ETag, is not the same\".\n\n{% highlight text %}\nIf-Not-Match: \"etag-value\"\n{% endhighlight %}\n\nWith headers, tests are possible for the following:\nUnconditionally (no additional headers)\nIf (not) modified since a version (If-Match and If-Not-Match)\nIf (not) modified since a date (If-Modified-Since and If-Unmodified-Since)\nIf (not) present (If-Match and If-Not-Match with a ETag=* value)\n\nNot all services support all of these semantics, and may not support any of them.  Developers have varying levels of understanding of the ETag and conditional requests, so it is best to abstract this concept from the API surface.  There are two types of conditional requests we need to be concerned with:\n\nSafe conditional requests (e.g. GET)\n\nThese are typically used to save bandwidth in an \"update cache\" scenario, i.e. I have a cached value, only send me the data if what the service has is newer than my copy. These return either a 200 or a 304 status code, indicating the value was not modified, which tells the caller that their cached value is up to date.\n\nUnsafe conditional requests (e.g. POST, PUT, or DELETE)\n\nThese are typically used to prevent losing updates in an optimistic concurrency scenario, i.e. I've modified the cached value I'm holding, but don't update the service version unless it has the same copy I've got. These return either a success or a 412 error status code, indicating the value was modified, to indicate to the caller that they'll need to retry their update if they want it to succeed.\n\nThese two cases are handled differently in client libraries.  However, the form of the call is the same in both cases.  The signature of the method should be:\n\n{% highlight text %}\nclient.(, requestOptions)\n{% endhighlight %}\n\nThe requestOptions field provides preconditions to the HTTP request.  The Etag value will be retrieved from the item that is passed into the method where possible, and method arguments where not possible. The form of the method will be modified based on idiomatic usage patterns in the language of choice.  In cases where the ETag value is not known, the operation cannot be conditional.\nIf the library developer does not need to support advanced usage of precondition headers, they can add a boolean parameter that is set to true to establish the condition.  For example, use one of the following boolean names instead of the conditions operator:\nonlyIfChanged\nonlyIfUnchanged\nonlyIfMissing\nonlyIfPresent\n\nIn all cases, the conditional expression is \"opt-in\", and the default is to perform the operation unconditionally.\n\nThe return value from a conditional operation must be carefully considered.  For safe operators (e.g. GET), return a response that will throw if the value is accessed (or follow the same convention used fro a 204 No Content response), since there is no value in the body to reference.  For unsafe operators (e.g. PUT, DELETE, or POST), throw a specific error when a Precondition Failed or Conflict result is received.  This allows the consumer to do something different in the case of conflicting results.\n\nYOU SHOULD accept a conditions parameter (which takes an enumerated type) on service methods that allow a conditional check on the service.\n\nYOU SHOULD accept an additional boolean or enum parameter on service methods as necessary to enable conditional checks using ETag.\n\nYOU SHOULD include the ETag field as part of the object model when conditional operations are supported.\n\n<p><a href=\"#{{ include.id }}\" name=\"{{ include.id }}\" class='requirement' role='img' aria-label='YOU SHOULD NOT'>\u26a0\ufe0f</a> <strong>YOU SHOULD NOT</strong></p>\n\n\nYOU SHOULD throw a distinct error when a 412 Precondition Failed response or a 409 Conflict response is received from the service due to a conditional check.\n\nTODO: Add discussion of hierarchical clients\n\nModel types are classes that developers of applications use to provide required information into, or to receive information from, Azure services. For example:\n\n```java\n// Copyright (c) Microsoft Corporation. All rights reserved.\n// Licensed under the MIT License.\npackage com.azure.ai.textanalytics.models;\n\n@Fluent\npublic final class PiiTaskParameters {\n\n    // optional properties\n    private PiiTaskParametersDomain domain;\n    private String modelVersion = \"latest\";\n\n   // optional properties have getters and fluent setters\n    public PiiTaskParametersDomain getDomain() {\n        return this.domain;\n    }\n\n    public PiiTaskParameters setDomain(PiiTaskParametersDomain domain) {\n        this.domain = domain;\n        return this;\n    }\n\n    public String getModelVersion() {\n        return this.modelVersion;\n    }\n\n    public PiiTaskParameters setModelVersion(String modelVersion) {\n        this.modelVersion = modelVersion;\n        return this;\n    }\n}\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-models-builder",
+    "category": "Model Types",
+    "text": "DO NOT offer a separate builder class for model classes."
+  },
+  {
+    "id": "java_introduction.html#java-models-constructors",
+    "category": "Model Types",
+    "text": "DO provide public constructors for all model classes that a user is allowed to instantiate. Model classes that are not instantiable by the user, for example if they are model types returned from the service, must not have any publicly visible constructors.\n\nBecause model types can represent many different kinds of models, it is important that they can correctly enforce required properties. Whilst many models have no required properties, some do, and moreso, some models can even support multiple mutually exclusive sets of required properties."
+  },
+  {
+    "id": "java_introduction.html#java-models-constructors-args",
+    "category": "Model Types",
+    "text": "DO provide a no-args constructor if a model type has no required properties."
+  },
+  {
+    "id": "java_introduction.html#java-models-constructors-args-required",
+    "category": "Model Types",
+    "text": "DO provide one or more constructors with arguments, if a model type has required properties. If there are multiple mutually exclusive sets of supported required parameter, a constructor must be introduced for each of these. For example:\n\n```java\n// Copyright (c) Microsoft Corporation. All rights reserved.\n// Licensed under the MIT License.\npackage com.azure.ai.textanalytics.models;\n\npublic final class TextDocumentInput {\n\n    // required properties\n    private final String id;\n    private final String text;\n\n    // optional property\n    private String language;\n\n    // Constructor to enforce setting the required properties\n    public TextDocumentInput(String id, String text) {\n        this.id = Objects.requireNonNull(id, \"'id' cannot be null\");\n        this.text = Objects.requireNonNull(text, \"'text' cannot be null\");\n    }\n\n    // required properties only have getters\n    public String getId() {\n        return this.id;\n    }\n\n    public String getText() {\n        return this.text;\n    }\n\n    // optional property has both getter and fluent setter\n    public String getLanguage() {\n        return this.language;\n    }\n\n    public TextDocumentInput setLanguage(String language) {\n        this.language = language;\n        return this;\n    }\n}\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-models-fluent",
+    "category": "Model Types",
+    "text": "DO provide a fluent setter API to configure the model class, where each set method should return this. This allows chaining of set operations."
+  },
+  {
+    "id": "java_introduction.html#java-models-fluent",
+    "category": "Model Types",
+    "text": "DO override all set methods when extending a fluent type to return the extended type. This allows chaining of set operations on the sub-class.\n\n```java\n@Fluent\npublic class SettlementOptions {\n    private ServiceBusTransactionContext transactionContext;\n\n    public ServiceBusTransactionContext getTransactionContext() {\n        return transactionContext;\n    }\n\n    public SettlementOptions setTransactionContext(ServiceBusTransactionContext transactionContext) {\n        this.transactionContext = transactionContext;\n        return this;\n    }\n}\n\n@Fluent\npublic final AbandonOptions extends SettlementOptions {\n    private Map&lt;String, Object&gt; propertiesToModify;\n\n    public Map&lt;String, Object&gt; getPropertiesToModify() {\n        return propertiesToModify;\n    }\n\n    public AbandonOptions setPropertiesToModify(Map&lt;String, Object&gt; propertiesToModify) {\n        this.propertiesToModify = propertiesToModify;\n        return this;\n    }\n\n    // Override setter method of the parent class\n    @Override\n    public AbandonOptions setTransactionContext(ServiceBusTransactionContext transactionContext) {\n        super.setTransactionContext(transactionContext);\n        return this;\n    }\n}\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-models-fluent-annotation",
+    "category": "Model Types",
+    "text": "DO apply the @Fluent annotation to the class.\n\nFluent types must not be immutable.  Don't return a new instance on each setter call."
+  },
+  {
+    "id": "java_introduction.html#java-models-javabeans",
+    "category": "Model Types",
+    "text": "DO use the JavaBean naming convention of get*, set*, and is*."
+  },
+  {
+    "id": "java_introduction.html#java-models-deserialize",
+    "category": "Model Types",
+    "text": "DO include static methods if new model instances are required to be created from raw data. The static method names should be from<dataformat>. For example, to create an instance of BinaryData from a string, include a static method called fromString in BinaryData class."
+  },
+  {
+    "id": "java_introduction.html#java-models-collection-mutability",
+    "category": "Model Types",
+    "text": "DO NOT copy collection-based results, or wrap collection-related return types with unmodifiable wrappers. If a user calls a method public List<String> getFoos(), they should feel entitled to modify this collection as their needs fit. These modifications should be applied back to the model that supplied the collection in the first place. In places where this will impact the correct operation of the model type (i.e. where the types of values is constrained), it is acceptable to copy the collection or to wrap it as an unmodifiable type, provided that this is clearly documented in the related JavaDoc.\n\nModel types sometimes exist only as an Azure service return type, and developers would never instantiate these. Often, these model types have API that is not user-friendly (in particular, overly complex constructors). It would be best for developers if they were never presented with this API in the first place, and we refer to these as 'undesirable public API'."
+  },
+  {
+    "id": "java_introduction.html#java-models-interface",
+    "category": "Model Types",
+    "text": "DO put model classes that are intended as service return types only, and which have undesirable public API into the .implementation.models package. In its place, an interface should be put into the public-facing .models package, and it should be this type that is returned through the public API to end users.\n\nExamples of situations where this is applicable include when there are constructors or setters on a type which receive implementation types, or when a type should be immutable but needs to be mutable internally. The interface should have the model type name, and the implementation (within .implementation.models) should be named <interfaceName>Impl.\n\nEnumerations in Java are extremely convenient, but used improperly can lead to breaking changes to the API. This is because often the Java compiler is configured to fail if not all enum values are listed in a switch statement, so with the addition of a new enum value, users will encounter breaking builds when updating their dependency to a newer version. Because of this, the Java azure-core ships with the ExpandableStringEnum that is the suggested means through which enumerations are exposed. Whilst not technically a Java enumeration, it can be treated as such in much the same way, without concerns about breaking changes from adding new values. It is also more user-friendly when new values are introduced on the service side before a library update has been shipped, as users can manually create their own values within the context of a single ExpandableStringEnum."
+  },
+  {
+    "id": "java_introduction.html#java-enums",
+    "category": "Enumerations",
+    "text": "DO NOT define Java enum types for parameters, properties, and return types, except in two scenarios:\nWhen values are fixed and will never change over time, or,\nWhen the enum is used as an input-only enum and therefore the likelihood of users running into breaking changes (i.e. when they must switch over all values) is low."
+  },
+  {
+    "id": "java_introduction.html#java-naming-enum-uppercase",
+    "category": "Enumerations",
+    "text": "DO use all upper-case names for enum (and ExpandableStringEnum) values. EnumType.FOO and EnumType.TWO_WORDS are valid, whereas EnumType.Foo and EnumType.twoWords are not."
+  },
+  {
+    "id": "java_introduction.html#java-expandable-enums",
+    "category": "Enumerations",
+    "text": "YOU MAY use the ExpandableStringEnum type provided by azure-core to define an enum-like API that declares well-known fields but which can also contain unknown values returned from the service, or user-defined values passed to the service. An example expandable enum, taken from azure-core's OperationStatus type, is shown below:\n\n```java\npublic static final class OperationStatus extends ExpandableStringEnum&lt;OperationStatus&gt; {\n    public static final OperationStatus NOT_STARTED = fromString(\"NOT_STARTED\");\n    public static final OperationStatus IN_PROGRESS = fromString(\"IN_PROGRESS\");\n    public static final OperationStatus SUCCESSFULLY_COMPLETED = fromString(\"SUCCESSFULLY_COMPLETED\");\n    public static final OperationStatus FAILED = fromString(\"FAILED\");\n    public static final OperationStatus USER_CANCELLED = fromString(\"USER_CANCELLED\");\n\n    /**\n     * Creates or finds a {@link OperationStatus} from its string representation.\n     * @param name a name to look for\n     * @return the corresponding {@link OperationStatus}\n     */\n    public static OperationStatus fromString(String name) {\n        return fromString(name, OperationStatus.class);\n    }\n}\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-core-types-must",
+    "category": "Using Azure Core Types",
+    "text": "DO make use of packages in Azure Core to provide behavior consistent across all Azure SDK libraries. This includes, but is not limited to:\nHttpClient, HttpPipeline, Response, etc for http client, pipeline and related functionality\nClientLogger for logging\nPagedFlux and PagedIterable for returning paged results\nSyncPoller and PollerFlux for long running operations\nTokenCredential, AzureKeyCredential, etc for common auth interfaces\n\nSee the Azure Core readme (https://github.com/Azure/azure-sdk-for-java/tree/main/sdk/core/azure-core) for more details."
+  },
+  {
+    "id": "java_introduction.html#java-api-old-date-time",
+    "category": "Using Primitive Types",
+    "text": "DO NOT create API that exposes the old Java date library (e.g. java.util.Date, java.util.Calendar, and java.util.Timezone). All API must use the new date / time APIs that shipped in JDK 8 in the java.time package."
+  },
+  {
+    "id": "java_introduction.html#java-api-url",
+    "category": "Using Primitive Types",
+    "text": "DO NOT create API that exposes the java.net.URL API. This API is difficult to work with, and more frequently gets in the users way rather than provide any real assistance. Instead, use the String type to represent the URL. When it is necessary to parse this String into a URL, and if it fails to be parsed (throwing a checked MalformedURLException), catch this internally and throw an unchecked IllegalArgumentException instead."
+  },
+  {
+    "id": "java_introduction.html#java-api-file-paths",
+    "category": "Using Primitive Types",
+    "text": "DO represent file paths using the Java java.nio.file.Path type. Do not use String or the older java.io.File type."
+  },
+  {
+    "id": "java_introduction.html#java-wrap-primitives",
+    "category": "Using Primitive Types",
+    "text": "DO wrap primitive types where appropriate to represent a meaningful domain entity even if the model type contains a single field. For example, a phone number is just a string, but creating a new type to wrap primitive String type can be more informative and represents a domain concept. It may also provide stronger guarantees and validation than just the primitive type.\n\n```java\npublic final class PhoneNumber {\n    private String phoneNumber;\n\n    public PhoneNumber setPhoneNumber(String phoneNumber) {\n        ...\n    }\n\n    public String getPhoneNumber() {\n        ...\n    }\n}\n\n```\n\nError handling is an important aspect of implementing a client library. It is the primary method by which problems are communicated to the consumer. We convey errors to developers by throwing appropriate exceptions from our service methods."
+  },
+  {
+    "id": "java_introduction.html#java-errors-http-request-failed",
+    "category": "Exceptions",
+    "text": "DO throw an exception when any HTTP request fails with an HTTP status code that is not defined by the service/Swagger as a successful status code."
+  },
+  {
+    "id": "java_introduction.html#java-errors-unchecked-exceptions",
+    "category": "Exceptions",
+    "text": "DO use unchecked exceptions. Java offers checked and unchecked exceptions, where checked exceptions force the user to introduce verbose try .. catch code blocks and handle each specified exception. Unchecked exceptions avoid verbosity and improve scalability issues inherent with checked exceptions in large apps.\n\nIn the case of a higher-level method that produces multiple HTTP requests, either the last exception or an aggregate exception of all failures should be produced."
+  },
+  {
+    "id": "java_introduction.html#java-errors-system-errors",
+    "category": "Exceptions",
+    "text": "DO use the following standard Java exceptions for pre-condition checking:\n\n| Exception                       | When to use                                                    |\n|---------------------------------|----------------------------------------------------------------|\n| IllegalArgumentException      | When a method argument is non-null, but inappropriate          |\n| IllegalStateException         | When the object state means method invocation can't continue   |\n| NullPointerException          | When a method argument is null and null is unexpected      |\n| UnsupportedOperationException | When an object doesn't support method invocation               |"
+  },
+  {
+    "id": "java_introduction.html#java-errors-no-new-errors",
+    "category": "Exceptions",
+    "text": "DO NOT create a new error type when a language-specific error type will suffice."
+  },
+  {
+    "id": "java_introduction.html#java-errors-document-all",
+    "category": "Exceptions",
+    "text": "DO specify all checked and unchecked exceptions thrown in a method within the JavaDoc documentation on the method as @throws statements."
+  },
+  {
+    "id": "java_introduction.html#java-errors-exception-tree",
+    "category": "Exceptions",
+    "text": "DO use the existing exception types present in the Azure core library for service request failures. Avoid creating new exception types. The following list outlines all available exception types (with indentation indicating exception type hierarchy):\nAzureException: Never use directly. Throw a more specific subtype.\n\nHttpResponseException: Thrown when an unsuccessful response is received with http status code (e.g. 3XX, 4XX, 5XX) from the service request.\n\nClientAuthenticationException: Thrown when there's a failure to authenticate against the service.\nDecodeException: Thrown when there's an error during response deserialization.\nResourceExistsException: Thrown when an HTTP request tried to create an already existing resource.\nResourceModifiedException: Thrown for invalid resource modification with status code of 4XX, typically 412 Conflict.\nResourceNotFoundException: Thrown when a resource is not found, typically triggered by a 412 response (for PUT) or 404 (for GET/POST).\nTooManyRedirectsException: Thrown when an HTTP request has reached the maximum number of redirect attempts.\n\n\nServiceResponseException: Thrown when the request was sent to the service, but the client library wasn't able to understand the response.\nServiceRequestException: Thrown for an invalid response with custom error information.\n\n\nHttpResponseException: Thrown when an unsuccessful response is received with http status code (e.g. 3XX, 4XX, 5XX) from the service request.\n\nClientAuthenticationException: Thrown when there's a failure to authenticate against the service.\nDecodeException: Thrown when there's an error during response deserialization.\nResourceExistsException: Thrown when an HTTP request tried to create an already existing resource.\nResourceModifiedException: Thrown for invalid resource modification with status code of 4XX, typically 412 Conflict.\nResourceNotFoundException: Thrown when a resource is not found, typically triggered by a 412 response (for PUT) or 404 (for GET/POST).\nTooManyRedirectsException: Thrown when an HTTP request has reached the maximum number of redirect attempts.\n\n\nClientAuthenticationException: Thrown when there's a failure to authenticate against the service.\nDecodeException: Thrown when there's an error during response deserialization.\nResourceExistsException: Thrown when an HTTP request tried to create an already existing resource.\nResourceModifiedException: Thrown for invalid resource modification with status code of 4XX, typically 412 Conflict.\nResourceNotFoundException: Thrown when a resource is not found, typically triggered by a 412 response (for PUT) or 404 (for GET/POST).\nTooManyRedirectsException: Thrown when an HTTP request has reached the maximum number of redirect attempts.\nServiceResponseException: Thrown when the request was sent to the service, but the client library wasn't able to understand the response.\nServiceRequestException: Thrown for an invalid response with custom error information.\nHttpResponseException: Thrown when an unsuccessful response is received with http status code (e.g. 3XX, 4XX, 5XX) from the service request.\n\nClientAuthenticationException: Thrown when there's a failure to authenticate against the service.\nDecodeException: Thrown when there's an error during response deserialization.\nResourceExistsException: Thrown when an HTTP request tried to create an already existing resource.\nResourceModifiedException: Thrown for invalid resource modification with status code of 4XX, typically 412 Conflict.\nResourceNotFoundException: Thrown when a resource is not found, typically triggered by a 412 response (for PUT) or 404 (for GET/POST).\nTooManyRedirectsException: Thrown when an HTTP request has reached the maximum number of redirect attempts.\n\n\nClientAuthenticationException: Thrown when there's a failure to authenticate against the service.\nDecodeException: Thrown when there's an error during response deserialization.\nResourceExistsException: Thrown when an HTTP request tried to create an already existing resource.\nResourceModifiedException: Thrown for invalid resource modification with status code of 4XX, typically 412 Conflict.\nResourceNotFoundException: Thrown when a resource is not found, typically triggered by a 412 response (for PUT) or 404 (for GET/POST).\nTooManyRedirectsException: Thrown when an HTTP request has reached the maximum number of redirect attempts.\nServiceResponseException: Thrown when the request was sent to the service, but the client library wasn't able to understand the response.\nServiceRequestException: Thrown for an invalid response with custom error information.\nClientAuthenticationException: Thrown when there's a failure to authenticate against the service.\nDecodeException: Thrown when there's an error during response deserialization.\nResourceExistsException: Thrown when an HTTP request tried to create an already existing resource.\nResourceModifiedException: Thrown for invalid resource modification with status code of 4XX, typically 412 Conflict.\nResourceNotFoundException: Thrown when a resource is not found, typically triggered by a 412 response (for PUT) or 404 (for GET/POST).\nTooManyRedirectsException: Thrown when an HTTP request has reached the maximum number of redirect attempts."
+  },
+  {
+    "id": "java_introduction.html#java-errors-new-exceptions",
+    "category": "Exceptions",
+    "text": "DO extend from one of the above exceptions defined in azure-core when defining a new service-specific exception. Do not extend from RuntimeException directly."
+  },
+  {
+    "id": "java_introduction.html#java-errors-exception-public",
+    "category": "Exceptions",
+    "text": "DO define exception type in a public package if the exception is thrown from a public API. Do not throw an exception that is defined as package-private or is defined in implementation package.\n\nAzure services use a variety of different authentication schemes to allow clients to access the service.  Conceptually, there are two entities responsible in this process: a credential and an authentication policy.  Credentials provide confidential authentication data.  Authentication policies use the data provided by a credential to authenticate requests to the service.\n\nPrimarily, all Azure services should support Azure Active Directory OAuth token authentication, and all clients of services that support Azure Active Directory OAuth token authentication must support authenticating requests in this manner."
+  },
+  {
+    "id": "java_introduction.html#java-auth-fluent-builder",
+    "category": "Authentication",
+    "text": "DO provide service client fluent builder APIs that accepts an instance of the appropriate azure-core credential abstraction, namely TokenCredential, BasicAuthenticationCredential, or AzureKeyCredential."
+  },
+  {
+    "id": "java_introduction.html#auth-client-no-token-persistence",
+    "category": "Authentication",
+    "text": "DO NOT persist, cache, or reuse tokens beyond the validity period of the given token. If any caching is implemented, the token credential must be given the opportunity to refresh before it expires."
+  },
+  {
+    "id": "java_introduction.html#java-auth-use-core",
+    "category": "Authentication",
+    "text": "DO use authentication policy implementations from the Azure Core library where available."
+  },
+  {
+    "id": "java_introduction.html#java-auth-reserve-when-not-suported",
+    "category": "Authentication",
+    "text": "DO reserve the API surface needed for TokenCredential authentication, in the rare case that a service does not yet support Azure Active Directory authentication.\n\nIn addition to Azure Active Directory OAuth, services may provide custom authentication schemes. In this case the following guidelines apply."
+  },
+  {
+    "id": "java_introduction.html#java-auth-support",
+    "category": "Authentication",
+    "text": "DO support all authentication schemes that the service supports."
+  },
+  {
+    "id": "java_introduction.html#java-auth-provide-credential-types",
+    "category": "Authentication",
+    "text": "DO define a public custom credential type which enables clients to authenticate requests using the custom scheme."
+  },
+  {
+    "id": "java_introduction.html#java-auth-credential-type-base",
+    "category": "Authentication",
+    "text": "YOU SHOULD NOT define custom credential types extending or implementing the TokenCredential abstraction from Azure Core. This is especially true in type safe languages where extending or implementing this abstraction would break the type safety of other service clients, allowing users to instantiate them with the custom credential of the wrong service."
+  },
+  {
+    "id": "java_introduction.html#java-auth-credential-type-placement",
+    "category": "Authentication",
+    "text": "DO define custom credential types in the same namespace and package as the client, or in a service group namespace and shared package, not in Azure Core or Azure Identity."
+  },
+  {
+    "id": "java_introduction.html#java-auth-azure-identity-dependency",
+    "category": "Authentication",
+    "text": "DO NOT take compile-scope dependency on azure-identity library."
+  },
+  {
+    "id": "java_introduction.html#java-auth-credential-type-prefix",
+    "category": "Authentication",
+    "text": "DO prepend custom credential type names with the service name or service group name to provide clear context to its intended scope and usage."
+  },
+  {
+    "id": "java_introduction.html#java-auth-credential-type-suffix",
+    "category": "Authentication",
+    "text": "DO append Credential to the end of the custom credential type name. Note this must be singular not plural."
+  },
+  {
+    "id": "java_introduction.html#java-auth-provide-credential-constructor",
+    "category": "Authentication",
+    "text": "DO define a constructor or factory for the custom credential type which takes in ALL data needed for the custom authentication protocol."
+  },
+  {
+    "id": "java_introduction.html#java-auth-provide-update-method",
+    "category": "Authentication",
+    "text": "DO define an update method which accepts all mutable credential data, and updates the credential in an atomic, thread safe manner."
+  },
+  {
+    "id": "java_introduction.html#java-auth-credential-set-properties",
+    "category": "Authentication",
+    "text": "DO NOT define public settable properties or fields which allow users to update the authentication data directly in a non-atomic manner."
+  },
+  {
+    "id": "java_introduction.html#java-auth-credential-get-properties",
+    "category": "Authentication",
+    "text": "YOU SHOULD NOT define public properties or fields which allow users to access the authentication data directly. They are most often not needed by end users, and are difficult to use in a thread safe manner. In the case that exposing the authentication data is necessary, all the data needed to authenticate requests should be returned from a single API which guarantees the data returned is in a consistent state."
+  },
+  {
+    "id": "java_introduction.html#java-auth-provide-client-constructor",
+    "category": "Authentication",
+    "text": "DO provide service client constructors or factories that accept all supported credential types.\n\nClient libraries may support providing credential data via a connection string ONLY IF the service provides a connection string to users via the portal or other tooling.   Connection strings are generally good for getting started as they are easily integrated into an application by copy/paste from the portal.  However, connection strings are considered a lesser form of authentication because the credentials cannot be rotated within a running process."
+  },
+  {
+    "id": "java_introduction.html#java-auth-connection-strings",
+    "category": "Authentication",
+    "text": "DO NOT support constructing a service client with a connection string unless such connection string is available within the Azure portal or Azure CLI.\n\nJava uses packages to group related types.  Grouping services within a cloud infrastructure is common since it aids discoverability and provides structure to the reference documentation.\n\nIn Java, the namespace should be named com.azure.<group>.<service>[.<feature>].  All consumer-facing APIs that are commonly used should exist within this package structure.  Here:\n<group> is the group for the service (see the list above)\n<service> is the service name represented as a single word\n<feature> is an optional subpackage to break services into separate components (for example, storage may have .blob, .files, and .queues)"
+  },
+  {
+    "id": "java_introduction.html#java-namespaces-prefix",
+    "category": "Namespaces",
+    "text": "DO start the package with com.azure to indicate an Azure client library."
+  },
+  {
+    "id": "java_introduction.html#java-namespaces-format",
+    "category": "Namespaces",
+    "text": "DO construct the package name with all lowercase letters (no camel case is allowed), without spaces, hyphens, or underscores. For example, Azure Key Vault would be in com.azure.security.keyvault - note that the two words 'Key' and 'Vault' are brought together to keyvault, instead of keyVault, key_vault, or key-vault.  It may further be shortened if the shortened version is well known in the community.  For example, \"Azure Media Analytics\" would have a compressed service name of mediaanalytics, and \"Azure Service Bus\" would become servicebus."
+  },
+  {
+    "id": "java_introduction.html#java-namespaces-package-name",
+    "category": "Namespaces",
+    "text": "DO pick a package name that allows the consumer to tie the package to the service being used. The package does NOT change when the branding of the product changes.  Avoid the use of marketing names that may change."
+  },
+  {
+    "id": "java_introduction.html#java-namespaces-approved-list",
+    "category": "Namespaces",
+    "text": "DO use the following list as the group of services:\n\n| Namespace Group  | Functional Area                                                           |\n|:-----------------|:--------------------------------------------------------------------------|\n| `ai`             | Artificial intelligence, including machine learning                       |\n| `analytics`      | Gathering data for metrics or usage                                       |\n| `containers`     | Services related to containers                                            |\n| `communication`  | Communication services                                                    |\n| `data`           | Dealing with structured data stores like databases                        |\n| `diagnostics`    | Gathering data for diagnosing issues                                      |\n| `digitaltwins`   | Digital Twins, digital representations of physical spaces and IoT devices |\n| `identity`       | Authentication and authorization                                          |\n| `iot`            | Internet of things                                                        |\n| `management`     | Control Plane (Azure Resource Manager)                                    |\n| `media`          | Audio and video technologies                                              |\n| `messaging`      | Messaging services, like push notifications or pub-sub                    |\n| `mixedreality`   | Mixed reality technologies                                                |\n| `monitor`        | Services that are offered by Azure Monitor                                |\n| `quantum`        | Quantum computing technologies                                            |\n| `search`         | Search technologies                                                       |\n| `security`       | Security and cryptography                                                 |\n| `storage`        | Storage of unstructured data                                              |\n\n\nIf the client library does not seem to fit into the group list, contact the [Architecture Board] to discuss the namespace requirements."
+  },
+  {
+    "id": "java_introduction.html#java-namespaces-management",
+    "category": "Namespaces",
+    "text": "DO place the management (Azure Resource Manager) API in the resourcemanager group.  Use the grouping com.azure.resourcemanager.<service> for the namespace. Management plane libraries do not have a <group>."
+  },
+  {
+    "id": "java_introduction.html#java-namespaces-registration",
+    "category": "Namespaces",
+    "text": "DO register the chosen namespace with the [Architecture Board].  Open an issue to request the namespace.  See the registered namespace list for a list of the currently registered namespaces.\n\nHere are some examples of namespaces that meet these guidelines:\ncom.azure.identity.activedirectory\ncom.azure.iot.deviceprovisioning\ncom.azure.storage.blob\ncom.azure.messaging.notificationhubs (the client library for Notification Hubs)\ncom.azure.resourcemanager.notificationhubs (the management library for Notification Hubs)\n\nHere are some namespaces that do not meet the guidelines:\ncom.microsoft.azure.cosmosdb (not in the com.azure namespace and does not use grouping)\ncom.azure.cognitiveservice.vision (the grouping cognitiveservice is not in the approved list)\n\nAll client libraries must support mocking to enable non-live testing of service clients by customers. One of the key things we want to support is to allow consumers of the library to easily write repeatable unit-tests for their applications without activating a service. This allows them to reliably and quickly test their code without worrying about the vagaries of the underlying service implementation (including, for example, network conditions or service outages). Mocking is also helpful to simulate failures, edge cases, and hard to reproduce situations (for example: does code work on February 29th).\n\nBelow is an example of writing a mock unit test using the Mockito framework (https://site.mockito.org/)  For more details on using Mockito in the context of the Azure SDK for Java, refer to the unit testing (https://github.com/Azure/azure-sdk-for-java/wiki/Unit-Testing) wiki documentation.\n\n```java\npublic class UserPreferencesTest {\n    @Test\n    public void getThemeTest() {\n        // create a mock instance of client\n        ConfigurationClient configurationClient = mock(ConfigurationClient.class);\n\n        // mock the client response\n        when(configurationClient.getSetting(\"theme\", null)).thenReturn(new ConfigurationSetting().setValue(\"light\"));\n\n        // wire the mock client to UserPreferences\n        UserPreferences userPreferences = new UserPreferences(configurationClient);\n\n        // assert the client response\n        assertEquals(Theme.LIGHT, userPreferences.getTheme());\n    }\n}\n\n```"
+  },
+  {
+    "id": "java_introduction.html#java-mocking",
+    "category": "Support for Mocking",
+    "text": "DO support mocking to enable non-live testing of service clients (and by extension also model types, option types, etc) by customers."
+  },
+  {
+    "id": "java_introduction.html#java-mocking-io",
+    "category": "Support for Mocking",
+    "text": "DO support mocking of all IO operations (including network and file operations).\n\nAll client libraries for Java standardize on the Maven build tooling for build and dependency management. This section details the standard configuration that must be used in all client libraries."
+  },
+  {
+    "id": "java_introduction.html#java-maven-pom",
+    "category": "Maven",
+    "text": "DO ship a maven pom.xml for each client library, or for each module within that client library (e.g. Storage might have one each for blob, queue, and file)."
+  },
+  {
+    "id": "java_introduction.html#java-maven-groupid",
+    "category": "Maven",
+    "text": "DO specify the groupId as com.azure."
+  },
+  {
+    "id": "java_introduction.html#java-maven-artifactid",
+    "category": "Maven",
+    "text": "DO specify the artifactId to be of the form azure-<group>-<service>, for example, azure-storage-blob. In cases where the client library has multiple children modules, set the root POM artifactId to be of the form azure-<group>-<service>-parent."
+  },
+  {
+    "id": "java_introduction.html#java-maven-name",
+    "category": "Maven",
+    "text": "DO specify the name element to take the form Microsoft Azure client library for <service name>."
+  },
+  {
+    "id": "java_introduction.html#java-maven-description",
+    "category": "Maven",
+    "text": "DO specify the description element to be a slightly longer statement along the lines of This package contains the Microsoft Azure <service> client library."
+  },
+  {
+    "id": "java_introduction.html#java-maven-url",
+    "category": "Maven",
+    "text": "DO specify the url element to point to the root of the GitHub repository (i.e. https://github.com/Azure/azure-sdk-for-java)."
+  },
+  {
+    "id": "java_introduction.html#java-maven-url",
+    "category": "Maven",
+    "text": "DO specify the source code management section, to specify where the source code resides for the client library. If the source code is located in the https://github.com/Azure/azure-sdk-for-java repository, then the following form must be used:\n\n<code>&lt;scm&gt;\n    &lt;url&gt;scm:git:https://github.com/Azure/azure-sdk-for-java&lt;/url&gt;\n    &lt;connection&gt;scm:git:git@github.com:Azure/azure-sdk-for-java.git&lt;/connection&gt;\n    &lt;tag&gt;HEAD&lt;/tag&gt;\n&lt;/scm&gt;\n</code>"
+  },
+  {
+    "id": "java_introduction.html#java-maven-developers",
+    "category": "Maven",
+    "text": "DO NOT change the developers section of the POM file - it must only list a developer id of microsoft and a name of Microsoft Corporation.\n\nThere are occasions when common code needs to be shared between several client libraries. For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
+  },
+  {
+    "id": "java_introduction.html#java-commonlib-approval",
+    "category": "Service-Specific Common Libraries",
+    "text": "DO gain [Architecture Board] approval prior to implementing a common library."
+  },
+  {
+    "id": "java_introduction.html#java-commonlib-minimize-code",
+    "category": "Service-Specific Common Libraries",
+    "text": "DO minimize the code within a common library. Code within the common library is available to the consumer of the client library and shared by multiple client libraries within the same namespace."
+  },
+  {
+    "id": "java_introduction.html#java-commonlib-namespace",
+    "category": "Service-Specific Common Libraries",
+    "text": "DO store the common library in the same namespace as the associated client libraries.\n\nA common library will only be approved if:\nThe consumer of the non-shared library will consume the objects within the common library directly, AND\nThe information will be shared between multiple client libraries.\n\nLet's take two examples:\n\nImplementing two Cognitive Services client libraries, we find a model is required that is produced by one Cognitive Services client library and consumed by another Cognitive Services client library, or the same model is produced by two client libraries. The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client library vs. that produced by another client library. This is a good candidate for choosing a common library.\n\n\nTwo Cognitive Services client libraries throw an ObjectNotFound exception to indicate that an object was not detected in an image. The user might trap the exception, but otherwise will not operate on the exception. There is no linkage between the ObjectNotFound exception in each client library. This is not a good candidate for creation of a common library (although you may wish to place this exception in a common library if one exists for the namespace already). Instead, produce two different exceptions - one in each client library.\n\n\nImplementing two Cognitive Services client libraries, we find a model is required that is produced by one Cognitive Services client library and consumed by another Cognitive Services client library, or the same model is produced by two client libraries. The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client library vs. that produced by another client library. This is a good candidate for choosing a common library.\n\nTwo Cognitive Services client libraries throw an ObjectNotFound exception to indicate that an object was not detected in an image. The user might trap the exception, but otherwise will not operate on the exception. There is no linkage between the ObjectNotFound exception in each client library. This is not a good candidate for creation of a common library (although you may wish to place this exception in a common library if one exists for the namespace already). Instead, produce two different exceptions - one in each client library.\n\nJava 9 and later support the notion of a module. A module exports certain packages, and requires other modules. Any package that is exported can be used by other modules, and anything that is not exported is invisible at compile and run times. This is a far stronger form of encapsulation than has existed previously for Java. For the Azure SDK for Java, a client library will be represented as one or more modules. Two good resources to understand modules are available on oracle.com (https://www.oracle.com/corporate/features/understanding-java-9-modules.html) and baeldung.com (https://www.baeldung.com/java-9-modularity) "
+  },
+  {
+    "id": "java_introduction.html#java-module-info",
+    "category": "Java 9 Modules",
+    "text": "DO include a module-info.java file for each module you ship."
+  },
+  {
+    "id": "java_introduction.html#java-module-name",
+    "category": "Java 9 Modules",
+    "text": "DO name your module based on the root package of the client library it represents. For example, com.azure.core or com.azure.storage.blob."
+  },
+  {
+    "id": "java_introduction.html#java-module-requires",
+    "category": "Java 9 Modules",
+    "text": "DO require only the minimum set of modules relevant for the module being developed."
+  },
+  {
+    "id": "java_introduction.html#java-module-exports",
+    "category": "Java 9 Modules",
+    "text": "DO export only packages that are considered public API. In particular, do not export packages that are in the implementation package namespace, as these, by convention, are not intended for public use."
+  },
+  {
+    "id": "java_introduction.html#java-module-no-conditional-exports",
+    "category": "Java 9 Modules",
+    "text": "DO NOT conditionally export or opens packages to other modules without prior approval by the architecture board. A conditional export or opens statement takes the form export X to Y or opens X to Y."
+  },
+  {
+    "id": "java_introduction.html#java-module-split-packages",
+    "category": "Java 9 Modules",
+    "text": "DO NOT have the same package in multiple modules. That is, do not have com.azure.storage.blob in module com.azure.storage.blob and in module com.azure.storage.blob.extras. It is however allowed to have different packages with common parent packages split across different modules. For example, a package named com.azure.storage can be in one module, and com.azure.storage.blob can be in another."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-backwards-compatibility",
+    "category": "Versioning",
+    "text": "DO be 100% backwards compatible with older versions of the same package."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-highest-api",
+    "category": "Versioning",
+    "text": "DO call the highest supported service API version by default."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-select-api-version",
+    "category": "Versioning",
+    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the service client, by using the service client builder with a property called serviceVersion. This method must take a type implementing the ServiceVersion interface, named specifically for the service, but as generally as possible. For example, IdentityServiceVersion for Identity. For a service with multiple sub-services, such as Storage, if the services all share a common versioning system, StorageServiceVersion would suffice. If they did not, it would be necessary to have separate BlobServiceVersion, QueueServiceVersion, and FileServiceVersion enums."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-enum-latest",
+    "category": "Versioning",
+    "text": "DO offer a getLatest() method on the enum that returns the latest service version. If a consumer doesn't specify a service version, the builder will call getLatest() to obtain the appropriate service version."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-enum--value-naming",
+    "category": "Versioning",
+    "text": "DO use the version naming used by the service itself in naming the version values in the enum. The standard approach takes the form V<year>_<month>_<day>, such as V2019_05_09. Being consistent with the service naming enables easier cross-referencing between service versions and the availability of features in the client library.\n\n**NOTE:** Third-party reusable libraries shouldn't change behavior without an explicit decision by the developer.  When developing libraries that are based on the Azure SDK, lock the library to a specific service version to avoid changes in behavior."
+  },
+  {
+    "id": "java_introduction.html#java-versioning-new-package",
+    "category": "Versioning",
+    "text": "DO introduce a new library (with new library names, new package names, and new type names) if you must do an API breaking change.\n\nBreaking changes should happen rarely, if ever.  Register your intent to do a breaking change with [adparch]. You'll need to have a discussion with the language architect before approval.\n\nConsistent version number scheme allows consumers to determine what to expect from a new version of the library."
+  },
+  {
+    "id": "java_introduction.html#java-version-semver",
+    "category": "Client Version Numbers {#java-versionnumbers}",
+    "text": "DO use MAJOR.MINOR.PATCH format for the library version.\n\nUse -beta.N suffix for beta package versions. For example, 1.0.0-beta.2."
+  },
+  {
+    "id": "java_introduction.html#java-version-change-on-release",
+    "category": "Client Version Numbers {#java-versionnumbers}",
+    "text": "DO change the version number of the client library when ANYTHING changes in the client library."
+  },
+  {
+    "id": "java_introduction.html#java-version-patching",
+    "category": "Client Version Numbers {#java-versionnumbers}",
+    "text": "DO increment the patch version when fixing a bug."
+  },
+  {
+    "id": "java_introduction.html#java-version-features-in-patch",
+    "category": "Client Version Numbers {#java-versionnumbers}",
+    "text": "DO NOT include new APIs in a patch release."
+  },
+  {
+    "id": "java_introduction.html#java-version-add-feature",
+    "category": "Client Version Numbers {#java-versionnumbers}",
+    "text": "DO increment the major or minor version when adding support for a service API version."
+  },
+  {
+    "id": "java_introduction.html#java-version-add-api",
+    "category": "Client Version Numbers {#java-versionnumbers}",
+    "text": "DO increment the major or minor version when adding a new method to the public API."
+  },
+  {
+    "id": "java_introduction.html#java-version-major-changes",
+    "category": "Client Version Numbers {#java-versionnumbers}",
+    "text": "YOU SHOULD increment the major version when making large feature changes."
+  },
+  {
+    "id": "java_introduction.html#java-version-change-on-release1",
+    "category": "Client Version Numbers {#java-versionnumbers}",
+    "text": "DO select a version number greater than the highest version number of any other released Track 1 packages for the service in all languages.\n\nDependencies bring in many considerations that are often easily avoided by avoiding the dependency.\nVersioning - Many programming languages do not allow a consumer to load multiple versions of the same package. So, if we have an client library that requires v3 of package Foo and the consumer wants to use v5 of package Foo, then the consumer cannot build their application. This means that client libraries should not have dependencies by default.\nSize - Consumer applications must be able to deploy as fast as possible into the cloud and move in various ways across networks. Removing additional code (like dependencies) improves deployment performance.\nLicensing - You must be conscious of the licensing restrictions of a dependency and often provide proper attribution and notices when using them.\nCompatibility - Often times you do not control a dependency and it may choose to evolve in a direction that is incompatible with your original use.\nSecurity - If a security vulnerability is discovered in a dependency, it may be difficult or time consuming to get the vulnerability corrected if Microsoft does not control the dependency's code base."
+  },
+  {
+    "id": "java_introduction.html#java-dependencies-azure-core",
+    "category": "Dependencies",
+    "text": "DO depend on the com.azure.core library for functionality that is common across all client libraries.  This library includes APIs for HTTP connectivity, global configuration, logging, and credential handling."
+  },
+  {
+    "id": "java_introduction.html#java-dependencies-approved-list",
+    "category": "Dependencies",
+    "text": "DO NOT be dependent on any other packages within the client library distribution package, with the exception of the following:\n\n| Name                                                             | Role                | Allowed in public API | Notes |\n|------------------------------------------------------------------|-------------------- |:---------------------:|-------|\n| [Apache Avro](https://avro.apache.org)                           | Avro parser         | No                    | Used only in azure-core-serializer-avro-apache. |\n| [Jackson](https://github.com/FasterXML/jackson)                  | JSON parser         | No                    | Use azure-core `JsonSerializer` abstractions rather than Jackson directly.      |\n| [JNA](https://github.com/java-native-access/jna)                 | Native access to OS | No                    | Used only in azure-identity. |\n| [Netty](https://netty.io)                                        | HTTP client         | No                    | Used only in azure-core-http-netty.      |\n| [OkHttp](https://square.github.io/okhttp/)                       | HTTP client         | No                    | Used only in azure-core-http-okhttp.      |\n| [OpenTelemetry](https://opentelemetry.io/)                       | Telemetry library   | No                    | Used only in azure-core-tracing-opentelemetry. |\n| [Reactor](https://projectreactor.io)                             | Reactive library    | Yes                   |       |\n| [slf4j](https://www.slf4j.org)                                   | Logging framework   | No                    | Use the azure core `ClientLogger` API rather than `slf4j` directly. |\n| [Apache Qpid Proton-J](https://github.com/apache/qpid-proton-j)  | AMQP messaging      | No                    | Used only in azure-core-amqp. |\n\n\nDependency versions are purposefully not specified in this table. The definitive source for the dependency versions being used in all client libraries is published in a separate document that is generated from the azure-sdk-for-java code repository (https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-java/staging/dependency-whitelist.html)  Transitive dependencies of these libraries, or dependencies that are part of a family of dependencies, are allowed.  For example, reactor-netty is a child project of reactor."
+  },
+  {
+    "id": "java_introduction.html#java-dependencies-archboard",
+    "category": "Dependencies",
+    "text": "DO NOT introduce new dependencies on third-party libraries that are already referenced from the parent POM, without first discussing with the Architecture Board]."
+  },
+  {
+    "id": "java_introduction.html#java-dependencies-versions",
+    "category": "Dependencies",
+    "text": "DO NOT specify or change dependency versions in your client library POM file. All dependency versioning must be centralized through existing tooling (https://github.com/Azure/azure-sdk-for-java/blob/main/CONTRIBUTING.md#versions-and-versioning) "
+  },
+  {
+    "id": "java_introduction.html#java-dependencies-snapshot",
+    "category": "Dependencies",
+    "text": "DO NOT include dependencies on external libraries that are -SNAPSHOT versions. All dependencies must be released versions."
+  },
+  {
+    "id": "java_introduction.html#java-dependencies-vendoring",
+    "category": "Dependencies",
+    "text": "YOU SHOULD consider copying or linking required code into the client library in order to avoid taking a dependency on another package that could conflict with the ecosystem. Make sure that you are not violating any licensing agreements and consider the maintenance that will be required of the duplicated code. [\"A little copying is better than a little dependency\"][1] (YouTube)."
+  },
+  {
+    "id": "java_introduction.html#java-dependencies-concrete",
+    "category": "Dependencies",
+    "text": "DO NOT depend on concrete logging, dependency injection, or configuration technologies (except as implemented in the com.azure.core library).  The client library will be used in applications that might be using the logging, DI, and configuration technologies of their choice.\n\nNative code plugins cause compatibility issues and require additional scrutiny. Certain languages compile to a machine-native format (for example, C or C++), whereas most modern languages opt to compile to an intermediary format to aid in cross-platform support."
+  },
+  {
+    "id": "java_introduction.html#java-no-native-code",
+    "category": "Native code",
+    "text": "DO NOT write platform-specific / native code."
+  },
+  {
+    "id": "java_introduction.html#java-javadoc-build",
+    "category": "Documentation",
+    "text": "DO ensure that anybody can clone the repo containing the client library and execute mvn javadoc:javadoc to generate the full and complete JavaDoc output for the code, without any need for additional processing steps."
+  },
+  {
+    "id": "java_introduction.html#java-javadoc-full-docs",
+    "category": "Documentation",
+    "text": "DO include descriptive text of the method, as well as all parameters, the returned value (if any), all checked exceptions, as well as all unchecked exceptions. Failing to document unchecked exceptions means that users do not have any indication of how they can handle exceptional circumstances."
+  },
+  {
+    "id": "java_introduction.html#java-javadoc-samples",
+    "category": "Documentation",
+    "text": "DO include code samples in all class-level JavaDoc, and in relevant method-level JavaDoc."
+  },
+  {
+    "id": "java_introduction.html#java-javadoc-hard-coding",
+    "category": "Documentation",
+    "text": "DO NOT hard-code the sample within the JavaDoc (where it may become stale). Put code samples in /src/samples/java and use the available tooling to reference them."
+  },
+  {
+    "id": "java_introduction.html#java-javadoc-naming-samples",
+    "category": "Documentation",
+    "text": "DO follow the naming convention outlined below for naming samples tags:\nIf a new instance of the class is created through build() method of a builder or through constructor: <packagename>.<classname>.instantiation\nFor other methods in the class: <packagename>.<classname>.<methodName>\nFor overloaded methods, or methods with arguments: <packagename>.<classname>.<methodName>#<argType1>-<argType2>\nCamel casing for the method name and argument types is valid, but not required."
+  },
+  {
+    "id": "java_introduction.html#java-docs-content-dev",
+    "category": "General guidelines",
+    "text": "DO include your service's content developer in the architectural review for your library. To find the content developer you should work with, check with your team's Program Manager."
+  },
+  {
+    "id": "java_introduction.html#java-docs-contributors-guide",
+    "category": "General guidelines",
+    "text": "DO follow the [Azure SDK Contributors Guide] (MICROSOFT INTERNAL)"
+  },
+  {
+    "id": "java_introduction.html#java-docs-style-guide",
+    "category": "General guidelines",
+    "text": "DO adhere to the Microsoft style guides when you write public-facing documentation. (MICROSOFT INTERNAL)\n[Microsoft Writing Style Guide]\n[Microsoft Cloud Style Guide]\n\nUse the style guides for both long-form documentation like a README and the docstrings in your code."
+  },
+  {
+    "id": "java_introduction.html#java-docs-into-silence",
+    "category": "General guidelines",
+    "text": "YOU SHOULD attempt to document your library into silence. Preempt developers' usage questions and minimize GitHub issues by clearly explaining your API in the docstrings. Include information on service limits and errors they might hit, and how to avoid and recover from those errors.\n\nAs you write your code, doc it so you never hear about it again. The fewer questions you have to answer about your client library, the more time you have to build new features for your service."
+  },
+  {
+    "id": "java_introduction.html#java-docs-maven-versions",
+    "category": "General guidelines",
+    "text": "DO NOT include version details when specifying Maven dependency statements. Always refer the user back to a central document detailing how to use the Azure SDK for Java BOM.\n\nCode samples are small applications that demonstrate a certain feature that is relevant to the client library.  Samples allow developers to quickly understand the full usage requirements of your client library. Code samples shouldn't be any more complex than they needed to demonstrate the feature. Don't write full applications. Samples should have a high signal to noise ratio between useful code and boilerplate code for non-related reasons."
+  },
+  {
+    "id": "java_introduction.html#java-samples-include-them",
+    "category": "Samples",
+    "text": "DO include code samples alongside your library's code within the repository. The samples should clearly and succinctly demonstrate the code most developers need to write with your library. Include samples for all common operations.  Pay attention to operations that are complex or might be difficult for new users of your library. Include samples for the champion scenarios you've identified for the library."
+  },
+  {
+    "id": "java_introduction.html#java-samples-location",
+    "category": "Samples",
+    "text": "DO place code samples within the /src/samples/java directory within the client library root directory. The samples will be compiled, but not packaged into the resulting jar."
+  },
+  {
+    "id": "java_introduction.html#java-samples-main",
+    "category": "Samples",
+    "text": "DO ensure that each sample file is executable by including a public static void main(String[] args) method."
+  },
+  {
+    "id": "java_introduction.html#java-samples-coding-style",
+    "category": "Samples",
+    "text": "DO use the latest coding conventions when creating samples. Make liberal use of modern Java syntax and APIs (for example, diamond operators) as they remove boilerplate from your samples and highlight you library. Don't use any language feature or API of Java the currently supported Java baseline.  The current supported Java version is Java 8."
+  },
+  {
+    "id": "java_introduction.html#java-samples-use-latest-library",
+    "category": "Samples",
+    "text": "DO compile sample code using the latest major release of the library. Review sample code for freshness.  At least one commit must be made (to update dependencies) to each sample per semester."
+  },
+  {
+    "id": "java_introduction.html#java-samples-grafting",
+    "category": "Samples",
+    "text": "DO ensure that code samples can be easily grafted from the documentation into a users own application.  For example, don't rely on variable declarations in other samples."
+  },
+  {
+    "id": "java_introduction.html#java-samples-readability",
+    "category": "Samples",
+    "text": "DO write code samples for ease of reading and comprehension over code compactness and efficiency."
+  },
+  {
+    "id": "java_introduction.html#java-samples-platform-support",
+    "category": "Samples",
+    "text": "DO ensure that samples can run in Windows, macOS, and Linux development environments.  Don't use a non-standard developer toolchain."
+  },
+  {
+    "id": "java_introduction.html#java-samples-build-code",
+    "category": "Samples",
+    "text": "DO build and test your code samples using the repository's continuous integration (CI) to ensure they remain functional."
+  },
+  {
+    "id": "java_introduction.html#java-snippets-no-combinations",
+    "category": "Samples",
+    "text": "DO NOT combine multiple operations in a code sample unless it's required for demonstrating the type or member. For example, a Cosmos DB code sample doesn't include both account and container creation operations.  Create a sample for account creation, and another sample for container creation.\n\nCombined operations require knowledge of additional operations that might be outside their current focus. The developer must first understand the code surrounding the operation they're working on, and can't copy and paste the code sample into their project.\n\nThis section introduces guidelines for fundamental Java development design decisions that are used throughout the Azure SDK for Java. For further guidance, consider reviewing presentations and documentation on Java API design best practices (https://www.jonathangiles.net/java-api-design-best-practices.html) \n\nUsing a consistent set of naming patterns across all client libraries will ensure a consistent and more intuitive developer experience. This section outlines good practices for naming that must be followed by all client libraries."
+  },
+  {
+    "id": "java_introduction.html#java-naming-succinct",
+    "category": "Naming Patterns",
+    "text": "DO prefer succinctness over verbosity in method and class names, except when readability is impacted. A few examples include:\nA class may want to return an identifier to a user. There is no additional value in the fully-qualified getIdentifier() compared with the shorter and equally-descriptive getId().\nA method called getName() is short, but may leave some doubt in the users mind about which name is being represented. Instead, naming this method getLinkName() will remove all doubt from the users mind, and without substantial additional verbosity. Similarly, in the case of getId() above, always choose to specify the identifier name if there is any likelihood of confusion about which identifier is being referenced. For example, use getTenantId() rather than getId(), unless it is completely unambiguous as to which identifier is being referenced."
+  },
+  {
+    "id": "java_introduction.html#java-naming-uppercase-acronyms",
+    "category": "Naming Patterns",
+    "text": "DO NOT fully uppercase acronyms. APIs must take the form of getHttpConnection() or getUrlName() rather than getHTTPConnection() or getURLName()."
+  },
+  {
+    "id": "java_introduction.html#java-naming-service-acronyns",
+    "category": "Naming Patterns",
+    "text": "DO use service-specific acronyms sparingly in API. Whereas most users will accept a method including Http or Url in the name, most users will not know what Sas or Cpk mean. Where possible (without breaking the succinctness over verbosity requirement above), expansion of acronyms, or at the very least sufficient documentation at class and method levels to describe the acronym, must be considered."
+  },
+  {
+    "id": "java_introduction.html#java-naming-host-vs-hostname",
+    "category": "Naming Patterns",
+    "text": "DO use the correct naming for 'host' vs 'hostname'. 'hostname' is the host name without any port number, whereas 'host' is the hostname with the port number."
+  },
+  {
+    "id": "java_introduction.html#java-naming-camel-case",
+    "category": "Naming Patterns",
+    "text": "DO NOT use camel case on words that are commonly accepted in their combined form. For example, 'hostname' should be spelt as hostname rather than hostName, and 'username' should be spelt as username rather than userName."
+  },
+  {
+    "id": "java_introduction.html#java-interface-i-prefix",
+    "category": "Naming Patterns",
+    "text": "DO NOT name interface types with an 'I' prefix, e.g. ISearchClient. Instead, do not have any prefix for an interface, preferring SearchClient as the name for the interface type in this case.\n\n<!-- Project Links -->\n<!-- Example Links -->\n<!-- Intra-document references -->\n"
+  }
+]

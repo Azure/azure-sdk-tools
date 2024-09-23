@@ -1,0 +1,198 @@
+@page "{id?}/{revisionId?}"
+@model APIViewWeb.Pages.Assemblies.UsageSamplePageModel
+@using APIViewWeb.Helpers
+@using APIViewWeb.LeanModels;
+@using APIViewWeb.Models
+@{
+    Layout = "Shared/_Layout";
+    ViewData["Title"] = "Usage Samples";
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    TempData["UserPreference"] = userPreference;
+}
+
+@{
+    var rightOffCanvasClass = " show-right-offcanvas";
+    var leftOffCanvasClass = " show-left-offcanvas";
+    var mainContainerLeftClass = " move-main-content-container-left";
+    var mainContainerRightClass = " move-main-content-container-right";
+    if (userPreference.HideSamplesPageOptions.HasValue && userPreference.HideSamplesPageOptions == true)
+    {
+        rightOffCanvasClass = String.Empty;
+        mainContainerRightClass = String.Empty;
+    }
+    var mainContainerClass = mainContainerLeftClass + mainContainerRightClass;
+}
+
+<div class="container-fluid mx-0 px-0 sub-header-content">
+    <div class="row px-3 py-2 border-bottom" id="review-info-bar">
+        @{
+            var reviewBadgeModel = new ReviewBadgeModel();
+            reviewBadgeModel.Review = Model.Review;
+        }
+        <partial name="Shared/_ReviewBadge" model="reviewBadgeModel" />
+    </div>
+</div>
+
+<div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
+    <div class="left-offcanvas-menu-content" id="left-offcanvas-menu-content">
+        <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Review" asp-route-id="@Model.Review.Id"><i class="bi bi-braces" data-bs-toggle="tooltip" data-bs-placement="right" title="API"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#samplesRevisions-context" aria-controls="samplesRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisions"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Conversation" asp-route-id="@Model.Review.Id"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversations"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples" active-if="@TempData["page"].Equals("samples")"><i class="bi bi-puzzle"></i></a>
+        </div>
+    </div>
+</div>
+
+<div id="right-offcanvas-menu" class="right-offcanvas@(rightOffCanvasClass)">
+    <div class="right-offcanvas-menu-content" id="right-offcanvas-menu-content">
+        <p class="h6">
+            <a data-bs-toggle="collapse" href="#samplesUpdateCollapse" aria-expanded="true" aria-controls="samplesUpdateCollapse">Update&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+        </p>
+        @{
+            var samplesUpdateCollapseState = " show";
+            if (Request.Cookies.ContainsKey("samplesUpdateCollapse"))
+            {
+                if (!Request.Cookies["samplesUpdateCollapse"].Equals("shown"))
+                    samplesUpdateCollapseState = String.Empty;
+            }
+        }
+        <ul class="list-group collapse mb-3@(samplesUpdateCollapseState)" id="samplesInfoCollapse">
+            <li class="list-group-item text-center">
+                <span class="small text-muted"><i>Uploaded by <strong> <a username="@Model.ActiveSampleRevision.CreatedBy"> @Model.ActiveSampleRevision.CreatedBy </a></strong></i></span>
+                <div class="d-grid gap-2 my-2">
+                    @if (Model.SampleContent != null && Model.SampleContent.Any())
+                    {
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="offcanvas" data-bs-target="#edit-samples-context" aria-controls="edit-samples-context">Edit</button>
+                        @if (Model.ActiveSampleRevision.CreatedBy == User.GetGitHubLogin())
+                        {
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModel">Delete</button>
+                        }
+                    }
+                    <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#upload-samples-context" aria-controls="upload-samples-context">Add Sample</button>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@if (Model.ActiveSampleRevision != null && (Model.ActiveSampleRevision.FileId == "Bad Deployment" || Model.ActiveSampleRevision.FileId == "File Content Missing")) // If the samples container does not exist
+{
+    <div class="container-fluid pt-2@(mainContainerClass)" id="samples-main-container">
+        <div class="row mx-0 px-0">
+            <div class="col-lg-12 mx-0 px-0">
+                <div class="text-muted">
+                    <p> <strong> Usage Samples are not available for this APIView deployment. </strong></p>
+                    <p> Please check <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/CONTRIBUTING.md">CONTRIBUTING.md</a> to see how to enable them. </p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container-fluid pt-2@(mainContainerClass)" id="samples-main-container">
+        <div class="row mx-0 px-0">
+            <div class="col-lg-12 mx-0 px-0" data-review-id=@Model.Review.Id>
+                @if (Model.SampleRevisions.Any())
+                {
+                    @if (Model.SampleContent.Length == 0) 
+                    {
+                        <div class="text-muted">
+                            <p> This review does not currently have any usage samples to display.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="border rounded samples-center">
+                            <table class="code-window">
+                                <tbody>
+                                    @foreach (var line in Model.SampleContent)
+                                    {
+                                        <partial name="_codeline" model="@line" />
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-muted">
+                        <p> <strong>This API Review has no Usage Samples </strong></p>
+                    </div>
+                }
+            </div>
+            <partial name="_SampleCommentFormPartial" />
+        </div>
+    </div>
+}
+
+<partial name="Shared/_AddSamplesRevisionsPartial" model="Model.Review" />
+
+<div class="offcanvas offcanvas-end border-start" tabindex="-1" id="edit-samples-context" aria-labelledby="edit-samples-context-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasLabel">Update Usage Samples</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form asp-page-handler="Upload" method="post">
+            <div class="form-group">
+                <div class="border rounded p-3">
+                    <label asp-for="Upload.RevisionTitle"> Enter a sample title (Optional) </label>
+                    <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
+                    <div class="edit-samples-content">
+                        <textarea asp-for="Upload.UpdateString" class="form-control" rows="25"></textarea>
+                    </div>
+                    <input asp-for="Upload.ReviewId" hidden value="@Model.Review.Id" />
+                    <input asp-for="Upload.Updating" hidden type="text" value="@true" />
+                    <p class="text-muted"> This will create a new revision of the sample. </p>
+                </div>
+            </div>
+            <div class="d-grid gap-2 my-2">
+                <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModel" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Usage Sample</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-content">
+                    <p class="text-center"> This action can not be undone. </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="form-group">
+                    <form asp-page-handler="Upload" method="post">
+                        <input asp-for="Upload.SampleString" hidden value="@null" />
+                        <input asp-for="Upload.ReviewId" hidden value="@Model.Review.Id" />
+                        <input asp-for="Upload.DeletingAndRedirect" hidden type="text" value="@true" />
+                        <input asp-for="Upload.SampleId" hidden type="text" value="@Model.ActiveSampleRevision.Id" />
+                        <input asp-for="Upload.FileId" hidden type="text" value="@Model.ActiveSampleRevision.FileId" />
+                        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end border-start" tabindex="-1" id="samplesRevisions-context" aria-labelledby="samplesRevisions-contex-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="samplesRevisions-contex-label"><a asp-page="Revisions" asp-route-id="@Model.Review.Id">Revisions</a></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <partial name="Shared/_SamplesRevisionsPartial" model="(Model.Review, Model.SampleRevisions, Model.ActiveSampleRevision)" />
+    </div>
+</div>

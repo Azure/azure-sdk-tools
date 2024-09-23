@@ -1,9 +1,9 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
-import * as jp from 'jsonpath';
 import * as path from 'path';
 import { AutorestExtensionHost, Session } from '@autorest/extension-base';
 import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
+import { JSONPath } from 'jsonpath-plus';
 import { comment, serialize } from '@azure-tools/codegen';
 
 export class Helper {
@@ -20,12 +20,14 @@ export class Helper {
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
             if (exportExplicitTypes) {
-                codeModelSchema.explicit = codeModelSchema.explicit.concat(codeModelSchema.implicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)));
-                codeModelSchema.implicit = codeModelSchema.implicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
-                codeModelSchema.compiledExplicit = codeModelSchema.compiledExplicit.concat(
-                    codeModelSchema.compiledImplicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)),
+                (codeModelSchema as any).explicit = (codeModelSchema as any).explicit.concat(
+                    (codeModelSchema as any).implicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)),
                 );
-                codeModelSchema.compiledImplicit = codeModelSchema.compiledImplicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
+                (codeModelSchema as any).implicit = (codeModelSchema as any).implicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
+                (codeModelSchema as any).compiledExplicit = (codeModelSchema as any).compiledExplicit.concat(
+                    (codeModelSchema as any).compiledImplicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)),
+                );
+                (codeModelSchema as any).compiledImplicit = (codeModelSchema as any).compiledImplicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
             }
             host.writeFile({
                 filename: 'code-model-v4.yaml',
@@ -202,7 +204,7 @@ export class Helper {
 
     public static queryByPath(obj: any, path: string[]): any[] {
         const jsonPath = '$' + path.map((x) => `['${x}']`).join('');
-        return jp.query(obj, jsonPath);
+        return JSONPath({ path: jsonPath, json: obj });
     }
 
     public static queryBodyParameter(obj: any, path: string[]): any[] {

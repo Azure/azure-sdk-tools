@@ -1,0 +1,5 @@
+@import "../../../../../../APIViewWeb/Client/css/shared/mixins.scss";
+
+.footer {
+    @include app-footer;
+}

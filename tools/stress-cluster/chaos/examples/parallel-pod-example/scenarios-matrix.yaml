@@ -1,0 +1,12 @@
+matrix:
+  scenarios:
+    parallel-example-a:
+      description: "Example for running multiple test containers in parallel"
+      # Adding this field into a matrix entry determines
+      # how many pods will run in parallel
+      parallel: 3
+    parallel-example-b:
+      description: "Example for running multiple test containers in parallel"
+      parallel: 2
+    non-parallel-example:
+      description: "This scenario is not run multiple pods in parallel"

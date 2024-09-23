@@ -1,0 +1,68 @@
+version: "0.2"
+language: en
+allowCompoundWords: true
+dictionaries:
+  - node
+  - typescript
+words:
+  - autorest
+  - azsdkengsys
+  - azurecr
+  - blockful
+  - blockless
+  - typespec
+  - Contoso
+  - CRUDL
+  - devdriven
+  - dogfood
+  - eastus
+  - esbuild
+  - globby
+  - Hdvcmxk
+  - inmemory
+  - instanceid
+  - intrinsics
+  - ints
+  - jsyaml
+  - msbuild
+  - MSRC
+  - munge
+  - mylib
+  - nostdlib
+  - oapi
+  - oneof
+  - onig
+  - onigasm
+  - onwarn
+  - openapi
+  - openapiv
+  - picocolors
+  - pnpm
+  - proto
+  - protobuf
+  - protoc
+  - regen
+  - rpaas
+  - rushx
+  - safeint
+  - strs
+  - TSES
+  - unassignable
+  - Uncapitalize
+  - uninstantiated
+  - unioned
+  - unprojected
+  - unsourced
+  - unversioned
+  - vsix
+  - vswhere
+  - westus
+  - xplat
+  - deindent
+ignorePaths:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/dist-dev/**"
+  - "**/tsp-output/**"
+enableFiletypes:
+  - tsp

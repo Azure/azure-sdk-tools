@@ -1,0 +1,8 @@
+{{- $addons := get .Values "stress-test-addons" -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    azure.workload.identity/client-id: {{ get $addons.infraWorkloadAppClientId $addons.env }}
+  name: {{ get $addons.infraWorkloadAppServiceAccountName $addons.env }}
+  namespace: {{ .Release.Namespace }}

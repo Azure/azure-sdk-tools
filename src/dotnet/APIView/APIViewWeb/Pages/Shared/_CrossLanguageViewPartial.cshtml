@@ -1,0 +1,38 @@
+@using APIViewWeb.Helpers
+@using APIViewWeb.LeanModels
+@model Dictionary<string, ReviewContentModel>
+<table id="cross-language-view-template" class="d-none">
+    <tbody>
+        <tr class="cross-language-panel">
+            <td colspan="2" class="border-top border-bottom">
+                <div class="d-flex align-items-start p-2">
+                    <div class="nav flex-column nav-pills me-3" role="tablist" aria-orientation="vertical">
+                        @foreach (var item in Model)
+                        {
+                            var lang = PageModelHelpers.GetLanguageCssSafeName(item.Key);
+                            string iconClassName = "icon-" + lang;
+                            <a class="nav-link" id="cross-lang-pills-tab-@(lang)" data-bs-toggle="pill" data-bs-target="#cross-lang-pills-content-@(lang)" type="button" role="tab" aria-controls="cross-lang-pills-content-@(lang)" aria-selected="false">
+                                <span role="img" class="icon-language @iconClassName" aria-label="@lang"></span>
+                            </a>
+                        }
+                    </div>
+                    <div class="tab-content border rounded cross-language-pills-tab-content">
+                        @foreach (var item in Model)
+                        {
+                            var lang = PageModelHelpers.GetLanguageCssSafeName(item.Key);
+                            <div class="tab-pane fade show" id="cross-lang-pills-content-@(lang)" role="tabpanel" aria-labelledby="cross-lang-pills-tab-@(lang)" tabindex="0">
+                                <div class="border-bottom">
+                                    &nbsp;&nbsp;No @item.Key Cross Language Content
+                                </div>
+                                <small class="ps-2">
+                                    <a href="@item.Value.ActiveAPIRevision.ReviewId/@item.Value.ActiveAPIRevision.Id" target="_blank">@item.Value.ActiveAPIRevision.Language/@item.Value.ActiveAPIRevision.PackageName</a>
+                                </small>
+                            </div>
+                        }
+                    </div>
+                    <button type="button" class="btn-close btn-sm" aria-label="Close"></button>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>

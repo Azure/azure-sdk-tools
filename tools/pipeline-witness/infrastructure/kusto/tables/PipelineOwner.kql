@@ -4,9 +4,9 @@
     Owners: dynamic,
     Timestamp: datetime,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
-.alter table PipelineOwner ingestion json mapping 'PipelineOwner_mapping' ```[
+.create-or-alter table PipelineOwner ingestion json mapping 'PipelineOwner_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },
     { "column": "Owners", "path": "$['owners']" },

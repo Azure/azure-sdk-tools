@@ -3,7 +3,7 @@
   <PropertyGroup>
     <VersionPrefix>0.2.0</VersionPrefix>
 
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
 
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
@@ -12,5 +12,6 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.7.0" />
   </ItemGroup>
 </Project>

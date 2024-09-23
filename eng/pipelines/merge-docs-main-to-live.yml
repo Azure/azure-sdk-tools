@@ -6,6 +6,9 @@ parameters:
 - name: DocsRepos
   type: object
   default:
+    - RepoName: azure-docs-sdk-dotnet
+      RepoOwner: Azure
+      AllowlistPath: docsms-allowlist/dotnet-allowlist.txt
     - RepoName: azure-docs-sdk-java
       RepoOwner: Azure
       AllowlistPath: docsms-allowlist/java-allowlist.txt
@@ -25,8 +28,8 @@ jobs:
   - job: 
     displayName: 'ReleaseDocsMs: ${{repo.RepoName}}'
     pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: MMSUbuntu20.04
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
     variables:
       DocRepoLocation: $(Pipeline.Workspace)/docs
     steps:

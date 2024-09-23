@@ -1,0 +1,5 @@
+# All Monikers ends in source path/owner line
+# AzureSdkOwners: @TestOwner2
+# PRLabel: %TestLabel1
+# ServiceLabel: TestLabel3
+/sdk/someFakePath @TestOwner0

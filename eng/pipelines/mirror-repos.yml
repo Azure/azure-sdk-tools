@@ -4,15 +4,14 @@ trigger: none
 pr: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2004-general
-  vmImage: MMSUbuntu20.04
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
 
 jobs:
   - job: SyncRepos
     displayName: Sync public repos
 
     steps:
-    - checkout: none
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
@@ -22,6 +21,48 @@ jobs:
             TargetRepos:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
+
+          Azure/typespec-azure:
+            TargetRepos:
+              Azure/typespec-azure-pr:
+
+    - template: ./templates/steps/sync-repo-merge-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+
+          Azure/azure-rest-api-specs-pr:
+            Branch: main
+            TargetBranches:
+              RPSaaSMaster:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              RPSaaSDev:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              ARMCoreRPDev:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              InternalARMContracts:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+
+    - template: ./templates/steps/sync-repo-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+
+          Azure/azure-sdk-for-cpp:
+            TargetRepos:
+              Azure/azure-sdk-for-cpp-pr:
 
           Azure/azure-sdk-for-go:
             TargetRepos:
@@ -68,15 +109,11 @@ jobs:
               Azure/azure-sdk-for-c-pr:
               azure-sdk/azure-sdk-for-c:
 
-          Azure/azure-cli-extensions:
+          Azure/azure-sdk-for-rust:
             TargetRepos:
-              Azure/azure-cli-extensions-pr:
-              azure-sdk/azure-cli-extensions:
-              azure-sdk/azure-cli-extensions-pr:
-
-          Azure/azure-libraries-for-java:
-            TargetRepos:
-              Azure/azure-libraries-for-java-pr:
+              Azure/azure-sdk-for-rust-pr:
+              azure-sdk/azure-sdk-for-rust:
+              azure-sdk/azure-sdk-for-rust-pr:
 
           Microsoft/vcpkg:
             TargetRepos:
@@ -86,10 +123,6 @@ jobs:
             TargetRepos:
               azure-sdk/azure-docs-sdk-java:
 
-          Azure/azure-powershell:
-            TargetRepo:
-              azure-sdk/azure-powershell:
-
           Azure/azure-resource-manager-schemas:
             TargetRepos:
               azure-sdk/azure-resource-manager-schemas:
@@ -97,6 +130,10 @@ jobs:
           Azure/azure-dev:
             TargetRepos:
               Azure/azure-dev-pr:
+
+          MicrosoftDocs/azure-dev-docs-pr:
+            TargetRepos:
+              azure-sdk/azure-dev-docs-pr:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:

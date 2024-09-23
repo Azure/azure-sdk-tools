@@ -1,5 +1,19 @@
 # Release History
 
+## Version 0.2.2 (Unreleased)
+- Fix issue where extension members were duplicated.
+
+## Version 0.2.1 (Unreleased)
+- Fix issue where framework-generated APIViews had an
+  unstable order.
+
+## Version 0.2.0 (Unreleased)
+- Switch from SwiftAST dependency to SwiftSyntax.
+- Overhaul to how extensions are displayed.
+
+## Version 0.1.4 (Unreleased)
+- Allow attributes inside function signatures.
+
 ## Version 0.1.3 (Unreleased)
 - Support for getter/setter blocks.
 - Fixed issue where read-only properties would appear as

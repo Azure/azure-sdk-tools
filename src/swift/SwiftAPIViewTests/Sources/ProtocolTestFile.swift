@@ -35,14 +35,14 @@ public protocol SomeProtocol {
 
 // Protocol with property requirements
 
-protocol FullyNamed {
+public protocol FullyNamed {
     var fullName: String { get }
 }
 
 // Implementing protocol in declaration
 
-struct Person: FullyNamed {
-    var fullName: String
+public struct Person: FullyNamed {
+    public var fullName: String
 }
 
 // Protocol with method requirements

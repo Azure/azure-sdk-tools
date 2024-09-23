@@ -1,0 +1,5 @@
+{
+  "matrix": {
+    "FooEnv": "env:FOO"
+  }
+}

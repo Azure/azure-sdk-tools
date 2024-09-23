@@ -1,0 +1,142 @@
+# The pipeline is mainly used to migrate our agent pool from one version to another version. 
+# Here is how we use the pipeline:
+# 1. What repos are you going to work on for your migration? Put your repos in Parameter 'Repos'. Follow the format in default.
+# 2. The replacement map, e.g We will search all occurrences of the strings in Parameter 'MigrateFrom' and replace to the value in 'MigrateTo'. This is regex map, and you can define multiple replacement rules here.
+# 3. The Parameter 'WhatIfPreference' boolean flag allows you to check your changed files before open a PR. Check the box if you don't want to create a PR.
+# 4. The pipeline will generate PRs in specified repos, Parameter 'ShortForMigrateFrom' and 'ShortForMigrateTo' are the short descriptions of the PR purpose.
+#    The PR title will in the format of "Migrate from ${{parameters.ShortForMigrateFrom}} to ${{parameters.ShortForMigrateTo}}"
+#    You can also specify who triggers the changes in Paramter 'GithubAssigneeAlias'. Then your PR will request review from the specified person.
+#    If you want to create PR from your own fork, you can specify the Parameters 'PRForkOwner'
+# 5. Go to the PR link in 'Create pull request' step. Review and merge the PR. Note, the pipeline intented to be aggressive, so take a closer look at the changes.
+#    The PR also has a link pointed back to the pipeline, so people will learn where it comes from and the purpose of the PR.
+trigger: none
+pr: none
+
+# Notes on ExcludePaths and IncludeFromExcludedPaths:
+# 1. ExcludePaths is used to exclude the file pattern you don't want to scan against.
+# 2. IncludeFromExcludedPaths is used to add back the files you don't want to exclude. It is supposed to be a subset of ExcludePaths. Pass empty if you only want exclude paths.
+# 3. Both excludePaths and IncludeFromExcludedPaths support standard powershell regex. 
+# 4. The paths here are relative to the repo folder. 
+#    E.g.
+#    In win agent pool, the path is like ".\eng\scripts\Repo-File-Content-Replacements.ps1", so the regex path can be like "^.\\eng\\"
+#    In linux agent pool, the path is like "./eng/scripts/Repo-File-Content-Replacements.ps1", so the regex path can be like "^./eng/"
+#    To be compatible with both cases, you can also specify your regex path like "^./|\\eng/|\\"
+parameters:
+- name: Repos
+  type: object
+  default:
+    - RepoOwner: Azure
+      RepoName: azure-sdk-tools
+    - RepoOwner: Azure
+      RepoName: azure-sdk
+      ExcludePaths: '^\.\\eng\\common\\'
+      IncludeFromExcludedPaths: ""
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-android
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\tests\\resources\\session-records\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-c
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-cpp
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-go
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-ios
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-java
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\resources\\session-records\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-js
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\recordings\\node\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-net
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\tests\\SessionRecords\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-python
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\tests\\recordings\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+# Default setting is an example of the map looks like:
+- name: MigrationMap
+  type: object
+  default: 
+    - MigrateFrom: azsdk-pool-mms-win-2019-general
+      MigrateTo: azsdk-pool-mms-win-2022-general
+    - MigrateFrom: windows-2019
+      MigrateTo: windows-2022
+    - MigrateFrom: windows2019
+      MigrateTo: windows2022
+    - MigrateFrom: MMS2019
+      MigrateTo: windows-2022
+- name: ShortForMigrateFrom
+  type: string
+  default: ''
+- name: ShortForMigrateTo
+  type: string
+  default: ''
+# The value here is github alias: e.g. konrad-jamrozik
+# Users to assign to the PR after opening. Users should be a comma-separated list. e.g. "user1,usertwo,user3"
+- name: GithubAssignees
+  type: string
+  default: ''
+- name: PRForkOwner
+  type: string
+  default: 'azure-sdk'
+- name: WhatIfPreference
+  type: boolean
+  default: false
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+jobs:
+  - job: Migration
+    pool:
+      name: azsdk-pool-mms-win-2022-general
+    steps:
+      - ${{ each repo in parameters.Repos }}:
+        - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+          parameters:
+            SkipCheckoutNone: true
+            Repositories:
+              - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
+                WorkingDirectory: $(Build.SourcesDirectory)/repos/${{ repo.RepoName }}
+                Commitish: ${{ repo.branch }}
+            Paths:
+              - /*
+        - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+          parameters:
+            WorkingDirectory: $(Build.SourcesDirectory)/repos/${{ repo.RepoName }}
+        - pwsh: |
+            $migrationMap = '${{ convertToJson(parameters.MigrationMap) }}'
+            $(Build.SourcesDirectory)/eng/scripts/Repo-File-Content-Replacements.ps1 `
+              -ExcludePathsRegex '${{ repo.ExcludePaths }}' `
+              -IncludeFromExcludedPathsRegex '${{ repo.IncludeFromExcludedPaths }}' `
+              -MigrationMap $migrationMap
+          displayName: Migration for "${{ repo.RepoName }}"
+          workingDirectory: $(Build.SourcesDirectory)/repos/${{ repo.RepoName }}
+          continueOnError: true
+        - ${{ if ne(parameters.WhatIfPreference, 'true')}}:
+          - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+            parameters:
+              BaseBranchName: $(DefaultBranch)
+              PRBranchName: migration
+              PROwner: ${{ parameters.PRForkOwner }}
+              CommitMsg: "Migrate from ${{parameters.ShortForMigrateFrom}} to ${{parameters.ShortForMigrateTo}}"
+              RepoOwner: ${{ repo.RepoOwner }}
+              RepoName: ${{ repo.RepoName }}
+              PRTitle: "Migrate from ${{parameters.ShortForMigrateFrom}} to ${{parameters.ShortForMigrateTo}}"
+              WorkingDirectory: $(Build.SourcesDirectory)/repos/${{ repo.RepoName }}
+              GHAssignees: ${{ parameters.GithubAssignees }}
+              PRBody: "This is auto PR generated by pipeline: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=$(Build.BuildId)&view=results"
+              PushArgs: -f

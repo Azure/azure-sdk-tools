@@ -13,15 +13,32 @@ stages:
   - job: Run
     timeoutInMinutes: 120
     pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: MMSUbuntu20.04
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
 
     variables:
       Organization: azure-sdk
       Project: internal
       DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
       OutputPath: '$(Agent.BuildDirectory)/pipelineOwners.json'
+      RepoLabelUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/repository-labels-blob"
+      TeamUserUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob"
+      UserOrgUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/user-org-visibility-blob"
+      RepoListFile: "$(Build.SourcesDirectory)/tools/github/data/repositories.txt"
+
     steps:
+      - task: AzureCLI@2
+        displayName: 'Fetch and store team/user data'
+        inputs:
+          azureSubscription: 'Azure SDK Artifacts'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            dotnet run -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
+          workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
+        env:
+          GITHUB_TOKEN: $(azuresdkartifacts-azure-sdk-write-teams-github-pat)
+
       - task: DotNetCoreCLI@2
         displayName: 'Install Pipeline Owners Extractor'
         inputs:
@@ -32,7 +49,7 @@ stages:
       - task: AzureCLI@2
         displayName: Run Pipeline Owners Extractor
         inputs:
-          azureSubscription: 'Azure SDK Engineering System'
+          azureSubscription: 'opensource-api-connection'
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: pipeline-owners-extractor --output "$(OutputPath)"
@@ -40,3 +57,4 @@ stages:
         displayName: Publish pipelineOwners artifact
         artifact: pipelineOwners
         condition: succeededOrFailed()
+

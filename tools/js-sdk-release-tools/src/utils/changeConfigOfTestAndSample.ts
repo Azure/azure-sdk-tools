@@ -31,15 +31,18 @@ export function changeConfigOfTestAndSample(packagePath: string, mode: ChangeMod
         tsConfig = JSON.parse(tsConfigFile);
         packageJson = JSON.parse(packageJsonFile);
         apiExtractor = JSON.parse(apiExtractorFile);
-
         tsConfig['include'] = ["./src/**/*.ts"];
-        packageJson['module'] = "./dist-esm/index.js";
-        if (sdkType === SdkType.Hlc) {
-            apiExtractor['mainEntryPointFilePath'] = "./dist-esm/index.d.ts";
-        } else {
-            apiExtractor['mainEntryPointFilePath'] = "./types/index.d.ts";
+        const isEsm = packageJson["type"] === "module";
+        // Only update other files for common JS packages
+        if(!isEsm) {
+            packageJson['module'] = "./dist-esm/index.js";
+            if (sdkType === SdkType.Hlc) {
+                apiExtractor['mainEntryPointFilePath'] = "./dist-esm/index.d.ts";
+            } else {
+                apiExtractor['mainEntryPointFilePath'] = "./types/index.d.ts";
+            }
         }
-
+    // TODO: bug? never change the files back, since the it reads the changed files
     }  else if (mode === ChangeModel.Revert) {
         tsConfig = oriTsConfig;
         packageJson = JSON.parse(packageJsonFile);

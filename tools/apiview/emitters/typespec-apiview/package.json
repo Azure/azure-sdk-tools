@@ -1,0 +1,82 @@
+{
+  "name": "@azure-tools/typespec-apiview",
+  "version": "0.4.9",
+  "author": "Microsoft Corporation",
+  "description": "Library for emitting APIView token files from TypeSpec",
+  "homepage": "https://github.com/Azure/azure-sdk-tools",
+  "readme": "https://github.com/Azure/azure-sdk-tools/blob/master/README.md",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Azure/azure-sdk-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Azure/azure-sdk-tools/issues"
+  },
+  "keywords": [
+    "typespec",
+    "apiview"
+  ],
+  "type": "module",
+  "main": "dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./testing": "./dist/src/testing/index.js"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/src/index.d.ts"
+      ],
+      "testing": [
+        "./dist/src/testing/index.d.ts"
+      ]
+    }
+  },
+  "tspMain": "dist/src/index.js",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "clean": "rimraf ./dist ./temp",
+    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
+    "build": "npm run prebuild && tsc -p . && npm run lint-typespec-library",
+    "watch": "tsc -p . --watch",
+    "lint-typespec-library": "tsp compile . --warn-as-error --import @typespec/library-linter --no-emit",
+    "test": "mocha",
+    "test-official": "c8 mocha --forbid-only --reporter mocha-multi-reporters",
+    "lint": "eslint . --ext .ts --max-warnings=0",
+    "lint:fix": "eslint . --fix --ext .ts"
+  },
+  "files": [
+    "lib/*.tsp",
+    "dist/**",
+    "!dist/test/**"
+  ],
+  "peerDependencies": {
+    "@typespec/compiler": ">=0.57 <1.0",
+    "@typespec/versioning": ">=0.57 <1.0"
+  },
+  "devDependencies": {
+    "@azure-tools/typespec-azure-core": ">=0.43 <1.0",
+    "@typespec/http": ">=0.57 <1.0",
+    "@typespec/rest": ">=0.57 <1.0",
+    "@typespec/eslint-plugin": ">=0.57 <1.0",
+    "@typespec/library-linter": ">=0.57 <1.0",
+    "@typespec/prettier-plugin-typespec": ">=0.57 <1.0",
+    "@types/mocha": "~9.1.0",
+    "@types/node": "~18.11.19",
+    "c8": "^9.1.0",
+    "cspell": "^8.8.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-unicorn": "^53.0.0",
+    "prettier": "~3.2.5",
+    "rimraf": "~5.0.7",
+    "typescript": "~5.4.5",
+    "mocha": "~9.2.0",
+    "mocha-junit-reporter": "~2.0.2",
+    "mocha-multi-reporters": "~1.5.1",
+    "source-map-support": "^0.5.19"
+  }
+}

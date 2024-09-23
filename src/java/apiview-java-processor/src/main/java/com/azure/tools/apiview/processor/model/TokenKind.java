@@ -1,6 +1,5 @@
-package com.azure.tools.apiview.processor.model;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+package com.azure.tools.apiview.processor.model;
 
 public enum TokenKind {
     TEXT(0),
@@ -30,7 +29,20 @@ public enum TokenKind {
 
     // for any metadata that should not be compared when checking diff
     SKIP_DIFF_START(15),
-    SKIP_DIFF_END(16);
+    SKIP_DIFF_END(16),
+
+    // for external links
+    EXTERNAL_LINK_START(28),
+    EXTERNAL_LINK_END(29);
+
+    private static final TokenKind[] VALUES;
+
+    static {
+        VALUES = new TokenKind[30];
+        for (TokenKind kind : TokenKind.values()) {
+            VALUES[kind.id] = kind;
+        }
+    }
 
     private final int id;
 
@@ -38,8 +50,16 @@ public enum TokenKind {
         this.id = id;
     }
 
-    @JsonValue
     public int getId() {
         return id;
+    }
+
+    public static TokenKind fromId(int id) {
+        for (TokenKind kind : TokenKind.values()) {
+            if (kind.id == id) {
+                return kind;
+            }
+        }
+        return null;
     }
 }

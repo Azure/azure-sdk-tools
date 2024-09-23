@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -38,11 +38,16 @@ namespace Azure.Sdk.Tools.SnippetGenerator
             _snippets = new Lazy<Task<List<Snippet>>>(DiscoverSnippetsAsync);
         }
 
-        public async Task<IEnumerable<string>> ProcessAsync()
+        public async Task<IEnumerable<string>> ProcessAsync(IEnumerable<string> files = null)
         {
-            List<string> files = new List<string>();
-            files.AddRange(Directory.EnumerateFiles(_directory, "*.md", SearchOption.AllDirectories));
-            files.AddRange(Directory.EnumerateFiles(_directory, "*.cs", SearchOption.AllDirectories));
+            if (files is null)
+            {
+                List<string> discoveredFiles = new();
+                discoveredFiles.AddRange(Directory.EnumerateFiles(_directory, "*.md", SearchOption.AllDirectories));
+                discoveredFiles.AddRange(Directory.EnumerateFiles(_directory, "*.cs", SearchOption.AllDirectories));
+
+                files = discoveredFiles;
+            }
 
             foreach (var file in files)
             {
@@ -64,6 +69,11 @@ namespace Azure.Sdk.Tools.SnippetGenerator
                     selectedSnippet.IsUsed = true;
                     Console.WriteLine($"Replaced {selectedSnippet.Name} in {file}");
                     var result = FormatSnippet(selectedSnippet.Text);
+                    if (string.IsNullOrWhiteSpace(result))
+                    {
+                        throw new InvalidOperationException($"Snippet '{s}' is empty. Did you remember to implement the snippet code or are preprocessor conditions excluding it?");
+                    }
+
                     return result;
                 }
 

@@ -10,9 +10,13 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"unicode"
+
+	"golang.org/x/exp/slices"
+	"golang.org/x/mod/module"
 )
 
 // diagnostic messages
@@ -27,6 +31,7 @@ var ErrNoPackages = errors.New("no packages found")
 
 // Pkg represents a Go package.
 type Pkg struct {
+	modulePath  string
 	c           content
 	diagnostics []Diagnostic
 	files       map[string][]byte
@@ -34,31 +39,33 @@ type Pkg struct {
 	p           *ast.Package
 	relName     string
 
-	// typeAliases keys are the names of types defined in other packages which this package exports by alias.
-	// For example, package "azcore" may export TokenCredential from azcore/internal/shared with
-	// an alias like "type TokenCredential = shared.TokenCredential", in which case this map will
-	// have key "TokenCredential" with value "azcore/internal/shared.TokenCredential"
-	typeAliases map[string]string
+	// TypeAliases are types exported from this package but defined in another. For
+	// example, package "azcore" may export TokenCredential from azcore/internal/shared
+	// with an alias like "type TokenCredential = shared.TokenCredential". This slice
+	// holds pointers so Module can update aliases with data not available to Pkg such
+	// as the source module path.
+	TypeAliases []*TypeAlias
 
 	// types maps the name of a type defined in this package to that type's definition
 	types map[string]typeDef
 }
 
 // NewPkg loads the package in the specified directory.
-// It's required there is only one package in the directory.
-func NewPkg(dir, moduleName string) (*Pkg, error) {
+//
+//   - dir is the directory containing the package
+//   - modulePath is the import path of the module containing the package
+//   - moduleRoot is the root directory of the module on disk i.e., the directory containing its go.mod
+func NewPkg(dir, modulePath, moduleRoot string) (*Pkg, error) {
 	pk := &Pkg{
+		modulePath:  modulePath,
 		c:           newContent(),
 		diagnostics: []Diagnostic{},
-		typeAliases: map[string]string{},
 		types:       map[string]typeDef{},
 	}
-	if _, after, found := strings.Cut(dir, filepath.Clean(moduleName)); found {
-		pk.relName = moduleName
-		if after != "" {
-			pk.relName += after
-		}
-		pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
+	modulePathWithoutVersion := strings.TrimSuffix(versionReg.ReplaceAllString(modulePath, "/"), "/")
+	moduleName := filepath.Base(modulePathWithoutVersion)
+	if _, after, found := strings.Cut(dir, moduleRoot); found {
+		pk.relName = strings.ReplaceAll(moduleName+after, "\\", "/")
 	} else {
 		return nil, errors.New(dir + " isn't part of module " + moduleName)
 	}
@@ -102,24 +109,25 @@ func (p *Pkg) indexFile(f *ast.File) {
 	// map import aliases to full import paths e.g. "shared" => "github.com/Azure/azure-sdk-for-go/sdk/azcore/internal/shared"
 	imports := map[string]string{}
 	for _, imp := range f.Imports {
-		// ignore obvious stdlib packages whose definitions we don't want to hoist
-		path := strings.Trim(imp.Path.Value, `"`)
-		if strings.Contains(path, "/") {
-			imports[filepath.Base(path)] = path
+		p := strings.Trim(imp.Path.Value, `"`)
+		if imp.Name != nil {
+			imports[imp.Name.String()] = p
+		} else {
+			imports[filepath.Base(p)] = p
 		}
 	}
 
 	ast.Inspect(f, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.FuncDecl:
-			p.c.addFunc(*p, x)
+			p.c.addFunc(*p, x, imports)
 			// children can't be exported, let's not inspect them
 			return false
 		case *ast.GenDecl:
 			if x.Tok == token.CONST || x.Tok == token.VAR {
 				// const or var declaration
 				for _, s := range x.Specs {
-					p.c.addGenDecl(*p, x.Tok, s.(*ast.ValueSpec))
+					p.c.addGenDecl(*p, x.Tok, s.(*ast.ValueSpec), imports)
 				}
 			}
 		case *ast.TypeSpec:
@@ -128,25 +136,25 @@ func (p *Pkg) indexFile(f *ast.File) {
 				// "type UUID [16]byte"
 				txt := p.getText(t.Pos(), t.End())
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.FuncType:
 				// "type PolicyFunc func(*Request) (*http.Response, error)"
 				txt := p.getText(t.Pos(), t.End())
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.Ident:
 				// "type ETag string"
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), t.Name, imports)
 			case *ast.IndexExpr, *ast.IndexListExpr:
 				// "type Client GenericClient[BaseClient]"
 				// "type Client CompositeClient[BaseClient1, BaseClient2]"
 				txt := p.getText(t.Pos(), t.End())
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.InterfaceType:
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t)
+				in := p.c.addInterface(*p, x.Name.Name, p.Name(), t, imports)
 				if in.Sealed {
 					p.diagnostics = append(p.diagnostics, Diagnostic{
 						TargetID: in.ID(),
@@ -157,24 +165,34 @@ func (p *Pkg) indexFile(f *ast.File) {
 			case *ast.MapType:
 				// "type opValues map[reflect.Type]interface{}"
 				txt := p.getText(t.Pos(), t.End())
-				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt)
+				p.c.addSimpleType(*p, x.Name.Name, p.Name(), txt, imports)
 			case *ast.SelectorExpr:
 				if ident, ok := t.X.(*ast.Ident); ok {
 					if impPath, ok := imports[ident.Name]; ok {
+						// alias in the same module could use type navigator directly
+						if _, _, found := strings.Cut(impPath, p.modulePath); found && !strings.Contains(impPath, "internal") {
+							expr := p.getText(t.Pos(), t.End())
+							p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr, imports)
+						}
+
 						// This is a re-exported type e.g. "type TokenCredential = shared.TokenCredential".
 						// Track it as an alias so we can later hoist its definition into this package.
-						qn := impPath + "." + t.Sel.Name
-						p.typeAliases[x.Name.Name] = qn
+						ta := TypeAlias{
+							Name:          x.Name.Name,
+							Package:       p,
+							QualifiedName: impPath + "." + t.Sel.Name,
+						}
+						p.TypeAliases = append(p.TypeAliases, &ta)
 					} else {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.
 						expr := p.getText(t.Pos(), t.End())
-						p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr)
+						p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr, imports)
 					}
 				}
 			case *ast.StructType:
 				p.types[x.Name.Name] = typeDef{n: x, p: p}
-				s := p.c.addStruct(*p, x.Name.Name, p.Name(), x)
+				s := p.c.addStruct(*p, x.Name.Name, p.Name(), x, imports)
 				for _, t := range s.AnonymousFields {
 					// if t contains "." it must be exported
 					if !strings.Contains(t, ".") && unicode.IsLower(rune(t[0])) {
@@ -226,6 +244,151 @@ func (pkg Pkg) translateFieldList(fl []*ast.Field, cb func(*string, string)) {
 			cb(&n, t)
 		}
 	}
+}
+
+// translateType change type string and add navigator mark:
+// 1. type in the same package or module, add navigator prefix <navigator> to the type string
+// 2. type in different module or system type, do nothing
+func (pkg Pkg) translateType(oriVal string, imports map[string]string) string {
+	now := ""
+	result := ""
+	for _, ch := range oriVal {
+		switch string(ch) {
+		case "*", "[", "]", " ", "(", ")", "{", "}", ",":
+			if now != "" {
+				result += pkg.addTypeNavigator(now, imports)
+				now = ""
+			}
+			result += string(ch)
+		case ".":
+			if now == ".." {
+				result += "..."
+				now = ""
+			} else {
+				now = now + "."
+			}
+		default:
+			now = now + string(ch)
+		}
+	}
+	if now != "" {
+		result += pkg.addTypeNavigator(now, imports)
+	}
+	return result
+}
+
+func (pkg Pkg) addTypeNavigator(oriVal string, imports map[string]string) string {
+	switch {
+	case slices.Contains(keywords, oriVal) || slices.Contains(internalTypes, oriVal):
+		return oriVal
+	default:
+		splits := strings.Split(oriVal, ".")
+		if len(splits) == 1 {
+			return fmt.Sprintf("<%s.%s>%s", pkg.Name(), oriVal, oriVal)
+		} else {
+			// find exact import path of a type
+			if impPath, ok := imports[splits[0]]; ok {
+				// judge if import path is in the module
+				if _, after, found := strings.Cut(impPath, pkg.modulePath); found {
+					return fmt.Sprintf("<%s.%s>%s", path.Base(pkg.modulePath)+after, splits[1], oriVal)
+				}
+			}
+			return oriVal
+		}
+	}
+}
+
+// TypeAlias represents a type exported from one package but defined in another. In code
+// this looks like "type Event = log.Event".
+type TypeAlias struct {
+	// Name in the exporting package e.g. "Event"
+	Name string
+	// Package containing the alias
+	Package *Pkg
+	// QualifiedName of the source type e.g. "github.com/Azure/azure-sdk-for-go/sdk/internal/log.Event"
+	QualifiedName string
+	// SourceMod is the module defining the type
+	SourceMod module.Version
+
+	// resolved indicates whether the alias has been resolved
+	resolved bool
+}
+
+// Resolve adds review content for the alias. If def is nonzero i.e., it carries a syntax node for the type definition,
+// Resolve adds that definition to the package exporting the alias. Otherwise, Resolve adds a SimpleType representing the
+// alias to the review.
+func (a *TypeAlias) Resolve(def typeDef) error {
+	if a.resolved {
+		// this should never happen but if it does, it's a bug we want to know about
+		return fmt.Errorf("alias %s already resolved", a.Name)
+	}
+	if def != (typeDef{}) {
+		a.Package.types[a.Name] = def
+	}
+	level := DiagnosticLevelInfo
+	originalName := a.QualifiedName
+	// if the definition is in the same module as the alias, strip the module path from the diagnostic message
+	if _, after, found := strings.Cut(a.QualifiedName, a.Package.modulePath); found {
+		// after is e.g. "/internal/log.Event" or ".StatusType"
+		originalName = after[1:]
+	} else {
+		level = DiagnosticLevelWarning
+	}
+	var t TokenMaker
+	if def.n == nil || def.p == nil {
+		t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), a.QualifiedName, nil)
+	} else {
+		switch n := def.n.Type.(type) {
+		case *ast.InterfaceType:
+			t = a.Package.c.addInterface(*def.p, a.Name, a.Package.Name(), n, nil)
+		case *ast.StructType:
+			t = a.Package.c.addStruct(*def.p, a.Name, a.Package.Name(), def.n, nil)
+			hoistMethodsForType(def.p, a.Name, a.Package)
+			// ensure that all struct field types that are structs are also aliased from this package
+			for _, field := range n.Fields.List {
+				fieldTypeName := unwrapStructFieldTypeName(field)
+				if fieldTypeName == "" {
+					// we can ignore this field
+					continue
+				}
+
+				// ensure that our package exports this type
+				found := false
+				for _, ta := range a.Package.TypeAliases {
+					if ta.Name == fieldTypeName {
+						found = true
+						break
+					}
+				}
+				if found {
+					continue
+				}
+
+				// no alias, add a diagnostic
+				a.Package.diagnostics = append(a.Package.diagnostics, Diagnostic{
+					Level:    DiagnosticLevelError,
+					TargetID: t.ID(),
+					Text:     missingAliasFor + fieldTypeName,
+				})
+			}
+		case *ast.Ident:
+			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), def.n.Type.(*ast.Ident).Name, nil)
+			hoistMethodsForType(def.p, a.Name, a.Package)
+		default:
+			fmt.Printf("unexpected node type %T\n", def.n.Type)
+			t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), originalName, nil)
+		}
+	}
+
+	if t != nil {
+		a.Package.diagnostics = append(a.Package.diagnostics, Diagnostic{
+			Level:    level,
+			TargetID: t.ID(),
+			Text:     aliasFor + originalName,
+		})
+	}
+	a.resolved = true
+	return nil
 }
 
 // TODO: could be replaced by TokenMaker

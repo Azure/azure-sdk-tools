@@ -1,2 +1,7 @@
 # Ignore link to private repo
 https://github.com/Azure/azure-sdk-pr
+https://github.com/azure/azure-rest-api-specs-pr
+https://github.com/Azure/azure-sdk-pr/blob/main/onboarding/Core_Concepts.pdf
+https://github.com/Azure/azure-sdk-pr/blob/24384df0202021ab86ee37fcb14e9554182cd014/training/azure-sdk-apis/principles/approachable/README.md
+# Ignore link to internal test-proxy teams channel
+https://teams.microsoft.com/l/channel/19%3ab7c3eda7e0864d059721517174502bdb%40thread.skype/Test-Proxy%2520-%2520Questions%252C%2520Help%252C%2520and%2520Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47

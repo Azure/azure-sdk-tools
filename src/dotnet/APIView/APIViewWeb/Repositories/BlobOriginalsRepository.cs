@@ -1,15 +1,17 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using APIViewWeb.Repositories;
+using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
-    public class BlobOriginalsRepository
+    public class BlobOriginalsRepository : IBlobOriginalsRepository
     {
         private BlobContainerClient _container;
 
@@ -17,19 +19,14 @@ namespace APIViewWeb
 
         public BlobOriginalsRepository(IConfiguration configuration)
         {
-            var connectionString = configuration["Blob:ConnectionString"];
-            _container = new BlobContainerClient(connectionString, "originals");
+            var serviceClient = new BlobServiceClient(new Uri(configuration["StorageAccountUrl"]), new DefaultAzureCredential());
+            _container = serviceClient.GetBlobContainerClient("originals");
         }
 
         public async Task<Stream> GetOriginalAsync(string codeFileId)
         {
             var info = await GetBlobClient(codeFileId).DownloadAsync();
             return info.Value.Content;
-        }
-
-        private BlobClient GetBlobClient(string codeFileId)
-        {
-            return _container.GetBlobClient(codeFileId);
         }
 
         public async Task UploadOriginalAsync(string codeFileId, Stream stream)
@@ -40,6 +37,11 @@ namespace APIViewWeb
         public async Task DeleteOriginalAsync(string codeFileId)
         {
             await GetBlobClient(codeFileId).DeleteAsync();
+        }
+
+        private BlobClient GetBlobClient(string codeFileId)
+        {
+            return _container.GetBlobClient(codeFileId);
         }
     }
 }

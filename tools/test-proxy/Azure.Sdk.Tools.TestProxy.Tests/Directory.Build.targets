@@ -1,0 +1,9 @@
+﻿<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory).., Directory.Build.targets))\Directory.Build.targets" />
+  <PropertyGroup>
+    <!-- Sign the test assembly so that we can use Internals Visible To for it-->
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>false</DelaySign>
+    <AssemblyOriginatorKeyFile>$(RepoEngPath)\AzureSDKToolsKey.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+</Project>

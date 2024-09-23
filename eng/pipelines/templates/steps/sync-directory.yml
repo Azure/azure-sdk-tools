@@ -1,6 +1,7 @@
 parameters:
   Repos: []
   DirectoryToSync: eng/common
+  FilePattern: ''
   CommitMessage: commit-message-not-set
   UpstreamBranchName: branch-name-not-set
   BaseBranchName: $(DefaultBranch)
@@ -27,7 +28,6 @@ steps:
 
   - ${{ each repo in parameters.Repos }}:
     - pwsh: |
-        $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
         if (Test-Path '$(PatchFilesLocation)')
         {
           pushd ${{ repo }}
@@ -79,41 +79,47 @@ steps:
           -PushArgs "${{ parameters.PushArgs }}"
           -AmendCommit $True
 
-    - task: PowerShell@2
+    - task: AzureCLI@2
       displayName: Queue template pipeline
       condition: and(succeeded(), ne(variables['${{repo}}-template-definition-id'], ''))
       inputs:
-        pwsh: true
+        azureSubscription: opensource-api-connection
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
+          ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1 `
+            -Organization "azure-sdk" `
+            -Project "internal" `
+            -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline" `
+            -DefinitionId "$(${{repo}}-template-definition-id)" `
+            -VsoQueuedPipelines "QUEUEDPIPELINES" `
+            -CancelPreviousBuilds $True `
+            -BearerToken $accessToken
         workingDirectory: ${{ parameters.WorkingDirectory }}
-        filePath: ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1
-        arguments: >
-          -Organization "azure-sdk"
-          -Project "internal"
-          -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
-          -DefinitionId "$(${{repo}}-template-definition-id)"
-          -VsoQueuedPipelines "QueuedPipelines"
-          -CancelPreviousBuilds $True
-          -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 
-    - task: PowerShell@2
+    - task: AzureCLI@2
       displayName: Queue live-test template pipeline
       condition: and(succeeded(), ne(variables['${{repo}}-template-tests-definition-id'], ''))
       inputs:
-        pwsh: true
+        azureSubscription: opensource-api-connection
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
+          ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1 `
+            -Organization "azure-sdk" `
+            -Project "internal" `
+            -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline" `
+            -DefinitionId "$(${{repo}}-template-tests-definition-id)" `
+            -VsoQueuedPipelines "QUEUEDPIPELINES" `
+            -CancelPreviousBuilds $True `
+            -BearerToken $accessToken
         workingDirectory: ${{ parameters.WorkingDirectory }}
-        filePath: ${{ parameters.ScriptDirectory }}/Queue-Pipeline.ps1
-        arguments: >
-          -Organization "azure-sdk"
-          -Project "internal"
-          -SourceBranch "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
-          -DefinitionId "$(${{repo}}-template-tests-definition-id)"
-          -VsoQueuedPipelines "QueuedPipelines"
-          -CancelPreviousBuilds $True
-          -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 
   - task: PowerShell@2
     displayName: Write Queued Pipeline Information to Tools PR
-    condition: and(succeeded(), and(ne(variables['QueuedPipelines'], ''), eq(variables['Build.Reason'], 'PullRequest')))
+    condition: and(succeeded(), and(ne(variables['QUEUEDPIPELINES'], ''), eq(variables['Build.Reason'], 'PullRequest')))
     inputs:
       pwsh: true
       workingDirectory: ${{ parameters.WorkingDirectory }}
@@ -122,7 +128,7 @@ steps:
         -RepoOwner "Azure"
         -RepoName "azure-sdk-tools"
         -IssueNumber "$(System.PullRequest.PullRequestNumber)"
-        -Comment "The following pipelines have been queued for testing:<br>$env:QueuedPipelines`
+        -Comment "The following pipelines have been queued for testing:<br>$env:QUEUEDPIPELINES`
         <br>You can sign off on the approval gate to test the release stage of each pipeline.`
         <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
         -AuthToken "$(azuresdk-github-pat)"
@@ -146,9 +152,9 @@ steps:
     - pwsh: |
         Set-PsDebug -Trace 1
         $repoPath = "${{ repo }}/${{ parameters.DirectoryToSync }}"
-        Remove-Item -v -r -ErrorAction Ignore $repoPath
+        Remove-Item -v -r -ErrorAction Ignore "$repoPath${{ parameters.FilePattern }}"
         Copy-Item -v -r `
-          $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }} `
+          "$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.DirectoryToSync }}${{ parameters.FilePattern }}" `
           $repoPath
         Get-ChildItem -r $repoPath
       displayName: Copy ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}

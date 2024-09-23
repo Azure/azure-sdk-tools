@@ -2,6 +2,7 @@
 import {ApiViewTokenKind, IApiViewToken} from './models';
 
 const jsTokens = require("js-tokens");
+const ANNOTATION_TOKEN = "@";
 
 export class TokensBuilder
 {
@@ -30,6 +31,7 @@ export class TokensBuilder
         "import",
         "in",
         "instanceof",
+        "namespace",
         "new",
         "null",
         "return",
@@ -71,6 +73,16 @@ export class TokensBuilder
         "keyof",
         "readonly"];
 
+    annotate(value: string): TokensBuilder {
+        this.tokens.push({
+            Kind: ApiViewTokenKind.StringLiteral,
+            Value: `${ANNOTATION_TOKEN}${value}`,
+        });
+
+        this.newline().indent()
+        return this;
+    }
+
     indent(): TokensBuilder
     {
         this.tokens.push({
@@ -82,13 +94,13 @@ export class TokensBuilder
 
     incIndent(): TokensBuilder
     {
-        this.indentString = ' '.repeat(this.indentString.length + 4); 
+        this.indentString = ' '.repeat(this.indentString.length + 4);
         return this;
     }
 
     decIndent(): TokensBuilder
     {
-        this.indentString = ' '.repeat(this.indentString.length - 4); 
+        this.indentString = ' '.repeat(this.indentString.length - 4);
         return this;
     }
 
@@ -173,7 +185,7 @@ export class TokensBuilder
             }
 
             var tokens: any[] = Array.from(jsTokens(line));
-            tokens.forEach(token => 
+            tokens.forEach(token =>
             {
                 if (this.keywords.indexOf(token.value) > 0)
                 {
@@ -181,7 +193,19 @@ export class TokensBuilder
                 }
                 else if (token.value === currentTypeName)
                 {
-                    this.tokens.push({ Kind: ApiViewTokenKind.TypeName, DefinitionId: currentTypeId, Value: token.value });
+                    if (currentTypeId.match(/.*:member(\(\d+\))*$/)) {
+                        this.tokens.push({
+                            Kind: ApiViewTokenKind.MemberName,
+                            DefinitionId: currentTypeId,
+                            Value: token.value,
+                        });
+                    } else {
+                        this.tokens.push({
+                            Kind: ApiViewTokenKind.TypeName,
+                            DefinitionId: currentTypeId,
+                            Value: token.value,
+                        });
+                    }
                 }
                 else if (token.type === "StringLiteral")
                 {
@@ -200,7 +224,7 @@ export class TokensBuilder
                     this.text(token.value);
                 }
             });
-            
+
             if (index < array.length - 1)
             {
                 this.newline();

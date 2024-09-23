@@ -1,10 +1,16 @@
-﻿@model IEnumerable<APIView.CodeDiagnostic>
+@using APIViewWeb.Models
+@model IEnumerable<APIView.CodeDiagnostic>
+@{
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel;
+}
+
 @if (Model.Any())
 {
     string diagnosticClass = Model.First().Level switch
     {
         APIView.CodeDiagnosticLevel.Info => "code-diagnostics-info",
         APIView.CodeDiagnosticLevel.Warning => "code-diagnostics-warn",
+        APIView.CodeDiagnosticLevel.Fatal => "code-diagnostics-fatal",
         _ => "code-diagnostics-error"
     };
     <td colspan="3" class="@diagnosticClass">

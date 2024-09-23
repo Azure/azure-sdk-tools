@@ -1,3 +1,4 @@
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,11 +10,16 @@ namespace Azure.Sdk.Tools.PipelineWitness
     {
         public static async Task Main(params string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            // per queue storage performance docs, set the default connection limit to >= 100
+            // https://learn.microsoft.com/en-us/azure/storage/queues/storage-performance-checklist#increase-default-connection-limit
+            ServicePointManager.DefaultConnectionLimit = 100;
+
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddHealthChecks();
+            builder.Services.AddHttpLogging(options => { });
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -21,7 +27,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             Startup.Configure(builder);
 
-            var app = builder.Build();
+            WebApplication app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -37,6 +43,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
             app.MapControllers();
 
             app.UseHealthChecks("/");
+
+            app.UseHttpLogging();
 
             await app.RunAsync();
         }

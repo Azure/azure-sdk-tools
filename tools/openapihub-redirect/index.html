@@ -1,0 +1,45 @@
+<html>
+<head>
+<script>
+  var request = new XMLHttpRequest();
+  var url = new URL(window.location.href);
+  url.hostname = 'openapihub.azure-devex-tools.com';
+  url.protocol = 'https:';
+  url.port = '443';
+  console.log(url.href);
+  var redirect = url.href;
+
+  request.open('GET', redirect, true);
+  request.timeout = 5000;
+
+  request.onload = handleCorpNet;
+  request.onerror = handleCorpNet;
+  request.ontimeout = handleNoCorpNet;
+
+  function handleCorpNet() {
+    console.log('there is a connection');
+    setTimeout(function() {
+      window.location.href = redirect;
+    }, 5000);
+  }
+
+  function handleNoCorpNet() {
+    console.log('there is no connection');
+    window.location.href = 'https://aka.ms/openapihub-landing';
+  }
+
+  request.send();
+</script>
+<style>
+.readme {
+    font: normal normal 16px/1.5 "Segoe UI", Helvetica, Arial, sans-serif;
+}
+</style>
+</head>
+
+<div class="readme">
+  <h2>portal.azure-devex-tools.com has moved to openapihub.azure-devex-tools.com</h2>
+  <p><b>Corp net access will soon be required to access this site. See <a href="https://aka.ms/openapihub-landing">https://aka.ms/openapihub-landing</a> for access instructions.</b></p>
+  <p>Redirecting in 5 seconds...</p>
+</div>
+</html>

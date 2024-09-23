@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using Azure.Sdk.tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Console;
 
@@ -8,9 +9,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 {
     public class NullStore : IAssetsStore
     {
-        public Task Push(string pathToAssetsJson) { return null; }
+        public Task<int> Push(string pathToAssetsJson, bool ignoreSecretProtection = false) { return null; }
 
-        public Task Restore(string pathToAssetsJson) { return null; }
+        public Task<string> Restore(string pathToAssetsJson) { return null; }
 
         public Task Reset(string assetsJspathToAssetsJsononPath) { return null; }
 
@@ -23,6 +24,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new AssetsConfiguration();
         }
 
-        public Task<string> GetPath(string pathToAssetsJson) { return null; }
+        public Task<NormalizedString> GetPath(string pathToAssetsJson) { return null; }
     }
 }

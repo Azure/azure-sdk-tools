@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeownersLinter", "Azure.Sdk.Tools.CodeownersLinter\Azure.Sdk.Tools.CodeownersLinter.csproj", "{A24C1588-EEC9-4421-8E0F-1C167B0F2112}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeownersUtils.Tests", "Azure.Sdk.Tools.CodeownersLinter.Tests\Azure.Sdk.Tools.CodeownersUtils.Tests.csproj", "{50856BB3-8AF2-455F-ABC9-5EF1297C2917}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.CodeownersUtils", "Azure.Sdk.Tools.CodeownersUtils\Azure.Sdk.Tools.CodeownersUtils.csproj", "{0F5654AF-639B-4005-B572-81CBDCB5B845}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A24C1588-EEC9-4421-8E0F-1C167B0F2112}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A24C1588-EEC9-4421-8E0F-1C167B0F2112}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A24C1588-EEC9-4421-8E0F-1C167B0F2112}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A24C1588-EEC9-4421-8E0F-1C167B0F2112}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50856BB3-8AF2-455F-ABC9-5EF1297C2917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50856BB3-8AF2-455F-ABC9-5EF1297C2917}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50856BB3-8AF2-455F-ABC9-5EF1297C2917}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50856BB3-8AF2-455F-ABC9-5EF1297C2917}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F5654AF-639B-4005-B572-81CBDCB5B845}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F5654AF-639B-4005-B572-81CBDCB5B845}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F5654AF-639B-4005-B572-81CBDCB5B845}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F5654AF-639B-4005-B572-81CBDCB5B845}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {50F82DFE-95E9-4C82-8370-824A48AACA61}
+	EndGlobalSection
+EndGlobal

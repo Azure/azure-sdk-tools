@@ -1,0 +1,61 @@
+{
+    "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/access.json",
+    "appDisplayName": "access-manager-full-test",
+    "properties": {
+      "subscriptionId": "00000000-0000-0000-0000-000000000000",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "resourceGroup": "test-foobar-access-manager",
+      "commonScope": "ref:refs/heads/main"
+    },
+    "githubRepositorySecrets": [
+        {
+            "repositories": [
+                "testfoobaraccessmanager/azure-sdk-test-foobar"
+            ],
+            "secrets": {
+                "AZURE_SUBSCRIPTION_ID": "{{ subscriptionId }}",
+                "AZURE_TENANT_ID": "{{ tenantId }}",
+                "AZURE_CLIENT_ID": "{{ applicationId }}"
+            }
+        }
+    ],
+    "roleBasedAccessControls": [
+        {
+          "role": "Contributor",
+          "scope": "/subscriptions/{{ subscriptionId }}/resourceGroups/{{ resourceGroup }}"
+        },
+        {
+          "role": "Key Vault Secrets User",
+          "scope": "/subscriptions/{{ subscriptionId }}/resourceGroups/{{ resourceGroup }}/providers/Microsoft.KeyVault/vaults/testfoobaraccessmanager"
+        }
+    ],
+    "federatedIdentityCredentials": [
+        {
+          "audiences": [
+            "api://azureadtokenexchange"
+          ],
+          "description": "event processor oidc main test 1",
+          "issuer": "https://token.actions.githubusercontent.com",
+          "name": "githubactionscredential-main-test-1",
+          "subject": "repo:testfoobaraccessmanager/azure-sdk-test-1:{{ commonScope }}"
+        },
+        {
+          "audiences": [
+            "api://azureadtokenexchange"
+          ],
+          "description": "event processor oidc main test 2",
+          "issuer": "https://token.actions.githubusercontent.com",
+          "name": "githubactionscredential-foobar-main-test-2",
+          "subject": "repo:testfoobaraccessmanager/azure-sdk-test-2:{{ commonScope }}"
+        },
+        {
+          "audiences": [
+            "api://azureadtokenexchange"
+          ],
+          "description": "event processor oidc main test 3",
+          "issuer": "https://token.actions.githubusercontent.com",
+          "name": "githubactionscredential-main-test-3",
+          "subject": "repo:testfoobaraccessmanager/azure-sdk-test-3:{{ commonScope }}"
+        }
+    ]
+}

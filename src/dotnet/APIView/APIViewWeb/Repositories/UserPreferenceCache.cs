@@ -1,9 +1,15 @@
-﻿using System.Security.Policy;
+using System.Security.Policy;
 using Microsoft.Extensions.Caching.Memory;
 using APIViewWeb.Models;
 using System;
 using System.Collections.Generic;
 using AutoMapper;
+using System.Threading.Tasks;
+using System.Threading;
+using Microsoft.Extensions.Primitives;
+using System.Security.Claims;
+using APIViewWeb.Managers;
+using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Repositories
 {
@@ -11,54 +17,61 @@ namespace APIViewWeb.Repositories
     {
         private readonly IMemoryCache _cache;
         private readonly IMapper _mapper;
+        private readonly IUserProfileManager _userProfileManager;
 
-        public UserPreferenceCache(IMemoryCache cache, IMapper mapper)
+        public UserPreferenceCache(IMemoryCache cache, IMapper mapper, IUserProfileManager profileManager)
         {
             _cache = cache;
             _mapper = mapper;
+            _userProfileManager = profileManager;
         }
 
-        public void UpdateUserPreference(UserPreferenceModel preference)
+        public async void UpdateUserPreference(UserPreferenceModel preference, ClaimsPrincipal User)
         {
-            UserPreferenceModel existingPreference = GetUserPreferences(preference.UserName);
-            if (existingPreference == null)
-            {
-                _cache.Set(preference.UserName, preference);
-            }
-            else
-            {
-                _mapper.Map<UserPreferenceModel, UserPreferenceModel>(preference, existingPreference);
-                _cache.Set(preference.UserName, existingPreference);
-            }
+            UserPreferenceModel existingPreference = await GetUserPreferences(User);
+            _mapper.Map<UserPreferenceModel, UserPreferenceModel>(preference, existingPreference);
+            UpdateCache(existingPreference, User);
         }
 
-        public UserPreferenceModel GetUserPreferences(string userName)
+        public async Task<UserPreferenceModel> GetUserPreferences(ClaimsPrincipal User)
         {
+            string userName = User.GetGitHubLogin();
             if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
             {
                 return _preference;
             }
-            return null;
+            else
+            {
+                var preference = (await _userProfileManager.TryGetUserProfileAsync(User)).Preferences;
+                UpdateCache(preference, User);
+                return preference;
+            }
         }
 
-        public IEnumerable<string> GetLangauge(string userName)
+        public IEnumerable<APIRevisionType> GetFilterType(string userName, APIRevisionType defaultType = APIRevisionType.Automatic)
         {
             if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
             {
-                return _preference.Language;
+                return _preference.APIRevisionType;
             }
-
-            return null;
+            return new List<APIRevisionType> { defaultType };
         }
 
-        public IEnumerable<ReviewType> GetFilterType(string userName, ReviewType defaultType = ReviewType.Automatic)
+        private void UpdateCache(UserPreferenceModel preference, ClaimsPrincipal User) 
         {
-            if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
-            {
-                return _preference.FilterType;
-            }
-
-            return new List<ReviewType> { defaultType };
+            string userName = User.GetGitHubLogin();
+            MemoryCacheEntryOptions memoryCacheEntryOptions = new MemoryCacheEntryOptions()
+                .AddExpirationToken(new CancellationChangeToken(new CancellationTokenSource(TimeSpan.FromHours(24)).Token))
+                .SetSlidingExpiration(TimeSpan.FromHours(2))
+                .RegisterPostEvictionCallback(async (key, value, reason, state) => {
+                    if (reason == EvictionReason.TokenExpired || reason == EvictionReason.Expired || reason == EvictionReason.Capacity)
+                    {
+                        UserPreferenceModel newPreference = (UserPreferenceModel)value;
+                        newPreference.UserName = User.GetGitHubLogin();
+                        await _userProfileManager.UpdateUserPreferences(User, newPreference);
+                    }
+                });
+            _cache.Set(userName, preference, memoryCacheEntryOptions);
         }
     }
 }

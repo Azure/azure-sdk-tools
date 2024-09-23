@@ -1,0 +1,792 @@
+[
+  {
+    "id": "ios_design.html#ios-general-follow-general-guidelines",
+    "category": "General Guidelines",
+    "text": "DO follow the [General Azure SDK Guidelines]."
+  },
+  {
+    "id": "ios_design.html#ios-language-swift",
+    "category": "General Guidelines",
+    "text": "YOU SHOULD write the client library in Swift 5."
+  },
+  {
+    "id": "ios_design.html#ios-language-swift-idiomatic",
+    "category": "General Guidelines",
+    "text": "DO ensure the library is idiomatic in its Swift usage."
+  },
+  {
+    "id": "ios_design.html#ios-language-objc",
+    "category": "General Guidelines",
+    "text": "YOU MAY write the client library in Objective-C. A library written in Objective-C must prioritize being idiomatic in its Swift usage. It need not be idiomatic in its Objective-C usage."
+  },
+  {
+    "id": "ios_design.html#ios-language-objc-compatibility",
+    "category": "General Guidelines",
+    "text": "YOU SHOULD NOT make specific accommodations to support Objective-C applications, unless a business case exists.\n\nCurrently, this document describes guidelines for client libraries exposing HTTP services. If your service is not HTTP-based, please contact the Azure SDK Architecture Board (https://azure.github.io/azure-sdk/policies_reviewprocess.html) for guidance.\n\nAzure services are exposed to iOS developers as one or more service client types and a set of supporting types.\n\nService clients are the main starting points for developers calling Azure services with the Azure SDK. Each client library should have at least one client, so it\u2019s easy to discover. The guidelines in this section describe patterns for the design of a service client.\n\n{% highlight swift %}\nimport AzureCore\nimport Foundation\n\n// A client always inherits from PipelineClient. It may also conform to the\n// PageableClient protocol if it provides any methods that return collections\n// from paginated APIs.\npublic final class ConfigurationClient: PipelineClient, PageableClient {\n\n<code>// Properties are defined as immutable, and are set in initializers\npublic let options: ConfigurationClientOptions\n\n// MARK: Initializers\n\n// A common private initializer to assign immutable properties and call\n// `super.init()`\nprivate init(\n    endpoint: URL,\n    authPolicy: Authenticating,\n    withOptions options: ConfigurationClientOptions\n) throws {\n    self.options = options\n    super.init(...)\n}\n\n// One or more public convenience initializers make it easy for consumers to\n// create client instances\npublic convenience init(\n    endpoint: URL,\n    credential: TokenCredential,\n    withOptions options: ConfigurationClientOptions? = nil\n) throws {\n    let authPolicy = BearerTokenCredentialPolicy(credential: credential)\n    try self.init(\n        endpoint: endpoint,\n        authPolicy: authPolicy,\n        withOptions: options ?? ConfigurationClientOptions()\n    )\n}\n\n...\n\n// MARK: Public Client Methods\n\n...\n\n// MARK: PageableClient Protocol\n\n// Always group methods that are used to conform with a protocol together\n...\n</code>\n\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-service-client-name",
+    "category": "Service Client",
+    "text": "DO name service client types with the Client suffix (for example, ConfigurationClient)."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-immutable",
+    "category": "Service Client",
+    "text": "DO ensure that all service client classes are immutable upon instantiation."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-feature-support",
+    "category": "Service Client",
+    "text": "YOU SHOULD support only those features provided by the Azure service that would make sense for a mobile app to access. Mobile apps are inherently consumer applications, and only a subset of Azure services and features are intended for use by consumer applications. While completeness is valuable and gaps in functionality can cause frustration, a smaller binary size and an opinionated stance of only providing consumer-facing functionality will make our libraries easier and more desirable for app developers to use."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-mobile-consistency",
+    "category": "Service Client",
+    "text": "DO provide a public API whose shape matches the public API shape provided in the equivalent Android library as closely as possible. Clients should have the same names and provide the same functionality as their public APIs, and while method naming should be idiomatic to each platform, consistency in naming between the two platforms is the next most important consideration."
+  },
+  {
+    "id": "ios_design.html#ios-client-initializer-minimal",
+    "category": "Service Client Creation",
+    "text": "DO allow the consumer to initialize a service client with the minimal information needed to connect and authenticate to the service."
+  },
+  {
+    "id": "ios_design.html#ios-client-options-parameter",
+    "category": "Service Client Creation",
+    "text": "DO accept all optional initializer arguments via an options struct provided as a single, final parameter labeled withOptions. Do not accept individual initializer options as separate parameters."
+  },
+  {
+    "id": "ios_design.html#ios-client-multiple-inits",
+    "category": "Service Client Creation",
+    "text": "DO provide unambiguous initializers and parameter labels for all client initialization scenarios. Do not use the _ syntax to avoid requiring parameter labels. For example:\n\n{% highlight swift %}\npublic convenience init(\nendpoint: URL,\ncredential: TokenCredential,\nwithOptions options: ConfigurationClientOptions? = nil\n) {\n...\n}\n\npublic convenience init(\nconnectionString: String,\nwithOptions options: ConfigurationClientOptions? = nil\n) {\n...\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-client-no-static-initializers",
+    "category": "Service Client Creation",
+    "text": "DO NOT provide static methods to initialize a client."
+  },
+  {
+    "id": "ios_design.html#ios-client-options",
+    "category": "Using ClientOptions",
+    "text": "DO NOT accept options used for customization of the client as individual optional parameters in client initializers."
+  },
+  {
+    "id": "ios_design.html#ios-client-options-single",
+    "category": "Using ClientOptions",
+    "text": "DO accept a single Options struct as an optional parameter for all client initializers."
+  },
+  {
+    "id": "ios_design.html#ios-client-options-object",
+    "category": "Using ClientOptions",
+    "text": "DO provide an immutable struct named with the suffix Options to allow for customization of the client during initialization. This struct must have an initializer that accepts all possible options for the client initializer as optional parameters, with defaults for each parameter. For example:\n\n{% highlight swift %}\npublic struct ConfigurationClientOptions: ClientOptions {\n// MARK: ClientOptions Protocol\n\n<code>public let apiVersion: String\npublic let logger: ClientLogger\npublic let telemetryOptions: TelemetryOptions\npublic let transportOptions: TransportOptions\npublic let dispatchQueue: DispatchQueue?\n\n// MARK: ConfigurationClient Options\n\npublic let configurationSettingEncryptionKey: EncryptionKey?\n\n// MARK: Initializer\n\npublic init(\n    apiVersion: ConfigurationClient.ApiVersion = .latest,\n    logger: ClientLogger = ClientLoggers.default(tag: \"ConfigurationClient\"),\n    telemetryOptions: TelemetryOptions = TelemetryOptions(),\n    transportOptions: TransportOptions = TransportOptions(),\n    dispatchQueue: DispatchQueue? = nil,\n    configurationSettingEncryptionKey: EncryptionKey? = nil\n) {\n    self.apiVersion = apiVersion.rawValue\n    self.logger = logger\n    self.telemetryOptions = telemetryOptions\n    self.transportOptions = transportOptions\n    self.dispatchQueue = dispatchQueue\n    self.configurationSettingEncryptionKey = configurationSettingEncryptionKey\n}\n</code>\n\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-client-options-conformance",
+    "category": "Using ClientOptions",
+    "text": "DO conform to the ClientOptions protocol for structures that define options passed when initializing a service client."
+  },
+  {
+    "id": "ios_design.html#ios-client-options-types",
+    "category": "Using ClientOptions",
+    "text": "DO use rich types where possible for options. For example, use the Date type for dates and the URL type for URIs. When not possible, name the option with a suffix to express the expected type. If the expected type is a unit, the suffix should follow the format In<Unit> (e.g. lengthInMeters)."
+  },
+  {
+    "id": "ios_design.html#ios-client-options-location",
+    "category": "Using ClientOptions",
+    "text": "DO store options structures (and supporting enumerations / structures referenced by such models) within the Source/Options directory inside the library's root directory."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-latest-service-api",
+    "category": "Service Versions",
+    "text": "DO call the highest supported service API version by default, and ensure this is clearly documented."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-no-previews-in-stable",
+    "category": "Service Versions",
+    "text": "DO NOT include preview API versions in a stable SDK release's API version enum."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-no-previews-in-stable",
+    "category": "Service Versions",
+    "text": "DO expose preview API versions only in beta SDKs."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-select-service-api",
+    "category": "Service Versions",
+    "text": "DO provide an enum of supported service API versions that can be supplied via the options struct when initializing the service client, as shown below:\n\n{% highlight swift %}\npublic final class ConfigurationClient {\npublic enum ApiVersion: String {\n/// API version \"2018-01-02\"\ncase v20180102 = \"2018-01-02\"\n/// API version \"2019-05-06\"\ncase v20190506 = \"2019-05-06\"\n\n<code>    /// The most recent API version of the service\n    public static var latest: ApiVersion {\n        return .v20190506\n    }\n}\n</code>\n\n}\n\npublic struct ConfigurationClientOptions: ClientOptions {\n/// The API version of the service to invoke\npublic let apiVersion: String\n...\n\n<code>public init(\n    apiVersion: ConfigurationClient.ApiVersion = .latest,\n    ...\n)\n</code>\n\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-versioning-latest-service-property",
+    "category": "Service Versions",
+    "text": "DO include a latest property from the client's API version enum which returns the latest preview API version for beta SDKs and the latest GA API version for stable SDKs.\n\nService methods are the methods on the client that invoke operations on the service."
+  },
+  {
+    "id": "ios_design.html#ios-async-service-methods",
+    "category": "Service Methods",
+    "text": "DO provide only async service methods, as async is the most common paradigm on iOS."
+  },
+  {
+    "id": "ios_design.html#ios-async-no-blocking",
+    "category": "Service Methods",
+    "text": "DO NOT include blocking calls inside service methods or any code called by a service method."
+  },
+  {
+    "id": "ios_design.html#ios-async-framework",
+    "category": "Service Methods",
+    "text": "DO NOT use a third-party library to provide an async API. Use only one of the approved methods described below."
+  },
+  {
+    "id": "ios_design.html#ios-async-use-azure-core",
+    "category": "Service Methods",
+    "text": "DO NOT write custom APIs for streaming or async operations. Make use of the existing functionality offered in the Azure Core library. Discuss proposed changes to the Azure Core library with the [Architecture Board]."
+  },
+  {
+    "id": "ios_design.html#ios-network-closure-final",
+    "category": "Closures",
+    "text": "DO accept a closure as the final parameter for service methods, allowing developers to take advantage of Swift's trailing closure syntax. For example:\n\n{% highlight swift %}\n// Library code\n\npublic final class ConfigurationClient {\nfunc get(\nconfigurationSetting: String,\ncompletionHandler: @escaping HTTPResultHandler\n) {\n...\n}\n}\n{% endhighlight %}\n{% highlight swift %}\n// Consumer code\n\nlet client = ConfigurationClient(...)\nclient.get(configurationSetting: \"FooSetting\") { result, httpResponse in\nswitch result {\ncase let .success(value):\n// operate on the value\ncase let .failure(error):\n// handle error\n}\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-network-closure-single",
+    "category": "Closures",
+    "text": "YOU SHOULD accept only a single closure for any given service method.\n\nProviding a method that accepts multiple closure leads to unnecessarily cluttered code, and only the final callback parameter can make use of the trailing closure syntax."
+  },
+  {
+    "id": "ios_design.html#ios-network-closure-suffix",
+    "category": "Closures",
+    "text": "DO use the suffix Handler for all closure parameter names, e.g. completionHandler, progressHandler."
+  },
+  {
+    "id": "ios_design.html#ios-network-closure-type",
+    "category": "Closures",
+    "text": "YOU SHOULD use HTTPResultHandler as the type of the closure to expose both the result (or error) and the raw response data.\n\niOS applications commonly need to react to events from the UI or service. The following guidelines apply to SDKs that expose events to the customer."
+  },
+  {
+    "id": "ios_design.html#ios-event-closures-required",
+    "category": "Closures",
+    "text": "DO expose event handlers as closures."
+  },
+  {
+    "id": "ios_design.html#ios-event-properties",
+    "category": "Closures",
+    "text": "YOU SHOULD group related events together in a struct whose definition is enclosed within the client. This struct should be named Events (if there is only one collection) or end with the Events suffix and should contain no other properties or methods besides the event handlers themselves. Event collections must be exposed directly on the client as a property that is either named events (if there is only one collection) or ends with the Events suffix. For example:\n\n{% highlight swift %}\npublic class CatClient: PipelineClient {\n\n<code>public struct UnicastEvents {\n    public var onCatMeow: ((String) -&gt; Void)? = nil\n    public var onCatSleep: ((String) -&gt; Void)? = nil\n    ...\n}\n\npublic struct MulticastEvents {\n    public var onCatMeow: MulticastEventsCollection&lt;((String) -&gt; Void)&gt;\n    public var onCatSleep: MulticastEventsCollection&lt;((String) -&gt; Void)&gt;\n    ...\n}\n\npublic var unicastEvents = Events()\npublic var multicastEvents = MulticastEvents()\n...\n</code>\n\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-event-mutable",
+    "category": "Closures",
+    "text": "YOU MAY mutate individual event handlers after client instantiation, unlike most client configuration which is required to be immutable."
+  },
+  {
+    "id": "ios_design.html#ios-closure-typealias",
+    "category": "Closures",
+    "text": "YOU SHOULD NOT provide a public typealias event signatures because they do not aid in Intellisense and pollute the public API surface area. If you feel you need to expose a public typealias, contact the SDK team."
+  },
+  {
+    "id": "ios_design.html#ios-closure-naming-convention",
+    "category": "Closures",
+    "text": "DO name event properties using the Swift UI naming convention. For example, a delegate method called \"cat(didMeow:)\" would translate to an closure-based event named \"onCatMeow\"."
+  },
+  {
+    "id": "ios_design.html#ios-event-multicast",
+    "category": "Closures",
+    "text": "DO expose multicast event handlers using the MulticastEventCollection generic type from Azure.Core. This type contains a register method which accepts the event as a trailing closure and returns a UUID string identifier which can be used to unregister the handler. SDKs which cannot use Azure.Core (for example, ObjC-based SDKs) should work with the Azure SDK team to ensure their multicast solution projects to the same Swift interface.\n\n{% highlight swift %}\n// SDK code\npublic class CatClient: PipelineClient {\npublic struct Events {\npublic var onCatMeow: MulticastEventsCollection<((String) -> Void)>\npublic var onCatSleep: MulticastEventsCollection<((String) -> Void)>\n...\n}\npublic var events = MulticastEvents()\n...\n}\n\n// Customer Code\nlet client = CatClient(...)\nlet event1 = client.events.onCatMeow.register { ... }\nlet event 2 = client.events.onCatMeow.register { ... }\nclient.events.unregister(event1)\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-network-delegate",
+    "category": "Delegates",
+    "text": "YOU MAY expose events as one or more delegate protocols that the developer can conform to. This pattern may be more familiar to Objective-C developers."
+  },
+  {
+    "id": "ios_design.html#ios-delegate-property",
+    "category": "Delegates",
+    "text": "DO include an optional weak delegate property on the client if delegates are implemented. For example:\n\n{% highlight swift %}\n// Library code\n\n// Delegate protocols define multiple methods which will be called asynchronously\npublic protocol ConfigurationSettingDelegate {\nfunc configurationSetting(\n_ configurationSetting: String,\ndidChangeFrom oldValue: String,\nto newValue: String\n)\n\n<code>func configurationSettingDidClear(_ configurationSetting: String)\n</code>\n\n}\n\n// Provide a default do-nothing implementation of all delegate methods\npublic extension ConfigurationSettingDelegate {\nfunc configurationSetting(\n_ configurationSetting: String,\ndidChangeFrom oldValue: String,\nto newValue: String\n) { }\n\n<code>func configurationSettingDidClear(_ configurationSetting: String) { }\n</code>\n\n}\n\npublic final class ConfigurationClient {\n// Provide a property on the client to which a delegate can be attached\npublic weak var delegate: ConfigurationSettingDelegate? = nil\n\n<code>public func getChanges(forConfigurationSettingsWithPrefix prefix: String) {\n    ...\n}\n</code>\n\n}\n{% endhighlight %}\n\n{% highlight swift %}\n// Consumer Code\n\npublic func registerForChanges() {\nlet client = ConfigurationClient(...)\n\n<code>// Attach delegate to the client\nclient.configurationSettingDelegate = self\nclient.getChanges(forConfigurationSettingsWithPrefix: \"Foo\")\n</code>\n\n}\n\n// MARK: ConfigurationSettingDelegate Protocol\n\n// The consumer need not implement all delegate methods since the library\n// declares default do-nothing implementations for each\npublic func configurationSetting(\n_ setting: String,\ndidChangeFrom oldValue: String,\nto newValue: String\n) {\n...\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-network-delegate-name",
+    "category": "Delegates",
+    "text": "DO follow the Swift naming conventions (https://swift.org/documentation/) when providing a delegate protocol.\n\nProtocols that describe what something is should read as nouns (e.g. Collection), protocols that describe a capability should be named using the suffixes able, ible, or ing (e.g. Equatable, ProgressReporting). In most cases, a delegate protocol should be named after the delegating object, with the suffix Delegate (e.g. ConfigurationSettingDelegate)."
+  },
+  {
+    "id": "ios_design.html#ios-network-delegate-method-names",
+    "category": "Delegates",
+    "text": "DO use a consistent prefix for each method defined by the delegate so that the developer can easily locate the delegate methods via code completion.\n\nThe name of the delegating object is commonly used as as the prefix. For example, a ConfigurationSettingDelegate protocol used to notify about events coming from ConfigurationSetting objects might define delegate methods that start with configurationSetting, e.g. configurationSetting(_:didChangeFrom:to:), configurationSettingDidClear(_:)."
+  },
+  {
+    "id": "ios_design.html#ios-network-delegate-method-param",
+    "category": "Delegates",
+    "text": "YOU SHOULD accept the delegating object as the first unnamed parameter to delegate methods when using the delegating object's name as the prefix for the delegate method. This parameter should use the _ syntax for its external label."
+  },
+  {
+    "id": "ios_design.html#ios-network-delegate-method-impls",
+    "category": "Delegates",
+    "text": "DO provide empty (do-nothing) default implementations for all delegate methods."
+  },
+  {
+    "id": "ios_design.html#ios-delegate-closure-parity",
+    "category": "Delegates",
+    "text": "YOU SHOULD expose the same level of functionality through delegates as through event closures if delegates are implemented; however, there does not need to be a one-to-one match between delegate methods and event closures. Delegate methods are often verbose and it is acceptable to use fewer closures to represent the same set of delegate methods."
+  },
+  {
+    "id": "ios_design.html#ios-client-verb-prefix",
+    "category": "Naming",
+    "text": "DO name service methods using a standardized set of verbs or verb prefixes within a set of client libraries for a service. Prefer the use of the following terms for CRUD operations:\n\n|Verb       |Parameters        |Returns                 |Comments                                                                                                               |\n|-----------|------------------|------------------------|-----------------------------------------------------------------------------------------------------------------------|\n| upsert  |key, item         |Updated or created item |Create new item or update existing item. Verb is primarily used in database-like services.                             |\n| set     |key, item         |Updated or created item |Create new item or update existing item. Verb is primarily used for dictionary-like properties of a service.           |\n| create  |key, item         |Created item            |Create new item. Fails if item already exists.                                                                         |\n| update  |key, partial item |Updated item            |Fails if item doesn't exist.                                                                                           |\n| replace |key, item         |Replace existing item   |Completely replaces an existing item. Fails if the item doesn't exist.                                                 |\n| delete  |key               |Deleted item or nil   |Delete an existing item. Will succeed even if item didn't exist. Deleted item may be returned, if service supports it. |\n| add     |index, item       |Added item              |Add item to a collection. Item will be added last, or into the index position specified.                               |\n| get     |key               |Item or nil           |Will return nil if item doesn't exist.                                                                               |\n| list    |                  |Items                   |Return list of items. Returns empty list if no items exist.                                                            |"
+  },
+  {
+    "id": "ios_design.html#ios-service-client-verb",
+    "category": "Naming",
+    "text": "DO use the verb by itself as the method name when the name of the first parameter makes it obvious what object the action will apply to. For example, prefer configurationClient.get(configurationSetting: 'FooSetting', completionHandler: ...) rather than configurationClient.getConfigurationSetting(name: 'FooSetting', completionHandler: ...) or configurationClient.getConfigurationSetting('FooSetting', completionHandler: ...)."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-verb-prefix",
+    "category": "Naming",
+    "text": "DO use the verb as as prefix for the method name when object(s) the action will apply to or return is unclear. For example, prefer configurationClient.listConfigurationSettings() rather than configurationClient.list()."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-method-parameter-name",
+    "category": "Naming",
+    "text": "DO provide unambiguous parameter labels for all client methods. Avoid using the _ syntax to avoid requiring parameter labels for client methods."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-method-parameter-unnamed",
+    "category": "Naming",
+    "text": "YOU SHOULD use the _ syntax to avoid requiring a parameter label for the first parameter of delegate methods and other scenarios where doing so is idiomatic to Swift naming conventions."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-flexibility",
+    "category": "Naming",
+    "text": "YOU SHOULD remain flexible and use names best suited for developer experience. Don't let the naming rules result in non-idiomatic naming patterns. For example, naming methods download(blob:) and upload(blob:) provides more semantic meaning and would be more idiomatic than naming them get(blob:) and put(blob:)."
+  },
+  {
+    "id": "ios_design.html#ios-async-suffix",
+    "category": "Naming",
+    "text": "DO NOT use the suffix Async for service methods or other methods that do operations asynchronously, since async is the default and expected mode of operation within the SDK."
+  },
+  {
+    "id": "ios_design.html#ios-async-cancellation",
+    "category": "Cancellation",
+    "text": "DO support an optional CancellationToken object in conformance with the RequestOptions protocol. This object allows the developer to call .cancel() on the token or set a timeout, after which a best-effort attempt is made to cancel the request."
+  },
+  {
+    "id": "ios_design.html#ios-async-cancellation-implementation",
+    "category": "Cancellation",
+    "text": "DO cancel any in-flight requests when a developer calls cancel() on the CancellationToken. If the body of the client method includes multiple, sequential operations, you must check for cancellation before executing any operations after the first. Since the underlying iOS network APIs do not permit cancellation of in-flight requests, you must also check for cancellation immediately after receiving any response. If cancellation has been requested, indicate that the call has been cancelled and do not return or otherwise further process the response."
+  },
+  {
+    "id": "ios_design.html#ios-async-cancellation-triggers-error",
+    "category": "Cancellation",
+    "text": "DO return an AzureError.client error when cancellation is requested stating that the request was canceled, even if the request was successful.\n\nRequests to the service fall into two basic groups: methods that make a single logical request, and methods that make a deterministic sequence of requests.  An example of a single logical request is a request that may be retried inside the operation. An example of a deterministic sequence of requests is a paged operation.\n\nThe logical entity is a protocol neutral representation of a response. The logical entity may be a simple Swift type where appropriate, or a model type defined within the client library in which case it may combine data from headers, body, and/or the status line. For example, you may expose an ETag header as a property on a model type if it's relevent to the service or to the operation with which the model type is used. In contrast, the HTTPResponse type defined in the Azure Core library represents the 'raw response'. It contains HTTP headers, status code, and the response body."
+  },
+  {
+    "id": "ios_design.html#ios-response-return-logical-entity",
+    "category": "Service Method Return Types",
+    "text": "DO return the logical entity for the normal form of a service method. The logical entity MUST represent the information needed in the 99%+ case."
+  },
+  {
+    "id": "ios_design.html#ios-response-access-response",
+    "category": "Service Method Return Types",
+    "text": "DO make it possible for a developer to access the complete response, including the status line, headers, and body. The callback type HTTPResultHandler<T> encodes this requirement and is the recommended type for callbacks passed to async client methods. The T parameter is the type of the logical entity."
+  },
+  {
+    "id": "ios_design.html#ios-response-provide-examples",
+    "category": "Service Method Return Types",
+    "text": "DO provide examples on how to access the raw and streamed response for a request, where exposed by the client library. We don't expect all methods to expose a streamed response."
+  },
+  {
+    "id": "ios_design.html#ios-response-pagination",
+    "category": "Service Method Return Types",
+    "text": "DO return an instance of the PagedCollection class for all paged operations. For more information on what to return for list operations, refer to Pagination.\n\nFor methods that combine multiple requests into a single call:"
+  },
+  {
+    "id": "ios_design.html#ios-response-return-headers",
+    "category": "Service Method Return Types",
+    "text": "DO NOT return headers and other per-request metadata unless it's obvious as to which specific HTTP request the methods return value corresponds to."
+  },
+  {
+    "id": "ios_design.html#ios-response-failure-cases",
+    "category": "Service Method Return Types",
+    "text": "DO provide enough information in failure cases for an application to take appropriate corrective action."
+  },
+  {
+    "id": "ios_design.html#ios-response-reserved-words",
+    "category": "Service Method Return Types",
+    "text": "YOU SHOULD NOT use reserved words (such as object and value) as a property name within the logical entity.  Avoid reserved words in other supported languages."
+  },
+  {
+    "id": "ios_design.html#ios-request-options",
+    "category": "Option Parameters",
+    "text": "DO NOT accept options used for customization of a service client method call as individual optional parameters."
+  },
+  {
+    "id": "ios_design.html#ios-request-options-single",
+    "category": "Option Parameters",
+    "text": "DO accept a single Options struct as an optional parameter for all service client methods. This parameter should be labeled withOptions."
+  },
+  {
+    "id": "ios_design.html#ios-request-options-object",
+    "category": "Option Parameters",
+    "text": "DO provide an immutable struct named with the suffix Options to allow for customization of each service client method call. This struct must have an initializer that accepts all possible options for the method call as optional parameters, with defaults for each parameter. For example:\n\n{% highlight swift %}\npublic struct ListConfigurationSettingsOptions: RequestOptions {\n// MARK: RequestOptions Protocol\n\n<code>public let clientRequestId: String?\npublic let cancellationToken: CancellationToken?\npublic let dispatchQueue: DispatchQueue?\npublic var context: PipelineContext?\n\n// MARK: ListConfigurationSettings Options\n\npublic let configurationSettingPrefix: String?\npublic let maxResults: Int?\npublic let timeout: TimeInterval?\n\n// MARK: Initializer\n\npublic init(\n    clientRequestId: String? = nil,\n    cancellationToken: CancellationToken? = nil,\n    dispatchQueue: DispatchQueue? = nil,\n    configurationSettingPrefix: String? = nil,\n    maxResults: Int? = nil,\n    timeout: TimeInterval? = nil\n) {\n    self.clientRequestId = clientRequestId\n    self.cancellationToken = cancellationToken\n    self.dispatchQueue = dispatchQueue\n    self.configurationSettingPrefix = configurationSettingPrefix\n    self.maxResults = maxResults\n    self.timeout = timeout\n}\n</code>\n\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-request-options-conformance",
+    "category": "Option Parameters",
+    "text": "DO conform to the RequestOptions protocol for structures that define options passed to a service client API method."
+  },
+  {
+    "id": "ios_design.html#ios-request-options-types",
+    "category": "Option Parameters",
+    "text": "DO use rich types where possible for options. For example, use the Date type for dates and the URL type for URIs. When not possible, name the option with a suffix to express the expected type. If the expected type is a unit, the suffix should follow the format In<Unit> (e.g. lengthInMeters)."
+  },
+  {
+    "id": "ios_design.html#ios-request-options-location",
+    "category": "Option Parameters",
+    "text": "DO store options structures (and supporting enumerations / structures referenced by such models) within the Source/Options directory inside the library's root directory.\n\nThe service client will have several methods that perform requests on the service.  Service parameters are directly passed across the wire to an Azure service.  Client parameters are not passed directly to the service, but used within the client library to fulfill the request.  Examples of client parameters include values that are used to construct a URI, or a file that needs to be uploaded to storage."
+  },
+  {
+    "id": "ios_design.html#general-params-client-validation",
+    "category": "Parameter Validation",
+    "text": "DO validate client parameters."
+  },
+  {
+    "id": "ios_design.html#general-params-server-validation",
+    "category": "Parameter Validation",
+    "text": "DO NOT validate service parameters.  This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters."
+  },
+  {
+    "id": "ios_design.html#general-params-check-devex",
+    "category": "Parameter Validation",
+    "text": "DO validate the developer experience when the service parameters are invalid to ensure appropriate error messages are generated by the service. If the developer experience is compromised due to service-side error messages, work with the service team to correct prior to release.\n\nThe Azure SDK for iOS contains the PagedCollection type, which provides Swift-idiomatic ways to iterate through all results of a paged operation. The developer can asynchronously iterate through the PagedCollection in a page-by-page or item-by-item fashion by calling the forEachPage and forEachItem methods:\n\n{% highlight swift %}\n// Automatic asynchronous iteration of a PagedCollection page-by-page\nclient.listConfigurationSettings(...) { result, _ in\nif case let .success(pagedCollection) = result {\npagedCollection.forEachPage { settings in\nfor setting in settings {\nprint(setting.description)\n}\n// return false to interrupt iteration\nreturn true\n}\n}\n}\n\n// Automatic asynchronous iteration of a PagedCollection item-by-item\nclient.listConfigurationSettings(...) { result, _ in\nif case let .success(pagedCollection) = result {\npagedCollection.forEachItem { setting in\nprint(setting.description)\n// return false to interrupt iteration\nreturn true\n}\n}\n}\n{% endhighlight %}\n\nThe developer can also choose to directly access the PagedCollection's items and pageItems properties, manually advancing the collection by calling the asynchronous nextPage method as needed:\n\n{% highlight swift %}\n// Explicit asynchronous iteration of a PagedCollection page-by-page\noverride func viewDidAppear(_ animated: Bool) {\n...\n// Execute the asynchronous method and use the resulting paged collection as the data source\nclient.listConfigurationSettings(...) { result, _ in\nif case let .success(pagedCollection) = result {\nself.dataSource = pagedCollection\n...\n}\n}\n...\n}\n\ninternal func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {\n...\n// Get the corresponding item from the pagedCollection\nlet item = self.dataSource.items[indexPath.row]\n...\n// Load the next page if the user is at the end of the current page\nif indexPath.row == self.dataSource.count - 1 {\n// nextPage automatically stops when exhausted, no need to handle that case separately\nself.dataSource.nextPage { result\nif case .success = result {\n...\n}\n}\n}\n...\n}\n{% endhighlight %}\n\nFinally, PagedCollection also provides an iterator property that conforms to the Sequence protocol, providing a way for the developer to synchronously consume all results of a paged operation using a standard for ... in loop:\n\n{% highlight swift %}\n// Automatic synchronous iteration of a PagedCollection item-by-item\nclient.listConfigurationSettings(...) { result, _ in\nif case let .success(pagedCollection) = result {\n// Synchronous iteration will block the UI thread as more pages are fetched\nDispatchQueue.global(qos: .background).async {\nfor setting in pagedCollection.syncIterator {\nprint(setting.description)\n// break to interrupt iteration\n}\n}\n}\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-pagination-client",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO conform clients to the PageableClient protocol if they contain service client methods that expose paginated collections of results."
+  },
+  {
+    "id": "ios_design.html#ios-pagination-async-support",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO return a PagedCollection from service client methods that expose a collection of results, regardless of whether the collection is paginated or non-paginated. This ensures that paginated and non-paginated collections are accessed and operate the same way. Users should not need to appreciate the difference.\n\n{% highlight swift %}\npublic func listCats(\nwithOptions options: ListCatOptions? = nil,\ncompletionHandler: @escaping HTTPResultHandler<PagedCollection>\n) {\n...\n// Construct request\nlet urlTemplate = \"/cat/list\"\n...\nclient.request(request, context: context) { result, httpResponse in\n...\nswitch result {\ncase .success:\nguard let statusCode = httpResponse?.statusCode else {\nlet noStatusCodeError = AzureError.client(\"Expected a status code in response but didn't find one.\")\ndispatchQueue.async {\ncompletionHandler(.failure(noStatusCodeError), httpResponse)\n}\nreturn\n}\nif [\n200\n].contains(statusCode) {\ndo {\nlet decoder = JSONDecoder()\nlet codingKeys = PagedCodingKeys(\nitems: \"value\",\ncontinuationToken: \"nextLink\"\n)\nlet paged = try PagedCollection(\nclient: self.client,\nrequest: request,\ncontext: context,\ndata: data,\ncodingKeys: codingKeys,\ndecoder: decoder\n)\ndispatchQueue.async {\ncompletionHandler(.success(paged), httpResponse)\n}\n} catch {\ndispatchQueue.async {\ncompletionHandler(.failure(AzureError.client(\"Decoding error.\", error)), httpResponse)\n}\n}\n}\n...\ncase let .failure(error):\ndispatchQueue.async {\ncompletionHandler(.failure(error), httpResponse)\n}\n}\n}\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-pagination-distinct-types",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO use the same type for entities returned from a list operation vs. a get operation if those operations return different views of the same result. For example a list operation may provide only a minimal representation of each result, with the expectation that a get operation must be performed for each result to access the full representation. If the representations are compatible, reuse the same type for both the list and the get operation. Otherwise, it is permissable to use distinct types for each operation.\n\n**IMPORTANT:** Services should refrain from having a difference between the type of a particular entity as it exists in a list versus the result of a GET request for that individual item as it makes the client library's surface area simpler."
+  },
+  {
+    "id": "ios_design.html#ios-pagination-large-get-iterator",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO NOT expose an iterator over each individual item if getting each item requires a corresponding GET request to the service. One GET per item is often too expensive and so not an action we want to take on behalf of users."
+  },
+  {
+    "id": "ios_design.html#ios-pagination-array-support",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO NOT expose an API to get a paginated collection into an array. This is a dangerous capability for services which may return many, many pages."
+  },
+  {
+    "id": "ios_design.html#ios-pagination-paging-api",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO NOT expose pagination internals when iterating over a collection. Consumers should work with only the PagedCollection, not the underlying Paging APIs.\n\nLong-running operations are uncommon in a mobile context. If you feel like you need long running operations, contact the Azure SDK mobile team for advice.\n\nTODO: Expand upon why LROs are uncommon in a mobile context.\n\nConditional requests are normally performed using HTTP headers. The primary usage provides headers that match the ETag to some known value. The ETag is an opaque identifier that represents a single version of a resource. For example, adding the following header will translate to \"if the record's version, specified by the ETag, is not the same\".\n\n{% highlight text %} If-Not-Match: \"etag-value\" {% endhighlight %}\n\nWith headers, tests are possible for the following:\n\nUnconditionally (no additional headers)\nIf (not) modified since a version (If-Match and If-Not-Match)\nIf (not) modified since a date (If-Modified-Since and If-Unmodified-Since)\nIf (not) present (If-Match and If-Not-Match with a ETag=* value)\nNot all services support all of these semantics and may not support any of them. Developers have varying levels of understanding of the ETag and conditional requests, so it is best to abstract this concept from the API surface. There are two types of conditional requests we need to be concerned with:\n\nSafe conditional requests (e.g. GET)\n\nThese are typically used to save bandwidth in an \"update cache\" scenario, i.e. I have a cached value, only send me the data if what the service has is newer than my copy. These return either a 200 or a 304 status code, indicating the value was not modified, which tells the caller that their cached value is up to date.\n\nUnsafe conditional requests (e.g. POST, PUT, or DELETE)\n\nThese are typically used to prevent losing updates in an optimistic concurrency scenario, i.e. I've modified the cached value I'm holding, but don't update the service version unless it has the same copy I've got. These return either a success or a 412 error status code, indicating the value was modified, to indicate to the caller that they'll need to retry their update if they want it to succeed.\n\nThese two cases are handled differently in client libraries. However, the form of the call is the same in both cases. The signature of the method should be:\n\n{% highlight text %} client.method(..., withOptions: RequestOptions) {% endhighlight %}\n\nThe withOptions field provides preconditions to the HTTP request. The Etag value will be retrieved from the item that is passed into the method where possible, and method arguments where not possible. The form of the method will be modified based on idiomatic usage patterns in the language of choice. In cases where the ETag value is not known, the operation cannot be conditional. If the library developer does not need to support advanced usage of precondition headers, they can add a boolean parameter that is set to true to establish the condition. For example, use one of the following boolean names instead of the conditions operator:\n\nonlyIfChanged\nonlyIfUnchanged\nonlyIfMissing\nonlyIfPresent\n\nIn all cases, the conditional expression is \"opt-in\", and the default is to perform the operation unconditionally.\n\nThe return value from a conditional operation must be carefully considered. For safe operators (e.g. GET), return a response that will throw if the value is accessed (or follow the same convention used for a 204 No Content response), since there is no value in the body to reference. For unsafe operators (e.g. PUT, DELETE, or POST), throw a specific error when a Precondition Failed or Conflict result is received. This allows the consumer to do something different in the case of conflicting results.\n\nYOU SHOULD accept a conditions parameter (which takes an enumerated type) on service methods that allow a conditional check on the service.\n\nYOU SHOULD accept an additional boolean or enum parameter on service methods as necessary to enable conditional checks using ETag.\n\nYOU SHOULD include the ETag field as part of the object model when conditional operations are supported.\n\n<p><a href=\"#{{ include.id }}\" name=\"{{ include.id }}\" class='requirement' role='img' aria-label='YOU SHOULD NOT'>\u26a0\ufe0f</a> <strong>YOU SHOULD NOT</strong></p>\n\n\nYOU SHOULD throw a distinct error when a 412 Precondition Failed response or a 409 Conflict response is received from the service due to a conditional check.\n\nModels are objects (structs and classes) that consumers use to provide required information into client library methods. These structures typically represent the domain model or logical entity, a protocol-neutral representation of a response."
+  },
+  {
+    "id": "ios_design.html#ios-client-model-object",
+    "category": "Model Types",
+    "text": "YOU SHOULD express client models as immutable structs rather than classes. Such a struct must express all properties of the model as let values, and have an initializer that accepts all properties of the model as parameters, with defaults provided for all optional parameters. For example:\n\n{% highlight swift %}\npublic struct FeatureFlagGroup {\npublic let groupName: String\npublic let serviceEnabled: Bool\npublic let userEnabled: Bool\n\n<code>// MARK: Initializer\n\npublic init(\n    groupName: String,\n    serviceEnabled: Bool = true,\n    userEnabled: Bool = true\n) {\n    self.groupName = groupName\n    self.serviceEnabled = serviceEnabled\n    self.userEnabled = userEnabled\n}\n</code>\n\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-client-model-domain-location",
+    "category": "Model Types",
+    "text": "DO store client models (and supporting enumerations / structures referenced by such models) within the Source/Models directory inside the library's root directory."
+  },
+  {
+    "id": "ios_design.html#ios-enums",
+    "category": "Enumerations",
+    "text": "DO use an enum for parameters, properties, and return types when values are known."
+  },
+  {
+    "id": "ios_design.html#ios-enums-request-string-convertible",
+    "category": "Enumerations",
+    "text": "DO conform to the RequestStringConvertible protocol provided in Azure Core."
+  },
+  {
+    "id": "ios_design.html#ios-naming-enum-camelcase",
+    "category": "Enumerations",
+    "text": "DO use camel casing names for enum values. EnumType.foo and EnumType.twoWords are valid, whereas EnumType.Foo and EnumType.TWO_WORDS are not."
+  },
+  {
+    "id": "ios_design.html#ios-expandable-enums",
+    "category": "Enumerations",
+    "text": "YOU MAY define an enum-like API that declares well-known fields but which can also contain unknown values returned from the service, or user-defined values passed to the service. An example expandable enum is shown below:\n\n```swift\npublic struct Shape: Equatable, RequestStringConvertible {\n\n    // the internal enum is a normal Swift enum\n    internal enum ShapeKV {\n        case circle\n        case square\n        case unknown(String)\n\n        var rawValue: String {\n            switch self {\n            case .circle:\n                return \"circle\"\n            case .square:\n                return \"square\"\n            case .unknown(let value):\n                return value\n            }\n        }\n\n        init(rawValue: String) {\n            switch rawValue.lowercased() {\n            case \"circle\":\n                self = .circle\n            case \"square\":\n                self = .square\n            default:\n                self = .unknown(rawValue.lowercase())\n            }\n        }\n    }\n\n    private let value: ShapeKV\n\n    public var requestString: String {\n        return value.rawValue\n    }\n\n    private init(rawValue: String) {\n        self.value = ShapeKV(rawValue: rawValue)\n    }\n\n    public static func == (lhs: Shape, rhs: Shape) -&gt; Bool {\n        return lhs.requestString == rhs.requestString\n    }\n\n    // declare public static constants using the internal enum of known values\n    public static let circle: Shape = .init(value: .circle)\n    public static let square: Shape = .init(value: .square)\n}\n\n```"
+  },
+  {
+    "id": "ios_design.html#ios-enums-no-future-growth",
+    "category": "Enumerations",
+    "text": "DO use an regular enum ONLY if the enum values are known to not change like days of a week, months in a year etc."
+  },
+  {
+    "id": "ios_design.html#ios-enums-future-growth",
+    "category": "Enumerations",
+    "text": "DO define an expandable enum for enumerations if the values could expand in the future. An expandable enum forces customers who switch on the value to declare a default case, preventing the addition of a known case from causing a breaking change."
+  },
+  {
+    "id": "ios_design.html#ios-core-types",
+    "category": "Using Azure Core Types",
+    "text": "DO make use of packages in Azure Core to provide behavior consistent across all Azure SDK libraries. This includes, but is not limited to:\nPipelineClient, PipelineRequest, PipelineResponse, etc. for http client, pipeline and related functionality.\nClientLogger for logging.\nPagedCollection and PagedItemSyncIterator for returning paged results.\n\nSee the [Azure Core README][Azure Core] for more details.\n\nTODO\n\nTODO: Error handling (see general guidelines)\n\nTBD:\nHook in to HockeyApp\n\nAzure services use different kinds of authentication schemes to allow clients to access the service. Conceptually, there are two entities responsible in this process: a credential and an authentication policy. Credentials provide confidential authentication data.  Authentication policies use the data provided by a credential to authenticate requests to the service."
+  },
+  {
+    "id": "ios_design.html#ios-auth-support",
+    "category": "Authentication",
+    "text": "DO support all authentication techniques that the service supports and that make sense in a mobile context. Service principal authentication generally does not make sense, for example."
+  },
+  {
+    "id": "ios_design.html#ios-auth-azure-core",
+    "category": "Authentication",
+    "text": "DO use credential and authentication policy implementations from the Azure Core library where available."
+  },
+  {
+    "id": "ios_design.html#ios-auth-credentials",
+    "category": "Authentication",
+    "text": "DO provide credential types that can be used to fetch all data needed to authenticate a request to the service.  If using a service-specific credential type, the implementation must be non-blocking and atomic."
+  },
+  {
+    "id": "ios_design.html#ios-auth-credential-type",
+    "category": "Authentication",
+    "text": "DO conform credential types to the Credential protocol (either directly, or by inheriting from or conforming to any type which itself conforms to Credential)."
+  },
+  {
+    "id": "ios_design.html#ios-auth-provide-client-initializer",
+    "category": "Authentication",
+    "text": "DO provide service client initializers that accept all supported credential types. The credential must be provided as the first parameter to the initializer and must be named credential."
+  },
+  {
+    "id": "ios_design.html#ios-auth-validate-credentials",
+    "category": "Authentication",
+    "text": "{% include requirement/MUST id=\"ios-auth-validate-credentials\"%} validate all credential objects passed to service client initializers by calling the validate() method defined by the Credential protocol.\n\nClient libraries may support providing credential data via a connection string ONLY IF the service provides a connection string to users via the portal or other tooling. Connection strings are generally good for getting started as they are easily integrated into an application by copy/paste from the portal. However, connection strings are considered a lesser form of authentication because the credentials cannot be rotated within a running process."
+  },
+  {
+    "id": "ios_design.html#ios-auth-connection-strings",
+    "category": "Authentication",
+    "text": "{% include requirement/MAY id=\"ios-auth-connection-strings\"%} provide a service client initializer that accepts a connection string if appropriate. The connection string must be provided as the first parameter to the initializer and must be named connectionString. When supporting connection strings, the documentation must include a warning that building credentials such as connection strings into a consumer-facing application is inherently insecure."
+  },
+  {
+    "id": "ios_design.html#ios-auth-connection-strings-only",
+    "category": "Authentication",
+    "text": "DO NOT support initializing a service client with a connection string unless such connection string is available within tooling (for copy/paste operations)."
+  },
+  {
+    "id": "ios_design.html#ios-authimpl-no-connection-strings",
+    "category": "Authentication",
+    "text": "YOU SHOULD NOT support connection strings with embedded secrets. iOS apps are not cryptographically secure and may be distributed to millions of devices. A developer should assume that any credential placed in an iOS app is compromised.\n\nWhen implementing authentication, don't open up the consumer to security holes like PII (personally identifiable information) leakage or credential leakage. Credentials are generally issued with a time limit, and must be refreshed periodically to ensure that the service connection continues to function as expected. Ensure your client library follows all current security recommendations and consider an independent security review of the client library to ensure you're not introducing potential security problems for the consumer."
+  },
+  {
+    "id": "ios_design.html#ios-authimpl-no-persisting",
+    "category": "Authentication",
+    "text": "DO NOT persist, cache, or reuse security credentials. Security credentials should be considered short lived to cover both security concerns and credential refresh situations.\n\nIf your service implements a non-standard credential system (that is, a credential system that is not supported by AzureCore), then you need to produce an authentication policy for the HTTP pipeline that can authenticate requests given the alternative credential types provided by the client library."
+  },
+  {
+    "id": "ios_design.html#ios-authimpl-provide-auth-policy",
+    "category": "Authentication",
+    "text": "DO provide an authentication policy that conforms to the Authenticating protocol, to authenticate the HTTP request when using non-standard credentials.\n\nSwift uses modules to group related types into a single distributable package. Grouping services within a cloud infrastructure is common since it aids discoverability and provides structure to the reference documentation."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-module",
+    "category": "Modules",
+    "text": "DO implement your library, and all service clients and supporting types, in a single module."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-module-name",
+    "category": "Modules",
+    "text": "DO name the module with the Azure prefix (for example, AzureConfiguration)."
+  },
+  {
+    "id": "ios_design.html#ios-service-client-module-subpackage",
+    "category": "Modules",
+    "text": "YOU MAY break a single library into sub-modules where appropriate (for example, when a service provides multiple distinct feature sets which can be used independently). When doing so, you must include a feature suffix (for example, AzureStorageBlob) in the module name.\n\nTODO\n\nTODO\n\niOS developers need to concern themselves with the runtime environment they are running in.  The iOS ecosystem enjoys little fragmentation, but multiple versions and form factors are still prevalent."
+  },
+  {
+    "id": "ios_design.html#ios-library-support",
+    "category": "Supported Platforms",
+    "text": "DO support the following versions of iOS:\nAll currently available patch builds in the minor release\nThe last patch build for the previous minor release.\nThe last patch build for the previous major release."
+  },
+  {
+    "id": "ios_design.html#ipados-library-support",
+    "category": "Supported Platforms",
+    "text": "DO support the following versions of iPadOS:\nAll currently available patch builds in the minor release\nThe last patch build for the previous minor release.\nThe last patch build for the previous major release."
+  },
+  {
+    "id": "ios_design.html#macos-library-support",
+    "category": "Supported Platforms",
+    "text": "YOU SHOULD support MacOS in order to permit customers to use our libraries within Apple universal apps. Support the following versions of macOS:\nAll currently available patch builds in the minor release\nThe last patch build for the previous minor release.\nThe last patch build for the previous major release."
+  },
+  {
+    "id": "ios_design.html#otheros-library-support",
+    "category": "Supported Platforms",
+    "text": "YOU MAY support other platforms such as watchOS and tvOS."
+  },
+  {
+    "id": "ios_design.html#ios-swift-support",
+    "category": "Supported Platforms",
+    "text": "DO support Swift 5.  This ensures the maximum ABI compatibility going forward."
+  },
+  {
+    "id": "ios_design.html#ios-swift4-support",
+    "category": "Supported Platforms",
+    "text": "YOU MAY support Swift 4."
+  },
+  {
+    "id": "ios_design.html#ios-objc-support",
+    "category": "Supported Platforms",
+    "text": "YOU MAY support Objective-C."
+  },
+  {
+    "id": "ios_design.html#ios-arch-support",
+    "category": "Supported Platforms",
+    "text": "DO support all architectures in $ARCH_STANDARD."
+  },
+  {
+    "id": "ios_design.html#ios-bitcode-enabled",
+    "category": "Supported Platforms",
+    "text": "DO NOT support bitcode enabled. Apple has marked this deprecated (https://developer.apple.com/documentation/Xcode-Release-Notes/xcode-14-release-notes) from XCode 14 onwards."
+  },
+  {
+    "id": "ios_design.html#ios-platform-support",
+    "category": "Supported Platforms",
+    "text": "DO support iPhone and iPad form factors.\n\nOnly support Objective-C and Swift 4 if you have a business justification for doing so. One such justification would be to package C++ code, which is only accessible via Objective-C. Optimize for applications written using Swift 5.\n\nSwift Package manager link (https://swift.org/package-manager/) is the offical distribution channel for Swift packages created and endorsed by Apple. Accordingly, this is the primary distribution channel for the Azure SDK for iOS. Swift Package Manager follows a \"one-repo-one-version\" model that is not conducive to working in a mono-repo that hosts multiple independently versioning packages. To work around this limitation while preserving the benefits of working in a mono-repo, each service branch that is supported on Swift Package Manager is mirrored to its own repo that Swift Package Manager users target to acquire necessary packages."
+  },
+  {
+    "id": "ios_design.html#ios-spm-packageswift",
+    "category": "Swift Package Manager",
+    "text": "DO support Swift Package Manager by supplying a Package.swift manifest at the root of the service directory."
+  },
+  {
+    "id": "ios_design.html#ios-spm-target",
+    "category": "Swift Package Manager",
+    "text": "DO include a target in the Package.swift file that matches the names of the module."
+  },
+  {
+    "id": "ios_design.html#ios-spm-test-target",
+    "category": "Swift Package Manager",
+    "text": "DO include a test target in the Package.swift file that matches the names of the module with the Tests suffix.\n\nFor example, to register the \"AzureCatHerding\" service:\n\n{% highlight swift %}\nlet package = Package(\nname: \"AzureSDK\",\nplatforms: [...],\nproducts: [\n...,\n.library(name: \"AzureCatHerding\", targets: [\"AzureCatHerding\"])\n],\ndependencies: [...],\ntargets: [\n...,\n.target(\nname: \"AzureCatHerding\",\ndependencies: [],\npath: \"sdk/catherding/AzureCatHerding\",\nexclude: [\"Source/Supporting Files\"],\nsources: [\"Source\"]\n),\n.testTarget(\nname: \"AzureCatHerdingTests\",\ndependencies: [\"AzureCatHerding\"],\npath: \"sdk/catherding/AzureCatHerding\",\nexclude: [\n\"Tests/Info.plist\",\n...\n],\nsources: [\"Tests\"]\n)\n],\nswiftLanguageVersions: [...]\n)\n{% endhighlight %}"
+  },
+  {
+    "id": "ios_design.html#ios-spm-private-preview",
+    "category": "Swift Package Manager",
+    "text": "DO NOT provide private previews via Swift Package Manager."
+  },
+  {
+    "id": "ios_design.html#ios-spm-binary",
+    "category": "Swift Package Manager",
+    "text": "YOU MAY publish a module as a precompiled binary framework rather than source. This is appropriate for Objective-C-based libraries or closed-source libraries.\n\nThe following apply when publishing a pre-compiled framework:"
+  },
+  {
+    "id": "ios_design.html#ios-spm-xcframework",
+    "category": "Swift Package Manager",
+    "text": "DO publish the framework in .xcframework format, as this is the only format that is compatbile with XCode version 12.3+."
+  },
+  {
+    "id": "ios_design.html#ios-spm-framework",
+    "category": "Swift Package Manager",
+    "text": "YOU MAY also publish the framework in .framework format for compatibility with older versions of XCode or iOS, if there is business justification for doing so.\n\nCocoaPods (https://cocoapods.org/) is a popular, community-supported dependency manager for Swift and Objective-C libraries."
+  },
+  {
+    "id": "ios_design.html#ios-cocoapods",
+    "category": "CocoaPods",
+    "text": "DO support CocoaPods release by including a podspec file at the root of the service directory."
+  },
+  {
+    "id": "ios_design.html#ios-cocoapods-json",
+    "category": "CocoaPods",
+    "text": "DO specify the podspec in JSON format."
+  },
+  {
+    "id": "ios_design.html#ios-cocoapods-podspec-name",
+    "category": "CocoaPods",
+    "text": "DO name the podspec according to the following format: <ModuleName>.podspec.json."
+  },
+  {
+    "id": "ios_design.html#ios-cocoapods-multiple-podspec",
+    "category": "CocoaPods",
+    "text": "DO NOT create multiple podspecs for the same logical package."
+  },
+  {
+    "id": "ios_design.html#ios-cocoapods-support-scenarios",
+    "category": "CocoaPods",
+    "text": "DO NOT complicate the podspec to support customer support scenarios for older versions of XCode or iOS."
+  },
+  {
+    "id": "ios_design.html#ios-cocoapods-private-preview",
+    "category": "CocoaPods",
+    "text": "YOU MAY release private preview libraries or support older mechanisms by publishing private podspecs to the Azure Private Podspecs (https://github.com/Azure/AzurePrivatePodspecs) repository. Note This repository is public and thus not appropriate for non-public services.\n\nCarthage (https://github.com/Carthage/Carthage) is a community-supported dependency manager for Swift and Objective-C that builds binary frameworks without modifying project structure. Unlike CocoaPods and Swift Package Manager, Carthage requires no special metadata files."
+  },
+  {
+    "id": "ios_design.html#ios-carthage-examples",
+    "category": "Carthage",
+    "text": "YOU SHOULD include examples in the libary's README.md file for directions on how to integrate the library using Carthage."
+  },
+  {
+    "id": "ios_design.html#ios-carthage-support-scenarios",
+    "category": "Carthage",
+    "text": "YOU SHOULD provide specific guidance for customer support scenarios where business justifcation exists. An example would be supporting older versions of iOS or XCode that are not possible with Swift Package Manager or CocoaPods.\n\nThere are occasions when common code needs to be shared between several client libraries.  For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
+  },
+  {
+    "id": "ios_design.html#general-commonlib-approval",
+    "category": "Service-Specific Common Libraries",
+    "text": "DO gain [Architecture Board] approval prior to implementing a common library."
+  },
+  {
+    "id": "ios_design.html#general-commonlib-minimize-code",
+    "category": "Service-Specific Common Libraries",
+    "text": "DO minimize the code within a common library.  Code within the common library is available to the consumer of the client library and shared by multiple client libraries within the same namespace."
+  },
+  {
+    "id": "ios_design.html#general-commonlib-suffix",
+    "category": "Service-Specific Common Libraries",
+    "text": "YOU SHOULD use the Common suffix for the common library. For example, if Azure Storage has a common library, it would be called AzureStorageCommon.\n\nA common library will only be approved if:\nThe consumer of the non-shared library will consume the objects within the common library directly, AND\nThe information will be shared between multiple client libraries.\n\nLet's take two examples:\n\nImplementing two Cognitive Services client libraries, we find a model is required that is produced by one Cognitive Services client library and consumed by another Coginitive Services client library, or the same model is produced by two client libraries.  The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client library vs. that produced by another client library.  This is a good candidate for choosing a common library.\n\n\nTwo Cognitive Services client libraries throw an ObjectNotFound exception to indicate that an object was not detected in an image.  The user might trap the exception, but otherwise will not operate on the exception.  There is no linkage between the ObjectNotFound exception in each client library.  This is not a good candidate for creation of a common library (although you may wish to place this exception in a common library if one exists for the namespace already).  Instead, produce two different exceptions - one in each client library.\n\n\nImplementing two Cognitive Services client libraries, we find a model is required that is produced by one Cognitive Services client library and consumed by another Coginitive Services client library, or the same model is produced by two client libraries.  The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client library vs. that produced by another client library.  This is a good candidate for choosing a common library.\n\nTwo Cognitive Services client libraries throw an ObjectNotFound exception to indicate that an object was not detected in an image.  The user might trap the exception, but otherwise will not operate on the exception.  There is no linkage between the ObjectNotFound exception in each client library.  This is not a good candidate for creation of a common library (although you may wish to place this exception in a common library if one exists for the namespace already).  Instead, produce two different exceptions - one in each client library."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-backwards-compatibility",
+    "category": "Versioning",
+    "text": "DO be 100% backwards compatible with older versions of the Azure SDK."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-highest-api",
+    "category": "Versioning",
+    "text": "DO call the highest supported service API version by default."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-select-api-version",
+    "category": "Versioning",
+    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the service client, by using the apiVersion property of the service client options object."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-apiversion-change",
+    "category": "Versioning",
+    "text": "DO increment the minor version if the default REST API version is changed, even if there's no public API change to the library."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-enum-latest",
+    "category": "Versioning",
+    "text": "DO offer a latest option on the enum that returns the latest service version. If a consumer doesn't specify a service version the latest value will be used."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-enum--value-naming",
+    "category": "Versioning",
+    "text": "DO use the version naming used by the service itself in naming the version values in the enum, stripping any non alphanumeric characters such as _ and -. The standard approach takes the form <year>_<month>_<day>. For example, apiVersion 2019_01_01_preview would translate to 20190101preview. Being consistent with the service naming enables easier cross-referencing between service versions and the availability of features in the client library.\n\nConsistent version number scheme allows consumers to determine what to expect from a new version of the library."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-semver",
+    "category": "Client Version Numbers",
+    "text": "DO use semantic versioning (https://semver.org) for the Azure SDK."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-beta",
+    "category": "Client Version Numbers",
+    "text": "DO use the -beta.N pre-release suffix for beta releases. For beta releases, you need only increment the beta number regardless of the type of change in the SDK, regardless of whether it is breaking or not."
+  },
+  {
+    "id": "ios_design.html#ios-version-beta-dependencies",
+    "category": "Client Version Numbers",
+    "text": "DO target specific versions of beta dependencies to ensure that subsequent, incompatible versions do not break. The is because beta versions do not follow semantic versioning."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-changes",
+    "category": "Client Version Numbers",
+    "text": "DO change the version number if anything changes in the Azure SDK."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-patch",
+    "category": "Client Version Numbers",
+    "text": "DO increment the patch version if only bug fixes are added to the Azure SDK."
+  },
+  {
+    "id": "ios_design.html#ios-verioning-minor",
+    "category": "Client Version Numbers",
+    "text": "DO increment the minor version if any new functionality is added to the Azure SDK."
+  },
+  {
+    "id": "ios_design.html#ios-version-features-in-patch",
+    "category": "Client Version Numbers",
+    "text": "DO NOT include new functionality in a patch release."
+  },
+  {
+    "id": "ios_design.html#python-versioning-api-major",
+    "category": "Client Version Numbers",
+    "text": "DO NOT increment the major version for a new REST API version unless it requires breaking API changes in the Azure SDK library itself."
+  },
+  {
+    "id": "ios_design.html#ios-versioning-major",
+    "category": "Client Version Numbers",
+    "text": "DO increment the major version if there are breaking changes in the Azure SDK. Breaking changes require prior approval from the [Architecture Board].\n\nThe bar to make a breaking change is extremely high for stable client libraries. We may create a new package with a different name to avoid diamond dependency issues."
+  },
+  {
+    "id": "ios_design.html#ios-dependencies-azure-core",
+    "category": "Dependencies",
+    "text": "DO depend on the iOS AzureCore library for functionality that is common across all client libraries. This library includes APIs for HTTP connectivity, global configuration, logging, and credential handling."
+  },
+  {
+    "id": "ios_design.html#ios-dependencies-approved",
+    "category": "Dependencies",
+    "text": "DO NOT be dependent on any other packages within the client library distribution package, with the exception of the following:\n\n| Name              | Role                          | Version |\n|-------------------|-------------------------------|:-------:|\n| [`LibName`]       | Library Role                  | 1.0.0   |\n\n[`LibName`]: https://aka.ms/go_libname\n\n\nTODO:\nHow can we use a common approved dependencies list."
+  },
+  {
+    "id": "ios_design.html#ios-dependencies-snapshot",
+    "category": "Dependencies",
+    "text": "DO NOT take dependencies on pre-released or beta versions of external libraries. All dependencies must be approved for general use."
+  },
+  {
+    "id": "ios_design.html#ios-dependencies-vendoring",
+    "category": "Dependencies",
+    "text": "YOU SHOULD consider copying or linking required code into the client library in order to avoid taking a dependency on another package that could conflict with the ecosystem. Make sure that you are not violating any licensing agreements and consider the maintenance that will be required of the duplicated code. [\"A little copying is better than a little dependency\"][1] (YouTube)."
+  },
+  {
+    "id": "ios_design.html#ios-dependencies-concrete",
+    "category": "Dependencies",
+    "text": "DO NOT depend on concrete logging, dependency injection, or configuration technologies (except as implemented in the AzureCore library). The client library will be used in applications that might be using the logging, DI, and configuration technologies of their choice.\n\niOS supports the development of platform-specific native code in C++.  These can cause compatibility issues across different versions of iOS and platforms.  You should only include such native code in the iOS library if:\nYou distribute full source and it is compiled in the context of the customer code.\nYou hide the implementation code behind a Swift-based facade.\nYou are doing so for performance reasons. No other reason is acceptable.\n\nTODO: Develop and significantly expand upon our guidance for libraries with native (C/C++ or Objective-C) code"
+  },
+  {
+    "id": "ios_design.html#ios-jazzy-docs",
+    "category": "Documentation",
+    "text": "DO ensure that anybody can clone the Azure SDK repo and execute jazzy <library> to generate the full and complete docs for the code, without any need for additional processing steps."
+  },
+  {
+    "id": "ios_design.html#ios-jazzy-full-docs",
+    "category": "Documentation",
+    "text": "DO include descriptive text of the method, as well as all parameters, the returned value (if any), and error thrown."
+  },
+  {
+    "id": "ios_design.html#ios-jazzy-samples",
+    "category": "Documentation",
+    "text": "DO include code samples in all class-level docs, and in relevant method-level docs."
+  },
+  {
+    "id": "ios_design.html#ios-jazzy-hard-coding",
+    "category": "Documentation",
+    "text": "DO NOT hard-code the sample within the doc (where it may become stale). Put code samples in /src/samples/ios and use the available tooling to reference them."
+  },
+  {
+    "id": "ios_design.html#ios-jazzy-naming-samples",
+    "category": "Documentation",
+    "text": "DO follow the naming convention outlined below for naming samples tags:\nIf a new instance of the class is created through init() constructor: <packagename>.<classname>.instantiation\nFor other methods in the class: <packagename>.<classname>.<methodName>\nFor overloaded methods, or methods with arguments: <packagename>.<classname>.<methodName>#<argType1>-<argType2>\nCamel casing for the method name and argument types is valid, but not required."
+  },
+  {
+    "id": "ios_design.html#ios-general-repository",
+    "category": "Repository Guidelines",
+    "text": "DO locate all source code in the [Azure/azure-sdk-for-ios] GitHub repository."
+  },
+  {
+    "id": "ios_design.html#ios-spm-repository-name",
+    "category": "Repository Guidelines",
+    "text": "DO name mirror repositories for Swift Package Manager releases in accordance with the format SwiftPM_<PackageName> (ex: SwiftPM-AzureCatHerding)."
+  },
+  {
+    "id": "ios_design.html#ios-spm-repository-contributions",
+    "category": "Repository Guidelines",
+    "text": "DO NOT manage issues or accept pull requests to Swift Package Manager mirror repositories. All contributions should be make to the mono-repo (https://github.com/Azure/azure-sdk-for-ios) "
+  },
+  {
+    "id": "ios_design.html#ios-mono-repo-release-tags",
+    "category": "Repository Guidelines",
+    "text": "DO tag releases in the mono-repo according to the format <PackageName>_<version>."
+  },
+  {
+    "id": "ios_design.html#ios-mirror-repo-release-tags",
+    "category": "Repository Guidelines",
+    "text": "DO tag releases in the Swift Package Manager mirror repos according to the format <version>. A tag to a Swift Package Manager mirror repository must always be accompanied by a corresponding tag in the mono-repo.\n\nTODO\n\nTODO\n\nTODO\n\nTODO\n\n<!-- Project Links -->\n"
+  }
+]

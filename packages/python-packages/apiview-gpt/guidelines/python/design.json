@@ -1,0 +1,647 @@
+[
+  {
+    "id": "python_design.html#python-feature-support",
+    "category": "General guidelines",
+    "text": "DO support 100% of the features provided by the Azure service the client library represents. Gaps in functionality cause confusion and frustration among developers.\n\nThese guidelines were written primarily with a HTTP based request/response in mind, but many general guidelines apply to other types of services as well. This includes, but is not limited to, packaging and naming, tools and project structures.\n\nPlease contact the [Architecture board] for more guidance on non HTTP/REST based services."
+  },
+  {
+    "id": "python_design.html#python-general-version-support",
+    "category": "Supported python versions",
+    "text": "DO support Python 3.7+.\n\nYour API surface will consist of one or more service clients that the consumer will instantiate to connect to your service, plus a set of supporting types.\n\nThe service client is the primary entry point for users of the library. A service client exposes one or more methods that allow them to interact with the service."
+  },
+  {
+    "id": "python_design.html#python-client-namespace",
+    "category": "Service client",
+    "text": "DO expose the service clients the user is more likely to interact with from the root namespace of your package. Specialized service clients may be placed in sub-namespaces."
+  },
+  {
+    "id": "python_design.html#python-client-naming",
+    "category": "Service client",
+    "text": "DO name service client types with a Client suffix."
+  },
+  {
+    "id": "python_design.html#python-client-sync-async-separate-clients",
+    "category": "Service client",
+    "text": "DO provide separate sync and async clients. See the Async Support section for more information.\n\n```python\n# Yes\nclass CosmosClient: ...\n\n# No\nclass CosmosProxy: ...\n\n# No\nclass CosmosUrl: ...\n\n```"
+  },
+  {
+    "id": "python_design.html#python-client-immutable",
+    "category": "Service client",
+    "text": "DO make the service client immutable. See the Client Immutability section for more information.\n\nOnly the minimal information needed to connect and interact with the service should be required in order to construct a client instance. All additional information should be optional and passed in as optional keyword-only arguments."
+  },
+  {
+    "id": "python_design.html#python-client-constructor-form",
+    "category": "Client configuration",
+    "text": "DO provide a constructor that takes positional binding parameters (for example, the name of, or a URL pointing to the service instance), a positional credential parameter, a transport keyword-only parameter, and keyword-only arguments for passing settings through to individual HTTP pipeline policies. See the Authentication section for more information on the credential parameter."
+  },
+  {
+    "id": "python_design.html#python-client-options-naming",
+    "category": "Client configuration",
+    "text": "DO NOT use an \"options bag\" object to group optional parameters. Instead, pass as individual keyword-only arguments."
+  },
+  {
+    "id": "python_design.html#python-client-constructor-policy-arguments",
+    "category": "Client configuration",
+    "text": "DO accept optional default request options as keyword arguments and pass them along to its pipeline policies. See Common service operation parameters for more information.\n\n```python\n# Change default number of retries to 18 and overall timeout to 2s.\nclient = ExampleClient('https://contoso.com/xmpl',\n                       DefaultAzureCredential(),\n                       max_retries=18,\n                       timeout=2)\n\n```"
+  },
+  {
+    "id": "python_design.html#python-client-constructor-transport-argument",
+    "category": "Client configuration",
+    "text": "DO allow users to pass in a transport keyword-only argument that allows the caller to specify a specific transport instance. The default value should be the RequestsTransport (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.1.1/azure.core.pipeline.transport.html?highlight=transport#azure.core.pipeline.transport.RequestsTransport) for synchronous clients and the AioHttpTransport (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.1.1/azure.core.pipeline.transport.html?highlight=transport#azure.core.pipeline.transport.AioHttpTransport) for async clients."
+  },
+  {
+    "id": "python_design.html#python-client-connection-string",
+    "category": "Client configuration",
+    "text": "DO use a separate factory classmethod from_connection_string to create a client from a connection string (if the client supports connection strings). The from_connection_string factory method should take the same set of arguments (excluding information provided in the connection string) as the constructor. The constructor (__init__ method) must not take a connection string, even if it means that using the from_connection_string is the only supported method to create an instance of the client.\n\nThe method should parse the connection string and pass the values along with any additional keyword-only arguments except credential to the constructor.  Only provide a from_connection_string factory method if the Azure portal exposes a connection string for your service.\n\n```python\nclass ExampleClientWithConnectionString:\n\n    @classmethod\n    def _parse_connection_string(cls, connection_string): ...\n\n    @classmethod\n    def from_connection_string(cls, connection_string, **kwargs):\n        endpoint, credential = cls._parse_connection_string(connection_string)\n        return cls(endpoint, credential, **kwargs)\n\n```\n\n\"\"\"Example client using some of the most common API patterns\n\"\"\"\n\nimport models\nimport azure.core.pipeline.transport as transports\n\nclass Thing:\n    \"\"\"A simple model type representing a Thing.\n\n    :ivar name: The name of the thing. \n    :vartype name: str\n    :ivar size: The size of the thing. \n    :vartype size: int\n    \"\"\"\n\n    def __init__(self, name: str, size: int) -> None:\n        \"\"\"Create a new Thing\n\n        :param name: The name of the thing\n        :type name: str\n        :param size: The size of the thing\n        :type size: int\n        \"\"\"\n\n        # Please note that we are using attributes rather than properties.\n        self.name = name\n        self.size = size\n\n    @classmethod\n    def from_response(self, response: \"azure.core.rest.HttpResponse\") -> \"Thing\":\n        \"\"\"Factory method to, given a response, construct a ~Thing\n        \"\"\"\n        return Thing(**response.context['deserialized_data'])\n\n    def __repr__(self):\n        # For simple model types, we can just dump our __dict__ and\n        # truncate the output at 1024 characters.\n        return json.dumps(self.__dict__)[:1024]\n\nclass ExampleClient:\n\n    def __init__(self, endpoint: str, credential: \"azure.core.credentials.TokenCredential\", **kwargs) -> None:\n        \"\"\"Create a new example client instance\n\n        :param endpoint: Endpoint to connect to.\n        :type endpoint str:\n        :param credential: Credentials to use when connecting to the service.\n        :type credential: ~azure.core.credentials.TokenCredential\n        :keyword api_version: API version to use when talking to the service. Default is '2020-12-31'\n        :paramtype api_version: str\n        :keyword transport: HttpTransport to use. Default is ~transports.RequestsHttpTransport.\n        :paramtype transport: ~azure.core.pipeline.transport.HttpTransport\n        \"\"\"\n        self._api_version = kwargs.pop('api_version', '2020-12-31')\n        transport = kwargs.pop('transport', None) or transports.RequestsTransport(**kwargs)\n        \n        # continue to build up your client...\n        self._pipeline = [\n            ..., # List of policies for this specific client\n            transport\n        ]\n\n    @classmethod\n    def from_connection_string(cls, connection_string: str, **kwargs) -> \"Thing\":\n        \"\"\"Optional factory method if the service supports connection strings\n        \n        :param connection_string: Connection string containing endpoint and credentials\n        :type connection_string: str\n        :returns: The newly created client.\n        :rtype: ~ExampleClient\n        \"\"\"\n        endpoint, credential = _parse(connection_string)\n        return cls(endpoint, credential, **kwargs)\n\n\n    def get_thing(self, name: str, **kwargs) -> \"Thing\":\n        \"\"\"Get the Thing with name `name`.\n\n        :param name: The name of the ~Thing to get\n        :type name: str\n        :rtype: ~Thing\n        \"\"\"\n        model_factory = kwargs.pop('cls', Thing.from_response)\n        request = self._build_get_thing_request(name)\n        # Pass along all policy parameters when making the request\n        response = self._pipeline.send(request, **kwargs) \n        return model_factory(response)\n\n    def list_things(self, **kwargs) -> \"azure.core.paging.ItemPaged[Thing]\":\n        \"\"\"List all things.\n        \n        :rtype: ~azure.core.ItemPaged[~Thing]\n        \"\"\"\n        ...\n        return azure.core.paging.ItemPaged(...)\n\n    def begin_restart_thing(self, name: str, **kwargs) -> \"azure.core.polling.LROPoller[bool]\":\n        \"\"\"Restart the thing\n\n        :param name: The name of the thing to restart\n        :type name: str\n        \"\"\"\n        model = kwargs.pop('cls', dict)\n        request = self._build_begin_restart_thing(name)\n        # Pass along all policy parameters when making the request\n        response = self._pipeline.send(request, **kwargs)\n\n        # TODO: show how to construct the poller instance\n        return azure.core.polling.LROPoller(...)\n\n\n\n\n\n\n"
+  },
+  {
+    "id": "python_design.html#python-client-constructor-from-url",
+    "category": "Client configuration",
+    "text": "YOU MAY use a separate factory classmethod from_<resource type>_url (e.g. from_blob_url) to create a client from a URL (if the service relies on passing URLs to resources around - e.g. Azure Blob Storage). The from_url factory method should take the same set of optional keyword arguments as the constructor."
+  },
+  {
+    "id": "python_design.html#python-client-constructor-api-version-argument-1",
+    "category": "Specifying the Service Version",
+    "text": "DO accept an optional api_version keyword-only argument of type string. If specified, the provided api version MUST be used when interacting with the service. If the parameter is not provided, the default value MUST be the latest non-preview API version understood by the client library (if there the service has a non-preview version) or the latest preview API version understood by the client library (if the service does not have any non-preview API versions yet). This parameter MUST be available even if there is only one API version understood by the service in order to allow library developers to lock down the API version they expect to interact with the service with.\n\n```python\nfrom azure.identity import DefaultAzureCredential\n\n# By default, use the latest supported API version\nlatest_known_version_client = ExampleClient('https://contoso.com/xmpl',\n                                            DefaultAzureCredential())\n\n# ...but allow the caller to specify a specific API version as welll\nspecific_api_version_client = ExampleClient('https://contoso.com/xmpl',\n                                            DefaultAzureCredential(),\n                                            api_version='1971-11-01')\n\n```"
+  },
+  {
+    "id": "python_design.html#python-client-constructor-api-version-argument-2",
+    "category": "Specifying the Service Version",
+    "text": "DO document the service API version that is used by default."
+  },
+  {
+    "id": "python_design.html#python-client-constructor-api-version-argument-3",
+    "category": "Specifying the Service Version",
+    "text": "DO document in which API version a feature (function or parameter) was introduced in if not all service API versions support it."
+  },
+  {
+    "id": "python_design.html#python-client-constructor-api-version-argument-4",
+    "category": "Specifying the Service Version",
+    "text": "YOU MAY validate the input api_version value against a list of supported API versions."
+  },
+  {
+    "id": "python_design.html#python-client-constructor-api-version-argument-5",
+    "category": "Specifying the Service Version",
+    "text": "YOU MAY include all service API versions that are supported by the client library in a ServiceVersion enumerated value.\n\n|Name|Description|\n|-|-|\n|credential|Credentials to use when making service requests (See Authentication)|\n|application_id|Name of the client application making the request. Used for telemetry|\n|api_version|API version to use when making service requests (See Service Version) |\n|transport|Override the default HTTP transport (See Client Configuration)|"
+  },
+  {
+    "id": "python_design.html#python-client-immutable-design",
+    "category": "Client immutability",
+    "text": "DO design the client to be immutable. This does not mean that you need to use read-only properties (attributes are still acceptable), but rather that the there should not be any scenarios that require callers to change properties/attributes of the client."
+  },
+  {
+    "id": "python_design.html#python-client-service-verbs",
+    "category": "Naming",
+    "text": "YOU SHOULD prefer the usage one of the preferred verbs for method names. You should have a good (articulated) reason to have an alternate verb for one of these operations.\n\n|Verb|Parameters|Returns|Comments|\n|-|-|-|-|\n|create_\\<noun>|key, item, [allow_overwrite=False]|Created item|Create new item. Fails if item already exists.|\n|upsert_\\<noun>|key, item|item|Create new item, or update existing item. Verb is primarily used in database-like services |\n|set_\\<noun>|key, item|item|Create new item, or update existing item. Verb is primarily used for dictionary-like properties of a service |\n|update_\\<noun>|key, partial item|item|Fails if item doesn't exist. |\n|replace_\\<noun>|key, item|item|Completely replaces an existing item. Fails if the item doesn't exist. |\n|append_\\<noun>|item|item|Add item to a collection. Item will be added last. |\n|add_\\<noun>|index, item|item|Add item to a collection. Item will be added at the given index. |\n|get_\\<noun>|key|item|Raises an exception if item doesn't exist |\n|list_\\<noun>||azure.core.ItemPaged[Item]|Return an iterable of Items. Returns an iterable with no items if no items exist (doesn't return None or throw)|\n|\\<noun>\\_exists|key|bool|Return True if the item exists. Must raise an exception if the method failed to determine if the item exists (for example, the service returned an HTTP 503 response)|\n|delete_\\<noun>|key|None|Delete an existing item. Must succeed even if item didn't exist.|\n|remove_\\<noun>|key|removed item or None|Remove a reference to an item from a collection. This method doesn't delete the actual item, only the reference.|"
+  },
+  {
+    "id": "python_design.html#python-client-standardize-verbs",
+    "category": "Naming",
+    "text": "DO standardize verb prefixes outside the list of preferred verbs for a given service across language SDKs. If a verb is called download in one language, we should avoid naming it fetch in another."
+  },
+  {
+    "id": "python_design.html#python-lro-prefix",
+    "category": "Naming",
+    "text": "DO prefix methods with begin_ for long running operations."
+  },
+  {
+    "id": "python_design.html#python-paged-prefix",
+    "category": "Naming",
+    "text": "DO prefix methods with list_ for methods that enumerate (lists) resources\n\nRequests to the service fall into two basic groups - methods that make a single logical request, or a deterministic sequence of requests. An example of a single logical request is a request that may be retried inside the operation. An example of a deterministic sequence of requests is a paged operation.\n\nThe logical entity is a protocol neutral representation of a response. For HTTP, the logical entity may combine data from headers, body, and the status line. For example, you may wish to expose an ETag header as an etag attribute on the logical entity. For more information see Model Types."
+  },
+  {
+    "id": "python_design.html#python-response-logical-entity",
+    "category": "Return types",
+    "text": "DO optimize for returning the logical entity for a given request. The logical entity MUST represent the information needed in the 99%+ case."
+  },
+  {
+    "id": "python_design.html#python-response-exception-on-failure",
+    "category": "Return types",
+    "text": "DO raise an exception if the method call failed to accomplish the user specified task. This includes both situations where the service actively responded with a failure as well as when no response was received. See Exceptions for more information.\n\n```python\nclient = ComputeClient(...)\n\ntry:\n    # Please note that there is no status code etc. as part of the response.\n    # If the call fails, you will get an exception that will include the status code\n    # (if the request was made)\n    virtual_machine  = client.get_virtual_machine('example')\n    print(f'Virtual machine instance looks like this: {virtual_machine}')\nexcept azure.core.exceptions.ServiceRequestError as e:\n    print(f'Failed to make the request - feel free to retry. But the specifics are here: {e}')\nexcept azure.core.exceptions.ServiceResponseError as e:\n    print(f'The request was made, but the service responded with an error. Status code: {e.status_code}')\n\n```\n\nDo not return None or a boolean to indicate errors:\n\n```python\n# Yes\ntry:\n    resource = client.create_resource(name)\nexcept azure.core.errors.ResourceExistsException:\n    print('Failed - we need to fix this!')\n\n# No\nresource = client.create_resource(name):\nif not resource:\n    print('Failed - we need to fix this!')\n\n```"
+  },
+  {
+    "id": "python_design.html#python-errors-normal-responses",
+    "category": "Return types",
+    "text": "DO NOT throw an exception for \"normal responses\".\n\nConsider an exists method. The method must distinguish between the service returned a client error 404/NotFound and a failure to even make a request:\n\n```python\n# Yes\ntry:\n    exists = client.resource_exists(name):\n    if not exists:\n        print(\"The resource doesn't exist...\")\nexcept azure.core.errors.ServiceRequestError:\n    print(\"We don't know if the resource exists - so it was appropriate to throw an exception!\")\n\n# No\ntry:\n    client.resource_exists(name)\nexcept azure.core.errors.ResourceNotFoundException:\n    print(\"The resource doesn't exist... but that shouldn't be an exceptional case for an 'exists' method\")\n\n```"
+  },
+  {
+    "id": "python_design.html#python-client-cancellation-sync-methods",
+    "category": "Cancellation",
+    "text": "DO provide an optional keyword argument timeout to allow callers to specify how long they are willing to wait for the method to complete. The timeout is in seconds, and should be honored to the best extent possible."
+  },
+  {
+    "id": "python_design.html#python-client-cancellation-async-methods",
+    "category": "Cancellation",
+    "text": "DO use the standard asyncio.Task.cancel (https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel) method to cancel async methods."
+  },
+  {
+    "id": "python_design.html#python-client-optional-arguments-keyword-only",
+    "category": "Service Method Parameters",
+    "text": "DO provide optional operation-specific arguments as keyword only. See [positional and keyword-only arguments] for more information."
+  },
+  {
+    "id": "python_design.html#python-client-service-per-call-args",
+    "category": "Service Method Parameters",
+    "text": "DO provide keyword-only arguments that override per-request policy options. The name of the parameters MUST mirror the name of the arguments provided in the client constructor or factory methods.\nFor a full list of supported optional arguments used for pipeline policy and transport configuration (both at the client constructor and per service operation), see the Azure Core developer documentation (https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/core/azure-core/CLIENT_LIBRARY_DEVELOPER.md) "
+  },
+  {
+    "id": "python_design.html#python-client-service-args-conflict",
+    "category": "Service Method Parameters",
+    "text": "DO qualify a service parameter name if it conflicts with any of the documented pipeline policy or transport configuration options used with all service operations and client constructors.\n\n```python\n# Set the default number of retries to 18 and timeout to 2s for this client instance.\nclient = ExampleClient('https://contoso.com/xmpl', DefaultAzureCredential(), max_retries=18, timeout=2)\n\n# Override the client default timeout for this specific call to 32s (but max_retries is kept to 18)\nclient.do_stuff(timeout=32)\n\n```\n\nThe service client will have several methods that send requests to the service. Service parameters are directly passed across the wire to an Azure service. Client parameters aren't passed directly to the service, but used within the client library to fulfill the request. Parameters that are used to construct a URI, or a file to be uploaded are examples of client parameters."
+  },
+  {
+    "id": "python_design.html#python-params-client-validation",
+    "category": "Parameter validation",
+    "text": "DO validate client parameters. Validation is especially important for parameters used to build up the URL since a malformed URL means that the client library will end up calling an incorrect endpoint.\n\n```python\n# No:\ndef get_thing(name: str) -&gt; str:\n    url = f'https://&lt;host&gt;/things/{name}'\n    return requests.get(url).json()\n\ntry:\n    thing = get_thing('') # Ooops - we will end up calling '/things/' which usually lists 'things'. We wanted a specific 'thing'.\nexcept ValueError:\n    print('We called with some invalid parameters. We should fix that.')\n\n# Yes:\ndef get_thing(name: str) -&gt; str:\n    if not name:\n        raise ValueError('name must be a non-empty string')\n    url = f'https://&lt;host&gt;/things/{name}'\n    return requests.get(url).json()\n\ntry:\n    thing = get_thing('')\nexcept ValueError:\n    print('We called with some invalid parameters. We should fix that.')\n\n```"
+  },
+  {
+    "id": "python_design.html#python-params-service-validation",
+    "category": "Parameter validation",
+    "text": "DO NOT validate service parameters. Don't do null checks, empty string checks, or other common validating conditions on service parameters. Let the service validate all request parameters."
+  },
+  {
+    "id": "python_design.html#python-params-devex",
+    "category": "Parameter validation",
+    "text": "DO verify that the developer experience when the service parameters are invalid to ensure appropriate error messages are generated by the service. Work with the service team if the developer experience is compromised because of service-side error messages."
+  },
+  {
+    "id": "python_design.html#python-client-service-args",
+    "category": "Common service operation parameters",
+    "text": "DO support the common arguments for service operations:\n\n|Name|Description|Applies to|Notes|\n|-|-|-|-|\n|timeout|Timeout in seconds|All service methods|\n|headers|Custom headers to include in the service request|All requests|Headers are added to all requests made (directly or indirectly) by the method.|\n|client_request_id|Caller specified identification of the request.|Service operations for services that allow the client to send a client-generated correlation ID.|Examples of this include x-ms-client-request-id headers.|The client library must use this value if provided, or generate a unique value for each request when not specified.|\n|response_hook|callable that is called with (response, headers) for each operation.|All service methods|"
+  },
+  {
+    "id": "python_design.html#python-client-splat-args",
+    "category": "Common service operation parameters",
+    "text": "DO accept a Mapping (dict-like) object in the same shape as a serialized model object for parameters.\n\n```python\n# Yes:\nclass Thing:\n\n    def __init__(self, name, size):\n        self.name = name\n        self.size = size\n\ndef do_something(thing: \"Thing\"):\n    ...\n\ndo_something(Thing(name='a', size=17)) # Works\ndo_something({'name': 'a', 'size', '17'}) # Does the same thing...\n\n```"
+  },
+  {
+    "id": "python_design.html#python-client-flatten-args",
+    "category": "Common service operation parameters",
+    "text": "DO use \"flattened\" named arguments for update_ methods. May additionally take the whole model instance as a named parameter. If the caller passes both a model instance and individual key=value parameters, the explicit key=value parameters override whatever was specified in the model instance.\n\n```python\nclass Thing:\n\n    def __init__(self, name, size, description):\n        self.name = name\n        self.size = size\n        self.description = description\n\n    def __repr__(self):\n        return json.dumps({\n            \"name\": self.name, \"size\": self.size, \"description\": self.description\n        })[:1024]\n\nclass Client:\n\n    def update_thing(self, name=None, size=None, thing=None): ...\n\nthing = Thing(name='hello', size=4711, description='This is a description...')\n\nclient.update_thing(thing=thing, size=4712) # Will send a request to the service to update the model's size to 4712\nthing.description = 'Updated'\nthing.size = -1\n# Will send a request to the service to update the model's size to 4713 and description to 'Updated'\nclient.update_thing(name='hello', size=4713, thing=thing)\n\n```\n\nServices may require multiple requests to retrieve the complete set of items in large collections. This is generally done by the service returning a partial result, and in the response providing a token or link that the client can use to retrieve the next batch of responses in addition to the set of items.\n\nIn Azure SDK for Python cilent libraries, this is exposed to users through the ItemPaged protocol. The ItemPaged protocol optimizes for retrieving the full set of items rather than forcing users to deal with the underlying paging."
+  },
+  {
+    "id": "python_design.html#python-response-paged-protocol",
+    "category": "Methods returning collections (paging)",
+    "text": "DO return a value that implements the ItemPaged protocol for operations that return collections. The ItemPaged protocol allows the user to iterate through all items in a returned collection, and also provides a method that gives access to individual pages.\n\n```python\nclient = ExampleClient(...)\n\n# List all things - paging happens transparently in the\n# background.\nfor thing in client.list_things():\n    print(thing)\n\n# The protocol also allows you to list things by page...\nfor page_no, page in enumerate(client.list_things().by_page()):\n    print(page_no, page)\n\n```"
+  },
+  {
+    "id": "python_design.html#python-response-paged-results",
+    "category": "Methods returning collections (paging)",
+    "text": "YOU MAY expose a results_per_page keyword-only parameter where supported by the service (e.g. an OData $top query parameter)."
+  },
+  {
+    "id": "python_design.html#python-response-paged-continuation",
+    "category": "Methods returning collections (paging)",
+    "text": "YOU SHOULD NOT expose a continuation parameter in the list_ client method - this is supported in the by_page() function.\n\n```python\nclient = ExampleClient(...)\n\n# No - don't pass in the continuation token directly to the method...\nfor thing in client.list_things(continuation_token='...'):\n    print(thing)\n\n# Yes - provide a continuation_token to in the `by_page` method...\nfor page in client.list_things().by_page(continuation_token='...'):\n    print(page)\n\n```"
+  },
+  {
+    "id": "python_design.html#python-paged-non-server-paged-list",
+    "category": "Methods returning collections (paging)",
+    "text": "DO return a value that implements the ItemPaged protocol even if the service API currently do not support server driven paging. This allows server driven paging to be added to the service API without introducing breaking changes in the client library.\n\nService operations that take a long time (currently defined in the Microsoft REST API Guidelines (https://github.com/microsoft/api-guidelines/blob/vNext/Guidelines.md#141-principles) as not completing in 0.5s in P99) to complete are modeled by services as long running operations.\n\nPython client libraries abstracts the long running operation using the Long running operation Poller protocol.\nIn cases where a service API is not explicitly implemented as a long-running operation, but the common usage pattern requires a customer to sleep or poll a status - it's likely that these API's should still be represented in the SDK using the Poller protocol."
+  },
+  {
+    "id": "python_design.html#python-lro-poller",
+    "category": "Methods invoking long running operations",
+    "text": "DO return an object that implements the Poller protocol for long running operations."
+  },
+  {
+    "id": "python_design.html#python-lro-poller-begin-naming",
+    "category": "Methods invoking long running operations",
+    "text": "DO use a begin_ prefix for all long running operations."
+  },
+  {
+    "id": "python_design.html#python-method-conditional-request",
+    "category": "Conditional request methods",
+    "text": "DO add a keyword-only match_condition parameter for service methods that support conditional requests. The parameter should support the azure.core.MatchConditions type defined in azure-core as input."
+  },
+  {
+    "id": "python_design.html#python-method-conditional-request-etag",
+    "category": "Conditional request methods",
+    "text": "DO add a keyword-only etag parameter for service methods that support conditional requests. For service methods that take a model instance that has an etag property, the explicit etag value passed in overrides the value in the model instance.\n\n```python\nclass Thing:\n\n    def __init__(self, name, etag):\n        self.name = name\n        self.etag = etag\n\nthing = client.get_thing('theName')\n\n# Uses the etag from the retrieved thing instance....\nclient.update_thing(thing, name='updatedName', match_condition=azure.core.MatchConditions.IfNotModified)\n\n# Uses the explicitly provided etag.\nclient.update_thing(thing, name='updatedName2', match_condition=azure.core.MatchConditions.IfNotModified, etag='\"igotthisetagfromsomewhereelse\"')\n\n```\n\nMany services have resources with nested child (or sub) resources. For example, Azure Storage provides an account that contains zero or more containers, which in turn contains zero or more blobs."
+  },
+  {
+    "id": "python_design.html#python-client-hierarchy",
+    "category": "Hierarchical clients",
+    "text": "DO create a client type corresponding to each level in the hierarchy except for leaf resource types. You may omit creating a client type for leaf node resources."
+  },
+  {
+    "id": "python_design.html#python-client-hier-creation",
+    "category": "Hierarchical clients",
+    "text": "DO make it possible to directly create clients for each level in the hierarchy.  The constructor can be called directly or via the parent.\n\n```python\nclass ChildClient:\n    # Yes:\n    __init__(self, parent, name, credentials, **kwargs) ...\n\nclass ChildClient:\n    # Yes:\n    __init__(self, url, credentials, **kwargs) ...\n\n```"
+  },
+  {
+    "id": "python_design.html#python-client-hier-vend",
+    "category": "Hierarchical clients",
+    "text": "DO provide a get_<child>_client(self, name, **kwargs) method to retrieve a client for the named child. The method must not make a network call to verify the existence of the child."
+  },
+  {
+    "id": "python_design.html#python-client-hier-create",
+    "category": "Hierarchical clients",
+    "text": "DO provide method create_<child>(...) that creates a child resource. The method should return a client for the newly created child resource."
+  },
+  {
+    "id": "python_design.html#python-client-hier-delete",
+    "category": "Hierarchical clients",
+    "text": "YOU SHOULD provide method delete_<child>(...) that deletes a child resource.\n\nClient libraries represent entities transferred to and from Azure services as model types. Certain types are used for round-trips to the service. They can be sent to the service (as an addition or update operation) and retrieved from the service (as a get operation). These should be named according to the type. For example, a ConfigurationSetting in App Configuration, or a VirtualMachine on for Azure Resource Manager.\n\nData within the model type can generally be split into two parts - data used to support one of the champion scenarios for the service, and less important data. Given a type Foo, the less important details can be gathered in a type called FooDetails and attached to Foo as the details attribute."
+  },
+  {
+    "id": "python_design.html#python-models-input-dict",
+    "category": "Model types",
+    "text": "DO support dicts as alternative inputs to model types."
+  },
+  {
+    "id": "python_design.html#python-models-input-constructor",
+    "category": "Model types",
+    "text": "DO craft a constructor for models that are intended to be instantiated by a user (i.e. non-result types) with minimal required information and optional information as keyword-only arguments."
+  },
+  {
+    "id": "python_design.html#python-models-generated",
+    "category": "Model types",
+    "text": "YOU MAY expose models from the generated layer by adding to the root __init__.py (and __all__) if they otherwise meet the guidelines."
+  },
+  {
+    "id": "python_design.html#python-models-async",
+    "category": "Model types",
+    "text": "DO NOT duplicate models between the root and aio namespace.\n\nIn order to facilitate round-trip of responses (common in get resource -> conditionally modify resource -> set resource workflows), output model types should use the input model type (e.g. ConfigurationSetting) whenever possible. The ConfigurationSetting type should include both server generated (read-only) attributes even though they will be ignored when used as input to the set resource method.\n<model>Item for each item in an enumeration if the enumeration returns a partial schema for the model. For example, GetBlobs() return an enumeration of BlobItem, which contains the blob name and metadata, but not the content of the blob.\n<operation>Result for the result of an operation. The <operation> is tied to a specific service operation. If the same result can be used for multiple operations, use a suitable noun-verb phrase instead. For example, use UploadBlobResult for the result from UploadBlob, but ContainerChangeResult for results from the various methods that change a blob container."
+  },
+  {
+    "id": "python_design.html#python-models-dict-result",
+    "category": "Model types",
+    "text": "DO use a simple Mapping (e.g. dict) rather than creating a <operation>Result class if the <operation>Result class is not used as an input parameter for other APIs.\n\nThe following table enumerates the various models you might create:\n\n|Type|Example|Usage|\n|-|-|\n||Secret|The full data for a resource|\n|Details|SecretDetails|Less important details about a resource. Attached to .details|\n|Item|SecretItem|A partial set of data returned for enumeration|\n|Result|AddSecretResult|A partial or different set of data for a single operation|\n|Result|SecretChangeResult|A partial or different set of data for multiple operations on a model|\n\n```python\n# An example of a model type.\nclass ConfigurationSetting:\n    \"\"\"Model type representing a configuration setting\n\n    :ivar name: The name of the setting\n    :vartype name: str\n    :ivar value: The value of the setting\n    :vartype value: object\n    \"\"\"\n\n    def __init__(self, name: str, value: object):\n        self.name = name\n        self.value = value\n\n    def __repr__(self) -&gt; str:\n        return json.dumps(self.__dict__)[:1024]\n\n```"
+  },
+  {
+    "id": "python_design.html#python-models-enum-string",
+    "category": "Enumerations",
+    "text": "DO use extensible enumerations."
+  },
+  {
+    "id": "python_design.html#python-models-enum-name-uppercase",
+    "category": "Enumerations",
+    "text": "DO use UPPERCASE names for enum names.\n\n```python\n\n# Yes\nclass MyGoodEnum(str, Enum):\n    ONE = 'one'\n    TWO = 'two'\n\n# No\nclass MyBadEnum(str, Enum):\n    One = 'one' # No - using PascalCased name.\n    two = 'two' # No - using all lower case name.\n\n```"
+  },
+  {
+    "id": "python_design.html#python-errors-azure-exceptions",
+    "category": "Exceptions",
+    "text": "YOU SHOULD prefer raising existing exception types from the azure-core (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.9.0/index.html#azure-core-library-exceptions) package over creating new exception types."
+  },
+  {
+    "id": "python_design.html#python-errors-use-standard-exceptions",
+    "category": "Exceptions",
+    "text": "DO NOT create new exception types when a built-in exception type (https://docs.python.org/3/library/exceptions.html) will suffice."
+  },
+  {
+    "id": "python_design.html#python-errors-new-exceptions",
+    "category": "Exceptions",
+    "text": "YOU SHOULD NOT create a new exception type unless the developer can handle the error programmatically.  Specialized exception types related to service operation failures should be based on existing exception types from the azure-core (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.9.0/index.html#azure-core-library-exceptions) package.\n\nFor higher-level methods that use multiple HTTP requests, either the last exception or an aggregate exception of all failures should be produced."
+  },
+  {
+    "id": "python_design.html#python-errors-rich-info",
+    "category": "Exceptions",
+    "text": "DO include any service-specific error information in the exception.  Service-specific error information must be available in service-specific properties or fields."
+  },
+  {
+    "id": "python_design.html#python-errors-documentation",
+    "category": "Exceptions",
+    "text": "DO document the errors that are produced by each method. Don't document commonly thrown errors that wouldn't normally be documented in Python (e.g. ValueError, TypeError, RuntimeError etc.)"
+  },
+  {
+    "id": "python_design.html#python-auth-credential-azure-core",
+    "category": "Authentication",
+    "text": "DO use the credentials classes in azure-core whenever possible."
+  },
+  {
+    "id": "python_design.html#python-auth-policy-azure-core",
+    "category": "Authentication",
+    "text": "DO use authentication policy implementations in azure-core whenever possible."
+  },
+  {
+    "id": "python_design.html#python-auth-service-credentials",
+    "category": "Authentication",
+    "text": "YOU MAY add additional credential types if required by the service. Contact the [Architecture board] for guidance if you believe you have need to do so."
+  },
+  {
+    "id": "python_design.html#python-auth-service-support",
+    "category": "Authentication",
+    "text": "DO support all authentication methods that the service supports.\n\nIn the guidelines below, the term \"namespace\" is used to denote a python package or module (i.e. something that you would import in your code). The term \"distribution package\" is used to describe the artifact you publish to and install from your package manager (i.e. something that you would pip install)."
+  },
+  {
+    "id": "python_design.html#python-namespaces-prefix",
+    "category": "Namespaces",
+    "text": "DO implement your library as a sub-package of the azure root namespace.\n\nNote: You MUST NOT use microsoft as your root namespace. If you need to include microsoft in the namespace (e.g. because of policy requirements for extensions to other projects such as opentelemetry), you should concatenate it with the package specific namespace with an underscore (e.g. microsoft_myservice). You may still use microsoft-myservice as the distribution package name in this scenario."
+  },
+  {
+    "id": "python_design.html#python-namespaces-naming",
+    "category": "Namespaces",
+    "text": "DO pick a package name that allows the consumer to tie the namespace to the service being used. As a default, use the compressed service name at the end of the namespace. The namespace does NOT change when the branding of the product changes. Avoid the use of marketing names that may change.\n\nA compressed service name is the service name without spaces. It may further be shortened if the shortened version is well known in the community. For example, \u201cAzure Media Analytics\u201d would have a compressed service name of mediaanalytics, and \u201cAzure Service Bus\u201d would become servicebus.  Separate words using an underscore if necessary. For example, mediaanalytics could be separated into media_analytics"
+  },
+  {
+    "id": "python_design.html#python-namespaces-grouping",
+    "category": "Namespaces",
+    "text": "YOU MAY include a group name segment in your namespace (for example, azure.<group>.<servicename>) if your service or family of services have common behavior (for example, shared authentication types)."
+  },
+  {
+    "id": "python_design.html#python-namespaces-grouping-dont-introduce-new-packages",
+    "category": "Namespaces",
+    "text": "DO avoid introducing new distribution packages that only differ in name. For existing packages, this means that you should not change the name of the package just to introduce a group name.\n\nIf you want to use a group name segment, use one of the following groups:\n\n| Namespace Group  | Functional Area                                                           |\n|:-----------------|:--------------------------------------------------------------------------|\n| `ai`             | Artificial intelligence, including machine learning                       |\n| `analytics`      | Gathering data for metrics or usage                                       |\n| `containers`     | Services related to containers                                            |\n| `communication`  | Communication services                                                    |\n| `data`           | Dealing with structured data stores like databases                        |\n| `diagnostics`    | Gathering data for diagnosing issues                                      |\n| `digitaltwins`   | Digital Twins, digital representations of physical spaces and IoT devices |\n| `identity`       | Authentication and authorization                                          |\n| `iot`            | Internet of things                                                        |\n| `management`     | Control Plane (Azure Resource Manager)                                    |\n| `media`          | Audio and video technologies                                              |\n| `messaging`      | Messaging services, like push notifications or pub-sub                    |\n| `mixedreality`   | Mixed reality technologies                                                |\n| `monitor`        | Services that are offered by Azure Monitor                                |\n| `quantum`        | Quantum computing technologies                                            |\n| `search`         | Search technologies                                                       |\n| `security`       | Security and cryptography                                                 |\n| `storage`        | Storage of unstructured data                                              |\n"
+  },
+  {
+    "id": "python_design.html#python-namespaces-mgmt",
+    "category": "Namespaces",
+    "text": "DO place management (Azure Resource Manager) APIs in the mgmt group. Use the grouping azure.mgmt.<servicename> for the namespace. Since more services require control plane APIs than data plane APIs, other namespaces may be used explicitly for control plane only."
+  },
+  {
+    "id": "python_design.html#python-namespaces-register",
+    "category": "Namespaces",
+    "text": "DO register the chosen namespace with the [Architecture Board].  Open an [issue] to request the namespace.  See the registered namespace list for a list of the currently registered namespaces."
+  },
+  {
+    "id": "python_design.html#python-namespaces-async",
+    "category": "Namespaces",
+    "text": "DO use an .aio suffix added to the namespace of the sync client for async clients.\n\nExample:\n\n```python\n# Yes:\nfrom azure.exampleservice.aio import ExampleServiceClient\n\n# No: Wrong namespace, wrong client name...\nfrom azure.exampleservice import AsyncExampleServiceClient\n\n```\n\nHere are some examples of namespaces that meet these guidelines:\nazure.storage.blob\nazure.keyvault.certificates\nazure.ai.textanalytics\nazure.mgmt.servicebus\n\nThe asyncio library has been available since Python 3.4, and the async/await keywords were introduced in Python 3.5. Despite such availability, most Python developers aren't familiar with or comfortable using libraries that only provide asynchronous methods."
+  },
+  {
+    "id": "python_design.html#python-client-sync-async",
+    "category": "Async support",
+    "text": "DO provide both sync and async versions of your APIs"
+  },
+  {
+    "id": "python_design.html#python-client-async-keywords",
+    "category": "Async support",
+    "text": "DO use the async/await keywords (requires Python 3.5+). Do not use the yield from coroutine or asyncio.coroutine (https://docs.python.org/3.4/library/asyncio-task.html) syntax."
+  },
+  {
+    "id": "python_design.html#python-client-separate-sync-async",
+    "category": "Async support",
+    "text": "DO provide two separate client classes for synchronous and asynchronous operations.  Do not combine async and sync operations in the same class.\n\n```python\n# Yes\n# In module azure.example\nclass ExampleClient:\n    def some_service_operation(self, name, size) ...\n\n# In module azure.example.aio\nclass ExampleClient:\n    # Same method name as sync, different client\n    async def some_service_operation(self, name, size) ...\n\n# No\n# In module azure.example\nclass ExampleClient:\n    def some_service_operation(self, name, size) ...\n\nclass AsyncExampleClient: # No async/async pre/postfix.\n    async def some_service_operation(self, name, size) ...\n\n# No\n# In module azure.example\nclass ExampleClient: # Don't mix'n match with different method names\n    def some_service_operation(self, name, size) ...\n    async def some_service_operation_async(self, name, size) ...\n\n\n```"
+  },
+  {
+    "id": "python_design.html#python-client-same-name-sync-async",
+    "category": "Async support",
+    "text": "DO use the same client name for sync and async packages\n\nExample:\n\n|Sync/async|Namespace|Distribution package name|Client name|\n|-|-|-|-|\n|Sync|azure.sampleservice|azure-sampleservice|azure.sampleservice.SampleServiceClient|\n|Async|azure.sampleservice.aio|azure-sampleservice-aio|azure.sampleservice.aio.SampleServiceClient|"
+  },
+  {
+    "id": "python_design.html#python-client-namespace-sync",
+    "category": "Async support",
+    "text": "DO use the same namespace for the synchronous client as the synchronous version of the package with .aio appended.\n\nExample:\n\n```python\nfrom azure.storage.blob import BlobServiceClient # Sync client\n\nfrom azure.storage.blob.aio import BlobServiceClient # Async client\n\n```"
+  },
+  {
+    "id": "python_design.html#python-client-separate-async-pkg",
+    "category": "Async support",
+    "text": "YOU SHOULD ship a separate package for async support if the async version requires additional dependencies."
+  },
+  {
+    "id": "python_design.html#python-client-same-pkg-name-sync-async",
+    "category": "Async support",
+    "text": "DO use the same name for the asynchronous version of the package as the synchronous version of the package with -aio appended."
+  },
+  {
+    "id": "python_design.html#python-client-async-http-stack",
+    "category": "Async support",
+    "text": "DO use aiohttp (https://aiohttp.readthedocs.io/en/stable/) as the default HTTP stack for async operations. Use azure.core.pipeline.transport.AioHttpTransport as the default transport type for the async client."
+  },
+  {
+    "id": "python_design.html#python-packaging-name",
+    "category": "Packaging",
+    "text": "DO name your package after the namespace of your main client class. For example, if your main client class is in the azure.data.tables namespace, your package name should be azure-data-tables."
+  },
+  {
+    "id": "python_design.html#python-packaging-name-allowed-chars",
+    "category": "Packaging",
+    "text": "DO use all lowercase in your package name with a dash (-) as a separator."
+  },
+  {
+    "id": "python_design.html#python-packaging-name-disallowed-chars",
+    "category": "Packaging",
+    "text": "DO NOT use underscore (_) or period (.) in your package name. If your namespace includes underscores, replace them with dash (-) in the distribution package name."
+  },
+  {
+    "id": "python_design.html#python-packaging-follow-repo-rules",
+    "category": "Packaging",
+    "text": "DO follow the specific package guidance from the azure-sdk-packaging wiki (https://github.com/Azure/azure-sdk-for-python/wiki/Azure-packaging) "
+  },
+  {
+    "id": "python_design.html#python-packaging-follow-python-rules",
+    "category": "Packaging",
+    "text": "DO follow the namespace package recommendations for Python 3.x (https://docs.python.org/3/reference/import.html#namespace-packages) for packages that only need to target 3.x."
+  },
+  {
+    "id": "python_design.html#python-general-supply-sdist",
+    "category": "Packaging",
+    "text": "DO provide both source distributions (sdist) and wheels."
+  },
+  {
+    "id": "python_design.html#python-general-pypi",
+    "category": "Packaging",
+    "text": "DO publish both source distributions (sdist) and wheels to PyPI."
+  },
+  {
+    "id": "python_design.html#python-general-wheel-behavior",
+    "category": "Packaging",
+    "text": "DO test correct behavior for both CPython and PyPy for pure (https://packaging.python.org/guides/distributing-packages-using-setuptools/#id75) and universal (https://packaging.python.org/guides/distributing-packages-using-setuptools/#universal-wheels) Python wheels."
+  },
+  {
+    "id": "python_design.html#python-packaging-nspkg",
+    "category": "Packaging",
+    "text": "DO depend on azure-nspkg for Python 2.x."
+  },
+  {
+    "id": "python_design.html#python-packaging-group-nspkg",
+    "category": "Packaging",
+    "text": "DO depend on azure-<group>-nspkg for Python 2.x if you are using namespace grouping."
+  },
+  {
+    "id": "python_design.html#python-packaging-init",
+    "category": "Packaging",
+    "text": "DO include __init__.py for the namespace(s) in sdists\n\nThere are occasions when common code needs to be shared between several client libraries.  For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
+  },
+  {
+    "id": "python_design.html#python-commonlib-approval",
+    "category": "Service-specific common library code",
+    "text": "DO gain [Architecture Board] approval prior to implementing a common library."
+  },
+  {
+    "id": "python_design.html#python-commonlib-minimize-code",
+    "category": "Service-specific common library code",
+    "text": "DO minimize the code within a common library.  Code within the common library is available to the consumer of the client library and shared by multiple client libraries within the same namespace.\n\nA common library will only be approved if:\nThe consumer of the non-shared library will consume the objects within the common library directly, AND\nThe information will be shared between multiple client libraries\n\nLet's take two examples:\n\nImplementing two Cognitive Services client libraries, we find that they both rely on the same business logic. This is a candidate for choosing a common library.\n\n\nTwo Cognitive Services client libraries have models (data classes) that are the same in shape, but has no or minimal logic associated with them. This is not a good candidate for a shared library. Instead, implement two separate classes.\n\n\nImplementing two Cognitive Services client libraries, we find that they both rely on the same business logic. This is a candidate for choosing a common library.\n\nTwo Cognitive Services client libraries have models (data classes) that are the same in shape, but has no or minimal logic associated with them. This is not a good candidate for a shared library. Instead, implement two separate classes."
+  },
+  {
+    "id": "python_design.html#python-versioning-semver",
+    "category": "Package Versioning",
+    "text": "DO use semantic versioning (https://semver.org) for your package."
+  },
+  {
+    "id": "python_design.html#python-versioning-beta",
+    "category": "Package Versioning",
+    "text": "DO use the bN pre-release segment for beta releases (https://www.python.org/dev/peps/pep-0440/#pre-releases) \n\nDon't use pre-release segments other than the ones defined in PEP440 (https://www.python.org/dev/peps/pep-0440) (aN, bN, rcN). Build tools, publication tools, and index servers may not sort the versions correctly."
+  },
+  {
+    "id": "python_design.html#python-versioning-changes",
+    "category": "Package Versioning",
+    "text": "DO change the version number if anything changes in the library."
+  },
+  {
+    "id": "python_design.html#python-versioning-patch",
+    "category": "Package Versioning",
+    "text": "DO increment the patch version if only bug fixes are added to the package."
+  },
+  {
+    "id": "python_design.html#python-verioning-minor",
+    "category": "Package Versioning",
+    "text": "DO increment the minor version if any new functionality is added to the package."
+  },
+  {
+    "id": "python_design.html#python-versioning-apiversion",
+    "category": "Package Versioning",
+    "text": "DO increment (at least) the minor version if the default REST API version is changed, even if there's no public API change to the library."
+  },
+  {
+    "id": "python_design.html#python-versioning-api-major",
+    "category": "Package Versioning",
+    "text": "DO NOT increment the major version for a new REST API version unless it requires breaking API changes in the python library itself."
+  },
+  {
+    "id": "python_design.html#python-versioning-major",
+    "category": "Package Versioning",
+    "text": "DO increment the major version if there are breaking changes in the package. Breaking changes require prior approval from the [Architecture Board]."
+  },
+  {
+    "id": "python_design.html#python-versioning-major-cross-languages",
+    "category": "Package Versioning",
+    "text": "DO select a version number greater than the highest version number of any other released Track 1 package for the service in any other scope or language.\n\nThe bar to make a breaking change is extremely high for stable client libraries.  We may create a new package with a different name to avoid diamond dependency issues."
+  },
+  {
+    "id": "python_design.html#python-dependencies-approved-list",
+    "category": "Dependencies",
+    "text": "DO only pick external dependencies from the following list of well known packages for shared functionality:\n\n\n| Package        | Usage                                |\n|----------------|--------------------------------------|\n| `six`          | Python version compatibility         |\n| `enum34`       | Backport of `enum` for Python 2.x    |\n| `requests`     | Synchronous HTTP                     |\n| `aiohttp`      | Asynchronous HTTP                    |\n| `aiodns`       | Asynchronous DNS resolution          |\n| `cryptography` |                                      |\n| `certifi`      | Mozilla CA bundle                    |\n"
+  },
+  {
+    "id": "python_design.html#python-dependencies-external",
+    "category": "Dependencies",
+    "text": "DO NOT use external dependencies outside the list of well known dependencies. To get a new dependency added, contact the [Architecture Board]."
+  },
+  {
+    "id": "python_design.html#python-dependencies-vendor",
+    "category": "Dependencies",
+    "text": "DO NOT vendor dependencies unless approved by the [Architecture Board].\n\nWhen you vendor a dependency in Python, you include the source from another package as if it was part of your package."
+  },
+  {
+    "id": "python_design.html#python-dependencies-pin-version",
+    "category": "Dependencies",
+    "text": "DO NOT pin a specific version of a dependency unless that is the only way to work around a bug in said dependencies versioning scheme.\n\nOnly applications are expected to pin exact dependencies. Libraries are not. A library should use a compatible release (https://www.python.org/dev/peps/pep-0440/#compatible-release) identifier for the dependency."
+  },
+  {
+    "id": "python_design.html#python-native-approval",
+    "category": "Binary extensions (native code)",
+    "text": "DO seek approval by the [Architecture Board] before implementing a binary extension."
+  },
+  {
+    "id": "python_design.html#python-native-plat-support",
+    "category": "Binary extensions (native code)",
+    "text": "DO support Windows, Linux (manylinux - see PEP513 (https://www.python.org/dev/peps/pep-0513/)  PEP571 (https://www.python.org/dev/peps/pep-0571/) , and MacOS.  Support the earliest possible manylinux to maximize your reach."
+  },
+  {
+    "id": "python_design.html#python-native-arch-support",
+    "category": "Binary extensions (native code)",
+    "text": "DO support both x86 and x64 architectures."
+  },
+  {
+    "id": "python_design.html#python-docstrings-pydocs",
+    "category": "Docstrings",
+    "text": "DO follow the documentation guidelines (http://aka.ms/pydocs) unless explicitly overridden in this document."
+  },
+  {
+    "id": "python_design.html#python-docstrings-all",
+    "category": "Docstrings",
+    "text": "DO provide docstrings for all public modules, types, constants and functions."
+  },
+  {
+    "id": "python_design.html#python-docstrings-kwargs",
+    "category": "Docstrings",
+    "text": "DO document any **kwargs directly consumed by a method. You may refer to the signature of a called method if the **kwargs are passed through.\n\nExample:\n\n```python\ndef request(method, url, headers, **kwargs): ...\n\ndef get(*args, **kwargs):\n    \"Calls `request` with the method \"GET\" and forwards all other arguments.\"\n    return request(\"GET\", *args, **kwargs)\n\n```"
+  },
+  {
+    "id": "python_design.html#python-docstrings-exceptions",
+    "category": "Docstrings",
+    "text": "DO document exceptions that may be raised explicitly in the method and any exceptions raised by the called method."
+  },
+  {
+    "id": "python_design.html#python-snippets-include",
+    "category": "Code snippets",
+    "text": "DO include example code snippets alongside your library's code within the repository. The snippets should clearly and succinctly demonstrate the operations most developers need to perform with your library. Include snippets for every common operation, and especially for those that are complex or might otherwise be difficult for new users of your library. At a bare minimum, include snippets for the champion scenarios you've identified for the library."
+  },
+  {
+    "id": "python_design.html#python-snippets-build",
+    "category": "Code snippets",
+    "text": "DO build and test your example code snippets using the repository's continuous integration (CI) to ensure they remain functional."
+  },
+  {
+    "id": "python_design.html#python-snippets-docstrings",
+    "category": "Code snippets",
+    "text": "DO include the example code snippets in your library's docstrings so they appear in its API reference. If the language and its tools support it, ingest these snippets directly into the API reference from within the docstrings. Each sample should be a valid pytest.\n\nUse the literalinclude directive in Python docstrings to instruct Sphinx to [ingest the snippets automatically][1]."
+  },
+  {
+    "id": "python_design.html#python-snippets-combinations",
+    "category": "Code snippets",
+    "text": "DO NOT combine more than one operation in a code snippet unless it's required for demonstrating the type or member, or it's in addition to existing snippets that demonstrate atomic operations. For example, a Cosmos DB code snippet should not include both account and container creation operations--create two different snippets, one for account creation, and one for container creation.\n\nThere are several documentation deliverables that must be included in or as a companion to your client library. Beyond complete and helpful API documentation within the code itself (docstrings), you need a great README and other supporting documentation.\nREADME.md - Resides in the root of your library's directory within the SDK repository; includes package installation and client library usage information. ([example][https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/appconfiguration/azure-appconfiguration/README.md])\nAPI reference - Generated from the docstrings in your code; published on docs.microsoft.com.\nCode snippets - Short code examples that demonstrate single (atomic) operations for the champion scenarios you've identified for your library; included in your README, docstrings, and Quickstart.\nQuickstart - Article on docs.microsoft.com that is similar to but expands on the README content; typically written by your service's content developer.\nConceptual - Long-form documentation like Quickstarts, Tutorials, How-to guides, and other content on docs.microsoft.com; typically written by your service's content developer."
+  },
+  {
+    "id": "python_design.html#python-docs-content-dev",
+    "category": "Documentation style",
+    "text": "DO include your service's content developer in the adparch review for your library. To find the content developer you should work with, check with your team's Program Manager."
+  },
+  {
+    "id": "python_design.html#python-docs-contributor-guide",
+    "category": "Documentation style",
+    "text": "DO follow the [Azure SDK Contributors Guide]. (MICROSOFT INTERNAL)"
+  },
+  {
+    "id": "python_design.html#python-docs-style-guide",
+    "category": "Documentation style",
+    "text": "DO adhere to the specifications set forth in the Microsoft style guides when you write public-facing documentation. This applies to both long-form documentation like a README and the docstrings in your code. (MICROSOFT INTERNAL)\n[Microsoft Writing Style Guide].\n[Microsoft Cloud Style Guide]."
+  },
+  {
+    "id": "python_design.html#python-docs-into-silence",
+    "category": "Documentation style",
+    "text": "YOU SHOULD attempt to document your library into silence. Preempt developers' usage questions and minimize GitHub issues by clearly explaining your API in the docstrings. Include information on service limits and errors they might hit, and how to avoid and recover from those errors.\n\nAs you write your code, doc it so you never hear about it again. The less questions you have to answer about your client library, the more time you have to build new features for your service.\n\nCode samples are small applications that demonstrate a certain feature that is relevant to the client library. Samples allow developers to quickly understand the full usage requirements of your client library. Code samples shouldn't be any more complex than they needed to demonstrate the feature. Don't write full applications. Samples should have a high signal to noise ratio between useful code and boilerplate code for non-related reasons."
+  },
+  {
+    "id": "python_design.html#python-samples-include-them",
+    "category": "Samples",
+    "text": "DO include code samples alongside your library's code within the repository. The samples should clearly and succinctly demonstrate the code most developers need to write with your library. Include samples for all common operations. Pay attention to operations that are complex or might be difficult for new users of your library. Include samples for the champion scenarios you've identified for the library."
+  },
+  {
+    "id": "python_design.html#python-samples-location",
+    "category": "Samples",
+    "text": "DO place code samples within the /samples directory within the client library root directory. The samples will be packaged into the resulting distribution package."
+  },
+  {
+    "id": "python_design.html#python-samples-runnable",
+    "category": "Samples",
+    "text": "DO ensure that each sample file is runnable."
+  },
+  {
+    "id": "python_design.html#python-samples-coding-style",
+    "category": "Samples",
+    "text": "DO avoid using features newer than the Python 3 baseline support. The current supported Python version is 3.7."
+  },
+  {
+    "id": "python_design.html#python-samples-grafting",
+    "category": "Samples",
+    "text": "DO ensure that code samples can be easily grafted from the documentation into a users own application. For example, don't rely on variable declarations in other samples."
+  },
+  {
+    "id": "python_design.html#python-samples-readability",
+    "category": "Samples",
+    "text": "DO write code samples for ease of reading and comprehension over code compactness and efficiency."
+  },
+  {
+    "id": "python_design.html#python-samples-platform-support",
+    "category": "Samples",
+    "text": "DO ensure that samples can run in Windows, macOS, and Linux development environments."
+  },
+  {
+    "id": "python_design.html#python-snippets-no-combinations",
+    "category": "Samples",
+    "text": "DO NOT combine multiple scenarios in a code sample unless it's required for demonstrating the type or member. For example, a Cosmos DB code sample doesn't include both account and container creation operations. Create a sample for account creation, and another sample for container creation.\n\nCombined scenarios require knowledge of additional operations that might be outside their current focus. The developer must first understand the code surrounding the scenario they're working on, and can't copy and paste the code sample into their project.\n\n[Zen of Python]: https://www.python.org/dev/peps/pep-0020/\n[universal package]: https://packaging.python.org/guides/distributing-packages-using-setuptools/#id75\n[Architecture board]: https://azure.github.io/azure-sdk/policies_reviewprocess.html\n[issue]: https://github.com/azure/azure-sdk/issues\n\n<!-- Intra-document links -->\n[Packaging]: python_implementation.html#packaging\n[HTTP pipeline]: python_implementation.html#azure-core\n[PagingDesign]: python_design.html#methods-returning-collections-paging\n[azure/azure-sdk-for-python]: https://github.com/azure/azure-sdk-for-python\n[positional and keyword-only arguments]: python_implementation.html#python-codestyle-long-args\n[structural type checking]: python_implementation.html#types-or-not"
+  }
+]

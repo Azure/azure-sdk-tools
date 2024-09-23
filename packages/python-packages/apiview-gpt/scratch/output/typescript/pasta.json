@@ -1,0 +1,59 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-apisurface-serviceclientnaming"
+            ],
+            "line_no": 8,
+            "bad_code": "export class Pasta { ... }",
+            "suggestion": "export class PastaClient { ... }",
+            "comment": "The class name should end with 'Client' suffix."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-use-overloads-over-unions"
+            ],
+            "line_no": 17,
+            "bad_code": "constructor(name: string, sauceType?: SauceType, pastaType?: pastaType, ingredients?: string[], cheeseTypes?: string[]);",
+            "suggestion": "constructor(name: string);\nconstructor(name: string, sauceType: SauceType, pastaType: pastaType, ingredients: string[], cheeseTypes: string[]);",
+            "comment": "Overloads should be preferred over unions."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-apisurface-serviceclientnaming"
+            ],
+            "line_no": 23,
+            "bad_code": "export class PastaLaVista {",
+            "suggestion": "export class PastaLaVistaClient {",
+            "comment": "The class name should end with 'Client'."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-naming-options"
+            ],
+            "line_no": 27,
+            "bad_code": "function retrieveAllPastas(options?: pastaOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>;",
+            "suggestion": "function retrieveAllPastas(options?: RetrieveAllPastasOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>;",
+            "comment": "The options parameter should be named as <method name>Options."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-use-overloads-over-unions"
+            ],
+            "line_no": 24,
+            "bad_code": "endpoint?: string;",
+            "suggestion": "Prefer using overloads over unions for correlated parameters.",
+            "comment": "The class does not use overloads over unions."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-naming-options"
+            ],
+            "line_no": 30,
+            "bad_code": "export interface pastaOptions {\n    pastaType?: pastaType;\n    sauceType?: sauceType;\n}",
+            "suggestion": "export interface PastaOptions {\n    pastaType?: pastaType;\n    sauceType?: sauceType;\n}",
+            "comment": "The options interface should be named as <class name>Options. In this case, it should be 'PastaOptions'."
+        }
+    ]
+}

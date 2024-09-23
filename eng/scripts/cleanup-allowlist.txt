@@ -16,3 +16,5 @@ LiveTestSecrets
 # For example, Azure Synapse (synapseworkspace-managedrg-adaed0ea-df22-4ec1-9280-5ac85cf2f87a) and Azure Purview (managed-rg-mypurviewaccount).
 
 *managed*
+# Azure Kubernetes Service node resource groups
+MC_*

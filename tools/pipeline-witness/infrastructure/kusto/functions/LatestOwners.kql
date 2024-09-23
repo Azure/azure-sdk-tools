@@ -1,5 +1,5 @@
-.create-or-alter function LatestOwners()
-{ 
+.create-or-alter function with (folder='', docstring='') LatestOwners()
+{
     PipelineOwner
     | summarize arg_max(Timestamp, *) by BuildDefinitionId
 }

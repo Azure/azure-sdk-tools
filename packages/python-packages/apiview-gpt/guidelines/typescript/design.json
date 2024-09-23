@@ -1,0 +1,447 @@
+[
+  {
+    "id": "typescript_design.html#ts-node-support",
+    "category": "Platform Support {#ts-platform-support}",
+    "text": "DO support all LTS versions of Node (https://github.com/nodejs/Release#release-schedule) and newer versions up to and including the latest release."
+  },
+  {
+    "id": "typescript_design.html#ts-browser-support",
+    "category": "Platform Support {#ts-platform-support}",
+    "text": "DO support the following browsers and versions:\nApple Safari: latest two versions\nGoogle Chrome: latest two versions\nMicrosoft Edge: all supported versions\nMozilla FireFox: latest two versions\n\nUse caniuse.com (https://caniuse.com) to determine whether you can use a given platform feature in the runtime versions you support. Syntax support is provided by TypeScript."
+  },
+  {
+    "id": "typescript_design.html#ts-no-ie11-support",
+    "category": "Platform Support {#ts-platform-support}",
+    "text": "YOU SHOULD NOT support IE11. If you have a business justification for IE11 support, contact the [Architecture Board]."
+  },
+  {
+    "id": "typescript_design.html#ts-support-ts",
+    "category": "Platform Support {#ts-platform-support}",
+    "text": "DO compile without errors on all versions of TypeScript greater than 3.1.\n\nWhile consumers are fast at adopting new versions of TypeScript, version 3.1 is used by Angular 7, which is still commonly used.  Supporting older versions of TypeScript can be a challenge. There are two general approaches:\nDon't use new features.\nUse typesVersions (https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-1.html#version-selection-with-typesversions)  which might require manual effort to produce typings compatible with older versions based on the new typings."
+  },
+  {
+    "id": "typescript_design.html#ts-register-dropped-platforms",
+    "category": "Platform Support {#ts-platform-support}",
+    "text": "DO get approval from the [Architecture Board] to drop support for any platform (except IE11 and Node 6) even if support isn't required."
+  },
+  {
+    "id": "typescript_design.html#ts-azure-scope",
+    "category": "Namespaces, NPM Scopes, and Distribution Tags {#ts-namespace}",
+    "text": "DO publish your library to the @azure npm scope."
+  },
+  {
+    "id": "typescript_design.html#ts-namespace-serviceclient",
+    "category": "Namespaces, NPM Scopes, and Distribution Tags {#ts-namespace}",
+    "text": "DO pick a package name that allows the consumer to tie the namespace to the service being used.  As a default, use the compressed service name at the end of the namespace.  The namespace does NOT change when the branding of the product changes. Avoid the use of marketing names that may change."
+  },
+  {
+    "id": "typescript_design.html#ts-npm-dist-tag-beta",
+    "category": "Namespaces, NPM Scopes, and Distribution Tags {#ts-namespace}",
+    "text": "DO tag beta packages with the npm distribution tag next. If there is no generally available release of this package, it should also be tagged latest."
+  },
+  {
+    "id": "typescript_design.html#ts-npm-dist-tag-next",
+    "category": "Namespaces, NPM Scopes, and Distribution Tags {#ts-namespace}",
+    "text": "DO tag generally available npm packages latest. Generally available packages may also be tagged next if they include the changes from the most recent beta."
+  },
+  {
+    "id": "typescript_design.html#ts-npm-package-name-prefix",
+    "category": "Namespaces, NPM Scopes, and Distribution Tags {#ts-namespace}",
+    "text": "DO prefix your data plane package names with the kebab-case version of the appropriate namespace from the following table:\n\n| Namespace Group  | Functional Area                                                           |\n|:-----------------|:--------------------------------------------------------------------------|\n| `ai`             | Artificial intelligence, including machine learning                       |\n| `analytics`      | Gathering data for metrics or usage                                       |\n| `containers`     | Services related to containers                                            |\n| `communication`  | Communication services                                                    |\n| `data`           | Dealing with structured data stores like databases                        |\n| `diagnostics`    | Gathering data for diagnosing issues                                      |\n| `digitaltwins`   | Digital Twins, digital representations of physical spaces and IoT devices |\n| `identity`       | Authentication and authorization                                          |\n| `iot`            | Internet of things                                                        |\n| `management`     | Control Plane (Azure Resource Manager)                                    |\n| `media`          | Audio and video technologies                                              |\n| `messaging`      | Messaging services, like push notifications or pub-sub                    |\n| `mixedreality`   | Mixed reality technologies                                                |\n| `monitor`        | Services that are offered by Azure Monitor                                |\n| `quantum`        | Quantum computing technologies                                            |\n| `search`         | Search technologies                                                       |\n| `security`       | Security and cryptography                                                 |\n| `storage`        | Storage of unstructured data                                              |\n\n\nFor example, these package names meet the guidelines:\n@azure/cosmos\n@azure/storage-blob\n@azure/digital-twins-core\n\nThe following are examples that do not meet the guidelines:\n@microsoft/cosmos (not in @azure scope).\n@azure/digitaltwins (not kebab-cased)."
+  },
+  {
+    "id": "typescript_design.html#ts-npm-package-name-follow-conventions",
+    "category": "Namespaces, NPM Scopes, and Distribution Tags {#ts-namespace}",
+    "text": "YOU SHOULD you should follow the casing conventions of any existing stable packages released in the @azure npm scope. It's not worth renaming a package just to align on naming conventions.\n\nYour API surface will consist of one or more service clients that the consumer will instantiate to connect to your service, plus a set of supporting types. The basic shape of JavaScript service clients is shown in the following example:\n\n```javascript\nexport class ServiceClient {\n  // client constructors have overloads for handling different\n  // authentication schemes.\n  constructor(connectionString: string, options?: ServiceClientOptions);\n  constructor(host: string, credential: TokenCredential, options?: ServiceClientOptions);\n  constructor(...) { }\n\n  // Service methods. Options take at least an abortSignal.\n  async createItem(options?: CreateItemOptions): CreateItemResponse;\n  async deleteItem(options?: DeleteItemOptions): DeleteItemResponse;\n\n  // Simple paginated API\n  listItems(): PagedAsyncIterableIterator&lt;Item, ItemPage&gt; { }\n\n  // Clients for sub-resources\n  getItemClient(itemName: string) { }\n}\n\n```"
+  },
+  {
+    "id": "typescript_design.html#ts-apisurface-serviceclientnamespace",
+    "category": "Client constructors and factories",
+    "text": "DO place service client types that the consumer is most likely to interact as a top-level export from your library.  That is, the service client type should be something that can be imported directly by the consumer."
+  },
+  {
+    "id": "typescript_design.html#ts-apisurface-serviceclientconstructor",
+    "category": "Client constructors and factories",
+    "text": "DO allow the consumer to construct a service client with the minimal information needed to connect and authenticate to the service."
+  },
+  {
+    "id": "typescript_design.html#ts-apisurface-standardized-verbs",
+    "category": "Client constructors and factories",
+    "text": "DO standardize verb prefixes within a set of client libraries for a service (see approved verbs).\n\nThe service speaks about specific operations in a cross-language manner within outbound materials (such as documentation, blogs, and public speaking).  The service can't be consistent across languages if the same operation is referred to by different verbs in different languages."
+  },
+  {
+    "id": "typescript_design.html#ts-apisurface-supportallfeatures",
+    "category": "Client constructors and factories",
+    "text": "DO support 100% of the features provided by the Azure service the client library represents.\n\nGaps in functionality cause confusion and frustration among developers. A feature may be omitted if there isn't support on the platform. For example, a library that depends on local file system access may not work in a browser."
+  },
+  {
+    "id": "typescript_design.html#ts-use-constructor-overloads",
+    "category": "Client constructors and factories",
+    "text": "YOU SHOULD provide overloaded constructors for all client construction scenarios.\n\nDon't use static methods to construct a client unless an overload would be ambiguous.  Prefix the static method with from if you require a static constructor."
+  },
+  {
+    "id": "typescript_design.html#ts-use-overloads-over-unions",
+    "category": "Client constructors and factories",
+    "text": "YOU SHOULD prefer overloads over unions when either:\nUsers want to see documentation (for example, signature help) tailored specifically to the parameters they're passing in, or\nMultiple parameters are correlated.\n\nUnions may be used if neither of these conditions are met. Let's say we have an API that takes either two numbers or two strings but not both. In this case, the parameters are correlated. If we implemented the types using unions like the following code:\n\n```javascript\nfunction foo(a: string | number, b: string | number): void {}\n\n```\n\nWe have mistakenly allowed invalid arguments; that is foo(number, string) and foo(string, number). Overloads naturally express this correlation:\n\n```javascript\nfunction foo(a: string, b: string): void;\nfunction foo(a: number, b: number): void;\nfunction foo(a: string | number, b: string | number): void {}\n\n```\n\nThe overload approach also lets us attach documentation to each overload individually.\n\n```javascript\n// bad example\nclass ExampleClient {\n  constructor (connectionString: string, options: ExampleClientOptions);\n  constructor (url: string, options: ExampleClientOptions);\n  constructor (urlOrCS: string, options: ExampleClientOptions) {\n    // have to dig into the first parameter to see whether its\n    // a url or a connection string. Not ideal.\n  }\n}\n\n// better example\nclass ExampleClient {\n  constructor (url: string, options: ExampleClientOptions) {\n\n  }\n\n  static fromConnectionString(connectionString: string, options: ExampleClientOptions) {\n\n  }\n}\n\n```"
+  },
+  {
+    "id": "typescript_design.html#ts-service-versions-use-latest",
+    "category": "Service Versions {#ts-service-versions}",
+    "text": "DO call the highest supported service API version by default."
+  },
+  {
+    "id": "typescript_design.html#ts-service-versions-select-api-version",
+    "category": "Service Versions {#ts-service-versions}",
+    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the client if multiple service versions are supported."
+  },
+  {
+    "id": "typescript_design.html#ts-service-versions-use-client-options",
+    "category": "Service Versions {#ts-service-versions}",
+    "text": "DO provide a serviceVersion option in the client constructor's option bag for providing a service version. The type of this should be a string literal union with supported service versions. You may also provide a string enum with supported service versions.\n\nThe guidelines in this section apply to options passed in options bags to clients, whether methods or constructors. When referring to option names, this means the key of the object users must use to specify that option when passing it into a method or constructor."
+  },
+  {
+    "id": "typescript_design.html#ts-naming-options",
+    "category": "Options {#ts-options}",
+    "text": "DO name the type of the options bag as <class name>Options and <method name>Options for constructors and methods respectively."
+  },
+  {
+    "id": "typescript_design.html#ts-options-abortSignal",
+    "category": "Options {#ts-options}",
+    "text": "DO name abort signal options abortSignal."
+  },
+  {
+    "id": "typescript_design.html#ts-options-suffix-durations",
+    "category": "Options {#ts-options}",
+    "text": "DO suffix durations with In<Unit>. Unit should be ms for milliseconds, and otherwise the name of the unit. Examples include timeoutInMs and delayInSeconds.\n\nMany services have a notion of retries and have various means to configure them."
+  },
+  {
+    "id": "typescript_design.html#ts-use-retry-option-names",
+    "category": "Retry-specific Options {#ts-retry-options}",
+    "text": "DO use the option names specified in the table below\n\n| Option | Values | Usage | Other Names (informational) |\n|--------|-------|------|------|\n| retryMode | 'fixed', 'linear', 'exponential' | Used to specify the retry strategy |\n| maxRetries | number >= 0 | Number of times to retry. 0 effectively disables retrying. |\n| retryDelayInMs | number > 0 | Delay between retries. For linear and exponential strategies, this is the initial retry delay and increases thereafter based on the strategy used. |\n| maxRetryDelayInMs | number > 0 | Maximum delay between retries. For linear and exponential strategies, this effectively clamps the maximum amount of time between retries. |\n| tryTimeoutInMs | number > 0 | How long to wait for a particular retry to complete before giving up |\n\nTODO: Please add a code sample showing how these fit into a track 2 JS/TS library."
+  },
+  {
+    "id": "typescript_design.html#ts-use-retry-strategies",
+    "category": "Retry-specific Options {#ts-retry-options}",
+    "text": "DO support the following retry strategies:\nfixed: retry after some duration, where the duration never changes.\nexponential: retry after some duration, where the duration increases exponentially after each attempt.\n\nTODO: Are these implemented by default in Azure Core or does the API designer need to implement these?  If there is no action for the API Designer, let's take this out.\n\nRequests to the service fall into two basic groups - methods that make a single logical request, or a deterministic sequence of requests.  An example of a single logical request is a request that may be retried inside the operation.  An example of a deterministic sequence of requests is a paged operation. The logical entity is a protocol neutral representation of a response. For HTTP, the logical entity may combine data from headers, the body, and the status line.  For example, you may add the ETag header as a property on the logical entity to the deserialized content from the body of the response."
+  },
+  {
+    "id": "typescript_design.html#ts-return-logical-entities",
+    "category": "Response formats {#ts-responses}",
+    "text": "DO optimize for returning the logical entity for a given request. The logical entity MUST represent the information needed in the 99%+ case.\n\nTODO: the above guideline is a little vague and I'm not sure how to concretely apply this in JS/TS."
+  },
+  {
+    "id": "typescript_design.html#ts-return-expose-raw",
+    "category": "Response formats {#ts-responses}",
+    "text": "DO make it possible for a developer to get access to the complete response, including the status line, headers, and body.\n\nTODO: a code sample to go with this might be nice, or a direct discussion of the typical response format and how to do this in JS/TS.  As an example of this, .NET discusses Response<T> in this section rather than the general guidelines, since Response<T> solves this problem for the API designer and then they don't have to think of another way to do it."
+  },
+  {
+    "id": "typescript_design.html#ts-return-document-raw-stream",
+    "category": "Response formats {#ts-responses}",
+    "text": "DO document how to access the raw and streamed response for a request (if exposed by the client library).  Include comprehensive samples.  We don't expect all methods to expose a streamed response.\n\nTODO: Should the above guideline go in the Samples section?\n\nFor methods that combine multiple requests into a single call:"
+  },
+  {
+    "id": "typescript_design.html#general-return-no-headers-if-confusing",
+    "category": "Response formats {#ts-responses}",
+    "text": "DO NOT return headers and other per-request metadata unless it's obvious as to which specific HTTP request the methods return value corresponds to.\n\nTODO: It's unclear regarding the above that this is referring to the model type.  (Is it?)  An example of how we've solved this problem in existing Track 2 JS/TS APIs would be helpful here to make this guideline more actionable."
+  },
+  {
+    "id": "typescript_design.html#general-expose-data-for-composite-failures",
+    "category": "Response formats {#ts-responses}",
+    "text": "DO provide enough information in failure cases for an application to take appropriate corrective action.\n\nTODO: Would the above guideline go better in the Exceptions & Errors section?  In the training, we say that exceptions should A) describe the problem and B) tell the developer how to solve the problem."
+  },
+  {
+    "id": "typescript_design.html#general-dont-use-value",
+    "category": "Response formats {#ts-responses}",
+    "text": "YOU SHOULD NOT use the following property names within a logical entity:\nobject\nvalue\n\nUsing names that are commonly used as reserved words can cause confusion and will cause consistency issues between languages."
+  },
+  {
+    "id": "typescript_design.html#ts-example-return-types",
+    "category": "Response formats {#ts-responses}",
+    "text": "\nAn example:\n\n```javascript\n// Service operation method on a service client\n  public async getProperties(\n    options: ContainerGetPropertiesOptions = {}\n  ): Promise&lt;Models.ContainerGetPropertiesResponse&gt; {\n    // ...\n  }\n\n// Response type, in this case for a service which returns the\n// relevant info in headers. Note how the headers are represented\n// in first-class properties with intellisense etc.\nexport type ContainerGetPropertiesResponse = ContainerGetPropertiesHeaders &amp; {\n  /**\n   * The underlying HTTP response.\n   */\n  _response: msRest.HttpResponse &amp; {\n      /**\n       * The parsed HTTP response headers.\n       */\n      parsedHeaders: ContainerGetPropertiesHeaders;\n    };\n};\n\nexport interface ContainerGetPropertiesHeaders {\n  // ...\n  /**\n   * @member {PublicAccessType} [blobPublicAccess] Indicated whether data in\n   * the container may be accessed publicly and the level of access. Possible\n   * values include: 'container', 'blob'\n   */\n  blobPublicAccess?: PublicAccessType;\n  /**\n   * @member {boolean} [hasImmutabilityPolicy] Indicates whether the container\n   * has an immutability policy set on it.\n   */\n  hasImmutabilityPolicy?: boolean;\n}\n\n```"
+  },
+  {
+    "id": "typescript_design.html#ts-apisurface-serviceclientnaming",
+    "category": "Client naming conventions {#ts-client-naming-conventions}",
+    "text": "DO name service client types with the Client suffix."
+  },
+  {
+    "id": "typescript_design.html#ts-approved-verbs",
+    "category": "Client naming conventions {#ts-client-naming-conventions}",
+    "text": "YOU SHOULD use one of the approved verbs in the below table when referring to service operations.\n\n|Verb|Parameters|Returns|Comments|\n|-|-|-|-|\n|create\\<Noun>|key, item|Created item|Create new item. Fails if item already exists.|\n|upsert\\<Noun>|key, item|Updated or created item|Create new item, or update existing item. Verb is primarily used in database-like services |\n|set\\<Noun>|key, item|Updated or created item|Create new item, or update existing item. Verb is primarily used for dictionary-like properties of a service |\n|update\\<Noun>|key, partial item|Updated item|Fails if item doesn't exist. |\n|replace\\<Noun>|key, item|Replace existing item|Completely replaces an existing item. Fails if the item doesn't exist. |\n|append\\<Noun>|item|Appended item|Add item to a collection. Item will be added last. |\n|add\\<Noun>|index, item|Added item|Add item to a collection. Item will be added at the given index. |\n|get\\<Noun>|key|Item|Will return null if item doesn't exist |\n|list\\<Noun>s||PagedAsyncIterableIterator<TItem, TPage>|Return list of items. Returns empty list if no items exist |\n|\\<noun>Exists|key|bool|Return true if the item exists. |\n|delete\\<Noun>|key|None|Delete an existing item. Will succeed even if item didn't exist.|\n|remove\\<Noun>|key|None or removed item|Remove item from a collection.|"
+  },
+  {
+    "id": "typescript_design.html#ts-naming-drop-noun",
+    "category": "Client naming conventions {#ts-client-naming-conventions}",
+    "text": "DO NOT include the Noun when the operation is operating on the resource itself,  For example, if you have an ItemClient with a delete method, it should be called delete rather than deleteItem. The noun is implicitly this."
+  },
+  {
+    "id": "typescript_design.html#ts-naming-subclients",
+    "category": "Client naming conventions {#ts-client-naming-conventions}",
+    "text": "DO prefix methods that create or vend subclients with get and suffix with client.  For example, container.getBlobClient().\n\nTODO: Put the above with the discussion of hierarchical clients?\n\nTODO: A code sample here would help illustrate this."
+  },
+  {
+    "id": "typescript_design.html#ts-example-naming",
+    "category": "Client naming conventions {#ts-client-naming-conventions}",
+    "text": "\nThe following are good examples of names for operations in a TypeScript client library:\n\n```javascript\ncontainerClient.listBlobs();\ncontainerClient.delete();\n\n```\n\nThe following are bad examples:\n\n```javascript\ncontainerClient.deleteContainer(); // don't include noun for direct manipulation\ncontainerClient.newBlob(); // use create instead of new\ncontainerClient.createOrUpdate(); // use upsert\ncontainerClient.createBlobClient(); // should be `getBlobClient`.\n\n```\n\nWhen an application makes a network request, the network infrastructure (like routers) and the called service may take a long time to respond. In fact, the network infrastructure may never respond. A well-written application should NEVER give up its control to the network infrastructure or service.\n\nConsider the following examples. An orchestrator needs to stop a service because of a scaling operation, reconfiguration, or upgrading to a new version). The orchestrator typically notifies a running service instance by sending an interrupt signal. The service should stop as quickly as possible when it receives this signal. Similarly, when a web server receives a request, it may set a time limit indicating how much time it's allowing before giving a response to the user. A UI application may offer the user a cancel button when making a network request.\n\nThe best way for consumers to work with cancellation is to think of cancellation objects as forming a tree. For example:\nCancelling a parent automatically cancels its children.\nChildren can time out sooner than their parent but can't extend the total time.\nCancellation can happen because of a timeout or an explicit request.\n\nTODO: Regarding the above discussion ... is it needed?  Could we just say the Azure SDK requires service calls to be cancellable and here are the rules for how to do it in JS/TS?  Please consider adding a code sample for this, and if there are implementation specifics for this, it might be nice to have them in the Implementation section (but the latter is technically out of scope for MQ).\n\nDO accept an AbortSignalLike parameter on all asynchronous calls. This type is provided by @azure/abort-controller.\n\nYOU SHOULD only check cancellation tokens on I/O calls (such as network requests and file loads).  Don't check the cancellation token between I/O calls within the client library (for example, when processing data between I/O calls).\n\nTODO: Does JS/TS use cancellation tokens?\n\n<p><a href=\"#{{ include.id }}\" name=\"{{ include.id }}\" class='requirement' role='img' aria-label='DO NOT'>\u26d4\ufe0f</a> <strong>DO NOT</strong></p>\n\n\nAzure services use different kinds of authentication schemes to allow clients to access the service.  Conceptually, there are two entities responsible in this process: a credential and an authentication policy.  Credentials provide confidential authentication data.  Authentication policies use the data provided by a credential to authenticate requests to the service."
+  },
+  {
+    "id": "typescript_design.html#ts-apisurface-supportcancellation",
+    "category": "Authentication",
+    "text": "DO support all authentication techniques that the service supports."
+  },
+  {
+    "id": "typescript_design.html#ts-apisurface-check-cancel-on-io-calls",
+    "category": "Authentication",
+    "text": "DO use credential and authentication policy implementations from the Azure Core library where available.\n\nTODO: Please mention the specific type examples to make this more actionable."
+  },
+  {
+    "id": "typescript_design.html#general-apisurface-no-leaking-implementation",
+    "category": "Authentication",
+    "text": "DO provide credential types that can be used to fetch all data needed to authenticate a request to the service. Credential types should be non-blocking and atomic.  Use credential types from the @azure/core-auth library where possible."
+  },
+  {
+    "id": "typescript_design.html#general-apisurface-auth-in-constructors",
+    "category": "Authentication",
+    "text": "DO provide service client constructors or factories that accept any supported authentication credentials.\n\nClient libraries may support connection strings ONLY IF the service provides a connection string to users via the portal or other tooling. Connection strings are easily integrated into an application by copy/paste from the portal.  However, connection strings don't allow the credentials to be rotated within a running process."
+  },
+  {
+    "id": "typescript_design.html#general-apisurface-no-connection-strings",
+    "category": "Authentication",
+    "text": "DO NOT support constructing a service client with a connection string unless such connection string is available within tooling (for copy/paste operations).\n\nTODO: Please make this section more actionable with regard to what JS/TS does specifically."
+  },
+  {
+    "id": "typescript_design.html#ts-use-promises",
+    "category": "Modern & Idiomatic JavaScript {#ts-modern-javascript}",
+    "text": "DO use built-in promises for asynchronous operations. You may provide overloads that take a callback. Don't import a polyfill or library to implement promises.\n\nPromises were added to JavaScript ES2015. ES2016 and later added async functions to make working with promises easier. Promises are broadly supported in JavaScript runtimes, including all currently supported versions of Node."
+  },
+  {
+    "id": "typescript_design.html#ts-use-async-functions",
+    "category": "Modern & Idiomatic JavaScript {#ts-modern-javascript}",
+    "text": "YOU SHOULD use async functions for implementing asynchronous library APIs.\n\nIf you need to support ES5 and are concerned with library size, use async when combining asynchronous code with control flow constructs.  Use promises for simpler code flows.  async adds code bloat (especially when targeting ES5) when transpiled."
+  },
+  {
+    "id": "typescript_design.html#ts-use-iterators",
+    "category": "Modern & Idiomatic JavaScript {#ts-modern-javascript}",
+    "text": "DO use Iterators (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators) and Async Iterators (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) for sequences and streams of all sorts.\n\nBoth iterators and async iterators are built into JavaScript and easy to consume. Other streaming interfaces (such as node streams) may be used where appropriate as long as they're idiomatic."
+  },
+  {
+    "id": "typescript_design.html#ts-use-interface-parameters",
+    "category": "Modern & Idiomatic JavaScript {#ts-modern-javascript}",
+    "text": "YOU SHOULD prefer interface types to class types. JavaScript is fundamentally a duck-typed language, and so alternative classes that implement the same interface should be allowed. Declare parameters as interface types over class types whenever possible. Overloads with specific class types are fine but there should be an overload present with the generic interface."
+  },
+  {
+    "id": "typescript_design.html#ts-avoid-extending-cross-package",
+    "category": "Modern & Idiomatic JavaScript {#ts-modern-javascript}",
+    "text": "DO not extend classes from a different package. It can be non-obvious that a dependent package is broken by a change to a base class. For example, adding a non-compatible method signature or a new private member is considered a non-breaking additive change, but would potentially conflict in the derived class."
+  },
+  {
+    "id": "typescript_design.html#ts-example-iterators",
+    "category": "Modern & Idiomatic JavaScript {#ts-modern-javascript}",
+    "text": "\n\n```javascript\n// bad synchronous example\nfunction listItems() {\n  return {\n    nextItem() { /*...*/ }\n  }\n}\n\n// better synchronous example\nfunction* listItems() {\n  /* ... */\n}\n\n// bad asynchronous examples\nfunction listItems() {\n  return Rx.Observable.of(/* ... */)\n}\n\nfunction listItems(callback) {\n  // fetch items\n  for (const item of items) {\n    callback (item)\n    }\n}\n\n// better asynchronous example\nasync function* listItems() {\n  for (const item of items) {\n    yield item;\n  }\n}\n\n```\n\n~"
+  },
+  {
+    "id": "typescript_design.html#ts-use-typescript",
+    "category": "Modern & Idiomatic TypeScript {#ts-modern-typescript}",
+    "text": "DO implement your library in TypeScript."
+  },
+  {
+    "id": "typescript_design.html#ts-ship-type-declarations",
+    "category": "Modern & Idiomatic TypeScript {#ts-modern-typescript}",
+    "text": "DO include type declarations for your library.\n\nTypeScript static types provide significant benefit for both the library authors and consumers. TypeScript also compiles modern JavaScript language features for use with older runtimes.\n\nYour tsconfig.json should look similar to the following example:\n\n\n```javascript\n{\n  \"compilerOptions\": {\n    \"declaration\": true,\n    \"module\": \"es6\",\n    \"moduleResolution\": \"node\",\n    \"strict\": true,\n    \"noUnusedLocals\": true,\n    \"noUnusedParameters\": true,\n    \"noImplicitReturns\": true,\n    \"noFallthroughCasesInSwitch\": true,\n    \"outDir\": \"./dist-esm\",\n    \"target\": \"es6\",\n    \"sourceMap\": true,\n    \"declarationMap\": true,\n    \"esModuleInterop\": true,\n    \"allowSyntheticDefaultImports\": true,\n    \"forceConsistentCasingInFileNames\": true,\n    \"importHelpers\": true\n  },\n  \"include\": [\"./src/**/*\"],\n  \"exclude\": [\"node_modules\"]\n}\n\n```"
+  },
+  {
+    "id": "typescript_design.html#ts-config-exclude",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO have at least \"node_modules\" in the exclude array. TypeScript shouldn't needlessly type check your dependencies."
+  },
+  {
+    "id": "typescript_design.html#ts-config-lib",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO NOT use the compilerOptions.lib field. Built in typescript libraries (for example, esnext.asynciterable) should be included via reference directives. See also Microsoft/TypeScript#27416 (https://github.com/Microsoft/TypeScript/issues/27416) "
+  },
+  {
+    "id": "typescript_design.html#ts-config-strict",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.strict to true. The strict flag is a best practice for developers as it provides the best TypeScript experience. The strict flag also ensures that your type definitions are maximally pedantic."
+  },
+  {
+    "id": "typescript_design.html#ts-config-esModuleInterop",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.esModuleInterop to true."
+  },
+  {
+    "id": "typescript_design.html#ts-config-allowSyntheticDefaultImports",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.allowSyntheticDefaultImports to true."
+  },
+  {
+    "id": "typescript_design.html#ts-config-target",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.target, but it can be any valid value so long as the final source distributions are compatible with the runtimes your library targets. See also [#ts-source-distros]."
+  },
+  {
+    "id": "typescript_design.html#ts-config-forceConsistentCasingInFileNames",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.forceConsistentCasingInFileNames to true. forceConsistentCasingInFileNames forces TypeScript to treat files as case sensitive, and ensures you don't get surprised by build failures when moving between platforms."
+  },
+  {
+    "id": "typescript_design.html#ts-config-module",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.module to es6. Use a bundler such as Rollup (https://rollupjs.org/guide/en/) or Webpack (https://webpack.js.org/) to produce the CommonJS and UMD builds."
+  },
+  {
+    "id": "typescript_design.html#ts-config-moduleResolution",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.moduleResolution to \"node\" if your library targets Node. Otherwise, it should be absent."
+  },
+  {
+    "id": "typescript_design.html#ts-config-declaration",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.declaration to true. The --declaration option tells TypeScript to emit a d.ts file that contains the public surface area of your library. TypeScript and editors use this file to provide intellisense and type checking capabilities. Ensure you reference this type declaration file from the types field of your package.json."
+  },
+  {
+    "id": "typescript_design.html#ts-config-no-experimentalDecorators",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO NOT set compilerOptions.experimentalDecorators to true. The experimentalDecorators flag adds support for \"v1 decorators\" to TypeScript. Unfortunately the standards process has moved on to an incompatible second version that is not yet implemented by TypeScript. Taking a dependency on decorators now means signing up your users for breaking changes later."
+  },
+  {
+    "id": "typescript_design.html#ts-config-sourceMap",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.sourceMap and compilerOptions.declarationMap to true. Shipping source maps in your package ensures clients can easily debug into your library code. sourceMap maps your emitted JS source to the declaration file and declarationMap maps the declaration file back to the TypeScript source that generated it. Be sure to include your original TypeScript sources in the package."
+  },
+  {
+    "id": "typescript_design.html#ts-config-importHelpers",
+    "category": "tsconfig.json {#ts-tsconfig.json}",
+    "text": "DO set compilerOptions.importHelpers to true. Using external helpers keeps your package size down. Without this flag, TypeScript will add a helper block to each file that needs it. The file size savings using this option can be huge when using async functions (as an example) in a number of different files."
+  },
+  {
+    "id": "typescript_design.html#ts-no-namespaces",
+    "category": "TypeScript Coding Guidelines {#ts-coding-guidelines}",
+    "text": "YOU SHOULD NOT use TypeScript namespaces. Namespaces either use the namespace keyword explicitly, or the module keyword with a module name (for example, module Microsoft.ApplicationInsights { ... }). Use top-level imports/exports with ECMAScript modules instead. Namespaces make your code less compatible with standard ECMAScript and create significant friction with the TypeScript community."
+  },
+  {
+    "id": "typescript_design.html#ts-no-const-enums",
+    "category": "TypeScript Coding Guidelines {#ts-coding-guidelines}",
+    "text": "YOU SHOULD NOT use const enum. Const enum requires global understanding of your program to compile properly. As a result, const enum can't be used with Babel 7, which otherwise supports TypeScript. Avoiding const enum will make sure your code can be compiled by any tool. Use regular enums instead.\n\nMost developers will want to process a list one item at a time. Higher-level APIs (for example, async iterators) are preferred in the majority of use cases.  Finer-grained control over handling paginated result sets is sometimes required (for example, to handle over-quota or throttling)."
+  },
+  {
+    "id": "typescript_design.html#ts-pagination-provide-list",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO provide a list method that returns a PagedAsyncIterableIterator from the module @azure/core-paging."
+  },
+  {
+    "id": "typescript_design.html#ts-pagination-provide-bypage-settings",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO provide page-related settings to the byPage() iterator and not the per-item iterator."
+  },
+  {
+    "id": "typescript_design.html#ts-pagination-take-continuationToken",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO take a continuationToken option in the byPage() method. You must rename other parameters that perform a similar function (for example, nextMarker).  If your page type has a continuation token, it must be named continuationToken."
+  },
+  {
+    "id": "typescript_design.html#ts-pagination-take-maxpagesize",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO take a maxPageSize option in the byPage() method.\n\nAn example of a paginating client:\n\n\n```javascript\n// usage\nconst client = new ServiceClient()\nfor await (const item of client.listItems()) {\n    console.log(item);\n}\n\nfor await (const page of client.listItems().byPage({ maxPageSize: 50 })) {\n    console.log(page);\n}\n\n// implementation\ninterface Item {\n    name: string;\n}\n\ninterface Page {\n    continuationToken: string;\n    items: Item[];\n}\n\nclass ServiceClient {\n    /* ... */\n    listItems(): PagedAsyncIterableIterator&lt;Item, Page&gt; {\n        async function* pages () { /* ... */ }\n        async function* items () {\n            for (const page of pages()) {\n                for (const item of page.items) {\n                    yield item;\n                }\n            }\n        }\n\n        const itemIter = items();\n\n        return {\n            next() {\n                return itemIter.next();\n                /* ... */\n            },\n            byPage() {\n                return pages();\n            },\n            [Symbol.asyncIterator]() { return this }\n        }\n    }\n}\n\n```"
+  },
+  {
+    "id": "typescript_design.html#general-pagination-paginate-lists",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO expose non-paginated list endpoints identically to paginated list endpoints. Users shouldn't need to appreciate the difference."
+  },
+  {
+    "id": "typescript_design.html#general-pagination-distinct-types",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO use different types for entities returned from a list endpoint and a get endpoint if the returned entities have a different shape.  If both entities are the same form, use the same type.\n\n**NOTE:** Services should return the same shape for entities from a list endpoint vs. a get endpoint unless there's a good reason for the difference.  Using the same type for both operations will make the API surface in the client library simpler."
+  },
+  {
+    "id": "typescript_design.html#general-pagination-no-item-iterators",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO NOT expose an iterator over individual items if it causes additional service requests.  Some services charge on a per-request basis. One GET per item is often too expensive when the data isn't used."
+  },
+  {
+    "id": "typescript_design.html#general-pagination-support-toArray",
+    "category": "Pagination {#ts-pagination}",
+    "text": "DO NOT expose an API to get a paginated collection into an array. Services may return many pages, which can lead to memory exhaustion in the application.\n\nLong-running operations are operations which consist of an initial request to start the operation followed by polling to determine when the operation has completed or failed. Long-running\noperations in Azure tend to follow the [REST API guidelines for Long-running Operations][rest-lro], but there are exceptions.\n\nDO represent long-running operations with some object that encapsulates the polling and the operation status. This object, called a poller, must provide APIs for:\nquerying the current operation state (either asynchronously, which may consult the service, or synchronously which must not)\nrequesting an asynchronous notification when the operation has completed\ncancelling the operation if cancellation is supported by the service\nregistering disinterest in the operation so polling stops\ntriggering a poll operation manually (automatic polling must be disabled)\nprogress reporting (if supported by the service)"
+  },
+  {
+    "id": "typescript_design.html#ts-lro-support-options",
+    "category": "Long Running Operations {#ts-lro}",
+    "text": "DO support the following polling configuration options:\npollInterval\n\nPolling configuration may be used only in the absence of relevant retry-after headers from service, and otherwise should be ignored."
+  },
+  {
+    "id": "typescript_design.html#ts-lro-prefix-methods",
+    "category": "Long Running Operations {#ts-lro}",
+    "text": "DO prefix method names which return a poller with either begin."
+  },
+  {
+    "id": "typescript_design.html#ts-lro-continuation",
+    "category": "Long Running Operations {#ts-lro}",
+    "text": "DO provide a way to instantiate a poller with the serialized state of another poller to begin where it left off, for example by passing the state as a parameter to the same method which started the operation, or by directly instantiating a poller with that state."
+  },
+  {
+    "id": "typescript_design.html#ts-lro-cancellation",
+    "category": "Long Running Operations {#ts-lro}",
+    "text": "DO NOT cancel the long-running operation when cancellation is requested via a cancellation token. The cancellation token is cancelling the polling operation and should not have any effect on the service."
+  },
+  {
+    "id": "typescript_design.html#ts-lro-logging",
+    "category": "Long Running Operations {#ts-lro}",
+    "text": "DO log polling status at the Info level (including time to next retry)"
+  },
+  {
+    "id": "typescript_design.html#ts-lro-progress-reporting",
+    "category": "Long Running Operations {#ts-lro}",
+    "text": "DO expose a progress reporting mechanism to the consumer if the service reports progress as part of the polling operation.  Language-dependent guidelines will present additional guidance on how to expose progress reporting in this case.\n\n**DRAFT:** Long-running operations will use the @azure/core-lro package, which is an abstraction that provides the above requirements\n\nTODO: If this is largely implemented for the API Designer, please include an example of how to use the Azure Core type in the public API.  It would be ideal to remove guidelines where the requirement has already been addressed for the API Designer in the type.\n\nThere are two patterns in use depending on whether etag is a member of the model type or not."
+  },
+  {
+    "id": "typescript_design.html#ts-conditional-request-options-1",
+    "category": "Conditional Request Methods {#ts-conditional-requests}",
+    "text": "DO provide the following options in a method's options bag when the model type has an etag property:\nonlyIfChanged - sets the if-match header to the etag.\nonlyIfUnchanged - sets the if-none-match header to the etag.\nonlyIfMissing - sets the if-none-match header to *.\nonlyIfPresent - sets the if-match header to *."
+  },
+  {
+    "id": "typescript_design.html#ts-conditional-request-options-2",
+    "category": "Conditional Request Methods {#ts-conditional-requests}",
+    "text": "DO provide the following options in a method's options bag's conditions property when the model type does not have an etag property:\nifMatch - sets the if-match header to the value provided.\nifNoneMatch - sets the if-none-match header to the value provided.\nifModifiedSince - sets the if-modified-since header to the value provided\nifUnmodifiedSince - sets the if-unmodified-since header to the value provided."
+  },
+  {
+    "id": "typescript_design.html#ts-conditional-request-no-dupe-options",
+    "category": "Conditional Request Methods {#ts-conditional-requests}",
+    "text": "DO throw an error if the user provides options from both option sets, for example passing onlyIfChanged: true and ifMatch: \"...\". In some cases you may want to provide both sets of options, but it is not required or necessarily recommended.\n\nClient libraries represent entities transferred to and from Azure services as model types. Certain types are used for round-trips to the service. They can be sent to the service (as an addition or update operation) and retrieved from the service (as a get operation).\u00a0These must be named according to the type. For example, a ConfigurationSetting in App Configuration, or an Event on Event Grid."
+  },
+  {
+    "id": "typescript_design.html#ts-model-types-use-good-name",
+    "category": "Model Types {#ts-model-types}",
+    "text": "DO follow the above convention for types which round-trip to the service and represent a complete entity.\n\nData within the model type can generally be split into two parts - data used to support one of the champion scenarios for the service, and less important data. Given a type Foo, the less important details can be gathered in a type called FooDetails and attached to Foo as the details property.\n\nFor example:\n\n{% highlight typescript %}\ninterface ConfigurationSettingDetails {\nlastModifiedOn: Date;\nreceivedOn: Date;\netag: string;\n}\n\ninterface ConfigurationSetting {\nkey: string;\nvalue: string;\ndetails: ConfigurationSettingDetails;\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "typescript_design.html#ts-model-types-use-details",
+    "category": "Model Types {#ts-model-types}",
+    "text": "YOU MAY use details to separate commonly needed and less commonly needed properties. If you use this convention, you MUST follow these naming conventions.\n\nIn cases where a partial schema is returned, use the following types:\n<model>Item for each item in an enumeration if the enumeration returns a partial schema for the model. For example, GetBlobs() return an enumeration of BlobItem, which contains the blob name and metadata, but not the content of the blob.\n<operation>Result for the result of an operation. The <operation> is tied to a specific service operation. If the same result can be used for multiple operations, use a suitable noun-verb phrase instead. For example, use UploadBlobResult for the result from UploadBlob, but ContainerChangeResult for results from the various methods that change a blob container. In cases where a result is just a primitive type, do not create a type alias for it - just use it directly, and do not follow these conventions."
+  },
+  {
+    "id": "typescript_design.html#ts-model-types-partial-naming",
+    "category": "Model Types {#ts-model-types}",
+    "text": "DO follow the above naming conventions when partial schemas are returned.\n\nThe following table enumerates the various models you might create:\n\n| Type | Example | Usage |\n| <model> | Secret | The full data for a resource |\n| <model>Details | SecretDetails | Less important details about a resource. Attached to <model>.details |\n| <model>Item | SecretItem | A partial set of data returned for enumeration |\n| <operation>Options | AddSecretOptions | Optional parameters to a single operation |\n| <operation>Result | AddSecretResult | A partial or different set of data for a single operation |\n| <model><verb>Result | SecretChangeResult | A partial or different set of data for multiple operations on a model |"
+  },
+  {
+    "id": "typescript_design.html#ts-core-types-must",
+    "category": "Using Azure Core {#ts-core-types}",
+    "text": "DO make use of packages in Azure Core to provide behavior consistent across all Azure SDK libraries. This includes, but is not limited to:\ncore-http for http client, pipeline and related functionality\nlogger for logging\ncore-tracing for distributed tracing\ncore-auth for common auth interfaces\ncore-lro for long running operations\n\nSee the Azure Core readme (https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/core) for more details.\n\nTODO: Please add a section on extensible enums, if this is relevant to JS/TS.\n\nMost Azure services expose a RESTful API over HTTPS.  However, a few services use other protocols, such as AMQP (https://www.amqp.org/)  MQTT (http://mqtt.org/)  or WebRTC (https://webrtc.org/)  In these cases, the operation of the protocol can be split into two phases:\nPer-connection (surrounding when the connection is initiated and terminated)\nPer-operation (surrounding when an operation is sent through the open connection)\n\nThe policies that are added to a HTTP request/response (authentication, unique request ID, telemetry, distributed tracing, and logging) are still valid on both a per-connection and per-operation basis.  However, the methods by which these policies are implemented are protocol dependent."
+  },
+  {
+    "id": "typescript_design.html#general-other-protocols-pipeline-policies",
+    "category": "Support for non-HTTP protocols {#general-other-protocols}",
+    "text": "DO implement as many of the policies as possible on a per-connection and per-operation basis.\n\nFor example, MQTT over WebSockets provides the ability to add headers during the initiation of the WebSockets connection, so this is a good place to add authentication, telemetry, and distributed tracing policies.  However, MQTT has no metadata (the equivalent of HTTP headers), so per-operation policies are not possible.  AMQP, by contract, does have per-operation metadata.  Unique request ID, and distributed tracing headers can be provided on a per-operation basis with AMQP."
+  },
+  {
+    "id": "typescript_design.html#general-other-protocols-consult-on-policies",
+    "category": "Support for non-HTTP protocols {#general-other-protocols}",
+    "text": "DO consult the [Architecture Board] on policy decisions for non-HTTP protocols.  Implementation of all policies is expected.  If the protocol cannot support a policy, obtain an exception from the [Architecture Board]."
+  },
+  {
+    "id": "typescript_design.html#general-other-protocols-use-global-config",
+    "category": "Support for non-HTTP protocols {#general-other-protocols}",
+    "text": "DO use the global configuration established in the Azure Core library to configure policies for non-HTTP protocols.  Consumers don't necessarily know what protocol is used by the client library.  They will expect the client library to honor global configuration that they have established for the entire Azure SDK.\n\n[RequireJS]: https://requirejs.org/\n\n[azure/azure-sdk-for-js]: https://github.com/azure/azure-sdk-for-js\n[TypeScript client library template]: https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/template/template\n[cjs]: https://nodejs.org/api/modules.html\n[esm]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import\n[namespace guidelines]: typescript_design.html#ts-namespaces"
+  }
+]

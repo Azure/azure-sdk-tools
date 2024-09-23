@@ -11,12 +11,15 @@ export async function getChangedPackageDirectory(throwErrorWhenFindingUnexpected
     const files = gitStatus.files;
     for (const file of files) {
         const filePath = file.path;
-        if (filePath.match(/sdk\/[^\/]*\/(arm-.*)|(.*-rest)/)) {
-            const packageDirectory = /sdk\/[^\/]*\/(arm-[^\/]*)|(.*-rest)/.exec(filePath);
+        // TODO: Temporarily disable the check for file folder, re-enable the check for file folder if necessary
+        // if (filePath.match(/sdk\/[^\/]*\/(arm-.*)|(.*-rest)/)) {
+        if (filePath.match(/sdk\/[^\/]*\/([^\/]*)/)) {
+            // const packageDirectory = /sdk\/[^\/]*\/(arm-[^\/]*)|(.*-rest)/.exec(filePath);
+            const packageDirectory = /sdk\/[^\/]*\/([^\/]*)/.exec(filePath);
             if (packageDirectory) {
                 changedPackageDirectories.add(packageDirectory[0]);
             }
-        } else if (throwErrorWhenFindingUnexpectedFile) {
+        } else if (throwErrorWhenFindingUnexpectedFile && filePath.endsWith('.ts')) {
             throw new Error(`Find unexpected generated file: ${filePath}. Please confirm whether the output-folder is correct.`);
         }
     }
@@ -42,7 +45,7 @@ export async function getLastCommitId(repository: string) {
     try {
         commitId = execSync(`git --git-dir=${path.join(repository, '.git')} log --format=%H -n 1`, {encoding: "utf8"});
     } catch (e) {
-        logger.log(`cannot get commit id from ${repository}`);
+        logger.error(`Failed to get commit id from '${repository}'.`);
     }
     return commitId.trim();
 }

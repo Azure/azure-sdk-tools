@@ -93,5 +93,23 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code);
         }
+
+        [Fact]
+        public async Task AZC0006NotProducedForClientsWithStaticProperties()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientOptions : Azure.Core.ClientOptions { }
+
+    public class SomeClient
+    {
+        public static int a = 1;
+        public SomeClient() {}
+        public SomeClient(SomeClientOptions options) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }

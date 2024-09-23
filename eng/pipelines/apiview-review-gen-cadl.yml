@@ -1,0 +1,70 @@
+pr: none
+
+trigger: none
+
+parameters:
+  - name: Reviews
+    type: string
+    default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","SourceRepoName":"<RepoName>","FileName":"<fileName>","SourceBranchName":"<SourceBranchName>"}]'
+  - name: APIViewURL
+    type: string
+    default: 'https://apiview.dev' 
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
+
+variables:
+  NodeVersion: '18.x'
+
+jobs:
+- job: CreateCadlReviewCodeFile
+  displayName: 'Create CADL API review token file'
+
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: $(NodeVersion)
+    displayName: "Use Node $(NodeVersion)"
+
+  - pwsh: |
+      $reviews = "${{ parameters.Reviews }}"
+      Write-Host "Reviews: $($reviews)"
+      echo "##vso[task.setvariable variable=Reviews]$reviews"
+    displayName: "Setup Reviews Variable"
+    condition: eq(variables['Reviews'], '')
+
+  - pwsh: |
+      $url = "${{parameters.APIViewURL}}"
+      echo "##vso[task.setvariable variable=APIViewURL]$url"
+    displayName: "Setup APIViewURL Variable"
+    condition: eq(variables['APIViewURL'], '')
+
+  - task: Powershell@2
+    displayName: 'Generate APIView Token files'
+    inputs:
+      pwsh: true
+      filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-Cadl.ps1
+      arguments: >
+        -Reviews "$(Reviews)"
+        -OutputDir "$(Build.ArtifactStagingDirectory)"
+        -WorkingDir "$(Pipeline.Workspace)"
+        -GitPat "$(github-access-token)"
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'apiview'
+
+  - task: Powershell@2
+    displayName: 'Send Request to APIView to Update Token files'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: $(Build.SourcesDirectory)/eng/scripts/Apiview-Update-Generated-Review.ps1
+      arguments: >
+        -BuildId $(Build.BuildId)
+        -ApiviewUpdateUrl "$(APIViewURL)/review/UpdateApiReview"

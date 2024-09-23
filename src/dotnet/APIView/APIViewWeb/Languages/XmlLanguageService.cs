@@ -1,16 +1,22 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.IO;
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
     public class XmlLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "Xml";
-        public override string Extension { get; } = ".xml";
+        public override string[] Extensions { get; } = { ".xml" };
         public override string ProcessName { get; } = "java";
-        public override string VersionString { get; } = "apiview-java-processor-1.27.0.jar";
+        public override string VersionString { get; } = "apiview-java-processor-1.31.0.jar";
+
+        public XmlLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
+        {
+        }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {

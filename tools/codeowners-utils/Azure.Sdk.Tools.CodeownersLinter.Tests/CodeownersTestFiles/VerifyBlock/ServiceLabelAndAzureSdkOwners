@@ -1,0 +1,6 @@
+# A ServiceLabel block with only AzureSdkOwners:
+# ServiceLabel: %TestLabel3
+# AzureSdkOwners: @TestOwner0 @TestOwner4 @Azure/TestTeam3
+
+# AzureSdkOwners: @TestOwner2 @Azure/TestTeam2 @TestOwner4
+# ServiceLabel: %TestLabel2

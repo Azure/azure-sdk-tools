@@ -1,0 +1,32 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/github-event-processor
+      - tools/codeowners-utils/Azure.Sdk.Tools.CodeownersUtils
+    exclude:
+      - tools/github-event-processor/YmlAndConfigFiles
+      - tools/github-event-processor/*.md
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/github-event-processor
+      - tools/codeowners-utils/Azure.Sdk.Tools.CodeownersUtils
+    exclude:
+      - tools/github-event-processor/YmlAndConfigFiles
+      - tools/github-event-processor/*.md
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ToolDirectory: tools/github-event-processor

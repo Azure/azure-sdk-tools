@@ -1,0 +1,16 @@
+# If a ServiceLabel ends with a source path/owner line and has ServiceOwners
+# in the same block.
+# ServiceLabel: %TestLabel4
+# ServiceOwners: @TestOwner2
+/sdk/someFakePath @TestOwner0
+
+# If a ServiceLabel ends with a source path/owner line and has the MissingPath
+# in the same block.
+# ServiceLabel: %TestLabel0
+#/<NotInRepo>/          @TestOwner0
+/sdk/someFakePath        @TestOwner4
+
+# If a ServiceLabel is part of a block that has both ServiceOwners and MissingPath
+# ServiceLabel: %TestLabel4
+# ServiceOwners: @TestOwner2
+#/<NotInRepo>/          @TestOwner0

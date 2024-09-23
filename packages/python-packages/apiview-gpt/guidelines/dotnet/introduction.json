@@ -1,0 +1,642 @@
+[
+  {
+    "id": "dotnet_introduction.html#dotnet-general-follow-framework-guidelines",
+    "category": "General Guidelines {#dotnet-general}",
+    "text": "DO follow the official .NET Framework Design Guidelines (https://aka.ms/fxdg3) \n\nAt the end of this document, you can find a section with the most commonly overlooked guidelines in existing Azure SDK libraries."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-general-follow-general-guidelines",
+    "category": "General Guidelines {#dotnet-general}",
+    "text": "DO follow the [General Azure SDK Guidelines][general-guidelines].\n\nThe guidelines provide a robust methodology for communicating with Azure services. The easiest way to ensure that your component meets these requirements is to use the [Azure.Core] package to call Azure services. Details of these helper APIs and their usage are described in the Using HttpPipeline section."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-general-use-http-pipeline",
+    "category": "General Guidelines {#dotnet-general}",
+    "text": "DO use HttpPipeline to implement all methods that call Azure REST services.\n\nThe pipeline can be found in the [Azure.Core] package, and it takes care of many [General Azure SDK Guidelines][general-guidelines]. Details of the pipeline design and usage are described in section Using HttpPipeline below. If you can't use the pipeline, you must implement [all the general requirements of Azure SDK]({{ \"/general_azurecore.html\" | relative_url }}) manually.\n\nThis document contains guidelines developed primarily for typical Azure REST services, i.e. stateless services with request-response based interaction model. Many of the guidelines in this document are more broadly applicable, but some might be specific to such REST services.\n\nAzure services are exposed to .NET developers as one or more service client types and a set of supporting types.  The supporting types may include various subclients, which give structure to the API by organizing groups of related service operations, and model types, which represent resources on the service.\n\nService clients are the main starting points for developers calling Azure services with the Azure SDK.  Each client library should have at least one client in its main namespace, so it's easy to discover.  The guidelines in this section describe patterns for the design of a service client.\n\nA service client should have the same shape as this code snippet:\n\n```csharp\nnamespace Azure.&lt;group&gt;.&lt;service_name&gt; {\n\n    // main service client class\n    public class &lt;service_name&gt;Client {\n\n        // simple constructors; don't use default parameters\n        public &lt;service_name&gt;Client(&lt;simple_binding_parameters&gt;);\n        public &lt;service_name&gt;Client(&lt;simple_binding_parameters&gt;, &lt;service_name&gt;ClientOptions options);\n\n        // 0 or more advanced constructors\n        public &lt;service_name&gt;Client(&lt;advanced_binding_parameters&gt;, &lt;service_name&gt;ClientOptions options = default);\n\n        // mocking constructor\n        protected &lt;service_name&gt;Client();\n\n        // service methods (synchronous and asynchronous)\n        public virtual Task&lt;Response&lt;&lt;model&gt;&gt; &lt;service_operation&gt;Async(&lt;parameters&gt;, CancellationToken cancellationToken = default);\n        public virtual Response&lt;model&gt; &lt;service_operation&gt;(&lt;parameters&gt;, CancellationToken cancellationToken = default);\n\n        // other members\n    }\n\n    // options for configuring the client\n    public class &lt;service_name&gt;ClientOptions : ClientOptions {\n\n    }\n}\n\n```\n\nFor example, the Application Configuration Service client looks like this code snippet:\n\n```csharp\nnamespace Azure.Data.Configuration {\n\n    public class ConfigurationClient {\n\n        public ConfigurationClient(string connectionString);\n        public ConfigurationClient(string connectionString, ConfigurationClientOptions options);\n\n        protected ConfigurationClient(); // for mocking\n\n        public virtual Task&lt;Response&lt;&lt;ConfigurationSetting&gt;&gt; GetConfigurationSettingAsync(string key, CancellationToken cancellationToken = default);\n        public virtual Response&lt;ConfigurationSetting&gt; GetConfigurationSetting(string key, CancellationToken cancellationToken = default);\n\n        // other members\n        \u2026\n    }\n\n    // options for configuring the client\n    public class ConfigurationClientOptions : ClientOptions {\n        ...\n    }\n}\n\n```\n\nYou can find the full sources of here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/appconfiguration/Azure.Data.AppConfiguration/src/ConfigurationClient.cs) "
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-naming",
+    "category": "The Service Client {#dotnet-client}",
+    "text": "DO name service client types with the Client suffix.\n\nFor example, the service client for the Application Configuration service is called ConfigurationClient."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-location",
+    "category": "The Service Client {#dotnet-client}",
+    "text": "DO place at least one service client in the root namespace of their corresponding component."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-type",
+    "category": "The Service Client {#dotnet-client}",
+    "text": "DO make service clients classes (reference types), not structs (value types)."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-immutable",
+    "category": "The Service Client {#dotnet-client}",
+    "text": "DO make service clients immutable.\n\nClient instances are often shared between threads (stored in application statics) and it should be difficult, if not impossible, for one of these threads to affect others."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-namespace",
+    "category": "The Service Client {#dotnet-client}",
+    "text": "DO see Namespace Naming guidelines for how to choose the namespace for the client types."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-constructor-minimal",
+    "category": "Service Client Constructors {#dotnet-client-ctor}",
+    "text": "DO provide a minimal constructor that takes only the parameters required to connect to the service.\n\nFor example, you may use a connection string, or host name and authentication.  It should be easy to start using the client without extensive customization.\n\n```csharp\npublic class ConfigurationClient {\n    public ConfigurationClient(string connectionString);\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-constructor-no-default-params",
+    "category": "Service Client Constructors {#dotnet-client-ctor}",
+    "text": "DO NOT use default parameters in the simplest constructor."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-constructor-overloads",
+    "category": "Service Client Constructors {#dotnet-client-ctor}",
+    "text": "DO provide constructor overloads that allow specifying additional options such as credentials, a custom HTTP pipeline, or advanced configuration.\n\nCustom pipeline and client-specific configuration are represented by an options parameter. The type of the parameter is typically a subclass of ClientOptions type, shown below."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-http-pipeline-options",
+    "category": "Using ClientOptions {#dotnet-usage-options}",
+    "text": "DO name subclasses of ClientOptions by adding Options suffix to the name of the client type the options subclass is configuring.\n\n```csharp\n// options for configuring ConfigurationClient\npublic class ConfigurationClientOptions : ClientOptions {\n    ...\n}\n\npublic class ConfigurationClient {\n\n    public ConfigurationClient(string connectionString, ConfigurationClientOptions options);\n    ...\n}\n\n```\n\nIf the options type can be shared by multiple client types, name it with a more general name, such as <library_name>ClientOptions.  For example, the BlobClientOptions class can be used by BlobClient, BlobContainerClient, and BlobAccountClient."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-options-no-default-constructor",
+    "category": "Using ClientOptions {#dotnet-usage-options}",
+    "text": "DO NOT have a default constructor on the options type.\n\nEach overload constructor should take at least version parameter to specify the service version. See Versioning guidelines for details.\n\nFor example, the ConfigurationClient type and its public constructors look as follows:\n\n```csharp\npublic class ConfigurationClient {\n    public ConfigurationClient(string connectionString);\n    public ConfigurationClient(string connectionString, ConfigurationClientOptions options);\n    public ConfigurationClient(Uri uri, TokenCredential credential, ConfigurationClientOptions options = default);\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-versioning-highest-api",
+    "category": "Service Versions {#dotnet-service-version-option}",
+    "text": "DO call the highest supported service API version by default."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-versioning-select-api-version",
+    "category": "Service Versions {#dotnet-service-version-option}",
+    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the service client.\n\nUse a constructor parameter called version on the client options type.\nThe version parameter must be the first parameter to all constructor overloads.\nThe version parameter must be required, and default to the latest supported service version.\nThe type of the version parameter must be ServiceVersion; an enum nested in the options type.\nThe ServiceVersion enum must use explicit values starting from 1.\nServiceVersion enum value 0 is reserved. When 0 is passed into APIs, ArgumentException should be thrown.\n\nFor example, the following is a code snippet from the ConfigurationClientOptions:\n\n```csharp\npublic class ConfigurationClientOptions : ClientOptions {\n\n    public ConfigurationClientOptions(ServiceVersion version = ServiceVersion.V2019_05_09) {\n        if (version == default)\n            throw new ArgumentException($\"The service version {version} is not supported by this library.\");\n        }\n    }\n\n    public enum ServiceVersion {\n        V2019_05_09 = 1,\n    }\n    ...\n}\n\n```\n\n**NOTE:** Third-party reusable libraries shouldn't change behavior without an explicit decision by the developer.  When developing libraries that are based on the Azure SDK, lock the library to a specific service version to avoid changes in behavior."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-versioning-feature-flags",
+    "category": "Service Versions {#dotnet-service-version-option}",
+    "text": "DO NOT force consumers to test service API versions to check support for a feature.  Use the tester-doer .NET pattern to implement feature flags, or use Nullable<T>.\n\nFor example, if the client library supports two service versions, only one of which can return batches, the consumer might write the following code:\n\n```csharp\nif (client.CanBatch) {\n    Response&lt;SettingBatch&gt; response = await client.GetBatch(\"some_key*\");\n    Guid? Guid = response.Result.Guid;\n} else {\n    Response&lt;ConfigurationSetting&gt; response1 = await client.GetAsync(\"some_key1\");\n    Response&lt;ConfigurationSetting&gt; response2 = await client.GetAsync(\"some_key2\");\n    Response&lt;ConfigurationSetting&gt; response3 = await client.GetAsync(\"some_key3\");\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-constructor-for-mocking",
+    "category": "Mocking",
+    "text": "DO provide protected parameterless constructor for mocking.\n\n```csharp\npublic class ConfigurationClient {\n    protected ConfigurationClient();\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-client-constructor-use-params",
+    "category": "Mocking",
+    "text": "DO NOT reference virtual properties of the client class as parameters to other methods or constructors within the client constructor. This violates the [.NET Framework Constructor Design] because a field to which a virtual property refers may not be initialized yet, or a mocked virtual property may not be set up yet. Use parameters or local variables instead:\n\n```csharp\npublic class ConfigurationClient {\n    private readonly ConfigurationRestClient _client;\n    public ConfigurationClient(string connectionString) {\n        ConnectionString = connectionString;\n        // Use parameter below instead of the class-defined virtual property.\n        _client = new ConfigurationRestClient(connectionString);\n    }\n    public virtual string ConnectionString { get; }\n}\n\n```\n\nIn mocks, using the virtual property instead of the parameter requires the property to be mocked to return the value before the constructor is called when the mock is created. In [Moq] this requires using the delegate parameter to create the mock, which may not be an obvious workaround.\n\nSee Support for Mocking for details.\n\nThere are two categories of clients: service clients and their subclients. Service clients can be instantiated and have the Client suffix.  Subclients can only be created by calling factory methods on other clients (commonly on service clients) and do not have the client suffix.\n\nAs discussed above, the service client is the entry point to the API for an Azure service -- from it, library users can invoke all operations the service provides and can easily implement the most common scenarios.  Where it will simplify an API's design, groups of service calls can be organized around smaller subclient types."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-client-entry-point",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "DO use service clients to indicate the starting point(s) for the most common customer scenarios."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-use-subclients",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "YOU SHOULD use subclients to group operations related to a service resource or functional area to improve API usability.\n\nThere are a variety of types of subclients.  These include:\nResource Clients, which group methods bound to a specific resource, along with information about the resource.\nOperation Group Clients, which are not bound to a resource but group related operations.  If referring to a specific resource, these would take a resource identifier as a parameter.\nSubclasses of Operation<T>, which manage service calls related to long running operations.\nPageable<T> types returned from paging methods, which manage service calls to retrieve pages of elements in a collection.\n\nFor example, in the Azure Container Registry API, a ContainerRegistryClient service client provides an entry point for communicating with the service, and a ContainerRepository resource client organizes operations related to a specific repository resource:\n\n```C#\npublic class ContainerRegistryClient {\n    // ...\n    public virtual ContainerRepository GetRepository(string name);\n}\n \npublic class ContainerRepository {\n    protected ContainerRepository();\n    public virtual string Name { get; }\n    public virtual Response Delete(CancellationToken cancellationToken = default);\n    public virtual Response&lt;ContainerRepositoryProperties&gt; GetProperties(CancellationToken cancellationToken = default);\n    public virtual Response&lt;ContainerRepositoryProperties&gt; UpdateProperties(ContainerRepositoryProperties value, CancellationToken cancellationToken = default);\n    // ...\n}\n\n```\n\nServiceBusSender groups operations for sending messages to a specific entity with properties that identify that entity.\n\n```C#\n    public class ServiceBusSender {\n        protected ServiceBusSender();\n        public virtual string EntityPath { get; }\n        public virtual Task CancelScheduledMessageAsync(long sequenceNumber, CancellationToken cancellationToken = default);\n        public virtual ValueTask&lt;ServiceBusMessageBatch&gt; CreateMessageBatchAsync(CancellationToken cancellationToken = default);\n        public virtual Task&lt;long&gt; ScheduleMessageAsync(ServiceBusMessage message, DateTimeOffset scheduledEnqueueTime, CancellationToken cancellationToken = default);\n        public virtual Task SendMessageAsync(ServiceBusMessage message, CancellationToken cancellationToken = default);\n        // ...\n    }\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-subclient-factory-methods",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "DO provide factory methods to create a subclient."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-subclient-factory-methods-suffix",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "YOU MAY include a suffix the method that creates a subclient, according to the table below:\n\n| Client Type            | Naming Convention  | Factory Method Naming Convention                 |\n|------------------------|--------------------|--------------------------------------------------|\n| Service Client         | Client Suffix    | Get<client>Client()                            |\n| Resource Client        | No Suffix          | Get<resource>()                                |\n| Operation Group Client | No Suffix          | Get<group>Client()                             |\n| Long Running Operation | Operation Suffix | (long LRO) Start prefix; (short LRO) no prefix |\n| Pageable                    | Pageable<T>  | Get<resource>s                                 |"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-subclient-factory-methods-parameters",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "YOU SHOULD take a resource identifier as a parameter to the resource client factory method."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-subclient-properties",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "YOU SHOULD expose resource identifiers as properties on the resource client."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-subclient-collections",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "YOU MAY place operations on collections of resources a separate subclient to avoid cluttering the parent client with too many methods.\n\nWhile API usability is the primary reason for subclients, another motivating factor is resource efficiency.  Clients need to be cached (https://devblogs.microsoft.com/azure-sdk/lifetime-management-and-thread-safety-guarantees-of-azure-sdk-net-clients/)  so if the set of client instances is large or unlimited (in case the client takes a scoping parameter, like a hub, or a container), using subclients allows an application to cache the top level client and create instances of subclients on demand.  In addition, if there is an expensive shared resource (e.g. an AMQP connection), subclients are preferred, as they naturally lead to resource sharing."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-client-entry-point",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "YOU SHOULD use the HttpPipeline that belongs to the type providing the factory method to make network calls to the service from the subclient.  An exception to this might be if subclient needs different pipeline policies than the parent client."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-subclient-no-constructor",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "DO NOT provide a public constructor on a subclient.  Subclients are non-instantiable by design."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-subclient-mocking",
+    "category": "Subclients {#dotnet-subclients}",
+    "text": "DO provide a protected parameterless constructor on subclients for mocking.\n\nIn many cases, an Azure SDK API should contain one service client and zero or more subclients.  Both service clients and subclients have service methods.  Consider adding more than one service client to the API in the following cases:"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-client-multiple-target-customers",
+    "category": "Choosing between Service Clients and Subclients {#dotnet-choosing-client-types}",
+    "text": "YOU MAY consider providing an additional service client in an API when the service has different common scenarios for multiple target users, such as a service administrator and an end-user of the entities the administrator creates.\n\nFor example, the Azure Form Recognizer library provides a FormRecognizerClient for application developers to read form fields in their applications, and a FormTrainingClient for data scientist customers to train the form recognition models."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-client-advanced-scenarios",
+    "category": "Choosing between Service Clients and Subclients {#dotnet-choosing-client-types}",
+    "text": "YOU MAY consider providing an additional service client when a service has advanced scenarios you want to keep separate from the types that support the most common scenarios.  In this case, consider using a .Specialized namespace to contain the additional clients.\n\nFor example, the Azure Storage Blobs library provides a BlockBlobClient in the Azure.Storage.Blobs.Specialized namespace that gives finer grained control of how blobs are uploaded.  For further discussion of designing APIs for advanced scenarios, please see the .NET Framework Guidelines (https://aka.ms/fxdg3) sections on progressive frameworks and the principle of layered architecture."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-client-direct-resource-urls",
+    "category": "Choosing between Service Clients and Subclients {#dotnet-choosing-client-types}",
+    "text": "YOU MAY consider providing an additional service client for a service resource that is commonly referenced with a URL that points to it directly.  This will allow users to instantiate a client directly from the resource endpoint, without needing to parse the URL to obtain the root service endpoint."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-client-resource-hierarchy",
+    "category": "Choosing between Service Clients and Subclients {#dotnet-choosing-client-types}",
+    "text": "YOU MAY consider providing additional service clients for each level in a resource hierarchy.  For service clients representing resources in a hierarchy, you should also provide a <parent>.Get<child>Client(...) method to retrieve the client for the named child.\n\nFor example, the Azure Storage service provides an account that contains zero or more containers, which in turn contain zero or more blobs. The Azure SDK storage library provides service clients for each level: BlobServiceClient, BlobContainerClient, and BlobClient.\n\n```C#\npublic class BlobServiceClient {\n    // ...\n    public virtual BlobContainerClient GetBlobContainerClient(string blobContainerName);\n    // ...\n}\n\npublic class BlobContainerClient {\n    // ...\n    public virtual BlobClient GetBlobClient(string blobName);\n    // ...\n}\n\npublic class BlobClient {\n    // ...\n}\n\n\n```\n\nService methods are the methods on the client that invoke operations on the service.\n\nHere are the main service methods in the ConfigurationClient.  They meet all the guidelines that are discussed below.\n\n```csharp\npublic class ConfigurationClient {\n\n    public virtual Task&lt;Response&lt;ConfigurationSetting&gt;&gt; AddAsync(ConfigurationSetting setting, CancellationToken cancellationToken = default);\n    public virtual Response&lt;ConfigurationSetting&gt; Add(ConfigurationSetting setting, CancellationToken cancellationToken = default);\n\n    public virtual Task&lt;Response&lt;ConfigurationSetting&gt;&gt; SetAsync(ConfigurationSetting setting, CancellationToken cancellationToken = default);\n    public virtual Response&lt;ConfigurationSetting&gt; Set(ConfigurationSetting setting, CancellationToken cancellationToken = default);\n\n    public virtual Task&lt;Response&lt;ConfigurationSetting&gt;&gt; GetAsync(string key, SettingFilter filter = default, CancellationToken cancellationToken = default);\n    public virtual Response&lt;ConfigurationSetting&gt; Get(string key, SettingFilter filter = default, CancellationToken cancellationToken = default);\n\n    public virtual Task&lt;Response&lt;ConfigurationSetting&gt;&gt; DeleteAsync(string key, SettingFilter filter = default, CancellationToken cancellationToken = default);\n    public virtual Response&lt;ConfigurationSetting&gt; Delete(string key, SettingFilter filter = default, CancellationToken cancellationToken = default);\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-methods-sync-and-async",
+    "category": "Sync and Async",
+    "text": "DO provide both asynchronous and synchronous variants for all service methods.\n\nMany developers want to port existing applications to the Cloud. These applications are often synchronous, and the cost of rewriting them to be asynchronous is usually prohibitive. Calling asynchronous APIs from synchronous methods can only be done through a technique called sync-over-async, which can cause deadlocks (https://devblogs.microsoft.com/pfxteam/should-i-expose-synchronous-wrappers-for-asynchronous-methods/)   The Azure SDK provides synchronous APIs to minimize friction when porting existing application to Azure."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-methods-naming",
+    "category": "Sync and Async",
+    "text": "DO ensure that the names of the asynchronous and the synchronous variants differ only by the Async suffix.\n\nMost methods in Azure SDK libraries should be named following the typical .NET method naming conventions. The Azure SDK Design Guidelines add special conventions for methods that access and manipulate server resources."
+  },
+  {
+    "id": "dotnet_introduction.html#general-client-standardize-verbs",
+    "category": "Naming",
+    "text": "YOU SHOULD use standard verbs for methods that access or manipulate server resources.\n\n<div class=\"standard-verbs-table-container\">\n    <!-- Table Header -->\n    <div class=\"standard-verbs-table-row\">\n        <div class=\"standard-verbs-table-cell standard-verbs-table-cell-header standard-verbs-table-cell-verb\">Verb</div>\n        <div class=\"standard-verbs-table-cell standard-verbs-table-cell-header\">Parameters</div>\n        <div class=\"standard-verbs-table-cell standard-verbs-table-cell-header\">Returns</div>\n        <div class=\"standard-verbs-table-cell standard-verbs-table-cell-header standard-verbs-table-cell-comments\">\n            Comments</div>\n    </div>\n    <!-- Table Rows -->\n    {% for item in data %}\n    {% assign mod = forloop.index0 | modulo:2 %}\n    {% if mod == 0 %}\n    {% include tables/standard_verbs_row.html perRowCellStyle=\"standard-verbs-table-cell-pair\"%}\n    {% else %}\n    {% include tables/standard_verbs_row.html perRowStyle=\"\"%}\n    {% endif %}\n    {% endfor %}\n</div>\n"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-methods-cancellation",
+    "category": "Cancellation",
+    "text": "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken or, in case of protocol methods, an optional RequestContext parameter called context.\n\nThe token should be further passed to all calls that take a cancellation token. DO NOT check the token manually, except when running a significant amount of CPU-bound work within the library, e.g. a loop that can take more than a typical network call."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-methods-virtual",
+    "category": "Mocking",
+    "text": "DO make service methods virtual.\n\nVirtual methods are used to support mocking. See Support for Mocking for details."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-methods-response-sync",
+    "category": "Return Types",
+    "text": "DO return Response<T> or Response from synchronous methods.\n\nT represents the content of the response, as described below."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-methods-response-async",
+    "category": "Return Types",
+    "text": "DO return Task<Response<T>> or Task<Response> from asynchronous methods that make network requests.\n\nThere are two possible return types from asynchronous methods: Task and ValueTask. Your code will be doing a network request in the majority of cases.  The Task variant is more appropriate for this use case. For more information, see this blog post (https://devblogs.microsoft.com/dotnet/understanding-the-whys-whats-and-whens-of-valuetask/#user-content-should-every-new-asynchronous-api-return-valuetask--valuetasktresult) \n\nT represents the content of the response, as described below.\n\nThe T can be either an unstructured payload (e.g. bytes of a storage blob) or a model type representing deserialized response content."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-return-unstructured-type",
+    "category": "Return Types",
+    "text": "DO use one of the following return types to represent an unstructured payload:\nSystem.IO.Stream - for large payloads\nbyte[] - for small payloads\nReadOnlyMemory<byte> - for slices of small payloads"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-return-model-type",
+    "category": "Return Types",
+    "text": "DO return a model type if the content has a schema and can be deserialized.\n\nFor more information, see Model Types"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-methods-thread-safety",
+    "category": "Thread Safety",
+    "text": "DO be thread-safe. All public members of the client type must be safe to call from multiple threads concurrently.\n\nService methods fall into two main groups when it comes to the number and complexity of parameters they accept:\nService Methods with Simple Inputs, simple methods for short\nService Methods with Complex Inputs, complex methods for short\n\nSimple methods are methods that take up to six parameters, with most of the parameters being simple BCL primitives. Complex methods are methods that take large number of parameters and typically correspond to REST APIs with complex request payloads.\n\nSimple methods should follow standard .NET Framework Design Guidelines (https://aka.ms/fxdg3) for parameter list and overload design.\n\nComplex methods should use option parameter to represent the request payload, and consider providing convenience simple overloads for most common scenarios.\n\n```csharp\npublic class BlobContainerClient {\n\n    // simple service method\n    public virtual Response&lt;BlobInfo&gt; UploadBlob(string blobName, Stream content, CancellationToken cancellationToken = default);\n\n    // complex service method\n    public virtual Response&lt;BlobInfo&gt; CreateBlob(BlobCreateOptions options = null, CancellationToken cancellationToken = default);\n\n    // convinience overload[s]\n    public virtual Response&lt;BlobContainerInfo&gt; CreateBlob(string blobName, CancellationToken cancellationToken = default);\n}\n\npublic class BlobCreateOptions {\n    public PublicAccessType Access { get; set; }\n    public IDictionary&lt;string, string&gt; Metadata { get; }\n    public BlobContainerEncryptionScopeOptions Encryption { get; set; }\n    ...\n}\n\n```\n\nThe Options class is designed similarly to .NET custom attributes, where required service method parameters are modeled as Options class constructor parameters and get-only properties, and optional parameters are get-set properties."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-params-complex",
+    "category": "Service Method Parameters {#dotnet-parameters}",
+    "text": "DO use the options parameter pattern for complex service methods."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-params-complex",
+    "category": "Service Method Parameters {#dotnet-parameters}",
+    "text": "YOU MAY use the options parameter pattern for simple service methods that you expect to grow in the future."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-params-complex",
+    "category": "Service Method Parameters {#dotnet-parameters}",
+    "text": "YOU MAY add simple overloads of methods using the options parameter pattern.\n\nIf in common scenarios, users are likely to pass just a small subset of what the options parameter represents, consider adding an overload with a parameter list representing just this subset.\n\n```csharp\n    // main overload taking the options property bag\n    public virtual Response&lt;BlobInfo&gt; CreateBlob(BlobCreateOptions options = null, CancellationToken cancellationToken = default);\n\n    // simple overload with a subset of parameters of the options bag\n    public virtual Response&lt;BlobContainerInfo&gt; CreateBlob(string blobName, CancellationToken cancellationToken = default);\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-params-options",
+    "category": "Service Method Parameters {#dotnet-parameters}",
+    "text": "YOU MAY name the option parameter type with the 'Options' suffix.\n\nService methods take two kinds of parameters: service parameters and client parameters. Service parameters are sent across the wire to the service as URL segments, query parameters, request header values, and request bodies (typically JSON or XML).  Client parameters are used solely within the client library and are not sent to the service; examples are path parameters, CancellationTokens or file paths."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-params-client-validation",
+    "category": "Parameter Validation",
+    "text": "DO validate client parameters."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-params-service-validation",
+    "category": "Parameter Validation",
+    "text": "DO NOT validate service parameters.\n\nCommon parameter validations include null checks, empty string checks, and range checks. Let the service validate its parameters."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-params-test-devex",
+    "category": "Parameter Validation",
+    "text": "DO test the developer experience when invalid service parameters are passed in. Ensure clear error messages are generated by the client. If the developer experience is inadequate, work with the service team to correct the problem.\n\nMany Azure REST APIs return collections of data in batches or pages. A client library will expose such APIs as special enumerable types Pageable<T> or AsyncPageable<T>.\nThese types are located in the Azure.Core package.\n\nFor example, the configuration service returns collections of items as follows:\n\n```csharp\npublic class ConfigurationClient {\n\n    // asynchronous API returning a collection of items\n    public virtual AsyncPageable&lt;Response&lt;ConfigurationSetting&gt;&gt; GetConfigurationSettingsAsync(...);\n\n    // synchronous variant of the method above\n    public virtual Pageable&lt;ConfigurationSetting&gt; GetConfigurationSettings(...);\n    ...\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-pagination-ienumerable",
+    "category": "Methods Returning Collections (Paging) {#dotnet-paging}",
+    "text": "DO return Pageable<T> or AsyncPageable<T> from service methods that return a collection of items.\n\nSome service operations, known as Long Running Operations or LROs take a long time (up to hours or days). Such operations do not return their result immediately, but rather are started, their progress is polled, and finally the result of the operation is retrieved.\n\nAzure.Core library exposes an abstract type called Operation<T>, which represents such LROs and supports operations for polling and waiting for status changes, and retrieving the final operation result.  A service method invoking a long running operation will return a subclass of Operation<T>, as shown below.\n\nNote that some older libraries use a slightly different, older LRO pattern. In the old pattern, LRO methods started with the prefix 'Start' and did not take the WaitUntil parameter. Such libraries are free to continue using this older pattern, or they can transition to the new pattern.\n\n```csharp\n// the following type is located in Azure.Core\npublic abstract class Operation&lt;T&gt; : Operation {\n\n    public abstract bool HasCompleted { get; }\n    public abstract bool HasValue { get; }\n\n    public abstract string Id { get; }\n\n    public abstract T Value { get; } // throws if CachedStatus != Succeeded\n    public abstract Response GetRawResponse();\n\n    public abstract Response UpdateStatus(CancellationToken cancellationToken = default);\n    public abstract ValueTask&lt;Response&gt; UpdateStatusAsync(CancellationToken cancellationToken = default);\n\n    public virtual Response&lt;T&gt; WaitForCompletion(CancellationToken cancellationToken = default);\n    public virtual Response&lt;T&gt; WaitForCompletion(TimeSpan pollingInterval, CancellationToken cancellationToken);\t\n    public virtual ValueTask&lt;Response&lt;T&gt;&gt; WaitForCompletionAsync(CancellationToken cancellationToken = default);\t\n    public virtual ValueTask&lt;Response&lt;T&gt;&gt; WaitForCompletionAsync(TimeSpan pollingInterval, CancellationToken cancellationToken = default);\n\n    // inherited  members returning untyped responses\n    public virtual Response WaitForCompletionResponse(CancellationToken cancellationToken = default);\t\n    public virtual Response WaitForCompletionResponse(TimeSpan pollingInterval, CancellationToken cancellationToken = default);\t\n    public virtual ValueTask&lt;Response&gt; WaitForCompletionResponseAsync(CancellationToken cancellationToken = default);\t\n    public virtual ValueTask&lt;Response&gt; WaitForCompletionResponseAsync(TimeSpan pollingInterval, CancellationToken cancellationToken = default);\n}\n\n```\n\nClient libraries need to inherit from Operation<T> not only to implement all abstract members, but also to provide a constructor required to access an existing LRO (an LRO initiated by a different process).\n\n```csharp\npublic class CopyFromUriOperation : Operation&lt;long&gt; {\n    public CopyFromUriOperation(string id, BlobBaseClient client);\n    ...\n}\n\npublic class BlobBaseClient {\n\n    public virtual CopyFromUriOperation CopyFromUri(WaitUntil wait, ..., CancellationToken cancellationToken = default);\n    public virtual Task&lt;CopyFromUriOperation&gt; CopyFromUriAsync(WaitUntil wait, ..., CancellationToken cancellationToken = default);\n}\n\n```\n\nThe following code snippet shows how an SDK consumer would use the Operation to poll for a response.\n\n```csharp\nBlobBaseClient client = ...\n\n// automatic polling\n{\n    Operation&lt;long&gt; operation = await client.CopyFromUri(WaitUntil.Completed, ...);\n    Console.WriteLine(operation.Value);\n}\n\n// manual polling\n{\n    CopyFromUriOperation operation = await client.CopyFromUriAsync(WaitUntil.Started, ...);\n    while (true)\n    {\n        await operation.UpdateStatusAsync();\n        if (operation.HasCompleted) break;\n        await Task.Delay(1000); // play some elevator music\n    }\n    if (operation.HasValue) Console.WriteLine(operation.Value);\n}\n\n// saving operation ID\n{\n    CopyFromUriOperation operation = await client.CopyFromUriAsync(WaitUntil.Started, ...);\n    string operationId = operation.Id;\n\n    // two days later\n    var operation2 = new CopyFromUriOperation(operationId, client);\n    long value = await operation2.WaitForCompletionAsync();\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-lro-return",
+    "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
+    "text": "DO return a subclass of Operation<T> from LRO methods."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-lro-waituntil",
+    "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
+    "text": "DO take WaitUntil as the first parameter to LRO methods."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-lro-subclass",
+    "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
+    "text": "YOU MAY add additional APIs to subclasses of Operation<T>.\nFor example, some subclasses add a constructor allowing to create an operation instance from a previously saved operation ID. Also, some subclasses are more granular states besides the IsCompleted and HasValue states that are present on the base class."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-lro-constructor",
+    "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
+    "text": "DO provide a public constructor on subclasses of Operation<T> to allow users to access an existing LRO."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-lro-constructor-for-mocking",
+    "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
+    "text": "DO provide protected parameterless constructor for mocking in subclasses of Operation<T>.\n\n```csharp\npublic class CopyFromUriOperation {\n    protected CopyFromUriOperation();\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-lro-mocking-properties",
+    "category": "Methods Invoking Long Running Operations {#dotnet-longrunning}",
+    "text": "DO make all properties virtual to allow mocking.\n\n```csharp\npublic class CopyFromUriOperation {\n    public virtual Uri SourceUri { get; }\n}\n\n```\n\nSome services support conditional requests that are used to implement optimistic concurrency control. In Azure, optimistic concurency is typically implemented using If-Match headers and ETags. See Managing Concurrency in Blob Storage (https://docs.microsoft.com/en-us/azure/storage/blobs/concurrency-manage?tabs=dotnet) as a good example."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-conditional-etag",
+    "category": "Conditional Request Methods",
+    "text": "DO use Azure.Core ETag to represent ETags."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-conditional-matchcondition",
+    "category": "Conditional Request Methods",
+    "text": "YOU MAY take MatchConditions (https://docs.microsoft.com/en-us/dotnet/api/azure.matchconditions?view=azure-dotnet)  RequestConditions (https://docs.microsoft.com/en-us/dotnet/api/azure.requestconditions?view=azure-dotnet)  (or a custom subclass) as a parameter to conditional service call methods.\n\nTODO: more guidelines comming. see https://github.com/Azure/azure-sdk/issues/2154\n\nIn addition to service client types, Azure SDK APIs provide and use other supporting types as well.\n\nThis section describes guidelines for the design model types and all their transitive closure of public dependencies (i.e. the model graph).  A model type is a representation of a REST service's resource.\n\nFor example, review the configuration service model type below:\n\n```csharp\npublic sealed class ConfigurationSetting : IEquatable&lt;ConfigurationSetting&gt; {\n\n    public ConfigurationSetting(string key, string value, string label = default);\n\n    public string ContentType { get; set; }\n    public string ETag { get; internal set; }\n    public string Key { get; set; }\n    public string Label { get; set; }\n    public DateTimeOffset LastModified { get; internal set; }\n    public bool Locked { get; internal set; }\n    public IDictionary&lt;string, string&gt; Tags { get; }\n    public string Value { get; set; }\n\n    public bool Equals(ConfigurationSetting other);\n\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override bool Equals(object obj);\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override int GetHashCode();\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override string ToString();\n}\n\n```\n\nThis model is returned from service methods as follows:\n\n```csharp\npublic class ConfigurationClient {\n    public virtual Task&lt;Response&lt;ConfigurationSetting&gt;&gt; GetAsync(...);\n    public virtual Response&lt;ConfigurationSetting&gt; Get(...);\n    ...\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-return-model-public-getters",
+    "category": "Model Types {#dotnet-model-types}",
+    "text": "DO ensure model public properties are get-only if they aren't intended to be changed by the user.\n\nMost output-only models can be fully read-only. Models that are used as both outputs and inputs (i.e. received from and sent to the service) typically have a mixture of read-only and read-write properties.\n\nFor example, the Locked property of ConfigurationSetting is controlled by the service.  It shouldn't be changed by the user.  The ContentType property, by contrast, can be modified by the user.\n\n```csharp\npublic sealed class ConfigurationSetting : IEquatable&lt;ConfigurationSetting&gt; {\n\n    public string ContentType { get; set; }\n\n    public bool Locked { get; internal set; }\n}\n\n```\n\nEnsure you include an internal setter to allow for deserialization.  For more information, see JSON Serialization."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-models-prefer-structs",
+    "category": "Model Types {#dotnet-model-types}",
+    "text": "DO ensure model types are structs, if they meet the criteria for being structs.\n\nGood candidates for struct are types that are small and immutable, especially if they are often stored in arrays. See .NET Framework Design Guidelines (https://aka.ms/fxdg3) for details."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-models-basic-data-interfaces",
+    "category": "Model Types {#dotnet-model-types}",
+    "text": "YOU SHOULD implement basic data type interfaces on model types, per .NET Framework Design Guidelines (https://aka.ms/fxdg3) \n\nFor example, implement IEquatable<T>, IComparable<T>, IEnumerable<T>, etc. if applicable."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-return-model-collections",
+    "category": "Model Types {#dotnet-model-types}",
+    "text": "YOU SHOULD use the following collection types for properties of model types:\nIReadOnlyList<T> and IList<T> for most collections\nIReadOnlyDictionary<T> and IDictionary<T> for lookup tables\nT[], Memory<T>, and ReadOnlyMemory<T> when low allocations and performance are critical\n\nNote that this guidance does not apply to input parameters. Input parameters representing collections should follow standard .NET Framework Design Guidelines (https://aka.ms/fxdg3)  e.g. use IEnumerable<T> is allowed.\nAlso, this guidance does not apply to return types of service method calls. These should be using Pageable<T> and AsyncPageable<T> discussed in Methods Returning Collections."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-models-namespace",
+    "category": "Model Types {#dotnet-model-types}",
+    "text": "YOU MAY place output model types in .Models subnamespace to avoid cluttering the main namespace with too many types.\n\nIt is important for the main namespace of a client library to be clutter free. Some client libraries have a relatively small number of model types, and these should keep the model types in the main namespace. For example, model types of Azure.Data.AppConfiguration package are in the main namespace. On the other hand, model types of Azure.Storage.Blobs package are in .Models subnamespace.\n\n```csharp\nnamespace Azure.Storage.Blobs {\n    public class BlobClient { ... }\n    public class BlobClientOptions { ... }\n    ...\n}\nnamespace Azure.Storage.Blobs.Models {\n    ...\n    public class BlobContainerItem { ... }\n    public class BlobContainerProperties { ...}\n    ...\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-service-editor-browsable-state",
+    "category": "Model Types {#dotnet-model-types}",
+    "text": "YOU SHOULD apply the [EditorBrowsable(EditorBrowsableState.Never)] attribute to methods on the model type that the user isn't meant to call.\n\nAdding this attribute will hide the methods from being shown with IntelliSense.  A user will almost never call GetHashCode() directly.  Equals(object) is almost never called if the type implements IEquatable<T> (which is preferred).  Hide the ToString() method if it isn't overridden.\n\n```csharp\npublic sealed class ConfigurationSetting : IEquatable&lt;ConfigurationSetting&gt; {\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override bool Equals(object obj);\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public override int GetHashCode();\n}\n\n```\n\n**NOTE:** Unlike service clients, model types aren't required to be thread-safe, as they're rarely shared between threads."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-models-in-mocks",
+    "category": "Model Types {#dotnet-model-types}",
+    "text": "DO ensure all model types can be used in mocks.\n\nIn practice, you need to provide public APIs to construct model graphs. See Support for Mocking for details.\n\nTODO: issue #2298"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-enums",
+    "category": "Enumerations",
+    "text": "DO use an enum for parameters, properties, and return types when values are known."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-enums-exception",
+    "category": "Enumerations",
+    "text": "YOU MAY use a readonly struct in place of an enum that declares well-known fields but can contain unknown values returned from the service, or user-defined values passed to the service.\n\nSee enumeration-like structure documentation for implementation details.\n\nThe Azure.Core package provides common functionality for client libraries.  Documentation and usage examples can be found in the azure/azure-sdk-for-net (https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/core/Azure.Core) repository."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-primitives-etag",
+    "category": "Using Primitive Types",
+    "text": "DO use Azure.ETag to represent ETags.\n\nThe Azure.ETag type is located in Azure.Core package."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-primitives-uri",
+    "category": "Using Primitive Types",
+    "text": "DO use System.Uri to represent URIs.\n\nIn .NET, throwing exceptions is how we communicate to library consumers that the services returned an error."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-errors-response-failed",
+    "category": "Exceptions {#dotnet-errors}",
+    "text": "DO throw RequestFailedException or its subtype when a service method fails with non-success status code.\n\nThe exception is available in Azure.Core package:\n\n```csharp\npublic class RequestFailedException : Exception {\n\n    public RequestFailedException(Response response);\n    public RequestFailedException(Response response, Exception innerException);\n    public RequestFailedException(Response response, Exception innerException, RequestFailedDetailsParser detailsParser);\n\n    public int Status { get; }\n}\n\n```\n\nThe exception message will be formed from the passed in Response content. For example:\n\n```csharp\nif (response.Status != 200) {\n    throw new RequestFailedException(response);\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-errors-use-response-failed-when-possible",
+    "category": "Exceptions {#dotnet-errors}",
+    "text": "DO use RequestFailedException or one of its subtypes where possible."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-request-failed-details-parser",
+    "category": "Exceptions {#dotnet-errors}",
+    "text": "DO provide RequestFailedDetailsParser for non-standard error formats.\n\nIf customization is required to parse the response content, e.g. because the service does not adhere to the standard error format as represented by the ResponseError type, libraries can must implement a RequestFailedDetailsParser and pass the parser into the construction of the HttpPipeline via the HttpPipelineOptions type. If more granular control is required than associating the parser per pipeline, there is a constructor of RequestFailedException that takes a RequestFailedDetailsParser that may be used.\n\nDon't introduce new exception types unless there's a programmatic scenario for handling the new exception that's different than RequestFailedException\n\nThe client library consumer should construct a service client using just the constructor.  After construction, service methods can successfully invoke service operations.  The constructor parameters must take all parameters required to create a functioning client, including all information needed to authenticate with the service.\n\nThe general constructor pattern refers to binding parameters.\n\n```csharp\n// simple constructors\npublic &lt;service_name&gt;Client(&lt;simple_binding_parameters&gt;);\npublic &lt;service_name&gt;Client(&lt;simple_binding_parameters&gt;, &lt;service_name&gt;ClientOptions options);\n\n// 0 or more advanced constructors\npublic &lt;service_name&gt;Client(&lt;advanced_binding_parameters&gt;, &lt;service_name&gt;ClientOptions options = default);\n\n```\n\nTypically, binding parameters would include a URI to the service endpoint and authorization credentials. For example, the blob service client can be bound using any of:\na connection string (which contains both endpoint information and credentials),\nan endpoint (for anonymous access),\nan endpoint and credentials (for authenticated access).\n\n```csharp\n// hello world constructors using the main authentication method on the service's Azure Portal (typically a connection string)\n// we don't want to use default parameters here; all other overloads can use default parameters\npublic BlobServiceClient(string connectionString)\npublic BlobServiceClient(string connectionString, BlobClientOptions options)\n\n// anonymous access\npublic BlobServiceClient(Uri uri, BlobClientOptions options = default)\n\n// using credential types\npublic BlobServiceClient(Uri uri, StorageSharedKeyCredential credential, BlobClientOptions options = default)\npublic BlobServiceClient(Uri uri, TokenCredential credential, BlobClientOptions options = default)\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-auth-azure-core",
+    "category": "Authentication {#dotnet-authentication}",
+    "text": "YOU SHOULD use credential types provided in the Azure.Core package.\n\nCurrently, Azure.Core provides TokenCredential for OAuth style tokens, including MSI credentials."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-auth-rolling-credentials",
+    "category": "Authentication {#dotnet-authentication}",
+    "text": "DO support changing credentials without having to create a new client instance.\n\nCredentials passed to the constructors must be read before every request (for example, by calling TokenCredential.GetToken())."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-auth-arch-review",
+    "category": "Authentication {#dotnet-authentication}",
+    "text": "DO contact [adparch] if you want to add a new credential type."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-auth-connection-strings",
+    "category": "Authentication {#dotnet-authentication}",
+    "text": "YOU MAY offer a way to create credentials from a connection string only if the service offers a connection string via the Azure portal.\n\nDon't ask users to compose connection strings manually if they aren't available through the Azure portal. Connection strings are immutable.  It's impossible for an application to roll over credentials when using connection strings."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-namespaces-naming",
+    "category": "Namespaces {#dotnet-namespace-naming}",
+    "text": "DO adhere to the following scheme when choosing a namespace: Azure.<group>.<service>[.<feature>]\n\nFor example, Azure.Storage.Blobs."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-namespaces-approved-list",
+    "category": "Namespaces {#dotnet-namespace-naming}",
+    "text": "DO use one of the following pre-approved namespace groups:\nAzure.AI for artificial intelligence, including machine learning\nAzure.Analytics for client libraries that gather or process analytics data\nAzure.Communication communication services\nAzure.Core for libraries that aren't service specific\nAzure.Cosmos for object database technologies\nAzure.Data for client libraries that handle databases or structured data stores\nAzure.DigitalTwins for DigitalTwins related technologies\nAzure.Identity for authentication and authorization client libraries\nAzure.IoT for client libraries dealing with the Internet of Things.\n\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\n\n\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\nAzure.Media for client libraries that deal with audio, video, or mixed reality\nAzure.Messaging for client libraries that provide messaging services, such as push notifications or pub-sub.\nAzure.Monitor for observability and Azure Monitor client libraries.\nAzure.ResourceManager.[ResourceProvider] for management plane client libraries for a given resource provider.\n\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\n\n\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\nAzure.Search for search technologies\nAzure.Security for client libraries dealing with security\nAzure.Storage for client libraries that handle unstructured data\nUse Iot for Pascal cased compound words, such as IotClient, otherwise follow language conventions.\nDo not use IoT more than once in a namespace.\nFor example the compute management plane namespace would be Azure.ResourceManager.Compute.\n\nIf you think a new group should be added to the list, contact [adparch]."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-namespaces-registration",
+    "category": "Namespaces {#dotnet-namespace-naming}",
+    "text": "DO register all namespaces with [adparch]."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-namespaces-location",
+    "category": "Namespaces {#dotnet-namespace-naming}",
+    "text": "DO NOT place APIs in the second-level namespace (directly under the Azure namespace)."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-namespaces-models",
+    "category": "Namespaces {#dotnet-namespace-naming}",
+    "text": "YOU SHOULD consider placing model types in a .Models namespace if number of model types is or might become large.\n\nSee model type guidelines for details.\n\nAll client libraries must support mocking to enable non-live testing of service clients by customers.\n\nHere is an example of how the ConfigurationClient can be mocked using [Moq] (a popular .NET mocking library):\n\n```csharp\n// Create a mock response\nvar mockResponse = new Mock&lt;Response&gt;();\n// Create a client mock\nvar mock = new Mock&lt;ConfigurationClient&gt;();\n// Setup client method\nmock.Setup(c =&gt; c.Get(\"Key\", It.IsAny&lt;string&gt;(), It.IsAny&lt;DateTimeOffset&gt;(), It.IsAny&lt;CancellationToken&gt;()))\n    .Returns(new Response&lt;ConfigurationSetting&gt;(mockResponse.Object, ConfigurationModelFactory.ConfigurationSetting(\"Key\", \"Value\")));\n\n// Use the client mock\nConfigurationClient client = mock.Object;\nConfigurationSetting setting = client.Get(\"Key\");\nAssert.AreEqual(\"Value\", setting.Value);\n\n```\n\nReview the full sample (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/appconfiguration/Azure.Data.AppConfiguration/samples/Sample7_MockClient.md) in the GitHub repository."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-mocking-constructor",
+    "category": "Support for Mocking {#dotnet-mocking}",
+    "text": "DO provide protected parameterless constructor for mocking."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-mocking-virtual-method",
+    "category": "Support for Mocking {#dotnet-mocking}",
+    "text": "DO make all service methods virtual."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-mocking-virtual-properties",
+    "category": "Support for Mocking {#dotnet-mocking}",
+    "text": "DO make all properties virtual.\n\n```csharp\n    public class BlobContainerClient {\n        public virtual string Name { get; }\n        public virtual Uri Uri { get; }\n    }\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-mocking-virtual-getclient-method",
+    "category": "Support for Mocking {#dotnet-mocking}",
+    "text": "DO make methods returning other clients virtual.\n\n```csharp\npublic class BlobContainerClient\n{\n    public virtual BlobClient GetBlobClient();\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-mocking-extensions",
+    "category": "Support for Mocking {#dotnet-mocking}",
+    "text": "DO use instance methods instead of extension methods when defined in the same assembly. The instance methods are simpler to mock.\n\n```csharp\npublic class BlobContainerClient\n{\n    // This method is possible to mock\n    public virtual AppendBlobClient GetAppendBlobClient() {}\n}\n\npublic class BlobContainerClientExtensions\n{\n    // This method is impossible to mock\n    public static AppendBlobClient GetAppendBlobClient(this BlobContainerClient containerClient) {}\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-mocking-factory-builder",
+    "category": "Support for Mocking {#dotnet-mocking}",
+    "text": "DO provide factory or builder for constructing model graphs returned from virtual service methods.\n\nModel types shouldn't have public constructors.  Instances of the model are typically returned from the client library, and are not constructed by the consumer of the library.  Mock implementations need to create instances of model types.  Implement a static class called <service>ModelFactory in the same namespace as the model types:\n\n```csharp\npublic static class ConfigurationModelFactory {\n    public static ConfigurationSetting ConfigurationSetting(string key, string value, string label=default, string contentType=default, ETag eTag=default, DateTimeOffset? lastModified=default, bool? locked=default);\n    public static SettingBatch SettingBatch(ConfigurationSetting[] settings, string link, SettingSelector selector);\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-mocking-factory-builder-methods",
+    "category": "Support for Mocking {#dotnet-mocking}",
+    "text": "DO hide older overloads and avoid ambiguity.\n\nWhen read-only properties are added to models and factory methods must be added to optionally set these properties,\nyou must hide the previous method and remove all default parameter values to avoid ambiguity:\n\n```csharp\npublic static class ConfigurationModelFactory {\n    [EditorBrowsable(EditorBrowsableState.Never)]\n    public static ConfigurationSetting ConfigurationSetting(string key, string value, string label, string contentType, ETag eTag, DateTimeOffset? lastModified, bool? locked) =&gt;\n        ConfigurationSetting(key, value, label, contentType, eTag, lastModified, locked, default);\n    public static ConfigurationSetting ConfigurationSetting(string key, string value, string label=default, string contentType=default, ETag eTag=default, DateTimeOffset? lastModified=default, bool? locked=default, int? ttl=default);\n}\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-packaging-nuget",
+    "category": "Packaging {#dotnet-packaging}",
+    "text": "DO package all components as NuGet packages.\n\nIf your client library is built by the Azure SDK engineering systems, all packaging requirements will be met automatically. Follow the .NET packaging guidelines (https://docs.microsoft.com/dotnet/standard/library-guidance/nuget) if you're self-publishing. For Microsoft owned packages we need to support both windows (for windows dump diagnostics) and portable (for x-platform debugging) pdb formats which means you need to publish them to the Microsoft symbol server and not the Nuget symbol server which only supports portable pdbs."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-packaging-naming",
+    "category": "Packaging {#dotnet-packaging}",
+    "text": "DO name the package based on the name of the main namespace of the component.\n\nFor example, if the component is in the Azure.Storage.Blobs namespace, the component DLL will be Azure.Storage.Blobs.dll and the NuGet package will b`Azure.Storage.Blobs```."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-packaging-granularity",
+    "category": "Packaging {#dotnet-packaging}",
+    "text": "YOU SHOULD place small related components that evolve together in a single NuGet package."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-build-net-standard",
+    "category": "Packaging {#dotnet-packaging}",
+    "text": "DO build all libraries for [.NET Standard 2.0].\n\nUse the following target setting in the .csproj file:\n\n```xml\n&lt;TargetFramework&gt;netstandard2.0&lt;/TargetFramework&gt;\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-build-multi-targeting-api",
+    "category": "Packaging {#dotnet-packaging}",
+    "text": "DO define the same APIs for all [target framework monikers (TFMs)][.NET Target Framework Monikers].\n\nYou may multi-target client libraries to different [TFMs][.NET Target Framework Monikers] but the public API must be the same for all targets including class, interface, parameter, and return types.\n\nThere are occasions when common code needs to be shared between several client libraries. For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-commonlib-approval",
+    "category": "Common Libraries",
+    "text": "DO gain [Architecture Board] discuss how to design such common library."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-versioning-backwards-compatibility",
+    "category": "Client Versions",
+    "text": "DO be 100% backwards compatible with older versions of the same package.\n\nFor detailed rules, see .NET Breaking Changes (https://github.com/dotnet/runtime/blob/master/docs/coding-guidelines/breaking-change-rules.md) "
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-versioning-new-package",
+    "category": "Client Versions",
+    "text": "DO introduce a new package (with new assembly names, new namespace names, and new type names) if you must do an API breaking change.\n\nBreaking changes should happen rarely, if ever.  Register your intent to do a breaking change with [adparch]. You'll need to have a discussion with the language architect before approval.\n\nConsistent version number scheme allows consumers to determine what to expect from a new version of the library."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-version-semver",
+    "category": "Package Version Numbers {#dotnet-versionnumbers}",
+    "text": "DO use MAJOR.MINOR.PATCH format for the version of the library dll and the NuGet package.\n\nUse _-beta.N suffix for beta package versions. For example, 1.0.0-beta.2."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-version-change-on-release",
+    "category": "Package Version Numbers {#dotnet-versionnumbers}",
+    "text": "DO change the version number of the client library when ANYTHING changes in the client library."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-version-patching",
+    "category": "Package Version Numbers {#dotnet-versionnumbers}",
+    "text": "DO increment the patch version when fixing a bug."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-version-features-in-patch",
+    "category": "Package Version Numbers {#dotnet-versionnumbers}",
+    "text": "DO NOT include new APIs in a patch release."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-version-add-feature",
+    "category": "Package Version Numbers {#dotnet-versionnumbers}",
+    "text": "DO increment the major or minor version when adding support for a service API version."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-version-add-api",
+    "category": "Package Version Numbers {#dotnet-versionnumbers}",
+    "text": "DO increment the major or minor version when adding a new method to the public API."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-version-major-changes",
+    "category": "Package Version Numbers {#dotnet-versionnumbers}",
+    "text": "YOU SHOULD increment the major version when making large feature changes."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-version-change-on-release",
+    "category": "Package Version Numbers {#dotnet-versionnumbers}",
+    "text": "DO select a version number greater than the highest version number of any other released Track 1 package for the service in any other scope or language."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-dependencies-minimize",
+    "category": "Dependencies {#dotnet-dependencies}",
+    "text": "YOU SHOULD minimize dependencies outside of the .NET Standard and Azure.Core packages."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-dependencies-list",
+    "category": "Dependencies {#dotnet-dependencies}",
+    "text": "DO NOT depend on any NuGet package except the following packages:\nAzure.* packages from the [azure/azure-sdk-for-net] repository.\nSystem.Text.Json.\nMicrosoft.BCL.AsyncInterfaces.\npackages produced by your own team.\n\nIn the past, JSON.NET (https://www.newtonsoft.com/json)  aka Newtonsoft.Json, was commonly used for serialization and deserialization. Use the System.Text.Json (https://www.nuget.org/packages/System.Text.Json/) package that is now a part of the .NET platform instead."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-dependencies-exposing",
+    "category": "Dependencies {#dotnet-dependencies}",
+    "text": "DO NOT publicly expose types from dependencies unless the types follow these guidelines as well.\n\nNative dependencies introduce lots of complexities to .NET libraries and so they should be avoided."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-problems-too-many-types",
+    "category": "Native Code",
+    "text": "YOU SHOULD NOT native dependencies."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-docs-document-everything",
+    "category": "Documentation Comments {#dotnet-documentation}",
+    "text": "DO document every exposed (public or protected) type and member within your library's code."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-docs-docstrings",
+    "category": "Documentation Comments {#dotnet-documentation}",
+    "text": "DO use C# documentation comments (https://docs.microsoft.com/dotnet/csharp/language-reference/language-specification/documentation-comments) for reference documentation.\n\nSee the [documentation guidelines]({{ site.baseurl }}/general_documentation.html) for language-independent guidelines for how to provide good documentation."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-general-repository",
+    "category": "Repository Guidelines {#dotnet-repository}",
+    "text": "DO locate all source code and README in the [azure/azure-sdk-for-net] GitHub repository."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-general-engsys",
+    "category": "Repository Guidelines {#dotnet-repository}",
+    "text": "DO follow Azure SDK engineering systems guidelines for working in the [azure/azure-sdk-for-net] GitHub repository.\n\nTODO: issue #2338"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-docs-readme",
+    "category": "README {#dotnet-repository-readme}",
+    "text": "DO have a README.md file in the component root folder.\n\nAn example of a good README.md file can be found here (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/appconfiguration/Azure.Data.AppConfiguration/README.md) "
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-docs-readme-consumer",
+    "category": "README {#dotnet-repository-readme}",
+    "text": "DO optimize the README.md for the consumer of the client library.\n\nThe contributor guide (CONTRIBUTING.md) should be a separate file linked to from the main component README.md.\n\nEach client library should have a quickstart guide with code samples.  Developers like to learn about a library by looking at sample code; not by reading in-depth technology papers."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-samples-location",
+    "category": "Samples {#dotnet-samples}",
+    "text": "DO have usage samples in samples subdirectory of main library directory.\n\nFor a complete example, see the Configuration Service samples (https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/appconfiguration/Azure.Data.AppConfiguration/samples) "
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-samples-readme",
+    "category": "Samples {#dotnet-samples}",
+    "text": "DO have a README.md file with the following front matter:\n\n```yml\n---\npage_type: sample\nlanguages:\n- csharp\nproducts:\n- azure\n- azure-app-configuration\nname: Azure.Data.AppConfiguration samples for .NET\ndescription: Samples for the Azure.Data.AppConfiguration client library\n---\n\n```\n\nThe README.md file should be written as a getting started guide. See the ServiceBus README (https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/servicebus/Azure.Messaging.ServiceBus/README.md) for a good example."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-samples-readme-links",
+    "category": "Samples {#dotnet-samples}",
+    "text": "DO link to each of the samples files using a brief description as the link text."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-samples-naming",
+    "category": "Samples {#dotnet-samples}",
+    "text": "DO have a sample file called Sample1_HelloWorld.md. All other samples are ordered from simplest to most complex using the Sample<number>_ prefix."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-sync-samples-naming",
+    "category": "Samples {#dotnet-samples}",
+    "text": "DO use synchronous APIs in the Sample1_HelloWorld.md sample.  Add a second sample named Sample1_HelloWorldAsync.md that does the same thing as Sample1_HelloWorld.md using asynchronous code."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-samples-source-snippets",
+    "category": "Samples {#dotnet-samples}",
+    "text": "DO use #regions in source with a unique identifier starting with \"Snippet:\" like Snippet:AzConfigSample1_CreateConfigurationClient. This must be unique within the entire repo."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-samples-snippets",
+    "category": "Samples {#dotnet-samples}",
+    "text": "DO C# code fences with the corresponding #region name like so:\n\n```markdown\n```C# Snippet:AzConfigSample1_CreateConfigurationClient\nvar client = new ConfigurationClient(connectionString);\n```\n\n```"
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-samples-build",
+    "category": "Samples {#dotnet-samples}",
+    "text": "DO make sure all the samples build and run as part of the CI process.\n\nTODO: Update guidance on samples to reflect what we do in most places.\n\nSome .NET Framework Design Guidelines (https://aka.ms/fxdg3) have been notoriously overlooked in earlier Azure SDKs. This section serves as a way to highlight these guidelines."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-problems-too-many-types",
+    "category": "Commonly Overlooked .NET API Design Guidelines {#dotnet-appendix-overlookedguidelines}",
+    "text": "YOU SHOULD NOT have many types in the main namespace. Number of types is directly proportional to the perceived complexity of a library."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-problems-abstractions",
+    "category": "Commonly Overlooked .NET API Design Guidelines {#dotnet-appendix-overlookedguidelines}",
+    "text": "DO NOT use abstractions unless the Azure SDK both returns and consumes the abstraction.  An abstraction is either an interface or abstract class."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-problems-interfaces",
+    "category": "Commonly Overlooked .NET API Design Guidelines {#dotnet-appendix-overlookedguidelines}",
+    "text": "DO NOT use interfaces if you can use abstract classes. The only reasons to use an interface are: a) you need to \"multiple-inherit\", b) you want structs to implement an abstraction."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-problems-generic-words",
+    "category": "Commonly Overlooked .NET API Design Guidelines {#dotnet-appendix-overlookedguidelines}",
+    "text": "DO NOT use generic words and terms for type names.  For example, do not use names like OperationResponse or DataCollection."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-problems-valid-values",
+    "category": "Commonly Overlooked .NET API Design Guidelines {#dotnet-appendix-overlookedguidelines}",
+    "text": "YOU SHOULD NOT use parameter types where it's not clear what valid values are supported.  For example, do not use strings but only accept certain values in the string."
+  },
+  {
+    "id": "dotnet_introduction.html#dotnet-problems-empty-types",
+    "category": "Commonly Overlooked .NET API Design Guidelines {#dotnet-appendix-overlookedguidelines}",
+    "text": "DO NOT have empty types (types with no members).\n\n[.NET Framework Design Guidelines]: https://docs.microsoft.com/dotnet/standard/design-guidelines/\n[.NET Framework Constructor Design]: https://docs.microsoft.com/dotnet/standard/design-guidelines/constructor\n[Azure Application Configuration service]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/appconfiguration/Azure.Data.AppConfiguration\n[Azure.Core]: https://www.nuget.org/packages/Azure.Core/\n[Moq]: https://github.com/moq/moq4\n[adparch]: https://github.com/azure/azure-sdk/issues\n[.NET Standard 2.0]: https://docs.microsoft.com/dotnet/standard/net-standard\n[azure/azure-sdk-for-net]: https://github.com/azure/azure-sdk-for-net\n[.NET Target Framework Monikers]: https://learn.microsoft.com/dotnet/standard/frameworks"
+  }
+]

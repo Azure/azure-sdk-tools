@@ -14,7 +14,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Where to begin
 
-Core of the APIView tool is the web app developed using ASP.Net and TypeScript. This core module takes care of presenting reviews to users, storing review files and metadata in Azure Storage Account and Cosmos database and process requests from Azure Devops pipelines and respond. We also have language level parsers that converts each language specific artifact into a common json stub file that's known to core APIView web app. So, first step as a contributor is to understand the feature or bug fix you would like to submit and identify the area you would like to contribute to. Language parsers are either added as plugin modules developed in .Net or developed using corresponding language as command line tool to extract and generate stub file. If change is specific to a language in how langauge specific API details are extracted to stub tokens then change will be at parser level for that language. If change is applicable for all languages then change will most likely be in core APIView web app.
+Core of the APIView tool is the web app developed using ASP.NET and TypeScript. This core module takes care of presenting reviews to users, storing review files and metadata in Azure Storage Account and Cosmos database and process requests from Azure Devops pipelines and respond. We also have language level parsers that converts each language specific artifact into a common json stub file that's known to core APIView web app. So, first step as a contributor is to understand the feature or bug fix you would like to submit and identify the area you would like to contribute to. Language parsers are either added as plugin modules developed in .NET or developed using corresponding language as command line tool to extract and generate stub file. If change is specific to a language in how langauge specific API details are extracted to stub tokens then change will be at parser level for that language. If change is applicable for all languages then change will most likely be in core APIView web app.
 
 
 | Module                        | Source Path                                                                                                                     |
@@ -24,8 +24,8 @@ Core of the APIView tool is the web app developed using ASP.Net and TypeScript. 
 | C                             | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CLanguageService.cs                  |
 | C++                           | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CppLanguageService.cs                |
 | Java                          | https://github.com/Azure/azure-sdk-tools/tree/main/src/java/apiview-java-processor                                              |
-| JS/TS                         | https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/js-api-parser                                                             |
-| Python                        | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/api-stub-generator                                  |
+| JS/TS                         | https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/js-api-parser                                          |
+| Python                        | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/apiview-stub-generator                              |
 | Go                            | https://github.com/Azure/azure-sdk-tools/tree/main/src/go                                                                       |
 | Swift                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/swift                                                                    |
 
@@ -39,7 +39,7 @@ Following are tools required to develop and run test instance of APIView to veri
 
 - Git
 - Visual Studio
-- .Net
+- .NET
 - Any LTS version of Node.js [download](https://nodejs.org/en/download/)
 - Java (Optional: Only required if you want to generate Java review locally)
 - Python 3.9+ (Optional: Only required if you want to generate Python review locally)
@@ -47,7 +47,7 @@ Following are tools required to develop and run test instance of APIView to veri
 - Xcode 10.2 or higher (Optional: Only to generate and test Go reviews)
  - Azure subscription with permission to create storage account and Cosmos DB instance.
 
-In addition to local machine setup, you will also require an Azure storage account to store source and stub file and Azure Cosmos database instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
+In addition to local machine setup, you will also require an Azure storage account to store source and stub file, an Azure App Configuration instance, and Azure Cosmos database instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
 
 
 ### Azure resources required to run APIView instance locally
@@ -59,18 +59,23 @@ Create following Azure resources in your Azure subscription.
 #### Azure storage account
 
  - Create a storage account in Azure. [Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
- - Create two blob storage containers with names as follows within the storage account created in previous step: `originals` and `codefiles`
+ - Create three blob storage containers with names as follows within the storage account created in previous step: `originals`, `codefiles`, and `usagesamples`
 
 #### Azure Cosmos DB
- - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
+ - Create a Cosmos DB account in Azure and then create a database with name `APIViewV2` in this account. Once database is created successfully then create three containers in `APIViewV2` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
 
    | Container Name      | Partition Key      |
    |---------------------|--------------------|
    | Reviews             | /id                |
+   | APIRevisions        | /ReviewId          |
    | Comments            | /ReviewId          |
-   | PullRequests        | /PullRequestNumber |
-   
+   | PullRequests        | /ReviewId          |
+   | SamplesRevisions    | /ReviewId          |
+   | Profiles            | /id                |
 
+#### Azure App Configuration
+
+- Create an Azure App Configuration instance in Azure. [Azure App Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/quickstart-azure-app-configuration-create?tabs=azure-portal), it can be empty for basic local debugging.
 
 ## Getting Started
 
@@ -94,6 +99,7 @@ Create following Azure resources in your Azure subscription.
 
 
 ### Connect local debugging instance to Azure resource
+
 Following configuration is required to connect local debug instance to Azure resources as well as to setup debugging environment. Below are the steps to follow and required configuration to be added.
 
 - Right click on `APIViewWeb` project in `APIView solution` using solution explorer in Visual Studio and select `Manage User Secrets`.
@@ -105,17 +111,27 @@ Following configuration is required to connect local debug instance to Azure res
         "ClientId": "<Client-ID>",
         "ClientSecret": "<Client OAuthSecret>"
     },
-    "Blob": {
-        "ConnectionString": "<connection string to storage account>"
-    },
-    "Cosmos": {
-        "ConnectionString": "<connection string to cosmos db>"
-    },
+    "StorageAccountUrl": "https://<storage account name>.blob.core.windows.net/",
+    "CosmosEndpoint": "Cosmos End point URL. For e.g. https://<cosmosDBName>.documents.azure.com:443/",
+    "CosmosDBName": "APIViewV2",
     "github-access-token": "",
     "ApiKey": "",
     "PYTHONEXECUTABLEPATH": "<Full path to python executable>",
-    "BackgroundTaskDisabled": true
+    "BackgroundTaskDisabled": true,
+    "APPCONFIG": "<connection string to app configuration>"
   }
+
+Note: User requires following role based access to storage account and cosmos DB for local debugging and make sure that user is logged in to Azure from Visual studio to access Azure resources.
+
+- `Storage Blob Contributor` to access storage account
+- `Cosmos DB Built-in Data Contributor` to access Cosmos DB
+
+### Role based access requierd for deployed instances
+
+APIView Azure web app instance requires role based access to storage and cosmos DB instances to access using managed identity. Following are the required RBAC roles.
+
+- `Storage Blob Contributor` to access storage account
+- `Cosmos DB Built-in Data Contributor` to access Cosmos DB
 
 ### Compile TypeScript code
 
@@ -140,7 +156,7 @@ Okay. I have followed all the steps and now I need to verify if it's running fin
 
 - Home page should be displayed with an empty list of reviews. 
 
-- Click `Create review` button and upload previously downloaded `Azure.Template` package. It should show API review for Azure.Template if everything is setup correctly.
+- Click `Create Review` button and upload previously downloaded `Azure.Template` package. It should show API review for Azure.Template if everything is setup correctly.
 
 
 If any of the above steps is showing errors, following are the items to check:
@@ -153,6 +169,9 @@ If any of the above steps is showing errors, following are the items to check:
 
 - Verify and ensure cosmos DB instance has all 3 containers as per the instructions above and verify partition key for each of them.
 
+### SPA Client
+
+APIView uses a SPA (Single Page Application) for part of its user interface. If adding completely new pages please make the contributions to the SPA client. See [SPA Client Contributing Doc](../ClientSPA/CONTRIBUTING.md) for more information.
 
 Happy coding!!!!
 

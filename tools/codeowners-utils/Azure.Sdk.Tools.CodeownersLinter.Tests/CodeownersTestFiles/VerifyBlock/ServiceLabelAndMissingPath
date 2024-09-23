@@ -1,0 +1,3 @@
+# A ServiceLabel block ending with a /<NotInRepo>/ line should have no errors
+# ServiceLabel: %TestLabel3
+#/<NotInRepo>/          @Azure/TestTeam3

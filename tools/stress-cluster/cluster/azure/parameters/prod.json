@@ -17,16 +17,20 @@
     "monitoringLocation": {
       "value": "centralus"
     },
-    "staticTestSecretsKeyvaultName": {
-      "value": "stress-secrets-prod"
+    "defaultAgentPoolMinNodes": {
+      "value": 2
     },
-    "staticTestSecretsKeyvaultGroup": {
-      "value": "rg-stress-secrets-prod"
+    "defaultAgentPoolMaxNodes": {
+      "value": 10
+    },
+    "maintenanceWindowDay": {
+      "value": "Friday"
     },
     "tags": {
       "value": {
         "environment": "Prod",
-        "owners": "bebroder"
+        "owners": "bebroder, albertcheng",
+        "DoNotDelete": ""
       }
     }
   }

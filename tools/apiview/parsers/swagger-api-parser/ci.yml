@@ -1,0 +1,28 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/apiview/parsers/swagger-api-parser
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/apiview/parsers/swagger-api-parser
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    PackageDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/swagger-api-parser/SwaggerApiParser
+    TestDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/swagger-api-parser/SwaggerApiParserTest

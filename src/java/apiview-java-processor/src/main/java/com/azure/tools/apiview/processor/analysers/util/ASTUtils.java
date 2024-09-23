@@ -10,6 +10,8 @@ import com.github.javaparser.ast.body.BodyDeclaration;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
+import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
@@ -17,19 +19,18 @@ import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
  * Abstract syntax tree (AST) utility methods.
  */
 public final class ASTUtils {
-    private static final Pattern MAKE_ID = Pattern.compile("\"| ");
 
     /**
      * Attempts to get the package name for a compilation unit.
@@ -87,7 +88,15 @@ public final class ASTUtils {
      * @return All type declarations contained in the compilation unit.
      */
     public static Stream<TypeDeclaration<?>> getClasses(CompilationUnit cu) {
-        return cu.getTypes().stream();
+        // previously we simply return 'cu.getTypes().stream()', but this had the effect of not returning all inner
+        // types, as was expected. This is because the 'getTypes()' method only returns the top-level types, and not
+        // member types. To fix this, we now return a stream of all types, including member types.
+        return Stream.concat(
+                cu.getTypes().stream(), // top-level types
+                cu.getTypes().stream()  // member types
+                     .flatMap(type -> type.getMembers().stream()
+                          .filter(member -> member instanceof TypeDeclaration<?>)
+                          .map(member -> (TypeDeclaration<?>) member)));
     }
 
     /**
@@ -107,7 +116,9 @@ public final class ASTUtils {
      * @return All public API constructors contained in the type declaration.
      */
     public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getConstructors().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof ConstructorDeclaration)
+            .map(member -> (ConstructorDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -128,7 +139,9 @@ public final class ASTUtils {
      * @return All public API methods contained in the type declaration.
      */
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMethods().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof MethodDeclaration)
+            .map(member -> (MethodDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -149,7 +162,9 @@ public final class ASTUtils {
      * @return All public API fields contained in the type declaration.
      */
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getFields().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof FieldDeclaration)
+            .map(member -> (FieldDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -170,7 +185,7 @@ public final class ASTUtils {
      * @return Whether the access specifier is package-private or private.
      */
     public static boolean isPrivateOrPackagePrivate(AccessSpecifier accessSpecifier) {
-        return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.PACKAGE_PRIVATE);
+        return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.NONE);
     }
 
     public static String makeId(CompilationUnit cu) {
@@ -193,13 +208,88 @@ public final class ASTUtils {
         return makeId(fieldDeclaration.getVariables().get(0));
     }
 
-    public static String makeId(String fullPath) {
-        return MAKE_ID.matcher(fullPath).replaceAll("-");
+    public static String makeId(EnumConstantDeclaration enumDeclaration) {
+        return makeId(getNodeFullyQualifiedName(enumDeclaration.getParentNode()) + "." + enumDeclaration.getNameAsString());
     }
 
-    public static String makeId(AnnotationExpr annotation) {
-        int line = annotation.getBegin().orElseThrow(RuntimeException::new).line;
-        return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + "-L" + line);
+    public static String makeId(String fullPath) {
+        // Previously, this used a regex to replace '"' and ' ' with '-', that wasn't necessary. The replacement pattern
+        // is simple and can be replaced with a simple loop. This is a performance optimization.
+        //
+        // The logic is that we iterate over the string, if no replacements are needed we return the original string.
+        // Otherwise, we create a new StringBuilder the size of the string being replaced, as the replacement size is
+        // the same as the search size, and we append the parts of the string that don't need to be replaced, and the
+        // replacement character for the parts that do. At the end of the loop, we append the last part of the string
+        // that doesn't need to be replaced and return the final string.
+        if (fullPath == null || fullPath.isEmpty()) {
+            return fullPath;
+        }
+
+        StringBuilder sb = null;
+        int prevStart = 0;
+
+        int length = fullPath.length();
+        for (int i = 0; i < length; i++) {
+            char c = fullPath.charAt(i);
+            if (c == '"' || c == ' ') {
+                if (sb == null) {
+                    sb = new StringBuilder(length);
+                }
+
+                if (prevStart != i) {
+                    sb.append(fullPath, prevStart, i);
+                }
+
+                sb.append('-');
+                prevStart = i + 1;
+            }
+        }
+
+        if (sb == null) {
+            return fullPath;
+        }
+
+        sb.append(fullPath, prevStart, length);
+        return sb.toString();
+    }
+
+    public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {
+        String annotationContext = getAnnotationContext(nodeWithAnnotations);
+
+        String idSuffix;
+
+        if (annotationContext == null || annotationContext.isEmpty()) {
+            idSuffix = "-L" + annotation.getBegin().orElseThrow(RuntimeException::new).line;
+        } else {
+            idSuffix = "-" + annotationContext;
+        }
+        return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);
+    }
+
+    private static String getAnnotationContext(NodeWithAnnotations<?> nodeWithAnnotations) {
+        if (nodeWithAnnotations == null) {
+            return "";
+        }
+        if (nodeWithAnnotations instanceof MethodDeclaration) {
+            MethodDeclaration methodDeclaration = (MethodDeclaration) nodeWithAnnotations;
+            // use the method declaration string instead of method name as there can be overloads
+            return methodDeclaration.getDeclarationAsString(true, true, true);
+        } else if (nodeWithAnnotations instanceof ClassOrInterfaceDeclaration) {
+            ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) nodeWithAnnotations;
+            return classOrInterfaceDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof EnumDeclaration) {
+            EnumDeclaration enumDeclaration = (EnumDeclaration) nodeWithAnnotations;
+            return enumDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof EnumConstantDeclaration) {
+            EnumConstantDeclaration enumValueDeclaration = (EnumConstantDeclaration) nodeWithAnnotations;
+            return enumValueDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof ConstructorDeclaration) {
+            ConstructorDeclaration constructorDeclaration = (ConstructorDeclaration) nodeWithAnnotations;
+            // use the constructor declaration string instead of the name as there can be overloads
+            return constructorDeclaration.getDeclarationAsString(true, true, true);
+        } else {
+            return "";
+        }
     }
 
     /**
@@ -284,26 +374,35 @@ public final class ASTUtils {
         return false;
     }
 
-    public static boolean isTypeImplementingInterface(TypeDeclaration type, String interfaceName) {
+    public static boolean isTypeImplementingInterface(TypeDeclaration<?> type, String interfaceName) {
         return type.asClassOrInterfaceDeclaration().getImplementedTypes().stream()
                 .anyMatch(_interface -> _interface.getNameAsString().equals(interfaceName));
     }
 
-    private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
-        if (!nodeOptional.isPresent()) {
+    public static String getNodeFullyQualifiedName(Node node) {
+        if (node == null) {
             return "";
         }
 
-        Node node = nodeOptional.get();
         if (node instanceof TypeDeclaration<?>) {
             TypeDeclaration<?> type = (TypeDeclaration<?>) node;
             return type.getFullyQualifiedName().get();
         } else if (node instanceof CallableDeclaration) {
-            CallableDeclaration callableDeclaration = (CallableDeclaration) node;
-            return getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
+            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
+            String fqn = getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
+
+            if (callableDeclaration.isConstructorDeclaration()) {
+                fqn += ".ctor";
+            }
+
+            return fqn;
         } else {
             return "";
         }
+    }
+
+    private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
+        return nodeOptional.map(ASTUtils::getNodeFullyQualifiedName).orElse("");
     }
 
     /**

@@ -1,35 +1,57 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
+using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
-using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.Controllers
 {
     [Authorize("RequireOrganization")]
     public class CommentsController: Controller
     {
-        private readonly CommentsManager _commentsManager;
-        private readonly ReviewManager _reviewManager;
-        private readonly NotificationManager _notificationManager;
+        private readonly ICommentsManager _commentsManager;
+        private readonly IReviewManager _reviewManager;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly INotificationManager _notificationManager;
 
-        public CommentsController(CommentsManager commentsManager, ReviewManager reviewManager, NotificationManager notificationManager)
+        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<SignalRHub> signalRHub)
         {
+            _signalRHubContext = signalRHub;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false, string crossLangId = null)
         {
-            var comment = new CommentModel();
-            comment.TimeStamp = DateTime.UtcNow;
+            if (string.IsNullOrEmpty(commentText))
+            {
+                var notifcation = new NotificationModel() { Message = "Comment Text cannot be empty. Please type your comment entry and try again.", Level = NotificatonLevel.Error };
+                await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
+                return new BadRequestResult();
+            }
+
+            var comment = new CommentItemModel();
+            comment.CreatedOn = DateTime.UtcNow;
             comment.ReviewId = reviewId;
-            comment.RevisionId = revisionId;
+            comment.APIRevisionId = revisionId;
             comment.ElementId = elementId;
-            comment.Comment = commentText;
+            comment.SectionClass = sectionClass;
+            comment.CommentText = commentText;
+            comment.CommentType = (usageSampleComment) ? CommentType.SampleRevision : CommentType.APIRevision;
+            comment.ResolutionLocked = !resolutionLock.Equals("on");
+            comment.CreatedBy = User.GetGitHubLogin();
+            comment.CrossLanguageId = crossLangId;
+
+            foreach(string user in taggedUsers)
+            {
+                comment.TaggedUsers.Add(user);
+            }
 
             await _commentsManager.AddCommentAsync(User, comment);
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
@@ -37,13 +59,14 @@ namespace APIViewWeb.Controllers
             {
                 await _notificationManager.SubscribeAsync(review,User);
             }
-            return await CommentPartialAsync(reviewId, comment.ElementId);
+            
+            return await CommentPartialAsync(reviewId, comment.ElementId); 
         }
 
         [HttpPost]
-        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText)
+        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText, string[] taggedUsers)
         {
-            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText);
+            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, taggedUsers);
 
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }
@@ -68,7 +91,7 @@ namespace APIViewWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> Delete(string reviewId, string commentId, string elementId)
         {
-            await _commentsManager.DeleteCommentAsync(User, reviewId, commentId);
+            await _commentsManager.SoftDeleteCommentAsync(User, reviewId, commentId);
 
             return await CommentPartialAsync(reviewId, elementId);
         }

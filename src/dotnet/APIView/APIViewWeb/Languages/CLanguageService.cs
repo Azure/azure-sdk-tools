@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -16,7 +16,7 @@ namespace APIViewWeb
 {
     public class CLanguageService : LanguageService
     {
-        private const string CurrentVersion = "4";
+        private const string CurrentVersion = "5";
         private static Regex _typeTokenizer = new Regex("\\w+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static HashSet<string> _keywords = new HashSet<string>()
         {
@@ -71,7 +71,7 @@ namespace APIViewWeb
 
         public override string Name { get; } = "C";
 
-        public override string Extension { get; } = ".zip";
+        public override string [] Extensions { get; } = { ".zip" };
 
         public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 
@@ -88,7 +88,7 @@ namespace APIViewWeb
             var packageNameMatch = _packageNameParser.Match(originalName);
             if (packageNameMatch.Success)
             {
-                packageNamespace = packageNameMatch.Groups[1].Value.Replace("_", "::");
+                packageNamespace = packageNameMatch.Groups[1].Value.Replace("_", "-");
             }
 
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();

@@ -1,0 +1,8 @@
+node_modules
+*.env
+dist
+types
+temp
+tsp-output/
+output/
+test/examples/specification/convert/examples/*

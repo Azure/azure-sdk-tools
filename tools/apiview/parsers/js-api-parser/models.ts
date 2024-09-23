@@ -18,6 +18,7 @@ export declare interface IApiViewFile {
     PackageName: string;
     VersionString: string;
     Language: string;
+    PackageVersion: string;
 }
 
 export declare interface IApiViewToken {

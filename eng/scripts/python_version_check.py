@@ -20,7 +20,7 @@ if __name__ == '__main__':
     warning_color = '\033[91m'
     end_color = '\033[0m'
 
-    stub_gen_path = os.path.join(ROOT, 'packages', 'python-packages', 'api-stub-generator')
+    stub_gen_path = os.path.join(ROOT, 'packages', 'python-packages', 'apiview-stub-generator')
     changelog_path = os.path.join(stub_gen_path, "CHANGELOG.md")
     version_path = os.path.join(stub_gen_path, 'apistub', '_version.py')
 

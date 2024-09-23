@@ -364,5 +364,37 @@ namespace RandomNamespace
                 .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0004NotProducedForMethodsWithOverloadAlternative()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task<Response> GetAsync(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual Response Get()
+        {
+            return null;
+        }
+
+        public virtual Response Get(CancellationToken cancellationToken)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
     }
 }

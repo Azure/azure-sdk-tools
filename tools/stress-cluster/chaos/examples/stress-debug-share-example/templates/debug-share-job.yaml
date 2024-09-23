@@ -6,16 +6,30 @@ metadata:
 spec:
   containers:
     - name: debug-share-example
-      image: busybox
+      # Your base image will be different - the only requirement is that it has some form of `sh`
+      image: mcr.microsoft.com/oss/busybox/busybox:1.33.1
       command: ['sh', '-c']
       args:
         - |
+            # -e: exit on non-zero exit code
+            # -x: echo out all executed commands
             set -ex;
+
+            # your log folder doesn't exist when your app starts, so make sure you
+            # create it.
             mkdir -p $DEBUG_SHARE;
+
+            # OPTIONAL: If your app can only write to your current working
+            # directory then you'll also want to cd into the folder you
+            # created before running your test:
             cd $DEBUG_SHARE;
+
+            # This is where you'd run your command, along with any Helm macro
+            # replacements that are needed.
+
             pwd;
-            ls -R $DEBUG_SHARE_ROOT;
-            echo "debug share example success" > success;
+            ls -R $DEBUG_SHARE;
+            echo "debug share example success {{ .Stress.dataToBeWritten }}" > success;
             cat success;
       # The file share is mounted by default at the path $DEBUG_SHARE
       # when including the container-env template

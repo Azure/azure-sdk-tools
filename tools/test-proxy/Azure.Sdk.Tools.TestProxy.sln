@@ -1,11 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30907.101
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.TestProxy", "Azure.Sdk.Tools.TestProxy\Azure.Sdk.Tools.TestProxy.csproj", "{9E3819C4-4760-45C0-B7F3-2EF890EEE1FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.TestProxy.Tests", "Azure.Sdk.Tools.TestProxy.Tests\Azure.Sdk.Tools.TestProxy.Tests.csproj", "{CE39ECF2-480A-4659-96FC-9C4617C08666}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.TestProxy.Tests", "Azure.Sdk.Tools.TestProxy.Tests\Azure.Sdk.Tools.TestProxy.Tests.csproj", "{CE39ECF2-480A-4659-96FC-9C4617C08666}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4F65D547-DE3D-4A9F-A5A3-B58E67C5AF13}"
+	ProjectSection(SolutionItems) = preProject
+		ci.yml = ci.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

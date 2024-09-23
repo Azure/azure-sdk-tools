@@ -1,0 +1,490 @@
+# Package is parsed using api-stub-generator(version:0.3.1), Python version: 3.10.2
+class azure.containerregistry.ArtifactArchitecture(str, Enum):
+    AMD64 = "amd64"
+    ARM = "arm"
+    ARM64 = "arm64"
+    I386 = "386"
+    MIPS = "mips"
+    MIPS64 = "mips64"
+    MIPS64LE = "mips64le"
+    MIPSLE = "mipsle"
+    PPC64 = "ppc64"
+    PPC64LE = "ppc64le"
+    RISCV64 = "riscv64"
+    S390X = "s390x"
+    WASM = "wasm"
+
+class azure.containerregistry.ArtifactManifestOrder(str, Enum):
+    LAST_UPDATED_ON_ASCENDING = "timeasc"
+    LAST_UPDATED_ON_DESCENDING = "timedesc"
+    NONE = "none"
+
+class azure.containerregistry.ArtifactManifestProperties:
+    property architecture: ArtifactArchitecture    # Read-only
+    property created_on: datetime    # Read-only
+    property digest: str    # Read-only
+    property fully_qualified_reference: str    # Read-only
+    property last_updated_on: datetime    # Read-only
+    property operating_system: ArtifactOperatingSystem    # Read-only
+    property repository_name: str    # Read-only
+    property size_in_bytes: int    # Read-only
+    property tags: List[str]    # Read-only
+    ivar architecture: ArtifactArchitecture
+    ivar can_delete: bool
+    ivar can_list: bool
+    ivar can_read: bool
+    ivar can_write: bool
+    ivar created_on: datetime
+    ivar digest: str
+    ivar last_updated_on: datetime
+    ivar operating_system: ArtifactOperatingSystem
+    ivar repository_name: str
+    ivar size_in_bytes: str
+    ivar tags: List[str]
+    def __init__(self, **kwargs)
+
+class azure.containerregistry.ArtifactOperatingSystem(str, Enum):
+    AIX = "aix"
+    ANDROID = "android"
+    DARWIN = "darwin"
+    DRAGONFLY = "dragonfly"
+    FREEBSD = "freebsd"
+    ILLUMOS = "illumos"
+    IOS = "ios"
+    JS = "js"
+    LINUX = "linux"
+    NETBSD = "netbsd"
+    OPENBSD = "openbsd"
+    PLAN9 = "plan9"
+    SOLARIS = "solaris"
+    WINDOWS = "windows"
+
+class azure.containerregistry.ArtifactTagOrder(str, Enum):
+    LAST_UPDATED_ON_ASCENDING = "timeasc"
+    LAST_UPDATED_ON_DESCENDING = "timedesc"
+    NONE = "none"
+
+class azure.containerregistry.ArtifactTagProperties:
+    property created_on: datetime    # Read-only
+    property digest: str    # Read-only
+    property last_updated_on: datetime    # Read-only
+    property name: str    # Read-only
+    property repository_name: str    # Read-only
+    ivar can_delete: bool
+    ivar can_list: bool
+    ivar can_read: bool
+    ivar can_write: bool
+    ivar created_on: datetime
+    ivar digest: str
+    ivar last_updated_on: datetime
+    ivar name: str
+    ivar repository: str
+    def __init__(self, **kwargs)
+
+class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClient): implements ContextManager
+
+    def __init__(
+            self, 
+            endpoint: str, 
+            credential: TokenCredential = None, 
+            *, 
+            api_version: str = ..., 
+            audience: str = ..., 
+            **kwargs
+        ) -> None
+
+    def close(self) -> None
+
+    @distributed_trace
+    def delete_blob(
+            self, 
+            repository: str, 
+            tag_or_digest: str, 
+            **kwargs
+        ) -> None
+
+    @distributed_trace
+    def delete_manifest(
+            self, 
+            repository: str, 
+            tag_or_digest: str, 
+            **kwargs
+        ) -> None
+
+    @distributed_trace
+    def delete_repository(
+            self, 
+            repository: str, 
+            **kwargs
+        ) -> None
+
+    @distributed_trace
+    def delete_tag(
+            self, 
+            repository: str, 
+            tag: str, 
+            **kwargs
+        ) -> None
+
+    @distributed_trace
+    def download_blob(
+            self, 
+            repository: str, 
+            digest: str, 
+            **kwargs
+        ) -> DownloadBlobResult | None
+
+    @distributed_trace
+    def download_manifest(
+            self, 
+            repository: str, 
+            tag_or_digest: str, 
+            **kwargs
+        ) -> DownloadManifestResult
+
+    @distributed_trace
+    def get_manifest_properties(
+            self, 
+            repository: str, 
+            tag_or_digest: str, 
+            **kwargs
+        ) -> ArtifactManifestProperties
+
+    @distributed_trace
+    def get_repository_properties(
+            self, 
+            repository: str, 
+            **kwargs
+        ) -> RepositoryProperties
+
+    @distributed_trace
+    def get_tag_properties(
+            self, 
+            repository: str, 
+            tag: str, 
+            **kwargs
+        ) -> ArtifactTagProperties
+
+    @distributed_trace
+    def list_manifest_properties(
+            self, 
+            repository: str, 
+            *, 
+            order_by: Union[ArtifactManifestOrder, str] = ..., 
+            results_per_page: int = ..., 
+            **kwargs
+        ) -> ItemPaged[ArtifactManifestProperties]
+
+    @distributed_trace
+    def list_repository_names(
+            self, 
+            *, 
+            results_per_page: int = ..., 
+            **kwargs
+        ) -> ItemPaged[str]
+
+    @distributed_trace
+    def list_tag_properties(
+            self, 
+            repository: str, 
+            *, 
+            order_by: Union[ArtifactTagOrder, str] = ..., 
+            results_per_page: int = ..., 
+            **kwargs
+        ) -> ItemPaged[ArtifactTagProperties]
+
+    @overload
+    def update_manifest_properties(
+            self, 
+            repository, 
+            tag_or_digest, 
+            properties, 
+            **kwargs
+        ) -> ArtifactManifestProperties
+
+    @overload
+    def update_manifest_properties(
+            self, 
+            repository, 
+            tag_or_digest, 
+            **kwargs
+        ) -> ArtifactManifestProperties
+
+    @distributed_trace
+    def update_manifest_properties(
+            self, 
+            *args, 
+            *, 
+            can_delete: Optional[bool] = ..., 
+            can_list: Optional[bool] = ..., 
+            can_read: Optional[bool] = ..., 
+            can_write: Optional[bool] = ..., 
+            **kwargs
+        ) -> ArtifactManifestProperties
+
+    @overload
+    def update_repository_properties(
+            self, 
+            repository, 
+            properties, 
+            **kwargs
+        ) -> RepositoryProperties
+ 
+    @overload
+    def update_repository_properties(
+            self, 
+            repository, 
+            **kwargs
+        ) -> RepositoryProperties
+
+    @distributed_trace
+    def update_repository_properties(
+            self, 
+            *args, 
+            *, 
+            can_delete: Optional[bool] = ..., 
+            can_list: Optional[bool] = ..., 
+            can_read: Optional[bool] = ..., 
+            can_write: Optional[bool] = ..., 
+            **kwargs
+        ) -> RepositoryProperties
+ 
+    @overload
+    def update_tag_properties(
+            self, 
+            repository, 
+            tag, 
+            properties, 
+            **kwargs
+        ) -> ArtifactTagProperties
+ 
+    @overload
+    def update_tag_properties(
+            self, 
+            repository, 
+            tag, 
+            **kwargs
+        ) -> ArtifactTagProperties
+  
+    @distributed_trace
+    def update_tag_properties(
+            self, 
+            *args, 
+            *, 
+            can_delete: Optional[bool] = ..., 
+            can_list: Optional[bool] = ..., 
+            can_read: Optional[bool] = ..., 
+            can_write: Optional[bool] = ..., 
+            **kwargs
+        ) -> ArtifactTagProperties
+
+  
+    @distributed_trace
+    def upload_blob(
+            self, 
+            repository: str, 
+            data: IO, 
+            **kwargs
+        ) -> str
+
+
+    @distributed_trace
+    def upload_manifest(
+            self, 
+            repository: str, 
+            manifest: Union[OCIManifest, IO], 
+            *, 
+            tag: Optional[str] = ..., 
+            **kwargs: Any
+        ) -> str
+
+class azure.containerregistry.RepositoryProperties:
+    property created_on: datetime    # Read-only
+    property last_updated_on: datetime    # Read-only
+    property manifest_count: int    # Read-only
+    property name: str    # Read-only
+    property tag_count: int    # Read-only
+    ivar can_delete: bool
+    ivar can_list: bool
+    ivar can_read: bool
+    ivar can_write: bool
+    ivar created_on: datetime
+    ivar last_updated_on: datetime
+    ivar manifest_count: int
+    ivar name: str
+    ivar tag_count: int
+    def __getattr__(self, name)
+    def __init__(self, **kwargs)
+
+class azure.containerregistry.aio.ContainerRegistryClient(ContainerRegistryBaseClient): implements AsyncContextManager
+
+    def __init__(
+            self, 
+            endpoint: str, 
+            credential: Optional[AsyncTokenCredential] = None, 
+            *, 
+            api_version: str = ..., 
+            audience: str, 
+            **kwargs: Any
+        ) -> None
+
+    async def close(self) -> None
+
+    @distributed_trace_async
+    async def delete_manifest(
+            self, 
+            repository: str, 
+            tag_or_digest: str, 
+            **kwargs: Any
+        ) -> None
+
+    @distributed_trace_async
+    async def delete_repository(
+            self, 
+            repository: str, 
+            **kwargs: Any
+        ) -> None
+
+    @distributed_trace_async
+    async def delete_tag(
+            self, 
+            repository: str, 
+            tag: str, 
+            **kwargs: Any
+        ) -> None
+
+    @distributed_trace_async
+    async def get_manifest_properties(
+            self, 
+            repository: str, 
+            tag_or_digest: str, 
+            **kwargs: Any
+        ) -> ArtifactManifestProperties
+
+    @distributed_trace_async
+    async def get_repository_properties(
+            self, 
+            repository: str, 
+            **kwargs: Any
+        ) -> RepositoryProperties
+
+    @distributed_trace_async
+    async def get_tag_properties(
+            self, 
+            repository: str, 
+            tag: str, 
+            **kwargs: Any
+        ) -> ArtifactTagProperties
+
+    @distributed_trace
+    def list_manifest_properties(
+            self, 
+            repository: str, 
+            *, 
+            order_by: Union[ArtifactManifestOrder, str] = ..., 
+            results_per_page: int = ..., 
+            **kwargs: Any
+        ) -> AsyncItemPaged[ArtifactManifestProperties]
+
+    @distributed_trace
+    def list_repository_names(
+            self, 
+            *, 
+            results_per_page: int = ..., 
+            **kwargs: Any
+        ) -> AsyncItemPaged[str]
+
+    @distributed_trace
+    def list_tag_properties(
+            self, 
+            repository: str, 
+            *, 
+            order_by: Union[ArtifactTagOrder, str] = ..., 
+            results_per_page: int = ..., 
+            **kwargs: Any
+        ) -> AsyncItemPaged[ArtifactTagProperties]
+
+    @overload
+    def update_manifest_properties(
+            self, 
+            repository: str, 
+            tag_or_digest: str, 
+            properties: ArtifactManifestProperties, 
+            **kwargs: Any
+        ) -> ArtifactManifestProperties
+
+    @overload
+    def update_manifest_properties(
+            self, 
+            repository: str, 
+            tag_or_digest: str, 
+            **kwargs: Any
+        ) -> ArtifactManifestProperties
+
+    @distributed_trace_async
+    async def update_manifest_properties(
+            self, 
+            *args: Union[str, ArtifactManifestProperties], 
+            *, 
+            can_delete: Optional[bool] = ..., 
+            can_list: Optional[bool] = ..., 
+            can_read: Optional[bool] = ..., 
+            can_write: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> ArtifactManifestProperties
+
+    @overload
+    def update_repository_properties(
+            self, 
+            repository: str, 
+            properties: RepositoryProperties, 
+            **kwargs: Any
+        ) -> RepositoryProperties
+
+    @overload
+    def update_repository_properties(
+            self, 
+            repository: str, 
+            **kwargs: Any
+        ) -> RepositoryProperties
+
+    @distributed_trace_async
+    async def update_repository_properties(
+            self, 
+            *args: Union[str, RepositoryProperties], 
+            *, 
+            can_delete: Optional[bool] = ..., 
+            can_list: Optional[bool] = ..., 
+            can_read: Optional[bool] = ..., 
+            can_write: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> RepositoryProperties
+
+    @overload
+    def update_tag_properties(
+            self, 
+            repository: str, 
+            tag: str, 
+            properties: ArtifactTagProperties, 
+            **kwargs: Any
+        ) -> ArtifactTagProperties
+
+    @overload
+    def update_tag_properties(
+            self, 
+            repository: str, 
+            tag: str, 
+            **kwargs: Any
+        ) -> ArtifactTagProperties
+
+    @distributed_trace_async
+    async def update_tag_properties(
+            self, 
+            *args: Union[str, ArtifactTagProperties], 
+            *, 
+            can_delete: Optional[bool] = ..., 
+            can_list: Optional[bool] = ..., 
+            can_read: Optional[bool] = ..., 
+            can_write: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> ArtifactTagProperties

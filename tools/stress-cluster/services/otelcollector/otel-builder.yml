@@ -1,0 +1,16 @@
+# This is used as an input to the `ocb` app that lets you build a customized OpenTelemetry collector, 
+# as described here: https://opentelemetry.io/docs/collector/custom-collector/
+dist:
+  name: otelcol-custom
+  description: Local OpenTelemetry Collector binary
+  output_path: /tmp/dist
+  otelcol_version: 0.96.0
+exporters:
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/azuremonitorexporter v0.96.0
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.96.0
+
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.96.0
+
+processors:
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.96.0

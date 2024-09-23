@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             await controller.Start();
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
-            Assert.NotNull(recordingId);
+            Assert.False(string.IsNullOrEmpty(recordingId));
             Assert.True(testRecordingHandler.RecordingSessions.ContainsKey(recordingId));
         }
 
@@ -62,9 +62,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         [Theory]
         [InlineData("recordings/TestStartRecordSimple_nosave.json", "request-response")]
-        [InlineData("recordings/TestStartRecordSimplé_nosave.json", "request-response")]
+        [InlineData("recordings/TestStartRecordSimplÃ©_nosave.json", "request-response")]
         [InlineData("recordings/TestStartRecordSimple.json", "")]
-        [InlineData("recordings/TestStartRecordSimplé.json", "")]
+        [InlineData("recordings/TestStartRecordSimplÃ©.json", "")]
         public async Task TestStopRecordingSimple(string targetFile, string additionalEntryModeHeader)
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
             }
 
-            controller.Stop();
+            await controller.Stop();
 
             if (string.IsNullOrEmpty(additionalEntryModeHeader))
             {
@@ -129,8 +129,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
 
 
-            var resultingException = Assert.Throws<HttpException>(
-               () => controller.Stop()
+            var resultingException = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.Stop()
             );
 
             Assert.Equal("When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.", resultingException.Message);
@@ -162,7 +162,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 recordContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
             }
 
-            recordController.Stop();
+            await recordController.Stop();
 
             if (string.IsNullOrEmpty(additionalEntryModeHeader))
             {
@@ -212,7 +212,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             foreach (var kvp in requestHeaders)
             {
-                playbackContext.Request.Headers.Add(kvp.Key, kvp.Value);
+                playbackContext.Request.Headers.Append(kvp.Key, kvp.Value);
             }
             playbackContext.Request.Method = "POST";
 

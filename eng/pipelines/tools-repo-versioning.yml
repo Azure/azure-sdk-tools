@@ -4,8 +4,8 @@ trigger: none
 pr: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2004-general
-  vmImage: MMSUbuntu20.04
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
 
 jobs:
   - job: TagToolsRepo
@@ -40,4 +40,3 @@ jobs:
           azure-sdk-for-net:
           azure-sdk-for-python:
           autorest.csharp:
-            branch: feature/v3

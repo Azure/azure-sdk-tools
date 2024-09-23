@@ -1,0 +1,23 @@
+# The warnings below are found after upgrading to Roslyn 4.7.0
+# It should be able to fix them all. Suppressing them is just a temporary work-around.
+
+[*.cs]
+
+# CS0618: 'IOperation.Children' is obsolete: 'This API has performance penalties, please use ChildOperations instead.
+dotnet_diagnostic.CS0618.severity = none
+
+# RS1031: The diagnostic title should not contain a period, nor any line return character, nor any leading or trailing whitespaces
+dotnet_diagnostic.RS1031.severity = none
+
+# RS1032: The diagnostic message should not contain any line return character nor any leading or trailing whitespaces and should either be a single sentence without a trailing period or a multi-sentences with a trailing period
+dotnet_diagnostic.RS1032.severity = none
+
+# RS2008: Enable analyzer release tracking for the analyzer project containing rule 'XXX'
+dotnet_diagnostic.RS2008.severity = none
+
+# RS1024: Use 'SymbolEqualityComparer' when comparing symbols
+dotnet_diagnostic.RS1024.severity = none
+
+# RS1037: Add "CompilationEnd" custom tag to the diagnostic descriptor used to initialize field 'AZC0011' as it is used to report a compilation end diagnostic
+dotnet_diagnostic.RS1037.severity = none
+

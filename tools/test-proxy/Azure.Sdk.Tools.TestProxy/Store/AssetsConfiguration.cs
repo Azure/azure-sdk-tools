@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Azure.Sdk.tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -13,18 +14,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Useful for sparse checkout operations.
         /// </summary>
         [JsonIgnore]
-        public virtual string AssetsJsonRelativeLocation { get; set; }
+        public virtual NormalizedString AssetsJsonRelativeLocation { get; set; }
 
         /// <summary>
         /// Contains the absolute path to the assets.json.
         /// </summary>
         [JsonIgnore]
-        public virtual string AssetsJsonLocation { get; set; }
+        public virtual NormalizedString AssetsJsonLocation { get; set; }
 
         /// <summary>
         /// Contains the absolute path to the root of the repo. Outside of a git repo, will return disk root.
         /// </summary>
         [JsonIgnore]
-        public virtual string RepoRoot { get; set; }
+        public virtual NormalizedString RepoRoot { get; set; }
     }
 }

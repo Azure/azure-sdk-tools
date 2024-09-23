@@ -15,6 +15,10 @@ class PackageProps
     [boolean]$IsNewSdk
     [string]$ArtifactName
     [string]$ReleaseStatus
+    # was this package purely included because other packages included it as an AdditionalValidationPackage?
+    [boolean]$IncludedForValidation
+    # does this package include other packages that we should trigger validation for?
+    [string[]]$AdditionalValidationPackages
 
     PackageProps([string]$name, [string]$version, [string]$directoryPath, [string]$serviceDirectory)
     {
@@ -37,6 +41,7 @@ class PackageProps
         $this.Version = $version
         $this.DirectoryPath = $directoryPath
         $this.ServiceDirectory = $serviceDirectory
+        $this.IncludedForValidation = $false
 
         if (Test-Path (Join-Path $directoryPath "README.md"))
         {
@@ -55,7 +60,7 @@ class PackageProps
             if ($changeLogEntry -and $changeLogEntry.ReleaseStatus)
             {
               $this.ReleaseStatus = $changeLogEntry.ReleaseStatus.Trim().Trim("()")
-            } 
+            }
         }
         else
         {
@@ -77,7 +82,7 @@ class PackageProps
 }
 
 # Takes package name and service Name
-# Returns important properties of the package as related to the language repo
+# Returns important properties of the package relative to the language repo
 # Returns a PS Object with properties @ { pkgName, pkgVersion, pkgDirectoryPath, pkgReadMePath, pkgChangeLogPath }
 # Note: python is required for parsing python package properties.
 function Get-PkgProperties
@@ -101,13 +106,63 @@ function Get-PkgProperties
         return $pkgProps[0]
     }
 
-    LogError "Failed to retrive Properties for [$PackageName]"
+    LogError "Failed to retrieve Properties for [$PackageName]"
     return $null
+}
+
+function Get-PrPkgProperties([string]$InputDiffJson) {
+    $packagesWithChanges = @()
+
+    $allPackageProperties = Get-AllPkgProperties
+    $diff = Get-Content $InputDiffJson | ConvertFrom-Json
+    $targetedFiles = $diff.ChangedFiles
+
+    $additionalValidationPackages = @()
+    $lookup = @{}
+
+    foreach ($pkg in $allPackageProperties)
+    {
+        $pkgDirectory = Resolve-Path "$($pkg.DirectoryPath)"
+        $lookupKey = ($pkg.DirectoryPath).Replace($RepoRoot, "").TrimStart('\/')
+        $lookup[$lookupKey] = $pkg
+
+        foreach ($file in $targetedFiles)
+        {
+            $filePath = Resolve-Path (Join-Path $RepoRoot $file)
+            $shouldInclude = $filePath -like "$pkgDirectory*"
+            if ($shouldInclude) {
+                $packagesWithChanges += $pkg
+
+                if ($pkg.AdditionalValidationPackages) {
+                    $additionalValidationPackages += $pkg.AdditionalValidationPackages
+                }
+
+                # avoid adding the same package multiple times
+                break
+            }
+        }
+    }
+
+    foreach ($addition in $additionalValidationPackages) {
+        $key = $addition.Replace($RepoRoot, "").TrimStart('\/')
+
+        if ($lookup[$key]) {
+            $lookup[$key].IncludedForValidation = $true
+            $packagesWithChanges += $lookup[$key]
+        }
+    }
+
+    if ($AdditionalValidationPackagesFromPackageSetFn -and (Test-Path "Function:$AdditionalValidationPackagesFromPackageSetFn"))
+    {
+        $packagesWithChanges += &$AdditionalValidationPackagesFromPackageSetFn $packagesWithChanges $diff $allPackageProperties
+    }
+
+    return $packagesWithChanges
 }
 
 # Takes ServiceName and Repo Root Directory
 # Returns important properties for each package in the specified service, or entire repo if the serviceName is not specified
-# Returns an Table of service key to array values of PS Object with properties @ { pkgName, pkgVersion, pkgDirectoryPath, pkgReadMePath, pkgChangeLogPath }
+# Returns a Table of service key to array values of PS Object with properties @ { pkgName, pkgVersion, pkgDirectoryPath, pkgReadMePath, pkgChangeLogPath }
 function Get-AllPkgProperties ([string]$ServiceDirectory = $null)
 {
     $pkgPropsResult = @()
@@ -135,7 +190,7 @@ function Get-AllPkgProperties ([string]$ServiceDirectory = $null)
 }
 
 # Given the metadata url under https://github.com/Azure/azure-sdk/tree/main/_data/releases/latest,
-# the function will return the csv metadata back as part of response.
+# the function will return the csv metadata back as part of the response.
 function Get-CSVMetadata ([string]$MetadataUri=$MetadataUri)
 {
     $metadataResponse = Invoke-RestMethod -Uri $MetadataUri -method "GET" -MaximumRetryCount 3 -RetryIntervalSec 10 | ConvertFrom-Csv
@@ -144,7 +199,7 @@ function Get-CSVMetadata ([string]$MetadataUri=$MetadataUri)
 
 function Get-PkgPropsForEntireService ($serviceDirectoryPath)
 {
-    $projectProps = @() # Properties from very project inthe service
+    $projectProps = @() # Properties from every project in the service
     $serviceDirectory = $serviceDirectoryPath -replace '^.*[\\/]+sdk[\\/]+([^\\/]+).*$', '$1'
 
     if (!$GetPackageInfoFromRepoFn -or !(Test-Path "Function:$GetPackageInfoFromRepoFn"))

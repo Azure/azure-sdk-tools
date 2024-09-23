@@ -1,2 +1,0 @@
-./
-pylint-guidelines-checker==0.0.7

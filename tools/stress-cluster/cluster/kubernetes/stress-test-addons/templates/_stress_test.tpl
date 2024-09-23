@@ -1,7 +1,9 @@
 {{- define "stress-test-addons.job-wrapper.tpl" -}}
+{{- $global := index . 0 -}}
+{{- $definition := index . 1 -}}
 spec:
   template:
-    {{- include (index . 1) (index . 0) | nindent 4 -}}
+    {{- include $definition $global | nindent 4 -}}
 {{- end -}}
 
 {{- define "stress-test-addons.deploy-job-template.tpl" -}}
@@ -15,14 +17,27 @@ metadata:
     scenario: {{ .Stress.Scenario }}
     resourceGroupName: {{ .Stress.ResourceGroupName }}
     baseName: {{ .Stress.BaseName }}
+    gitCommit: {{ .Values.GitCommit | default "" }}
 spec:
+  {{- if .Stress.parallel }}
+  completions: {{ .Stress.parallel }}
+  parallelism: {{ .Stress.parallel }}
+  completionMode: Indexed
+  {{- end }}
   backoffLimit: 0
   template:
     metadata:
       labels:
+        azure.workload.identity/use: "true"
         release: {{ .Release.Name }}
         scenario: {{ .Stress.Scenario }}
+        gitCommit: {{ .Values.GitCommit | default "" }}
+      {{- if .Values.PodDisruptionBudgetExpiry }}
+      annotations:
+        deletionLockExpiry: {{ .Values.PodDisruptionBudgetExpiry }}
+      {{- end }}
     spec:
+      serviceAccountName: {{ .Release.Namespace }}
       # In cases where a stress test has higher resource requirements or needs a dedicated node,
       # a new nodepool can be provisioned and labeled to allow custom scheduling.
       nodeSelector:
@@ -55,6 +70,9 @@ spec:
 {{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
+{{- if $global.Values.PodDisruptionBudgetExpiry }}
+{{- include "stress-test-addons.pod-disruption-budget" $global }}
+{{- end }}
 {{- end -}}
 
 {{- define "stress-test-addons.env-job-template.tpl" -}}
@@ -68,14 +86,27 @@ metadata:
     scenario: {{ .Stress.Scenario }}
     resourceGroupName: {{ .Stress.ResourceGroupName }}
     baseName: {{ .Stress.BaseName }}
+    gitCommit: {{ .Values.GitCommit | default "" }}
 spec:
+  {{- if .Stress.parallel }}
+  completions: {{ .Stress.parallel }}
+  parallelism: {{ .Stress.parallel }}
+  completionMode: Indexed
+  {{- end }}
   backoffLimit: 0
   template:
     metadata:
       labels:
+        azure.workload.identity/use: "true"
         release: {{ .Release.Name }}
         scenario: {{ .Stress.Scenario }}
+        gitCommit: {{ .Values.GitCommit | default "" }}
+      {{- if .Values.PodDisruptionBudgetExpiry }}
+      annotations:
+        deletionLockExpiry: {{ .Values.PodDisruptionBudgetExpiry }}
+      {{- end }}
     spec:
+      serviceAccountName: {{ .Release.Namespace }}
       nodeSelector:
         sku: 'default'
       restartPolicy: Never
@@ -100,5 +131,8 @@ spec:
 {{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $jobCtx $podDefinition)) -}}
 {{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
+{{- end }}
+{{- if $global.Values.PodDisruptionBudgetExpiry }}
+{{- include "stress-test-addons.pod-disruption-budget" $global }}
 {{- end }}
 {{- end -}}

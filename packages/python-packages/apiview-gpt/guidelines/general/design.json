@@ -1,0 +1,352 @@
+[
+  {
+    "id": "general_design.html#general-namespaces-support",
+    "category": "Namespaces",
+    "text": "YOU SHOULD support namespaces if namespace usage is common within the language ecosystem."
+  },
+  {
+    "id": "general_design.html#general-namespaces-naming",
+    "category": "Namespaces",
+    "text": "DO use a root namespace of the form <AZURE>.<group>.<service>.  All consumer-facing APIs that are commonly used should exist within this namespace.  The namespace is comprised of three parts:\n<AZURE> indicates a common prefix for all Azure services.  This may be Azure or com.azure or similiar, depending on the common form within the language.\n<group> is the group for the service.  See the list below.\n<service> is the shortened service name."
+  },
+  {
+    "id": "general_design.html#general-namespaces-shortened-name",
+    "category": "Namespaces",
+    "text": "DO pick a shortened service name that allows the consumer to tie the package to the service being used.  As a default, use the compressed service name.  The namespace does NOT change when the branding of the product changes, so avoid the use of marketing names that may change.\n\nA compressed service name is the service name without spaces.  It may further be shortened if the shortened version is well known in the community.  For example, \"Azure Media Analytics\" would have a compressed service name of MediaAnalytics, whereas \"Azure Service Bus\" would become ServiceBus."
+  },
+  {
+    "id": "general_design.html#general-namespaces-approved-list",
+    "category": "Namespaces",
+    "text": "DO use the following list as the group of services (if the target language supports namespaces):\n\n| Namespace Group  | Functional Area                                                           |\n|:-----------------|:--------------------------------------------------------------------------|\n| `ai`             | Artificial intelligence, including machine learning                       |\n| `analytics`      | Gathering data for metrics or usage                                       |\n| `containers`     | Services related to containers                                            |\n| `communication`  | Communication services                                                    |\n| `data`           | Dealing with structured data stores like databases                        |\n| `diagnostics`    | Gathering data for diagnosing issues                                      |\n| `digitaltwins`   | Digital Twins, digital representations of physical spaces and IoT devices |\n| `identity`       | Authentication and authorization                                          |\n| `iot`            | Internet of things                                                        |\n| `management`     | Control Plane (Azure Resource Manager)                                    |\n| `media`          | Audio and video technologies                                              |\n| `messaging`      | Messaging services, like push notifications or pub-sub                    |\n| `mixedreality`   | Mixed reality technologies                                                |\n| `monitor`        | Services that are offered by Azure Monitor                                |\n| `quantum`        | Quantum computing technologies                                            |\n| `search`         | Search technologies                                                       |\n| `security`       | Security and cryptography                                                 |\n| `storage`        | Storage of unstructured data                                              |\n\n\nIf the client library does not seem to fit into the group list, contact the [Architecture Board] to discuss the namespace requirements."
+  },
+  {
+    "id": "general_design.html#general-namespaces-mgmt",
+    "category": "Namespaces",
+    "text": "DO place the management (Azure Resource Manager) API in the management group.  Use the grouping <AZURE>.management.<group>.<service> for the namespace. Since more services require control plane APIs than data plane APIs, other namespaces may be used explicitly for control plane only.  Data plane usage is by exception only.  Additional namespaces that can be used for control plane SDKs include:\n\n| Namespace Group  | Functional Area                                          |\n|:-----------------|:---------------------------------------------------------|\n| `appmodel`       | Application models, such as Functions or App Frameworks  |\n| `compute`        | Virtual machines, containers, and other compute services |\n| `integration`    | Integration services (such as Logic Apps)                |\n| `management`     | Management services (such as Cost Analytics)             |\n| `networking`     | Services such as VPN, WAN, and Networking                |\n\n\nMany management APIs do not have a data plane because they deal with management of the Azure account. Place the management library in the <AZURE>.management namespace.  For example, use azure.management.costanalysis instead of azure.management.management.costanalysis."
+  },
+  {
+    "id": "general_design.html#general-namespaces-similar-names",
+    "category": "Namespaces",
+    "text": "DO NOT choose similar names for clients that do different things."
+  },
+  {
+    "id": "general_design.html#general-namespaces-registration",
+    "category": "Namespaces",
+    "text": "DO register the chosen namespace with the [Architecture Board].  Open an issue to request the namespace.  See the registered namespace list for a list of the currently registered namespaces.\n\nHere are some examples of namespaces that meet these guidelines:\nAzure.Data.Cosmos\nAzure.Identity.ActiveDirectory\nAzure.IoT.DeviceProvisioning\nAzure.Storage.Blobs\nAzure.Messaging.NotificationHubs (the client library for Notification Hubs)\nAzure.Management.Messaging.NotificationHubs (the management library for Notification Hubs)\n\nHere are some namespaces that do not meet the guidelines:\nMicrosoft.Azure.CosmosDB (not in the Azure namespace and does not use grouping)\nAzure.MixedReality.Kinect (the grouping is not in the approved list)\nAzure.IoT.IoTHub.DeviceProvisioning (too many levels in the group)\n\nThe API surface will consist of one of more service clients that the consumer will instantiate to connect to your service, plus a set of supporting types.\n\nThe number of service clients in a client library should be minimized to provide consumers a clear starting point for using the library. However, multiple service clients may be appropriate in the following situations:\nThe service supports two distinct use cases, such as \"authoring\" and \"inference\", or \"administration\" and \"runtime\", that are unlikely to be used together.\nThe service has a small subset of methods that are needed for its hero scenarios.\nA subset of service requests require special/different permissions.\n\nWhen a client library has multiple service clients, these must have descriptive names so that the consumer can quickly determine which client to use to accomplish their task."
+  },
+  {
+    "id": "general_design.html#general-client-naming",
+    "category": "Client interface",
+    "text": "DO name service client types with the client suffix.\n\nThere are times when operations require the addition of optional data, provided in what is colloquially known as an \"options bag\".  Libraries should strive for consistent naming."
+  },
+  {
+    "id": "general_design.html#general-client-options-naming",
+    "category": "Client interface",
+    "text": "YOU SHOULD name the type for service client option bags with the client_options suffix."
+  },
+  {
+    "id": "general_design.html#general-client-options-param-naming",
+    "category": "Client interface",
+    "text": "YOU SHOULD name operation option bag types with the options suffix.  For example, if the operation is get_secret, then the type of the options bag would be called get_secret_options."
+  },
+  {
+    "id": "general_design.html#general-client-in-namespace",
+    "category": "Client interface",
+    "text": "DO place service client types that the consumer is most likely to interact with in the root namespace of the client library (assuming namespaces are supported in the target language).  Specialized service clients may be placed in sub-namespaces."
+  },
+  {
+    "id": "general_design.html#general-client-minimal-constructor",
+    "category": "Client interface",
+    "text": "DO allow the consumer to construct a service client with the minimal information needed to connect and authenticate to the service."
+  },
+  {
+    "id": "general_design.html#general-client-standardize-verbs",
+    "category": "Client interface",
+    "text": "DO standardize verb prefixes within a set of client libraries for a service.  The service must be able to speak about a specific operation in a cross-language manner within outbound materials (such as documentation, blogs, and public speaking).  They cannot do this if the same operation is referred to by different verbs in different languages.\n\nThe following are standard verb prefixes.  You should have a good (articulated) reason to have an alternate verb for one of these operations.  For example, .NET uses Get<noun>s instead of List<noun>s since it is idiomatic to the language.\n\n<!-- The table data is in yaml format on _data/tables/standard_verbs -->\n<p>{% assign data = site.data.tables.standard_verbs.entries %}\n{% include tables/standard_verbs_template.html %}</p>\n"
+  },
+  {
+    "id": "general_design.html#general-client-feature-support",
+    "category": "Client interface",
+    "text": "DO support 100% of the features provided by the Azure service the client library represents. Gaps in functionality cause confusion and frustration among developers.\n\nThe purposes of the client library is to communicate with an Azure service.  Azure services support multiple API versions.  To understand the capabilities of the service, the client library must be able to support multiple service API versions."
+  },
+  {
+    "id": "general_design.html#general-service-apiversion-1",
+    "category": "Service API versions",
+    "text": "DO only target generally available service API versions when releasing a stable version of the client library."
+  },
+  {
+    "id": "general_design.html#general-service-apiversion-8",
+    "category": "Service API versions",
+    "text": "DO allow the consumer to explicitly select a supported service API version when instantiating the client."
+  },
+  {
+    "id": "general_design.html#general-service-apiversion-2",
+    "category": "Service API versions",
+    "text": "DO target the latest generally available service API version by default in stable versions of the client library."
+  },
+  {
+    "id": "general_design.html#general-service-apiversion-5",
+    "category": "Service API versions",
+    "text": "DO document the service API version that is used by default."
+  },
+  {
+    "id": "general_design.html#general-service-apiversion-3",
+    "category": "Service API versions",
+    "text": "DO target the latest public preview API version by default when releasing a public beta version of the client library."
+  },
+  {
+    "id": "general_design.html#general-service-apiversion-4",
+    "category": "Service API versions",
+    "text": "DO include all service API versions that are supported by the client library in a ServiceVersion enumerated value."
+  },
+  {
+    "id": "general_design.html#general-service-apiversion-6",
+    "category": "Service API versions",
+    "text": "DO ensure that the values of the ServiceVersion enumerated value \"match\" the version strings in the service Swagger definition."
+  },
+  {
+    "id": "general_design.html#general-service-apiversion-7",
+    "category": "Service API versions",
+    "text": "DO add or replace the api-version query parameter on any URI returned by the service e.g., Operation-Location, next page links, etc., with the service version passed configured on the client.\n\nFor the purposes of this requirement, semantic changes are allowed.  For instance, many version strings are based on SemVer, which allows dots and dashes.  However, these characters are not allowed in identifiers.  The developer MUST be able to clearly understand what service API version will be used when the service version is set to each value in the ServiceVersion enumerated value.\n\nClient libraries represent entities transferred to and from Azure services as model types.   Certain types are used for round-trips to the service.  They can be sent to the service (as an addition or update operation) and retrieved from the service (as a get operation).  These should be named according to the type.  For example, a ConfigurationSetting in App Configuration, or an Event on Event Grid.\n\nData within the model type can generally be split into two parts - data used to support one of the champion scenarios for the service, and less important data.  Given a type Foo, the less important details can be gathered in a type called FooDetails and attached to Foo as the details property.\n\nFor example:\n\n{% highlight csharp %}\nclass ConfigurationSettingDetails {\nDateTimeOffset lastModifiedDate;\nDateTimeOffset receivedDate;\nETag eTag;\n}\n\nclass ConfigurationSetting {\nString key;\nString value;\nConfigurationSettingDetails details;\n}\n{% endhighlight %}\n\nOptional parameters and settings to an operation should be collected into an options bag named <operation>Options. For example, the GetConfigurationSetting method might take a GetConfigurationSettingOptions class for specifying optional parameters.\n\nResults should use the model type (e.g. ConfigurationSetting) where the return value is a complete set of data for the model.  However, in cases where a partial schema is returned, use the following types:\n<model>Item for each item in an enumeration if the enumeration returns a partial schema for the model.  For example, GetBlobs() return an enumeration of BlobItem, which contains the blob name and metadata, but not the content of the blob.\n<operation>Result for the result of an operation.  The <operation> is tied to a specific service operation.  If the same result can be used for multiple operations, use a suitable noun-verb phrase instead.  For example, use UploadBlobResult for the result from UploadBlob, but ContainerChangeResult for results from the various methods that change a blob container.\n\nThe following table enumerates the various models you might create:\n\n| Type | Example | Usage |\n| <model> | Secret | The full data for a resource |\n| <model>Details | SecretDetails | Less important details about a resource.  Attached to <model>.details |\n| <model>Item | SecretItem | A partial set of data returned for enumeration |\n| <operation>Options | AddSecretOptions | Optional parameters to a single operation |\n| <operation>Result | AddSecretResult | A partial or different set of data for a single operation |\n| <model><verb>Result | SecretChangeResult | A partial or different set of data for multiple operations on a model |\n\nSince the client library generally wraps one or more HTTP requests, it is important to support standard network capabilities.  Asynchronous programming techniques are not widely understood, although such techniques are essential in developing scalable web services and required in certain environments (such as mobile or Node environments).  Many developers prefer synchronous method calls for their easy semantics when learning how to use a technology.  In addition, consumers have come to expect certain capabilities in a network stack - capabilities such as call cancellation, automatic retry, and logging."
+  },
+  {
+    "id": "general_design.html#general-network-support-sync-and-async",
+    "category": "Network requests",
+    "text": "DO support both synchronous and asynchronous method calls, except where the language or default runtime does not support one or the other."
+  },
+  {
+    "id": "general_design.html#general-network-identify-sync-methods",
+    "category": "Network requests",
+    "text": "DO ensure that the consumer can identify which methods are async and which are synchronous.\n\nWhen an application makes a network request, the network infrastructure (like routers) and the called service may take a long time to respond and, in fact, may never respond. A well-written application SHOULD NEVER give up its control to the network infrastucture or service. Here are some examples as to why this is so important:\nWhen an orchestrator needs to terminate a service (due to scale in, reconfiguration, or upgrading to a new version), the orchestrator typically notifies a running service instance by sending the Posix SIGINT. When the service receives this signal, it should terminate as quickly and gracefully as possible by setting a cancellation mechanism which is honored by all network operations that are currently in progress.\nWhen a consumer's web server receives a request, it may set a time limit indicating how much time it is allowing before it must give a response to the user.\nWhen a consumer's GUI application makes a request to an Azure service via our SDK, the GUI might offer a cancel button so that the end user can indicate that they are no longer in waiting for an operation or operations to complete.\n\nThe best way for consumers to work with cancellation is to think of cancellation objects as forming a tree. For example:\nCancelling a parent automatically cancels its children.\nChildren can time out sooner than their parent but cannot extend the total time.\nCancellation can happen due to timeout or due to a manual/explicit cancel.\n\nHere is an example of how an application would use the tree of cancellations:\nWhen an application starts, it should create a cancellation object that represents the entire application; this object is explicitly terminated in response to the application receiving a SIGINT notification.\nWhen a web server receives an incoming request, it would create a new cancellation object that is a child of the application node. The new cancellation object would specify a maximum time that the web server is allowed to operate on the request.\nAs part of operating on the incoming request, the web server might need to make multiple requests to other services (like a database). If these requests can be made serially or in parallel, then they might share the previously created cancellation object. However, if the web server wants to limit the time spent on 1 or more of the requests, it can create a new cancellation object (with the desired timeout value) and make this object a child of the incoming node; this way, the individual request times out either when the overall request times out or when the maximum time for this operation is exceeded - whichever happens first.\nNote that if multiple requests are made in parallel, it is common for the consumer to want to cancel all of them if any one of them fails. This should be a supported scenario."
+  },
+  {
+    "id": "general_design.html#general-network-accept-cancellation",
+    "category": "Network requests",
+    "text": "DO accept platform-native cancellation tokens (that implement a timeout) on all asynchronous calls."
+  },
+  {
+    "id": "general_design.html#general-network-check-cancellation",
+    "category": "Network requests",
+    "text": "YOU SHOULD check cancellation tokens only on I/O calls (such as network requests and file loads).  Do not check cancellation tokens in between I/O calls within the client library (for example, when processing data between I/O calls)."
+  },
+  {
+    "id": "general_design.html#general-network-no-leakage",
+    "category": "Network requests",
+    "text": "DO NOT leak the underlying protocol transport implementation details to the consumer.  All types from the protocol transport implementation must be appropriately abstracted.\n\nAzure services use a variety of different authentication schemes to allow clients to access the service.  Conceptually, there are two entities responsible in this process: a credential and an authentication policy.  Credentials provide confidential authentication data.  Authentication policies use the data provided by a credential to authenticate requests to the service.\n\nPrimarily, all Azure services should support Azure Active Directory OAuth token authentication, and all clients must support authenticating requests in this manner."
+  },
+  {
+    "id": "general_design.html#general-auth-provide-token-client-constructor",
+    "category": "Authentication",
+    "text": "DO provide a service client constructor or factory that accepts an instance of the TokenCredential abstraction from Azure Core."
+  },
+  {
+    "id": "general_design.html#auth-client-no-token-persistence",
+    "category": "Authentication",
+    "text": "DO NOT persist, cache, or reuse tokens returned from the token credential. This is CRITICAL as credentials generally have a short validity period and the token credential is responsible for refreshing these."
+  },
+  {
+    "id": "general_design.html#general-auth-use-core",
+    "category": "Authentication",
+    "text": "DO use authentication policy implementations from the Azure Core library where available."
+  },
+  {
+    "id": "general_design.html#general-auth-reserve-when-not-suported",
+    "category": "Authentication",
+    "text": "DO reserve the API surface needed for TokenCredential authentication, in the rare case that a service does not yet support Azure Active Directory authentication.\n\nIn addition to Azure Active Directory OAuth, services may provide custom authentication schemes. In this case the following guidelines apply."
+  },
+  {
+    "id": "general_design.html#general-auth-support",
+    "category": "Authentication",
+    "text": "DO support all authentication schemes that the service supports."
+  },
+  {
+    "id": "general_design.html#general-auth-provide-credential-types",
+    "category": "Authentication",
+    "text": "DO define a public custom credential type which enables clients to authenticate requests using the custom scheme."
+  },
+  {
+    "id": "general_design.html#general-auth-credential-type-base",
+    "category": "Authentication",
+    "text": "YOU SHOULD NOT define custom credential types extending or implementing the TokenCredential abstraction from Azure Core. This is especially true in type safe languages where extending or implementing this abstraction would break the type safety of other service clients, allowing users to instantiate them with the custom credential of the wrong service."
+  },
+  {
+    "id": "general_design.html#general-auth-credential-type-placement",
+    "category": "Authentication",
+    "text": "DO define custom credential types in the same namespace and package as the client, or in a service group namespace and shared package, not in Azure Core or Azure Identity."
+  },
+  {
+    "id": "general_design.html#general-auth-credential-type-prefix",
+    "category": "Authentication",
+    "text": "DO prepend custom credential type names with the service name or service group name to provide clear context to its intended scope and usage."
+  },
+  {
+    "id": "general_design.html#general-auth-credential-type-suffix",
+    "category": "Authentication",
+    "text": "DO append Credential to the end of the custom credential type name. Note this must be singular not plural."
+  },
+  {
+    "id": "general_design.html#general-auth-provide-credential-constructor",
+    "category": "Authentication",
+    "text": "DO define a constructor or factory for the custom credential type which takes in ALL data needed for the custom authentication protocol."
+  },
+  {
+    "id": "general_design.html#general-auth-provide-update-method",
+    "category": "Authentication",
+    "text": "DO define an update method which accepts all mutable credential data, and updates the credential in an atomic, thread safe manner."
+  },
+  {
+    "id": "general_design.html#general-auth-credential-set-properties",
+    "category": "Authentication",
+    "text": "DO NOT define public settable properties or fields which allow users to update the authentication data directly in a non-atomic manner."
+  },
+  {
+    "id": "general_design.html#general-auth-credential-get-properties",
+    "category": "Authentication",
+    "text": "YOU SHOULD NOT define public properties or fields which allow users to access the authentication data directly. They are most often not needed by end users, and are difficult to use in a thread safe manner. In the case that exposing the authentication data is necessary, all the data needed to authenticate requests should be returned from a single API which guarantees the data returned is in a consistent state."
+  },
+  {
+    "id": "general_design.html#general-auth-provide-client-constructor",
+    "category": "Authentication",
+    "text": "DO provide service client constructors or factories that accept all supported credential types.\n\nClient libraries may support providing credential data via a connection string ONLY IF the service provides a connection string to users via the portal or other tooling.   Connection strings are generally good for getting started as they are easily integrated into an application by copy/paste from the portal.  However, connection strings are considered a lesser form of authentication because the credentials cannot be rotated within a running process."
+  },
+  {
+    "id": "general_design.html#general-auth-connection-strings",
+    "category": "Authentication",
+    "text": "DO NOT support constructing a service client with a connection string unless such connection string is available within tooling (for copy/paste operations).\n\nRequests to the service fall into two basic groups - methods that make a single logical request, or a deterministic sequence of requests.  An example of a single logical request is a request that may be retried inside the operation.  An example of a deterministic sequence of requests is a paged operation.\n\nThe logical entity is a protocol neutral representation of a response. For HTTP, the logical entity may combine data from headers, body and the status line. A common example is exposing an ETag header as a property on the logical entity in addition to any deserialized content from the body."
+  },
+  {
+    "id": "general_design.html#general-response-logical-entity",
+    "category": "Response formats",
+    "text": "DO optimize for returning the logical entity for a given request. The logical entity must represent the information needed in the 99%+ case."
+  },
+  {
+    "id": "general_design.html#general-response-complete",
+    "category": "Response formats",
+    "text": "DO allow a consumer to access the complete response, including the status line, headers and body. The client library must follow the language specific guidance for accomplishing this."
+  },
+  {
+    "id": "general_design.html#general-response-streaming",
+    "category": "Response formats",
+    "text": "DO provide examples on how to access the raw and streamed response for a given request, where exposed by the client library.  We do not expect all methods to expose a streamed response."
+  },
+  {
+    "id": "general_design.html#general-response-enumeration",
+    "category": "Response formats",
+    "text": "DO provide a language idiomatic way to enumerate all logical entities for a paged operation, automatically fetching new pages as needed.\n\nFor example, in Python:\n\n```python\n# Yes:\nfor instance in client.list_instances():\n    print(instance)\n\n# No - don't force the caller of the library to do paging:\nnext_page = None\nwhile not done:\n    list_instance_result = client.list_instances(page=next_page):\n    for instance ln list_instance_result.response():\n        print(instance)\n    next_page = list_instance_result.next_page\n    done = next_page is None\n\n```\n\nFor methods that combine multiple requests into a single call:"
+  },
+  {
+    "id": "general_design.html#general-response-return-headers",
+    "category": "Response formats",
+    "text": "DO return headers and other per-request metadata unless it is obvious as to which specific HTTP request the methods return value corresponds to."
+  },
+  {
+    "id": "general_design.html#general-response-failure-cases",
+    "category": "Response formats",
+    "text": "DO provide enough information in failure cases for an application to take appropriate corrective action."
+  },
+  {
+    "id": "general_design.html#general-response-no-reserved-words",
+    "category": "Response formats",
+    "text": "YOU SHOULD NOT use common reserved words as a property name within the models returned within the logical entity.  For example:\nobject\nvalue\n\nSuch usage can cause confusion and will inevitably have to be changed on a per-language basis, which can cause consistency problems.\n\nConditional requests (https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests) are normally performed using HTTP headers.  The primary usage provides headers that match the ETag to some known value.  The ETag is an opaque identifier that represents a single version of a resource. For example, adding the following header will translate to \"if the record's version, specified by the ETag, is not the same\".\n\n{% highlight text %}\nIf-Not-Match: \"etag-value\"\n{% endhighlight %}\n\nWith headers, tests are possible for the following:\nUnconditionally (no additional headers)\nIf (not) modified since a version (If-Match and If-Not-Match)\nIf (not) modified since a date (If-Modified-Since and If-Unmodified-Since)\nIf (not) present (If-Match and If-Not-Match with a ETag=* value)\n\nNot all services support all of these semantics, and may not support any of them.  Developers have varying levels of understanding of the ETag and conditional requests, so it is best to abstract this concept from the API surface.  There are two types of conditional requests we need to be concerned with:\n\nSafe conditional requests (e.g. GET)\n\nThese are typically used to save bandwidth in an \"update cache\" scenario, i.e. I have a cached value, only send me the data if what the service has is newer than my copy. These return either a 200 or a 304 status code, indicating the value was not modified, which tells the caller that their cached value is up to date.\n\nUnsafe conditional requests (e.g. POST, PUT, or DELETE)\n\nThese are typically used to prevent losing updates in an optimistic concurrency scenario, i.e. I've modified the cached value I'm holding, but don't update the service version unless it has the same copy I've got. These return either a success or a 412 error status code, indicating the value was modified, to indicate to the caller that they'll need to retry their update if they want it to succeed.\n\nThese two cases are handled differently in client libraries.  However, the form of the call is the same in both cases.  The signature of the method should be:\n\n{% highlight text %}\nclient.(, requestOptions)\n{% endhighlight %}\n\nThe requestOptions field provides preconditions to the HTTP request.  The Etag value will be retrieved from the item that is passed into the method where possible, and method arguments where not possible. The form of the method will be modified based on idiomatic usage patterns in the language of choice.  In cases where the ETag value is not known, the operation cannot be conditional.\nIf the library developer doens't need to support advanced usage of precondition headers, they can add a boolean parameter that is set to true to establish the condition.  For example, use one of the following boolean names instead of the conditions operator:\nonlyIfChanged\nonlyIfUnchanged\nonlyIfMissing\nonlyIfPresent\n\nIn all cases, the conditional expression is \"opt-in\", and the default is to perform the operation unconditionally.\n\nThe return value from a conditional operation must be carefully considered.  For safe operators (e.g. GET), return a response that will throw if the value is accessed (or follow the same convention used fro a 204 No Content response), since there is no value in the body to reference.  For unsafe operators (e.g. PUT, DELETE, or POST), throw a specific error when a Precondition Failed or Conflict result is received.  This allows the consumer to do something different in the case of conflicting results.\n\nYOU SHOULD accept a conditions parameter (which takes an enumerated type) on service methods that allow a conditional check on the service.\n\nYOU SHOULD accept an additional boolean or enum parameter on service methods as necessary to enable conditional checks using ETag.\n\nYOU SHOULD include the ETag field as part of the object model when conditional operations are supported.\n\n<p><a href=\"#{{ include.id }}\" name=\"{{ include.id }}\" class='requirement' role='img' aria-label='YOU SHOULD NOT'>\u26a0\ufe0f</a> <strong>YOU SHOULD NOT</strong></p>\n\n\nYOU SHOULD throw a distinct error when a 412 Precondition Failed response or a 409 Conflict response is received from the service due to a conditional check.\n\nAzure client libraries eschew low-level pagination APIs in favor of high-level abstractions that implement per-item iterators. High-level APIs are easy for developers to use for the majority of use cases but can be more confusing when finer-grained control is required (for example, over-quota/throttling) and debugging when things go wrong. Other guidelines in this document work to mitigate this limitation, for example by providing robust logging, tracing, and pipeline customization options."
+  },
+  {
+    "id": "general_design.html#general-pagination-use-async-iterators",
+    "category": "Pagination",
+    "text": "DO expose paginated collections using language-canonical iterators over items within pages. The APIs used to expose the async iterators are language-dependent but should align with any existing common practices in your ecosystem."
+  },
+  {
+    "id": "general_design.html#general-pagination-use-iterators",
+    "category": "Pagination",
+    "text": "DO expose paginated collections using an iterator or cursor pattern if async iterators aren't a built-in feature of your language."
+  },
+  {
+    "id": "general_design.html#general-pagination-expose-lists-equally",
+    "category": "Pagination",
+    "text": "DO expose non-paginated list endpoints identically to paginated list endpoints. Users shouldn't need to appreciate the difference."
+  },
+  {
+    "id": "general_design.html#general-pagination-use-distinct-types",
+    "category": "Pagination",
+    "text": "DO use distinct types for entities in a list endpoint and an entity returned from a get endpoint if these are different types, and otherwise you must use the same types in these situations.\n\n**IMPORTANT:** Services should refrain from having a difference between the type of a particular entity as it exists in a list versus the result of a GET request for that individual item as it makes the client library's surface area simpler."
+  },
+  {
+    "id": "general_design.html#general-pagination-expose-individual-items",
+    "category": "Pagination",
+    "text": "DO NOT expose an iterator over each individual item if getting each item requires a corresponding GET request to the service. One GET per item is often too expensive and so not an action we want to take on behalf of users."
+  },
+  {
+    "id": "general_design.html#general-pagination-no-arrays",
+    "category": "Pagination",
+    "text": "DO NOT expose an API to get a paginated collection into an array. This is a dangerous capability for services which may return many pages."
+  },
+  {
+    "id": "general_design.html#general-pagination-expose-paging-apis",
+    "category": "Pagination",
+    "text": "DO expose paging APIs when iterating over a collection. Paging APIs must accept a continuation token (from a prior run) and a maximum number of items to return, and must return a continuation token as part of the response so that the iterator may continue, potentially on a different machine.\n\nLong-running operations are operations which consist of an initial request to start the operation followed by polling to determine when the operation has completed or failed. Long-running operations in Azure tend to follow the [REST API guidelines for Long-running Operations][rest-lro], but there are exceptions."
+  },
+  {
+    "id": "general_design.html#general-lro-expose-poller",
+    "category": "Long running operations",
+    "text": "DO represent long-running operations with some object that encapsulates the polling and the operation status. This object, called a poller, must provide APIs for:\nquerying the current operation state (either asynchronously, which may consult the service, or synchronously which must not)\nrequesting an asynchronous notification when the operation has completed\ncancelling the operation if cancellation is supported by the service\nregistering disinterest in the operation so polling stops\ntriggering a poll operation manually (automatic polling must be disabled)\nprogress reporting (if supported by the service)"
+  },
+  {
+    "id": "general_design.html#general-lro-polling-config",
+    "category": "Long running operations",
+    "text": "DO support the following polling configuration options:\npollInterval\n\nPolling configuration may be used only in the absence of relevant retry-after headers from service, and otherwise should be ignored."
+  },
+  {
+    "id": "general_design.html#general-lro-prefix",
+    "category": "Long running operations",
+    "text": "DO prefix method names which return a poller with either begin or start.  Language-specific guidelines will dictate which verb to use."
+  },
+  {
+    "id": "general_design.html#general-lro-continuation",
+    "category": "Long running operations",
+    "text": "DO provide a way to instantiate a poller with the serialized state of another poller to begin where it left off, for example by passing the state as a parameter to the same method which started the operation, or by directly instantiating a poller with that state."
+  },
+  {
+    "id": "general_design.html#general-lro-cancellation",
+    "category": "Long running operations",
+    "text": "DO NOT cancel the long-running operation when cancellation is requested via a cancellation token. The cancellation token is cancelling the polling operation and should not have any effect on the service."
+  },
+  {
+    "id": "general_design.html#general-lro-logging",
+    "category": "Long running operations",
+    "text": "DO log polling status at the Info level (including time to next retry)"
+  },
+  {
+    "id": "general_design.html#general-lro-progress-reporting",
+    "category": "Long running operations",
+    "text": "DO expose a progress reporting mechanism to the consumer if the service reports progress as part of the polling operation.  Language-dependent guidelines will present additional guidance on how to expose progress reporting in this case.\n\nThe ability to retry failed requests for which a client never received a response greatly simplifies the ability to write resilient distributed applications. When the method on the service is not idempotent, the service may support safe retry by supporting repeatability headers as defined in OASIS Repeatable Requests Version 1.0 (https://docs.oasis-open.org/odata/repeatable-requests/v1.0/repeatable-requests-v1.0.html) "
+  },
+  {
+    "id": "general_design.html#general-repeatable-requests-support",
+    "category": "Repeatable requests",
+    "text": "DO add the Repeatability-Request-ID (a uuid) and Repeatability-First-Sent (IMF fixdate) request headers before sending the HTTP request to the pipeline in any client method that directly invokes a single service operation. These header values remain the same cross all retries."
+  },
+  {
+    "id": "general_design.html#general-repeatable-requests-parameters",
+    "category": "Repeatable requests",
+    "text": "YOU SHOULD NOT offer explicit parameters on client methods allowing the consumer to explicitly set the repeatability headers value.\n\nNOTE: If the client method allows the consumer to set arbitrary headers, then any values for these two headers should be used and must not be overwritten by the client method code."
+  },
+  {
+    "id": "general_design.html#general-repeatable-requests-support",
+    "category": "Repeatable requests",
+    "text": "DO expose the Repeatability-Result response header in the response model for the method.\n\nMost Azure services expose a RESTful API over HTTPS.  However, a few services use other protocols, such as AMQP (https://www.amqp.org/)  MQTT (http://mqtt.org/)  or WebRTC (https://webrtc.org/)  In these cases, the operation of the protocol can be split into two phases:\nPer-connection (surrounding when the connection is initiated and terminated)\nPer-operation (surrounding when an operation is sent through the open connection)\n\nThe policies that are added to a HTTP request/response (authentication, unique request ID, telemetry, distributed tracing, and logging) are still valid on both a per-connection and per-operation basis.  However, the methods by which these policies are implemented are protocol dependent."
+  },
+  {
+    "id": "general_design.html#general-proto-policies",
+    "category": "Support for non-HTTP protocols",
+    "text": "DO implement as many of the policies as possible on a per-connection and per-operation basis.\n\nFor example, MQTT over WebSockets provides the ability to add headers during the initiation of the WebSockets connection, so this is a good place to add authentication, telemetry, and distributed tracing policies.  However, MQTT has no metadata (the equivalent of HTTP headers), so per-operation policies are not possible.  AMQP, by contract, does have per-operation metadata.  Unique request ID, and distributed tracing headers can be provided on a per-operation basis with AMQP."
+  },
+  {
+    "id": "general_design.html#general-proto-adparch",
+    "category": "Support for non-HTTP protocols",
+    "text": "DO consult the [Architecture Board] on policy decisions for non-HTTP protocols.  Implementation of all policies is expected.  If the protocol cannot support a policy, obtain an exception from the [Architecture Board]."
+  },
+  {
+    "id": "general_design.html#general-proto-config",
+    "category": "Support for non-HTTP protocols",
+    "text": "DO use the global configuration established in the Azure Core library to configure policies for non-HTTP protocols.  Consumers don't necessarily know what protocol is used by the client library.  They will expect the client library to honor global configuration that they have established for the entire Azure SDK.\n\n[Architecture Board]: https://github.com/azure/azure-sdk/issues\n\n[General Azure SDK Guidelines]: {{ site.baseurl }}{% link docs/general/introduction.md %}\n[Azure SDK Contributors Guide]: https://review.docs.microsoft.com/help/contribute-ref/contribute-ref-how-to-document-sdk\n[Microsoft Writing Style Guide]: https://styleguides.azurewebsites.net/StyleGuide/Read?id=2700\n[Microsoft Cloud Style Guide]: https://styleguides.azurewebsites.net/Styleguide/Read?id=2696\n[Acrolinx VS Code extension]: https://aka.ms/azsdk/acrolinx-vscode\n[rest-lro]: https://github.com/microsoft/api-guidelines/blob/vNext/Guidelines.md#13-long-running-operations\n\n[general-guidelines]: {{ site.baseurl }}{% link docs/general/introduction.md %}\n[android-guidelines]: {{ site.baseurl }}{% link docs/android/design.md %}\n[clang-guidelines]: {{ site.baseurl }}{% link docs/clang/design.md %}\n[cpp-guidelines]: {{ site.baseurl }}{% link docs/cpp/introduction.md %}\n[dotnet-guidelines]: {{ site.baseurl }}{% link docs/dotnet/introduction.md %}\n[golang-guidelines]: {{ site.baseurl }}{% link docs/golang/introduction.md %}\n[ios-guidelines]: {{ site.baseurl }}{% link docs/ios/introduction.md %}\n[java-guidelines]: {{ site.baseurl }}{% link docs/java/introduction.md %}\n[python-guidelines]: {{ site.baseurl }}{% link docs/python/design.md %}\n[typescript-guidelines]: {{ site.baseurl }}{% link docs/typescript/introduction.md %}\n\n[android-latest-releases]: {{ site.baseurl }}{% link releases/latest/android.md %}\n[dotnet-latest-releases]: {{ site.baseurl }}{% link releases/latest/dotnet.md %}\n[go-latest-releases]: {{ site.baseurl }}{% link releases/latest/go.md %}\n[ios-latest-releases]: {{ site.baseurl }}{% link releases/latest/ios.md %}\n[java-latest-releases]: {{ site.baseurl }}{% link releases/latest/java.md %}\n[js-latest-releases]: {{ site.baseurl }}{% link releases/latest/js.md %}\n[python-latest-releases]: {{ site.baseurl }}{% link releases/latest/python.md %}\n[cpp-latest-releases]: {{ site.baseurl }}{% link releases/latest/cpp.md %}\n[c-latest-releases]: {{ site.baseurl }}{% link releases/latest/c.md %}\n\n[README-EXAMPLE]: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-EXAMPLE.md\n[README-TEMPLATE]: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md\n"
+  }
+]

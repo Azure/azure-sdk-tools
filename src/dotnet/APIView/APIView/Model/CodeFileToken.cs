@@ -2,13 +2,14 @@
 {
     public struct CodeFileToken
     {
-        public CodeFileToken(string value, CodeFileTokenKind kind)
+        public CodeFileToken(string value, CodeFileTokenKind kind, int? numberOfLinesinLeafSection = null)
         {
             Value = value;
             NavigateToId = null;
             Kind = kind;
             DefinitionId = null;
-            CrossLanguageDefId = null;
+            CrossLanguageDefinitionId = null;
+            NumberOfLinesinLeafSection = numberOfLinesinLeafSection;
         }
 
         public string DefinitionId { get; set; }
@@ -19,7 +20,9 @@
 
         public CodeFileTokenKind Kind { get; set; }
 
-        public string CrossLanguageDefId { get; set; }
+        public string CrossLanguageDefinitionId { get; set; }
+
+        public int? NumberOfLinesinLeafSection { get; set; }
 
         public override string ToString()
         {

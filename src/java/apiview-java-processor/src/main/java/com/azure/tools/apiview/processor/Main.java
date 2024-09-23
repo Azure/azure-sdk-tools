@@ -14,10 +14,8 @@ import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -186,8 +184,11 @@ public class Main {
         String unzippedTemp = "temp/" + inputFile.getName();
         deleteDirectory(new File(unzippedTemp));
 
-        ZipFile zipFile = new ZipFile(inputFile);
-        zipFile.extractAll(unzippedTemp);
+        try (ZipFile zipFile = new ZipFile(inputFile)) {
+            zipFile.extractAll(unzippedTemp);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         File unzippedFile = new File(unzippedTemp);
 
         if (KotlinASTAnalyser.hasPublicApiInKotlin(unzippedFile.getAbsolutePath())) {
@@ -197,7 +198,7 @@ public class Main {
         }
         else {
             apiListing.setLanguage("Java");
-            final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
+            final Analyser analyser = new JavaASTAnalyser(apiListing);
 
             // Read all files within the jar file so that we can create a list of files to analyse
             final List<Path> allFiles = new ArrayList<>();
@@ -214,6 +215,8 @@ public class Main {
 
                 // Do the analysis while the filesystem is still represented in memory
                 analyser.analyse(allFiles);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
         deleteDirectory(unzippedFile);
@@ -266,7 +269,6 @@ public class Main {
             System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file - continuing...");
             e.printStackTrace();
         }
-        file.delete();
     }
 
     private static void processXmlFile(File inputFile, APIListing apiListing) {

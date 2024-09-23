@@ -77,5 +77,3 @@
 # Pylint checkers
 ###########
 /tools/pylint-extensions/azure-pylint-guidelines-checker @l0lawrence
-
-.config/1espt/   @benbp @weshaggard

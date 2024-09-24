@@ -14,7 +14,8 @@ export class ReviewInfoComponent {
   @Input() activeApiRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
   @Input() userProfile: UserProfile | undefined;
-  
+  @Input() showPageoptionsButton: boolean = false;
+
   @Input() review : Review | undefined = undefined;
   @Output() pageOptionsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 

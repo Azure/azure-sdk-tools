@@ -5,6 +5,7 @@
 
 import astroid
 import pylint.testutils
+import pytest
 import requests
 import os
 
@@ -18,125 +19,75 @@ TEST_FOLDER = os.path.abspath(os.path.join(__file__, ".."))
 class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveTracingDecorators
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_tracing_decorators.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_constructor(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        function_node = setup.body[3].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method_async(self, setup):
+        function_node = setup.body[3].body[2]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_methods_with_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator import distributed_trace
-        class SomeClient(): #@
-            @distributed_trace
-            def create_configuration(self, **kwargs): #@
-                pass
-            @distributed_trace
-            def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace
-            def list_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_decorators(self, setup):
+        func_node_a = setup.body[3].body[3]
+        func_node_b = setup.body[3].body[4]
+        func_node_c = setup.body[3].body[5]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_async_methods_with_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator_async import distributed_trace_async
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def create_configuration(self, **kwargs): #@
-                pass
-            @distributed_trace_async
-            async def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace_async
-            async def list_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_async_methods_with_decorators(self, setup):
+        func_node_a = setup.body[3].body[6]
+        func_node_b = setup.body[3].body[7]
+        func_node_c = setup.body[3].body[8]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_sync_decorator_on_async_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator import distributed_trace
-        class SomeClient(): #@
-            @distributed_trace
-            async def create_configuration(self, **kwargs): #@
-                pass
-            @distributed_trace
-            async def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace
-            async def list_thing(self, **kwargs): #@
-                pass
-        """
-        )
+    def test_finds_sync_decorator_on_async_method(self, setup):
+        func_node_a = setup.body[3].body[9]
+        func_node_b = setup.body[3].body[10]
+        func_node_c = setup.body[3].body[11]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=5,
+                line=47,
                 node=func_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=47,
                 end_col_offset=34,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=8,
+                line=51,
                 node=func_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=51,
                 end_col_offset=23,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator-async",
-                line=11,
+                line=55,
                 node=func_node_c,
                 col_offset=4,
-                end_line=11,
+                end_line=55,
                 end_col_offset=24,
             ),
         ):
@@ -144,45 +95,33 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_async_decorator_on_sync_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator_async import distributed_trace_async
-        class SomeClient(): #@
-            @distributed_trace_async
-            def create_configuration(self, **kwargs): #@
-                pass
-            @distributed_trace_async
-            def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace_async
-            def list_thing(self, **kwargs): #@
-                pass
-        """
-        )
+    def test_finds_async_decorator_on_sync_method(self, setup):
+        func_node_a = setup.body[3].body[12]
+        func_node_b = setup.body[3].body[13]
+        func_node_c = setup.body[3].body[14]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=5,
+                line=60,
                 node=func_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=60,
                 end_col_offset=28,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=8,
+                line=64,
                 node=func_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=64,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-tracing-decorator",
-                line=11,
+                line=68,
                 node=func_node_c,
                 col_offset=4,
-                end_line=11,
+                end_line=68,
                 end_col_offset=18,
             ),
         ):
@@ -190,61 +129,23 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_other_decorators(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator import distributed_trace
-        class SomeClient(): #@
-            @classmethod
-            @distributed_trace
-            def download_thing(self, some, **kwargs): #@
-                pass
-
-            @distributed_trace
-            @decorator
-            def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_decorators(self, setup):
+        func_node_a = setup.body[3].body[15]
+        func_node_b = setup.body[3].body[16]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
 
-    def test_ignores_other_decorators_async(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator_async import distributed_trace_async
-        class SomeClient(): #@
-            @classmethod
-            @distributed_trace_async
-            async def download_thing(self, some, **kwargs): #@
-                pass
-
-            @distributed_trace_async
-            @decorator
-            async def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_decorators_async(self, setup):
+        func_node_a = setup.body[3].body[17]
+        func_node_b = setup.body[3].body[18]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
 
-    def test_ignores_non_client_method(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def download_thing(self, some, **kwargs): #@
-                pass
-            
-            @classmethod
-            async def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_method(self, setup):
+        func_node_a = setup.body[4].body[0]
+        func_node_b = setup.body[4].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
@@ -261,230 +162,133 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
 class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientsDoNotUseStaticMethods
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "clients_do_not_use_static_methods.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_constructor(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        function_node = setup.body[3].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            async def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method_async(self, setup):
+        function_node = setup.body[3].body[2]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_methods_with_other_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def create_configuration(self): #@
-                pass
-            @distributed_trace
-            def get_thing(self): #@
-                pass
-            @distributed_trace
-            def list_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_other_decorators(self, setup):
+        func_node_a = setup.body[3].body[3]
+        func_node_b = setup.body[3].body[4]
+        func_node_c = setup.body[3].body[5]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_async_methods_with_other_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def create_configuration(self): #@
-                pass
-            @distributed_trace_async
-            async def get_thing(self): #@
-                pass
-            @distributed_trace_async
-            async def list_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_async_methods_with_other_decorators(self, setup):
+        func_node_a = setup.body[3].body[6]
+        func_node_b = setup.body[3].body[7]
+        func_node_c = setup.body[3].body[8]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_staticmethod_on_async_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            async def create_configuration(self): #@
-                pass
-            @staticmethod
-            async def get_thing(self): #@
-                pass
-            @staticmethod
-            async def list_thing(self): #@
-                pass
-        """
-        )
+    def test_finds_staticmethod_on_async_method(self, setup):
+        func_node_a = setup.body[3].body[9]
+        func_node_b = setup.body[3].body[10]
+        func_node_c = setup.body[3].body[11]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=4,
+                line=49,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
-                end_col_offset=34,
+                end_line=49,
+                end_col_offset=35,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=7,
+                line=53,
                 node=func_node_b,
                 col_offset=4,
-                end_line=7,
-                end_col_offset=23,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="client-method-should-not-use-static-method",
-                line=10,
-                node=func_node_c,
-                col_offset=4,
-                end_line=10,
+                end_line=53,
                 end_col_offset=24,
             ),
+            pylint.testutils.MessageTest(
+                msg_id="client-method-should-not-use-static-method",
+                line=57,
+                node=func_node_c,
+                col_offset=4,
+                end_line=57,
+                end_col_offset=25,
+            ),
         ):
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_staticmethod_on_sync_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            def create_configuration(self): #@
-                pass
-            @staticmethod
-            def get_thing(self): #@
-                pass
-            @staticmethod
-            def list_thing(self): #@
-                pass
-        """
-        )
+    def test_finds_staticmethod_on_sync_method(self, setup):
+        func_node_a = setup.body[3].body[12]
+        func_node_b = setup.body[3].body[13]
+        func_node_c = setup.body[3].body[14]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=4,
+                line=62,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
-                end_col_offset=28,
+                end_line=62,
+                end_col_offset=29,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=7,
+                line=66,
                 node=func_node_b,
                 col_offset=4,
-                end_line=7,
-                end_col_offset=17,
+                end_line=66,
+                end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-should-not-use-static-method",
-                line=10,
+                line=70,
                 node=func_node_c,
                 col_offset=4,
-                end_line=10,
-                end_col_offset=18,
+                end_line=70,
+                end_col_offset=19,
             ),
         ):
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_other_multiple_decorators(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @classmethod
-            @distributed_trace
-            def download_thing(self, some, **kwargs): #@
-                pass
-
-            @distributed_trace
-            @decorator
-            def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_multiple_decorators(self, setup):
+        func_node_a = setup.body[3].body[15]
+        func_node_b = setup.body[3].body[16]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
 
-    def test_ignores_other_multiple_decorators_async(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @classmethod
-            @distributed_trace_async
-            async def download_thing(self, some, **kwargs): #@
-                pass
-
-            @distributed_trace_async
-            @decorator
-            async def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_multiple_decorators_async(self, setup):
+        func_node_a = setup.body[3].body[17]
+        func_node_b = setup.body[3].body[18]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
 
-    def test_ignores_non_client_method(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            @staticmethod
-            def download_thing(self, some, **kwargs): #@
-                pass
-
-            @staticmethod
-            async def do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_method(self, setup):
+        func_node_a = setup.body[4].body[0]
+        func_node_b = setup.body[4].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
@@ -501,312 +305,195 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
 class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientHasApprovedMethodNamePrefix
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_has_approved_method_name_prefix.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_constructor(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_private_method(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        class_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_if_exists_suffix(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def check_if_exists(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_if_exists_suffix(self, setup):
+        class_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_from_prefix(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def from_connection_string(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_from_prefix(self, setup):
+        class_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_approved_prefix_names(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-            func_node_g,
-            func_node_h,
-            func_node_i,
-            func_node_j,
-            func_node_k,
-            func_node_l,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def create_configuration(self): #@
-                pass
-            def get_thing(self): #@
-                pass
-            def list_thing(self): #@
-                pass
-            def upsert_thing(self): #@
-                pass
-            def set_thing(self): #@
-                pass
-            def update_thing(self): #@
-                pass
-            def replace_thing(self): #@
-                pass
-            def append_thing(self): #@
-                pass
-            def add_thing(self): #@
-                pass
-            def delete_thing(self): #@
-                pass
-            def remove_thing(self): #@
-                pass
-            def begin_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_approved_prefix_names(self, setup):
+        class_node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_non_client_with_unapproved_prefix_names(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def download_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_with_unapproved_prefix_names(self, setup):
+        class_node = setup.body[6]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_nested_function_with_unapproved_prefix_names(self):
-        class_node, function_node = astroid.extract_node(
-            """
-            class SomeClient(): #@
-                def create_configuration(self, **kwargs): #@
-                    def nested(hello, world):
-                        pass
-            """
-        )
-
+    def test_ignores_nested_function_with_unapproved_prefix_names(self, setup):
+        class_node = setup.body[7]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_finds_unapproved_prefix_names(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-            func_node_g,
-            func_node_h,
-            func_node_i,
-            func_node_j,
-            func_node_k,
-            func_node_l,
-            func_node_m,
-            func_node_n,
-            func_node_o,
-            func_node_p,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def build_configuration(self): #@
-                pass
-            def generate_thing(self): #@
-                pass
-            def make_thing(self): #@
-                pass
-            def insert_thing(self): #@
-                pass
-            def put_thing(self): #@
-                pass
-            def creates_configuration(self): #@
-                pass
-            def gets_thing(self): #@
-                pass
-            def lists_thing(self): #@
-                pass
-            def upserts_thing(self): #@
-                pass
-            def sets_thing(self): #@
-                pass
-            def updates_thing(self): #@
-                pass
-            def replaces_thing(self): #@
-                pass
-            def appends_thing(self): #@
-                pass
-            def adds_thing(self): #@
-                pass
-            def deletes_thing(self): #@
-                pass
-            def removes_thing(self): #@
-                pass
-        """
-        )
-
+    def test_finds_unapproved_prefix_names(self, setup):
+        class_node = setup.body[8]
+        func_node_a = setup.body[8].body[0]
+        func_node_b = setup.body[8].body[1]
+        func_node_c = setup.body[8].body[2]
+        func_node_d = setup.body[8].body[3]
+        func_node_e = setup.body[8].body[4]
+        func_node_f = setup.body[8].body[5]
+        func_node_g = setup.body[8].body[6]
+        func_node_h = setup.body[8].body[7]
+        func_node_i = setup.body[8].body[8]
+        func_node_j = setup.body[8].body[9]
+        func_node_k = setup.body[8].body[10]
+        func_node_l = setup.body[8].body[11]
+        func_node_m = setup.body[8].body[12]
+        func_node_n = setup.body[8].body[13]
+        func_node_o = setup.body[8].body[14]
+        func_node_p = setup.body[8].body[15]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=4,
+                line=83,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
+                end_line=83,
                 end_col_offset=27,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=6,
+                line=86,
                 node=func_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=86,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=8,
+                line=89,
                 node=func_node_c,
                 col_offset=4,
-                end_line=8,
+                end_line=89,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=10,
+                line=92,
                 node=func_node_d,
                 col_offset=4,
-                end_line=10,
+                end_line=92,
                 end_col_offset=20,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=12,
+                line=95,
                 node=func_node_e,
                 col_offset=4,
-                end_line=12,
+                end_line=95,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=14,
+                line=98,
                 node=func_node_f,
                 col_offset=4,
-                end_line=14,
+                end_line=98,
                 end_col_offset=29,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=16,
+                line=101,
                 node=func_node_g,
                 col_offset=4,
-                end_line=16,
+                end_line=101,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=18,
+                line=104,
                 node=func_node_h,
                 col_offset=4,
-                end_line=18,
+                end_line=104,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=20,
+                line=107,
                 node=func_node_i,
                 col_offset=4,
-                end_line=20,
+                end_line=107,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=22,
+                line=110,
                 node=func_node_j,
                 col_offset=4,
-                end_line=22,
+                end_line=110,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=24,
+                line=113,
                 node=func_node_k,
                 col_offset=4,
-                end_line=24,
+                end_line=113,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=26,
+                line=116,
                 node=func_node_l,
                 col_offset=4,
-                end_line=26,
+                end_line=116,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=28,
+                line=119,
                 node=func_node_m,
                 col_offset=4,
-                end_line=28,
+                end_line=119,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=30,
+                line=122,
                 node=func_node_n,
                 col_offset=4,
-                end_line=30,
+                end_line=122,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=32,
+                line=125,
                 node=func_node_o,
                 col_offset=4,
-                end_line=32,
+                end_line=125,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="unapproved-client-method-name-prefix",
-                line=34,
+                line=128,
                 node=func_node_p,
                 col_offset=4,
-                end_line=34,
+                end_line=128,
                 end_col_offset=21,
             ),
         ):
@@ -824,108 +511,75 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
 class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientConstructorTakesCorrectParameters
 
-    def test_finds_correct_params(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, thing_url, credential, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_constructor_takes_correct_parameters.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_finds_correct_params(self, setup):
+        function_node = setup.body[0].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_non_constructor_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def create_configuration(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_constructor_methods(self, setup):
+        function_node = setup.body[0].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_non_client_constructor_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def __init__(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_constructor_methods(self, setup):
+        function_node = setup.body[1].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_constructor_without_kwargs(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, thing_url, credential=None): #@
-                pass
-        """
-        )
-
+    def test_finds_constructor_without_kwargs(self, setup):
+        function_node = setup.body[2].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="missing-client-constructor-parameter-kwargs",
-                line=3,
+                line=19,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=19,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_constructor_without_credentials(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, thing_url, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_finds_constructor_without_credentials(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="missing-client-constructor-parameter-credential",
-                line=3,
+                line=25,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=25,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_constructor_with_no_params(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self): #@
-                pass
-        """
-        )
-
+    def test_finds_constructor_with_no_params(self, setup):
+        function_node = setup.body[4].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="missing-client-constructor-parameter-credential",
-                line=3,
+                line=31,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=31,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="missing-client-constructor-parameter-kwargs",
-                line=3,
+                line=31,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=31,
                 end_col_offset=16,
             ),
         ):
@@ -942,63 +596,33 @@ class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCa
         assert response.http_response.status_code == 200
 
 
-class TestClientMethodsUseKwargsWithMultipleParameters(
-    pylint.testutils.CheckerTestCase
-):
+class TestClientMethodsUseKwargsWithMultipleParameters(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsUseKwargsWithMultipleParameters
 
-    def test_ignores_method_abiding_to_guidelines(self):
-        (
-            class_node,
-            function_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-            function_node_e,
-            function_node_f,
-            function_node_g,
-            function_node_h,
-            function_node_i,
-            function_node_j,
-            function_node_k,
-            function_node_l,
-            function_node_m,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def do_thing(): #@
-                pass
-            def do_thing_a(self): #@
-                pass
-            def do_thing_b(self, one): #@
-                pass
-            def do_thing_c(self, one, two): #@
-                pass
-            def do_thing_d(self, one, two, three): #@
-                pass
-            def do_thing_e(self, one, two, three, four): #@
-                pass
-            def do_thing_f(self, one, two, three, four, five): #@
-                pass
-            def do_thing_g(self, one, two, three, four, five, six=6): #@
-                pass
-            def do_thing_h(self, one, two, three, four, five, six=6, seven=7): #@
-                pass
-            def do_thing_i(self, one, two, three, four, five, *, six=6, seven=7): #@
-                pass
-            def do_thing_j(self, one, two, three, four, five, *, six=6, seven=7): #@
-                pass
-            def do_thing_k(self, one, two, three, four, five, **kwargs): #@
-                pass
-            def do_thing_l(self, one, two, three, four, five, *args, **kwargs): #@
-                pass
-            def do_thing_m(self, one, two, three, four, five, *args, six, seven=7, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_methods_use_kwargs_with_multiple_parameters.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_method_abiding_to_guidelines(self, setup):
+        function_node = setup.body[2].body[0]
+        function_node_a = setup.body[2].body[1]
+        function_node_b = setup.body[2].body[2]
+        function_node_c = setup.body[2].body[3]
+        function_node_d = setup.body[2].body[4]
+        function_node_e = setup.body[2].body[5]
+        function_node_f = setup.body[2].body[6]
+        function_node_g = setup.body[2].body[7]
+        function_node_h = setup.body[2].body[8]
+        function_node_i = setup.body[2].body[9]
+        function_node_j = setup.body[2].body[10]
+        function_node_k = setup.body[2].body[11]
+        function_node_l = setup.body[2].body[12]
+        function_node_m = setup.body[2].body[13]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
             self.checker.visit_functiondef(function_node_a)
@@ -1015,58 +639,21 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
             self.checker.visit_functiondef(function_node_l)
             self.checker.visit_functiondef(function_node_m)
 
-    def test_ignores_method_abiding_to_guidelines_async(self):
-        (
-            class_node,
-            function_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-            function_node_e,
-            function_node_f,
-            function_node_g,
-            function_node_h,
-            function_node_i,
-            function_node_j,
-            function_node_k,
-            function_node_l,
-            function_node_m,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def do_thing(): #@
-                pass
-            async def do_thing_a(self): #@
-                pass
-            async def do_thing_b(self, one): #@
-                pass
-            async def do_thing_c(self, one, two): #@
-                pass
-            async def do_thing_d(self, one, two, three): #@
-                pass
-            async def do_thing_e(self, one, two, three, four): #@
-                pass
-            async def do_thing_f(self, one, two, three, four, five): #@
-                pass
-            async def do_thing_g(self, one, two, three, four, five, six=6): #@
-                pass
-            async def do_thing_h(self, one, two, three, four, five, six=6, seven=7): #@
-                pass
-            async def do_thing_i(self, one, two, three, four, five, *, six=6, seven=7): #@
-                pass
-            async def do_thing_j(self, one, two, three, four, five, *, six=6, seven=7): #@
-                pass
-            async def do_thing_k(self, one, two, three, four, five, **kwargs): #@
-                pass
-            async def do_thing_l(self, one, two, three, four, five, *args, **kwargs): #@
-                pass
-            async def do_thing_m(self, one, two, three, four, five, *args, six, seven=7, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_method_abiding_to_guidelines_async(self, setup):
+        function_node = setup.body[3].body[0]
+        function_node_a = setup.body[3].body[1]
+        function_node_b = setup.body[3].body[2]
+        function_node_c = setup.body[3].body[3]
+        function_node_d = setup.body[3].body[4]
+        function_node_e = setup.body[3].body[5]
+        function_node_f = setup.body[3].body[6]
+        function_node_g = setup.body[3].body[7]
+        function_node_h = setup.body[3].body[8]
+        function_node_i = setup.body[3].body[9]
+        function_node_j = setup.body[3].body[10]
+        function_node_k = setup.body[3].body[11]
+        function_node_l = setup.body[3].body[12]
+        function_node_m = setup.body[3].body[13]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
             self.checker.visit_asyncfunctiondef(function_node_a)
@@ -1083,92 +670,69 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
             self.checker.visit_asyncfunctiondef(function_node_l)
             self.checker.visit_asyncfunctiondef(function_node_m)
 
-    def test_finds_methods_with_too_many_positional_args(self):
-        (
-            class_node,
-            function_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-            function_node_e,
-            function_node_f,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def do_thing(self, one, two, three, four, five, six): #@
-                pass
-            def do_thing_a(self, one, two, three, four, five, six, seven=7): #@
-                pass
-            def do_thing_b(self, one, two, three, four, five, six, *, seven): #@
-                pass
-            def do_thing_c(self, one, two, three, four, five, six, *, seven, eight, nine): #@
-                pass
-            def do_thing_d(self, one, two, three, four, five, six, **kwargs): #@
-                pass
-            def do_thing_e(self, one, two, three, four, five, six, *args, seven, eight, nine): #@
-                pass
-            def do_thing_f(self, one, two, three, four, five, six, *args, seven=7, eight=8, nine=9): #@
-                pass
-        """
-        )
-
+    def test_finds_methods_with_too_many_positional_args(self, setup):
+        function_node = setup.body[4].body[0]
+        function_node_a = setup.body[4].body[1]
+        function_node_b = setup.body[4].body[2]
+        function_node_c = setup.body[4].body[3]
+        function_node_d = setup.body[4].body[4]
+        function_node_e = setup.body[4].body[5]
+        function_node_f = setup.body[4].body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=4,
+                line=100,
                 node=function_node,
                 col_offset=4,
-                end_line=4,
+                end_line=100,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=6,
+                line=103,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=103,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=8,
+                line=106,
                 node=function_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=106,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=10,
+                line=109,
                 node=function_node_c,
                 col_offset=4,
-                end_line=10,
+                end_line=109,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=12,
+                line=112,
                 node=function_node_d,
                 col_offset=4,
-                end_line=12,
+                end_line=112,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=14,
+                line=115,
                 node=function_node_e,
                 col_offset=4,
-                end_line=14,
+                end_line=115,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=16,
+                line=118,
                 node=function_node_f,
                 col_offset=4,
-                end_line=16,
+                end_line=118,
                 end_col_offset=18,
             ),
         ):
@@ -1180,92 +744,69 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
             self.checker.visit_functiondef(function_node_e)
             self.checker.visit_functiondef(function_node_f)
 
-    def test_finds_methods_with_too_many_positional_args_async(self):
-        (
-            class_node,
-            function_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-            function_node_e,
-            function_node_f,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def do_thing(self, one, two, three, four, five, six): #@
-                pass
-            async def do_thing_a(self, one, two, three, four, five, six, seven=7): #@
-                pass
-            async def do_thing_b(self, one, two, three, four, five, six, *, seven): #@
-                pass
-            async def do_thing_c(self, one, two, three, four, five, six, *, seven, eight, nine): #@
-                pass
-            async def do_thing_d(self, one, two, three, four, five, six, **kwargs): #@
-                pass
-            async def do_thing_e(self, one, two, three, four, five, six, *args, seven, eight, nine): #@
-                pass
-            async def do_thing_f(self, one, two, three, four, five, six, *args, seven=7, eight=8, nine=9): #@
-                pass
-        """
-        )
-
+    def test_finds_methods_with_too_many_positional_args_async(self, setup):
+        function_node = setup.body[5].body[0]
+        function_node_a = setup.body[5].body[1]
+        function_node_b = setup.body[5].body[2]
+        function_node_c = setup.body[5].body[3]
+        function_node_d = setup.body[5].body[4]
+        function_node_e = setup.body[5].body[5]
+        function_node_f = setup.body[5].body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=4,
+                line=125,
                 node=function_node,
                 col_offset=4,
-                end_line=4,
+                end_line=125,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=6,
+                line=128,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=128,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=8,
+                line=131,
                 node=function_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=131,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=10,
+                line=134,
                 node=function_node_c,
                 col_offset=4,
-                end_line=10,
+                end_line=134,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=12,
+                line=137,
                 node=function_node_d,
                 col_offset=4,
-                end_line=12,
+                end_line=137,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=14,
+                line=140,
                 node=function_node_e,
                 col_offset=4,
-                end_line=14,
+                end_line=140,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-has-more-than-5-positional-arguments",
-                line=16,
+                line=143,
                 node=function_node_f,
                 col_offset=4,
-                end_line=16,
+                end_line=143,
                 end_col_offset=24,
             ),
         ):
@@ -1277,19 +818,9 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
             self.checker.visit_asyncfunctiondef(function_node_e)
             self.checker.visit_asyncfunctiondef(function_node_f)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def do_thing(self, one, two, three, four, five, six): #@
-                pass
-            
-            @distributed_trace_async
-            async def do_thing(self, one, two, three, four, five, six): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node_a = setup.body[6].body[0]
+        function_node_b = setup.body[6].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
@@ -1306,373 +837,223 @@ class TestClientMethodsUseKwargsWithMultipleParameters(
 class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveTypeAnnotations
 
-    def test_ignores_correct_type_annotations(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict) -> int: #@
-                pass
-            async def do_thing(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict) -> int: #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_type_annotations.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_correct_type_annotations(self, setup):
+        function_node_a = setup.body[1].body[0]
+        function_node_b = setup.body[1].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_ignores_correct_type_comments(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing_a(self, one, two, three, four, five): #@
-                # type: (str, str, str, str, str) -> None
-                pass
-
-            def do_thing_b(self, one, two):  # type: (str, str) -> int #@
-                pass
-
-            def do_thing_c(self, #@
-                           one,  # type: str
-                           two,  # type: str
-                           three,  # type: str
-                           four,  # type: str
-                           five  # type: str
-                           ):
-                # type: (...) -> int
-                pass
-        """
-        )
-
+    def test_ignores_correct_type_comments(self, setup):
+        function_node_a = setup.body[1].body[2]
+        function_node_b = setup.body[1].body[3]
+        function_node_c = setup.body[1].body[4]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
             self.checker.visit_functiondef(function_node_c)
 
-    def test_ignores_correct_type_comments_async(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing_a(self, one, two, three, four, five): #@
-                # type: (str, str, str, str, str) -> None
-                pass
-
-            async def do_thing_b(self, one, two):  # type: (str, str) -> int #@
-                pass
-
-            async def do_thing_c(self, #@
-                           one,  # type: str
-                           two,  # type: str
-                           three,  # type: str
-                           four,  # type: str
-                           five  # type: str
-                           ):
-                # type: (...) -> int
-                pass
-        """
-        )
-
+    def test_ignores_correct_type_comments_async(self, setup):
+        function_node_a = setup.body[1].body[5]
+        function_node_b = setup.body[1].body[6]
+        function_node_c = setup.body[1].body[7]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
             self.checker.visit_asyncfunctiondef(function_node_c)
 
-    def test_ignores_no_parameter_method_with_annotations(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing_a(self): #@
-                # type: () -> None
-                pass
-
-            def do_thing_b(self) -> None: #@
-                pass
-        """
-        )
-
+    def test_ignores_no_parameter_method_with_annotations(self, setup):
+        function_node_a = setup.body[1].body[8]
+        function_node_b = setup.body[1].body[9]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_ignores_no_parameter_method_with_annotations_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing_a(self): #@
-                # type: () -> None
-                pass
-
-            async def do_thing_b(self) -> None: #@
-                pass
-        """
-        )
-
+    def test_ignores_no_parameter_method_with_annotations_async(self, setup):
+        function_node_a = setup.body[1].body[10]
+        function_node_b = setup.body[1].body[11]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_finds_no_parameter_method_without_annotations(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self): #@
-                pass
-            async def do_thing(self): #@
-                pass
-        """
-        )
-
+    def test_finds_no_parameter_method_without_annotations(self, setup):
+        function_node_a = setup.body[2].body[0]
+        function_node_b = setup.body[2].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=67,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=67,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=5,
+                line=70,
                 node=function_node_b,
                 col_offset=4,
-                end_line=5,
+                end_line=70,
                 end_col_offset=22,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_method_missing_annotations(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self, one, two, three): #@
-                pass
-        """
-        )
-
+    def test_finds_method_missing_annotations(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=76,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=76,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_method_missing_annotations_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing(self, one, two, three): #@
-                pass
-        """
-        )
-
+    def test_finds_method_missing_annotations_async(self, setup):
+        function_node = setup.body[4].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=82,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=82,
                 end_col_offset=22,
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_finds_constructor_without_annotations(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, one, two, three, four, five): #@
-                pass
-        """
-        )
-
+    def test_finds_constructor_without_annotations(self, setup):
+        function_node = setup.body[5].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=88,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=88,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_finds_missing_return_annotation_but_has_type_hints(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing_a(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict): #@
-                pass
-
-            def do_thing_b(self, one, two, three, four, five): #@
-                # type: (str, str, str, str, str)
-                pass
-        """
-        )
-
+    def test_finds_missing_return_annotation_but_has_type_hints(self, setup):
+        function_node_a = setup.body[6].body[0]
+        function_node_b = setup.body[6].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=94,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=94,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=6,
+                line=97,
                 node=function_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=97,
                 end_col_offset=18,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_missing_return_annotation_but_has_type_hints_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing_a(self, one: str, two: int, three: bool, four: Union[str, thing], five: dict): #@
-                pass
-
-            async def do_thing_b(self, one, two, three, four, five): #@
-                # type: (str, str, str, str, str)
-                pass
-        """
-        )
-
+    def test_finds_missing_return_annotation_but_has_type_hints_async(self, setup):
+        function_node_a = setup.body[7].body[0]
+        function_node_b = setup.body[7].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=104,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=104,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=6,
+                line=107,
                 node=function_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=107,
                 end_col_offset=24,
             ),
         ):
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_finds_missing_annotations_but_has_return_hint(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing_a(self, one, two, three, four, five) -> None: #@
-                pass
-
-            def do_thing_b(self, one, two, three, four, five): #@
-                # type: -> None
-                pass
-        """
-        )
-
+    def test_finds_missing_annotations_but_has_return_hint(self, setup):
+        function_node_a = setup.body[8].body[0]
+        function_node_b = setup.body[8].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=114,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=114,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=6,
+                line=117,
                 node=function_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=117,
                 end_col_offset=18,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_missing_annotations_but_has_return_hint_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def do_thing_a(self, one, two, three, four, five) -> None: #@
-                pass
-
-            async def do_thing_b(self, one, two, three, four, five): #@
-                # type: -> None
-                pass
-        """
-        )
-
+    def test_finds_missing_annotations_but_has_return_hint_async(self, setup):
+        function_node_a = setup.body[9].body[0]
+        function_node_b = setup.body[9].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=3,
+                line=124,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=124,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-type-annotations",
-                line=6,
+                line=127,
                 node=function_node_b,
                 col_offset=4,
-                end_line=6,
+                end_line=127,
                 end_col_offset=24,
             ),
         ):
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def do_thing(self, one, two, three, four, five, six): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node = setup.body[10].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def _do_thing(self, one, two, three, four, five, six): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_methods(self, setup):
+        function_node = setup.body[10].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
@@ -1687,131 +1068,72 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(
-    pylint.testutils.CheckerTestCase
-):
+class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientHasKwargsInPoliciesForCreateConfigurationMethod
 
-    def test_ignores_config_policies_with_kwargs(self):
-        function_node_a, function_node_b = astroid.extract_node(
-            """
-        def create_configuration(self, **kwargs): #@
-            config = Configuration(**kwargs)
-            config.headers_policy = StorageHeadersPolicy(**kwargs)
-            config.user_agent_policy = StorageUserAgentPolicy(**kwargs)
-            config.retry_policy = kwargs.get('retry_policy') or ExponentialRetry(**kwargs)
-            config.redirect_policy = RedirectPolicy(**kwargs)
-            config.logging_policy = StorageLoggingPolicy(**kwargs)
-            config.proxy_policy = ProxyPolicy(**kwargs)
-            return config
-
-        @staticmethod
-        def create_config(credential, api_version=None, **kwargs): #@
-            # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
-            if api_version is None:
-                api_version = KeyVaultClient.DEFAULT_API_VERSION
-            config = KeyVaultClient.get_configuration_class(api_version, aio=False)(credential, **kwargs)
-            config.authentication_policy = ChallengeAuthPolicy(credential, **kwargs)
-            return config
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_has_kwargs_in_policies_for_create_config_method.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_config_policies_with_kwargs(self, setup):
+        function_node_a = setup.body[4].body[0]
+        function_node_b = setup.body[4].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_config_policies_without_kwargs(self):
-        (
-            function_node_a,
-            policy_a,
-            policy_b,
-            policy_c,
-            function_node_b,
-            policy_d,
-        ) = astroid.extract_node(
-            """
-        def create_configuration(self, **kwargs): #@
-            config = Configuration(**kwargs)
-            config.headers_policy = StorageHeadersPolicy(**kwargs)
-            config.user_agent_policy = StorageUserAgentPolicy() #@
-            config.retry_policy = kwargs.get('retry_policy') or ExponentialRetry(**kwargs)
-            config.redirect_policy = RedirectPolicy(**kwargs)
-            config.logging_policy = StorageLoggingPolicy() #@
-            config.proxy_policy = ProxyPolicy() #@
-            return config
-
-        @staticmethod
-        def create_config(credential, api_version=None, **kwargs): #@
-            # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
-            if api_version is None:
-                api_version = KeyVaultClient.DEFAULT_API_VERSION
-            config = KeyVaultClient.get_configuration_class(api_version, aio=False)(credential, **kwargs)
-            config.authentication_policy = ChallengeAuthPolicy(credential) #@
-            return config
-        """
-        )
-
+    def test_finds_config_policies_without_kwargs(self, setup):
+        function_node_a = setup.body[5].body[0]
+        policy_a = setup.body[5].body[0].body[2]
+        policy_b = setup.body[5].body[0].body[5]
+        policy_c = setup.body[5].body[0].body[6]
+        function_node_b = setup.body[5].body[1]
+        policy_d = setup.body[5].body[1].body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="config-missing-kwargs-in-policy",
-                line=5,
+                line=35,
                 node=policy_a,
-                col_offset=4,
-                end_line=5,
-                end_col_offset=55,
+                col_offset=8,
+                end_line=35,
+                end_col_offset=59,
             ),
             pylint.testutils.MessageTest(
                 msg_id="config-missing-kwargs-in-policy",
-                line=8,
+                line=38,
                 node=policy_b,
-                col_offset=4,
-                end_line=8,
-                end_col_offset=50,
+                col_offset=8,
+                end_line=38,
+                end_col_offset=54,
             ),
             pylint.testutils.MessageTest(
                 msg_id="config-missing-kwargs-in-policy",
-                line=9,
+                line=39,
                 node=policy_c,
-                col_offset=4,
-                end_line=9,
-                end_col_offset=39,
+                col_offset=8,
+                end_line=39,
+                end_col_offset=43,
             ),
             pylint.testutils.MessageTest(
                 msg_id="config-missing-kwargs-in-policy",
-                line=18,
+                line=48,
                 node=policy_d,
-                col_offset=4,
-                end_line=18,
-                end_col_offset=66,
+                col_offset=8,
+                end_line=48,
+                end_col_offset=70,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_ignores_policies_outside_create_config(self):
-        function_node_a, function_node_b = astroid.extract_node(
-            """
-        def _configuration(self, **kwargs): #@
-            config = Configuration(**kwargs)
-            config.headers_policy = StorageHeadersPolicy(**kwargs)
-            config.user_agent_policy = StorageUserAgentPolicy(**kwargs)
-            config.retry_policy = kwargs.get('retry_policy') or ExponentialRetry()
-            config.redirect_policy = RedirectPolicy()
-            config.logging_policy = StorageLoggingPolicy()
-            config.proxy_policy = ProxyPolicy()
-            return config
-
-        @staticmethod
-        def some_other_method(credential, api_version=None, **kwargs): #@
-            # type: (TokenCredential, Optional[str], Mapping[str, Any]) -> Configuration
-            if api_version is None:
-                api_version = KeyVaultClient.DEFAULT_API_VERSION
-            config = KeyVaultClient.get_configuration_class(api_version, aio=False)(credential)
-            config.authentication_policy = ChallengeAuthPolicy(credential)
-            return config
-        """
-        )
-
+    def test_ignores_policies_outside_create_config(self, setup):
+        function_node_a = setup.body[6].body[0]
+        function_node_b = setup.body[6].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
@@ -1830,156 +1152,82 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(
 class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientUsesCorrectNamingConventions
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_uses_correct_naming_conventions.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_constructor(self, setup):
+        class_node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_internal_client(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class _BaseSomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_internal_client(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_private_method(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _private_method(self, **kwargs): #@
-                pass
-            async def _another_private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        class_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_client(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            pass
-        """
-        )
-
+    def test_ignores_correct_client(self, setup):
+        class_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_non_client(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def download_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client(self, setup):
+        class_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_method_names(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def from_connection_string(self, **kwargs): #@
-                pass
-            def get_thing(self, **kwargs): #@
-                pass
-            def delete_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_correct_method_names(self, setup):
+        class_node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_method_names_async(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def from_connection_string(self, **kwargs): #@
-                pass
-            def get_thing(self, **kwargs): #@
-                pass
-            def delete_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_correct_method_names_async(self, setup):
+        class_node = setup.body[6]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_class_constant(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            MAX_SIZE = 14
-            MIN_SIZE = 2
-        """
-        )
-
+    def test_ignores_correct_class_constant(self, setup):
+        class_node = setup.body[7]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_client(self):
-        class_node_a, class_node_b, class_node_c = astroid.extract_node(
-            """
-        class some_client(): #@
-            pass
-        class Some_Client(): #@
-            pass
-        class someClient(): #@
-            pass
-        """
-        )
-
+    def test_finds_incorrectly_named_client(self, setup):
+        class_node_a = setup.body[8]
+        class_node_b = setup.body[9]
+        class_node_c = setup.body[10]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=2,
+                line=64,
                 node=class_node_a,
                 col_offset=0,
-                end_line=2,
+                end_line=64,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=4,
+                line=68,
                 node=class_node_b,
                 col_offset=0,
-                end_line=4,
+                end_line=68,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=6,
+                line=72,
                 node=class_node_c,
                 col_offset=0,
-                end_line=6,
+                end_line=72,
                 end_col_offset=16,
             ),
         ):
@@ -1987,201 +1235,152 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(class_node_b)
             self.checker.visit_classdef(class_node_c)
 
-    def test_finds_incorrectly_named_methods(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def Create_Config(self): #@
-                pass
-            def getThing(self): #@
-                pass
-            def List_thing(self): #@
-                pass
-            def UpsertThing(self): #@
-                pass
-            def set_Thing(self): #@
-                pass
-            def Updatething(self): #@
-                pass
-        """
-        )
-
+    def test_finds_incorrectly_named_methods(self, setup):
+        class_node = setup.body[11]
+        func_node_a = setup.body[11].body[0]
+        func_node_b = setup.body[11].body[1]
+        func_node_c = setup.body[11].body[2]
+        func_node_d = setup.body[11].body[3]
+        func_node_e = setup.body[11].body[4]
+        func_node_f = setup.body[11].body[5]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=3,
+                line=78,
                 node=func_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=78,
                 end_col_offset=21,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=5,
+                line=81,
                 node=func_node_b,
                 col_offset=4,
-                end_line=5,
+                end_line=81,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=7,
+                line=84,
                 node=func_node_c,
                 col_offset=4,
-                end_line=7,
+                end_line=84,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=9,
+                line=87,
                 node=func_node_d,
                 col_offset=4,
-                end_line=9,
+                end_line=87,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=11,
+                line=90,
                 node=func_node_e,
                 col_offset=4,
-                end_line=11,
+                end_line=90,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=13,
+                line=93,
                 node=func_node_f,
                 col_offset=4,
-                end_line=13,
+                end_line=93,
                 end_col_offset=19,
             ),
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_methods_async(self):
-        (
-            class_node,
-            func_node_a,
-            func_node_b,
-            func_node_c,
-            func_node_d,
-            func_node_e,
-            func_node_f,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def Create_Config(self): #@
-                pass
-            async def getThing(self): #@
-                pass
-            async def List_thing(self): #@
-                pass
-            async def UpsertThing(self): #@
-                pass
-            async def set_Thing(self): #@
-                pass
-            async def Updatething(self): #@
-                pass
-        """
-        )
-
+    def test_finds_incorrectly_named_methods_async(self, setup):
+        class_node = setup.body[12]
+        func_node_a = setup.body[12].body[0]
+        func_node_b = setup.body[12].body[1]
+        func_node_c = setup.body[12].body[2]
+        func_node_d = setup.body[12].body[3]
+        func_node_e = setup.body[12].body[4]
+        func_node_f = setup.body[12].body[5]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=3,
+                line=99,
                 node=func_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=99,
                 end_col_offset=27,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=5,
+                line=102,
                 node=func_node_b,
                 col_offset=4,
-                end_line=5,
+                end_line=102,
                 end_col_offset=22,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=7,
+                line=105,
                 node=func_node_c,
                 col_offset=4,
-                end_line=7,
+                end_line=105,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=9,
+                line=108,
                 node=func_node_d,
                 col_offset=4,
-                end_line=9,
+                end_line=108,
                 end_col_offset=25,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=11,
+                line=111,
                 node=func_node_e,
                 col_offset=4,
-                end_line=11,
+                end_line=111,
                 end_col_offset=23,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=13,
+                line=114,
                 node=func_node_f,
                 col_offset=4,
-                end_line=13,
+                end_line=114,
                 end_col_offset=25,
             ),
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_class_constant(self):
-        class_node, const_a, const_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            max_size = 14 #@
-            min_size = 2 #@
-        """
-        )
-
+    def test_finds_incorrectly_named_class_constant(self, setup):
+        class_node = setup.body[13]
+        const_a = setup.body[13].body[0]
+        const_b = setup.body[13].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=3,
+                line=120,
                 node=const_a,
                 col_offset=4,
-                end_line=3,
+                end_line=120,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-incorrect-naming-convention",
-                line=4,
+                line=121,
                 node=const_b,
                 col_offset=4,
-                end_line=4,
+                end_line=121,
                 end_col_offset=16,
             ),
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_incorrectly_named_class_constant(self):
-        class_node, const_a = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            __doc__ = "Some docstring" #@
-        """
-        )
-
+    def test_ignores_docstrings(self, setup):
+        class_node = setup.body[14]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
@@ -2197,153 +1396,91 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
 class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveKwargsParameter
 
-    def test_ignores_private_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _create_configuration(self): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_methods_have_kwargs_param.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_methods(self, setup):
+        function_node = setup.body[2].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_properties(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @property
-            def key_id(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_properties(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_properties_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @property
-            async def key_id(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_properties_async(self, setup):
+        function_node = setup.body[4].body[0]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def create_configuration(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node = setup.body[5].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_methods_with_kwargs(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def get_thing(self, **kwargs): #@
-                pass
-            @distributed_trace
-            def remove_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_kwargs(self, setup):
+        function_node_a = setup.body[6].body[0]
+        function_node_b = setup.body[6].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_missing_kwargs(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator import distributed_trace
-        
-        class SomeClient(): #@
-            @distributed_trace
-            def get_thing(self): #@
-                pass
-            @distributed_trace
-            def remove_thing(self): #@
-                pass
-        """
-        )
-
+    def test_finds_missing_kwargs(self, setup):
+        function_node_a = setup.body[7].body[0]
+        function_node_b = setup.body[7].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-kwargs",
-                line=6,
+                line=44,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=44,
                 end_col_offset=17,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-kwargs",
-                line=9,
+                line=48,
                 node=function_node_b,
                 col_offset=4,
-                end_line=9,
+                end_line=48,
                 end_col_offset=20,
             ),
         ):
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_ignores_methods_with_kwargs_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            async def get_thing(self, **kwargs): #@
-                pass
-            async def remove_thing(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_kwargs_async(self, setup):
+        function_node_a = setup.body[8].body[0]
+        function_node_b = setup.body[8].body[1]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node_a)
             self.checker.visit_asyncfunctiondef(function_node_b)
 
-    def test_finds_missing_kwargs_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.tracing.decorator_async import distributed_trace_async
-        
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def get_thing(self): #@
-                pass
-            @distributed_trace_async
-            async def remove_thing(self): #@
-                pass
-        """
-        )
-
+    def test_finds_missing_kwargs_async(self, setup):
+        function_node_a = setup.body[9].body[0]
+        function_node_b = setup.body[9].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-kwargs",
-                line=6,
+                line=64,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=64,
                 end_col_offset=23,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-missing-kwargs",
-                line=9,
+                line=68,
                 node=function_node_b,
                 col_offset=4,
-                end_line=9,
+                end_line=68,
                 end_col_offset=26,
             ),
         ):
@@ -2362,72 +1499,46 @@ class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
 class TestAsyncClientCorrectNaming(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.AsyncClientCorrectNaming
 
-    def test_ignores_private_client(self):
-        class_node = astroid.extract_node(
-            """
-        class _AsyncBaseSomeClient(): #@
-            def create_configuration(self):
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "async_client_correct_naming.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_client(self, setup):
+        class_node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_client(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def create_configuration(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_correct_client(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_async_base_named_client(self):
-        class_node_a = astroid.extract_node(
-            """
-        class AsyncSomeClientBase(): #@
-            def get_thing(self, **kwargs):
-                pass
-        """
-        )
-
+    def test_ignores_async_base_named_client(self, setup):
+        class_node_a = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node_a)
 
-    def test_finds_incorrectly_named_client(self):
-        class_node_a = astroid.extract_node(
-            """
-        class AsyncSomeClient(): #@
-            def get_thing(self, **kwargs):
-                pass
-        """
-        )
-
+    def test_finds_incorrectly_named_client(self, setup):
+        class_node_a = setup.body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="async-client-bad-name",
-                line=2,
+                line=20,
                 node=class_node_a,
                 col_offset=0,
-                end_line=2,
+                end_line=20,
                 end_col_offset=21,
             ),
         ):
             self.checker.visit_classdef(class_node_a)
 
-    def test_ignores_non_client(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def create_configuration(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client(self, setup):
+        class_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
@@ -2479,108 +1590,67 @@ class TestFileHasCopyrightHeader(pylint.testutils.CheckerTestCase):
 class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.SpecifyParameterNamesInCall
 
-    def test_ignores_call_with_only_two_unnamed_params(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self):
-                self._client.thing(one, two) #@
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "specify_parameter_names_in_call.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_call_with_only_two_unnamed_params(self, setup):
+        call_node = setup.body[0].body[0].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
-    def test_ignores_call_with_two_unnamed_params_and_one_named(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self):
-                self._client.thing(one, two, three=3) #@
-        """
-        )
-
+    def test_ignores_call_with_two_unnamed_params_and_one_named(self, setup):
+        call_node = setup.body[0].body[1].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
-    def test_ignores_call_from_non_client(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def do_thing(self):
-                self._other.thing(one, two, three) #@
-        """
-        )
-
+    def test_ignores_call_from_non_client(self, setup):
+        call_node = setup.body[1].body[0].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
-    def test_ignores_call_with_named_params(self):
-        class_node, call_node_a, call_node_b, call_node_c = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def do_thing_a(self):
-                self._other.thing(one=one, two=two, three=three) #@
-            def do_thing_b(self):
-                self._other.thing(zero, number, one=one, two=two, three=three) #@
-            def do_thing_c(self):
-                self._other.thing(zero, one=one, two=two, three=three) #@      
-        """
-        )
-
+    def test_ignores_call_with_named_params(self, setup):
+        call_node_a = setup.body[2].body[0].body[0].value
+        call_node_b = setup.body[2].body[1].body[0].value
+        call_node_c = setup.body[2].body[2].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node_a)
             self.checker.visit_call(call_node_b)
             self.checker.visit_call(call_node_c)
 
-    def test_ignores_non_client_function_call(self):
-        call_node = astroid.extract_node(
-            """
-        def do_thing():
-            self._client.thing(one, two, three) #@
-        """
-        )
-
+    def test_ignores_non_client_function_call(self, setup):
+        call_node = setup.body[3].body[0].body[0].value
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
 
-    def test_finds_call_with_more_than_two_unnamed_params(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self):
-                self._client.thing(one, two, three) #@
-        """
-        )
-
+    def test_finds_call_with_more_than_two_unnamed_params(self, setup):
+        call_node = setup.body[4].body[0].body[0].value
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="specify-parameter-names-in-call",
-                line=4,
+                line=38,
                 node=call_node,
                 col_offset=8,
-                end_line=4,
+                end_line=38,
                 end_col_offset=43,
             ),
         ):
             self.checker.visit_call(call_node)
 
-    def test_finds_call_with_more_than_two_unnamed_params_and_some_named(self):
-        class_node, call_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def do_thing(self):
-                self._client.thing(one, two, three, four=4, five=5) #@
-        """
-        )
-
+    def test_finds_call_with_more_than_two_unnamed_params_and_some_named(self, setup):
+        call_node = setup.body[5].body[0].body[0].value
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="specify-parameter-names-in-call",
-                line=4,
+                line=44,
                 node=call_node,
                 col_offset=8,
-                end_line=4,
+                end_line=44,
                 end_col_offset=59,
             ),
         ):
@@ -2598,180 +1668,110 @@ class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
 class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientListMethodsUseCorePaging
 
-    def test_ignores_private_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _list_thing(self): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_list_methods_use_core_paging.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_methods(self, setup):
+        function_node = setup.body[5].body[0]
         with self.assertNoMessages():
             self.checker.visit_return(function_node.body[0])
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def list_things(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node = setup.body[6].body[0]
         with self.assertNoMessages():
             self.checker.visit_return(function_node.body[0])
 
-    def test_ignores_methods_return_ItemPaged(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.paging import ItemPaged
-        
-        class SomeClient(): #@
-            def list_thing(self): #@
-                return ItemPaged()
-            @distributed_trace
-            def list_thing2(self): #@
-                return ItemPaged(
-                    command, prefix=name_starts_with, results_per_page=results_per_page,
-                    page_iterator_class=BlobPropertiesPaged)
-        """
-        )
-
+    def test_ignores_methods_return_ItemPaged(self, setup):
+        function_node_a = setup.body[7].body[0]
+        function_node_b = setup.body[7].body[1]
         with self.assertNoMessages():
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
-    def test_ignores_methods_return_AsyncItemPaged(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.async_paging import AsyncItemPaged
-        
-        class SomeClient(): #@
-            async def list_thing(self): #@
-                return AsyncItemPaged()
-            @distributed_trace
-            def list_thing2(self): #@
-                return AsyncItemPaged(
-                    command, prefix=name_starts_with, results_per_page=results_per_page,
-                    page_iterator_class=BlobPropertiesPaged)
-        """
-        )
-
+    def test_ignores_methods_return_AsyncItemPaged(self, setup):
+        function_node_a = setup.body[8].body[0]
+        function_node_b = setup.body[8].body[1]
         with self.assertNoMessages():
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
-    def test_finds_method_returning_something_else(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def list_thing(self): #@
-                return list()
-            def list_thing2(self): #@
-                return LROPoller()
-        """
-        )
-
+    def test_finds_method_returning_something_else(self, setup):
+        function_node_a = setup.body[9].body[0]
+        function_node_b = setup.body[9].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=5,
+                line=47,
                 node=function_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=47,
                 end_col_offset=18,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=7,
+                line=50,
                 node=function_node_b,
                 col_offset=4,
-                end_line=7,
+                end_line=50,
                 end_col_offset=19,
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
-    def test_finds_method_returning_something_else_async(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        from typing import list
-        
-        class SomeClient(): #@
-            async def list_thing(self, **kwargs): #@
-                return list()
-            async def list_thing2(self, **kwargs): #@
-                return LROPoller()
-        """
-        )
-
+    def test_finds_method_returning_something_else_async(self, setup):
+        function_node_a = setup.body[10].body[0]
+        function_node_b = setup.body[10].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=6,
+                line=56,
                 node=function_node_a,
                 col_offset=4,
-                end_line=6,
+                end_line=56,
                 end_col_offset=24,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=8,
+                line=59,
                 node=function_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=59,
                 end_col_offset=25,
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
-    def test_finds_return_ItemPaged_not_list(self):
-        class_node, function_node_a = astroid.extract_node(
-            """
-        from azure.core.paging import ItemPaged
-        
-        class SomeClient(): #@
-            def some_thing(self): #@
-                return ItemPaged()
-        """
-        )
-
+    def test_finds_return_ItemPaged_not_list(self, setup):
+        function_node_a = setup.body[11].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=5,
+                line=65,
                 node=function_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=65,
                 end_col_offset=18,
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
 
-    def test_finds_return_AsyncItemPaged_not_list(self):
-        class_node, function_node_a = astroid.extract_node(
-            """
-        from azure.core.async_paging import AsyncItemPaged
-        
-        class SomeClient(): #@
-            async def some_thing(self): #@
-                return AsyncItemPaged()
-        """
-        )
-
+    def test_finds_return_AsyncItemPaged_not_list(self, setup):
+        function_node_a = setup.body[12].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=5,
+                line=71,
                 node=function_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=71,
                 end_col_offset=24,
             ),
         ):
@@ -2847,74 +1847,50 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientLROMethodsUseCorePolling
 
-    def test_ignores_private_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def _begin_thing(self): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_LRO_methods_use_core_polling.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_methods(self, setup):
+        function_node = setup.body[2].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def begin_things(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        function_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_methods_return_LROPoller(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def begin_thing(self): #@
-                return LROPoller()
-            @distributed_trace
-            def begin_thing2(self): #@
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method)
-        """
-        )
-
+    def test_ignores_methods_return_LROPoller(self, setup):
+        function_node_a = setup.body[4].body[0]
+        function_node_b = setup.body[4].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
 
-    def test_finds_method_returning_something_else(self):
-        class_node, function_node_a, function_node_b = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def begin_thing(self): #@
-                return list()
-            def begin_thing2(self): #@
-                return {}
-        """
-        )
-
+    def test_finds_method_returning_something_else(self, setup):
+        function_node_a = setup.body[5].body[0]
+        function_node_b = setup.body[5].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-lro-methods-use-polling",
-                line=3,
+                line=29,
                 node=function_node_a,
                 col_offset=4,
-                end_line=3,
+                end_line=29,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-lro-methods-use-polling",
-                line=5,
+                line=32,
                 node=function_node_b,
                 col_offset=4,
-                end_line=5,
+                end_line=32,
                 end_col_offset=20,
             ),
         ):
@@ -2933,90 +1909,59 @@ class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
 class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientLROMethodsUseCorrectNaming
 
-    def test_ignores_private_methods(self):
-        class_node, return_node = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def _do_thing(self): 
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method) #@
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_LRO_methods_use_correct_naming.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_private_methods(self, setup):
+        class_node = setup.body[2]
+        return_node = setup.body[2].body[0].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_return(return_node)
 
-    def test_ignores_non_client_methods(self):
-        class_node, return_node = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomethingElse(): #@
-            def begin_things(self):
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method) #@
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        class_node = setup.body[3]
+        return_node = setup.body[3].body[0].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_return(return_node)
 
-    def test_ignores_methods_return_LROPoller_and_correctly_named(self):
-        class_node, return_node_a, return_node_b = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def begin_thing(self):
-                return LROPoller() #@
-            @distributed_trace
-            def begin_thing2(self):
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method) #@
-        """
-        )
-
+    def test_ignores_methods_return_LROPoller_and_correctly_named(self, setup):
+        class_node = setup.body[4]
+        return_node_a = setup.body[4].body[0].body[0]
+        return_node_b = setup.body[4].body[1].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_return(return_node_a)
             self.checker.visit_return(return_node_b)
 
-    def test_finds_incorrectly_named_method_returning_LROPoller(self):
-        (
-            class_node,
-            function_node_a,
-            return_node_a,
-            function_node_b,
-            return_node_b,
-        ) = astroid.extract_node(
-            """
-        from azure.core.polling import LROPoller
-        
-        class SomeClient(): #@
-            def poller_thing(self): #@
-                return LROPoller() #@
-            @distributed_trace
-            def start_thing2(self): #@
-                return LROPoller(self._client, raw_result, get_long_running_output, polling_method) #@
-        """
-        )
-
+    def test_finds_incorrectly_named_method_returning_LROPoller(self, setup):
+        class_node = setup.body[5]
+        function_node_a = setup.body[5].body[0]
+        return_node_a = setup.body[5].body[0].body[0]
+        function_node_b = setup.body[5].body[1]
+        return_node_b = setup.body[5].body[1].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="lro-methods-use-correct-naming",
-                line=5,
+                line=28,
                 node=function_node_a,
                 col_offset=4,
-                end_line=5,
+                end_line=28,
                 end_col_offset=20,
             ),
             pylint.testutils.MessageTest(
                 msg_id="lro-methods-use-correct-naming",
-                line=8,
+                line=32,
                 node=function_node_b,
                 col_offset=4,
-                end_line=8,
+                end_line=32,
                 end_col_offset=20,
             ),
         ):
@@ -3033,73 +1978,52 @@ class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-class TestClientConstructorDoesNotHaveConnectionStringParam(
-    pylint.testutils.CheckerTestCase
-):
+class TestClientConstructorDoesNotHaveConnectionStringParam(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientConstructorDoesNotHaveConnectionStringParam
 
-    def test_ignores_client_with_no_conn_str_in_constructor(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self): 
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_constructor_does_not_have_connection_string_param.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_client_with_no_conn_str_in_constructor(self, setup):
+        class_node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_non_client_methods(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            def __init__(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_non_client_methods(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_finds_client_method_using_conn_str_in_constructor_a(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, connection_string):
-                return list()
-        """
-        )
-
+    def test_finds_client_method_using_conn_str_in_constructor_a(self, setup):
+        class_node = setup.body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="connection-string-should-not-be-constructor-param",
-                line=2,
+                line=14,
                 node=class_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=14,
+                end_col_offset=17,
             ),
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_finds_client_method_using_conn_str_in_constructor_b(self):
-        class_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, conn_str):
-                return list()
-        """
-        )
-
+    def test_finds_client_method_using_conn_str_in_constructor_b(self, setup):
+        class_node = setup.body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="connection-string-should-not-be-constructor-param",
-                line=2,
+                line=20,
                 node=class_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=20,
+                end_col_offset=17,
             ),
         ):
             self.checker.visit_classdef(class_node)
@@ -3116,12 +2040,17 @@ class TestClientConstructorDoesNotHaveConnectionStringParam(
 class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.PackageNameDoesNotUseUnderscoreOrPeriod
 
-    def test_package_name_acceptable(self):
-        package_name = astroid.extract_node(
-            """
-        PACKAGE_NAME = "correct-package-name"        
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "package_name_does_not_use_underscore_or_period.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_package_name_acceptable(self, setup):
+        package_name = setup.body[0]
         module_node = astroid.Module(name="node", file="setup.py")
         module_node.doc_node = """ """
         module_node.body = [package_name]
@@ -3129,16 +2058,11 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
         with self.assertNoMessages():
             self.checker.visit_module(module_node)
 
-    def test_package_name_violation(self):
-        package_name = astroid.extract_node(
-            """
-        PACKAGE_NAME = "incorrect.package-name"        
-        """
-        )
+    def test_package_name_violation(self, setup):
+        package_name = setup.body[1]
         module_node = astroid.Module(name="node", file="setup.py")
         module_node.doc_node = """ """
         module_node.body = [package_name]
-
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="package-name-incorrect", line=0, node=module_node, col_offset=0,
@@ -3158,14 +2082,17 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
 class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ServiceClientUsesNameWithClientSuffix
 
-    def test_client_suffix_acceptable(self):
-        client_node = astroid.extract_node(
-            """
-        class MyClient():
-            def __init__(self):
-                pass       
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "service_client_uses_name_with_client_suffix.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_client_suffix_acceptable(self, setup):
+        client_node = setup.body[0]
         module_node = astroid.Module(name="node", file="_my_client.py")
         module_node.doc_node = """ """
         module_node.body = [client_node]
@@ -3173,14 +2100,8 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         with self.assertNoMessages():
             self.checker.visit_module(module_node)
 
-    def test_client_suffix_violation(self):
-        client_node = astroid.extract_node(
-            """
-        class Violation():
-            def __init__(self):
-                pass       
-        """
-        )
+    def test_client_suffix_violation(self, setup):
+        client_node = setup.body[1]
         module_node = astroid.Module(name="node", file="_my_client.py")
         module_node.doc_node = """ """
         module_node.body = [client_node]
@@ -3200,168 +2121,94 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         assert response.http_response.status_code == 200
 
 
-class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
-    pylint.testutils.CheckerTestCase
-):
+class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodNamesDoNotUseDoubleUnderscorePrefix
 
-    def test_ignores_repr(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __repr__(self): #@
-                pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "client_method_names_do_not_use_double_underscore_prefix.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_repr(self, setup):
+        function_node = setup.body[2].body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_constructor(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __init__(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_constructor(self, setup):
+        function_node = setup.body[2].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_other_dunder(self):
-        (
-            class_node,
-            function_node_a,
-            function_node_b,
-            function_node_c,
-            function_node_d,
-        ) = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            def __enter__(self): #@
-                pass
-            def __exit__(self): #@
-                pass
-            def __aenter__(self): #@
-                pass
-            def __aexit__(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_other_dunder(self, setup):
+        function_node_a = setup.body[2].body[2]
+        function_node_b = setup.body[2].body[3]
+        function_node_c = setup.body[2].body[4]
+        function_node_d = setup.body[2].body[5]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_a)
             self.checker.visit_functiondef(function_node_b)
             self.checker.visit_functiondef(function_node_c)
             self.checker.visit_functiondef(function_node_d)
 
-    def test_ignores_private_method(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method(self, setup):
+        function_node = setup.body[2].body[6]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_private_method_async(self):
-        class_node, function_node = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            async def _private_method(self, **kwargs): #@
-                pass
-        """
-        )
-
+    def test_ignores_private_method_async(self, setup):
+        function_node = setup.body[2].body[7]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_methods_with_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace
-            def create_configuration(self): #@
-                pass
-            @distributed_trace
-            def get_thing(self): #@
-                pass
-            @distributed_trace
-            def list_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_methods_with_decorators(self, setup):
+        func_node_a = setup.body[2].body[8]
+        func_node_b = setup.body[2].body[9]
+        func_node_c = setup.body[2].body[10]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_async_methods_with_decorators(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @distributed_trace_async
-            async def create_configuration(self): #@
-                pass
-            @distributed_trace_async
-            async def get_thing(self): #@
-                pass
-            @distributed_trace_async
-            async def list_thing(self): #@
-                pass
-        """
-        )
-
+    def test_ignores_async_methods_with_decorators(self, setup):
+        func_node_a = setup.body[2].body[8]
+        func_node_b = setup.body[2].body[9]
+        func_node_c = setup.body[2].body[10]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_double_underscore_on_async_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            async def __create_configuration(self): #@
-                pass
-            @staticmethod
-            async def __get_thing(self): #@
-                pass
-            @staticmethod
-            async def __list_thing(self): #@
-                pass
-        """
-        )
+    def test_finds_double_underscore_on_async_method(self, setup):
+        func_node_a = setup.body[3].body[0]
+        func_node_b = setup.body[3].body[1]
+        func_node_c = setup.body[3].body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=4,
+                line=67,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
+                end_line=67,
                 end_col_offset=36,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=7,
+                line=71,
                 node=func_node_b,
                 col_offset=4,
-                end_line=7,
+                end_line=71,
                 end_col_offset=25,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=10,
+                line=75,
                 node=func_node_c,
                 col_offset=4,
-                end_line=10,
+                end_line=75,
                 end_col_offset=26,
             ),
         ):
@@ -3369,44 +2216,33 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
             self.checker.visit_asyncfunctiondef(func_node_b)
             self.checker.visit_asyncfunctiondef(func_node_c)
 
-    def test_finds_double_underscore_on_sync_method(self):
-        class_node, func_node_a, func_node_b, func_node_c = astroid.extract_node(
-            """
-        class SomeClient(): #@
-            @staticmethod
-            def __create_configuration(self): #@
-                pass
-            @staticmethod
-            def __get_thing(self): #@
-                pass
-            @staticmethod
-            def __list_thing(self): #@
-                pass
-        """
-        )
+    def test_finds_double_underscore_on_sync_method(self, setup):
+        func_node_a = setup.body[4].body[0]
+        func_node_b = setup.body[4].body[1]
+        func_node_c = setup.body[4].body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=4,
+                line=82,
                 node=func_node_a,
                 col_offset=4,
-                end_line=4,
+                end_line=82,
                 end_col_offset=30,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=7,
+                line=86,
                 node=func_node_b,
                 col_offset=4,
-                end_line=7,
+                end_line=86,
                 end_col_offset=19,
             ),
             pylint.testutils.MessageTest(
                 msg_id="client-method-name-no-double-underscore",
-                line=10,
+                line=90,
                 node=func_node_c,
                 col_offset=4,
-                end_line=10,
+                end_line=90,
                 end_col_offset=20,
             ),
         ):
@@ -3414,19 +2250,9 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
             self.checker.visit_functiondef(func_node_b)
             self.checker.visit_functiondef(func_node_c)
 
-    def test_ignores_non_client_method(self):
-        class_node, func_node_a, func_node_b = astroid.extract_node(
-            """
-        class SomethingElse(): #@
-            @staticmethod
-            def __download_thing(self, some, **kwargs): #@
-                pass
-
-            @staticmethod
-            async def __do_thing(self, some, **kwargs): #@
-                pass
-        """
-        )
+    def test_ignores_non_client_method(self, setup):
+        func_node_a = setup.body[5].body[0]
+        func_node_b = setup.body[5].body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(func_node_a)
             self.checker.visit_asyncfunctiondef(func_node_b)
@@ -3443,256 +2269,125 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
 class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckDocstringAdmonitionNewline
 
-    def test_ignores_correct_admonition_statement_in_function(self):
-        function_node = astroid.extract_node(
-            """
-            def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_docstring_admonition_newline.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignores_correct_admonition_statement_in_function(self, setup):
+        function_node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_function_with_comments(self):
-        function_node = astroid.extract_node(
-            """
-            def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_function_with_comments(self, setup):
+        function_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node)
 
-    def test_bad_admonition_statement_in_function(self):
-        function_node = astroid.extract_node(
-            """
-            def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_bad_admonition_statement_in_function(self, setup):
+        function_node = setup.body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=24,
                 node=function_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=24,
+                end_col_offset=17,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_bad_admonition_statement_in_function_with_comments(self):
-        function_node = astroid.extract_node(
-            """
-            def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_bad_admonition_statement_in_function_with_comments(self, setup):
+        function_node = setup.body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=32,
                 node=function_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=32,
+                end_col_offset=17,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_function_async(self):
-        function_node = astroid.extract_node(
-            """
-            async def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_function_async(self, setup):
+        function_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_function_with_comments_async(self):
-        function_node = astroid.extract_node(
-            """
-            async def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-                      
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_function_with_comments_async(self, setup):
+        function_node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_bad_admonition_statement_in_function_async(self):
-        function_node = astroid.extract_node(
-            """
-            async def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_bad_admonition_statement_in_function_async(self, setup):
+        function_node = setup.body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=64,
                 node=function_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=22,
+                end_line=64,
+                end_col_offset=23,
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_bad_admonition_statement_in_function_with_comments_async(self):
-        function_node = astroid.extract_node(
-            """
-            async def function_foo(x, y, z):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-            """
-        )
-
+    def test_bad_admonition_statement_in_function_with_comments_async(self, setup):
+        function_node = setup.body[7]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=72,
                 node=function_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=22,
+                end_line=72,
+                end_col_offset=23,
             )
         ):
             self.checker.visit_asyncfunctiondef(function_node)
 
-    def test_ignores_correct_admonition_statement_in_class(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''docstring
-                .. admonition:: Example:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-                def __init__(self):
-                    pass
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_class(self, setup):
+        class_node = setup.body[8]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_ignores_correct_admonition_statement_in_class_with_comments(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-                def __init__(self):
-                    pass
-            """
-        )
-
+    def test_ignores_correct_admonition_statement_in_class_with_comments(self, setup):
+        class_node = setup.body[9]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_bad_admonition_statement_in_class(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''docstring
-                .. admonition:: Example:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-                def __init__(self):
-                    pass
-            """
-        )
-
+    def test_bad_admonition_statement_in_class(self, setup):
+        class_node = setup.body[10]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=110,
                 node=class_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=110,
+                end_col_offset=17,
             )
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_bad_admonition_statement_in_class_with_comments(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''docstring
-                .. admonition:: Example:
-                    This is Example content.
-                    Should support multi-line.
-                    Can also include file:
-                    .. literalinclude:: ../samples/sample_detect_language.py
-                '''
-                def __init__(self):
-                    pass
-            """
-        )
-
+    def test_bad_admonition_statement_in_class_with_comments(self, setup):
+        class_node = setup.body[11]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-admonition-needs-newline",
-                line=2,
+                line=121,
                 node=class_node,
                 col_offset=0,
-                end_line=2,
-                end_col_offset=16,
+                end_line=121,
+                end_col_offset=17,
             )
         ):
             self.checker.visit_classdef(class_node)
@@ -3701,18 +2396,17 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
 class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckNamingMismatchGeneratedCode
 
-    def test_import_naming_mismatch_violation(self):
-        import_one = astroid.extract_node("import Something")
-        import_two = astroid.extract_node("import Something2 as SomethingTwo")
-        assign_one = astroid.extract_node(
-            """
-            __all__ =(
-            "Something",
-            "SomethingTwo", 
-            ) 
-          """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_naming_mismatch_generated_code.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_import_naming_mismatch_violation(self, setup):
+        import_one, import_two, assign_one = setup.body[0], setup.body[1], setup.body[2]
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
@@ -3723,29 +2417,17 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="naming-mismatch",
-                line=4,
+                line=7,
                 node=err_node,
-                col_offset=0,
-                end_line=4,
-                end_col_offset=14,
+                col_offset=4,
+                end_line=7,
+                end_col_offset=18,
             )
         ):
             self.checker.visit_module(module_node)
 
-    def test_import_from_naming_mismatch_violation(self):
-        import_one = astroid.extract_node("import Something")
-        import_two = astroid.extract_node(
-            "from Something2 import SomethingToo as SomethingTwo"
-        )
-        assign_one = astroid.extract_node(
-            """
-            __all__ =(
-            "Something",
-            "SomethingTwo", 
-            ) 
-          """
-        )
-
+    def test_import_from_naming_mismatch_violation(self, setup):
+        import_one, import_two, assign_one = setup.body[0], setup.body[3], setup.body[2]
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
@@ -3756,27 +2438,17 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="naming-mismatch",
-                line=4,
+                line=7,
                 node=err_node,
-                col_offset=0,
-                end_line=4,
-                end_col_offset=14,
+                col_offset=4,
+                end_line=7,
+                end_col_offset=18,
             )
         ):
             self.checker.visit_module(module_node)
 
-    def test_naming_mismatch_acceptable(self):
-        import_one = astroid.extract_node("import Something")
-        import_two = astroid.extract_node("import Something2 as SomethingTwo")
-        assign_one = astroid.extract_node(
-            """
-            __all__ =(
-            "Something",
-            "Something2", 
-            ) 
-          """
-        )
-
+    def test_naming_mismatch_acceptable(self, setup):
+        import_one, import_two, assign_one = setup.body[0], setup.body[1], setup.body[4]
         module_node = astroid.Module(name="node", file="__init__.py")
         module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
@@ -3804,98 +2476,64 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
 class TestCheckEnum(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckEnum
 
-    def test_ignore_normal_class(self):
-        class_node = astroid.extract_node(
-            """
-               class SomeClient(object):
-                    my_list = []
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_enum.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_ignore_normal_class(self, setup):
+        class_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
-    def test_enum_capitalized_violation_python_two(self):
-        class_node = astroid.extract_node(
-            """
-            from enum import Enum
-            from six import with_metaclass
-            from azure.core import CaseInsensitiveEnumMeta
-
-            class MyBadEnum(with_metaclass(CaseInsensitiveEnumMeta, str, Enum)): 
-                One = "one"
-              """
-        )
-
+    def test_enum_capitalized_violation_python_two(self, setup):
+        class_node = setup.body[4]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="enum-must-be-uppercase",
-                line=7,
+                line=13,
                 node=class_node.body[0].targets[0],
                 col_offset=4,
-                end_line=7,
+                end_line=13,
                 end_col_offset=7,
             )
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_enum_capitalized_violation_python_three(self):
-        class_node = astroid.extract_node(
-            """
-            from enum import Enum
-            from azure.core import CaseInsensitiveEnumMeta
-
-            class MyBadEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta): 
-                One = "one"
-            
-            """
-        )
-
+    def test_enum_capitalized_violation_python_three(self, setup):
+        class_node = setup.body[5]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="enum-must-be-uppercase",
-                line=6,
+                line=18,
                 node=class_node.body[0].targets[0],
                 col_offset=4,
-                end_line=6,
+                end_line=18,
                 end_col_offset=7,
             )
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_inheriting_case_insensitive_violation(self):
-        class_node = astroid.extract_node(
-            """
-            from enum import Enum
-
-            class MyGoodEnum(str, Enum): 
-                ONE = "one"
-            """
-        )
-
+    def test_inheriting_case_insensitive_violation(self, setup):
+        class_node = setup.body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="enum-must-inherit-case-insensitive-enum-meta",
-                line=4,
+                line=22,
                 node=class_node,
                 col_offset=0,
-                end_line=4,
+                end_line=22,
                 end_col_offset=16,
             )
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_acceptable_python_three(self):
-        class_node = astroid.extract_node(
-            """
-            from enum import Enum
-            from azure.core import CaseInsensitiveEnumMeta
-
-            class MyGoodEnum(str, Enum, metaclass=CaseInsensitiveEnumMeta): 
-                ONE = "one"
-            """
-        )
-
+    def test_acceptable_python_three(self, setup):
+        class_node = setup.body[7]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
@@ -3952,18 +2590,17 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
 class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckAPIVersion
 
-    def test_api_version_violation(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''
-                   :param str something: something
-                '''
-                def __init__(self, something, **kwargs):
-                    pass
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_API_version.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_api_version_violation(self, setup):
+        class_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-accepts-api-version-keyword",
@@ -3976,19 +2613,8 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_api_version_acceptable(self):
-        class_node = astroid.extract_node(
-            """
-            class SomeClient(object):
-                '''
-                   :param str something: something 
-                   :keyword str api_version: api_version
-                '''
-                def __init__(self, something, **kwargs):
-                    pass
-            """
-        )
-
+    def test_api_version_acceptable(self, setup):
+        class_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
 
@@ -4049,73 +2675,78 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.NonCoreNetworkImport
 
-    def test_disallowed_imports(self):
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "non_core_network_import.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_imports(self, setup):
         """Check that illegal imports raise warnings"""
-        # Blocked import ouside of core.
-        requests_import_node = astroid.extract_node("import requests")
+        # Blocked import outside of core.
+        requests_import_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="networking-import-outside-azure-core-transport",
-                line=1,
+                line=2,
                 node=requests_import_node,
                 col_offset=0,
-                end_line=1,
+                end_line=2,
                 end_col_offset=15,
             )
         ):
             self.checker.visit_import(requests_import_node)
 
-        httpx_import_node = astroid.extract_node("import httpx")
+        httpx_import_node = setup.body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="networking-import-outside-azure-core-transport",
-                line=1,
+                line=3,
                 node=httpx_import_node,
                 col_offset=0,
-                end_line=1,
+                end_line=3,
                 end_col_offset=12,
             )
         ):
             self.checker.visit_import(httpx_import_node)
 
         # blocked import from outside of core.
-        importfrom_node = astroid.extract_node("from aiohttp import get")
+        importfrom_node = setup.body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="networking-import-outside-azure-core-transport",
-                line=1,
+                line=4,
                 node=importfrom_node,
                 col_offset=0,
-                end_line=1,
+                end_line=4,
                 end_col_offset=23,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_allowed_imports(self):
+    def test_allowed_imports(self, setup):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
-        import_node = astroid.extract_node("import math")
+        import_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_import(import_node)
 
         # from import not in the blocked list.
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline import Pipeline"
-        )
+        importfrom_node = setup.body[4]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # blocked import, but in core.
-        import_node = astroid.extract_node("import requests")
+        import_node = setup.body[5]
         import_node.root().name = "azure.core.pipeline.transport"
         with self.assertNoMessages():
             self.checker.visit_import(import_node)
 
         # blocked from import, but in core.
-        importfrom_node = astroid.extract_node(
-            "from requests.exceptions import HttpException"
-        )
+        importfrom_node = setup.body[6]
         importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
@@ -4126,48 +2757,49 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.NonAbstractTransportImport
 
-    def test_disallowed_imports(self):
-        """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline.transport import RequestsTransport"
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "non_abstract_transport_import.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_imports(self, setup):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="non-abstract-transport-import",
-                line=1,
+                line=2,
                 node=importfrom_node,
                 col_offset=0,
-                end_line=1,
+                end_line=2,
                 end_col_offset=59,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_allowed_imports(self):
+    def test_allowed_imports(self, setup):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
-        importfrom_node = astroid.extract_node("from math import PI")
+        importfrom_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # from import not in the blocked list.
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline import Pipeline"
-        )
+        importfrom_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # Import abstract classes
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline.transport import HttpTransport, HttpRequest, HttpResponse, AsyncHttpTransport, AsyncHttpResponse"
-        )
+        importfrom_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # Import non-abstract classes, but from in `azure.core.pipeline.transport`.
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline.transport import RequestsTransport, AioHttpTransport, AioHttpTransportResponse"
-        )
+        importfrom_node = setup.body[4]
         importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
@@ -4178,20 +2810,24 @@ class TestRaiseWithTraceback(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.NoAzureCoreTracebackUseRaiseFrom
 
-    def test_raise_traceback(self):
-        node = astroid.extract_node(
-            """
-        from azure.core.exceptions import DeserializationError, SerializationError, raise_with_traceback
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "raise_with_traceback.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
 
+    def test_raise_traceback(self, setup):
+        node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-raise-with-traceback",
-                line=2,
+                line=1,
                 node=node,
                 col_offset=0,
-                end_line=2,
+                end_line=1,
                 end_col_offset=96,
             )
         ):
@@ -4203,14 +2839,17 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.NameExceedsStandardCharacterLength
 
-    def test_class_name_too_long(self):
-        class_node = astroid.extract_node(
-            """
-            class ThisClassNameShouldEndUpBeingTooLongForAClient():
-                def __init__(self, **kwargs):
-                    pass
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "type_property_name_length.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_class_name_too_long(self, setup):
+        class_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="name-too-long",
@@ -4223,100 +2862,76 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(class_node)
 
-    def test_function_name_too_long(self):
-        class_node, function_node = astroid.extract_node(
-            """
-            class ClassNameGoodClient(): #@
-                def this_function_name_should_be_too_long_for_rule(self, **kwargs): #@
-                    pass
-        """
-        )
+    def test_function_name_too_long(self, setup):
+        class_node = setup.body[1]
+        function_node = setup.body[1].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="name-too-long",
-                line=3,
+                line=9,
                 node=function_node,
                 col_offset=4,
-                end_line=3,
+                end_line=9,
                 end_col_offset=54,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_variable_name_too_long(self):
-        class_node, function_node, property_node = astroid.extract_node(
-            """
-            class ClassNameGoodClient(): #@
-                def this_function_good(self, **kwargs): #@
-                    this_lists_name_is_too_long_to_work_with_linter_rule = [] #@
-        """
-        )
+    def test_variable_name_too_long(self, setup):
+        class_node = setup.body[1]
+        function_node = setup.body[1].body[1]
+        property_node = setup.body[1].body[1].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="name-too-long",
-                line=4,
+                line=14,
                 node=property_node.targets[0],
                 col_offset=8,
-                end_line=4,
+                end_line=14,
                 end_col_offset=60,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_private_name_too_long(self):
-        class_node, function_node, property_node = astroid.extract_node(
-            """
-            class ClassNameGoodClient(): #@
-                def _this_function_is_private_but_over_length_reqs(self, **kwargs): #@
-                    this_lists_name = [] #@
-        """
-        )
+    def test_private_name_too_long(self, setup):
+        class_node = setup.body[1]
+        function_node = setup.body[1].body[2]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
             self.checker.visit_functiondef(function_node)
 
-    def test_instance_attr_name_too_long(self):
-        class_node, function_node, property_node = astroid.extract_node(
-            """
-            class ClassNameGoodClient(): #@
-                def __init__(self, this_name_is_too_long_to_use_anymore_reqs, **kwargs): #@
-                    self.this_name_is_too_long_to_use_anymore_reqs = 10 #@
-        """
-        )
+    def test_instance_attr_name_too_long(self, setup):
+        class_node = setup.body[1]
+        function_node = setup.body[1].body[3]
+        property_node = setup.body[1].body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_classdef(class_node)
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="name-too-long",
-                line=4,
+                line=22,
                 node=property_node.targets[0],
                 col_offset=8,
-                end_line=4,
+                end_line=22,
                 end_col_offset=54,
             )
         ):
             self.checker.visit_functiondef(function_node)
 
-    def test_class_var_name_too_long(self):
-        class_node, class_var_node, function_node, property_node = astroid.extract_node(
-            """
-            class ClassNameGoodClient(): #@
-                this_name_is_too_long_to_use_anymore_reqs = 10 #@
-                def __init__(self, dog, **kwargs): #@
-                    self.dog=dog #@
-        """
-        )
+    def test_class_var_name_too_long(self, setup):
+        class_node = setup.body[1]
+        function_node = setup.body[1].body[4]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="name-too-long",
-                line=3,
-                node=class_node.body[0].targets[0],
+                line=25,
+                node=class_node.body[4].targets[0],
                 col_offset=4,
-                end_line=3,
+                end_line=25,
                 end_col_offset=45,
             )
         ):
@@ -4326,78 +2941,54 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
 
 
 class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
-
     """Test that we are checking the return type of delete functions is correct"""
 
     CHECKER_CLASS = checker.DeleteOperationReturnStatement
 
-    def test_begin_delete_operation_incorrect_return(self):
-        node = astroid.extract_node(
-            """
-            from azure.core.polling import LROPoller 
-            from typing import Any
-            class MyClient():
-                def begin_delete_some_function(self, **kwargs)  -> LROPoller[Any]: #@
-                    return LROPoller[Any]
-        """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "delete_operation_return_type.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_begin_delete_operation_incorrect_return(self, setup):
+        node = setup.body[2].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="delete-operation-wrong-return-type",
-                line=5,
+                line=7,
                 node=node,
                 col_offset=4,
-                end_line=5,
+                end_line=7,
                 end_col_offset=34,
             )
         ):
             self.checker.visit_functiondef(node)
 
-    def test_delete_operation_incorrect_return(self):
-        node = astroid.extract_node(
-            """
-            from azure.core.polling import LROPoller 
-            from typing import Any
-            class MyClient():
-                def delete_some_function(self, **kwargs)  -> str: #@
-                    return "hello"
-        """
-        )
+    def test_delete_operation_incorrect_return(self, setup):
+        node = setup.body[2].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="delete-operation-wrong-return-type",
-                line=5,
+                line=11,
                 node=node,
                 col_offset=4,
-                end_line=5,
+                end_line=11,
                 end_col_offset=28,
             )
         ):
             self.checker.visit_functiondef(node)
 
-    def test_delete_operation_correct_return(self):
-        node = astroid.extract_node(
-            """
-            from azure.core.polling import LROPoller 
-            from typing import Any
-            class MyClient():
-                def delete_some_function(self, **kwargs)  -> None: #@
-                    return None
-        """
-        )
+    def test_delete_operation_correct_return(self, setup):
+        node = setup.body[2].body[2]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_begin_delete_operation_correct_return(self):
-        node = astroid.extract_node(
-            """
-            from azure.core.polling import LROPoller 
-            from typing import Any
-            class MyClient():
-                def begin_delete_some_function(self, **kwargs)  -> LROPoller[None]: #@
-                    return LROPoller[None]
-        """
-        )
+    def test_begin_delete_operation_correct_return(self, setup):
+        node = setup.body[2].body[3]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
@@ -4408,260 +2999,146 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.CheckDocstringParameters
 
-    def test_docstring_vararg(self):
-        node = astroid.extract_node(
-            # Check that we recognize *args as param in docstring
-            """
-            def function_foo(x, y, *z):
-                '''
-                :param x: x
-                :type x: str
-                :param str y: y
-                :param str z: z
-                '''
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_parameters.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_docstring_vararg(self, setup):
+        # Check that we recognize *args as param in docstring
+        node = setup.body[0]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_vararg_keyword_args(self):
+    def test_docstring_vararg_keyword_args(self, setup):
         # Check that we recognize keyword-only args after *args in docstring
-        node = astroid.extract_node(
-            """
-            def function_foo(x, y, *z, a="Hello", b="World"):
-                '''
-                :param x: x
-                :type x: str
-                :param str y: y
-                :param str z: z
-                :keyword str a: a
-                :keyword str b: b
-                '''
-            """
-        )
+        node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_varag_no_type(self):
+    def test_docstring_varag_no_type(self, setup):
         # Error on documenting keyword only args as param after *args in docstring
-        node = astroid.extract_node(
-            """
-            def function_foo(*x):
-                '''
-                :param x: x
-                :keyword z: z
-                :paramtype z: str
-                '''
-            """
-        )
+        node = setup.body[2]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-keyword-should-match-keyword-only",
-                line=2,
+                line=24,
                 node=node,
                 args="z",
                 col_offset=0,
-                end_line=2,
+                end_line=24,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="docstring-missing-type",
-                line=2,
+                line=24,
                 args="x",
                 node=node,
                 col_offset=0,
-                end_line=2,
+                end_line=24,
                 end_col_offset=16,
             ),
         ):
             self.checker.visit_functiondef(node)
 
-    def test_docstring_class_paramtype(self):
-        node = astroid.extract_node(
-            """
-            class MyClass(): #@
-                def function_foo(**kwargs): #@
-                    '''
-                    :keyword z: z
-                    :paramtype z: str
-                    '''
-                
-                def function_boo(**kwargs): #@
-                    '''
-                    :keyword z: z
-                    :paramtype z: str
-                    '''
-            """
-        )
+    def test_docstring_class_paramtype(self, setup):
+        function_node_a = setup.body[3].body[0]
+        function_node_b = setup.body[3].body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-keyword-should-match-keyword-only",
-                line=3,
-                node=node[1],
+                line=34,
+                node=function_node_a,
                 args="z",
                 col_offset=4,
-                end_line=3,
+                end_line=34,
                 end_col_offset=20,
             ),
         ):
-            self.checker.visit_functiondef(node[1])
+            self.checker.visit_functiondef(function_node_a)
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-keyword-should-match-keyword-only",
-                line=9,
-                node=node[2],
+                line=40,
+                node=function_node_b,
                 args="z",
                 col_offset=4,
-                end_line=9,
+                end_line=40,
                 end_col_offset=20,
             ),
         ):
-            self.checker.visit_functiondef(node[2])
+            self.checker.visit_functiondef(function_node_b)
 
-    def test_docstring_property_decorator(self):
-        node = astroid.extract_node(
-            """
-            from typing import Dict
-            
-            @property
-            def function_foo(self) -> Dict[str,str]:
-                '''The current headers collection.
-                :rtype: dict[str, str]
-                '''
-                return {"hello": "world"}
-            """
-        )
+    def test_docstring_property_decorator(self, setup):
+        node = setup.body[5]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_no_property_decorator(self):
-        node = astroid.extract_node(
-            """
-            from typing import Dict
-            def function_foo(self) -> Dict[str,str]:
-                '''The current headers collection.
-                :rtype: dict[str, str]
-                '''
-                return {"hello": "world"}
-            """
-        )
+    def test_docstring_no_property_decorator(self, setup):
+        node = setup.body[6]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-missing-return",
-                line=3,
+                line=60,
                 args=None,
                 node=node,
                 col_offset=0,
-                end_line=3,
+                end_line=60,
                 end_col_offset=16,
             ),
         ):
             self.checker.visit_functiondef(node)
 
-    def test_docstring_type_has_space(self):
+    def test_docstring_type_has_space(self, setup):
         # Don't error if there is extra spacing in the type
-        node = astroid.extract_node(
-            """
-            def function_foo(x):
-                '''
-                :param dict[str, int] x: x
-                '''
-            """
-        )
+        node = setup.body[7]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_type_has_many_spaces(self):
+    def test_docstring_type_has_many_spaces(self, setup):
         # Don't error if there is extra spacing around the type
-        node = astroid.extract_node(
-            """
-            def function_foo(x):
-                '''
-                :param  dict[str, int]  x: x
-                '''
-            """
-        )
+        node = setup.body[8]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_raises(self):
-        node = astroid.extract_node(
-            """
-            def function_foo():
-                '''
-                :raises: ValueError
-                '''
-                print("hello")
-                raise ValueError("hello")
-            """
-        )
+    def test_docstring_raises(self, setup):
+        node = setup.body[9]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_keyword_only(self):
-        node = astroid.extract_node(
-            """
-            def function_foo(self, x, *, z, y=None):
-                '''
-                :param x: x
-                :type x: str
-                :keyword str y: y
-                :keyword str z: z
-                '''
-                print("hello")
-            """
-        )
+    def test_docstring_keyword_only(self, setup):
+        node = setup.body[10]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_correct_rtype(self):
-        node = astroid.extract_node(
-            """
-            def function_foo(self, x, *, z, y=None) -> str:
-                '''
-                :param x: x
-                :type x: str
-                :keyword str y: y
-                :keyword str z: z
-                :rtype: str
-                '''
-                print("hello")
-            """
-        )
+    def test_docstring_correct_rtype(self, setup):
+        node = setup.body[11]
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_class_type(self):
-        node = astroid.extract_node(
-            """
-            def function_foo(self, x, y):
-                '''
-                :param x: x
-                :type x: :class:`azure.core.credentials.AccessToken`
-                :param y: y
-                :type y: str
-                :rtype: :class:`azure.core.credentials.AccessToken`
-                '''
-                print("hello")
-            """
-        )
+    def test_docstring_class_type(self, setup):
+        node = setup.body[12]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="docstring-type-do-not-use-class",
-                line=2,
+                line=114,
                 args="x",
                 node=node,
                 col_offset=0,
-                end_line=2,
+                end_line=114,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="docstring-type-do-not-use-class",
-                line=2,
+                line=114,
                 args="rtype",
                 node=node,
                 col_offset=0,
-                end_line=2,
+                end_line=114,
                 end_col_offset=16,
             ),
         ):
@@ -4673,47 +3150,54 @@ class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.DoNotImportLegacySix
 
-    def test_disallowed_import_from(self):
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_import_legacy_six.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_import_from(self, setup):
         """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node("from six import with_metaclass")
+        importfrom_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-import-legacy-six",
-                line=1,
+                line=2,
                 node=importfrom_node,
                 col_offset=0,
-                end_line=1,
+                end_line=2,
                 end_col_offset=30,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_disallowed_import(self):
+    def test_disallowed_import(self, setup):
         """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node("import six")
+        importfrom_node = setup.body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-import-legacy-six",
-                line=1,
+                line=5,
                 node=importfrom_node,
                 col_offset=0,
-                end_line=1,
+                end_line=5,
                 end_col_offset=10,
             )
         ):
             self.checker.visit_import(importfrom_node)
 
-    def test_allowed_imports(self):
+    def test_allowed_imports(self, setup):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
-        importfrom_node = astroid.extract_node("from math import PI")
+        importfrom_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # from import not in the blocked list.
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline import Pipeline"
-        )
+        importfrom_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
@@ -4723,39 +3207,44 @@ class TestCheckNoLegacyAzureCoreHttpResponseImport(pylint.testutils.CheckerTestC
 
     CHECKER_CLASS = checker.NoLegacyAzureCoreHttpResponseImport
 
-    def test_disallowed_import_from(self):
-        """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline.transport import HttpResponse"
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "no_legacy_azure_core_http_response_import.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_import_from(self, setup):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-legacy-azure-core-http-response-import",
-                line=1,
+                line=2,
                 node=importfrom_node,
                 col_offset=0,
-                end_line=1,
+                end_line=2,
                 end_col_offset=54,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_allowed_imports(self):
+    def test_allowed_imports(self, setup):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
-        importfrom_node = astroid.extract_node("from math import PI")
+        importfrom_node = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # from import not in the blocked list.
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline import Pipeline"
-        )
+        importfrom_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # Import HttpResponse, but from in `azure.core`.
-        importfrom_node = astroid.extract_node("from .. import HttpResponse")
+        importfrom_node = setup.body[3]
         importfrom_node.root().name = "azure.core"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
@@ -4766,16 +3255,18 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.NoImportTypingFromTypeCheck
 
-    def test_disallowed_import_from(self):
-        """Check that illegal imports raise warnings"""
-        import_node = astroid.extract_node(
-            """
-            from typing import TYPE_CHECKING
-
-            if TYPE_CHECKING:
-                from typing import Any #@
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "no_typing_under_type_checking.py")
         )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_import_from(self, setup):
+        """Check that illegal imports raise warnings"""
+        import_node = setup.body[1].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-typing-import-in-type-check",
@@ -4788,56 +3279,34 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_importfrom(import_node)
 
-    def test_disallowed_import_from_extensions(self):
+    def test_disallowed_import_from_extensions(self, setup):
         """Check that illegal imports raise warnings"""
-        import_node = astroid.extract_node(
-            """
-            from typing import TYPE_CHECKING
-
-            if TYPE_CHECKING:
-                import typing_extensions #@
-            """
-        )
+        import_node = setup.body[2].body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="no-typing-import-in-type-check",
-                line=5,
+                line=9,
                 node=import_node,
                 col_offset=4,
-                end_line=5,
+                end_line=9,
                 end_col_offset=28,
             )
         ):
             self.checker.visit_import(import_node)
 
-    def test_allowed_imports(self):
+    def test_allowed_imports(self, setup):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
-        importfrom_node = astroid.extract_node(
-        """
-            from typing import TYPE_CHECKING
-
-            if TYPE_CHECKING:
-
-                from math import PI
-            """
-        )
+        importfrom_node = setup.body[3].body[0]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_allowed_import_else(self):
+    def test_allowed_import_else(self, setup):
         """Check that illegal imports raise warnings"""
-        ima, imb, imc, imd = astroid.extract_node(
-            """
-            if sys.version_info >= (3, 9):
-                from collections.abc import MutableMapping
-            else:
-                from typing import MutableMapping #@
-                import typing #@
-                import typing_extensions #@
-                from typing_extensions import Protocol #@
-            """
-        )
+        ima = setup.body[4].orelse[0]
+        imb = setup.body[4].orelse[1]
+        imc = setup.body[4].orelse[2]
+        imd = setup.body[4].orelse[3]
         with self.assertNoMessages():
             self.checker.visit_importfrom(ima)
             self.checker.visit_import(imb)
@@ -4891,331 +3360,60 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
             self.checker.visit_classdef(node)
 
 
-
 class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
-    """Test that we are blocking imports of asncio directly allowing indirect imports."""
+    """Test that we are blocking imports of asyncio directly allowing indirect imports."""
     CHECKER_CLASS = checker.DoNotImportAsyncio
 
-    def test_disallowed_import_from(self):
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_import_asyncio.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_import_from(self, setup):
         """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node("from asyncio import sleep")
+        importfrom_node = setup.body[0]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-import-asyncio",
-                    line=1,
+                    line=2,
                     node=importfrom_node,
                     col_offset=0,
-                    end_line=1,
+                    end_line=2,
                     end_col_offset=25,
                 )
         ):
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_disallowed_import(self):
+    def test_disallowed_import(self, setup):
         """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node("import asyncio")
+        importfrom_node = setup.body[1]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-import-asyncio",
-                line=1,
+                line=5,
                 node=importfrom_node,
                 col_offset=0,
-                end_line=1,
+                end_line=5,
                 end_col_offset=14,
             )
         ):
             self.checker.visit_import(importfrom_node)
 
-    def test_allowed_imports(self):
+    def test_allowed_imports(self, setup):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.
-        importfrom_node = astroid.extract_node("from math import PI")
+        importfrom_node = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
         # from import not in the blocked list.
-        importfrom_node = astroid.extract_node(
-            "from azure.core.pipeline import Pipeline"
-        )
+        importfrom_node = setup.body[3]
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
-
-class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
-
-    """Test that any errors raised are not logged at 'error' or 'warning' levels in the exception block."""
-
-    CHECKER_CLASS = checker.DoNotLogErrorsEndUpRaising
-
-    def test_error_level_not_logged(self):
-        """Check that any exceptions raised aren't logged at error level in the exception block."""
-        try_node, expression_node = astroid.extract_node('''
-        try: #@
-            add = 1 + 2
-        except Exception as e:
-            logger.ERROR(str(e)) #@
-            raise
-        '''
-                                              )
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="do-not-log-raised-errors",
-                line=5,
-                node=expression_node.parent,
-                col_offset=4,
-                end_line=5,
-                end_col_offset=24,
-            )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_warning_level_not_logged(self):
-        """Check that any exceptions raised aren't logged at warning level in the exception block."""
-        try_node, expression_node = astroid.extract_node('''
-        try: #@
-            add = 1 + 2
-        except Exception as e:
-            logger.warning(str(e)) #@
-            raise
-        '''
-                                                               )
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="do-not-log-raised-errors",
-                line=5,
-                node=expression_node.parent,
-                col_offset=4,
-                end_line=5,
-                end_col_offset=26,
-            )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_warning_level_logging_ok_when_no_raise(self):
-        """Check that exceptions can be logged if the exception isn't raised."""
-
-        try_node = astroid.extract_node('''
-        try:
-            add = 1 + 2
-        except Exception as e:
-            logger.warning(str(e))
-        '''
-                                              )
-        with self.assertNoMessages():
-            self.checker.visit_try(try_node)
-
-    def test_unlogged_exception_block(self):
-        """Check that exceptions raised without logging are allowed."""
-
-        try_node = astroid.extract_node('''
-        try:
-            add = 1 + 2
-        except Exception as e:
-            raise
-        '''
-                                              )
-        with self.assertNoMessages():
-            self.checker.visit_try(try_node)
-
-    def test_mult_exception_blocks_separate_raise(self):
-        """Check multiple exception blocks with separate raise and logging is allowed."""
-
-        try_node = astroid.extract_node('''
-        try:
-            add = 1 + 2
-        except Exception as e:
-            raise
-        except OtherException as x:
-            logger.error(str(x))
-        '''
-                                              )
-        with self.assertNoMessages():
-            self.checker.visit_try(try_node)
-
-    def test_mult_exception_blocks_with_raise(self):
-        """Check that multiple exception blocks with raise and logging is not allowed."""
-
-        try_node, expression_node = astroid.extract_node('''
-        try: #@
-            add = 1 + 2
-        except Exception as e:
-            raise
-        except OtherException as x:
-            logger.error(str(x)) #@
-            raise
-        '''
-                                              )
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=7,
-                    node=expression_node.parent,
-                    col_offset=4,
-                    end_line=7,
-                    end_col_offset=24,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_implicit_else_exception_logged(self):
-        """Check that any exceptions raised in branches aren't logged at error level."""
-        try_node, expression_node = astroid.extract_node(
-            '''
-                try: #@
-                    add = 1 + 2
-                except Exception as e:
-                    if e.code == "Retryable":
-                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart")
-                        return True
-                    elif Exception != BaseException:
-                        logging.error(f"System shutting down due to error: {e}.")
-                        return False
-                    logging.error(f"Unexpected error occurred: {e}") #@
-                    raise SystemError("Uh oh!") from e
-            ''')
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=11,
-                    node=expression_node.parent,
-                    col_offset=4,
-                    end_line=11,
-                    end_col_offset=52,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_branch_exceptions_logged(self):
-        """Check that any exceptions raised in if branches aren't logged at error level."""
-        try_node, expression_node_a, expression_node_b, expression_node_c = astroid.extract_node(
-            '''
-                try: #@
-                    add = 1 + 2
-                except Exception as e:
-                    if e.code == "Retryable":
-                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart") #@
-                        raise SystemError("Uh oh!") from e
-                    elif Exception != BaseException:
-                        logging.error(f"System shutting down due to error: {e}.") #@
-                        raise SystemError("Uh oh!") from e
-                    elif e.code == "Second elif branch":
-                        logging.error(f"Second: {e}.") #@
-                        raise SystemError("Uh oh!") from e
-                    logging.error(f"Unexpected error occurred: {e}")  
-            ''')
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=6,
-                    node=expression_node_a.parent,
-                    col_offset=8,
-                    end_line=6,
-                    end_col_offset=82,
-                ),
-                pylint.testutils.MessageTest(
-                msg_id="do-not-log-raised-errors",
-                line=9,
-                node=expression_node_b.parent,
-                col_offset=8,
-                end_line=9,
-                end_col_offset=65,
-                ),
-                pylint.testutils.MessageTest(
-                msg_id="do-not-log-raised-errors",
-                line=12,
-                node=expression_node_c.parent,
-                col_offset=8,
-                end_line=12,
-                end_col_offset=38,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_explicit_else_branch_exception_logged(self):
-        """Check that any exceptions raised in else branches aren't logged at error level."""
-        try_node, expression_node = astroid.extract_node(
-            '''
-                try: #@
-                    add = 1 + 2
-                except Exception as e:
-                    if e.code == "Retryable":
-                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart")
-                        return True
-                    elif Exception != BaseException:
-                        logging.error(f"System shutting down due to error: {e}.")
-                        return False
-                    else:
-                        logging.error(f"Unexpected error occurred: {e}") #@
-                        raise SystemError("Uh oh!") from e 
-                         
-            ''')
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=12,
-                    node=expression_node.parent,
-                    col_offset=8,
-                    end_line=12,
-                    end_col_offset=56,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_extra_nested_branches_exception_logged(self):
-        """Check that any exceptions raised in else branches aren't logged at error level."""
-        try_node, expression_node_a, expression_node_b, expression_node_c, expression_node_d = astroid.extract_node(
-            '''
-                try: #@
-                    add = 1 + 2
-                except Exception as e:
-                    if e.code == "Retryable":
-                        if e.code == "A":
-                            logging.warning(f"A: {e}") #@
-                            raise SystemError("Uh oh!") from e
-                        elif e.code == "E":
-                            logging.warning(f"E: {e}") #@
-                            raise SystemError("Uh oh!") from e
-                        else:
-                            logging.warning(f"F: {e}") #@
-                            raise SystemError("Uh oh!") from e
-                    else:
-                        logging.error(f"Unexpected error occurred: {e}") #@
-                        raise SystemError("Uh oh!") from e 
-            ''')
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=7,
-                    node=expression_node_a.parent,
-                    col_offset=12,
-                    end_line=7,
-                    end_col_offset=38,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=10,
-                    node=expression_node_b.parent,
-                    col_offset=12,
-                    end_line=10,
-                    end_col_offset=38,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=13,
-                    node=expression_node_c.parent,
-                    col_offset=12,
-                    end_line=13,
-                    end_col_offset=38,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=16,
-                    node=expression_node_d.parent,
-                    col_offset=8,
-                    end_line=16,
-                    end_col_offset=56,
-                )
-        ):
-            self.checker.visit_try(try_node)
 
 
 class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
@@ -5223,16 +3421,18 @@ class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
 
     CHECKER_CLASS = checker.DoNotUseLegacyTyping
 
-    def test_disallowed_typing(self):
-        """Check that illegal method typing comments raise warnings"""
-        fdef = astroid.extract_node(
-            """
-            def function(x): #@
-                # type: (str) -> str
-                pass
-            """
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "check_do_not_use_legacy_typing.py")
         )
-        
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_disallowed_typing(self, setup):
+        """Check that illegal method typing comments raise warnings"""
+        fdef = setup.body[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-use-legacy-typing",
@@ -5244,27 +3444,207 @@ class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
             )
         ):
             self.checker.visit_functiondef(fdef)
-    
-    def test_allowed_typing(self):
+
+    def test_allowed_typing(self, setup):
         """Check that allowed method typing comments don't raise warnings"""
-        fdef = astroid.extract_node(
-            """
-            def function(x: str) -> str: #@
-                pass
-            """
-        )
+        fdef = setup.body[1]
         with self.assertNoMessages():
             self.checker.visit_functiondef(fdef)
 
-    def test_arbitrary_comments(self):
+    def test_arbitrary_comments(self, setup):
         """Check that arbitrary comments don't raise warnings"""
-        fdef = astroid.extract_node(
-            """
-            def function(x): #@
-                # This is a comment
-                pass
-            """
-        )
+        fdef = setup.body[2]
         with self.assertNoMessages():
             self.checker.visit_functiondef(fdef)
 
+
+class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
+    """Test that any errors raised are not logged at 'error' or 'warning' levels in the exception block."""
+
+    CHECKER_CLASS = checker.DoNotLogErrorsEndUpRaising
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_log_errors_end_up_raising.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_error_level_not_logged(self, setup):
+        """Check that any exceptions raised aren't logged at error level in the exception block."""
+        try_node, expression_node = setup.body[1].body[0], setup.body[1].body[0].handlers[0].body[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=9,
+                    node=expression_node,
+                    col_offset=8,
+                    end_line=9,
+                    end_col_offset=29,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_warning_level_not_logged(self, setup):
+        """Check that any exceptions raised aren't logged at warning level in the exception block."""
+        try_node, expression_node = setup.body[2].body[0], setup.body[2].body[0].handlers[0].body[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=18,
+                    node=expression_node,
+                    col_offset=8,
+                    end_line=18,
+                    end_col_offset=31,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_warning_level_logging_ok_when_no_raise(self, setup):
+        """Check that exceptions can be logged if the exception isn't raised."""
+        try_node = setup.body[3].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_unlogged_exception_block(self, setup):
+        """Check that exceptions raised without logging are allowed."""
+        try_node = setup.body[4].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_mult_exception_blocks_separate_raise(self, setup):
+        """Check multiple exception blocks with separate raise and logging is allowed."""
+        try_node = setup.body[5].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_mult_exception_blocks_with_raise(self, setup):
+        """Check that multiple exception blocks with raise and logging is not allowed."""
+        try_node, expression_node = setup.body[6].body[0], setup.body[6].body[0].handlers[1].body[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=55,
+                    node=expression_node,
+                    col_offset=8,
+                    end_line=55,
+                    end_col_offset=29,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_implicit_else_exception_logged(self, setup):
+        """Check that any exceptions raised in branches aren't logged at error level."""
+        try_node, expression_node = setup.body[7].body[0], setup.body[7].body[0].handlers[0].body[1]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=70,
+                    node=expression_node,
+                    col_offset=8,
+                    end_line=70,
+                    end_col_offset=56,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_branch_exceptions_logged(self, setup):
+        """Check that any exceptions raised in if branches aren't logged at error level."""
+        try_node = setup.body[8].body[0]
+        expression_node_a = setup.body[8].body[0].handlers[0].body[0].body[0]
+        expression_node_b = setup.body[8].body[0].handlers[0].body[0].orelse[0].body[0]
+        expression_node_c = setup.body[8].body[0].handlers[0].body[0].orelse[0].orelse[0].body[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=80,
+                    node=expression_node_a,
+                    col_offset=12,
+                    end_line=80,
+                    end_col_offset=86,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=83,
+                    node=expression_node_b,
+                    col_offset=12,
+                    end_line=83,
+                    end_col_offset=69,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=86,
+                    node=expression_node_c,
+                    col_offset=12,
+                    end_line=86,
+                    end_col_offset=42,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_explicit_else_branch_exception_logged(self, setup):
+        """Check that any exceptions raised in else branches aren't logged at error level."""
+        try_node = setup.body[9].body[0]
+        expression_node = setup.body[9].body[0].handlers[0].body[0].orelse[0].orelse[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=103,
+                    node=expression_node,
+                    col_offset=12,
+                    end_line=103,
+                    end_col_offset=60,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_extra_nested_branches_exception_logged(self, setup):
+        """Check that any exceptions raised in nested branches aren't logged at warning level."""
+        try_node = setup.body[10].body[0]
+        expression_node_a = setup.body[10].body[0].handlers[0].body[0].body[0].body[0]
+        expression_node_b = setup.body[10].body[0].handlers[0].body[0].body[0].orelse[0].body[0]
+        expression_node_c = setup.body[10].body[0].handlers[0].body[0].body[0].orelse[0].orelse[0]
+        expression_node_d = setup.body[10].body[0].handlers[0].body[0].orelse[0]
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=114,
+                    node=expression_node_a,
+                    col_offset=16,
+                    end_line=114,
+                    end_col_offset=42,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=117,
+                    node=expression_node_b,
+                    col_offset=16,
+                    end_line=117,
+                    end_col_offset=42,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=120,
+                    node=expression_node_c,
+                    col_offset=16,
+                    end_line=120,
+                    end_col_offset=42,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=123,
+                    node=expression_node_d,
+                    col_offset=12,
+                    end_line=123,
+                    end_col_offset=60,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+# [Pylint] custom linter check for invalid use of @overload #3229
+# [Pylint] Custom Linter check for Exception Logging #3227
+# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+# [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Investigate pylint rule around missing dependency #3231

@@ -2,6 +2,7 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { checkDebugLogging, Logger, printBanner, usageText } from "./log.js";
 import {
+  compareCommand,
   convertCommand,
   generateCommand,
   generateLockFileCommand,
@@ -10,13 +11,20 @@ import {
   syncCommand,
   updateCommand,
 } from "./commands.js";
-import { normalizePath, resolvePath } from "@typespec/compiler";
+import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import PromptSync from "prompt-sync";
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const packageJson = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
 
 function commandPreamble(argv: any) {
   checkDebugLogging(argv);
   printBanner();
-  yargs().showVersion();
+  Logger.info(packageJson.version);
 }
 
 /** Ensure the output directory exists and allow interactive users to confirm or override the value. */
@@ -49,6 +57,8 @@ export function resolveOutputDir(argv: any): string {
 }
 
 const parser = yargs(hideBin(process.argv))
+  .version(packageJson.version)
+  .alias("v", "version")
   .scriptName("")
   .usage(usageText)
   .option("debug", {
@@ -215,7 +225,20 @@ const parser = yargs(hideBin(process.argv))
       });
     },
     async (argv: any) => {
+      commandPreamble(argv);
       await sortSwaggerCommand(argv);
+    },
+  )
+  .command(
+    "compare",
+    "Compare two Swaggers for functional equivalency. This is typically used to compare a source Swagger with a TypeSpec project or TypeSpec generated Swagger to ensure that the TypeSpec project is functionally equivalent to the source Swagger.",
+    (yargs: any) => {
+      return yargs.help(false);
+    },
+    async (argv: any) => {
+      argv["output-dir"] = resolveOutputDir(argv);
+      const rawArgs = process.argv.slice(3);
+      await compareCommand(argv, rawArgs);
     },
   )
   .demandCommand(1, "Please provide a command.")

@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -689,8 +688,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Request.Headers, targetEntry.Request.Headers, new HashSet<string>(), new HashSet<string>()));
             Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Response.Headers, targetEntry.Response.Headers, new HashSet<string>(), new HashSet<string>()));
-            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body));
-            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body));
+            
+            targetUntouchedEntry.Request.TryGetContentType(out var contentType);
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body, contentType));
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body, contentType));
             Assert.Equal(targetUntouchedEntry.RequestUri, targetEntry.RequestUri);
         }
 
@@ -769,8 +770,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await session.Session.Sanitize(sanitizer);
 
             var resultBodyValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
-            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body));
-            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body));
+            targetUntouchedEntry.Request.TryGetContentType(out var contentType);
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body, contentType));
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body, contentType));
         }
 
         [Fact]

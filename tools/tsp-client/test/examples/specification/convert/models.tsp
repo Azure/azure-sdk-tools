@@ -1,31 +1,16 @@
 import "@typespec/rest";
 import "@typespec/http";
 import "@azure-tools/typespec-azure-core";
+import "@azure-tools/typespec-azure-resource-manager";
 
 using TypeSpec.Rest;
 using TypeSpec.Http;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Foundations;
 
-namespace AzureSphereManagementClient;
+namespace Microsoft.AzureSphere;
 
-/**
- * The intended executor of the operation; as in Resource Based Access Control
- * (RBAC) and audit logs UX. Default value is "user,system"
- */
-union Origin {
-  string,
-  user: "user",
-  system: "system",
-  `user,system`: "user,system",
-}
-
-/**
- * Enum. Indicates the action type. "Internal" refers to actions that are for
- * internal only APIs.
- */
-union ActionType {
-  string,
-  Internal: "Internal",
-}
+interface Operations extends Azure.ResourceManager.Operations {}
 
 /**
  * Provisioning state of resource.
@@ -67,17 +52,6 @@ union ProvisioningState {
    * The resource create request has been accepted
    */
   Accepted: "Accepted",
-}
-
-/**
- * The type of identity that created the resource.
- */
-union CreatedByType {
-  string,
-  User: "User",
-  Application: "Application",
-  ManagedIdentity: "ManagedIdentity",
-  Key: "Key",
 }
 
 /**
@@ -320,168 +294,6 @@ union CapabilityType {
 }
 
 /**
- * A list of REST API operations supported by an Azure Resource Provider. It
- * contains an URL link to get the next set of results.
- */
-model OperationListResult is Azure.Core.Page<Operation>;
-
-/**
- * Details of a REST API operation, returned from the Resource Provider Operations
- * API
- */
-model Operation {
-  /**
-   * The name of the operation, as per Resource-Based Access Control (RBAC).
-   * Examples: "Microsoft.Compute/virtualMachines/write",
-   * "Microsoft.Compute/virtualMachines/capture/action"
-   */
-  @visibility("read")
-  name?: string;
-
-  /**
-   * Whether the operation applies to data-plane. This is "true" for data-plane
-   * operations and "false" for ARM/control-plane operations.
-   */
-  @visibility("read")
-  isDataAction?: boolean;
-
-  /**
-   * Localized display information for this particular operation.
-   */
-  display?: OperationDisplay;
-
-  /**
-   * The intended executor of the operation; as in Resource Based Access Control
-   * (RBAC) and audit logs UX. Default value is "user,system"
-   */
-  @visibility("read")
-  origin?: Origin;
-
-  /**
-   * Enum. Indicates the action type. "Internal" refers to actions that are for
-   * internal only APIs.
-   */
-  @visibility("read")
-  actionType?: ActionType;
-}
-
-/**
- * Localized display information for this particular operation.
- */
-model OperationDisplay {
-  /**
-   * The localized friendly form of the resource provider name, e.g. "Microsoft
-   * Monitoring Insights" or "Microsoft Compute".
-   */
-  @visibility("read")
-  provider?: string;
-
-  /**
-   * The localized friendly name of the resource type related to this operation.
-   * E.g. "Virtual Machines" or "Job Schedule Collections".
-   */
-  @visibility("read")
-  resource?: string;
-
-  /**
-   * The concise, localized friendly name for the operation; suitable for dropdowns.
-   * E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
-   */
-  @visibility("read")
-  operation?: string;
-
-  /**
-   * The short, localized friendly description of the operation; suitable for tool
-   * tips and detailed views.
-   */
-  @visibility("read")
-  description?: string;
-}
-
-/**
- * Common error response for all Azure Resource Manager APIs to return error
- * details for failed operations. (This also follows the OData error response
- * format.).
- */
-@error
-model ErrorResponse {
-  /**
-   * The error object.
-   */
-  error?: ErrorDetail;
-}
-
-/**
- * The error detail.
- */
-model ErrorDetail {
-  /**
-   * The error code.
-   */
-  @visibility("read")
-  code?: string;
-
-  /**
-   * The error message.
-   */
-  @visibility("read")
-  message?: string;
-
-  /**
-   * The error target.
-   */
-  @visibility("read")
-  target?: string;
-
-  /**
-   * The error details.
-   */
-  @visibility("read")
-  @OpenAPI.extension("x-ms-identifiers", ["message", "target"])
-  details?: ErrorDetail[];
-
-  /**
-   * The error additional info.
-   */
-  @visibility("read")
-  @OpenAPI.extension("x-ms-identifiers", [])
-  additionalInfo?: ErrorAdditionalInfo[];
-}
-
-/**
- * The resource management error additional info.
- */
-model ErrorAdditionalInfo {
-  /**
-   * The additional info type.
-   */
-  @visibility("read")
-  type?: string;
-
-  /**
-   * The additional info.
-   */
-  @visibility("read")
-  info?: Record<unknown>;
-}
-
-/**
- * The response of a Catalog list operation.
- */
-model CatalogListResult is Azure.Core.Page<Catalog>;
-
-/**
- * An Azure Sphere catalog
- */
-model Catalog extends TrackedResource {
-  /**
-   * The resource-specific properties for this resource.
-   */
-  @visibility("read", "create")
-  properties?: CatalogProperties;
-}
-
-/**
  * Catalog properties
  */
 model CatalogProperties {
@@ -499,31 +311,11 @@ model CatalogProperties {
 }
 
 /**
- * The resource model definition for an Azure Resource Manager tracked top level
- * resource which has 'tags' and a 'location'
- */
-model TrackedResource extends Resource {
-  /**
-   * Resource tags.
-   */
-  @visibility("read", "create", "update")
-  tags?: Record<string>;
-
-  /**
-   * The geo-location where the resource lives
-   */
-  @visibility("read", "create")
-  location: string;
-}
-
-/**
- * Common fields that are returned in the response for all Azure Resource Manager
- * resources
+ * Common fields that are returned in the response for all Azure Resource Manager resources
  */
 model Resource {
   /**
-   * Fully qualified resource ID for the resource. Ex -
-   * /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
+   * Fully qualified resource ID for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
    */
   @visibility("read")
   id?: string;
@@ -535,8 +327,7 @@ model Resource {
   name?: string;
 
   /**
-   * The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
-   * "Microsoft.Storage/storageAccounts"
+   * The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
    */
   @visibility("read")
   type?: string;
@@ -549,43 +340,6 @@ model Resource {
 }
 
 /**
- * Metadata pertaining to creation and last modification of the resource.
- */
-model SystemData {
-  /**
-   * The identity that created the resource.
-   */
-  createdBy?: string;
-
-  /**
-   * The type of identity that created the resource.
-   */
-  createdByType?: CreatedByType;
-
-  /**
-   * The timestamp of resource creation (UTC).
-   */
-  // FIXME: (utcDateTime) Please double check that this is the correct type for your scenario.
-  createdAt?: utcDateTime;
-
-  /**
-   * The identity that last modified the resource.
-   */
-  lastModifiedBy?: string;
-
-  /**
-   * The type of identity that last modified the resource.
-   */
-  lastModifiedByType?: CreatedByType;
-
-  /**
-   * The timestamp of resource last modification (UTC)
-   */
-  // FIXME: (utcDateTime) Please double check that this is the correct type for your scenario.
-  lastModifiedAt?: utcDateTime;
-}
-
-/**
  * The type used for update operations of the Catalog.
  */
 model CatalogUpdate {
@@ -593,22 +347,6 @@ model CatalogUpdate {
    * Resource tags.
    */
   tags?: Record<string>;
-}
-
-/**
- * The response of a Certificate list operation.
- */
-model CertificateListResult is Azure.Core.Page<Certificate>;
-
-/**
- * An certificate resource belonging to a catalog resource.
- */
-model Certificate extends ProxyResource {
-  /**
-   * The resource-specific properties for this resource.
-   */
-  @visibility("read", "create")
-  properties?: CertificateProperties;
 }
 
 /**
@@ -661,12 +399,6 @@ model CertificateProperties {
 }
 
 /**
- * The resource model definition for a Azure Resource Manager proxy resource. It
- * will not have tags and a location
- */
-model ProxyResource extends Resource {}
-
-/**
  * The certificate chain response.
  */
 model CertificateChainResponse {
@@ -708,28 +440,11 @@ model CountElementsResponse {
 }
 
 /**
- * The response of a Image list operation.
- */
-model ImageListResult is Azure.Core.Page<Image>;
-
-/**
- * An image resource belonging to a catalog resource.
- */
-model Image extends ProxyResource {
-  /**
-   * The resource-specific properties for this resource.
-   */
-  @visibility("read", "create")
-  properties?: ImageProperties;
-}
-
-/**
  * The properties of image
  */
 model ImageProperties {
   /**
-   * Image as a UTF-8 encoded base 64 string on image create. This field contains
-   * the image URI on image reads.
+   * Image as a UTF-8 encoded base 64 string on image create. This field contains the image URI on image reads.
    */
   @visibility("read", "create")
   image?: string;
@@ -784,22 +499,6 @@ model ImageProperties {
 }
 
 /**
- * The response of a Deployment list operation.
- */
-model DeploymentListResult is Azure.Core.Page<Deployment>;
-
-/**
- * An deployment resource belonging to a device group resource.
- */
-model Deployment extends ProxyResource {
-  /**
-   * The resource-specific properties for this resource.
-   */
-  @visibility("read", "create")
-  properties?: DeploymentProperties;
-}
-
-/**
  * The properties of deployment
  */
 model DeploymentProperties {
@@ -837,22 +536,6 @@ model ListDeviceGroupsRequest {
    * Device Group name.
    */
   deviceGroupName?: string;
-}
-
-/**
- * The response of a DeviceGroup list operation.
- */
-model DeviceGroupListResult is Azure.Core.Page<DeviceGroup>;
-
-/**
- * An device group resource belonging to a product resource.
- */
-model DeviceGroup extends ProxyResource {
-  /**
-   * The resource-specific properties for this resource.
-   */
-  @visibility("read", "create")
-  properties?: DeviceGroupProperties;
 }
 
 /**
@@ -950,22 +633,6 @@ model DeviceInsight {
 }
 
 /**
- * The response of a Device list operation.
- */
-model DeviceListResult is Azure.Core.Page<Device>;
-
-/**
- * An device resource belonging to a device group resource.
- */
-model Device extends ProxyResource {
-  /**
-   * The resource-specific properties for this resource.
-   */
-  @visibility("read", "create")
-  properties?: DeviceProperties;
-}
-
-/**
  * The properties of device
  */
 model DeviceProperties {
@@ -1012,22 +679,6 @@ model DeviceProperties {
    */
   @visibility("read")
   provisioningState?: ProvisioningState;
-}
-
-/**
- * The response of a Product list operation.
- */
-model ProductListResult is Azure.Core.Page<Product>;
-
-/**
- * An product resource belonging to a catalog resource.
- */
-model Product extends ProxyResource {
-  /**
-   * The resource-specific properties for this resource.
-   */
-  @visibility("read", "create")
-  properties?: ProductProperties;
 }
 
 /**

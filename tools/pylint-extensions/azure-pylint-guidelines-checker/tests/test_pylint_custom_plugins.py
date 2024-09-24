@@ -4052,18 +4052,31 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
     def test_disallowed_imports(self):
         """Check that illegal imports raise warnings"""
         # Blocked import ouside of core.
-        import_node = astroid.extract_node("import requests")
+        requests_import_node = astroid.extract_node("import requests")
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="networking-import-outside-azure-core-transport",
                 line=1,
-                node=import_node,
+                node=requests_import_node,
                 col_offset=0,
                 end_line=1,
                 end_col_offset=15,
             )
         ):
-            self.checker.visit_import(import_node)
+            self.checker.visit_import(requests_import_node)
+
+        httpx_import_node = astroid.extract_node("import httpx")
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="networking-import-outside-azure-core-transport",
+                line=1,
+                node=httpx_import_node,
+                col_offset=0,
+                end_line=1,
+                end_col_offset=12,
+            )
+        ):
+            self.checker.visit_import(httpx_import_node)
 
         # blocked import from outside of core.
         importfrom_node = astroid.extract_node("from aiohttp import get")
@@ -4831,7 +4844,6 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_import(imc)
             self.checker.visit_importfrom(imd)
 
-
 class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
     """Test that use of the @overload decorator matches the async/sync nature of the underlying function"""
 
@@ -4879,6 +4891,380 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
             self.checker.visit_module(node)
 
 
-# [Pylint] Custom Linter check for Exception Logging #3227
-# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-# [Pylint] Add a check for connection_verify hardcoded settings #35355
+
+class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking imports of asncio directly allowing indirect imports."""
+    CHECKER_CLASS = checker.DoNotImportAsyncio
+
+    def test_disallowed_import_from(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("from asyncio import sleep")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-import-asyncio",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                    end_line=1,
+                    end_col_offset=25,
+                )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_disallowed_import(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("import asyncio")
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-import-asyncio",
+                line=1,
+                node=importfrom_node,
+                col_offset=0,
+                end_line=1,
+                end_col_offset=14,
+            )
+        ):
+            self.checker.visit_import(importfrom_node)
+
+    def test_allowed_imports(self):
+        """Check that allowed imports don't raise warnings."""
+        # import not in the blocked list.
+        importfrom_node = astroid.extract_node("from math import PI")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # from import not in the blocked list.
+        importfrom_node = astroid.extract_node(
+            "from azure.core.pipeline import Pipeline"
+        )
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
+
+    """Test that any errors raised are not logged at 'error' or 'warning' levels in the exception block."""
+
+    CHECKER_CLASS = checker.DoNotLogErrorsEndUpRaising
+
+    def test_error_level_not_logged(self):
+        """Check that any exceptions raised aren't logged at error level in the exception block."""
+        try_node, expression_node = astroid.extract_node('''
+        try: #@
+            add = 1 + 2
+        except Exception as e:
+            logger.ERROR(str(e)) #@
+            raise
+        '''
+                                              )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-raised-errors",
+                line=5,
+                node=expression_node.parent,
+                col_offset=4,
+                end_line=5,
+                end_col_offset=24,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_warning_level_not_logged(self):
+        """Check that any exceptions raised aren't logged at warning level in the exception block."""
+        try_node, expression_node = astroid.extract_node('''
+        try: #@
+            add = 1 + 2
+        except Exception as e:
+            logger.warning(str(e)) #@
+            raise
+        '''
+                                                               )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-raised-errors",
+                line=5,
+                node=expression_node.parent,
+                col_offset=4,
+                end_line=5,
+                end_col_offset=26,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_warning_level_logging_ok_when_no_raise(self):
+        """Check that exceptions can be logged if the exception isn't raised."""
+
+        try_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            logger.warning(str(e))
+        '''
+                                              )
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_unlogged_exception_block(self):
+        """Check that exceptions raised without logging are allowed."""
+
+        try_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            raise
+        '''
+                                              )
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_mult_exception_blocks_separate_raise(self):
+        """Check multiple exception blocks with separate raise and logging is allowed."""
+
+        try_node = astroid.extract_node('''
+        try:
+            add = 1 + 2
+        except Exception as e:
+            raise
+        except OtherException as x:
+            logger.error(str(x))
+        '''
+                                              )
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_mult_exception_blocks_with_raise(self):
+        """Check that multiple exception blocks with raise and logging is not allowed."""
+
+        try_node, expression_node = astroid.extract_node('''
+        try: #@
+            add = 1 + 2
+        except Exception as e:
+            raise
+        except OtherException as x:
+            logger.error(str(x)) #@
+            raise
+        '''
+                                              )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=7,
+                    node=expression_node.parent,
+                    col_offset=4,
+                    end_line=7,
+                    end_col_offset=24,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_implicit_else_exception_logged(self):
+        """Check that any exceptions raised in branches aren't logged at error level."""
+        try_node, expression_node = astroid.extract_node(
+            '''
+                try: #@
+                    add = 1 + 2
+                except Exception as e:
+                    if e.code == "Retryable":
+                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart")
+                        return True
+                    elif Exception != BaseException:
+                        logging.error(f"System shutting down due to error: {e}.")
+                        return False
+                    logging.error(f"Unexpected error occurred: {e}") #@
+                    raise SystemError("Uh oh!") from e
+            ''')
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=11,
+                    node=expression_node.parent,
+                    col_offset=4,
+                    end_line=11,
+                    end_col_offset=52,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_branch_exceptions_logged(self):
+        """Check that any exceptions raised in if branches aren't logged at error level."""
+        try_node, expression_node_a, expression_node_b, expression_node_c = astroid.extract_node(
+            '''
+                try: #@
+                    add = 1 + 2
+                except Exception as e:
+                    if e.code == "Retryable":
+                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart") #@
+                        raise SystemError("Uh oh!") from e
+                    elif Exception != BaseException:
+                        logging.error(f"System shutting down due to error: {e}.") #@
+                        raise SystemError("Uh oh!") from e
+                    elif e.code == "Second elif branch":
+                        logging.error(f"Second: {e}.") #@
+                        raise SystemError("Uh oh!") from e
+                    logging.error(f"Unexpected error occurred: {e}")  
+            ''')
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=6,
+                    node=expression_node_a.parent,
+                    col_offset=8,
+                    end_line=6,
+                    end_col_offset=82,
+                ),
+                pylint.testutils.MessageTest(
+                msg_id="do-not-log-raised-errors",
+                line=9,
+                node=expression_node_b.parent,
+                col_offset=8,
+                end_line=9,
+                end_col_offset=65,
+                ),
+                pylint.testutils.MessageTest(
+                msg_id="do-not-log-raised-errors",
+                line=12,
+                node=expression_node_c.parent,
+                col_offset=8,
+                end_line=12,
+                end_col_offset=38,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_explicit_else_branch_exception_logged(self):
+        """Check that any exceptions raised in else branches aren't logged at error level."""
+        try_node, expression_node = astroid.extract_node(
+            '''
+                try: #@
+                    add = 1 + 2
+                except Exception as e:
+                    if e.code == "Retryable":
+                        logging.warning(f"Retryable failure occurred: {e}, attempting to restart")
+                        return True
+                    elif Exception != BaseException:
+                        logging.error(f"System shutting down due to error: {e}.")
+                        return False
+                    else:
+                        logging.error(f"Unexpected error occurred: {e}") #@
+                        raise SystemError("Uh oh!") from e 
+                         
+            ''')
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=12,
+                    node=expression_node.parent,
+                    col_offset=8,
+                    end_line=12,
+                    end_col_offset=56,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_extra_nested_branches_exception_logged(self):
+        """Check that any exceptions raised in else branches aren't logged at error level."""
+        try_node, expression_node_a, expression_node_b, expression_node_c, expression_node_d = astroid.extract_node(
+            '''
+                try: #@
+                    add = 1 + 2
+                except Exception as e:
+                    if e.code == "Retryable":
+                        if e.code == "A":
+                            logging.warning(f"A: {e}") #@
+                            raise SystemError("Uh oh!") from e
+                        elif e.code == "E":
+                            logging.warning(f"E: {e}") #@
+                            raise SystemError("Uh oh!") from e
+                        else:
+                            logging.warning(f"F: {e}") #@
+                            raise SystemError("Uh oh!") from e
+                    else:
+                        logging.error(f"Unexpected error occurred: {e}") #@
+                        raise SystemError("Uh oh!") from e 
+            ''')
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=7,
+                    node=expression_node_a.parent,
+                    col_offset=12,
+                    end_line=7,
+                    end_col_offset=38,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=10,
+                    node=expression_node_b.parent,
+                    col_offset=12,
+                    end_line=10,
+                    end_col_offset=38,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=13,
+                    node=expression_node_c.parent,
+                    col_offset=12,
+                    end_line=13,
+                    end_col_offset=38,
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-log-raised-errors",
+                    line=16,
+                    node=expression_node_d.parent,
+                    col_offset=8,
+                    end_line=16,
+                    end_col_offset=56,
+                )
+        ):
+            self.checker.visit_try(try_node)
+
+
+class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed legacy typing practices"""
+
+    CHECKER_CLASS = checker.DoNotUseLegacyTyping
+
+    def test_disallowed_typing(self):
+        """Check that illegal method typing comments raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # type: (str) -> str
+                pass
+            """
+        )
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-legacy-typing",
+                line=2,
+                node=fdef,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=12,
+            )
+        ):
+            self.checker.visit_functiondef(fdef)
+    
+    def test_allowed_typing(self):
+        """Check that allowed method typing comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x: str) -> str: #@
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+    def test_arbitrary_comments(self):
+        """Check that arbitrary comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # This is a comment
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+

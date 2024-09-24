@@ -44,14 +44,18 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         private readonly BlobContainerClient stepsContainerClient;
         private readonly BlobContainerClient logsContainerClient;
 
-        public GitHubActionProcessor(ILogger<GitHubActionProcessor> logger, BlobServiceClient blobServiceClient, ICredentialStore credentials)
+        public GitHubActionProcessor(ILogger<GitHubActionProcessor> logger, BlobServiceClient blobServiceClient, GitHubClient githubClient)
         {
+            ArgumentNullException.ThrowIfNull(githubClient);
+            ArgumentNullException.ThrowIfNull(blobServiceClient);
+            ArgumentNullException.ThrowIfNull(githubClient);
+
             this.logger = logger;
             this.logsContainerClient = blobServiceClient.GetBlobContainerClient(LogsContainerName);
             this.runsContainerClient = blobServiceClient.GetBlobContainerClient(RunsContainerName);
             this.jobsContainerClient = blobServiceClient.GetBlobContainerClient(JobsContainerName);
             this.stepsContainerClient = blobServiceClient.GetBlobContainerClient(StepsContainerName);
-            this.client = new GitHubClient(new ProductHeaderValue("PipelineWitness", "1.0"), credentials);
+            this.client = githubClient;
         }
 
         public async Task ProcessAsync(string owner, string repository, long runId)
@@ -64,6 +68,32 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 WorkflowRun runAttempt = await this.client.Actions.Workflows.Runs.GetAttempt(owner, repository, runId, attempt);
                 await ProcessWorkflowRunAsync(runAttempt);
             }
+        }
+
+        public async Task<string[]> GetRunBlobNamesAsync(string repository, DateTimeOffset minTime, DateTimeOffset maxTime, CancellationToken cancellationToken)
+        {
+            DateTimeOffset minDay = minTime.ToUniversalTime().Date;
+            DateTimeOffset maxDay = maxTime.ToUniversalTime().Date;
+
+            DateTimeOffset[] days = Enumerable.Range(0, (int)(maxDay - minDay).TotalDays + 1)
+                .Select(offset => minDay.AddDays(offset))
+                .ToArray();
+
+            List<string> blobNames = [];
+
+            foreach (DateTimeOffset day in days)
+            {
+                string blobPrefix = $"{repository}/{day:yyyy/MM/dd}/".ToLower();
+
+                AsyncPageable<BlobItem> blobs = this.runsContainerClient.GetBlobsAsync(prefix: blobPrefix, cancellationToken: cancellationToken);
+                
+                await foreach (BlobItem blob in blobs)
+                {
+                    blobNames.Add(blob.Name);
+                }
+            }
+
+            return blobNames.ToArray();
         }
 
         public string GetRunBlobName(WorkflowRun run)
@@ -79,19 +109,22 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
         private async Task ProcessWorkflowRunAsync(WorkflowRun run)
         {
+            Workflow workflow = await GetWorkflowAsync(run);
             List<WorkflowJob> jobs = await GetJobsAsync(run);
 
-            await UploadJobsBlobAsync(run, jobs);
-            await UploadStepsBlobAsync(run, jobs);
-            await UploadLogsBlobAsync(run, jobs);
+            await UploadJobsBlobAsync(workflow, run, jobs);
+            await UploadStepsBlobAsync(workflow, run, jobs);
+            await UploadLogsBlobAsync(workflow, run, jobs);
 
             // We upload the run blob last. This allows us to use the existence of the blob as a signal that run processing is complete.
-            await UploadRunBlobAsync(run);
+            await UploadRunBlobAsync(workflow, run);
         }
 
-        private async Task UploadRunBlobAsync(WorkflowRun run)
+        private async Task UploadRunBlobAsync(Workflow workflow, WorkflowRun run)
         {
             string repository = run.Repository.FullName;
+            long workflowId = workflow.Id;
+            string workflowName = workflow.Name;
             long runId = run.Id;
             string runName = run.Name;
             long attempt = run.RunAttempt;
@@ -105,23 +138,24 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing workflow jobs for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                    this.logger.LogInformation("Skipping existing workflow jobs for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                     return;
                 }
 
-                this.logger.LogInformation("Processing workflow jobs for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Processing workflow jobs for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
 
                 string content = JsonConvert.SerializeObject(
                     new
                     {
                         Repository = repository,
-                        Workflow = runName,
-                        run.WorkflowId,
-                        RunId = run.Id,
+                        WorkflowId = workflowId,
+                        WorkflowName = workflowName,
+                        RunId = runId,
+                        RunName = runName,
                         run.RunNumber,
                         run.HeadBranch,
                         run.HeadSha,
-                        run.RunAttempt,
+                        RunAttenpt = attempt,
                         run.Event,
                         Status = run.Status.StringValue,
                         Conclusion = run.Conclusion?.StringValue,
@@ -143,18 +177,20 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                 throw;
             }
         }
 
-        private async Task UploadJobsBlobAsync(WorkflowRun run, List<WorkflowJob> jobs)
+        private async Task UploadJobsBlobAsync(Workflow workflow, WorkflowRun run, List<WorkflowJob> jobs)
         {
             string repository = run.Repository.FullName;
+            long workflowId = workflow.Id;
+            string workflowName = workflow.Name;
             long runId = run.Id;
             string runName = run.Name;
             long attempt = run.RunAttempt;
@@ -166,11 +202,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing workflow jobs for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                    this.logger.LogInformation("Skipping existing workflow jobs for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                     return;
                 }
 
-                this.logger.LogInformation("Processing workflow jobs for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Processing workflow jobs for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
 
                 StringBuilder builder = new();
 
@@ -180,11 +216,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                         new
                         {
                             Repository = repository,
-                            Workflow = runName,
-                            run.WorkflowId,
-                            RunId = run.Id,
+                            WorkflowId = workflowId,
+                            WorkflowName = workflowName,
+                            RunId = runId,
+                            RunName = runName,
+                            RunAttempt = attempt,
                             JobId = job.Id,
-                            job.Name,
+                            JobName = job.Name,
                             Status = job.Status.StringValue,
                             Conclusion = job.Conclusion?.StringValue,
                             CreatedAt = job.CreatedAt?.ToString(TimeFormat),
@@ -206,18 +244,20 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
-                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Ignoring existing blob exception for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogError(ex, "Error processing repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                 throw;
             }
         }
 
-        private async Task UploadStepsBlobAsync(WorkflowRun run, List<WorkflowJob> jobs)
+        private async Task UploadStepsBlobAsync(Workflow workflow, WorkflowRun run, List<WorkflowJob> jobs)
         {
             string repository = run.Repository.FullName;
+            long workflowId = workflow.Id;
+            string workflowName = workflow.Name;
             long runId = run.Id;
             string runName = run.Name;
             long attempt = run.RunAttempt;
@@ -232,11 +272,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
                 if (await blobClient.ExistsAsync())
                 {
-                    this.logger.LogInformation("Skipping existing workflow steps for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                    this.logger.LogInformation("Skipping existing workflow steps for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
                     return;
                 }
 
-                this.logger.LogInformation("Processing workflow steps for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
+                this.logger.LogInformation("Processing workflow steps for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, workflowName, runId, attempt);
 
                 StringBuilder builder = new();
 
@@ -248,13 +288,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                             new
                             {
                                 Repository = repository,
-                                Workflow = runName,
-                                Job = job.Name,
-                                run.WorkflowId,
-                                RunId = run.Id,
+                                WorkflowId = workflowId,
+                                WorkflowName = workflowName,
+                                RunId = runId,
+                                RunName = runName,
+                                RunAttempt = attempt,
                                 JobId = job.Id,
+                                JobName = job.Name,
                                 StepNumber = step.Number,
-                                step.Name,
+                                StepName = step.Name,
                                 Status = step.Status.StringValue,
                                 Conclusion = step.Conclusion?.StringValue,
                                 StartedAt = step.StartedAt?.ToString(TimeFormat),
@@ -277,9 +319,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
         }
 
-        private async Task UploadLogsBlobAsync(WorkflowRun run, List<WorkflowJob> jobs)
+        private async Task UploadLogsBlobAsync(Workflow workflow, WorkflowRun run, List<WorkflowJob> jobs)
         {
             string repository = run.Repository.FullName;
+            long workflowId = workflow.Id;
+            string workflowName = workflow.Name;
             long runId = run.Id;
             string runName = run.Name;
             long attempt = run.RunAttempt;
@@ -360,9 +404,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                         await blobWriter.WriteLineAsync(JsonConvert.SerializeObject(new
                         {
                             Repository = repository,
-                            WorkflowName = runName,
-                            run.WorkflowId,
-                            RunId = run.Id,
+                            WorkflowId = workflowId,
+                            WorkflowName = workflowName,
+                            RunId = runId,
+                            RunAttempt = attempt,
                             JobId = job.Id,
                             StepNumber = logLine.Step,
                             LineNumber = logLine.Number,
@@ -461,6 +506,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         {
             WorkflowRun workflowRun = await this.client.Actions.Workflows.Runs.Get(owner, repository, runId);
             return workflowRun;
+        }
+
+        private async Task<Workflow> GetWorkflowAsync(WorkflowRun run)
+        {
+            Workflow workflow = await this.client.Actions.Workflows.Get(run.Repository.Owner.Login, run.Repository.Name, run.WorkflowId);
+            return workflow;
         }
 
         private async Task<List<WorkflowJob>> GetJobsAsync(WorkflowRun run)

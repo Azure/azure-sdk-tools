@@ -69,6 +69,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 
                 this.logger.LogDebug("Getting next message from queue {QueueName}", queueClient.Name);
 
+                TimeSpan pauseDuration = TimeSpan.Zero;
+
                 try
                 {
                     // We consider a message leased when it's made invisible in the queue and the current process has a
@@ -106,21 +108,19 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 
                         // Because processing a message may take longer than our initial lease period, we want to continually
                         // renew our lease until processing completes.
-                        Task<string> renewTask = RenewMessageLeaseAsync(queueClient, message, cts.Token);
-                        Task<bool> processTask = SafelyProcessMessageAsync(message, cts.Token);
+                        var renewTask = RenewMessageLeaseAsync(queueClient, message, cts.Token);
+                        var processTask = SafelyProcessMessageAsync(message, cts.Token);
 
-                        Task[] tasks = new Task[] { renewTask, processTask };
-
-                        Task.WaitAny(tasks, CancellationToken.None);
+                        Task.WaitAny([renewTask, processTask], CancellationToken.None);
 
                         cts.Cancel();
 
-                        Task.WaitAll(tasks, CancellationToken.None);
-
                         // if the renew task doesn't complete successfully, we can't trust the PopReceipt on the message and must abort.
                         string latestPopReceipt = await renewTask;
+                        var result = await processTask;
+                        pauseDuration = result.pauseDuration;
 
-                        if (processTask.IsCompletedSuccessfully && processTask.Result == true)
+                        if (result.Success)
                         {
                             this.logger.LogDebug("Message processed successfully. Removing message from queue.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", message.MessageId, queueClient.Name, latestPopReceipt);
                             await queueClient.DeleteMessageAsync(message.MessageId, latestPopReceipt, stoppingToken);
@@ -138,8 +138,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                             }
                             else
                             {
-                                this.logger.LogError("Resetting message visibility timeout to {SleepPeriod}.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", options.MessageErrorSleepPeriod, message.MessageId, queueClient.Name, latestPopReceipt);
-                                await queueClient.UpdateMessageAsync(message.MessageId, latestPopReceipt, message.Body, options.MessageErrorSleepPeriod, cancellationToken: stoppingToken);
+                                // Use message.DequeueCount for exponential backoff
+                                var sleepMultiplier = Math.Pow(2, Math.Max(message.DequeueCount - 1, 0));
+                                var sleepPeriod = TimeSpan.FromSeconds(sleepMultiplier * options.MessageErrorSleepPeriod.TotalSeconds);
+
+                                this.logger.LogError("Resetting message visibility timeout to {SleepPeriod}.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", sleepPeriod, message.MessageId, queueClient.Name, latestPopReceipt);
+                                await queueClient.UpdateMessageAsync(message.MessageId, latestPopReceipt, message.Body, sleepPeriod, cancellationToken: stoppingToken);
                             }
                         }
                     }
@@ -152,8 +156,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 catch (Exception ex)
                 {
                     this.logger.LogError(ex, "Exception thrown while procesing message loop.");
-                    await Task.Delay(options.MessageErrorSleepPeriod, stoppingToken);
+                    pauseDuration = options.MessageErrorSleepPeriod;
                     loopOperation.Telemetry.Success = false;
+                }
+
+
+                if (pauseDuration != TimeSpan.Zero)
+                {
+                    this.logger.LogWarning("Pause in processing requested. Waiting {PauseDuration}.", pauseDuration);
+                    await Task.Delay(pauseDuration, stoppingToken);
                 }
             }
         }
@@ -181,8 +192,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 while (true)
                 {
                     // We extend the lease after half of the lease period has expired.
-                    // For a 30 second MessageLeasePeriod, every 15 seconds, we'll set the message to invisible
-                    // for 30 seconds.
+                    // For a 30 second MessageLeasePeriod, every 15 seconds,
+                    // we'll set the message to invisible for 30 seconds.
                     await Task.Delay(halfLife, cancellationToken);
 
                     this.logger.LogDebug("Extending visibility timeout for message.\n  Queue: {Queue}\n  Message: {MessageId}\n  Pop Receipt: {PopReceipt}\n  Visible in: {VisibleIn}", queueName, messageId, popReceipt, nextVisibleOn - DateTimeOffset.UtcNow);
@@ -216,17 +227,28 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         /// Call ProcessMessageAsync and log any exception that occurs
         /// </summary>
         /// <returns>true if ProcessMessageAsync completes successfully, otherwise false</returns>
-        private async Task<bool> SafelyProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
+        private async Task<(bool Success, TimeSpan pauseDuration)> SafelyProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
             try
             {
                 await ProcessMessageAsync(message, cancellationToken).ConfigureAwait(false);
-                return true;
+                return (true, TimeSpan.Zero);
+            }
+            catch(PauseProcessingException ex)
+            {
+                // The processor can throw a PauseProcessing exception that will stop the message loop for a period of time.
+                // This is useful when the processor detects a condition that will not be resolved by reprocessing the message, e.g. rate limiting.
+                if(ex.InnerException != null)
+                {
+                    this.logger.LogError(ex.InnerException, "ProcessMessageAsync threw exception");
+                }
+
+                return (false, ex.PauseDuration);
             }
             catch (Exception ex)
             {
                 this.logger.LogError(ex, "ProcessMessageAsync threw exception");
-                return false;
+                return (false, TimeSpan.Zero);
             }
         }
     }

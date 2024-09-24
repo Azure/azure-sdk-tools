@@ -40,7 +40,7 @@
                     <span *ngIf="selectedActiveAPIRevision.prNo"> {{ selectedActiveAPIRevision.prNo }}</span>
                     <span class="emphasis-badge info ms-2">version: {{ selectedActiveAPIRevision.version }}</span>
                     <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedActiveAPIRevision.isApproved"></i>
-                    <span *ngIf="selectedActiveAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedActiveAPIRevision.creatorBy }}</span>
+                    <span *ngIf="selectedActiveAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedActiveAPIRevision.createdBy }}</span>
                     <span *ngIf="selectedActiveAPIRevision.isReleased" class="emphasis-badge success ms-2">released: {{ selectedActiveAPIRevision.releasedOn | timeago }}</span>
                 </div>
             </ng-template>
@@ -50,14 +50,14 @@
                     <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
                     <span class="emphasis-badge info ms-2">version: {{ apiRevision.version }}</span>
                     <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
-                    <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.creatorBy }}</span>
+                    <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
                     <span *ngIf="apiRevision.isLatestGA" class="emphasis-badge warn small ms-2">Latest GA</span>
                     <span *ngIf="apiRevision.isLatestApproved" class="emphasis-badge warn small ms-2">Latest Approved</span>
                     <span *ngIf="apiRevision.isLatestMain" class="emphasis-badge warn small ms-2">Latest Main</span>
                     <span *ngIf="apiRevision.isLatestReleased" class="emphasis-badge warn small ms-2">Latest Released</span>
                     <div class="small">
                         <span class="emphasis-badge secondary">created: {{ apiRevision.createdOn | timeago }}</span>
-                        <span class="emphasis-badge secondary ms-2">lastUpdated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+                        <span class="emphasis-badge secondary ms-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
                         <span *ngIf="apiRevision.isReleased" class="emphasis-badge success ms-2">released: {{ apiRevision.releasedOn | timeago }}</span>
                     </div>
                     <div *ngIf="apiRevision.apiRevisionType === 'Manual' && apiRevision.label">{{ apiRevision.label }}</div>
@@ -110,7 +110,7 @@
                     <span *ngIf="selectedDiffAPIRevision.prNo"> {{ selectedDiffAPIRevision.prNo }}</span>
                     <span class="emphasis-badge info ms-2">version: {{ selectedDiffAPIRevision.version }}</span>
                     <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedDiffAPIRevision.isApproved"></i>
-                    <span *ngIf="selectedDiffAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedDiffAPIRevision.creatorBy }}</span>
+                    <span *ngIf="selectedDiffAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedDiffAPIRevision.createdBy }}</span>
                     <span *ngIf="selectedDiffAPIRevision.isReleased" class="emphasis-badge success ms-2">released: {{ selectedDiffAPIRevision.releasedOn | timeago }}</span>
                 </div>
             </ng-template>
@@ -120,13 +120,13 @@
                     <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
                     <span class="emphasis-badge info ms-2">version: {{ apiRevision.version }}</span>
                     <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
-                    <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.creatorBy }}</span>
+                    <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
                     <span *ngIf="apiRevision.isLatestGA" class="emphasis-badge warn small ms-2">Latest GA</span>
                     <span *ngIf="apiRevision.isLatestApproved" class="emphasis-badge warn small ms-2">Latest Approved</span>
                     <span *ngIf="apiRevision.isLatestMain" class="emphasis-badge warn small ms-2">Latest Main</span>
                     <span *ngIf="apiRevision.isLatestReleased" class="emphasis-badge warn small ms-2">Latest Released</span>
                     <div class="small"><span class="emphasis-badge secondary">created: {{ apiRevision.createdOn | timeago }}</span>
-                        <span class="emphasis-badge secondary ms-2">lastUpdated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+                        <span class="emphasis-badge secondary ms-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
                         <span *ngIf="apiRevision.isReleased" class="emphasis-badge success ms-2">released: {{ apiRevision.releasedOn | timeago }}</span></div>
                     <div *ngIf="apiRevision.apiRevisionType === 'Manual' && apiRevision.label">{{ apiRevision.label }}</div>
                 </div>

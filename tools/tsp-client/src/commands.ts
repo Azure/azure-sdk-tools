@@ -7,7 +7,7 @@ import {
   readTspLocation,
   removeDirectory,
 } from "./fs.js";
-import { cp, mkdir, readFile, rename, stat, unlink, writeFile } from "fs/promises";
+import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import { npmCommand, nodeCommand } from "./npm.js";
 import { compileTsp, discoverMainFile, resolveTspConfigUrl, TspLocation } from "./typespec.js";
 import {
@@ -268,7 +268,7 @@ export async function generateCommand(argv: any) {
     args.push("--force");
   }
   await npmCommand(srcDir, args);
-  await compileTsp({
+  const success = await compileTsp({
     emitterPackage: emitter,
     outputPath: outputDir,
     resolvedMainFilePath,
@@ -281,6 +281,23 @@ export async function generateCommand(argv: any) {
   } else {
     Logger.debug("Cleaning up temp directory");
     await removeDirectory(tempRoot);
+  }
+
+  if (!success) {
+    Logger.error("Failed to generate client");
+    process.exit(1);
+  }
+}
+
+export async function compareCommand(argv: any, args: string[]) {
+  let outputDir = argv["output-dir"];
+  const openApiDiffPath = await getPathToDependency("@azure-tools/rest-api-diff");
+  const command = [openApiDiffPath, ...args];
+  try {
+    await nodeCommand(outputDir, command);
+  } catch (err) {
+    Logger.error(`Error occurred while attempting to compare: ${err}`);
+    process.exit(1);
   }
 }
 
@@ -343,34 +360,7 @@ export async function convertCommand(argv: any): Promise<void> {
     `"${readme}"`,
   ];
 
-  // If the swagger is an ARM swagger, generate ARM metadata
   if (arm) {
-    const autorestCsharpPath = await getPathToDependency("@autorest/csharp");
-    const generateMetadataCmd = [
-      autorestBinPath,
-      "--csharp",
-      "--max-memory-size=8192",
-      `--use="${autorestCsharpPath}"`,
-      `--output-folder="${outputDir}"`,
-      "--mgmt-debug.only-generate-metadata",
-      "--azure-arm",
-      "--skip-csproj",
-      `"${readme}"`,
-    ];
-    try {
-      await nodeCommand(outputDir, generateMetadataCmd);
-    } catch (err) {
-      Logger.error(`Error occurred while attempting to generate ARM metadata: ${err}`);
-      process.exit(1);
-    }
-    try {
-      await rename(joinPaths(outputDir, "metadata.json"), joinPaths(outputDir, "resources.json"));
-    } catch (err) {
-      Logger.error(
-        `Error occurred while attempting to rename metadata.json to resources.json: ${err}`,
-      );
-      process.exit(1);
-    }
     args.push("--isArm");
   }
   await nodeCommand(outputDir, args);

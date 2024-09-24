@@ -287,7 +287,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             foreach (var kvp in requestHeaders)
             {
-                playbackContext.Request.Headers.Add(kvp.Key, kvp.Value);
+                playbackContext.Request.Headers.Append(kvp.Key, kvp.Value);
             }
             playbackContext.Request.Method = "POST";
 
@@ -332,7 +332,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             foreach (var kvp in requestHeaders)
             {
-                playbackContext.Request.Headers.Add(kvp.Key, kvp.Value);
+                playbackContext.Request.Headers.Append(kvp.Key, kvp.Value);
             }
             var queryString = "?api-version=1.0&year=2023&basinId=AL&govId=5";
             var path = "/weather/tropical/storms/json";

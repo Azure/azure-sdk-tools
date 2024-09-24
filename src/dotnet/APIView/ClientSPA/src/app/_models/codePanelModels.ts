@@ -57,6 +57,8 @@ export class CodePanelRowData {
 export interface CodePanelData {
   nodeMetaData: { [key: string]: CodePanelNodeMetaData };
   hasDiff: boolean;
+  hasHiddenAPIThatIsDiff: boolean;
+  navigationTreeNodes: NavigationTreeNode[];
 }
   
 export class CodePanelNodeMetaData {
@@ -70,7 +72,9 @@ export class CodePanelNodeMetaData {
   isNodeWithDiff: boolean;
   isNodeWithDiffInDescendants: boolean;
   isNodeWithNoneDocDiffInDescendants : boolean;
-  bottomTokenNodeIdHash: string; 
+  bottomTokenNodeIdHash: string;
+  isProcessed: boolean;
+  relatedNodeIdHash: string;
   
   constructor() {
     this.documentation = [];
@@ -84,5 +88,7 @@ export class CodePanelNodeMetaData {
     this.isNodeWithDiffInDescendants = false;
     this.isNodeWithNoneDocDiffInDescendants = false;
     this.bottomTokenNodeIdHash = '';
+    this.isProcessed = false;
+    this.relatedNodeIdHash = '';
   }
 }

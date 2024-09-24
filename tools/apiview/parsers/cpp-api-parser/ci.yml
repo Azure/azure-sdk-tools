@@ -23,7 +23,7 @@ pr:
 
 variables:
   ArtifactName: 'apiview'
-  VcpkgRelease: '2023.06.20'
+  VcpkgRelease: '2024.08.23'
 
 stages:
   - stage: 'Build'
@@ -33,8 +33,6 @@ stages:
         pool:
           name: azsdk-pool-mms-win-2022-general
           os: windows
-          demands:
-          - ImageOverride -equals 1espt-win-2022-cpp-rollback
 
         steps:
           - pwsh: |
@@ -64,13 +62,17 @@ stages:
             displayName: Create cmake build directory.
             workingDirectory: '$(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser'
             condition: succeeded()
-          - task: PowerShell@2
-            inputs:
-              pwsh: true
-              targetType: filePath
-              filePath: eng/scripts/Set-VcpkgWriteModeCache.ps1
-              arguments: -StorageAccountKey '$(cpp-vcpkg-cache-storage-key)'
+          - task: AzurePowerShell@5
             displayName: Set Vcpkg Write-mode Cache
+            inputs:
+              azureSubscription: 'Azure SDK Artifacts'
+              ScriptType: FilePath
+              ScriptPath: eng/scripts/Set-VcpkgWriteModeCache.ps1
+              azurePowerShellVersion: LatestVersion
+              pwsh: true
+            # This step is idempotent and can be run multiple times in cases of
+            # failure and partial execution.
+            retryCountOnTaskFailure: 3
           - pwsh: |
               cmake.exe -G "Visual Studio 17 2022" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
             displayName: Cmake Generate.

@@ -65,7 +65,7 @@ namespace APIViewUnitTests
                 Path.Combine("missing_folder", "output.json")
             };
 
-            await Assert.ThrowsAsync<FolderNotFoundException>(async () => await Program.RunAsync(args));
+            await Assert.ThrowsAsync<DirectoryNotFoundException>(async () => await Program.RunAsync(args));
         }
 
         [Theory]

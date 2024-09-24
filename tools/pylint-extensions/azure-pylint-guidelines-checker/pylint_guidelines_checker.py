@@ -2766,16 +2766,12 @@ class InvalidUseOfOverload(BaseChecker):
 
     def visit_module(self, node):
         """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
-        try:
-            klass = node.parent.parent.parent
-        except:   #For testing purposes
-            klass = node
 
         # Obtain a list of all functions and function names
         functions = []
         try:
-            klass.body
-            for item in klass.body:
+            node.body
+            for item in node.body:
                 if hasattr(item, 'name'):
                     functions.append(item)
 

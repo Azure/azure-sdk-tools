@@ -153,11 +153,12 @@ async function main() {
     }),
   );
 
-  await writeFile(process.argv[3], JSON.stringify(apiViewFile));
-  const v2FileName = process.argv[3].endsWith(".json")
-    ? process.argv[3].replace(".json", ".v2.json")
-    : process.argv[3] + ".v2.json";
-  await writeFile(v2FileName, result);
+  // await writeFile(process.argv[3], JSON.stringify(apiViewFile));
+
+//   const v2FileName = process.argv[3].endsWith(".json")
+//     ? process.argv[3].replace(".json", ".v2.json")
+//     : process.argv[3] + ".v2.json";
+  await writeFile(process.argv[3], result);
 }
 
 main().catch(console.error);

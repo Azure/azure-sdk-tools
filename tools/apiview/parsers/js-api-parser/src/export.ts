@@ -9,7 +9,7 @@ import {
 
 import { readFile, writeFile } from "node:fs/promises";
 
-import { IApiViewFile, IApiViewNavItem } from "./models";
+import { IApiViewNavItem } from "./models";
 import { TokensBuilder } from "./tokensBuilder";
 import { GenerateApiview } from "./generate";
 
@@ -126,17 +126,8 @@ async function main() {
   if (packageVersionString != "") {
     name += "(" + packageVersionString + ")";
   }
-  const apiViewFile: IApiViewFile = {
-    Name: name,
-    Navigation: navigation,
-    Tokens: builder.tokens,
-    PackageName: apiModel.packages[0].name,
-    VersionString: "2.0.0",
-    Language: "JavaScript",
-    PackageVersion: packageVersionString,
-  };
 
-  const apiJson = JSON.parse((await readFile(fileName, { encoding: "utf-8"})));
+  const apiJson = JSON.parse(await readFile(fileName, { encoding: "utf-8" }));
   const dependencies = apiJson.metadata.dependencies;
 
   const result = JSON.stringify(
@@ -155,9 +146,9 @@ async function main() {
 
   // await writeFile(process.argv[3], JSON.stringify(apiViewFile));
 
-//   const v2FileName = process.argv[3].endsWith(".json")
-//     ? process.argv[3].replace(".json", ".v2.json")
-//     : process.argv[3] + ".v2.json";
+  //   const v2FileName = process.argv[3].endsWith(".json")
+  //     ? process.argv[3].replace(".json", ".v2.json")
+  //     : process.argv[3] + ".v2.json";
   await writeFile(process.argv[3], result);
 }
 

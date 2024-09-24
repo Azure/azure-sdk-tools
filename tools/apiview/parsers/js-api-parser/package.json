@@ -26,7 +26,7 @@
     "watch": "tsc -p . -watch",
     "clean": "rimraf dist/",
     "format": "prettier --write ./src ./*.{js,mjs,json}",
-    "lint": "eslint ./*.ts"
+    "lint": "eslint src"
   },
   "keywords": [],
   "author": "azure-sdk",

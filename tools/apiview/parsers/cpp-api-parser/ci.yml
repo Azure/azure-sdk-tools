@@ -119,6 +119,12 @@ stages:
                   - checkout: none
                   - download: current
                     artifact: release-artifacts
+                  - pwsh: |
+                      $latestVersion = (azcopy list "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/") -replace '[\/;].*' | Get-Unique | sort {[version] $_} -Descending | Select-Object -First 1
+                      $major, $minor, $build = $latestVersion.Split('.')
+                      $nextVersion = [version]::new($major, 1 + $minor, $build).ToString()
+                      Write-Host "##vso[task.setvariable variable=APIVIEW_PARSER_VERSION]$nextVersion"
+                    displayName: Determine Next ApiView Parser Version
                   - task: AzurePowerShell@5
                     displayName: Publish Public ApiView Parser
                     inputs:
@@ -127,18 +133,15 @@ stages:
                       azurePowerShellVersion: LatestVersion 
                       pwsh: true
                       Inline: |
-                        $latestVersion = (azcopy list "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/") -replace '[\/;].*' | Get-Unique | sort {[version] $_} -Descending | Select-Object -First 1
-                        $major, $minor, $build = $latestVersion.Split('.')
-                        $nextVersion = [version]::new($major, 1 + $minor, $build).ToString()
-                        azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$nextVersion" --recursive
+                        azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$(APIVIEW_PARSER_VERSION)" --recursive
                     env:
                       AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
-                  # - task: UniversalPackages@0
-                  #   displayName: Publish Private ApiView Parser
-                  #   inputs:
-                  #     command: publish
-                  #     publishDirectory: $(Pipeline.Workspace)/release-artifacts
-                  #     vstsFeedPublish: 'internal/AzureSDKForCpp'
-                  #     vstsFeedPackagePublish: 'parseazuresdkcpp'
-                  #     versionPublish: $(APIVIEW_PARSER_VERSION)
-                  #     packagePublishDescription: 'Azure C++ SDK API View Parser.'
+                  - task: UniversalPackages@0
+                    displayName: Publish Private ApiView Parser
+                    inputs:
+                      command: publish
+                      publishDirectory: $(Pipeline.Workspace)/release-artifacts
+                      vstsFeedPublish: 'internal/AzureSDKForCpp'
+                      vstsFeedPackagePublish: 'parseazuresdkcpp'
+                      versionPublish: $(APIVIEW_PARSER_VERSION)
+                      packagePublishDescription: 'Azure C++ SDK API View Parser.'

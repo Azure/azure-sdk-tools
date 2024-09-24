@@ -2820,7 +2820,7 @@ class InvalidUseOfOverload(BaseChecker):
         ),
     }
 
-    def visit_module(self, node):
+    def visit_classdef(self, node):
         """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
 
         # Obtain a list of all functions and function names

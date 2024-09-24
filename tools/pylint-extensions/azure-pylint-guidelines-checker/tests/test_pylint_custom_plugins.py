@@ -4855,10 +4855,10 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
                 TEST_FOLDER, "test_files", "invalid_use_of_overload_acceptable.py"
             )
         )
-        node = astroid.parse(file.read())
+        node = astroid.extract_node(file.read())
         file.close()
         with self.assertNoMessages():
-            self.checker.visit_module(node)
+            self.checker.visit_classdef(node)
 
 
     def test_invalid_use_overload(self):
@@ -4867,28 +4867,28 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
                 TEST_FOLDER, "test_files", "invalid_use_of_overload_violation.py"
             )
         )
-        node = astroid.parse(file.read())
+        node = astroid.extract_node(file.read())
         file.close()
-        children = list(node.get_children())
+
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="invalid-use-of-overload",
                 line=11,
-                node=children[2],
-                col_offset=0,
+                node=node.body[1],
+                col_offset=4,
                 end_line=11,
-                end_col_offset=10,
+                end_col_offset=14,
             ),
             pylint.testutils.MessageTest(
                 msg_id="invalid-use-of-overload",
                 line=28,
-                node=children[6],
-                col_offset=0,
+                node=node.body[5],
+                col_offset=4,
                 end_line=28,
-                end_col_offset=21,
+                end_col_offset=25,
             ),
         ):
-            self.checker.visit_module(node)
+            self.checker.visit_classdef(node)
 
 
 

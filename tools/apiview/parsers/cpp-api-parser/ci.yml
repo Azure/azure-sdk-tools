@@ -141,8 +141,7 @@ stages:
                         $latestVersion = "0.12.0" #(azcopy list "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/") -replace '[\/;].*' | Get-Unique | sort {[version] $_} -Descending | Select-Object -First 1
                         $major, $minor, $build = $latestVersion.Split('.')
                         $nextVersion = [version]::new($major, 1 + $minor, $build).ToString()
-                        Write-Host "##vso[task.setvariable variable=APIVIEW_PARSER_VERSION]$nextVersion"
-                        azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$(APIVIEW_PARSER_VERSION)" --recursive
+                        azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$nextVersion" --recursive
                     env:
                       AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
                   # - task: UniversalPackages@0

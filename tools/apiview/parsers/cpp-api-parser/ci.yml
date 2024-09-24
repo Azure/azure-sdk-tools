@@ -120,17 +120,6 @@ stages:
                   - download: current
                     artifact: release-artifacts
                   - task: AzurePowerShell@5
-                    displayName: Cleanup Public ApiView Parser
-                    inputs:
-                      azureSubscription: 'Azure SDK Artifacts'
-                      ScriptType: 'InlineScript'
-                      azurePowerShellVersion: LatestVersion 
-                      pwsh: true
-                      Inline: |
-                        azcopy rm "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/*" --recursive
-                    env:
-                      AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
-                  - task: AzurePowerShell@5
                     displayName: Publish Public ApiView Parser
                     inputs:
                       azureSubscription: 'Azure SDK Artifacts'
@@ -138,7 +127,7 @@ stages:
                       azurePowerShellVersion: LatestVersion 
                       pwsh: true
                       Inline: |
-                        $latestVersion = "0.12.0" #(azcopy list "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/") -replace '[\/;].*' | Get-Unique | sort {[version] $_} -Descending | Select-Object -First 1
+                        $latestVersion = (azcopy list "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/") -replace '[\/;].*' | Get-Unique | sort {[version] $_} -Descending | Select-Object -First 1
                         $major, $minor, $build = $latestVersion.Split('.')
                         $nextVersion = [version]::new($major, 1 + $minor, $build).ToString()
                         azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$nextVersion" --recursive

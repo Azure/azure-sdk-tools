@@ -122,7 +122,8 @@ stages:
                   - pwsh: |
                       $latestVersion = (azcopy list "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/") -replace '[\/;].*' | Get-Unique | sort {[version] $_} -Descending | Select-Object -First 1
                       $major, $minor, $build = $latestVersion.Split('.')
-                      $nextVersion = [version]::new($major, 1 + $minor, $build).ToString()
+                      # $nextVersion = [version]::new($major, 1 + $minor, $build).ToString()
+                      $nextVersion = [version]::new($major, $minor, $build).ToString()
                       Write-Host "##vso[task.setvariable variable=APIVIEW_PARSER_VERSION]$nextVersion"
                     displayName: Determine Next ApiView Parser Version
                   - task: AzurePowerShell@5
@@ -143,5 +144,6 @@ stages:
                       publishDirectory: $(Pipeline.Workspace)/release-artifacts
                       vstsFeedPublish: 'internal/AzureSDKForCpp'
                       vstsFeedPackagePublish: 'parseazuresdkcpp'
+                      versionOption: custom
                       versionPublish: $(APIVIEW_PARSER_VERSION)
                       packagePublishDescription: 'Azure C++ SDK API View Parser.'

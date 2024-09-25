@@ -3315,12 +3315,6 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(imd)
 
 
-
-class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
-
-
-
-
 class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
     """Test that we are blocking imports of asyncio directly allowing indirect imports."""
     CHECKER_CLASS = checker.DoNotImportAsyncio

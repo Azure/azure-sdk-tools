@@ -11,7 +11,7 @@ import {
   ExcerptTokenKind,
   ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { buildToken, splitAndBuild } from "./jstokens";
+import { buildToken, splitAndBuild, splitAndBuildMultipleLine } from "./jstokens";
 
 interface Metadata {
   Name: string;
@@ -24,10 +24,21 @@ interface Metadata {
 // key: item's canonical reference, value: sub paths that include it
 const exported = new Map<string, Set<string>>();
 
+/**
+ * Builds a blank line for the review
+ * @param relatedToLine line id to associate the result with
+ * @returns
+ */
 function emptyLine(relatedToLine?: string): ReviewLine {
   return { RelatedToLine: relatedToLine, Tokens: [] };
 }
 
+/**
+ * Builds review for the package's direct dependencies
+ * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param dependencies dependencies of name and version pairs
+ * @returns
+ */
 function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<string, string>) {
   if (!dependencies) {
     return;
@@ -70,6 +81,14 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
   reviewLines.push(emptyLine(header.LineId));
 }
 
+/**
+ * Builds review for all the entrypoints.  Each entrypoint represents a subpath export.
+ * The regular output api.json file from api-extractor currently only contains one single entrypoint.
+ * The dev-tool in azure-sdk-for-js repository augments the api to have multiple entrypoints,
+ * one for each subpath export.
+ * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param apiModel {@link ApiModel} object loaded from the .api.json file
+ */
 function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
   for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
@@ -79,7 +98,7 @@ function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
         Tokens: [
           buildToken({
             Kind: TokenKind.StringLiteral,
-            Value: ` "${subpath}"`,
+            Value: ` "${subpath}" subpath export`,
             NavigationDisplayName: `"${subpath}" subpath export`,
           }),
         ],
@@ -96,13 +115,23 @@ function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
         buildMember(exportLine.Children!, member);
       }
       reviewLines.push(exportLine);
+      reviewLines.push(emptyLine(exportLine.LineId));
     }
   }
 }
 
-function buildDocumentation(reviewLines: ReviewLine[], member: ApiItem, relatedTo: string) {
-  if (member instanceof ApiDocumentedItem) {
-    const lines = member.tsdocComment?.emitAsTsdoc().split("\n");
+/**
+ * Builds reference doc comments
+ * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param item {@link ApiItem} instance
+ * @param relatedTo Line id of the line with which the documentation is associated
+ */
+function buildDocumentation(reviewLines: ReviewLine[], item: ApiItem, relatedTo: string) {
+  if (item instanceof ApiDocumentedItem) {
+    const lines = item.tsdocComment
+      ?.emitAsTsdoc()
+      .split("\n")
+      .filter((l) => l.trim() !== "");
     for (const l of lines ?? []) {
       const docToken: ReviewToken = buildToken({
         Kind: TokenKind.Comment,
@@ -117,6 +146,11 @@ function buildDocumentation(reviewLines: ReviewLine[], member: ApiItem, relatedT
   }
 }
 
+/**
+ * Returns release tag string corresponding to the tag
+ * @param item {@link ApiItem} instance with releaseTag
+ * @returns release tag string
+ */
 function getReleaseTag(item: ApiItem & { releaseTag?: ReleaseTag }): string | undefined {
   switch (item.releaseTag) {
     case ReleaseTag.Beta:
@@ -129,6 +163,11 @@ function getReleaseTag(item: ApiItem & { releaseTag?: ReleaseTag }): string | un
 }
 
 const ANNOTATION_TOKEN = "@";
+/**
+ * Builds review line for a release tag
+ * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param tag release tag
+ */
 function buildReleaseTag(reviewLines: ReviewLine[], tag: string): void {
   const tagToken = buildToken({
     Kind: TokenKind.StringLiteral,
@@ -137,6 +176,82 @@ function buildReleaseTag(reviewLines: ReviewLine[], tag: string): void {
   reviewLines.push({ Tokens: [tagToken] });
 }
 
+/**
+ * Checks whether a {@link @ApiItem} instance may have children or not
+ * @param item The result array to push {@link ReviewLine}s to
+ * @returns
+ */
+function mayHaveChildren(item: ApiItem): boolean {
+  return (
+    item.kind === ApiItemKind.Interface ||
+    item.kind === ApiItemKind.Class ||
+    item.kind === ApiItemKind.Namespace ||
+    item.kind === ApiItemKind.Enum
+  );
+}
+
+/**
+ * Returns normalized item kind string of an {@link ApiDeclaredItem}
+ * @param item {@link ApiDeclaredItem} instance
+ * @returns
+ */
+function getItemKindString(item: ApiDeclaredItem) {
+  let itemKind: string = "";
+  if (mayHaveChildren(item)) {
+    itemKind = item.kind.toLowerCase();
+  } else if (item.kind === ApiItemKind.Function) {
+    itemKind = "method";
+  } else if (item.kind === ApiItemKind.TypeAlias) {
+    itemKind = "struct";
+  }
+  return itemKind;
+}
+
+/**
+ * Builds the token list for an Api and pushes to the review line that is passed in
+ * @param line The {@link ReviewLine} to push {@link ReviewToken}s to
+ * @param item {@link ApiItem} instance
+ */
+function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
+  const itemId = item.canonicalReference.toString();
+  if (item instanceof ApiDeclaredItem) {
+    const itemKind: string = getItemKindString(item);
+
+    if (item.kind === ApiItemKind.Namespace) {
+      line.Tokens.push(
+        ...splitAndBuild(
+          `declare namespace ${item.displayName} `,
+          itemId,
+          item.displayName,
+          itemKind,
+        ),
+      );
+    } else {
+      if (!item.excerptTokens.some((except) => except.text.includes("\n"))) {
+        for (const excerpt of item.excerptTokens) {
+          if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
+            const token = buildToken({
+              Kind: TokenKind.TypeName,
+              NavigateToId: excerpt.canonicalReference.toString(),
+              Value: excerpt.text,
+            });
+            line.Tokens.push(token);
+          } else {
+            line.Tokens.push(...splitAndBuild(excerpt.text, itemId, item.displayName, itemKind));
+          }
+        }
+      } else {
+        splitAndBuildMultipleLine(line, item.excerptTokens, itemId, item.displayName, itemKind);
+      }
+    }
+  }
+}
+
+/**
+ * Builds review for an {@link ApiItem}.
+ * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param item the Api to build review for
+ */
 function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
   const itemId = item.canonicalReference.toString();
   const line: ReviewLine = {
@@ -145,7 +260,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     Tokens: [],
   };
 
-  buildDocumentation(reviewLines, item, itemId);
+  //buildDocumentation(reviewLines, item, itemId);
 
   const releaseTag = getReleaseTag(item);
   const parentReleaseTag = getReleaseTag(item.parent);
@@ -153,54 +268,12 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     buildReleaseTag(reviewLines, releaseTag);
   }
 
-  if (item instanceof ApiDeclaredItem) {
-    if (item.kind === ApiItemKind.Namespace) {
-      line.Tokens.push(
-        ...splitAndBuild(
-          `declare namespace ${item.displayName} `,
-          itemId,
-          item.displayName,
-          "namespace",
-        ),
-      );
-    }
+  buildMemberLineTokens(line, item);
 
-    let itemKind: string = "";
-    switch (item.kind) {
-      case ApiItemKind.Interface:
-      case ApiItemKind.Class:
-      case ApiItemKind.Namespace:
-      case ApiItemKind.Enum:
-        itemKind = item.kind.toLowerCase();
-        break;
-      case ApiItemKind.Function:
-        itemKind = "method";
-        break;
-      case ApiItemKind.TypeAlias:
-        itemKind = "struct";
-        break;
+  if (mayHaveChildren(item)) {
+    if (line.Tokens.length > 0) {
+      line.Tokens[line.Tokens.length - 1].HasSuffixSpace = true;
     }
-
-    for (const excerpt of item.excerptTokens) {
-      if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-        const token = buildToken({
-          Kind: TokenKind.TypeName,
-          NavigateToId: excerpt.canonicalReference.toString(),
-          Value: excerpt.text,
-        });
-        line.Tokens.push(token);
-      } else {
-        line.Tokens.push(...splitAndBuild(excerpt.text, itemId, item.displayName, itemKind));
-      }
-    }
-  }
-
-  if (
-    item.kind === ApiItemKind.Interface ||
-    item.kind === ApiItemKind.Class ||
-    item.kind === ApiItemKind.Namespace ||
-    item.kind === ApiItemKind.Enum
-  ) {
     if (item.members.length > 0) {
       line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: `{` }));
       for (const member of item.members) {
@@ -212,19 +285,22 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
         RelatedToLine: line.LineId,
       });
     } else {
+      line.Tokens.push(
+        buildToken({ Kind: TokenKind.Punctuation, Value: `{`, HasSuffixSpace: true }),
+        buildToken({ Kind: TokenKind.Punctuation, Value: `}` }),
+      );
       reviewLines.push(line);
-      reviewLines.push({
-        Tokens: [
-          buildToken({ Kind: TokenKind.Punctuation, Value: `{`, HasSuffixSpace: true }),
-          buildToken({ Kind: TokenKind.Punctuation, Value: `}` }),
-        ],
-      });
     }
   } else {
     reviewLines.push(line);
   }
 
-  if (item instanceof ApiDeclaredItem && item.kind === ApiItemKind.Namespace) {
+  // add blank line between types or functions
+  if (
+    mayHaveChildren(item) ||
+    item.kind === ApiItemKind.TypeAlias ||
+    item.kind === ApiItemKind.Function
+  ) {
     reviewLines.push(emptyLine(line.LineId));
   }
 }

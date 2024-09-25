@@ -269,12 +269,22 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                     errors = baselineUtils.FilterErrorsUsingBaseline(errors);
                 }
             }
-
+            bool loggingInDevOps = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SYSTEM_TEAMPROJECTID"));
             int returnCode = 0;
             // If there are errors, and this isn't a baseline generation, ensure the returnCode is non-zero and output the errors.
             if ((errors.Count > 0) && !generateBaseline)
             {
                 returnCode = 1;
+
+                // DevOps only adds the first 4 errors to the github checks list so lets always add the generic one first and then as many of the individual ones as can be found afterwards
+                if (loggingInDevOps)
+                {
+                    Console.WriteLIne($"##vso[task.logissue type=error;]There are linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
+                }
+                else
+                {
+                    Console.WriteLine($"There are linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
+                }
 
                 // Output the errors sorted ascending by line number and by type. If there's a block
                 // error with the same starting line number as a single line error, the block error
@@ -283,10 +293,15 @@ namespace Azure.Sdk.Tools.CodeownersLinter
 
                 foreach (var error in errorsByLineAndType)
                 {
-                    Console.WriteLine(error + Environment.NewLine);
+                    if (loggingInDevOps)
+                    {
+                        Console.WriteLIne($"##vso[task.logissue type=error;sourcepath={codeownersFileFullPath};linenumber={error.LineNumber};columnnumber=1;]{error.ToString().Replace('\n','%0D%0A'}");
+                    }
+                    else 
+                    {
+                        Console.WriteLine(error + Environment.NewLine);
+                    }
                 }
-
-                Console.WriteLine($"There were linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
             }
             return returnCode;
         }

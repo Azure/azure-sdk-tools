@@ -51,7 +51,7 @@ jobs:
         continue-on-error: true
         working-directory: tools/tsp-client
 
-      - run: npm run pack
+      - run: npm pack
         shell: pwsh
         working-directory: tools/tsp-client
 

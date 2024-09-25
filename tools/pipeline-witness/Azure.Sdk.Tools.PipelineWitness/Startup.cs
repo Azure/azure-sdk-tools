@@ -61,9 +61,7 @@ public static class Startup
         builder.Services.AddTransient<BuildCompleteQueue>();
         builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
 
-        builder.Services.AddSingleton<ICredentialStore, GitHubCredentialStore>();
-        builder.Services.AddSingleton(new ProductHeaderValue("PipelineWitness", "1.0"));
-        builder.Services.AddSingleton<GitHubClient>();
+        builder.Services.AddSingleton<GitHubClientFactory>();
         builder.Services.AddTransient<GitHubActionProcessor>();
         builder.Services.AddTransient<RunCompleteQueue>();
         builder.Services.AddHostedService<RunCompleteQueueWorker>(settings.GitHubActionRunsWorkerCount);

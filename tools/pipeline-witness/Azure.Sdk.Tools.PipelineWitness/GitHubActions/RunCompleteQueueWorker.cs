@@ -18,13 +18,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
     {
         private readonly ILogger logger;
         private readonly GitHubActionProcessor processor;
-        private readonly GitHubClient githubClient;
+        private readonly GitHubClientFactory githubClientFactory;
 
         public RunCompleteQueueWorker(
             ILogger<RunCompleteQueueWorker> logger,
             GitHubActionProcessor processor,
             QueueServiceClient queueServiceClient,
-            GitHubClient githubClient,
+            GitHubClientFactory githubClientFactory,
             TelemetryClient telemetryClient,
             IOptionsMonitor<PipelineWitnessSettings> options)
             : base(
@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         {
             this.logger = logger;
             this.processor = processor;
-            this.githubClient = githubClient;
+            this.githubClientFactory = githubClientFactory;
         }
 
         internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
@@ -55,7 +55,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
                 try
                 {
-                    var rateLimit = await this.githubClient.RateLimit.GetRateLimits();
+                    var client = await this.githubClientFactory.CreateGitHubClientAsync();
+                    var rateLimit = await client.RateLimit.GetRateLimits();
                     this.logger.LogInformation("Rate limit details: {RateLimit}", rateLimit.Resources);
                 }
                 catch (Exception rateLimitException)

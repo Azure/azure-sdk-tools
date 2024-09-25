@@ -17,6 +17,6 @@
     "Azure/azure-sdk-for-python",
     "Azure/azure-sdk-for-rust",
     "Azure/azure-sdk-tools",
-    "Azure/typespec",
+    "Azure/typespec-azure",
     "Microsoft/typespec"
 ]

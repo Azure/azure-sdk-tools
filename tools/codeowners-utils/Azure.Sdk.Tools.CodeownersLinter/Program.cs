@@ -295,7 +295,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 {
                     if (loggingInDevOps)
                     {
-                        Console.WriteLIne($"##vso[task.logissue type=error;sourcepath={codeownersFileFullPath};linenumber={error.LineNumber};columnnumber=1;]{error.ToString().Replace('\n','%0D%0A')}");
+                        Console.WriteLIne($"##vso[task.logissue type=error;sourcepath={codeownersFileFullPath};linenumber={error.LineNumber};columnnumber=1;]{error.ToString().Replace(Environment.NewLine,"%0D%0A")}");
                     }
                     else 
                     {

@@ -12,7 +12,7 @@ import { ConfigService } from '../config/config.service';
 })
 export class ReviewsService {
   baseUrl : string = this.configService.apiUrl + "reviews";
-  paginatedResult: PaginatedResult<Review[]> = new PaginatedResult<Review[]>
+  paginatedResult: PaginatedResult<Review[]> = new PaginatedResult<Review[]>();
 
   constructor(private http: HttpClient, private configService: ConfigService) { }
 

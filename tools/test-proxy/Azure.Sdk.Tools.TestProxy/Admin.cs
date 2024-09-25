@@ -166,7 +166,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                Response.Headers.Add("x-recording-id", recordingId);
+                Response.Headers.Append("x-recording-id", recordingId);
             }
 
             var json = JsonSerializer.Serialize(new { Sanitizers = registeredSanitizers });

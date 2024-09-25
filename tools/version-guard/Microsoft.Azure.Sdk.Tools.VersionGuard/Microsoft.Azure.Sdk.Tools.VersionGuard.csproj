@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <VersionPrefix>0.1.0</VersionPrefix>
 
     <PackAsTool>true</PackAsTool>

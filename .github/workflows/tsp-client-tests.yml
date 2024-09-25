@@ -55,7 +55,7 @@ jobs:
         shell: pwsh
         working-directory: tools/tsp-client
 
-        - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: package
           path: tools/tsp-client/*.tgz

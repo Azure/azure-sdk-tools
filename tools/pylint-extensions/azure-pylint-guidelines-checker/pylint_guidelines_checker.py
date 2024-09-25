@@ -2756,7 +2756,6 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                     )
 
 
-
 class ImportTypeChecker(BaseChecker):
     """Checker to ensure no type is imported from the same module more than once within the same file,
     while allowing imports of the same type from different namespaces (e.g., sync and async clients)."""
@@ -2780,9 +2779,6 @@ class ImportTypeChecker(BaseChecker):
         if self._is_inside_exception_or_conditional(node):
             # Ignore imports inside conditional or try/except blocks
             return
-
-class NoImportTypingFromTypeCheck(BaseChecker):
-
 
         module_name = node.modname
         for name, alias in node.names:

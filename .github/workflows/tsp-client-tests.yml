@@ -51,15 +51,9 @@ jobs:
         continue-on-error: true
         working-directory: tools/tsp-client
 
-      - run: npm pack
+      - run: npm run build
         shell: pwsh
         working-directory: tools/tsp-client
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: package-${{ runner.os }}
-          path: tools/tsp-client/*.tgz
-          compression-level: 0
 
       - run: npm run test
         shell: pwsh

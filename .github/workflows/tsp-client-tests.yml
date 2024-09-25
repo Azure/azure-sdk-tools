@@ -57,7 +57,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: package-${{ runner.os }}
           path: tools/tsp-client/*.tgz
           compression-level: 0
 

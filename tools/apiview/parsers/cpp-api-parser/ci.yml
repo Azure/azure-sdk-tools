@@ -22,8 +22,11 @@ pr:
       - tools/apiview/parsers/cpp-api-parser
 
 variables:
-  ArtifactName: 'apiview'
-  VcpkgRelease: '2024.08.23'
+  - template: /eng/pipelines/templates/variables/image.yml
+  - name: ArtifactName
+    value: 'apiview'
+  - name: VcpkgRelease
+    value: '2024.08.23'
 
 stages:
   - stage: 'Build'
@@ -31,8 +34,8 @@ stages:
       - job: 'Build'
         timeoutInMinutes: 300
         pool:
-          name: azsdk-pool-mms-win-2022-general
-          image: azsdk-pool-mms-win-2022-1espt
+          name: $(WINDOWSPOOL)
+          image: $(WINDOWSVMIMAGE)
           os: windows
 
         steps:
@@ -136,13 +139,3 @@ stages:
                         azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$(APIVIEW_PARSER_VERSION)" --recursive
                     env:
                       AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
-                  - task: UniversalPackages@0
-                    displayName: Publish Private ApiView Parser
-                    inputs:
-                      command: publish
-                      publishDirectory: $(Pipeline.Workspace)/release-artifacts
-                      vstsFeedPublish: 'internal/AzureSDKForCpp'
-                      vstsFeedPackagePublish: 'parseazuresdkcpp'
-                      versionOption: custom
-                      versionPublish: $(APIVIEW_PARSER_VERSION)
-                      packagePublishDescription: 'Azure C++ SDK API View Parser.'

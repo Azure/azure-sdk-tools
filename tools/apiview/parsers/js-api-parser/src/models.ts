@@ -106,18 +106,6 @@ export enum TokenKind {
   Comment = 7,
 }
 
-export enum ApiViewTokenKind {
-  Text = 0,
-  Newline = 1,
-  Whitespace = 2,
-  Punctuation = 3,
-  Keyword = 4,
-  LineIdMarker = 5, // use this if there are no visible tokens with ID on the line but you still want to be able to leave a comment for it
-  TypeName = 6,
-  MemberName = 7,
-  StringLiteral = 8,
-}
-
 export enum CodeDiagnosticLevel {
   Info = 1,
   Warning = 2,
@@ -125,36 +113,4 @@ export enum CodeDiagnosticLevel {
   /** Fatal level diagnostic will block API review approval and it will show an error message to the user. Approver will have to
    * override fatal level system comments before approving a review.*/
   Fatal = 4,
-}
-
-export interface IApiViewFile {
-  Name: string;
-  Tokens: IApiViewToken[];
-  Navigation: IApiViewNavItem[];
-  PackageName: string;
-  VersionString: string;
-  Language: string;
-  PackageVersion: string;
-}
-
-export interface IApiViewToken {
-  Kind: ApiViewTokenKind;
-  DefinitionId?: string;
-  NavigateToId?: string;
-  Value?: string;
-}
-
-export interface IApiViewNavItem {
-  Text: string;
-  NavigationId: string;
-  ChildItems: IApiViewNavItem[];
-  Tags: {
-    [propertyName: string]: string;
-  };
-}
-
-export interface PackageJson {
-  // name: string;
-  // version: string;
-  dependencies: Record<string, string>;
 }

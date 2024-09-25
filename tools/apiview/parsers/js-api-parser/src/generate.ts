@@ -238,7 +238,7 @@ function buildReview(
   buildSubpathExports(review, apiModel);
 }
 
-export function GenerateApiview(options: {
+export function generateApiview(options: {
   meta: Metadata;
   dependencies: Record<string, string>;
   apiModel: ApiModel;

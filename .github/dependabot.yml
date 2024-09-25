@@ -6,53 +6,6 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/src/dotnet/APIView/APIViewWeb/Client"
-    schedule:
-      interval: "daily"
-    
-  - package-ecosystem: "npm"
-    directory: "/src/dotnet/APIView/ClientSPA" 
-    schedule:
-      interval: "daily"
-      
-  - package-ecosystem: "npm"
-    directory: "/tools/apiview/emitters/typespec-apiview"
-    schedule:
-      interval: "daily"
-
-  - package-ecosystem: "npm"
-    directory: "/tools/apiview/parsers/apiview-treestyle-parser-schema"
-    schedule:
-      interval: "daily"
-      
-  - package-ecosystem: "npm"
-    directory: "/tools/js-sdk-release-tools"
-    schedule:
-      interval: "daily"
-      
-  - package-ecosystem: "npm"
-    directory: "/tools/keyvault-mock-attestation"
-    schedule:
-      interval: "daily"
-      
-  - package-ecosystem: "npm"
-    directory: "/tools/mock-service-host"
-    schedule:
-      interval: "daily"
-      
-  - package-ecosystem: "npm"
-    directory: "/tools/oav-traffic-converter"
-    schedule:
-      interval: "daily"
-      
-  - package-ecosystem: "npm"
-    directory: "/tools/tsp-client"
-    schedule:
-      interval: "daily"
-
-  - package-ecosystem: "npm"
     directory: "/tools/sdk-testgen/packages/autorest.testmodeler"
     schedule:
       interval: "daily"
-
-

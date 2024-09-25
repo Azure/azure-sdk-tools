@@ -128,7 +128,7 @@ public class GitHubClientFactory
     {
         Process process = new()
         {
-            StartInfo = GetAzureCliProcessStartInfo(),
+            StartInfo = GetGitHubCliProcessStartInfo(),
             EnableRaisingEvents = true
         };
 
@@ -139,7 +139,7 @@ public class GitHubClientFactory
         return new Credentials(output, AuthenticationType.Bearer);
     }
 
-    private static ProcessStartInfo GetAzureCliProcessStartInfo()
+    private static ProcessStartInfo GetGitHubCliProcessStartInfo()
     {
         string environmentPath = Environment.GetEnvironmentVariable("PATH");
 

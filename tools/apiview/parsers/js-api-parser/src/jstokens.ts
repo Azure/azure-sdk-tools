@@ -4,6 +4,7 @@
 import jsTokens from "js-tokens";
 import { type ReviewToken, TokenKind } from "./models";
 
+// The list of keywords is derived from https://github.com/microsoft/TypeScript/blob/aa9df4d68795052d1681ac7dc5f66d6362c3f3cb/src/compiler/scanner.ts#L135
 const TS_KEYWORDS = new Set<string>([
   "abstract",
   "accessor",

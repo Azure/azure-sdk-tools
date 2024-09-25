@@ -3315,9 +3315,11 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(imd)
 
 
-error-if-same-named-type-importable
+
 class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
-=======
+
+
+
 class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
     """Test that we are blocking imports of asyncio directly allowing indirect imports."""
     CHECKER_CLASS = checker.DoNotImportAsyncio
@@ -3602,7 +3604,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_try(try_node)
 
-error-if-same-named-type-importable
+
 
 class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed legacy typing practices"""

@@ -116,10 +116,12 @@ export class ReviewPageComponent implements OnInit {
     this.sideMenu = [
       {
           icon: 'bi bi-clock-history',
+          tooltip: 'Revisions',
           command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
       },
       {
         icon: 'bi bi-chat-left-dots',
+        tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
       }
@@ -496,8 +498,8 @@ export class ReviewPageComponent implements OnInit {
         break;
       }
     }
-  } 
-
+  }
+  
   ngOnDestroy() {
     this.workerService.terminateWorker();
     this.destroy$.next();

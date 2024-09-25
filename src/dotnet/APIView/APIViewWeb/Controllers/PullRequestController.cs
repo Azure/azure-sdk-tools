@@ -30,7 +30,7 @@ namespace APIViewWeb.Controllers
         private readonly TelemetryClient _telemetryClient;
         private HashSet<string> _allowedListBotAccounts = new HashSet<string>();
 
-        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar", ".gosource" };
+        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".json", ".nupkg", "-sources.jar", ".gosource" };
         
         public PullRequestController(ICodeFileManager codeFileManager, IPullRequestManager pullRequestManager,
             IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager,

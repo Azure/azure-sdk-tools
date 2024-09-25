@@ -1,7 +1,8 @@
-<h4>Conversations</h4>
-<p-divider />
-<p *ngIf="commentThreads.size === 0">This Review has no comments</p>
-<p-timeline [value]="getAPIRevisionWithComments()">
+<div *ngIf="isLoading" class="spinner-border m-3" role="status">
+    <span class="visually-hidden">Loading...</span>
+</div>
+<p *ngIf="!isLoading && (getAPIRevisionWithComments()).length == 0" class="ms-4">This Review has no comments</p>
+<p-timeline *ngIf="!isLoading" [value]="getAPIRevisionWithComments()">
     <ng-template pTemplate="marker" let-apiRevision>
         <i class="bi bi-clock-history"></i>
     </ng-template>

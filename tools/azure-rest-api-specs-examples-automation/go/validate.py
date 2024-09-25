@@ -79,7 +79,7 @@ class GoVet:
 
                 logging.info("Run goimports")
                 # goimports
-                cmd = ["go", "install", "golang.org/x/tools/cmd/goimports@latest"]
+                cmd = ["go", "install", "golang.org/x/tools/cmd/goimports@v0.24.0"]
                 check_call(cmd, tmp_dir_name)
 
                 cmd = ["goimports", "-w", "."]

@@ -1,0 +1,6 @@
+:host ::ng-deep {
+    .revision-panel{
+        height: calc(100vh - 130px);
+        background-color: var(--base-fg-color);
+    }
+}

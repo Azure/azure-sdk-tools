@@ -17,6 +17,7 @@ let toggleDocumentationClassPart = "bi-arrow-up-square";
 let hasHiddenAPI: boolean = false;
 let visibleNodes: Set<string> = new Set<string>();
 let addPostDiffContext: boolean = false;
+let isNavigationTreeCreated: boolean = false;
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
@@ -27,6 +28,11 @@ addEventListener('message', ({ data }) => {
       apiTreeBuilderData!.diffStyle = FULL_DIFF_STYLE; // If there is no diff nodes and tree diff will not work
     }
     
+    if (codePanelData?.navigationTreeNodes && codePanelData?.navigationTreeNodes.length > 0)
+    {
+      isNavigationTreeCreated = true;
+      navigationTree = codePanelData?.navigationTreeNodes;
+    }
     buildCodePanelRows("root", navigationTree);
     const codePanelRowDataMessage : InsertCodePanelRowDataMessage = {
       directive: ReviewPageWorkerMessageDirective.UpdateCodePanelRowData,
@@ -60,6 +66,7 @@ addEventListener('message', ({ data }) => {
     apiTreeBuilderData = null;
     visibleNodes = new Set<string>();
     addPostDiffContext = false;
+    isNavigationTreeCreated = false;
   }
   else {
     apiTreeBuilderData = data;
@@ -106,12 +113,12 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   let navigationChildren = navigationTree;
-  if (node.navigationTreeNode) {
+  if (!isNavigationTreeCreated && node.navigationTreeNode) {
     if (!node.navigationTreeNode.children) {
       node.navigationTreeNode.children = [];
     }
     navigationChildren = node.navigationTreeNode.children;
-  }
+  } 
 
   if ((!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && node.isNodeWithDiff) {
     codePanelRowData.push(...diffBuffer);
@@ -191,7 +198,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     }
   }
 
-  if (buildNode && node.navigationTreeNode) {
+  if (buildNode && node.navigationTreeNode && !isNavigationTreeCreated) {
     navigationTree.push(node.navigationTreeNode);
   }  
 

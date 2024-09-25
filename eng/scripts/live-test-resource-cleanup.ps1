@@ -16,8 +16,7 @@ param (
   [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
   [string] $ProvisionerApplicationId,
 
-  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-  [ValidateNotNullOrEmpty()]
+  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $false)]
   [string] $ProvisionerApplicationSecret,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
@@ -465,7 +464,7 @@ function DeleteAndPurgeGroups([array]$toDelete) {
 }
 
 function Login() {
-  if ($PSCmdlet.ParameterSetName -eq "Provisioner") {
+  if ($PSCmdlet.ParameterSetName -eq "Provisioner" -and $ProvisionerApplicationSecret) {
     Write-Verbose "Logging in with provisioner"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)

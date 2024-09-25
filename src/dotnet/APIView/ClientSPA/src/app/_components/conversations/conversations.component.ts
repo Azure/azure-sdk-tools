@@ -28,6 +28,10 @@ export class ConversationsComponent implements OnChanges {
   commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
   numberOfActiveThreads: number = 0;
 
+  apiRevisionsLoaded = false;
+  commentsLoaded = false;
+  isLoading: boolean = true;
+
   destroy$ = new Subject<void>();
 
   constructor(private commentsService: CommentsService, private signalRService: SignalRService) { }
@@ -37,62 +41,76 @@ export class ConversationsComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['apiRevisions'] || changes['comments']) {
-      if (this.apiRevisions.length > 0 && this.comments.length > 0) {
-        this.createCommentThreads();
-      }
+    if (changes['apiRevisions']) {
+      this.apiRevisionsLoaded = true;
+    }
+
+    if (changes['comments']) {
+      this.commentsLoaded = true;
+    }
+
+    if (this.apiRevisionsLoaded && this.commentsLoaded) {
+      this.createCommentThreads();
     }
   }
 
   createCommentThreads() {
-    this.commentThreads = new Map<string, CodePanelRowData[]>();
-    this.numberOfActiveThreads = 0;
-    const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
-    const groupedComments = this.comments
-      .reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
-        const key = comment.elementId;
-        if (!acc[key]) {
-          acc[key] = [];
-        }
-        acc[key].push(comment);
-        return acc;
-      }, {});
-
-    for (const elementId in groupedComments) {
-      if (groupedComments.hasOwnProperty(elementId)) {
-        const comments = groupedComments[elementId];
-        const apiRevisionIds = comments.map(c => c.apiRevisionId);
-
-        let apiRevisionPostion = Number.MAX_SAFE_INTEGER;
-
-        for (const apiRevisionId of apiRevisionIds) {
-          const apiRevisionIdPosition = apiRevisionInOrder.findIndex(apiRevision => apiRevision.id === apiRevisionId);
-          if (apiRevisionIdPosition >= 0 && apiRevisionIdPosition < apiRevisionPostion) {
-            apiRevisionPostion = apiRevisionIdPosition;
+    if (this.apiRevisions.length > 0 && this.comments.length > 0) {
+      this.commentThreads = new Map<string, CodePanelRowData[]>();
+      this.numberOfActiveThreads = 0;
+      const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
+      const groupedComments = this.comments
+        .reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
+          const key = comment.elementId;
+          if (!acc[key]) {
+            acc[key] = [];
           }
-        }
+          acc[key].push(comment);
+          return acc;
+        }, {});
 
-        if (apiRevisionPostion >= 0 && apiRevisionPostion < apiRevisionInOrder.length) {
-          const apiRevisionIdForThread = apiRevisionInOrder[apiRevisionPostion].id;
-          const codePanelRowData = new CodePanelRowData();
-          codePanelRowData.type = CodePanelRowDatatype.CommentThread;
-          codePanelRowData.comments = comments;
-          codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
+      for (const elementId in groupedComments) {
+        if (groupedComments.hasOwnProperty(elementId)) {
+          const comments = groupedComments[elementId];
+          const apiRevisionIds = comments.map(c => c.apiRevisionId);
 
-          if (!codePanelRowData.isResolvedCommentThread) {
-            this.numberOfActiveThreads++;
+          let apiRevisionPostion = Number.MAX_SAFE_INTEGER;
+
+          for (const apiRevisionId of apiRevisionIds) {
+            const apiRevisionIdPosition = apiRevisionInOrder.findIndex(apiRevision => apiRevision.id === apiRevisionId);
+            if (apiRevisionIdPosition >= 0 && apiRevisionIdPosition < apiRevisionPostion) {
+              apiRevisionPostion = apiRevisionIdPosition;
+            }
           }
 
-          if (this.commentThreads.has(apiRevisionIdForThread)) {
-            this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);
-          }
-          else {
-            this.commentThreads.set(apiRevisionIdForThread, [codePanelRowData]);
+          if (apiRevisionPostion >= 0 && apiRevisionPostion < apiRevisionInOrder.length) {
+            const apiRevisionIdForThread = apiRevisionInOrder[apiRevisionPostion].id;
+            const codePanelRowData = new CodePanelRowData();
+            codePanelRowData.type = CodePanelRowDatatype.CommentThread;
+            codePanelRowData.comments = comments;
+            codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
+
+            if (!codePanelRowData.isResolvedCommentThread) {
+              this.numberOfActiveThreads++;
+            }
+
+            if (this.commentThreads.has(apiRevisionIdForThread)) {
+              this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);
+            }
+            else {
+              this.commentThreads.set(apiRevisionIdForThread, [codePanelRowData]);
+            }
           }
         }
       }
+      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
+      this.isLoading = false;
     }
-    this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
+    else if (this.apiRevisions.length > 0 && this.comments.length === 0) {
+      setTimeout(() => {
+        this.isLoading = false;
+      }, 1000);
+    }
   }
 
   getAPIRevisionWithComments() {

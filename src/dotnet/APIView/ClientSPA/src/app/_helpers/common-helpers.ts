@@ -59,7 +59,6 @@ export function getTypeClass(type: string): string {
   return result;
 }
 
-
 export function isDiffRow(row: CodePanelRowData) {
   return row.type === CodePanelRowDatatype.CodeLine && (row.diffKind === DIFF_REMOVED || row.diffKind === DIFF_ADDED);
 }

@@ -1,8 +1,9 @@
 .create-merge table GitHubActionsRun (
     Repository: string,
-    Workflow: string,
     WorkflowId: long,
+    WorkflowName: string,
     RunId: long,
+    RunName: string,
     RunNumber: long,
     HeadBranch: string,
     HeadSha: string,
@@ -26,9 +27,10 @@
 
 .create-or-alter table GitHubActionsRun ingestion json mapping 'GitHubActionsRun_mapping' ```[
     { "column": "Repository", "path": "$['repository']" },
-    { "column": "Workflow", "path": "$['workflow']" },
     { "column": "WorkflowId", "path": "$['workflowId']" },
+    { "column": "WorkflowName", "path": "$['workflowName']" },
     { "column": "RunId", "path": "$['runId']" },
+    { "column": "RunName", "path": "$['runName']" },
     { "column": "RunNumber", "path": "$['runNumber']" },
     { "column": "HeadBranch", "path": "$['headBranch']" },
     { "column": "HeadSha", "path": "$['headSha']" },

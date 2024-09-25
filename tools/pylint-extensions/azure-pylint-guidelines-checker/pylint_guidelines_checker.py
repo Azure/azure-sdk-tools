@@ -2757,6 +2757,7 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                     )
 
 
+
 class ImportTypeChecker(BaseChecker):
     """Checker to ensure no type is imported from the same module more than once within the same file,
     while allowing imports of the same type from different namespaces (e.g., sync and async clients)."""
@@ -2780,6 +2781,9 @@ class ImportTypeChecker(BaseChecker):
         if self._is_inside_exception_or_conditional(node):
             # Ignore imports inside conditional or try/except blocks
             return
+
+class NoImportTypingFromTypeCheck(BaseChecker):
+
 
         module_name = node.modname
         for name, alias in node.names:
@@ -2882,6 +2886,52 @@ class DoNotUseLegacyTyping(BaseChecker):
             )
 
 
+
+
+class DoNotImportAsyncio(BaseChecker):
+
+    """Rule to check that libraries do not import the asyncio package directly."""
+
+    name = "do-not-import-asyncio"
+    priority = -1
+    # TODO Find message number
+    msgs = {
+        "C4763": (
+            "Do not import the asyncio package directly in your library",
+            "do-not-import-asyncio",
+            "Do not import the asyncio package in your directly.",
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from asyncio directly."""
+        if node.modname == "asyncio":
+            self.add_message(
+                msgid=f"do-not-import-asyncio",
+                node=node,
+                confidence=None,
+            )
+
+    def visit_import(self, node):
+        """Check that we aren't importing asyncio."""
+        for name, _ in node.names:
+            if name == "asyncio":
+                self.add_message(
+                    msgid=f"do-not-import-asyncio",
+                    node=node,
+                    confidence=None,
+                )
+
+
+# [Pylint] custom linter check for invalid use of @overload #3229
+# [Pylint] Custom Linter check for Exception Logging #3227
+# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+# [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+# [Pylint] Investigate pylint rule around missing dependency #3231
+
+
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2915,12 +2965,25 @@ def register(linter):
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))
+
     linter.register_checker(ImportTypeChecker(linter))
+
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
+
+    # [Pylint] custom linter check for invalid use of @overload #3229
+    # [Pylint] Custom Linter check for Exception Logging #3227
+    # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+    # [Pylint] Add a check for connection_verify hardcoded settings #35355
+    # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+    # [Pylint] Investigate pylint rule around missing dependency #3231
+
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
 
+
     linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
+
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

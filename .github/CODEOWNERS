@@ -18,6 +18,8 @@
 ###########
 /eng/                                  @azure/azure-sdk-eng
 
+/.config/1espt/                        @benbp @weshaggard
+
 ###########
 # CODEOWNERS Linter pipeline
 ###########

@@ -279,7 +279,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 // DevOps only adds the first 4 errors to the github checks list so lets always add the generic one first and then as many of the individual ones as can be found afterwards
                 if (loggingInDevOps)
                 {
-                    Console.WriteLIne($"##vso[task.logissue type=error;]There are linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
+                    Console.WriteLine($"##vso[task.logissue type=error;]There are linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
                 }
                 else
                 {
@@ -295,7 +295,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 {
                     if (loggingInDevOps)
                     {
-                        Console.WriteLIne($"##vso[task.logissue type=error;sourcepath={codeownersFileFullPath};linenumber={error.LineNumber};columnnumber=1;]{error.ToString().Replace(Environment.NewLine,"%0D%0A")}");
+                        Console.WriteLine($"##vso[task.logissue type=error;sourcepath={codeownersFileFullPath};linenumber={error.LineNumber};columnnumber=1;]{error.ToString().Replace(Environment.NewLine,"%0D%0A")}");
                     }
                     else 
                     {

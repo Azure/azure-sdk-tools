@@ -260,7 +260,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     Tokens: [],
   };
 
-  //buildDocumentation(reviewLines, item, itemId);
+  buildDocumentation(reviewLines, item, itemId);
 
   const releaseTag = getReleaseTag(item);
   const parentReleaseTag = getReleaseTag(item.parent);

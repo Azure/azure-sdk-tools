@@ -20,7 +20,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using Octokit;
 
 namespace Azure.Sdk.Tools.PipelineWitness;
 
@@ -86,12 +85,9 @@ public static class Startup
 
     private static VssConnection CreateVssConnection(IServiceProvider provider)
     {
-        TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
-        TokenRequestContext tokenRequestContext = new(VssAadSettings.DefaultScopes);
-        Azure.Core.AccessToken token = azureCredential.GetToken(tokenRequestContext, CancellationToken.None);
-
         Uri organizationUrl = new("https://dev.azure.com/azure-sdk");
-        VssAadCredential vssCredential = new(new VssAadToken("Bearer", token.Token));
+        TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
+        VssAzureIdentityCredential vssCredential = new(azureCredential);
         VssHttpRequestSettings settings = VssClientHttpRequestSettings.Default.Clone();
 
         return new VssConnection(organizationUrl, vssCredential, settings);

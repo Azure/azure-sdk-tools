@@ -2881,34 +2881,60 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
         ),
     }
 
+
     def visit_call(self, node):
+        """Visit function calls to ensure it isn't used as a parameter"""
         for keyword in node.keywords:
             if keyword.arg == "connection_verify":
-                print("found a connection verify")
                 if type(keyword.value.value) == bool:
-                    print("IT IS A BOOL!!!!- Found in visit call")
                     self.add_message(
                         msgid=f"do-not-hardcode-connection-verify",
                         node=keyword,
                         confidence=None,
                     )
 
-    # def visit_assign(self, node):
-    #     print("Assign")
-    #     for target in node.targets:
-    #         print("TARGET: ", target)
+
+    def visit_assign(self, node):
+        """Visiting variable Assignments"""
+        try: # Picks up self.connection_verify = True
+            if node.targets[0].attrname == "connection_verify":
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
+        except:
+            try: # connection_verify = True
+                if node.targets[0].name == "connection_verify":
+                    if type(node.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=node,
+                            confidence=None,
+                        )
+            except:
+                pass
 
 
     def visit_annassign(self, node):
-        try:
+        """Visiting variable annotated assignments"""
+        try: # self.connection_verify: bool = True
             if node.target.attrname == "connection_verify":
-                if type(node.annotation.value) == bool:
-                    print("Found & Bool")
-                print("Found not a bool")
-
-        except:
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
+        except: # connection_verify: bool = True
             if node.target.name == "connection_verify":
-                print("FOUND IT in name")
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
 
 
 

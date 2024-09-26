@@ -23,6 +23,7 @@ pr:
 
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
+  - template: /eng/pipelines/templates/variables/globals.yml
   - name: ArtifactName
     value: 'apiview'
   - name: VcpkgRelease
@@ -119,14 +120,16 @@ stages:
             runOnce: 
               deploy:
                 steps: 
-                  - checkout: none
+                  - checkout: azure-sdk-build-tools
+                    path: azure-sdk-build-tools
                   - download: current
                     artifact: release-artifacts
+                  - template: pipelines/steps/binary-signing.yml@azure-sdk-build-tools
+                    parameters:
+                      BinaryPath: $(Pipeline.Workspace)/release-artifacts
                   - pwsh: |
-                      $latestVersion = (azcopy list "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/") -replace '[\/;].*' | Get-Unique | sort {[version] $_} -Descending | Select-Object -First 1
-                      $major, $minor, $build = $latestVersion.Split('.')
-                      $nextVersion = [version]::new($major, 1 + $minor, $build).ToString()
-                      Write-Host "##vso[task.setvariable variable=APIVIEW_PARSER_VERSION]$nextVersion"
+                      Write-Host "Set Api Parser version to $(OfficialBuildId)"
+                      Write-Host "##vso[task.setvariable variable=APIVIEW_PARSER_VERSION]$(OfficialBuildId)"
                     displayName: Determine Next ApiView Parser Version
                   - task: AzurePowerShell@5
                     displayName: Publish Public ApiView Parser

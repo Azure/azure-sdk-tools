@@ -276,9 +276,12 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         "analyze",
     ]
 
+    # TODO: split itno checks for prefixes/suffixes and ignored decorators
+
     def __init__(self, linter=None):
         super(ClientHasApprovedMethodNamePrefix, self).__init__(linter)
         self.process_class = None
+        self.namespace = None
 
     def _is_property(self, node):
         if not node.decorators:
@@ -288,19 +291,21 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
                 return True
         return False
 
-    def _get_namespace(self, node):
-        path = node.root().file.split("/")
-        if len(path) == 1:
-            return self.process_class.name
-        namespace = ".".join(path[path.index("azure"):-1]) + "." + self.process_class.name
-        return namespace
+    def visit_module(self, node):
+        self.namespace = node.name
 
     def visit_classdef(self, node):
         # TODO: ignore classes with leading "_"
         # TODO: ignore classes in private namespaces. i.e.:
         #   - azure.ai.ml.identity._internal.ManagedIdentityClient
         #   - azure.servicebus._pyamqp.ReceiveClient
-        if node.name.endswith("Client") and node.name not in self.ignore_clients:
+        
+        if all((
+            node.name.endswith("Client"),
+            node.name not in self.ignore_clients,
+            not node.name.startswith("_"),
+            not '._' in self.namespace,
+        )):
             self.process_class = node
 
     def visit_functiondef(self, node):
@@ -321,7 +326,7 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         if parts[0].lower() not in self.approved_prefixes:
             self.add_message(
                 msgid="unapproved-client-method-name-prefix",
-                args=self._get_namespace(node) + "::" + node.name,
+                args=f"{node.name} {self.namespace}",
                 node=node,
                 confidence=None,
             )

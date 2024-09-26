@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
@@ -69,7 +70,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 {
                     var client = await this.clientFactory.CreateGitHubClientAsync();
                     var rateLimit = await client.RateLimit.GetRateLimits();
-                    this.logger.LogInformation("Rate limit details: {RateLimit}", rateLimit.Resources);
+                    this.logger.LogInformation("Rate limit details: {RateLimit}", JsonSerializer.Serialize(rateLimit.Resources));
                 }
                 catch (Exception rateLimitException)
                 {

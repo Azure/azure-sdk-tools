@@ -295,6 +295,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 {
                     if (loggingInDevOps)
                     {
+                        // Environment.NewLine needs to be replaced by an encoded NewLine "%0D%0A" in order to display on GitHub and DevOps checks
                         Console.WriteLine($"##vso[task.logissue type=error;sourcepath={codeownersFileFullPath};linenumber={error.LineNumber};columnnumber=1;]{error.ToString().Replace(Environment.NewLine,"%0D%0A")}");
                     }
                     else 

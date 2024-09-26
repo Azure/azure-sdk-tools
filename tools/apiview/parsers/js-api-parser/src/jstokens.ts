@@ -175,16 +175,25 @@ export function splitAndBuild(
           Kind: TokenKind.Punctuation,
           Value: token.value,
         });
-      } else if (token.type === "WhiteSpace" && reviewTokens.length > 0) {
-        reviewTokens[reviewTokens.length - 1].HasSuffixSpace = true;
-      } else if (token.type !== "WhiteSpace") {
+      } else if (token.type === "WhiteSpace") {
+        if (token.value.length > 1) {
+          // very likely it's indentation, added it
+          reviewToken = buildToken({
+            Kind: TokenKind.Text,
+            Value: token.value,
+          });
+        } else if (reviewTokens.length > 0) {
+          // Make previous token to have a space
+          reviewTokens[reviewTokens.length - 1].HasSuffixSpace = true;
+        }
+      } else {
         reviewToken = buildToken({
           Kind: TokenKind.Text,
           Value: token.value,
         });
       }
 
-      if (token.type !== "WhiteSpace") {
+      if (token.type !== "WhiteSpace" || (token.type === "WhiteSpace" && token.value.length > 1)) {
         reviewTokens.push(reviewToken);
       }
     }

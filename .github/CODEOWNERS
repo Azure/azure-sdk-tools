@@ -23,7 +23,7 @@
 ###########
 # CODEOWNERS Linter pipeline
 ###########
-/eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio
+/eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio @weshaggard
 
 ###########
 # GitHub Tools

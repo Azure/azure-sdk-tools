@@ -141,7 +141,9 @@ export function splitAndBuild(
   memberKind: string,
 ) {
   const reviewTokens: ReviewToken[] = [];
-  const lines = s.split("\n");
+  // Not sure why api.json uses "export declare function", while api.md uses "export function".
+  // Use the latter because that's how we normally define it in the TypeScript source code.
+  const lines = s.replace(/export declare function/g, "export function").split("\n");
   for (const l of lines) {
     const tokens: jsTokens.Token[] = Array.from(jsTokens(l));
     for (const token of tokens) {
@@ -199,31 +201,30 @@ export function splitAndBuildMultipleLine(
   memberKind: string,
 ) {
   let firstLine: boolean = true;
-  for (const excerpt of excerptTokens) {
-    const lines = excerpt.text.split("\n").filter((l) => l.trim() !== "");
-    for (const l of lines) {
-      const reviewTokens: ReviewToken[] = [];
-      if (l.match(/\/\*\*|\s\*/)) {
-        reviewTokens.push(
-          buildToken({
-            Kind: TokenKind.Comment,
-            IsDocumentation: true,
-            Value: l,
-          }),
-        );
-      } else {
-        reviewTokens.push(...splitAndBuild(l, currentTypeid, currentTypeName, memberKind));
-      }
+  const code = excerptTokens.map((e) => e.text).join("");
+  const lines = code.split("\n").filter((l) => l.trim() !== "");
+  for (const l of lines) {
+    const reviewTokens: ReviewToken[] = [];
+    if (l.match(/\/\*\*|\s\*/)) {
+      reviewTokens.push(
+        buildToken({
+          Kind: TokenKind.Comment,
+          IsDocumentation: true,
+          Value: l,
+        }),
+      );
+    } else {
+      reviewTokens.push(...splitAndBuild(l, currentTypeid, currentTypeName, memberKind));
+    }
 
-      if (firstLine) {
-        line.Tokens.push(...reviewTokens);
-        firstLine = false;
-      } else {
-        const childLine: ReviewLine = {
-          Tokens: reviewTokens,
-        };
-        line.Children.push(childLine);
-      }
+    if (firstLine) {
+      line.Tokens.push(...reviewTokens);
+      firstLine = false;
+    } else {
+      const childLine: ReviewLine = {
+        Tokens: reviewTokens,
+      };
+      line.Children.push(childLine);
     }
   }
 }

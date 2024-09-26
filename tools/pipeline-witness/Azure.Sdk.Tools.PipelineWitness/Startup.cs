@@ -57,7 +57,7 @@ public static class Startup
         builder.Services.AddSingleton<IAsyncLockProvider>(provider => new CosmosAsyncLockProvider(provider.GetRequiredService<CosmosClient>(), settings.CosmosDatabase, settings.CosmosAsyncLockContainer));
         builder.Services.AddTransient(CreateVssConnection);
 
-        builder.Services.AddTransient<AzurePipelinesProcessor>();
+        builder.Services.AddTransient<Func<AzurePipelinesProcessor>>(p => () => ActivatorUtilities.CreateInstance<AzurePipelinesProcessor>(p));
         builder.Services.AddTransient<BuildCompleteQueue>();
         builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
 
@@ -84,14 +84,19 @@ public static class Startup
         builder.RegisterClientFactory((CosmosClientOptions options, TokenCredential cred) => new CosmosClient(serviceUri.AbsoluteUri, cred, options));
     }
 
+    private static Core.AccessToken cachedToken = new(default, DateTimeOffset.MinValue);
+
     private static VssConnection CreateVssConnection(IServiceProvider provider)
     {
-        TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
-        TokenRequestContext tokenRequestContext = new(VssAadSettings.DefaultScopes);
-        Azure.Core.AccessToken token = azureCredential.GetToken(tokenRequestContext, CancellationToken.None);
+        if(cachedToken.ExpiresOn < DateTimeOffset.UtcNow.AddMinutes(5))
+        {
+            TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
+            TokenRequestContext tokenRequestContext = new(VssAadSettings.DefaultScopes);
+            cachedToken = azureCredential.GetToken(tokenRequestContext, CancellationToken.None);
+        }
 
         Uri organizationUrl = new("https://dev.azure.com/azure-sdk");
-        VssAadCredential vssCredential = new(new VssAadToken("Bearer", token.Token));
+        VssAadCredential vssCredential = new(new VssAadToken("Bearer", cachedToken.Token));
         VssHttpRequestSettings settings = VssClientHttpRequestSettings.Default.Clone();
 
         return new VssConnection(organizationUrl, vssCredential, settings);

@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
@@ -11,12 +12,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
     public class AzurePipelinesBuildDefinitionWorker : PeriodicLockingBackgroundService
     {
         private readonly ILogger<AzurePipelinesBuildDefinitionWorker> logger;
-        private readonly AzurePipelinesProcessor runProcessor;
+        private readonly Func<AzurePipelinesProcessor> processorFactory;
         private readonly IOptions<PipelineWitnessSettings> options;
 
         public AzurePipelinesBuildDefinitionWorker(
             ILogger<AzurePipelinesBuildDefinitionWorker> logger,
-            AzurePipelinesProcessor runProcessor,
+            Func<AzurePipelinesProcessor> processorFactory,
             IAsyncLockProvider asyncLockProvider,
             IOptions<PipelineWitnessSettings> options)
             : base(
@@ -25,16 +26,17 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                   options.Value.BuildDefinitionWorker)
         {
             this.logger = logger;
-            this.runProcessor = runProcessor;
+            this.processorFactory = processorFactory;
             this.options = options;
         }
 
         protected override async Task ProcessAsync(CancellationToken cancellationToken)
         {
             var settings = this.options.Value;
+            var processor = this.processorFactory();
             foreach (string project in settings.Projects)
             {
-                await this.runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
+                await processor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
             }
         }
     }

@@ -17,11 +17,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
     internal class BuildCompleteQueueWorker : QueueWorkerBackgroundService
     {
         private readonly ILogger logger;
-        private readonly AzurePipelinesProcessor runProcessor;
+        private readonly Func<AzurePipelinesProcessor> processorFactory;
 
         public BuildCompleteQueueWorker(
             ILogger<BuildCompleteQueueWorker> logger,
-            AzurePipelinesProcessor runProcessor,
+            Func<AzurePipelinesProcessor> processorFactory,
             QueueServiceClient queueServiceClient,
             TelemetryClient telemetryClient,
             IOptionsMonitor<PipelineWitnessSettings> options)
@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                 options)
         {
             this.logger = logger;
-            this.runProcessor = runProcessor;
+            this.processorFactory = processorFactory;
         }
 
         internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
@@ -61,8 +61,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                 this.logger.LogError("Failed to deserialize message: {MessageText}", message.MessageText);
                 return;
             }
-
-            await this.runProcessor.UploadBuildBlobsAsync(queueMessage.Account, queueMessage.ProjectId, queueMessage.BuildId);
+            var processor = this.processorFactory();
+            await processor.UploadBuildBlobsAsync(queueMessage.Account, queueMessage.ProjectId, queueMessage.BuildId);
         }
     }
 }

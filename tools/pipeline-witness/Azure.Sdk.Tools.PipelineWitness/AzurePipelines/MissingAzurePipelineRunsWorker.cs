@@ -15,14 +15,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
     public class MissingAzurePipelineRunsWorker : PeriodicLockingBackgroundService
     {
         private readonly ILogger<MissingAzurePipelineRunsWorker> logger;
-        private readonly AzurePipelinesProcessor runProcessor;
+        private readonly Func<AzurePipelinesProcessor> processorFactory;
         private readonly BuildCompleteQueue buildCompleteQueue;
         private readonly IOptions<PipelineWitnessSettings> options;
         private readonly EnhancedBuildHttpClient buildClient;
 
         public MissingAzurePipelineRunsWorker(
             ILogger<MissingAzurePipelineRunsWorker> logger,
-            AzurePipelinesProcessor runProcessor,
+            Func<AzurePipelinesProcessor> processorFactory,
             IAsyncLockProvider asyncLockProvider,
             VssConnection vssConnection,
             BuildCompleteQueue buildCompleteQueue,
@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                   options.Value.MissingPipelineRunsWorker)
         {
             this.logger = logger;
-            this.runProcessor = runProcessor;
+            this.processorFactory = processorFactory;
             this.buildCompleteQueue = buildCompleteQueue;
             this.options = options;
 
@@ -50,9 +50,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
             var buildMinTime = DateTimeOffset.UtcNow.Subtract(settings.MissingPipelineRunsWorker.LookbackPeriod);
             var buildMaxTime = DateTimeOffset.UtcNow.Subtract(TimeSpan.FromHours(1));
 
+            var processor = this.processorFactory();
             foreach (string project in settings.Projects)
             {
-                var knownBlobs = await this.runProcessor.GetBuildBlobNamesAsync(project, buildMinTime, buildMaxTime, cancellationToken);
+                var knownBlobs = await processor.GetBuildBlobNamesAsync(project, buildMinTime, buildMaxTime, cancellationToken);
 
                 string continuationToken = null;
                 do
@@ -69,7 +70,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                     var enqueueCount = 0;
                     foreach (var build in completedBuilds)
                     {
-                        var blobName = this.runProcessor.GetBuildBlobName(build);
+                        var blobName = processor.GetBuildBlobName(build);
 
                         if (knownBlobs.Contains(blobName, StringComparer.InvariantCultureIgnoreCase))
                         {

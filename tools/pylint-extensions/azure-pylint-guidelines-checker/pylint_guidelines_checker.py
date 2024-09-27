@@ -2760,7 +2760,7 @@ class ImportTypeChecker(BaseChecker):
     """Checker to ensure no type is imported from the same module more than once within the same file,
     while allowing imports of the same type from different namespaces (e.g., sync and async clients)."""
 
-    name = "import-type-checker"
+    name = "duplicate-import-type"
     priority = -1
     msgs = {
         "C4764": (
@@ -2960,7 +2960,7 @@ def register(linter):
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))
-
+    linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(ImportTypeChecker(linter))
 
     linter.register_checker(DoNotLogErrorsEndUpRaising(linter))

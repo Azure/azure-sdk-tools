@@ -24,8 +24,6 @@ pr:
 variables:
   - template: /eng/pipelines/templates/variables/image.yml
   - template: /eng/pipelines/templates/variables/globals.yml
-  - name: ArtifactName
-    value: 'apiview'
   - name: VcpkgRelease
     value: '2024.08.23'
 
@@ -34,6 +32,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
+      ref: refs/tags/azure-sdk-build-tools_20240925.3
 
 stages:
   - stage: 'Build'

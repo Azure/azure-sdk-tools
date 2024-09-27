@@ -169,17 +169,13 @@ namespace Stress.Watcher
 
         public void HandleNamespaceEvent(WatchEventType eventType, V1Namespace ns)
         {
-            if (ExcludedNamespaces.Contains(ns.Name()))
+            if (ExcludedNamespaces.Contains(ns.Name()) || string.IsNullOrEmpty(ns.Name()))
             {
                 return;
             }
             if (!string.IsNullOrEmpty(WatchNamespace) && ns.Name() != WatchNamespace)
             {
                 Logger.Information($"Skipping namespace '{ns.Name()}' because it is not the watched namespace '{WatchNamespace}'");
-                return;
-            }
-            if (ns.Status?.Phase == "Terminating")
-            {
                 return;
             }
 
@@ -193,6 +189,18 @@ namespace Stress.Watcher
                         {
                             Logger.Error(t.Exception, "Error creating federated identity credential.");
                             return;
+                        }
+                    });
+                }
+                else if (eventType == WatchEventType.Deleted)
+                {
+                    DeleteFederatedIdentityCredential(ns).ContinueWith(t =>
+                    {
+                        Logger.Information("Releasing federated credential write semaphore");
+                        FederatedCredentialWriteSemaphore.Release();
+                        if (t.Exception != null)
+                        {
+                            Logger.Error(t.Exception, "Error deleting federated identity credential.");
                         }
                     });
                 }
@@ -313,6 +321,50 @@ namespace Stress.Watcher
             Logger.Information($"Created federated identity credential '{lro.Value.Data.Name}'");
 
             return selectedIdentity;
+        }
+
+        public async Task DeleteFederatedIdentityCredential(V1Namespace ns)
+        {
+            Logger.Information($"Waiting for federated credential write semaphore");
+            await FederatedCredentialWriteSemaphore.WaitAsync();
+
+            var credentialName = CreateFederatedIdentityCredentialName(ns);
+            var workloadApp = "";
+
+            WorkloadAppCache.Remove(credentialName);
+
+            foreach (var app in WorkloadAppPool)
+            {
+                var resourceId = UserAssignedIdentityResource.CreateResourceIdentifier(SubscriptionId, ClusterGroup, app);
+                var userAssignedIdentity = ArmClient.GetUserAssignedIdentityResource(resourceId);
+                var fedCreds = userAssignedIdentity.GetFederatedIdentityCredentials();
+                await foreach (var item in fedCreds.GetAllAsync())
+                {
+                    if (item.Data.Name == credentialName)
+                    {
+                        workloadApp = app;
+                        break;
+                    }
+                }
+                if (!String.IsNullOrEmpty(workloadApp))
+                {
+                    break;
+                }
+            }
+
+            if (string.IsNullOrEmpty(workloadApp))
+            {
+                Logger.Warning($"Federated identity credential '{credentialName}' not found in workload app pool. Skipping delete.");
+                return;
+            }
+
+            var federatedIdentityCredentialResourceId = FederatedIdentityCredentialResource.CreateResourceIdentifier(
+                    SubscriptionId, ClusterGroup, workloadApp, credentialName);
+            var federatedIdentityCredential = ArmClient.GetFederatedIdentityCredentialResource(federatedIdentityCredentialResourceId);
+
+            Logger.Information($"Deleting federated identity credential '{credentialName}' for managed identity '{workloadApp}'");
+            var lro = await federatedIdentityCredential.DeleteAsync(Azure.WaitUntil.Completed);
+            Logger.Information($"Deleted federated identity credential '{credentialName}'");
         }
     }
 }

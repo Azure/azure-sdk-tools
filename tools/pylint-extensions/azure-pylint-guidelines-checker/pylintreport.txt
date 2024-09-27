@@ -1,249 +1,211 @@
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.ai.generative.evaluate._client.openai_client
-sdk\ai\azure-ai-generative\azure\ai\generative\evaluate\_client\openai_client.py:43:4: C5000: AzureOpenAIClient::bounded_chat_completion (unapproved-client-method-name-prefix)
-************* Module azure.ai.generative.synthetic.simulator._conversation.augloop_client
-sdk\ai\azure-ai-generative\azure\ai\generative\synthetic\simulator\_conversation\augloop_client.py:217:4: C5000: AugLoopClient::reconnect_and_attempt_session_init (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-generative\azure\ai\generative\synthetic\simulator\_conversation\augloop_client.py:265:4: C5000: AugLoopClient::setup_session_after_init (unapproved-client-method-name-prefix)
-************* Module azure.ai.inference._patch
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:255:4: C5000: ChatCompletionsClient::complete (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:278:4: C5000: ChatCompletionsClient::complete (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:301:4: C5000: ChatCompletionsClient::complete (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:412:4: C5000: ChatCompletionsClient::complete (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:436:4: C5000: ChatCompletionsClient::complete (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:460:4: C5000: ChatCompletionsClient::complete (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:733:4: C5000: EmbeddingsClient::embed (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:775:4: C5000: EmbeddingsClient::embed (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:797:4: C5000: EmbeddingsClient::embed (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:818:4: C5000: EmbeddingsClient::embed (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:1017:4: C5000: ImageEmbeddingsClient::embed (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:1059:4: C5000: ImageEmbeddingsClient::embed (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:1081:4: C5000: ImageEmbeddingsClient::embed (unapproved-client-method-name-prefix)
-sdk\ai\azure-ai-inference\azure\ai\inference\_patch.py:1102:4: C5000: ImageEmbeddingsClient::embed (unapproved-client-method-name-prefix)
-************* Module azure.ai.resources.client._ai_client
-sdk\ai\azure-ai-resources\azure\ai\resources\client\_ai_client.py:334:4: C5000: AIClient::build_index_on_cloud (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.98/10 (previous run: 10.00/10, -0.02)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.98/10, +0.02)
-
-
-------------------------------------
-Your code has been rated at 10.00/10
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.appconfiguration._azure_appconfiguration_client
-sdk\appconfiguration\azure-appconfiguration\azure\appconfiguration\_azure_appconfiguration_client.py:689:4: C5000: AzureAppConfigurationClient::archive_snapshot (unapproved-client-method-name-prefix)
-sdk\appconfiguration\azure-appconfiguration\azure\appconfiguration\_azure_appconfiguration_client.py:730:4: C5000: AzureAppConfigurationClient::recover_snapshot (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.appconfiguration._app_configuration_management_client
-sdk\appconfiguration\azure-mgmt-appconfiguration\azure\mgmt\appconfiguration\_app_configuration_management_client.py:87:4: C5000: AppConfigurationManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.appconfiguration.aio._app_configuration_management_client
-sdk\appconfiguration\azure-mgmt-appconfiguration\azure\mgmt\appconfiguration\aio\_app_configuration_management_client.py:87:4: C5000: AppConfigurationManagementClient::models (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.00)
-
-
-------------------------------------
-Your code has been rated at 10.00/10
-
-************* Module azure.mgmt.applicationinsights._application_insights_management_client
-sdk\applicationinsights\azure-mgmt-applicationinsights\azure\mgmt\applicationinsights\_application_insights_management_client.py:108:4: C5000: ApplicationInsightsManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.applicationinsights.aio._application_insights_management_client
-sdk\applicationinsights\azure-mgmt-applicationinsights\azure\mgmt\applicationinsights\aio\_application_insights_management_client.py:108:4: C5000: ApplicationInsightsManagementClient::models (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-************* Module azure.mgmt.appplatform._app_platform_management_client
-sdk\appplatform\azure-mgmt-appplatform\azure\mgmt\appplatform\_app_platform_management_client.py:109:4: C5000: AppPlatformManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.appplatform.aio._app_platform_management_client
-sdk\appplatform\azure-mgmt-appplatform\azure\mgmt\appplatform\aio\_app_platform_management_client.py:109:4: C5000: AppPlatformManagementClient::models (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-************* Module azure.mgmt.web._web_site_management_client
-sdk\appservice\azure-mgmt-web\azure\mgmt\web\_web_site_management_client.py:112:4: C5000: WebSiteManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.web.aio._web_site_management_client
-sdk\appservice\azure-mgmt-web\azure\mgmt\web\aio\_web_site_management_client.py:112:4: C5000: WebSiteManagementClient::models (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.security.attestation._administration_client
-sdk\attestation\azure-security-attestation\azure\security\attestation\_administration_client.py:290:4: C5000: AttestationAdministrationClient::reset_policy (unapproved-client-method-name-prefix)
-************* Module azure.security.attestation._client
-sdk\attestation\azure-security-attestation\azure\security\attestation\_client.py:114:4: C5000: AttestationClient::attest_sgx_enclave (unapproved-client-method-name-prefix)
-sdk\attestation\azure-security-attestation\azure\security\attestation\_client.py:232:4: C5000: AttestationClient::attest_open_enclave (unapproved-client-method-name-prefix)
-sdk\attestation\azure-security-attestation\azure\security\attestation\_client.py:357:4: C5000: AttestationClient::attest_tpm (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.98/10 (previous run: 10.00/10, -0.02)
-
-************* Module azure.mgmt.authorization._authorization_management_client
-sdk\authorization\azure-mgmt-authorization\azure\mgmt\authorization\_authorization_management_client.py:131:4: C5000: AuthorizationManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.authorization.aio._authorization_management_client
-sdk\authorization\azure-mgmt-authorization\azure\mgmt\authorization\aio\_authorization_management_client.py:131:4: C5000: AuthorizationManagementClient::models (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.00)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.98/10, +0.02)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
-------------------------------------
-Your code has been rated at 10.00/10
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
-------------------------------------
-Your code has been rated at 10.00/10
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
 ************* Module azure.cognitiveservices.formrecognizer.form_recognizer_client
-sdk\cognitiveservices\azure-cognitiveservices-formrecognizer\azure\cognitiveservices\formrecognizer\form_recognizer_client.py:75:4: C5000: FormRecognizerClient::train_custom_model (unapproved-client-method-name-prefix)
+sdk\cognitiveservices\azure-cognitiveservices-formrecognizer\azure\cognitiveservices\formrecognizer\form_recognizer_client.py:75:4: C5000: train_custom_model azure.cognitiveservices.formrecognizer.form_recognizer_client (unapproved-client-method-name-prefix)
 ************* Module azure.cognitiveservices.language.textanalytics.text_analytics_client
-sdk\cognitiveservices\azure-cognitiveservices-language-textanalytics\azure\cognitiveservices\language\textanalytics\text_analytics_client.py:76:4: C5000: TextAnalyticsClient::detect_language (unapproved-client-method-name-prefix)
-sdk\cognitiveservices\azure-cognitiveservices-language-textanalytics\azure\cognitiveservices\language\textanalytics\text_analytics_client.py:150:4: C5000: TextAnalyticsClient::entities (unapproved-client-method-name-prefix)
-sdk\cognitiveservices\azure-cognitiveservices-language-textanalytics\azure\cognitiveservices\language\textanalytics\text_analytics_client.py:226:4: C5000: TextAnalyticsClient::key_phrases (unapproved-client-method-name-prefix)
-sdk\cognitiveservices\azure-cognitiveservices-language-textanalytics\azure\cognitiveservices\language\textanalytics\text_analytics_client.py:302:4: C5000: TextAnalyticsClient::sentiment (unapproved-client-method-name-prefix)
+sdk\cognitiveservices\azure-cognitiveservices-language-textanalytics\azure\cognitiveservices\language\textanalytics\text_analytics_client.py:76:4: C5000: detect_language azure.cognitiveservices.language.textanalytics.text_analytics_client (unapproved-client-method-name-prefix)
+sdk\cognitiveservices\azure-cognitiveservices-language-textanalytics\azure\cognitiveservices\language\textanalytics\text_analytics_client.py:150:4: C5000: entities azure.cognitiveservices.language.textanalytics.text_analytics_client (unapproved-client-method-name-prefix)
+sdk\cognitiveservices\azure-cognitiveservices-language-textanalytics\azure\cognitiveservices\language\textanalytics\text_analytics_client.py:226:4: C5000: key_phrases azure.cognitiveservices.language.textanalytics.text_analytics_client (unapproved-client-method-name-prefix)
+sdk\cognitiveservices\azure-cognitiveservices-language-textanalytics\azure\cognitiveservices\language\textanalytics\text_analytics_client.py:302:4: C5000: sentiment azure.cognitiveservices.language.textanalytics.text_analytics_client (unapproved-client-method-name-prefix)
 ************* Module azure.cognitiveservices.personalizer.personalizer_client
-sdk\cognitiveservices\azure-cognitiveservices-personalizer\azure\cognitiveservices\personalizer\personalizer_client.py:80:4: C5000: PersonalizerClient::rank (unapproved-client-method-name-prefix)
+sdk\cognitiveservices\azure-cognitiveservices-personalizer\azure\cognitiveservices\personalizer\personalizer_client.py:80:4: C5000: rank azure.cognitiveservices.personalizer.personalizer_client (unapproved-client-method-name-prefix)
 
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
+-------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 8.95/10, +1.04)
 
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.communication.callautomation._call_automation_client
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:310:4: C5000: CallAutomationClient::answer_call (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:370:4: C5000: CallAutomationClient::redirect_call (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:416:4: C5000: CallAutomationClient::reject_call (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:446:4: C5000: CallAutomationClient::start_recording (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:499:4: C5000: CallAutomationClient::start_recording (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:552:4: C5000: CallAutomationClient::start_recording (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:586:4: C5000: CallAutomationClient::stop_recording (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:602:4: C5000: CallAutomationClient::pause_recording (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_automation_client.py:618:4: C5000: CallAutomationClient::resume_recording (unapproved-client-method-name-prefix)
-************* Module azure.communication.callautomation._call_connection_client
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:192:4: C5000: CallConnectionClient::hang_up (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:249:4: C5000: CallConnectionClient::transfer_call_to_participant (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:415:4: C5000: CallConnectionClient::play_media (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:513:4: C5000: CallConnectionClient::play_media_to_all (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:559:4: C5000: CallConnectionClient::start_recognizing_media (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:692:4: C5000: CallConnectionClient::start_continuous_dtmf_recognition (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:727:4: C5000: CallConnectionClient::stop_continuous_dtmf_recognition (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:804:4: C5000: CallConnectionClient::mute_participant (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:871:4: C5000: CallConnectionClient::start_hold_music (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:911:4: C5000: CallConnectionClient::stop_hold_music (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:938:4: C5000: CallConnectionClient::start_transcription (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:965:4: C5000: CallConnectionClient::stop_transcription (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:1008:4: C5000: CallConnectionClient::hold (unapproved-client-method-name-prefix)
-sdk\communication\azure-communication-callautomation\azure\communication\callautomation\_call_connection_client.py:1056:4: C5000: CallConnectionClient::unhold (unapproved-client-method-name-prefix)
-************* Module azure.communication.identity._communication_identity_client
-sdk\communication\azure-communication-identity\azure\communication\identity\_communication_identity_client.py:188:4: C5000: CommunicationIdentityClient::revoke_tokens (unapproved-client-method-name-prefix)
-************* Module azure.communication.phonenumbers._phone_numbers_client
-sdk\communication\azure-communication-phonenumbers\azure\communication\phonenumbers\_phone_numbers_client.py:425:4: C5000: PhoneNumbersClient::search_operator_information (unapproved-client-method-name-prefix)
-************* Module azure.communication.phonenumbers.aio._phone_numbers_client_async
-sdk\communication\azure-communication-phonenumbers\azure\communication\phonenumbers\aio\_phone_numbers_client_async.py:421:4: C5000: PhoneNumbersClient::search_operator_information (unapproved-client-method-name-prefix)
 
 -------------------------------------------------------------------
-Your code has been rated at 9.99/10 (previous run: 10.00/10, -0.01)
+Your code has been rated at 10.00/10 (previous run: 9.97/10, +0.03)
 
-************* Module azure.mgmt.compute._compute_management_client
-sdk\compute\azure-mgmt-compute\azure\mgmt\compute\_compute_management_client.py:132:4: C5000: ComputeManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.compute.aio._compute_management_client
-sdk\compute\azure-mgmt-compute\azure\mgmt\compute\aio\_compute_management_client.py:132:4: C5000: ComputeManagementClient::models (unapproved-client-method-name-prefix)
 
 --------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+-------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 9.53/10, +0.47)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+-------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.01)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+------------------------------------
+Your code has been rated at 10.00/10
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 
 --------------------------------------------------------------------
@@ -269,27 +231,6 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.containerregistry._exchange_client
-sdk\containerregistry\azure-containerregistry\azure\containerregistry\_exchange_client.py:76:4: C5000: ACRExchangeClient::exchange_aad_token_for_refresh_token (unapproved-client-method-name-prefix)
-sdk\containerregistry\azure-containerregistry\azure\containerregistry\_exchange_client.py:88:4: C5000: ACRExchangeClient::exchange_refresh_token_for_access_token (unapproved-client-method-name-prefix)
-************* Module azure.containerregistry._anonymous_exchange_client
-sdk\containerregistry\azure-containerregistry\azure\containerregistry\_anonymous_exchange_client.py:60:4: C5000: AnonymousACRExchangeClient::exchange_refresh_token_for_access_token (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.containerregistry._container_registry_management_client
-sdk\containerregistry\azure-mgmt-containerregistry\azure\mgmt\containerregistry\_container_registry_management_client.py:96:4: C5000: ContainerRegistryManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.containerregistry.aio._container_registry_management_client
-sdk\containerregistry\azure-mgmt-containerregistry\azure\mgmt\containerregistry\aio\_container_registry_management_client.py:96:4: C5000: ContainerRegistryManagementClient::models (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.mgmt.containerservice._container_service_client
-sdk\containerservice\azure-mgmt-containerservice\azure\mgmt\containerservice\_container_service_client.py:117:4: C5000: ContainerServiceClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.containerservice.aio._container_service_client
-sdk\containerservice\azure-mgmt-containerservice\azure\mgmt\containerservice\aio\_container_service_client.py:117:4: C5000: ContainerServiceClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.containerservicefleet._container_service_fleet_mgmt_client
-sdk\containerservice\azure-mgmt-containerservicefleet\azure\mgmt\containerservicefleet\_container_service_fleet_mgmt_client.py:108:4: C5000: ContainerServiceFleetMgmtClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.containerservicefleet.aio._container_service_fleet_mgmt_client
-sdk\containerservice\azure-mgmt-containerservicefleet\azure\mgmt\containerservicefleet\aio\_container_service_fleet_mgmt_client.py:108:4: C5000: ContainerServiceFleetMgmtClient::models (unapproved-client-method-name-prefix)
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
@@ -297,76 +238,6 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.servicemanagement._http.httpclient
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\_http\httpclient.py:171:4: C5000: _HTTPClient::perform_request (unapproved-client-method-name-prefix)
-************* Module azure.servicemanagement.servicemanagementclient
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:95:4: C5000: _ServiceManagementClient::should_use_requests (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:118:4: C5000: _ServiceManagementClient::with_filter (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:155:4: C5000: _ServiceManagementClient::timeout (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:158:4: C5000: _ServiceManagementClient::perform_get (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:179:4: C5000: _ServiceManagementClient::perform_put (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:203:4: C5000: _ServiceManagementClient::perform_post (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:228:4: C5000: _ServiceManagementClient::perform_delete (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:250:4: C5000: _ServiceManagementClient::wait_for_operation_status_progress_default_callback (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:254:4: C5000: _ServiceManagementClient::wait_for_operation_status_success_default_callback (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:258:4: C5000: _ServiceManagementClient::wait_for_operation_status_failure_default_callback (unapproved-client-method-name-prefix)
-sdk\core\azure-servicemanagement-legacy\azure\servicemanagement\servicemanagementclient.py:264:4: C5000: _ServiceManagementClient::wait_for_operation_status (unapproved-client-method-name-prefix)
-
-------------------------------------------------------------------
-Your code has been rated at 9.99/10 (previous run: 9.99/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.mgmt.databox._data_box_management_client
-sdk\databox\azure-mgmt-databox\azure\mgmt\databox\_data_box_management_client.py:87:4: C5000: DataBoxManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.databox.aio._data_box_management_client
-sdk\databox\azure-mgmt-databox\azure\mgmt\databox\aio\_data_box_management_client.py:87:4: C5000: DataBoxManagementClient::models (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-************* Module azure.mgmt.databoxedge._data_box_edge_management_client
-sdk\databoxedge\azure-mgmt-databoxedge\azure\mgmt\databoxedge\_data_box_edge_management_client.py:87:4: C5000: DataBoxEdgeManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.databoxedge.aio._data_box_edge_management_client
-sdk\databoxedge\azure-mgmt-databoxedge\azure\mgmt\databoxedge\aio\_data_box_edge_management_client.py:87:4: C5000: DataBoxEdgeManagementClient::models (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.50/10, +0.50)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
-------------------------------------
-Your code has been rated at 10.00/10
 
 
 --------------------------------------------------------------------
@@ -416,17 +287,9 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.digitaltwins.core._digitaltwins_client
-sdk\digitaltwins\azure-digitaltwins-core\azure\digitaltwins\core\_digitaltwins_client.py:398:4: C5000: DigitalTwinsClient::publish_telemetry (unapproved-client-method-name-prefix)
-sdk\digitaltwins\azure-digitaltwins-core\azure\digitaltwins\core\_digitaltwins_client.py:425:4: C5000: DigitalTwinsClient::publish_component_telemetry (unapproved-client-method-name-prefix)
-sdk\digitaltwins\azure-digitaltwins-core\azure\digitaltwins\core\_digitaltwins_client.py:527:4: C5000: DigitalTwinsClient::decommission_model (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.digitaltwins._azure_digital_twins_management_client
-sdk\digitaltwins\azure-mgmt-digitaltwins\azure\mgmt\digitaltwins\_azure_digital_twins_management_client.py:86:4: C5000: AzureDigitalTwinsManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.digitaltwins.aio._azure_digital_twins_management_client
-sdk\digitaltwins\azure-mgmt-digitaltwins\azure\mgmt\digitaltwins\aio\_azure_digital_twins_management_client.py:86:4: C5000: AzureDigitalTwinsManagementClient::models (unapproved-client-method-name-prefix)
 
 --------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 
 --------------------------------------------------------------------
@@ -448,57 +311,10 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.mgmt.edgeorder._edge_order_management_client
-sdk\edgeorder\azure-mgmt-edgeorder\azure\mgmt\edgeorder\_edge_order_management_client.py:87:4: C5000: EdgeOrderManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.edgeorder.aio._edge_order_management_client
-sdk\edgeorder\azure-mgmt-edgeorder\azure\mgmt\edgeorder\aio\_edge_order_management_client.py:87:4: C5000: EdgeOrderManagementClient::models (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.00)
-
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.eventhub._consumer_client
-sdk\eventhub\azure-eventhub\azure\eventhub\_consumer_client.py:474:4: C5000: EventHubConsumerClient::receive (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_consumer_client.py:585:4: C5000: EventHubConsumerClient::receive_batch (unapproved-client-method-name-prefix)
-************* Module azure.eventhub._producer_client
-sdk\eventhub\azure-eventhub\azure\eventhub\_producer_client.py:893:4: C5000: EventHubProducerClient::flush (unapproved-client-method-name-prefix)
-************* Module azure.eventhub._pyamqp.client
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:299:4: C5000: AMQPClient::open (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:386:4: C5000: AMQPClient::auth_complete (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:398:4: C5000: AMQPClient::client_ready (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:417:4: C5000: AMQPClient::do_work (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:433:4: C5000: AMQPClient::mgmt_request (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:947:4: C5000: ReceiveClient::receive_message_batch (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:983:4: C5000: ReceiveClient::receive_messages_iter (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:1031:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:1042:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:1053:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:1065:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:1079:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\eventhub\azure-eventhub\azure\eventhub\_pyamqp\client.py:1091:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.eventhub._event_hub_management_client
-sdk\eventhub\azure-mgmt-eventhub\azure\mgmt\eventhub\_event_hub_management_client.py:87:4: C5000: EventHubManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.eventhub.aio._event_hub_management_client
-sdk\eventhub\azure-mgmt-eventhub\azure\mgmt\eventhub\aio\_event_hub_management_client.py:87:4: C5000: EventHubManagementClient::models (unapproved-client-method-name-prefix)
 
 ------------------------------------
 Your code has been rated at 10.00/10
@@ -507,20 +323,6 @@ Your code has been rated at 10.00/10
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.ai.vision.face._patch
-sdk\face\azure-ai-vision-face\azure\ai\vision\face\_patch.py:36:4: C5000: FaceClient::detect_from_url (unapproved-client-method-name-prefix)
-sdk\face\azure-ai-vision-face\azure\ai\vision\face\_patch.py:52:4: C5000: FaceClient::detect_from_url (unapproved-client-method-name-prefix)
-sdk\face\azure-ai-vision-face\azure\ai\vision\face\_patch.py:68:4: C5000: FaceClient::detect_from_url (unapproved-client-method-name-prefix)
-sdk\face\azure-ai-vision-face\azure\ai\vision\face\_patch.py:84:4: C5000: FaceClient::detect_from_url (unapproved-client-method-name-prefix)
-sdk\face\azure-ai-vision-face\azure\ai\vision\face\_patch.py:485:4: C5000: FaceClient::detect (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.98/10 (previous run: 10.00/10, -0.02)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.98/10, +0.02)
-
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
@@ -576,85 +378,6 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.identity._internal.aad_client
-sdk\identity\azure-identity\azure\identity\_internal\aad_client.py:27:4: C5000: AadClient::obtain_token_by_authorization_code (unapproved-client-method-name-prefix)
-sdk\identity\azure-identity\azure\identity\_internal\aad_client.py:35:4: C5000: AadClient::obtain_token_by_client_certificate (unapproved-client-method-name-prefix)
-sdk\identity\azure-identity\azure\identity\_internal\aad_client.py:41:4: C5000: AadClient::obtain_token_by_client_secret (unapproved-client-method-name-prefix)
-sdk\identity\azure-identity\azure\identity\_internal\aad_client.py:45:4: C5000: AadClient::obtain_token_by_jwt_assertion (unapproved-client-method-name-prefix)
-sdk\identity\azure-identity\azure\identity\_internal\aad_client.py:49:4: C5000: AadClient::obtain_token_by_refresh_token (unapproved-client-method-name-prefix)
-sdk\identity\azure-identity\azure\identity\_internal\aad_client.py:53:4: C5000: AadClient::obtain_token_on_behalf_of (unapproved-client-method-name-prefix)
-************* Module azure.identity._internal.managed_identity_client
-sdk\identity\azure-identity\azure\identity\_internal\managed_identity_client.py:127:4: C5000: ManagedIdentityClient::request_token (unapproved-client-method-name-prefix)
-************* Module azure.identity._internal.msal_client
-sdk\identity\azure-identity\azure\identity\_internal\msal_client.py:78:4: C5000: MsalClient::post (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.98/10 (previous run: 10.00/10, -0.02)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.98/10, +0.02)
-
-************* Module azure.mgmt.iothub._iot_hub_client
-sdk\iothub\azure-mgmt-iothub\azure\mgmt\iothub\_iot_hub_client.py:88:4: C5000: IotHubClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.iothub.aio._iot_hub_client
-sdk\iothub\azure-mgmt-iothub\azure\mgmt\iothub\aio\_iot_hub_client.py:88:4: C5000: IotHubClient::models (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-************* Module azure.keyvault.certificates._client
-sdk\keyvault\azure-keyvault-certificates\azure\keyvault\certificates\_client.py:274:4: C5000: CertificateClient::purge_deleted_certificate (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-certificates\azure\keyvault\certificates\_client.py:344:4: C5000: CertificateClient::import_certificate (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-certificates\azure\keyvault\certificates\_client.py:486:4: C5000: CertificateClient::backup_certificate (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-certificates\azure\keyvault\certificates\_client.py:516:4: C5000: CertificateClient::restore_certificate_backup (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-certificates\azure\keyvault\certificates\_client.py:791:4: C5000: CertificateClient::merge_certificate (unapproved-client-method-name-prefix)
-************* Module azure.keyvault.keys._client
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\_client.py:492:4: C5000: KeyClient::purge_deleted_key (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\_client.py:627:4: C5000: KeyClient::backup_key (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\_client.py:656:4: C5000: KeyClient::restore_key_backup (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\_client.py:689:4: C5000: KeyClient::import_key (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\_client.py:743:4: C5000: KeyClient::release_key (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\_client.py:819:4: C5000: KeyClient::rotate_key (unapproved-client-method-name-prefix)
-************* Module azure.keyvault.keys.crypto._client
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\crypto\_client.py:250:4: C5000: CryptographyClient::encrypt (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\crypto\_client.py:326:4: C5000: CryptographyClient::decrypt (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\crypto\_client.py:390:4: C5000: CryptographyClient::wrap_key (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\crypto\_client.py:434:4: C5000: CryptographyClient::unwrap_key (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\crypto\_client.py:476:4: C5000: CryptographyClient::sign (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-keys\azure\keyvault\keys\crypto\_client.py:520:4: C5000: CryptographyClient::verify (unapproved-client-method-name-prefix)
-************* Module azure.keyvault.secrets._client
-sdk\keyvault\azure-keyvault-secrets\azure\keyvault\secrets\_client.py:255:4: C5000: SecretClient::backup_secret (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-secrets\azure\keyvault\secrets\_client.py:279:4: C5000: SecretClient::restore_secret_backup (unapproved-client-method-name-prefix)
-sdk\keyvault\azure-keyvault-secrets\azure\keyvault\secrets\_client.py:407:4: C5000: SecretClient::purge_deleted_secret (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.keyvault._key_vault_management_client
-sdk\keyvault\azure-mgmt-keyvault\azure\mgmt\keyvault\_key_vault_management_client.py:109:4: C5000: KeyVaultManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.keyvault.aio._key_vault_management_client
-sdk\keyvault\azure-mgmt-keyvault\azure\mgmt\keyvault\aio\_key_vault_management_client.py:109:4: C5000: KeyVaultManagementClient::models (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.00)
-
-************* Module azure.mgmt.kubernetesconfiguration._source_control_configuration_client
-sdk\kubernetesconfiguration\azure-mgmt-kubernetesconfiguration\azure\mgmt\kubernetesconfiguration\_source_control_configuration_client.py:95:4: C5000: SourceControlConfigurationClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.kubernetesconfiguration.aio._source_control_configuration_client
-sdk\kubernetesconfiguration\azure-mgmt-kubernetesconfiguration\azure\mgmt\kubernetesconfiguration\aio\_source_control_configuration_client.py:95:4: C5000: SourceControlConfigurationClient::models (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.01)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.41/10, +0.59)
 
 
 --------------------------------------------------------------------
@@ -720,12 +443,6 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.ai.metricsadvisor._patch
-sdk\metricsadvisor\azure-ai-metricsadvisor\azure\ai\metricsadvisor\_patch.py:1159:4: C5000: MetricsAdvisorAdministrationClient::refresh_data_feed_ingestion (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
@@ -734,21 +451,9 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.ai.ml.identity._internal.managed_identity_client
-sdk\ml\azure-ai-ml\azure\ai\ml\identity\_internal\managed_identity_client.py:120:4: C5000: ManagedIdentityClient::request_token (unapproved-client-method-name-prefix)
-************* Module azure.ai.ml._artifacts._blob_storage_helper
-sdk\ml\azure-ai-ml\azure\ai\ml\_artifacts\_blob_storage_helper.py:297:4: C5000: BlobStorageClient::exists (unapproved-client-method-name-prefix)
-************* Module azure.ai.ml._artifacts._gen2_storage_helper
-sdk\ml\azure-ai-ml\azure\ai\ml\_artifacts\_gen2_storage_helper.py:248:4: C5000: Gen2StorageClient::exists (unapproved-client-method-name-prefix)
-************* Module azure.ai.ml._artifacts._fileshare_storage_helper
-sdk\ml\azure-ai-ml\azure\ai\ml\_artifacts\_fileshare_storage_helper.py:254:4: C5000: FileStorageClient::exists (unapproved-client-method-name-prefix)
-************* Module azure.ai.ml._local_endpoints.docker_client
-sdk\ml\azure-ai-ml\azure\ai\ml\_local_endpoints\docker_client.py:317:4: C5000: DockerClient::logs (unapproved-client-method-name-prefix)
-************* Module azure.ai.ml._local_endpoints.vscode_debug.vscode_client
-sdk\ml\azure-ai-ml\azure\ai\ml\_local_endpoints\vscode_debug\vscode_client.py:36:4: C5000: VSCodeClient::invoke_dev_container (unapproved-client-method-name-prefix)
 
 --------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 
 --------------------------------------------------------------------
@@ -762,25 +467,17 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.mgmt.monitor._monitor_management_client
-sdk\monitor\azure-mgmt-monitor\azure\mgmt\monitor\_monitor_management_client.py:121:4: C5000: MonitorManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.monitor.aio._monitor_management_client
-sdk\monitor\azure-mgmt-monitor\azure\mgmt\monitor\aio\_monitor_management_client.py:121:4: C5000: MonitorManagementClient::models (unapproved-client-method-name-prefix)
 
 --------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
-************* Module azure.mgmt.dns._dns_management_client
-sdk\network\azure-mgmt-dns\azure\mgmt\dns\_dns_management_client.py:88:4: C5000: DnsManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.dns.aio._dns_management_client
-sdk\network\azure-mgmt-dns\azure\mgmt\dns\aio\_dns_management_client.py:88:4: C5000: DnsManagementClient::models (unapproved-client-method-name-prefix)
 
 --------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 
 --------------------------------------------------------------------
@@ -793,6 +490,170 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+-------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 9.29/10, +0.71)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+
+------------------------------------
+Your code has been rated at 10.00/10
+
+
+------------------------------------
+Your code has been rated at 10.00/10
 
 
 ------------------------------------
@@ -831,34 +692,6 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 
-------------------------------------
-Your code has been rated at 10.00/10
-
-
-------------------------------------
-Your code has been rated at 10.00/10
-
-************* Module azure.ai.personalizer._patch
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:76:4: C5000: PersonalizerAdministrationClient::export_model (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:91:4: C5000: PersonalizerAdministrationClient::import_model (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:105:4: C5000: PersonalizerAdministrationClient::reset_model (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:228:4: C5000: PersonalizerAdministrationClient::reset_policy (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:446:4: C5000: PersonalizerAdministrationClient::apply_from_evaluation (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:862:4: C5000: PersonalizerClient::rank (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:936:4: C5000: PersonalizerClient::reward (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:969:4: C5000: PersonalizerClient::activate (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:984:4: C5000: PersonalizerClient::rank_multi_slot (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:1070:4: C5000: PersonalizerClient::reward_multi_slot (unapproved-client-method-name-prefix)
-sdk\personalizer\azure-ai-personalizer\azure\ai\personalizer\_patch.py:1107:4: C5000: PersonalizerClient::activate_multi_slot (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.94/10 (previous run: 10.00/10, -0.06)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.94/10, +0.06)
-
-
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
@@ -897,408 +730,10 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 --------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
-------------------------------------
-Your code has been rated at 10.00/10
-
-************* Module azure.mgmt.redhatopenshift._azure_red_hat_open_shift_client
-sdk\redhatopenshift\azure-mgmt-redhatopenshift\azure\mgmt\redhatopenshift\_azure_red_hat_open_shift_client.py:109:4: C5000: AzureRedHatOpenShiftClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.redhatopenshift.aio._azure_red_hat_open_shift_client
-sdk\redhatopenshift\azure-mgmt-redhatopenshift\azure\mgmt\redhatopenshift\aio\_azure_red_hat_open_shift_client.py:109:4: C5000: AzureRedHatOpenShiftClient::models (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
-------------------------------------
-Your code has been rated at 10.00/10
-
-************* Module azure.mixedreality.remoterendering._remote_rendering_client
-sdk\remoterendering\azure-mixedreality-remoterendering\azure\mixedreality\remoterendering\_remote_rendering_client.py:320:4: C5000: RemoteRenderingClient::stop_rendering_session (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.98/10 (previous run: 10.00/10, -0.02)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.98/10, +0.02)
-
-************* Module azure.mgmt.resourcehealth._resource_health_mgmt_client
-sdk\resourcehealth\azure-mgmt-resourcehealth\azure\mgmt\resourcehealth\_resource_health_mgmt_client.py:87:4: C5000: ResourceHealthMgmtClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resourcehealth.aio._resource_health_mgmt_client
-sdk\resourcehealth\azure-mgmt-resourcehealth\azure\mgmt\resourcehealth\aio\_resource_health_mgmt_client.py:87:4: C5000: ResourceHealthMgmtClient::models (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.01)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.mgmt.msi.aio._managed_service_identity_client
-sdk\resources\azure-mgmt-msi\azure\mgmt\msi\aio\_managed_service_identity_client.py:85:4: C5000: ManagedServiceIdentityClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.msi._managed_service_identity_client
-sdk\resources\azure-mgmt-msi\azure\mgmt\msi\_managed_service_identity_client.py:85:4: C5000: ManagedServiceIdentityClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.changes._changes_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\changes\_changes_client.py:107:4: C5000: ChangesClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.changes.aio._changes_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\changes\aio\_changes_client.py:107:4: C5000: ChangesClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.deploymentscripts._deployment_scripts_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\deploymentscripts\_deployment_scripts_client.py:108:4: C5000: DeploymentScriptsClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.deploymentscripts.aio._deployment_scripts_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\deploymentscripts\aio\_deployment_scripts_client.py:108:4: C5000: DeploymentScriptsClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.deploymentstacks._deployment_stacks_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\deploymentstacks\_deployment_stacks_client.py:108:4: C5000: DeploymentStacksClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.deploymentstacks.aio._deployment_stacks_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\deploymentstacks\aio\_deployment_stacks_client.py:108:4: C5000: DeploymentStacksClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.features._feature_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\features\_feature_client.py:108:4: C5000: FeatureClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.features.aio._feature_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\features\aio\_feature_client.py:108:4: C5000: FeatureClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.links._management_link_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\links\_management_link_client.py:107:4: C5000: ManagementLinkClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.links.aio._management_link_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\links\aio\_management_link_client.py:107:4: C5000: ManagementLinkClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.locks._management_lock_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\locks\_management_lock_client.py:107:4: C5000: ManagementLockClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.locks.aio._management_lock_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\locks\aio\_management_lock_client.py:107:4: C5000: ManagementLockClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.managedapplications._application_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\managedapplications\_application_client.py:109:4: C5000: ApplicationClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.managedapplications.aio._application_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\managedapplications\aio\_application_client.py:109:4: C5000: ApplicationClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.policy._policy_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\policy\_policy_client.py:110:4: C5000: PolicyClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.policy.aio._policy_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\policy\aio\_policy_client.py:110:4: C5000: PolicyClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.privatelinks._resource_private_link_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\privatelinks\_resource_private_link_client.py:107:4: C5000: ResourcePrivateLinkClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.privatelinks.aio._resource_private_link_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\privatelinks\aio\_resource_private_link_client.py:107:4: C5000: ResourcePrivateLinkClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.resources._resource_management_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\resources\_resource_management_client.py:108:4: C5000: ResourceManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.resources.aio._resource_management_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\resources\aio\_resource_management_client.py:108:4: C5000: ResourceManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.subscriptions._subscription_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\subscriptions\_subscription_client.py:105:4: C5000: SubscriptionClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.subscriptions.aio._subscription_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\subscriptions\aio\_subscription_client.py:105:4: C5000: SubscriptionClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.templatespecs._template_specs_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\templatespecs\_template_specs_client.py:107:4: C5000: TemplateSpecsClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.resource.templatespecs.aio._template_specs_client
-sdk\resources\azure-mgmt-resource\azure\mgmt\resource\templatespecs\aio\_template_specs_client.py:107:4: C5000: TemplateSpecsClient::models (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.schemaregistry._patch
-sdk\schemaregistry\azure-schemaregistry\azure\schemaregistry\_patch.py:174:4: C5000: SchemaRegistryClient::register_schema (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.search.documents._search_client
-sdk\search\azure-search-documents\azure\search\documents\_search_client.py:143:4: C5000: SearchClient::search (unapproved-client-method-name-prefix)
-sdk\search\azure-search-documents\azure\search\documents\_search_client.py:388:4: C5000: SearchClient::suggest (unapproved-client-method-name-prefix)
-sdk\search\azure-search-documents\azure\search\documents\_search_client.py:476:4: C5000: SearchClient::autocomplete (unapproved-client-method-name-prefix)
-sdk\search\azure-search-documents\azure\search\documents\_search_client.py:618:4: C5000: SearchClient::merge_documents (unapproved-client-method-name-prefix)
-sdk\search\azure-search-documents\azure\search\documents\_search_client.py:648:4: C5000: SearchClient::merge_or_upload_documents (unapproved-client-method-name-prefix)
-sdk\search\azure-search-documents\azure\search\documents\_search_client.py:669:4: C5000: SearchClient::index_documents (unapproved-client-method-name-prefix)
-************* Module azure.search.documents.indexes._search_indexer_client
-sdk\search\azure-search-documents\azure\search\documents\indexes\_search_indexer_client.py:253:4: C5000: SearchIndexerClient::run_indexer (unapproved-client-method-name-prefix)
-sdk\search\azure-search-documents\azure\search\documents\indexes\_search_indexer_client.py:272:4: C5000: SearchIndexerClient::reset_indexer (unapproved-client-method-name-prefix)
-sdk\search\azure-search-documents\azure\search\documents\indexes\_search_indexer_client.py:291:4: C5000: SearchIndexerClient::reset_documents (unapproved-client-method-name-prefix)
-sdk\search\azure-search-documents\azure\search\documents\indexes\_search_indexer_client.py:641:4: C5000: SearchIndexerClient::reset_skills (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.98/10 (previous run: 10.00/10, -0.01)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.98/10, +0.02)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.mgmt.servicebus._service_bus_management_client
-sdk\servicebus\azure-mgmt-servicebus\azure\mgmt\servicebus\_service_bus_management_client.py:89:4: C5000: ServiceBusManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.servicebus.aio._service_bus_management_client
-sdk\servicebus\azure-mgmt-servicebus\azure\mgmt\servicebus\aio\_service_bus_management_client.py:89:4: C5000: ServiceBusManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.servicebus._pyamqp.client
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:296:4: C5000: AMQPClient::open (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:382:4: C5000: AMQPClient::auth_complete (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:394:4: C5000: AMQPClient::client_ready (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:413:4: C5000: AMQPClient::do_work (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:429:4: C5000: AMQPClient::mgmt_request (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:946:4: C5000: ReceiveClient::receive_message_batch (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:982:4: C5000: ReceiveClient::receive_messages_iter (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:1030:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:1041:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:1052:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:1064:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:1078:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-sdk\servicebus\azure-servicebus\azure\servicebus\_pyamqp\client.py:1090:4: C5000: ReceiveClient::settle_messages (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.mgmt.storage._storage_management_client
-sdk\storage\azure-mgmt-storage\azure\mgmt\storage\_storage_management_client.py:109:4: C5000: StorageManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.mgmt.storage.aio._storage_management_client
-sdk\storage\azure-mgmt-storage\azure\mgmt\storage\aio\_storage_management_client.py:109:4: C5000: StorageManagementClient::models (unapproved-client-method-name-prefix)
-************* Module azure.storage.blob._blob_service_client
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_service_client.py:474:4: C5000: BlobServiceClient::find_blobs_by_tags (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_service_client.py:657:4: C5000: BlobServiceClient::undelete_container (unapproved-client-method-name-prefix)
-************* Module azure.storage.blob._container_client
-sdk\storage\azure-storage-blob\azure\storage\blob\_container_client.py:420:4: C5000: ContainerClient::acquire_lease (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_container_client.py:536:4: C5000: ContainerClient::exists (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_container_client.py:881:4: C5000: ContainerClient::walk_blobs (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_container_client.py:937:4: C5000: ContainerClient::find_blobs_by_tags (unapproved-client-method-name-prefix)
-************* Module azure.storage.blob._lease
-sdk\storage\azure-storage-blob\azure\storage\blob\_lease.py:65:4: C5000: BlobLeaseClient::acquire (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_lease.py:123:4: C5000: BlobLeaseClient::renew (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_lease.py:178:4: C5000: BlobLeaseClient::release (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_lease.py:231:4: C5000: BlobLeaseClient::change (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_lease.py:284:4: C5000: BlobLeaseClient::break_lease (unapproved-client-method-name-prefix)
-************* Module azure.storage.blob._blob_client
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:926:4: C5000: BlobClient::undelete_blob (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:959:4: C5000: BlobClient::exists (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:1563:4: C5000: BlobClient::start_copy_from_url (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:1758:4: C5000: BlobClient::abort_copy (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:1789:4: C5000: BlobClient::acquire_lease (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:1911:4: C5000: BlobClient::stage_block (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:1977:4: C5000: BlobClient::stage_block_from_url (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:2087:4: C5000: BlobClient::commit_block_list (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:2634:4: C5000: BlobClient::resize_blob (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\_blob_client.py:3210:4: C5000: BlobClient::seal_append_blob (unapproved-client-method-name-prefix)
-************* Module azure.storage.blob.aio._blob_service_client_async
-sdk\storage\azure-storage-blob\azure\storage\blob\aio\_blob_service_client_async.py:477:4: C5000: BlobServiceClient::find_blobs_by_tags (unapproved-client-method-name-prefix)
-************* Module azure.storage.blob.aio._container_client_async
-sdk\storage\azure-storage-blob\azure\storage\blob\aio\_container_client_async.py:871:4: C5000: ContainerClient::walk_blobs (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-blob\azure\storage\blob\aio\_container_client_async.py:927:4: C5000: ContainerClient::find_blobs_by_tags (unapproved-client-method-name-prefix)
-************* Module azure.storage.filedatalake._data_lake_lease
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_lease.py:73:4: C5000: DataLakeLeaseClient::acquire (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_lease.py:114:4: C5000: DataLakeLeaseClient::renew (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_lease.py:153:4: C5000: DataLakeLeaseClient::release (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_lease.py:190:4: C5000: DataLakeLeaseClient::change (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_lease.py:226:4: C5000: DataLakeLeaseClient::break_lease (unapproved-client-method-name-prefix)
-************* Module azure.storage.filedatalake._data_lake_file_client
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_file_client.py:646:4: C5000: DataLakeFileClient::flush_data (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_file_client.py:802:4: C5000: DataLakeFileClient::exists (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_file_client.py:819:4: C5000: DataLakeFileClient::rename_file (unapproved-client-method-name-prefix)
-************* Module azure.storage.filedatalake._data_lake_service_client
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_service_client.py:348:4: C5000: DataLakeServiceClient::undelete_file_system (unapproved-client-method-name-prefix)
-************* Module azure.storage.filedatalake._data_lake_directory_client
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_directory_client.py:334:4: C5000: DataLakeDirectoryClient::exists (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_data_lake_directory_client.py:351:4: C5000: DataLakeDirectoryClient::rename_directory (unapproved-client-method-name-prefix)
-************* Module azure.storage.filedatalake._path_client
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_path_client.py:1072:4: C5000: PathClient::acquire_lease (unapproved-client-method-name-prefix)
-************* Module azure.storage.filedatalake._file_system_client
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_file_system_client.py:198:4: C5000: FileSystemClient::acquire_lease (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-datalake\azure\storage\filedatalake\_file_system_client.py:306:4: C5000: FileSystemClient::exists (unapproved-client-method-name-prefix)
-************* Module azure.storage.fileshare._lease
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_lease.py:72:4: C5000: ShareLeaseClient::acquire (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_lease.py:114:4: C5000: ShareLeaseClient::renew (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_lease.py:150:4: C5000: ShareLeaseClient::release (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_lease.py:179:4: C5000: ShareLeaseClient::change (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_lease.py:211:4: C5000: ShareLeaseClient::break_lease (unapproved-client-method-name-prefix)
-************* Module azure.storage.fileshare._directory_client
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_directory_client.py:434:4: C5000: ShareDirectoryClient::rename_directory (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_directory_client.py:773:4: C5000: ShareDirectoryClient::exists (unapproved-client-method-name-prefix)
-************* Module azure.storage.fileshare._file_client
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_file_client.py:331:4: C5000: ShareFileClient::acquire_lease (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_file_client.py:366:4: C5000: ShareFileClient::exists (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_file_client.py:645:4: C5000: ShareFileClient::start_copy_from_url (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_file_client.py:781:4: C5000: ShareFileClient::abort_copy (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_file_client.py:940:4: C5000: ShareFileClient::rename_file (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_file_client.py:1630:4: C5000: ShareFileClient::resize_file (unapproved-client-method-name-prefix)
-************* Module azure.storage.fileshare._share_service_client
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_share_service_client.py:419:4: C5000: ShareServiceClient::undelete_share (unapproved-client-method-name-prefix)
-************* Module azure.storage.fileshare._share_client
-sdk\storage\azure-storage-file-share\azure\storage\fileshare\_share_client.py:304:4: C5000: ShareClient::acquire_lease (unapproved-client-method-name-prefix)
-************* Module azure.storage.queue._queue_client
-sdk\storage\azure-storage-queue\azure\storage\queue\_queue_client.py:544:4: C5000: QueueClient::receive_message (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-queue\azure\storage\queue\_queue_client.py:614:4: C5000: QueueClient::receive_messages (unapproved-client-method-name-prefix)
-sdk\storage\azure-storage-queue\azure\storage\queue\_queue_client.py:837:4: C5000: QueueClient::peek_messages (unapproved-client-method-name-prefix)
-************* Module azure.storage.queue.aio._queue_client_async
-sdk\storage\azure-storage-queue\azure\storage\queue\aio\_queue_client_async.py:618:4: C5000: QueueClient::receive_messages (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.synapse.managedprivateendpoints._vnet_client
-sdk\synapse\azure-synapse-managedprivateendpoints\azure\synapse\managedprivateendpoints\_vnet_client.py:89:4: C5000: VnetClient::models (unapproved-client-method-name-prefix)
-************* Module azure.synapse.managedprivateendpoints.aio._vnet_client
-sdk\synapse\azure-synapse-managedprivateendpoints\azure\synapse\managedprivateendpoints\aio\_vnet_client.py:87:4: C5000: VnetClient::models (unapproved-client-method-name-prefix)
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, -0.00)
-
-************* Module azure.data.tables._table_client
-sdk\tables\azure-data-tables\azure\data\tables\_table_client.py:838:4: C5000: TableClient::submit_transaction (unapproved-client-method-name-prefix)
-sdk\tables\azure-data-tables\azure\data\tables\_table_client.py:875:4: C5000: TableClient::submit_transaction (unapproved-client-method-name-prefix)
-sdk\tables\azure-data-tables\azure\data\tables\_table_client.py:902:4: C5000: TableClient::submit_transaction (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.99/10 (previous run: 10.00/10, -0.01)
 
 
 -------------------------------------------------------------------
 Your code has been rated at 10.00/10 (previous run: 9.99/10, +0.01)
-
-************* Module azure.ai.textanalytics._text_analytics_client
-sdk\textanalytics\azure-ai-textanalytics\azure\ai\textanalytics\_text_analytics_client.py:164:4: C5000: TextAnalyticsClient::detect_language (unapproved-client-method-name-prefix)
-sdk\textanalytics\azure-ai-textanalytics\azure\ai\textanalytics\_text_analytics_client.py:271:4: C5000: TextAnalyticsClient::recognize_entities (unapproved-client-method-name-prefix)
-sdk\textanalytics\azure-ai-textanalytics\azure\ai\textanalytics\_text_analytics_client.py:382:4: C5000: TextAnalyticsClient::recognize_pii_entities (unapproved-client-method-name-prefix)
-sdk\textanalytics\azure-ai-textanalytics\azure\ai\textanalytics\_text_analytics_client.py:507:4: C5000: TextAnalyticsClient::recognize_linked_entities (unapproved-client-method-name-prefix)
-sdk\textanalytics\azure-ai-textanalytics\azure\ai\textanalytics\_text_analytics_client.py:829:4: C5000: TextAnalyticsClient::extract_key_phrases (unapproved-client-method-name-prefix)
-
--------------------------------------------------------------------
-Your code has been rated at 9.97/10 (previous run: 10.00/10, -0.03)
-
-
--------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 9.97/10, +0.03)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-
-************* Module azure.messaging.webpubsubclient._client
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:428:4: C5000: WebPubSubClient::join_group (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:450:4: C5000: WebPubSubClient::leave_group (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:781:4: C5000: WebPubSubClient::is_connected (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:1036:4: C5000: WebPubSubClient::open (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:1177:4: C5000: WebPubSubClient::unsubscribe (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:1190:4: C5000: WebPubSubClient::unsubscribe (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:1203:4: C5000: WebPubSubClient::unsubscribe (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:1216:4: C5000: WebPubSubClient::unsubscribe (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:1229:4: C5000: WebPubSubClient::unsubscribe (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:1242:4: C5000: WebPubSubClient::unsubscribe (unapproved-client-method-name-prefix)
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\_client.py:1255:4: C5000: WebPubSubClient::unsubscribe (unapproved-client-method-name-prefix)
-************* Module azure.messaging.webpubsubclient.aio._client
-sdk\webpubsub\azure-messaging-webpubsubclient\azure\messaging\webpubsubclient\aio\_client.py:694:4: C5000: WebPubSubClient::is_connected (unapproved-client-method-name-prefix)
-
-------------------------------------------------------------------
-Your code has been rated at 9.99/10 (previous run: 9.96/10, +0.02)
 
 
 --------------------------------------------------------------------

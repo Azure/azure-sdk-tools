@@ -125,18 +125,12 @@ stages:
           strategy: 
             runOnce: 
               deploy:
-                steps: 
-                  - checkout: azure-sdk-build-tools
-                    path: azure-sdk-build-tools
+                steps:
                   - download: current
                     artifact: release-artifacts
                   - template: pipelines/steps/binary-signing.yml@azure-sdk-build-tools
                     parameters:
                       BinaryPath: $(Pipeline.Workspace)/release-artifacts
-                  - pwsh: |
-                      Write-Host "Set Api Parser version to $(OfficialBuildId)"
-                      Write-Host "##vso[task.setvariable variable=APIVIEW_PARSER_VERSION]$(OfficialBuildId)"
-                    displayName: Determine Next ApiView Parser Version
                   - task: AzurePowerShell@5
                     displayName: Publish Public ApiView Parser
                     inputs:
@@ -145,6 +139,6 @@ stages:
                       azurePowerShellVersion: LatestVersion 
                       pwsh: true
                       Inline: |
-                        azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$(APIVIEW_PARSER_VERSION)" --recursive
+                        azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$(OfficialBuildId)" --recursive
                     env:
                       AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'

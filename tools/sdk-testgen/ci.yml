@@ -74,10 +74,11 @@ stages:
             displayName: Bump versions
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
-              npm pack
+              tarball=$(npm pack)
+              mv "$tarball" ./dist/artifacts/packages
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-          - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages
+          - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/dist/artifacts/packages
             artifact: packages
             displayName: Publish packages(.tgz) as pipeline artifacts
 
@@ -106,12 +107,10 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
               npm pack
-              npm publish --tag latest
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
               export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
-              npm pack
               npm publish --tag latest --access public
             displayName: Publish packages
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

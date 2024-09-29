@@ -70,11 +70,12 @@ stages:
 
           - script: |
               commitId=$(git rev-parse --short HEAD)
-              npm publish --apply --prerelease-name="ci.$commitId"
+              npm version prerelease --preid="ci.$commitId"
             displayName: Bump versions
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
-              npm publish --publish --pack --include-all
+              npm pack
+              npm publish --tag latest
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages
@@ -105,11 +106,13 @@ stages:
             displayName: "Build all packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
-              npm publish --publish --pack --include-all
+              npm pack
+              npm publish --tag latest
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
               export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
-              npm publish --publish --include-all --set-access-level public
+              npm pack
+              npm publish --tag latest --access public
             displayName: Publish packages
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

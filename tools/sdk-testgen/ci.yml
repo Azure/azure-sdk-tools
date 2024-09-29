@@ -36,8 +36,8 @@ stages:
   - stage: build
     displayName: "Build, Lint and Test"
     jobs:
-      - job: MonoRepo
-        displayName: "MonoRepo"
+      - job: npm
+        displayName: "sdk-testgen"
         steps:
           - template: ../../eng/common/pipelines/templates/steps/verify-path-length.yml
             parameters:
@@ -46,17 +46,17 @@ stages:
           - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yml
           
           - script: |
-              rush rebuild -v
+              npm rebuild -v
             displayName: "Build all packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
-              rush lint -v
+              npm lint -v
             displayName: "Lint all packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
 
           - script: |
               export PATH=$PATH:$HOME/go/bin
-              rush test -v
+              npm test -v
             displayName: "Test all packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - task: PublishTestResults@2
@@ -70,11 +70,11 @@ stages:
 
           - script: |
               commitId=$(git rev-parse --short HEAD)
-              rush publish --apply --prerelease-name="ci.$commitId"
+              npm publish --apply --prerelease-name="ci.$commitId"
             displayName: Bump versions
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
-              rush publish --publish --pack --include-all
+              npm publish --publish --pack --include-all
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages
@@ -101,15 +101,15 @@ stages:
           steps:
           - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yml
           - script: |
-              rush rebuild -v
+              npm rebuild -v
             displayName: "Build all packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
-              rush publish --publish --pack --include-all
+              npm publish --publish --pack --include-all
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
               export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
-              rush publish --publish --include-all --set-access-level public
+              npm publish --publish --include-all --set-access-level public
             displayName: Publish packages
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

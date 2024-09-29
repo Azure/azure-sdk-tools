@@ -69,11 +69,13 @@ stages:
               reportDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage
 
           - script: |
+              export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
               commitId=$(git rev-parse --short HEAD)
               npm publish --apply --prerelease-name="ci.$commitId"
             displayName: Bump versions
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
+              export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
               npm publish --publish --pack --include-all
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
@@ -105,6 +107,7 @@ stages:
             displayName: "Build all packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
+              export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
               npm publish --publish --pack --include-all
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

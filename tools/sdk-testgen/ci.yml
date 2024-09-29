@@ -36,8 +36,8 @@ stages:
   - stage: build
     displayName: "Build, Lint and Test"
     jobs:
-      - job: npm
-        displayName: "sdk-testgen"
+      - job: MonoRepo
+        displayName: "MonoRepo"
         steps:
           - template: ../../eng/common/pipelines/templates/steps/verify-path-length.yml
             parameters:

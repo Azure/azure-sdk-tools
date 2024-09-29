@@ -3600,5 +3600,128 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 # [Pylint] custom linter check for invalid use of @overload #3229
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-# [Pylint] Add a check for connection_verify hardcoded settings #35355
+
+
+class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
+    """Test that we are not hard-coding a True or False to connection_verify"""
+
+    CHECKER_CLASS = checker.DoNotHardcodeConnectionVerify
+
+    def test_valid_connection_verify(self):
+        """Check that valid connection_verify hard coding does not raise warnings"""
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "do_not_hardcode_connection_verify_acceptable.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        nodes = node.body
+        InstanceVariableError = nodes[0].body[0].body[0]
+        VariableError = nodes[1].body[0]
+        FunctionArgumentsErrors = nodes[2].body[1].value
+        FunctionArgumentsInstanceErrors = nodes[3].body[0].body[0].value
+        ReturnErrorFunctionArgument = nodes[4].body[1].body[0].value
+        ReturnErrorDict = nodes[5].body[0].body[0].value
+        AnnotatedAssignment = nodes[6].body[0]
+
+        with self.assertNoMessages():
+            self.checker.visit_assign(InstanceVariableError)
+            self.checker.visit_assign(VariableError)
+            self.checker.visit_call(FunctionArgumentsErrors)
+            self.checker.visit_call(FunctionArgumentsInstanceErrors)
+            self.checker.visit_call(ReturnErrorFunctionArgument)
+            self.checker.visit_call(ReturnErrorDict)
+            self.checker.visit_annassign(AnnotatedAssignment)
+
+
+    def test_invalid_connection_verify(self):
+        """Check that hard-coding connection_verify to a bool raise warnings"""
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "do_not_hardcode_connection_verify_violation.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        nodes = node.body
+        InstanceVariableError = nodes[0].body[0].body[0]
+        VariableError = nodes[1].body[0]
+        FunctionArgumentsErrors = nodes[2].body[1].value
+        FunctionArgumentsInstanceErrors = nodes[3].body[0].body[0].value
+        ReturnErrorFunctionArgument = nodes[4].body[1].body[0].value
+        ReturnErrorDict = nodes[5].body[0].body[0].value
+        AnnotatedAssignment = nodes[6].body[0]
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=3,
+                node=InstanceVariableError,
+                col_offset=8,
+                end_line=3,
+                end_col_offset=37,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=8,
+                node=VariableError,
+                col_offset=4,
+                end_line=8,
+                end_col_offset=28,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=15,
+                node=FunctionArgumentsErrors.keywords[0],
+                col_offset=20,
+                end_line=15,
+                end_col_offset=43,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=20,
+                node=FunctionArgumentsInstanceErrors.keywords[0],
+                col_offset=52,
+                end_line=20,
+                end_col_offset=75,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=28,
+                node=ReturnErrorFunctionArgument.keywords[0],
+                col_offset=25,
+                end_line=28,
+                end_col_offset=47,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=35,
+                node=ReturnErrorDict.keywords[0],
+                col_offset=12,
+                end_line=35,
+                end_col_offset=35,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=39,
+                node=AnnotatedAssignment,
+                col_offset=4,
+                end_line=39,
+                end_col_offset=34,
+            ),
+        ):
+
+
+            self.checker.visit_assign(InstanceVariableError)
+            self.checker.visit_assign(VariableError)
+            self.checker.visit_call(FunctionArgumentsErrors)
+            self.checker.visit_call(FunctionArgumentsInstanceErrors)
+            self.checker.visit_call(ReturnErrorFunctionArgument)
+            self.checker.visit_call(ReturnErrorDict)
+            self.checker.visit_annassign(AnnotatedAssignment)
+
+
 # [Pylint] Investigate pylint rule around missing dependency #3231

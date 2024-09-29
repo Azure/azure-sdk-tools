@@ -2884,14 +2884,17 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
 
     def visit_call(self, node):
         """Visit function calls to ensure it isn't used as a parameter"""
-        for keyword in node.keywords:
-            if keyword.arg == "connection_verify":
-                if type(keyword.value.value) == bool:
-                    self.add_message(
-                        msgid=f"do-not-hardcode-connection-verify",
-                        node=keyword,
-                        confidence=None,
-                    )
+        try:
+            for keyword in node.keywords:
+                if keyword.arg == "connection_verify":
+                    if type(keyword.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=keyword,
+                            confidence=None,
+                        )
+        except:
+            pass
 
 
     def visit_assign(self, node):
@@ -2927,14 +2930,17 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
                         node=node,
                         confidence=None,
                     )
-        except: # connection_verify: bool = True
-            if node.target.name == "connection_verify":
-                if type(node.value.value) == bool:
-                    self.add_message(
-                        msgid=f"do-not-hardcode-connection-verify",
-                        node=node,
-                        confidence=None,
-                    )
+        except:  # Picks up connection_verify: bool = True
+            try:
+                if node.target.name == "connection_verify":
+                    if type(node.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=node,
+                            confidence=None,
+                        )
+            except:
+                pass
 
 
 

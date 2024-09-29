@@ -35,6 +35,9 @@ variables:
 stages:
   - stage: build
     displayName: "Build, Lint and Test"
+    variables:
+      - name: FeedRegistry
+        value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
     jobs:
       - job: MonoRepo
         displayName: "MonoRepo"
@@ -68,14 +71,23 @@ stages:
               summaryFileLocation: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage/cobertura-coverage.xml
               reportDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage
 
-          - script: |
-              export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
+          - pwsh: |
               commitId=$(git rev-parse --short HEAD)
-              npm publish --apply --prerelease-name="ci.$commitId"
+              $registry="$(FeedRegistry)"
+              $regAuth=$registry.replace("https:","")
+              $npmReg = $regAuth.replace("registry/","");
+              $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
+              Write-Host "Publishing to $($regAuth)"
+              npm config set $regAuth`:username=azure-sdk
+              npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
+              npm config set $regAuth`:email=not_set
+              npm config set $npmReg`:username=azure-sdk
+              npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
+              npm config set $npmReg`:email=not_set
+              npm publish --apply --prerelease-name="ci.$commitId" --registry=$registry --always-auth=true
             displayName: Bump versions
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
-              export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
               npm publish --publish --pack --include-all
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
@@ -107,7 +119,6 @@ stages:
             displayName: "Build all packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
-              export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
               npm publish --publish --pack --include-all
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

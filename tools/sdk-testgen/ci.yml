@@ -75,7 +75,6 @@ stages:
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |
               npm pack
-              npm publish --tag latest
             displayName: "Pack packages"
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages

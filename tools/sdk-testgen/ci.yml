@@ -72,7 +72,7 @@ stages:
               reportDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage
 
           - pwsh: |
-              commitId=$(git rev-parse --short HEAD)
+              $commitId=$(git rev-parse --short HEAD)
               $registry="$(FeedRegistry)"
               $regAuth=$registry.replace("https:","")
               $npmReg = $regAuth.replace("registry/","");
@@ -84,7 +84,7 @@ stages:
               npm config set $npmReg`:username=azure-sdk
               npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
               npm config set $npmReg`:email=not_set
-              npm publish --apply --prerelease-name="ci.$commitId" --registry=$registry --always-auth=true
+              npm publish --apply --prerelease-name=$commitId --registry=$registry --always-auth=true
             displayName: Bump versions
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
           - script: |

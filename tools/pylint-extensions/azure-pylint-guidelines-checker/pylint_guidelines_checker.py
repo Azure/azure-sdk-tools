@@ -2889,7 +2889,7 @@ class DoNotLogExceptions(BaseChecker):
         except_block = node.handlers
         # Iterate through each exception block
         for nod in except_block:
-            # Get the nodes in each block
+            # Get exception blocks with an exception name
             if nod.name is not None:
                 exception_name = nod.name.name
                 self.check_for_logging(nod.body, exception_name)
@@ -2903,16 +2903,18 @@ class DoNotLogExceptions(BaseChecker):
             if isinstance(j, astroid.Expr):
                 expression = j.as_string().lower()
                 if any(x in expression for x in levels_matches) and "logger" in expression:
+                    # Check for variables after strings
                     end_finder = expression.rfind("'")
-                    delimiters = ["(", "{", "}", ")", "\"", "=", ",", "'"]
+                    delimiters = ["(", "{", "}", ")", "\"", ",", "'"]
                     if end_finder != -1:
                         expression_a = expression[end_finder + 1:]
+                        # If there are variables after a string
                         if len(expression_a) > 1:
                             expression = expression_a
                     for delimiter in delimiters:
                         expression = " ".join(expression.split(delimiter))
                     expression1 = expression.split()
-                    # check for presence of exception name
+                    # Check for presence of exception name
                     if exception_name in expression1:
                         self.add_message(
                             msgid=f"do-not-log-exceptions",
@@ -2927,7 +2929,6 @@ class DoNotLogExceptions(BaseChecker):
 
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
-# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
 # [Pylint] Investigate pylint rule around missing dependency #3231
 
 

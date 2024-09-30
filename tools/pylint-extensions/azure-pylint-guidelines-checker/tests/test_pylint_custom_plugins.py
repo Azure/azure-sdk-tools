@@ -5392,7 +5392,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_try(try_node)
 
-    def test_no_logging_ok(self, setup):
+    def test_no_logging_and_no_exception_name_ok(self, setup):
         """Check that no logging is ok in the exception block."""
         try_node = setup.body[6].body[0]
         with self.assertNoMessages():

@@ -62,12 +62,18 @@ def test_other_logging_fails():
             return False
 
 
-# test_no_logging_ok
-def test_no_logging_ok():
+# test_no_logging_and_no_exception_name_ok
+def test_no_logging_and_no_exception_name_ok():
     try:
         add = 1 + 2
     except Exception as ex:
         self.errors.appendleft(ex)
+    except Exception as ex:  # pylint: disable=broad-except
+        _logger.warning(
+            "Exception occurred when instrumenting: %s.",
+            lib_name,
+            exc_info=ex,
+        )
 
 
 # test_logging_without_exception_name

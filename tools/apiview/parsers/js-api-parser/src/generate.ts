@@ -5,6 +5,7 @@ import { CodeFile, ReviewLine, ReviewToken, TokenKind } from "./models";
 import {
   ApiDeclaredItem,
   ApiDocumentedItem,
+  ApiEntryPoint,
   ApiItem,
   ApiItemKind,
   ApiModel,
@@ -81,6 +82,10 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
   reviewLines.push(emptyLine(header.LineId));
 }
 
+function getSubPathName(entryPoint: ApiEntryPoint): string {
+  return entryPoint.name.length > 0 ? `./${entryPoint.name}` : ".";
+}
+
 /**
  * Builds review for all the entrypoints.  Each entrypoint represents a subpath export.
  * The regular output api.json file from api-extractor currently only contains one single entrypoint.
@@ -92,14 +97,14 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
 function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
   for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
-      const subpath = entryPoint.name.length > 0 ? entryPoint.name : "<default>";
+      const subpath = getSubPathName(entryPoint);
       const exportLine: ReviewLine = {
         LineId: `Subpath-export-${subpath}`,
         Tokens: [
           buildToken({
             Kind: TokenKind.StringLiteral,
-            Value: ` "${subpath}" subpath export`,
-            NavigationDisplayName: `"${subpath}" subpath export`,
+            Value: ` "${subpath}"`,
+            NavigationDisplayName: `"${subpath}"`,
           }),
         ],
         Children: [],

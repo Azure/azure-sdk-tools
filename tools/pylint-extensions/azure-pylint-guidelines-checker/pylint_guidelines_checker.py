@@ -2915,12 +2915,21 @@ class DoNotLogExceptions(BaseChecker):
                         expression = " ".join(expression.split(delimiter))
                     expression1 = expression.split()
                     # Check for presence of exception name
-                    if exception_name in expression1:
-                        self.add_message(
-                            msgid=f"do-not-log-exceptions",
-                            node=j,
-                            confidence=None,
-                        )
+                    for i in range(len(expression1)):
+                        if exception_name == expression1[i]:
+                            if i+1 < len(expression1):
+                                if "." and "name" not in expression1[i+1]:
+                                    self.add_message(
+                                        msgid=f"do-not-log-exceptions",
+                                        node=j,
+                                        confidence=None,
+                                    )
+                            else:
+                                self.add_message(
+                                    msgid=f"do-not-log-exceptions",
+                                    node=j,
+                                    confidence=None,
+                                )
             if isinstance(j, astroid.If):
                 self.check_for_logging(j.body, exception_name)
                 # Check any 'elif' or 'else' branches

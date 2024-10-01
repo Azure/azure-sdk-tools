@@ -74,6 +74,13 @@ def test_no_logging_and_no_exception_name_ok():
             lib_name,
             exc_info=ex,
         )
+    except (OSError, PermissionError) as e:
+        logger.warning(
+            "Failed to read on-disk cache for component due to %s. "
+            "Please check if the file %s is in use or current user doesn't have the permission.",
+            type(e).__name__,
+            on_disk_cache_path.as_posix(),
+        )
 
 
 # test_logging_without_exception_name
@@ -87,5 +94,3 @@ def test_logging_without_exception_name():
             )
         else:
             module_logger.debug("Skipping file upload, reason:  %s", str(e.reason))
-
-

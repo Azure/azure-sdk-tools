@@ -1,10 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
-import { NPMScope } from "@ts-common/azure-js-dev-tools";
 import { logger } from "../../utils/logger";
 import { getLatestStableVersion } from "../../utils/version";
 import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
 import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils";
+import { tryGetNpmView } from "../../common/npmUtils";
 
 const shell = require('shelljs');
 const todayDate = new Date();
@@ -38,9 +38,8 @@ export async function generateChangelog(packagePath) {
     const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
     const packageName = packageJson.name;
     const version = packageJson.version;
-    const npm = new NPMScope({executionFolderPath: packagePath});
-    const npmViewResult = await npm.view({packageName});
-    if (npmViewResult.exitCode !== 0) {
+    const npmViewResult = await tryGetNpmView(packageName);
+    if (!npmViewResult) {
         logger.info(`'${packageName}' is first release, start to generate changelog.`);
         generateChangelogForFirstRelease(packagePath, version);
         logger.info(`Generated changelog successfully.`);

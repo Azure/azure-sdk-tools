@@ -1,4 +1,4 @@
-﻿using Azure.Data.AppConfiguration;
+using Azure.Data.AppConfiguration;
 using Azure.Identity;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
@@ -160,7 +160,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
             return payloadContent;
         }
 
-        private SHA256CryptoServiceProvider sha256 = new SHA256CryptoServiceProvider();
+        private SHA256 sha256 = SHA256.Create();
 
         private async Task<byte[]> ReadAndValidateContentFromAzureDevOpsAsync(AzureDevOpsRule rule, HttpRequest request)
         {
@@ -285,7 +285,7 @@ namespace Azure.Sdk.Tools.WebhookRouter.Routing
                     payload
                     );
 
-                throw ex;
+                throw;
             }
         }
     }

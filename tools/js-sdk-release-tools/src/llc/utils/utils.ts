@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import {logger} from "../../utils/logger";
-import {NPMScope} from "@ts-common/azure-js-dev-tools";
 import {getLatestStableVersion} from "../../utils/version";
+import { tryGetNpmView } from "../../common/npmUtils";
 const readline = require('readline');
 
 export function validPackageName(packageName) {
@@ -55,8 +55,7 @@ export function getPackageFolderName(packageName) {
 }
 
 export async function getLatestCodegen(packagePath) {
-    const npm = new NPMScope({executionFolderPath: packagePath});
-    const npmViewResult = await npm.view({packageName: '@autorest/typescript'});
+    const npmViewResult = await tryGetNpmView('@autorest/typescript');
     const stableVersion = getLatestStableVersion(npmViewResult);
     if (!stableVersion)
         return '6.0.0-beta.14';

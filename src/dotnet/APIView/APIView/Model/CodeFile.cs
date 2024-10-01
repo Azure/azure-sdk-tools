@@ -11,7 +11,6 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ApiView
@@ -148,14 +147,207 @@ namespace ApiView
         /// Generates a complete text representation of API surface to help generating the content.
         /// One use case of this function will be to support download request of entire API review surface.
         /// </summary>
-        public string GetApiText()
+        public string GetApiText(bool skipDocs = true)
         {
             StringBuilder sb = new();
             foreach (var line in ReviewLines)
             {
-                line.AppendApiTextToBuilder(sb, 0, true);
+                line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language));
             }
             return sb.ToString();
-        }       
+        }
+
+        public static int GetIndentationForLanguage(string language)
+        {
+            switch (language)
+            {
+                case "C++":
+                case "C":
+                    return 2;
+                default:
+                    return 4;
+            }
+        }
+
+        public void ConvertToTreeTokenModel()
+        {
+            Dictionary<string, string> navigationItems = new Dictionary<string, string>();
+            ReviewLine reviewLine = new ReviewLine();
+            ReviewLine previousLine = null;
+            bool isDocumentation = false;
+            bool isHidden = false;
+            bool skipDiff = false;
+            bool isDeprecated = false;
+            bool skipIndent = false;
+            string className = "";
+            //Process all navigation items in old model to generate a map
+            GetNavigationMap(navigationItems, Navigation);
+
+            List<ReviewToken> currentLineTokens = new List<ReviewToken>();
+            foreach(var oldToken in Tokens)
+            {
+                ReviewToken token = null;
+                switch(oldToken.Kind)
+                {
+                    case CodeFileTokenKind.DocumentRangeStart:
+                        isDocumentation = true; break;
+                    case CodeFileTokenKind.DocumentRangeEnd:
+                        isDocumentation = false; break;
+                    case CodeFileTokenKind.DeprecatedRangeStart:
+                        isDeprecated = true; break;
+                    case CodeFileTokenKind.DeprecatedRangeEnd:
+                        isDeprecated = false; break;
+                    case CodeFileTokenKind.SkipDiffRangeStart:
+                        skipDiff = true; break;
+                    case CodeFileTokenKind.SkipDiffRangeEnd:
+                        skipDiff = false; break;
+                    case CodeFileTokenKind.HiddenApiRangeStart:
+                        isHidden = true; break;
+                    case CodeFileTokenKind.HiddenApiRangeEnd:
+                        isHidden = false; break;
+                    case CodeFileTokenKind.Keyword:
+                        token = ReviewToken.CreateKeywordToken(oldToken.Value, false);
+                        var keywordValue = oldToken.Value.ToLower();
+                        if (keywordValue == "class" || keywordValue == "enum" || keywordValue == "struct" || keywordValue == "interface" || keywordValue == "type" || keywordValue == "namespace")
+                            className = keywordValue;
+                        break;
+                    case CodeFileTokenKind.Comment:
+                        token = ReviewToken.CreateCommentToken(oldToken.Value, false); 
+                        break;
+                    case CodeFileTokenKind.Text:
+                        token = ReviewToken.CreateTextToken(oldToken.Value, oldToken.NavigateToId, false); 
+                        break;
+                    case CodeFileTokenKind.Punctuation:
+                        token = ReviewToken.CreatePunctuationToken(oldToken.Value, false); 
+                        break;
+                    case CodeFileTokenKind.TypeName:
+                        token = ReviewToken.CreateTypeNameToken(oldToken.Value, false);
+                        if (currentLineTokens.Any(t => t.Kind == TokenKind.Keyword && t.Value.ToLower() == className))
+                            token.RenderClasses.Add(className);
+                        className = "";
+                        break;
+                    case CodeFileTokenKind.MemberName:
+                        token = ReviewToken.CreateMemberNameToken(oldToken.Value, false); 
+                        break;
+                    case CodeFileTokenKind.StringLiteral:
+                        token = ReviewToken.CreateStringLiteralToken(oldToken.Value, false); 
+                        break;
+                    case CodeFileTokenKind.Literal:
+                        token = ReviewToken.CreateLiteralToken(oldToken.Value, false); 
+                        break;
+                    case CodeFileTokenKind.ExternalLinkStart:
+                        token = ReviewToken.CreateStringLiteralToken(oldToken.Value, false); 
+                        break;
+                    case CodeFileTokenKind.Whitespace:
+                        if (currentLineTokens.Count > 0) {
+                            currentLineTokens.Last().HasSuffixSpace = true;
+                        }
+                        else if (!skipIndent) {
+                            reviewLine.Indent += oldToken.Value.Length;
+                        }
+                        break;
+                    case CodeFileTokenKind.Newline:
+                        var parent = previousLine;
+                        skipIndent = false;
+                        if (currentLineTokens.Count > 0)
+                        {
+                            while (parent != null && parent.Indent >= reviewLine.Indent)
+                                parent = parent.parentLine;
+                        }
+                        else
+                        {
+                            //If current line is empty line then add it as an empty line under previous line's parent
+                            parent = previousLine?.parentLine;
+                        }
+                        
+                        if (parent == null)
+                        {
+                            this.ReviewLines.Add(reviewLine);
+                        }
+                        else
+                        {
+                            parent.Children.Add(reviewLine);
+                            reviewLine.parentLine = parent;
+                        }
+
+                        if (currentLineTokens.Count == 0)
+                        {
+                            //Empty line. So just add previous line as related line
+                            reviewLine.RelatedToLine = previousLine?.LineId;
+                        }
+                        else
+                        {
+                            reviewLine.Tokens = currentLineTokens;
+                            previousLine = reviewLine;
+                        }
+
+                        reviewLine = new ReviewLine();
+                        // If previous line ends with "," then next line will be sub line to show split content in multiple lines. 
+                        // Set next line's indent same as current line
+                        // This is required to convert C++ tokens correctly
+                        if (previousLine != null && previousLine.Tokens.LastOrDefault()?.Value == "," && Language == "C++")
+                        {
+                            reviewLine.Indent = previousLine.Indent;
+                            skipIndent = true;
+                        }
+                        currentLineTokens = new List<ReviewToken>();
+                        break;
+                    case CodeFileTokenKind.LineIdMarker:
+                        if (string.IsNullOrEmpty(reviewLine.LineId))
+                            reviewLine.LineId = oldToken.Value;
+                        break;
+                    default:
+                        Console.WriteLine($"Unsupported token kind to convert to new model, Kind: {oldToken.Kind}, value: {oldToken.Value}, Line Id: {oldToken.DefinitionId}"); 
+                        break;
+                }
+
+                if (token != null)
+                {
+                    currentLineTokens.Add(token);
+
+                    if (oldToken.Equals("}") || oldToken.Equals("};"))
+                        reviewLine.IsContextEndLine = true;
+                    if (isHidden)
+                        reviewLine.IsHidden = true;
+                    if (oldToken.DefinitionId != null)
+                        reviewLine.LineId = oldToken.DefinitionId;
+                    if (oldToken.CrossLanguageDefinitionId != null)
+                        reviewLine.CrossLanguageId = oldToken.CrossLanguageDefinitionId;
+                    if (isDeprecated)
+                        token.IsDeprecated = true;
+                    if (skipDiff)
+                        token.SkipDiff = true;
+                    if (isDocumentation)
+                        token.IsDocumentation = true;
+                }
+            }
+
+            //Process last line
+            if (currentLineTokens.Count > 0)
+            {                
+                reviewLine.Tokens = currentLineTokens;
+                var parent = previousLine;
+                while (parent != null && parent.Indent >= reviewLine.Indent)
+                    parent = parent.parentLine;
+
+                if (parent == null)
+                    this.ReviewLines.Add(reviewLine);
+                else
+                    parent.Children.Add(reviewLine);
+            }                        
+        }
+
+        private static void GetNavigationMap(Dictionary<string, string> navigationItems, NavigationItem[] items)
+        {
+            if (items == null)
+                return;
+
+            foreach (var item in items)
+            {
+                var key = string.IsNullOrEmpty(item.NavigationId) ? item.Text : item.NavigationId;
+                navigationItems.Add(key, item.Text);
+                GetNavigationMap(navigationItems, item.ChildItems);
+            }
+        }
     }
 }

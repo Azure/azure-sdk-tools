@@ -29,6 +29,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
+  @Input() hasHiddenAPIThatIsDiff : boolean = false;
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -134,6 +135,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     if (changes['review'] && changes['review'].currentValue != undefined) { 
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
+    }
+
+    if (changes['hasHiddenAPIThatIsDiff']) {
+      this.setPageOptionValues();
     }
   }
 
@@ -256,10 +261,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
-    this.showHiddenAPISwitch = this.userProfile?.preferences.showHiddenApis ?? this.showHiddenAPISwitch;
     this.disableCodeLinesLazyLoading = this.userProfile?.preferences.disableCodeLinesLazyLoading ?? this.disableCodeLinesLazyLoading;
     this.showLineNumbersSwitch = (this.userProfile?.preferences.hideLineNumbers) ? false : this.showLineNumbersSwitch;
     this.showLeftNavigationSwitch = (this.userProfile?.preferences.hideLeftNavigation) ? false : this.showLeftNavigationSwitch;
+    this.showHiddenAPISwitch = (this.userProfile?.preferences.showHiddenApis || this.hasHiddenAPIThatIsDiff || this.showHiddenAPISwitch) ? true : false;
   }
 
   setAPIRevisionApprovalStates() {

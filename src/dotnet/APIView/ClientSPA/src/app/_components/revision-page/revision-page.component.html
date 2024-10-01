@@ -1,0 +1,10 @@
+<app-review-page-layout
+    [review]="review"
+    [sideMenu]="sideMenu">
+    <div class="revisions-panel overflow-auto border rounded">
+        <app-revisions-list
+            [review]="review"
+            (apiRevisionsEmitter)="handleApiRevisionsEmitter($event)">
+        </app-revisions-list>
+    </div>
+</app-review-page-layout>

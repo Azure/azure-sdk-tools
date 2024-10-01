@@ -14,7 +14,6 @@ import { MessageService } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
-import { computeStyles } from '@popperjs/core';
 
 @Component({
   selector: 'app-code-panel',
@@ -39,6 +38,7 @@ export class CodePanelComponent implements OnChanges{
 
   
   noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
+
   isLoading: boolean = true;
   codeWindowHeight: string | undefined = undefined;
   codePanelRowDataIndicesMap = new Map<string, number>();
@@ -422,7 +422,10 @@ export class CodePanelComponent implements OnChanges{
       index++;
     }
     if (scrollIndex) {
-      this.codePanelRowSource?.adapter?.reload(scrollIndex);
+      let scrollPadding = 0;
+      scrollPadding = (this.showNoDiffInContentMessage()) ? scrollPadding + 2 : scrollPadding;
+
+      this.codePanelRowSource?.adapter?.reload(scrollIndex - scrollPadding);
       let newQueryParams = getQueryParams(this.route);
       newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
       this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
@@ -665,6 +668,10 @@ export class CodePanelComponent implements OnChanges{
       index--;
     }
     return undefined;
+  }
+  
+  showNoDiffInContentMessage() {
+    return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
   }
 
   private updateHasActiveConversations() {

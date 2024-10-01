@@ -18,7 +18,7 @@ import {
 } from '../utils/generateSampleReadmeMd';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile';
 import { getRelativePackagePath } from "../utils/utils";
-import { getGeneratedPackageDirectory } from "../../common/utils";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory } from "../../common/utils";
 import { remove } from 'fs-extra';
 
 export async function generateRLCInPipeline(options: {
@@ -182,7 +182,7 @@ export async function generateRLCInPipeline(options: {
 
             logger.info(`Start to run command: ${cmd}.`);
             try {
-                execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath)});
+                execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath), timeout: defaultChildProcessTimeout});
             } catch (e: any) {
                 throw new Error(`Failed to generate codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
             }

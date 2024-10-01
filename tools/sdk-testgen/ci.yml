@@ -84,7 +84,8 @@ extends:
                   mv *.tgz ./artifacts/packages/
                 displayName: "Pack packages"
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-              - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/artifacts/packages/
-                artifact: testmodeler
-                displayName: Publish packages(.tgz) as pipeline artifacts
+              - task: 1ES.PublishPipelineArtifact@1
+                inputs:
+                  targetPath: $(Build.SourcesDirectory)/tools/sdk-testgen/artifacts/packages/
+                  artifactName: testmodeler
 

@@ -274,6 +274,8 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         "send",
         "query",
         "analyze",
+        "train", # TODO: test this
+        "detect",
     ]
 
     # TODO: split itno checks for prefixes/suffixes and ignored decorators

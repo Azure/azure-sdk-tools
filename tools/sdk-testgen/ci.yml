@@ -25,11 +25,6 @@ pr:
     include:
       - tools/sdk-testgen
 
-pool:
-  name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: ubuntu-22.04
-  os: linux
-
 variables:
   NugetSecurityAnalysisWarningLevel: "none"
 
@@ -45,6 +40,10 @@ extends:
         jobs:
           - job: BuildTestModeler
             displayName: "Build autorest/testmodeler"
+            pool:
+              name: azsdk-pool-mms-ubuntu-2204-general
+              vmImage: ubuntu-22.04
+              os: linux
             steps:
               - template: /eng/common/pipelines/templates/steps/verify-path-length.yml
                 parameters:

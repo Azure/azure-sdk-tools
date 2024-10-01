@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                 {
                     var client = await this.githubClientFactory.CreateGitHubClientAsync();
                     var rateLimit = await client.RateLimit.GetRateLimits();
-                    this.logger.LogInformation("Rate limit details: {RateLimit}", rateLimit.Resources);
+                    this.logger.LogInformation("Rate limit details: {RateLimit}", JsonSerializer.Serialize(rateLimit.Resources));
                 }
                 catch (Exception rateLimitException)
                 {

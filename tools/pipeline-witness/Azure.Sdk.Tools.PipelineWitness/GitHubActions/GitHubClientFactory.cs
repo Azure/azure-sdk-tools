@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.Utilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -20,13 +21,15 @@ public class GitHubClientFactory
     private readonly TimeSpan processTimeout = TimeSpan.FromSeconds(13);
     private readonly PipelineWitnessSettings settings;
     private readonly ProductHeaderValue productHeaderValue;
+    private readonly ILogger<GitHubClientFactory> logger;
 
-    public GitHubClientFactory(IOptions<PipelineWitnessSettings> options)
+    public GitHubClientFactory(ILogger<GitHubClientFactory> logger, IOptions<PipelineWitnessSettings> options)
     {
         this.settings = options.Value;
 
         string version = typeof(GitHubClientFactory).Assembly.GetName().Version.ToString();
         this.productHeaderValue = new("PipelineWitness", version);
+        this.logger = logger;
     }
 
     public async Task<IGitHubClient> CreateGitHubClientAsync()
@@ -34,9 +37,11 @@ public class GitHubClientFactory
         // If we're running in local dev mode, return a client based on the CLI token
         if (string.IsNullOrEmpty(this.settings.GitHubAppPrivateKey))
         {
+            this.logger.LogDebug("No private key provided, creating cli authenticated client.");
             return await CreateGitHubClientWithCliTokenAsync();
         }
 
+        this.logger.LogDebug("Creating app token authenticated client.");
         return CreateGitHubClientWithAppToken();
     }
 
@@ -45,24 +50,30 @@ public class GitHubClientFactory
         // If we're running in local dev mode, return a client based on the CLI token
         if (string.IsNullOrEmpty(this.settings.GitHubAppPrivateKey))
         {
+            this.logger.LogDebug("No private key provided, creating cli authenticated client.");
             return await CreateGitHubClientWithCliTokenAsync();
         }
 
+        this.logger.LogDebug("Creating app token authenticated client.");
         GitHubClient appClient = CreateGitHubClientWithAppToken();
 
         Installation installation;
         
         try
         {
+            this.logger.LogDebug("Getting app installation for {Owner}/{Repository}.", owner, repository);
             installation = await appClient.GitHubApps.GetRepositoryInstallationForCurrent(owner, repository);
         }
         catch (NotFoundException)
         {
+            this.logger.LogError("The GitHub App is not installed on the repository {Owner}/{Repository}.", owner, repository);
             throw new InvalidOperationException($"The GitHub App is not installed on the repository {owner}/{repository}");
         }
 
+        this.logger.LogDebug("Getting installation token for {Owner}/{Repository}.", owner, repository);
         AccessToken accessToken = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
 
+        this.logger.LogDebug("Creating installation token authenticated client.");
         Credentials installationCredentials = new(accessToken.Token);
 
         GitHubClient installationClient = new(this.productHeaderValue)
@@ -126,6 +137,7 @@ public class GitHubClientFactory
 
     private async Task<Credentials> GetCliCredentialsAsync()
     {
+        this.logger.LogDebug("Creating GitHub token using gh cli.");
         Process process = new()
         {
             StartInfo = GetGitHubCliProcessStartInfo(),

@@ -45,7 +45,7 @@ extends:
           - job: BuildTestModeler
             displayName: "Build autorest/testmodeler"
             steps:
-              - template: ../../eng/common/pipelines/templates/steps/verify-path-length.yml
+              - template: /eng/common/pipelines/templates/steps/verify-path-length.yml
                 parameters:
                   SourceDirectory: 'tools/sdk-testgen'
               - task: NodeTool@0

@@ -4,7 +4,6 @@ import shell from 'shelljs';
 
 import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
 import { Changelog } from "../../changelog/changelogGenerator";
-import { NPMScope, NPMViewResult } from "@ts-common/azure-js-dev-tools";
 import {
     makeChangesForFirstRelease,
     makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,
@@ -23,6 +22,7 @@ import { getversionDate } from "../../utils/version";
 import { ApiVersionType, SDKType } from "../../common/types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../../common/utils';
+import { tryGetNpmView } from '../../common/npmUtils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
@@ -30,15 +30,14 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
     const ApiType = await getApiVersionType(packageFolderPath);
     const isStableRelease = ApiType != ApiVersionType.Preview;
     const packageName = getNpmPackageName(packageFolderPath);
-    const npm = new NPMScope({ executionFolderPath: packageFolderPath });
-    const npmViewResult: NPMViewResult = await npm.view({ packageName });
-    const stableVersion = getVersion(npmViewResult,"latest");
+    const npmViewResult = await tryGetNpmView(packageName);
+    const stableVersion = getVersion(npmViewResult, "latest");
     const nextVersion = getVersion(npmViewResult, "next");
 
-    if (npmViewResult.exitCode !== 0 || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
-        logger.info(`Package ${packageName} is first ${npmViewResult.exitCode !== 0? ' ': ' stable'} release, start to generate changelogs and set version for first ${npmViewResult.exitCode !== 0? ' ': ' stable'} release.`);
+    if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
+        logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ': ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ': ' stable'} release.`);
         makeChangesForFirstRelease(packageFolderPath, isStableRelease);
-        logger.info(`Generated changelogs and setting version for first${npmViewResult.exitCode !== 0? ' ': ' stable'} release successfully`);
+        logger.info(`Generated changelogs and setting version for first${!npmViewResult ? ' ': ' stable'} release successfully`);
     } else {
         if (!stableVersion) {
             logger.error(`Invalid latest version ${stableVersion}`);

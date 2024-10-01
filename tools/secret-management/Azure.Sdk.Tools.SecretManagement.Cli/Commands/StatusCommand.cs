@@ -14,7 +14,7 @@ public class StatusCommand : RotationCommandBase
     protected override async Task HandleCommandAsync(ILogger logger, RotationConfiguration rotationConfiguration,
         InvocationContext invocationContext)
     {
-        var timeProvider = new TimeProvider();
+        var timeProvider = TimeProvider.System;
         RotationPlan[] plans = rotationConfiguration.GetAllRotationPlans(logger, timeProvider).ToArray();
 
         logger.LogInformation($"Getting status for {plans.Length} plans");

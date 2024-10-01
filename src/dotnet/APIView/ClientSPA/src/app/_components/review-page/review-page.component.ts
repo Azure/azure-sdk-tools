@@ -51,6 +51,7 @@ export class ReviewPageComponent implements OnInit {
   hasActiveConversation : boolean = false;
   numberOfActiveConversation : number = 0;
   hasHiddenAPIs : boolean = false;
+  hasHiddenAPIThatIsDiff : boolean = false;
   loadFailed : boolean = false;
 
   showLeftNavigation : boolean = true;
@@ -115,10 +116,12 @@ export class ReviewPageComponent implements OnInit {
     this.sideMenu = [
       {
           icon: 'bi bi-clock-history',
+          tooltip: 'Revisions',
           command: () => { this.revisionSidePanel = !this.revisionSidePanel; }
       },
       {
         icon: 'bi bi-chat-left-dots',
+        tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
       }
@@ -165,6 +168,7 @@ export class ReviewPageComponent implements OnInit {
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelData) {
         this.codePanelData = data.payload as CodePanelData;
+        this.hasHiddenAPIThatIsDiff = this.codePanelData.hasHiddenAPIThatIsDiff;
         this.workerService.terminateWorker();
       }
     });
@@ -494,8 +498,8 @@ export class ReviewPageComponent implements OnInit {
         break;
       }
     }
-  } 
-
+  }
+  
   ngOnDestroy() {
     this.workerService.terminateWorker();
     this.destroy$.next();

@@ -1,5 +1,6 @@
 import { load } from '@npmcli/package-json';
 import { NpmPackageInfo } from './types';
+import * as fetch from 'npm-registry-fetch';
 
 export async function getNpmPackageInfo(packageDirectory): Promise<NpmPackageInfo> {
     const packageJson = await load(packageDirectory);
@@ -28,4 +29,12 @@ export function getArtifactName(info: NpmPackageInfo) {
     const name = getNpmPackageName(info);
     const version = info.version;
     return `${name}-${version}.tgz`;
+}
+
+export async function tryGetNpmView(packageName: string): Promise<{[id: string]: any} | undefined> {
+    try {
+        return await fetch.json(`/${packageName}`);
+    } catch (err) {
+        return undefined;
+    }
 }

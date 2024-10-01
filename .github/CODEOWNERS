@@ -18,10 +18,12 @@
 ###########
 /eng/                                  @azure/azure-sdk-eng
 
+/.config/1espt/                        @benbp @weshaggard
+
 ###########
 # CODEOWNERS Linter pipeline
 ###########
-/eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio
+/eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio @weshaggard
 
 ###########
 # GitHub Tools

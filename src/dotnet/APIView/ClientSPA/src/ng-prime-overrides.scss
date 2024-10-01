@@ -376,7 +376,7 @@ p-contextmenusub {
 }
 
 .p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus {
-    background: var(--base-fg-color);;
+    background: var(--base-fg-color);
 }
 
 .p-datatable .p-sortable-column.p-highlight, .p-datatable .p-sortable-column.p-highlight:hover {
@@ -397,8 +397,20 @@ p-contextmenusub {
     color: var(--primary-btn-color) !important;
 }
 
-.p-tooltip .p-tooltip-arrow {
+.p-tooltip-top .p-tooltip-arrow {
     border-top-color: var(--primary-color) !important;
+}
+
+.p-tooltip-bottom .p-tooltip-arrow {
+    border-bottom-color: var(--primary-color) !important;
+}
+
+.p-tooltip-left .p-tooltip-arrow {
+    border-left-color: var(--primary-color) !important;
+}
+
+.p-tooltip-right .p-tooltip-arrow {
+    border-right-color: var(--primary-color) !important;
 }
 
 .p-splitter {

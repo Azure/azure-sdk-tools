@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
             try
             {
                 // This is aad scope of opensource rest API.
-                string[] scopes = new [] { "66b6ea26-954d-4b68-8f48-71e3faec7ad1/.default" };
+                string[] scopes = new [] { "2efaf292-00a0-426c-ba7d-f5d2b214b8fc/.default" };
                 opsAuthToken = await credential.GetTokenAsync(new TokenRequestContext(scopes), CancellationToken.None);
             }
             catch (Exception ex)

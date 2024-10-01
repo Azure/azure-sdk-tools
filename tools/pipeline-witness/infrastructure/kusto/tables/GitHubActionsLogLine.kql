@@ -1,8 +1,9 @@
 .create-merge table GitHubActionsLogLine (
     Repository: string,
-    WorkflowName: string,
     WorkflowId: long,
+    WorkflowName: string,
     RunId: long,
+    RunAttempt: long,
     JobId: long,
     StepNumber: int,
     LineNumber: int,
@@ -14,9 +15,10 @@
 
 .create-or-alter table GitHubActionsLogLine ingestion json mapping 'GitHubActionsLogLine_mapping' ```[
     { "column": "Repository", "path": "$['repository']" },
-    { "column": "WorkflowName", "path": "$['workflowName']" },
     { "column": "WorkflowId", "path": "$['workflowId']" },
+    { "column": "WorkflowName", "path": "$['workflowName']" },
     { "column": "RunId", "path": "$['runId']" },
+    { "column": "RunAttempt", "path": "$['runAttempt']" },
     { "column": "JobId", "path": "$['jobId']" },
     { "column": "StepNumber", "path": "$['stepNumber']" },
     { "column": "LineNumber", "path": "$['lineNumber']" },

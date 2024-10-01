@@ -212,7 +212,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             foreach (var kvp in requestHeaders)
             {
-                playbackContext.Request.Headers.Add(kvp.Key, kvp.Value);
+                playbackContext.Request.Headers.Append(kvp.Key, kvp.Value);
             }
             playbackContext.Request.Method = "POST";
 

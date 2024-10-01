@@ -4,7 +4,6 @@ import fs from 'fs';
 import { SDKType } from './types';
 import { logger } from '../utils/logger';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
-import { replaceAll } from '@ts-common/azure-js-dev-tools';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
@@ -25,6 +24,10 @@ const errorKeywordsInLowercase = new Set<string>(['error', 'err_pnpm_no_matching
 
 function removeLastNewline(line: string): string {
     return line.replace(/\n$/, '')
+}
+
+function replaceAll(original: string, from: string, to: string) { 
+    return original.split(from).join(to);
 }
 
 function printErrorDetails(

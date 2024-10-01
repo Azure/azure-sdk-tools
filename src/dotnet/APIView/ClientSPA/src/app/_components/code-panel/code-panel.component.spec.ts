@@ -5,7 +5,7 @@ import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
+import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { MessageService } from 'primeng/api';
 
 describe('CodePanelComponent', () => {

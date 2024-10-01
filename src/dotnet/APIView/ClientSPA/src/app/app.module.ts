@@ -17,6 +17,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { SharedAppModule } from './_modules/shared/shared-app.module';
 import { HttpErrorInterceptorService } from './_services/http-error-interceptor/http-error-interceptor.service';
 import { MessageService } from 'primeng/api';
+import { CommonModule } from '@angular/common';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -32,6 +33,7 @@ export function initializeApp(configService: ConfigService) {
   ],
   imports: [
     SharedAppModule,
+    CommonModule,
     AppRoutingModule,
     BadgeModule,
     BrowserModule,

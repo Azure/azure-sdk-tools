@@ -25,91 +25,67 @@ pr:
     include:
       - tools/sdk-testgen
 
-pool:
-  name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: ubuntu-22.04
-
 variables:
   NugetSecurityAnalysisWarningLevel: "none"
 
-stages:
-  - stage: build
-    displayName: "Build, Lint and Test"
-    jobs:
-      - job: MonoRepo
-        displayName: "MonoRepo"
-        steps:
-          - template: ../../eng/common/pipelines/templates/steps/verify-path-length.yml
-            parameters:
-              SourceDirectory: 'tools/sdk-testgen'
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
+  parameters:
+    BuildStageName: build
+    ArtifactName: testmodeler
+    PackageJsonPath: $(Build.SourcesDirectory)/tools/sdk-testgen
+    BuildStages:
+      - stage: build
+        displayName: "Build, Lint and Test"
+        jobs:
+          - job: BuildTestModeler
+            displayName: "Build autorest/testmodeler"
+            pool:
+              name: azsdk-pool-mms-ubuntu-2204-general
+              vmImage: ubuntu-22.04
+              os: linux
+            steps:
+              - template: /eng/common/pipelines/templates/steps/verify-path-length.yml
+                parameters:
+                  SourceDirectory: 'tools/sdk-testgen'
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: "18.x"
+                displayName: "Install Node.js"
+              - task: GoTool@0
+                inputs:
+                  version: '1.22.1'
+                displayName: "Install Go"
+              - script: |
+                  npm ci
+                displayName: "Install dependencies"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
+              - script: |
+                  npm rebuild -v
+                displayName: "Build code"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
+              - script: |
+                  npm lint -v
+                displayName: "Lint code"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
+              - script: |
+                  export PATH=$PATH:$HOME/go/bin
+                  npm test -v
+                displayName: "Test code"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
+              - script: |
+                  commitId=$(git rev-parse --short HEAD)
+                  npm version prerelease --preid="ci.$commitId"
+                displayName: Bump versions
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
+              - script: |
+                  mkdir -p ./artifacts/packages
+                  npm pack
+                  mv *.tgz ./artifacts/packages/
+                displayName: "Pack packages"
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
+              - task: 1ES.PublishPipelineArtifact@1
+                inputs:
+                  targetPath: $(Build.SourcesDirectory)/tools/sdk-testgen/artifacts/packages/
+                  artifactName: testmodeler
 
-          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yml
-          
-          - script: |
-              rush rebuild -v
-            displayName: "Build all packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-          - script: |
-              rush lint -v
-            displayName: "Lint all packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-
-          - script: |
-              export PATH=$PATH:$HOME/go/bin
-              rush test -v
-            displayName: "Test all packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-          - task: PublishTestResults@2
-            inputs:
-              testRunner: JUnit
-              testResultsFiles: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/junit.xml
-          - task: PublishCodeCoverageResults@2
-            inputs:
-              summaryFileLocation: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage/cobertura-coverage.xml
-              reportDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen/packages/**/coverage
-
-          - script: |
-              commitId=$(git rev-parse --short HEAD)
-              rush publish --apply --prerelease-name="ci.$commitId"
-            displayName: Bump versions
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-          - script: |
-              rush publish --publish --pack --include-all
-            displayName: "Pack packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-          - publish: $(Build.SourcesDirectory)/tools/sdk-testgen/common/temp/artifacts/packages
-            artifact: packages
-            displayName: Publish packages(.tgz) as pipeline artifacts
-
-  - ${{if eq(variables['Build.Reason'], 'Manual')}}:
-    - stage: release
-      displayName: "Release Package"
-      dependsOn: build
-      condition: succeeded()
-      jobs:
-        - job: approve
-          pool: server
-          displayName: "Approve"
-          steps:
-          - task: ManualValidation@0
-            inputs:
-              notifyUsers: 'Click to approve if it''s an expected public release.'
-        - job: release
-          displayName: "Pack and Release"
-          dependsOn: approve
-          condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
-          steps:
-          - template: ../../eng/pipelines/templates/steps/sdk-testgen-set-env.yml
-          - script: |
-              rush rebuild -v
-            displayName: "Build all packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-          - script: |
-              rush publish --publish --pack --include-all
-            displayName: "Pack packages"
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen
-          - script: |
-              export NPM_AUTH_TOKEN="$(azure-sdk-npm-token)"
-              rush publish --publish --include-all --set-access-level public
-            displayName: Publish packages
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-testgen

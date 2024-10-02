@@ -99,12 +99,16 @@ namespace APIViewWeb.LeanModels
         public Dictionary<string, CodePanelNodeMetaData> NodeMetaDataObj { get; set; } = new Dictionary<string, CodePanelNodeMetaData>();
         public Dictionary<string, CodePanelNodeMetaData> NodeMetaData => NodeMetaDataObj.Count > 0 ? NodeMetaDataObj : null;
         public bool HasDiff { get; set; } = false;
+        public bool HasHiddenAPIThatIsDiff { get; set; } = false;
         [JsonIgnore]
         public Dictionary<string, string> LineIdToNodeIdHashed { get; set; } = new Dictionary<string, string>();
         [JsonIgnore]
         public Dictionary<string, List<CodePanelRowData>> ActiveDocumentationMap { get; set; } = new Dictionary<string, List<CodePanelRowData>>();
         [JsonIgnore]
         public Dictionary<string, List<CodePanelRowData>> DiffDocumentationMap { get; set; } = new Dictionary<string, List<CodePanelRowData>>();
+        [JsonIgnore]
+        public List<NavigationTreeNode> NavigationTreeNodesObj { get; set; } = [];
+        public NavigationTreeNode[] NavigationTreeNodes => NavigationTreeNodesObj != null ? NavigationTreeNodesObj.ToArray() : null;
 
         public void AddLineIdNodeHashMapping(string lineId, string nodeId)
         {

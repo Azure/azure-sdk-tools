@@ -4,6 +4,7 @@ import {execSync} from "child_process";
 import {generateChangelog} from "../utils/generateChangelog";
 import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../../utils/changeConfigOfTestAndSample";
 import {generateExtraFiles} from "../utils/generateExtraFiles";
+import { defaultChildProcessTimeout } from "../../common/utils";
 
 const shell = require('shelljs')
 
@@ -11,7 +12,7 @@ export async function generateCodes(sdkRepo: string, packagePath: string, packag
     let cmd = `autorest  --typescript README.md`;
     shell.cd(path.join(packagePath, 'swagger'));
     logger.info(`Start to run command: ${cmd}.`);
-    execSync(cmd, {stdio: 'inherit'});
+    execSync(cmd, {stdio: 'inherit', timeout: defaultChildProcessTimeout});
     logger.info(`Start to generate config files.`);
     shell.cd(packagePath);
     await generateExtraFiles(packagePath, packageName, sdkRepo);

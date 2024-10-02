@@ -96,12 +96,11 @@
 }
 
 .review-comment {
+    padding: 4px 16px;
+    position: relative;
     pre {
         background-color: var(--base-bg-color);
     }
-
-    padding: 4px 16px;
-    position: relative;
 }
 
 .review-comment:first-child {

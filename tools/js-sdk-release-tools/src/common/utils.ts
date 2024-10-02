@@ -4,7 +4,6 @@ import fs from 'fs';
 import { SDKType } from './types';
 import { logger } from '../utils/logger';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
-import { replaceAll } from '@ts-common/azure-js-dev-tools';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
 import { access } from 'node:fs/promises';
@@ -14,6 +13,9 @@ import { SpawnOptions, spawn } from 'child_process';
 // so do NOT change the emitter
 const emitterName = '@azure-tools/typespec-ts';
 
+// 1 hour in milliseconds unit
+export const defaultChildProcessTimeout = 60 * 60 * 1000;
+
 // TODO: remove it after we generate and use options by ourselves
 const messageToTspConfigSample =
     'Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.';
@@ -22,6 +24,10 @@ const errorKeywordsInLowercase = new Set<string>(['error', 'err_pnpm_no_matching
 
 function removeLastNewline(line: string): string {
     return line.replace(/\n$/, '')
+}
+
+function replaceAll(original: string, from: string, to: string) { 
+    return original.split(from).join(to);
 }
 
 function printErrorDetails(

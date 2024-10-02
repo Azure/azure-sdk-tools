@@ -1,6 +1,6 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
@@ -22,6 +22,8 @@ import { environment } from 'src/environments/environment';
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
   @Input() revisionSidePanel : boolean = false;
+
+  @Output() apiRevisionsEmitter : EventEmitter<APIRevision[]> = new EventEmitter<APIRevision[]>();
 
   @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
 
@@ -75,7 +77,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService,
     private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
-    private router: Router, private messageService: MessageService) { }
+    private route: ActivatedRoute, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.createRevisionFilters();
@@ -152,7 +154,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
             this.pagination = response.pagination;
             this.totalNumberOfRevisions = this.pagination?.totalCount!;
           }
-
+          this.apiRevisionsEmitter.emit(this.revisions);
           this.setCreateRevisionLanguageBasedOnReview();
         }
       }
@@ -238,14 +240,14 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   viewDiffOfSelectedAPIRevisions() {
     if (this.selectedRevisions.length == 2)
     {
-      this.apiRevisionsService.openDiffOfAPIRevisions(this.selectedRevisions[0], this.selectedRevisions[1], this.router.url);
+      this.apiRevisionsService.openDiffOfAPIRevisions(this.selectedRevisions[0], this.selectedRevisions[1], this.route);
     }
   }
   
   viewRevision(apiRevision: APIRevision) {
     if (!this.showDeletedAPIRevisions)
     {
-      this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.router.url);
+      this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.route);
     }
   }
 
@@ -478,7 +480,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
             this.createRevisionSidebarVisible = false;
             this.creatingRevision = false;
             this.crButtonText = "Create Review";
-            this.apiRevisionsService.openAPIRevisionPage(response, this.router.url);
+            this.apiRevisionsService.openAPIRevisionPage(response, this.route);
           }
         },
         error: (error: any) => {

@@ -56,12 +56,16 @@ namespace APIView.Model.V2
         [JsonIgnore]
         public bool Processed { get; set; } = false;
 
+        [JsonIgnore]
+        public int Indent {  get; set; }
+        [JsonIgnore]
+        public ReviewLine parentLine { get; set; }
         public void AddToken(ReviewToken token)
         {
             Tokens.Add(token);
         }
 
-        public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true)
+        public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4)
         {
             if (skipDocs && Tokens.Count > 0 && Tokens[0].IsDocumentation == true)
             {
@@ -77,7 +81,10 @@ namespace APIView.Model.V2
             //Add spaces for indentation
             for (int i = 0; i < indent; i++)
             {
-                sb.Append("    ");
+                for(int j = 0; j < lineIndentSpaces; j++)
+                {
+                    sb.Append(" ");
+                }
             }
             //Process all tokens
             sb.Append(ToString(true));
@@ -85,7 +92,7 @@ namespace APIView.Model.V2
             sb.Append(Environment.NewLine);
             foreach (var child in Children)
             {
-                child.AppendApiTextToBuilder(sb, indent + 1, skipDocs);
+                child.AppendApiTextToBuilder(sb, indent + 1, skipDocs, lineIndentSpaces);
             }
         }
 

@@ -191,11 +191,11 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         "clear",
         "subscribe",
         "send",
-        "query",
-        "analyze",  # common verbs
+        "query",    # common verbs
+        "analyze",
         "train",
-        "detect",
-        "from",     # future proofing
+        "detect",   # future proofing
+        "from",     # special case
     ]
 
     ignored_decorators = [

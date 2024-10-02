@@ -59,6 +59,7 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
         RenderClasses: ["dependencies"],
       }),
     ],
+    IsHidden: true,
   };
 
   const dependencyLines: ReviewLine[] = [];
@@ -97,9 +98,10 @@ function getSubPathName(entryPoint: ApiEntryPoint): string {
  * The dev-tool in azure-sdk-for-js repository augments the api to have multiple entrypoints,
  * one for each subpath export.
  * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param meta Metadata about the package
  * @param apiModel {@link ApiModel} object loaded from the .api.json file
  */
-function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
+function buildSubpathExports(reviewLines: ReviewLine[], meta: Metadata, apiModel: ApiModel) {
   for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
       const subpath = getSubPathName(entryPoint);
@@ -122,7 +124,7 @@ function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
           containingExport.add(subpath);
           exported.set(canonicalRef, containingExport);
         }
-        buildMember(exportLine.Children!, member);
+        buildMember(exportLine.Children!, meta, member);
       }
       reviewLines.push(exportLine);
       reviewLines.push(emptyLine(exportLine.LineId));
@@ -258,16 +260,44 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
 }
 
 /**
+ * Returns whether the api item should be hidden by default
+ * @parm packageName the name of the package
+ * @param item {@link ApiItem} instance
+ * @param meta {@link Metadata} about the package
+ */
+function shouldHide(item: ApiItem, meta: Metadata) {
+  const generatedRlcFiles = [
+    "clientDefinitions.ts",
+    "isUnexpected.ts",
+    "models.ts",
+    "outputModels.ts",
+    "paginateHelper.ts",
+    "parameters.ts",
+    "responses.ts",
+  ];
+
+  if (item instanceof ApiDeclaredItem) {
+    return (
+      meta.PackageName.startsWith("@azure-rest") &&
+      generatedRlcFiles.some((f) => item.fileUrlPath?.endsWith(f))
+    );
+  }
+  return false;
+}
+
+/**
  * Builds review for an {@link ApiItem}.
  * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param meta {@link Metadata} about the package
  * @param item the Api to build review for
  */
-function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
+function buildMember(reviewLines: ReviewLine[], meta: Metadata, item: ApiItem) {
   const itemId = item.canonicalReference.toString();
   const line: ReviewLine = {
     LineId: itemId,
     Children: [],
     Tokens: [],
+    IsHidden: shouldHide(item, meta),
   };
 
   buildDocumentation(reviewLines, item, itemId);
@@ -287,7 +317,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     if (item.members.length > 0) {
       line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: `{` }));
       for (const member of item.members) {
-        buildMember(line.Children!, member);
+        buildMember(line.Children!, meta, member);
       }
       reviewLines.push(line);
       reviewLines.push({
@@ -315,15 +345,12 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
   }
 }
 
-function buildReview(
-  review: ReviewLine[],
-  dependencies: Record<string, string>,
-  apiModel: ApiModel,
-) {
-  buildDependencies(review, dependencies);
-  buildSubpathExports(review, apiModel);
-}
-
+/**
+ * Builds apiview {@link ReviewLine}s and push them into result array
+ * @param meta {@link Metadata} about the package
+ * @param dependencies dependencies of this package consist of name: version pairs
+ * @param apiModel api model from api-extractor
+ */
 export function generateApiview(options: {
   meta: Metadata;
   dependencies: Record<string, string>;
@@ -331,7 +358,9 @@ export function generateApiview(options: {
 }): CodeFile {
   const { meta, dependencies, apiModel } = options;
   const review: ReviewLine[] = [];
-  buildReview(review, dependencies, apiModel);
+
+  buildDependencies(review, dependencies);
+  buildSubpathExports(review, meta, apiModel);
 
   return {
     ...meta,

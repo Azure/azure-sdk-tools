@@ -97,7 +97,17 @@ extends:
                 $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
                 Write-Host "Detected package name: $detectedPackageName"
                 $registry="$(FeedRegistry)"
-                Write-Host "Publishing to $($registry)"
-                Write-Host "npm publish $detectedPackageName --registry=$registry"
-                npm publish $detectedPackageName --registry=$registry
+                $regAuth=$registry.replace("https:","")
+                $npmReg = $regAuth.replace("registry/","");
+                $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
+                Write-Host "Publishing to $($regAuth)"
+                npm config set $regAuth`:username=azure-sdk
+                npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
+                npm config set $regAuth`:email=not_set
+                npm config set $npmReg`:username=azure-sdk
+                npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
+                npm config set $npmReg`:email=not_set
+                Write-Host "Publishing package"
+                Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true"
+                npm publish $detectedPackageName --registry=$registry --always-auth=true
               displayName: Publish package

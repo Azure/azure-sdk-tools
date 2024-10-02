@@ -354,10 +354,8 @@ extends:
                   InlineScript: |
                     @echo off
                     echo Installing .NET tool
-                    call mkdir D:\home\site\wwwroot\csharp-parser
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                     echo Installing JavaScript parser
-                    call mkdir D:\home\site\wwwroot\js-parser
                     call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}  
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
@@ -410,10 +408,8 @@ extends:
                         InlineScript: |
                           @echo off
                           echo Installing .NET tool
-                          call mkdir D:\home\site\wwwroot\csharp-parser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           echo Installing JavaScript parser
-                          call mkdir D:\home\site\wwwroot\js-parser
                           call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
@@ -470,10 +466,8 @@ extends:
                         InlineScript: |
                           @echo off
                           echo Installing .NET tool
-                          call mkdir D:\home\site\wwwroot\csharp-parser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           echo Installing JavaScript parser
-                          call mkdir D:\home\site\wwwroot\js-parser
                           call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy

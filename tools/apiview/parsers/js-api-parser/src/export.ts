@@ -26,7 +26,7 @@ async function loadApiJson(fileName: string) {
 }
 
 async function main() {
-  if (process.argv.length < 3) {
+  if (process.argv.length < 4) {
     console.log("Please run this tool with proper input");
     console.log("ts-genapi <Path to api-extractor JSON output> <Path to apiviewFile>");
     process.exit(1);

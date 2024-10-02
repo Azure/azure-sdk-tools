@@ -7,7 +7,7 @@ parameters:
     default: '1.0.0-dev.20240828.2'
   - name: JavaScriptAPIParser
     type: string
-    default: '@azure-tools/ts-genapi@1.0.7'
+    default: '@azure-tools/ts-genapi@2.0.0'
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
@@ -353,9 +353,6 @@ extends:
                   ScriptType: 'Inline Script'
                   InlineScript: |
                     @echo off
-                    echo Installing npm packages
-                    call npm install --prefix D:\home\site\wwwroot --force
-                    call npm run-script build --prefix D:\home\site\wwwroot --force
                     echo Installing .NET tool
                     call mkdir D:\home\site\wwwroot\csharp-parser
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
@@ -412,9 +409,6 @@ extends:
                         packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
                         InlineScript: |
                           @echo off
-                          echo Installing npm packages
-                          call npm install --prefix D:\home\site\wwwroot --force
-                          call npm run-script build --prefix D:\home\site\wwwroot --force
                           echo Installing .NET tool
                           call mkdir D:\home\site\wwwroot\csharp-parser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
@@ -475,9 +469,6 @@ extends:
                         packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
                         InlineScript: |
                           @echo off
-                          echo Installing npm packages
-                          call npm install --prefix D:\home\site\wwwroot --force
-                          call npm run-script build --prefix D:\home\site\wwwroot --force
                           echo Installing .NET tool
                           call mkdir D:\home\site\wwwroot\csharp-parser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser

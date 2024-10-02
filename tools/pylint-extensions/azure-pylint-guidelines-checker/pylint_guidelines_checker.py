@@ -238,14 +238,15 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
     name = "client-approved-method-name-prefix"
     priority = -1
     msgs = {
-        "C5000": (
-            "%s",
+        "C4720": (
+            "Client is not using an approved method name prefix. See details:"
+            " https://azure.github.io/azure-sdk/python_design.html#service-operations",
             "unapproved-client-method-name-prefix",
             "All clients should use the preferred verbs for method names.",
         ),
     }
 
-    ignore_clients = [
+    ignore_clients = [  
         "PipelineClient",
         "AsyncPipelineClient",
         "ARMPipelineClient",
@@ -266,30 +267,41 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         "remove",
         "begin",
         "upload",
-        "download",
-        "close",
+        "download", # standard verbs
+        "close",    # very common verb
         "cancel",
         "clear",
         "subscribe",
         "send",
         "query",
-        "analyze",
-        "train", # TODO: test this
+        "analyze",  # common verbs
+        "train",
         "detect",
+        "from",     # future proofing
     ]
 
-    # TODO: split itno checks for prefixes/suffixes and ignored decorators
+    ignored_decorators = [
+        "property",
+    ]
 
     def __init__(self, linter=None):
         super(ClientHasApprovedMethodNamePrefix, self).__init__(linter)
         self.process_class = None
         self.namespace = None
 
-    def _is_property(self, node):
+    # def _is_property(self, node):
+    #     if not node.decorators:
+    #         return False
+    #     for decorator in node.decorators.nodes:
+    #         if isinstance(decorator, astroid.nodes.Name) and decorator.name == "property":
+    #             return True
+    #     return False
+    
+    def _check_decorators(self, node):
         if not node.decorators:
             return False
         for decorator in node.decorators.nodes:
-            if isinstance(decorator, astroid.nodes.Name) and decorator.name == "property":
+            if isinstance(decorator, astroid.nodes.Name) and decorator.name in self.ignored_decorators:
                 return True
         return False
 
@@ -297,11 +309,6 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         self.namespace = node.name
 
     def visit_classdef(self, node):
-        # TODO: ignore classes with leading "_"
-        # TODO: ignore classes in private namespaces. i.e.:
-        #   - azure.ai.ml.identity._internal.ManagedIdentityClient
-        #   - azure.servicebus._pyamqp.ReceiveClient
-        
         if all((
             node.name.endswith("Client"),
             node.name not in self.ignore_clients,
@@ -311,14 +318,12 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
             self.process_class = node
 
     def visit_functiondef(self, node):
-        # TODO: ignore "models" if it's namespace starts with "azure.mgmt"
-        # TODO: order the output list alphabetically by method name
         if any((
             self.process_class is None, # not in a client class
             node.name.startswith("_"), # private method
             node.name.endswith("_exists"), # special case
-            node.name.startswith("from"), # special case
-            self._is_property(node), # property
+            # node.name.startswith("from"), # special case
+            self._check_decorators(node), # property
             node.parent != self.process_class, # nested method
         )):
             return
@@ -328,7 +333,6 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
         if parts[0].lower() not in self.approved_prefixes:
             self.add_message(
                 msgid="unapproved-client-method-name-prefix",
-                args=f"{node.name} {self.namespace}",
                 node=node,
                 confidence=None,
             )

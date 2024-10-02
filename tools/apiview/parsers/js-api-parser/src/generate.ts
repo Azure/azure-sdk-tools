@@ -82,6 +82,11 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
   reviewLines.push(emptyLine(header.LineId));
 }
 
+/**
+ * Gets the name of the subpath export given an entrypoint
+ * @param entryPoint
+ * @returns
+ */
 function getSubPathName(entryPoint: ApiEntryPoint): string {
   return entryPoint.name.length > 0 ? `./${entryPoint.name}` : ".";
 }

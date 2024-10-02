@@ -158,7 +158,7 @@ public class RotationConfigurationTests
         RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
 
         // Act
-        IEnumerable<RotationPlan> plans = configuration.GetAllRotationPlans(Mock.Of<ILogger>(), new TimeProvider());
+        IEnumerable<RotationPlan> plans = configuration.GetAllRotationPlans(Mock.Of<ILogger>(), TimeProvider.System);
 
         Assert.AreEqual(1, plans.Count());
     }

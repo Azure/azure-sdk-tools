@@ -23,6 +23,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using Timeline = Microsoft.TeamFoundation.Build.WebApi.Timeline;
 
 namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
@@ -181,6 +182,30 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 
             // We upload the build blob last. This allows us to use the existence of the blob as a signal that build processing is complete.
             await UploadBuildBlobAsync(account, build);
+        }
+
+        public async Task<string[]> GetBuildBlobNamesAsync(string projectName, DateTimeOffset minTime, DateTimeOffset maxTime, CancellationToken cancellationToken)
+        {
+            DateTimeOffset minDay = minTime.ToUniversalTime().Date;
+            DateTimeOffset maxDay = maxTime.ToUniversalTime().Date;
+
+            DateTimeOffset[] days = Enumerable.Range(0, (int)(maxDay - minDay).TotalDays + 1)
+                .Select(offset => minDay.AddDays(offset))
+                .ToArray();
+
+            List<string> blobNames = [];
+
+            foreach (DateTimeOffset day in days)
+            {
+                string blobPrefix = $"{projectName}/{day:yyyy/MM/dd}/";
+
+                await foreach (BlobItem blob in this.buildsContainerClient.GetBlobsAsync(prefix: blobPrefix, cancellationToken: cancellationToken))
+                {
+                    blobNames.Add(blob.Name);
+                }
+            }
+
+            return [.. blobNames];
         }
 
         public string GetBuildBlobName(Build build)

@@ -13,5 +13,5 @@ namespace Test { namespace Inner {
 using namespace Test::Inner;
 
 namespace A { namespace AB { namespace ABCD {
-    char* GlobalFunctionInAABABCD(int character);
+  char* GlobalFunctionInAABABCD(int character);
 }}} // namespace A::AB::ABCD

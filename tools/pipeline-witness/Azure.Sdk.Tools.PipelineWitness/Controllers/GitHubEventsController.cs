@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.GitHubActions;
-using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,15 +19,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
     [ApiController]
     public class GitHubEventsController : ControllerBase
     {
-        private readonly QueueClient queueClient;
+        private readonly RunCompleteQueue queue;
         private readonly ILogger<GitHubEventsController> logger;
         private readonly PipelineWitnessSettings settings;
 
-        public GitHubEventsController(ILogger<GitHubEventsController> logger, QueueServiceClient queueServiceClient, IOptions<PipelineWitnessSettings> options)
+        public GitHubEventsController(ILogger<GitHubEventsController> logger, RunCompleteQueue queue, IOptions<PipelineWitnessSettings> options)
         {
             this.logger = logger;
             this.settings = options.Value;
-            this.queueClient = queueServiceClient.GetQueueClient(this.settings.GitHubActionRunsQueueName);
+            this.queue = queue;
         }
 
         // POST api/githubevents
@@ -38,13 +37,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
             var eventName = Request.Headers["X-GitHub-Event"].FirstOrDefault();
             switch (eventName)
             {
-                case "ping":
-                    return Ok();
                 case "workflow_run":
                     return await ProcessWorkflowRunEventAsync();
                 default:
                     this.logger.LogWarning("Received GitHub event {EventName} which is not supported", eventName);
-                    return BadRequest();
+                    return Ok();
             }
         }
 
@@ -83,16 +80,27 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
 
             if (action == "completed")
             {
-                var queueMessage = new RunCompleteQueueMessage
+                string owner = eventMessage.GetProperty("repository").GetProperty("owner").GetProperty("login").GetString();
+                string repository = eventMessage.GetProperty("repository").GetProperty("name").GetString();
+                long runId = eventMessage.GetProperty("workflow_run").GetProperty("id").GetInt64();
+
+                if (this.settings.GitHubRepositories.Contains($"{owner}/{repository}", StringComparer.InvariantCultureIgnoreCase))
                 {
-                    Owner = eventMessage.GetProperty("repository").GetProperty("owner").GetProperty("login").GetString(),
-                    Repository = eventMessage.GetProperty("repository").GetProperty("name").GetString(),
-                    RunId = eventMessage.GetProperty("workflow_run").GetProperty("id").GetInt64(),
-                };
-
-                this.logger.LogInformation("Enqueuing GitHubRunCompleteMessage for {Owner}/{Repository} run {RunId}", queueMessage.Owner, queueMessage.Repository, queueMessage.RunId);
-
-                await this.queueClient.SendMessageAsync(JsonSerializer.Serialize(queueMessage));
+                    this.logger.LogInformation("Enqueuing GitHubRunCompleteMessage for {Owner}/{Repository} run {RunId}", owner, repository, runId);
+                    
+                    var queueMessage = new RunCompleteQueueMessage
+                    {
+                        Owner = owner,
+                        Repository = repository,
+                        RunId = runId,
+                    };
+                    
+                    await this.queue.EnqueueMessageAsync(queueMessage);
+                }
+                else
+                {
+                    this.logger.LogInformation("Skipping message for unknown repostory {Owner}/{Repository}", owner, repository);
+                }
             }
 
             return Ok();

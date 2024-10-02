@@ -239,7 +239,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             response.StatusCode = upstreamResponse.StatusCode;
             foreach (var header in upstreamResponse.Headers)
             {
-                response.Headers.Add(header.Key, header.Value);
+                response.Headers.Append(header.Key, header.Value);
             }
 
             _logger.LogInformation("Started writing response body, {actualLength}", contentBytes);

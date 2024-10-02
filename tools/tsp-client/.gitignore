@@ -3,3 +3,6 @@ node_modules
 dist
 types
 temp
+tsp-output/
+output/
+test/examples/specification/convert/examples/*

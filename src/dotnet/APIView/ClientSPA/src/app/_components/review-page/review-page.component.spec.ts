@@ -16,7 +16,8 @@ import { ReviewNavComponent } from '../review-nav/review-nav.component';
 import { ReviewPageOptionsComponent } from '../review-page-options/review-page-options.component';
 import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
+import { ReviewPageModule } from 'src/app/_modules/review-page.module';
+import { MessageService } from 'primeng/api';
 
 describe('ReviewPageComponent', () => {
   let component: ReviewPageComponent;
@@ -51,8 +52,9 @@ describe('ReviewPageComponent', () => {
               paramMap: convertToParamMap({ reviewId: 'test' }),
             },
             queryParams: of(convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' }))
-          }
-        }
+          },
+        },
+        MessageService
       ]
     });
     fixture = TestBed.createComponent(ReviewPageComponent);

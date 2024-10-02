@@ -8,7 +8,7 @@ import { HttpErrorInterceptorService } from 'src/app/_services/http-error-interc
 import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { ReviewPageModule } from 'src/app/_modules/review-page/review-page.module';
+import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { UserProfile } from 'src/app/_models/userProfile';
 
 describe('ReviewPageOptionsComponent', () => {
@@ -85,5 +85,21 @@ describe('ReviewPageOptionsComponent', () => {
       const message : HTMLElement = fixture.nativeElement.querySelector('#first-release-approval-message');
       expect(message.textContent).toEqual("First Release Approval Pending");
     });
+  });
+
+  describe('Page Option Values', () => {
+    it('Should set Page Option Defaults when UserProfile is undefined', () => {
+      component.userProfile = undefined;
+      component.ngOnInit();
+      expect(component.userProfile).toBeUndefined();
+      expect(component.showCommentsSwitch).toEqual(true);
+      expect(component.showSystemCommentsSwitch).toEqual(true);
+      expect(component.showDocumentationSwitch).toEqual(true);
+      expect(component.showHiddenAPISwitch).toEqual(false);
+      expect(component.showLeftNavigationSwitch).toEqual(true);
+      expect(component.markedAsViewSwitch).toEqual(false);
+      expect(component.showLineNumbersSwitch).toEqual(true);
+      expect(component.disableCodeLinesLazyLoading).toEqual(false);
+    })
   });
 });

@@ -12,7 +12,7 @@ import { ConfigService } from '../config/config.service';
 })
 export class ReviewsService {
   baseUrl : string = this.configService.apiUrl + "reviews";
-  paginatedResult: PaginatedResult<Review[]> = new PaginatedResult<Review[]>
+  paginatedResult: PaginatedResult<Review[]> = new PaginatedResult<Review[]>();
 
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
@@ -103,6 +103,22 @@ export class ReviewsService {
     { 
       headers: headers,
       withCredentials: true,
+    });
+  }
+
+  toggleReviewSubscriptionByUser(reviewId: string, state: boolean) {
+    let params = new HttpParams();
+    params = params.append('state', state.toString());
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+   
+    return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/toggleSubscribe`, {},
+    { 
+      headers: headers,
+      params: params,
+      withCredentials: true
     });
   }
 

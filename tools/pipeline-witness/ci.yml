@@ -20,6 +20,9 @@ pr:
   paths:
     include:
       - tools/pipeline-witness
+    exclude:
+      - tools/pipeline-witness/monitored-repos.json
+      - tools/pipeline-witness/docs/*
   
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-webapp.yml

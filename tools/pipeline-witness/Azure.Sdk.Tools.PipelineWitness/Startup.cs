@@ -20,7 +20,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using Octokit;
 
 namespace Azure.Sdk.Tools.PipelineWitness;
 
@@ -37,6 +36,7 @@ public static class Startup
         builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
         builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
         builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
+        builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureSettings>();
 
         builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
         builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
@@ -60,12 +60,14 @@ public static class Startup
         builder.Services.AddTransient<BuildCompleteQueue>();
         builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
 
-        builder.Services.AddSingleton<ICredentialStore, GitHubCredentialStore>();
+        builder.Services.AddSingleton<GitHubClientFactory>();
         builder.Services.AddTransient<GitHubActionProcessor>();
         builder.Services.AddTransient<RunCompleteQueue>();
         builder.Services.AddHostedService<RunCompleteQueueWorker>(settings.GitHubActionRunsWorkerCount);
 
         builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+        builder.Services.AddHostedService<MissingGitHubActionsWorker>();
+        builder.Services.AddHostedService<MissingAzurePipelineRunsWorker>();
     }
 
     private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService
@@ -83,12 +85,9 @@ public static class Startup
 
     private static VssConnection CreateVssConnection(IServiceProvider provider)
     {
-        TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
-        TokenRequestContext tokenRequestContext = new(VssAadSettings.DefaultScopes);
-        Azure.Core.AccessToken token = azureCredential.GetToken(tokenRequestContext, CancellationToken.None);
-
         Uri organizationUrl = new("https://dev.azure.com/azure-sdk");
-        VssAadCredential vssCredential = new(new VssAadToken("Bearer", token.Token));
+        TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
+        VssAzureIdentityCredential vssCredential = new(azureCredential);
         VssHttpRequestSettings settings = VssClientHttpRequestSettings.Default.Clone();
 
         return new VssConnection(organizationUrl, vssCredential, settings);

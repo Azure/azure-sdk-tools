@@ -1,7 +1,7 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { MenuItem, SortEvent } from 'primeng/api';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MenuItem, MessageService, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { Pagination } from 'src/app/_models/pagination';
@@ -21,7 +21,9 @@ import { environment } from 'src/environments/environment';
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
-  @Input() revisionSideBarVisible : boolean = false;
+  @Input() revisionSidePanel : boolean = false;
+
+  @Output() apiRevisionsEmitter : EventEmitter<APIRevision[]> = new EventEmitter<APIRevision[]>();
 
   @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
 
@@ -75,7 +77,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService,
     private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
-    private router: Router) { }
+    private route: ActivatedRoute, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.createRevisionFilters();
@@ -110,7 +112,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       this.showDiffButton = false;
     }
 
-    if (changes['revisionSideBarVisible'] && changes['revisionSideBarVisible'].currentValue == false) {
+    if (changes['revisionSidePanel'] && changes['revisionSidePanel'].currentValue == false) {
       this.createRevisionSidebarVisible = false;
       this.optionsSidebarVisible = false;
     }
@@ -152,7 +154,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
             this.pagination = response.pagination;
             this.totalNumberOfRevisions = this.pagination?.totalCount!;
           }
-
+          this.apiRevisionsEmitter.emit(this.revisions);
           this.setCreateRevisionLanguageBasedOnReview();
         }
       }
@@ -238,14 +240,14 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   viewDiffOfSelectedAPIRevisions() {
     if (this.selectedRevisions.length == 2)
     {
-      this.apiRevisionsService.openDiffOfAPIRevisions(this.selectedRevisions[0], this.selectedRevisions[1], this.router.url);
+      this.apiRevisionsService.openDiffOfAPIRevisions(this.selectedRevisions[0], this.selectedRevisions[1], this.route);
     }
   }
   
   viewRevision(apiRevision: APIRevision) {
     if (!this.showDeletedAPIRevisions)
     {
-      this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.router.url);
+      this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.route);
     }
   }
 
@@ -478,11 +480,12 @@ export class RevisionsListComponent implements OnInit, OnChanges {
             this.createRevisionSidebarVisible = false;
             this.creatingRevision = false;
             this.crButtonText = "Create Review";
-            this.apiRevisionsService.openAPIRevisionPage(response, this.router.url);
+            this.apiRevisionsService.openAPIRevisionPage(response, this.route);
           }
         },
         error: (error: any) => {
           this.creatingRevision = false;
+          this.messageService.add({ severity: 'error', icon: 'bi bi-info-circle', detail: 'Failed to create new API Revision', key: 'bl', life: 3000 });
         }
       });
     }
@@ -504,9 +507,9 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       case "C#":
         this.createRevisionInstruction = [
           `Run <code>dotnet pack</code>`, 
-          `Upload the resulting .nupkg file.`
+          `Upload the resulting .nupkg or .dll file.`
         ];
-        this.acceptedFilesForReviewUpload = ".nupkg";
+        this.acceptedFilesForReviewUpload = ".nupkg, .dll";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
@@ -584,14 +587,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         break;
       case "Json":
         this.createRevisionInstruction = [
-          `Upload JSON API review token file.`
+          `Upload .json API review token file.`
         ];
-        this.acceptedFilesForReviewUpload = ".json, .tgz";
+        this.acceptedFilesForReviewUpload = ".json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
       default:
-        this.createRevisionInstruction = []
+        this.createRevisionInstruction = [];
+        this.acceptedFilesForReviewUpload = undefined;
     }
 
     if (this.revisionCreationFileUpload) {    

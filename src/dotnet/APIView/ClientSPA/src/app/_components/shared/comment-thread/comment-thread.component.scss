@@ -1,5 +1,17 @@
 :host ::ng-deep {
     font-family: var(--font-family);
+    
+    .comment-thread-container {
+        width: min(100%, 1000px);
+    }
+
+    .comment-thread-navigation {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        transform: translate(0, -50%);
+    }
 
     .user-avartar {
         border: 2px solid var(--border-color);
@@ -20,6 +32,7 @@
     
     .p-panel {
         border: none;
+        background-color: unset;
 
         p {
             font-size: 14px;
@@ -72,5 +85,13 @@
         color: var(--primary-color);
         font-weight: bolder;
         cursor: pointer;
+    }
+
+    .rendered-comment-content {
+        overflow-wrap: anywhere;
+        pre {
+            max-width: 100%;
+            white-space: pre-wrap;
+        }
     }
 }

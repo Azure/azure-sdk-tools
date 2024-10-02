@@ -39,7 +39,7 @@ public partial class PostConfigureKeyVaultSettings<T> : IPostConfigureOptions<T>
                 {
                     if (DateTimeOffset.UtcNow < cacheEntry.ExpirationTime)
                     {
-                        this.logger.LogInformation("Replacing setting property {PropertyName} with value from cache", property.Name);
+                        this.logger.LogInformation("Replacing setting {PropertyName} with value from cache", property.Name);
                         property.SetValue(options, cacheEntry.Value);
                         continue;
                     }
@@ -52,16 +52,19 @@ public partial class PostConfigureKeyVaultSettings<T> : IPostConfigureOptions<T>
                     var vaultUrl = match.Groups["vault"].Value;
                     var secretName = match.Groups["secret"].Value;
 
+                    this.logger.LogInformation("Setting {PropertyName} points to Key Vault secret url {SecretUrl}", property.Name, propertyValue);
                     try
                     {
                         var secretClient = this.secretClientProvider.GetSecretClient(new Uri(vaultUrl));
-                        this.logger.LogInformation("Replacing setting property {PropertyName} with value from secret {SecretUrl}", property.Name, propertyValue);
 
+                        this.logger.LogInformation("Getting secret value from {SecretUrl}", propertyValue);
                         var response = secretClient.GetSecret(secretName);
                         var secret = response.Value;
 
+                        this.logger.LogInformation("Replacing setting {PropertyName} with value from secret", property.Name);
                         property.SetValue(options, secret.Value);
 
+                        this.logger.LogInformation("Caching secret value for setting {PropertyName}", property.Name);
                         this.valueCache[propertyValue] = (ExpirationTime: DateTimeOffset.UtcNow.AddMinutes(5), secret.Value);
                     }
                     catch (Exception exception)

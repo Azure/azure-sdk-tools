@@ -23,6 +23,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using Timeline = Microsoft.TeamFoundation.Build.WebApi.Timeline;
 
 namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {

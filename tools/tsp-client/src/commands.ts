@@ -348,11 +348,16 @@ export async function convertCommand(argv: any): Promise<void> {
   );
   const autorestBinPath = joinPaths(autorestPath, autorestPackageJson["bin"]["autorest"]);
 
+  // Resolve core dependency
+  const autorestCorePath = await getPathToDependency("@autorest/core");
+
+  // Resolve extension dependencies
   const autorestOpenApiToTypeSpecPath = await getPathToDependency("@autorest/openapi-to-typespec");
 
   // Build the command to convert swagger to typespec
   const args = [
     autorestBinPath,
+    `--version="${autorestCorePath}"`,
     "--openapi-to-typespec",
     "--csharp=false",
     `--output-folder="${outputDir}"`,

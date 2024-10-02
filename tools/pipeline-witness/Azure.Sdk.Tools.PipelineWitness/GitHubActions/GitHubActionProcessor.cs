@@ -38,35 +38,36 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         };
 
         private readonly ILogger<GitHubActionProcessor> logger;
-        private readonly GitHubClient client;
+        private readonly GitHubClientFactory clientFactory;
         private readonly BlobContainerClient runsContainerClient;
         private readonly BlobContainerClient jobsContainerClient;
         private readonly BlobContainerClient stepsContainerClient;
         private readonly BlobContainerClient logsContainerClient;
 
-        public GitHubActionProcessor(ILogger<GitHubActionProcessor> logger, BlobServiceClient blobServiceClient, GitHubClient githubClient)
+        public GitHubActionProcessor(ILogger<GitHubActionProcessor> logger, BlobServiceClient blobServiceClient, GitHubClientFactory clientFactory)
         {
-            ArgumentNullException.ThrowIfNull(githubClient);
+            ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(blobServiceClient);
-            ArgumentNullException.ThrowIfNull(githubClient);
+            ArgumentNullException.ThrowIfNull(clientFactory);
 
             this.logger = logger;
             this.logsContainerClient = blobServiceClient.GetBlobContainerClient(LogsContainerName);
             this.runsContainerClient = blobServiceClient.GetBlobContainerClient(RunsContainerName);
             this.jobsContainerClient = blobServiceClient.GetBlobContainerClient(JobsContainerName);
             this.stepsContainerClient = blobServiceClient.GetBlobContainerClient(StepsContainerName);
-            this.client = githubClient;
+            this.clientFactory = clientFactory;
         }
 
         public async Task ProcessAsync(string owner, string repository, long runId)
         {
-            WorkflowRun run = await GetWorkflowRunAsync(owner, repository, runId);
-            await ProcessWorkflowRunAsync(run);
+            IGitHubClient client = await this.clientFactory.CreateGitHubClientAsync(owner, repository);
+            WorkflowRun run = await GetWorkflowRunAsync(client, owner, repository, runId);
+            await ProcessWorkflowRunAsync(client, run);
 
             for (long attempt = 1; attempt < run.RunAttempt; attempt++)
             {
-                WorkflowRun runAttempt = await this.client.Actions.Workflows.Runs.GetAttempt(owner, repository, runId, attempt);
-                await ProcessWorkflowRunAsync(runAttempt);
+                WorkflowRun runAttempt = await client.Actions.Workflows.Runs.GetAttempt(owner, repository, runId, attempt);
+                await ProcessWorkflowRunAsync(client, runAttempt);
             }
         }
 
@@ -107,14 +108,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             return blobName;
         }
 
-        private async Task ProcessWorkflowRunAsync(WorkflowRun run)
+        private async Task ProcessWorkflowRunAsync(IGitHubClient client, WorkflowRun run)
         {
-            Workflow workflow = await GetWorkflowAsync(run);
-            List<WorkflowJob> jobs = await GetJobsAsync(run);
+            Workflow workflow = await GetWorkflowAsync(client, run);
+            List<WorkflowJob> jobs = await GetJobsAsync(client, run);
 
             await UploadJobsBlobAsync(workflow, run, jobs);
             await UploadStepsBlobAsync(workflow, run, jobs);
-            await UploadLogsBlobAsync(workflow, run, jobs);
+            await UploadLogsBlobAsync(client, workflow, run, jobs);
 
             // We upload the run blob last. This allows us to use the existence of the blob as a signal that run processing is complete.
             await UploadRunBlobAsync(workflow, run);
@@ -319,7 +320,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             }
         }
 
-        private async Task UploadLogsBlobAsync(Workflow workflow, WorkflowRun run, List<WorkflowJob> jobs)
+        private async Task UploadLogsBlobAsync(IGitHubClient client, Workflow workflow, WorkflowRun run, List<WorkflowJob> jobs)
         {
             string repository = run.Repository.FullName;
             long workflowId = workflow.Id;
@@ -344,7 +345,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
                 this.logger.LogInformation("Processing log for repository {Repository}, workflow {Workflow}, run {RunId}, attempt {Attempt}", repository, runName, runId, attempt);
 
-                using ZipArchive archive = await GetLogsAsync(run);
+                using ZipArchive archive = await GetLogsAsync(client, run);
 
                 var logEntries = archive.Entries
                     .Select(x => new
@@ -502,19 +503,19 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             return result;
         }
 
-        private async Task<WorkflowRun> GetWorkflowRunAsync(string owner, string repository, long runId)
+        private static async Task<WorkflowRun> GetWorkflowRunAsync(IGitHubClient client, string owner, string repository, long runId)
         {
-            WorkflowRun workflowRun = await this.client.Actions.Workflows.Runs.Get(owner, repository, runId);
+            WorkflowRun workflowRun = await client.Actions.Workflows.Runs.Get(owner, repository, runId);
             return workflowRun;
         }
 
-        private async Task<Workflow> GetWorkflowAsync(WorkflowRun run)
+        private static async Task<Workflow> GetWorkflowAsync(IGitHubClient client, WorkflowRun run)
         {
-            Workflow workflow = await this.client.Actions.Workflows.Get(run.Repository.Owner.Login, run.Repository.Name, run.WorkflowId);
+            Workflow workflow = await client.Actions.Workflows.Get(run.Repository.Owner.Login, run.Repository.Name, run.WorkflowId);
             return workflow;
         }
 
-        private async Task<List<WorkflowJob>> GetJobsAsync(WorkflowRun run)
+        private static async Task<List<WorkflowJob>> GetJobsAsync(IGitHubClient client, WorkflowRun run)
         {
             List<WorkflowJob> jobs = [];
             for (int pageNumber = 1; ; pageNumber++)
@@ -526,7 +527,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
                     StartPage = pageNumber
                 };
 
-                WorkflowJobsResponse jobsResponse = await this.client.Actions.Workflows.Jobs.List(run.Repository.Owner.Login, run.Repository.Name, run.Id, (int)run.RunAttempt, options);
+                WorkflowJobsResponse jobsResponse = await client.Actions.Workflows.Jobs.List(run.Repository.Owner.Login, run.Repository.Name, run.Id, (int)run.RunAttempt, options);
 
                 IReadOnlyList<WorkflowJob> pageJobs = jobsResponse.Jobs;
                 if (pageJobs.Count == 0)
@@ -540,9 +541,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             return jobs;
         }
 
-        private async Task<ZipArchive> GetLogsAsync(WorkflowRun run)
+        private static async Task<ZipArchive> GetLogsAsync(IGitHubClient client, WorkflowRun run)
         {
-            var logBytes = await this.client.Actions.Workflows.Runs.GetAttemptLogs(run.Repository.Owner.Login, run.Repository.Name, run.Id, run.RunAttempt);
+            var logBytes = await client.Actions.Workflows.Runs.GetAttemptLogs(run.Repository.Owner.Login, run.Repository.Name, run.Id, run.RunAttempt);
             return new ZipArchive(new MemoryStream(logBytes), ZipArchiveMode.Read, false);
         }
 

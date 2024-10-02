@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.GitHubActions;
-using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,15 +19,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
     [ApiController]
     public class GitHubEventsController : ControllerBase
     {
-        private readonly QueueClient queueClient;
+        private readonly RunCompleteQueue queue;
         private readonly ILogger<GitHubEventsController> logger;
         private readonly PipelineWitnessSettings settings;
 
-        public GitHubEventsController(ILogger<GitHubEventsController> logger, QueueServiceClient queueServiceClient, IOptions<PipelineWitnessSettings> options)
+        public GitHubEventsController(ILogger<GitHubEventsController> logger, RunCompleteQueue queue, IOptions<PipelineWitnessSettings> options)
         {
             this.logger = logger;
             this.settings = options.Value;
-            this.queueClient = queueServiceClient.GetQueueClient(this.settings.GitHubActionRunsQueueName);
+            this.queue = queue;
         }
 
         // POST api/githubevents
@@ -38,13 +37,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
             var eventName = Request.Headers["X-GitHub-Event"].FirstOrDefault();
             switch (eventName)
             {
-                case "ping":
-                    return Ok();
                 case "workflow_run":
                     return await ProcessWorkflowRunEventAsync();
                 default:
                     this.logger.LogWarning("Received GitHub event {EventName} which is not supported", eventName);
-                    return BadRequest();
+                    return Ok();
             }
         }
 
@@ -98,7 +95,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
                         RunId = runId,
                     };
                     
-                    await this.queueClient.SendMessageAsync(JsonSerializer.Serialize(queueMessage));
+                    await this.queue.EnqueueMessageAsync(queueMessage);
                 }
                 else
                 {

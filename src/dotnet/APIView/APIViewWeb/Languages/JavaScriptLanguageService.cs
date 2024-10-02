@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
@@ -13,17 +14,15 @@ namespace APIViewWeb
         public override string[] Extensions { get; } = { ".api.json" };
         public override string ProcessName { get; } = "node";
         public override string VersionString { get; } = "1.0.8";
+        private readonly string _jsParserToolPath;
 
-        public JavaScriptLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
+        public JavaScriptLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
+            _jsParserToolPath = configuration["JavaScriptParserToolPath"];
         }
-
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {
-            var jsPath = Path.Combine(
-                    Path.GetDirectoryName(typeof(JavaScriptLanguageService).Assembly.Location),
-                    "export.js");
-
+            var jsPath = Path.Combine(_jsParserToolPath, "export.js");
             return $"{jsPath} \"{originalName}\" \"{jsonFilePath}\"";
         }
     }

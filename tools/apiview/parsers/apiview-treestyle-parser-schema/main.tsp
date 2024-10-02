@@ -18,7 +18,7 @@ model CodeFile {
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
   Diagnostics?: Array<CodeDiagnostic>;
-  /** Navigation items are used to create a tree view in the navigation panel. Each navigation item is linked to a review line ID. this is optional.
+  /** Navigation items are used to create a tree view in the navigation panel. Each navigation item is linked to a review line ID. This is optional.
   * If navigation items are not provided then navigation panel will be automatically generated using the review lines. Navigation items should be provided only if you want to customize the navigation panel.
   */
   Navigation?: Array<NavigationItem>;

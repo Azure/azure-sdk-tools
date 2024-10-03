@@ -30,8 +30,8 @@ const exported = new Map<string, Set<string>>();
  * @param relatedToLine line id to associate the result with
  * @returns
  */
-function emptyLine(relatedToLine?: string): ReviewLine {
-  return { RelatedToLine: relatedToLine, Tokens: [] };
+function emptyLine(relatedToLine?: string, isHidden?: boolean): ReviewLine {
+  return { RelatedToLine: relatedToLine, Tokens: [], IsHidden: isHidden };
 }
 
 /**
@@ -75,12 +75,13 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
     });
     const dependencyLine: ReviewLine = {
       Tokens: [nameToken, buildToken({ Kind: TokenKind.Punctuation, Value: ":" }), versionToken],
+      IsHidden: header.IsHidden,
     };
     dependencyLines.push(dependencyLine);
   }
   header.Children = dependencyLines;
   reviewLines.push(header);
-  reviewLines.push(emptyLine(header.LineId));
+  reviewLines.push(emptyLine(header.LineId, header.IsHidden));
 }
 
 /**
@@ -109,9 +110,13 @@ function buildSubpathExports(reviewLines: ReviewLine[], meta: Metadata, apiModel
         LineId: `Subpath-export-${subpath}`,
         Tokens: [
           buildToken({
+            Kind: TokenKind.Keyword,
+            Value: "export",
+          }),
+          buildToken({
             Kind: TokenKind.StringLiteral,
             Value: ` "${subpath}"`,
-            NavigationDisplayName: `"${subpath}"`,
+            NavigationDisplayName: `export "${subpath}"`,
           }),
         ],
         Children: [],
@@ -224,7 +229,7 @@ function getItemKindString(item: ApiDeclaredItem) {
  * @param line The {@link ReviewLine} to push {@link ReviewToken}s to
  * @param item {@link ApiItem} instance
  */
-function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
+function buildMemberLineTokens(line: ReviewLine, item: ApiItem, isHidden?: boolean) {
   const itemId = item.canonicalReference.toString();
   if (item instanceof ApiDeclaredItem) {
     const itemKind: string = getItemKindString(item);
@@ -253,7 +258,14 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
           }
         }
       } else {
-        splitAndBuildMultipleLine(line, item.excerptTokens, itemId, item.displayName, itemKind);
+        splitAndBuildMultipleLine(
+          line,
+          item.excerptTokens,
+          itemId,
+          item.displayName,
+          itemKind,
+          isHidden,
+        );
       }
     }
   }
@@ -297,7 +309,7 @@ function buildMember(reviewLines: ReviewLine[], meta: Metadata, item: ApiItem) {
     LineId: itemId,
     Children: [],
     Tokens: [],
-    IsHidden: shouldHide(item, meta),
+    IsHidden: shouldHide(item, meta) || shouldHide(item.parent, meta),
   };
 
   buildDocumentation(reviewLines, item, itemId);
@@ -308,7 +320,7 @@ function buildMember(reviewLines: ReviewLine[], meta: Metadata, item: ApiItem) {
     buildReleaseTag(reviewLines, releaseTag);
   }
 
-  buildMemberLineTokens(line, item);
+  buildMemberLineTokens(line, item, line.IsHidden);
 
   if (mayHaveChildren(item)) {
     if (line.Tokens.length > 0) {
@@ -323,6 +335,7 @@ function buildMember(reviewLines: ReviewLine[], meta: Metadata, item: ApiItem) {
       reviewLines.push({
         Tokens: [buildToken({ Kind: TokenKind.Punctuation, Value: `}` })],
         RelatedToLine: line.LineId,
+        IsHidden: line.IsHidden,
       });
     } else {
       line.Tokens.push(
@@ -341,7 +354,7 @@ function buildMember(reviewLines: ReviewLine[], meta: Metadata, item: ApiItem) {
     item.kind === ApiItemKind.TypeAlias ||
     item.kind === ApiItemKind.Function
   ) {
-    reviewLines.push(emptyLine(line.LineId));
+    reviewLines.push(emptyLine(line.LineId, line.IsHidden));
   }
 }
 

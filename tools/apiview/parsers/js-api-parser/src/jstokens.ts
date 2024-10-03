@@ -155,7 +155,7 @@ export function splitAndBuild(
         });
       } else if (token.value === currentTypeName) {
         reviewToken = buildToken({
-          Kind: TokenKind.TypeName,
+          Kind: TokenKind.MemberName,
           Value: token.value,
         });
         if (memberKind !== "") {
@@ -164,6 +164,7 @@ export function splitAndBuild(
         if (!isTypeMember(currentTypeid)) {
           reviewToken.NavigateToId = currentTypeid;
           reviewToken.NavigationDisplayName = token.value;
+          reviewToken.Kind = TokenKind.TypeName;
         }
       } else if (token.type === "StringLiteral") {
         reviewToken = buildToken({
@@ -208,6 +209,7 @@ export function splitAndBuildMultipleLine(
   currentTypeid: string,
   currentTypeName: string,
   memberKind: string,
+  isHidden?: boolean,
 ) {
   let firstLine: boolean = true;
   const code = excerptTokens.map((e) => e.text).join("");
@@ -232,6 +234,7 @@ export function splitAndBuildMultipleLine(
     } else {
       const childLine: ReviewLine = {
         Tokens: reviewTokens,
+        IsHidden: isHidden,
       };
       line.Children.push(childLine);
     }

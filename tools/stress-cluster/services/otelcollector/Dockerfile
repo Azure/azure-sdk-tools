@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/oss/go/microsoft/golang:1.21 as build
+FROM mcr.microsoft.com/oss/go/microsoft/golang:1.22 as build
 RUN apt update -y && apt upgrade -y && apt install -y build-essential git
 
 # this lets us build a custom otel-collector image, with a minimal set of 

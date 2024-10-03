@@ -22,9 +22,6 @@ interface Metadata {
   Language: "JavaScript";
 }
 
-// key: item's canonical reference, value: sub paths that include it
-const exported = new Map<string, Set<string>>();
-
 /**
  * Builds a blank line for the review
  * @param relatedToLine line id to associate the result with
@@ -126,15 +123,15 @@ function buildSubpathExports(reviewLines: ReviewLine[], meta: Metadata, apiModel
         Children: [emptyLine()],
       };
 
-      for (const member of entryPoint.members) {
-        const canonicalRef = member.canonicalReference.toString();
-        const containingExport = exported.get(canonicalRef) ?? new Set<string>();
-        if (!containingExport.has(subpath)) {
-          containingExport.add(subpath);
-          exported.set(canonicalRef, containingExport);
-        }
+      // put top level functions to top
+      for (const member of entryPoint.members.filter((m) => m.kind === ApiItemKind.Function)) {
         buildMember(exportLine.Children!, meta, member);
       }
+
+      for (const member of entryPoint.members.filter((m) => m.kind !== ApiItemKind.Function)) {
+        buildMember(exportLine.Children!, meta, member);
+      }
+
       reviewLines.push(exportLine);
       reviewLines.push(emptyLine(exportLine.LineId));
     }

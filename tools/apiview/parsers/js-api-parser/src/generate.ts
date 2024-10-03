@@ -110,16 +110,20 @@ function buildSubpathExports(reviewLines: ReviewLine[], meta: Metadata, apiModel
         LineId: `Subpath-export-${subpath}`,
         Tokens: [
           buildToken({
-            Kind: TokenKind.Keyword,
-            Value: "export",
+            Kind: TokenKind.Comment,
+            Value: "/".repeat(40),
           }),
           buildToken({
             Kind: TokenKind.StringLiteral,
-            Value: ` "${subpath}"`,
-            NavigationDisplayName: `export "${subpath}"`,
+            Value: ` subpath "${subpath}" export `,
+            NavigationDisplayName: `subpath "${subpath}" export`,
+          }),
+          buildToken({
+            Kind: TokenKind.Comment,
+            Value: "\\".repeat(40),
           }),
         ],
-        Children: [],
+        Children: [emptyLine()],
       };
 
       for (const member of entryPoint.members) {

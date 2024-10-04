@@ -67,6 +67,10 @@ parameters:
       RepoName: azure-sdk-for-python
       ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\tests\\recordings\\'
       IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
+    - RepoOwner: Azure
+      RepoName: azure-sdk-for-rust
+      ExcludePaths: '^\.\\sdk\\|^\.\\eng\\common\\|\\tests\\recordings\\'
+      IncludeFromExcludedPaths: '^\.\\sdk\\.*-matrix.*.json$|^\.\\sdk\\.*\\.*yml$'
 # Default setting is an example of the map looks like:
 - name: MigrationMap
   type: object

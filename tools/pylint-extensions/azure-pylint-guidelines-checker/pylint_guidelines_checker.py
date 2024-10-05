@@ -2811,6 +2811,75 @@ class NoImportTypingFromTypeCheck(BaseChecker):
 # [Pylint] Investigate pylint rule around missing dependency #3231
 
 
+class InvalidUseOfOverload(BaseChecker):
+    """Rule to check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+
+    name = "invalid-use-of-overload"
+    priority = -1
+    msgs = {
+        "C4765": (
+            "Do not mix async and synchronous overloads",
+            "invalid-use-of-overload",
+            "Functions and their overloads must be either all async or all synchronous.",
+        ),
+    }
+
+    def visit_classdef(self, node):
+        """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+
+        # Obtain a list of all functions and function names
+        functions = []
+        try:
+            node.body
+            for item in node.body:
+                if hasattr(item, 'name'):
+                    functions.append(item)
+
+            # Dictionary of lists of all functions by name
+            overloadedfunctions = {}
+            for item in functions:
+                if item.name in overloadedfunctions:
+                    overloadedfunctions[item.name].append(item)
+                else:
+                    overloadedfunctions[item.name] = [item]
+
+
+            # Loop through the overloaded functions and check they are the same type
+            for funct in overloadedfunctions.values():
+                if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
+                    function_is_async = None
+
+                    for item in funct:
+                        if function_is_async is None:
+                            function_is_async = self.is_function_async(item)
+
+                        else:
+                            if function_is_async != self.is_function_async(item):
+                                self.add_message(
+                                    msgid=f"invalid-use-of-overload",
+                                    node=item,
+                                    confidence=None,
+                                )
+        except:
+            pass
+
+
+    def is_function_async(self, node):
+        try:
+            str(node.__class__).index("Async")
+            return True
+        except:
+            if node.returns is None:
+                return False
+            try:
+                if node.returns.value.name == "Awaitable":
+                    return True
+                else:
+                    return False
+            except:
+                return False
+
+
 class DoNotUseLegacyTyping(BaseChecker):
 
     """ Rule to check that we aren't using legacy typing using comments. """
@@ -2867,6 +2936,7 @@ class DoNotImportAsyncio(BaseChecker):
                     node=node,
                     confidence=None,
                 )
+
 
 
 # [Pylint] custom linter check for invalid use of @overload #3229
@@ -2987,6 +3057,7 @@ def register(linter):
     linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    linter.register_checker(InvalidUseOfOverload(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))
     linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
     # [Pylint] custom linter check for invalid use of @overload #3229

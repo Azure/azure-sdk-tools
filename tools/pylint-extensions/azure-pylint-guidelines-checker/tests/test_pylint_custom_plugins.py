@@ -3694,7 +3694,6 @@ class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(fdef)
 
-# [Pylint] custom linter check for invalid use of @overload #3229
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 
@@ -3821,7 +3820,5 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             self.checker.visit_annassign(AnnotatedAssignment)
 
 
-# [Pylint] Add a check for connection_verify hardcoded settings #35355
-# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
 
 

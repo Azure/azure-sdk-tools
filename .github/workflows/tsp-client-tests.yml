@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - .github/workflows/tsp-client-tests.yml
+      - tools/tsp-client/**
   pull_request:
     paths:
       - .github/workflows/tsp-client-tests.yml

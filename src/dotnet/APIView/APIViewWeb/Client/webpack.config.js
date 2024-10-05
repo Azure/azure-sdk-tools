@@ -20,6 +20,11 @@ module.exports = {
           {
             loader: 'css-loader',
             options: {
+              url: {
+                filter: (url, resourcePath) => {
+                  return !url.startsWith('/icons/');
+                },
+              },
               sourceMap: true,
             },
           },
@@ -36,6 +41,10 @@ module.exports = {
         use: 'ts-loader',
         exclude: /node_modules/,
       },
+      {
+        test: /\.(png|jpe?g|gif|svg)$/i,
+        type: 'asset/source',
+      },
     ]
   },
   plugins: [
@@ -48,6 +57,9 @@ module.exports = {
     })
   ],
   resolve: {
+    alias: {
+      '@wwwroot': path.resolve(__dirname, '../wwwroot'),
+    },
     extensions: [ '.tsx', '.ts', '.js' ],
   },
   output: {

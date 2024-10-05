@@ -36,6 +36,8 @@ public class PostConfigureSettings : IPostConfigureOptions<PipelineWitnessSettin
                     .ConfigureAwait(true)
                     .GetAwaiter()
                     .GetResult();
+
+                this.logger.LogInformation("Loaded {Count} repositories from {Source}", options.GitHubRepositories.Length, options.GitHubRepositoriesSource);
             }
             catch (Exception ex)
             {

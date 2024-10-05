@@ -7,6 +7,8 @@
 }
 
 #reviews-table {
+    color: var(--base-text-color);
+
     td {
         white-space: nowrap;
         overflow: hidden;
@@ -25,8 +27,6 @@
     .cst-bdr-left {
         border-left: 1px solid var(--border-color);
     }
-
-    color: var(--base-text-color);
 }
 
 #reviews-table-container {

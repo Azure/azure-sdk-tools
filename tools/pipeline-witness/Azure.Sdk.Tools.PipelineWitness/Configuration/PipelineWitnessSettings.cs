@@ -45,12 +45,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         public string GitHubWebhookSecret { get; set; }
 
         /// <summary>
-        /// Gets or sets the access token to use for GitHub API requests. This
-        /// must be a personal access token with `repo` scope.
-        /// </summary>
-        public string GitHubAccessToken { get; set; }
-
-        /// <summary>
         /// Gets or sets the amount of time a message should be invisible in the queue while being processed
         /// </summary>
         public TimeSpan MessageLeasePeriod { get; set; } = TimeSpan.FromSeconds(30);
@@ -129,5 +123,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the url for a list of monitored GitHub repositories
         /// </summary>
         public string GitHubRepositoriesSource { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Client Id to use for GitHub API requests.
+        /// </summary>
+        public string GitHubAppClientId { get; set; }
+
+        /// <summary>
+        /// Gets or sets private key to use when generating GitHub App access tokens.
+        /// </summary>
+        public string GitHubAppPrivateKey { get; set; }
     }
 }

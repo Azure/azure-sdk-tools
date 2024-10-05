@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
@@ -17,14 +18,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         private readonly GitHubActionProcessor processor;
         private readonly RunCompleteQueue queue;
         private readonly IOptions<PipelineWitnessSettings> options;
-        private readonly GitHubClient client;
+        private readonly GitHubClientFactory clientFactory;
 
         public MissingGitHubActionsWorker(
             ILogger<MissingGitHubActionsWorker> logger,
             GitHubActionProcessor processor,
             IAsyncLockProvider asyncLockProvider,
-            ICredentialStore credentials,
             RunCompleteQueue queue,
+            GitHubClientFactory clientFactory,
             IOptions<PipelineWitnessSettings> options)
             : base(
                   logger,
@@ -35,13 +36,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             this.processor = processor;
             this.queue = queue;
             this.options = options;
-
-            if (credentials == null)
-            {
-                throw new ArgumentNullException(nameof(credentials));
-            }
-
-            this.client = new GitHubClient(new ProductHeaderValue("PipelineWitness", "1.0"), credentials);
+            this.clientFactory = clientFactory;
         }
 
         protected override async Task ProcessAsync(CancellationToken cancellationToken)
@@ -58,15 +53,24 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             {
                 foreach (string ownerAndRepository in repositories)
                 {
-                    await ProcessRepositoryAsync(ownerAndRepository, runMinTime, runMaxTime, cancellationToken);
+                    try
+                    {
+                        this.logger.LogInformation("Processing missing builds for {Repository}", ownerAndRepository);
+                        await ProcessRepositoryAsync(ownerAndRepository, runMinTime, runMaxTime, cancellationToken);
+                    }
+                    catch (Exception ex) when (ex is not RateLimitExceededException)
+                    {
+                        this.logger.LogError(ex, "Error processing repository {Repository}", ownerAndRepository);
+                    }
                 }
             }
             catch(RateLimitExceededException ex)
             {
                 try
                 {
-                    var rateLimit = await this.client.RateLimit.GetRateLimits();
-                    this.logger.LogInformation("Rate limit details: {RateLimit}", rateLimit.Resources);
+                    var client = await this.clientFactory.CreateGitHubClientAsync();
+                    var rateLimit = await client.RateLimit.GetRateLimits();
+                    this.logger.LogInformation("Rate limit details: {RateLimit}", JsonSerializer.Serialize(rateLimit.Resources));
                 }
                 catch (Exception rateLimitException)
                 {
@@ -84,19 +88,20 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
             string owner = ownerAndRepository.Split('/')[0];
             string repository = ownerAndRepository.Split('/')[1];
 
-            string[] knownBlobs = await this.processor.GetRunBlobNamesAsync(ownerAndRepository, runMinTime, runMaxTime, cancellationToken);
+            string[] knownBlobs = await processor.GetRunBlobNamesAsync(ownerAndRepository, runMinTime, runMaxTime, cancellationToken);
 
             WorkflowRunsResponse listRunsResponse;
 
             try
             {
-                listRunsResponse = await this.client.Actions.Workflows.Runs.List(owner, repository, new WorkflowRunsRequest
+                var client = await this.clientFactory.CreateGitHubClientAsync(owner, repository);
+                listRunsResponse = await client.Actions.Workflows.Runs.List(owner, repository, new WorkflowRunsRequest
                 {
                     Created = $"{runMinTime:o}..{runMaxTime:o}",
                     Status = CheckRunStatusFilter.Completed,
                 });
             }
-            catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            catch (NotFoundException)
             {
                 this.logger.LogWarning("Repository {Repository} not found", ownerAndRepository);
                 return;

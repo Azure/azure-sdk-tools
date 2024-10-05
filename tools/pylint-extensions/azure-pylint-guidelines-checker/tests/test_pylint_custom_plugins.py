@@ -3705,6 +3705,7 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
         ReturnErrorFunctionArgument = nodes[4].body[1].body[0].value
         ReturnErrorDict = nodes[5].body[0].body[0].value
         AnnotatedAssignment = nodes[6].body[0]
+        AnnotatedSelfAssignment = nodes[7].body[0].body[0]
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
@@ -3763,6 +3764,14 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
                 end_line=39,
                 end_col_offset=34,
             ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=45,
+                node=AnnotatedSelfAssignment,
+                col_offset=8,
+                end_line=45,
+                end_col_offset=43,
+            ),
         ):
 
 
@@ -3773,7 +3782,28 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(ReturnErrorFunctionArgument)
             self.checker.visit_call(ReturnErrorDict)
             self.checker.visit_annassign(AnnotatedAssignment)
+            self.checker.visit_annassign(AnnotatedSelfAssignment)
 
+
+    def test_pass_connection_verify(self):
+        """Test coverage checking nodes incorrectly"""
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "do_not_hardcode_connection_verify_acceptable.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        nodes = node.body
+        VariableError = nodes[1].body[0]
+        FunctionArgumentsErrors = nodes[2].body[1].value
+        AnnotatedAssignment = nodes[6].body[0]
+
+        with self.assertNoMessages():
+            self.checker.visit_assign(FunctionArgumentsErrors)
+            self.checker.visit_call(AnnotatedAssignment)
+            self.checker.visit_annassign(VariableError)
 
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
 # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233

@@ -38,11 +38,10 @@ class ReturnErrorDict:
 class AnnotatedAssignment:
     connection_verify: bool = True
 
+
+
+class AnnotatedSelfAssignment:
     def __init__(self):
         self.connection_verify: bool = True
-
-
-
-
 
 

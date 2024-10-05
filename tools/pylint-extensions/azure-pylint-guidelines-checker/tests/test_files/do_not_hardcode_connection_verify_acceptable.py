@@ -35,11 +35,15 @@ class ReturnErrorDict:
             connection_verify=None,
         )
 
+
 class AnnotatedAssignment:
     connection_verify: bool = None
 
+
+class AnnotatedSelfAssignment:
     def __init__(self):
         self.connection_verify: bool = None
+
 
 
 

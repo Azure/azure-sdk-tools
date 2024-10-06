@@ -1,174 +1,129 @@
+from azure.core.tracing.decorator import distributed_trace
+
+
 # test_ignores_constructor
-class ConstrClient():  #@
-    def __init__(self, **kwargs):  #@
+class SomeClient():  # @
+    def __init__(self, **kwargs):  # @
         pass
 
 
 # test_ignores_private_method
-class PrivClient():  #@
-    def _private_method(self, **kwargs):  #@
+class Some1Client():  # @
+    def _private_method(self, **kwargs):  # @
         pass
 
 
 # test_ignores_if_exists_suffix
-class ExistsClient():  #@
-    def check_if_exists(self, **kwargs):  #@
+class Some2Client():  # @
+    def check_if_exists(self, **kwargs):  # @
+        pass
+
+
+# test_ignores_from_prefix
+class Some3Client():  # @
+    def from_connection_string(self, **kwargs):  # @
         pass
 
 
 # test_ignores_approved_prefix_names
-class ApprovedClient():  #@
-    def get_noun(self):  #@
+class Some4Client():  # @
+    def create_configuration(self):  # @
         pass
-    
-    def list_noun(self):  #@
+
+    def get_thing(self):  # @
         pass
-    
-    def create_noun(self):  #@
+
+    def list_thing(self):  # @
         pass
-    
-    def upsert_noun(self):  #@
+
+    def upsert_thing(self):  # @
         pass
-    
-    def set_noun(self):  #@
+
+    def set_thing(self):  # @
         pass
-    
-    def update_noun(self):  #@
+
+    def update_thing(self):  # @
         pass
-    
-    def replace_noun(self):  #@
+
+    def replace_thing(self):  # @
         pass
-    
-    def append_noun(self):  #@
+
+    def append_thing(self):  # @
         pass
-    
-    def add_noun(self):  #@
+
+    def add_thing(self):  # @
         pass
-    
-    def delete_noun(self):  #@
+
+    def delete_thing(self):  # @
         pass
-    
-    def remove_noun(self):  #@
+
+    def remove_thing(self):  # @
         pass
-    
-    def begin_noun(self):  #@
-        pass
-    
-    def upload_noun(self):  #@
-        pass
-    
-    def download_noun(self):  #@
-        pass
-    
-    def close_noun(self):  #@
-        pass
-    
-    def cancel_noun(self):  #@
-        pass
-    
-    def clear_noun(self):  #@
-        pass
-    
-    def subscribe_noun(self):  #@
-        pass
-    
-    def send_noun(self):  #@
-        pass
-    
-    def query_noun(self):  #@
-        pass
-    
-    def analyze_noun(self):  #@
-        pass
-    
-    def train_noun(self):  #@
-        pass
-    
-    def detect_noun(self):  #@
-        pass
-    
-    def from_noun(self):  #@
+
+    def begin_thing(self):  # @
         pass
 
 
 # test_ignores_non_client_with_unapproved_prefix_names
-class SomethingElse():  #@
-    def download_thing(self, some, **kwargs):  #@
+class SomethingElse():  # @
+    def download_thing(self, some, **kwargs):  # @
         pass
 
 
 # test_ignores_nested_function_with_unapproved_prefix_names
-class NestedClient():  #@
-    def create_configuration(self, **kwargs):  #@
-        def nested(hello, world): #@
+class Some5Client():  # @
+    def create_configuration(self, **kwargs):  # @
+        def nested(hello, world):
             pass
 
 
 # test_finds_unapproved_prefix_names
-class UnapprovedClient():  #@
-    def build_configuration(self):  #@
+class Some6Client():  # @
+    @distributed_trace
+    def build_configuration(self):  # @
         pass
 
-    def generate_thing(self):  #@
+    def generate_thing(self):  # @
         pass
 
-    def make_thing(self):  #@
+    def make_thing(self):  # @
         pass
 
-    def insert_thing(self):  #@
+    def insert_thing(self):  # @
         pass
 
-    def put_thing(self):  #@
+    def put_thing(self):  # @
         pass
 
-    def creates_configuration(self):  #@
+    def creates_configuration(self):  # @
         pass
 
-    def gets_thing(self):  #@
+    def gets_thing(self):  # @
         pass
 
-    def lists_thing(self):  #@
+    def lists_thing(self):  # @
         pass
 
-    def upserts_thing(self):  #@
+    def upserts_thing(self):  # @
         pass
 
-    def sets_thing(self):  #@
+    def sets_thing(self):  # @
         pass
 
-    def updates_thing(self):  #@
+    def updates_thing(self):  # @
         pass
 
-    def replaces_thing(self):  #@
+    def replaces_thing(self):  # @
         pass
 
-    def appends_thing(self):  #@
+    def appends_thing(self):  # @
         pass
 
-    def adds_thing(self):  #@
+    def adds_thing(self):  # @
         pass
 
-    def deletes_thing(self):  #@
+    def deletes_thing(self):  # @
         pass
 
-    def removes_thing(self):  #@
-        pass
-
-
-# test_ignores_property
-class PropClient():  #@
-    @property
-    def func(self):  #@
-        pass
-
-
-# test_ignores_private_client
-class _PrivateClient():  #@
-    def get_thing(self):  #@
-        pass
-
-
-# test_ignores_private_module
-class PrivateModuleClient():  #@
-    def get_thing(self):  #@
+    def removes_thing(self):  # @
         pass

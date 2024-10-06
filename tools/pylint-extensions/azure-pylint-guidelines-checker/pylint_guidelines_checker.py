@@ -161,93 +161,79 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
             " https://azure.github.io/azure-sdk/python_design.html#service-operations",
             "unapproved-client-method-name-prefix",
             "All clients should use the preferred verbs for method names.",
-        ),
+        )
     }
+    options = (
+        (
+            "ignore-unapproved-client-method-name-prefix",
+            {
+                "default": False,
+                "type": "yn",
+                "metavar": "<y_or_n>",
+                "help": "Allow clients to not use preferred method name prefixes",
+            },
+        ),
+    )
 
-    ignore_clients = [  
+    ignore_clients = [
         "PipelineClient",
         "AsyncPipelineClient",
         "ARMPipelineClient",
         "AsyncARMPipelineClient",
     ]
 
-    approved_prefixes = [
-        "get",
-        "list",
-        "create",
-        "upsert",
-        "set",
-        "update",
-        "replace",
-        "append",
-        "add",
-        "delete",
-        "remove",
-        "begin",
-        "upload",
-        "download", # standard verbs
-        "close",    # very common verb
-        "cancel",
-        "clear",
-        "subscribe",
-        "send",
-        "query",    # common verbs
-        "analyze",
-        "train",
-        "detect",   # future proofing
-        "from",     # special case
-    ]
-
-    ignored_decorators = [
-        "property",
-    ]
-
     def __init__(self, linter=None):
         super(ClientHasApprovedMethodNamePrefix, self).__init__(linter)
-        self.process_class = None
-        self.namespace = None
-    
-    def _check_decorators(self, node):
-        if not node.decorators:
-            return False
-        for decorator in node.decorators.nodes:
-            if isinstance(decorator, astroid.nodes.Name) and decorator.name in self.ignored_decorators:
-                return True
-        return False
-
-    def visit_module(self, node):
-        self.namespace = node.name
 
     def visit_classdef(self, node):
-        if all((
-            node.name.endswith("Client"),
-            node.name not in self.ignore_clients,
-            not node.name.startswith("_"),
-            not '._' in self.namespace,
-        )):
-            self.process_class = node
+        """Visits every class in file and checks if it is a client. If it is a client, checks
+        that approved method name prefixes are present.
 
-    def visit_functiondef(self, node):
-        if any((
-            self.process_class is None, # not in a client class
-            node.name.startswith("_"), # private method
-            node.name.endswith("_exists"), # special case
-            self._check_decorators(node), # property
-            node.parent != self.process_class, # nested method
-        )):
-            return
-        
-        # check for approved prefix
-        parts = node.name.split("_")
-        if parts[0].lower() not in self.approved_prefixes:
-            self.add_message(
-                msgid="unapproved-client-method-name-prefix",
-                node=node,
-                confidence=None,
+        :param node: class node
+        :type node: ast.ClassDef
+        :return: None
+        """
+        try:
+            if node.name.endswith("Client") and node.name not in self.ignore_clients:
+                client_methods = [
+                    child for child in node.get_children() if child.is_function
+                ]
+
+                approved_prefixes = [
+                    "get",
+                    "list",
+                    "create",
+                    "upsert",
+                    "set",
+                    "update",
+                    "replace",
+                    "append",
+                    "add",
+                    "delete",
+                    "remove",
+                    "begin",
+                ]
+                for idx, method in enumerate(client_methods):
+                    if (
+                        method.name.startswith("__")
+                        or "_exists" in method.name
+                        or method.name.startswith("_")
+                        or method.name.startswith("from")
+                    ):
+                        continue
+                    prefix = method.name.split("_")[0]
+                    if prefix.lower() not in approved_prefixes:
+                        self.add_message(
+                            msgid="unapproved-client-method-name-prefix",
+                            node=client_methods[idx],
+                            confidence=None,
+                        )
+        except AttributeError:
+            logger.debug(
+                "Pylint custom checker failed to check if client has approved method name prefix."
             )
+            pass
 
-    def leave_classdef(self, node):
-        self.process_class = None
 
 class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
     name = "client-method-multiple-parameters"
@@ -3071,7 +3057,7 @@ def register(linter):
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))
-    linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
+    # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
 
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))

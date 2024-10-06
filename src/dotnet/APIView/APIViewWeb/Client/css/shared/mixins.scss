@@ -72,6 +72,8 @@
     color: var(--navbar-text);
     padding-top : 0px;
     padding-bottom : 0px;
+    border-bottom: 1px solid var(--border-color);
+    z-index: 2;
 
     a:hover {
         text-decoration: none;
@@ -84,9 +86,6 @@
     a:hover, a:active {
         color: var(--navbar-link-active);
     }
-
-    border-bottom: 1px solid var(--border-color);
-    z-index: 2;
 }
 
 @mixin apiview-logo {

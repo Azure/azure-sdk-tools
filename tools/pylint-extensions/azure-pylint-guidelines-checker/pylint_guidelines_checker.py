@@ -2628,7 +2628,7 @@ class DeleteOperationReturnStatement(BaseChecker):
         try:
             if node.returns.as_string() == "None":
                 # If there are residual comment typehints or no return value,
-                # we dont want to throw an error
+                # we don't want to throw an error
                 return
             if node.name.startswith("delete") and node.parent.name.endswith("Client"):
                 if node.returns.as_string() != "None":
@@ -2946,8 +2946,81 @@ class DoNotImportAsyncio(BaseChecker):
                 )
 
 
-# [Pylint] Custom Linter check for Exception Logging #3227
+
+class DoNotLogExceptions(BaseChecker):
+
+    """Rule to check that exceptions aren't logged"""
+
+    name = "do-not-log-exceptions"
+    priority = -1
+    msgs = {"C4766": (
+            "Do not log exceptions. See Details:"
+            " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
+            "do-not-log-exceptions",
+            "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
+            ),
+            }
+
+    def visit_try(self, node):
+        """Check that exceptions aren't logged in exception blocks.
+           Go through exception block and branches and ensure error hasn't been logged.
+        """
+        # Return a list of exception blocks
+        except_block = node.handlers
+        # Iterate through each exception block
+        for nod in except_block:
+            # Get exception blocks with an exception name
+            if nod.name is not None:
+                exception_name = nod.name.name
+                self.check_for_logging(nod.body, exception_name)
+
+    def check_for_logging(self, node, exception_name):
+        """ Helper function - checks nodes to see if logging has occurred at all
+            levels.
+        """
+        levels_matches = [".warning", ".error", ".info", ".debug"]
+        for j in node:
+            if isinstance(j, astroid.Expr):
+                expression = j.as_string().lower()
+                if any(x in expression for x in levels_matches) and "logger" in expression:
+                    # Check for variables after strings
+                    end_finder = expression.rfind("'")
+                    delimiters = ["(", "{", "}", ")", "\"", ",", "'"]
+                    if end_finder != -1:
+                        expression_a = expression[end_finder + 1:]
+                        # If there are variables after a string
+                        if len(expression_a) > 1:
+                            expression = expression_a
+                    for delimiter in delimiters:
+                        expression = " ".join(expression.split(delimiter))
+                    expression1 = expression.split()
+                    # Check for presence of exception name
+                    for i in range(len(expression1)):
+                        if exception_name == expression1[i]:
+                            if i+1 < len(expression1):
+                                # TODO: Investigate whether there are any other cases we don't want to raise a Pylint
+                                #  error
+                                # Prevent .__name__ raising error
+                                if "." and "name" not in expression1[i+1]:
+                                    self.add_message(
+                                        msgid=f"do-not-log-exceptions",
+                                        node=j,
+                                        confidence=None,
+                                    )
+                            else:
+                                self.add_message(
+                                    msgid=f"do-not-log-exceptions",
+                                    node=j,
+                                    confidence=None,
+                                )
+            if isinstance(j, astroid.If):
+                self.check_for_logging(j.body, exception_name)
+                # Check any 'elif' or 'else' branches
+                self.check_for_logging(j.orelse, exception_name)
+
+
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+
 
 class DoNotHardcodeConnectionVerify(BaseChecker):
 
@@ -3025,6 +3098,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
                 pass
 
 
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3061,7 +3135,7 @@ def register(linter):
     linter.register_checker(InvalidUseOfOverload(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))
     linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
-    # [Pylint] Custom Linter check for Exception Logging #3227
+    linter.register_checker(DoNotLogExceptions(linter))
     # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
     linter.register_checker(DoNotHardcodeConnectionVerify(linter))
 

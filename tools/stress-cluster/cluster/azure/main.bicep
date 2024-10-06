@@ -98,22 +98,14 @@ module containerRegistry 'cluster/acr.bicep' = {
     }
 }
 
-var storageName = 'stressdebug${resourceSuffix}'
-
 module storage 'cluster/storage.bicep' = {
   name: 'storage'
   scope: group
   params: {
-    storageName: storageName
+    storageName: 'stressdebug${resourceSuffix}'
     fileShareName: 'stressfiles${resourceSuffix}'
     location: clusterLocation
   }
-}
-
-// Get storage account reference for key lookup (avoid key as secret output from storage module)
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' existing = {
-  name: storageName
-  scope: group
 }
 
 var appInsightsInstrumentationKeySecretName = 'appInsightsInstrumentationKey-${resourceSuffix}'
@@ -128,9 +120,9 @@ var appInsightsConnectionStringSecretValue = 'APPLICATIONINSIGHTS_CONNECTION_STR
 // See https://docs.microsoft.com/azure/aks/azure-files-volume#create-a-kubernetes-secret
 // See https://docs.microsoft.com/azure/aks/azure-files-csi
 var debugStorageKeySecretName = 'debugStorageKey-${resourceSuffix}'
+var debugStorageKeySecretValue = storage.outputs.key
 var debugStorageAccountSecretName = 'debugStorageAccount-${resourceSuffix}'
 var debugStorageAccountSecretValue = storage.outputs.name
-var debugStorageKeySecretValue = '${storageAccount.listKeys().keys[0].value}'
 
 module keyvault 'cluster/keyvault.bicep' = {
     name: 'keyvault'

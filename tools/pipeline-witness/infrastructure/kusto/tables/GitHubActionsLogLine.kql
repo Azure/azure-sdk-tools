@@ -8,7 +8,7 @@
     StepNumber: int,
     LineNumber: int,
     Length: int,
-    Timestamp: datetime,
+    Timestamp: string,
     Message: string,
     EtlIngestDate: datetime
 ) with (folder='', docstring='')

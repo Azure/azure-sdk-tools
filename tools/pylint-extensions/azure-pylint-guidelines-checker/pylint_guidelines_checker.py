@@ -2851,6 +2851,7 @@ class InvalidUseOfOverload(BaseChecker):
                 else:
                     overloadedfunctions[item.name] = [item]
 
+
             # Loop through the overloaded functions and check they are the same type
             for funct in overloadedfunctions.values():
                 if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
@@ -2869,6 +2870,7 @@ class InvalidUseOfOverload(BaseChecker):
                                 )
         except:
             pass
+
 
     def is_function_async(self, node):
         try:
@@ -2942,6 +2944,7 @@ class DoNotImportAsyncio(BaseChecker):
                     node=node,
                     confidence=None,
                 )
+
 
 
 class DoNotLogExceptions(BaseChecker):
@@ -3033,6 +3036,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
         ),
     }
 
+
     def visit_call(self, node):
         """Visit function calls to ensure it isn't used as a parameter"""
         try:
@@ -3046,6 +3050,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
                         )
         except:
             pass
+
 
     def visit_assign(self, node):
         """Visiting variable Assignments"""
@@ -3069,6 +3074,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
             except:
                 pass
 
+
     def visit_annassign(self, node):
         """Visiting variable annotated assignments"""
         try: # self.connection_verify: bool = True
@@ -3090,6 +3096,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
                         )
             except:
                 pass
+
 
 
 # if a linter is registered in this function then it will be checked with pylint

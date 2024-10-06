@@ -3248,7 +3248,6 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_import(imc)
             self.checker.visit_importfrom(imd)
 
-
 class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
     """Test that use of the @overload decorator matches the async/sync nature of the underlying function"""
 
@@ -3264,6 +3263,7 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
         file.close()
         with self.assertNoMessages():
             self.checker.visit_classdef(node)
+
 
     def test_invalid_use_overload(self):
         file = open(
@@ -3578,6 +3578,58 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_try(try_node)
 
+
+class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed legacy typing practices"""
+
+    CHECKER_CLASS = checker.DoNotUseLegacyTyping
+
+    def test_disallowed_typing(self):
+        """Check that illegal method typing comments raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # type: (str) -> str
+                pass
+            """
+        )
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-legacy-typing",
+                line=2,
+                node=fdef,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=12,
+            )
+        ):
+            self.checker.visit_functiondef(fdef)
+    
+    def test_allowed_typing(self):
+        """Check that allowed method typing comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x: str) -> str: #@
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+    def test_arbitrary_comments(self):
+        """Check that arbitrary comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # This is a comment
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+            
 # [Pylint] custom linter check for invalid use of @overload #3229
 
 
@@ -3804,6 +3856,7 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(ReturnErrorDict)
             self.checker.visit_annassign(AnnotatedAssignment)
 
+
     def test_invalid_connection_verify(self):
         """Check that hard-coding connection_verify to a bool raise warnings"""
         file = open(
@@ -3881,6 +3934,7 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
                 end_col_offset=34,
             ),
         ):
+
 
             self.checker.visit_assign(InstanceVariableError)
             self.checker.visit_assign(VariableError)

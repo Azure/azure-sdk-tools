@@ -155,7 +155,7 @@ export function splitAndBuild(
         });
       } else if (token.value === currentTypeName) {
         reviewToken = buildToken({
-          Kind: TokenKind.TypeName,
+          Kind: TokenKind.MemberName,
           Value: token.value,
         });
         if (memberKind !== "") {
@@ -164,6 +164,7 @@ export function splitAndBuild(
         if (!isTypeMember(currentTypeid)) {
           reviewToken.NavigateToId = currentTypeid;
           reviewToken.NavigationDisplayName = token.value;
+          reviewToken.Kind = TokenKind.MemberName;
         }
       } else if (token.type === "StringLiteral") {
         reviewToken = buildToken({

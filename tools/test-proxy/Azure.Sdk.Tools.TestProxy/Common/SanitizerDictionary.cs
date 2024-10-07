@@ -2,8 +2,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 
@@ -42,11 +42,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         // so that when we start a new recording we can properly
         // apply only the sanitizers that have been registered at the global level
         public List<string> SessionSanitizers = new List<string>();
-
-        public readonly object SessionSanitizerLock = new object();
+        public SemaphoreSlim SessionSanitizerLock { get; set; } = new SemaphoreSlim(1);
 
         public SanitizerDictionary() {
-            ResetSessionSanitizers();
+            ResetSessionSanitizers().Wait();
         }
 
         /*
@@ -697,9 +696,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Used to update the session sanitizers to their default configuration.
         /// </summary>
-        public void ResetSessionSanitizers()
+        public async Task ResetSessionSanitizers()
         {
-            lock (SessionSanitizerLock)
+            await SessionSanitizerLock.WaitAsync();
+            try
             {
                 var expectedSanitizers = DefaultSanitizerList;
 
@@ -716,6 +716,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 SessionSanitizers = DefaultSanitizerList.Select(x => x.Id).ToList();
             }
+            finally
+            {
+                SessionSanitizerLock.Release();
+            }
         }
 
         /// <summary>
@@ -723,18 +727,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="session"></param>
         /// <returns></returns>
-        public List<RecordedTestSanitizer> GetSanitizers(ModifiableRecordSession session)
+        public async Task<List<RecordedTestSanitizer>> GetSanitizers(ModifiableRecordSession session)
         {
-            return GetRegisteredSanitizers(session).Select(x => x.Sanitizer).ToList();
+            return (await GetRegisteredSanitizers(session)).Select(x => x.Sanitizer).ToList();
         }
 
         /// <summary>
         /// Gets a list of sanitizers that should be applied for the session level.
         /// </summary>
         /// <returns></returns>
-        public List<RecordedTestSanitizer> GetSanitizers()
+        public async Task<List<RecordedTestSanitizer>> GetSanitizers()
         {
-            return GetRegisteredSanitizers().Select(x => x.Sanitizer).ToList();
+            return (await GetRegisteredSanitizers()).Select(x => x.Sanitizer).ToList();
         }
 
         /// <summary>
@@ -742,9 +746,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="session"></param>
         /// <returns></returns>
-        public List<RegisteredSanitizer> GetRegisteredSanitizers(ModifiableRecordSession session)
+        public async Task<List<RegisteredSanitizer>> GetRegisteredSanitizers(ModifiableRecordSession session)
         {
-            lock (session.SanitizerLock)
+            await session.Session.EntryLock.WaitAsync();
+            try
             {
                 var sanitizers = new List<RegisteredSanitizer>();
 
@@ -762,18 +767,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 return sanitizers;
             }
+            finally
+            {
+                session.Session.EntryLock.Release();
+            }
         }
 
         /// <summary>
         /// Gets the set of registered sanitizers for the session level.
         /// </summary>
         /// <returns></returns>
-        public List<RegisteredSanitizer> GetRegisteredSanitizers()
+        public async Task<List<RegisteredSanitizer>> GetRegisteredSanitizers()
         {
-            lock (SessionSanitizerLock)
+            var sanitizers = new List<RegisteredSanitizer>();
+            await SessionSanitizerLock.WaitAsync();
+            try
             {
-                var sanitizers = new List<RegisteredSanitizer>();
-
                 foreach (var id in SessionSanitizers)
                 {
                     if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
@@ -781,9 +790,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         sanitizers.Add(sanitizer);
                     }
                 }
-
-                return sanitizers;
             }
+            finally
+            {
+                SessionSanitizerLock.Release();
+            }
+
+            return sanitizers;
         }
 
         private bool _register(RecordedTestSanitizer sanitizer, string id)
@@ -802,19 +815,32 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Ensuring that session level sanitizers can be identified internally
         /// </summary>
-        /// <param name="sanitizer"></param>
+        /// <param name="sanitizer">The sanitizer being registered</param>
+        /// <param name="shouldLock"></param>
         /// <returns>The Id of the newly registered sanitizer.</returns>
         /// <exception cref="HttpException"></exception>
-        public string Register(RecordedTestSanitizer sanitizer)
+        public async Task<string> Register(RecordedTestSanitizer sanitizer, bool shouldLock = true)
         {
             var strCurrent = IdFactory.GetNextId().ToString();
 
-            lock (SessionSanitizerLock)
+            if (shouldLock)
+            {
+                await SessionSanitizerLock.WaitAsync();
+            }
+
+            try
             {
                 if (_register(sanitizer, strCurrent))
                 {
                     SessionSanitizers.Add(strCurrent);
                     return strCurrent;
+                }
+            }
+            finally
+            {
+                if (shouldLock)
+                {
+                    SessionSanitizerLock.Release();
                 }
             }
             throw new HttpException(System.Net.HttpStatusCode.InternalServerError, $"Unable to register global sanitizer id \"{strCurrent}\" with value '{JsonSerializer.Serialize(sanitizer)}'");
@@ -825,13 +851,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="session"></param>
         /// <param name="sanitizer"></param>
+        /// <param name="shouldLock"></param>
         /// <returns>The Id of the newly registered sanitizer.</returns>
         /// <exception cref="HttpException"></exception>
-        public string Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
+        public async Task<string> Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer, bool shouldLock = true)
         {
             var strCurrent = IdFactory.GetNextId().ToString();
 
-            lock (session.SanitizerLock)
+            session.AuditLog.Enqueue(new AuditLogItem(session.SessionId, $"Starting registration of sanitizerId {strCurrent}"));
+
+            if(shouldLock)
+            {
+                await session.Session.EntryLock.WaitAsync();
+            }
+            try
             {
 
                 if (_register(sanitizer, strCurrent))
@@ -842,7 +875,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     return strCurrent;
                 }
             }
+            finally
+            {
+                if (shouldLock)
+                {
+                    session.Session.EntryLock.Release();
+                }
+            }
 
+            session.AuditLog.Enqueue(new AuditLogItem(session.SessionId, $"Finished registration of sanitizerId {strCurrent}"));
             return string.Empty;
         }
 
@@ -852,9 +893,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="sanitizerId"></param>
         /// <returns></returns>
         /// <exception cref="HttpException"></exception>
-        public string Unregister(string sanitizerId)
+        public async Task<string> Unregister(string sanitizerId)
         {
-            lock (SessionSanitizerLock)
+            await SessionSanitizerLock.WaitAsync();
+            try
             {
                 if (SessionSanitizers.Contains(sanitizerId))
                 {
@@ -862,8 +904,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     return sanitizerId;
                 }
             }
+            finally
+            {
+                SessionSanitizerLock.Release();
+            }
 
-            throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active at the session level.");
+            return string.Empty;
         }
 
         /// <summary>
@@ -873,9 +919,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="session"></param>
         /// <returns></returns>
         /// <exception cref="HttpException"></exception>
-        public string Unregister(string sanitizerId, ModifiableRecordSession session)
+        public async Task<string> Unregister(string sanitizerId, ModifiableRecordSession session)
         {
-            lock (session.SanitizerLock)
+            await session.Session.EntryLock.WaitAsync();
+            try
             {
                 if (session.AppliedSanitizers.Contains(sanitizerId))
                 {
@@ -883,8 +930,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     return sanitizerId;
                 }
             }
+            finally
+            {
+                session.Session.EntryLock.Release();
+            }
+            session.AuditLog.Enqueue(new AuditLogItem(session.SessionId, $"Starting unregister of {sanitizerId}."));
 
-            throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active on recording/playback with id \"{session.SessionId}\".");
+            return string.Empty;
         }
 
         /// <summary>
@@ -902,11 +954,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Not publically available via an API Route, but used to remove all of the active default session sanitizers.
         /// </summary>
-        public void Clear()
+        public async Task Clear()
         {
-            lock (SessionSanitizerLock)
+            await SessionSanitizerLock.WaitAsync();
+            try
             {
                 SessionSanitizers.Clear();
+            }
+            finally
+            {
+                SessionSanitizerLock.Release();
             }
         }
     }

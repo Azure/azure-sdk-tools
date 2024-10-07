@@ -8,7 +8,7 @@ from models import DotNetExample, DotNetBuildResult
 
 
 def check_call(cmd: List[str], work_dir: str):
-    logging.info('Command line: ' + ' '.join(cmd))
+    logging.info("Command line: " + " ".join(cmd))
     subprocess.check_call(cmd, cwd=work_dir)
 
 
@@ -29,26 +29,26 @@ class DotNetBuild:
             # format and validate go files
             current_example = None
             try:
-                logging.info('Initialize project')
+                logging.info("Initialize project")
                 # project
-                cmd = ['dotnet', 'new', 'console', '--name', 'example', '--output', '.']
+                cmd = ["dotnet", "new", "console", "--name", "example", "--output", "."]
                 check_call(cmd, tmp_dir_name)
 
-                cmd = ['dotnet', 'add', 'package', 'Azure.Identity']
+                cmd = ["dotnet", "add", "package", "Azure.Identity"]
                 check_call(cmd, tmp_dir_name)
 
                 # cmd = ['dotnet', 'add', 'package', 'Azure.ResourceManager']
                 # check_call(cmd, tmp_dir_name)
 
-                cmd = ['dotnet', 'add', 'package', self.module, '--version', self.module_version]
+                cmd = ["dotnet", "add", "package", self.module, "--version", self.module_version]
                 check_call(cmd, tmp_dir_name)
 
-                with open(path.join(tmp_dir_name, 'example.csproj'), encoding='utf-8') as f:
+                with open(path.join(tmp_dir_name, "example.csproj"), encoding="utf-8") as f:
                     content = f.read()
-                    logging.info(f'csproj\n{content}')
+                    logging.info(f"csproj\n{content}")
 
                 # build per example
-                filename = 'Program.cs'
+                filename = "Program.cs"
                 filepath = path.join(tmp_dir_name, filename)
                 file_no = 0
                 max_file_count = 10  # TODO: for now, only build for first 10 examples
@@ -58,19 +58,19 @@ class DotNetBuild:
                     if file_no > max_file_count:
                         break
 
-                    with open(filepath, 'w', encoding='utf-8') as f:
+                    with open(filepath, "w", encoding="utf-8") as f:
                         f.write(example.content)
 
-                    cmd = ['dotnet', 'clean', '--nologo', '--verbosity', 'quiet']
+                    cmd = ["dotnet", "clean", "--nologo", "--verbosity", "quiet"]
                     check_call(cmd, tmp_dir_name)
 
-                    cmd = ['dotnet', 'build', '--no-restore', '--nologo', '--verbosity', 'quiet']
+                    cmd = ["dotnet", "build", "--no-restore", "--nologo", "--verbosity", "quiet"]
                     check_call(cmd, tmp_dir_name)
 
             except subprocess.CalledProcessError as error:
-                logging.error(f'Call error: {error}')
+                logging.error(f"Call error: {error}")
                 if current_example:
-                    logging.error(f'Program.cs\n{current_example.content}')
+                    logging.error(f"Program.cs\n{current_example.content}")
                 return DotNetBuildResult(False, [])
 
             return DotNetBuildResult(True, self.examples)

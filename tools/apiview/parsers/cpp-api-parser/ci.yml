@@ -22,8 +22,17 @@ pr:
       - tools/apiview/parsers/cpp-api-parser
 
 variables:
-  ArtifactName: 'apiview'
-  VcpkgRelease: '2023.06.20'
+  - template: /eng/pipelines/templates/variables/image.yml
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - name: VcpkgRelease
+    value: '2024.08.23'
+
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+      ref: refs/tags/azure-sdk-build-tools_20240925.3
 
 stages:
   - stage: 'Build'
@@ -31,10 +40,9 @@ stages:
       - job: 'Build'
         timeoutInMinutes: 300
         pool:
-          name: azsdk-pool-mms-win-2022-general
+          name: $(WINDOWSPOOL)
+          image: $(WINDOWSVMIMAGE)
           os: windows
-          demands:
-          - ImageOverride -equals 1espt-win-2022-cpp-rollback
 
         steps:
           - pwsh: |
@@ -64,13 +72,17 @@ stages:
             displayName: Create cmake build directory.
             workingDirectory: '$(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser'
             condition: succeeded()
-          - task: PowerShell@2
-            inputs:
-              pwsh: true
-              targetType: filePath
-              filePath: eng/scripts/Set-VcpkgWriteModeCache.ps1
-              arguments: -StorageAccountKey '$(cpp-vcpkg-cache-storage-key)'
+          - task: AzurePowerShell@5
             displayName: Set Vcpkg Write-mode Cache
+            inputs:
+              azureSubscription: 'Azure SDK Artifacts'
+              ScriptType: FilePath
+              ScriptPath: eng/scripts/Set-VcpkgWriteModeCache.ps1
+              azurePowerShellVersion: LatestVersion
+              pwsh: true
+            # This step is idempotent and can be run multiple times in cases of
+            # failure and partial execution.
+            retryCountOnTaskFailure: 3
           - pwsh: |
               cmake.exe -G "Visual Studio 17 2022" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
             displayName: Cmake Generate.
@@ -112,16 +124,20 @@ stages:
           strategy: 
             runOnce: 
               deploy:
-                steps: 
-                  - checkout: none
+                steps:
                   - download: current
                     artifact: release-artifacts
-                  - task: UniversalPackages@0
-                    displayName: Publish ApiView Parser.
+                  - template: pipelines/steps/binary-signing.yml@azure-sdk-build-tools
+                    parameters:
+                      BinaryPath: $(Pipeline.Workspace)/release-artifacts
+                  - task: AzurePowerShell@5
+                    displayName: Publish Public ApiView Parser
                     inputs:
-                      command: publish
-                      publishDirectory: $(Pipeline.Workspace)/release-artifacts
-                      vstsFeedPublish: 'internal/AzureSDKForCpp'
-                      vstsFeedPackagePublish: 'parseazuresdkcpp'
-                      versionOption: minor
-                      packagePublishDescription: 'Azure C++ SDK API View Parser.'
+                      azureSubscription: 'Azure SDK Artifacts'
+                      ScriptType: 'InlineScript'
+                      azurePowerShellVersion: LatestVersion 
+                      pwsh: true
+                      Inline: |
+                        azcopy copy "$(Pipeline.Workspace)/release-artifacts/*" "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-for-cpp/parseazuresdkcpp/$(OfficialBuildId)" --recursive
+                    env:
+                      AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'

@@ -1,0 +1,41 @@
+
+<div *ngIf="isLoading" class="spinner-border m-3" role="status">
+    <span class="visually-hidden">Loading...</span>
+</div>
+<div *ngIf="codePanelRowSource;" class="viewport {{languageSafeName!}}" (click)="onCodePanelItemClick($event)">
+  <p-messages class="sticky-top" *ngIf="showNoDiffInContentMessage()" [(value)]="noDiffInContentMessage" [closable]="false" />
+  <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
+    [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">
+      <div class="line-actions">
+          <span *ngIf="showLineNumbers" class="line-number">{{index+1}}</span>
+          <span class="small toggle-user-comments-btn {{item.toggleCommentsClasses}}"></span>
+          <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
+      </div>
+      <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+          <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)"
+          [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.Diagnostics">
+      <div>
+        <span>{{ item.diagnostics.text }} <a *ngIf="item.diagnostics.helpLinkUri" href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a></span>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
+      <app-comment-thread
+        [codePanelRowData]="item"
+        [associatedCodeLine]="getAssociatedCodeLine(item)"
+        (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
+        (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
+        (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
+        (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
+        (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
+        (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)">
+      </app-comment-thread>
+    </ng-container>
+  </div>
+</div>
+<div class="pt-4 d-flex justify-content-center align-items-center" *ngIf="!isLoading && !codePanelRowSource">
+  <h5>API-Revision Content Load Failed...</h5>
+</div>

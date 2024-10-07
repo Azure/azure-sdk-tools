@@ -238,6 +238,85 @@ namespace APIViewWeb
             return result;
         }
 
+        public async Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams)
+        {
+            var queryStringBuilder = new StringBuilder(@"
+SELECT VALUE {
+    Id: c.id,
+    PackageName: c.PackageName,
+    Language: c.Language,
+    LastUpdatedOn: c.LastUpdatedOn,
+    IsDeleted: c.IsDeleted,
+    IsApproved: c.IsApproved
+} FROM Reviews c");
+            queryStringBuilder.Append(" WHERE c.IsDeleted = false");
+
+            if (!string.IsNullOrEmpty(filterAndSortParams.Name))
+            {
+                var query = '"' + $"{filterAndSortParams.Name}" + '"';
+                queryStringBuilder.Append($" AND CONTAINS(c.PackageName, {query}, true)");
+            }
+
+            if (filterAndSortParams.Languages != null && filterAndSortParams.Languages.Count() > 0)
+            {
+                var languagesAsQueryStr = CosmosQueryHelpers.ArrayToQueryString<string>(filterAndSortParams.Languages);
+                queryStringBuilder.Append($" AND c.Language IN {languagesAsQueryStr}");
+            }
+
+            if (filterAndSortParams.IsApproved != null)
+            {
+                queryStringBuilder.Append(" AND c.IsApproved = @isApproved");
+            }
+
+            int totalCount = 0;
+            var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder})";
+            QueryDefinition countQueryDefinition = new QueryDefinition(countQuery).WithParameter("@isApproved", filterAndSortParams.IsApproved);
+            using FeedIterator<int> countFeedIterator = _reviewsContainer.GetItemQueryIterator<int>(countQueryDefinition);
+            while (countFeedIterator.HasMoreResults)
+            {
+                totalCount = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
+            }
+
+            switch (filterAndSortParams.SortField)
+            {
+                case "lastUpdatedOn":
+                    queryStringBuilder.Append($" ORDER BY c.LastUpdatedOn");
+                    break;
+                case "packageName":
+                    queryStringBuilder.Append($" ORDER BY c.PackageName");
+                    break;
+                default:
+                    queryStringBuilder.Append($" ORDER BY c.LastUpdatedOn");
+                    break;
+            }
+
+            if (filterAndSortParams.SortOrder == 1)
+            {
+                queryStringBuilder.Append(" DESC");
+            }
+            else
+            {
+                queryStringBuilder.Append(" ASC");
+            }
+
+            queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
+            var reviews = new List<ReviewListItemModel>();
+            QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@offset", pageParams.NoOfItemsRead)
+                .WithParameter("@limit", pageParams.PageSize)
+                .WithParameter("@sortField", filterAndSortParams.SortField)
+                .WithParameter("@isApproved", filterAndSortParams.IsApproved);
+
+            using FeedIterator<ReviewListItemModel> feedIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
+            while (feedIterator.HasMoreResults)
+            {
+                FeedResponse<ReviewListItemModel> response = await feedIterator.ReadNextAsync();
+                reviews.AddRange(response);
+            }
+            var noOfItemsRead = pageParams.NoOfItemsRead + reviews.Count();
+            return new PagedList<ReviewListItemModel>((IEnumerable<ReviewListItemModel>)reviews, noOfItemsRead, totalCount, pageParams.PageSize);
+        }
+
         private static string ArrayToQueryString<T>(IEnumerable<T> items)
         {
             var result = new StringBuilder();

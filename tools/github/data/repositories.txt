@@ -29,4 +29,6 @@ Azure/autorest.typescript
 Azure/autorest.go
 Azure/autorest.swift
 Azure/autorest.cpp
+Azure/autorest.rust
 Azure/perks
+Azure/azure-rest-api-specs

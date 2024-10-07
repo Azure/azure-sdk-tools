@@ -1,0 +1,18 @@
+<app-nav-bar></app-nav-bar>
+<div class="container-fluid py-2 px-4 main-container">
+    <p-splitter 
+        [panelSizes]="[30, 70]" 
+        [style]="{ height: 'calc(100vh - 80px)', border: '0px' }">
+        <ng-template pTemplate>
+            <div class="col flex align-items-center justify-content-center border rounded-start overflow-hidden">
+                <app-reviews-list (reviewEmitter)="getRevisions($event)"></app-reviews-list>
+            </div>
+        </ng-template>
+        <ng-template pTemplate>
+            <div class="col flex align-items-center justify-content-center border rounded-end overflow-hidden">
+                <app-revisions-list [review]="review"></app-revisions-list>
+            </div>
+        </ng-template>
+    </p-splitter>
+</div>
+<app-footer></app-footer>

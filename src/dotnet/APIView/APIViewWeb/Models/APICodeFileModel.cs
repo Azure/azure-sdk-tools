@@ -2,9 +2,17 @@
 // Licensed under the MIT License.
 
 using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace APIViewWeb
 {
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum ParserStyle {
+        Flat = 0,
+        Tree
+    }
+
     public class APICodeFileModel
     {
         private string _language;
@@ -21,19 +29,14 @@ namespace APIViewWeb
         }
 
         public string VersionString { get; set; }
-
+        public ParserStyle? ParserStyle { get; set; }
         public string LanguageVariant { get; set; }
-
         public bool HasOriginal { get; set; }
-
         public DateTime CreationDate { get; set; } = DateTime.Now;
-
         [Obsolete("Back compat don't use directly")]
         public bool RunAnalysis { get; set; }
-
         // Field is used to store package name returned by parser. This is used to lookup review for a specific package
         public string PackageName { get; set; }
-
         // This field stores original file name uploaded to create review
         public string FileName { get; set; }
         public string PackageVersion { get; set; }

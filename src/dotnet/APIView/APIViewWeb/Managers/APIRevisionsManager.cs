@@ -10,6 +10,7 @@ using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -65,12 +66,13 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb after applying filter to the query.
         /// </summary>
+        /// <param name="user"></param>
         /// <param name="pageParams"></param> Contains paginationinfo
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
-        public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(PageParams pageParams, APIRevisionsFilterAndSortParams filterAndSortParams)
+        public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, APIRevisionsFilterAndSortParams filterAndSortParams)
         {
-             return await _apiRevisionsRepository.GetAPIRevisionsAsync(pageParams, filterAndSortParams);
+             return await _apiRevisionsRepository.GetAPIRevisionsAsync(user, pageParams, filterAndSortParams);
         }
 
         /// <summary>
@@ -221,7 +223,7 @@ namespace APIViewWeb.Managers
         /// <param name="notes"></param>
         /// <param name="approver"></param>
         /// <returns>true if review approval needs to be updated otherwise false</returns>
-        public async Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "")
+        public async Task<(bool updateReview, APIRevisionListItemModel apiRevision)> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "")
         {
             if (apiRevisionId == null && apiRevision == null)
             {
@@ -263,7 +265,38 @@ namespace APIViewWeb.Managers
             }
             
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, apiRevisionId, userId, apiRevision.IsApproved);
-            return updateReview;
+            return (updateReview, apiRevision);
+        }
+
+
+        /// <summary>
+        /// Create APIRevision from File or FilePAth
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="review"></param>
+        /// <param name="file"></param>
+        /// <param name="filePath"></param>
+        /// <param name="language"></param>
+        /// <param name="label"></param>
+        /// <returns></returns>
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, IFormFile file, string filePath, string language, string label)
+        {
+            APIRevisionListItemModel apiRevision = null;
+
+            if (file != null)
+            {
+                using (var openReadStream = file.OpenReadStream())
+                {
+                    apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                        name: file.FileName, label: label, fileStream: openReadStream, language: language);
+                }
+            }
+            else if (!string.IsNullOrEmpty(filePath))
+            {
+                apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
+                           name: filePath, label: label, fileStream: null, language: language);
+            }
+            return apiRevision;
         }
 
         /// <summary>
@@ -540,6 +573,30 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Restore APIRevisions
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        public async Task RestoreAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string apiRevisionId)
+        {
+            var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
+            ManagerHelpers.AssertAPIRevisionDeletion(apiRevision);
+            await ManagerHelpers.AssertAPIRevisionOwner(user, apiRevision, _authorizationService);
+            if (apiRevision.IsDeleted)
+            {
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
+                     changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.UnDeleted, user: user.GetGitHubLogin(), notes: "");
+
+                apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
+                apiRevision.IsDeleted = changeUpdate.ChangeStatus;
+
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            }
+        }
+
+        /// <summary>
         /// Delete APIRevisions
         /// </summary>
         /// <param name="user"></param>
@@ -610,10 +667,11 @@ namespace APIViewWeb.Managers
 
                 var reviewId = reviewDetails[1];
                 var apiRevisionId = reviewDetails[2];
-                var codeFile = await CodeFile.DeserializeAsync(entry.Open());
+                var review = await _reviewsRepository.GetReviewAsync(reviewId);
+
+                var codeFile = await CodeFile.DeserializeAsync(entry.Open(), LanguageServiceHelpers.UseTreeStyleParser(review.Language));
 
                 // Update code file with one downloaded from pipeline
-                var review = await _reviewsRepository.GetReviewAsync(reviewId);
                 if (review != null)
                 {
                     var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
@@ -653,8 +711,9 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="revision"></param>
         /// <param name="languageService"></param>
+        /// <param name="verifyUpgradabilityOnly"> </param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService)
+        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, bool verifyUpgradabilityOnly)
         {
             foreach (var file in revision.Files)
             {
@@ -666,20 +725,35 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var fileOriginal = await _originalsRepository.GetOriginalAsync(file.FileId);
-                    // file.Name property has been repurposed to store package name and version string
-                    // This is causing issue when updating review using latest parser since it expects Name field as file name
-                    // We have added a new property FileName which is only set for new reviews
-                    // All older reviews needs to be handled by checking review name field
-                    var fileName = file.FileName ?? file.Name;
-                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, false);
-                    await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
-                    // update only version string
-                    file.VersionString = codeFile.VersionString;
-                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                    if (string.IsNullOrEmpty(file.FileName))
+                    {
+                        _telemetryClient.TrackTrace($"Revision does not have original file name to update API revision. Revision Id: {revision.Id}");
+                        continue;
+                    }
+                    var codeFile = await languageService.GetCodeFileAsync(file.FileName, fileOriginal, false);
+                    if (!verifyUpgradabilityOnly)
+                    {
+                        await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
+                        // update only version string
+                        file.VersionString = codeFile.VersionString;
+                        if (codeFile.ReviewLines.Count > 0)
+                        {
+                            file.ParserStyle = ParserStyle.Tree;
+                        }
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                        _telemetryClient.TrackTrace($"Successfully Updated {revision.Language} revision with id {revision.Id}");
+                    }
+                    else
+                    {
+                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {codeFile.PackageName} can be upgraded using new parser version.");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _telemetryClient.TrackTrace("Failed to update revision " + revision.Id);
+                    if (!verifyUpgradabilityOnly)
+                        _telemetryClient.TrackTrace($"Failed to update {revision.Language} revision with id {revision.Id}");
+                    else
+                        _telemetryClient.TrackTrace($"Revision with id {revision.Id} for package {file.PackageName} cannot be upgraded using new parser version.");
                     _telemetryClient.TrackException(ex);
                 }
             }
@@ -781,6 +855,30 @@ namespace APIViewWeb.Managers
                 }
             }
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+        }
+
+        public async Task<APIRevisionListItemModel> UpdateAPIRevisionReviewersAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers)
+        {
+            APIRevisionListItemModel apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            foreach (var reviewer in reviewers)
+            {
+                if (!apiRevision.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
+                {
+                    var reviewAssignment = new ReviewAssignmentModel()
+                    {
+                        AssingedTo = reviewer,
+                        AssignedBy = User.GetGitHubLogin(),
+                        AssingedOn = DateTime.Now,
+                    };
+                    apiRevision.AssignedReviewers.Add(reviewAssignment);
+                }
+            }
+            foreach (var assignment in apiRevision.AssignedReviewers.FindAll(x => !reviewers.Contains(x.AssingedTo)))
+            {
+                apiRevision.AssignedReviewers.Remove(assignment);
+            }
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            return apiRevision;
         }
 
         /// <summary>

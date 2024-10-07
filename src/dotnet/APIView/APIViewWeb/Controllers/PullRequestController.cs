@@ -16,6 +16,7 @@ using APIViewWeb.Managers.Interfaces;
 using ApiView;
 using APIViewWeb.Models;
 using APIViewWeb.LeanModels;
+using System;
 
 namespace APIViewWeb.Controllers
 {
@@ -29,7 +30,7 @@ namespace APIViewWeb.Controllers
         private readonly TelemetryClient _telemetryClient;
         private HashSet<string> _allowedListBotAccounts = new HashSet<string>();
 
-        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar", ".gosource" };
+        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".json", ".nupkg", "-sources.jar", ".gosource" };
         
         public PullRequestController(ICodeFileManager codeFileManager, IPullRequestManager pullRequestManager,
             IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager,
@@ -144,7 +145,7 @@ namespace APIViewWeb.Controllers
                 if (baselineStream.Length > 0)
                 {
                     baselineStream.Position = 0;
-                    baseLineCodeFile = await CodeFile.DeserializeAsync(baselineStream);
+                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
                 }
                 if (codeFile != null)
                 {
@@ -168,6 +169,10 @@ namespace APIViewWeb.Controllers
                 {
                     await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName, commitSha);
                 }
+            }
+            catch (OverflowException exception)
+            {
+                _telemetryClient.TrackException(exception);
             }
             finally
             {
@@ -237,7 +242,7 @@ namespace APIViewWeb.Controllers
             // If a revision already exists for PR then just update the code file for that revision.
             if (revisionAlreadyExistsForPR(prModel, false))
             {
-                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile))
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile, originalFileName))
                     return;
             }
 
@@ -265,12 +270,12 @@ namespace APIViewWeb.Controllers
             bool createNewModifiedRevision = true;
             if (revisionAlreadyExistsForPR(prModel, true))
             {
-                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, baselineMemoryStream, baselineCodeFile))
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, baselineMemoryStream, baselineCodeFile, originalFileName))
                     createNewBaselineRevision = false;
             }
             if (revisionAlreadyExistsForPR(prModel, false))
             {
-                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile))
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions, prModel.APIRevisionId, memoryStream, codeFile, originalFileName))
                     createNewModifiedRevision = false;
             }
 
@@ -315,8 +320,9 @@ namespace APIViewWeb.Controllers
         /// <param name="revisionId"></param>
         /// <param name="memoryStream"></param>
         /// <param name="codeFile"></param>
+        /// <param name="originalFileName"></param>
         /// <returns>true if update happened otherwise false</returns>
-        private async Task<bool> UpdateExistingAPIRevisionCodeFile(IEnumerable<APIRevisionListItemModel> apiRevisions, string revisionId, MemoryStream memoryStream, CodeFile codeFile)
+        private async Task<bool> UpdateExistingAPIRevisionCodeFile(IEnumerable<APIRevisionListItemModel> apiRevisions, string revisionId, MemoryStream memoryStream, CodeFile codeFile, string originalFileName)
         {
             var apiRevision = apiRevisions.FirstOrDefault(v => v.Id == revisionId);
             if (apiRevision != default(APIRevisionListItemModel))
@@ -324,7 +330,7 @@ namespace APIViewWeb.Controllers
                 //Update the code file if revision already exists
                 var codeModel = await _codeFileManager.CreateReviewCodeFileModel(
                        apiRevisionId: revisionId, memoryStream: memoryStream, codeFile: codeFile);
-
+                codeModel.FileName = originalFileName;
                 apiRevision.Files[0] = codeModel;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
                 return true;

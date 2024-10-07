@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
 
 namespace APIViewWeb.Helpers
 {
@@ -27,15 +25,34 @@ namespace APIViewWeb.Helpers
     {
         public string Name { get; set; }
         public IEnumerable<string> Languages { get; set; }
-        public IEnumerable<string> Details { get; set; }
-        public string SortField { get; set; } = "PackageName";
+        public string SortField { get; set; } = "LastUpdatedOn";
         public int SortOrder { get; set; } = 1;
+        public bool? IsApproved { get; set; }
     }
 
     public class APIRevisionsFilterAndSortParams : ReviewFilterAndSortParams
     {
+        public bool IsDeleted { get; set; }
+        public bool AssignedToMe { get; set; }
+        public string Label { get; set; }
         public string Author { get; set; }
         public string ReviewId { get; set; }
+        public bool WithTreeStyleTokens { get; set; }
+        public IEnumerable<string> Details { get; set; }
+    }
+
+    public class APIRevisionSoftDeleteParam
+    {
+        public string reviewId { get; set; }
+        public IEnumerable<string> apiRevisionIds { get; set;}
+    }
+
+    public class ReviewCreationParam                                                                    
+    {
+        public IFormFile File { get; set; }
+        public string Language { get; set; }
+        public string Label { get; set; }
+        public string FilePath { get; set; }
     }
 
     public class PagedList<T> : List<T>
@@ -56,9 +73,26 @@ namespace APIViewWeb.Helpers
     public class LeanJsonResult : JsonResult
     {
         private readonly int _statusCode;
+        private readonly string _locationUrl;
+ 
+        private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            ReferenceHandler = ReferenceHandler.IgnoreCycles,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            WriteIndented = false,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        };
+
         public LeanJsonResult(object value, int statusCode) : base(value)
         {
             _statusCode = statusCode;
+        }
+
+        public LeanJsonResult(object value, int statusCode, string locationUrl) : base(value)
+        {
+            _statusCode = statusCode;
+            _locationUrl = locationUrl;
         }
 
         public override async Task ExecuteResultAsync(ActionContext context)
@@ -72,15 +106,10 @@ namespace APIViewWeb.Helpers
 
             response.ContentType = !string.IsNullOrEmpty(ContentType) ? ContentType : "application/json";
             response.StatusCode = _statusCode;
+            response.Headers["Location"] = _locationUrl;
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                Converters = { new JsonStringEnumConverter() }
-            };
-
-            await JsonSerializer.SerializeAsync(response.Body, Value, options);
+            var serializedValue = JsonSerializer.Serialize(Value, _serializerOptions);
+            await response.WriteAsync(serializedValue);
         }
     }
     public class PaginationHeader

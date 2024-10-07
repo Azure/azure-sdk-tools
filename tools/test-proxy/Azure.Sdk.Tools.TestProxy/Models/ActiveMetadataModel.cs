@@ -3,6 +3,7 @@ using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Concurrent;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
@@ -15,18 +16,18 @@ namespace Azure.Sdk.Tools.TestProxy.Models
 
         public ActiveMetadataModel(RecordingHandler pageRecordingHandler)
         {
-            Descriptions = _populateFromHandler(pageRecordingHandler, "");
+            Descriptions = _populateFromHandler(pageRecordingHandler, "").Result;
         }
 
         public ActiveMetadataModel(RecordingHandler pageRecordingHandler, string recordingId)
         {
             RecordingId = recordingId;
-            Descriptions = _populateFromHandler(pageRecordingHandler, recordingId);
+            Descriptions = _populateFromHandler(pageRecordingHandler, recordingId).Result;
         }
 
         public string RecordingId { get; set; }
 
-        private List<ActionDescription> _populateFromHandler(RecordingHandler handler, string recordingId)
+        private async Task<List<ActionDescription>> _populateFromHandler(RecordingHandler handler, string recordingId)
         {
             var transforms = (IEnumerable<ResponseTransform>) handler.Transforms;
             var matcher = handler.Matcher;
@@ -38,14 +39,14 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                 handler.InMemorySessions
             };
 
-            var sanitizers = handler.SanitizerRegistry.GetRegisteredSanitizers();
+            var sanitizers = await handler.SanitizerRegistry.GetRegisteredSanitizers();
             var recordingFound = false;
             if (!string.IsNullOrWhiteSpace(recordingId)){
                 foreach (var sessionDict in searchCollections)
                 { 
                     if (sessionDict.TryGetValue(recordingId, out var session))
                     {
-                        sanitizers = handler.SanitizerRegistry.GetRegisteredSanitizers(session);
+                        sanitizers = await handler.SanitizerRegistry.GetRegisteredSanitizers(session);
                         transforms = transforms.Concat(session.AdditionalTransforms);
 
                         if (session.CustomMatcher != null)

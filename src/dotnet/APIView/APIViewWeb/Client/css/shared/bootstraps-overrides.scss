@@ -67,6 +67,11 @@
     box-shadow: var(--box-shadow-link);
 }
 
+.btn-check + .btn:hover {
+    color: var(--link-active);
+    border-color: var(--link-active);
+}
+
 .page-link {
     background-color: var(--base-fg-color);
     border: 1px solid var(--border-color);
@@ -239,6 +244,16 @@ select {
 
 .nav-link {
     padding: 0.2rem 1rem;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    background-color: var(--link-color);
+    color: var(--primary-btn-color);
+}
+
+.nav-link:hover, .nav-link:focus {
+    text-decoration: none;
+    color: var(--link-active);
 }
 
 .modal-content {

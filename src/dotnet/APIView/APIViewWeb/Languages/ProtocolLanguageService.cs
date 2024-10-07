@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
@@ -14,7 +15,7 @@ namespace APIViewWeb
         private readonly string _protocolProcessor;
         public override string ProcessName => _protocolProcessor;
 
-        public ProtocolLanguageService(IConfiguration configuration)
+        public ProtocolLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
             // protocolGen is located in python's scripts path e.g. <Pythonhome>/Scripts/protocolGen
             // Env variable PROTOCOLPARSERPATH is set to <pythonhome>/Scripts/protocolGen where parser is located

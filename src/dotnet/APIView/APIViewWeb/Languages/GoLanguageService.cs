@@ -7,6 +7,9 @@ using System.IO.Compression;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
@@ -16,6 +19,10 @@ namespace APIViewWeb
         public override string [] Extensions { get; } = { ".gosource" };
         public override string ProcessName { get; } = "apiviewgo";
         public override string VersionString { get; } = "2";
+
+        public GoLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
+        {
+        }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {
@@ -62,7 +69,7 @@ namespace APIViewWeb
 
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
+                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;

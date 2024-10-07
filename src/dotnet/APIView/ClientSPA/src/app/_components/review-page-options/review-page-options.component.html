@@ -1,0 +1,251 @@
+<app-page-options-section sectionName="Approval">
+    <ul class="list-group">
+        <li class="list-group-item text-center">
+            <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">
+                <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
+                    <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
+                    <div class="d-grid gap-2">
+                        <button class="{{apiRevisionApprovalBtnClass}}" type="button" (click)="handleAPIRevisionApprovalAction()">{{apiRevisionApprovalBtnLabel}}</button>
+                    </div>
+                </ng-container>
+                <ng-template #cantToggleApproveAPIRevision>
+                    <div class="d-grid gap-2">
+                        <button class="{{apiRevisionApprovalBtnClass}}" type="button"
+                            pTooltip="API Revision cannot be approved when comparing against unapproved revision. Or when the diffApiRevision is older than the activeApiRevision." 
+                            tooltipPosition="bottom"
+                            disabled>
+                            {{apiRevisionApprovalBtnLabel}}
+                        </button>
+                    </div>
+                </ng-template>
+            </ng-container>
+            <span *ngIf="activeAPIRevision && activeAPIRevision!.approvers.length > 0; else noAPIRevisionApprovers" class="small text-muted mt-1">
+                Approved By: <a *ngFor="let approver of activeAPIRevision!.approvers" href="{{webAppUrl}}Assemblies/Profile/{{approver}}">{{approver}},&nbsp;</a>
+            </span>
+            <ng-template #noAPIRevisionApprovers>
+                <span class="small text-muted mt-1">Current Revision Approval Pending</span>
+            </ng-template>
+        </li>
+        <li class="list-group-item text-center">
+            <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
+                <span class="small text-muted mt-1" id="first-release-approval-message">Approved for First Release By: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
+            </ng-container>
+            <ng-template #reviewIsNotApproved>
+                <div *ngIf="preferredApprovers.includes(userProfile?.userName!); else userIsNotAPreferedApprover">
+                    <span class="small text-muted">Approves First Release of the package</span>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" type="button" id="first-release-approval-button"
+                            (click)="handleReviewApprovalAction()"
+                            pTooltip="Package name must be approved before first preview release of a new package." 
+                            tooltipPosition="bottom">
+                            Approve First Release
+                        </button>
+                    </div>
+                    <span class="small mt-2 text-muted" id="first-release-approval-message">First Release Approval Pending</span>
+                </div>
+            </ng-template>
+            <ng-template #userIsNotAPreferedApprover>
+                <span class="small mt-2 text-muted" id="first-release-approval-message">First Release Approval Pending</span>
+            </ng-template>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section *ngIf="associatedPullRequests.length > 0" sectionName="Associated Pull Requests">
+    <ul class="list-group">
+        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
+            <a href="https://github.com/{{pullRequest.repoName}}/pull/{{pullRequest.pullRequestNumber}}" target="_blank">{{pullRequest.repoName}}/{{pullRequest.pullRequestNumber}}</a>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0" sectionName="Associated API Revisions" [collapsedInput]="true">
+    <ul class="list-group">
+        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
+            <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank">{{pullRequest.language}}/{{pullRequest.packageName}}</a>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section *ngIf="showCommentsSwitch || (isDiffView && contentHasDiff)" sectionName="Find on Page">
+    <ul class="list-group">
+        <li class="list-group-item" *ngIf="showCommentsSwitch">                
+            <label class="small mx-1 fw-semibold">Comment:</label>
+            <div class="d-grid gap-2">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Comment Navigation">
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="commentThreadNavaigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
+                        <i class="bi bi-arrow-up"></i>Prev</button>
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="top" (click)="commentThreadNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)">
+                        <i class="bi bi-arrow-down"></i>Next</button>
+                </div>
+            </div>
+        </li>
+        <li class="list-group-item" *ngIf="isDiffView && contentHasDiff">
+            <label class="small mx-1 fw-semibold">Diff:</label>
+            <div class="d-grid gap-2">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Diff Navigation">
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
+                        <i class="bi bi-arrow-up"></i>Prev</button>
+                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)">
+                        <i class="bi bi-arrow-down"></i>Next</button>
+                </div>
+            </div>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section sectionName="Page Settings">
+    <ul class="list-group">
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showCommentsSwitch"
+            (onChange)="onCommentsSwitchChange($event)" />
+            <label class="ms-2">Comments</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showSystemCommentsSwitch"
+            (onChange)="onShowSystemCommentsSwitchChange($event)" />
+            <label class="ms-2">System Comments</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showDocumentationSwitch"
+            (onChange)="onShowDocumentationSwitchChange($event)" />
+            <label class="ms-2">Documentation</label>
+        </li>
+        <li *ngIf="hasHiddenAPIs" class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showHiddenAPISwitch"
+            (onChange)="onShowHiddenAPISwitchChange($event)" />
+            <label class="ms-2">Hidden APIs</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showLineNumbersSwitch" 
+            (onChange)="onShowLineNumbersSwitchChange($event)" />
+            <label class="ms-2">Line Numbers</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch"
+            (onChange)="onShowLeftNavigationSwitchChange($event)" />
+            <label class="ms-2">Left Navigation</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="disableCodeLinesLazyLoading"
+            (onChange)="onDisableLazyLoadingSwitchChange($event)" />
+            <label class="ms-2">Disable Lazy Loading</label>
+        </li>
+        <li *ngIf="isDiffView" class="list-group-item">
+            <label class="small mx-1 fw-semibold" for="diff-style-select">Diff Style :</label>
+            <p-dropdown 
+                (onChange)="onDiffStyleChange($event)"
+                [options]="diffStyleOptions" 
+                [(ngModel)]="selectedDiffStyle"
+                [disabled]="!contentHasDiff"
+                inputId="diff-style-select"
+                optionLabel="label"
+                [style]="{'width':'100%'}"/>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section sectionName="API Revision Options">
+    <ul class="list-group">
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="markedAsViewSwitch"
+            (onChange)="onMarkedAsViewedSwitchChange($event)" />
+            <label class="ms-2">Mark As Viewed</label>
+        </li>
+        <li class="list-group-item">
+            <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
+            <p-multiSelect 
+                [options]="preferredApprovers" 
+                [(ngModel)]="selectedApprovers" 
+                placeholder="Request Reviewers"
+                [showClear]="true"
+                [style]="{'width':'100%'}"
+                (onPanelHide)="handleAssignedReviewersChange()">
+                    <ng-template pTemplate="selectedItems">
+                        <div *ngIf="selectedApprovers && selectedApprovers.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
+                        <span>{{ formatSelectedApprovers(selectedApprovers) }}</span>
+                        </div>
+                        <div *ngIf="!selectedApprovers || selectedApprovers.length === 0">Select Reviewers</div>
+                    </ng-template>
+                    <ng-template let-approver pTemplate="item">
+                        <div class="flex align-items-center gap-2">
+                            <img 
+                                src="https://github.com/{{ approver }}.png?size=30"
+                                class="me-2 rounded"
+                                style="width: 30px" />
+                            <span>{{ approver }}</span>
+                        </div>
+                    </ng-template>
+            </p-multiSelect>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section sectionName="Review Options">
+    <ul class="list-group">
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="subscribeSwitch"
+            (onChange)="onSubscribeSwitchChange($event)" />
+            <label class="ms-2">Subscribe</label>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section sectionName="Change History" [collapsedInput]="true">
+    <ul class="list-group">
+        <li class="list-group-item change-history">
+            <p-timeline [value]="activeAPIRevision?.changeHistory">
+                <ng-template pTemplate="marker" let-changeHistory>
+                    <span [style]="{ 'background-color': changeHistory.color }">
+                        <i [class]="changeHistoryIcons[changeHistory.changeAction]"></i>
+                    </span>
+                </ng-template>
+                <ng-template pTemplate="content" let-changeHistory>
+                    <div class="p-text-primary small">{{ changeHistory.changeAction | titlecase }}</div>
+                    <div class="p-text-secondary small">{{ changeHistory.changedBy }}</div>
+                    <div class="p-text-secondary small">{{ (changeHistory.changedOn) ? (changeHistory.changedOn | timeago) : "" }}</div>
+                </ng-template>
+            </p-timeline>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<p-dialog header="Approve APIRevision" 
+    [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
+    [style]="{ width: '40dvw' }">
+    <ul class="list-group">
+        <li class="list-group-item" *ngIf="hasActiveConversation">
+            <div class="float-start">
+                <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
+            </div>
+            <div class="float-end">
+                <p-inputSwitch [(ngModel)]="overrideActiveConversationforApproval"/>
+                <label class="ms-2">Override</label>
+            </div>
+        </li>
+        <li class="list-group-item" *ngIf="this.hasFatalDiagnostics">
+            <div class="float-start">
+                <p class="mb-0">This API has fatal diagnostics.</p>
+            </div>
+            <div class="float-end">
+                <p-inputSwitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
+                <label class="ms-2">Override</label>
+            </div>
+        </li>
+      </ul>
+      <div class="d-grid gap-2 mt-2">
+        <button class="btn btn-success" type="button"
+            (click)="toggleAPIRevisionApproval()"
+            [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
+      </div>
+</p-dialog>
+
+<p-dialog header="Disable Lazy Loading" 
+    [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
+    [style]="{ width: '30dvw' }" (onHide)="disableCodeLinesLazyLoading = userProfile?.preferences?.disableCodeLinesLazyLoading!">
+    <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
+    <div class="d-grid gap-2 mt-2">
+    <button class="btn btn-primary" type="button" (click)="disableCodeLinesLazyLoadingEmitter.emit(disableCodeLinesLazyLoading); showDisableCodeLinesLazyLoadingModal = false">Disable</button>
+    <button class="btn btn-link" type="button" (click)="showDisableCodeLinesLazyLoadingModal = false;">Cancel</button>
+    </div>
+</p-dialog>

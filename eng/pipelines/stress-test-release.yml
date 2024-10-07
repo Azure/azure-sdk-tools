@@ -16,8 +16,8 @@ parameters:
     values:
     - all
     - examples
-    - javascript
     - java
+    - javascript
     - net
     - python
     - go

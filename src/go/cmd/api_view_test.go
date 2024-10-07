@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -161,11 +162,28 @@ func TestDiagnostics(t *testing.T) {
 	}
 }
 
-func TestAliasDefinitions(t *testing.T) {
-	priorValue := sdkDirName
-	sdkDirName = "testdata"
-	defer func() { sdkDirName = priorValue }()
+func TestExternalModule(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_external_module"))
+	require.NoError(t, err)
+	require.Equal(t, 1, len(review.Diagnostics))
+	require.Equal(t, aliasFor+"github.com/Azure/azure-sdk-for-go/sdk/azcore.Policy", review.Diagnostics[0].Text)
+	require.Equal(t, 1, len(review.Navigation))
+	require.Equal(t, 1, len(review.Navigation[0].ChildItems))
+	foundDo, foundPolicy := false, false
+	for _, token := range review.Tokens {
+		if token.DefinitionID != nil && *token.DefinitionID == "test_external_module.MyPolicy" {
+			require.Equal(t, "MyPolicy", token.Value)
+			foundPolicy = true
+		} else if token.Value == "Do" {
+			foundDo = true
+			require.Contains(t, *token.DefinitionID, "MyPolicy")
+		}
+	}
+	require.True(t, foundDo, "missing MyPolicy.Do()")
+	require.True(t, foundPolicy, "missing MyPolicy type")
+}
 
+func TestAliasDefinitions(t *testing.T) {
 	for _, test := range []struct {
 		name, path, sourceName string
 		diagLevel              DiagnosticLevel
@@ -174,7 +192,7 @@ func TestAliasDefinitions(t *testing.T) {
 			diagLevel:  DiagnosticLevelWarning,
 			name:       "service_group",
 			path:       "testdata/test_service_group/group/test_alias_export",
-			sourceName: "github.com/Azure/azure-sdk-for-go/sdk/test_service_group/group/internal.Foo",
+			sourceName: "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_service_group/group/internal.Foo",
 		},
 		{
 			diagLevel:  DiagnosticLevelInfo,
@@ -186,11 +204,13 @@ func TestAliasDefinitions(t *testing.T) {
 			diagLevel:  DiagnosticLevelWarning,
 			name:       "external_package",
 			path:       "testdata/test_external_alias_exporter",
-			sourceName: "github.com/Azure/azure-sdk-for-go/sdk/test_external_alias_source.Foo",
+			sourceName: "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_external_alias_source.Foo",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			review, err := createReview(filepath.Clean(test.path))
+			p, err := filepath.Abs(test.path)
+			require.NoError(t, err)
+			review, err := createReview(p)
 			require.NoError(t, err)
 			require.Equal(t, "Go", review.Language)
 			require.Equal(t, 1, len(review.Diagnostics))
@@ -209,10 +229,6 @@ func TestAliasDefinitions(t *testing.T) {
 }
 
 func TestRecursiveAliasDefinitions(t *testing.T) {
-	priorValue := sdkDirName
-	sdkDirName = "testdata"
-	defer func() { sdkDirName = priorValue }()
-
 	for _, test := range []struct {
 		name, path, sourceName string
 		diagLevel              DiagnosticLevel
@@ -274,6 +290,15 @@ func TestAliasDiagnostics(t *testing.T) {
 	}
 }
 
+func TestMajorVersion(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_major_version"))
+	require.NoError(t, err)
+	require.Equal(t, "Go", review.Language)
+	require.Equal(t, "test_major_version", review.Name)
+	require.Equal(t, 1, len(review.Navigation))
+	require.Equal(t, "test_major_version/subpackage", review.Navigation[0].Text)
+}
+
 func TestVars(t *testing.T) {
 	review, err := createReview(filepath.Clean("testdata/test_vars"))
 	require.NoError(t, err)
@@ -297,4 +322,20 @@ func Test_getPackageNameFromModPath(t *testing.T) {
 	require.EqualValues(t, "sdk/foo", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo"))
 	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar"))
 	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar/v5"))
+}
+
+func TestDeterministicOutput(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		review1, err := createReview(filepath.Clean("testdata/test_multi_recursive_alias"))
+		require.NoError(t, err)
+		review2, err := createReview(filepath.Clean("testdata/test_multi_recursive_alias"))
+		require.NoError(t, err)
+
+		output1, err := json.MarshalIndent(review1, "", " ")
+		require.NoError(t, err)
+		output2, err := json.MarshalIndent(review2, "", " ")
+		require.NoError(t, err)
+
+		require.EqualValues(t, string(output1), string(output2))
+	}
 }

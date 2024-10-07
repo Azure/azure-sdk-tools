@@ -4,7 +4,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20240507.1
+      ref: refs/tags/azure-sdk-build-tools_20240925.3
 
 parameters:
   - name: BuildToolsRepoPath
@@ -54,9 +54,14 @@ jobs:
           azurePowerShellVersion: LatestVersion 
           pwsh: true
           Inline: |
+            echo "azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true"
             azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true
-            echo "Copied files:"
-            dir '${{ parameters.ArtifactsPath }}' -r | % { $_.FullName }
+            $copiedFiles = (dir '${{ parameters.ArtifactsPath }}' -r | % { $_.FullName })
+            echo "Copied files: $copiedFiles"
+            if (!$copiedFiles) { 
+              echo "Failed to copy any files from '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' please double check they exist"
+              exit 1
+            }            
         env: 
           AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'     
 
@@ -67,15 +72,11 @@ jobs:
             BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
 
       - ${{ if eq(parameters.ShouldPublish, true) }}:
-        - task: MSBuild@1
-          displayName: 'Upload Symbols'
-          inputs:
-            solution: '${{ parameters.BuildToolsRepoPath }}/tools/symboltool/SymbolUploader.proj'
-            msbuildArguments: >
-              /p:PackagesPath=${{ parameters.ArtifactsPath }}
-              /p:MSPublicSymbolsPAT=$(azuresdk-microsoftpublicsymbols-devops-pat)
-              /p:MSSymbolsPAT=$(azuresdk-microsoft-devops-pat)
-              /p:AzureSDKSymbolsPAT=$(azuresdk-azure-sdk-devops-pat)
+        - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
+          parameters:
+            BuildToolsRepositoryPath: ${{ parameters.BuildToolsRepoPath }}
+            PackagesPath: ${{ parameters.ArtifactsPath }}
+            StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
 
         - task: NuGetToolInstaller@1
           displayName: 'Use NuGet ${{ parameters.NugetVersion }}'

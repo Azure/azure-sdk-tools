@@ -2376,7 +2376,7 @@ class NonCoreNetworkImport(BaseChecker):
             "This import is only allowed in azure.core.pipeline.transport.",
         ),
     }
-    BLOCKED_MODULES = ["aiohttp", "requests", "trio"]
+    BLOCKED_MODULES = ["aiohttp", "requests", "trio", "httpx"]
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
 
     def visit_import(self, node):
@@ -2708,6 +2708,60 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
+class DoNotLogErrorsEndUpRaising(BaseChecker):
+
+    """Rule to check that errors that get raised aren't logged"""
+
+    name = "do-not-log-raised-errors"
+    priority = -1
+    msgs = {"C4762": (
+            "Do not log errors that get raised in an exception block.",
+            "do-not-log-raised-errors",
+            "Do not log errors at error or warning level when error is raised in an exception block",
+            ),
+            }
+
+    def visit_try(self, node):
+        """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
+           Go through exception block and branches and ensure error hasn't been logged if exception is raised.
+        """
+        # Return a list of exception blocks
+        except_block = node.handlers
+        # Iterate through each exception block
+        for nod in except_block:
+            # Get the nodes in each block (e.g. nodes Expr and Raise)
+            exception_block_body = nod.body
+            self.check_for_raise(exception_block_body)
+
+    def check_for_raise(self, node):
+        """ Helper function - checks for instance of 'Raise' node
+            Also checks 'If' and nested 'If' branches
+        """
+        for i in node:
+            if isinstance(i, astroid.Raise):
+                self.check_for_logging(node)
+            # Check for any nested 'If' branches
+            if isinstance(i, astroid.If):
+                self.check_for_raise(i.body)
+
+                # Check any 'elif' or 'else' branches
+                self.check_for_raise(i.orelse)
+
+    def check_for_logging(self, node):
+        """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
+            levels. Called from 'check_for_raise' function
+        """
+        matches = [".warning", ".error", ".exception"]
+        for j in node:
+            if isinstance(j, astroid.Expr):
+                expression = j.as_string().lower()
+                if any(x in expression for x in matches):
+                    self.add_message(
+                        msgid=f"do-not-log-raised-errors",
+                        node=j,
+                        confidence=None,
+                    )
+
 
 class NoImportTypingFromTypeCheck(BaseChecker):
 
@@ -2750,6 +2804,74 @@ class NoImportTypingFromTypeCheck(BaseChecker):
         except:
             pass
 
+
+class DoNotUseLegacyTyping(BaseChecker):
+
+    """ Rule to check that we aren't using legacy typing using comments. """
+
+    name = "do-not-use-legacy-typing"
+    priority = -1
+    msgs = {
+        "C4761": (
+            "Do not use legacy typing using comments.",
+            "do-not-use-legacy-typing",
+            "Do not use legacy typing using comments. Python 2 is no longer supported, use Python 3.9+ type hints instead.",
+        ),
+    }
+
+    def visit_functiondef(self, node):
+        """Check that we aren't using legacy typing."""
+        if node.type_comment_args or node.type_comment_returns:
+            self.add_message(
+                msgid=f"do-not-use-legacy-typing",
+                node=node,
+                confidence=None,
+            )
+
+
+class DoNotImportAsyncio(BaseChecker):
+
+    """Rule to check that libraries do not import the asyncio package directly."""
+
+    name = "do-not-import-asyncio"
+    priority = -1
+    # TODO Find message number
+    msgs = {
+        "C4763": (
+            "Do not import the asyncio package directly in your library",
+            "do-not-import-asyncio",
+            "Do not import the asyncio package in your directly.",
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from asyncio directly."""
+        if node.modname == "asyncio":
+            self.add_message(
+                msgid=f"do-not-import-asyncio",
+                node=node,
+                confidence=None,
+            )
+
+    def visit_import(self, node):
+        """Check that we aren't importing asyncio."""
+        for name, _ in node.names:
+            if name == "asyncio":
+                self.add_message(
+                    msgid=f"do-not-import-asyncio",
+                    node=node,
+                    confidence=None,
+                )
+
+
+# [Pylint] custom linter check for invalid use of @overload #3229
+# [Pylint] Custom Linter check for Exception Logging #3227
+# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+# [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+# [Pylint] Investigate pylint rule around missing dependency #3231
+
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2780,11 +2902,22 @@ def register(linter):
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(DoNotImportLegacySix(linter))
+    linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    linter.register_checker(DoNotUseLegacyTyping(linter))
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
+
+    # [Pylint] custom linter check for invalid use of @overload #3229
+    # [Pylint] Custom Linter check for Exception Logging #3227
+    # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+    # [Pylint] Add a check for connection_verify hardcoded settings #35355
+    # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+    # [Pylint] Investigate pylint rule around missing dependency #3231
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
+
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))

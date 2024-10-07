@@ -85,7 +85,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
     });
 
@@ -162,11 +162,37 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
-    });  
-  });
+    });
 
+    it("with default values", async () => {
+      const input = `
+        #suppress "deprecated"
+        @TypeSpec.service( { title: "Test", version: "1" } )
+        namespace Azure.Test {
+          model Foo {
+            name: string = "foo";
+            array: string[] = #["a", "b"];
+            obj: Record<unknown> = #{val: 1, name: "foo"};
+          }
+        }
+        `;
+      const expect = `
+        namespace Azure.Test {
+          model Foo {
+            name: string = "foo";
+            array: string[] = #["a", "b"];
+            obj: Record< unknown > = #{val: 1, name: "foo"};
+          }
+        }
+        `;
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 10);
+      validateDefinitionIds(apiview);
+    });
+  });
 
   describe("scalars", () => {
     it("extends string", async () => {
@@ -184,9 +210,9 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
-    });    
+    });
 
     it("new scalar type", async () => {
       const input = `
@@ -203,9 +229,9 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
-    });    
+    });
 
     it("templated", async () => {
       const input = `
@@ -224,12 +250,11 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
     });
   });
 
-  
   describe("aliases", () => {
     it("simple alias", async () => {
       const input = `
@@ -254,12 +279,12 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
-    });  
+    });
 
     it("templated alias", async () => {
-        const input = `
+      const input = `
         #suppress "deprecated"
         @TypeSpec.service( { title: "Test", version: "1" } )
         namespace Azure.Test {
@@ -267,24 +292,24 @@ describe("apiview: tests", () => {
             species: string;
           }
 
-          alias Template<T extends valueof string> = "Foo \${T} bar";
+          alias Template<T extends string> = "Foo \${T} bar";
         }
         `;
-        const expect = `
+      const expect = `
         namespace Azure.Test {
           model Animal {
             species: string;
           }
     
-          alias Template<T extends valueof string> = "Foo \${T} bar";
+          alias Template<T extends string> = "Foo \${T} bar";
         }
         `;
-        const apiview = await apiViewFor(input, {});
-        const actual = apiViewText(apiview);
-        compare(expect, actual, 9);
-        validateDefinitionIds(apiview);
-      });  
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 10);
+      validateDefinitionIds(apiview);
     });
+  });
 
   describe("augment decorators", () => {
     it("simple augment", async () => {
@@ -310,9 +335,9 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
-    });  
+    });
   });
 
   describe("enums", () => {
@@ -335,7 +360,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
     });
 
@@ -358,7 +383,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
     });
 
@@ -381,7 +406,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
     });
 
@@ -407,13 +432,13 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
-    });  
+    });
   });
 
   describe("unions", () => {
-    it("discriminated union", async () =>{
+    it("discriminated union", async () => {
       const input = `
       #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
@@ -461,11 +486,11 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
-    });  
+    });
 
-    it("unnamed union", async () =>{
+    it("unnamed union", async () => {
       const input = `
       #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
@@ -509,13 +534,13 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateDefinitionIds(apiview);
     });
   });
 
   describe("operations", () => {
-    it("templated", async () =>{
+    it("templated", async () => {
       const input = `
       #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
@@ -609,12 +634,12 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
-      compare(expect, lines, 9);
+      compare(expect, lines, 10);
       validateDefinitionIds(apiview);
     });
-  
-    it("templated with empty models", async () =>{
-        const input = `
+
+    it("templated with empty models", async () => {
+      const input = `
         #suppress "deprecated"
         @TypeSpec.service( { title: "Test", version: "1" } )
         namespace Azure.Test {
@@ -629,7 +654,7 @@ describe("apiview: tests", () => {
             TParams = {}
           >;
         }`;
-        const expect = `
+      const expect = `
         namespace Azure.Test {
           op GetFoo is ResourceRead<
             {},
@@ -647,13 +672,13 @@ describe("apiview: tests", () => {
             params: TParams
           ): TResource;
         }`;
-        const apiview = await apiViewFor(input, {});
-        const lines = apiViewText(apiview);
-        compare(expect, lines, 9);
-        validateDefinitionIds(apiview);
+      const apiview = await apiViewFor(input, {});
+      const lines = apiViewText(apiview);
+      compare(expect, lines, 10);
+      validateDefinitionIds(apiview);
     });
-  
-    it("with anonymous models", async () =>{
+
+    it("with anonymous models", async () => {
       const input = `
       #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
@@ -682,9 +707,9 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
-      compare(expect, lines, 9);
+      compare(expect, lines, 10);
       validateDefinitionIds(apiview);
-    });  
+    });
   });
 
   describe("interfaces", () => {
@@ -722,9 +747,9 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
-      compare(expect, lines, 9);
+      compare(expect, lines, 10);
       validateDefinitionIds(apiview);
-    });  
+    });
   });
 
   describe("string literals", () => {
@@ -753,7 +778,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
-      compare(expect, lines, 9);
+      compare(expect, lines, 10);
       validateDefinitionIds(apiview);
     });
 
@@ -774,9 +799,9 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
-      compare(expect, lines, 9);
+      compare(expect, lines, 10);
       validateDefinitionIds(apiview);
-    });  
+    });
   });
 
   describe("string templates", () => {
@@ -797,7 +822,7 @@ describe("apiview: tests", () => {
           ref: "Ref this alias \${myconst} end";
           template: Template<"custom">;          
         }
-        alias Template<T extends valueof string> = "Foo \${T} bar";
+        alias Template<T extends string> = "Foo \${T} bar";
       }`;
 
       const expect = `
@@ -816,12 +841,12 @@ describe("apiview: tests", () => {
 
         alias myconst = "foobar";
 
-        alias Template<T extends valueof string> = "Foo \${T} bar";
+        alias Template<T extends string> = "Foo \${T} bar";
       }
       `;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
-      compare(expect, lines, 9);
+      compare(expect, lines, 10);
       validateDefinitionIds(apiview);
     });
   });
@@ -850,7 +875,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
-      compare(expect, lines, 9);
+      compare(expect, lines, 10);
       validateDefinitionIds(apiview);
     });
 
@@ -882,12 +907,12 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
-      compare(expect, lines, 9);
+      compare(expect, lines, 10);
       validateDefinitionIds(apiview);
     });
 
     it("suppression on operation", async () => {
-        const input = `
+      const input = `
         #suppress "deprecated"
         @TypeSpec.service( { title: "Test", version: "1" } )
         namespace Azure.Test {
@@ -895,16 +920,41 @@ describe("apiview: tests", () => {
             op someOp(): void;
         }
         `;
-        const expect = `
+      const expect = `
         namespace Azure.Test {
           #suppress "foo" "bar"
           op someOp(): void;
         }
         `;
-        const apiview = await apiViewFor(input, {});
-        const lines = apiViewText(apiview);
-        compare(expect, lines, 9);
-        validateDefinitionIds(apiview);
-      });
+      const apiview = await apiViewFor(input, {});
+      const lines = apiViewText(apiview);
+      compare(expect, lines, 10);
+      validateDefinitionIds(apiview);
     });
+  });
+
+  describe("constants", () => {
+    it("renders constants", async () => {
+      const input = `
+      #suppress "deprecated"
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {
+        const a = 123;
+        const b = #{name: "abc"};
+        const c = a;
+      }
+      `;
+      const expect = `
+        namespace Azure.Test {
+          const a = 123;
+          const b = #{name: "abc"};
+          const c = a;
+        }
+        `;
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 10);
+      validateDefinitionIds(apiview);    
+    });
+  });
 });

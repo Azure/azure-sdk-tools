@@ -1,9 +1,11 @@
 import {
   AliasStatementNode,
   ArrayExpressionNode,
+  ArrayLiteralNode,
   AugmentDecoratorStatementNode,
   BaseNode,
   BooleanLiteralNode,
+  ConstStatementNode,
   DecoratorExpressionNode,
   DirectiveExpressionNode,
   EnumMemberNode,
@@ -23,6 +25,9 @@ import {
   Namespace,
   navigateProgram,
   NumericLiteralNode,
+  ObjectLiteralNode,
+  ObjectLiteralPropertyNode,
+  ObjectLiteralSpreadPropertyNode,
   OperationSignatureDeclarationNode,
   OperationSignatureReferenceNode,
   OperationStatementNode,
@@ -379,6 +384,7 @@ export class ApiView {
 
   tokenize(node: BaseNode) {
     let obj;
+    let last = 0;  // track the final index of an array
     let isExpanded = false;
     switch (node.kind) {
       case SyntaxKind.AliasStatement:
@@ -395,6 +401,18 @@ export class ApiView {
         obj = node as ArrayExpressionNode;
         this.tokenize(obj.elementType);
         this.punctuation("[]");
+        break;
+      case SyntaxKind.ArrayLiteral:
+        obj = node as ArrayLiteralNode;
+        this.punctuation("#[");
+        last = obj.values.length - 1;
+        obj.values.forEach((val, i) => {
+          this.tokenize(val);
+          if (i !== last) {
+            this.punctuation(",", false, true);
+          }
+        });
+        this.punctuation("]");
         break;
       case SyntaxKind.AugmentDecoratorStatement:
         obj = node as AugmentDecoratorStatementNode;
@@ -429,13 +447,22 @@ export class ApiView {
         throw new Error(`Case "BlockComment" not implemented`);
       case SyntaxKind.TypeSpecScript:
         throw new Error(`Case "TypeSpecScript" not implemented`);
+      case SyntaxKind.ConstStatement:
+        obj = node as ConstStatementNode;
+        this.namespaceStack.push(obj.id.sv);
+        this.keyword("const", false, true);
+        this.tokenizeIdentifier(obj.id, "declaration");
+        this.punctuation("=", true, true);
+        this.tokenize(obj.value);
+        this.namespaceStack.pop();
+        break;
       case SyntaxKind.DecoratorExpression:
         obj = node as DecoratorExpressionNode;
         this.punctuation("@", false, false);
         this.tokenizeIdentifier(obj.target, "keyword");
         this.lineMarker();
         if (obj.arguments.length) {
-          const last = obj.arguments.length - 1;
+          last = obj.arguments.length - 1;
           this.punctuation("(", false, false);
           for (let x = 0; x < obj.arguments.length; x++) {
             const arg = obj.arguments[x];
@@ -544,6 +571,28 @@ export class ApiView {
         obj = node as NumericLiteralNode;
         this.literal(obj.value.toString());
         break;
+      case SyntaxKind.ObjectLiteral:
+        obj = node as ObjectLiteralNode;
+        this.punctuation("#{", true, false);
+        last = obj.properties.length - 1;
+        obj.properties.forEach((prop, i) => {
+          this.tokenize(prop);
+          if (i !== last) {
+            this.punctuation(",", false, true);
+          }
+        });
+        this.punctuation("}", false, false);
+        break;
+      case SyntaxKind.ObjectLiteralProperty:
+        obj = node as ObjectLiteralPropertyNode;
+        this.tokenizeIdentifier(obj.id, "member");
+        this.punctuation(":", false, true);
+        this.tokenize(obj.value);
+        break;
+      case SyntaxKind.ObjectLiteralSpreadProperty:
+        obj = node as ObjectLiteralSpreadPropertyNode;
+        // TODO: Whenever there is an example?
+        throw new Error(`Case "ObjectLiteralSpreadProperty" not implemented`);
       case SyntaxKind.OperationStatement:
         this.tokenizeOperationStatement(node as OperationStatementNode);
         break;
@@ -641,7 +690,7 @@ export class ApiView {
         this.tokenizeUnionVariant(node as UnionVariantNode);
         break;
       case SyntaxKind.UnknownKeyword:
-        this.keyword("any", true, true);
+        this.keyword("unknown", true, true);
         break;
       case SyntaxKind.UsingStatement:
         throw new Error(`Case "UsingStatement" not implemented`);
@@ -741,7 +790,6 @@ export class ApiView {
           case SyntaxKind.MemberExpression:
             return this.getFullyQualifiedIdentifier(obj.target as MemberExpressionNode);
         }
-        break;
       default:
         throw new Error(`Unsupported expression kind: ${SyntaxKind[node.kind]}`);
       //unsupported ArrayExpressionNode | MemberExpressionNode | ModelExpressionNode | TupleExpressionNode | UnionExpressionNode | IntersectionExpressionNode | TypeReferenceNode | ValueOfExpressionNode | AnyKeywordNode;
@@ -1014,6 +1062,11 @@ export class ApiView {
       this.tokenize(node);
       this.punctuation(";");
       this.blankLines(1);
+    }
+    for (const node of model.constants.values()) {
+        this.tokenize(node);
+        this.punctuation(";");
+        this.blankLines(1);
     }
     this.endGroup();
     this.blankLines(1);

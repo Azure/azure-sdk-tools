@@ -31,6 +31,8 @@ import {
   Directive,
   DirectiveExpressionNode,
   StringLiteralNode,
+  ObjectLiteralNode,
+  ConstStatementNode,
 } from "@typespec/compiler";
 
 export class NamespaceModel {
@@ -49,6 +51,7 @@ export class NamespaceModel {
     | ScalarStatementNode
     | UnionStatementNode
     | UnionExpressionNode
+    | ObjectLiteralNode
   >();
   models = new Map<
     string,
@@ -60,9 +63,11 @@ export class NamespaceModel {
     | ScalarStatementNode
     | UnionStatementNode
     | UnionExpressionNode
+    | ObjectLiteralNode
   >();
   aliases = new Map<string, AliasStatementNode>();
   augmentDecorators = new Array<AugmentDecoratorStatementNode>();
+  constants = new Array<ConstStatementNode>();
 
   constructor(name: string, ns: Namespace, program: Program) {
     this.name = name;
@@ -113,6 +118,11 @@ export class NamespaceModel {
     // collect augment decorators
     for (const augment of findNodes(SyntaxKind.AugmentDecoratorStatement, program, ns)) {
       this.augmentDecorators.push(augment);
+    }
+
+    // collect contants
+    for (const constant of findNodes(SyntaxKind.ConstStatement, program, ns)) {
+      this.constants.push(constant);
     }
 
     // sort operations and models
@@ -188,7 +198,6 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
         case SyntaxKind.MemberExpression:
           return generateId(node.target);
       }
-      break;
     case SyntaxKind.EnumMember:
       node = obj as EnumMemberNode;
       name = node.id.sv;

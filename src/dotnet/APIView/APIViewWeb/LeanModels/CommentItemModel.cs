@@ -1,13 +1,11 @@
-using APIViewWeb.Helpers;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace APIViewWeb.LeanModels
 {
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     [JsonConverter(typeof(StringEnumConverter))]
     public enum CommentType
     {
@@ -17,6 +15,7 @@ namespace APIViewWeb.LeanModels
 
     public class CommentItemModel
     {
+        [System.Text.Json.Serialization.JsonPropertyName("id")]
         [JsonProperty("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
@@ -25,7 +24,7 @@ namespace APIViewWeb.LeanModels
         public string SectionClass { get; set; }
         public string CommentText { get; set; }
         public string CrossLanguageId { get; set; }
-        public List<CommentChangeHistoryModel> ChangeHistory { get; set; } = new List<CommentChangeHistoryModel>();
+        public List<CommentChangeHistoryModel> ChangeHistory { get; set; } = new List<CommentChangeHistoryModel>();        
         public bool IsResolved { get; set; }
         public List<string> Upvotes { get; set; } = new List<string>();
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
@@ -19,10 +20,11 @@ namespace APIViewWeb.Repositories
         /// Retrieve Revisions from the Revisions container in CosmosDb after applying filter to the query
         /// Used for ClientSPA
         /// </summary>
+        /// <param name="user"></param>
         /// <param name="pageParams"></param> Contains paginationinfo
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
-        public Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(PageParams pageParams, APIRevisionsFilterAndSortParams filterAndSortParams);
+        public Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, APIRevisionsFilterAndSortParams filterAndSortParams);
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb for a given reviewId

@@ -1,0 +1,94 @@
+
+<p-contextMenu #cm [model]="contextMenuItems"></p-contextMenu>
+<p-table
+    #reviewsTable
+    [rows]="noOfRows"
+    [value]="reviews"
+    dataKey="id"
+    [scrollable]="true"
+    scrollHeight="flex"
+    responsiveLayout="stack"
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
+    [virtualScroll]="true"
+    [virtualScrollDelay]="0"
+    [virtualScrollItemSize]="rowHeight"
+    [(contextMenuSelection)]="selectedReview"
+    [contextMenu]="cm"
+    [customSort]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    (onSort)="onSort($event)"
+    (onFilter)="onFilter($event)"
+    selectionMode="single"
+    [(selection)]="selectedReview"
+    (onRowSelect)="onRowSelect($event)"
+    [tableStyle]="{ 'min-width': '10rem' }"
+    styleClass="p-datatable-sm">
+    <ng-template pTemplate="caption">
+        <div class="d-flex justify-content-between index-table-info">
+            <div>
+                <p-chip *ngFor="let lang of selectedLanguages" label="{{ lang.data }}"></p-chip>
+            </div>
+            <div>
+                <button *ngIf="tableHasFilters()" (click)="clear(reviewsTable)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Filters</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="filterSideBarVisible = true"><i class="bi bi-sliders"></i></button>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+        <tr>
+            <th style="width:20%">Lanuage</th>
+            <th pSortableColumn="packageName" style="width:auto">Review - Package Name<p-sortIcon class="ms-2" field="packageName"></p-sortIcon></th>
+        </tr>
+        <tr>
+            <th>
+                <p-columnFilter id="langauge-filter" field="languages" matchMode="in" [showMenu]="false">
+                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                        <p-multiSelect [ngModel]="value" [appendTo]="reviewsTable" [options]="languages" [filter]="false" [(ngModel)]="selectedLanguages" (onChange)="filter($event.value)" optionLabel="label">
+                            <ng-template let-option pTemplate="item">
+                                <div class="inline-block vertical-align-middle">
+                                    <img [alt]="" src="{{assetsPath}}/images/{{ option.label | languageNames }}-original.svg" width="24" class="vertical-align-middle" />
+                                    <span class="mx-2 mt-1">{{ option.label }}</span>
+                                </div>
+                            </ng-template>
+                        </p-multiSelect>
+                    </ng-template>
+                </p-columnFilter>
+            </th>
+            <th>
+                <p-columnFilter type="text" field="packageName" [showMenu]="false"></p-columnFilter>
+            </th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-review>
+        <tr [pContextMenuRow]="review" [pSelectableRow]="review">
+            <td>
+                <img class="ms-3" src="{{assetsPath}}/images/{{ review.language | languageNames }}-original.svg" alt="{{review.language}}" width="25">
+            </td>
+            <td style="word-wrap: break-word; max-width: 10ch">{{ review.packageName }} <i *ngIf="review.isApproved" class="fas fa-check-circle text-success"></i></td>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="summary">
+        <div class="flex align-items-center justify-content-center">
+            {{totalNumberOfReviews}} {{reviewListDetail}} Review(s)
+        </div>
+    </ng-template>
+</p-table>
+<p-sidebar [(visible)]="filterSideBarVisible" position="right" styleClass="filters-sidebar">
+    <h3>Filter Reviews</h3>
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+            <div class="me-auto">
+                <div class="fw-medium">First Release Aprroval</div>
+                <p-selectButton
+                    class="first-release-approval-filter-button"
+                    [options]="firstReleaseApprovalOptions"
+                    [(ngModel)]="firstReleaseApproval"
+                    (onChange)="updateFirstReleaseApproval($event)"
+                    optionLabel="label" 
+                    optionValue="value"
+                    [style]="{'margin-top':'8px'}" />
+            </div>
+        </li>
+    </ul>
+</p-sidebar>

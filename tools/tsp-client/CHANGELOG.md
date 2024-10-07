@@ -1,5 +1,74 @@
 # Release
 
+## Unreleased - 0.13.1
+
+- Add `@autorest/core` as a dependency, and run the package from its install folder, to guarantee the versions don't change after install.
+
+## 2024-09-10 - 0.13.0
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.0`.
+- Removed the dependency `@autorest/csharp`.
+
+## 2024-08-30 - 0.12.2
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.9.1`.
+
+## 2024-08-16 - 0.12.1
+
+- Added `--mgmt-debug.suppress-list-exception` flag to the ARM metadata generation command.
+- Bumped `@autorest/openapi-to-typespec` version to `0.9.0`.
+- Format updates for additional directories.
+
+## 2024-08-15 - 0.12.0
+
+- Check for error diagnostics during TypeSpec compilation and exit with error if found. (#8815, #8777, #8555)
+
+## 2024-08-13 - 0.11.2
+
+- Fix `--version` flag. (#8814)
+- Added `compare` command to compare a hand-authored Swagger to a TypeSpec-generated Swagger to understand the relevant differences between them.
+- Floating `@azure-tools/typespec-autorest` dependency from `>=0.44.0 <1.0.0`.
+
+## 2024-08-08 - 0.11.1
+
+- Removed `compare` command.
+
+## 2024-08-08 - 0.11.0
+
+- Added `generate-lock-file` command, see [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for more information.
+- Removed the `--generate-lock-file` flag and replaced it with the command above.
+- Migrated tsp-client from `node:util` to `yargs` for commandline infrastructure.
+- Added `compare` command to compare a hand-authored Swagger to a TypeSpec-generated Swagger to understand the relevant differences between them.
+
+## 2024-08-05 - 0.10.0
+
+- Added `sort-swagger` command, see [README](https://github.com/Azure/azure-sdk-tools/blob/main/tools/tsp-client/README.md) for more information.
+- Copy the package.json + package-lock.json directly under TempTypeSpecFiles/. (#8583)
+- Only show compile diagnostics if the `--debug` flag is passed to the command.
+- Increase minimum node version to "^18.19.0 || >=20.6.0", to ensure API import.meta.resolve() is available. (#8765)
+- Increase minimum `@typespec/compiler` version to `0.58.0`. (#8766)
+
+## 2024-07-23 - 0.9.4
+
+- Fixed issue where one additional directory entry is treated as a string instead of an array. (#8551)
+
+## 2024-07-15 - 0.9.3
+
+- Add autorest and plugins as dependencies, and run the packages from their install folders, to guarantee the versions don't change after install.
+
+## 2024-07-04 - 0.9.2
+
+- Revert `exit(1)` on tsp compile diagnostics.
+
+## 2024-07-02 - 0.9.1
+
+- Fix error logging after the `compile()` call and exit if diagnostics are encountered.
+- Use `formatDiagnostic()` from "@typespec/compiler" to report diagnostics after compiling.
+
+## 2024-06-21 - 0.9.0
+
+- Prefer the `service-dir` parameter in the emitter configurations in tspconfig.yaml if specified.
+
 ## 2024-06-07 - 0.8.1
 
 - Normalize and clean up the directory property in tsp-location.yaml.

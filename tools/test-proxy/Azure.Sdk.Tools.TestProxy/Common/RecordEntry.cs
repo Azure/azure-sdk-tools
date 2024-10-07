@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void NormalizeJsonBody(RequestOrResponse requestOrResponse)
         {
-            if (requestOrResponse.TryGetContentType(out string contentType) && contentType.Contains("json"))
+            if (requestOrResponse.TryGetContentType(out string contentType) && contentType.Contains("json") && !ContentTypeUtilities.IsManifestContentType(contentType))
             {
                 try
                 {

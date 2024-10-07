@@ -1,3 +1,3 @@
-module github.com/Azure/azure-sdk-for-go/sdk/test_alias_export
+module github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_alias_export
 
 go 1.18

@@ -18,6 +18,8 @@ import {
 } from '../utils/generateSampleReadmeMd';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile';
 import { getRelativePackagePath } from "../utils/utils";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory } from "../../common/utils";
+import { remove } from 'fs-extra';
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -38,14 +40,19 @@ export async function generateRLCInPipeline(options: {
     let packagePath: string | undefined = undefined;
     let relativePackagePath: string | undefined = undefined;
     if (options.typespecProject) {
+        const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
+        const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
+        await remove(generatedPackageDir);
+
         if (!options.skipGeneration) {
-            logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+            logger.info(`Start to generate rest level client SDK from '${options.typespecProject}'.`);
+            // TODO: remove it, since this function is used in pipeline.
             if(options.sdkGenerationType === "command") {
-                logger.logGreen("Run TypeSpec command directly.");
+                logger.info("Start to run TypeSpec command directly.");
                 const copyPackageJsonName = 'emitter-package.json';
-                logger.logGreen(`copy package.json file if not exist from SDK repo ${copyPackageJsonName}`);
+                logger.info(`Start to copy package.json file if not exist from SDK repo '${copyPackageJsonName}'.`);
                 const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', copyPackageJsonName), path.join(options.swaggerRepo, options.typespecProject, 'package.json'));
-                logger.logGreen(installCommand);
+                logger.info(`Start to run command: '${installCommand}'`);
                 execSync(installCommand, {
                     stdio: 'inherit',
                     cwd: path.join(options.swaggerRepo, options.typespecProject)
@@ -55,29 +62,29 @@ export async function generateRLCInPipeline(options: {
                 if (fs.existsSync(path.join(options.swaggerRepo, options.typespecProject, 'client.tsp'))) {
                     typespecSource = 'client.tsp';
                 }
-                logger.logGreen(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
+                logger.info(`Start to run command: 'npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"'.`);
                 execSync(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`, {
                     stdio: 'inherit',
                     cwd: path.join(options.swaggerRepo, options.typespecProject)
                 });
-                logger.logGreen("End with TypeSpec command.");
+                logger.info("End with TypeSpec command.");
             } else {
-                logger.logGreen("Run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
+                logger.info("Start to generate code by tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
-                const scriptCommand = ['pwsh', './eng/common/scripts/TypeSpec-Project-Process.ps1', tspDefDir,  options.gitCommitId, options.swaggerRepoUrl].join(" ");
-                logger.logGreen(`${scriptCommand}`);
+                const scriptCommand = ['tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', options.swaggerRepo, '--commit', options.gitCommitId].join(" ");
+                logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
-                logger.logGreen("End with ./eng/common/scripts/TypeSpec-Project-Process.ps1 script.");
+                logger.info("Generated code by tsp-client successfully.");
             } 
         }
     } else {
-        logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+        logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
         if (!options.skipGeneration) {
             let autorestConfigFilePath: string | undefined;
             let isMultiClient: boolean = false;
             if (!!options.autorestConfig) {
-                logger.logGreen(`Find autorest configuration in PR comment: ${options.autorestConfig}`);
-                logger.logGreen(`Parsing the autorest configuration in PR comment`);
+                logger.info(`Start to find autorest configuration in PR comment: '${options.autorestConfig}'.`);
+                logger.info(`Start to parse the autorest configuration in PR comment.`);
                 const yamlBlocks: {
                     condition: string;
                     yamlContent: any;
@@ -97,7 +104,8 @@ export async function generateRLCInPipeline(options: {
                         match = regexToExtractAutorestConfig.exec(options.autorestConfig);
                     }
                 } catch (e: any) {
-                    logger.logError(`Encounter error when parsing autorestConfig from PR comment: \nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+                    logger.error(`Failed to parse autorestConfig from PR comment: \nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+                    logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
                     throw e;
                 }
 
@@ -117,7 +125,7 @@ export async function generateRLCInPipeline(options: {
                     autorestConfigFilePath = await generateAutorestConfigurationFileForSingleClientByPrComment(yamlContent, options.swaggerRepo, options.sdkRepo);
                 }
             } else {
-                logger.logGreen(`Don't find autorest configuration in spec PR comment, and trying to find it in sdk repository`);
+                logger.info(`Autorest configuration is not found in spec PR comment, and start to find it in sdk repository.`);
                 const sdkFolderPath = path.join(options.sdkRepo, 'sdk');
                 for (const rp of fs.readdirSync(sdkFolderPath)) {
                     if (!!autorestConfigFilePath) break;
@@ -140,7 +148,7 @@ export async function generateRLCInPipeline(options: {
                                 continue;
                             }
                             if (regexExecResult.length !== 2) {
-                                logger.logError(`Find ${regexExecResult.length} match in ${currentAutorestConfigFilePath}. The autorest configuration file should only contain one require with one readme.md file`);
+                                logger.error(`Found ${regexExecResult.length} matches in '${currentAutorestConfigFilePath}'. The autorest configuration file should only contain one require with one readme.md file`);
                                 continue;
                             }
                             replaceRequireInAutorestConfigurationFile(currentAutorestConfigFilePath, regexExecResult[1], path.join(options.swaggerRepo, options.readmeMd!));
@@ -153,8 +161,8 @@ export async function generateRLCInPipeline(options: {
             }
 
             if (!autorestConfigFilePath) {
-                logger.logWarn(`Don't find autorest configuration in spec PR comment or sdk repository, skip generating codes`);
-                logger.logWarn(`If you ensure there is autorest configuration file in sdk repository, please make sure it contains require keyword and the corresponding readme.md in swagger repository.`);
+                logger.warn(`Don't find autorest configuration in spec PR comment or sdk repository, skip generating codes.`);
+                logger.warn(`If you ensure there is autorest configuration file in sdk repository, please make sure it contains require keyword and the corresponding readme.md in swagger repository.`);
                 return;
             }
 
@@ -172,14 +180,11 @@ export async function generateRLCInPipeline(options: {
                 cmd += ` --multi-client=true`;
             }
 
-            logger.logGreen('Executing command:');
-            logger.logGreen('------------------------------------------------------------');
-            logger.logGreen(cmd);
-            logger.logGreen('------------------------------------------------------------');
+            logger.info(`Start to run command: ${cmd}.`);
             try {
-                execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath)});
+                execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath), timeout: defaultChildProcessTimeout});
             } catch (e: any) {
-                throw new Error(`An error occurred while generating codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+                throw new Error(`Failed to generate codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
             }
         }
     }
@@ -187,10 +192,14 @@ export async function generateRLCInPipeline(options: {
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
 
     try {
+        // TODO: need to refactor
+        // too tricky here, when relativePackagePath === undefined,
+        // the project should be typespec,
+        // and the changedPackageDirectories should be join(service-dir, package-dir)
         if (!packagePath || !relativePackagePath) {
             const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
             if (changedPackageDirectories.size !== 1) {
-                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
+                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories.size}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
             }
             for (const d of changedPackageDirectories) relativePackagePath = d;
             packagePath = path.join(options.sdkRepo, relativePackagePath!);
@@ -202,12 +211,13 @@ export async function generateRLCInPipeline(options: {
 
         const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
         const packageName = packageJson.name;
-        logger.logGreen(`Generate some other files for ${packageName} in ${packagePath}...`);
+        logger.info(`Start to generate some other files for '${packageName}' in '${packagePath}'.`);
         if (!options.skipGeneration) {
             await modifyOrGenerateCiYml(options.sdkRepo, packagePath, packageName, false);
 
             await changeRushJson(options.sdkRepo, packageName, getRelativePackagePath(packagePath), 'client');
 
+            // TODO: remove it for typespec project, since no need now, the test and sample are decouple from build
             // change configuration to skip build test, sample
             changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
         }
@@ -224,15 +234,15 @@ export async function generateRLCInPipeline(options: {
             }
         }
 
-        logger.logGreen(`rush update...`);
-        execSync('rush update', {stdio: 'inherit'});
-        logger.logGreen(`rush build -t ${packageName}: Build generated codes, except test and sample, which may be written manually`);
+        logger.info(`Start to update rush.`);
+        execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+        logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
-        execSync(`rush build -t ${packageName}`, {stdio: 'inherit'});
-        logger.logGreen(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`);
+        execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});
+        logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
-            logger.logGreen(`Generate changelog`);
+            logger.info(`Start to generate changelog.`);
             await generateChangelog(packagePath);
         }
         if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
@@ -244,15 +254,17 @@ export async function generateRLCInPipeline(options: {
             addApiViewInfo(outputPackageInfo, packagePath, relativePackagePath);
         }
     } catch (e: any) {
-        logger.logError('Error:');
         if (options.typespecProject) {
-            logger.logError(`An error occurred while run build for typespec project: "${options.typespecProject}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            logger.error(`Failed to build typespec project: "${options.typespecProject}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}".`);
+            logger.error(`Please check out https://github.com/Azure/autorest.typescript/blob/main/packages/typespec-ts/CONTRIBUTING.md#how-to-debug to troubleshoot the issue.`);
         } else {
-            logger.logError(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+            logger.error(`Failed to build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}".`);
+            logger.error(`Please check out https://github.com/Azure/autorest/blob/main/docs/troubleshooting.md to troubleshoot the issue.`);
         }
         if (outputPackageInfo) {
             outputPackageInfo.result = 'failed';
         }
+        throw e;
     } finally {
         if (options.outputJson && outputPackageInfo) {
             options.outputJson.packages.push(outputPackageInfo);

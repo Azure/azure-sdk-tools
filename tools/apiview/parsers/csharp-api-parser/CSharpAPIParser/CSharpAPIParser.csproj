@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>CSharpAPIParserForAPIView</ToolCommandName>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>CSharpAPIParser</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NuGet.Protocol" Version="6.10.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\dotnet\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.csproj" />
+  </ItemGroup>
+
+</Project>

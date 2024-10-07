@@ -13,62 +13,94 @@ $hasPermissions = $false
 
 # Verify that the user exists and has the correct public
 # organization memberships.
-$response = (gh api "https://api.github.com/users/$UserName/orgs")
-$json = $response | ConvertFrom-Json
+$orgResponse = (gh api "https://api.github.com/users/$UserName/orgs")
+$orgs = $orgResponse | ConvertFrom-Json | Select-Object -Expand login -ErrorAction Ignore
 
-Write-Verbose "Orginizations API Response:"
-Write-Verbose "`t$response"
+# Validate that the user has the required public organization memberships.
+$requiredOrgs = [System.Collections.Generic.HashSet[String]]::new([StringComparer]::InvariantCultureIgnoreCase)
+$requiredOrgs.Add("Microsoft") | Out-Null
+$requiredOrgs.Add("Azure") | Out-Null
 
-# If there were no organizations, the user fails validation.
-if ($json -ne $null) {
+# Capture non-required organizations for verbose output.
+$otherOrgs = $orgs | Where-Object { -not $requiredOrgs.Contains($_) }
 
-    # If the user is not a member of Microsoft or Azure, the user fails validation.
-    $orgs = [System.Collections.Generic.HashSet[String]]::new([StringComparer]::InvariantCultureIgnoreCase)
+Write-Host ""
+Write-Host "Required Orginizations:" -ForegroundColor DarkGray
 
-    foreach ($org in $json) {
-        $orgs.Add("$($org.login)") | Out-Null
-    }
-
-    Write-Verbose ""
-    Write-Verbose "Orginizations:"
-
-    foreach ($org in $orgs) {
-        Write-Verbose "`t$($org)"
-    }
-
-    if ($orgs.Contains("Microsoft") -and $orgs.Contains("Azure")) {
-        $hasOrgs = $true
+foreach ($org in $orgs) {
+    if ($requiredOrgs.Contains($org)) {
+        Write-Host "`t$([char]0x2713) $($org) " -ForegroundColor Green
+        $requiredOrgs.Remove($org) | Out-Null
     }
 }
+
+# Any required organizations left are not present for the user.
+foreach ($org in $requiredOrgs) {
+    Write-Host "`tx $($org)" -ForegroundColor Red
+}
+
+# Write the other public organizations for the user, if
+# verbose output is enabled.
+if ($otherOrgs.Length -gt 0) {
+    Write-Verbose ""
+    Write-Verbose "Other Orginizations:"
+
+    foreach ($org in $otherOrgs) {
+        Write-Verbose "`t$($org) (not required)"
+    }
+}
+
+$hasOrgs = ($requiredOrgs.Count -eq 0)
 
 # Verify that the user exists and has the correct permissions
 # to the repository.  Delegage to the GH CLI here, as this is a
 # priviledged operation that requires an authenticated caller.
-$response = (gh api "https://api.github.com/repos/Azure/azure-sdk-for-net/collaborators/$UserName/permission")
+$permResponse = (gh api "https://api.github.com/repos/Azure/azure-sdk-for-net/collaborators/$UserName/permission")
+$permission = ($permResponse | ConvertFrom-Json).permission
 
-Write-Verbose ""
-Write-Verbose "Permissions API Response:"
-Write-Verbose "`t$response"
-
-$permission = ($response | ConvertFrom-Json).permission
+Write-Host ""
+Write-Host "Required Permissions:" -ForegroundColor DarkGray
 
 if ($permission -eq "admin" -or $permission -eq "write") {
+    Write-Host "`t$([char]0x2713) $($permission) " -ForegroundColor Green
     $hasPermissions = $true
+} else {
+    Write-Host "`tx write" -ForegroundColor Red
 }
+
+# Write the other permissions for the user, if
+# verbose output is enabled.
+Write-Verbose ""
+Write-Verbose "Other Permissions:"
+Write-Verbose "`t$($permission) (not required)"
 
 # Validate the user and write the results.
 $isValid = ($hasOrgs -and $hasPermissions)
 
 Write-Host ""
-Write-Host "Has organization memberships: " -NoNewline
-Write-host $hasOrgs -ForegroundColor "$(if ($hasOrgs) { "Green" } else { "Red" })"
-Write-Host "Has permissions: " -NoNewline
-Write-Host $hasPermissions -ForegroundColor "$(if ($hasPermissions) { "Green" } else { "Red" })"
 Write-Host ""
-Write-Host "Is valid: " -NoNewline
-Write-Host $isValid -ForegroundColor "$(if ($isValid) { "Green" } else { "Red" })"
+Write-Host "Validation result for '$UserName':" -ForegroundColor White
+
+if ($isValid) {
+    Write-Host "`t$([char]0x2713) Valid code owner" -ForegroundColor Green
+} else {
+    Write-Host "`tx Not a valid code owner" -ForegroundColor Red
+}
+
 Write-Host ""
 Write-Host ""
+
+# If verbose output is requested, write the raw API responses.
+Write-Verbose "Organizations API Response:"
+Write-Verbose "`t$orgResponse"
+
+Write-Verbose ""
+Write-Verbose ""
+Write-Verbose "Permissions API Response:"
+Write-Verbose "`t$permResponse"
+
+Write-Verbose ""
+Write-Verbose ""
 
 <#
 .SYNOPSIS

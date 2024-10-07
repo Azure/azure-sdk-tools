@@ -12,6 +12,7 @@ using System.Linq;
 using Xunit;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.Collections.Concurrent;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -34,6 +35,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     public static class TestHelpers
     {
         public static readonly string DisableBranchCleanupEnvVar = "DISABLE_INTEGRATION_BRANCH_CLEANUP";
+
+        public static List<T> ExhaustQueue<T>(ConcurrentQueue<T> queue)
+        {
+            List<T> results = new List<T>();
+
+            while (queue.TryDequeue(out var item))
+            {
+                results.Add(item);
+            }
+
+            return results;
+        }
 
         public static string GetValueFromCertificateFile(string certName)
         {
@@ -148,6 +161,27 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             File.WriteAllText(path, content);
         }
 
+        public static string GetTmpPath(string[] pathsBeyondFolder = null)
+        {
+            var pathSuffix = string.Empty;
+
+            if (pathsBeyondFolder != null && pathsBeyondFolder.Length > 0) {
+                pathSuffix += Path.Combine(pathsBeyondFolder);
+            }
+            else
+            {
+                pathSuffix = Guid.NewGuid().ToString();
+            }
+
+            var tmpPath = Path.Join(Path.GetTempPath(), pathSuffix);
+
+            if (!Directory.Exists(tmpPath)) {
+                Directory.CreateDirectory(tmpPath);
+            }
+
+            return tmpPath;
+        }
+
         /// <summary>
         /// Used to define any set of file constructs we want. This enables us to roll a target environment to point various GitStore functionalities at.
         ///
@@ -169,9 +203,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
             // the guid will be used to create a unique test folder root and, if this is a push test,
             // it'll be used as part of the generated branch name
-            string testGuid = Guid.NewGuid().ToString();
-            // generate a test folder root
-            var tmpPath = Path.Join(Path.GetTempPath(), testGuid);
+            var testGuid = Guid.NewGuid().ToString();
+            var tmpPath = GetTmpPath(new string[] { testGuid });
 
             // Push tests need some special setup for automation
             // 1. The AssetsReproBranch

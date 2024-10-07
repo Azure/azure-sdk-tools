@@ -1,0 +1,18 @@
+:host ::ng-deep {
+    .review-panel{
+        height: calc(100vh - 130px);
+        &.approved {
+            border: solid 1px var(--success-color) !important;
+            box-shadow: var(--box-shadow-success);
+        }
+    }
+
+    .p-splitter-panel-nested {
+        display: block;
+        min-width: 0;
+    }
+
+    .revisions-sidebar, .conversation-sidebar {
+        width: 75dvw;
+    }
+}

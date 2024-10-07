@@ -23,7 +23,7 @@ public class RotateCommand : RotationCommandBase
         bool onlyRotateExpiring = invocationContext.ParseResult.GetValueForOption(this.expiringOption);
         bool whatIf = invocationContext.ParseResult.GetValueForOption(this.whatIfOption);
 
-        var timeProvider = new TimeProvider();
+        var timeProvider = TimeProvider.System;
 
         IEnumerable<RotationPlan> plans = rotationConfiguration.GetAllRotationPlans(logger, timeProvider);
         bool success = true;

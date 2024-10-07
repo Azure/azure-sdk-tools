@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ComponentFactoryResolver, ElementRef, Injector, Renderer2, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ComponentFactoryResolver, ElementRef, Injector, NgZone, Renderer2, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
 import { FileSelectEvent } from 'primeng/fileupload';
@@ -497,7 +497,6 @@ export class SamplesPageComponent {
       this.commentsService.deleteComment(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
         next: () => {
           commentThread!.comments = commentThread!.comments!.filter(x => x.id !== commentUpdates.commentId);
-          console.log(commentThread!.comments);
           if (commentThread!.comments.length === 0) {
             this.removeCommentThread(commentUpdates.title);
           }
@@ -512,12 +511,13 @@ export class SamplesPageComponent {
 
   private removeCommentThread(title: string): void {
     this.el.nativeElement.querySelector(`.user-comment-thread[title="${title}"]`).remove();
-    const targetCommentIcon = this.el.nativeElement.querySelector(`.line-actions[title="${title}"] > .toggle-user-comments-btn`);
-    if (targetCommentIcon) {
-      targetCommentIcon.classList.remove('show');
-      targetCommentIcon.classList.remove('temp-show');
-      targetCommentIcon.classList.add('can-show');
-    }
+    const targetCommentIcon = this.el.nativeElement.querySelectorAll(`.line-actions[title="${title}"] > .toggle-user-comments-btn`);
+    targetCommentIcon.forEach((targetCommentIcon: HTMLElement) => {
+      if (targetCommentIcon.classList.contains('show') && targetCommentIcon.classList.contains('temp-show')) {
+        targetCommentIcon.classList.remove('show', 'temp-show');
+        targetCommentIcon.classList.add('can-show');
+      }
+    });
   }
 
   private insertCommentThread(commentThreadContainer: HTMLElement, target: HTMLElement): void {

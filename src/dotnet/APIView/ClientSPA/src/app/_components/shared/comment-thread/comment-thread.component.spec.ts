@@ -6,6 +6,7 @@ import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
+import { MessageService } from 'primeng/api';
 
 describe('CommentThreadComponent', () => {
   let component: CommentThreadComponent;
@@ -19,6 +20,9 @@ describe('CommentThreadComponent', () => {
         ReviewPageModule,
         SharedAppModule
       ],
+      providers: [
+        MessageService
+      ]
     });
     fixture = TestBed.createComponent(CommentThreadComponent);
     component = fixture.componentInstance;

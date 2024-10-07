@@ -82,7 +82,7 @@ namespace APIViewWeb.LeanControllers
         /// Update usage sample revision
         /// </summary>
         /// <param name="reviewId"></param>
-        /// <param name="sampleRevisionId"></param
+        /// <param name="sampleRevisionId"></param>
         /// <param name="usageSampleAPIParam"></param>
         /// <returns></returns>
         [HttpPatch("{reviewId}/update", Name = "UpdateUsageSample")]

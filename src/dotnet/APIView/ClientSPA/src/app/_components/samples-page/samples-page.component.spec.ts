@@ -17,6 +17,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
 import { PanelModule } from 'primeng/panel';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MessageService } from 'primeng/api';
+import { Dialog, DialogModule } from 'primeng/dialog';
 
 describe('SamplesPageComponent', () => {
   let component: SamplesPageComponent;
@@ -42,7 +44,8 @@ describe('SamplesPageComponent', () => {
         MenuModule,
         MenubarModule,
         ReactiveFormsModule,
-        FormsModule
+        FormsModule,
+        DialogModule
       ],
       providers: [
         {
@@ -53,7 +56,8 @@ describe('SamplesPageComponent', () => {
             },
             queryParams: of(convertToParamMap({ activeSamplesRevisionId: 'test' }))
           },
-        }
+        },
+        MessageService
       ]
     });
     fixture = TestBed.createComponent(SamplesPageComponent);

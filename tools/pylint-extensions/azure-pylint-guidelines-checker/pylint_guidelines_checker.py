@@ -2817,75 +2817,12 @@ class NoImportTypingFromTypeCheck(BaseChecker):
                         )
         except:
             pass
-
-
-class InvalidUseOfOverload(BaseChecker):
-    """Rule to check that use of the @overload decorator matches the async/sync nature of the underlying function"""
-
-    name = "invalid-use-of-overload"
-    priority = -1
-    msgs = {
-        "C4765": (
-            "Do not mix async and synchronous overloads",
-            "invalid-use-of-overload",
-            "Functions and their overloads must be either all async or all synchronous.",
-        ),
-    }
-
-    def visit_classdef(self, node):
-        """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
-
-        # Obtain a list of all functions and function names
-        functions = []
-        try:
-            node.body
-            for item in node.body:
-                if hasattr(item, 'name'):
-                    functions.append(item)
-
-            # Dictionary of lists of all functions by name
-            overloadedfunctions = {}
-            for item in functions:
-                if item.name in overloadedfunctions:
-                    overloadedfunctions[item.name].append(item)
-                else:
-                    overloadedfunctions[item.name] = [item]
-
-
-            # Loop through the overloaded functions and check they are the same type
-            for funct in overloadedfunctions.values():
-                if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
-                    function_is_async = None
-
-                    for item in funct:
-                        if function_is_async is None:
-                            function_is_async = self.is_function_async(item)
-
-                        else:
-                            if function_is_async != self.is_function_async(item):
-                                self.add_message(
-                                    msgid=f"invalid-use-of-overload",
-                                    node=item,
-                                    confidence=None,
-                                )
-        except:
-            pass
-
-
-    def is_function_async(self, node):
-        try:
-            str(node.__class__).index("Async")
-            return True
-        except:
-            if node.returns is None:
-                return False
-            try:
-                if node.returns.value.name == "Awaitable":
-                    return True
-                else:
-                    return False
-            except:
-                return False
+# [Pylint] custom linter check for invalid use of @overload #3229
+# [Pylint] Custom Linter check for Exception Logging #3227
+# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
+# [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+# [Pylint] Investigate pylint rule around missing dependency #3231
 
 
 class DoNotUseLegacyTyping(BaseChecker):
@@ -2918,6 +2855,7 @@ class DoNotImportAsyncio(BaseChecker):
 
     name = "do-not-import-asyncio"
     priority = -1
+    # TODO Find message number
     msgs = {
         "C4763": (
             "Do not import the asyncio package directly in your library",
@@ -2946,83 +2884,12 @@ class DoNotImportAsyncio(BaseChecker):
                 )
 
 
+# [Pylint] custom linter check for invalid use of @overload #3229
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-
-class DoNotHardcodeConnectionVerify(BaseChecker):
-
-    """Rule to check that developers do not hardcode a boolean to connection_verify."""
-
-    name = "do-not-hardcode-connection-verify"
-    priority = -1
-    msgs = {
-        "C4767": (
-            "Do not hardcode a boolean value to connection_verify",
-            "do-not-hardcode-connection-verify",
-            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to be able to set it",
-        ),
-    }
-
-
-    def visit_call(self, node):
-        """Visit function calls to ensure it isn't used as a parameter"""
-        try:
-            for keyword in node.keywords:
-                if keyword.arg == "connection_verify":
-                    if type(keyword.value.value) == bool:
-                        self.add_message(
-                            msgid=f"do-not-hardcode-connection-verify",
-                            node=keyword,
-                            confidence=None,
-                        )
-        except:
-            pass
-
-
-    def visit_assign(self, node):
-        """Visiting variable Assignments"""
-        try: # Picks up self.connection_verify = True
-            if node.targets[0].attrname == "connection_verify":
-                if type(node.value.value) == bool:
-                    self.add_message(
-                        msgid=f"do-not-hardcode-connection-verify",
-                        node=node,
-                        confidence=None,
-                    )
-        except:
-            try: # connection_verify = True
-                if node.targets[0].name == "connection_verify":
-                    if type(node.value.value) == bool:
-                        self.add_message(
-                            msgid=f"do-not-hardcode-connection-verify",
-                            node=node,
-                            confidence=None,
-                        )
-            except:
-                pass
-
-
-    def visit_annassign(self, node):
-        """Visiting variable annotated assignments"""
-        try: # self.connection_verify: bool = True
-            if node.target.attrname == "connection_verify":
-                if type(node.value.value) == bool:
-                    self.add_message(
-                        msgid=f"do-not-hardcode-connection-verify",
-                        node=node,
-                        confidence=None,
-                    )
-        except:  # Picks up connection_verify: bool = True
-            try:
-                if node.target.name == "connection_verify":
-                    if type(node.value.value) == bool:
-                        self.add_message(
-                            msgid=f"do-not-hardcode-connection-verify",
-                            node=node,
-                            confidence=None,
-                        )
-            except:
-                pass
+# [Pylint] Add a check for connection_verify hardcoded settings #35355
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+# [Pylint] Investigate pylint rule around missing dependency #3231
 
 
 # if a linter is registered in this function then it will be checked with pylint
@@ -3058,12 +2925,15 @@ def register(linter):
     linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
-    linter.register_checker(InvalidUseOfOverload(linter))
     linter.register_checker(DoNotUseLegacyTyping(linter))
     linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
+
+    # [Pylint] custom linter check for invalid use of @overload #3229
     # [Pylint] Custom Linter check for Exception Logging #3227
     # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-    linter.register_checker(DoNotHardcodeConnectionVerify(linter))
+    # [Pylint] Add a check for connection_verify hardcoded settings #35355
+    # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+    # [Pylint] Investigate pylint rule around missing dependency #3231
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

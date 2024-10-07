@@ -103,24 +103,51 @@ function buildSubpathExports(reviewLines: ReviewLine[], meta: Metadata, apiModel
   for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
       const subpath = getSubPathName(entryPoint);
+      const subpathLineContent = ` subpath "${subpath}" export `;
+      reviewLines.push({
+        Tokens: [
+          buildToken({
+            Kind: TokenKind.Comment,
+            Value: "   " + "/".repeat(30 * 2 + subpathLineContent.length),
+          }),
+        ],
+      });
       const exportLine: ReviewLine = {
         LineId: `Subpath-export-${subpath}`,
         Tokens: [
           buildToken({
             Kind: TokenKind.Comment,
-            Value: "/".repeat(40),
+            Value: "   " + "/".repeat(2),
+          }),
+          buildToken({
+            Kind: TokenKind.Comment,
+            Value: " ".repeat(27),
           }),
           buildToken({
             Kind: TokenKind.StringLiteral,
-            Value: ` subpath "${subpath}" export `,
+            Value: subpathLineContent,
             NavigationDisplayName: `subpath "${subpath}" export`,
           }),
           buildToken({
             Kind: TokenKind.Comment,
-            Value: "\\".repeat(40),
+            Value: " ".repeat(29),
+          }),
+          buildToken({
+            Kind: TokenKind.Comment,
+            Value: "/".repeat(2),
           }),
         ],
-        Children: [emptyLine()],
+        Children: [
+          {
+            Tokens: [
+              buildToken({
+                Kind: TokenKind.Comment,
+                Value: "/".repeat(30 * 2 + subpathLineContent.length),
+              }),
+            ],
+          },
+          emptyLine(),
+        ],
       };
 
       // put top level functions to top

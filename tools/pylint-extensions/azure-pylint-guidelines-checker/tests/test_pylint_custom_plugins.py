@@ -12,6 +12,7 @@ import os
 from azure.core import PipelineClient
 from azure.core.configuration import Configuration
 import pylint_guidelines_checker as checker
+from pylint.testutils import MessageTest
 
 TEST_FOLDER = os.path.abspath(os.path.join(__file__, ".."))
 
@@ -3370,6 +3371,7 @@ class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(importfrom_node)
 
 
+
 class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed legacy typing practices"""
 
@@ -3597,8 +3599,184 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_try(try_node)
 
+
+
+class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed legacy typing practices"""
+
+    CHECKER_CLASS = checker.DoNotUseLegacyTyping
+
+    def test_disallowed_typing(self):
+        """Check that illegal method typing comments raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # type: (str) -> str
+                pass
+            """
+        )
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-legacy-typing",
+                line=2,
+                node=fdef,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=12,
+            )
+        ):
+            self.checker.visit_functiondef(fdef)
+
+    def test_allowed_typing(self):
+        """Check that allowed method typing comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x: str) -> str: #@
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+    def test_arbitrary_comments(self):
+        """Check that arbitrary comments don't raise warnings"""
+        fdef = astroid.extract_node(
+            """
+            def function(x): #@
+                # This is a comment
+                pass
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(fdef)
+
+
+class TestImportTypeChecker(pylint.testutils.CheckerTestCase):
+    CHECKER_CLASS = checker.ImportTypeChecker
+
+    def test_finds_duplicate_imports(self):
+        """Test that the checker correctly finds duplicate imports of the same type within the same file."""
+        node = astroid.parse("""
+            from module_a import MyClass
+            from module_a import MyClass
+        """)
+        with self.assertAddsMessages(
+                MessageTest(
+                    msg_id='duplicate-import-type',
+                    line=3,
+                    node=node.body[1],  # Points to the second 'from ... import' statement
+                    args=('MyClass', 'module_a'),
+                    col_offset=0,
+                    end_line=3,
+                    end_col_offset=28
+                )
+        ):
+            self.walk(node)
+
+    def test_no_duplicates(self):
+        """Test that the checker does not raise errors when there are no duplicate imports."""
+        node = astroid.parse("""
+            from module_a import MyClass
+            from module_b import AnotherClass
+        """)
+        with self.assertNoMessages():
+            self.walk(node)
+
+    def test_ignore_imports_in_if_statement(self):
+        """Test that the checker does not raise errors for duplicate imports inside an if statement."""
+        node = astroid.parse("""
+            if sys.version_info >= (3, 8):
+                from module_a import MyClass
+            else:
+                from module_b import MyClass
+        """)
+        with self.assertNoMessages():
+            self.walk(node)
+
+    def test_ignore_imports_in_try_except(self):
+        """Test that the checker does not raise errors for duplicate imports inside a try/except block."""
+        node = astroid.parse("""
+            try:
+                from module_a import MyClass
+            except ImportError:
+                from module_b import MyClass
+        """)
+        with self.assertNoMessages():
+            self.walk(node)
+
+    def test_no_error_for_different_namespaces(self):
+        """Test that the checker does not raise errors for the same client name in different namespaces."""
+        node = astroid.parse("""
+            from azure.eventgrid import EventGridClient
+            from azure.eventgrid.aio import EventGridClient
+        """)
+        with self.assertNoMessages():
+            self.walk(node)
+
+    def test_no_error_for_completely_different_namespaces(self):
+        """Test that the checker does not raise errors when importing the same client from completely different namespaces."""
+        node = astroid.parse("""
+            from azure.storage.blob import BlobServiceClient
+            from azure.storage.blob.aio import BlobServiceClient
+            from azure.identity import DefaultAzureCredential
+            from azure.identity.aio import DefaultAzureCredential
+        """)
+        with self.assertNoMessages():
+            self.walk(node)
+
+    def test_error_for_duplicate_imports_in_same_namespace(self):
+        """Test that the checker correctly finds duplicate imports of the same type from the same namespace."""
+        node = astroid.parse("""
+            from azure.storage.blob import BlobServiceClient
+            from azure.storage.blob import BlobServiceClient
+        """)
+        with self.assertAddsMessages(
+                MessageTest(
+                    msg_id='duplicate-import-type',
+                    line=3,
+                    node=node.body[1],  # Points to the second 'from ... import' statement
+                    args=('BlobServiceClient', 'azure.storage.blob'),
+                    col_offset=0,
+                    end_line=3,
+                    end_col_offset=48
+                )
+        ):
+            self.walk(node)
+
+    def test_no_error_for_generic_namespaces(self):
+        """Test that the checker does not raise errors for the same type in different generic namespaces."""
+        node = astroid.parse("""
+            from some.generic.namespace import SomeClass
+            from some.generic.namespace.aio import SomeClass
+            from another.namespace import AnotherClass
+            from another.namespace.aio import AnotherClass
+        """)
+        with self.assertNoMessages():
+            self.walk(node)
+
+    def test_error_for_duplicate_imports_in_generic_namespace(self):
+        """Test that the checker correctly finds duplicate imports of the same type from the same generic namespace."""
+        node = astroid.parse("""
+            from some.generic.namespace import SomeClass
+            from some.generic.namespace import SomeClass
+        """)
+        with self.assertAddsMessages(
+                MessageTest(
+                    msg_id='duplicate-import-type',
+                    line=3,
+                    node=node.body[1],  # Points to the second 'from ... import' statement
+                    args=('SomeClass', 'some.generic.namespace'),
+                    col_offset=0,
+                    end_line=3,
+                    end_col_offset=44
+                )
+        ):
+            self.walk(node)
+
 # [Pylint] custom linter check for invalid use of @overload #3229
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
 # [Pylint] Investigate pylint rule around missing dependency #3231
+

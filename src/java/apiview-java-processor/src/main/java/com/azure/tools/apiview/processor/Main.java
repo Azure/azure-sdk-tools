@@ -4,6 +4,7 @@ import com.azure.json.JsonProviders;
 import com.azure.json.JsonReader;
 import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.analysers.KotlinASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -13,6 +14,8 @@ import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -166,7 +169,7 @@ public class Main {
         apiListing.setReviewName(reviewName);
         apiListing.setPackageName(packageName);
         apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
-        apiListing.setLanguage("Java");
+
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
         if(groupId.contains("spring")) {
@@ -178,26 +181,58 @@ public class Main {
         }
         System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
-        // Read all files within the jar file so that we can create a list of files to analyse
-        final List<Path> allFiles = new ArrayList<>();
-        try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
-            tryParseApiViewProperties(fs, apiListing, artifactId);
+        String unzippedTemp = "temp/" + inputFile.getName();
+        deleteDirectory(new File(unzippedTemp));
 
-            fs.getRootDirectories().forEach(root -> {
-                try (Stream<Path> paths = Files.walk(root)) {
-                    paths.forEach(allFiles::add);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
-            });
-
-            // Do the analysis while the filesystem is still represented in memory
-            final Analyser analyser = new JavaASTAnalyser(apiListing);
-            analyser.analyse(allFiles);
-        } catch (Exception e) {
-            e.printStackTrace();
+        try (ZipFile zipFile = new ZipFile(inputFile)) {
+            zipFile.extractAll(unzippedTemp);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+        File unzippedFile = new File(unzippedTemp);
+
+        if (KotlinASTAnalyser.hasPublicApiInKotlin(unzippedFile.getAbsolutePath())) {
+            apiListing.setLanguage("Kotlin");
+            final KotlinASTAnalyser kotlinAnalyser = new KotlinASTAnalyser(apiListing);
+            kotlinAnalyser.analyse(unzippedFile.getAbsolutePath());
+        }
+        else {
+            apiListing.setLanguage("Java");
+            final Analyser analyser = new JavaASTAnalyser(apiListing);
+
+            // Read all files within the jar file so that we can create a list of files to analyse
+            final List<Path> allFiles = new ArrayList<>();
+            try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
+                tryParseApiViewProperties(fs, apiListing, artifactId);
+                fs.getRootDirectories().forEach(root -> {
+                    try (Stream<Path> paths = Files.walk(root)) {
+                        paths.forEach(allFiles::add);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        System.exit(-1);
+                    }
+                });
+
+                // Do the analysis while the filesystem is still represented in memory
+                analyser.analyse(allFiles);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        deleteDirectory(unzippedFile);
+    }
+
+    private static void deleteDirectory(File file){
+        if (file == null) {
+            return;
+        }
+
+        if (file.isDirectory()) {
+            for (File f : file.listFiles()) {
+                deleteDirectory(f);
+            }
+        }
+        file.delete();
     }
 
     /**

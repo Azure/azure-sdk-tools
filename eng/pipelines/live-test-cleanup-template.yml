@@ -46,6 +46,19 @@ steps:
             $(SubscriptionConfiguration)
           '@ | ConvertFrom-Json -AsHashtable
 
+          $context = Get-AzContext
+          $subscriptionConfiguration["Environment"] = $context.Environment.Name
+          $subscriptionConfiguration["SubscriptionId"] = $context.Subscription.Id
+          $subscriptionConfiguration["TenantId"] = $context.Subscription.TenantId
+          $subscriptionConfiguration["TestApplicationId"] = $context.Account.Id
+          $subscriptionConfiguration["ProvisionerApplicationId"] = $context.Account.Id
+
+          $principal = Get-AzADServicePrincipal -ApplicationId $context.Account.Id
+          $subscriptionConfiguration["TestApplicationOid"] = $principal.Id
+          $subscriptionConfiguration["ProvisionerApplicationOid"] = $principal.Id
+
+          Write-Host ($subscriptionConfiguration | ConvertTo-Json)
+
           ./eng/scripts/live-test-resource-cleanup.ps1 `
             -OpensourceApiApplicationToken $(opensource-api-token) `
             -GithubAliasCachePath ${{ parameters.GithubAliasCachePath }} `

@@ -130,6 +130,13 @@ docstring_type_with_quotes = """
 :rtype: list[`str`]
 """
 
+docstring_with_complex_argtype_ivar = """
+:param dict[str, str] or None name: Dummy name param
+:keyword str or None name2: Dummy name param
+:ivar dict[str, str] or None name: Value type
+:ivar str name2: Value type
+"""
+
 class TestDocstringParser:
 
     def _test_variable_type(self, docstring, expected):
@@ -217,3 +224,10 @@ class TestDocstringParser:
         assert parser.default_for("value") == "cat"
         assert parser.default_for("another") == "dog"
         assert parser.default_for("some_class") == ":py:class:`apistubgen.test.models.FakeObject`"
+
+    def test_docstring_complex_argtype_ivar(self):
+        parser = DocstringParser(docstring_with_complex_argtype_ivar)
+        assert parser.type_for("name", keyword="param") == "dict[str, str] or None"
+        assert parser.type_for("name2", keyword="keyword") == "union[str, None]"
+        assert parser.type_for("name", keyword="ivar") == "union[dict[str, str], None]"
+        assert parser.type_for("name2", keyword="ivar") == "str"

@@ -268,7 +268,9 @@ class ClassNode(NodeEntityBase):
         docstring = getattr(self.obj, "__doc__")
         if docstring:
             docstring_parser = DocstringParser(docstring)
+            print(docstring_parser.ivars.items())
             for key, var in docstring_parser.ivars.items():
+                print(key, var)
                 ivar_node = VariableNode(
                     namespace=self.namespace,
                     parent_node=self,
@@ -277,6 +279,7 @@ class ClassNode(NodeEntityBase):
                     value=None,
                     is_ivar=True
                 )
+                print(ivar_node)
                 self.child_nodes.append(ivar_node)
 
     def _sort_elements(self):
@@ -341,6 +344,7 @@ class ClassNode(NodeEntityBase):
         # Generate token for child nodes
         if self.child_nodes:
             self._generate_child_tokens(apiview)
+        print(apiview.metadata_map)
 
 
     def _generate_child_tokens(self, apiview):

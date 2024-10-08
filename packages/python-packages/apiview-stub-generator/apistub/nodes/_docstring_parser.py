@@ -200,7 +200,6 @@ class DocstringParser:
         return arg.argtype if arg else arg
 
     def default_for(self, name):
-        print('in default for')
         arg = (
             self.ivars.get(name, None) or
             self.pos_args.get(name, None) or
@@ -209,7 +208,6 @@ class DocstringParser:
         if not arg:
             return None
         argtype = arg.argtype or self.type_for(name)
-        print(f'argtype: {argtype}')
         if not argtype:
             return arg.default
         try:

@@ -8,8 +8,7 @@ parameters:
     type: string
   - name: SubscriptionConfigurations
     type: object
-    default:
-      - $(sub-config-azure-cloud-test-resources)
+    default: []
   - name: SubscriptionConfigurationFilePaths
     type: object
     default: []
@@ -65,6 +64,7 @@ steps:
             @subscriptionConfiguration `
             -Verbose `
             ${{ parameters.AdditionalParameters }} `
+            -UseExistingAzContext `
             -WhatIf:$${{ parameters.DryRun }}
 
       displayName: ${{ parameters.DisplayName }}

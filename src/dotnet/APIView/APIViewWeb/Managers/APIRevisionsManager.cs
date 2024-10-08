@@ -990,7 +990,9 @@ namespace APIViewWeb.Managers
         private async Task<APIRevisionListItemModel> UpgradeAPIRevisionIfRequired(APIRevisionListItemModel revisionModel)
         {
             if (revisionModel == null)
+            {
                 return revisionModel;
+            }
             var codeFileDetails = revisionModel.Files[0];
             var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
             if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))

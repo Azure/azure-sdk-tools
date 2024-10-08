@@ -64,7 +64,11 @@ namespace APIViewWeb.Managers
         public async Task<SamplesRevisionModel> GetLatestSampleRevisionsAsync(string reviewId)
         {
             var samplesRevisions = await _samplesRevisionsRepository.GetSamplesRevisionsAsync(reviewId);
-            return samplesRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
+            if (samplesRevisions != null && samplesRevisions.Any())
+            {
+                return samplesRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
+            }
+            return default(SamplesRevisionModel);
         }
 
         public async Task<string> GetSamplesRevisionContentAsync(string fileId)
@@ -116,13 +120,16 @@ namespace APIViewWeb.Managers
         public async Task UpdateSamplesRevisionAsync(ClaimsPrincipal user, string reviewId, string sampleRevisionId, string newContent = null, string newTitle = null)
         {
             var samplesRevision = await _samplesRevisionsRepository.GetSamplesRevisionAsync(reviewId, sampleRevisionId);
-            await AssertUsageSampleOwnerAsync(user, samplesRevision);
-            
-            samplesRevision.Title = newTitle;
-            var originalStream = new MemoryStream(Encoding.UTF8.GetBytes(newContent));
+            if (samplesRevision != null)
+            {
+                await AssertUsageSampleOwnerAsync(user, samplesRevision);
 
-            await _samplesRevisionsRepository.UpsertSamplesRevisionAsync(samplesRevision);
-            await _sampleFilesRepository.UploadUsageSampleAsync(samplesRevision.OriginalFileId, originalStream);
+                samplesRevision.Title = newTitle;
+                var originalStream = new MemoryStream(Encoding.UTF8.GetBytes(newContent));
+
+                await _sampleFilesRepository.UploadUsageSampleAsync(samplesRevision.OriginalFileId, originalStream);
+                await _samplesRevisionsRepository.UpsertSamplesRevisionAsync(samplesRevision);
+            }
         }
 
         public async Task UpdateSamplesRevisionTitle(string reviewId, string sampleId, string newTitle)

@@ -34,8 +34,8 @@
                                 <span *ngIf="activeSamplesRevision" class="small text-muted">
                                     Created By: <a href="{{webAppUrl}}Assemblies/Profile/{{activeSamplesRevision.createdBy}}">{{activeSamplesRevision.createdBy}}</a>
                                 </span>
-                                <button *ngIf="samplesContent" class="btn btn-outline-secondary" (click)="showEditSamplesPanel()" type="button">Edit</button>
-                                <button *ngIf="samplesContent" class="btn btn-outline-danger" (click)="showSamplesDeleteModal = true" type="button">Delete</button>
+                                <button *ngIf="samplesContent && activeSamplesRevision?.createdBy === userProfile?.userName" class="btn btn-outline-secondary" (click)="showEditSamplesPanel()" type="button">Edit</button>
+                                <button *ngIf="samplesContent && activeSamplesRevision?.createdBy === userProfile?.userName" class="btn btn-outline-danger" (click)="showSamplesDeleteModal = true" type="button">Delete</button>
                                 <button class="btn btn-primary" (click)="showAddSamplesPanel()" type="button">Add Sample</button>
                             </div>
                         </li>

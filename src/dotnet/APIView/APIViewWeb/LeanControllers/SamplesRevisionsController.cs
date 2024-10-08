@@ -6,9 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using APIViewWeb.Managers;
 using APIViewWeb.Extensions;
-using APIViewWeb.Managers.Interfaces;
-using System;
-using System.Security.Claims;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -35,7 +32,14 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<SamplesRevisionModel>> GetLatestSampleRevisionAsync(string reviewId)
         {
             var result = await _samplesRevisionsManager.GetLatestSampleRevisionsAsync(reviewId: reviewId);
-            return new LeanJsonResult(result, StatusCodes.Status200OK);
+            if (result != null)
+            {
+                return new LeanJsonResult(result, StatusCodes.Status200OK);
+            }
+            else
+            {
+                return new LeanJsonResult("No SamplesRevision found", StatusCodes.Status404NotFound);
+            }
         }
 
 
@@ -67,7 +71,8 @@ namespace APIViewWeb.LeanControllers
             {
                 var samplesRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, usageSampleAPIParam.Content, usageSampleAPIParam.Title);
                 return new LeanJsonResult(samplesRevision, StatusCodes.Status200OK);
-            } else if (usageSampleAPIParam.File != null)
+            } 
+            else if (usageSampleAPIParam.File != null)
             {
                 var samplesRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, usageSampleAPIParam.File.OpenReadStream(), usageSampleAPIParam.Title, usageSampleAPIParam.File.FileName);
                 return new LeanJsonResult(samplesRevision, StatusCodes.Status200OK);
@@ -88,7 +93,7 @@ namespace APIViewWeb.LeanControllers
         [HttpPatch("{reviewId}/update", Name = "UpdateUsageSample")]
         public async Task UpdateUsageSampleAsync(string reviewId, string sampleRevisionId, [FromForm] UsageSampleAPIParam usageSampleAPIParam)
         {
-            await _samplesRevisionsManager.UpdateSamplesRevisionAsync(User, reviewId, sampleRevisionId, usageSampleAPIParam.Content, usageSampleAPIParam.Title);;
+            await _samplesRevisionsManager.UpdateSamplesRevisionAsync(User, reviewId, sampleRevisionId, usageSampleAPIParam.Content, usageSampleAPIParam.Title);
         }
 
         /// <summary>
@@ -110,16 +115,12 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<string>> GetSamplesContentAsync(string reviewId, [FromQuery] string activeSamplesRevisionId)
         {
             var activeSamplesRevision = await _samplesRevisionsManager.GetSamplesRevisionAsync(reviewId, activeSamplesRevisionId);
-
             if (activeSamplesRevision != null)
             {
-
                 string samplesContent = await _samplesRevisionsManager.GetSamplesRevisionContentAsync(activeSamplesRevision.OriginalFileId);
-
                 return new LeanJsonResult(samplesContent, StatusCodes.Status200OK);
             }
-
-            return new LeanJsonResult("Invalid SamplesRevision", StatusCodes.Status500InternalServerError);
+            return new LeanJsonResult("SamplesRevision NotFound", StatusCodes.Status404NotFound);
         }
     }
 }

@@ -468,7 +468,7 @@ function DeleteAndPurgeGroups([array]$toDelete) {
 function Login() {
   if ($UseExistingAzContext -and (Get-AzContext)) {
     Write-Verbose "Using existing account"
-  } else if ($PSCmdlet.ParameterSetName -eq "Provisioner" -and $ProvisionerApplicationSecret) {
+  } elseif ($PSCmdlet.ParameterSetName -eq "Provisioner" -and $ProvisionerApplicationSecret) {
     Write-Verbose "Logging in with provisioner"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)

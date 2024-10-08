@@ -164,7 +164,7 @@ export function splitAndBuild(
         if (!isTypeMember(currentTypeid)) {
           reviewToken.NavigateToId = currentTypeid;
           reviewToken.NavigationDisplayName = token.value;
-          reviewToken.Kind = TokenKind.MemberName;
+          reviewToken.Kind = TokenKind.TypeName;
         }
       } else if (token.type === "StringLiteral") {
         reviewToken = buildToken({

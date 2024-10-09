@@ -92,6 +92,23 @@ function getSubPathName(entryPoint: ApiEntryPoint): string {
 }
 
 /**
+ * Customizes Array.sort() for {@link ApiItem}s in members.
+ * @param a -
+ * @param b -
+ * @returns -1, 0, or 1
+ */
+function compareApiItem(a: ApiItem, b: ApiItem): number {
+  // List functions first
+  if (a.kind == b.kind || (a.kind !== ApiItemKind.Function && b.kind !== ApiItemKind.Function)) {
+    return a.displayName.localeCompare(b.displayName);
+  } else if (a.kind === ApiItemKind.Function) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
+
+/**
  * Builds review for all the entrypoints.  Each entrypoint represents a subpath export.
  * The regular output api.json file from api-extractor currently only contains one single entrypoint.
  * The dev-tool in azure-sdk-for-js repository augments the api to have multiple entrypoints,
@@ -115,7 +132,7 @@ function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
         Children: [],
       };
 
-      for (const member of entryPoint.members) {
+      for (const member of entryPoint.members.map((i) => i).sort(compareApiItem)) {
         const canonicalRef = member.canonicalReference.toString();
         const containingExport = exported.get(canonicalRef) ?? new Set<string>();
         if (!containingExport.has(subpath)) {

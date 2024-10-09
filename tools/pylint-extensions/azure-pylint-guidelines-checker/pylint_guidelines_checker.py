@@ -2920,8 +2920,7 @@ class DoNotLogExceptions(BaseChecker):
                             if i+1 < len(expression1):
                                 # TODO: Investigate whether there are any other cases we don't want to raise a Pylint
                                 #  error
-                                # Prevent .__name__ raising error
-                                if "." and "name" not in expression1[i+1]:
+                                if ".__name__" not in expression1[i+1]:
                                     self.add_message(
                                         msgid=f"do-not-log-exceptions",
                                         node=j,

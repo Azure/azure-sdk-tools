@@ -100,7 +100,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
+                var reqEntryPreSanitize = requestEntry.ToString();
                 sanitizer.Sanitize(requestEntry);
+                var reqEntryPostSanitize = requestEntry.ToString();
+                var result = StringComparer.OrdinalIgnoreCase.Compare(reqEntryPreSanitize, reqEntryPostSanitize);
+                DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} start ######################");
+                DebugLogger.LogInformation($"before: {reqEntryPreSanitize}");
+                DebugLogger.LogInformation($" after: {reqEntryPostSanitize}");
+                DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} end ######################");
+                if (result != 0)
+                {
+                    DebugLogger.LogInformation($"Sanitizer {sanitizer.GetType().Name} modified request entry {reqEntryPreSanitize} to {reqEntryPostSanitize}");
+                }
             }
 
             // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
@@ -145,7 +156,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             try
             {
+                var entryPreSanitize = this.Entries;
                 sanitizer.Sanitize(this);
+                var entryPostSanitize = this.Entries.ToString();
+                var result = StringComparer.OrdinalIgnoreCase.Compare(entryPreSanitize, entryPostSanitize);
+                if (result != 0)
+                {
+                    DebugLogger.LogInformation($"Sanitizer {sanitizer.GetType().Name} modified request entry {entryPreSanitize} to {entryPostSanitize}");
+                }
+                //DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} start ######################");
+                //DebugLogger.LogInformation($"before: {entryPreSanitize}");
+                //DebugLogger.LogInformation($" after: {entryPostSanitize}");
+                //DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} end ######################");
             }
             finally
             {
@@ -167,7 +189,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 foreach (var sanitizer in sanitizers)
                 {
+                    var entryPreSanitize = this.Entries.ToString();
                     sanitizer.Sanitize(this);
+                    var entryPostSanitize = this.Entries.ToString();
+                    var result = StringComparer.OrdinalIgnoreCase.Compare(entryPreSanitize, entryPostSanitize);
+                    if (result != 0)
+                    {
+                        DebugLogger.LogInformation($"Sanitizer {sanitizer.GetType().Name} modified request entry {entryPreSanitize} to {entryPostSanitize}");
+                    }
+                    //DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} start ######################");
+                    //DebugLogger.LogInformation($"before: {entryPreSanitize}");
+                    //DebugLogger.LogInformation($" after: {entryPostSanitize}");
+                    //DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} end ######################");
                 }
             }
             finally

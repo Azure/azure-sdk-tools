@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -316,5 +317,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return TryGetContentType(requestHeaders, out string contentType) &&
                    ContentTypeUtilities.TryGetTextEncoding(contentType, out encoding);
         }
+
+        public override string ToString()
+        {
+            return $"Name: {Name}, Age: {Age}";
+        }
+
     }
 }

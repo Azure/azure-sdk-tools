@@ -93,8 +93,8 @@ function getSubPathName(entryPoint: ApiEntryPoint): string {
 
 /**
  * Customizes Array.sort() for {@link ApiItem}s in members.
- * @param a -
- * @param b -
+ * @param a - first item
+ * @param b - second item
  * @returns -1, 0, or 1
  */
 function compareApiItem(a: ApiItem, b: ApiItem): number {

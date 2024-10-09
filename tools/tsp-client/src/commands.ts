@@ -27,8 +27,8 @@ export async function initCommand(argv: any) {
   let outputDir = argv["output-dir"];
   let tspConfig = argv["tsp-config"];
   const skipSyncAndGenerate = argv["skip-sync-and-generate"];
-  const commit = argv["commit"];
-  const repo = argv["repo"];
+  const commit = argv["commit"] ?? "<replace with your value>";
+  const repo = argv["repo"] ?? "<replace with your value>";
 
   const repoRoot = await getRepoRoot(outputDir);
 
@@ -40,16 +40,16 @@ export async function initCommand(argv: any) {
   }
 
   let isUrl = true;
-  if (await doesFileExist(tspConfig)) {
+  if (argv["local-spec-repo"]) {
+    const localSpecRepo = argv["local-spec-repo"];
+    if (!(await doesFileExist(localSpecRepo))) {
+      throw new Error(`Local spec repo not found: ${localSpecRepo}`);
+    }
+    isUrl = false;
+    tspConfig = localSpecRepo;
+  } else if (await doesFileExist(tspConfig)) {
     isUrl = false;
   }
-  if (!isUrl) {
-    if (!commit || !repo) {
-      Logger.error("--commit and --repo are required when --tsp-config is a local directory");
-      process.exit(1);
-    }
-  }
-
   if (isUrl) {
     // URL scenario
     const resolvedConfigUrl = resolveTspConfigUrl(tspConfig);

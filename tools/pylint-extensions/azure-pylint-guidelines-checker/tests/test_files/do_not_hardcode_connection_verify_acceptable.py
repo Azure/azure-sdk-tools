@@ -45,3 +45,8 @@ class AnnotatedSelfAssignment:
         self.connection_verify: bool = None
 
 
+class FunctionPositionalArgumentsErrors:
+    def create(connection_verify, x, y):
+        pass
+
+    client = create(None, 0, False)

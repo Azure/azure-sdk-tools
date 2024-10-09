@@ -3649,12 +3649,13 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
         nodes = node.body
         InstanceVariableError = nodes[0].body[0].body[0]
         VariableError = nodes[1].body[0]
-        FunctionArgumentsErrors = nodes[2].body[1].value
-        FunctionArgumentsInstanceErrors = nodes[3].body[0].body[0].value
+        FunctionKeywordArguments = nodes[2].body[1].value
+        FunctionArgumentsInstance = nodes[3].body[0].body[0].value
         ReturnErrorFunctionArgument = nodes[4].body[1].body[0].value
         ReturnErrorDict = nodes[5].body[0].body[0].value
         AnnotatedAssignment = nodes[6].body[0]
         AnnotatedSelfAssignment = nodes[7].body[0].body[0]
+        FunctionPositionalArguments = nodes[8].body[1].value
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
@@ -3676,7 +3677,7 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="do-not-hardcode-connection-verify",
                 line=15,
-                node=FunctionArgumentsErrors.keywords[0],
+                node=FunctionKeywordArguments.keywords[0],
                 col_offset=20,
                 end_line=15,
                 end_col_offset=43,
@@ -3684,7 +3685,7 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="do-not-hardcode-connection-verify",
                 line=20,
-                node=FunctionArgumentsInstanceErrors.keywords[0],
+                node=FunctionArgumentsInstance.keywords[0],
                 col_offset=52,
                 end_line=20,
                 end_col_offset=75,
@@ -3721,17 +3722,27 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
                 end_line=45,
                 end_col_offset=43,
             ),
+
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=52,
+                node=FunctionPositionalArguments.args[0],
+                col_offset=20,
+                end_line=52,
+                end_col_offset=24,
+            ),
         ):
 
 
             self.checker.visit_assign(InstanceVariableError)
             self.checker.visit_assign(VariableError)
-            self.checker.visit_call(FunctionArgumentsErrors)
-            self.checker.visit_call(FunctionArgumentsInstanceErrors)
+            self.checker.visit_call(FunctionKeywordArguments)
+            self.checker.visit_call(FunctionArgumentsInstance)
             self.checker.visit_call(ReturnErrorFunctionArgument)
             self.checker.visit_call(ReturnErrorDict)
             self.checker.visit_annassign(AnnotatedAssignment)
             self.checker.visit_annassign(AnnotatedSelfAssignment)
+            self.checker.visit_call(FunctionPositionalArguments)
 
 
     def test_pass_connection_verify(self):
@@ -3745,14 +3756,27 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
         file.close()
 
         nodes = node.body
+        InstanceVariableError = nodes[0].body[0].body[0]
         VariableError = nodes[1].body[0]
-        FunctionArgumentsErrors = nodes[2].body[1].value
+        FunctionKeywordArguments = nodes[2].body[1].value
+        FunctionArgumentsInstance = nodes[3].body[0].body[0].value
+        ReturnErrorFunctionArgument = nodes[4].body[1].body[0].value
+        ReturnErrorDict = nodes[5].body[0].body[0].value
         AnnotatedAssignment = nodes[6].body[0]
+        AnnotatedSelfAssignment = nodes[7].body[0].body[0]
+        FunctionPositionalArguments = nodes[8].body[1].value
+
 
         with self.assertNoMessages():
-            self.checker.visit_assign(FunctionArgumentsErrors)
-            self.checker.visit_call(AnnotatedAssignment)
-            self.checker.visit_annassign(VariableError)
+            self.checker.visit_assign(InstanceVariableError)
+            self.checker.visit_assign(VariableError)
+            self.checker.visit_call(FunctionKeywordArguments)
+            self.checker.visit_call(FunctionArgumentsInstance)
+            self.checker.visit_call(ReturnErrorFunctionArgument)
+            self.checker.visit_call(ReturnErrorDict)
+            self.checker.visit_annassign(AnnotatedAssignment)
+            self.checker.visit_annassign(AnnotatedSelfAssignment)
+            self.checker.visit_call(FunctionPositionalArguments)
 
 
 # [Pylint] Investigate pylint rule around missing dependency #3231

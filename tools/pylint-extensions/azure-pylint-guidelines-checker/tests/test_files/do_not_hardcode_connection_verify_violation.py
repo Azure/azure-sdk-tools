@@ -8,11 +8,11 @@ class VariableError:
     connection_verify = True
 
 
-class FunctionArgumentsErrors:
-    def create(connection_verify):
+class FunctionKeywordArgumentsErrors:
+    def create(x, connection_verify):
         pass
 
-    client = create(connection_verify=False)
+    client = create(connection_verify=False, x=0)
 
 
 class FunctionArgumentsInstanceErrors:
@@ -43,3 +43,10 @@ class AnnotatedAssignment:
 class AnnotatedSelfAssignment:
     def __init__(self):
         self.connection_verify: bool = True
+
+
+class FunctionPositionalArgumentsErrors:
+    def create(connection_verify, x, y):
+        pass
+
+    client = create(True, 0, False)

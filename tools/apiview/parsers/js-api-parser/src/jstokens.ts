@@ -209,6 +209,7 @@ export function splitAndBuildMultipleLine(
   currentTypeid: string,
   currentTypeName: string,
   memberKind: string,
+  isHidden?: boolean,
 ) {
   let firstLine: boolean = true;
   const code = excerptTokens.map((e) => e.text).join("");
@@ -233,6 +234,7 @@ export function splitAndBuildMultipleLine(
     } else {
       const childLine: ReviewLine = {
         Tokens: reviewTokens,
+        IsHidden: isHidden,
       };
       line.Children.push(childLine);
     }

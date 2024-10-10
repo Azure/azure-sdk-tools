@@ -4,11 +4,11 @@ from typing import Awaitable, overload, Union
 
 class testingOverload:
     @overload
-    def double(a: str)  -> Awaitable[int]:
+    async def double(a: str)  -> Awaitable[int]:
         ...
 
     @overload
-    def double(a: int) -> Awaitable[int]:
+    async def double(a: int) -> Awaitable[int]:
         ...
 
     async def double(a: Union[str, int]) -> int:

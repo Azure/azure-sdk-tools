@@ -4,7 +4,7 @@ from typing import Awaitable, overload, Union
 
 class testingOverload:
     @overload
-    def double(a: str)  -> Awaitable[int]:
+    def double(a: str):
         ...
 
     @overload
@@ -18,7 +18,7 @@ class testingOverload:
 
 
     @overload
-    def doubleAgain(a: str):
+    async def doubleAgain(a: str):
         ...
 
     @overload

@@ -2885,39 +2885,36 @@ class InvalidUseOfOverload(BaseChecker):
 
         # Obtain a list of all functions and function names
         functions = []
-        try:
-            node.body
-            for item in node.body:
-                if hasattr(item, 'name'):
-                    functions.append(item)
+        node.body
+        for item in node.body:
+            if hasattr(item, 'name'):
+                functions.append(item)
 
-            # Dictionary of lists of all functions by name
-            overloadedfunctions = {}
-            for item in functions:
-                if item.name in overloadedfunctions:
-                    overloadedfunctions[item.name].append(item)
-                else:
-                    overloadedfunctions[item.name] = [item]
+        # Dictionary of lists of all functions by name
+        overloadedfunctions = {}
+        for item in functions:
+            if item.name in overloadedfunctions:
+                overloadedfunctions[item.name].append(item)
+            else:
+                overloadedfunctions[item.name] = [item]
 
 
-            # Loop through the overloaded functions and check they are the same type
-            for funct in overloadedfunctions.values():
-                if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
-                    function_is_async = None
+        # Loop through the overloaded functions and check they are the same type
+        for funct in overloadedfunctions.values():
+            if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
+                function_is_async = None
 
-                    for item in funct:
-                        if function_is_async is None:
-                            function_is_async = self.is_function_async(item)
+                for item in funct:
+                    if function_is_async is None:
+                        function_is_async = self.is_function_async(item)
 
-                        else:
-                            if function_is_async != self.is_function_async(item):
-                                self.add_message(
-                                    msgid=f"invalid-use-of-overload",
-                                    node=item,
-                                    confidence=None,
-                                )
-        except:
-            pass
+                    else:
+                        if function_is_async != self.is_function_async(item):
+                            self.add_message(
+                                msgid=f"invalid-use-of-overload",
+                                node=item,
+                                confidence=None,
+                            )
 
 
     def is_function_async(self, node):
@@ -2925,15 +2922,7 @@ class InvalidUseOfOverload(BaseChecker):
             str(node.__class__).index("Async")
             return True
         except:
-            if node.returns is None:
-                return False
-            try:
-                if node.returns.value.name == "Awaitable":
-                    return True
-                else:
-                    return False
-            except:
-                return False
+            return False
 
 # [Pylint] Custom Linter check for Exception Logging #3227
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228

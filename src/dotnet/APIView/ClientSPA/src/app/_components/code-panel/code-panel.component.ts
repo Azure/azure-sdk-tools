@@ -4,7 +4,8 @@ import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CodeLineRowNavigationDirection, isDiffRow, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, isDiffRow } from 'src/app/_helpers/common-helpers';
+import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
@@ -95,7 +96,7 @@ export class CodePanelComponent implements OnChanges{
       this.toggleNodeDocumentation(target);
     }
 
-    if (target.classList.contains('toggle-user-comments-btn')) {
+    if (target.classList.contains('toggle-user-comments-btn') && !target.classList.contains('hide')) {
       this.toggleNodeComments(target);
     }
   }

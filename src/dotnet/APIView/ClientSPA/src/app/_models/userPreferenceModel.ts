@@ -3,6 +3,7 @@ export class UserPreferenceModel {
     language : string []
     theme : string
     hideReviewPageOptions : boolean
+    hideSamplesPageOptions : boolean
     hideLineNumbers : boolean
     hideLeftNavigation: boolean
     showHiddenApis: boolean
@@ -18,6 +19,7 @@ export class UserPreferenceModel {
         this.language = []
         this.theme = '';
         this.hideReviewPageOptions  = false;
+        this.hideSamplesPageOptions  = false;
         this.hideLineNumbers = false;
         this.hideLeftNavigation = false;
         this.showHiddenApis = false

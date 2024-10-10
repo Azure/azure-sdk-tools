@@ -1,18 +1,18 @@
 import 'reflect-metadata';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ApiRevisionOptionsComponent } from './api-revision-options.component';
+import { RevisionOptionsComponent } from './revision-options.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 
 describe('ApiRevisionOptionsComponent', () => {
-  let component: ApiRevisionOptionsComponent;
-  let fixture: ComponentFixture<ApiRevisionOptionsComponent>;
+  let component: RevisionOptionsComponent;
+  let fixture: ComponentFixture<RevisionOptionsComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ApiRevisionOptionsComponent],
+      declarations: [RevisionOptionsComponent],
       imports: [
         SharedAppModule,
         ReviewPageModule
@@ -29,7 +29,7 @@ describe('ApiRevisionOptionsComponent', () => {
         }
       ]
     });
-    fixture = TestBed.createComponent(ApiRevisionOptionsComponent);
+    fixture = TestBed.createComponent(RevisionOptionsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

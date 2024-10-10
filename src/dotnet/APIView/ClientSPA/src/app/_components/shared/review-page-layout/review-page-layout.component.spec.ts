@@ -9,6 +9,8 @@ import { MenuModule } from 'primeng/menu';
 import { FooterComponent } from '../footer/footer.component';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ReviewNavComponent } from '../../review-nav/review-nav.component';
 
 describe('ReviewPageLayoutComponent', () => {
   let component: ReviewPageLayoutComponent;
@@ -29,6 +31,17 @@ describe('ReviewPageLayoutComponent', () => {
         MenubarModule,
         MenuModule
       ],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({ reviewId: 'test' }),
+              queryParamMap: convertToParamMap({ activeApiRevisionId: 'test' })
+            }
+          }
+        }
+      ]
     });
     fixture = TestBed.createComponent(ReviewPageLayoutComponent);
     component = fixture.componentInstance;

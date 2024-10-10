@@ -17,7 +17,7 @@ export class CommentItemModel {
     isResolved: boolean = false;
     upvotes: string[] = [];
     taggedUsers: Set<string> = new Set<string>();
-    commentType: CommentType = CommentType.APIRevision;
+    commentType: CommentType | null = null;
     resolutionLocked: boolean = false;
     createdBy: string = '';
     createdOn: string = '';

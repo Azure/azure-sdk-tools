@@ -1,4 +1,6 @@
-<p-editor [(ngModel)]="content" [style]="{ height: '75px'}" >
+<p-editor [(ngModel)]="content"
+    (onTextChange)="onTextChange($event)"
+    [style]="{ height: '75px'}" >
     <ng-template pTemplate="header">
         <span class="ql-formats">
             <select class="ql-header" aria-label="Heading">

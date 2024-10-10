@@ -4,10 +4,12 @@
             <img src="{{assetsPath}}/images/{{ review?.language! | languageNames }}-original.svg" width="25" height="25">
             <span class="fw-semibold ms-2 me-3">{{ review?.packageName}}</span>
             <i class="fas fa-check-circle text-success me-3" *ngIf="review?.isApproved"></i>
-            <app-api-revision-options *ngIf="apiRevisions && apiRevisions.length > 0" [apiRevisions]="apiRevisions" 
+            <app-revision-options *ngIf="(apiRevisions && apiRevisions.length > 0) || (samplesRevisions && samplesRevisions.length > 0)" [apiRevisions]="apiRevisions" 
                 [activeApiRevisionId]="activeApiRevisionId" 
-                [diffApiRevisionId]="diffApiRevisionId">
-            </app-api-revision-options>
+                [diffApiRevisionId]="diffApiRevisionId"
+                [samplesRevisions]="samplesRevisions"
+                [activeSamplesRevisionId]="activeSamplesRevisionId">
+            </app-revision-options>
         </ng-template>
         <ng-template *ngIf="showPageoptionsButton" pTemplate="end">
             <input type="checkbox" (change)="onRightPanelCheckChange($event)" [(ngModel)]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off">

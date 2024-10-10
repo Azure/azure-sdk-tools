@@ -100,6 +100,12 @@ p-contextmenusub {
     padding: 1rem;
 }
 
+.p-dialog .p-dialog-footer {
+    border-top: 1px solid var(--border-color);
+    background: var(--base-bg-color);
+    color: var(--base-text-color);
+}
+
 .p-sidebar {
     background: var(--base-fg-color);
     color: var(--base-text-color);
@@ -293,6 +299,7 @@ p-contextmenusub {
     a {
         padding: 0.35rem 1rem;
         text-decoration: none;
+        color: var(--link-color);
     }
 }
 
@@ -675,6 +682,38 @@ p-contextmenusub {
     }
 }
 
+.p-tabview .p-tabview-nav {
+    border: 1px solid var(--border-color);
+    border-width: 0 0 1px 0;
+}
+
+.p-tabview .p-tabview-panels {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+    background: var(--base-fg-color);
+    border-color: var(--border-color);
+    color: var(--primary-color);
+}
+
+.p-tabview .p-tabview-nav li:not(.p-highlight):not(.p-disabled):hover .p-tabview-nav-link {
+    background: var(--base-fg-color);
+    border-color: var(--border-color);
+    color: var(--base-text-color);
+}
+
+.p-tabview .p-tabview-nav li .p-tabview-nav-link {
+    border-width: 1px;
+    border-color: var(--border-color);
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+pre code.hljs {
+    border-radius: 5px;
+}
 
 p-inputswitch .p-hidden-accessible {
     position: static !important;

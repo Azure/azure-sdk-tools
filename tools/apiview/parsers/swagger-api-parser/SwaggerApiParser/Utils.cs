@@ -273,7 +273,27 @@ namespace SwaggerApiParser
                     }
                     else 
                     {
-                        Definition def = (Definition)schema;
+                        Definition def = new Definition();
+                        if (schema is Definition)
+                        {
+                            def = (Definition)schema;
+                        }
+                        else
+                        {
+                            // Copy over properties to definition
+                            foreach (PropertyInfo property in schema.GetType().GetProperties())
+                            {
+                                var value = property.GetValue(schema);
+                                if (value != null)
+                                {
+                                    PropertyInfo targetProperty = def.GetType().GetProperty(property.Name);
+                                    if (targetProperty != null && targetProperty.CanWrite)
+                                    {
+                                        targetProperty.SetValue(def, value);
+                                    }
+                                }
+                            }
+                        }
                         if (definitions[schemaKey].IsRefObject())
                         {
                             definitions[schemaKey] = def;

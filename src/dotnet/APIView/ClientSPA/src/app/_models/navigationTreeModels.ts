@@ -9,4 +9,5 @@ export class NavigationTreeNode {
   data: NavigationTreeNodeData = new NavigationTreeNodeData();
   expanded: boolean = false;
   children: NavigationTreeNode[] = [];
+  visible: boolean = true;
 }

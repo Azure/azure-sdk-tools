@@ -186,6 +186,9 @@ namespace ApiView
             List<ReviewToken> currentLineTokens = new List<ReviewToken>();
             foreach(var oldToken in Tokens)
             {
+                //Don't include documentation in converted code file due to incorrect documentation formatting used in previous model.
+                if (isDocumentation && oldToken.Kind != CodeFileTokenKind.DocumentRangeEnd)
+                    continue;
                 ReviewToken token = null;
                 switch(oldToken.Kind)
                 {
@@ -268,6 +271,13 @@ namespace ApiView
                         {
                             parent.Children.Add(reviewLine);
                             reviewLine.parentLine = parent;
+                        }
+
+                        //Handle specific cases for C++ line with 'public:' and '{' to mark related line
+                        if ((currentLineTokens.Count == 1 && currentLineTokens.First().Value == "{") ||
+                            (currentLineTokens.Count == 2 && currentLineTokens.Any(t => t.Kind == TokenKind.Keyword && t.Value == "public")))
+                        {
+                            reviewLine.RelatedToLine = previousLine?.LineId;
                         }
 
                         if (currentLineTokens.Count == 0)

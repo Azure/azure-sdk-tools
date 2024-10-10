@@ -6,7 +6,7 @@ import { AzureCoreTestLibrary } from "@azure-tools/typespec-azure-core/testing";
 import { ApiViewTestLibrary } from "../src/testing/index.js";
 import "@azure-tools/typespec-apiview";
 import { ApiViewEmitterOptions } from "../src/lib.js";
-import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
+import { CodeFile, TokenKind } from "../src/apiview.js";
 import { Diagnostic, resolvePath } from "@typespec/compiler";
 import { strictEqual } from "assert";
 
@@ -46,7 +46,7 @@ export async function diagnosticsFor(code: string, options: ApiViewEmitterOption
   return diagnostics;
 }
 
-export async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<ApiViewDocument> {
+export async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<CodeFile> {
   const runner = await createApiViewTestRunner({withVersioning: true});
   const outPath = resolvePath("/apiview.json");
   await runner.compile(code, {
@@ -56,15 +56,15 @@ export async function apiViewFor(code: string, options: ApiViewEmitterOptions): 
   });
 
   const jsonText = runner.fs.get(outPath)!;
-  const apiview = JSON.parse(jsonText) as ApiViewDocument;
+  const apiview = JSON.parse(jsonText) as CodeFile;
   return apiview;
 }
 
-export function apiViewText(apiview: ApiViewDocument): string[] {
+export function apiViewText(apiview: CodeFile): string[] {
   const vals = new Array<string>;
   for (const token of apiview.Tokens) {
     switch (token.Kind) {
-      case ApiViewTokenKind.Newline:
+      case TokenKind.Newline:
         vals.push("\n");
         break;
       default:

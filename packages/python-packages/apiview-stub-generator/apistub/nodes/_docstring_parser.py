@@ -127,7 +127,8 @@ class DocstringParser:
             # keyword aguments.
             arg.default = "..."
             if arg.argtype and not arg.argtype.startswith("Optional["):
-                arg.argtype = f"Optional[{arg.argtype}]"
+                strip_none = arg.argtype.replace(" or None", "").replace("None or ", "")
+                arg.argtype = f"Optional[{strip_none}]"
             self.kwargs[arg.argname] = arg
         else:
             logging.error(f"Unexpected keyword: {keyword}")

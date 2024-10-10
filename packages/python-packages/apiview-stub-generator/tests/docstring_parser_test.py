@@ -228,6 +228,7 @@ class TestDocstringParser:
     def test_docstring_complex_argtype_ivar(self):
         parser = DocstringParser(docstring_with_complex_argtype_ivar)
         assert parser.type_for("name", keyword="param") == "dict[str, str] or None"
-        assert parser.type_for("name2", keyword="keyword") == "union[str, None]"
-        assert parser.type_for("name", keyword="ivar") == "union[dict[str, str], None]"
+        # docstring parser wraps kwargs in Optional by default, so None should be stripped
+        assert parser.type_for("name2", keyword="keyword") == "Optional[str]"
+        assert parser.type_for("name", keyword="ivar") == "dict[str, str] or None"
         assert parser.type_for("name2", keyword="ivar") == "str"

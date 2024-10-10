@@ -49,8 +49,7 @@ import {
 } from "@typespec/compiler";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
-import { CodeDiagnostic, CodeDiagnosticLevel, CodeFile, ReviewLine, ReviewTokenOptions, TokenKind } from "./schemas.js";
-import { NavigationItem } from "./navigation.js";
+import { CodeDiagnostic, CodeDiagnosticLevel, CodeFile, NavigationItem, ReviewLine, ReviewTokenOptions, TokenKind } from "./schemas.js";
 
 export class ApiView {
   name: string;
@@ -1019,22 +1018,23 @@ export class ApiView {
     for (const directive of directives ?? []) {
       this.tokenize(directive);
     }
-    if (!inline && decorators?.length && directives === undefined) {
-      while (this.currentLine.Tokens.length) {
-        const item = this.currentLine.pop()!;
-        if (item.Kind === TokenKind.LineIdMarker && item.LineId === "GLOBAL") {
-          this.currentLine.Tokens.push(item);
-          this.blankLines(2);
-          break;
-        } else if ([TokenKind.Punctuation, TokenKind.TypeName].includes(item.Kind)) {
-          this.currentLine.Tokens.push(item);
-          // for now, render with no newlines, per stewardship board request
-          const lineCount = ["{", "("].includes(item.Value!) ? 0 : 0;
-          this.blankLines(lineCount);
-          break;
-        }
-      }
-    }
+    // FIXME: Re-implement, as needed
+    // if (!inline && decorators?.length && directives === undefined) {
+    //   while (this.reviewLines.length) {
+    //     const item = this.reviewLines.pop()!;
+    //     if (item.LineId === "GLOBAL") {
+    //       this.reviewLines.push(item);
+    //       this.blankLines(2);
+    //       break;
+    //     } else if ([TokenKind.Punctuation, TokenKind.TypeName].includes(item.Kind)) {
+    //       this.currentLine.Tokens.push(item);
+    //       // for now, render with no newlines, per stewardship board request
+    //       const lineCount = ["{", "("].includes(item.Value!) ? 0 : 0;
+    //       this.blankLines(lineCount);
+    //       break;
+    //     }
+    //   }
+    // }
     // render each decorator
     for (const node of decorators || []) {
       this.namespaceStack.push(generateId(node)!);

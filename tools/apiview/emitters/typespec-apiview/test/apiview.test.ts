@@ -1,10 +1,10 @@
 import assert, { fail } from "assert";
-import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
+import { CodeFile, TokenKind } from "../src/apiview.js";
 import { apiViewFor, apiViewText, compare } from "./test-host.js";
 
 describe("apiview: tests", () => {
   /** Validates that there are no repeat defintion IDs and that each line has only one definition ID. */
-  function validateDefinitionIds(apiview: ApiViewDocument) {
+  function validateDefinitionIds(apiview: CodeFile) {
     const definitionIds = new Set<string>();
     const defIdsPerLine = new Array<Array<string>>();
     let index = 0;
@@ -21,7 +21,7 @@ describe("apiview: tests", () => {
       if (token.DefinitionId !== undefined) {
         defIdsPerLine[index].push(token.DefinitionId);
       }
-      if (token.Kind === ApiViewTokenKind.Newline) {
+      if (token.Kind === TokenKind.Newline) {
         index++;
         defIdsPerLine[index] = new Array<string>();
       }

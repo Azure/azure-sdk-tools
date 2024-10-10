@@ -6,9 +6,9 @@ import { AzureCoreTestLibrary } from "@azure-tools/typespec-azure-core/testing";
 import { ApiViewTestLibrary } from "../src/testing/index.js";
 import "@azure-tools/typespec-apiview";
 import { ApiViewEmitterOptions } from "../src/lib.js";
-import { CodeFile, TokenKind } from "../src/apiview.js";
 import { Diagnostic, resolvePath } from "@typespec/compiler";
 import { strictEqual } from "assert";
+import { CodeFile } from "../src/schemas.js";
 
 export async function createApiViewTestHost() {
   return createTestHost({
@@ -62,17 +62,13 @@ export async function apiViewFor(code: string, options: ApiViewEmitterOptions): 
 
 export function apiViewText(apiview: CodeFile): string[] {
   const vals = new Array<string>;
-  for (const token of apiview.Tokens) {
-    switch (token.Kind) {
-      case TokenKind.Newline:
-        vals.push("\n");
-        break;
-      default:
-        if (token.Value !== undefined) {
-          vals.push(token.Value);
-        }
-        break;
+  for (const line of apiview.ReviewLines) {
+    for (const token of line.Tokens) {
+      if (token.Value !== undefined) {
+        vals.push(token.Value);
+      }
     }
+    vals.push("\n");  
   }
   return vals.join("").split("\n");
 }

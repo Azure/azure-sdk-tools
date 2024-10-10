@@ -1,35 +1,19 @@
 import assert, { fail } from "assert";
-import { CodeFile, TokenKind } from "../src/apiview.js";
 import { apiViewFor, apiViewText, compare } from "./test-host.js";
+import { CodeFile } from "../src/schemas.js";
 
 describe("apiview: tests", () => {
-  /** Validates that there are no repeat defintion IDs and that each line has only one definition ID. */
-  function validateDefinitionIds(apiview: CodeFile) {
+  /** Validates that there are no repeat defintion IDs. */
+  function validateLineIds(apiview: CodeFile) {
     const definitionIds = new Set<string>();
-    const defIdsPerLine = new Array<Array<string>>();
-    let index = 0;
-    defIdsPerLine[index] = new Array<string>();
-    for (const token of apiview.Tokens) {
+    for (const line of apiview.ReviewLines) {
       // ensure that there are no repeated definition IDs.
-      if (token.DefinitionId !== undefined) {
-        if (definitionIds.has(token.DefinitionId)) {
-          fail(`Duplicate defintion ID ${token.DefinitionId}.`);
+      if (line.LineId !== undefined) {
+        if (definitionIds.has(line.LineId)) {
+          fail(`Duplicate defintion ID ${line.LineId}.`);
         }
-        definitionIds.add(token.DefinitionId);
+        definitionIds.add(line.LineId);
       }
-      // Collect the definition IDs that exist on each line
-      if (token.DefinitionId !== undefined) {
-        defIdsPerLine[index].push(token.DefinitionId);
-      }
-      if (token.Kind === TokenKind.Newline) {
-        index++;
-        defIdsPerLine[index] = new Array<string>();
-      }
-    }
-    // ensure that each line has either 0 or 1 definition ID.
-    for (let x = 0; x < defIdsPerLine.length; x++) {
-      const row = defIdsPerLine[x];
-      assert(row.length === 0 || row.length === 1, `Too many definition IDs (${row.length}) on line ${x}`);
     }
   }
 
@@ -86,7 +70,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("templated", async () => {
@@ -163,7 +147,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("with default values", async () => {
@@ -190,7 +174,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -211,7 +195,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("new scalar type", async () => {
@@ -230,7 +214,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("templated", async () => {
@@ -251,7 +235,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -280,7 +264,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("templated alias", async () => {
@@ -307,7 +291,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -336,7 +320,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -361,7 +345,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("string-backed values", async () => {
@@ -384,7 +368,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("int-backed values", async () => {
@@ -407,7 +391,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("spread labels", async () => {
@@ -433,7 +417,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -487,7 +471,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("unnamed union", async () => {
@@ -535,7 +519,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -635,7 +619,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("templated with empty models", async () => {
@@ -675,7 +659,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("with anonymous models", async () => {
@@ -708,7 +692,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -748,7 +732,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -779,7 +763,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("short strings", async () => {
@@ -800,7 +784,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -847,7 +831,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -876,7 +860,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("suppression on namespace", async () => {
@@ -908,7 +892,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
 
     it("suppression on operation", async () => {
@@ -929,7 +913,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);
       compare(expect, lines, 10);
-      validateDefinitionIds(apiview);
+      validateLineIds(apiview);
     });
   });
 
@@ -954,7 +938,7 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateDefinitionIds(apiview);    
+      validateLineIds(apiview);    
     });
   });
 });

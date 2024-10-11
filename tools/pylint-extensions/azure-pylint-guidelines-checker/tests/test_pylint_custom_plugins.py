@@ -12,6 +12,7 @@ import os
 from azure.core import PipelineClient
 from azure.core.configuration import Configuration
 import pylint_guidelines_checker as checker
+from pylint.testutils import MessageTest
 
 TEST_FOLDER = os.path.abspath(os.path.join(__file__, ".."))
 
@@ -302,202 +303,131 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
+def _load_file(filename):
+    file_path = os.path.join(TEST_FOLDER, "test_files", filename)
+    with open(file_path, "r") as file:
+        contents = file.read().split("\n\n\n") # Split by triple newline (2 blank lines)
+    return [astroid.extract_node(content) for content in contents]
+
+
 class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientHasApprovedMethodNamePrefix
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_has_approved_method_name_prefix.py")
-        )
-        node = astroid.parse(file.read())
-        file.close()
-        return node
+        trees = _load_file("client_has_approved_method_name_prefix.py")
+        return {tree[0].name:tree for tree in trees}
 
-    def test_ignores_constructor(self, setup):
-        class_node = setup.body[1]
+    @pytest.fixture(scope="class")
+    def modules(self):
+        mods = {
+            "public":astroid.nodes.Module(name="azure.service.subservice.operations"),
+            "private":astroid.nodes.Module(name="azure.mgmt._generated.operations"),
+        }
+        return mods
+
+    def test_ignores_constructor(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("ConstrClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_private_method(self, setup):
-        class_node = setup.body[2]
+    def test_ignores_private_method(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("PrivClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_if_exists_suffix(self, setup):
-        class_node = setup.body[3]
+    def test_ignores_if_exists_suffix(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("ExistsClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_from_prefix(self, setup):
-        class_node = setup.body[4]
+    def test_ignores_approved_prefix_names(self, setup, modules):
+        mod = modules["public"]
+        cls, *funcs = setup.get("ApprovedClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            for func in funcs:
+                self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_approved_prefix_names(self, setup):
-        class_node = setup.body[5]
+    def test_ignores_non_client_with_unapproved_prefix_names(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("SomethingElse")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_non_client_with_unapproved_prefix_names(self, setup):
-        class_node = setup.body[6]
+    def test_ignores_nested_function_with_unapproved_prefix_names(self, setup, modules):
+        mod = modules["public"]
+        cls, func, nested = setup.get("NestedClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.visit_functiondef(nested)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_nested_function_with_unapproved_prefix_names(self, setup):
-        class_node = setup.body[7]
+    def test_finds_unapproved_prefix_names(self, setup, modules):
+        mod = modules["public"]
+        cls, *funcs = setup.get("UnapprovedClient")
+        msgs = [
+            pylint.testutils.MessageTest(
+                msg_id="unapproved-client-method-name-prefix",
+                line=func.position.lineno,
+                node=func,
+                col_offset=func.position.col_offset,
+                end_line=func.position.end_lineno,
+                end_col_offset=func.position.end_col_offset,
+            ) for func in funcs
+        ]
+        with self.assertAddsMessages(*msgs):
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            for func in funcs:
+                self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
+
+    def test_ignores_property(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("PropClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_finds_unapproved_prefix_names(self, setup):
-        class_node = setup.body[8]
-        func_node_a = setup.body[8].body[0]
-        func_node_b = setup.body[8].body[1]
-        func_node_c = setup.body[8].body[2]
-        func_node_d = setup.body[8].body[3]
-        func_node_e = setup.body[8].body[4]
-        func_node_f = setup.body[8].body[5]
-        func_node_g = setup.body[8].body[6]
-        func_node_h = setup.body[8].body[7]
-        func_node_i = setup.body[8].body[8]
-        func_node_j = setup.body[8].body[9]
-        func_node_k = setup.body[8].body[10]
-        func_node_l = setup.body[8].body[11]
-        func_node_m = setup.body[8].body[12]
-        func_node_n = setup.body[8].body[13]
-        func_node_o = setup.body[8].body[14]
-        func_node_p = setup.body[8].body[15]
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=83,
-                node=func_node_a,
-                col_offset=4,
-                end_line=83,
-                end_col_offset=27,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=86,
-                node=func_node_b,
-                col_offset=4,
-                end_line=86,
-                end_col_offset=22,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=89,
-                node=func_node_c,
-                col_offset=4,
-                end_line=89,
-                end_col_offset=18,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=92,
-                node=func_node_d,
-                col_offset=4,
-                end_line=92,
-                end_col_offset=20,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=95,
-                node=func_node_e,
-                col_offset=4,
-                end_line=95,
-                end_col_offset=17,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=98,
-                node=func_node_f,
-                col_offset=4,
-                end_line=98,
-                end_col_offset=29,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=101,
-                node=func_node_g,
-                col_offset=4,
-                end_line=101,
-                end_col_offset=18,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=104,
-                node=func_node_h,
-                col_offset=4,
-                end_line=104,
-                end_col_offset=19,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=107,
-                node=func_node_i,
-                col_offset=4,
-                end_line=107,
-                end_col_offset=21,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=110,
-                node=func_node_j,
-                col_offset=4,
-                end_line=110,
-                end_col_offset=18,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=113,
-                node=func_node_k,
-                col_offset=4,
-                end_line=113,
-                end_col_offset=21,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=116,
-                node=func_node_l,
-                col_offset=4,
-                end_line=116,
-                end_col_offset=22,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=119,
-                node=func_node_m,
-                col_offset=4,
-                end_line=119,
-                end_col_offset=21,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=122,
-                node=func_node_n,
-                col_offset=4,
-                end_line=122,
-                end_col_offset=18,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=125,
-                node=func_node_o,
-                col_offset=4,
-                end_line=125,
-                end_col_offset=21,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=128,
-                node=func_node_p,
-                col_offset=4,
-                end_line=128,
-                end_col_offset=21,
-            ),
-        ):
-            self.checker.visit_classdef(class_node)
+    def test_ignores_private_client(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("_PrivateClient") 
+        with self.assertNoMessages():
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
+
+    def test_ignores_private_module(self, setup, modules):
+        mod = modules["private"]
+        cls, func = setup.get("PrivateModuleClient")
+        with self.assertNoMessages():
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_design.html#service-operations"
@@ -2065,7 +1995,10 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
         module_node.body = [package_name]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="package-name-incorrect", line=0, node=module_node, col_offset=0,
+                msg_id="package-name-incorrect",
+                line=0,
+                node=module_node,
+                col_offset=0,
             )
         ):
             self.checker.visit_module(module_node)
@@ -2107,7 +2040,10 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         module_node.body = [client_node]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-suffix-needed", line=0, node=module_node, col_offset=0,
+                msg_id="client-suffix-needed",
+                line=0,
+                node=module_node,
+                col_offset=0,
             )
         ):
             self.checker.visit_module(module_node)
@@ -2994,7 +2930,6 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
 
 
 class TestDocstringParameters(pylint.testutils.CheckerTestCase):
-
     """Test that we are checking the docstring is correct"""
 
     CHECKER_CLASS = checker.CheckDocstringParameters
@@ -3597,6 +3532,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_try(try_node)
 
+
 # [Pylint] custom linter check for invalid use of @overload #3229
 
 
@@ -3926,5 +3862,6 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
 
 
 
-
+# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
 # [Pylint] Investigate pylint rule around missing dependency #3231
+

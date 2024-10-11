@@ -153,12 +153,14 @@ namespace APIViewWeb.Managers
             {
                 throw new UnauthorizedAccessException();
             }
-            return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            var revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            return await UpgradeAPIRevisionIfRequired(revisionModel);
         }
 
         public async Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId)
         {
-            return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            var revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            return await UpgradeAPIRevisionIfRequired(revisionModel);
         }
 
         /// <summary>
@@ -984,6 +986,21 @@ namespace APIViewWeb.Managers
                 }
             }
             return result;
+        }
+        private async Task<APIRevisionListItemModel> UpgradeAPIRevisionIfRequired(APIRevisionListItemModel revisionModel)
+        {
+            if (revisionModel == null)
+            {
+                return revisionModel;
+            }
+            var codeFileDetails = revisionModel.Files[0];
+            var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
+            if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
+            {
+                await UpdateAPIRevisionAsync(revisionModel, languageService, false);
+                revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
+            }
+            return revisionModel;
         }
     }
 }

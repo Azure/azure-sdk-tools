@@ -49,20 +49,21 @@ import {
 } from "@typespec/compiler";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
-import { CodeDiagnostic, CodeDiagnosticLevel, CodeFile, NavigationItem, ReviewLine, ReviewTokenOptions, TokenKind } from "./schemas.js";
+import { CodeDiagnostic, CodeDiagnosticLevel, CodeFile, NavigationItem, ReviewLine, ReviewToken, ReviewTokenOptions, TokenKind } from "./schemas.js";
+import { reviewLineText } from "./util.js";
 
 export class ApiView {
   name: string;
   packageName: string;
   crossLanguagePackageId: string | undefined;
   currentLine: ReviewLine;
+  parentStack: ReviewLine[];
+  currentParent: ReviewLine | undefined;
   reviewLines: ReviewLine[] = [];
   navigationItems: NavigationItem[] = [];
   diagnostics: CodeDiagnostic[] = [];
   packageVersion: string;
 
-  indentString: string = "";
-  indentSize: number = 2;
   namespaceStack = new NamespaceStack();
   typeDeclarations = new Set<string>();
   includeGlobalNamespace: boolean;
@@ -79,206 +80,13 @@ export class ApiView {
       Tokens: [],
       Children: [],
     }
+    this.parentStack = []
+    this.currentParent = undefined;
     this.emitHeader();
   }
 
-  token(kind: TokenKind, value: string, options?: ReviewTokenOptions) {
-    this.currentLine.Tokens.push({
-      Kind: kind,
-      Value: value,
-      ...options
-    });
-  }
-
-  indent() {
-    // TODO: Maybe this all can be deleted.
-    // this.trim();
-    // this.indentString = WHITESPACE.repeat(this.indentString.length + this.indentSize);
-    // if (this.indentString.length) {
-    //   this.currentLine.Tokens.push({ Kind: TokenKind.Whitespace, Value: this.indentString });
-    // }
-  }
-
-  deindent() {
-    // TODO: Maybe this all can be deleted.
-    // this.trim();
-    // this.indentString = WHITESPACE.repeat(this.indentString.length - this.indentSize);
-    // if (this.indentString.length) {
-    //   this.currentLine.Tokens.push({ Kind: TokenKind.Whitespace, Value: this.indentString });
-    // }
-  }
-
-  trim(trimNewlines: boolean = false) {
-    // TODO: Maybe this all can be deleted.
-    // let last = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
-    // while (last) {
-    //   if (last.Kind === TokenKind.Whitespace || (trimNewlines && last.Kind === TokenKind.Newline)) {
-    //     this.currentLine.Tokens.pop();
-    //     last = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
-    //   } else {
-    //     return;
-    //   }
-    // }
-  }
-
-  beginGroup() {
-    this.punctuation("{");
-    this.blankLines(0);
-    this.indent();
-  }
-
-  endGroup() {
-    this.blankLines(0);
-    this.deindent();
-    this.punctuation("}");
-  }
-
-  whitespace(count: number = 1) {
-    // TODO: Maybe this all can be deleted.
-    // this.currentLine.Tokens.push({
-    //   Kind: TokenKind.Text,
-    //   Value: WHITESPACE.repeat(count),
-    // });
-  }
-
-  space() {
-    // TODO: Maybe this all can be deleted
-    // if (this.currentLine.Tokens[this.currentLine.Tokens.length - 1]?.Kind !== TokenKind.Whitespace) {
-    //   this.currentLine.Tokens.push({
-    //     Kind: TokenKind.Whitespace,
-    //     Value: WHITESPACE,
-    //   });
-    // }
-  }
-
-  newline() {
-    this.trim();
-    this.reviewLines.push(this.currentLine);
-    // Probably need to calculate the line id and cross language id at this point from the gathered tokens?
-    this.currentLine = {
-      LineId: "",
-      CrossLanguageId: "",
-      Tokens: [],
-      Children: [],
-    }
-    if (this.indentString.length) {
-      this.whitespace(this.indentString.length);
-    }
-  }
-
-  blankLines(count: number) {
-    // count the number of trailing newlines (ignoring indent whitespace)
-    let newlineCount: number = 0;
-    for (let i = this.reviewLines.length; i > 0; i--) {
-      const line = this.reviewLines[i - 1];
-      if (line.Tokens.length === 0) {
-          newlineCount++;
-      } else {
-          break;
-      }
-    }
-    if (newlineCount < count + 1) {
-      // if there aren't new enough newlines, add some
-      const toAdd = count + 1 - newlineCount;
-      for (let i = 0; i < toAdd; i++) {
-        this.newline();
-      }
-    } else if (newlineCount > count + 1) {
-      // if there are too many newlines, remove some
-      let toRemove = newlineCount - (count + 1);
-      while (toRemove) {
-        const popped = this.reviewLines.pop();
-        if (popped?.Tokens.length === 0) {
-          toRemove--;
-        }
-      }
-    }
-  }
-
-  lineMarker(options?: {value?: string, addCrossLanguageId?: boolean}) {
-    this.currentLine.LineId = options?.value ?? this.namespaceStack.value();
-    this.currentLine.CrossLanguageId = options?.addCrossLanguageId ? (options?.value ?? this.namespaceStack.value()) : undefined;
-  }
-
-  punctuation(value: string, options?: ReviewTokenOptions) {
-    this.token(TokenKind.Punctuation, value, options);
-  }
-
-  text(text: string, options?: ReviewTokenOptions) {
-    this.token(TokenKind.Text, text, options);
-  }
-
-  keyword(keyword: string, options?: ReviewTokenOptions) {
-    this.token(TokenKind.Keyword, keyword, options);
-  }
-
-  typeDeclaration(typeName: string, typeId: string | undefined, addCrossLanguageId: boolean, options?: ReviewTokenOptions) {
-    if (typeId) {
-      if (this.typeDeclarations.has(typeId)) {
-        throw new Error(`Duplication ID "${typeId}" for declaration will result in bugs.`);
-      }
-      this.typeDeclarations.add(typeId);
-    }
-    this.lineMarker({value: typeId, addCrossLanguageId: true});
-    this.token(TokenKind.TypeName, typeName, options);
-  }
-
-  typeReference(typeName: string, options?: ReviewTokenOptions) {
-    options = options ?? {};
-    options.NavigateToId = options.NavigateToId ?? "__MISSING__";
-    this.token(TokenKind.TypeName, typeName, {...options});
-  }
-
-  member(name: string, options?: ReviewTokenOptions) {
-    this.token(TokenKind.MemberName, name, options);
-  }
-
-  stringLiteral(value: string, options?: ReviewTokenOptions) {
-    const lines = value.split("\n");
-    if (lines.length === 1) {
-      this.currentLine.Tokens.push({
-        Kind: TokenKind.StringLiteral,
-        Value: `\u0022${value}\u0022`,
-        ...options
-      });
-    } else {
-      this.punctuation(`"""`, options);
-      this.newline();
-      for (const line of lines) {
-        this.literal(line, options);
-        this.newline();
-      }
-      this.punctuation(`"""`, options);
-    }
-  }
-
-  literal(value: string, options?: ReviewTokenOptions) {
-    this.token(TokenKind.StringLiteral, value, options);
-  }
-
-  diagnostic(message: string, targetId: string, level: CodeDiagnosticLevel) {
-    this.diagnostics.push({
-      Text: message,
-      TargetId: targetId,
-      Level: level,
-    })
-  }
-
-  shouldEmitNamespace(name: string): boolean {
-    if (name === "" && this.includeGlobalNamespace) {
-      return true;
-    }
-    if (name === this.packageName) {
-      return true;
-    }
-    if (!name.startsWith(this.packageName)) {
-      return false;
-    }
-    const suffix = name.substring(this.packageName.length);
-    return suffix.startsWith(".");
-  }
-
-  emit(program: Program) {
+  /** Compiles the APIView model for output.  */
+  compile(program: Program) {
     let allNamespaces = new Map<string, Namespace>();
 
     // collect namespaces in program
@@ -304,6 +112,178 @@ export class ApiView {
     }
   }
 
+  /** Attempts to resolve any type references marked as __MISSING__. */
+  resolveMissingTypeReferences() {
+    for (const token of this.currentLine.Tokens) {
+      if (token.Kind === TokenKind.TypeName && token.NavigateToId === "__MISSING__") {
+        token.NavigateToId = this.definitionIdFor(token.Value!, this.packageName);
+      }
+    }
+  }
+
+  /** Output the APIView model to the CodeFile JSON format. */
+  asCodeFile(): CodeFile {
+    return {
+      Name: this.name,
+      PackageName: this.packageName,
+      PackageVersion: this.packageVersion,
+      ParserVersion: LIB_VERSION,
+      Language: "TypeSpec",
+      LanguageVariant: undefined,
+      CrossLanguagePackageId: this.crossLanguagePackageId,
+      ReviewLines: this.reviewLines,
+      Diagnostics: this.diagnostics,
+      Navigation: this.navigationItems,
+    };
+
+  }
+
+  /** Outputs the APIView model to a string approximation of what will display on the web. */
+  asString(): string {
+    return this.reviewLines.map(l => reviewLineText(l, 0)).join("\n");
+  }
+
+  private token(kind: TokenKind, value: string, options?: ReviewTokenOptions) {
+    this.currentLine.Tokens.push({
+      Kind: kind,
+      Value: value,
+      ...options
+    });
+  }
+
+  private indent() {
+    if (this.currentParent) {
+      this.currentParent.Children.push(this.currentLine);
+      this.parentStack.push(this.currentParent);
+    } else {
+      this.reviewLines.push(this.currentLine);
+    }
+    this.currentParent = this.currentLine;
+    this.currentLine = {
+      LineId: "",
+      CrossLanguageId: "",
+      Tokens: [],
+      Children: [],
+    }
+  }
+
+  private deindent() {
+    if (!this.currentParent) {
+      throw new Error("Cannot deindent without an indent.");
+    }
+    this.currentParent = this.parentStack.pop();
+    this.currentLine = {
+      LineId: "",
+      CrossLanguageId: "",
+      Tokens: [],
+      Children: [],
+    }
+  }
+
+  private space() {
+    this.token(TokenKind.Text, "", {HasSuffixSpace: true});
+  }
+
+  private newline(isEndContext?: boolean) {
+    if (isEndContext) {
+      this.currentLine.IsContextEndLine = true;
+    }
+    if (this.currentParent) {
+      this.currentParent.Children.push(this.currentLine);
+    } else {
+      this.reviewLines.push(this.currentLine);
+    }
+    this.currentLine = {
+      LineId: "",
+      CrossLanguageId: "",
+      Tokens: [],
+      Children: [],
+    }
+  }
+
+  private lineMarker(options?: {value?: string, addCrossLanguageId?: boolean}) {
+    this.currentLine.LineId = options?.value ?? this.namespaceStack.value();
+    this.currentLine.CrossLanguageId = options?.addCrossLanguageId ? (options?.value ?? this.namespaceStack.value()) : undefined;
+  }
+
+  private punctuation(value: string, options?: ReviewTokenOptions) {
+    this.token(TokenKind.Punctuation, value, options);
+  }
+
+  private text(text: string, options?: ReviewTokenOptions) {
+    this.token(TokenKind.Text, text, options);
+  }
+
+  private keyword(keyword: string, options?: ReviewTokenOptions) {
+    this.token(TokenKind.Keyword, keyword, options);
+  }
+
+  private typeDeclaration(typeName: string, typeId: string | undefined, addCrossLanguageId: boolean, options?: ReviewTokenOptions) {
+    if (typeId) {
+      if (this.typeDeclarations.has(typeId)) {
+        throw new Error(`Duplication ID "${typeId}" for declaration will result in bugs.`);
+      }
+      this.typeDeclarations.add(typeId);
+    }
+    this.lineMarker({value: typeId, addCrossLanguageId: true});
+    this.token(TokenKind.TypeName, typeName, options);
+  }
+
+  private typeReference(typeName: string, options?: ReviewTokenOptions) {
+    options = options ?? {};
+    options.NavigateToId = options.NavigateToId ?? "__MISSING__";
+    this.token(TokenKind.TypeName, typeName, {...options});
+  }
+
+  private member(name: string, options?: ReviewTokenOptions) {
+    this.token(TokenKind.MemberName, name, options);
+  }
+
+  private stringLiteral(value: string, options?: ReviewTokenOptions) {
+    const lines = value.split("\n");
+    if (lines.length === 1) {
+      this.currentLine.Tokens.push({
+        Kind: TokenKind.StringLiteral,
+        Value: `\u0022${value}\u0022`,
+        ...options
+      });
+    } else {
+      this.punctuation(`"""`, options);
+      this.newline();
+      for (const line of lines) {
+        this.literal(line, options);
+        this.newline();
+      }
+      this.punctuation(`"""`, options);
+    }
+  }
+
+  private literal(value: string, options?: ReviewTokenOptions) {
+    this.token(TokenKind.StringLiteral, value, options);
+  }
+
+  private diagnostic(message: string, targetId: string, level: CodeDiagnosticLevel) {
+    this.diagnostics.push({
+      Text: message,
+      TargetId: targetId,
+      Level: level,
+    })
+  }
+
+  private shouldEmitNamespace(name: string): boolean {
+    if (name === "" && this.includeGlobalNamespace) {
+      return true;
+    }
+    if (name === this.packageName) {
+      return true;
+    }
+    if (!name.startsWith(this.packageName)) {
+      return false;
+    }
+    const suffix = name.substring(this.packageName.length);
+    return suffix.startsWith(".");
+  }
+
   private emitHeader() {
     const toolVersion = LIB_VERSION;
     const headerText = `// Package parsed using @azure-tools/typespec-apiview (version:${toolVersion})`;
@@ -312,10 +292,10 @@ export class ApiView {
     this.lineMarker();
     this.namespaceStack.pop();
     // TODO: Source URL?
-    this.blankLines(2);
+    this.newline()
   }
 
-  tokenize(node: BaseNode) {
+  private tokenize(node: BaseNode) {
     let obj;
     let last = 0;  // track the final index of an array
     let isExpanded = false;
@@ -324,7 +304,7 @@ export class ApiView {
         obj = node as AliasStatementNode;
         this.namespaceStack.push(obj.id.sv);
         this.keyword("alias", {HasSuffixSpace: true});
-        this.typeDeclaration(obj.id.sv, this.namespaceStack.value(), true);
+        this.typeDeclaration(obj.id.sv, this.namespaceStack.value(), true, {HasSuffixSpace: true});
         this.tokenizeTemplateParameters(obj.templateParameters);
         this.punctuation("=", {HasSuffixSpace: true});
         this.tokenize(obj.value);
@@ -415,12 +395,10 @@ export class ApiView {
         for (const arg of obj.arguments) {
           switch (arg.kind) {
             case SyntaxKind.StringLiteral:
-              this.stringLiteral(arg.value);
-              this.space();
+              this.stringLiteral(arg.value, {HasSuffixSpace: true});
               break;
             case SyntaxKind.Identifier:
-              this.stringLiteral(arg.sv);
-              this.space();
+              this.stringLiteral(arg.sv, {HasSuffixSpace: true});
               break;
           }
         }
@@ -591,7 +569,6 @@ export class ApiView {
             const arg = obj.arguments[x];
             this.tokenize(arg);
             if (x !== obj.arguments.length - 1) {
-              this.trim(true);
               this.renderPunctuation(",");
               if (isExpanded) {
                 this.newline();
@@ -599,11 +576,12 @@ export class ApiView {
             }
           }
           if (isExpanded) {
-            this.trim(true);
             this.newline();
             this.deindent();
           }
           this.punctuation(">");
+        } else {
+          this.space();
         }
         break;
       case SyntaxKind.UnionExpression:
@@ -638,14 +616,14 @@ export class ApiView {
         obj = node as TemplateArgumentNode;
         isExpanded = obj.argument.kind === SyntaxKind.ModelExpression && obj.argument.properties.length > 0;
         if (isExpanded) {
-          this.blankLines(0);
+          this.newline()
         }
         if (obj.name) {
           this.text(obj.name.sv);
           this.punctuation("=", {HasSuffixSpace: true});
         }
         if (isExpanded) {
-          this.tokenizeModelExpressionExpanded(obj.argument as ModelExpressionNode, false, false);
+          this.tokenizeModelExpressionExpanded(obj.argument as ModelExpressionNode, false);
         } else {
           this.tokenize(obj.argument);
         }
@@ -688,17 +666,6 @@ export class ApiView {
         // All Projection* cases should fail here...
         throw new Error(`Case "${SyntaxKind[node.kind].toString()}" not implemented`);
     }
-  }
-
-  peekTokens(count: number = 20): string {
-    let result = "";
-    const tokens = this.currentLine.Tokens.slice(-count);
-    for (const token of tokens) {
-      if (token.Value) {
-        result += token.Value;
-      }
-    }
-    return result;
   }
 
   private buildExpressionString(node: Expression) {
@@ -754,17 +721,18 @@ export class ApiView {
     }
     this.tokenizeTemplateParameters(node.templateParameters);
     if (node.properties.length) {
-      this.beginGroup();
+      this.punctuation("{");
+      this.indent();
       for (const prop of node.properties) {
         const propName = this.getNameForNode(prop);
         this.namespaceStack.push(propName);
         this.tokenize(prop);
-        this.trim(true);
         this.punctuation(";");
         this.namespaceStack.pop();
-        this.blankLines(0);
+        this.newline()
       }
-      this.endGroup();
+      this.deindent();
+      this.punctuation("}");
     } else {
       this.punctuation("{}");
     }
@@ -781,7 +749,7 @@ export class ApiView {
       this.tokenize(node.extends);
     }
     this.tokenizeTemplateParameters(node.templateParameters);
-    this.blankLines(0);
+    this.newline()
     this.namespaceStack.pop();
   }
 
@@ -791,13 +759,15 @@ export class ApiView {
     this.keyword("interface", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
     this.tokenizeTemplateParameters(node.templateParameters);
-    this.beginGroup();
+    this.punctuation("{");
+    this.indent();
     for (let x = 0; x < node.operations.length; x++) {
       const op = node.operations[x];
       this.tokenizeOperationStatement(op, true);
-      this.blankLines(x !== node.operations.length - 1 ? 1 : 0);
+      this.newline()
     }
-    this.endGroup();
+    this.deindent();
+    this.punctuation("}");
     this.namespaceStack.pop();
   }
 
@@ -806,16 +776,18 @@ export class ApiView {
     this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("enum", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
-    this.beginGroup();
+    this.punctuation("{");
+    this.indent();
     for (const member of node.members) {
       const memberName = this.getNameForNode(member);
       this.namespaceStack.push(memberName);
       this.tokenize(member);
       this.punctuation(",");
       this.namespaceStack.pop();
-      this.blankLines(0);
+      this.newline()
     }
-    this.endGroup();
+    this.deindent();
+    this.punctuation("}");
     this.namespaceStack.pop();
   }
 
@@ -824,7 +796,8 @@ export class ApiView {
     this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("union", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
-    this.beginGroup();
+    this.punctuation("{");
+    this.indent();
     for (let x = 0; x < node.options.length; x++) {
       const variant = node.options[x];
       const variantName = this.getNameForNode(variant);
@@ -834,10 +807,11 @@ export class ApiView {
       if (x !== node.options.length - 1) {
         this.punctuation(",");
       }
-      this.blankLines(0);
+      this.newline()
     }
+    this.deindent();
+    this.punctuation("}");
     this.namespaceStack.pop();
-    this.endGroup();
   }
 
   private tokenizeUnionVariant(node: UnionVariantNode) {
@@ -894,18 +868,13 @@ export class ApiView {
   private tokenizeModelExpressionExpanded(
     node: ModelExpressionNode,
     isOperationSignature: boolean,
-    leadingNewline: boolean,
   ) {
     if (node.properties.length) {
-      if (leadingNewline) {
-        this.blankLines(0);
-        this.indent();
-      }
       if (!isOperationSignature) {
-        this.punctuation("{");
-        this.blankLines(0);
         this.indent();
+        this.punctuation("{");
       }
+      this.indent();
       this.namespaceStack.push("anonymous");
       for (let x = 0; x < node.properties.length; x++) {
         const prop = node.properties[x];
@@ -921,26 +890,20 @@ export class ApiView {
         this.namespaceStack.pop();
         if (isOperationSignature) {
           if (x !== node.properties.length - 1) {
-            this.trim(true);
             this.renderPunctuation(",");
           }
         } else {
-          this.trim(true);
           this.renderPunctuation(";");
         }
-        this.blankLines(0);
+        this.newline()
+      }
+      this.deindent();
+      if (!isOperationSignature) {
+        this.punctuation("}");
+        this.newline(true);
+        this.deindent();
       }
       this.namespaceStack.pop();
-      this.blankLines(0);
-      if (!isOperationSignature) {
-        this.deindent();
-        this.punctuation("}");
-        this.blankLines(0);
-      }
-      this.trim();
-      if (leadingNewline) {
-        this.deindent();
-      }
     } else if (!isOperationSignature) {
       this.punctuation("{}");
     }
@@ -950,7 +913,7 @@ export class ApiView {
     if (inline) {
       this.tokenizeModelExpressionInline(node, isOperationSignature);
     } else {
-      this.tokenizeModelExpressionExpanded(node, isOperationSignature, true);
+      this.tokenizeModelExpressionExpanded(node, isOperationSignature);
     }
   }
 
@@ -973,36 +936,38 @@ export class ApiView {
       this.tokenizeDecoratorsAndDirectives(model.node.decorators, model.node.directives, false);
     }
     this.keyword("namespace", {HasSuffixSpace: true});
-    this.typeDeclaration(model.name, this.namespaceStack.value(), true);
-    this.beginGroup();
+    this.typeDeclaration(model.name, this.namespaceStack.value(), true, {HasSuffixSpace: true});
+    this.punctuation("{");
+    this.indent();
     for (const node of model.augmentDecorators) {
       this.tokenize(node);
-      this.blankLines(1);
+      this.newline()
     }
     for (const node of model.operations.values()) {
       this.tokenize(node);
-      this.blankLines(1);
+      this.newline()
     }
     for (const node of model.resources.values()) {
       this.tokenize(node);
-      this.blankLines(1);
+      this.newline()
     }
     for (const node of model.models.values()) {
       this.tokenize(node);
-      this.blankLines(1);
+      this.newline()
     }
     for (const node of model.aliases.values()) {
       this.tokenize(node);
       this.punctuation(";");
-      this.blankLines(1);
+      this.newline()
     }
     for (const node of model.constants.values()) {
         this.tokenize(node);
         this.punctuation(";");
-        this.blankLines(1);
+        this.newline()
     }
-    this.endGroup();
-    this.blankLines(1);
+    this.deindent();
+    this.punctuation("}");
+    this.newline()
     this.namespaceStack.pop();
   }
 
@@ -1018,23 +983,6 @@ export class ApiView {
     for (const directive of directives ?? []) {
       this.tokenize(directive);
     }
-    // FIXME: Re-implement, as needed
-    // if (!inline && decorators?.length && directives === undefined) {
-    //   while (this.reviewLines.length) {
-    //     const item = this.reviewLines.pop()!;
-    //     if (item.LineId === "GLOBAL") {
-    //       this.reviewLines.push(item);
-    //       this.blankLines(2);
-    //       break;
-    //     } else if ([TokenKind.Punctuation, TokenKind.TypeName].includes(item.Kind)) {
-    //       this.currentLine.Tokens.push(item);
-    //       // for now, render with no newlines, per stewardship board request
-    //       const lineCount = ["{", "("].includes(item.Value!) ? 0 : 0;
-    //       this.blankLines(lineCount);
-    //       break;
-    //     }
-    //   }
-    // }
     // render each decorator
     for (const node of decorators || []) {
       this.namespaceStack.push(generateId(node)!);
@@ -1050,7 +998,7 @@ export class ApiView {
         }
       }
       if (!inline) {
-        this.blankLines(0);
+        this.newline()
       }
     }
   }
@@ -1094,7 +1042,7 @@ export class ApiView {
       case SyntaxKind.Identifier:
         switch (style) {
           case "declaration":
-            this.typeDeclaration(node.sv, this.namespaceStack.value(), true);
+            this.typeDeclaration(node.sv, this.namespaceStack.value(), true, {HasSuffixSpace: true});
             break;
           case "reference":
             const defId = this.definitionIdFor(node.sv, this.packageName);
@@ -1133,7 +1081,6 @@ export class ApiView {
           this.space();
         }
         if (isExpanded) {
-            this.trim(true);
             this.newline();
         }
       }
@@ -1176,30 +1123,7 @@ export class ApiView {
     this.punctuation(punctuation, {HasSuffixSpace: true});
   }
 
-  resolveMissingTypeReferences() {
-    for (const token of this.currentLine.Tokens) {
-      if (token.Kind === TokenKind.TypeName && token.NavigateToId === "__MISSING__") {
-        token.NavigateToId = this.definitionIdFor(token.Value!, this.packageName);
-      }
-    }
-  }
-
-  asApiViewDocument(): CodeFile {
-    return {
-      Name: this.name,
-      PackageName: this.packageName,
-      PackageVersion: this.packageVersion,
-      ParserVersion: LIB_VERSION,
-      Language: "TypeSpec",
-      LanguageVariant: undefined,
-      CrossLanguagePackageId: this.crossLanguagePackageId,
-      ReviewLines: this.reviewLines,
-      Diagnostics: this.diagnostics,
-      Navigation: this.navigationItems,
-    };
-  }
-
-  definitionIdFor(value: string, prefix: string): string | undefined {
+  private definitionIdFor(value: string, prefix: string): string | undefined {
     if (value.includes(".")) {
       const fullName = `${prefix}.${value}`;
       return this.typeDeclarations.has(fullName) ? fullName : undefined;

@@ -142,6 +142,11 @@ extends:
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
 
+              - pwsh: |
+                  copy-item -Path 'tools/apiview/parsers/js-api-parser/.npmrc' -Destination "$(Build.ArtifactStagingDirectory)/APIViewWeb"
+                  Write-Host "Packaged npmrc for JS parser"
+                displayName: 'Package npmrc'
+
               - task: UseDotNet@2
                 inputs:
                   packageType: 'sdk'

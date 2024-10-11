@@ -8,6 +8,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <JavaProcessor>..\..\..\java\apiview-java-processor\target\apiview-java-processor-1.31.0.jar</JavaProcessor>
     <GoProcessor>..\..\..\go\apiviewgo.exe</GoProcessor>
+    <NpmRcForJS>..\..\..\..\tools\apiview\parsers\js-api-parser\.npmrc</NpmRcForJS>
     <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <SignAssembly>False</SignAssembly>
@@ -63,6 +64,7 @@
   <ItemGroup>
     <Content Include="$(GoProcessor)" Condition="Exists($(GoProcessor))" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="$(JavaProcessor)" Condition="Exists($(JavaProcessor))" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(NpmRcForJS)\**\*" Condition="Exists($(NpmRcForJS))" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

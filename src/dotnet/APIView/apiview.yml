@@ -409,7 +409,7 @@ extends:
                           @echo off
                           echo Installing .NET tool
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                          echo Installing JavaScript parser                          
+                          echo Installing JavaScript parser
                           call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy

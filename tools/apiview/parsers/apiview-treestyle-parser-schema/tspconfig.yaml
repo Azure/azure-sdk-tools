@@ -7,3 +7,8 @@ options:
     bundleId: "CodeFile.json"
     emitAllModels: false
     emitAllRefs: false
+  "@azure-tools/typespec-python":
+    package-dir: "{project-root}"
+    package-name: "{package-dir}"
+    package-version: 0.3.13
+    generate-packaging-files: false

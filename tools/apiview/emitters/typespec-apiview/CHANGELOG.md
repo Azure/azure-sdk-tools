@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.5.0 (TBD)
+Support new internal APIView tree-structure.
+
 ## Version 0.4.9 (07-09-2024)
 Fix issue where "unknown" was rendered as "any".
 Support value syntax for objects and arrays.

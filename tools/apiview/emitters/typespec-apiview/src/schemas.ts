@@ -37,9 +37,20 @@ export interface CodeFile {
   */
   Navigation: NavigationItem[] | undefined;
 }
-  
+
+export interface ReviewLineOptions {
+  /** Set current line as hidden code line by default. .NET has hidden APIs and architects don't want to see them by default. */
+  IsHidden?: boolean;
+  /** Set current line as context end line. For e.g. line with token } or empty line after the class to mark end of context. */
+  IsContextEndLine?: boolean;
+  /** Set ID of related line to ensure current line is not visible when a related line is hidden.
+   * One e.g. is a code line for class attribute should set class line's Line ID as related line ID.
+  */
+  RelatedToLine?: string;
+}
+
 /** ReviewLine object corresponds to each line displayed on API review. If an empty line is required then add a code line object without any token. */
-export interface ReviewLine {
+export interface ReviewLine extends ReviewLineOptions {
   /** lineId is only required if we need to support commenting on a line that contains this token. 
    *  Usually code line for documentation or just punctuation is not required to have lineId. lineId should be a unique value within 
    *  the review token file to use it assign to review comments as well as navigation Id within the review page.
@@ -51,15 +62,7 @@ export interface ReviewLine {
   Tokens: ReviewToken[];
   /** Add any child lines as children. For e.g. all classes and namespace level methods are added as a children of namespace(module) level code line. 
    *  Similarly all method level code lines are added as children of it's class code line.*/
-  Children: ReviewLine[] | undefined;
-  /** Set current line as hidden code line by default. .NET has hidden APIs and architects don't want to see them by default. */
-  IsHidden?: boolean;
-  /** Set current line as context end line. For e.g. line with token } or empty line after the class to mark end of context. */
-  IsContextEndLine?: boolean;
-  /** Set ID of related line to ensure current line is not visible when a related line is hidden.
-   * One e.g. is a code line for class attribute should set class line's Line ID as related line ID.
-  */
-  RelatedToLine?: string;
+  Children: ReviewLine[];
 }
 
 export interface ReviewTokenOptions {

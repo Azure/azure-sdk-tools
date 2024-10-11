@@ -8,7 +8,8 @@ import "@azure-tools/typespec-apiview";
 import { ApiViewEmitterOptions } from "../src/lib.js";
 import { Diagnostic, resolvePath } from "@typespec/compiler";
 import { strictEqual } from "assert";
-import { CodeFile } from "../src/schemas.js";
+import { CodeFile, ReviewLine, ReviewToken } from "../src/schemas.js";
+import { reviewLineText } from "../src/util.js";
 
 export async function createApiViewTestHost() {
   return createTestHost({
@@ -61,16 +62,7 @@ export async function apiViewFor(code: string, options: ApiViewEmitterOptions): 
 }
 
 export function apiViewText(apiview: CodeFile): string[] {
-  const vals = new Array<string>;
-  for (const line of apiview.ReviewLines) {
-    for (const token of line.Tokens) {
-      if (token.Value !== undefined) {
-        vals.push(token.Value);
-      }
-    }
-    vals.push("\n");  
-  }
-  return vals.join("").split("\n");
+  return apiview.ReviewLines.map(l => reviewLineText(l, 0)).join("\n").split("\n");
 }
 
 function getIndex(lines: string[]): number {

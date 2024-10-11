@@ -98,6 +98,11 @@ extends:
                 Write-Host "##vso[task.setvariable variable=PackageArtifactFullPath]$detectedPackageName"
               displayName: "Find package artifact"
 
+            - task: npmAuthenticate@0
+              inputs:
+                workingFile: .npmrc
+              workingDirectory: $(TypeScriptGeneratorDirectory)
+
             - task: Npm@1
               inputs:
                 command: 'custom'
@@ -105,5 +110,6 @@ extends:
                 publishRegistry: useFeed
                 publishFeed: "public/azure-sdk-for-js"
               displayName: "Publish package"
+              workingDirectory: $(TypeScriptGeneratorDirectory)
               env:
                 SYSTEM_ACCESSTOKEN: $(System.AccessToken)

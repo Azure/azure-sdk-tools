@@ -3597,6 +3597,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_try(try_node)
 
+            
 class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
     """Test that use of the @overload decorator matches the async/sync nature of the underlying function"""
 
@@ -3645,6 +3646,195 @@ class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
 
             
 # [Pylint] Custom Linter check for Exception Logging #3227
+
+
+class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
+
+    """Test that any errors are not logged in exception blocks."""
+
+    CHECKER_CLASS = checker.DoNotLogExceptions
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_log_exceptions.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_logging_levels_logged_str_exception(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[1].body[0]
+        error_node = setup.body[1].body[0].handlers[0].body[0]
+        warning_node = setup.body[1].body[0].handlers[0].body[1]
+        info_node = setup.body[1].body[0].handlers[0].body[2]
+        debug_node = setup.body[1].body[0].handlers[0].body[3]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=9,
+                node=error_node,
+                col_offset=8,
+                end_line=9,
+                end_col_offset=39,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=10,
+                node=warning_node,
+                col_offset=8,
+                end_line=10,
+                end_col_offset=31,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=11,
+                node=info_node,
+                col_offset=8,
+                end_line=11,
+                end_col_offset=28,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=12,
+                node=debug_node,
+                col_offset=8,
+                end_line=12,
+                end_col_offset=29,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_logging_levels_logged_repr_exception(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[2].body[0]
+        error_node = setup.body[2].body[0].handlers[0].body[0]
+        warning_node = setup.body[2].body[0].handlers[0].body[1]
+        info_node = setup.body[2].body[0].handlers[0].body[2]
+        debug_node = setup.body[2].body[0].handlers[0].body[3]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=20,
+                node=error_node,
+                col_offset=8,
+                end_line=20,
+                end_col_offset=30,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=21,
+                node=warning_node,
+                col_offset=8,
+                end_line=21,
+                end_col_offset=32,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=22,
+                node=info_node,
+                col_offset=8,
+                end_line=22,
+                end_col_offset=29,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=23,
+                node=debug_node,
+                col_offset=8,
+                end_line=23,
+                end_col_offset=30,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_regular_logging_ok(self, setup):
+        """Check that normal logging is ok in the exception block."""
+        try_node = setup.body[3].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_logging_str_exception_branches(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[4].body[0]
+        error_node = setup.body[4].body[0].handlers[0].body[0].body[0]
+        warning_node = setup.body[4].body[0].handlers[0].body[0].orelse[0].body[0]
+        info_node = setup.body[4].body[0].handlers[0].body[0].orelse[0].orelse[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=43,
+                node=error_node,
+                col_offset=12,
+                end_line=43,
+                end_col_offset=33,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=46,
+                node=warning_node,
+                col_offset=12,
+                end_line=46,
+                end_col_offset=36,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=49,
+                node=info_node,
+                col_offset=12,
+                end_line=49,
+                end_col_offset=32,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_other_logging_fails(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[5].body[0]
+        error_node = setup.body[5].body[0].handlers[0].body[0].body[0]
+        warning_node = setup.body[5].body[0].handlers[0].body[0].orelse[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=58,
+                node=error_node,
+                col_offset=12,
+                end_line=58,
+                end_col_offset=65,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=61,
+                node=warning_node,
+                col_offset=12,
+                end_line=61,
+                end_col_offset=30,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_no_logging_and_no_exception_name_ok(self, setup):
+        """Check that no logging is ok in the exception block."""
+        try_node = setup.body[6].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_logging_without_exception_name(self, setup):
+        """Check that logging without exception name is ok in the exception block."""
+        try_node = setup.body[7].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_guidelines_link_active(self):
+        url = "https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info"
+        config = Configuration()
+        client = PipelineClient(url, config=config)
+        request = client.get(url)
+        response = client._pipeline.run(request)
+        assert response.http_response.status_code == 200
+
+
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
 # [Pylint] Add a check for connection_verify hardcoded settings #35355
 # [Pylint] Investigate pylint rule around missing dependency #3231

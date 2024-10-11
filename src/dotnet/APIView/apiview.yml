@@ -142,11 +142,6 @@ extends:
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
 
-              - pwsh: |
-                  copy-item -Path 'tools/apiview/parsers/js-api-parser/.npmrc' -Destination "$(Build.ArtifactStagingDirectory)/APIViewWeb"
-                  Write-Host "Packaged npmrc for JS parser"
-                displayName: 'Package npmrc'
-
               - task: UseDotNet@2
                 inputs:
                   packageType: 'sdk'
@@ -361,6 +356,8 @@ extends:
                     echo Installing .NET tool
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                     echo Installing JavaScript parser
+                    call npm install @microsoft/api-extractor-model@^7.29.8 --prefix D:\home\site\wwwroot\js-parser
+                    call npm install js-tokens@^9.0.0 --prefix D:\home\site\wwwroot\js-parser
                     call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}  
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
@@ -414,7 +411,9 @@ extends:
                           @echo off
                           echo Installing .NET tool
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                          echo Installing JavaScript parser
+                          echo Installing JavaScript parser                          
+                          call npm install @microsoft/api-extractor-model@^7.29.8 --prefix D:\home\site\wwwroot\js-parser
+                          call npm install js-tokens@^9.0.0 --prefix D:\home\site\wwwroot\js-parser
                           call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
@@ -473,6 +472,8 @@ extends:
                           echo Installing .NET tool
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           echo Installing JavaScript parser
+                          call npm install @microsoft/api-extractor-model@^7.29.8 --prefix D:\home\site\wwwroot\js-parser
+                          call npm install js-tokens@^9.0.0 --prefix D:\home\site\wwwroot\js-parser
                           call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy

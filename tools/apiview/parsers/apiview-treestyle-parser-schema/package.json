@@ -6,6 +6,9 @@
     "@typespec/compiler": "latest",
     "@typespec/json-schema": "latest"
   },
+  "dependencies": {
+    "@azure-tools/typespec-python": "0.35.1"
+  },
   "devDependencies": {
     "@typespec/compiler": "latest",
     "@typespec/json-schema": "latest"

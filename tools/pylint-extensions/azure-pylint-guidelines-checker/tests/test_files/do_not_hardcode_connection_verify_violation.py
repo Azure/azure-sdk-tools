@@ -24,12 +24,12 @@ class ReturnErrorFunctionArgument:
     def send(connection_verify):
         pass
 
-    def sampleFunction(self):
+    def sample_function(self):
         return self.send(connection_verify=True)
 
 
 class ReturnErrorDict:
-    def returnDict(self):
+    def return_dict(self):
 
         return dict(
             connection_verify=False,
@@ -39,14 +39,8 @@ class AnnotatedAssignment:
     connection_verify: bool = True
 
 
-
 class AnnotatedSelfAssignment:
     def __init__(self):
         self.connection_verify: bool = True
 
 
-class FunctionPositionalArgumentsErrors:
-    def create(connection_verify, x, y):
-        pass
-
-    client = create(True, 0, False)

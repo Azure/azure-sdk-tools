@@ -2883,46 +2883,21 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
         ),
     }
 
-
     def visit_call(self, node):
-        """Visit function calls to ensure it isn't used as a parameter"""
-        try:
-            # Assigned as keyword
-            if len(node.keywords) > 0:
-                for keyword in node.keywords:
-                    if keyword.arg == "connection_verify":
-                        if type(keyword.value.value) == bool:
-                            self.add_message(
-                                msgid=f"do-not-hardcode-connection-verify",
-                                node=keyword,
-                                confidence=None,
-                            )
-
-        except:
-            pass
-        try:
-            # Assigned as a positional
-            if len(node.args) > 0:
-                for arg in node.args:
-                    if type(arg.value) == bool:
-                        for item in node.parent.parent.body:
-                            if item.name == node.func.name:
-                                for variable in item.args.args:
-                                    if variable.name == "connection_verify":
-                                        if item.args.args.index(variable) == node.args.index(arg):
-                                            self.add_message(
-                                                msgid=f"do-not-hardcode-connection-verify",
-                                                node=arg,
-                                                confidence=None,
-                                            )
-        except:
-            pass
-
-
+        """Visit function calls to ensure it isn't used as a keyword parameter"""
+        if len(node.keywords) > 0:
+            for keyword in node.keywords:
+                if keyword.arg == "connection_verify":
+                    if type(keyword.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=keyword,
+                            confidence=None,
+                        )
 
     def visit_assign(self, node):
         """Visiting variable Assignments"""
-        try: # Picks up self.connection_verify = True
+        try: # self.connection_verify = True
             if node.targets[0].attrname == "connection_verify":
                 if type(node.value.value) == bool:
                     self.add_message(
@@ -2940,8 +2915,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
                             confidence=None,
                         )
             except:
-                pass
-
+                pass # typically lists
 
     def visit_annassign(self, node):
         """Visiting variable annotated assignments"""

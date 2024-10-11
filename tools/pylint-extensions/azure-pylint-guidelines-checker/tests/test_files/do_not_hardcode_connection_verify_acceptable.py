@@ -1,14 +1,14 @@
-class InstanceVariableError:
+class InstanceVariable:
     def __init__(self):
         self.connection_verify = None
         self.self = self
 
 
-class VariableError:
+class Variable:
     connection_verify = None
 
 
-class FunctionArgumentsErrors:
+class FunctionKeywordArgumentsErrors:
     def create(connection_verify):
         pass
 
@@ -45,8 +45,10 @@ class AnnotatedSelfAssignment:
         self.connection_verify: bool = None
 
 
-class FunctionPositionalArgumentsErrors:
-    def create(connection_verify, x, y):
-        pass
+class VisitAssignPass:
+    connection_verify = ["apple", "banana", "cherry"]
 
-    client = create(None, 0, False)
+
+class VisitAnnassignPass:
+    connection_verify = [0]
+    connection_verify[0]: int = 0

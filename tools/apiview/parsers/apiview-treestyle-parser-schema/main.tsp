@@ -18,6 +18,10 @@ model CodeFile {
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
   Diagnostics?: Array<CodeDiagnostic>;
+  /** Navigation items are used to create a tree view in the navigation panel. Each navigation item is linked to a review line ID. This is optional.
+  * If navigation items are not provided then navigation panel will be automatically generated using the review lines. Navigation items should be provided only if you want to customize the navigation panel.
+  */
+  Navigation?: Array<NavigationItem>;
 }
 
 
@@ -100,4 +104,11 @@ enum CodeDiagnosticLevel {
   /** Fatal level diagnostic will block API review approval and it will show an error message to the user. Approver will have to 
   * override fatal level system comments before approving a review.*/
  Fatal:	4
+}
+
+model NavigationItem {
+  Text: string;
+  NavigationId: string;
+  ChildItems: Array<NavigationItem>;
+  Tags: Record<string>;
 }

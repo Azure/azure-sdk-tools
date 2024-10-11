@@ -98,6 +98,13 @@
                         "$ref": "CodeDiagnostic.json"
                     },
                     "description": "Add any system generated comments. Each comment is linked to review line ID"
+                },
+                "Navigation": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "NavigationItem.json"
+                    },
+                    "description": "Navigation items are used to create a tree view in the navigation panel. Each navigation item is linked to a review line ID. This is optional.\nIf navigation items are not provided then navigation panel will be automatically generated using the review lines. Navigation items should be provided only if you want to customize the navigation panel."
                 }
             },
             "required": [
@@ -262,6 +269,43 @@
                 3,
                 4
             ]
+        },
+        "NavigationItem": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "NavigationItem.json",
+            "type": "object",
+            "properties": {
+                "Text": {
+                    "type": "string"
+                },
+                "NavigationId": {
+                    "type": "string"
+                },
+                "ChildItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "NavigationItem.json"
+                    }
+                },
+                "Tags": {
+                    "$ref": "#/$defs/RecordString"
+                }
+            },
+            "required": [
+                "Text",
+                "NavigationId",
+                "ChildItems",
+                "Tags"
+            ],
+            "$defs": {
+                "RecordString": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
         }
     }
 }

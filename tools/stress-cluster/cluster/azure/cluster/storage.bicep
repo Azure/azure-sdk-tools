@@ -17,5 +17,4 @@ resource fileshare 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-0
 }
 
 output name string = storage.name
-output key string = storage.listKeys().keys[0].value
 output fileShareName string = fileShareName

@@ -22,16 +22,13 @@ interface Metadata {
   Language: "JavaScript";
 }
 
-// key: item's canonical reference, value: sub paths that include it
-const exported = new Map<string, Set<string>>();
-
 /**
  * Builds a blank line for the review
  * @param relatedToLine line id to associate the result with
  * @returns
  */
-function emptyLine(relatedToLine?: string): ReviewLine {
-  return { RelatedToLine: relatedToLine, Tokens: [] };
+function emptyLine(relatedToLine?: string, isHidden?: boolean): ReviewLine {
+  return { RelatedToLine: relatedToLine, Tokens: [], IsHidden: isHidden };
 }
 
 /**
@@ -59,6 +56,7 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
         RenderClasses: ["dependencies"],
       }),
     ],
+    IsHidden: true,
   };
 
   const dependencyLines: ReviewLine[] = [];
@@ -74,12 +72,13 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
     });
     const dependencyLine: ReviewLine = {
       Tokens: [nameToken, buildToken({ Kind: TokenKind.Punctuation, Value: ":" }), versionToken],
+      IsHidden: header.IsHidden,
     };
     dependencyLines.push(dependencyLine);
   }
   header.Children = dependencyLines;
   reviewLines.push(header);
-  reviewLines.push(emptyLine(header.LineId));
+  reviewLines.push(emptyLine(header.LineId, header.IsHidden));
 }
 
 /**
@@ -97,33 +96,69 @@ function getSubPathName(entryPoint: ApiEntryPoint): string {
  * The dev-tool in azure-sdk-for-js repository augments the api to have multiple entrypoints,
  * one for each subpath export.
  * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param meta Metadata about the package
  * @param apiModel {@link ApiModel} object loaded from the .api.json file
  */
-function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
+function buildSubpathExports(reviewLines: ReviewLine[], meta: Metadata, apiModel: ApiModel) {
   for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
       const subpath = getSubPathName(entryPoint);
+      const subpathLineContent = ` subpath "${subpath}" export `;
+      reviewLines.push({
+        Tokens: [
+          buildToken({
+            Kind: TokenKind.Comment,
+            Value: "   " + "/".repeat(30 * 2 + subpathLineContent.length),
+          }),
+        ],
+      });
       const exportLine: ReviewLine = {
         LineId: `Subpath-export-${subpath}`,
         Tokens: [
           buildToken({
+            Kind: TokenKind.Comment,
+            Value: "   " + "/".repeat(2),
+          }),
+          buildToken({
+            Kind: TokenKind.Comment,
+            Value: " ".repeat(27),
+          }),
+          buildToken({
             Kind: TokenKind.StringLiteral,
-            Value: ` "${subpath}"`,
-            NavigationDisplayName: `"${subpath}"`,
+            Value: subpathLineContent,
+            NavigationDisplayName: `subpath "${subpath}" export`,
+          }),
+          buildToken({
+            Kind: TokenKind.Comment,
+            Value: " ".repeat(29),
+          }),
+          buildToken({
+            Kind: TokenKind.Comment,
+            Value: "/".repeat(2),
           }),
         ],
-        Children: [],
+        Children: [
+          {
+            Tokens: [
+              buildToken({
+                Kind: TokenKind.Comment,
+                Value: "/".repeat(30 * 2 + subpathLineContent.length),
+              }),
+            ],
+          },
+          emptyLine(),
+        ],
       };
 
-      for (const member of entryPoint.members) {
-        const canonicalRef = member.canonicalReference.toString();
-        const containingExport = exported.get(canonicalRef) ?? new Set<string>();
-        if (!containingExport.has(subpath)) {
-          containingExport.add(subpath);
-          exported.set(canonicalRef, containingExport);
-        }
-        buildMember(exportLine.Children!, member);
+      // put top level functions to top
+      for (const member of entryPoint.members.filter((m) => m.kind === ApiItemKind.Function)) {
+        buildMember(exportLine.Children!, meta, member);
       }
+
+      for (const member of entryPoint.members.filter((m) => m.kind !== ApiItemKind.Function)) {
+        buildMember(exportLine.Children!, meta, member);
+      }
+
       reviewLines.push(exportLine);
       reviewLines.push(emptyLine(exportLine.LineId));
     }
@@ -222,7 +257,7 @@ function getItemKindString(item: ApiDeclaredItem) {
  * @param line The {@link ReviewLine} to push {@link ReviewToken}s to
  * @param item {@link ApiItem} instance
  */
-function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
+function buildMemberLineTokens(line: ReviewLine, item: ApiItem, isHidden?: boolean) {
   const itemId = item.canonicalReference.toString();
   if (item instanceof ApiDeclaredItem) {
     const itemKind: string = getItemKindString(item);
@@ -251,23 +286,58 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
           }
         }
       } else {
-        splitAndBuildMultipleLine(line, item.excerptTokens, itemId, item.displayName, itemKind);
+        splitAndBuildMultipleLine(
+          line,
+          item.excerptTokens,
+          itemId,
+          item.displayName,
+          itemKind,
+          isHidden,
+        );
       }
     }
   }
 }
 
 /**
+ * Returns whether the api item should be hidden by default
+ * @parm packageName the name of the package
+ * @param item {@link ApiItem} instance
+ * @param meta {@link Metadata} about the package
+ */
+function shouldHide(item: ApiItem, meta: Metadata) {
+  const generatedRlcFiles = [
+    "clientDefinitions.ts",
+    "isUnexpected.ts",
+    "models.ts",
+    "outputModels.ts",
+    "paginateHelper.ts",
+    "parameters.ts",
+    "responses.ts",
+  ];
+
+  if (item instanceof ApiDeclaredItem) {
+    return (
+      meta.PackageName.startsWith("@azure-rest") &&
+      generatedRlcFiles.some((f) => item.fileUrlPath?.endsWith(f))
+    );
+  }
+  return false;
+}
+
+/**
  * Builds review for an {@link ApiItem}.
  * @param reviewLines The result array to push {@link ReviewLine}s to
+ * @param meta {@link Metadata} about the package
  * @param item the Api to build review for
  */
-function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
+function buildMember(reviewLines: ReviewLine[], meta: Metadata, item: ApiItem) {
   const itemId = item.canonicalReference.toString();
   const line: ReviewLine = {
     LineId: itemId,
     Children: [],
     Tokens: [],
+    IsHidden: shouldHide(item, meta) || shouldHide(item.parent, meta),
   };
 
   buildDocumentation(reviewLines, item, itemId);
@@ -278,7 +348,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     buildReleaseTag(reviewLines, releaseTag);
   }
 
-  buildMemberLineTokens(line, item);
+  buildMemberLineTokens(line, item, line.IsHidden);
 
   if (mayHaveChildren(item)) {
     if (line.Tokens.length > 0) {
@@ -287,12 +357,13 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     if (item.members.length > 0) {
       line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: `{` }));
       for (const member of item.members) {
-        buildMember(line.Children!, member);
+        buildMember(line.Children!, meta, member);
       }
       reviewLines.push(line);
       reviewLines.push({
         Tokens: [buildToken({ Kind: TokenKind.Punctuation, Value: `}` })],
         RelatedToLine: line.LineId,
+        IsHidden: line.IsHidden,
       });
     } else {
       line.Tokens.push(
@@ -311,19 +382,16 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     item.kind === ApiItemKind.TypeAlias ||
     item.kind === ApiItemKind.Function
   ) {
-    reviewLines.push(emptyLine(line.LineId));
+    reviewLines.push(emptyLine(line.LineId, line.IsHidden));
   }
 }
 
-function buildReview(
-  review: ReviewLine[],
-  dependencies: Record<string, string>,
-  apiModel: ApiModel,
-) {
-  buildDependencies(review, dependencies);
-  buildSubpathExports(review, apiModel);
-}
-
+/**
+ * Builds apiview {@link ReviewLine}s and push them into result array
+ * @param meta {@link Metadata} about the package
+ * @param dependencies dependencies of this package consist of name: version pairs
+ * @param apiModel api model from api-extractor
+ */
 export function generateApiview(options: {
   meta: Metadata;
   dependencies: Record<string, string>;
@@ -331,7 +399,9 @@ export function generateApiview(options: {
 }): CodeFile {
   const { meta, dependencies, apiModel } = options;
   const review: ReviewLine[] = [];
-  buildReview(review, dependencies, apiModel);
+
+  buildDependencies(review, dependencies);
+  buildSubpathExports(review, meta, apiModel);
 
   return {
     ...meta,

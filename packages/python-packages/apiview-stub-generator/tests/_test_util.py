@@ -33,3 +33,8 @@ def _merge_lines(lines) -> str:
 
 def _check(actual, expected, client):
     assert actual.lstrip() == expected, f"\n*******\nClient: {client.__name__}\nActual:   {actual}\nExpected: {expected}\n*******"    
+
+def _check_all(actual, expect, obj):
+    for (idx, exp) in enumerate(expect):
+        act = actual[idx]
+        _check(act.lstrip(), exp, obj)

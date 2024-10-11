@@ -28,13 +28,7 @@ from apistubgentest.models import (
 
 from pytest import fail
 
-from ._test_util import _check, _tokenize, _merge_lines, _render_lines
-
-
-def _check_all(actual, expect, obj):
-    for (idx, exp) in enumerate(expect):
-        act = actual[idx]
-        _check(act.lstrip(), exp, obj)
+from ._test_util import _check, _tokenize, _merge_lines, _render_lines, _check_all
 
 
 class TestClassParsing:

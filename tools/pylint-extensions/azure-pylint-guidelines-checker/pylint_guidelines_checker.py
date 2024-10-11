@@ -3015,7 +3015,80 @@ class DoNotLogExceptions(BaseChecker):
 
 
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-# [Pylint] Add a check for connection_verify hardcoded settings #35355
+
+
+class DoNotHardcodeConnectionVerify(BaseChecker):
+
+    """Rule to check that developers do not hardcode a boolean to connection_verify."""
+
+    name = "do-not-hardcode-connection-verify"
+    priority = -1
+    msgs = {
+        "C4767": (
+            "Do not hardcode a boolean value to connection_verify",
+            "do-not-hardcode-connection-verify",
+            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to be able to set it",
+        ),
+    }
+
+    def visit_call(self, node):
+        """Visit function calls to ensure it isn't used as a keyword parameter"""
+        if len(node.keywords) > 0:
+            for keyword in node.keywords:
+                if keyword.arg == "connection_verify":
+                    if type(keyword.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=keyword,
+                            confidence=None,
+                        )
+
+    def visit_assign(self, node):
+        """Visiting variable Assignments"""
+        try: # self.connection_verify = True
+            if node.targets[0].attrname == "connection_verify":
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
+        except:
+            try: # connection_verify = True
+                if node.targets[0].name == "connection_verify":
+                    if type(node.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=node,
+                            confidence=None,
+                        )
+            except:
+                pass # typically lists
+
+    def visit_annassign(self, node):
+        """Visiting variable annotated assignments"""
+        try: # self.connection_verify: bool = True
+            if node.target.attrname == "connection_verify":
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
+        except:  # Picks up connection_verify: bool = True
+            try:
+                if node.target.name == "connection_verify":
+                    if type(node.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=node,
+                            confidence=None,
+                        )
+            except:
+                pass
+
+
+
 # [Pylint] Investigate pylint rule around missing dependency #3231
 
 
@@ -3058,7 +3131,7 @@ def register(linter):
     linter.register_checker(DoNotLogExceptions(linter))
 
     # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-    # [Pylint] Add a check for connection_verify hardcoded settings #35355
+    linter.register_checker(DoNotHardcodeConnectionVerify(linter))
     # [Pylint] Investigate pylint rule around missing dependency #3231
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

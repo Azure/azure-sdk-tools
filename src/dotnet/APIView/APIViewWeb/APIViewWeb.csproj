@@ -10,6 +10,7 @@
     <PythonProcessor>..\..\..\..\packages\python-packages\apiview-stub-generator\dist\api_stub_generator-0.1.0-py3-none-any.whl</PythonProcessor>
     <GoProcessor>..\..\..\go\apiviewgo.exe</GoProcessor>
     <JavaScriptProcessor>..\..\..\..\tools\apiview\parsers\js-api-parser\</JavaScriptProcessor>
+    <NpmRcForJS>.\.npmrc</NpmRcForJS>
     <TypeScriptToolsVersion>latest</TypeScriptToolsVersion>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <SignAssembly>False</SignAssembly>
@@ -66,6 +67,7 @@
     <Content Include="$(GoProcessor)" Condition="Exists($(GoProcessor))" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="$(JavaProcessor)" Condition="Exists($(JavaProcessor))" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="$(JavaScriptProcessor)\**\*" Condition="Exists($(JavaScriptProcessor))" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(NpmRcForJS)\**\*" Condition="Exists($(NpmRcForJS))" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

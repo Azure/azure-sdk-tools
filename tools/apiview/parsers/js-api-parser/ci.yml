@@ -101,7 +101,7 @@ extends:
             - task: npmAuthenticate@0
               inputs:
                 workingFile: .npmrc
-              workingDirectory: $(TypeScriptGeneratorDirectory)
+                workingDirectory: $(TypeScriptGeneratorDirectory)
 
             - task: Npm@1
               inputs:
@@ -109,7 +109,6 @@ extends:
                 customCommand: 'publish $(PackageArtifactFullPath)'
                 publishRegistry: useFeed
                 publishFeed: "public/azure-sdk-for-js"
-              displayName: "Publish package"
-              workingDirectory: $(TypeScriptGeneratorDirectory)
+                workingDirectory: $(TypeScriptGeneratorDirectory)
               env:
                 SYSTEM_ACCESSTOKEN: $(System.AccessToken)

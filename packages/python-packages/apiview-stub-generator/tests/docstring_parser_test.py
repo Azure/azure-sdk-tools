@@ -230,7 +230,7 @@ class TestDocstringParser:
         expected = [
             "class DocstringClass:",
             "ivar name: str",
-            "ivar values: Union[dict[str, str], None]",  # TODO: Union "or None" should be Optional
+            "ivar values: Optional[dict[str, str]]", # TODO: Should Dict vs. dict be mixed in like this?
         ]
         _check_all(actuals, expected, obj)
 

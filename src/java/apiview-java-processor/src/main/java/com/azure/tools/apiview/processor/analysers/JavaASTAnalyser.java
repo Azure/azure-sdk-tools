@@ -96,9 +96,6 @@ public class JavaASTAnalyser implements Analyser {
     private final TreeNode libraryRootNode;
     private TreeNode rootPackageNode;
 
-    // a set of all elements discovered before we begin processing them
-    private Set<ScanElement> scanElements;
-
     private final Map<String,String> shortClassNameToFullyQualfiedNameMap = new HashMap<>();
 
     /************************************************************************************************
@@ -132,12 +129,13 @@ public class JavaASTAnalyser implements Analyser {
          * Then build a map of all known types and package names and a map of package names to navigation items.
          * Finally, tokenize each file.
          */
-        scanElements = allFiles.stream()
-            .filter(this::filterFilePaths)
-            .map(this::scanForTypes)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toSet());
+        // a set of all elements discovered before we begin processing them
+        Set<ScanElement> scanElements = allFiles.stream()
+                .filter(this::filterFilePaths)
+                .map(this::scanForTypes)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
 
         scanElements.stream()
             .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
@@ -884,7 +882,9 @@ public class JavaASTAnalyser implements Analyser {
                     return;
                 }
 
-                parentNode.addNewline()
+                parentNode
+                    .addNewline()
+                    .addTabSpace()
                     .addTopToken(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'.");
                 return;
             }

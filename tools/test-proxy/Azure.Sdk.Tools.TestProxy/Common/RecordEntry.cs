@@ -320,7 +320,31 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public override string ToString()
         {
-            return $"Name: {Name}, Age: {Age}";
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"RequestUri: {RequestUri}");
+            sb.AppendLine($"RequestMethod: {RequestMethod}");
+            sb.AppendLine($"StatusCode: {StatusCode}");
+            sb.AppendLine("Request Headers:");
+            foreach (var header in Request.Headers)
+            {
+                sb.AppendLine($"{header.Key}: {string.Join(", ", header.Value)}");
+            }
+            sb.AppendLine("Request Body:");
+            if (Request.Body != null)
+            {
+                sb.AppendLine(Encoding.UTF8.GetString(Request.Body));
+            }
+            sb.AppendLine("Response Headers:");
+            foreach (var header in Response.Headers)
+            {
+                sb.AppendLine($"{header.Key}: {string.Join(", ", header.Value)}");
+            }
+            sb.AppendLine("Response Body:");
+            if (Response.Body != null)
+            {
+                sb.AppendLine(Encoding.UTF8.GetString(Response.Body));
+            }
+            return sb.ToString();
         }
 
     }

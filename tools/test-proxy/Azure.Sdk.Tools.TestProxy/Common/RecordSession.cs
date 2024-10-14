@@ -104,13 +104,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 sanitizer.Sanitize(requestEntry);
                 var reqEntryPostSanitize = requestEntry.ToString();
                 var result = StringComparer.OrdinalIgnoreCase.Compare(reqEntryPreSanitize, reqEntryPostSanitize);
-                DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} start ######################");
-                DebugLogger.LogInformation($"before: {reqEntryPreSanitize}");
-                DebugLogger.LogInformation($" after: {reqEntryPostSanitize}");
-                DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} end ######################");
                 if (result != 0)
                 {
-                    DebugLogger.LogInformation($"Sanitizer {sanitizer.GetType().Name} modified request entry {reqEntryPreSanitize} to {reqEntryPostSanitize}");
+                    DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} modified the entry\nbefore:\n {reqEntryPreSanitize}\nafter:\n {reqEntryPostSanitize}");
                 }
             }
 
@@ -156,18 +152,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             try
             {
-                var entryPreSanitize = this.Entries;
+                var entryPreSanitize = "";
+                for (int i = 0; i < this.Entries.Count; i++)
+                {
+                    entryPreSanitize += this.Entries[i].ToString();
+                }
                 sanitizer.Sanitize(this);
-                var entryPostSanitize = this.Entries.ToString();
+                var entryPostSanitize = "";
+                for (int i = 0; i < this.Entries.Count; i++)
+                {
+                    entryPostSanitize += this.Entries[i].ToString();
+                }
                 var result = StringComparer.OrdinalIgnoreCase.Compare(entryPreSanitize, entryPostSanitize);
                 if (result != 0)
                 {
-                    DebugLogger.LogInformation($"Sanitizer {sanitizer.GetType().Name} modified request entry {entryPreSanitize} to {entryPostSanitize}");
+                    DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} modified the entry\nbefore:\n {entryPreSanitize}\nafter:\n {entryPostSanitize}");
                 }
-                //DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} start ######################");
-                //DebugLogger.LogInformation($"before: {entryPreSanitize}");
-                //DebugLogger.LogInformation($" after: {entryPostSanitize}");
-                //DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} end ######################");
             }
             finally
             {
@@ -189,18 +189,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 foreach (var sanitizer in sanitizers)
                 {
-                    var entryPreSanitize = this.Entries.ToString();
+                    var entryPreSanitize = "";
+                    for (int i = 0; i < this.Entries.Count; i++)
+                    {
+                        entryPreSanitize += this.Entries[i].ToString();
+                    }
                     sanitizer.Sanitize(this);
-                    var entryPostSanitize = this.Entries.ToString();
+                    var entryPostSanitize = "";
+                    for (int i = 0; i < this.Entries.Count; i++)
+                    {
+                        entryPostSanitize += this.Entries[i].ToString();
+                    }
                     var result = StringComparer.OrdinalIgnoreCase.Compare(entryPreSanitize, entryPostSanitize);
                     if (result != 0)
                     {
-                        DebugLogger.LogInformation($"Sanitizer {sanitizer.GetType().Name} modified request entry {entryPreSanitize} to {entryPostSanitize}");
+                        DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} modified the entry\nbefore:\n {entryPreSanitize}\nafter:\n {entryPostSanitize}");
                     }
-                    //DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} start ######################");
-                    //DebugLogger.LogInformation($"before: {entryPreSanitize}");
-                    //DebugLogger.LogInformation($" after: {entryPostSanitize}");
-                    //DebugLogger.LogInformation($"Sanitizer {sanitizer.SanitizerId} end ######################");
                 }
             }
             finally

@@ -34,7 +34,7 @@ import {
 import { logger } from '../../logging/logger';
 
 // TODO: limit node
-function findBreakingReasons(baselineNode: Node, currentNode: Node): BreakingReasons {
+function findBreakingReasons(target: Node, source: Node): BreakingReasons {
   // Note: if return type node defined,
   // it's a funtion/method/signature's return type node,
   // return it, it will be used to compare later
@@ -46,47 +46,47 @@ function findBreakingReasons(baselineNode: Node, currentNode: Node): BreakingRea
   };
   let breakingReasons = BreakingReasons.None;
 
-  const baselineTypeNode = getTypeNode(baselineNode);
-  const currentTypeNode = getTypeNode(currentNode);
+  const targetTypeNode = getTypeNode(target);
+  const sourceTypeNode = getTypeNode(source);
 
   // check if concrete type -> any. e.g. string -> any
-  const isConcretTypeToAny = canConvertConcretTypeToAny(baselineTypeNode?.getKind(), currentTypeNode?.getKind());
+  const isConcretTypeToAny = canConvertConcretTypeToAny(targetTypeNode?.getKind(), sourceTypeNode?.getKind());
   if (isConcretTypeToAny) breakingReasons |= BreakingReasons.TypeChanged;
 
   // check type predicates
   if (
-    baselineTypeNode &&
-    currentTypeNode &&
-    baselineTypeNode.isKind(SyntaxKind.TypePredicate) &&
-    currentTypeNode.isKind(SyntaxKind.TypePredicate)
+    targetTypeNode &&
+    sourceTypeNode &&
+    targetTypeNode.isKind(SyntaxKind.TypePredicate) &&
+    sourceTypeNode.isKind(SyntaxKind.TypePredicate)
   ) {
     const getTypeName = (node: TypeNode) => node.asKindOrThrow(SyntaxKind.TypePredicate).getTypeNodeOrThrow().getText();
-    if (getTypeName(baselineTypeNode) !== getTypeName(currentTypeNode)) breakingReasons |= BreakingReasons.TypeChanged;
+    if (getTypeName(targetTypeNode) !== getTypeName(sourceTypeNode)) breakingReasons |= BreakingReasons.TypeChanged;
   }
 
   // check type
-  const assignable = currentTypeNode.getType().isAssignableTo(baselineTypeNode.getType());
+  const assignable = sourceTypeNode.getType().isAssignableTo(targetTypeNode.getType());
   if (!assignable) breakingReasons |= BreakingReasons.TypeChanged;
 
   // check required -> optional
   const isOptional = (node: Node) => node.getSymbolOrThrow().isOptional();
-  const incompatibleOptional = isOptional(baselineNode) && !isOptional(currentNode);
+  const incompatibleOptional = isOptional(target) && !isOptional(source);
   if (incompatibleOptional) breakingReasons |= BreakingReasons.RequiredToOptional;
 
   // check readonly -> mutable
   const isReadonly = (node: Node) => Node.isReadonlyable(node) && node.isReadonly();
-  const incompatibleReadonly = isReadonly(baselineNode) && !isReadonly(currentNode);
+  const incompatibleReadonly = isReadonly(target) && !isReadonly(source);
   if (incompatibleReadonly) breakingReasons |= BreakingReasons.ReadonlyToMutable;
 
   return breakingReasons;
 }
 
 function findCallSignatureBreakingChanges(
-  baselineSignatures: Signature[],
-  currentSignatures: Signature[],
+  targetSignatures: Signature[],
+  sourceSignatures: Signature[],
   findMappingCallSignature?: FindMappingCallSignature
 ): BreakingPair[] {
-  const pairs = baselineSignatures.reduce((result, baselineSignature) => {
+  const pairs = targetSignatures.reduce((result, targetSignature) => {
     const defaultFindMappingCallSignature: FindMappingCallSignature = (target: Signature, signatures: Signature[]) => {
       const signature = signatures.find((s) => isSameSignature(target, s));
       if (!signature) return undefined;
@@ -94,27 +94,27 @@ function findCallSignatureBreakingChanges(
       return { id, signature };
     };
     const resolvedFindMappingCallSignature = findMappingCallSignature || defaultFindMappingCallSignature;
-    const currentContext = resolvedFindMappingCallSignature(baselineSignature, currentSignatures);
-    if (currentContext) {
-      const currentSignature = currentContext.signature;
+    const sourceContext = resolvedFindMappingCallSignature(targetSignature, sourceSignatures);
+    if (sourceContext) {
+      const sourceSignature = sourceContext.signature;
       // handle return type
       const getDeclaration = (s: Signature): CallSignatureDeclaration =>
         s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
-      const baselineDeclaration = getDeclaration(baselineSignature)!;
-      const currentDeclaration = getDeclaration(currentSignature)!;
-      const returnPairs = findReturnTypeBreakingChangesCore(baselineDeclaration, currentDeclaration);
+      const targetDeclaration = getDeclaration(targetSignature)!;
+      const sourceDeclaration = getDeclaration(sourceSignature)!;
+      const returnPairs = findReturnTypeBreakingChangesCore(targetDeclaration, sourceDeclaration);
       if (returnPairs.length > 0) result.push(...returnPairs);
 
       // handle parameters
       const getParameters = (s: Signature): ParameterDeclaration[] =>
         s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getParameters();
       const parameterPairs = findParameterBreakingChangesCore(
-        getParameters(baselineSignature),
-        getParameters(currentSignature),
-        currentContext.id,
-        currentContext.id,
-        baselineSignature.getDeclaration(),
-        currentSignature.getDeclaration()
+        getParameters(targetSignature),
+        getParameters(sourceSignature),
+        sourceContext.id,
+        sourceContext.id,
+        targetSignature.getDeclaration(),
+        sourceSignature.getDeclaration()
       );
       if (parameterPairs.length > 0) result.push(...parameterPairs);
 
@@ -124,8 +124,8 @@ function findCallSignatureBreakingChanges(
     const getNode = (s: Signature): Node => s.compilerSignature.getDeclaration() as unknown as Node;
     const getName = (s: Signature): string => s.compilerSignature.getDeclaration().getText();
     const getNameNode = (s: Signature): NameNode => ({ name: getName(s), node: getNode(s) });
-    const baselineNameNode = getNameNode(baselineSignature);
-    const pair = makeBreakingPair(BreakingLocation.Call, BreakingReasons.Removed, undefined, baselineNameNode);
+    const targetNameNode = getNameNode(targetSignature);
+    const pair = makeBreakingPair(BreakingLocation.Call, BreakingReasons.Removed, undefined, targetNameNode);
     result.push(pair);
     return result;
   }, new Array<BreakingPair>());
@@ -140,82 +140,82 @@ function isClassicProperty(p: Symbol) {
   return (p.getFlags() & SymbolFlags.Property) !== 0 && !isMethodOrArrowFunction(p);
 }
 
-function canConvertConcretTypeToAny(baselineKind: SyntaxKind | undefined, currentKind: SyntaxKind | undefined) {
-  return baselineKind !== SyntaxKind.AnyKeyword && currentKind === SyntaxKind.AnyKeyword;
+function canConvertConcretTypeToAny(targetKind: SyntaxKind | undefined, sourceKind: SyntaxKind | undefined) {
+  return targetKind !== SyntaxKind.AnyKeyword && sourceKind === SyntaxKind.AnyKeyword;
 }
 
 function findClassicPropertyBreakingChanges(
-  baselineProperty: Symbol,
-  currentProperty: Symbol
+  targetProperty: Symbol,
+  sourceProperty: Symbol
 ): BreakingPair | undefined {
   const reasons = findBreakingReasons(
-    baselineProperty.getValueDeclarationOrThrow(),
-    currentProperty.getValueDeclarationOrThrow()
+    targetProperty.getValueDeclarationOrThrow(),
+    sourceProperty.getValueDeclarationOrThrow()
   );
 
   if (reasons === BreakingReasons.None) return undefined;
   return makeBreakingPair(
     BreakingLocation.ClassicProperty,
     reasons,
-    getNameNode(baselineProperty),
-    getNameNode(currentProperty)
+    getNameNode(targetProperty),
+    getNameNode(sourceProperty)
   );
 }
 
 // NOTE: this function compares methods and arrow functions in interface
-function findPropertyBreakingChanges(baselineProperties: Symbol[], currentProperties: Symbol[]): BreakingPair[] {
-  const currentPropMap = currentProperties.reduce((map, p) => {
+function findPropertyBreakingChanges(targetProperties: Symbol[], sourceProperties: Symbol[]): BreakingPair[] {
+  const sourcePropMap = sourceProperties.reduce((map, p) => {
     map.set(p.getName(), p);
     return map;
   }, new Map<string, Symbol>());
 
-  const removed = baselineProperties.reduce((result, baselineProperty) => {
-    const name = baselineProperty.getName();
-    if (currentPropMap.has(name)) {
+  const removed = targetProperties.reduce((result, targetProperty) => {
+    const name = targetProperty.getName();
+    if (sourcePropMap.has(name)) {
       return result;
     }
 
-    const isPropertyFunction = isMethodOrArrowFunction(baselineProperty);
+    const isPropertyFunction = isMethodOrArrowFunction(targetProperty);
     const location = isPropertyFunction ? BreakingLocation.Function : BreakingLocation.ClassicProperty;
-    const pair = makeBreakingPair(location, BreakingReasons.Removed, undefined, getNameNode(baselineProperty));
+    const pair = makeBreakingPair(location, BreakingReasons.Removed, undefined, getNameNode(targetProperty));
     result.push(pair);
     return result;
   }, new Array<BreakingPair>());
 
-  const changed = baselineProperties.reduce((result, baselineProperty) => {
-    const name = baselineProperty.getName();
-    const currentProperty = currentPropMap.get(name);
-    if (!currentProperty) return result;
+  const changed = targetProperties.reduce((result, targetProperty) => {
+    const name = targetProperty.getName();
+    const sourceProperty = sourcePropMap.get(name);
+    if (!sourceProperty) return result;
 
-    const isBaselinePropertyClassic = isClassicProperty(baselineProperty);
-    const isCurrentPropertyClassic = isClassicProperty(currentProperty);
+    const isTargetPropertyClassic = isClassicProperty(targetProperty);
+    const isSourcePropertyClassic = isClassicProperty(sourceProperty);
 
     // handle different property kinds
-    if (isBaselinePropertyClassic !== isCurrentPropertyClassic) {
+    if (isTargetPropertyClassic !== isSourcePropertyClassic) {
       return [
         ...result,
         makeBreakingPair(
           BreakingLocation.Function,
           BreakingReasons.TypeChanged,
-          getNameNode(currentProperty),
-          getNameNode(baselineProperty)
+          getNameNode(sourceProperty),
+          getNameNode(targetProperty)
         ),
       ];
     }
 
     // handle classic property
-    if (isBaselinePropertyClassic && isCurrentPropertyClassic) {
-      const classicBreakingPair = findClassicPropertyBreakingChanges(baselineProperty, currentProperty);
+    if (isTargetPropertyClassic && isSourcePropertyClassic) {
+      const classicBreakingPair = findClassicPropertyBreakingChanges(targetProperty, sourceProperty);
       if (!classicBreakingPair) return result;
       return [...result, classicBreakingPair];
     }
 
     // handle method and arrow function
     if (
-      (isPropertyMethod(baselineProperty) || isPropertyArrowFunction(baselineProperty)) &&
-      (isPropertyMethod(currentProperty) || isPropertyArrowFunction(currentProperty))
+      (isPropertyMethod(targetProperty) || isPropertyArrowFunction(targetProperty)) &&
+      (isPropertyMethod(sourceProperty) || isPropertyArrowFunction(sourceProperty))
     ) {
-      const functionPropertyDetails = findFunctionPropertyBreakingChangeDetails(baselineProperty, currentProperty);
+      const functionPropertyDetails = findFunctionPropertyBreakingChangeDetails(targetProperty, sourceProperty);
       return [...result, ...functionPropertyDetails];
     }
 
@@ -224,41 +224,41 @@ function findPropertyBreakingChanges(baselineProperties: Symbol[], currentProper
   return [...removed, ...changed];
 }
 
-function findReturnTypeBreakingChangesCore(baseline: Node, current: Node): BreakingPair[] {
-  const reasons = findBreakingReasons(baseline, current);
+function findReturnTypeBreakingChangesCore(target: Node, source: Node): BreakingPair[] {
+  const reasons = findBreakingReasons(target, source);
   if (reasons === BreakingReasons.None) return [];
-  const baselineNameNode = baseline ? { name: baseline.getText(), node: baseline } : undefined;
-  const currentNameNode = current ? { name: current.getText(), node: current } : undefined;
-  const pair = makeBreakingPair(BreakingLocation.FunctionReturnType, reasons, currentNameNode, baselineNameNode);
+  const targetNameNode = target ? { name: target.getText(), node: target } : undefined;
+  const sourceNameNode = source ? { name: source.getText(), node: source } : undefined;
+  const pair = makeBreakingPair(BreakingLocation.FunctionReturnType, reasons, sourceNameNode, targetNameNode);
   return [pair];
 }
 
-function findReturnTypeBreakingChanges(baselineMethod: Symbol, currentMethod: Symbol): BreakingPair[] {
-  const baselineDeclaration = baselineMethod.getValueDeclarationOrThrow();
-  const currentDeclaration = currentMethod.getValueDeclarationOrThrow();
-  return findReturnTypeBreakingChangesCore(baselineDeclaration, currentDeclaration);
+function findReturnTypeBreakingChanges(targetMethod: Symbol, sourceMethod: Symbol): BreakingPair[] {
+  const targetDeclaration = targetMethod.getValueDeclarationOrThrow();
+  const sourceDeclaration = sourceMethod.getValueDeclarationOrThrow();
+  return findReturnTypeBreakingChangesCore(targetDeclaration, sourceDeclaration);
 }
 
 function findParameterBreakingChangesCore(
-  baselineParameters: ParameterDeclaration[],
-  currentParameters: ParameterDeclaration[],
-  baselineName: string,
-  currentName: string,
-  baselineNode: Node | TypeNode,
-  currentNode: Node | TypeNode
+  targetParameters: ParameterDeclaration[],
+  sourceParameters: ParameterDeclaration[],
+  targetName: string,
+  sourceName: string,
+  targetNode: Node | TypeNode,
+  sourceNode: Node | TypeNode
 ): BreakingPair[] {
   const pairs: BreakingPair[] = [];
 
   // handle parameter counts
-  const isSameParameterCount = baselineParameters.length === currentParameters.length;
+  const isSameParameterCount = targetParameters.length === sourceParameters.length;
   if (!isSameParameterCount) {
     const source = {
-      name: currentName,
-      node: currentNode,
+      name: sourceName,
+      node: sourceNode,
     };
     const target = {
-      name: baselineName,
-      node: baselineNode,
+      name: targetName,
+      node: targetNode,
     };
     const pair = makeBreakingPair(BreakingLocation.FunctionParameterList, BreakingReasons.CountChanged, source, target);
     pairs.push(pair);
@@ -267,15 +267,15 @@ function findParameterBreakingChangesCore(
 
   // NOTE: parameter count is the same
   // handle each parameter
-  baselineParameters.forEach((baselineParameter, i) => {
-    const currentParameter = currentParameters[i];
+  targetParameters.forEach((targetParameter, i) => {
+    const sourceParameter = sourceParameters[i];
     const getParameterNameNode = (p: ParameterDeclaration | undefined) =>
       p ? { name: p.getName() || '', node: p } : undefined;
-    const target = getParameterNameNode(baselineParameter);
-    const source = getParameterNameNode(currentParameter);
-    const reasons = findBreakingReasons(baselineParameter, currentParameter);
+    const target = getParameterNameNode(targetParameter);
+    const source = getParameterNameNode(sourceParameter);
+    const reasons = findBreakingReasons(targetParameter, sourceParameter);
     const pair = makeBreakingPair(BreakingLocation.FunctionParameter, reasons, source, target);
-    pair.reasons = findBreakingReasons(baselineParameter, currentParameter);
+    pair.reasons = findBreakingReasons(targetParameter, sourceParameter);
     if (pair.reasons !== BreakingReasons.None) pairs.push(pair);
   });
 
@@ -283,22 +283,22 @@ function findParameterBreakingChangesCore(
 }
 
 // TODO: not support for overloads
-function findParameterBreakingChanges(baselineMethod: Symbol, currentMethod: Symbol): BreakingPair[] {
-  const baselineParameters = getCallableEntityParametersFromSymbol(baselineMethod);
-  const currentParameters = getCallableEntityParametersFromSymbol(currentMethod);
+function findParameterBreakingChanges(targetMethod: Symbol, sourceMethod: Symbol): BreakingPair[] {
+  const targetParameters = getCallableEntityParametersFromSymbol(targetMethod);
+  const sourceParameters = getCallableEntityParametersFromSymbol(sourceMethod);
   return findParameterBreakingChangesCore(
-    baselineParameters,
-    currentParameters,
-    baselineMethod.getName(),
-    currentMethod.getName(),
-    baselineMethod.getValueDeclarationOrThrow(),
-    currentMethod.getValueDeclarationOrThrow()
+    targetParameters,
+    sourceParameters,
+    targetMethod.getName(),
+    sourceMethod.getName(),
+    targetMethod.getValueDeclarationOrThrow(),
+    sourceMethod.getValueDeclarationOrThrow()
   );
 }
 
-function findFunctionPropertyBreakingChangeDetails(baselineMethod: Symbol, currentMethod: Symbol): BreakingPair[] {
-  const returnTypePairs = findReturnTypeBreakingChanges(baselineMethod, currentMethod);
-  const parameterPairs = findParameterBreakingChanges(baselineMethod, currentMethod);
+function findFunctionPropertyBreakingChangeDetails(targetMethod: Symbol, sourceMethod: Symbol): BreakingPair[] {
+  const returnTypePairs = findReturnTypeBreakingChanges(targetMethod, sourceMethod);
+  const parameterPairs = findParameterBreakingChanges(targetMethod, sourceMethod);
   return [...returnTypePairs, ...parameterPairs];
 }
 
@@ -309,17 +309,17 @@ export function findInterfaceBreakingChanges(
   target: InterfaceDeclaration,
   findMappingCallSignature?: FindMappingCallSignature
 ): BreakingPair[] {
-  const baselineSignatures = target.getType().getCallSignatures();
-  const currentSignatures = source.getType().getCallSignatures();
+  const targetSignatures = target.getType().getCallSignatures();
+  const sourceSignatures = source.getType().getCallSignatures();
   const callSignatureBreakingChanges = findCallSignatureBreakingChanges(
-    baselineSignatures,
-    currentSignatures,
+    targetSignatures,
+    sourceSignatures,
     findMappingCallSignature
   );
-  const baselineProperties = target.getType().getProperties();
-  const currentProperties = source.getType().getProperties();
+  const targetProperties = target.getType().getProperties();
+  const sourceProperties = source.getType().getProperties();
 
-  const propertyBreakingChanges = findPropertyBreakingChanges(baselineProperties, currentProperties);
+  const propertyBreakingChanges = findPropertyBreakingChanges(targetProperties, sourceProperties);
 
   return [...callSignatureBreakingChanges, ...propertyBreakingChanges];
 }

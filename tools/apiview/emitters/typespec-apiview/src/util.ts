@@ -12,3 +12,41 @@ function reviewTokenText(token: ReviewToken): string {
   const value = token.Value;
   return `${value}${suffixSpace}`;
 }
+
+export class NamespaceStack {
+  stack = new Array<string>();
+
+  push(val: string) {
+    this.stack.push(val);
+  }
+
+  pop(): string | undefined {
+    return this.stack.pop();
+  }
+
+  value(): string {
+    return this.stack.join(".");
+  }
+
+  reset() {
+    this.stack = Array<string>();
+  }
+}
+
+/** A simple structure that holds the last n ReviewLines in reverse order, without nesting */
+export class ReviewLineLookback {
+  lines: ReviewLine[];
+  maxSize: number;
+
+  constructor(maxSize: number = 10) {
+    this.maxSize = maxSize;
+    this.lines = [];
+  }
+
+  push(line: ReviewLine) {
+    if (this.lines.length >= this.maxSize) {
+      this.lines.pop();
+    }
+    this.lines.unshift(line);
+  }
+}

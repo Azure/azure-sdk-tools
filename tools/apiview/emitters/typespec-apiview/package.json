@@ -38,14 +38,13 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "clean": "rimraf ./dist ./temp",
+    "clean": "rimraf ./dist ./temp ./tsp-output",
     "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "purge": "rimraf ./node_modules ./package-lock.json",
     "build": "npm run prebuild && tsc -p . && npm run lint-typespec-library",
     "watch": "tsc -p . --watch",
     "lint-typespec-library": "tsp compile . --warn-as-error --import @typespec/library-linter --no-emit",
-    "test": "mocha",
-    "test-official": "c8 mocha --forbid-only --reporter mocha-multi-reporters",
+    "test": "vitest",
     "lint": "eslint . --ext .ts --max-warnings=0",
     "lint:fix": "eslint . --fix --ext .ts",
     "api-view": "node ./node_modules/@typespec/compiler/entrypoints/cli.js compile main.tsp --emit=@azure-tools/typespec-apiview"
@@ -61,24 +60,23 @@
   },
   "devDependencies": {
     "@azure-tools/typespec-azure-core": ">=0.43 <1.0",
-    "@typespec/http": ">=0.57 <1.0",
-    "@typespec/rest": ">=0.57 <1.0",
+    "@types/node": "~18.11.19",
     "@typespec/eslint-plugin": ">=0.57 <1.0",
+    "@typespec/http": ">=0.57 <1.0",
     "@typespec/library-linter": ">=0.57 <1.0",
     "@typespec/prettier-plugin-typespec": ">=0.57 <1.0",
-    "@types/mocha": "~9.1.0",
-    "@types/node": "~18.11.19",
+    "@typespec/rest": ">=0.57 <1.0",
+    "@vitest/coverage-v8": "^2.1.0",
     "c8": "^9.1.0",
     "cspell": "^8.8.1",
     "eslint": "^9.11.1",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-unicorn": "^53.0.0",
+    "eslint-plugin-vitest": "^0.5.4",
     "prettier": "~3.2.5",
     "rimraf": "~5.0.7",
+    "source-map-support": "^0.5.19",
     "typescript": "~5.4.5",
-    "mocha": "~9.2.0",
-    "mocha-junit-reporter": "~2.0.2",
-    "mocha-multi-reporters": "~1.5.1",
-    "source-map-support": "^0.5.19"
+    "vitest": "^2.1.3"
   }
 }

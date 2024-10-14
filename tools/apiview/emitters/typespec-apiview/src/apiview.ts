@@ -50,7 +50,7 @@ import {
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
 import { CodeDiagnostic, CodeDiagnosticLevel, CodeFile, NavigationItem, ReviewLine, ReviewToken, ReviewTokenOptions, TokenKind } from "./schemas.js";
-import { reviewLineText } from "./util.js";
+import { NamespaceStack, reviewLineText } from "./util.js";
 
 export class ApiView {
   name: string;
@@ -1134,25 +1134,5 @@ export class ApiView {
       }
     }
     return undefined;
-  }
-}
-
-export class NamespaceStack {
-  stack = new Array<string>();
-
-  push(val: string) {
-    this.stack.push(val);
-  }
-
-  pop(): string | undefined {
-    return this.stack.pop();
-  }
-
-  value(): string {
-    return this.stack.join(".");
-  }
-
-  reset() {
-    this.stack = Array<string>();
   }
 }

@@ -3,7 +3,7 @@
     "outDir": "dist",
     "rootDir": ".",
     "tsBuildInfoFile": "temp/tsconfig.tsbuildinfo",
-    "types": ["node", "mocha"],
+    "types": ["node", "vitest"],
     "composite": true,
     "alwaysStrict": true,
     "forceConsistentCasingInFileNames": true,

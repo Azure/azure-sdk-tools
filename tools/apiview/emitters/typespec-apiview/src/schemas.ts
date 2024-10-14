@@ -3,7 +3,7 @@
 
 import { AliasStatementNode, EnumStatementNode, InterfaceStatementNode, IntersectionExpressionNode, ModelExpressionNode, ModelStatementNode, ObjectLiteralNode, OperationStatementNode, ProjectionModelExpressionNode, ScalarStatementNode, SyntaxKind, UnionExpressionNode, UnionStatementNode } from "@typespec/compiler";
 import { NamespaceModel } from "./namespace-model.js";
-import { NamespaceStack } from "./apiview.js";
+import { NamespaceStack } from "./util.js";
 
 // CORE API VIEW SCHEMAS
 

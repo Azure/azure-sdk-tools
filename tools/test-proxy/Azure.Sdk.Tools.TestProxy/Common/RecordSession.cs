@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var reqEntryPreSanitize = requestEntry.ToString();
                 sanitizer.Sanitize(requestEntry);
                 var reqEntryPostSanitize = requestEntry.ToString();
-                LogSanitizerModification(reqEntryPreSanitize, reqEntryPostSanitize, sanitizer.SanitizerId);
+                LogSanitizerModification(sanitizer.SanitizerId, reqEntryPreSanitize, reqEntryPostSanitize );
             }
 
             // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 entryPreSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
                 sanitizer.Sanitize(this);
                 entryPostSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
-                LogSanitizerModification(entryPreSanitize, entryPostSanitize, sanitizer.SanitizerId);
+                LogSanitizerModification(sanitizer.SanitizerId, entryPreSanitize, entryPostSanitize);
             }
             finally
             {
@@ -165,7 +165,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
         }
-        private void LogSanitizerModification(string entryPreSanitize, string entryPostSanitize, string sanitizerId)
+        private void LogSanitizerModification(string sanitizerId, string entryPreSanitize, string entryPostSanitize)
         {
             var result = StringComparer.OrdinalIgnoreCase.Compare(entryPreSanitize, entryPostSanitize);
             if (result != 0)
@@ -191,7 +191,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     entryPreSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
                     sanitizer.Sanitize(this);
                     entryPostSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
-                    LogSanitizerModification(entryPreSanitize, entryPostSanitize, sanitizer.SanitizerId);
+                    LogSanitizerModification(sanitizer.SanitizerId, entryPreSanitize, entryPostSanitize);
                 }
             }
             finally

@@ -1,5 +1,4 @@
-const version = 'v1.0.0';
-const staticCacheName = `static-${version}`;
+const version = process.env.BUILD_BUILDID || 'dev';
 const globPatterns = [
   'favicon.ico',
   'index.html',
@@ -16,23 +15,7 @@ module.exports = {
   skipWaiting: true,
   clientsClaim: true,
   cleanupOutdatedCaches: true,
+  modifyURLPrefix: {
+    '': `?v=${version}`
+  }
 };
-
-self.addEventListener('install', event => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => caches.delete(cacheName))
-      );
-    }).then(() => {
-      return caches.open(staticCacheName).then(cache => {
-        return cache.addAll(globPatterns);
-      });
-    })
-  );
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
-});

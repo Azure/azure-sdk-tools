@@ -1,6 +1,7 @@
-import assert, { fail } from "assert";
 import { apiViewFor, apiViewText, compare } from "./test-host.js";
 import { CodeFile } from "../src/schemas.js";
+import { describe, it } from "vitest";
+import { fail } from "assert";
 
 describe("apiview: tests", () => {
   /** Validates that there are no repeat defintion IDs. */

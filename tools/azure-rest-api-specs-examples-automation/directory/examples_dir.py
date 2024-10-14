@@ -20,7 +20,7 @@ def try_find_resource_manager_example(
             if tsp_dir:
                 # find example under directory
                 # e.g. example_path = "specification/mongocluster/DocumentDB.MongoCluster.Management/examples/2024-03-01-preview/MongoClusters_ListConnectionStrings.json"
-                example_paths = glob.glob(f"{path.join(specs_path, tsp_dir)}/**/{example_filename}", recursive=True)
+                example_paths = glob.glob(f"{path.join(specs_path, tsp_dir)}/**/examples/{example_dir}/{example_filename}", recursive=True)
 
                 if len(example_paths) > 0:
                     example_path = example_paths[0]

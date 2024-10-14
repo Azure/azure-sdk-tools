@@ -6,6 +6,7 @@ using TypeSpec.JsonSchema;
 
 @usage(Usage.input | Usage.output)
 @jsonSchema
+@service({title: "Schemas"})  // TODO: remove the @service decorator, keeping for now for generation
 namespace Schemas;
 
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */

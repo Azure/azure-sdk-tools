@@ -40,13 +40,15 @@
   "scripts": {
     "clean": "rimraf ./dist ./temp",
     "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
+    "purge": "rimraf ./node_modules ./package-lock.json",
     "build": "npm run prebuild && tsc -p . && npm run lint-typespec-library",
     "watch": "tsc -p . --watch",
     "lint-typespec-library": "tsp compile . --warn-as-error --import @typespec/library-linter --no-emit",
     "test": "mocha",
     "test-official": "c8 mocha --forbid-only --reporter mocha-multi-reporters",
     "lint": "eslint . --ext .ts --max-warnings=0",
-    "lint:fix": "eslint . --fix --ext .ts"
+    "lint:fix": "eslint . --fix --ext .ts",
+    "api-view": "node ./node_modules/@typespec/compiler/entrypoints/cli.js compile main.tsp --emit=@azure-tools/typespec-apiview"
   },
   "files": [
     "lib/*.tsp",
@@ -68,7 +70,7 @@
     "@types/node": "~18.11.19",
     "c8": "^9.1.0",
     "cspell": "^8.8.1",
-    "eslint": "^8.57.0",
+    "eslint": "^9.11.1",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-unicorn": "^53.0.0",
     "prettier": "~3.2.5",

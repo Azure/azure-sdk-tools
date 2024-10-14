@@ -5,14 +5,13 @@ from os import path, makedirs
 from examples_dir import try_find_resource_manager_example
 
 
-def create_mock_test_folder() -> tempfile.TemporaryDirectory:
-    tsp_location_file_content = """directory: specification/mongocluster/DocumentDB.MongoCluster.Management
+tsp_location_file_content = """directory: specification/mongocluster/DocumentDB.MongoCluster.Management
 commit: 7ed015e3dd1b8b1b0e71c9b5e6b6c5ccb8968b3a
 repo: Azure/azure-rest-api-specs
 additionalDirectories: null
 """
 
-    json_example_file_content = """{
+json_example_file_content = """{
   "operationId": "MongoClusters_ListConnectionStrings",
   "title": "List the available connection strings for the Mongo Cluster resource.",
   "parameters": {
@@ -36,6 +35,7 @@ additionalDirectories: null
 }
 """
 
+def create_mock_test_folder() -> tempfile.TemporaryDirectory:
     tmp_path = path.abspath(".")
     tmp_dir = tempfile.TemporaryDirectory(dir=tmp_path)
     try:
@@ -80,6 +80,16 @@ class TestExamplesDir(unittest.TestCase):
             self.assertEqual(
                 "specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-03-01-preview/examples",
                 example_dir,
+            )
+
+    def test_find_resource_manager_example_typespec_no_tsp_location(self):
+        mock_path = path.abspath(".")
+        with self.assertRaises(RuntimeError) as context:
+            example_dir = try_find_resource_manager_example(
+                path.join(mock_path, "azure-rest-api-specs"),
+                path.join(mock_path, "azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster"),
+                "2024-03-01-preview",
+                "MongoClusters_ListConnectionStrings.json",
             )
 
     def test_find_resource_manager_example_swagger(self):

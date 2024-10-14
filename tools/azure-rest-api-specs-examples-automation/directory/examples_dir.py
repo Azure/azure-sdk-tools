@@ -46,5 +46,7 @@ def try_find_resource_manager_example(
                         if len(candidate_resource_manager_filename) > 0:
                             example_path, _ = path.split(candidate_resource_manager_filename[0])
                             example_dir = path.relpath(example_path, specs_path).replace("\\", "/")
+        else:
+            raise RuntimeError(f"tsp-location.yaml not found in SDK package folder {sdk_package_path}")
 
     return example_dir

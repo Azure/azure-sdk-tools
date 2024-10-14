@@ -113,13 +113,12 @@ function Log($Message) {
   Write-Host $Message
 }
 
-function IsValidAlias
+function IsValidAlias([string]$Alias)
 {
-  param(
-    [Parameter(Mandatory = $true)]
-    [string]$Alias
-  )
-
+  if (!$Alias) { 
+    return $false 
+  }
+  
   if ($OwnerAliasCache.ContainsKey($Alias)) {
     return $OwnerAliasCache[$Alias]
   }

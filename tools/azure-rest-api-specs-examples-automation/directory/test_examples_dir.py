@@ -6,7 +6,7 @@ from examples_dir import try_find_resource_manager_example
 
 
 tsp_location_file_content = """directory: specification/mongocluster/DocumentDB.MongoCluster.Management
-commit: 7ed015e3dd1b8b1b0e71c9b5e6b6c5ccb8968b3a
+commit: 07bdede4651ce2ea0e4039d76e81a69df23a3d6e
 repo: Azure/azure-rest-api-specs
 additionalDirectories: null
 """
@@ -18,7 +18,7 @@ json_example_file_content = """{
     "subscriptionId": "ffffffff-ffff-ffff-ffff-ffffffffffff",
     "resourceGroupName": "TestGroup",
     "mongoClusterName": "myMongoCluster",
-    "api-version": "2024-03-01-preview"
+    "api-version": "2024-07-01"
   },
   "responses": {
     "200": {
@@ -44,6 +44,7 @@ def create_mock_test_folder() -> tempfile.TemporaryDirectory:
         with open(path.join(sdk_path, "tsp-location.yaml"), "w+", encoding="utf-8") as file:
             file.write(tsp_location_file_content)
 
+        # api-version 2024-03-01-preview
         specs_path = path.join(
             tmp_dir.name,
             "azure-rest-api-specs/specification/mongocluster/DocumentDB.MongoCluster.Management/examples/2024-03-01-preview",
@@ -55,6 +56,23 @@ def create_mock_test_folder() -> tempfile.TemporaryDirectory:
         specs_path = path.join(
             tmp_dir.name,
             "azure-rest-api-specs/specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-03-01-preview/examples",
+        )
+        makedirs(specs_path)
+        with open(path.join(specs_path, "MongoClusters_ListConnectionStrings.json"), "w+", encoding="utf-8") as file:
+            file.write(json_example_file_content)
+
+        # api-version 2024-07-01
+        specs_path = path.join(
+            tmp_dir.name,
+            "azure-rest-api-specs/specification/mongocluster/DocumentDB.MongoCluster.Management/examples/2024-07-01",
+        )
+        makedirs(specs_path)
+        with open(path.join(specs_path, "MongoClusters_ListConnectionStrings.json"), "w+", encoding="utf-8") as file:
+            file.write(json_example_file_content)
+
+        specs_path = path.join(
+            tmp_dir.name,
+            "azure-rest-api-specs/specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-07-01/examples",
         )
         makedirs(specs_path)
         with open(path.join(specs_path, "MongoClusters_ListConnectionStrings.json"), "w+", encoding="utf-8") as file:
@@ -73,12 +91,12 @@ class TestExamplesDir(unittest.TestCase):
             example_dir = try_find_resource_manager_example(
                 path.join(tmp_dir_name, "azure-rest-api-specs"),
                 path.join(tmp_dir_name, "azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster"),
-                "2024-03-01-preview",
+                "2024-07-01",
                 "MongoClusters_ListConnectionStrings.json",
             )
 
             self.assertEqual(
-                "specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-03-01-preview/examples",
+                "specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-07-01/examples",
                 example_dir,
             )
 
@@ -88,7 +106,7 @@ class TestExamplesDir(unittest.TestCase):
             example_dir = try_find_resource_manager_example(
                 path.join(mock_path, "azure-rest-api-specs"),
                 path.join(mock_path, "azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster"),
-                "2024-03-01-preview",
+                "2024-07-01",
                 "MongoClusters_ListConnectionStrings.json",
             )
 

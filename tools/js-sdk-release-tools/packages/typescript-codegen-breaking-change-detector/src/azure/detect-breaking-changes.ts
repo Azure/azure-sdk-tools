@@ -2,6 +2,7 @@ import * as parser from '@typescript-eslint/parser';
 import * as ruleIds from '../common/models/rules/rule-ids';
 
 import {
+  AstContext,
   InlineDeclarationNameSetMessage,
   LinterSettings,
   ParseForESLintResult,
@@ -16,6 +17,7 @@ import { TSESLint } from '@typescript-eslint/utils';
 import ignoreInlineDeclarationsInOperationGroup from './common/rules/ignore-inline-declarations-in-operation-group';
 import { glob } from 'glob';
 import { logger } from '../logging/logger';
+import { Project, ScriptTarget } from 'ts-morph';
 
 const tsconfig = `
 {
@@ -148,6 +150,20 @@ async function detectBreakingChangesCore(projectContext: ProjectContext): Promis
     logger.error(`Failed to detect breaking changes due to ${(err as Error)?.stack ?? err}`);
     return undefined;
   }
+}
+
+export async function createAstContext(
+  baselineApiViewPath: string,
+  currentApiViewPath: string,
+  tempFolder: string
+) {
+  const projectContext = await prepareProject(currentApiViewPath, baselineApiViewPath, tempFolder);
+  const project = new Project({
+    compilerOptions: { target: ScriptTarget.ES2022 },
+  });
+  const baseline = project.createSourceFile('review/baseline/index.ts', projectContext.baseline.code);
+  const current = project.createSourceFile('review/current/index.ts', projectContext.current.code);
+  return { baseline, current };
 }
 
 export async function detectBreakingChangesBetweenPackages(

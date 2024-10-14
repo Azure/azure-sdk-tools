@@ -4,7 +4,15 @@ import { ParserServices } from '@typescript-eslint/parser';
 import type { ScopeManager } from '@typescript-eslint/scope-manager';
 import { TSESTree } from '@typescript-eslint/utils';
 import type { VisitorKeys } from '@typescript-eslint/visitor-keys';
-import { EnumDeclaration, InterfaceDeclaration, Node, TypeAliasDeclaration } from 'ts-morph';
+import {
+  EnumDeclaration,
+  InterfaceDeclaration,
+  Node,
+  Signature,
+  SourceFile,
+  TypeAliasDeclaration,
+  TypeNode,
+} from 'ts-morph';
 
 export interface ParseForESLintResult {
   ast: TSESTree.Program & {
@@ -50,3 +58,55 @@ export interface RenameAbleDeclarations {
   typeAliases: TypeAliasDeclaration[];
   enums: EnumDeclaration[];
 }
+
+export interface AstContext {
+  baseline: SourceFile;
+  current: SourceFile;
+}
+
+export interface NameNode {
+  name: string;
+  node: Node | TypeNode;
+}
+
+export enum BreakingReasons {
+  None = 0,
+  Removed = 1,
+  TypeChanged = 2,
+  CountChanged = 4,
+  RequiredToOptional = 8,
+  ReadonlyToMutable = 16,
+}
+
+export interface BreakingPair {
+  target?: NameNode;
+  source?: NameNode;
+  location: BreakingLocation;
+  reasons: BreakingReasons;
+  messages: Map<BreakingReasons, string>;
+  modelType: ModelType;
+}
+
+export enum BreakingLocation {
+  None,
+  Call,
+  Function,
+  FunctionOverload,
+  FunctionReturnType,
+  FunctionParameterList,
+  FunctionParameter,
+  ClassicProperty,
+  TypeAlias,
+  Interface,
+}
+
+export enum ModelType {
+  None,
+  Input,
+  Output,
+}
+
+export type FindMappingCallSignature = (
+  target: Signature,
+  signatures: Signature[]
+) => { signature: Signature; id: string } | undefined;

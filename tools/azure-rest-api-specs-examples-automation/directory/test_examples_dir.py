@@ -35,6 +35,7 @@ json_example_file_content = """{
 }
 """
 
+
 def create_mock_test_folder() -> tempfile.TemporaryDirectory:
     tmp_path = path.abspath(".")
     tmp_dir = tempfile.TemporaryDirectory(dir=tmp_path)

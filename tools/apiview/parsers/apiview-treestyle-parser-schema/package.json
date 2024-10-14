@@ -11,7 +11,8 @@
   },
   "devDependencies": {
     "@typespec/compiler": "latest",
-    "@typespec/json-schema": "latest"
+    "@typespec/json-schema": "latest",
+    "@azure-tools/typespec-client-generator-core": "latest"
   },
   "private": true
 }

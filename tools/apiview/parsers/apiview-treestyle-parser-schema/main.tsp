@@ -1,5 +1,7 @@
 import "@typespec/json-schema";
+import "@azure-tools/typespec-client-generator-core";
 
+using Azure.ClientGenerator.Core;
 using TypeSpec.JsonSchema;
 
 namespace Schemas;

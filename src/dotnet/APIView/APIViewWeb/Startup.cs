@@ -35,6 +35,7 @@ using System.IO;
 using Microsoft.Azure.Cosmos;
 using APIViewWeb.Managers.Interfaces;
 using Azure.Identity;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb
 {
@@ -226,13 +227,7 @@ namespace APIViewWeb
             services.AddCors(options => {
                 options.AddPolicy("AllowCredentials", builder =>
                 {
-                    string [] origins = new string[] { 
-                        "https://localhost:4200",
-                        "https://spa.apiviewuxtest.com",
-                        "https://spa.apiviewstagingtest.com",
-                        "https://spa.apiview.dev"
-
-                    };
+                    string [] origins = (Environment.IsDevelopment()) ? URlHelpers.GetAllowedStagingOrigins() : URlHelpers.GetAllowedProdOrigins();
                     builder.WithOrigins(origins)
                         .AllowAnyMethod()
                         .AllowAnyHeader()

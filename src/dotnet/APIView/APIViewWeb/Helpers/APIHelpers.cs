@@ -44,10 +44,10 @@ namespace APIViewWeb.Helpers
     public class APIRevisionSoftDeleteParam
     {
         public string reviewId { get; set; }
-        public IEnumerable<string> apiRevisionIds { get; set;}
+        public IEnumerable<string> apiRevisionIds { get; set; }
     }
 
-    public class ReviewCreationParam                                                                    
+    public class ReviewCreationParam
     {
         public IFormFile File { get; set; }
         public string Language { get; set; }
@@ -74,7 +74,7 @@ namespace APIViewWeb.Helpers
     {
         private readonly int _statusCode;
         private readonly string _locationUrl;
- 
+
         private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -126,3 +126,4 @@ namespace APIViewWeb.Helpers
         public int TotalCount { get; set; }
     }
 }
+

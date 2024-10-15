@@ -16,7 +16,15 @@
     }
 
     .p-timeline-event-opposite {
-        flex: 0 0 auto !important;
+        display: none;
+    }
+
+    .p-timeline-event-separator {
+        margin-left: 3%;
+    }
+
+    .p-timeline-event-content {
+        flex: 1 1 auto;
     }
 
     .p-timeline .p-timeline-event-connector {
@@ -29,14 +37,6 @@
 
     .p-timeline-event {
         overflow: hidden;
-    }
-
-    .p-panel .p-panel-content {
-        padding: 0;
-    }
-
-    .p-panel {
-        border: none;
     }
 
     .p-dropdown, .p-multiselect {

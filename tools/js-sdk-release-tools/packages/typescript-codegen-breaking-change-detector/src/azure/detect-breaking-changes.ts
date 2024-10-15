@@ -152,11 +152,7 @@ async function detectBreakingChangesCore(projectContext: ProjectContext): Promis
   }
 }
 
-export async function createAstContext(
-  baselineApiViewPath: string,
-  currentApiViewPath: string,
-  tempFolder: string
-) {
+export async function createAstContext(baselineApiViewPath: string, currentApiViewPath: string, tempFolder: string) {
   const projectContext = await prepareProject(currentApiViewPath, baselineApiViewPath, tempFolder);
   const project = new Project({
     compilerOptions: { target: ScriptTarget.ES2022 },

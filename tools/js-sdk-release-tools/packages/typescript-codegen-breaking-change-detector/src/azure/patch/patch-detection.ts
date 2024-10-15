@@ -1,31 +1,14 @@
 import { FunctionDeclaration, Node, Signature, SourceFile, SyntaxKind } from 'ts-morph';
-import { AstContext, BreakingLocation, BreakingPair, BreakingReasons, ModelType } from '../common/types';
+import { AstContext, DiffLocation, DiffPair, DiffReasons, AssignDirection } from '../common/types';
 import {
   findFunctionBreakingChanges,
   findInterfaceBreakingChanges,
   findTypeAliasBreakingChanges,
-  makeBreakingPair,
-} from '../diff/ts-diff';
+  checkRemovedDeclaration,
+  createDiffPair,
+  checkAddedDeclaration,
+} from '../diff/declaration-diff';
 import { logger } from '../../logging/logger';
-
-// TODO: handle add
-function handleRemove(
-  location: BreakingLocation,
-  baseline?: Node,
-  current?: Node,
-  modelType: ModelType = ModelType.Output
-): BreakingPair | undefined {
-  if (baseline && current) return undefined;
-
-  const getNameNode = (node?: Node) => {
-    if (!node) return undefined;
-    const name = Node.hasName(node) ? node.getName() : node.getText();
-    return { name, node };
-  };
-  const sourceNameNode = modelType === ModelType.Input ? getNameNode(baseline) : getNameNode(current);
-  const targetNameNode = modelType === ModelType.Input ? getNameNode(current) : getNameNode(baseline);
-  if (!current) return makeBreakingPair(location, BreakingReasons.Removed, sourceNameNode, targetNameNode, modelType);
-}
 
 function findMappingCallSignature(
   target: Signature,
@@ -52,29 +35,60 @@ function findMappingCallSignature(
   return { signature: foundPaths[0], id: path };
 }
 
-export function patchRoutes(astContext: AstContext): BreakingPair[] {
+export function patchRoutes(astContext: AstContext): DiffPair[] {
   const baseline = astContext.baseline.getInterface('Routes');
   const current = astContext.current.getInterface('Routes');
-  const removePair = handleRemove(BreakingLocation.Interface, baseline, current);
+
+  if (!baseline && !current) throw new Error(`Failed to find interface 'Routes' in baseline and current package`);
+
+  const addPair = checkAddedDeclaration(DiffLocation.Interface, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = checkRemovedDeclaration(DiffLocation.Interface, baseline, current);
   if (removePair) return [removePair];
-  return patchDeclaration(
-    ModelType.Output,
+
+  const breakingChangePairs = patchDeclaration(
+    AssignDirection.CurrentToBaseline,
     findInterfaceBreakingChanges,
     baseline!,
     current!,
     findMappingCallSignature
   );
+
+  const newFeaturePairs = patchDeclaration(
+    AssignDirection.BaselineToCurrent,
+    findInterfaceBreakingChanges,
+    current!,
+    baseline!,
+    findMappingCallSignature
+  )
+    .filter((p) => p.reasons === DiffReasons.Removed)
+    .map((p) => {
+      p.reasons = DiffReasons.Added;
+      p.assignDirection = AssignDirection.CurrentToBaseline;
+      const temp = p.source;
+      p.source = p.target;
+      p.target = temp;
+      return p;
+    });
+  return [...breakingChangePairs, ...newFeaturePairs];
 }
 
-export function patchUnionType(name: string, astContext: AstContext, modelType: ModelType): BreakingPair[] {
-  const baseline = astContext.baseline.getTypeAliasOrThrow(name);
-  const current = astContext.current.getTypeAliasOrThrow(name);
-  const removePair = handleRemove(BreakingLocation.TypeAlias, baseline, current);
+export function patchUnionType(name: string, astContext: AstContext, modelType: AssignDirection): DiffPair[] {
+  const baseline = astContext.baseline.getTypeAlias(name);
+  const current = astContext.current.getTypeAlias(name);
+
+  if (!baseline && !current) throw new Error(`Failed to find type '${name}' in baseline and current package`);
+
+  const addPair = checkAddedDeclaration(DiffLocation.TypeAlias, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = checkRemovedDeclaration(DiffLocation.TypeAlias, baseline, current);
   if (removePair) return [removePair];
-  return patchDeclaration(modelType, findTypeAliasBreakingChanges, baseline, current);
+  return patchDeclaration(modelType, findTypeAliasBreakingChanges, baseline!, current!);
 }
 
-export function patchFunction(name: string, astContext: AstContext): BreakingPair[] {
+export function patchFunction(name: string, astContext: AstContext): DiffPair[] {
   const getFunctions = (source: SourceFile) =>
     source
       .getStatements()
@@ -84,12 +98,23 @@ export function patchFunction(name: string, astContext: AstContext): BreakingPai
   const baselineFunctions = getFunctions(astContext.baseline);
   const currentFunctions = getFunctions(astContext.current);
 
+  if (baselineFunctions.length === 0 && currentFunctions.length === 0) {
+    throw new Error(`Failed to find function '${name}' in baseline and current package`);
+  }
+
   if (baselineFunctions.length > 1 || currentFunctions.length > 1) {
     logger.warn(`Found overloads for function '${name}'`);
   }
 
-  const removePair = handleRemove(
-    BreakingLocation.Function,
+  const addPair = checkAddedDeclaration(
+    DiffLocation.Function,
+    baselineFunctions.length > 0 ? baselineFunctions[0] : undefined,
+    currentFunctions.length > 0 ? currentFunctions[0] : undefined
+  );
+  if (addPair) return [addPair];
+
+  const removePair = checkRemovedDeclaration(
+    DiffLocation.Function,
     baselineFunctions.length > 0 ? baselineFunctions[0] : undefined,
     currentFunctions.length > 0 ? currentFunctions[0] : undefined
   );
@@ -97,18 +122,11 @@ export function patchFunction(name: string, astContext: AstContext): BreakingPai
 
   const getNameNode = (s: FunctionDeclaration) => ({ name, node: s as Node });
   if (currentFunctions.length === 0) {
-    return [
-      makeBreakingPair(
-        BreakingLocation.Function,
-        BreakingReasons.Removed,
-        undefined,
-        getNameNode(baselineFunctions[0])
-      ),
-    ];
+    return [createDiffPair(DiffLocation.Function, DiffReasons.Removed, undefined, getNameNode(baselineFunctions[0]))];
   }
 
   const pairs = patchDeclaration(
-    ModelType.Output,
+    AssignDirection.CurrentToBaseline,
     findFunctionBreakingChanges,
     baselineFunctions[0],
     currentFunctions[0]
@@ -117,21 +135,21 @@ export function patchFunction(name: string, astContext: AstContext): BreakingPai
 }
 
 export function patchDeclaration<T extends Node>(
-  modelType: ModelType,
-  findBreakingChanges: (source: T, target: T, ...extra: any) => BreakingPair[],
+  modelType: AssignDirection,
+  findBreakingChanges: (source: T, target: T, ...extra: any) => DiffPair[],
   baseline: T,
   current: T,
   ...extra: any
-): BreakingPair[] {
-  const updateModelType = (pair: BreakingPair) => {
-    pair.modelType = modelType;
+): DiffPair[] {
+  const updateModelType = (pair: DiffPair) => {
+    pair.assignDirection = modelType;
     return pair;
   };
   switch (modelType) {
-    case ModelType.Input: {
+    case AssignDirection.BaselineToCurrent: {
       return findBreakingChanges(baseline, current, ...extra).map(updateModelType);
     }
-    case ModelType.Output: {
+    case AssignDirection.CurrentToBaseline: {
       return findBreakingChanges(current, baseline, ...extra).map(updateModelType);
     }
     default:

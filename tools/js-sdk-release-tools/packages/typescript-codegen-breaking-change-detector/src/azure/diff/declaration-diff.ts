@@ -13,11 +13,11 @@ import {
   CallSignatureDeclaration,
 } from 'ts-morph';
 import {
-  BreakingLocation,
-  BreakingPair,
-  BreakingReasons,
+  DiffLocation,
+  DiffPair,
+  DiffReasons,
   FindMappingCallSignature,
-  ModelType,
+  AssignDirection,
   NameNode,
 } from '../common/types';
 import {
@@ -28,9 +28,9 @@ import {
   isSameSignature,
 } from '../../utils/ast-utils';
 import { logger } from '../../logging/logger';
+import { get } from 'http';
 
-// TODO: limit node
-function findBreakingReasons(source: Node, target: Node): BreakingReasons {
+function findBreakingReasons(source: Node, target: Node): DiffReasons {
   // Note: if return type node defined,
   // it's a funtion/method/signature's return type node,
   // return it, it will be used to compare later
@@ -40,14 +40,14 @@ function findBreakingReasons(source: Node, target: Node): BreakingReasons {
     if (Node.isTyped(node)) return node.getTypeNodeOrThrow();
     throw new Error(`Unsupported ${node.getKindName()} node: "${node.getText()}"`);
   };
-  let breakingReasons = BreakingReasons.None;
+  let breakingReasons = DiffReasons.None;
 
   const targetTypeNode = getTypeNode(target);
   const sourceTypeNode = getTypeNode(source);
 
   // check if concrete type -> any. e.g. string -> any
   const isConcretTypeToAny = canConvertConcretTypeToAny(targetTypeNode?.getKind(), sourceTypeNode?.getKind());
-  if (isConcretTypeToAny) breakingReasons |= BreakingReasons.TypeChanged;
+  if (isConcretTypeToAny) breakingReasons |= DiffReasons.TypeChanged;
 
   // check type predicates
   if (
@@ -57,22 +57,22 @@ function findBreakingReasons(source: Node, target: Node): BreakingReasons {
     sourceTypeNode.isKind(SyntaxKind.TypePredicate)
   ) {
     const getTypeName = (node: TypeNode) => node.asKindOrThrow(SyntaxKind.TypePredicate).getTypeNodeOrThrow().getText();
-    if (getTypeName(targetTypeNode) !== getTypeName(sourceTypeNode)) breakingReasons |= BreakingReasons.TypeChanged;
+    if (getTypeName(targetTypeNode) !== getTypeName(sourceTypeNode)) breakingReasons |= DiffReasons.TypeChanged;
   }
 
   // check type
   const assignable = sourceTypeNode.getType().isAssignableTo(targetTypeNode.getType());
-  if (!assignable) breakingReasons |= BreakingReasons.TypeChanged;
+  if (!assignable) breakingReasons |= DiffReasons.TypeChanged;
 
   // check required -> optional
   const isOptional = (node: Node) => node.getSymbolOrThrow().isOptional();
   const incompatibleOptional = isOptional(target) && !isOptional(source);
-  if (incompatibleOptional) breakingReasons |= BreakingReasons.RequiredToOptional;
+  if (incompatibleOptional) breakingReasons |= DiffReasons.RequiredToOptional;
 
   // check readonly -> mutable
   const isReadonly = (node: Node) => Node.isReadonlyable(node) && node.isReadonly();
   const incompatibleReadonly = isReadonly(target) && !isReadonly(source);
-  if (incompatibleReadonly) breakingReasons |= BreakingReasons.ReadonlyToMutable;
+  if (incompatibleReadonly) breakingReasons |= DiffReasons.ReadonlyToMutable;
 
   return breakingReasons;
 }
@@ -81,7 +81,7 @@ function findCallSignatureBreakingChanges(
   sourceSignatures: Signature[],
   targetSignatures: Signature[],
   findMappingCallSignature?: FindMappingCallSignature
-): BreakingPair[] {
+): DiffPair[] {
   const pairs = targetSignatures.reduce((result, targetSignature) => {
     const defaultFindMappingCallSignature: FindMappingCallSignature = (target: Signature, signatures: Signature[]) => {
       const signature = signatures.find((s) => isSameSignature(target, s));
@@ -98,7 +98,7 @@ function findCallSignatureBreakingChanges(
         s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
       const targetDeclaration = getDeclaration(targetSignature)!;
       const sourceDeclaration = getDeclaration(sourceSignature)!;
-      const returnPairs = findReturnTypeBreakingChangesCore( sourceDeclaration,targetDeclaration);
+      const returnPairs = findReturnTypeBreakingChangesCore(sourceDeclaration, targetDeclaration);
       if (returnPairs.length > 0) result.push(...returnPairs);
 
       // handle parameters
@@ -121,15 +121,21 @@ function findCallSignatureBreakingChanges(
     const getName = (s: Signature): string => s.compilerSignature.getDeclaration().getText();
     const getNameNode = (s: Signature): NameNode => ({ name: getName(s), node: getNode(s) });
     const targetNameNode = getNameNode(targetSignature);
-    const pair = makeBreakingPair(BreakingLocation.Call, BreakingReasons.Removed, undefined, targetNameNode);
+    const pair = createDiffPair(DiffLocation.CallSignature, DiffReasons.Removed, undefined, targetNameNode);
     result.push(pair);
     return result;
-  }, new Array<BreakingPair>());
+  }, new Array<DiffPair>());
   return pairs;
 }
 
-function getNameNode(s: Symbol): NameNode {
+function getNameNodeFromSymbol(s: Symbol): NameNode {
   return { name: s.getName(), node: s.getValueDeclarationOrThrow() };
+}
+
+function getNameNodeFromNode(node?: Node): NameNode | undefined {
+  if (!node) return undefined;
+  const name = Node.hasName(node) ? node.getName() : node.getText();
+  return { name, node };
 }
 
 function isClassicProperty(p: Symbol) {
@@ -140,23 +146,23 @@ function canConvertConcretTypeToAny(targetKind: SyntaxKind | undefined, sourceKi
   return targetKind !== SyntaxKind.AnyKeyword && sourceKind === SyntaxKind.AnyKeyword;
 }
 
-function findClassicPropertyBreakingChanges(sourceProperty: Symbol, targetProperty: Symbol): BreakingPair | undefined {
+function findClassicPropertyBreakingChanges(sourceProperty: Symbol, targetProperty: Symbol): DiffPair | undefined {
   const reasons = findBreakingReasons(
     sourceProperty.getValueDeclarationOrThrow(),
     targetProperty.getValueDeclarationOrThrow()
   );
 
-  if (reasons === BreakingReasons.None) return undefined;
-  return makeBreakingPair(
-    BreakingLocation.ClassicProperty,
+  if (reasons === DiffReasons.None) return undefined;
+  return createDiffPair(
+    DiffLocation.ClassicProperty,
     reasons,
-    getNameNode(targetProperty),
-    getNameNode(sourceProperty)
+    getNameNodeFromSymbol(targetProperty),
+    getNameNodeFromSymbol(sourceProperty)
   );
 }
 
 // NOTE: this function compares methods and arrow functions in interface
-function findPropertyBreakingChanges(sourceProperties: Symbol[], targetProperties: Symbol[]): BreakingPair[] {
+function findPropertyBreakingChanges(sourceProperties: Symbol[], targetProperties: Symbol[]): DiffPair[] {
   const sourcePropMap = sourceProperties.reduce((map, p) => {
     map.set(p.getName(), p);
     return map;
@@ -169,11 +175,11 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
     }
 
     const isPropertyFunction = isMethodOrArrowFunction(targetProperty);
-    const location = isPropertyFunction ? BreakingLocation.Function : BreakingLocation.ClassicProperty;
-    const pair = makeBreakingPair(location, BreakingReasons.Removed, undefined, getNameNode(targetProperty));
+    const location = isPropertyFunction ? DiffLocation.Function : DiffLocation.ClassicProperty;
+    const pair = createDiffPair(location, DiffReasons.Removed, undefined, getNameNodeFromSymbol(targetProperty));
     result.push(pair);
     return result;
-  }, new Array<BreakingPair>());
+  }, new Array<DiffPair>());
 
   const changed = targetProperties.reduce((result, targetProperty) => {
     const name = targetProperty.getName();
@@ -187,11 +193,11 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
     if (isTargetPropertyClassic !== isSourcePropertyClassic) {
       return [
         ...result,
-        makeBreakingPair(
-          BreakingLocation.Function,
-          BreakingReasons.TypeChanged,
-          getNameNode(sourceProperty),
-          getNameNode(targetProperty)
+        createDiffPair(
+          DiffLocation.Function,
+          DiffReasons.TypeChanged,
+          getNameNodeFromSymbol(sourceProperty),
+          getNameNodeFromSymbol(targetProperty)
         ),
       ];
     }
@@ -208,52 +214,46 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
       (isPropertyMethod(targetProperty) || isPropertyArrowFunction(targetProperty)) &&
       (isPropertyMethod(sourceProperty) || isPropertyArrowFunction(sourceProperty))
     ) {
-      const functionPropertyDetails = findFunctionPropertyBreakingChangeDetails( sourceProperty,targetProperty,);
+      const functionPropertyDetails = findFunctionPropertyBreakingChangeDetails(sourceProperty, targetProperty);
       return [...result, ...functionPropertyDetails];
     }
 
     throw new Error('Should never reach here');
-  }, new Array<BreakingPair>());
+  }, new Array<DiffPair>());
   return [...removed, ...changed];
 }
 
-function findReturnTypeBreakingChangesCore( source: Node,target: Node): BreakingPair[] {
+function findReturnTypeBreakingChangesCore(source: Node, target: Node): DiffPair[] {
   const reasons = findBreakingReasons(source, target);
-  if (reasons === BreakingReasons.None) return [];
+  if (reasons === DiffReasons.None) return [];
   const targetNameNode = target ? { name: target.getText(), node: target } : undefined;
   const sourceNameNode = source ? { name: source.getText(), node: source } : undefined;
-  const pair = makeBreakingPair(BreakingLocation.FunctionReturnType, reasons, sourceNameNode, targetNameNode);
+  const pair = createDiffPair(DiffLocation.FunctionReturnType, reasons, sourceNameNode, targetNameNode);
   return [pair];
 }
 
-function findReturnTypeBreakingChanges( sourceMethod: Symbol,targetMethod: Symbol): BreakingPair[] {
+function findReturnTypeBreakingChanges(sourceMethod: Symbol, targetMethod: Symbol): DiffPair[] {
   const targetDeclaration = targetMethod.getValueDeclarationOrThrow();
   const sourceDeclaration = sourceMethod.getValueDeclarationOrThrow();
-  return findReturnTypeBreakingChangesCore( sourceDeclaration,targetDeclaration);
+  return findReturnTypeBreakingChangesCore(sourceDeclaration, targetDeclaration);
 }
 
 function findParameterBreakingChangesCore(
-    sourceParameters: ParameterDeclaration[],
-    targetParameters: ParameterDeclaration[],
-    sourceName: string,
-    targetName: string,
-    sourceNode: Node | TypeNode,
-    targetNode: Node | TypeNode,
-): BreakingPair[] {
-  const pairs: BreakingPair[] = [];
+  sourceParameters: ParameterDeclaration[],
+  targetParameters: ParameterDeclaration[],
+  sourceName: string,
+  targetName: string,
+  sourceNode: Node,
+  targetNode: Node
+): DiffPair[] {
+  const pairs: DiffPair[] = [];
 
   // handle parameter counts
   const isSameParameterCount = targetParameters.length === sourceParameters.length;
   if (!isSameParameterCount) {
-    const source = {
-      name: sourceName,
-      node: sourceNode,
-    };
-    const target = {
-      name: targetName,
-      node: targetNode,
-    };
-    const pair = makeBreakingPair(BreakingLocation.FunctionParameterList, BreakingReasons.CountChanged, source, target);
+    const source = { name: sourceName, node: sourceNode };
+    const target = { name: targetName, node: targetNode };
+    const pair = createDiffPair(DiffLocation.FunctionParameterList, DiffReasons.CountChanged, source, target);
     pairs.push(pair);
     return pairs;
   }
@@ -267,31 +267,31 @@ function findParameterBreakingChangesCore(
     const target = getParameterNameNode(targetParameter);
     const source = getParameterNameNode(sourceParameter);
     const reasons = findBreakingReasons(sourceParameter, targetParameter);
-    const pair = makeBreakingPair(BreakingLocation.FunctionParameter, reasons, source, target);
+    const pair = createDiffPair(DiffLocation.FunctionParameter, reasons, source, target);
     pair.reasons = findBreakingReasons(sourceParameter, targetParameter);
-    if (pair.reasons !== BreakingReasons.None) pairs.push(pair);
+    if (pair.reasons !== DiffReasons.None) pairs.push(pair);
   });
 
   return pairs;
 }
 
 // TODO: not support for overloads
-function findParameterBreakingChanges( sourceMethod: Symbol,targetMethod: Symbol,): BreakingPair[] {
+function findParameterBreakingChanges(sourceMethod: Symbol, targetMethod: Symbol): DiffPair[] {
   const targetParameters = getCallableEntityParametersFromSymbol(targetMethod);
   const sourceParameters = getCallableEntityParametersFromSymbol(sourceMethod);
   return findParameterBreakingChangesCore(
-      sourceParameters,
-      targetParameters,
-      sourceMethod.getName(),
-      targetMethod.getName(),
-      sourceMethod.getValueDeclarationOrThrow(),
-      targetMethod.getValueDeclarationOrThrow(),
+    sourceParameters,
+    targetParameters,
+    sourceMethod.getName(),
+    targetMethod.getName(),
+    sourceMethod.getValueDeclarationOrThrow(),
+    targetMethod.getValueDeclarationOrThrow()
   );
 }
 
-function findFunctionPropertyBreakingChangeDetails( sourceMethod: Symbol,targetMethod: Symbol,): BreakingPair[] {
-  const returnTypePairs = findReturnTypeBreakingChanges( sourceMethod,targetMethod);
-  const parameterPairs = findParameterBreakingChanges( sourceMethod,targetMethod,);
+function findFunctionPropertyBreakingChangeDetails(sourceMethod: Symbol, targetMethod: Symbol): DiffPair[] {
+  const returnTypePairs = findReturnTypeBreakingChanges(sourceMethod, targetMethod);
+  const parameterPairs = findParameterBreakingChanges(sourceMethod, targetMethod);
   return [...returnTypePairs, ...parameterPairs];
 }
 
@@ -301,7 +301,7 @@ export function findInterfaceBreakingChanges(
   source: InterfaceDeclaration,
   target: InterfaceDeclaration,
   findMappingCallSignature?: FindMappingCallSignature
-): BreakingPair[] {
+): DiffPair[] {
   const targetSignatures = target.getType().getCallSignatures();
   const sourceSignatures = source.getType().getCallSignatures();
   const callSignatureBreakingChanges = findCallSignatureBreakingChanges(
@@ -317,73 +317,125 @@ export function findInterfaceBreakingChanges(
   return [...callSignatureBreakingChanges, ...propertyBreakingChanges];
 }
 
+function findRemovedFunctionOverloads(
+  sourceOverloads: FunctionDeclaration[],
+  targetOverloads: FunctionDeclaration[]
+): FunctionDeclaration[] {
+  const overloads = targetOverloads.filter((t) => {
+    const compatibleSourceFunction = sourceOverloads.find((s) => {
+      // NOTE: isTypeAssignableTo does not work for overloads
+      const returnTypePairs = [...findReturnTypeBreakingChangesCore(s, t), ...findReturnTypeBreakingChangesCore(t, s)];
+      if (returnTypePairs.length > 0) return false;
+      const parameterPairs = [
+        ...findParameterBreakingChangesCore(s.getParameters(), t.getParameters(), '', '', s, t),
+        ...findParameterBreakingChangesCore(t.getParameters(), s.getParameters(), '', '', t, s),
+      ];
+      return parameterPairs.length === 0;
+    });
+    return compatibleSourceFunction === undefined;
+  });
+  return overloads;
+}
+
 // TODO: support arrow function
-export function findFunctionBreakingChanges(source: FunctionDeclaration, target: FunctionDeclaration): BreakingPair[] {
+export function findFunctionBreakingChanges(source: FunctionDeclaration, target: FunctionDeclaration): DiffPair[] {
   const sourceOverloads = source.getOverloads();
   const targetOverloads = target.getOverloads();
 
+  // function has overloads
   if (sourceOverloads.length > 1 || targetOverloads.length > 1) {
-    logger.warn('Function has overloads');
-    const pairs = targetOverloads
-      .filter((t) => {
-        const compatibleSourceFunction = sourceOverloads.find((s) => {
-          // NOTE: isTypeAssignableTo does not work for overloads
-          const returnTypePairs = findReturnTypeBreakingChangesCore( s,t);
-          if (returnTypePairs.length > 0) return false;
-          const parameterPairs = findParameterBreakingChangesCore(s.getParameters(),t.getParameters(),  '', '',  s,t,);
-          return parameterPairs.length === 0;
-        });
-        return compatibleSourceFunction === undefined;
-      })
-      .map((t) =>
-        makeBreakingPair(BreakingLocation.FunctionOverload, BreakingReasons.Removed, undefined, {
+    const getDiffPairs = (overloads: FunctionDeclaration[]) =>
+      overloads.map((t) =>
+        createDiffPair(DiffLocation.FunctionOverload, DiffReasons.Removed, undefined, {
           name: t.getName()!,
           node: t,
         })
       );
-
-    return pairs;
+    const removedPairs = findRemovedFunctionOverloads(sourceOverloads, targetOverloads).map((t) =>
+      createDiffPair(DiffLocation.FunctionOverload, DiffReasons.Removed, undefined, {
+        name: t.getName()!,
+        node: t,
+      })
+    );
+    const addedPairs = findRemovedFunctionOverloads(targetOverloads, sourceOverloads).map(
+      (t) =>
+        createDiffPair(DiffLocation.FunctionOverload, DiffReasons.Added, {
+          name: t.getName()!,
+          node: t,
+        }),
+      undefined
+    );
+    return [...removedPairs, ...addedPairs];
   }
 
   // function has no overloads
-  const returnTypePairs = findReturnTypeBreakingChangesCore( source,target);
+  const returnTypePairs = findReturnTypeBreakingChangesCore(source, target);
 
   const parameterPairs = findParameterBreakingChangesCore(
-      source.getParameters(),
-      target.getParameters(),
-      source.getName()!,
-      target.getName()!,
-      source,
-      target,
+    source.getParameters(),
+    target.getParameters(),
+    source.getName()!,
+    target.getName()!,
+    source,
+    target
   );
 
   return [...returnTypePairs, ...parameterPairs];
 }
 
-export function findTypeAliasBreakingChanges(
-  source: TypeAliasDeclaration,
-  target: TypeAliasDeclaration
-): BreakingPair[] {
+export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, target: TypeAliasDeclaration): DiffPair[] {
   if (source.getType().isAssignableTo(target.getType())) return [];
 
-  let sourceNameNode = <NameNode>{
-    name: source.getName(),
-    node: source,
-  };
-  let targetNameNode = <NameNode>{
-    name: target.getName(),
-    node: target,
-  };
-  return [makeBreakingPair(BreakingLocation.TypeAlias, BreakingReasons.TypeChanged, sourceNameNode, targetNameNode)];
+  let sourceNameNode: NameNode = { name: source.getName(), node: source };
+  let targetNameNode: NameNode = { name: target.getName(), node: target };
+  return [createDiffPair(DiffLocation.TypeAlias, DiffReasons.TypeChanged, sourceNameNode, targetNameNode)];
 }
 
-export function makeBreakingPair(
-  location: BreakingLocation,
-  reasons: BreakingReasons,
+export function createDiffPair(
+  location: DiffLocation,
+  reasons: DiffReasons,
   source?: NameNode,
   target?: NameNode,
-  modelType: ModelType = ModelType.None
-): BreakingPair {
-  const messages = new Map<BreakingReasons, string>();
-  return { location, reasons, messages, target, source, modelType };
+  assignDirection: AssignDirection = AssignDirection.None
+): DiffPair {
+  const messages = new Map<DiffReasons, string>();
+  return { location, reasons, messages, target, source, assignDirection };
+}
+
+export function checkRemovedDeclaration(
+  location: DiffLocation,
+  baseline?: Node,
+  current?: Node,
+  assignDirection: AssignDirection = AssignDirection.CurrentToBaseline
+): DiffPair | undefined {
+  if (baseline && current) return undefined;
+
+  const sourceNameNode =
+    assignDirection === AssignDirection.BaselineToCurrent
+      ? getNameNodeFromNode(baseline)
+      : getNameNodeFromNode(current);
+  const targetNameNode =
+    assignDirection === AssignDirection.BaselineToCurrent
+      ? getNameNodeFromNode(current)
+      : getNameNodeFromNode(baseline);
+  if (!current) return createDiffPair(location, DiffReasons.Removed, sourceNameNode, targetNameNode, assignDirection);
+}
+
+export function checkAddedDeclaration(
+  location: DiffLocation,
+  baseline?: Node,
+  current?: Node,
+  assignDirection: AssignDirection = AssignDirection.CurrentToBaseline
+): DiffPair | undefined {
+  if (baseline && current) return undefined;
+
+  const sourceNameNode =
+    assignDirection === AssignDirection.BaselineToCurrent
+      ? getNameNodeFromNode(baseline)
+      : getNameNodeFromNode(current);
+  const targetNameNode =
+    assignDirection === AssignDirection.BaselineToCurrent
+      ? getNameNodeFromNode(current)
+      : getNameNodeFromNode(baseline);
+  if (!baseline) return createDiffPair(location, DiffReasons.Added, sourceNameNode, targetNameNode, assignDirection);
 }

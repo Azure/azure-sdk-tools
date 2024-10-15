@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { createAstContext } from '../azure/detect-breaking-changes';
 import { patchFunction, patchRoutes, patchUnionType } from '../azure/patch/patch-detection';
 import { createTempFolder, getFormattedDate } from './utils';
-import { BreakingLocation, BreakingReasons, ModelType } from '../azure/common/types';
+import { DiffLocation, DiffReasons, AssignDirection } from '../azure/common/types';
 
 const testCaseDir = '../../misc/test-cases/patch-detection';
 
@@ -19,13 +19,16 @@ describe("patch current tool's breaking changes", async () => {
     try {
       const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
       const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
-      const breakingPairs = patchFunction('isUnexpected', astContext);
+      let breakingPairs = patchFunction('isUnexpected', astContext);
 
-      expect(breakingPairs.find((p) => p.modelType !== ModelType.Output)).toBeUndefined();
-      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
+      expect(breakingPairs.length).toBe(2);
 
-      expect(breakingPairs[0].location).toBe(BreakingLocation.FunctionOverload);
-      expect(breakingPairs[0].reasons).toBe(BreakingReasons.Removed);
+      expect(breakingPairs[0].location).toBe(DiffLocation.FunctionOverload);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+
+      expect(breakingPairs[1].location).toBe(DiffLocation.FunctionOverload);
+      expect(breakingPairs[1].reasons).toBe(DiffReasons.Added);
     } finally {
       if (tempFolder) remove(tempFolder);
     }
@@ -42,32 +45,38 @@ describe("patch current tool's breaking changes", async () => {
       const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
 
       let breakingPairs = patchFunction('funcBasic', astContext);
-      expect(breakingPairs.find((p) => p.modelType !== ModelType.Output)).toBeUndefined();
+      expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(0);
 
       breakingPairs = patchFunction('funcReturnType', astContext);
-      expect(breakingPairs.find((p) => p.modelType !== ModelType.Output)).toBeUndefined();
+      expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
-      expect(breakingPairs[0].reasons).toBe(BreakingReasons.TypeChanged);
-      expect(breakingPairs[0].location).toBe(BreakingLocation.FunctionReturnType);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+      expect(breakingPairs[0].location).toBe(DiffLocation.FunctionReturnType);
 
       breakingPairs = patchFunction('funcParameterCount', astContext);
-      expect(breakingPairs.find((p) => p.modelType !== ModelType.Output)).toBeUndefined();
+      expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
-      expect(breakingPairs[0].reasons).toBe(BreakingReasons.CountChanged);
-      expect(breakingPairs[0].location).toBe(BreakingLocation.FunctionParameterList);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.CountChanged);
+      expect(breakingPairs[0].location).toBe(DiffLocation.FunctionParameterList);
 
       breakingPairs = patchFunction('funcParameterType', astContext);
-      expect(breakingPairs.find((p) => p.modelType !== ModelType.Output)).toBeUndefined();
+      expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
-      expect(breakingPairs[0].reasons).toBe(BreakingReasons.TypeChanged);
-      expect(breakingPairs[0].location).toBe(BreakingLocation.FunctionParameter);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+      expect(breakingPairs[0].location).toBe(DiffLocation.FunctionParameter);
 
       breakingPairs = patchFunction('funcRemove', astContext);
-      expect(breakingPairs.find((p) => p.modelType !== ModelType.Output)).toBeUndefined();
+      expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
-      expect(breakingPairs[0].reasons).toBe(BreakingReasons.Removed);
-      expect(breakingPairs[0].location).toBe(BreakingLocation.Function);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Function);
+
+      breakingPairs = patchFunction('funcAdd', astContext);
+      expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Added);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Function);
     } finally {
       if (tempFolder) remove(tempFolder);
     }
@@ -83,19 +92,22 @@ describe("patch current tool's breaking changes", async () => {
       const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
       const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
       const breakingPairs = patchRoutes(astContext);
-      expect(breakingPairs.length).toBe(4);
+      expect(breakingPairs.length).toBe(5);
 
-      expect(breakingPairs[0].location).toBe(BreakingLocation.Call);
-      expect(breakingPairs[0].reasons).toBe(BreakingReasons.Removed);
+      expect(breakingPairs[0].location).toBe(DiffLocation.CallSignature);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
 
-      expect(breakingPairs[1].location).toBe(BreakingLocation.FunctionReturnType);
-      expect(breakingPairs[1].reasons).toBe(BreakingReasons.TypeChanged);
+      expect(breakingPairs[1].location).toBe(DiffLocation.FunctionReturnType);
+      expect(breakingPairs[1].reasons).toBe(DiffReasons.TypeChanged);
 
-      expect(breakingPairs[2].location).toBe(BreakingLocation.FunctionParameterList);
-      expect(breakingPairs[2].reasons).toBe(BreakingReasons.CountChanged);
+      expect(breakingPairs[2].location).toBe(DiffLocation.FunctionParameterList);
+      expect(breakingPairs[2].reasons).toBe(DiffReasons.CountChanged);
 
-      expect(breakingPairs[3].location).toBe(BreakingLocation.FunctionParameter);
-      expect(breakingPairs[3].reasons).toBe(BreakingReasons.TypeChanged);
+      expect(breakingPairs[3].location).toBe(DiffLocation.FunctionParameter);
+      expect(breakingPairs[3].reasons).toBe(DiffReasons.TypeChanged);
+
+      expect(breakingPairs[4].location).toBe(DiffLocation.CallSignature);
+      expect(breakingPairs[4].reasons).toBe(DiffReasons.Added);
     } finally {
       if (tempFolder) remove(tempFolder);
     }
@@ -110,11 +122,23 @@ describe("patch current tool's breaking changes", async () => {
     try {
       const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
       const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
-      const breakingPairs = patchUnionType('types', astContext, ModelType.Output);
+      let breakingPairs = patchUnionType('types', astContext, AssignDirection.CurrentToBaseline);
       expect(breakingPairs.length).toBe(1);
-      expect(breakingPairs[0].modelType).toBe(ModelType.Output);
-      expect(breakingPairs[0].location).toBe(BreakingLocation.TypeAlias);
-      expect(breakingPairs[0].reasons).toBe(BreakingReasons.TypeChanged);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+
+      breakingPairs = patchUnionType('typesRemove', astContext, AssignDirection.CurrentToBaseline);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+
+      breakingPairs = patchUnionType('typesAdd', astContext, AssignDirection.CurrentToBaseline);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Added);
     } finally {
       if (tempFolder) remove(tempFolder);
     }

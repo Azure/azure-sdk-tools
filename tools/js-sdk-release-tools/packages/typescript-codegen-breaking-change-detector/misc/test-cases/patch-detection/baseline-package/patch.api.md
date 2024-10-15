@@ -15,6 +15,7 @@ export interface Routes {
 }
 
 export type types = "basic" | "remove";
+export type typesRemove = "basic" | "remove";
 
 export interface A {a: string;}
 export interface B {b: string;}

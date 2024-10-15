@@ -6,12 +6,13 @@ import { TSESTree } from '@typescript-eslint/utils';
 import type { VisitorKeys } from '@typescript-eslint/visitor-keys';
 import {
   EnumDeclaration,
+  FunctionDeclaration,
   InterfaceDeclaration,
-  Node,
+  ParameterDeclaration,
   Signature,
   SourceFile,
   TypeAliasDeclaration,
-  TypeNode,
+  Node,
 } from 'ts-morph';
 
 export interface ParseForESLintResult {
@@ -64,32 +65,38 @@ export interface AstContext {
   current: SourceFile;
 }
 
+// TODO: support more node types
 export interface NameNode {
   name: string;
-  node: Node | TypeNode;
+  node: Node;
 }
 
-export enum BreakingReasons {
+export enum DiffReasons {
   None = 0,
+
+  // breaking changes
   Removed = 1,
   TypeChanged = 2,
   CountChanged = 4,
   RequiredToOptional = 8,
   ReadonlyToMutable = 16,
+
+  // new features
+  Added = 1024,
 }
 
-export interface BreakingPair {
+export interface DiffPair {
   target?: NameNode;
   source?: NameNode;
-  location: BreakingLocation;
-  reasons: BreakingReasons;
-  messages: Map<BreakingReasons, string>;
-  modelType: ModelType;
+  location: DiffLocation;
+  reasons: DiffReasons;
+  messages: Map<DiffReasons, string>;
+  assignDirection: AssignDirection;
 }
 
-export enum BreakingLocation {
+export enum DiffLocation {
   None,
-  Call,
+  CallSignature,
   Function,
   FunctionOverload,
   FunctionReturnType,
@@ -100,10 +107,10 @@ export enum BreakingLocation {
   Interface,
 }
 
-export enum ModelType {
+export enum AssignDirection {
   None,
-  Input,
-  Output,
+  BaselineToCurrent, // e.g. input model
+  CurrentToBaseline, // e.g. output model
 }
 
 export type FindMappingCallSignature = (

@@ -78,7 +78,7 @@ namespace APIViewWeb.Managers
             {
                 upgradedList.Add(await UpgradeAPIRevisionIfRequired(item));
             }
-            return revisions;
+            return new PagedList<APIRevisionListItemModel>((IEnumerable<APIRevisionListItemModel>)upgradedList, revisions.NoOfItemsRead, revisions.TotalCount, pageParams.PageSize);
         }
 
         /// <summary>

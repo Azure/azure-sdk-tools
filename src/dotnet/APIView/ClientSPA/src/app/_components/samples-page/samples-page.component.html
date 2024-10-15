@@ -20,7 +20,7 @@
                 <div class="pt-4 d-flex justify-content-center align-items-center" *ngIf="!isLoading && !samplesContent">
                     <h5 *ngIf="samplesRevisions.length > 0; else noSampleRevision">Sample-Revision Content Load Failed...</h5>
                     <ng-template #noSampleRevision>
-                        <h5>Review has no Usage Samples...</h5>
+                        <h5>Review has no usage samples...</h5>
                     </ng-template>
                 </div>
             </div>
@@ -36,7 +36,7 @@
                                 </span>
                                 <button *ngIf="samplesContent && activeSamplesRevision?.createdBy === userProfile?.userName" class="btn btn-outline-secondary" (click)="showEditSamplesPanel()" type="button">Edit</button>
                                 <button *ngIf="samplesContent && activeSamplesRevision?.createdBy === userProfile?.userName" class="btn btn-outline-danger" (click)="showSamplesDeleteModal = true" type="button">Delete</button>
-                                <button class="btn btn-primary" (click)="showAddSamplesPanel()" type="button">Add Sample</button>
+                                <button class="btn btn-primary" (click)="showAddSamplesPanel()" type="button">Add sample</button>
                             </div>
                         </li>
                     </ul>
@@ -48,8 +48,8 @@
 <p-sidebar [(visible)]="samplesUpdateSidePanel" position="right" [modal]="true" [showCloseIcon]="false" styleClass="edit-samples-sidebar">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2">
-            <h4 *ngIf="samplesUpdateState == 'add'">Add Usage Samples</h4>
-            <h4 *ngIf="samplesUpdateState == 'edit'">Update Usage Samples</h4>
+            <h4 *ngIf="samplesUpdateState == 'add'">Add usage samples</h4>
+            <h4 *ngIf="samplesUpdateState == 'edit'">Update usage samples</h4>
         </div>
     </ng-template>
     <span class="p-float-label mt-4 mb-3">
@@ -59,10 +59,10 @@
     <ng-container *ngIf="samplesUpdateState == 'add'">
         <ul class="nav nav-pills nav-fill mb-3">
             <li class="nav-item">
-                <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#md-text">Enter Markdown Text</a>
+                <a class="nav-link active" id="home-tab" data-bs-toggle="tab" href="#md-text">Enter markdown text</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#md-file">Upload Markdown File</a>
+                <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#md-file">Upload markdown file</a>
             </li>
         </ul>    
         <div class="tab-content">
@@ -119,10 +119,10 @@
         </div> 
     </ng-container>
 </p-sidebar>
-<p-dialog header="Delete Usage Sample" 
+<p-dialog header="Delete usage sample" 
     [modal]="true" [(visible)]="showSamplesDeleteModal"
     [style]="{ width: '20dvw' }">
-    <p>Are you sure you want to delete the Usage Sample?</p>
+    <p>Are you sure you want to delete the usage sample?</p>
     <ng-template pTemplate="footer">
         <button *ngIf="samplesContent" class="btn btn-link me-2" (click)="showSamplesDeleteModal = false" type="button">Cancel</button>
         <button *ngIf="samplesContent" class="btn btn-outline-danger" (click)="deleteUsageSample()" type="button"><i class="bi bi-trash"></i> {{ deleteSamplesButton }}

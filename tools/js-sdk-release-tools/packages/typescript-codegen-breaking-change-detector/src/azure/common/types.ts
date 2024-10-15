@@ -94,15 +94,18 @@ export interface DiffPair {
   assignDirection: AssignDirection;
 }
 
+// NOTE: When there is a '_', the first word indicate the node type
 export enum DiffLocation {
   None,
-  CallSignature,
-  Function,
-  FunctionOverload,
-  FunctionReturnType,
-  FunctionParameterList,
-  FunctionParameter,
-  ClassicProperty,
+  // NOTE: Signatue includes method/arrow-function/call-signature in interface
+  //       Signatue includes method/arrow-function/constructor class
+  //       Signatue includes function/arrow-function
+  Signature,
+  Signature_Overload,
+  Signature_ReturnType,
+  Signature_ParameterList,
+  Parameter,
+  Property,
   TypeAlias,
   Interface,
 }

@@ -27,8 +27,6 @@ import {
   isPropertyMethod,
   isSameSignature,
 } from '../../utils/ast-utils';
-import { logger } from '../../logging/logger';
-import { get } from 'http';
 
 function findBreakingReasons(source: Node, target: Node): DiffReasons {
   // Note: if return type node defined,
@@ -121,7 +119,7 @@ function findCallSignatureBreakingChanges(
     const getName = (s: Signature): string => s.compilerSignature.getDeclaration().getText();
     const getNameNode = (s: Signature): NameNode => ({ name: getName(s), node: getNode(s) });
     const targetNameNode = getNameNode(targetSignature);
-    const pair = createDiffPair(DiffLocation.CallSignature, DiffReasons.Removed, undefined, targetNameNode);
+    const pair = createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, targetNameNode);
     result.push(pair);
     return result;
   }, new Array<DiffPair>());
@@ -154,7 +152,7 @@ function findClassicPropertyBreakingChanges(sourceProperty: Symbol, targetProper
 
   if (reasons === DiffReasons.None) return undefined;
   return createDiffPair(
-    DiffLocation.ClassicProperty,
+    DiffLocation.Property,
     reasons,
     getNameNodeFromSymbol(targetProperty),
     getNameNodeFromSymbol(sourceProperty)
@@ -175,7 +173,7 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
     }
 
     const isPropertyFunction = isMethodOrArrowFunction(targetProperty);
-    const location = isPropertyFunction ? DiffLocation.Function : DiffLocation.ClassicProperty;
+    const location = isPropertyFunction ? DiffLocation.Signature : DiffLocation.Property;
     const pair = createDiffPair(location, DiffReasons.Removed, undefined, getNameNodeFromSymbol(targetProperty));
     result.push(pair);
     return result;
@@ -194,7 +192,7 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
       return [
         ...result,
         createDiffPair(
-          DiffLocation.Function,
+          DiffLocation.Signature,
           DiffReasons.TypeChanged,
           getNameNodeFromSymbol(sourceProperty),
           getNameNodeFromSymbol(targetProperty)
@@ -228,7 +226,7 @@ function findReturnTypeBreakingChangesCore(source: Node, target: Node): DiffPair
   if (reasons === DiffReasons.None) return [];
   const targetNameNode = target ? { name: target.getText(), node: target } : undefined;
   const sourceNameNode = source ? { name: source.getText(), node: source } : undefined;
-  const pair = createDiffPair(DiffLocation.FunctionReturnType, reasons, sourceNameNode, targetNameNode);
+  const pair = createDiffPair(DiffLocation.Signature_ReturnType, reasons, sourceNameNode, targetNameNode);
   return [pair];
 }
 
@@ -253,7 +251,7 @@ function findParameterBreakingChangesCore(
   if (!isSameParameterCount) {
     const source = { name: sourceName, node: sourceNode };
     const target = { name: targetName, node: targetNode };
-    const pair = createDiffPair(DiffLocation.FunctionParameterList, DiffReasons.CountChanged, source, target);
+    const pair = createDiffPair(DiffLocation.Signature_ParameterList, DiffReasons.CountChanged, source, target);
     pairs.push(pair);
     return pairs;
   }
@@ -267,7 +265,7 @@ function findParameterBreakingChangesCore(
     const target = getParameterNameNode(targetParameter);
     const source = getParameterNameNode(sourceParameter);
     const reasons = findBreakingReasons(sourceParameter, targetParameter);
-    const pair = createDiffPair(DiffLocation.FunctionParameter, reasons, source, target);
+    const pair = createDiffPair(DiffLocation.Parameter, reasons, source, target);
     pair.reasons = findBreakingReasons(sourceParameter, targetParameter);
     if (pair.reasons !== DiffReasons.None) pairs.push(pair);
   });
@@ -346,20 +344,20 @@ export function findFunctionBreakingChanges(source: FunctionDeclaration, target:
   if (sourceOverloads.length > 1 || targetOverloads.length > 1) {
     const getDiffPairs = (overloads: FunctionDeclaration[]) =>
       overloads.map((t) =>
-        createDiffPair(DiffLocation.FunctionOverload, DiffReasons.Removed, undefined, {
+        createDiffPair(DiffLocation.Signature_Overload, DiffReasons.Removed, undefined, {
           name: t.getName()!,
           node: t,
         })
       );
     const removedPairs = findRemovedFunctionOverloads(sourceOverloads, targetOverloads).map((t) =>
-      createDiffPair(DiffLocation.FunctionOverload, DiffReasons.Removed, undefined, {
+      createDiffPair(DiffLocation.Signature_Overload, DiffReasons.Removed, undefined, {
         name: t.getName()!,
         node: t,
       })
     );
     const addedPairs = findRemovedFunctionOverloads(targetOverloads, sourceOverloads).map(
       (t) =>
-        createDiffPair(DiffLocation.FunctionOverload, DiffReasons.Added, {
+        createDiffPair(DiffLocation.Signature_Overload, DiffReasons.Added, {
           name: t.getName()!,
           node: t,
         }),

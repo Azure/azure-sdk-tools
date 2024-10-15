@@ -74,7 +74,7 @@ export function patchRoutes(astContext: AstContext): DiffPair[] {
   return [...breakingChangePairs, ...newFeaturePairs];
 }
 
-export function patchUnionType(name: string, astContext: AstContext, modelType: AssignDirection): DiffPair[] {
+export function patchUnionType(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
   const baseline = astContext.baseline.getTypeAlias(name);
   const current = astContext.current.getTypeAlias(name);
 
@@ -85,7 +85,7 @@ export function patchUnionType(name: string, astContext: AstContext, modelType: 
 
   const removePair = checkRemovedDeclaration(DiffLocation.TypeAlias, baseline, current);
   if (removePair) return [removePair];
-  return patchDeclaration(modelType, findTypeAliasBreakingChanges, baseline!, current!);
+  return patchDeclaration(assignDirection, findTypeAliasBreakingChanges, baseline!, current!);
 }
 
 export function patchFunction(name: string, astContext: AstContext): DiffPair[] {
@@ -107,14 +107,14 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
   }
 
   const addPair = checkAddedDeclaration(
-    DiffLocation.Function,
+    DiffLocation.Signature,
     baselineFunctions.length > 0 ? baselineFunctions[0] : undefined,
     currentFunctions.length > 0 ? currentFunctions[0] : undefined
   );
   if (addPair) return [addPair];
 
   const removePair = checkRemovedDeclaration(
-    DiffLocation.Function,
+    DiffLocation.Signature,
     baselineFunctions.length > 0 ? baselineFunctions[0] : undefined,
     currentFunctions.length > 0 ? currentFunctions[0] : undefined
   );
@@ -122,7 +122,7 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
 
   const getNameNode = (s: FunctionDeclaration) => ({ name, node: s as Node });
   if (currentFunctions.length === 0) {
-    return [createDiffPair(DiffLocation.Function, DiffReasons.Removed, undefined, getNameNode(baselineFunctions[0]))];
+    return [createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, getNameNode(baselineFunctions[0]))];
   }
 
   const pairs = patchDeclaration(
@@ -135,24 +135,24 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
 }
 
 export function patchDeclaration<T extends Node>(
-  modelType: AssignDirection,
+  assignDirection: AssignDirection,
   findBreakingChanges: (source: T, target: T, ...extra: any) => DiffPair[],
   baseline: T,
   current: T,
   ...extra: any
 ): DiffPair[] {
-  const updateModelType = (pair: DiffPair) => {
-    pair.assignDirection = modelType;
+  const updateAssignDirection = (pair: DiffPair) => {
+    pair.assignDirection = assignDirection;
     return pair;
   };
-  switch (modelType) {
+  switch (assignDirection) {
     case AssignDirection.BaselineToCurrent: {
-      return findBreakingChanges(baseline, current, ...extra).map(updateModelType);
+      return findBreakingChanges(baseline, current, ...extra).map(updateAssignDirection);
     }
     case AssignDirection.CurrentToBaseline: {
-      return findBreakingChanges(current, baseline, ...extra).map(updateModelType);
+      return findBreakingChanges(current, baseline, ...extra).map(updateAssignDirection);
     }
     default:
-      throw new Error(`Unsupported model type: ${modelType}`);
+      throw new Error(`Unsupported model type: ${assignDirection}`);
   }
 }

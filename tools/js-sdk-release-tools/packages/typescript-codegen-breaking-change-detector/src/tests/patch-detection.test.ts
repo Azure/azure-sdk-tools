@@ -24,10 +24,10 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(2);
 
-      expect(breakingPairs[0].location).toBe(DiffLocation.FunctionOverload);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature_Overload);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
 
-      expect(breakingPairs[1].location).toBe(DiffLocation.FunctionOverload);
+      expect(breakingPairs[1].location).toBe(DiffLocation.Signature_Overload);
       expect(breakingPairs[1].reasons).toBe(DiffReasons.Added);
     } finally {
       if (tempFolder) remove(tempFolder);
@@ -52,31 +52,31 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
-      expect(breakingPairs[0].location).toBe(DiffLocation.FunctionReturnType);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature_ReturnType);
 
       breakingPairs = patchFunction('funcParameterCount', astContext);
       expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.CountChanged);
-      expect(breakingPairs[0].location).toBe(DiffLocation.FunctionParameterList);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature_ParameterList);
 
       breakingPairs = patchFunction('funcParameterType', astContext);
       expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
-      expect(breakingPairs[0].location).toBe(DiffLocation.FunctionParameter);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Parameter);
 
       breakingPairs = patchFunction('funcRemove', astContext);
       expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
-      expect(breakingPairs[0].location).toBe(DiffLocation.Function);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
 
       breakingPairs = patchFunction('funcAdd', astContext);
       expect(breakingPairs.find((p) => p.assignDirection !== AssignDirection.CurrentToBaseline)).toBeUndefined();
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Added);
-      expect(breakingPairs[0].location).toBe(DiffLocation.Function);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
     } finally {
       if (tempFolder) remove(tempFolder);
     }
@@ -94,19 +94,19 @@ describe("patch current tool's breaking changes", async () => {
       const breakingPairs = patchRoutes(astContext);
       expect(breakingPairs.length).toBe(5);
 
-      expect(breakingPairs[0].location).toBe(DiffLocation.CallSignature);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
 
-      expect(breakingPairs[1].location).toBe(DiffLocation.FunctionReturnType);
+      expect(breakingPairs[1].location).toBe(DiffLocation.Signature_ReturnType);
       expect(breakingPairs[1].reasons).toBe(DiffReasons.TypeChanged);
 
-      expect(breakingPairs[2].location).toBe(DiffLocation.FunctionParameterList);
+      expect(breakingPairs[2].location).toBe(DiffLocation.Signature_ParameterList);
       expect(breakingPairs[2].reasons).toBe(DiffReasons.CountChanged);
 
-      expect(breakingPairs[3].location).toBe(DiffLocation.FunctionParameter);
+      expect(breakingPairs[3].location).toBe(DiffLocation.Parameter);
       expect(breakingPairs[3].reasons).toBe(DiffReasons.TypeChanged);
 
-      expect(breakingPairs[4].location).toBe(DiffLocation.CallSignature);
+      expect(breakingPairs[4].location).toBe(DiffLocation.Signature);
       expect(breakingPairs[4].reasons).toBe(DiffReasons.Added);
     } finally {
       if (tempFolder) remove(tempFolder);

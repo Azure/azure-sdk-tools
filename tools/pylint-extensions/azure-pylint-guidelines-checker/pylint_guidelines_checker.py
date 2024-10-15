@@ -2868,7 +2868,7 @@ def register(linter):
     linter.register_checker(CheckDocstringParameters(linter))
 
 
-    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
+
 
 
     # Rules are disabled until false positive rate improved

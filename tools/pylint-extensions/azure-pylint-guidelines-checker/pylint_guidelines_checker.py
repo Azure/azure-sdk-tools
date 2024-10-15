@@ -160,79 +160,93 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
             " https://azure.github.io/azure-sdk/python_design.html#service-operations",
             "unapproved-client-method-name-prefix",
             "All clients should use the preferred verbs for method names.",
-        )
-    }
-    options = (
-        (
-            "ignore-unapproved-client-method-name-prefix",
-            {
-                "default": False,
-                "type": "yn",
-                "metavar": "<y_or_n>",
-                "help": "Allow clients to not use preferred method name prefixes",
-            },
         ),
-    )
+    }
 
-    ignore_clients = [
+    ignore_clients = [  
         "PipelineClient",
         "AsyncPipelineClient",
         "ARMPipelineClient",
         "AsyncARMPipelineClient",
     ]
 
+    approved_prefixes = [
+        "get",
+        "list",
+        "create",
+        "upsert",
+        "set",
+        "update",
+        "replace",
+        "append",
+        "add",
+        "delete",
+        "remove",
+        "begin",
+        "upload",
+        "download", # standard verbs
+        "close",    # very common verb
+        "cancel",
+        "clear",
+        "subscribe",
+        "send",
+        "query",    # common verbs
+        "analyze",
+        "train",
+        "detect",   # future proofing
+        "from",     # special case
+    ]
+
+    ignored_decorators = [
+        "property",
+    ]
+
     def __init__(self, linter=None):
         super(ClientHasApprovedMethodNamePrefix, self).__init__(linter)
+        self.process_class = None
+        self.namespace = None
+    
+    def _check_decorators(self, node):
+        if not node.decorators:
+            return False
+        for decorator in node.decorators.nodes:
+            if isinstance(decorator, astroid.nodes.Name) and decorator.name in self.ignored_decorators:
+                return True
+        return False
+
+    def visit_module(self, node):
+        self.namespace = node.name
 
     def visit_classdef(self, node):
-        """Visits every class in file and checks if it is a client. If it is a client, checks
-        that approved method name prefixes are present.
+        if all((
+            node.name.endswith("Client"),
+            node.name not in self.ignore_clients,
+            not node.name.startswith("_"),
+            not '._' in self.namespace,
+        )):
+            self.process_class = node
 
-        :param node: class node
-        :type node: ast.ClassDef
-        :return: None
-        """
-        try:
-            if node.name.endswith("Client") and node.name not in self.ignore_clients:
-                client_methods = [
-                    child for child in node.get_children() if child.is_function
-                ]
-
-                approved_prefixes = [
-                    "get",
-                    "list",
-                    "create",
-                    "upsert",
-                    "set",
-                    "update",
-                    "replace",
-                    "append",
-                    "add",
-                    "delete",
-                    "remove",
-                    "begin",
-                ]
-                for idx, method in enumerate(client_methods):
-                    if (
-                        method.name.startswith("__")
-                        or "_exists" in method.name
-                        or method.name.startswith("_")
-                        or method.name.startswith("from")
-                    ):
-                        continue
-                    prefix = method.name.split("_")[0]
-                    if prefix.lower() not in approved_prefixes:
-                        self.add_message(
-                            msgid="unapproved-client-method-name-prefix",
-                            node=client_methods[idx],
-                            confidence=None,
-                        )
-        except AttributeError:
-            logger.debug(
-                "Pylint custom checker failed to check if client has approved method name prefix."
+    def visit_functiondef(self, node):
+        if any((
+            self.process_class is None, # not in a client class
+            node.name.startswith("_"), # private method
+            node.name.endswith("_exists"), # special case
+            self._check_decorators(node), # property
+            node.parent != self.process_class, # nested method
+        )):
+            return
+        
+        # check for approved prefix
+        parts = node.name.split("_")
+        if parts[0].lower() not in self.approved_prefixes:
+            self.add_message(
+                msgid="unapproved-client-method-name-prefix",
+                node=node,
+                confidence=None,
             )
-            pass
 
+    def leave_classdef(self, node):
+        self.process_class = None
 
 class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
     name = "client-method-multiple-parameters"
@@ -2610,7 +2624,7 @@ class DeleteOperationReturnStatement(BaseChecker):
         try:
             if node.returns.as_string() == "None":
                 # If there are residual comment typehints or no return value,
-                # we dont want to throw an error
+                # we don't want to throw an error
                 return
             if node.name.startswith("delete") and node.parent.name.endswith("Client"):
                 if node.returns.as_string() != "None":
@@ -2812,11 +2826,272 @@ class NoImportTypingFromTypeCheck(BaseChecker):
 # [Pylint] Investigate pylint rule around missing dependency #3231
 
 
-# [Pylint] custom linter check for invalid use of @overload #3229
-# [Pylint] Custom Linter check for Exception Logging #3227
+
+class DoNotUseLegacyTyping(BaseChecker):
+
+    """ Rule to check that we aren't using legacy typing using comments. """
+
+    name = "do-not-use-legacy-typing"
+    priority = -1
+    msgs = {
+        "C4761": (
+            "Do not use legacy typing using comments.",
+            "do-not-use-legacy-typing",
+            "Do not use legacy typing using comments. Python 2 is no longer supported, use Python 3.9+ type hints instead.",
+        ),
+    }
+
+    def visit_functiondef(self, node):
+        """Check that we aren't using legacy typing."""
+        if node.type_comment_args or node.type_comment_returns:
+            self.add_message(
+                msgid=f"do-not-use-legacy-typing",
+                node=node,
+                confidence=None,
+            )
+
+
+class DoNotImportAsyncio(BaseChecker):
+
+    """Rule to check that libraries do not import the asyncio package directly."""
+
+    name = "do-not-import-asyncio"
+    priority = -1
+    # TODO Find message number
+    msgs = {
+        "C4763": (
+            "Do not import the asyncio package directly in your library",
+            "do-not-import-asyncio",
+            "Do not import the asyncio package in your directly.",
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from asyncio directly."""
+        if node.modname == "asyncio":
+            self.add_message(
+                msgid=f"do-not-import-asyncio",
+                node=node,
+                confidence=None,
+            )
+
+    def visit_import(self, node):
+        """Check that we aren't importing asyncio."""
+        for name, _ in node.names:
+            if name == "asyncio":
+                self.add_message(
+                    msgid=f"do-not-import-asyncio",
+                    node=node,
+                    confidence=None,
+                )
+
+
+
+
+class InvalidUseOfOverload(BaseChecker):
+    """Rule to check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+
+    name = "invalid-use-of-overload"
+    priority = -1
+    msgs = {
+        "C4765": (
+            "Do not mix async and synchronous overloads",
+            "invalid-use-of-overload",
+            "Functions and their overloads must be either all async or all synchronous.",
+        ),
+    }
+
+    def visit_classdef(self, node):
+        """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+
+        # Obtain a list of all functions and function names
+        functions = []
+        node.body
+        for item in node.body:
+            if hasattr(item, 'name'):
+                functions.append(item)
+
+        # Dictionary of lists of all functions by name
+        overloadedfunctions = {}
+        for item in functions:
+            if item.name in overloadedfunctions:
+                overloadedfunctions[item.name].append(item)
+            else:
+                overloadedfunctions[item.name] = [item]
+
+
+        # Loop through the overloaded functions and check they are the same type
+        for funct in overloadedfunctions.values():
+            if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
+                function_is_async = None
+
+                for item in funct:
+                    if function_is_async is None:
+                        function_is_async = self.is_function_async(item)
+
+                    else:
+                        if function_is_async != self.is_function_async(item):
+                            self.add_message(
+                                msgid=f"invalid-use-of-overload",
+                                node=item,
+                                confidence=None,
+                            )
+
+
+    def is_function_async(self, node):
+        try:
+            str(node.__class__).index("Async")
+            return True
+        except:
+            return False
+
+
+class DoNotLogExceptions(BaseChecker):
+
+    """Rule to check that exceptions aren't logged"""
+
+    name = "do-not-log-exceptions"
+    priority = -1
+    msgs = {"C4766": (
+            "Do not log exceptions. See Details:"
+            " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
+            "do-not-log-exceptions",
+            "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
+            ),
+            }
+
+    def visit_try(self, node):
+        """Check that exceptions aren't logged in exception blocks.
+           Go through exception block and branches and ensure error hasn't been logged.
+        """
+        # Return a list of exception blocks
+        except_block = node.handlers
+        # Iterate through each exception block
+        for nod in except_block:
+            # Get exception blocks with an exception name
+            if nod.name is not None:
+                exception_name = nod.name.name
+                self.check_for_logging(nod.body, exception_name)
+
+    def check_for_logging(self, node, exception_name):
+        """ Helper function - checks nodes to see if logging has occurred at all
+            levels.
+        """
+        levels_matches = [".warning", ".error", ".info", ".debug"]
+        for j in node:
+            if isinstance(j, astroid.Expr):
+                expression = j.as_string().lower()
+                if any(x in expression for x in levels_matches) and "logger" in expression:
+                    # Check for variables after strings
+                    end_finder = expression.rfind("'")
+                    delimiters = ["(", "{", "}", ")", "\"", ",", "'"]
+                    if end_finder != -1:
+                        expression_a = expression[end_finder + 1:]
+                        # If there are variables after a string
+                        if len(expression_a) > 1:
+                            expression = expression_a
+                    for delimiter in delimiters:
+                        expression = " ".join(expression.split(delimiter))
+                    expression1 = expression.split()
+                    # Check for presence of exception name
+                    for i in range(len(expression1)):
+                        if exception_name == expression1[i]:
+                            if i+1 < len(expression1):
+                                # TODO: Investigate whether there are any other cases we don't want to raise a Pylint
+                                #  error
+                                if ".__name__" not in expression1[i+1]:
+                                    self.add_message(
+                                        msgid=f"do-not-log-exceptions",
+                                        node=j,
+                                        confidence=None,
+                                    )
+                            else:
+                                self.add_message(
+                                    msgid=f"do-not-log-exceptions",
+                                    node=j,
+                                    confidence=None,
+                                )
+            if isinstance(j, astroid.If):
+                self.check_for_logging(j.body, exception_name)
+                # Check any 'elif' or 'else' branches
+                self.check_for_logging(j.orelse, exception_name)
+
+
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-# [Pylint] Add a check for connection_verify hardcoded settings #35355
-# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+
+
+class DoNotHardcodeConnectionVerify(BaseChecker):
+
+    """Rule to check that developers do not hardcode a boolean to connection_verify."""
+
+    name = "do-not-hardcode-connection-verify"
+    priority = -1
+    msgs = {
+        "C4767": (
+            "Do not hardcode a boolean value to connection_verify",
+            "do-not-hardcode-connection-verify",
+            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to be able to set it",
+        ),
+    }
+
+    def visit_call(self, node):
+        """Visit function calls to ensure it isn't used as a keyword parameter"""
+        if len(node.keywords) > 0:
+            for keyword in node.keywords:
+                if keyword.arg == "connection_verify":
+                    if type(keyword.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=keyword,
+                            confidence=None,
+                        )
+
+    def visit_assign(self, node):
+        """Visiting variable Assignments"""
+        try: # self.connection_verify = True
+            if node.targets[0].attrname == "connection_verify":
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
+        except:
+            try: # connection_verify = True
+                if node.targets[0].name == "connection_verify":
+                    if type(node.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=node,
+                            confidence=None,
+                        )
+            except:
+                pass # typically lists
+
+    def visit_annassign(self, node):
+        """Visiting variable annotated assignments"""
+        try: # self.connection_verify: bool = True
+            if node.target.attrname == "connection_verify":
+                if type(node.value.value) == bool:
+                    self.add_message(
+                        msgid=f"do-not-hardcode-connection-verify",
+                        node=node,
+                        confidence=None,
+                    )
+        except:  # Picks up connection_verify: bool = True
+            try:
+                if node.target.name == "connection_verify":
+                    if type(node.value.value) == bool:
+                        self.add_message(
+                            msgid=f"do-not-hardcode-connection-verify",
+                            node=node,
+                            confidence=None,
+                        )
+            except:
+                pass
+
+
+
 # [Pylint] Investigate pylint rule around missing dependency #3231
 
 
@@ -2855,12 +3130,14 @@ def register(linter):
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
     linter.register_checker(ImportTypeChecker(linter))
 
+    linter.register_checker(DoNotUseLegacyTyping(linter))
+    linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
+    linter.register_checker(InvalidUseOfOverload(linter))
+    linter.register_checker(DoNotLogExceptions(linter))
 
-    # [Pylint] custom linter check for invalid use of @overload #3229
-    # [Pylint] Custom Linter check for Exception Logging #3227
+
     # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-    # [Pylint] Add a check for connection_verify hardcoded settings #35355
-    # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
+    linter.register_checker(DoNotHardcodeConnectionVerify(linter))
     # [Pylint] Investigate pylint rule around missing dependency #3231
 
 
@@ -2873,7 +3150,7 @@ def register(linter):
 
     # Rules are disabled until false positive rate improved
     # linter.register_checker(CheckForPolicyUse(linter))
-    # linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
+    linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
 
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))

@@ -61,6 +61,8 @@ param (
   [Parameter(ParameterSetName = 'Interactive')]
   [switch] $Login,
 
+  [switch] $UseExistingAzContext,
+
   [Parameter(ValueFromRemainingArguments = $true)]
   $IgnoreUnusedArguments
 )
@@ -111,13 +113,12 @@ function Log($Message) {
   Write-Host $Message
 }
 
-function IsValidAlias
+function IsValidAlias([string]$Alias)
 {
-  param(
-    [Parameter(Mandatory = $true)]
-    [string]$Alias
-  )
-
+  if (!$Alias) { 
+    return $false 
+  }
+  
   if ($OwnerAliasCache.ContainsKey($Alias)) {
     return $OwnerAliasCache[$Alias]
   }
@@ -464,7 +465,9 @@ function DeleteAndPurgeGroups([array]$toDelete) {
 }
 
 function Login() {
-  if ($PSCmdlet.ParameterSetName -eq "Provisioner" -and $ProvisionerApplicationSecret) {
+  if ($UseExistingAzContext -and (Get-AzContext)) {
+    Write-Verbose "Using existing account"
+  } elseif ($PSCmdlet.ParameterSetName -eq "Provisioner" -and $ProvisionerApplicationSecret) {
     Write-Verbose "Logging in with provisioner"
     $provisionerSecret = ConvertTo-SecureString -String $ProvisionerApplicationSecret -AsPlainText -Force
     $provisionerCredential = [System.Management.Automation.PSCredential]::new($ProvisionerApplicationId, $provisionerSecret)

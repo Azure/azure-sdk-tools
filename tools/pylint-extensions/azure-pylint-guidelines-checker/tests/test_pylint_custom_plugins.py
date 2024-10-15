@@ -303,202 +303,131 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
+def _load_file(filename):
+    file_path = os.path.join(TEST_FOLDER, "test_files", filename)
+    with open(file_path, "r") as file:
+        contents = file.read().split("\n\n\n") # Split by triple newline (2 blank lines)
+    return [astroid.extract_node(content) for content in contents]
+
+
 class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientHasApprovedMethodNamePrefix
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "client_has_approved_method_name_prefix.py")
-        )
-        node = astroid.parse(file.read())
-        file.close()
-        return node
+        trees = _load_file("client_has_approved_method_name_prefix.py")
+        return {tree[0].name:tree for tree in trees}
 
-    def test_ignores_constructor(self, setup):
-        class_node = setup.body[1]
+    @pytest.fixture(scope="class")
+    def modules(self):
+        mods = {
+            "public":astroid.nodes.Module(name="azure.service.subservice.operations"),
+            "private":astroid.nodes.Module(name="azure.mgmt._generated.operations"),
+        }
+        return mods
+
+    def test_ignores_constructor(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("ConstrClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_private_method(self, setup):
-        class_node = setup.body[2]
+    def test_ignores_private_method(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("PrivClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_if_exists_suffix(self, setup):
-        class_node = setup.body[3]
+    def test_ignores_if_exists_suffix(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("ExistsClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_from_prefix(self, setup):
-        class_node = setup.body[4]
+    def test_ignores_approved_prefix_names(self, setup, modules):
+        mod = modules["public"]
+        cls, *funcs = setup.get("ApprovedClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            for func in funcs:
+                self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_approved_prefix_names(self, setup):
-        class_node = setup.body[5]
+    def test_ignores_non_client_with_unapproved_prefix_names(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("SomethingElse")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_non_client_with_unapproved_prefix_names(self, setup):
-        class_node = setup.body[6]
+    def test_ignores_nested_function_with_unapproved_prefix_names(self, setup, modules):
+        mod = modules["public"]
+        cls, func, nested = setup.get("NestedClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.visit_functiondef(nested)
+            self.checker.leave_classdef(cls)
 
-    def test_ignores_nested_function_with_unapproved_prefix_names(self, setup):
-        class_node = setup.body[7]
+    def test_finds_unapproved_prefix_names(self, setup, modules):
+        mod = modules["public"]
+        cls, *funcs = setup.get("UnapprovedClient")
+        msgs = [
+            pylint.testutils.MessageTest(
+                msg_id="unapproved-client-method-name-prefix",
+                line=func.position.lineno,
+                node=func,
+                col_offset=func.position.col_offset,
+                end_line=func.position.end_lineno,
+                end_col_offset=func.position.end_col_offset,
+            ) for func in funcs
+        ]
+        with self.assertAddsMessages(*msgs):
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            for func in funcs:
+                self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
+
+    def test_ignores_property(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("PropClient")
         with self.assertNoMessages():
-            self.checker.visit_classdef(class_node)
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
-    def test_finds_unapproved_prefix_names(self, setup):
-        class_node = setup.body[8]
-        func_node_a = setup.body[8].body[0]
-        func_node_b = setup.body[8].body[1]
-        func_node_c = setup.body[8].body[2]
-        func_node_d = setup.body[8].body[3]
-        func_node_e = setup.body[8].body[4]
-        func_node_f = setup.body[8].body[5]
-        func_node_g = setup.body[8].body[6]
-        func_node_h = setup.body[8].body[7]
-        func_node_i = setup.body[8].body[8]
-        func_node_j = setup.body[8].body[9]
-        func_node_k = setup.body[8].body[10]
-        func_node_l = setup.body[8].body[11]
-        func_node_m = setup.body[8].body[12]
-        func_node_n = setup.body[8].body[13]
-        func_node_o = setup.body[8].body[14]
-        func_node_p = setup.body[8].body[15]
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=83,
-                node=func_node_a,
-                col_offset=4,
-                end_line=83,
-                end_col_offset=27,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=86,
-                node=func_node_b,
-                col_offset=4,
-                end_line=86,
-                end_col_offset=22,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=89,
-                node=func_node_c,
-                col_offset=4,
-                end_line=89,
-                end_col_offset=18,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=92,
-                node=func_node_d,
-                col_offset=4,
-                end_line=92,
-                end_col_offset=20,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=95,
-                node=func_node_e,
-                col_offset=4,
-                end_line=95,
-                end_col_offset=17,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=98,
-                node=func_node_f,
-                col_offset=4,
-                end_line=98,
-                end_col_offset=29,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=101,
-                node=func_node_g,
-                col_offset=4,
-                end_line=101,
-                end_col_offset=18,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=104,
-                node=func_node_h,
-                col_offset=4,
-                end_line=104,
-                end_col_offset=19,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=107,
-                node=func_node_i,
-                col_offset=4,
-                end_line=107,
-                end_col_offset=21,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=110,
-                node=func_node_j,
-                col_offset=4,
-                end_line=110,
-                end_col_offset=18,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=113,
-                node=func_node_k,
-                col_offset=4,
-                end_line=113,
-                end_col_offset=21,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=116,
-                node=func_node_l,
-                col_offset=4,
-                end_line=116,
-                end_col_offset=22,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=119,
-                node=func_node_m,
-                col_offset=4,
-                end_line=119,
-                end_col_offset=21,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=122,
-                node=func_node_n,
-                col_offset=4,
-                end_line=122,
-                end_col_offset=18,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=125,
-                node=func_node_o,
-                col_offset=4,
-                end_line=125,
-                end_col_offset=21,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="unapproved-client-method-name-prefix",
-                line=128,
-                node=func_node_p,
-                col_offset=4,
-                end_line=128,
-                end_col_offset=21,
-            ),
-        ):
-            self.checker.visit_classdef(class_node)
+    def test_ignores_private_client(self, setup, modules):
+        mod = modules["public"]
+        cls, func = setup.get("_PrivateClient") 
+        with self.assertNoMessages():
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
+
+    def test_ignores_private_module(self, setup, modules):
+        mod = modules["private"]
+        cls, func = setup.get("PrivateModuleClient")
+        with self.assertNoMessages():
+            self.checker.visit_module(mod)
+            self.checker.visit_classdef(cls)
+            self.checker.visit_functiondef(func)
+            self.checker.leave_classdef(cls)
 
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_design.html#service-operations"
@@ -2066,7 +1995,10 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
         module_node.body = [package_name]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="package-name-incorrect", line=0, node=module_node, col_offset=0,
+                msg_id="package-name-incorrect",
+                line=0,
+                node=module_node,
+                col_offset=0,
             )
         ):
             self.checker.visit_module(module_node)
@@ -2108,7 +2040,10 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         module_node.body = [client_node]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-suffix-needed", line=0, node=module_node, col_offset=0,
+                msg_id="client-suffix-needed",
+                line=0,
+                node=module_node,
+                col_offset=0,
             )
         ):
             self.checker.visit_module(module_node)
@@ -2995,7 +2930,6 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
 
 
 class TestDocstringParameters(pylint.testutils.CheckerTestCase):
-
     """Test that we are checking the docstring is correct"""
 
     CHECKER_CLASS = checker.CheckDocstringParameters
@@ -3440,9 +3374,382 @@ class TestImportTypeChecker(pylint.testutils.CheckerTestCase):
 
 
 
-# [Pylint] custom linter check for invalid use of @overload #3229
-# [Pylint] Custom Linter check for Exception Logging #3227
+            
+class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
+    """Test that use of the @overload decorator matches the async/sync nature of the underlying function"""
+
+    CHECKER_CLASS = checker.InvalidUseOfOverload
+
+    def test_valid_use_overload(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "invalid_use_of_overload_acceptable.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        with self.assertNoMessages():
+            self.checker.visit_classdef(node.body[1])
+
+
+    def test_invalid_use_overload(self):
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "invalid_use_of_overload_violation.py"
+            )
+        )
+        node = astroid.extract_node(file.read())
+        file.close()
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="invalid-use-of-overload",
+                line=14,
+                node=node.body[2],
+                col_offset=4,
+                end_line=14,
+                end_col_offset=20,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="invalid-use-of-overload",
+                line=25,
+                node=node.body[4],
+                col_offset=4,
+                end_line=25,
+                end_col_offset=19,
+            ),
+        ):
+            self.checker.visit_classdef(node)
+
+
+class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
+
+    """Test that any errors are not logged in exception blocks."""
+
+    CHECKER_CLASS = checker.DoNotLogExceptions
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_log_exceptions.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_logging_levels_logged_str_exception(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[1].body[0]
+        error_node = setup.body[1].body[0].handlers[0].body[0]
+        warning_node = setup.body[1].body[0].handlers[0].body[1]
+        info_node = setup.body[1].body[0].handlers[0].body[2]
+        debug_node = setup.body[1].body[0].handlers[0].body[3]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=9,
+                node=error_node,
+                col_offset=8,
+                end_line=9,
+                end_col_offset=39,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=10,
+                node=warning_node,
+                col_offset=8,
+                end_line=10,
+                end_col_offset=31,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=11,
+                node=info_node,
+                col_offset=8,
+                end_line=11,
+                end_col_offset=28,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=12,
+                node=debug_node,
+                col_offset=8,
+                end_line=12,
+                end_col_offset=29,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_logging_levels_logged_repr_exception(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[2].body[0]
+        error_node = setup.body[2].body[0].handlers[0].body[0]
+        warning_node = setup.body[2].body[0].handlers[0].body[1]
+        info_node = setup.body[2].body[0].handlers[0].body[2]
+        debug_node = setup.body[2].body[0].handlers[0].body[3]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=20,
+                node=error_node,
+                col_offset=8,
+                end_line=20,
+                end_col_offset=30,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=21,
+                node=warning_node,
+                col_offset=8,
+                end_line=21,
+                end_col_offset=32,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=22,
+                node=info_node,
+                col_offset=8,
+                end_line=22,
+                end_col_offset=29,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=23,
+                node=debug_node,
+                col_offset=8,
+                end_line=23,
+                end_col_offset=30,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_regular_logging_ok(self, setup):
+        """Check that normal logging is ok in the exception block."""
+        try_node = setup.body[3].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_logging_str_exception_branches(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[4].body[0]
+        error_node = setup.body[4].body[0].handlers[0].body[0].body[0]
+        warning_node = setup.body[4].body[0].handlers[0].body[0].orelse[0].body[0]
+        info_node = setup.body[4].body[0].handlers[0].body[0].orelse[0].orelse[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=43,
+                node=error_node,
+                col_offset=12,
+                end_line=43,
+                end_col_offset=33,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=46,
+                node=warning_node,
+                col_offset=12,
+                end_line=46,
+                end_col_offset=36,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=49,
+                node=info_node,
+                col_offset=12,
+                end_line=49,
+                end_col_offset=32,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_other_logging_fails(self, setup):
+        """Check that exceptions aren't logged at all logging levels in the exception block."""
+        try_node = setup.body[5].body[0]
+        error_node = setup.body[5].body[0].handlers[0].body[0].body[0]
+        warning_node = setup.body[5].body[0].handlers[0].body[0].orelse[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=58,
+                node=error_node,
+                col_offset=12,
+                end_line=58,
+                end_col_offset=65,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-log-exceptions",
+                line=61,
+                node=warning_node,
+                col_offset=12,
+                end_line=61,
+                end_col_offset=30,
+            )
+        ):
+            self.checker.visit_try(try_node)
+
+    def test_no_logging_and_no_exception_name_ok(self, setup):
+        """Check that no logging is ok in the exception block."""
+        try_node = setup.body[6].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_logging_without_exception_name(self, setup):
+        """Check that logging without exception name is ok in the exception block."""
+        try_node = setup.body[7].body[0]
+        with self.assertNoMessages():
+            self.checker.visit_try(try_node)
+
+    def test_guidelines_link_active(self):
+        url = "https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info"
+        config = Configuration()
+        client = PipelineClient(url, config=config)
+        request = client.get(url)
+        response = client._pipeline.run(request)
+        assert response.http_response.status_code == 200
+
+
 # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-# [Pylint] Add a check for connection_verify hardcoded settings #35355
+
+
+
+class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
+    """Test that we are not hard-coding a True or False to connection_verify"""
+
+    CHECKER_CLASS = checker.DoNotHardcodeConnectionVerify
+
+    def test_valid_connection_verify(self):
+        """Check that valid connection_verify hard coding does not raise warnings"""
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "do_not_hardcode_connection_verify_acceptable.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        nodes = node.body
+        instance_variable_error = nodes[0].body[0].body[0]
+        variable_error = nodes[1].body[0]
+        function_arguments_errors = nodes[2].body[1].value
+        function_arguments_instance_errors = nodes[3].body[0].body[0].value
+        return_error_function_argument = nodes[4].body[1].body[0].value
+        return_error_dict = nodes[5].body[0].body[0].value
+        annotated_assignment = nodes[6].body[0]
+        annotated_self_assignment = nodes[7].body[0].body[0]
+        visit_assign_pass = nodes[8].body[0]
+        visit_annassign_pass = nodes[9].body[1]
+
+        with self.assertNoMessages():
+            self.checker.visit_assign(instance_variable_error)
+            self.checker.visit_assign(variable_error)
+            self.checker.visit_call(function_arguments_errors)
+            self.checker.visit_call(function_arguments_instance_errors)
+            self.checker.visit_call(return_error_function_argument)
+            self.checker.visit_call(return_error_dict)
+            self.checker.visit_annassign(annotated_assignment)
+            self.checker.visit_annassign(annotated_self_assignment)
+            self.checker.visit_assign(visit_assign_pass)
+            self.checker.visit_annassign(visit_annassign_pass)
+
+    def test_invalid_connection_verify(self):
+        """Check that hard-coding connection_verify to a bool raise warnings"""
+        file = open(
+            os.path.join(
+                TEST_FOLDER, "test_files", "do_not_hardcode_connection_verify_violation.py"
+            )
+        )
+        node = astroid.parse(file.read())
+        file.close()
+
+        nodes = node.body
+        instance_variable_error = nodes[0].body[0].body[0]
+        variable_error = nodes[1].body[0]
+        function_keyword_arguments = nodes[2].body[1].value
+        function_arguments_instance = nodes[3].body[0].body[0].value
+        return_error_function_argument = nodes[4].body[1].body[0].value
+        return_error_dict = nodes[5].body[0].body[0].value
+        annotated_assignment = nodes[6].body[0]
+        annotated_self_assignment = nodes[7].body[0].body[0]
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=3,
+                node=instance_variable_error,
+                col_offset=8,
+                end_line=3,
+                end_col_offset=37,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=8,
+                node=variable_error,
+                col_offset=4,
+                end_line=8,
+                end_col_offset=28,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=15,
+                node=function_keyword_arguments.keywords[0],
+                col_offset=20,
+                end_line=15,
+                end_col_offset=43,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=20,
+                node=function_arguments_instance.keywords[0],
+                col_offset=52,
+                end_line=20,
+                end_col_offset=75,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=28,
+                node=return_error_function_argument.keywords[0],
+                col_offset=25,
+                end_line=28,
+                end_col_offset=47,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=35,
+                node=return_error_dict.keywords[0],
+                col_offset=12,
+                end_line=35,
+                end_col_offset=35,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=39,
+                node=annotated_assignment,
+                col_offset=4,
+                end_line=39,
+                end_col_offset=34,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-hardcode-connection-verify",
+                line=44,
+                node=annotated_self_assignment,
+                col_offset=8,
+                end_line=44,
+                end_col_offset=43,
+            ),
+        ):
+            self.checker.visit_assign(instance_variable_error)
+            self.checker.visit_assign(variable_error)
+            self.checker.visit_call(function_keyword_arguments)
+            self.checker.visit_call(function_arguments_instance)
+            self.checker.visit_call(return_error_function_argument)
+            self.checker.visit_call(return_error_dict)
+            self.checker.visit_annassign(annotated_assignment)
+            self.checker.visit_annassign(annotated_self_assignment)
+
+
+
+
 # [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
 # [Pylint] Investigate pylint rule around missing dependency #3231
+

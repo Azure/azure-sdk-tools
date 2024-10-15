@@ -371,20 +371,11 @@ $diagnostics: (
     margin: 0;
 }
 
-.light-theme .code-diagnostics p a {
-
-    &:active,
-    &:hover {
-        color: var(--details-link-active-hover);
-    }
-}
-
-.dark-theme .code-diagnostics p {
-    color: #e6eff7;
+.code-diagnostics p {
+    color: var(--base-bg-color);
 
     a {
         color: var(--details-link-color);
-
         &:visited {
             color: var(--details-link-visited);
         }
@@ -393,19 +384,6 @@ $diagnostics: (
         &:hover {
             color: var(--details-link-active-hover);
         }
-    }
-}
-
-.dark-solarized-theme .code-diagnostics a {
-    color: var(--details-link-color);
-
-    &:visited {
-        color: var(--details-link-visited);
-    }
-
-    &:active,
-    &:hover {
-        color: var(--details-link-active-hover);
     }
 }
 

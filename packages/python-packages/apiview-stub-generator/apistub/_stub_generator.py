@@ -21,8 +21,10 @@ from subprocess import check_call
 import zipfile
 
 
-from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub._apiview import APIViewEncoder, Navigation, Kind, NavigationTag
 from apistub._metadata_map import MetadataMap
+
+from apistub._generated.treestyle.parser.models import CodeFile as ApiView
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"

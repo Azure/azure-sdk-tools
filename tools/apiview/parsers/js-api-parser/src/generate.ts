@@ -57,6 +57,7 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
         Value: "Dependencies:",
         NavigationDisplayName: "Dependencies",
         RenderClasses: ["dependencies"],
+        SkipDiff: true,
       }),
     ],
   };
@@ -177,13 +178,14 @@ const ANNOTATION_TOKEN = "@";
  * Builds review line for a release tag
  * @param reviewLines The result array to push {@link ReviewLine}s to
  * @param tag release tag
+ * @param relatedLineId the id of the review line with which the release tag is associated
  */
-function buildReleaseTag(reviewLines: ReviewLine[], tag: string): void {
+function buildReleaseTag(reviewLines: ReviewLine[], tag: string, relatedLineId: string): void {
   const tagToken = buildToken({
     Kind: TokenKind.StringLiteral,
     Value: `${ANNOTATION_TOKEN}${tag}`,
   });
-  reviewLines.push({ Tokens: [tagToken] });
+  reviewLines.push({ Tokens: [tagToken], RelatedToLine: relatedLineId });
 }
 
 /**
@@ -275,7 +277,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
   const releaseTag = getReleaseTag(item);
   const parentReleaseTag = getReleaseTag(item.parent);
   if (releaseTag && releaseTag !== parentReleaseTag) {
-    buildReleaseTag(reviewLines, releaseTag);
+    buildReleaseTag(reviewLines, releaseTag, line.LineId);
   }
 
   buildMemberLineTokens(line, item);

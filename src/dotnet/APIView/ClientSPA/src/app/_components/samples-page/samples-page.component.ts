@@ -18,6 +18,7 @@ import { APIRevisionsService } from 'src/app/_services/revisions/revisions.servi
 import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
+import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 
 @Component({
   selector: 'app-samples-page',
@@ -500,6 +501,32 @@ export class SamplesPageComponent {
           if (commentThread!.comments.length === 0) {
             this.removeCommentThread(commentUpdates.title);
           }
+        }
+      });
+    });
+
+    componentRef.instance.commentResolutionActionEmitter.subscribe((commentUpdates: any) => {
+      commentUpdates.reviewId = this.reviewId!;
+      if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
+        this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
+          next: () => {
+            this.applyCommentResolutionUpdate(commentUpdates);
+          }
+        });
+      }
+      if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
+        this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
+          next: () => {
+            this.applyCommentResolutionUpdate(commentUpdates);
+          }
+        });
+      }
+    });
+
+    componentRef.instance.commentUpvoteActionEmitter.subscribe((commentUpdates: any) => {
+      this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
+        next: () => {
+          this.signalRService.pushCommentUpdates(commentUpdates);
         }
       });
     });

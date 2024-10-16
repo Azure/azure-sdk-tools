@@ -285,19 +285,20 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
       line.Tokens[line.Tokens.length - 1].HasSuffixSpace = true;
     }
     if (item.members.length > 0) {
-      line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: `{` }));
+      line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: "{" }));
       for (const member of item.members) {
         buildMember(line.Children!, member);
       }
       reviewLines.push(line);
       reviewLines.push({
-        Tokens: [buildToken({ Kind: TokenKind.Punctuation, Value: `}` })],
+        Tokens: [buildToken({ Kind: TokenKind.Punctuation, Value: "}" })],
         RelatedToLine: line.LineId,
+        IsContextEndLine: true,
       });
     } else {
       line.Tokens.push(
-        buildToken({ Kind: TokenKind.Punctuation, Value: `{`, HasSuffixSpace: true }),
-        buildToken({ Kind: TokenKind.Punctuation, Value: `}` }),
+        buildToken({ Kind: TokenKind.Punctuation, Value: "{", HasSuffixSpace: true }),
+        buildToken({ Kind: TokenKind.Punctuation, Value: "}" }),
       );
       reviewLines.push(line);
     }

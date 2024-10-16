@@ -75,6 +75,7 @@ const TS_KEYWORDS = new Set<string>([
   "throw",
   "true",
   "try",
+  "type",
   "typeof",
   "undefined",
   "unique",

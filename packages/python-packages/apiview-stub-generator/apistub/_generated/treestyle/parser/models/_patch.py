@@ -9,12 +9,13 @@ Follow our quickstart for examples: https://aka.ms/azsdk/python/dpcodegen/python
 import os
 import re
 import logging
-from typing import List
+import platform
+from typing import List, Optional
 from apistub._version import VERSION
 from apistub._node_index import NodeIndex
 from apistub._metadata_map import MetadataMap
 
-from ._models import CodeFile, ReviewToken as Token
+from ._models import CodeFile, ReviewToken as Token, ReviewLine as ReviewLineImpl, CodeDiagnostic as Diagnostic
 from ._enums import TokenKind
 
 HEADER_TEXT = "# Package is parsed using apiview-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
@@ -75,68 +76,44 @@ class ApiView(CodeFile):
         return None
 
     def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None, pkg_version =""):
-        self.package_name = pkg_name
-        self.package_version = pkg_version
-        self.language = "Python"
-        self.cross_language_package_id = self.metadata_map.cross_language_package_id
-        self.review_lines = []
-        self.diagnostics = []
-        self.navigation = []
+        #self.package_name = pkg_name
+        #self.package_version = pkg_version
+        #self.language = "Python"
+        self.metadata_map = metadata_map or MetadataMap("")
+        #self.cross_language_package_id = self.metadata_map.cross_language_package_id
+        #self.review_lines = []
+        #self.diagnostics = []
+        #self.navigation = []
+        # check if super needs to be called
+        super().__init__(
+            package_name=pkg_name,
+            package_version=pkg_version,
+            parser_version=VERSION,
+            language="Python",
+            review_lines=[],
+            cross_language_package_id=self.metadata_map.cross_language_package_id,
+            diagnostics=[],
+            navigation=[],
+        )
 
-        self.name = pkg_name
+        self.source_url = source_url
         self.version = 0
-        self.version_string = VERSION
-        self.indent = 0    
+        self.indent = 0
         self.namespace = namespace
         self.node_index = NodeIndex()
-        self.metadata_map = metadata_map or MetadataMap("")
-        #self.add_token(Token("", TokenKind.SkipDiffRangeStart))
-        self.add_literal(HEADER_TEXT)
-        self.add_line_marker("GLOBAL")
-        if source_url:
-            self.set_blank_lines(1)
-            self.add_literal("# Source URL: ")
-            self.add_link(source_url)
-        self.add_token(Token("", TokenKind.SkipDiffRangeEnd))
-        self.set_blank_lines(2)
-
-    def add_token(self, token):
-        self.tokens.append(token)
-
-    def begin_group(self, group_name=""):
-        """Begin a new group in API view by shifting to right
-        """
-        self.indent += 1
-
-    def end_group(self):
-        """End current group by moving indent to left
-        """
-        if not self.indent:
-            raise ValueError("Invalid indentation")
-        self.indent -= 1
-
-    def add_whitespace(self, count: Optional[int] = None):
-        """ Inject appropriate whitespace for indentation,
-            or inject a specific number of whitespace characters.
-        """
-        if self.indent:
-            self.add_token(Token(" " * (self.indent * 4)))
-        elif count:
-            self.add_token(Token(" " * (count)))
-
-    def add_space(self):
-        """ Used to add a single space. Cannot add multiple spaces.
-        """
-        if self.tokens[-1].kind != TokenKind.Whitespace:
-            self.add_token(Token(" ", TokenKind.Whitespace))
-
-    def add_newline(self):
-        """ Used to END a line and wrap to the next.
-            Cannot be used to inject blank lines.
-        """
-        # don't add newline if it already is in place
-        if self.tokens[-1].kind != TokenKind.Newline:
-            self.add_token(Token("", TokenKind.Newline))
+        token = Token(
+            kind=TokenKind.TEXT,
+            skip_diff=True,
+            value=HEADER_TEXT,
+            has_suffix_space=False,
+        )
+        self.add_review_line(line_id="GLOBAL", tokens=[token])
+        #if source_url:
+        #    self.set_blank_lines(1)
+        #    self.add_literal("# Source URL: ")
+        #    self.add_link(source_url)
+        #self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
+        #self.set_blank_lines(2)
 
     def set_blank_lines(self, count):
         """ Ensures a specific number of blank lines.
@@ -160,6 +137,74 @@ class ApiView(CodeFile):
             excess = newline_count - (count + 1)
             for _ in range(excess):
                 self.tokens.pop()
+
+    def begin_group(self, group_name=""):
+        """Begin a new group in API view by shifting to right
+        """
+        self.indent += 1
+
+    def end_group(self):
+        """End current group by moving indent to left
+        """
+        if not self.indent:
+            raise ValueError("Invalid indentation")
+        self.indent -= 1
+    
+    def add_review_line(self, line_id, tokens: List[Token] = None):
+        self.review_lines.append(ReviewLine(line_id=line_id, tokens=tokens))
+
+    def add_diagnostic(self, *, obj, target_id):
+        self.diagnostics.append(Diagnostic(obj=obj, target_id=target_id))
+
+    def add_navigation(self, navigation):
+        self.navigation.append(navigation)
+
+class ReviewLine(ReviewLineImpl):
+
+    def __init__(
+        self,
+        *,
+        tokens: List[Token],
+        line_id: Optional[str] = None,
+        cross_language_id: Optional[str] = None,
+        children: Optional[List["ReviewLine"]] = None,
+        is_context_end_line: Optional[bool] = False,
+        related_to_line: Optional[str] = None,
+    ):
+        super().__init__(
+            tokens=tokens,
+            line_id=line_id,
+            cross_language_id=cross_language_id,
+            children=children,
+            is_context_end_line=is_context_end_line,
+            related_to_line=related_to_line
+        )
+
+    def add_token(self, token):
+        self.tokens.append(token)
+
+    def add_whitespace(self, count: Optional[int] = None):
+        """ Inject appropriate whitespace for indentation,
+            or inject a specific number of whitespace characters.
+        """
+        if self.indent:
+            self.add_token(Token(" " * (self.indent * 4)))
+        elif count:
+            self.add_token(Token(" " * (count)))
+
+    def add_space(self):
+        """ Used to add a single space. Cannot add multiple spaces.
+        """
+        if self.tokens[-1].kind != TokenKind.Whitespace:
+            self.add_token(Token(" ", TokenKind.Whitespace))
+
+    def add_newline(self):
+        """ Used to END a line and wrap to the next.
+            Cannot be used to inject blank lines.
+        """
+        # don't add newline if it already is in place
+        if self.tokens[-1].kind != TokenKind.Newline:
+            self.add_token(Token("", TokenKind.Newline))
 
     def add_punctuation(self, value, prefix_space=False, postfix_space=False):
         if prefix_space:
@@ -254,10 +299,6 @@ class ApiView(CodeFile):
             self.add_punctuation(type_name)
 
 
-    def add_diagnostic(self, *, obj, target_id):
-        self.diagnostics.append(Diagnostic(obj=obj, target_id=target_id))
-
-
     def add_member(self, name, id):
         token = Token(name, TokenKind.MemberName)
         token.definition_id = id
@@ -270,14 +311,13 @@ class ApiView(CodeFile):
 
     def add_literal(self, value):
         self.add_token(Token(value, TokenKind.Literal))
+    
+    def add_child_line(self, line):
+        self.children.append(line)
 
-
-    def add_navigation(self, navigation):
-        self.navigation.append(navigation)
-
-
-
-__all__: List[str] = []  # Add all objects you want publicly available to users at this package level
+__all__: List[str] = [
+    "ApiView"
+]  # Add all objects you want publicly available to users at this package level
 
 
 def patch_sdk():

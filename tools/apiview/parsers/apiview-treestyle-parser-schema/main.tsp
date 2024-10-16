@@ -99,7 +99,7 @@ model CodeDiagnostic {
 }
 
 enum TokenKind {
-  Text: 0,
+  Text: 0, // is newline just a text token kind, \n?
   Punctuation: 1,
   Keyword: 2,
   TypeName: 3,

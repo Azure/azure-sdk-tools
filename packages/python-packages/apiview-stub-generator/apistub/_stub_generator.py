@@ -21,10 +21,11 @@ from subprocess import check_call
 import zipfile
 
 
-from apistub._apiview import APIViewEncoder, Navigation, Kind, NavigationTag
+from apistub._apiview import Navigation, Kind, NavigationTag
 from apistub._metadata_map import MetadataMap
 
-from apistub._generated.treestyle.parser.models import CodeFile as ApiView
+from apistub._generated.treestyle.parser.models import ApiView
+from apistub._generated.treestyle.parser._model_base import SdkJSONEncoder as APIViewEncoder
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"
@@ -208,40 +209,41 @@ class StubGenerator:
             source_url=source_url,
             pkg_version=package_version
         )
-        modules = self._find_modules(pkg_root_path)
-        logging.debug("Modules to generate tokens: {}".format(modules))
 
-        # load all modules and parse them recursively
-        for m in modules:
-            if not m.startswith(namespace):
-                logging.debug("Skipping module {0}. Module should start with {1}".format(m, namespace))
-                continue
+        #modules = self._find_modules(pkg_root_path)
+        #logging.debug("Modules to generate tokens: {}".format(modules))
 
-            logging.debug("Importing module {}".format(m))
-            module_obj = importlib.import_module(m)
-            self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
+        ## load all modules and parse them recursively
+        #for m in modules:
+        #    if not m.startswith(namespace):
+        #        logging.debug("Skipping module {0}. Module should start with {1}".format(m, namespace))
+        #        continue
 
-        # Create navigation info to navigate within APIreview tool
-        navigation = Navigation(package_name, None)
-        navigation.tags = NavigationTag(Kind.type_package)
-        apiview.add_navigation(navigation)
+        #    logging.debug("Importing module {}".format(m))
+        #    module_obj = importlib.import_module(m)
+        #    self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
 
-        # Generate any global diagnostics
-        global_errors = PylintParser.get_items("GLOBAL")
-        for g in global_errors or []:
-            g.generate_tokens(apiview, "GLOBAL")
+        ## Create navigation info to navigate within APIreview tool
+        #navigation = Navigation(package_name, None)
+        #navigation.tags = NavigationTag(Kind.type_package)
+        #apiview.add_navigation(navigation)
 
-        # Generate tokens
-        modules = self.module_dict.keys()
-        for m in modules:
-            self.module_dict[m].generate_diagnostics()
-            # Generate and add token to APIView
-            logging.debug("Generating tokens for module {}".format(m))
-            self.module_dict[m].generate_tokens(apiview)
-            # Add navigation info for this modules. navigation info is used to build tree panel in API tool
-            module_nav = self.module_dict[m].get_navigation()
-            if module_nav:
-                navigation.add_child(module_nav)
+        ## Generate any global diagnostics
+        #global_errors = PylintParser.get_items("GLOBAL")
+        #for g in global_errors or []:
+        #    g.generate_tokens(apiview, "GLOBAL")
+
+        ## Generate tokens
+        #modules = self.module_dict.keys()
+        #for m in modules:
+        #    self.module_dict[m].generate_diagnostics()
+        #    # Generate and add token to APIView
+        #    logging.debug("Generating tokens for module {}".format(m))
+        #    self.module_dict[m].generate_tokens(apiview)
+        #    # Add navigation info for this modules. navigation info is used to build tree panel in API tool
+        #    module_nav = self.module_dict[m].get_navigation()
+        #    if module_nav:
+        #        navigation.add_child(module_nav)
         return apiview
 
     def _extract_wheel(self):

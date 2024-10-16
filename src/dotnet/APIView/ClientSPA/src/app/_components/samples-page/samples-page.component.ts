@@ -118,11 +118,6 @@ export class SamplesPageComponent {
         tooltip: 'API',
         command: () => this.openLatestAPIReivisonForReview()
       }
-      //{
-      //  icon: 'bi bi-clock-history',
-      //  tooltip: 'Revisions',
-      //  command: () => this.router.navigate([`/revision/${this.reviewId}`])
-      //}
     ];
   }
 

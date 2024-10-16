@@ -11,7 +11,6 @@ export interface Routes {
     (path: "change_return_type", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
     (path: "change_para_count", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
     (path: "change_para_type", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
-    
 }
 
 export type types = "basic" | "remove";

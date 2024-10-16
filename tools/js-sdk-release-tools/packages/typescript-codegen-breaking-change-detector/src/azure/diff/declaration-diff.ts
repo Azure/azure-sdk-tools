@@ -115,9 +115,8 @@ function findCallSignatureBreakingChanges(
       return result;
     }
 
-    const getNode = (s: Signature): Node => s.compilerSignature.getDeclaration() as unknown as Node;
-    const getName = (s: Signature): string => s.compilerSignature.getDeclaration().getText();
-    const getNameNode = (s: Signature): NameNode => ({ name: getName(s), node: getNode(s) });
+    // not found
+    const getNameNode = (s: Signature): NameNode => ({ name: s.getDeclaration().getText(), node: s.getDeclaration() });
     const targetNameNode = getNameNode(targetSignature);
     const pair = createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, targetNameNode);
     result.push(pair);

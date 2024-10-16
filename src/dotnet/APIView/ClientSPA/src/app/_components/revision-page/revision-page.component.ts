@@ -2,11 +2,11 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
-import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/common-helpers';
+import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
-import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 
 @Component({
   selector: 'app-revision-page',
@@ -21,7 +21,7 @@ export class RevisionPageComponent {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private apiRevisionsService: RevisionsService, private router: Router) {}
+  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private apiRevisionsService: APIRevisionsService, private router: Router) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);

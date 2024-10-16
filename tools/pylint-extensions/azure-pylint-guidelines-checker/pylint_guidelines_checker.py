@@ -2818,12 +2818,6 @@ class NoImportTypingFromTypeCheck(BaseChecker):
                         )
         except:
             pass
-# [Pylint] custom linter check for invalid use of @overload #3229
-# [Pylint] Custom Linter check for Exception Logging #3227
-# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-# [Pylint] Add a check for connection_verify hardcoded settings #35355
-# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
-# [Pylint] Investigate pylint rule around missing dependency #3231
 
 
 
@@ -2889,6 +2883,7 @@ class DoNotImportAsyncio(BaseChecker):
 
 
 class InvalidUseOfOverload(BaseChecker):
+    
     """Rule to check that use of the @overload decorator matches the async/sync nature of the underlying function"""
 
     name = "invalid-use-of-overload"
@@ -3017,9 +3012,6 @@ class DoNotLogExceptions(BaseChecker):
                 self.check_for_logging(j.orelse, exception_name)
 
 
-# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-
-
 class DoNotHardcodeConnectionVerify(BaseChecker):
 
     """Rule to check that developers do not hardcode a boolean to connection_verify."""
@@ -3092,10 +3084,6 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
 
 
 
-# [Pylint] Investigate pylint rule around missing dependency #3231
-
-
-
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3136,9 +3124,7 @@ def register(linter):
     linter.register_checker(DoNotLogExceptions(linter))
 
 
-    # [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
     linter.register_checker(DoNotHardcodeConnectionVerify(linter))
-    # [Pylint] Investigate pylint rule around missing dependency #3231
 
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it

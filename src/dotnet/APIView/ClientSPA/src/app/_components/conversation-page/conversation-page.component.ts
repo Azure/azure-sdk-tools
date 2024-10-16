@@ -2,14 +2,14 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
-import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/common-helpers';
-import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
+import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
-import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 
 @Component({
@@ -30,7 +30,7 @@ export class ConversationPageComponent {
   private destroy$ = new Subject<void>();
 
   constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private userProfileService: UserProfileService,
-    private apiRevisionsService: RevisionsService, private commentsService: CommentsService
+    private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService
   ) {}
 
   ngOnInit() {
@@ -76,7 +76,7 @@ export class ConversationPageComponent {
   }
 
   loadComments() {
-    this.commentsService.getComments(this.reviewId!)
+    this.commentsService.getComments(this.reviewId!, CommentType.APIRevision)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (comments: CommentItemModel[]) => {
           this.comments = comments;

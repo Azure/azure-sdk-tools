@@ -3609,9 +3609,6 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
-# [Pylint] Address Commented out Pylint Custom Plugin Checkers #3228
-
-
 
 class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
     """Test that we are not hard-coding a True or False to connection_verify"""
@@ -3747,9 +3744,4 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             self.checker.visit_annassign(annotated_assignment)
             self.checker.visit_annassign(annotated_self_assignment)
 
-
-
-
-# [Pylint] Refactor test suite for custom pylint checkers to use files instead of docstrings #3233
-# [Pylint] Investigate pylint rule around missing dependency #3231
 

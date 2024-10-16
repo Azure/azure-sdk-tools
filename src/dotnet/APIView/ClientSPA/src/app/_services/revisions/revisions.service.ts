@@ -2,7 +2,6 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map, take } from 'rxjs';
 
-
 import { PaginatedResult } from 'src/app/_models/pagination';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
@@ -12,11 +11,15 @@ import { INDEX_PAGE_NAME } from 'src/app/_helpers/router-helpers';
 @Injectable({
   providedIn: 'root'
 })
-export class RevisionsService {
+export class APIRevisionsService {
   baseUrl : string = this.configService.apiUrl + "APIRevisions";
   paginatedResult: PaginatedResult<APIRevision[]> = new PaginatedResult<APIRevision[]>
   
   constructor(private http: HttpClient, private configService: ConfigService) { }
+
+  getLatestAPIRevision(reviewId: string): Observable<APIRevision> {
+    return this.http.get<APIRevision>(this.baseUrl + `/${reviewId}/latest`);
+  }
 
   getAPIRevisions(noOfItemsRead: number, pageSize: number,
     reviewId : string, label: string | undefined = undefined, author: string | undefined = undefined, 
@@ -49,7 +52,7 @@ export class RevisionsService {
         params: params,
         observe: 'response', 
         withCredentials: true 
-      } ).pipe(
+      }).pipe(
           map((response : any) => {
             if (response.body) {
               this.paginatedResult.result = response.body;
@@ -61,7 +64,7 @@ export class RevisionsService {
             return this.paginatedResult;
           }
         )
-      );
+    );
   }
 
   deleteAPIRevisions(reviewId: string, revisionIds: string[]): Observable<any> {
@@ -170,7 +173,6 @@ export class RevisionsService {
     return currentRoute.data.pipe(
       map(data => {
         const pageName = data['pageName'];
-        console.log("Page Name", pageName);
         return data['pageName'] === INDEX_PAGE_NAME;
       })
     );

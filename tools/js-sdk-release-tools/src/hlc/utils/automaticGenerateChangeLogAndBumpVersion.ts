@@ -44,7 +44,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
             process.exit(1);
         }
         logger.info(`Package ${packageName} has been released before, start to check whether previous release is track2 sdk.`)
-        const usedVersions = npmViewResult['versions'];
+        const usedVersions = Object.keys(npmViewResult['versions']);
         // in our rule, we always compare to stableVersion. But here wo should pay attention to the some stableVersion which contains beta, which means the package has not been GA.
         try {
             shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));

@@ -232,18 +232,18 @@ class StubGenerator:
             pkg_version=package_version
         )
 
-        #modules = self._find_modules(pkg_root_path)
-        #logging.debug("Modules to generate tokens: {}".format(modules))
+        modules = self._find_modules(pkg_root_path)
+        logging.debug("Modules to generate tokens: {}".format(modules))
 
-        ## load all modules and parse them recursively
-        #for m in modules:
-        #    if not m.startswith(namespace):
-        #        logging.debug("Skipping module {0}. Module should start with {1}".format(m, namespace))
-        #        continue
+        # load all modules and parse them recursively
+        for m in modules:
+            if not m.startswith(namespace):
+                logging.debug("Skipping module {0}. Module should start with {1}".format(m, namespace))
+                continue
 
-        #    logging.debug("Importing module {}".format(m))
-        #    module_obj = importlib.import_module(m)
-        #    self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
+            logging.debug("Importing module {}".format(m))
+            module_obj = importlib.import_module(m)
+            self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
 
         ## Create navigation info to navigate within APIreview tool
         #navigation = Navigation(package_name, None)

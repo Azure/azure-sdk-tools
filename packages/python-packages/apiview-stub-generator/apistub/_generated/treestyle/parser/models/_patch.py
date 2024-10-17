@@ -84,7 +84,8 @@ class ApiView(CodeFile):
         #self.review_lines = []
         #self.diagnostics = []
         #self.navigation = []
-        # check if super needs to be called
+        # TODO: Version: 0 doesn't have a correpsonding value in new parser. 
+        #self.version = 0
         super().__init__(
             package_name=pkg_name,
             package_version=pkg_version,
@@ -93,11 +94,10 @@ class ApiView(CodeFile):
             review_lines=[],
             cross_language_package_id=self.metadata_map.cross_language_package_id,
             diagnostics=[],
-            navigation=[],
+            #navigation=[], # TODO: Add later if needed
         )
 
         self.source_url = source_url
-        self.version = 0
         self.indent = 0
         self.namespace = namespace
         self.node_index = NodeIndex()
@@ -108,35 +108,39 @@ class ApiView(CodeFile):
             has_suffix_space=False,
         )
         self.add_review_line(line_id="GLOBAL", tokens=[token])
-        #if source_url:
+        #if source_url:  # TODO: test source url
         #    self.set_blank_lines(1)
         #    self.add_literal("# Source URL: ")
         #    self.add_link(source_url)
         #self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
-        #self.set_blank_lines(2)
+        self.set_blank_lines(2)
 
     def set_blank_lines(self, count):
         """ Ensures a specific number of blank lines.
             Will add or remove newline tokens as needed
             to ensure the exact number of blank lines.
         """
+        for _ in range(count):
+            self.add_review_line()
+
+        # TODO: Find out why counting/removing was needed
         # count the number of trailing newlines
-        newline_count = 0
-        for token in self.tokens[::-1]:
-            if token.kind == TokenKind.Newline:
-                newline_count += 1
-            else:
-                break
+        #newline_count = 0
+        #for token in self.tokens[::-1]:
+        #    if token.kind == TokenKind.Newline:
+        #        newline_count += 1
+        #    else:
+        #        break
         
-        if newline_count < (count + 1):
-            # if there are not enough newlines, add some
-            for n in range((count + 1) - newline_count):
-                self.add_token(Token("", TokenKind.Newline))
-        elif newline_count > (count + 1):
-            # if there are too many newlines, remove some
-            excess = newline_count - (count + 1)
-            for _ in range(excess):
-                self.tokens.pop()
+        #if newline_count < (count + 1):
+        #    # if there are not enough newlines, add some
+        #    for n in range((count + 1) - newline_count):
+        #        self.add_token(Token("", TokenKind.Newline))
+        #elif newline_count > (count + 1):
+        #    # if there are too many newlines, remove some
+        #    excess = newline_count - (count + 1)
+        #    for _ in range(excess):
+        #        self.tokens.pop()
 
     def begin_group(self, group_name=""):
         """Begin a new group in API view by shifting to right
@@ -150,8 +154,15 @@ class ApiView(CodeFile):
             raise ValueError("Invalid indentation")
         self.indent -= 1
     
-    def add_review_line(self, line_id, tokens: List[Token] = None):
-        self.review_lines.append(ReviewLine(line_id=line_id, tokens=tokens))
+    def add_review_line(
+        self,
+        *,
+        line_id: Optional[str] = None,
+        tokens: List[Token] = [],
+    ):
+        self.review_lines.append(
+            ReviewLine(line_id=line_id, tokens=tokens)
+        )
 
     def add_diagnostic(self, *, obj, target_id):
         self.diagnostics.append(Diagnostic(obj=obj, target_id=target_id))
@@ -170,6 +181,7 @@ class ReviewLine(ReviewLineImpl):
         children: Optional[List["ReviewLine"]] = None,
         is_context_end_line: Optional[bool] = False,
         related_to_line: Optional[str] = None,
+        parent: Optional["ReviewLine"] = None
     ):
         super().__init__(
             tokens=tokens,
@@ -179,6 +191,7 @@ class ReviewLine(ReviewLineImpl):
             is_context_end_line=is_context_end_line,
             related_to_line=related_to_line
         )
+        self.parent = parent
 
     def add_token(self, token):
         self.tokens.append(token)

@@ -17,6 +17,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     public class RecordedTestSanitizer
     {
         public const string SanitizeValue = "Sanitized";
+
+        public string SanitizerId { get; set; }
+
         public List<string> JsonPathSanitizers { get; } = new List<string>();
 
         public ApplyCondition Condition { get; protected set; } = null;

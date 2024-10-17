@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -100,7 +101,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
+                var reqEntryPreSanitize = requestEntry.ToString();
                 sanitizer.Sanitize(requestEntry);
+                var reqEntryPostSanitize = requestEntry.ToString();
+                LogSanitizerModification(sanitizer.SanitizerId, reqEntryPreSanitize, reqEntryPostSanitize );
             }
 
             // normalize request body with STJ using relaxed escaping to match behavior when Deserializing from session files
@@ -145,7 +149,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             try
             {
+                var entryPreSanitize = "";
+                var entryPostSanitize = "";
+
+                entryPreSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
                 sanitizer.Sanitize(this);
+                entryPostSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
+                LogSanitizerModification(sanitizer.SanitizerId, entryPreSanitize, entryPostSanitize);
             }
             finally
             {
@@ -153,6 +163,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     EntryLock.Release();
                 }
+            }
+        }
+        private void LogSanitizerModification(string sanitizerId, string entryPreSanitize, string entryPostSanitize)
+        {
+            var result = StringComparer.OrdinalIgnoreCase.Compare(entryPreSanitize, entryPostSanitize);
+            if (result != 0)
+            {
+                DebugLogger.LogInformation($"Sanitizer {sanitizerId} modified the entry\nbefore:\n {entryPreSanitize}\nafter:\n {entryPostSanitize}");
             }
         }
 
@@ -167,7 +185,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 foreach (var sanitizer in sanitizers)
                 {
+                    var entryPreSanitize = "";
+                    var entryPostSanitize = "";
+
+                    entryPreSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
                     sanitizer.Sanitize(this);
+                    entryPostSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
+                    LogSanitizerModification(sanitizer.SanitizerId, entryPreSanitize, entryPostSanitize);
                 }
             }
             finally

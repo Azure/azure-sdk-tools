@@ -128,6 +128,7 @@ export function buildToken(options: ReviewToken): ReviewToken {
  *   - punctuators => punctuators
  *   - whitespace: set hasSuffixSpace = true on previous {@link ReviewToken}
  *   - otherwise add a normal Text token
+ * @param reviewTokens - {@link ReviewToken} array to add the built token
  * @param line the {@link ReviewLine} to add tokens and children if any
  * @param s
  * @param currentTypeid
@@ -136,12 +137,12 @@ export function buildToken(options: ReviewToken): ReviewToken {
  * @returns
  */
 export function splitAndBuild(
+  reviewTokens: ReviewToken[],
   s: string,
   currentTypeid: string,
   currentTypeName: string,
   memberKind: string,
 ) {
-  const reviewTokens: ReviewToken[] = [];
   // Not sure why api.json uses "export declare function", while api.md uses "export function".
   // Use the latter because that's how we normally define it in the TypeScript source code.
   const lines = s.replace(/export declare function/g, "export function").split("\n");
@@ -184,8 +185,9 @@ export function splitAndBuild(
             Kind: TokenKind.Text,
             Value: token.value,
           });
-        } else if (reviewTokens.length > 0) {
-          // Make previous token to have a space
+        }
+        if (reviewTokens.length > 0) {
+          // Make previous non-whitespace token to have a space
           reviewTokens[reviewTokens.length - 1].HasSuffixSpace = true;
         }
       } else {
@@ -225,7 +227,7 @@ export function splitAndBuildMultipleLine(
         }),
       );
     } else {
-      reviewTokens.push(...splitAndBuild(l, currentTypeid, currentTypeName, memberKind));
+      splitAndBuild(reviewTokens, l, currentTypeid, currentTypeName, memberKind);
     }
 
     if (firstLine) {

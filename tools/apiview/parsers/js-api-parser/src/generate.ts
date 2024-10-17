@@ -230,13 +230,12 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
     const itemKind: string = getItemKindString(item);
 
     if (item.kind === ApiItemKind.Namespace) {
-      line.Tokens.push(
-        ...splitAndBuild(
-          `declare namespace ${item.displayName} `,
-          itemId,
-          item.displayName,
-          itemKind,
-        ),
+      splitAndBuild(
+        line.Tokens,
+        `declare namespace ${item.displayName} `,
+        itemId,
+        item.displayName,
+        itemKind,
       );
     } else {
       if (item.kind === ApiItemKind.Variable) {
@@ -255,7 +254,7 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
             });
             line.Tokens.push(token);
           } else {
-            line.Tokens.push(...splitAndBuild(excerpt.text, itemId, item.displayName, itemKind));
+            splitAndBuild(line.Tokens, excerpt.text, itemId, item.displayName, itemKind);
           }
         }
       } else {

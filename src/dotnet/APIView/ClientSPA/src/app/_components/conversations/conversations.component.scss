@@ -1,6 +1,10 @@
 :host ::ng-deep {
     .p-timeline-event-opposite {
-        flex: 0 0 auto !important;
+        display: none;
+    }
+
+    .p-timeline-event-separator {
+        margin-left: 3%;
     }
 
     .p-timeline .p-timeline-event-connector {

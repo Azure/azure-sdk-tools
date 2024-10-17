@@ -2,6 +2,9 @@ parameters:
   - name: DryRun
     type: boolean
     default: false
+  - name: GroupFilter
+    type: string
+    default: '*'
   - name: DisplayName
     type: string
   - name: ServiceConnection
@@ -87,7 +90,8 @@ steps:
           @subscriptionConfiguration `
           -Verbose `
           ${{ parameters.AdditionalParameters }} `
-          -WhatIf:$${{ parameters.DryRun }}
+          -WhatIf:$${{ parameters.DryRun }} `
+          -GroupFilter '${{ parameters.GroupFilter }}'
       displayName: ${{ parameters.DisplayName }}
       continueOnError: true
       env:

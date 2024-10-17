@@ -14,7 +14,7 @@ import { RevisionOptionsComponent } from 'src/app/_components/revision-options/r
 import { SharedAppModule } from './shared-app.module';
 import { CommonModule } from '@angular/common'; 
 import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-options-section/page-options-section.component';
-import { NavBarComponent } from 'src/app/_components/shared/nav-bar/nav-bar.component';
+import { HtmlToMarkdownPipe } from 'src/app/_pipes/html-to-markdown.pipe';
 
 @NgModule({
   declarations: [
@@ -25,6 +25,7 @@ import { NavBarComponent } from 'src/app/_components/shared/nav-bar/nav-bar.comp
     RevisionOptionsComponent,
     PageOptionsSectionComponent,
     MarkdownToHtmlPipe,
+    HtmlToMarkdownPipe,
     EditorComponent,
   ],
   exports: [
@@ -35,6 +36,7 @@ import { NavBarComponent } from 'src/app/_components/shared/nav-bar/nav-bar.comp
     ReviewPageLayoutComponent,
     RevisionOptionsComponent,
     MarkdownToHtmlPipe,
+    HtmlToMarkdownPipe,
     EditorComponent,
     SharedAppModule,
     EditorModule,

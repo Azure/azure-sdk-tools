@@ -13,22 +13,26 @@ const NON_SPECIAL_CHARACTERS = /^[^a-zA-Z0-9]+$/;
   name: 'markdownToHtml'
 })
 export class MarkdownToHtmlPipe implements PipeTransform {
-  transform(markdown: string): Promise<string> {
+  transform(markdown: string, addLineActions: boolean = false): Promise<string> {
     return new Promise((resolve, reject) => {
-      unified()
-      .use(remarkParse)
-      .use(remarkRehype, { allowDangerousHtml: true })
-      .use(rehypeRaw)
-      .use(rehypeHighlight)
-      .use(rehypeAddLineActions)
-      .use(rehypeStringify) 
-      .process(markdown)
-      .then((file) => {
-        resolve(String(file));
-      })
-      .catch((err) => {
-        reject(err);
-      });
+      const processor = unified()
+        .use(remarkParse)
+        .use(remarkRehype, { allowDangerousHtml: true })
+        .use(rehypeRaw)
+        .use(rehypeHighlight);
+
+      if (addLineActions) {
+        processor.use(rehypeAddLineActions);
+      }
+      
+      processor.use(rehypeStringify) 
+        .process(markdown)
+        .then((file) => {
+          resolve(String(file));
+        })
+        .catch((err) => {
+          reject(err);
+        });
     });
   }
 }

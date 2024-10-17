@@ -15,7 +15,7 @@
                         <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
                     </div>
                 </ng-template>
-                <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml) | async" class="pe-5 rendered-comment-content">
+                <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | htmlToMarkdown : false | markdownToHtml | async)" class="pe-5 rendered-comment-content">
                 </div>
                 <div *ngIf="comment.isInEditMode" class="mt-2 p-2 edit-editor-container">
                     <app-editor [content]="comment.commentText" (contentEmitter)="handleContentEmitter($event)" [editorId]="comment.id" [style]="{ width: '100%'}"></app-editor>

@@ -18,5 +18,6 @@ export class EditorComponent {
 
   onTextChange(event: EditorTextChangeEvent) {
     this.contentEmitter.emit(event.textValue);
+    console.log(event.textValue);
   }
 }

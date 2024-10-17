@@ -287,6 +287,12 @@ stages:
             git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
           displayName: Clone Repo
 
+        - task: UseJavaVersion@1
+          inputs:
+            versionSpec: '21'
+            jdkArchitectureOption: 'x64'
+            jdkSourceOption: 'PreInstalled'
+
         - pwsh: |
             Write-Host "mvn install -f eng/code-quality-reports/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress"
             mvn install -f eng/code-quality-reports/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress

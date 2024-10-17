@@ -239,6 +239,12 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
         ),
       );
     } else {
+      if (item.kind === ApiItemKind.Variable) {
+        line.Tokens.push(
+          buildToken({ Kind: TokenKind.Keyword, Value: "export", HasSuffixSpace: true }),
+          buildToken({ Kind: TokenKind.Keyword, Value: "const", HasSuffixSpace: true }),
+        );
+      }
       if (!item.excerptTokens.some((except) => except.text.includes("\n"))) {
         for (const excerpt of item.excerptTokens) {
           if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {

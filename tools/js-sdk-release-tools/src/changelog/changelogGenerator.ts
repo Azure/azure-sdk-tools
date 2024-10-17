@@ -4,8 +4,20 @@ import {
     InterfaceDeclaration,
     TypeAliasDeclaration
 } from "parse-ts-to-ast";
-// TODO: add detection for routes and overloads in base detector
-import { InlineDeclarationNameSetMessage, RuleMessage, RuleMessageKind, detectBreakingChangesBetweenPackages } from "typescript-codegen-breaking-change-detector";
+import {
+    AssignDirection,
+    AstContext,
+    DiffLocation,
+    DiffPair,
+    DiffReasons,
+    InlineDeclarationNameSetMessage,
+    RuleMessage,
+    RuleMessageKind,
+    detectBreakingChangesBetweenPackages,
+    patchRoutes,
+    patchUnionType,
+    patchFunction,
+} from "typescript-codegen-breaking-change-detector";
 
 import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration";
 import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
@@ -14,6 +26,7 @@ import { SDKType } from "../common/types";
 import { logger } from "../utils/logger";
 import { TSExportedMetaData } from "./extractMetaData";
 import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor";
+import { Node, SyntaxKind } from "ts-morph";
 
 export interface ChangelogItem {
     line: string;
@@ -23,6 +36,14 @@ export interface ChangelogItem {
 }
 
 export class Changelog {
+    // TODO: refactor: use unified changelog item,
+    //       avoid updating the following for adding a new change type
+    //       -   'hasBreakingChange'
+    //       -   'hasFeature'
+    //       -   'getBreakingChangeItems'
+    //       -   'getBreakingChangeItems
+    //       -   'displayChangeLog'
+
     // features
     public addedOperationGroup: ChangelogItem[] = [];
     public addedOperation: ChangelogItem[] = [];
@@ -36,6 +57,8 @@ export class Changelog {
     public addedEnum: ChangelogItem[] = [];
     public addedEnumValue: ChangelogItem[] = [];
     public addedFunction: ChangelogItem[] = [];
+    public addedFunctionOverload: ChangelogItem[] = [];
+
     // breaking changes
     public removedOperationGroup: ChangelogItem[] = [];
     public removedOperation: ChangelogItem[] = [];
@@ -52,9 +75,13 @@ export class Changelog {
     public typeAliasParamDelete: ChangelogItem[] = [];
     public typeAliasAddRequiredParam: ChangelogItem[] = [];
     public typeAliasParamChangeRequired: ChangelogItem[] = [];
+    public typeAliasOtherChanged: ChangelogItem[] = [];
     public removedEnum: ChangelogItem[] = [];
     public removedEnumValue: ChangelogItem[] = [];
     public removedFunction: ChangelogItem[] = [];
+    public removedFunctionOverload: ChangelogItem[] = [];
+    public changedFunction: ChangelogItem[] = [];
+    public removedTypeAlias: ChangelogItem[] = [];
 
     public get hasBreakingChange() {
         return this.removedOperationGroup.filter(i => !i.toDelete).length > 0 ||
@@ -73,8 +100,12 @@ export class Changelog {
             this.typeAliasAddRequiredParam.filter(i => !i.toDelete).length > 0 ||
             this.typeAliasParamChangeRequired.filter(i => !i.toDelete).length > 0 ||
             this.removedEnum.filter(i => !i.toDelete).length > 0 ||
-            this.removedEnumValue.filter(i => !i.toDelete).length > 0;
-            this.removedFunction.filter(i => !i.toDelete).length > 0;
+            this.removedEnumValue.filter(i => !i.toDelete).length > 0 ||
+            this.removedFunction.filter(i => !i.toDelete).length > 0 ||
+            this.changedFunction.filter(i => !i.toDelete).length > 0 ||
+            this.removedFunctionOverload.filter(i => !i.toDelete).length > 0 ||
+            this.removedTypeAlias.filter(i => !i.toDelete).length > 0 ||
+            this.typeAliasOtherChanged.filter(i => !i.toDelete).length > 0;
     }
 
     public get hasFeature() {
@@ -88,8 +119,9 @@ export class Changelog {
             this.typeAliasAddInherit.filter(i => !i.toDelete).length > 0 ||
             this.typeAliasAddParam.filter(i => !i.toDelete).length > 0 ||
             this.addedEnum.filter(i => !i.toDelete).length > 0 ||
-            this.addedEnumValue.filter(i => !i.toDelete).length > 0;
-        this.addedFunction.filter(i => !i.toDelete).length > 0;
+            this.addedEnumValue.filter(i => !i.toDelete).length > 0 ||
+            this.addedFunction.filter(i => !i.toDelete).length > 0 ||
+            this.addedFunctionOverload.filter(i => !i.toDelete).length > 0;
     }
 
     public getBreakingChangeItems(): string[] {
@@ -113,12 +145,17 @@ export class Changelog {
                 .concat(this.removedEnum.filter(i => !i.toDelete).map(i => i.line))
                 .concat(this.removedEnumValue.filter(i => !i.toDelete).map(i => i.line))
                 .concat(this.removedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.changedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedFunctionOverload.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedTypeAlias.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasOtherChanged.filter(i => !i.toDelete).map(i => i.line))
                 .forEach(e => {
                     items.push(e);
                 });
         }
         return items;
     }
+
 
     public displayChangeLog(): string {
         const display: string[] = [];
@@ -137,6 +174,7 @@ export class Changelog {
                 .concat(this.addedEnum.filter(i => !i.toDelete).map(i => i.line))
                 .concat(this.addedEnumValue.filter(i => !i.toDelete).map(i => i.line))
                 .concat(this.addedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.addedFunctionOverload.filter(i => !i.toDelete).map(i => i.line))
                 .forEach(e => {
                     display.push('  - ' + e);
                 });
@@ -164,6 +202,10 @@ export class Changelog {
                 .concat(this.removedEnum.filter(i => !i.toDelete).map(i => i.line))
                 .concat(this.removedEnumValue.filter(i => !i.toDelete).map(i => i.line))
                 .concat(this.removedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.changedFunction.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedFunctionOverload.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.removedTypeAlias.filter(i => !i.toDelete).map(i => i.line))
+                .concat(this.typeAliasOtherChanged.filter(i => !i.toDelete).map(i => i.line))
                 .forEach(e => {
                     display.push('  - ' + e);
                 });
@@ -547,6 +589,7 @@ const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
     return removedOperation;
 };
 
+// TODO: fix no check for return type
 const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType): ChangelogItem[] => {
     const newToOld = getRenamedOperationGroupFromToMap(metaDataNew);
@@ -1125,7 +1168,7 @@ const findRemovedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExp
 
 export const changelogGenerator = (
     metaDataOld: TSExportedMetaData, metadataNew: TSExportedMetaData,
-    oldSdkType: SDKType, newSdkType: SDKType): Changelog => {
+    oldSdkType: SDKType, newSdkType: SDKType, astContext: AstContext): Changelog => {
     if (!oldSdkType || !newSdkType) {
         throw new Error(`SDK type is not valid. Old SDK type: ${oldSdkType}, New SDK type: ${newSdkType}`);
     }
@@ -1165,8 +1208,196 @@ export const changelogGenerator = (
     changLog.removedEnum = findRemovedEnum(metaDataOld, metadataNew);
     changLog.removedEnumValue = findRemovedEnumValue(metaDataOld, metadataNew);
     changLog.removedFunction = findRemovedFunction(metaDataOld, metadataNew);
-        console.log('functionNames', functionNames.size)
-        console.log('metadataNew.functions.length', metadataNew.functions)
-        console.log('functionDiffPairs', functionDiffPairs.length)
+
+    // patch RLC
+    if (newSdkType === SDKType.RestLevelClient && oldSdkType === SDKType.RestLevelClient) {
+        const routesDiffPairs = patchRoutes(astContext);
+        handleRoutesDiffPairs(routesDiffPairs, changLog);    
+
+        const functionNames = new Set([...Object.keys(metaDataOld.functions), ...Object.keys(metadataNew.functions)]);
+        const functionDiffPairs = [...functionNames].reduce((pairs, functionName) => {
+            pairs.push(...patchFunction(functionName, astContext));
+            return pairs;
+        }, new Array<DiffPair>());
+        handleFunctionDiffPairs(functionDiffPairs, changLog);
+
+        const typeAliasNames = new Set([...Object.keys(metaDataOld.typeAlias), ...Object.keys(metadataNew.typeAlias)]);
+        const typeAliasPairs = [...typeAliasNames].reduce((pairs, typeAliasName) => {
+            pairs.push(...patchUnionType(typeAliasName, astContext, AssignDirection.CurrentToBaseline));
+            return pairs;
+        }, new Array<DiffPair>());
+        handleAddedRemovedTypeAliasDiffPairs(typeAliasPairs, changLog);
+        
+        // NOTE: handle type alias's type change case in simple way for now, and exclude intersection type, since already handled
+        // TODO: handle type alias's type change case in a general way
+        const typeAliasPairsReverse = [...typeAliasNames].reduce((pairs, typeAliasName) => {
+            pairs.push(...patchUnionType(typeAliasName, astContext, AssignDirection.BaselineToCurrent));
+            return pairs;
+        }, new Array<DiffPair>());
+        handleChangedTypeAliasDiffPairs(typeAliasPairs, typeAliasPairsReverse, changLog);
+    }
+
     return changLog;
 };
+
+function handleFunctionDiffPairs(pairs: DiffPair[], changelog: Changelog) {
+    pairs.forEach(p => {
+        // signature overload is added or removed
+        if (p.location === DiffLocation.Signature_Overload && p.reasons === DiffReasons.Added) {
+            changelog.addedFunctionOverload.push({
+                line: `Added function overload "${p.source!.node.getText()}"`,
+                newName: p.source!.node.getText()
+            })
+            return;
+        }
+        if (p.location === DiffLocation.Signature_Overload && p.reasons === DiffReasons.Removed) {
+            changelog.removedFunctionOverload.push({
+                line: `Removed function overload '${p.target!.node.getText()}'`,
+                oldName: p.target!.node.getText()
+            })
+            return;
+        }
+        // signature is added or removed
+        if (p.location === DiffLocation.Signature &&
+            (p.reasons === DiffReasons.Added || p.reasons === DiffReasons.Removed)) {
+            // already handled in changelog generator, ignore
+            return;
+        }
+        // signature is changed
+        if (p.location === DiffLocation.Signature_ReturnType && p.reasons === DiffReasons.TypeChanged) {
+            const functionName = p.source!.node.asKindOrThrow(SyntaxKind.FunctionDeclaration).getName();
+            const newReturnType = p.source!.node.asKindOrThrow(SyntaxKind.FunctionDeclaration).getReturnTypeNodeOrThrow().getText();
+            changelog.changedFunction.push({
+                line: `Function ${functionName} has a new signature`,
+                newName: newReturnType
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Signature_ParameterList && p.reasons === DiffReasons.CountChanged) {
+            const functionName = p.source!.node.asKindOrThrow(SyntaxKind.FunctionDeclaration).getName();
+            changelog.changedFunction.push({
+                line: `Function ${functionName} has a new signature`
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Parameter && p.reasons === DiffReasons.TypeChanged) {
+            const newParameterType = p.source!.node.asKindOrThrow(SyntaxKind.Parameter).getTypeNode()?.getText();
+            const functionName = p.source!.node.asKindOrThrow(SyntaxKind.Parameter).getParent().asKindOrThrow(SyntaxKind.FunctionDeclaration).getName();
+            changelog.changedFunction.push({
+                line: `Function ${functionName} has a new signature`,
+                newName: newParameterType
+            });
+            return;
+        }
+        // unsupported
+        throw new Error(`Unsupported diff pair: ${p.location} - ${p.reasons}`);
+    });
+}
+
+function handleChangedTypeAliasDiffPairs(typeAliasPairs: DiffPair[], typeAliasPairsReverse: DiffPair[], changelog: Changelog) {
+    function getName(p: DiffPair) {
+        return p.source!.node.asKindOrThrow(SyntaxKind.TypeAliasDeclaration).getName();
+    }
+
+    const changedTypeAlias = typeAliasPairs
+            .filter(p => p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.TypeChanged)
+            .reduce((set, p) => {
+                set.add(getName(p));
+                return set;
+            }, new Set<string>());
+        const changedTypeAliasReverse = typeAliasPairsReverse
+            .filter(p => p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.TypeChanged)
+            .reduce((set, p) => {
+                set.add(getName(p));
+                return set;
+            }, new Set<string>());
+        const changedTypeAliasIntersection = [...changedTypeAlias].filter(x => changedTypeAliasReverse.has(x));
+        changedTypeAliasIntersection.forEach(t => {
+            changelog.typeAliasOtherChanged.push({line: `Type alias "${t}" has been changed`});
+        });
+}
+
+function handleAddedRemovedTypeAliasDiffPairs(pairs: DiffPair[], changelog: Changelog) {
+    pairs.forEach(p => {
+        if (p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.Added) {
+            // already handled in changelog generator, ignore
+            return;
+        }
+        if (p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.Removed) {
+            const name = p.target!.node.asKindOrThrow(SyntaxKind.TypeAliasDeclaration).getName();
+            changelog.removedTypeAlias.push({ line: 'Removed Type Alias ' + name, oldName: name });
+            return;
+        }
+        // ignore type change, handle in a simple way for now
+    });
+}
+
+function handleRoutesDiffPairs(routeDiffPairs: DiffPair[], changelog: Changelog) {
+    function getOperationPath(node: Node) {
+        if (node.isKind(SyntaxKind.FunctionDeclaration)) return node.getParameterOrThrow('path').getTypeNodeOrThrow().getText(); 
+        if (node.isKind(SyntaxKind.CallSignature)) return node.getParameterOrThrow('path').getTypeNodeOrThrow().getText();
+        if (node.isKind(SyntaxKind.Parameter)) {
+            if (node.getName() === 'path') return node.getTypeNodeOrThrow().getText();
+            for (const p of node.getNextSiblings()) {
+                if (p.isKind(SyntaxKind.Parameter) && p.getName() === 'path') return p.getTypeNodeOrThrow().getText();
+            }
+            for (const p of node.getPreviousSiblings()) {
+                if (p.isKind(SyntaxKind.Parameter) && p.getName() === 'path') return p.getTypeNodeOrThrow().getText();
+            }
+        }
+        throw new Error(`Operation path not found for ${node.getText()}`);
+    }
+
+    routeDiffPairs.forEach(p => {
+        // Routes is added or removed 
+        if (p.location === DiffLocation.Interface && p.reasons === DiffReasons.Removed) {
+            changelog.addedOperationGroup.push({ line: 'Added operation group Routes', newName: 'Routes' });
+            return;
+        }
+        if (p.location === DiffLocation.Interface && p.reasons === DiffReasons.Added) {
+            changelog.removedOperationGroup.push({ line: 'Removed operation group Routes', oldName: 'Routes' });
+            return;
+        }
+        // operation is added or removed
+        if (p.location === DiffLocation.Signature && p.reasons === DiffReasons.Added) {
+            changelog.addedOperation.push({
+                line: 'Added operation in Routes for path: ' + getOperationPath(p.source!.node),
+                newName: p.source!.name
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Signature && p.reasons === DiffReasons.Removed) {
+            changelog.removedOperation.push({
+                line: 'Removed operation Routes for path: ' + getOperationPath(p.target!.node),
+                oldName: p.target!.name
+            });
+            return;
+        }
+        // signature is changed
+        if (p.location === DiffLocation.Signature_ReturnType && p.reasons === DiffReasons.TypeChanged) {
+            const newReturnType = p.source!.node.asKind(SyntaxKind.CallSignature)?.getReturnTypeNodeOrThrow().getText();
+            changelog.operationSignatureChange.push({
+                line: 'Operation in "Routes" has a new signature for path: ' + getOperationPath(p.source!.node),
+                newName: newReturnType
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Signature_ParameterList && p.reasons === DiffReasons.CountChanged) {
+            const path = getOperationPath(p.source!.node);
+            changelog.operationSignatureChange.push({
+                line: 'Operation in "Routes" has a new signature for path: ' + path
+            });
+            return;
+        }
+        if (p.location === DiffLocation.Parameter && p.reasons === DiffReasons.TypeChanged) {
+            const newParameterType = p.source!.node.asKindOrThrow(SyntaxKind.Parameter).getTypeNodeOrThrow().getText();
+            changelog.operationSignatureChange.push({
+                line: 'Operation in "Routes" has a new signature for path: ' + getOperationPath(p.source!.node),
+                newName: newParameterType
+            });
+            return;
+        }
+        // unsupported
+        throw new Error(`Unsupported diff pair: ${p.location} - ${p.reasons}`);
+    });
+}

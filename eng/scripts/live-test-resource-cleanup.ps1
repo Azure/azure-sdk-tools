@@ -55,6 +55,8 @@ param (
   [Parameter()]
   [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist.txt",
 
+  [string] $GroupFilter = '*',
+
   [Parameter()]
   [switch] $Force,
 
@@ -351,7 +353,7 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  [Array]$allGroups = Retry { Get-AzResourceGroup }
+  [Array]$allGroups = Retry { Get-AzResourceGroup } | Where-Object { $_.ResourceGroupName -like $GroupFilter }
   $toDelete = @()
   $toClean = @()
   $toDeleteSoon = @()
@@ -449,7 +451,7 @@ function DeleteAndPurgeGroups([array]$toDelete) {
   }
 
   if (!$purgeableResources.Count) {
-    return
+    return $hasError
   }
   if ($Force -or $PSCmdlet.ShouldProcess("Purgable Resources", "Delete Purgeable Resources")) {
     # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.

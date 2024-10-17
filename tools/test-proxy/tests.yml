@@ -287,7 +287,7 @@ stages:
             git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
           displayName: Clone Repo
 
-        - task: UseJavaVersion@1
+        - task: JavaToolInstaller@0
           inputs:
             versionSpec: '21'
             jdkArchitectureOption: 'x64'

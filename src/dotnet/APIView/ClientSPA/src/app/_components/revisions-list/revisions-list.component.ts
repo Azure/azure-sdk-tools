@@ -526,7 +526,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         this.createRevisionInstruction = [
           `Run a <code>mvn package</code> build on your project, which will generate a number of build artifacts in the <code>/target</code> directory. In there, find the file ending <code>sources.jar</code>, and select it.`,
         ];
-        this.acceptedFilesForReviewUpload = ".sources.jar";
+        this.acceptedFilesForReviewUpload = ".jar";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
@@ -544,7 +544,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
           `Use <code>api-extractor</code> to generate a <a href="https://api-extractor.com/pages/setup/generating_docs/">docModel file</a>`,
           `Upload generated api.json file`
         ];
-        this.acceptedFilesForReviewUpload = ".api.json";
+        this.acceptedFilesForReviewUpload = ".json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;

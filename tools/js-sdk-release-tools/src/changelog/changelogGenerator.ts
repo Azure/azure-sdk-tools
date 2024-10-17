@@ -1165,5 +1165,8 @@ export const changelogGenerator = (
     changLog.removedEnum = findRemovedEnum(metaDataOld, metadataNew);
     changLog.removedEnumValue = findRemovedEnumValue(metaDataOld, metadataNew);
     changLog.removedFunction = findRemovedFunction(metaDataOld, metadataNew);
+        console.log('functionNames', functionNames.size)
+        console.log('metadataNew.functions.length', metadataNew.functions)
+        console.log('functionDiffPairs', functionDiffPairs.length)
     return changLog;
 };

@@ -58,8 +58,8 @@ export function patchRoutes(astContext: AstContext): DiffPair[] {
   const newFeaturePairs = patchDeclaration(
     AssignDirection.BaselineToCurrent,
     findInterfaceBreakingChanges,
-    current!,
     baseline!,
+    current!,
     findMappingCallSignature
   )
     .filter((p) => p.reasons === DiffReasons.Removed)

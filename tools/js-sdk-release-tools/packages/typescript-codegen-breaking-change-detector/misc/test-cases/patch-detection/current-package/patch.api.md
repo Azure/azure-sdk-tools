@@ -1,6 +1,6 @@
 # patch
 
-``` typescript
+``` ts
 export interface ClustersGet {
     a: string;
 }
@@ -17,7 +17,7 @@ export interface Routes {
     (path: "change_para_type", subscriptionId: string, resourceGroupName: string, clusterName: number): ClusterGetOld;
 }
 
-export type types = "basic" | "rEmove";
+export type typesChange = "basic" | "rEmove";
 export type typesAdd = "basic" | "rEmove";
 
 export interface A {a: string;}

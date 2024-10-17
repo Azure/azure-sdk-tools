@@ -100,15 +100,16 @@ function findCallSignatureBreakingChanges(
       if (returnPairs.length > 0) result.push(...returnPairs);
 
       // handle parameters
+      const path = sourceContext.id;
       const getParameters = (s: Signature): ParameterDeclaration[] =>
         s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getParameters();
       const parameterPairs = findParameterBreakingChangesCore(
-        getParameters(targetSignature),
         getParameters(sourceSignature),
-        sourceContext.id,
-        sourceContext.id,
-        targetSignature.getDeclaration(),
-        sourceSignature.getDeclaration()
+        getParameters(targetSignature),
+        path,
+        path,
+        sourceSignature.getDeclaration(),
+        targetSignature.getDeclaration()
       );
       if (parameterPairs.length > 0) result.push(...parameterPairs);
 
@@ -223,8 +224,9 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
 function findReturnTypeBreakingChangesCore(source: Node, target: Node): DiffPair[] {
   const reasons = findBreakingReasons(source, target);
   if (reasons === DiffReasons.None) return [];
-  const targetNameNode = target ? { name: target.getText(), node: target } : undefined;
-  const sourceNameNode = source ? { name: source.getText(), node: source } : undefined;
+  const getName = (node: Node) => (Node.hasName(node) ? node.getName() : node.getText());
+  const targetNameNode = target ? { name: getName(target), node: target } : undefined;
+  const sourceNameNode = source ? { name: getName(source), node: source } : undefined;
   const pair = createDiffPair(DiffLocation.Signature_ReturnType, reasons, sourceNameNode, targetNameNode);
   return [pair];
 }
@@ -341,13 +343,6 @@ export function findFunctionBreakingChanges(source: FunctionDeclaration, target:
 
   // function has overloads
   if (sourceOverloads.length > 1 || targetOverloads.length > 1) {
-    const getDiffPairs = (overloads: FunctionDeclaration[]) =>
-      overloads.map((t) =>
-        createDiffPair(DiffLocation.Signature_Overload, DiffReasons.Removed, undefined, {
-          name: t.getName()!,
-          node: t,
-        })
-      );
     const removedPairs = findRemovedFunctionOverloads(sourceOverloads, targetOverloads).map((t) =>
       createDiffPair(DiffLocation.Signature_Overload, DiffReasons.Removed, undefined, {
         name: t.getName()!,

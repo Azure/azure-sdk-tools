@@ -3,7 +3,7 @@
 
 import jsTokens from "js-tokens";
 import { ReviewLine, type ReviewToken, TokenKind } from "./models";
-import { ExcerptToken } from "@microsoft/api-extractor-model";
+import { ExcerptToken, ExcerptTokenKind } from "@microsoft/api-extractor-model";
 
 // The list of keywords is derived from https://github.com/microsoft/TypeScript/blob/aa9df4d68795052d1681ac7dc5f66d6362c3f3cb/src/compiler/scanner.ts#L135
 const TS_KEYWORDS = new Set<string>([
@@ -213,31 +213,71 @@ export function splitAndBuildMultipleLine(
   currentTypeName: string,
   memberKind: string,
 ) {
-  let firstLine: boolean = true;
-  const code = excerptTokens.map((e) => e.text).join("");
-  const lines = code.split("\n").filter((l) => l.trim() !== "");
-  for (const l of lines) {
-    const reviewTokens: ReviewToken[] = [];
-    if (l.match(/\/\*\*|\s\*/)) {
-      reviewTokens.push(
-        buildToken({
-          Kind: TokenKind.Comment,
-          IsDocumentation: true,
-          Value: l,
-        }),
-      );
+  let firstReviewLine: boolean = true;
+  for (const excerpt of excerptTokens) {
+    if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
+      const token = buildToken({
+        Kind: TokenKind.TypeName,
+        NavigateToId: excerpt.canonicalReference.toString(),
+        Value: excerpt.text,
+      });
+      if (line.Children.length > 0) {
+        line.Children[line.Children.length - 1].Tokens.push(token);
+      } else {
+        line.Tokens.push(token);
+      }
     } else {
-      splitAndBuild(reviewTokens, l, currentTypeid, currentTypeName, memberKind);
-    }
+      const codeLines = excerpt.text.split("\n");
+      let firstCodeLine: boolean = true;
+      for (const l of codeLines) {
+        const reviewTokens: ReviewToken[] = [];
+        if (l.match(/\/\*\*|\s\*/)) {
+          const commentToken = buildToken({
+            Kind: TokenKind.Comment,
+            IsDocumentation: true,
+            Value: l,
+          });
+          reviewTokens.push(commentToken);
+        } else {
+          splitAndBuild(reviewTokens, l, currentTypeid, currentTypeName, memberKind);
+        }
 
-    if (firstLine) {
-      line.Tokens.push(...reviewTokens);
-      firstLine = false;
-    } else {
-      const childLine: ReviewLine = {
-        Tokens: reviewTokens,
-      };
-      line.Children.push(childLine);
+        if (firstReviewLine) {
+          line.Tokens.push(...reviewTokens);
+          firstCodeLine = false;
+          firstReviewLine = false;
+        } else if (firstCodeLine) {
+          // code before first "\n" should be in last review line
+          if (line.Children.length > 0) {
+            if (hasLeadingSpace(reviewTokens[0])) {
+              line.Children[line.Children.length - 1].Tokens[
+                line.Children[line.Children.length - 1].Tokens.length - 1
+              ].HasSuffixSpace = true;
+            }
+            line.Children[line.Children.length - 1].Tokens.push(...reviewTokens);
+          } else {
+            line.Tokens.push(...reviewTokens);
+          }
+          firstCodeLine = false;
+        } else {
+          const childLine: ReviewLine = {
+            Tokens: reviewTokens,
+          };
+          line.Children.push(childLine);
+        }
+      }
     }
   }
+}
+
+/**
+ * Whether a {@link ReviewToken} needs a leading whitespace.
+ * @param reviewToken
+ * @returns
+ */
+function hasLeadingSpace(reviewToken?: ReviewToken) {
+  return (
+    reviewToken?.Kind === TokenKind.Punctuation &&
+    (reviewToken?.Value === "|" || reviewToken?.Value === "&")
+  );
 }

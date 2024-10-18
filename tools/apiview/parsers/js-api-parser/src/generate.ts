@@ -57,6 +57,7 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
         Value: "Dependencies:",
         NavigationDisplayName: "Dependencies",
         RenderClasses: ["dependencies"],
+        SkipDiff: true,
       }),
     ],
   };
@@ -177,13 +178,14 @@ const ANNOTATION_TOKEN = "@";
  * Builds review line for a release tag
  * @param reviewLines The result array to push {@link ReviewLine}s to
  * @param tag release tag
+ * @param relatedLineId the id of the review line with which the release tag is associated
  */
-function buildReleaseTag(reviewLines: ReviewLine[], tag: string): void {
+function buildReleaseTag(reviewLines: ReviewLine[], tag: string, relatedLineId: string): void {
   const tagToken = buildToken({
     Kind: TokenKind.StringLiteral,
     Value: `${ANNOTATION_TOKEN}${tag}`,
   });
-  reviewLines.push({ Tokens: [tagToken] });
+  reviewLines.push({ Tokens: [tagToken], RelatedToLine: relatedLineId });
 }
 
 /**
@@ -228,15 +230,20 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
     const itemKind: string = getItemKindString(item);
 
     if (item.kind === ApiItemKind.Namespace) {
-      line.Tokens.push(
-        ...splitAndBuild(
-          `declare namespace ${item.displayName} `,
-          itemId,
-          item.displayName,
-          itemKind,
-        ),
+      splitAndBuild(
+        line.Tokens,
+        `declare namespace ${item.displayName} `,
+        itemId,
+        item.displayName,
+        itemKind,
       );
     } else {
+      if (item.kind === ApiItemKind.Variable) {
+        line.Tokens.push(
+          buildToken({ Kind: TokenKind.Keyword, Value: "export", HasSuffixSpace: true }),
+          buildToken({ Kind: TokenKind.Keyword, Value: "const", HasSuffixSpace: true }),
+        );
+      }
       if (!item.excerptTokens.some((except) => except.text.includes("\n"))) {
         for (const excerpt of item.excerptTokens) {
           if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
@@ -247,7 +254,7 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
             });
             line.Tokens.push(token);
           } else {
-            line.Tokens.push(...splitAndBuild(excerpt.text, itemId, item.displayName, itemKind));
+            splitAndBuild(line.Tokens, excerpt.text, itemId, item.displayName, itemKind);
           }
         }
       } else {
@@ -275,7 +282,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
   const releaseTag = getReleaseTag(item);
   const parentReleaseTag = getReleaseTag(item.parent);
   if (releaseTag && releaseTag !== parentReleaseTag) {
-    buildReleaseTag(reviewLines, releaseTag);
+    buildReleaseTag(reviewLines, releaseTag, line.LineId);
   }
 
   buildMemberLineTokens(line, item);

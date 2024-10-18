@@ -21,6 +21,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Id = id;
             Sanitizer = sanitizer;
             Description = description;
+            sanitizer.SanitizerId = id;
         }
     }
 

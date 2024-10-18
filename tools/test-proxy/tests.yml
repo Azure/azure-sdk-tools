@@ -261,12 +261,6 @@ stages:
           Windows:
             Pool: 'azsdk-pool-mms-win-2022-general'
             OS: 'Windows'
-          Linux:
-            Pool: azsdk-pool-mms-ubuntu-2204-general
-            OS: 'Linux'
-          Mac:
-            Pool: 'Azure Pipelines'
-            OS: 'Mac'
 
       pool:
         name: $(Pool)

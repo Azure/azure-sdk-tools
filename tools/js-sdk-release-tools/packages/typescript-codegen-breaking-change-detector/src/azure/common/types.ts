@@ -4,7 +4,16 @@ import { ParserServices } from '@typescript-eslint/parser';
 import type { ScopeManager } from '@typescript-eslint/scope-manager';
 import { TSESTree } from '@typescript-eslint/utils';
 import type { VisitorKeys } from '@typescript-eslint/visitor-keys';
-import { EnumDeclaration, InterfaceDeclaration, Node, TypeAliasDeclaration } from 'ts-morph';
+import {
+  EnumDeclaration,
+  FunctionDeclaration,
+  InterfaceDeclaration,
+  ParameterDeclaration,
+  Signature,
+  SourceFile,
+  TypeAliasDeclaration,
+  Node,
+} from 'ts-morph';
 
 export interface ParseForESLintResult {
   ast: TSESTree.Program & {
@@ -50,3 +59,64 @@ export interface RenameAbleDeclarations {
   typeAliases: TypeAliasDeclaration[];
   enums: EnumDeclaration[];
 }
+
+export interface AstContext {
+  baseline: SourceFile;
+  current: SourceFile;
+}
+
+// TODO: support more node types
+export interface NameNode {
+  name: string;
+  node: Node;
+}
+
+export enum DiffReasons {
+  None = 0,
+
+  // breaking changes
+  Removed = 1,
+  TypeChanged = 2,
+  CountChanged = 4,
+  RequiredToOptional = 8,
+  ReadonlyToMutable = 16,
+
+  // new features
+  Added = 1024,
+}
+
+export interface DiffPair {
+  target?: NameNode;
+  source?: NameNode;
+  location: DiffLocation;
+  reasons: DiffReasons;
+  messages: Map<DiffReasons, string>;
+  assignDirection: AssignDirection;
+}
+
+// NOTE: When there is a '_', the first word indicate the node type
+export enum DiffLocation {
+  None,
+  // NOTE: Signatue includes method/arrow-function/call-signature in interface
+  //       Signatue includes method/arrow-function/constructor class
+  //       Signatue includes function/arrow-function
+  Signature,
+  Signature_Overload,
+  Signature_ReturnType,
+  Signature_ParameterList,
+  Parameter,
+  Property,
+  TypeAlias,
+  Interface,
+}
+
+export enum AssignDirection {
+  None,
+  BaselineToCurrent, // e.g. input model
+  CurrentToBaseline, // e.g. output model
+}
+
+export type FindMappingCallSignature = (
+  target: Signature,
+  signatures: Signature[]
+) => { signature: Signature; id: string } | undefined;

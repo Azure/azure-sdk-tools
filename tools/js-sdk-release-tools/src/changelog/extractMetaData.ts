@@ -4,6 +4,8 @@ import { ClassDeclaration, EnumDeclaration, InterfaceDeclaration, TypeAliasDecla
 import { changelogGenerator } from "./changelogGenerator";
 import { logger } from "../utils/logger";
 import { SDKType } from "../common/types";
+import { createAstContext } from "typescript-codegen-breaking-change-detector";
+import { mkdirp, remove } from "fs-extra";
 
 export class TSExportedMetaData {
     public typeAlias = {};
@@ -69,8 +71,15 @@ export const extractExportAndGenerateChangelog = async (mdFilePathOld: string, m
 ) => {
     const metaDataOld = await readSourceAndExtractMetaData(mdFilePathOld);
     const metaDataNew = await readSourceAndExtractMetaData(mdFilePathNew);
-    const changeLog = changelogGenerator(metaDataOld, metaDataNew, oldSdkType, newSdkType);
-    logger.info('Generated changelog successfully:');
-    logger.info(changeLog.displayChangeLog());
-    return changeLog;
+    
+    try {
+        mkdirp('./tmp-patch');
+        const astContext = await createAstContext(mdFilePathOld, mdFilePathNew, './tmp-patch');
+        const changeLog = changelogGenerator(metaDataOld, metaDataNew, oldSdkType, newSdkType, astContext);
+        logger.info('Generated changelog successfully:');
+        logger.info(changeLog.displayChangeLog());
+        return changeLog;
+    } finally {
+        remove('./tmp-patch');
+    }
 };

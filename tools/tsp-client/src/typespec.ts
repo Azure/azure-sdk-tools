@@ -113,7 +113,7 @@ export async function compileTsp({
     .join(" ");
 
   const exampleCmd = `npx tsp compile ${resolvedMainFilePath} --emit ${emitterPackage} ${cliOptions}`;
-  Logger.warn(`Example of how to compile using the tsp commandline. tsp-client does NOT directly run this command, results may vary:
+  Logger.debug(`Example of how to compile using the tsp commandline. tsp-client does NOT directly run this command, results may vary:
     ${exampleCmd}
     `);
 

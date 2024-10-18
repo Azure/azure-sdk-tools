@@ -107,6 +107,16 @@ export async function compileTsp({
     overrides,
   });
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
+
+  const cliOptions = Object.entries(options.options?.[emitterPackage] ?? {})
+    .map(([key, value]) => `--option ${key}=${value}`)
+    .join(" ");
+
+  const exampleCmd = `npx tsp compile ${resolvedMainFilePath} --emit ${emitterPackage} ${cliOptions}`;
+  Logger.warn(`Example of how to compile using the tsp commandline. tsp-client does NOT directly run this command, results may vary:
+    ${exampleCmd}
+    `);
+
   if (diagnostics.length > 0) {
     let errorDiagnostic = false;
     // This should not happen, but if it does, we should log it.

@@ -1,6 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
+import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
@@ -17,6 +18,7 @@ export class MarkdownToHtmlPipe implements PipeTransform {
     return new Promise((resolve, reject) => {
       const processor = unified()
         .use(remarkParse)
+        .use(remarkGfm)
         .use(remarkRehype, { allowDangerousHtml: true })
         .use(rehypeRaw)
         .use(rehypeHighlight);

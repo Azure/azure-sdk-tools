@@ -39,7 +39,6 @@ import { HtmlToMarkdownPipe } from 'src/app/_pipes/html-to-markdown.pipe';
     HtmlToMarkdownPipe,
     EditorComponent,
     SharedAppModule,
-    EditorModule,
     PanelModule,
     MenuModule,
     TimelineModule,
@@ -48,7 +47,6 @@ import { HtmlToMarkdownPipe } from 'src/app/_pipes/html-to-markdown.pipe';
   imports: [
     CommonModule,
     SharedAppModule,
-    EditorModule,
     PanelModule,
     MenuModule,
     TimelineModule,

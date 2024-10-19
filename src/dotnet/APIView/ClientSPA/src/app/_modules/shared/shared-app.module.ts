@@ -21,6 +21,7 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessagesModule } from 'primeng/messages';
 import { BadgeModule } from 'primeng/badge';
+import { SimplemdeModule } from 'ngx-simplemde';
  
 
 @NgModule({
@@ -55,6 +56,7 @@ import { BadgeModule } from 'primeng/badge';
     SidebarModule,
     TimeagoModule,
     InputTextModule,
+    SimplemdeModule
   ],
   imports: [
     CommonModule,
@@ -74,6 +76,7 @@ import { BadgeModule } from 'primeng/badge';
     SidebarModule,
     InputTextModule,
     TimeagoModule.forRoot(),
+    SimplemdeModule.forRoot()
   ]
 })
 export class SharedAppModule { }

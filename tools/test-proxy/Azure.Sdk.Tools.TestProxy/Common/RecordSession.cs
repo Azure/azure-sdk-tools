@@ -150,7 +150,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             try
             {
                 var entryPreSanitize = string.Empty;
-                var entryPostSanitize = "";
+                var entryPostSanitize = string.Empty;
 
                 entryPreSanitize += string.Join("", this.Entries.Select(e => e.ToString()));
                 sanitizer.Sanitize(this);

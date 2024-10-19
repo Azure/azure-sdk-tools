@@ -13,7 +13,6 @@ export class ReviewNavComponent implements OnChanges {
 
   @Output() navTreeNodeIdEmitter : EventEmitter<string> = new EventEmitter<string>();
 
-
   isLoading: boolean = true;
   assetsPath : string = environment.assetsPath;
 

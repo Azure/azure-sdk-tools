@@ -36,6 +36,30 @@
                 }
             }
         }
+
+        blockquote {
+            padding: 10px 20px;
+            margin: 0 0 20px;
+            border-left: 5px solid var(--border-color);
+            background-color: var(base-bg-color);
+            font-style: italic;
+            color: var(--base-text-color);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+          
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+    }
+
+    .CodeMirror-wrap pre {
+        border: none !important;
     }
 
     .p-splitter-panel-nested {

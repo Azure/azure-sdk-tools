@@ -16,7 +16,7 @@ export class SamplesRevisionService {
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
   getLatestSampleRevision(reviewId: string): Observable<SamplesRevision> {
-    return this.http.get<SamplesRevision>(this.baseUrl + `/${reviewId}/latest`);
+    return this.http.get<SamplesRevision>(this.baseUrl + `/${reviewId}/latest`, { withCredentials: true });
   }
 
   getSamplesRevisions(noOfItemsRead: number, pageSize: number,

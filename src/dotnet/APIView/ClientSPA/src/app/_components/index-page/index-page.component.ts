@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FirstReleaseApproval, Review } from 'src/app/_models/review';
+import { Review } from 'src/app/_models/review';
 
 @Component({
   selector: 'app-index-page',

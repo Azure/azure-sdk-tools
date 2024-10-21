@@ -2,15 +2,24 @@ import { ReviewLine, ReviewToken } from "./schemas.js";
 
 export function reviewLineText(line: ReviewLine, indent: number): string {
   const indentString = " ".repeat(indent);
-  const tokenText = line.Tokens.map(t => reviewTokenText(t)).join("");
+  let tokenText = "";
+  for (const token of line.Tokens) {
+    tokenText += reviewTokenText(token, tokenText);
+  }
   const childrenText = line.Children.map(c => reviewLineText(c, indent + 2)).join("\n");
-  return `${indentString}${tokenText}\n${childrenText}`;
+  if (childrenText !== "") {
+    return `${indentString}${tokenText}\n${childrenText}`;
+  } else {
+    return `${indentString}${tokenText}`;
+  }
 }
   
-function reviewTokenText(token: ReviewToken): string {
+function reviewTokenText(token: ReviewToken, preview: string): string {
+  const previewEndsInSpace = preview.endsWith(" ");
   const suffixSpace = token.HasSuffixSpace ? " " : "";
+  const prefixSpace = (token.HasPrefixSpace && !previewEndsInSpace) ? " " : "";
   const value = token.Value;
-  return `${value}${suffixSpace}`;
+  return `${prefixSpace}${value}${suffixSpace}`;
 }
 
 export class NamespaceStack {
@@ -30,23 +39,5 @@ export class NamespaceStack {
 
   reset() {
     this.stack = Array<string>();
-  }
-}
-
-/** A simple structure that holds the last n ReviewLines in reverse order, without nesting */
-export class ReviewLineLookback {
-  lines: ReviewLine[];
-  maxSize: number;
-
-  constructor(maxSize: number = 10) {
-    this.maxSize = maxSize;
-    this.lines = [];
-  }
-
-  push(line: ReviewLine) {
-    if (this.lines.length >= this.maxSize) {
-      this.lines.pop();
-    }
-    this.lines.unshift(line);
   }
 }

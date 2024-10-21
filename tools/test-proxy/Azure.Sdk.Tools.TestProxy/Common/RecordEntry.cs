@@ -4,6 +4,7 @@
 using Azure.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -26,16 +27,48 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public RequestOrResponse Response { get; set; } = new RequestOrResponse();
 
-        public string RequestUri { get; set; }
+        private string _requestUri;
+        public string RequestUri
+        {
+            get { return this._requestUri; }
+            set {
+                // If the requestUri is being modified, set the flag to true
+                if (this._requestUri != value) requestUriIsModified = true;
+                this._requestUri = value; 
+            }
+        }
 
         public bool IsTrack1Recording { get; set; }
 
         public RequestMethod RequestMethod { get; set; }
 
         public int StatusCode { get; set; }
+        // Flag to indicate if the requestUri has been modified
+        public bool requestUriIsModified { get; set; } = false;
+
+        /// <summary>
+        /// Checks if the RecordEntry instance or any of its properties have been modified.
+        /// Primarily used to determine if the RecordEntry has been sanitized.
+        /// </summary>
+        /// <returns>True if any modification has been made, otherwise false.</returns>
+        public bool isModified()
+        {
+            return this.requestUriIsModified || this.Request.IsModified.Headers || this.Request.IsModified.Body || this.Response.IsModified.Headers || this.Response.IsModified.Body;
+        }
+
+        /// <summary>
+        /// Initializes the IsModified flags for the RecordEntry instance.
+        /// Primarily used to determine if the RecordEntry has been sanitized.
+        /// </summary>
+        public void initializeIsModifiedFlag()
+        {
+            this.requestUriIsModified = false;
+            this.Request.IsModified = new RequestOrResponse.RequestOrResponseIsModified();
+            this.Response.IsModified = new RequestOrResponse.RequestOrResponseIsModified();
+        }
 
         public static RecordEntry Deserialize(JsonElement element)
-        {
+            {
             var record = new RecordEntry();
 
             if (element.TryGetProperty(nameof(RequestMethod), out JsonElement property))

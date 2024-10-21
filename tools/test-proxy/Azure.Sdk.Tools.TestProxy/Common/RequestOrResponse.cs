@@ -9,9 +9,47 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class RequestOrResponse
     {
-        public SortedDictionary<string, string[]> Headers { get; set; } = new SortedDictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase);
+        /// <summary>
+        /// Represents the modified state of the headers and body.
+        /// </summary>
+        public class RequestOrResponseIsModified
+        {
+            /// <summary>
+            /// Gets or sets a value indicating whether the headers are modified.
+            /// </summary>
+            public bool Headers { get; set; } = false;
 
-        public byte[] Body { get; set; }
+            /// <summary>
+            /// Gets or sets a value indicating whether the body is modified.
+            /// </summary>
+            public bool Body { get; set; } = false;
+        }
+
+        private SortedDictionary<string, string[]> _headers = new SortedDictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase);
+        public SortedDictionary<string, string[]> Headers
+        {
+            get { return this._headers; }
+            set
+            {
+                // If the _headers are modified, set the flag to true
+                if (this._headers != value) IsModified.Headers = true;
+                this._headers = value; 
+            }
+        }
+
+        private byte[] _body;
+        public byte[] Body
+        {
+            get { return this._body; }
+            set
+            {
+                // If the _body is modified, set the flag to true
+                if (this._body != value) IsModified.Body = true;
+                this._body = value; 
+            }
+        }
+
+        public RequestOrResponseIsModified IsModified { get; set; } = new RequestOrResponseIsModified();
 
         public bool TryGetContentType(out string contentType)
         {

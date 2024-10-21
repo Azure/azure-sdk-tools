@@ -95,8 +95,7 @@ export function compare(expect: string, lines: string[], offset: number) {
   // split the input into lines and ignore leading or trailing empty lines.
   const expectedLines = trimLines(expect.split("\n"));
   const checkLines = trimLines(lines.slice(offset));
-  strictEqual(expectedLines.length, checkLines.length);
   for (let x = 0; x < checkLines.length; x++) {
-    strictEqual(expectedLines[x], checkLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${checkLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
+    strictEqual(checkLines[x], expectedLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${checkLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
   }
 }

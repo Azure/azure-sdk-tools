@@ -77,7 +77,9 @@ export interface ReviewTokenOptions {
   SkipDiff?: boolean;
   /** This is set if API is marked as deprecated */
   IsDeprecated?: boolean;
-  /** Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name */
+  /** Set this to true if a prefix space is required before the next value. */
+  HasPrefixSpace?: boolean;
+  /** Set this to true if a suffix space required before next token. For e.g, punctuation right after method name */
   HasSuffixSpace?: boolean;
   /** Set isDocumentation to true if current token is part of documentation */
   IsDocumentation?: boolean;

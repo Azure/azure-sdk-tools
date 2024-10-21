@@ -180,9 +180,39 @@ export class ApiView {
     }
   }
 
-  private space() {
-    this.token(TokenKind.Text, "", {HasSuffixSpace: true});
+  private leadingSpace() {
+    if (this.currentLine.Tokens.length > 0) {
+      this.currentLine.Tokens[this.currentLine.Tokens.length - 1].HasSuffixSpace = true;
+    } else {
+      this.token(TokenKind.Text, " ");
+    }
   }
+
+  /** Set the exact number of desired newlines. */
+  private blankLines(count: number = 0) {
+    this.newline();
+    const parentLines = this.currentParent ? this.currentParent.Children : this.reviewLines;
+    let newlineCount = 0;
+    if (parentLines.length) {
+      for (let i = parentLines.length - 1; i >= 0; i--) {
+        if (parentLines[i].Tokens.length === 0) {
+          newlineCount++;
+        } else {
+          break;
+        }
+      }
+    }
+    if (newlineCount == count) {
+      return;
+    } else if (newlineCount > count) {
+      throw new Error(`Cannot reduce blank lines from ${newlineCount} to ${count}`);
+    } else {
+      for (let i = newlineCount; i < count; i++) {
+        this.newline();
+      }
+    }
+    return;
+}
 
   private newline(isEndContext?: boolean) {
     if (isEndContext) {
@@ -292,7 +322,7 @@ export class ApiView {
     this.lineMarker();
     this.namespaceStack.pop();
     // TODO: Source URL?
-    this.newline()
+    this.blankLines(2)
   }
 
   private tokenize(node: BaseNode) {
@@ -306,7 +336,8 @@ export class ApiView {
         this.keyword("alias", {HasSuffixSpace: true});
         this.typeDeclaration(obj.id.sv, this.namespaceStack.value(), true, {HasSuffixSpace: true});
         this.tokenizeTemplateParameters(obj.templateParameters);
-        this.punctuation("=", {HasSuffixSpace: true});
+        this.leadingSpace();
+        this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
         this.tokenize(obj.value);
         this.namespaceStack.pop();
         break;
@@ -365,7 +396,8 @@ export class ApiView {
         this.namespaceStack.push(obj.id.sv);
         this.keyword("const", {HasSuffixSpace: true});
         this.tokenizeIdentifier(obj.id, "declaration");
-        this.punctuation("=", {HasSuffixSpace: true});
+        this.leadingSpace();
+        this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
         this.tokenize(obj.value);
         this.namespaceStack.pop();
         break;
@@ -534,11 +566,13 @@ export class ApiView {
         obj = node as TemplateParameterDeclarationNode;
         this.tokenize(obj.id);
         if (obj.constraint) {
-          this.keyword("extends", {HasSuffixSpace: true});
+          this.leadingSpace();
+          this.keyword("extends", {HasSuffixSpace: true, HasPrefixSpace: true});
           this.tokenize(obj.constraint);
         }
         if (obj.default) {
-          this.punctuation("=", {HasSuffixSpace: true});
+          this.leadingSpace();
+          this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
           this.tokenize(obj.default);
         }
         break;
@@ -580,8 +614,6 @@ export class ApiView {
             this.deindent();
           }
           this.punctuation(">");
-        } else {
-          this.space();
         }
         break;
       case SyntaxKind.UnionExpression:
@@ -620,7 +652,8 @@ export class ApiView {
         }
         if (obj.name) {
           this.text(obj.name.sv);
-          this.punctuation("=", {HasSuffixSpace: true});
+          this.leadingSpace();
+          this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
         }
         if (isExpanded) {
           this.tokenizeModelExpressionExpanded(obj.argument as ModelExpressionNode, false);
@@ -712,7 +745,8 @@ export class ApiView {
     this.keyword("model", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
     if (node.extends) {
-      this.keyword("extends", {HasSuffixSpace: true});
+      this.leadingSpace();
+      this.keyword("extends", {HasSuffixSpace: true, HasPrefixSpace: true});
       this.tokenize(node.extends);
     }
     if (node.is) {
@@ -721,7 +755,8 @@ export class ApiView {
     }
     this.tokenizeTemplateParameters(node.templateParameters);
     if (node.properties.length) {
-      this.punctuation("{");
+      this.leadingSpace();
+      this.punctuation("{", {HasPrefixSpace: true});
       this.indent();
       for (const prop of node.properties) {
         const propName = this.getNameForNode(prop);
@@ -734,7 +769,8 @@ export class ApiView {
       this.deindent();
       this.punctuation("}");
     } else {
-      this.punctuation("{}");
+      this.leadingSpace();
+      this.punctuation("{}", {HasPrefixSpace: true});
     }
     this.namespaceStack.pop();
   }
@@ -745,7 +781,8 @@ export class ApiView {
     this.keyword("scalar", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
     if (node.extends) {
-      this.keyword("extends", {HasSuffixSpace: true});
+      this.leadingSpace();
+      this.keyword("extends", {HasSuffixSpace: true, HasPrefixSpace: true});
       this.tokenize(node.extends);
     }
     this.tokenizeTemplateParameters(node.templateParameters);
@@ -759,7 +796,8 @@ export class ApiView {
     this.keyword("interface", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
     this.tokenizeTemplateParameters(node.templateParameters);
-    this.punctuation("{");
+    this.leadingSpace();
+    this.punctuation("{", {HasPrefixSpace: true});
     this.indent();
     for (let x = 0; x < node.operations.length; x++) {
       const op = node.operations[x];
@@ -776,7 +814,8 @@ export class ApiView {
     this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("enum", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
-    this.punctuation("{");
+    this.leadingSpace();
+    this.punctuation("{", {HasPrefixSpace: true});
     this.indent();
     for (const member of node.members) {
       const memberName = this.getNameForNode(member);
@@ -796,7 +835,8 @@ export class ApiView {
     this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("union", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
-    this.punctuation("{");
+    this.leadingSpace();
+    this.punctuation("{", {HasPrefixSpace: true});
     this.indent();
     for (let x = 0; x < node.options.length; x++) {
       const variant = node.options[x];
@@ -831,7 +871,8 @@ export class ApiView {
     this.punctuation(node.optional ? "?:" : ":", {HasSuffixSpace: true});
     this.tokenize(node.value);
     if (node.default) {
-      this.punctuation("=", {HasSuffixSpace: true});
+      this.leadingSpace();
+      this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
       this.tokenize(node.default);
     }
   }
@@ -839,7 +880,8 @@ export class ApiView {
   private tokenizeModelExpressionInline(node: ModelExpressionNode, isOperationSignature: boolean) {
     if (node.properties.length) {
       if (!isOperationSignature) {
-        this.punctuation("{", {HasSuffixSpace: true});
+        this.leadingSpace();
+        this.punctuation("{", {HasSuffixSpace: true, HasPrefixSpace: true});
       }
       for (let x = 0; x < node.properties.length; x++) {
         const prop = node.properties[x];
@@ -905,7 +947,8 @@ export class ApiView {
       }
       this.namespaceStack.pop();
     } else if (!isOperationSignature) {
-      this.punctuation("{}");
+      this.leadingSpace();
+      this.punctuation("{}", {HasPrefixSpace: true});
     }
   }
 
@@ -937,37 +980,38 @@ export class ApiView {
     }
     this.keyword("namespace", {HasSuffixSpace: true});
     this.typeDeclaration(model.name, this.namespaceStack.value(), true, {HasSuffixSpace: true});
-    this.punctuation("{");
+    this.leadingSpace();
+    this.punctuation("{", {HasPrefixSpace: true});
     this.indent();
     for (const node of model.augmentDecorators) {
       this.tokenize(node);
-      this.newline()
+      this.blankLines(1);
     }
     for (const node of model.operations.values()) {
       this.tokenize(node);
-      this.newline()
+      this.blankLines(1);
     }
     for (const node of model.resources.values()) {
       this.tokenize(node);
-      this.newline()
+      this.blankLines(1);
     }
     for (const node of model.models.values()) {
       this.tokenize(node);
-      this.newline()
+      this.blankLines(1);
     }
     for (const node of model.aliases.values()) {
       this.tokenize(node);
       this.punctuation(";");
-      this.newline()
+      this.blankLines(1);
     }
     for (const node of model.constants.values()) {
         this.tokenize(node);
         this.punctuation(";");
-        this.newline()
+        this.blankLines(1);
     }
     this.deindent();
     this.punctuation("}");
-    this.newline()
+    this.blankLines(1);
     this.namespaceStack.pop();
   }
 
@@ -988,9 +1032,9 @@ export class ApiView {
       this.namespaceStack.push(generateId(node)!);
       const isDoc = docDecorators.includes((node.target as IdentifierNode).sv);
       this.tokenize(node);
-      if (inline) {
-        this.space();
-      }
+      // if (inline) {
+      //   this.leadingSpace();
+      // }
       this.namespaceStack.pop();
       if (isDoc) {
         for (const token of this.currentLine.Tokens) {
@@ -1078,7 +1122,6 @@ export class ApiView {
         this.tokenize(param);
         if (x !== nodes.length - 1) {
           this.renderPunctuation(",");
-          this.space();
         }
         if (isExpanded) {
             this.newline();

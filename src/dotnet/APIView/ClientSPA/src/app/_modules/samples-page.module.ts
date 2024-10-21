@@ -4,7 +4,6 @@ import { ReviewPageLayoutModule } from './shared/review-page-layout.module';
 import { CommonModule } from '@angular/common';
 import { SamplesPageComponent } from '../_components/samples-page/samples-page.component';
 import { CodeEditorComponent } from '../_components/shared/code-editor/code-editor.component';
-import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { DialogModule } from 'primeng/dialog';
 
 const routes: Routes = [
@@ -20,7 +19,6 @@ const routes: Routes = [
     CommonModule,
     DialogModule,
     ReviewPageLayoutModule,
-    MonacoEditorModule.forRoot(),
     RouterModule.forChild(routes),
   ]
 })

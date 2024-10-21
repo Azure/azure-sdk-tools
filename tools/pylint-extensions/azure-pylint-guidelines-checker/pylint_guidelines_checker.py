@@ -11,7 +11,6 @@ import logging
 import astroid
 from pylint.checkers import BaseChecker
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -476,8 +475,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                         and node.name not in self.ignore_functions
                         and not node.name.endswith("client")
                         and not self.ignore_decorators.intersection(
-                            node.decoratornames()
-                        )
+                        node.decoratornames()
+                    )
                         and "azure.core.tracing.decorator.distributed_trace"
                         not in node.decoratornames()
                     ):
@@ -515,8 +514,8 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
                         and node.name not in self.ignore_functions
                         and not node.name.endswith("client")
                         and not self.ignore_decorators.intersection(
-                            node.decoratornames()
-                        )
+                        node.decoratornames()
+                    )
                         and "azure.core.tracing.decorator_async.distributed_trace_async"
                         not in node.decoratornames()
                     ):
@@ -712,7 +711,7 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
             # check that methods in client class do not use camelcase
             try:
                 for func in node.body:
-                    if func.name != func.name.lower() and not func.name.startswith("_") and isinstance(func, astroid.FunctionDef):
+                    if func.name != func.name.lower() and not func.name.startswith("_") and isinstance(func,astroid.FunctionDef):
                         self.add_message(
                             msgid="client-incorrect-naming-convention",
                             node=func,
@@ -2455,7 +2454,6 @@ class NonAbstractTransportImport(BaseChecker):
 
 
 class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
-
     """Rule to check that we don't use raise_with_traceback from azure core."""
 
     name = "no-raise-with-traceback"
@@ -2499,7 +2497,6 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
 
 
 class NameExceedsStandardCharacterLength(BaseChecker):
-
     """Rule to check that the character length of type and property names are not over 40 characters."""
 
     name = "name-too-long"
@@ -2563,11 +2560,11 @@ class NameExceedsStandardCharacterLength(BaseChecker):
 
         for i in node.body:
             if (
-                not (
-                    isinstance(i, astroid.FunctionDef)
-                    or isinstance(i, astroid.AsyncFunctionDef)
-                )
-                and not ignore_function
+                    not (
+                        isinstance(i, astroid.FunctionDef)
+                        or isinstance(i, astroid.AsyncFunctionDef)
+                    )
+                    and not ignore_function
             ):
                 try:
                     if len(
@@ -2583,7 +2580,7 @@ class NameExceedsStandardCharacterLength(BaseChecker):
                     for j in i.targets:
                         if isinstance(j, astroid.AssignName):
                             if len(
-                                j.name
+                                    j.name
                             ) > self.STANDARD_CHARACTER_LENGTH and not j.name.startswith(
                                 "_"
                             ):
@@ -2609,7 +2606,6 @@ class NameExceedsStandardCharacterLength(BaseChecker):
 
 
 class DeleteOperationReturnStatement(BaseChecker):
-
     """Rule to check that delete* or begin_delete* return None or LROPoller[None], respectively."""
 
     name = "delete-operation-wrong-return-type"
@@ -2654,7 +2650,6 @@ class DeleteOperationReturnStatement(BaseChecker):
 
 
 class DoNotImportLegacySix(BaseChecker):
-
     """Rule to check that libraries do not import the six package."""
 
     name = "do-not-import-legacy-six"
@@ -2688,7 +2683,6 @@ class DoNotImportLegacySix(BaseChecker):
 
 
 class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
-
     """Rule to check that we aren't importing azure.core.pipeline.transport.HttpResponse outside of Azure Core."""
 
     name = "no-legacy-azure-core-http-response-import"
@@ -2722,63 +2716,70 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                     )
 
 
-class DoNotLogErrorsEndUpRaising(BaseChecker):
 
-    """Rule to check that errors that get raised aren't logged"""
 
-    name = "do-not-log-raised-errors"
+class ImportTypeChecker(BaseChecker):
+    """Checker to ensure no type is imported from the same module more than once within the same file,
+    while allowing imports of the same type from different namespaces (e.g., sync and async clients)."""
+
+    name = "duplicate-import-type"
     priority = -1
-    msgs = {"C4762": (
-            "Do not log errors that get raised in an exception block.",
-            "do-not-log-raised-errors",
-            "Do not log errors at error or warning level when error is raised in an exception block",
-            ),
-            }
+    msgs = {
+        "C4764": (
+            "Type %s is imported multiple times from the same module: %s",
+            "duplicate-import-type",
+            "Used when a type is imported multiple times from the same module within the same file.",
+        ),
+    }
 
-    def visit_try(self, node):
-        """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
-           Go through exception block and branches and ensure error hasn't been logged if exception is raised.
-        """
-        # Return a list of exception blocks
-        except_block = node.handlers
-        # Iterate through each exception block
-        for nod in except_block:
-            # Get the nodes in each block (e.g. nodes Expr and Raise)
-            exception_block_body = nod.body
-            self.check_for_raise(exception_block_body)
+    def visit_module(self, node):
+        """Initialize the dictionary for tracking imports at the start of processing each file."""
+        self.imported_entities = {}
 
-    def check_for_raise(self, node):
-        """ Helper function - checks for instance of 'Raise' node
-            Also checks 'If' and nested 'If' branches
-        """
-        for i in node:
-            if isinstance(i, astroid.Raise):
-                self.check_for_logging(node)
-            # Check for any nested 'If' branches
-            if isinstance(i, astroid.If):
-                self.check_for_raise(i.body)
+    def visit_importfrom(self, node):
+        """Check for duplicate imports from the same module within the same file."""
+        if self._is_inside_exception_or_conditional(node):
+            # Ignore imports inside conditional or try/except blocks
+            return
 
-                # Check any 'elif' or 'else' branches
-                self.check_for_raise(i.orelse)
+        module_name = node.modname
+        for name, alias in node.names:
+            entity_name = alias or name
 
-    def check_for_logging(self, node):
-        """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
-            levels. Called from 'check_for_raise' function
-        """
-        matches = [".warning", ".error", ".exception"]
-        for j in node:
-            if isinstance(j, astroid.Expr):
-                expression = j.as_string().lower()
-                if any(x in expression for x in matches):
+            # Check if the entity has already been imported from the same base namespace
+            if entity_name in self.imported_entities:
+                if self.imported_entities[entity_name] == module_name:
+                    # The same entity is imported again from the same base namespace
                     self.add_message(
-                        msgid=f"do-not-log-raised-errors",
-                        node=j,
-                        confidence=None,
+                        "duplicate-import-type",
+                        node=node,
+                        args=(entity_name, module_name),
                     )
+            else:
+                # Record the entity and its module
+                self.imported_entities[entity_name] = module_name
+
+    def _get_base_namespace(self, module_name):
+        """Extract the base namespace from the module name."""
+        # Assume the base namespace is the first two segments (e.g., 'azure.eventgrid' from 'azure.eventgrid.aio')
+        return '.'.join(module_name.split('.')[:2])
+
+    def _is_inside_exception_or_conditional(self, node):
+        """Check if the given node is inside a conditional statement or try/except block."""
+        parent = node.parent
+        while parent:
+            # Check for parent nodes that are If or Try statements
+            if parent.is_statement and parent.__class__.__name__ in {'If', 'TryExcept', 'Try'}:
+                return True
+            parent = parent.parent
+        return False
+
+    def close(self):
+        """Reset the imported entities dictionary after processing a file."""
+        self.imported_entities.clear()
 
 
 class NoImportTypingFromTypeCheck(BaseChecker):
-
     """Rule to check that we aren't importing typing under TYPE_CHECKING."""
 
     name = "no-typing-import-in-type-check"
@@ -2817,6 +2818,7 @@ class NoImportTypingFromTypeCheck(BaseChecker):
                         )
         except:
             pass
+
 
 
 class DoNotUseLegacyTyping(BaseChecker):
@@ -2876,6 +2878,7 @@ class DoNotImportAsyncio(BaseChecker):
                     node=node,
                     confidence=None,
                 )
+
 
 
 
@@ -3080,6 +3083,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
                 pass
 
 
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3110,18 +3114,24 @@ def register(linter):
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(DoNotImportLegacySix(linter))
-    linter.register_checker(DoNotImportAsyncio(linter))
     linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
     linter.register_checker(NoImportTypingFromTypeCheck(linter))
+    linter.register_checker(ImportTypeChecker(linter))
+
     linter.register_checker(DoNotUseLegacyTyping(linter))
     linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
     linter.register_checker(InvalidUseOfOverload(linter))
     linter.register_checker(DoNotLogExceptions(linter))
 
+
     linter.register_checker(DoNotHardcodeConnectionVerify(linter))
+
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
+
+
+
 
 
     # Rules are disabled until false positive rate improved

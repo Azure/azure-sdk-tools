@@ -3249,288 +3249,130 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
             self.checker.visit_importfrom(imd)
 
 
-class TestDoNotImportAsyncio(pylint.testutils.CheckerTestCase):
-    """Test that we are blocking imports of asyncio directly allowing indirect imports."""
-    CHECKER_CLASS = checker.DoNotImportAsyncio
+class TestImportTypeChecker(pylint.testutils.CheckerTestCase):
+    CHECKER_CLASS = checker.ImportTypeChecker
 
-    @pytest.fixture(scope="class")
-    def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "do_not_import_asyncio.py")
-        )
-        node = astroid.parse(file.read())
-        file.close()
-        return node
-
-    def test_disallowed_import_from(self, setup):
-        """Check that illegal imports raise warnings"""
-        importfrom_node = setup.body[0]
+    def test_finds_duplicate_imports(self):
+        """Test that the checker correctly finds duplicate imports of the same type within the same file."""
+        node = astroid.parse("""
+            from module_a import MyClass
+            from module_a import MyClass
+        """)
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-import-asyncio",
-                    line=2,
-                    node=importfrom_node,
+                MessageTest(
+                    msg_id='duplicate-import-type',
+                    line=3,
+                    node=node.body[1],  # Points to the second 'from ... import' statement
+                    args=('MyClass', 'module_a'),
                     col_offset=0,
-                    end_line=2,
-                    end_col_offset=25,
+                    end_line=3,
+                    end_col_offset=28
                 )
         ):
-            self.checker.visit_importfrom(importfrom_node)
+            self.walk(node)
 
-    def test_disallowed_import(self, setup):
-        """Check that illegal imports raise warnings"""
-        importfrom_node = setup.body[1]
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="do-not-import-asyncio",
-                line=5,
-                node=importfrom_node,
-                col_offset=0,
-                end_line=5,
-                end_col_offset=14,
-            )
-        ):
-            self.checker.visit_import(importfrom_node)
-
-    def test_allowed_imports(self, setup):
-        """Check that allowed imports don't raise warnings."""
-        # import not in the blocked list.
-        importfrom_node = setup.body[2]
+    def test_no_duplicates(self):
+        """Test that the checker does not raise errors when there are no duplicate imports."""
+        node = astroid.parse("""
+            from module_a import MyClass
+            from module_b import AnotherClass
+        """)
         with self.assertNoMessages():
-            self.checker.visit_importfrom(importfrom_node)
+            self.walk(node)
 
-        # from import not in the blocked list.
-        importfrom_node = setup.body[3]
+    def test_ignore_imports_in_if_statement(self):
+        """Test that the checker does not raise errors for duplicate imports inside an if statement."""
+        node = astroid.parse("""
+            if sys.version_info >= (3, 8):
+                from module_a import MyClass
+            else:
+                from module_b import MyClass
+        """)
         with self.assertNoMessages():
-            self.checker.visit_importfrom(importfrom_node)
+            self.walk(node)
 
-
-class TestCheckDoNotUseLegacyTyping(pylint.testutils.CheckerTestCase):
-    """Test that we are blocking disallowed legacy typing practices"""
-
-    CHECKER_CLASS = checker.DoNotUseLegacyTyping
-
-    @pytest.fixture(scope="class")
-    def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "check_do_not_use_legacy_typing.py")
-        )
-        node = astroid.parse(file.read())
-        file.close()
-        return node
-
-    def test_disallowed_typing(self, setup):
-        """Check that illegal method typing comments raise warnings"""
-        fdef = setup.body[0]
-        with self.assertAddsMessages(
-            pylint.testutils.MessageTest(
-                msg_id="do-not-use-legacy-typing",
-                line=2,
-                node=fdef,
-                col_offset=0,
-                end_line=2,
-                end_col_offset=12,
-            )
-        ):
-            self.checker.visit_functiondef(fdef)
-
-    def test_allowed_typing(self, setup):
-        """Check that allowed method typing comments don't raise warnings"""
-        fdef = setup.body[1]
+    def test_ignore_imports_in_try_except(self):
+        """Test that the checker does not raise errors for duplicate imports inside a try/except block."""
+        node = astroid.parse("""
+            try:
+                from module_a import MyClass
+            except ImportError:
+                from module_b import MyClass
+        """)
         with self.assertNoMessages():
-            self.checker.visit_functiondef(fdef)
+            self.walk(node)
 
-    def test_arbitrary_comments(self, setup):
-        """Check that arbitrary comments don't raise warnings"""
-        fdef = setup.body[2]
+    def test_no_error_for_different_namespaces(self):
+        """Test that the checker does not raise errors for the same client name in different namespaces."""
+        node = astroid.parse("""
+            from azure.eventgrid import EventGridClient
+            from azure.eventgrid.aio import EventGridClient
+        """)
         with self.assertNoMessages():
-            self.checker.visit_functiondef(fdef)
+            self.walk(node)
 
-
-class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
-    """Test that any errors raised are not logged at 'error' or 'warning' levels in the exception block."""
-
-    CHECKER_CLASS = checker.DoNotLogErrorsEndUpRaising
-
-    @pytest.fixture(scope="class")
-    def setup(self):
-        file = open(
-            os.path.join(TEST_FOLDER, "test_files", "do_not_log_errors_end_up_raising.py")
-        )
-        node = astroid.parse(file.read())
-        file.close()
-        return node
-
-    def test_error_level_not_logged(self, setup):
-        """Check that any exceptions raised aren't logged at error level in the exception block."""
-        try_node, expression_node = setup.body[1].body[0], setup.body[1].body[0].handlers[0].body[0]
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=9,
-                    node=expression_node,
-                    col_offset=8,
-                    end_line=9,
-                    end_col_offset=29,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_warning_level_not_logged(self, setup):
-        """Check that any exceptions raised aren't logged at warning level in the exception block."""
-        try_node, expression_node = setup.body[2].body[0], setup.body[2].body[0].handlers[0].body[0]
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=18,
-                    node=expression_node,
-                    col_offset=8,
-                    end_line=18,
-                    end_col_offset=31,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_warning_level_logging_ok_when_no_raise(self, setup):
-        """Check that exceptions can be logged if the exception isn't raised."""
-        try_node = setup.body[3].body[0]
+    def test_no_error_for_completely_different_namespaces(self):
+        """Test that the checker does not raise errors when importing the same client from completely different namespaces."""
+        node = astroid.parse("""
+            from azure.storage.blob import BlobServiceClient
+            from azure.storage.blob.aio import BlobServiceClient
+            from azure.identity import DefaultAzureCredential
+            from azure.identity.aio import DefaultAzureCredential
+        """)
         with self.assertNoMessages():
-            self.checker.visit_try(try_node)
+            self.walk(node)
 
-    def test_unlogged_exception_block(self, setup):
-        """Check that exceptions raised without logging are allowed."""
-        try_node = setup.body[4].body[0]
+    def test_error_for_duplicate_imports_in_same_namespace(self):
+        """Test that the checker correctly finds duplicate imports of the same type from the same namespace."""
+        node = astroid.parse("""
+            from azure.storage.blob import BlobServiceClient
+            from azure.storage.blob import BlobServiceClient
+        """)
+        with self.assertAddsMessages(
+                MessageTest(
+                    msg_id='duplicate-import-type',
+                    line=3,
+                    node=node.body[1],  # Points to the second 'from ... import' statement
+                    args=('BlobServiceClient', 'azure.storage.blob'),
+                    col_offset=0,
+                    end_line=3,
+                    end_col_offset=48
+                )
+        ):
+            self.walk(node)
+
+    def test_no_error_for_generic_namespaces(self):
+        """Test that the checker does not raise errors for the same type in different generic namespaces."""
+        node = astroid.parse("""
+            from some.generic.namespace import SomeClass
+            from some.generic.namespace.aio import SomeClass
+            from another.namespace import AnotherClass
+            from another.namespace.aio import AnotherClass
+        """)
         with self.assertNoMessages():
-            self.checker.visit_try(try_node)
+            self.walk(node)
 
-    def test_mult_exception_blocks_separate_raise(self, setup):
-        """Check multiple exception blocks with separate raise and logging is allowed."""
-        try_node = setup.body[5].body[0]
-        with self.assertNoMessages():
-            self.checker.visit_try(try_node)
-
-    def test_mult_exception_blocks_with_raise(self, setup):
-        """Check that multiple exception blocks with raise and logging is not allowed."""
-        try_node, expression_node = setup.body[6].body[0], setup.body[6].body[0].handlers[1].body[0]
+    def test_error_for_duplicate_imports_in_generic_namespace(self):
+        """Test that the checker correctly finds duplicate imports of the same type from the same generic namespace."""
+        node = astroid.parse("""
+            from some.generic.namespace import SomeClass
+            from some.generic.namespace import SomeClass
+        """)
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=55,
-                    node=expression_node,
-                    col_offset=8,
-                    end_line=55,
-                    end_col_offset=29,
+                MessageTest(
+                    msg_id='duplicate-import-type',
+                    line=3,
+                    node=node.body[1],  # Points to the second 'from ... import' statement
+                    args=('SomeClass', 'some.generic.namespace'),
+                    col_offset=0,
+                    end_line=3,
+                    end_col_offset=44
                 )
         ):
-            self.checker.visit_try(try_node)
+            self.walk(node)
 
-    def test_implicit_else_exception_logged(self, setup):
-        """Check that any exceptions raised in branches aren't logged at error level."""
-        try_node, expression_node = setup.body[7].body[0], setup.body[7].body[0].handlers[0].body[1]
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=70,
-                    node=expression_node,
-                    col_offset=8,
-                    end_line=70,
-                    end_col_offset=56,
-                )
-        ):
-            self.checker.visit_try(try_node)
 
-    def test_branch_exceptions_logged(self, setup):
-        """Check that any exceptions raised in if branches aren't logged at error level."""
-        try_node = setup.body[8].body[0]
-        expression_node_a = setup.body[8].body[0].handlers[0].body[0].body[0]
-        expression_node_b = setup.body[8].body[0].handlers[0].body[0].orelse[0].body[0]
-        expression_node_c = setup.body[8].body[0].handlers[0].body[0].orelse[0].orelse[0].body[0]
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=80,
-                    node=expression_node_a,
-                    col_offset=12,
-                    end_line=80,
-                    end_col_offset=86,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=83,
-                    node=expression_node_b,
-                    col_offset=12,
-                    end_line=83,
-                    end_col_offset=69,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=86,
-                    node=expression_node_c,
-                    col_offset=12,
-                    end_line=86,
-                    end_col_offset=42,
-                )
-        ):
-            self.checker.visit_try(try_node)
 
-    def test_explicit_else_branch_exception_logged(self, setup):
-        """Check that any exceptions raised in else branches aren't logged at error level."""
-        try_node = setup.body[9].body[0]
-        expression_node = setup.body[9].body[0].handlers[0].body[0].orelse[0].orelse[0]
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=103,
-                    node=expression_node,
-                    col_offset=12,
-                    end_line=103,
-                    end_col_offset=60,
-                )
-        ):
-            self.checker.visit_try(try_node)
-
-    def test_extra_nested_branches_exception_logged(self, setup):
-        """Check that any exceptions raised in nested branches aren't logged at warning level."""
-        try_node = setup.body[10].body[0]
-        expression_node_a = setup.body[10].body[0].handlers[0].body[0].body[0].body[0]
-        expression_node_b = setup.body[10].body[0].handlers[0].body[0].body[0].orelse[0].body[0]
-        expression_node_c = setup.body[10].body[0].handlers[0].body[0].body[0].orelse[0].orelse[0]
-        expression_node_d = setup.body[10].body[0].handlers[0].body[0].orelse[0]
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=114,
-                    node=expression_node_a,
-                    col_offset=16,
-                    end_line=114,
-                    end_col_offset=42,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=117,
-                    node=expression_node_b,
-                    col_offset=16,
-                    end_line=117,
-                    end_col_offset=42,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=120,
-                    node=expression_node_c,
-                    col_offset=16,
-                    end_line=120,
-                    end_col_offset=42,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="do-not-log-raised-errors",
-                    line=123,
-                    node=expression_node_d,
-                    col_offset=12,
-                    end_line=123,
-                    end_col_offset=60,
-                )
-        ):
-            self.checker.visit_try(try_node)
 
             
 class TestInvalidUseOfOverload(pylint.testutils.CheckerTestCase):
@@ -3767,6 +3609,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         assert response.http_response.status_code == 200
 
 
+
 class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
     """Test that we are not hard-coding a True or False to connection_verify"""
 
@@ -3900,4 +3743,5 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(return_error_dict)
             self.checker.visit_annassign(annotated_assignment)
             self.checker.visit_annassign(annotated_self_assignment)
+
 

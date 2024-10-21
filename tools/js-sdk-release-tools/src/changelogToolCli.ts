@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {generateChangelogAndBumpVersion} from "./hlc/utils/automaticGenerateChangeLogAndBumpVersion";
+import {generateChangelogAndBumpVersion} from "./common/changlog/automaticGenerateChangeLogAndBumpVersion";
 import {logger} from "./utils/logger";
 
 const changelogToolCli = async (packageFolderPath: string | undefined) => {

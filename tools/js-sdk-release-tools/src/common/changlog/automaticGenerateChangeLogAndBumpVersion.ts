@@ -19,12 +19,13 @@ import {
 } from "../../utils/version";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version";
-import { ApiVersionType, SDKType } from "../../common/types"
+import { ApiVersionType, SDKType } from "../types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
-import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../../common/utils';
-import { tryGetNpmView } from '../../common/npmUtils';
+import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils';
+import { tryGetNpmView } from '../npmUtils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
+    logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
     const ApiType = await getApiVersionType(packageFolderPath);

@@ -73,13 +73,13 @@ export const extractExportAndGenerateChangelog = async (mdFilePathOld: string, m
     const metaDataNew = await readSourceAndExtractMetaData(mdFilePathNew);
     
     try {
-        mkdirp('./tmp-patch');
+        await mkdirp('./tmp-patch');
         const astContext = await createAstContext(mdFilePathOld, mdFilePathNew, './tmp-patch');
         const changeLog = changelogGenerator(metaDataOld, metaDataNew, oldSdkType, newSdkType, astContext);
         logger.info('Generated changelog successfully:');
         logger.info(changeLog.displayChangeLog());
         return changeLog;
     } finally {
-        remove('./tmp-patch');
+        await remove('./tmp-patch');
     }
 };

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,7 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             get { return this._requestUri; }
             set {
                 // If the requestUri is being modified, set the flag to true
-                if (this._requestUri != value) requestUriIsModified = true;
+                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && this._requestUri != value) requestUriIsModified = true;
                 this._requestUri = value; 
             }
         }
@@ -62,9 +63,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         public void initializeIsModifiedFlag()
         {
-            this.requestUriIsModified = false;
-            this.Request.IsModified = new RequestOrResponse.RequestOrResponseIsModified();
-            this.Response.IsModified = new RequestOrResponse.RequestOrResponseIsModified();
+            if (DebugLogger.CheckLogLevel(LogLevel.Debug))
+            {
+                this.requestUriIsModified = false;
+                this.Request.IsModified = new RequestOrResponse.RequestOrResponseIsModified();
+                this.Response.IsModified = new RequestOrResponse.RequestOrResponseIsModified();
+            }
         }
 
         public static RecordEntry Deserialize(JsonElement element)

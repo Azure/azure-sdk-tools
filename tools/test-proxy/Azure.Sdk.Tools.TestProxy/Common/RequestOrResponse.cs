@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -32,7 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             set
             {
                 // If the _headers are modified, set the flag to true
-                if (this._headers != value) IsModified.Headers = true;
+                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && this._headers != value) this.IsModified.Headers = true;
                 this._headers = value; 
             }
         }
@@ -44,7 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             set
             {
                 // If the _body is modified, set the flag to true
-                if (this._body != value) IsModified.Body = true;
+                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && this._body != value) this.IsModified.Body = true;
                 this._body = value; 
             }
         }

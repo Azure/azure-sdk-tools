@@ -230,21 +230,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         private RecordEntry CopyRecordEntry(RecordEntry requestEntry)
         {
             // Create a copy of the record entry
-            var copiedRecordEntry = new RecordEntry
-            {
-                RequestUri = requestEntry.RequestUri,
-                Request = new RequestOrResponse
-                {
-                    Headers = new SortedDictionary<string, string[]>(requestEntry.Request.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone())),
-                    Body = (byte[])requestEntry.Request.Body.Clone()
-                },
-                Response = new RequestOrResponse
-                {
-                    Headers = new SortedDictionary<string, string[]>(requestEntry.Response.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone())),
-                    Body = (byte[])requestEntry.Response.Body.Clone()
-                }
-            };
-
+            var copiedRecordEntry = new RecordEntry();
+            copiedRecordEntry.RequestUri = requestEntry.RequestUri;
+            
+            copiedRecordEntry.Request = new RequestOrResponse();
+            copiedRecordEntry.Request.Headers = new SortedDictionary<string, string[]>(requestEntry.Request.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
+            copiedRecordEntry.Request.Body = requestEntry.Response.Body != null ? (byte[])requestEntry.Request.Body.Clone(): null;
+            
+            copiedRecordEntry.Response = new RequestOrResponse();
+            copiedRecordEntry.Response.Headers = new SortedDictionary<string, string[]>(requestEntry.Response.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
+            copiedRecordEntry.Response.Body = requestEntry.Response.Body != null ? (byte[])requestEntry.Response.Body.Clone() : null;
             return copiedRecordEntry;
         }
 
@@ -256,8 +251,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="entryPostSanitize">The record entry after sanitization.</param>
         private void LogSanitizerModification(string sanitizerId, RecordEntry entryPreSanitize, RecordEntry entryPostSanitize)
         {
-            DebugLogger.LogDebug((sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry");
-
+            DebugLogger.LogDebug((sanitizerId!= null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry");
+            DebugLogger.LogDebug("lalalala");
             if (entryPostSanitize.requestUriIsModified)
             {
                 DebugLogger.LogDebug($"RequestUri is modified\nbefore:\n {entryPreSanitize.RequestUri}\nafter:\n {entryPostSanitize.RequestUri}");

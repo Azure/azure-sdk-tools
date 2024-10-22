@@ -5,12 +5,10 @@ using Azure.Core;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Unicode;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -353,35 +351,5 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return TryGetContentType(requestHeaders, out string contentType) &&
                    ContentTypeUtilities.TryGetTextEncoding(contentType, out encoding);
         }
-
-        public override string ToString()
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"RequestUri: {RequestUri}");
-            sb.AppendLine($"RequestMethod: {RequestMethod}");
-            sb.AppendLine($"StatusCode: {StatusCode}");
-            sb.AppendLine("Request Headers:");
-            foreach (var header in Request.Headers)
-            {
-                sb.AppendLine($"{header.Key}: {string.Join(", ", header.Value)}");
-            }
-            sb.AppendLine("Request Body:");
-            if (Request.Body != null)
-            {
-                sb.AppendLine(Encoding.UTF8.GetString(Request.Body));
-            }
-            sb.AppendLine("Response Headers:");
-            foreach (var header in Response.Headers)
-            {
-                sb.AppendLine($"{header.Key}: {string.Join(", ", header.Value)}");
-            }
-            sb.AppendLine("Response Body:");
-            if (Response.Body != null)
-            {
-                sb.AppendLine(Encoding.UTF8.GetString(Response.Body));
-            }
-            return sb.ToString();
-        }
-
     }
 }

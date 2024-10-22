@@ -6,6 +6,7 @@
 - fix leading whitespace issue around punctuation and keyword
 - fix type reference issue in multi-line code
 - fix contextual keyword in property/method signature
+- add "class" renderClass to type parameters
 
 # 2.0.2
 

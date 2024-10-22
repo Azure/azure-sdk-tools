@@ -208,16 +208,9 @@ function mayHaveChildren(item: ApiItem): boolean {
  * @param item {@link ApiItem} instance
  */
 function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
-  const itemId = item.canonicalReference.toString();
   if (item instanceof ApiDeclaredItem) {
     if (item.kind === ApiItemKind.Namespace) {
-      splitAndBuild(
-        line.Tokens,
-        `declare namespace ${item.displayName} `,
-        itemId,
-        item.displayName,
-        item.kind,
-      );
+      splitAndBuild(line.Tokens, `declare namespace ${item.displayName} `, item);
     } else {
       if (item.kind === ApiItemKind.Variable) {
         line.Tokens.push(
@@ -235,11 +228,11 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
             });
             line.Tokens.push(token);
           } else {
-            splitAndBuild(line.Tokens, excerpt.text, itemId, item.displayName, item.kind);
+            splitAndBuild(line.Tokens, excerpt.text, item);
           }
         }
       } else {
-        splitAndBuildMultipleLine(line, item.excerptTokens, itemId, item.displayName, item.kind);
+        splitAndBuildMultipleLine(line, item.excerptTokens, item);
       }
     }
   }

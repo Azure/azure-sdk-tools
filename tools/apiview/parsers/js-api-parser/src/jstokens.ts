@@ -3,7 +3,13 @@
 
 import jsTokens from "js-tokens";
 import { type ReviewLine, type ReviewToken, TokenKind } from "./models";
-import { ApiItemKind, type ExcerptToken, ExcerptTokenKind } from "@microsoft/api-extractor-model";
+import {
+  ApiDeclaredItem,
+  ApiItem,
+  ApiItemKind,
+  type ExcerptToken,
+  ExcerptTokenKind,
+} from "@microsoft/api-extractor-model";
 
 // The list of keywords is derived from https://github.com/microsoft/TypeScript/blob/aa9df4d68795052d1681ac7dc5f66d6362c3f3cb/src/compiler/scanner.ts#L135
 const TS_KEYWORDS = new Set<string>([
@@ -191,21 +197,15 @@ function getRenderClass(kind: ApiItemKind) {
  *   - otherwise add a normal Text token
  * @param reviewTokens - {@link ReviewToken} array to add the built token
  * @param s
- * @param currentTypeid
- * @param currentTypeName
- * @param memberKind
+ * @param item
  * @returns
  */
-export function splitAndBuild(
-  reviewTokens: ReviewToken[],
-  s: string,
-  currentTypeid: string,
-  currentTypeName: string,
-  memberKind: ApiItemKind,
-) {
+export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiItem) {
   // Not sure why api.json uses "export declare function", while api.md uses "export function".
   // Use the latter because that's how we normally define it in the TypeScript source code.
   const lines = s.replace(/export declare function/g, "export function").split("\n");
+  const { kind: memberKind, displayName: currentTypeName } = item;
+  const currentTypeid = item.canonicalReference.toString();
   for (const l of lines) {
     const tokens: jsTokens.Token[] = Array.from(jsTokens(l));
     for (const token of tokens) {
@@ -262,6 +262,9 @@ export function splitAndBuild(
           Kind: TokenKind.Text,
           Value: token.value,
         });
+        if ((item as any).typeParameters?.some((tp) => tp.name === token.value)) {
+          reviewToken.RenderClasses = ["class"];
+        }
       }
 
       if (token.type !== "WhiteSpace" || (token.type === "WhiteSpace" && token.value.length > 1)) {
@@ -287,9 +290,7 @@ export function splitAndBuild(
 export function splitAndBuildMultipleLine(
   line: ReviewLine,
   excerptTokens: readonly ExcerptToken[],
-  currentTypeid: string,
-  currentTypeName: string,
-  memberKind: ApiItemKind,
+  item: ApiItem,
 ) {
   let firstReviewLine: boolean = true;
   for (const excerpt of excerptTokens) {
@@ -317,7 +318,7 @@ export function splitAndBuildMultipleLine(
           });
           reviewTokens.push(commentToken);
         } else {
-          splitAndBuild(reviewTokens, l, currentTypeid, currentTypeName, memberKind);
+          splitAndBuild(reviewTokens, l, item);
         }
 
         if (firstReviewLine) {

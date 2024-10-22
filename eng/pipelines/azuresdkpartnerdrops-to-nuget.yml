@@ -33,10 +33,14 @@ jobs:
           artifactName: 'packages-signed'
           targetPath: '$(Build.ArtifactStagingDirectory)/packages-signed'
 
+      - pwsh: |
+          Get-ChildItem $(Build.ArtifactStagingDirectory)/packages-signed -Recurse
+        displayName: List signed packages
+
       - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
         parameters:
           BuildToolsRepositoryPath: '$(Build.SourcesDirectory)/azure-sdk-build-tools'
-          PackagesPath: $(Build.ArtifactStagingDirectory)/packages-signed
+          PackagesPath: $(Build.ArtifactStagingDirectory)/packages-signed/packages
           StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
 
       - publish: $(Build.ArtifactStagingDirectory)

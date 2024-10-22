@@ -1319,16 +1319,11 @@ function handleChangedTypeAliasDiffPairs(typeAliasPairs: DiffPair[], typeAliasPa
 
 function handleAddedRemovedTypeAliasDiffPairs(pairs: DiffPair[], changelog: Changelog) {
     pairs.forEach(p => {
-        if (p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.Added) {
-            // already handled in changelog generator, ignore
-            return;
-        }
         if (p.location === DiffLocation.TypeAlias && p.reasons === DiffReasons.Removed) {
             const name = p.target!.node.asKindOrThrow(SyntaxKind.TypeAliasDeclaration).getName();
             changelog.removedTypeAlias.push({ line: 'Removed Type Alias ' + name, oldName: name });
             return;
         }
-        // ignore type change, handle in a simple way for now
     });
 }
 

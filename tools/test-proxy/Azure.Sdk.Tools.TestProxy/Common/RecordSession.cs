@@ -251,31 +251,31 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="entryPostSanitize">The record entry after sanitization.</param>
         private void LogSanitizerModification(string sanitizerId, RecordEntry entryPreSanitize, RecordEntry entryPostSanitize)
         {
-            DebugLogger.LogDebug((sanitizerId!= null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry");
-            DebugLogger.LogDebug("lalalala");
+            DebugLogger.LogDebug((sanitizerId!= null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry{Environment.NewLine}");
+
             if (entryPostSanitize.requestUriIsModified)
             {
-                DebugLogger.LogDebug($"RequestUri is modified\nbefore:\n {entryPreSanitize.RequestUri}\nafter:\n {entryPostSanitize.RequestUri}");
+                DebugLogger.LogDebug($"RequestUri is modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.RequestUri}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.RequestUri}{Environment.NewLine}");
             }
 
             if (entryPostSanitize.Request.IsModified.Headers)
             {
-                DebugLogger.LogDebug($"Request Headers are modified\nbefore:\n {entryPreSanitize.Request.Headers}\nafter:\n {entryPostSanitize.Request.Headers}");
+                DebugLogger.LogDebug($"Request Headers are modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.Request.Headers}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.Request.Headers}{Environment.NewLine}");
             }
 
             if (entryPostSanitize.Response.IsModified.Headers)
             {
-                DebugLogger.LogDebug($"Response Headers are modified\nbefore:\n {entryPreSanitize.Response.Headers}\nafter:\n {entryPostSanitize.Response.Headers}");
+                DebugLogger.LogDebug($"Response Headers are modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.Response.Headers}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.Response.Headers}{Environment.NewLine}");
             }
 
             if (entryPostSanitize.Request.IsModified.Body)
             {
-                DebugLogger.LogDebug($"Request Body is modified\nbefore:\n {entryPreSanitize.Request.Body}\nafter:\n {entryPostSanitize.Request.Body}");
+                DebugLogger.LogDebug($"Request Body is modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.Request.Body}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.Request.Body}{Environment.NewLine}");
             }
 
             if (entryPostSanitize.Response.IsModified.Body)
             {
-                DebugLogger.LogDebug($"Response Body is modified\nbefore:\n {entryPreSanitize.Response.Body}\nafter:\n {entryPostSanitize.Response.Body}");
+                DebugLogger.LogDebug($"Response Body is modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.Response.Body}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.Response.Body}{Environment.NewLine}");
             }
         }
     }

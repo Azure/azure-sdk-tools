@@ -4,7 +4,6 @@
 import jsTokens from "js-tokens";
 import { type ReviewLine, type ReviewToken, TokenKind } from "./models";
 import {
-  ApiDeclaredItem,
   ApiItem,
   ApiItemKind,
   type ExcerptToken,
@@ -104,8 +103,8 @@ function isKeyword(s: string): boolean {
 }
 
 /**
- * Returns true if the id represents member of a type; false otherwise.
- * @param id
+ * Returns true if the kind represents member of a type; false otherwise.
+ * @param kind
  * @returns
  */
 function isTypeMember(kind: ApiItemKind): boolean {
@@ -122,12 +121,21 @@ function isTypeMember(kind: ApiItemKind): boolean {
 }
 
 /**
- * Returns true if the id represents module function; false otherwise.
- * @param id
+ * Returns true if the kind represents module function; false otherwise.
+ * @param kind
  * @returns
  */
 function isFunction(kind: ApiItemKind): boolean {
   return kind === ApiItemKind.Function;
+}
+
+/**
+ * Returns true if the kind represents an emum member; false otherwise.
+ * @param kind
+ * @returns
+ */
+function isEnumMember(kind: ApiItemKind): boolean {
+  return kind === ApiItemKind.EnumMember;
 }
 
 /**
@@ -232,7 +240,9 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
           if (!isFunction(memberKind)) {
             reviewToken.NavigateToId = currentTypeid;
           }
-          reviewToken.NavigationDisplayName = token.value;
+          if (!isEnumMember(memberKind)) {
+            reviewToken.NavigationDisplayName = token.value;
+          }
           reviewToken.Kind = TokenKind.TypeName;
         }
       } else if (token.type === "StringLiteral") {

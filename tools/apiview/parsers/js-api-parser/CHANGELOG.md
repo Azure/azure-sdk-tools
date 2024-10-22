@@ -7,6 +7,7 @@
 - fix type reference issue in multi-line code
 - fix contextual keyword in property/method signature
 - add "class" renderClass to type parameters
+- hide enum members from navigation list
 
 # 2.0.2
 

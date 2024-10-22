@@ -107,6 +107,15 @@ function isTypeMember(id: string): boolean {
 }
 
 /**
+ * Returns true if the id represents module function; false otherwise.
+ * @param id
+ * @returns
+ */
+function isFunction(id: string): boolean {
+  return id.includes(":function");
+}
+
+/**
  * Returns a {@link ReviewToken} with HasSuffixSpace of false by default
  * @param options
  * @returns
@@ -129,7 +138,6 @@ export function buildToken(options: ReviewToken): ReviewToken {
  *   - whitespace: set hasSuffixSpace = true on previous {@link ReviewToken}
  *   - otherwise add a normal Text token
  * @param reviewTokens - {@link ReviewToken} array to add the built token
- * @param line the {@link ReviewLine} to add tokens and children if any
  * @param s
  * @param currentTypeid
  * @param currentTypeName
@@ -164,7 +172,9 @@ export function splitAndBuild(
           reviewToken.RenderClasses = [memberKind];
         }
         if (!isTypeMember(currentTypeid)) {
-          reviewToken.NavigateToId = currentTypeid;
+          if (!isFunction(currentTypeid)) {
+            reviewToken.NavigateToId = currentTypeid;
+          }
           reviewToken.NavigationDisplayName = token.value;
           reviewToken.Kind = TokenKind.TypeName;
         }
@@ -206,6 +216,17 @@ export function splitAndBuild(
   return reviewTokens;
 }
 
+/**
+ * Builds review line for excerpt tokens that contains multi-line code (includes("\n") === true).
+ *   Api Extractor doesn't support in-line types well. All we have from api.json is just a list of
+ *   excerpt tokens whose values contain multi-line code, so we have to parse the code and stitch tokens
+ *   together to form the review line.
+ * @param line the {@link ReviewLine} to add tokens and children if any
+ * @param excerptTokens {@link ExcerptToken}s of the api item.
+ * @param currentTypeid
+ * @param currentTypeName
+ * @param memberKind
+ */
 export function splitAndBuildMultipleLine(
   line: ReviewLine,
   excerptTokens: readonly ExcerptToken[],
@@ -256,6 +277,9 @@ export function splitAndBuildMultipleLine(
             }
             line.Children[line.Children.length - 1].Tokens.push(...reviewTokens);
           } else {
+            if (line.Tokens.length > 0 && hasLeadingSpace(reviewTokens[0])) {
+              line.Tokens[line.Tokens.length - 1].HasSuffixSpace = true;
+            }
             line.Tokens.push(...reviewTokens);
           }
           firstCodeLine = false;

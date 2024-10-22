@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 import jsTokens from "js-tokens";
-import { ReviewLine, type ReviewToken, TokenKind } from "./models";
-import { ExcerptToken, ExcerptTokenKind } from "@microsoft/api-extractor-model";
+import { type ReviewLine, type ReviewToken, TokenKind } from "./models";
+import { ApiItemKind, type ExcerptToken, ExcerptTokenKind } from "@microsoft/api-extractor-model";
 
 // The list of keywords is derived from https://github.com/microsoft/TypeScript/blob/aa9df4d68795052d1681ac7dc5f66d6362c3f3cb/src/compiler/scanner.ts#L135
 const TS_KEYWORDS = new Set<string>([
@@ -102,8 +102,17 @@ function isKeyword(s: string): boolean {
  * @param id
  * @returns
  */
-function isTypeMember(id: string): boolean {
-  return id.includes(":member");
+function isTypeMember(kind: ApiItemKind): boolean {
+  return (
+    kind === ApiItemKind.CallSignature ||
+    kind === ApiItemKind.Constructor ||
+    kind === ApiItemKind.ConstructSignature ||
+    kind === ApiItemKind.IndexSignature ||
+    kind === ApiItemKind.Method ||
+    kind === ApiItemKind.MethodSignature ||
+    kind === ApiItemKind.Property ||
+    kind === ApiItemKind.PropertySignature
+  );
 }
 
 /**
@@ -111,8 +120,8 @@ function isTypeMember(id: string): boolean {
  * @param id
  * @returns
  */
-function isFunction(id: string): boolean {
-  return id.includes(":function");
+function isFunction(kind: ApiItemKind): boolean {
+  return kind === ApiItemKind.Function;
 }
 
 /**
@@ -125,6 +134,49 @@ export function buildToken(options: ReviewToken): ReviewToken {
     ...options,
     HasSuffixSpace: options.HasSuffixSpace ?? false,
   };
+}
+
+function isPropertySignature(memberKind: ApiItemKind, tokens: jsTokens.Token[]): boolean {
+  return (
+    (memberKind === ApiItemKind.PropertySignature &&
+      tokens.length > 2 &&
+      tokens[0].type === "IdentifierName" &&
+      (tokens[1].value === ":" || (tokens[1].value === "?" && tokens[2].value === ":"))) ||
+    (tokens.length > 3 &&
+      tokens[0].value === "readonly" &&
+      tokens[1].type === "IdentifierName" &&
+      (tokens[2].value === ":" || (tokens[2].value === "?" && tokens[3].value === ":")))
+  );
+}
+
+function isMethodSignature(memberKind: ApiItemKind, tokens: jsTokens.Token[]): boolean {
+  return (
+    memberKind === ApiItemKind.MethodSignature &&
+    tokens.length > 1 &&
+    tokens[0].type === "IdentifierName" &&
+    (tokens[1].value === "(" || tokens[1].value === "<")
+  );
+}
+/**
+ * Returns render class string of an {@link ApiItemKind}
+ * @param kind
+ * @returns
+ */
+function getRenderClass(kind: ApiItemKind) {
+  let result: string = "";
+  if (
+    kind === ApiItemKind.Interface ||
+    kind === ApiItemKind.Class ||
+    kind === ApiItemKind.Namespace ||
+    kind === ApiItemKind.Enum
+  ) {
+    result = kind.toLowerCase();
+  } else if (kind === ApiItemKind.Function) {
+    result = "method";
+  } else if (kind === ApiItemKind.TypeAlias) {
+    result = "struct";
+  }
+  return result;
 }
 
 /**
@@ -149,7 +201,7 @@ export function splitAndBuild(
   s: string,
   currentTypeid: string,
   currentTypeName: string,
-  memberKind: string,
+  memberKind: ApiItemKind,
 ) {
   // Not sure why api.json uses "export declare function", while api.md uses "export function".
   // Use the latter because that's how we normally define it in the TypeScript source code.
@@ -158,7 +210,11 @@ export function splitAndBuild(
     const tokens: jsTokens.Token[] = Array.from(jsTokens(l));
     for (const token of tokens) {
       let reviewToken: ReviewToken | undefined;
-      if (isKeyword(token.value)) {
+      if (
+        isKeyword(token.value) &&
+        !isPropertySignature(memberKind, tokens) &&
+        !isMethodSignature(memberKind, tokens)
+      ) {
         reviewToken = buildToken({
           Kind: TokenKind.Keyword,
           Value: token.value,
@@ -168,11 +224,12 @@ export function splitAndBuild(
           Kind: TokenKind.MemberName,
           Value: token.value,
         });
-        if (memberKind !== "") {
-          reviewToken.RenderClasses = [memberKind];
+        const renderClass = getRenderClass(memberKind);
+        if (renderClass !== "") {
+          reviewToken.RenderClasses = [renderClass];
         }
-        if (!isTypeMember(currentTypeid)) {
-          if (!isFunction(currentTypeid)) {
+        if (!isTypeMember(memberKind)) {
+          if (!isFunction(memberKind)) {
             reviewToken.NavigateToId = currentTypeid;
           }
           reviewToken.NavigationDisplayName = token.value;
@@ -232,7 +289,7 @@ export function splitAndBuildMultipleLine(
   excerptTokens: readonly ExcerptToken[],
   currentTypeid: string,
   currentTypeName: string,
-  memberKind: string,
+  memberKind: ApiItemKind,
 ) {
   let firstReviewLine: boolean = true;
   for (const excerpt of excerptTokens) {

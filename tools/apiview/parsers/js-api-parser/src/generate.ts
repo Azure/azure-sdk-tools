@@ -203,23 +203,6 @@ function mayHaveChildren(item: ApiItem): boolean {
 }
 
 /**
- * Returns normalized item kind string of an {@link ApiDeclaredItem}
- * @param item {@link ApiDeclaredItem} instance
- * @returns
- */
-function getItemKindString(item: ApiDeclaredItem) {
-  let itemKind: string = "";
-  if (mayHaveChildren(item)) {
-    itemKind = item.kind.toLowerCase();
-  } else if (item.kind === ApiItemKind.Function) {
-    itemKind = "method";
-  } else if (item.kind === ApiItemKind.TypeAlias) {
-    itemKind = "struct";
-  }
-  return itemKind;
-}
-
-/**
  * Builds the token list for an Api and pushes to the review line that is passed in
  * @param line The {@link ReviewLine} to push {@link ReviewToken}s to
  * @param item {@link ApiItem} instance
@@ -227,15 +210,13 @@ function getItemKindString(item: ApiDeclaredItem) {
 function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
   const itemId = item.canonicalReference.toString();
   if (item instanceof ApiDeclaredItem) {
-    const itemKind: string = getItemKindString(item);
-
     if (item.kind === ApiItemKind.Namespace) {
       splitAndBuild(
         line.Tokens,
         `declare namespace ${item.displayName} `,
         itemId,
         item.displayName,
-        itemKind,
+        item.kind,
       );
     } else {
       if (item.kind === ApiItemKind.Variable) {
@@ -254,11 +235,11 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
             });
             line.Tokens.push(token);
           } else {
-            splitAndBuild(line.Tokens, excerpt.text, itemId, item.displayName, itemKind);
+            splitAndBuild(line.Tokens, excerpt.text, itemId, item.displayName, item.kind);
           }
         }
       } else {
-        splitAndBuildMultipleLine(line, item.excerptTokens, itemId, item.displayName, itemKind);
+        splitAndBuildMultipleLine(line, item.excerptTokens, itemId, item.displayName, item.kind);
       }
     }
   }

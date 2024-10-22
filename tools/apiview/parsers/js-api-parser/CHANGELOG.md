@@ -3,6 +3,9 @@
 - add `SkipDiff: true` for dependency header line
 - set related line id for pre-release tags
 - add `export const` before constants
+- fix leading whitespace issue around punctuation and keyword
+- fix type reference issue in multi-line code
+- fix contextual keyword in property/method signature
 
 # 2.0.2
 

@@ -32,7 +32,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             get { return this._requestUri; }
             set {
                 // If the requestUri is being modified, set the flag to true
-                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && this._requestUri != value) requestUriIsModified = true;
+                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && this._requestUri != value) 
+                {
+                    requestUriIsModified = true;
+                } 
                 this._requestUri = value; 
             }
         }

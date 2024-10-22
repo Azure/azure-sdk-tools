@@ -171,7 +171,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     for (int i = 0; i < entriesPreSanitize.Length; i++)
                     {
-                        if (this.Entries[i].isModified()) LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
+                        if (this.Entries[i].isModified())
+                        {
+                            LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
+                        }
                     }
                 }
             }

@@ -34,7 +34,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             set
             {
                 // If the _headers are modified, set the flag to true
-                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && !this._headers.SequenceEqual(value)) this.IsModified.Headers = true;
+                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && !this._headers.SequenceEqual(value))
+                {
+                    this.IsModified.Headers = true;
+                }
                 this._headers = value; 
             }
         }

@@ -6,10 +6,7 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Xunit;
-using System;
-using System.Linq;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -118,14 +115,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(
                 "Request Body Content{\"key\":\"Location\",\"value\":\"https://fakeazsdktestaccount.table.core.windows.net/Tables\"}",
                 logger.Logs[2 + offset].ToString());
-            if (testType == "playback") offset = offset + 2;
+            if (testType == "playback")
+            {
+                offset = offset + 2;
+            }
             Assert.Equal("URI: [ https://Sanitized.table.core.windows.net/Tables]" +
                          Environment.NewLine + "Headers: [{\"Accept\":[\"application/json;odata=minimalmetadata\"],\"Accept-Encoding\":[\"gzip, deflate\"],\"Authorization\":[\"Sanitized\"],\"Connection\":[\"keep-alive\"]," +
                          "\"Content-Length\":[\"" + expectedContentLength + "\"],\"Content-Type\":[\"application/octet-stream\"],\"DataServiceVersion\":[\"3.0\"],\"Date\":[\"Tue, 18 May 2021 23:27:42 GMT\"]," +
                          "\"User-Agent\":[\"azsdk-python-data-tables/12.0.0b7 Python/3.8.6 (Windows-10-10.0.19041-SP0)\"],\"x-ms-client-request-id\":[\"Sanitized\"]," +
                          "\"x-ms-date\":[\"Tue, 18 May 2021 23:27:42 GMT\"],\"x-ms-version\":[\"2019-02-02\"]}]" + Environment.NewLine,
                 logger.Logs[3 + offset].ToString());
-            if (testType == "playback") offset = offset - 1;
+            if (testType == "playback")
+            {
+                offset = offset - 1;
+            }
             Assert.Equal("RequestUri is modified" + Environment.NewLine + "before:" + Environment.NewLine + " https://fakeazsdktestaccount.table.core.windows.net/Tables" + Environment.NewLine + "after:" + Environment.NewLine + " https://Sanitized.table.core.windows.net/Tables" + Environment.NewLine , logger.Logs[6 + offset].ToString());
         }
 

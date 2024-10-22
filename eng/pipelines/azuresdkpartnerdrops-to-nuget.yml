@@ -33,12 +33,11 @@ jobs:
           artifactName: 'packages-signed'
           targetPath: '$(Build.ArtifactStagingDirectory)/packages-signed'
 
-      - ${{ if eq(parameters.ShouldPublish, true) }}:
-        - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
-          parameters:
-            BuildToolsRepositoryPath: '$(Build.SourcesDirectory)/azure-sdk-build-tools'
-            PackagesPath: $(Build.ArtifactStagingDirectory)/packages-signed
-            StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
+      - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
+        parameters:
+          BuildToolsRepositoryPath: '$(Build.SourcesDirectory)/azure-sdk-build-tools'
+          PackagesPath: $(Build.ArtifactStagingDirectory)/packages-signed
+          StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols
 
       - publish: $(Build.ArtifactStagingDirectory)
         displayName: Upload Packages to Artifacts

@@ -1,5 +1,4 @@
 export enum SDKType {
-    None = 'None',
     HighLevelClient = 'HighLevelClient',
     RestLevelClient = 'RestLevelClient',
     ModularClient = 'ModularClient'

@@ -106,6 +106,7 @@ namespace APIView.Model.V2
             StringBuilder sb = new();
             foreach (var token in filterdTokens)
             {
+                sb.Append(token.HasPrefixSpace == true ? " " : string.Empty);
                 sb.Append(token.Value);
                 sb.Append(token.HasSuffixSpace == true ? " " : string.Empty);
             }

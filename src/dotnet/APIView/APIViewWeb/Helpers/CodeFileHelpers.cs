@@ -253,6 +253,12 @@ namespace APIViewWeb.Helpers
             // Convert ReviewToken to UI required StructuredToken
             foreach (var token in reviewLine.Tokens)
             {
+                if (token.HasPrefixSpace == true)
+                {
+                    var spaceToken = StructuredToken.CreateSpaceToken();
+                    spaceToken.Value = " ";
+                    tokensInRow.Add(spaceToken);
+                }
                 var structuredToken = new StructuredToken(token);
                 tokensInRow.Add(structuredToken);
 

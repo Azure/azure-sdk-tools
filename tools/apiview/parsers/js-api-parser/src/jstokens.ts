@@ -301,7 +301,8 @@ export function splitAndBuildMultipleLine(
  */
 function hasLeadingSpace(reviewToken?: ReviewToken) {
   return (
-    reviewToken?.Kind === TokenKind.Punctuation &&
-    (reviewToken?.Value === "|" || reviewToken?.Value === "&")
+    (reviewToken?.Kind === TokenKind.Punctuation &&
+      (reviewToken?.Value === "|" || reviewToken?.Value === "&")) ||
+    (reviewToken?.Kind === TokenKind.Keyword && reviewToken?.Value === "is")
   );
 }

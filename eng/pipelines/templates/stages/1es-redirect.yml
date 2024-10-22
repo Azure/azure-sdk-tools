@@ -32,6 +32,7 @@ extends:
       ${{ if and(parameters.GenerateBaselines, eq(variables['Build.SourceBranchName'], 'main'), eq(variables['System.TeamProject'], 'internal')) }}:
         autobaseline:
           isMainPipeline: true
+          disableAutoBaselineOnNonDefaultBranches: true
           enableForGitHub: true
       sourceAnalysisPool:
         name: azsdk-pool-mms-win-2022-general

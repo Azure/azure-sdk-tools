@@ -130,7 +130,7 @@ function isFunction(kind: ApiItemKind): boolean {
 }
 
 /**
- * Returns true if the kind represents an emum member; false otherwise.
+ * Returns true if the kind represents an enum member; false otherwise.
  * @param kind
  * @returns
  */
@@ -272,8 +272,13 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
           Kind: TokenKind.Text,
           Value: token.value,
         });
-        if ((item as any).typeParameters?.some((tp) => tp.name === token.value)) {
-          reviewToken.RenderClasses = ["class"];
+        const typeParameters = isTypeMember(item.kind)
+          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (item.parent as any).typeParameters
+          : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (item as any).typeParameters;
+        if (typeParameters?.some((tp) => tp.name === token.value)) {
+          reviewToken.Kind = TokenKind.TypeName;
         }
       }
 

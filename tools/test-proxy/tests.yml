@@ -277,12 +277,6 @@ stages:
           parameters:
             versionSpec: '3.9'
 
-        - task: JavaToolInstaller@0
-          inputs:
-            versionSpec: '17'
-            jdkArchitectureOption: 'x64'
-            jdkSourceOption: 'PreInstalled'
-
         - pwsh: |
             git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
           displayName: Clone Repo
@@ -294,12 +288,8 @@ stages:
             Write-Host "mvn install -f sdk/serialization/azure-xml/pom.xml             `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile `"-DskipCheckStyle=true`" -DskipTests --no-transfer-progress"
             mvn install -f sdk/serialization/azure-xml/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" -DskipTests --no-transfer-progress
 
-            Write-Host "mvn install -f sdk/core/azure-core/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile `"-DskipCheckStyle=true`" --no-transfer-progress"
-            mvn install -f sdk/core/azure-core/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true"--no-transfer-progress
-
-            Write-Host "mvn install -f sdk/core/azure-core-http-jdk-httpclient/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile `"-DskipCheckStyle=true`" -DskipTests --no-transfer-progress"
-            mvn install -f sdk/core/azure-core-http-jdk-httpclient/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" -DskipTests --no-transfer-progress
-
+            Write-Host "mvn install -f sdk/core/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile `"-DskipCheckStyle=true`" --no-transfer-progress"
+            mvn install -f sdk/core/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true"--no-transfer-progress
             Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml `"-Dspotless.skip=true`" -DskipTests=true `"-Dmaven.javadoc.skip=true`" -DskipCheckStyle=true --no-transfer-progress"
             mvn install -f sdk/core/azure-core-test/pom.xml "-Dspotless.skip=true" -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true --no-transfer-progress
           displayName: 'Install azure-core-test'

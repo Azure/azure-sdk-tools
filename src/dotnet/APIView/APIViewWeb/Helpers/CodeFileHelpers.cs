@@ -250,10 +250,11 @@ namespace APIViewWeb.Helpers
                 }
             }
 
+            bool spaceAdded = false;
             // Convert ReviewToken to UI required StructuredToken
             foreach (var token in reviewLine.Tokens)
             {
-                if (token.HasPrefixSpace == true)
+                if (token.HasPrefixSpace == true && !spaceAdded)
                 {
                     var spaceToken = StructuredToken.CreateSpaceToken();
                     spaceToken.Value = " ";
@@ -274,6 +275,11 @@ namespace APIViewWeb.Helpers
                     var spaceToken = StructuredToken.CreateSpaceToken();
                     spaceToken.Value = " ";
                     tokensInRow.Add(spaceToken);
+                    spaceAdded = true;
+                }
+                else
+                {
+                    spaceAdded = false;
                 }
             }
             return codePanelRowData;

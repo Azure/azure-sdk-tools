@@ -137,8 +137,8 @@ describe("Breaking change detection", () => {
             __dirname,
             "../../../packages/typescript-codegen-breaking-change-detector/misc/test-cases/patch-detection/"
         );
-        const oldViewPath = path.join(root, `baseline-package/patch.api.md`);
-        const newViewPath = path.join(root, `current-package/patch.api.md`);
+        const oldViewPath = path.join(__dirname, `testCases/patch.1.old.rlc.api.md`);
+        const newViewPath = path.join(__dirname, `testCases/patch.1.new.rlc.api.md`);
         const changelog = await extractExportAndGenerateChangelog(
             oldViewPath,
             newViewPath,

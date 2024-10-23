@@ -1234,7 +1234,19 @@ export const changelogGenerator = (
             pairs.push(...patchUnionType(typeAliasName, astContext, AssignDirection.BaselineToCurrent));
             return pairs;
         }, new Array<DiffPair>());
-        handleChangedTypeAliasDiffPairs(typeAliasPairs, typeAliasPairsReverse, changLog);
+        
+        // NOTE: ignore generic type aliases, since isTypeAssignableTo() doesn't work for generic type,
+        //       and operation detection can detect it as expected
+        const ignoreGenericTypeAlias = (pairs: DiffPair[]) => pairs.filter(p => {
+            const node = p.source?.node ?? p.target?.node;
+            if (!node) throw new Error('Empty node for both source and target');
+            return node.asKindOrThrow(SyntaxKind.TypeAliasDeclaration).getTypeParameters().length === 0;
+        });
+
+        handleChangedTypeAliasDiffPairs(
+            ignoreGenericTypeAlias(typeAliasPairs), 
+            ignoreGenericTypeAlias(typeAliasPairsReverse), 
+            changLog);
     }
 
     return changLog;

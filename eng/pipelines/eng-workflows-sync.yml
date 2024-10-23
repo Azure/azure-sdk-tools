@@ -22,6 +22,7 @@ parameters:
     - azure-sdk-for-js
     - azure-sdk-for-net
     - azure-sdk-for-python
+    - azure-sdk-for-rust
 
 trigger: none
 

@@ -8,6 +8,7 @@ import {
   ApiItemKind,
   type ExcerptToken,
   ExcerptTokenKind,
+  TypeParameter,
 } from "@microsoft/api-extractor-model";
 
 // The list of keywords is derived from https://github.com/microsoft/TypeScript/blob/aa9df4d68795052d1681ac7dc5f66d6362c3f3cb/src/compiler/scanner.ts#L135
@@ -211,7 +212,10 @@ function getRenderClass(kind: ApiItemKind) {
 export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiItem) {
   // Not sure why api.json uses "export declare function", while api.md uses "export function".
   // Use the latter because that's how we normally define it in the TypeScript source code.
-  const lines = s.replace(/export declare function/g, "export function").split("\n");
+  const lines = s
+    .replace(/export declare function/g, "export function")
+    .replace(/export declare enum/g, "export enum")
+    .split("\n");
   const { kind: memberKind, displayName: currentTypeName } = item;
   const currentTypeid = item.canonicalReference.toString();
   for (const l of lines) {
@@ -273,10 +277,10 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
           Value: token.value,
         });
         const typeParameters = isTypeMember(item.kind)
-          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (item.parent as any).typeParameters
-          : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (item as any).typeParameters;
+          ? (item.parent as unknown as { readonly typeParameters: ReadonlyArray<TypeParameter> })
+              .typeParameters
+          : (item as unknown as { readonly typeParameters: ReadonlyArray<TypeParameter> })
+              .typeParameters;
         if (typeParameters?.some((tp) => tp.name === token.value)) {
           reviewToken.Kind = TokenKind.TypeName;
         }

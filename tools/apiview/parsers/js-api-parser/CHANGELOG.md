@@ -8,6 +8,7 @@
 - fix contextual keyword in property/method signature
 - add "class" renderClass to type parameters
 - hide enum members from navigation list
+- replace `export declare enum` with `export enum`
 
 # 2.0.2
 

@@ -1,7 +1,6 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
-import { UserProfile } from 'src/app/_models/userProfile';
+import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
 import { ConfigService } from 'src/app/_services/config/config.service';
-import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
+
 
 @Component({
   selector: 'app-code-editor',

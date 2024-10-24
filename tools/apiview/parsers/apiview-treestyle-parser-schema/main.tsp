@@ -67,6 +67,8 @@ model ReviewToken {
   IsDeprecated?: boolean = false;
   /** Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name */
   HasSuffixSpace?: boolean = true;
+  /** Set this to true if there is a prefix space required before current token. For e.g, space before token for = */
+  HasPrefixSpace?: boolean = false;
   /** Set isDocumentation to true if current token is part of documentation */
   IsDocumentation?: boolean = false;
   /** Language specific style css class names */
@@ -78,7 +80,7 @@ model ReviewToken {
 model CodeDiagnostic {
   /** Diagnostic ID is auto generated ID by CSharp analyzer. */
   DiagnosticId?: string;
-    /** Id of ReviewLine object where this diagnostic needs to be displayed */
+  /** Id of ReviewLine object where this diagnostic needs to be displayed */
   TargetId: string;
   /** Auto generated system comment to be displayed under targeted line. */
   Text: string;
@@ -87,13 +89,22 @@ model CodeDiagnostic {
 }
 
 enum TokenKind {
+  /** Text: Token kind should be set as Text for any plan text token. for e.g documentation, namespace value, or attribute or decorator tokens **/
   Text: 0,
+  /** Punctuation **/
   Punctuation: 1,
+  /** Keyword **/
   Keyword: 2,
+  /** TypeName: Kind should be set as TypeName for class definitions, base class token, parameter types etc **/
   TypeName: 3,
+  /** MemberName: Kind should be set as MemberName for method name tokens, member variable tokens **/
   MemberName: 4,
+  /** StringLiteral: Token kind for any metadata or string literals to show in API view **/
   StringLiteral: 5,
+  /** Literal: Token kind for any literals, for e.g. enum value or numerical constant literal or default value **/
   Literal: 6,
+  /** Comment: Comment text within the code that's really a documentation. 
+   *  Few languages wants to show comments within API review that's not tagged as documentation **/
   Comment: 7
 }
 

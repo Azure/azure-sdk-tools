@@ -1,12 +1,17 @@
 import astroid
 import logging
 import inspect
+from typing import TYPE_CHECKING, List
 
 from ._base_node import NodeEntityBase
 from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub import Navigation, Kind, NavigationTag
+from apistub._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line, set_blank_lines
+
+if TYPE_CHECKING:
+    from .._generated.treestyle.parser.models import ApiView, ReviewLine
 
 filter_function = lambda x: isinstance(x, FunctionNode)
 filter_class = lambda x: isinstance(x, ClassNode)
@@ -19,10 +24,11 @@ class ModuleNode(NodeEntityBase):
     :param dict: node_index
     """
 
-    def __init__(self, namespace, module, node_index, pkg_root_namespace):
-        super().__init__(namespace, None, module)
+    def __init__(self, namespace, module, apiview: "ApiView", pkg_root_namespace):
+        super().__init__(namespace=namespace, parent_node=None, obj=module)
         self.namespace_id = self.generate_id()
-        self.node_index = node_index
+        self.children = []
+        self.node_index = apiview.node_index
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
 
@@ -56,7 +62,7 @@ class ModuleNode(NodeEntityBase):
                     namespace=self.namespace,
                     parent_node=self,
                     obj=member_obj,
-                    pkg_root_namespace=self.pkg_root_namespace
+                    pkg_root_namespace=self.pkg_root_namespace,
                 )
                 key = "{0}.{1}".format(self.namespace, class_node.name)
                 self.node_index.add(key, class_node)
@@ -88,20 +94,26 @@ class ModuleNode(NodeEntityBase):
         # Don't skip member if module name is not available. This is just to be on safer side
         return False
 
-    def generate_tokens(self, apiview):
+    def generate_tokens(self, review_lines: List["ReviewLine"]):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param ApiView: apiview
+        :param review_lines: List of ReviewLine 
         """
+        tokens = [
+            Token(kind=TokenKind.KEYWORD, value="namespace"),
+            Token(kind=TokenKind.TEXT, value=self.namespace, has_suffix_space=False)
+        ]
         if self.child_nodes:
             # Add name space level functions first
-            for c in filter(filter_function, self.child_nodes):
-                c.generate_tokens(apiview)
-                apiview.set_blank_lines(2)
+            #for c in filter(filter_function, self.child_nodes):
+            #    c.generate_tokens(apiview)
+            #    set_blank_lines(self.review_lines, 2)
 
             # Add classes
             for c in filter(filter_class, self.child_nodes):
-                c.generate_tokens(apiview)
-                apiview.set_blank_lines(2)
+                c.generate_tokens(self.children)
+                set_blank_lines(review_lines, 2)
+        # TODO: figure out why children only print when added before parent review line
+        add_review_line(review_lines=review_lines, line_id=self.namespace_id, tokens=tokens, children=self.children)
 
     def get_navigation(self):
         """Generate navigation tree recursively by generating Navigation obejct for classes and functions in name space

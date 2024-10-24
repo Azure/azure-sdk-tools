@@ -68,17 +68,17 @@ class ApiView:
     def add_token(self, token):
         self.tokens.append(token)
 
-    def begin_group(self, group_name=""):
-        """Begin a new group in API view by shifting to right
-        """
-        self.indent += 1
+    #def begin_group(self, group_name=""):
+    #    """Begin a new group in API view by shifting to right
+    #    """
+    #    self.indent += 1
 
-    def end_group(self):
-        """End current group by moving indent to left
-        """
-        if not self.indent:
-            raise ValueError("Invalid indentation")
-        self.indent -= 1
+    #def end_group(self):
+    #    """End current group by moving indent to left
+    #    """
+    #    if not self.indent:
+    #        raise ValueError("Invalid indentation")
+    #    self.indent -= 1
 
     def add_whitespace(self, count: Optional[int] = None):
         """ Inject appropriate whitespace for indentation,
@@ -95,13 +95,14 @@ class ApiView:
         if self.tokens[-1].kind != TokenKind.Whitespace:
             self.add_token(Token(" ", TokenKind.Whitespace))
 
-    def add_newline(self):
-        """ Used to END a line and wrap to the next.
-            Cannot be used to inject blank lines.
-        """
-        # don't add newline if it already is in place
-        if self.tokens[-1].kind != TokenKind.Newline:
-            self.add_token(Token("", TokenKind.Newline))
+    # TODO: check that it's no longer needed, since each RL will be a new line
+    #def add_newline(self):
+    #    """ Used to END a line and wrap to the next.
+    #        Cannot be used to inject blank lines.
+    #    """
+    #    # don't add newline if it already is in place
+    #    if self.tokens[-1].kind != TokenKind.Newline:
+    #        self.add_token(Token("", TokenKind.Newline))
 
     def set_blank_lines(self, count):
         """ Ensures a specific number of blank lines.

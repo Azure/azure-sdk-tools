@@ -80,8 +80,7 @@ extends:
             - template: /eng/pipelines/templates/variables/image.yml
             - name: ArtifactName
               value: 'apiview'
-            - name: FeedRegistry
-              value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
+
           jobs:
           - job: PublishPackage
             displayName: 'Publish ts-genapi package to devops feed'
@@ -96,18 +95,18 @@ extends:
             - pwsh: |
                 $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
                 Write-Host "Detected package name: $detectedPackageName"
-                $registry="$(FeedRegistry)"
-                $regAuth=$registry.replace("https:","")
-                $npmReg = $regAuth.replace("registry/","");
-                $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
-                Write-Host "Publishing to $($regAuth)"
-                npm config set $regAuth`:username=azure-sdk
-                npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
-                npm config set $regAuth`:email=not_set
-                npm config set $npmReg`:username=azure-sdk
-                npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
-                npm config set $npmReg`:email=not_set
-                Write-Host "Publishing package"
-                Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true"
-                npm publish $detectedPackageName --registry=$registry --always-auth=true
-              displayName: Publish package
+                Write-Host "##vso[task.setvariable variable=PackageArtifactFullPath]$detectedPackageName"
+              displayName: "Find package artifact"
+
+            - task: npmAuthenticate@0
+              inputs:
+                workingFile: $(TypeScriptGeneratorDirectory)/.npmrc
+
+            - task: Npm@1
+              inputs:
+                command: 'custom'
+                customCommand: 'publish $(PackageArtifactFullPath)'
+                publishRegistry: useFeed
+                publishFeed: "public/azure-sdk-for-js"
+              env:
+                SYSTEM_ACCESSTOKEN: $(System.AccessToken)

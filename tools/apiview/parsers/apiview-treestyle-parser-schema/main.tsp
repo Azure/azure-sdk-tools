@@ -5,11 +5,11 @@ using Azure.ClientGenerator.Core;
 using TypeSpec.JsonSchema;
 
 @usage(Usage.input | Usage.output)
-@jsonSchema
 @service({title: "Schemas"})
 namespace Schemas;
 
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
+@jsonSchema
 model CodeFile {
   PackageName: string;
   PackageVersion: string;

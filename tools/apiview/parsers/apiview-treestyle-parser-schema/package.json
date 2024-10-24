@@ -2,11 +2,9 @@
   "name": "apiview-treestyle-parser-schema",
   "version": "0.1.0",
   "type": "module",
-  "peerDependencies": {
-    "@typespec/compiler": "latest",
-    "@typespec/json-schema": "latest"
-  },
   "dependencies": {
+    "@typespec/compiler": "latest",
+    "@typespec/json-schema": "latest",
     "@azure-tools/typespec-python": "0.35.1"
   },
   "devDependencies": {

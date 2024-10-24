@@ -105,8 +105,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 RecordEntry reqEntryPreSanitize = null;
                 if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
-                    requestEntry.initializeIsModifiedFlag();
-                    reqEntryPreSanitize = CopyRecordEntry(requestEntry);
+                    requestEntry.ResetRecordEntryModificationStatus();
+                    reqEntryPreSanitize = requestEntry.Clone();
                 }
 
                 sanitizer.Sanitize(requestEntry);
@@ -162,7 +162,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var entriesPreSanitize = Array.Empty<RecordEntry>();
                 if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
-                    entriesPreSanitize = this.Entries.Select(requestEntry => { requestEntry.initializeIsModifiedFlag(); return CopyRecordEntry(requestEntry); }).ToArray();
+                    entriesPreSanitize = this.Entries.Select(requestEntry => { requestEntry.ResetRecordEntryModificationStatus(); return requestEntry.Clone(); }).ToArray();
                 }
                 
                 sanitizer.Sanitize(this);
@@ -171,7 +171,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     for (int i = 0; i < entriesPreSanitize.Length; i++)
                     {
-                        if (this.Entries[i].isModified())
+                            if (this.Entries[i] == null || this.Entries[i].isModified()) 
                         {
                             LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
                         }
@@ -201,7 +201,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     var entriesPreSanitize = Array.Empty<RecordEntry>();
                     if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                     {
-                        entriesPreSanitize = this.Entries.Select(requestEntry => { requestEntry.initializeIsModifiedFlag(); return CopyRecordEntry(requestEntry); }).ToArray();
+                        entriesPreSanitize = this.Entries.Select(requestEntry => { requestEntry.ResetRecordEntryModificationStatus(); return requestEntry.Clone(); }).ToArray();
                     }
                     
                     sanitizer.Sanitize(this);
@@ -210,7 +210,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     {
                         for (int i = 0; i < entriesPreSanitize.Length; i++)
                         {
-                            if (this.Entries[i].isModified()) LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
+                            if (this.Entries[i] == null || this.Entries[i].isModified()) 
+                            { 
+                                LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]); 
+                            }
                         }
                     }
                 }
@@ -225,61 +228,41 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         }
 
         /// <summary>
-        /// Creates a copy of the provided record entry.
-        /// Used primarily for sanitization logging.
-        /// </summary>
-        /// <param name="requestEntry">The record entry to copy.</param>
-        /// <returns>The copied record entry.</returns>
-        private RecordEntry CopyRecordEntry(RecordEntry requestEntry)
-        {
-            // Create a copy of the record entry
-            var copiedRecordEntry = new RecordEntry();
-            copiedRecordEntry.RequestUri = requestEntry.RequestUri;
-            
-            copiedRecordEntry.Request = new RequestOrResponse();
-            copiedRecordEntry.Request.Headers = new SortedDictionary<string, string[]>(requestEntry.Request.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
-            copiedRecordEntry.Request.Body = requestEntry.Response.Body != null ? (byte[])requestEntry.Request.Body.Clone(): null;
-            
-            copiedRecordEntry.Response = new RequestOrResponse();
-            copiedRecordEntry.Response.Headers = new SortedDictionary<string, string[]>(requestEntry.Response.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
-            copiedRecordEntry.Response.Body = requestEntry.Response.Body != null ? (byte[])requestEntry.Response.Body.Clone() : null;
-            return copiedRecordEntry;
-        }
-
-        /// <summary>
         /// Logs the modifications made by a sanitizer to a record entry.
         /// </summary>
         /// <param name="sanitizerId">The ID of the sanitizer.</param>
         /// <param name="entryPreSanitize">The record entry before sanitization.</param>
         /// <param name="entryPostSanitize">The record entry after sanitization.</param>
         private void LogSanitizerModification(string sanitizerId, RecordEntry entryPreSanitize, RecordEntry entryPostSanitize)
-        {
-            DebugLogger.LogDebug((sanitizerId!= null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry{Environment.NewLine}");
-
-            if (entryPostSanitize.requestUriIsModified)
+        { 
+            var logMessage = (sanitizerId != null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry{Environment.NewLine}";
+            var before = $"{Environment.NewLine}before:{Environment.NewLine} ";
+            var after = $"{Environment.NewLine}after: {Environment.NewLine} ";
+            if (entryPostSanitize.RequestUriIsModified)
             {
-                DebugLogger.LogDebug($"RequestUri is modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.RequestUri}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.RequestUri}{Environment.NewLine}");
+                logMessage+= $"RequestUri is modified{before}{entryPreSanitize.RequestUri}{after}{entryPostSanitize.RequestUri}{Environment.NewLine}";
             }
 
             if (entryPostSanitize.Request.IsModified.Headers)
             {
-                DebugLogger.LogDebug($"Request Headers are modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.Request.Headers}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.Request.Headers}{Environment.NewLine}");
+                logMessage += $"Request Headers are modified{before}{entryPreSanitize.Request.Headers.ToString()}{after}{entryPostSanitize.Request.Headers.ToString()}{Environment.NewLine}";
             }
 
             if (entryPostSanitize.Response.IsModified.Headers)
             {
-                DebugLogger.LogDebug($"Response Headers are modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.Response.Headers}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.Response.Headers}{Environment.NewLine}");
+                logMessage += $"Response Headers are modified{before}{entryPreSanitize.Response.Headers.ToString()}{after}{entryPostSanitize.Response.Headers.ToString()}{Environment.NewLine}";
             }
 
             if (entryPostSanitize.Request.IsModified.Body)
             {
-                DebugLogger.LogDebug($"Request Body is modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.Request.Body}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.Request.Body}{Environment.NewLine}");
+                logMessage += $"Request Body is modified{before}{entryPreSanitize.Request.Body.ToString()}{after}{entryPostSanitize.Request.Body.ToString()}{Environment.NewLine}";
             }
 
             if (entryPostSanitize.Response.IsModified.Body)
             {
-                DebugLogger.LogDebug($"Response Body is modified{Environment.NewLine}before:{Environment.NewLine} {entryPreSanitize.Response.Body}{Environment.NewLine}after:{Environment.NewLine} {entryPostSanitize.Response.Body}{Environment.NewLine}");
+                logMessage += $"Response Body is modified{before}{entryPreSanitize.Response.Body.ToString()}{after}{entryPostSanitize.Response.Body.ToString()}{Environment.NewLine}";
             }
+            DebugLogger.LogDebug(logMessage);
         }
     }
 }

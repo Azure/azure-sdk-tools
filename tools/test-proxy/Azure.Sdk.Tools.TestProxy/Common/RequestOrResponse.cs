@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Represents the modified state of the headers and body.
         /// </summary>
-        public class RequestOrResponseIsModified
+        public class ModificationStatus
         {
             /// <summary>
             /// Gets or sets a value indicating whether the headers are modified.
@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             set
             {
                 // If the _headers are modified, set the flag to true
-                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && !this._headers.SequenceEqual(value))
+                if (!this._headers.SequenceEqual(value))
                 {
                     this.IsModified.Headers = true;
                 }
@@ -49,8 +49,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             set
             {
                 // If the _body is modified, set the flag to true
-                if (DebugLogger.CheckLogLevel(LogLevel.Debug) &&
-                    (this._body != null || value != null) &&
+                if ((this._body != null || value != null) &&
                     (this._body == null || value == null || !this._body.SequenceEqual(value)))
                 {
                     this.IsModified.Body = true;
@@ -59,7 +58,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        public RequestOrResponseIsModified IsModified { get; set; } = new RequestOrResponseIsModified();
+        public ModificationStatus IsModified { get; set; } = new ModificationStatus();
 
         public bool TryGetContentType(out string contentType)
         {

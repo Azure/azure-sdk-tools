@@ -2,6 +2,7 @@ import astroid
 import inspect
 
 from ._base_node import get_qualified_name
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line
 
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
@@ -33,9 +34,9 @@ class ArgType:
             self.argtype = argtype
         self.function_node = func_node
 
-    def generate_tokens(self, apiview, function_id, *, add_line_marker: bool, prefix: str = ""):
+    def generate_tokens(self, review_lines, function_id, namespace, *, add_line_marker: bool, prefix: str = ""):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param ~ApiVersion apiview: The ApiView
+        :param ~ReviewLine apiview: The ApiView
         :param str function_id: Module level Unique ID created for function 
         :keyword bool add_line_marker: Flag to indicate whether to include a line ID marker or not.
         :keyword str prefix: Optional prefix for *args and **kwargs.
@@ -44,27 +45,30 @@ class ArgType:
         self.id = function_id
         if add_line_marker:
             self.id = f"{function_id}.param({self.argname})"
-            apiview.add_line_marker(self.id)
 
-        apiview.add_text(f"{prefix}{self.argname}")
+        tokens = []
+        tokens.append(Token(kind=TokenKind.TEXT, value=f"{prefix}{self.argname}", has_suffix_space=False))
         # add arg type
         if self.argtype:
-            apiview.add_punctuation(":", False, True)
-            apiview.add_type(self.argtype, self.id)
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":"))
+            tokens.append(Token(kind=TokenKind.TYPE_NAME, value=self.argtype, has_suffix_space=False))
+
+        add_review_line(review_lines, line_id=self.id, tokens=tokens)
 
         # add arg default value
         default = self.default
         if default is not None:
-            apiview.add_punctuation("=", True, True)
+            # TODO: add has_prefix_space=True if prefix is not empty
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="=", has_suffix_space=True))
             if isinstance(default, str) and default not in SPECIAL_DEFAULT_VALUES:
-                apiview.add_string_literal(default)
+                tokens.append(Token(kind=TokenKind.STRING_LITERAL, value=default, has_suffix_space=False))
             else:
                 if isinstance(default, astroid.node_classes.Name):
                     value = default.name
                 elif hasattr(default, "as_string"):
                     value = default.as_string()
                 elif inspect.isclass(default):
-                    value = get_qualified_name(default, apiview.namespace)
+                    value = get_qualified_name(default, namespace)
                 else:
                     value = str(default)
-                apiview.add_literal(value)
+                tokens.append(Token(kind=TokenKind.LITERAL, value=value, has_suffix_space=False))

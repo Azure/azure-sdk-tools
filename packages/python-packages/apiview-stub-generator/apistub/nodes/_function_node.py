@@ -3,12 +3,17 @@ import inspect
 from collections import OrderedDict
 import astroid
 import re
+from typing import TYPE_CHECKING, List, Dict
 
 from ._annotation_parser import FunctionAnnotationParser
 from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line, set_blank_lines, add_type
+
+if TYPE_CHECKING:
+    from .._generated.treestyle.parser.models import ReviewLine
 
 
 # Find types like ~azure.core.paging.ItemPaged and group returns ItemPaged.
@@ -33,6 +38,7 @@ class FunctionNode(NodeEntityBase):
             self.name = node.name
             self.display_name = node.name
         self.annotations = []
+        self.children = []
 
         # Track **kwargs and *args separately, the way astroid does
         self.special_kwarg = None
@@ -181,97 +187,119 @@ class FunctionNode(NodeEntityBase):
             short_type = short_type.replace(g[0], g[1])
         return short_type
 
-    def _generate_args_for_collection(self, items, apiview, use_multi_line):
+    def _generate_args_for_collection(self, items: Dict[str, ArgType], review_lines, use_multi_line):
         for item in items.values():
-            self._newline_if_needed(apiview, use_multi_line)
-            item.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line)
-            apiview.add_punctuation(",", False, True)
+            item.generate_tokens(review_lines, self.namespace_id, namespace=self.namespace, add_line_marker=use_multi_line)
+            review_lines[-1]['Tokens'].append(Token(kind=TokenKind.PUNCTUATION, value=","))
 
-    def _generate_signature_token(self, apiview, use_multi_line):
-        apiview.add_punctuation("(")
+    def _generate_signature_token(self, review_lines, tokens, use_multi_line):
+        tokens.append(Token(kind=TokenKind.PUNCTUATION, value="(", has_suffix_space=False))
 
+        # TODO: extra indent for all below
+        use_multi_line = False
         if use_multi_line:
+            # TODO: if the goal is to not add whitespace tokens, should indent be built into review line as well?
+            add_review_line(
+                review_lines=review_lines,
+                line_id=self.namespace_id,
+                tokens=tokens,
+                #related_to_line=self.namespace_id,
+                #add_cross_language_id=True     # TODO: add cross language id
+            )
             # render errors directly below definition line
             for err in self.pylint_errors:
-                err.generate_tokens(apiview, self.namespace_id)
-            apiview.begin_group()
-            apiview.begin_group()
+                err.generate_tokens(review_lines, self.namespace_id)
+            #apiview.begin_group()
+        else:
+            add_review_line(
+                review_lines=review_lines,
+                tokens=tokens,
+                #related_to_line=self.namespace_id,
+                #add_cross_language_id=True     # TODO: add cross language id
+            )
 
-        self._generate_args_for_collection(self.posargs, apiview, use_multi_line)
+        self._generate_args_for_collection(self.posargs, review_lines, use_multi_line)
         # add postional-only marker if any posargs
         if self.posargs:
-            self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text("/")
-            apiview.add_punctuation(",", False, True)
+            tokens = [
+                Token(kind=TokenKind.TEXT, value="/", has_suffix_space=False),
+                Token(kind=TokenKind.PUNCTUATION, value=",")
+            ]
+            add_review_line(review_lines, tokens=tokens)
 
-        self._generate_args_for_collection(self.args, apiview, use_multi_line)
+        self._generate_args_for_collection(self.args, review_lines, use_multi_line)
         if self.special_vararg:
-            self._newline_if_needed(apiview, use_multi_line)
-            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="*")
-            apiview.add_punctuation(",", False, True)
+            self.special_vararg.generate_tokens(review_lines, self.namespace_id, namespace=self.namespace, add_line_marker=use_multi_line, prefix="*")
+            #apiview.add_punctuation(",", False, True)
 
         # add keyword argument marker        
-        if self.kwargs:
-            self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text("*")
-            apiview.add_punctuation(",", False, True)
+        if self.kwargs and not self.special_vararg:
+            tokens = []
+            # TODO: only add this if self.special_vararg is not present
+            tokens.append(Token(kind=TokenKind.TEXT, value="*", has_suffix_space=False))
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
+            add_review_line(review_lines, tokens=tokens)
 
-        self._generate_args_for_collection(self.kwargs, apiview, use_multi_line)
+        self._generate_args_for_collection(self.kwargs, review_lines, use_multi_line)
         if self.special_kwarg:
-            self._newline_if_needed(apiview, use_multi_line)
-            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="**")
-            apiview.add_punctuation(",", False, True)
+            tokens = []
+            self.special_kwarg.generate_tokens(
+                review_lines,
+                self.namespace_id,
+                self.namespace,
+                add_line_marker=use_multi_line,
+                prefix="**"
+            )
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
+            add_review_line(review_lines, tokens=tokens)
 
         # pop the final ", " tokens
-        if self._argument_count():
-            apiview.tokens.pop()
-            apiview.tokens.pop()
+        #if self._argument_count():
+        #    apiview.tokens.pop()
+        #    apiview.tokens.pop()
 
-        if use_multi_line:
-            apiview.add_newline()
-            apiview.end_group()
-            apiview.add_whitespace()
-            apiview.add_punctuation(")")
-            apiview.end_group()
-        else:
-            apiview.add_punctuation(")")
+        #apiview.add_newline()
+        #apiview.end_group()
+        #apiview.add_whitespace()
+        tokens = []
+        tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")"))
+        add_review_line(review_lines, tokens=tokens)
 
-    def generate_tokens(self, apiview):
+    def generate_tokens(self, review_lines: List["ReviewLine"]):
         """Generates token for function signature
         :param ApiView: apiview
         """
-        # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
+        # Show args in individual line if method has more than 4 args and use two tabs to properly align them
         use_multi_line = self._argument_count() > 2
 
         parent_id = self.parent_node.namespace_id if self.parent_node else "???"
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
-            apiview.add_whitespace()
-            apiview.add_keyword(annot)
-            apiview.add_newline()
+            add_review_line(
+                review_lines=review_lines,
+                tokens=[Token(kind=TokenKind.KEYWORD, value=annot, has_suffix_space=False)]
+            )
 
-        apiview.add_whitespace()
-        apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
+        tokens = []
         if self.is_async:
-            apiview.add_keyword("async", False, True)
+            tokens.append(Token(kind=TokenKind.KEYWORD, value="async"))
 
-        apiview.add_keyword("def", False, True)
+        tokens.append(Token(kind=TokenKind.KEYWORD, value="def"))
         # Show fully qualified name for module level function and short name for instance functions
-        apiview.add_text(
-            self.full_name if self.is_module_level else self.name,
-            definition_id=self.namespace_id
-        )
+        value = self.full_name if self.is_module_level else self.name
+        tokens.append(Token(kind=TokenKind.TEXT, value=value, has_suffix_space=False))
         # Add parameters
-        self._generate_signature_token(apiview, use_multi_line)
+        self._generate_signature_token(review_lines, tokens, use_multi_line)
+
         if self.return_type:
-            apiview.add_punctuation("->", True, True)
+            tokens = []
+            # TODO: add has_prefix_space here
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="->"))
             # Add line marker id if signature is displayed in multi lines
             if use_multi_line:
                 line_id = f"{self.namespace_id}.returntype"
-                apiview.add_line_marker(line_id)
-            apiview.add_type(self.return_type)
-        apiview.add_newline()
-        if not use_multi_line:
-            for err in self.pylint_errors:
-                err.generate_tokens(apiview, self.namespace_id)            
+            add_type(tokens, self.return_type)
+        #if not use_multi_line:
+        #    for err in self.pylint_errors:
+        #        err.generate_tokens(apiview, self.namespace_id)            

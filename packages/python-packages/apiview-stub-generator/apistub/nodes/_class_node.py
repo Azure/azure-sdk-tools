@@ -3,7 +3,7 @@ import logging
 import inspect
 from enum import Enum
 import operator
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
@@ -12,7 +12,10 @@ from ._key_node import KeyNode
 from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line, set_blank_lines, add_type
 
+if TYPE_CHECKING:
+    from .._generated.treestyle.parser.models import ReviewLine
 
 find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
@@ -61,7 +64,7 @@ class ClassNode(NodeEntityBase):
         self.base_class_names = []
         # This is the name obtained by NodeEntityBase from __name__.
         # We must preserve it to detect the mismatch and issue a warning.
-        self._name = self.name
+        self.children = []
         self.name = name
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
@@ -307,65 +310,80 @@ class ClassNode(NodeEntityBase):
             base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 
-    def generate_tokens(self, apiview):
+    def generate_tokens(self, review_lines: List["ReviewLine"]):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param ApiView: apiview
+        :param review_lines: List of ReviewLine 
         """
         logging.info(f"Processing class {self.namespace_id}")
         # Generate class name line
-        for decorator in self.decorators:
-            apiview.add_whitespace()
-            apiview.add_keyword(decorator)
-            apiview.add_newline()
+        for decorator in self.decorators: 
+            print('adding decorator:', decorator)
+            # TODO: may need to remove line id here
+            add_review_line(
+                review_lines=review_lines,
+                line_id=self.namespace_id,
+                tokens=[Token(kind=TokenKind.KEYWORD, value=decorator)],
+                related_to_line=self.namespace_id,
+            )
+            set_blank_lines(review_lines)
 
-        apiview.add_whitespace()
-        apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
-        apiview.add_keyword("class", False, True)
-        apiview.add_text(self.full_name, definition_id=self.namespace_id)
-        for err in self.pylint_errors:
-            err.generate_tokens(apiview, self.namespace_id)
+        #apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
+        tokens = [
+            Token(kind=TokenKind.KEYWORD, value="class"),
+            Token(kind=TokenKind.TEXT, value=self.name, has_suffix_space=False),
+        ]
+
+        #for err in self.pylint_errors:
+        #    err.generate_tokens(review_lines, self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:
-            apiview.add_punctuation("(")
-            self._generate_tokens_for_collection(self.base_class_names, apiview)
-            apiview.add_punctuation(")")
-        apiview.add_punctuation(":")
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="(", has_suffix_space=False))
+            self._generate_tokens_for_collection(self.base_class_names, tokens)
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")", has_suffix_space=False))
+        tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":", has_suffix_space=False)) # TODO: is_context_end_line=True?
 
         # Add any ABC implementation list
         if self.implements:
-            apiview.add_keyword("implements", True, True)
-            self._generate_tokens_for_collection(self.implements, apiview)
-        apiview.add_newline()
+            tokens.append(Token(kind=TokenKind.TEXT, value=" "))
+            tokens.append(Token(kind=TokenKind.KEYWORD, value="implements"))
+            self._generate_tokens_for_collection(self.implements, tokens)
 
         # Generate token for child nodes
         if self.child_nodes:
-            self._generate_child_tokens(apiview)
+            self._generate_child_tokens(review_lines)
+
+        add_review_line(
+            review_lines=review_lines,
+            line_id=self.namespace_id,
+            tokens=tokens,
+            children=self.children,
+            is_context_end_line=True,
+            related_to_line=self.namespace_id,
+        )
 
 
-    def _generate_child_tokens(self, apiview):
+    def _generate_child_tokens(self, review_lines):
         # Add members and methods
-        apiview.begin_group()
-        for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
-            apiview.add_newline()
-            apiview.add_whitespace()
-            e.generate_tokens(apiview)
-            apiview.add_newline()
+        #apiview.begin_group()
+        #for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
+        #    e.generate_tokens(self.children)
+        #    set_blank_lines(review_lines)
         for func in [
             x
             for x in self.child_nodes
             if isinstance(x, FunctionNode) and x.hidden == False
         ]:
-            apiview.set_blank_lines(1)
-            func.generate_tokens(apiview)
-        apiview.end_group()
+            set_blank_lines(review_lines)
+            func.generate_tokens(self.children)
+        #apiview.end_group()
 
 
-    def _generate_tokens_for_collection(self, values, apiview):
+    def _generate_tokens_for_collection(self, values, tokens):
         # Helper method to concatenate list of values and generate tokens
         list_len = len(values)
         for (idx, value) in enumerate(values):
-            apiview.add_type(value, self.namespace_id)
+            add_type(tokens, value)
             # Add punctuation between types
             if idx < list_len - 1:
-                apiview.add_punctuation(",", False, True)
+                tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))

@@ -221,26 +221,28 @@ class StubGenerator:
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
-            self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
 
+            # TODO: for any namespaces under the package.name, make sure nested child namespaces are added
+            self.module_dict[m] = ModuleNode(m, module_obj, apiview, namespace)
+        
         ## Create navigation info to navigate within APIreview tool
         #navigation = Navigation(package_name, None)
         #navigation.tags = NavigationTag(Kind.type_package)
         #apiview.add_navigation(navigation)
 
-        ## Generate any global diagnostics
+        ## Generate any globa diagnostics
         #global_errors = PylintParser.get_items("GLOBAL")
         #for g in global_errors or []:
-        #    g.generate_tokens(apiview, "GLOBAL")
+        #    g.generate_tokens(apiview.review_tokens, "GLOBAL")
 
-        ## Generate tokens
-        #modules = self.module_dict.keys()
-        #for m in modules:
-        #    self.module_dict[m].generate_diagnostics()
-        #    # Generate and add token to APIView
-        #    logging.debug("Generating tokens for module {}".format(m))
-        #    self.module_dict[m].generate_tokens(apiview)
-        #    # Add navigation info for this modules. navigation info is used to build tree panel in API tool
+        # Generate tokens
+        modules = self.module_dict.keys()
+        for m in modules:
+            self.module_dict[m].generate_diagnostics()
+            # Generate and add token to APIView
+            logging.debug("Generating tokens for module {}".format(m))
+            self.module_dict[m].generate_tokens(apiview.review_lines)
+            # Add navigation info for this modules. navigation info is used to build tree panel in API tool
         #    module_nav = self.module_dict[m].get_navigation()
         #    if module_nav:
         #        navigation.add_child(module_nav)

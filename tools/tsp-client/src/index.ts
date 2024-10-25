@@ -200,7 +200,7 @@ const parser = yargs(hideBin(process.argv))
           type: "boolean",
           description: "Convert swagger to ARM TypeSpec",
         })
-        .option("fullyCompatible", {
+        .option("fully-compatible", {
           type: "boolean",
           description: "Convert swagger to fully compatible TypeSpec",
         });

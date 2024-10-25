@@ -333,7 +333,7 @@ export async function convertCommand(argv: any): Promise<void> {
   const outputDir = argv["output-dir"];
   const swaggerReadme = argv["swagger-readme"];
   const arm = argv["arm"];
-  const fullyCompatible = argv["fullyCompatible"];
+  const fullyCompatible = argv["fully-compatible"];
   let rootUrl = resolvePath(outputDir);
 
   Logger.info("Converting swagger to typespec...");

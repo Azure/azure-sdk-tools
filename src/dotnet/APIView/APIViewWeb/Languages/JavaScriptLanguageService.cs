@@ -13,7 +13,7 @@ namespace APIViewWeb
         public override string Name { get; } = "JavaScript";
         public override string[] Extensions { get; } = { ".api.json" };
         public override string ProcessName { get; } = "node";
-        public override string VersionString { get; } = "2.0.2";
+        public override string VersionString { get; } = "2.0.3";
         private readonly string _jsParserToolPath;
 
         public JavaScriptLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)

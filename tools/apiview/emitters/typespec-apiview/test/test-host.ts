@@ -65,7 +65,7 @@ export function apiViewText(apiview: CodeFile): string[] {
   return apiview.ReviewLines.map(l => reviewLineText(l, 0)).join("\n").split("\n");
 }
 
-function getIndex(lines: string[]): number {
+function getBaseIndent(lines: string[]): number {
   for (const line of lines) {
     if (line.trim() !== "") {
       return line.length - line.trimStart().length;
@@ -77,15 +77,16 @@ function getIndex(lines: string[]): number {
 /** Eliminates leading indentation and blank links that can mess with comparisons */
 function trimLines(lines: string[]): string[] {
   const trimmed: string[] = [];
-  const indent = getIndex(lines);
+  const indent = getBaseIndent(lines);
+  
+  // if first line is blank, skip it
+  if (lines[0].trim() === "") {
+    lines = lines.slice(1);
+  }
+
   for (const line of lines) {
-    if (line.trim() === '') {
-      // skip blank lines
-      continue;
-    } else {
-      // remove any leading indentation
-      trimmed.push(line.substring(indent));
-    }
+    // remove any leading indentation
+    trimmed.push(line.substring(indent));
   }
   return trimmed;
 }

@@ -151,7 +151,13 @@ export class ApiView {
     });
   }
 
-  private indent() {
+  private indent() {  
+    // enure no trailing space at the end of the line
+    const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
+    if (lastToken && lastToken.HasPrefixSpace) {
+      lastToken.HasSuffixSpace = false;
+    }
+
     if (this.currentParent) {
       this.currentParent.Children.push(this.currentLine);
       this.parentStack.push(this.currentParent);
@@ -171,20 +177,17 @@ export class ApiView {
     if (!this.currentParent) {
       throw new Error("Cannot deindent without an indent.");
     }
+    // Ensure that the last line before the deindent has no blank lines
+    const lastChild = this.currentParent.Children.pop();
+    if (lastChild && lastChild.Tokens.length > 0) {
+      this.currentParent.Children.push(lastChild);
+    }
     this.currentParent = this.parentStack.pop();
     this.currentLine = {
       LineId: "",
       CrossLanguageId: "",
       Tokens: [],
       Children: [],
-    }
-  }
-
-  private leadingSpace() {
-    if (this.currentLine.Tokens.length > 0) {
-      this.currentLine.Tokens[this.currentLine.Tokens.length - 1].HasSuffixSpace = true;
-    } else {
-      this.token(TokenKind.Text, " ");
     }
   }
 
@@ -215,6 +218,11 @@ export class ApiView {
 }
 
   private newline(isEndContext?: boolean) {
+    // ensure no trailing space at the end of the line
+    if (this.currentLine.Tokens.length > 0) {
+      const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
+      lastToken.HasSuffixSpace = false;
+    }
     if (isEndContext) {
       this.currentLine.IsContextEndLine = true;
     }
@@ -334,9 +342,8 @@ export class ApiView {
         obj = node as AliasStatementNode;
         this.namespaceStack.push(obj.id.sv);
         this.keyword("alias", {HasSuffixSpace: true});
-        this.typeDeclaration(obj.id.sv, this.namespaceStack.value(), true, {HasSuffixSpace: true});
+        this.typeDeclaration(obj.id.sv, this.namespaceStack.value(), true);
         this.tokenizeTemplateParameters(obj.templateParameters);
-        this.leadingSpace();
         this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
         this.tokenize(obj.value);
         this.namespaceStack.pop();
@@ -396,7 +403,6 @@ export class ApiView {
         this.namespaceStack.push(obj.id.sv);
         this.keyword("const", {HasSuffixSpace: true});
         this.tokenizeIdentifier(obj.id, "declaration");
-        this.leadingSpace();
         this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
         this.tokenize(obj.value);
         this.namespaceStack.pop();
@@ -550,7 +556,7 @@ export class ApiView {
         break;
       case SyntaxKind.OperationSignatureReference:
         obj = node as OperationSignatureReferenceNode;
-        this.keyword("is", {HasSuffixSpace: true});
+        this.keyword("is", {HasPrefixSpace: true, HasSuffixSpace: true});
         this.tokenize(obj.baseOperation);
         break;
       case SyntaxKind.Return:
@@ -566,12 +572,10 @@ export class ApiView {
         obj = node as TemplateParameterDeclarationNode;
         this.tokenize(obj.id);
         if (obj.constraint) {
-          this.leadingSpace();
           this.keyword("extends", {HasSuffixSpace: true, HasPrefixSpace: true});
           this.tokenize(obj.constraint);
         }
         if (obj.default) {
-          this.leadingSpace();
           this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
           this.tokenize(obj.default);
         }
@@ -633,7 +637,7 @@ export class ApiView {
         this.tokenizeUnionVariant(node as UnionVariantNode);
         break;
       case SyntaxKind.UnknownKeyword:
-        this.keyword("unknown", {HasSuffixSpace: true});
+        this.keyword("unknown");
         break;
       case SyntaxKind.UsingStatement:
         throw new Error(`Case "UsingStatement" not implemented`);
@@ -652,7 +656,6 @@ export class ApiView {
         }
         if (obj.name) {
           this.text(obj.name.sv);
-          this.leadingSpace();
           this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
         }
         if (isExpanded) {
@@ -745,17 +748,15 @@ export class ApiView {
     this.keyword("model", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
     if (node.extends) {
-      this.leadingSpace();
       this.keyword("extends", {HasSuffixSpace: true, HasPrefixSpace: true});
       this.tokenize(node.extends);
     }
     if (node.is) {
-      this.keyword("is", {HasSuffixSpace: true});
+      this.keyword("is", {HasPrefixSpace: true, HasSuffixSpace: true});
       this.tokenize(node.is);
     }
     this.tokenizeTemplateParameters(node.templateParameters);
     if (node.properties.length) {
-      this.leadingSpace();
       this.punctuation("{", {HasPrefixSpace: true});
       this.indent();
       for (const prop of node.properties) {
@@ -769,7 +770,6 @@ export class ApiView {
       this.deindent();
       this.punctuation("}");
     } else {
-      this.leadingSpace();
       this.punctuation("{}", {HasPrefixSpace: true});
     }
     this.namespaceStack.pop();
@@ -781,7 +781,6 @@ export class ApiView {
     this.keyword("scalar", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
     if (node.extends) {
-      this.leadingSpace();
       this.keyword("extends", {HasSuffixSpace: true, HasPrefixSpace: true});
       this.tokenize(node.extends);
     }
@@ -796,7 +795,6 @@ export class ApiView {
     this.keyword("interface", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
     this.tokenizeTemplateParameters(node.templateParameters);
-    this.leadingSpace();
     this.punctuation("{", {HasPrefixSpace: true});
     this.indent();
     for (let x = 0; x < node.operations.length; x++) {
@@ -814,7 +812,6 @@ export class ApiView {
     this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("enum", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
-    this.leadingSpace();
     this.punctuation("{", {HasPrefixSpace: true});
     this.indent();
     for (const member of node.members) {
@@ -835,7 +832,6 @@ export class ApiView {
     this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("union", {HasSuffixSpace: true});
     this.tokenizeIdentifier(node.id, "declaration");
-    this.leadingSpace();
     this.punctuation("{", {HasPrefixSpace: true});
     this.indent();
     for (let x = 0; x < node.options.length; x++) {
@@ -871,7 +867,6 @@ export class ApiView {
     this.punctuation(node.optional ? "?:" : ":", {HasSuffixSpace: true});
     this.tokenize(node.value);
     if (node.default) {
-      this.leadingSpace();
       this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
       this.tokenize(node.default);
     }
@@ -880,7 +875,6 @@ export class ApiView {
   private tokenizeModelExpressionInline(node: ModelExpressionNode, isOperationSignature: boolean) {
     if (node.properties.length) {
       if (!isOperationSignature) {
-        this.leadingSpace();
         this.punctuation("{", {HasSuffixSpace: true, HasPrefixSpace: true});
       }
       for (let x = 0; x < node.properties.length; x++) {
@@ -947,7 +941,6 @@ export class ApiView {
       }
       this.namespaceStack.pop();
     } else if (!isOperationSignature) {
-      this.leadingSpace();
       this.punctuation("{}", {HasPrefixSpace: true});
     }
   }
@@ -980,7 +973,6 @@ export class ApiView {
     }
     this.keyword("namespace", {HasSuffixSpace: true});
     this.typeDeclaration(model.name, this.namespaceStack.value(), true, {HasSuffixSpace: true});
-    this.leadingSpace();
     this.punctuation("{", {HasPrefixSpace: true});
     this.indent();
     for (const node of model.augmentDecorators) {
@@ -1032,9 +1024,6 @@ export class ApiView {
       this.namespaceStack.push(generateId(node)!);
       const isDoc = docDecorators.includes((node.target as IdentifierNode).sv);
       this.tokenize(node);
-      // if (inline) {
-      //   this.leadingSpace();
-      // }
       this.namespaceStack.pop();
       if (isDoc) {
         for (const token of this.currentLine.Tokens) {
@@ -1086,7 +1075,7 @@ export class ApiView {
       case SyntaxKind.Identifier:
         switch (style) {
           case "declaration":
-            this.typeDeclaration(node.sv, this.namespaceStack.value(), true, {HasSuffixSpace: true});
+            this.typeDeclaration(node.sv, this.namespaceStack.value(), true, {HasSuffixSpace: false});
             break;
           case "reference":
             const defId = this.definitionIdFor(node.sv, this.packageName);

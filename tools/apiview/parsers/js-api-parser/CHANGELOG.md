@@ -9,6 +9,7 @@
 - add "class" renderClass to type parameters
 - hide enum members from navigation list
 - replace `export declare enum` with `export enum`
+- group api items instead of sorting them alphabetically
 
 # 2.0.2
 

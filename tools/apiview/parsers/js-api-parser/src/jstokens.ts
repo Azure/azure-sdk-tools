@@ -241,13 +241,13 @@ export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiI
           reviewToken.RenderClasses = [renderClass];
         }
         if (!isTypeMember(memberKind)) {
-          if (!isFunction(memberKind)) {
-            reviewToken.NavigateToId = currentTypeid;
-          }
+          reviewToken.NavigateToId = currentTypeid;
           if (!isEnumMember(memberKind)) {
             reviewToken.NavigationDisplayName = token.value;
           }
-          reviewToken.Kind = TokenKind.TypeName;
+          if (!isFunction(memberKind)) {
+            reviewToken.Kind = TokenKind.TypeName;
+          }
         }
       } else if (token.type === "StringLiteral") {
         reviewToken = buildToken({

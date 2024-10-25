@@ -93,6 +93,69 @@ function getSubPathName(entryPoint: ApiEntryPoint): string {
 }
 
 /**
+ * Groups the {@link ApiItem}s by their kind
+ * @param members
+ * @returns
+ */
+function groupByKind(members: ApiItem[]): Record<ApiItemKind, ApiItem[]> {
+  const result: Record<ApiItemKind, ApiItem[]> = {
+    [ApiItemKind.Class]: [],
+    [ApiItemKind.Enum]: [],
+    [ApiItemKind.Interface]: [],
+    [ApiItemKind.Namespace]: [],
+    [ApiItemKind.TypeAlias]: [],
+    [ApiItemKind.Function]: [],
+    [ApiItemKind.Variable]: [],
+    [ApiItemKind.CallSignature]: [],
+    [ApiItemKind.Constructor]: [],
+    [ApiItemKind.ConstructSignature]: [],
+    [ApiItemKind.EntryPoint]: [],
+    [ApiItemKind.EnumMember]: [],
+    [ApiItemKind.IndexSignature]: [],
+    [ApiItemKind.Method]: [],
+    [ApiItemKind.MethodSignature]: [],
+    [ApiItemKind.Model]: [],
+    [ApiItemKind.Package]: [],
+    [ApiItemKind.Property]: [],
+    [ApiItemKind.PropertySignature]: [],
+    [ApiItemKind.None]: [],
+  };
+
+  for (const member of members) {
+    result[member.kind].push(member);
+  }
+
+  return result;
+}
+
+/**
+ * Gets ordering of {@link ApiItemKind}s.  The api items are saved in this order.
+ * @returns
+ */
+function* getApiKindOrdering() {
+  yield ApiItemKind.Function;
+  yield ApiItemKind.Class;
+  yield ApiItemKind.Enum;
+  yield ApiItemKind.Interface;
+  yield ApiItemKind.TypeAlias;
+  yield ApiItemKind.Namespace;
+  yield ApiItemKind.Variable;
+  yield ApiItemKind.Property;
+  yield ApiItemKind.PropertySignature;
+  yield ApiItemKind.IndexSignature;
+  yield ApiItemKind.Constructor;
+  yield ApiItemKind.ConstructSignature;
+  yield ApiItemKind.CallSignature;
+  yield ApiItemKind.EntryPoint;
+  yield ApiItemKind.EnumMember;
+  yield ApiItemKind.Method;
+  yield ApiItemKind.MethodSignature;
+  yield ApiItemKind.Model;
+  yield ApiItemKind.Package;
+  yield ApiItemKind.None;
+}
+
+/**
  * Builds review for all the entrypoints.  Each entrypoint represents a subpath export.
  * The regular output api.json file from api-extractor currently only contains one single entrypoint.
  * The dev-tool in azure-sdk-for-js repository augments the api to have multiple entrypoints,
@@ -116,15 +179,20 @@ function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
         Children: [],
       };
 
-      for (const member of entryPoint.members) {
-        const canonicalRef = member.canonicalReference.toString();
-        const containingExport = exported.get(canonicalRef) ?? new Set<string>();
-        if (!containingExport.has(subpath)) {
-          containingExport.add(subpath);
-          exported.set(canonicalRef, containingExport);
+      const grouped = groupByKind(entryPoint.members as ApiItem[]);
+      for (const kind of getApiKindOrdering()) {
+        const members = grouped[kind];
+        for (const member of members) {
+          const canonicalRef = member.canonicalReference.toString();
+          const containingExport = exported.get(canonicalRef) ?? new Set<string>();
+          if (!containingExport.has(subpath)) {
+            containingExport.add(subpath);
+            exported.set(canonicalRef, containingExport);
+          }
+          buildMember(exportLine.Children!, member);
         }
-        buildMember(exportLine.Children!, member);
       }
+
       reviewLines.push(exportLine);
       reviewLines.push(emptyLine(exportLine.LineId));
     }
@@ -267,9 +335,14 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     }
     if (item.members.length > 0) {
       line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: "{" }));
-      for (const member of item.members) {
-        buildMember(line.Children!, member);
+      const grouped = groupByKind(item.members as ApiItem[]);
+      for (const kind of getApiKindOrdering()) {
+        const members = grouped[kind];
+        for (const member of members) {
+          buildMember(line.Children!, member);
+        }
       }
+
       reviewLines.push(line);
       reviewLines.push({
         Tokens: [buildToken({ Kind: TokenKind.Punctuation, Value: "}" })],

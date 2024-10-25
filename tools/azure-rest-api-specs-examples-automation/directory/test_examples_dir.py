@@ -136,8 +136,8 @@ additionalDirectories: null
 
     def test_find_resource_manager_example_swagger(self):
         example_dir = try_find_resource_manager_example(
-            "c:/github/azure-rest-api-specs",
-            "c:/github/azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster",
+            "not_used",
+            "not_used",
             "specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-03-01-preview/examples",
             "MongoClusters_ListConnectionStrings.json",
         )

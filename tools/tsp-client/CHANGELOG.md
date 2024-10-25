@@ -1,8 +1,9 @@
 # Release
 
-## 2024-10-24 - 0.13.3
+## 2024-10-25 - 0.13.3
 
 - Expose `fullyCompatible` argument for `@autorest/openapi-to-typespec`
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.3`.
 
 ## 2024-10-21 - 0.13.2
 

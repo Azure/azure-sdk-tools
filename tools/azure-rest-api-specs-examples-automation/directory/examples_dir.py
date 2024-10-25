@@ -18,6 +18,8 @@ def try_find_resource_manager_example(
             tsp_dir = yaml_json["directory"]
 
             if tsp_dir:
+                tsp_dir = tsp_dir.replace("\\", "/")
+
                 # find example under directory
                 # e.g. example_path = "specification/mongocluster/DocumentDB.MongoCluster.Management/examples/2024-03-01-preview/MongoClusters_ListConnectionStrings.json"
                 example_search_glob = f"{path.join(specs_path, tsp_dir)}/**/examples/{example_dir}/{example_filename}"

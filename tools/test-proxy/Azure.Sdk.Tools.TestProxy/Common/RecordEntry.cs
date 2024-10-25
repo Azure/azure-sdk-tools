@@ -2,13 +2,14 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Unicode;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -26,16 +27,51 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public RequestOrResponse Response { get; set; } = new RequestOrResponse();
 
-        public string RequestUri { get; set; }
+        private string _requestUri;
+        public string RequestUri
+        {
+            get { return this._requestUri; }
+            set {
+                // If the requestUri is being modified, set the flag to true
+                if (this._requestUri != value) 
+                {
+                    RequestUriIsModified = true;
+                } 
+                this._requestUri = value; 
+            }
+        }
 
         public bool IsTrack1Recording { get; set; }
 
         public RequestMethod RequestMethod { get; set; }
 
         public int StatusCode { get; set; }
+        // Flag to indicate if the requestUri has been modified
+        public bool RequestUriIsModified { get; set; } = false;
+
+        /// <summary>
+        /// Checks if the RecordEntry instance or any of its properties have been modified.
+        /// Primarily used to determine if the RecordEntry has been sanitized.
+        /// </summary>
+        /// <returns>True if any modification has been made, otherwise false.</returns>
+        public bool isModified()
+        {
+            return this.RequestUriIsModified || this.Request.IsModified.Headers || this.Request.IsModified.Body || this.Response.IsModified.Headers || this.Response.IsModified.Body;
+        }
+
+        /// <summary>
+        /// Resets the IsModified flags for the RecordEntry instance.
+        /// Primarily used to determine if the RecordEntry has been sanitized.
+        /// </summary>
+        public void ResetRecordEntryModificationStatus()
+        {
+            this.RequestUriIsModified = false;
+            this.Request.IsModified = new RequestOrResponse.ModificationStatus();
+            this.Response.IsModified = new RequestOrResponse.ModificationStatus();
+        }
 
         public static RecordEntry Deserialize(JsonElement element)
-        {
+            {
             var record = new RecordEntry();
 
             if (element.TryGetProperty(nameof(RequestMethod), out JsonElement property))
@@ -315,6 +351,27 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             encoding = null;
             return TryGetContentType(requestHeaders, out string contentType) &&
                    ContentTypeUtilities.TryGetTextEncoding(contentType, out encoding);
+        }
+
+        /// <summary>
+        /// Creates a copy of the provided record entry (Only the RequestUri, Request and Response are copied over).
+        /// Used primarily for sanitization logging.
+        /// </summary>
+        /// <returns>The copied record entry.</returns>
+        public RecordEntry Clone()
+        {
+            // Create a copy of the record entry
+            var copiedRecordEntry = new RecordEntry();
+            copiedRecordEntry.RequestUri = this.RequestUri;
+
+            copiedRecordEntry.Request = new RequestOrResponse();
+            copiedRecordEntry.Request.Headers = new SortedDictionary<string, string[]>(this.Request.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
+            copiedRecordEntry.Request.Body = this.Response.Body != null ? (byte[])this.Request.Body.Clone() : null;
+
+            copiedRecordEntry.Response = new RequestOrResponse();
+            copiedRecordEntry.Response.Headers = new SortedDictionary<string, string[]>(this.Response.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
+            copiedRecordEntry.Response.Body = this.Response.Body != null ? (byte[])this.Response.Body.Clone() : null;
+            return copiedRecordEntry;
         }
     }
 }

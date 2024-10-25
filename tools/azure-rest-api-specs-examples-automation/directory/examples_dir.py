@@ -56,6 +56,7 @@ def try_find_resource_manager_example(
         else:
             raise RuntimeError(f"tsp-location.yaml not found in SDK package folder {sdk_package_path}")
 
+    example_dir = example_dir.replace("\\", "/")
     if re.search(r"[:\"*?<>|]+", example_dir):
         # invalid character in windows path < > : " | ? *
         raise RuntimeError(f"Example directory contains invalid character {example_dir}")

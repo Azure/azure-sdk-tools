@@ -111,6 +111,29 @@ class TestExamplesDir(unittest.TestCase):
                 "MongoClusters_ListConnectionStrings.json",
             )
 
+    def test_find_resource_manager_example_typespec_windows_directory_separator(self):
+        with create_mock_test_folder() as tmp_dir_name:
+            # use windows directory separator
+            tsp_location_path = path.join(tmp_dir_name, "azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster/tsp-location.yaml")
+            with open(tsp_location_path, "w+", encoding="utf-8") as file:
+                file.write("""directory: specification/mongocluster/DocumentDB.MongoCluster.Management
+commit: 07bdede4651ce2ea0e4039d76e81a69df23a3d6e
+repo: Azure/azure-rest-api-specs
+additionalDirectories: null
+""")
+
+            example_dir = try_find_resource_manager_example(
+                path.join(tmp_dir_name, "azure-rest-api-specs"),
+                path.join(tmp_dir_name, "azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster"),
+                "2024-07-01",
+                "MongoClusters_ListConnectionStrings.json",
+            )
+
+            self.assertEqual(
+                "specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-07-01/examples",
+                example_dir,
+            )
+
     def test_find_resource_manager_example_swagger(self):
         example_dir = try_find_resource_manager_example(
             "c:/github/azure-rest-api-specs",

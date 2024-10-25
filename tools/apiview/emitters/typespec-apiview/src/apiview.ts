@@ -600,7 +600,6 @@ export class ApiView {
         if (obj.arguments.length) {
           this.punctuation("<");
           if (isExpanded) {
-            this.newline();
             this.indent();
           }
           for (let x = 0; x < obj.arguments.length; x++) {
@@ -614,7 +613,6 @@ export class ApiView {
             }
           }
           if (isExpanded) {
-            this.newline();
             this.deindent();
           }
           this.punctuation(">");
@@ -676,7 +674,6 @@ export class ApiView {
         // otherwise multiline case
         const lines = stringValue.split("\n");
         this.punctuation(`"""`);
-        this.newline();
         this.indent();
         for (const line of lines) {
           this.literal(line);
@@ -936,7 +933,6 @@ export class ApiView {
       this.deindent();
       if (!isOperationSignature) {
         this.punctuation("}");
-        this.newline(true);
         this.deindent();
       }
       this.namespaceStack.pop();
@@ -999,7 +995,7 @@ export class ApiView {
     for (const node of model.constants.values()) {
         this.tokenize(node);
         this.punctuation(";");
-        this.blankLines(1);
+        this.blankLines(0);
     }
     this.deindent();
     this.punctuation("}");
@@ -1103,7 +1099,7 @@ export class ApiView {
     return first.argument.kind === SyntaxKind.ModelExpression;
   }
 
-  private tokenizeTemplateParameters(nodes: readonly TemplateParameterDeclarationNode[], isExpanded: boolean = false) {
+  private tokenizeTemplateParameters(nodes: readonly TemplateParameterDeclarationNode[]) {
     if (nodes.length) {
       this.punctuation("<");
       for (let x = 0; x < nodes.length; x++) {
@@ -1111,9 +1107,6 @@ export class ApiView {
         this.tokenize(param);
         if (x !== nodes.length - 1) {
           this.renderPunctuation(",");
-        }
-        if (isExpanded) {
-            this.newline();
         }
       }
       this.punctuation(">");

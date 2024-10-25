@@ -52,27 +52,27 @@ describe("apiview: tests", () => {
         model Animal {
           species: string;
         }
-  
+
         model Cat {
           species: string;
           name?: string = "fluffy";
         }
-  
+
         model Dog {
           ...Animal;
           ...Pet;
         }
-  
+
         model Pet {
           name?: string;
         }
-  
+
         model Pig extends Animal {}
       }
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -149,7 +149,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -176,7 +176,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -197,7 +197,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -216,7 +216,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -237,7 +237,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -266,7 +266,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -293,7 +293,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -322,7 +322,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -347,7 +347,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -370,7 +370,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -393,7 +393,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -419,7 +419,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -473,7 +473,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -521,7 +521,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -620,8 +620,8 @@ describe("apiview: tests", () => {
         }
       }`;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -660,8 +660,8 @@ describe("apiview: tests", () => {
           ): TResource;
         }`;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -693,8 +693,8 @@ describe("apiview: tests", () => {
         ): string;
       }`;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -733,8 +733,8 @@ describe("apiview: tests", () => {
       }
       `;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -764,8 +764,8 @@ describe("apiview: tests", () => {
       }
       `;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -785,8 +785,8 @@ describe("apiview: tests", () => {
       }
       `;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -832,8 +832,8 @@ describe("apiview: tests", () => {
       }
       `;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -861,8 +861,8 @@ describe("apiview: tests", () => {
       }
       `;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -893,8 +893,8 @@ describe("apiview: tests", () => {
       }
       `;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
 
@@ -914,8 +914,8 @@ describe("apiview: tests", () => {
         }
         `;
       const apiview = await apiViewFor(input, {});
-      const lines = apiViewText(apiview);
-      compare(expect, lines, 10);
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
       validateLineIds(apiview);
     });
   });
@@ -940,7 +940,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 10);
+      compare(expect, actual, 9);
       validateLineIds(apiview);    
     });
   });

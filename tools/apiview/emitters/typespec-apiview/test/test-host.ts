@@ -85,8 +85,19 @@ function trimLines(lines: string[]): string[] {
   }
 
   for (const line of lines) {
-    // remove any leading indentation
-    trimmed.push(line.substring(indent));
+    if (line.trim() === "") {
+      // ensure blank lines are compared consistently
+      trimmed.push("");
+    } else {
+      // remove any leading indentation
+      trimmed.push(line.substring(indent));
+    }
+  }
+
+  // if last line is blank, skip it
+  const lastLine = trimmed.pop();
+  if (lastLine && lastLine.trim() !== "") {
+    trimmed.push(lastLine)
   }
   return trimmed;
 }
@@ -95,8 +106,8 @@ function trimLines(lines: string[]): string[] {
 export function compare(expect: string, lines: string[], offset: number) {
   // split the input into lines and ignore leading or trailing empty lines.
   const expectedLines = trimLines(expect.split("\n"));
-  const checkLines = trimLines(lines.slice(offset));
-  for (let x = 0; x < checkLines.length; x++) {
-    strictEqual(checkLines[x], expectedLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${checkLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
+  const actualLines = trimLines(lines.slice(offset));
+  for (let x = 0; x < actualLines.length; x++) {
+    strictEqual(actualLines[x], expectedLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${actualLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
   }
 }

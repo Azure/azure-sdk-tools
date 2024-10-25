@@ -103,7 +103,7 @@ class TestExamplesDir(unittest.TestCase):
 
     def test_find_resource_manager_example_typespec_no_tsp_location(self):
         mock_path = path.abspath(".")
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(RuntimeError):
             example_dir = try_find_resource_manager_example(
                 path.join(mock_path, "azure-rest-api-specs"),
                 path.join(mock_path, "azure-sdk-for-java/sdk/mongocluster/azure-resourcemanager-mongocluster"),
@@ -146,3 +146,12 @@ additionalDirectories: null
             "specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-03-01-preview/examples",
             example_dir,
         )
+
+    def test_find_resource_manager_example_swagger_invalid_path(self):
+        with self.assertRaises(RuntimeError):
+            example_dir = try_find_resource_manager_example(
+                "not_used",
+                "not_used",
+                "D:/w/Azure/azure-rest-api-specs/specification/mongocluster/resource-manager/Microsoft.DocumentDB/preview/2024-03-01-preview/examples",
+                "MongoClusters_ListConnectionStrings.json",
+            )

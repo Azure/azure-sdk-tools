@@ -119,7 +119,7 @@ class TestExamplesDir(unittest.TestCase):
             )
             with open(tsp_location_path, "w+", encoding="utf-8") as file:
                 file.write(
-                    """directory: specification/mongocluster/DocumentDB.MongoCluster.Management
+                    """directory: specification\mongocluster\DocumentDB.MongoCluster.Management
 commit: 07bdede4651ce2ea0e4039d76e81a69df23a3d6e
 repo: Azure/azure-rest-api-specs
 additionalDirectories: null

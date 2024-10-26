@@ -717,9 +717,9 @@ In a very specific scenario, developers may wish to apply post-generation update
 
 This scenario should be used with caution:
 
-- A developer needs to **add** a specific property to the matrix at runtime
+- A developer needs to **add** a specific property to the matrix at runtime.
   - The matrix configs at rest should not contain this property, as it is unnecessary in most circumstances.
-- The value of the property being added is calculated at run time
+- The value of the property being added is calculated at run time.
 
 If the above conditions are true, developers should examine utilizing the PostGenerationScript parameter. This script is invoked against the generated matrix just prior to setting the azdo output variable. This gives an opportunity to manipulate the _output_ of the matrix generation just prior to saving it.
 

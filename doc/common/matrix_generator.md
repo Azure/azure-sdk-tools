@@ -111,7 +111,7 @@ To address this limitation, we introduce the [stepList](https://learn.microsoft.
 
 `PreGenerationSteps` allows users to update matrix config json however they like prior to actually invoking the matrix generation. Injected steps are run after the repository checkout, but before any matrix generation is invoked.
 
-`MatrixFilters` and `MatrixReplace` allow runtime adjustment of the matrix generation process as can be seen in the source of [GenerateMatrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/job-matrix-functions.ps1#L94-L95).  
+`MatrixFilters` and `MatrixReplace` allow runtime adjustment of the matrix generation process as can be seen in the source of [GenerateMatrix](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/job-matrix/job-matrix-functions.ps1#L94-L95).
 See also [Filters](#filters) and [Replace/Modify/Append Values](#replacemodifyappend-values).
 
 ## Matrix config file syntax
@@ -467,8 +467,8 @@ and the imported matrix has 3 elements, so the product is a matrix with 6 elemen
 
 ### all
 
-`MatrixConfigs.Selection.all` will output the full matrix, i.e. every possible combination of all parameters given.  
-The total number of combinations will be: `p1.Length * p2.Length * ... * pn.Length`,  
+`MatrixConfigs.Selection.all` will output the full matrix, i.e. every possible combination of all parameters given.
+The total number of combinations will be: `p1.Length * p2.Length * ... * pn.Length`,
 where `px.Length` denotes the number of values of `x`-th parameter.
 
 ### sparse
@@ -566,9 +566,9 @@ The top level keys are used as job names, meaning they get displayed in the azur
 
 The logic for generating display names works like this:
 
-* Join parameter values by `_`  
-    a. If the parameter value exists as a key in [`displayNames`](#displaynames) in the matrix config, replace it with that value.  
-    b. For each name value, strip all non-alphanumeric characters (excluding `_`).  
+* Join parameter values by `_`
+    a. If the parameter value exists as a key in [`displayNames`](#displaynames) in the matrix config, replace it with that value.
+    b. For each name value, strip all non-alphanumeric characters (excluding `_`).
     c. If the name is greater than 100 characters, truncate it.
 
 ### Filters
@@ -582,10 +582,10 @@ Filters support filtering for scenarios in which some parameter values are missi
 2. filter for combinations in which when a given parameter with a given key exists, it needs to have a specific value.
 
 Given the filters are regexs, to make these two scenarios possible a missing parameter is treated
-as a parameter whose key is present but value is an empty string.  
+as a parameter whose key is present but value is an empty string.
 For an example of case 1., if you want to exclude combinations that do not have parameter named `AbsentParam`
 (or, equivalently: you want to include only combinations that do have this parameter), you can create a filter
-with regex `AbsentParam=^$`.  
+with regex `AbsentParam=^$`.
 For an example of case 2., if you want to include only combinations that either have `OptionalEnumParam` set to `foo` or `bar`,
 or don't have it at all, you can include filter of form `OptionalEnumParam=foo|bar|^$`
 
@@ -679,7 +679,7 @@ $ ../Create-JobMatrix.ps1 -ConfigPath ./test.Json -Selection all -Replace $repla
 ### NonSparseParameters
 
 Sometimes it may be necessary to generate a sparse matrix, but keep the full combination of a few parameters.
-The `MatrixConfigs` `NonSparseParameters` parameter allows for more fine-grained control of matrix generation.  
+The `MatrixConfigs` `NonSparseParameters` parameter allows for more fine-grained control of matrix generation.
 For example:
 
 ``` powershell
@@ -710,6 +710,18 @@ A matrix with 6 combinations will be generated: A sparse matrix of `Agent`, `AZU
 (3 total combinations) will be multiplied by the two `JavaTestVersion` parameter values of `1.8` and `1.11`.
 
 NOTE: `NonSparseParameters` are also applied when generating an imported matrix.
+
+### PostGenerationScript
+
+In a very specific scenario, developers may wish to apply post-generation updates to the matrix after generation is complete, but prior to actually invoking the jobs.
+
+This scenario should be used with caution:
+
+- A developer needs to **add** a specific property to the matrix at runtime
+  - The matrix configs at rest should not contain this property, as it is unnecessary in most circumstances.
+- The value of the property being added is calculated at run time
+
+If the above conditions are true, developers should examine utilizing the PostGenerationScript parameter. This script is invoked against the generated matrix just prior to setting the azdo output variable. This gives an opportunity to manipulate the _output_ of the matrix generation just prior to saving it.
 
 ## Under the hood
 

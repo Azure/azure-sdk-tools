@@ -52,7 +52,7 @@ Generate a client library from a TypeSpec project. The `generate` command should
 
 ### convert
 
-Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag. Highly suggested to leverage TypeSpec built-in libraries with standarded patterns and templates, which will cause discrepancy between the generated TypeSpec and original swagger. If you really don't want this intended discrepancy, add `--fully-compatible` flag.
+Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag. By default, the converted TypeSpec project will leverage TypeSpec built-in libraries with standard patterns and templates (highly recommended), which will cause discrepancies between the generated TypeSpec and original swagger. If you really don't want this intended discrepancy, add `--fully-compatible` flag to generate a TypeSpec project that is fully compatible with the swagger.
 
 ### compare
 

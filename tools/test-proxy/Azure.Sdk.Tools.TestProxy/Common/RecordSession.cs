@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -236,13 +237,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="entryPostSanitize">The record entry after sanitization.</param>
         private void LogSanitizerModification(string sanitizerId, RecordEntry entryPreSanitize, RecordEntry entryPostSanitize)
         {
-            var logMessage = (sanitizerId != null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry{Environment.NewLine}";
+            StringBuilder logMessage = new StringBuilder();
+
+            logMessage.AppendLine((sanitizerId != null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry");
             var before = $"{Environment.NewLine}before:{Environment.NewLine} ";
             var after = $"{Environment.NewLine}after: {Environment.NewLine} ";
 
             if (entryPostSanitize.RequestUriIsModified)
             {
-                logMessage += $"RequestUri is modified{before}{entryPreSanitize.RequestUri}{after}{entryPostSanitize.RequestUri}{Environment.NewLine}";
+                logMessage.AppendLine($"RequestUri is modified{before}{entryPreSanitize.RequestUri}{after}{entryPostSanitize.RequestUri}");
             }
 
             string HeadersAsString(SortedDictionary<string, string[]> sortedDict)
@@ -254,7 +257,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 if (post.IsModified.Headers)
                 {
-                    logMessage += $"{(isRequest ? "Request" : "Response")} Headers are modified{before}{HeadersAsString(pre.Headers)}{after}{post.Headers}{Environment.NewLine}";
+                    logMessage.AppendLine($"{(isRequest ? "Request" : "Response")} Headers are modified{before}{HeadersAsString(pre.Headers)}{after}{post.Headers}");
                 }
             }
 
@@ -266,7 +269,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     !string.IsNullOrWhiteSpace(bodyTextPre) &&
                     !string.IsNullOrWhiteSpace(bodyTextPost))
                 {
-                    logMessage += $"{(isRequest ? "Request" : "Response")} Body is modified{before}{bodyTextPre}{after}{bodyTextPost}{Environment.NewLine}";
+                    logMessage.AppendLine($"{(isRequest ? "Request" : "Response")} Body is modified{before}{bodyTextPre}{after}{bodyTextPost}");
                 }
             }
 
@@ -275,7 +278,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             LogBodyModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
             LogBodyModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
 
-            DebugLogger.LogDebug(logMessage);
+            DebugLogger.LogDebug(logMessage.ToString());
         }
     }
 }

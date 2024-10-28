@@ -1,0 +1,73 @@
+trigger: none
+pr: none
+
+parameters:
+  - name: Images
+    type: object
+    default:
+      - source: azsdkengsys.azurecr.io/stress/watcher
+        changes: bash -c "yum update -y"
+      - source: azsdkengsys.azurecr.io/stress/deploy-test-resources
+        changes: bash -c "yum update -y"
+      - source: azsdkengsys.azurecr.io/stress/httpfaultinjector
+        changes: bash -c "yum update -y"
+      - source: azsdkengsys.azurecr.io/stress/otelcollector
+        changes: bash -c "apt update -y && apt upgrade -y"
+      - source: ghcr.io/chaos-mesh/chaos-daemon:v2.6.3
+        changes: bash -c "apt update -y && apt upgrade -y"
+      - source: ghcr.io/chaos-mesh/chaos-daemon:v2.6.3
+        mirror: azsdkengsys.azurecr.io/mirror/chaos-mesh/chaos-daemon:v2.6.3
+        changes: bash -c "apt update -y && apt upgrade -y"
+      - source: ghcr.io/chaos-mesh/chaos-mesh:v2.6.3
+        mirror: azsdkengsys.azurecr.io/mirror/chaos-mesh/chaos-mesh:v2.6.3
+        changes: sh -c "apk update && apk upgrade"
+      - source: ghcr.io/chaos-mesh/chaos-dashboard:v2.6.3
+        mirror: azsdkengsys.azurecr.io/mirror/chaos-mesh/chaos-dashboard:v2.6.3
+        changes: bash -c "apt update -y && apt upgrade -y"
+      - source: ubuntu/squid
+        mirror: azsdkengsys.azurecr.io/mirror/ubuntu/squid
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage:
+        displayName: Update Images
+        variables:
+          - template: /eng/pipelines/templates/variables/image.yml
+        jobs:
+          - job: UpdateImages
+            displayName: Update Container Images
+
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+
+            steps:
+              - ${{ each image in parameters.Images }}:
+                - task: AzureCLI@2
+                  ${{ if image.mirror }}:
+                    displayName: Login to ${{ split(image.mirror, '.')[0] }}
+                  ${{ else }}:
+                    displayName: Login to ${{ split(image.source, '.')[0] }}
+                  inputs:
+                    azureSubscription: "Azure SDK Engineering System"
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    ${{ if image.mirror }}:
+                      inlineScript: az acr login --name ${{ split(image.mirror, '.')[0] }}
+                    ${{ else }}:
+                      inlineScript: az acr login --name ${{ split(image.source, '.')[0] }}
+                - task: Powershell@2
+                  ${{ if image.mirror }}:
+                    displayName: Mirror ${{ image.source }} to ${{ image.mirror }}
+                  ${{ else }}:
+                    displayName: Update ${{ image.source }}
+                  inputs:
+                    pwsh: true
+                    filePath: $(Build.SourcesDirectory)/eng/scripts/update-container-image.ps1
+                    arguments: >
+                      -Image '${{ image.source }}'
+                      -Mirror '${{ coalesce(image.mirror, "") }}'
+                      -Changes '${{ coalesce(image.changes, "") }}'

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -136,7 +137,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 await EntryLock.WaitAsync();
             }
-            
+
             try
             {
                 Entries.Remove(entry);
@@ -164,14 +165,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     entriesPreSanitize = this.Entries.Select(requestEntry => { requestEntry.ResetRecordEntryModificationStatus(); return requestEntry.Clone(); }).ToArray();
                 }
-                
+
                 sanitizer.Sanitize(this);
 
                 if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
                     for (int i = 0; i < entriesPreSanitize.Length; i++)
                     {
-                            if (this.Entries[i] == null || this.Entries[i].isModified()) 
+                        if (this.Entries[i] == null || this.Entries[i].isModified())
                         {
                             LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
                         }
@@ -203,16 +204,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     {
                         entriesPreSanitize = this.Entries.Select(requestEntry => { requestEntry.ResetRecordEntryModificationStatus(); return requestEntry.Clone(); }).ToArray();
                     }
-                    
+
                     sanitizer.Sanitize(this);
 
                     if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                     {
                         for (int i = 0; i < entriesPreSanitize.Length; i++)
                         {
-                            if (this.Entries[i] == null || this.Entries[i].isModified()) 
-                            { 
-                                LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]); 
+                            if (this.Entries[i] == null || this.Entries[i].isModified())
+                            {
+                                LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
                             }
                         }
                     }
@@ -234,34 +235,46 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="entryPreSanitize">The record entry before sanitization.</param>
         /// <param name="entryPostSanitize">The record entry after sanitization.</param>
         private void LogSanitizerModification(string sanitizerId, RecordEntry entryPreSanitize, RecordEntry entryPostSanitize)
-        { 
+        {
             var logMessage = (sanitizerId != null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry{Environment.NewLine}";
             var before = $"{Environment.NewLine}before:{Environment.NewLine} ";
             var after = $"{Environment.NewLine}after: {Environment.NewLine} ";
+
             if (entryPostSanitize.RequestUriIsModified)
             {
-                logMessage+= $"RequestUri is modified{before}{entryPreSanitize.RequestUri}{after}{entryPostSanitize.RequestUri}{Environment.NewLine}";
+                logMessage += $"RequestUri is modified{before}{entryPreSanitize.RequestUri}{after}{entryPostSanitize.RequestUri}{Environment.NewLine}";
             }
 
-            if (entryPostSanitize.Request.IsModified.Headers)
+            string HeadersAsString(SortedDictionary<string, string[]> sortedDict)
             {
-                logMessage += $"Request Headers are modified{before}{entryPreSanitize.Request.Headers.ToString()}{after}{entryPostSanitize.Request.Headers.ToString()}{Environment.NewLine}";
+                return string.Join(Environment.NewLine, sortedDict.Select(kvp => $"{kvp.Key}: {string.Join(", ", kvp.Value)}"));
             }
 
-            if (entryPostSanitize.Response.IsModified.Headers)
+            void LogHeadersModification(RequestOrResponse pre, RequestOrResponse post, bool isRequest)
             {
-                logMessage += $"Response Headers are modified{before}{entryPreSanitize.Response.Headers.ToString()}{after}{entryPostSanitize.Response.Headers.ToString()}{Environment.NewLine}";
+                if (post.IsModified.Headers)
+                {
+                    logMessage += $"{(isRequest ? "Request" : "Response")} Headers are modified{before}{HeadersAsString(pre.Headers)}{after}{post.Headers}{Environment.NewLine}";
+                }
             }
 
-            if (entryPostSanitize.Request.IsModified.Body)
+            void LogBodyModification(RequestOrResponse pre, RequestOrResponse post, bool isRequest)
             {
-                logMessage += $"Request Body is modified{before}{entryPreSanitize.Request.Body.ToString()}{after}{entryPostSanitize.Request.Body.ToString()}{Environment.NewLine}";
+                if (post.IsModified.Body &&
+                    pre.TryGetBodyAsText(out string bodyTextPre) &&
+                    post.TryGetBodyAsText(out string bodyTextPost) &&
+                    !string.IsNullOrWhiteSpace(bodyTextPre) &&
+                    !string.IsNullOrWhiteSpace(bodyTextPost))
+                {
+                    logMessage += $"{(isRequest ? "Request" : "Response")} Body is modified{before}{bodyTextPre}{after}{bodyTextPost}{Environment.NewLine}";
+                }
             }
 
-            if (entryPostSanitize.Response.IsModified.Body)
-            {
-                logMessage += $"Response Body is modified{before}{entryPreSanitize.Response.Body.ToString()}{after}{entryPostSanitize.Response.Body.ToString()}{Environment.NewLine}";
-            }
+            LogHeadersModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
+            LogHeadersModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
+            LogBodyModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
+            LogBodyModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
+
             DebugLogger.LogDebug(logMessage);
         }
     }

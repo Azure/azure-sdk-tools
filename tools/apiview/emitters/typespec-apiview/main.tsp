@@ -3,13 +3,8 @@ namespace Azure.Test {
 
   op GetFoo is ResourceRead<
     {
-      @doc("The name")
-      name: string;
-    },
-    {
       parameters:
         {
-          @doc("The collection id.")
           fooId: string;
         };
     }
@@ -28,8 +23,7 @@ namespace Azure.Test {
 
   // op GetFoo is ResourceRead<string, string>;
 
-  op ResourceRead<TResource, TParams>(
-    resource: TResource,
-    params: TParams
-  ): TResource;
+  op ResourceRead<T>(
+    params: T
+  ): void;
 }

@@ -241,17 +241,24 @@ export class ApiView {
     }
   }
 
-  private getLastNonBlankLine(): ReviewLine | undefined {
-    if (this.currentLine.Tokens.length > 0) {
-      return this.currentLine;
+  private getLastLine(line: ReviewLine | undefined): ReviewLine | undefined {
+    if (!line) {
+      return undefined;
     }
-    // FIXME: Need to recursively search
-    return this.currentParent?.Children[this.currentParent.Children.length - 1];
+    const lastLine = line.Children[line.Children.length - 1];
+    if (lastLine.Children.length > 0) {
+      return this.getLastLine(lastLine);
+    }
+    return lastLine
   }
 
-  private removeLastNonBlankLine() {
-    // FIXME: Need to recursively search
-    this.currentParent?.Children.pop();
+  private removeLastLine(line: ReviewLine) {
+    const lastLine = line.Children[line.Children.length - 1];
+    if (lastLine.Children.length > 0) {
+      this.removeLastLine(lastLine);
+    } else {
+      line.Children.pop();
+    }
   }
 
   /** Chomps whitespace to any of the provided characters. If the first non-whitespace
@@ -260,7 +267,7 @@ export class ApiView {
   private trimTo(characters: string) {
     const allowed = new Set(characters.split(""));
     const trimCurrent = (this.currentLine.Tokens.length !== 0);
-    const checkLine = trimCurrent ? this.currentLine : this.getLastNonBlankLine();
+    const checkLine = trimCurrent ? this.currentLine : this.getLastLine(this.currentParent);
     if (!checkLine) {
       return;
     }
@@ -284,8 +291,8 @@ export class ApiView {
           this.currentLine = checkLine;
           this.currentLine.Tokens = trimmedTokens;
           // get rid of the current last child since it's now currentLine
-          if (!trimCurrent) {
-            this.removeLastNonBlankLine();
+          if (!trimCurrent && this.currentParent) {
+            this.removeLastLine(this.currentParent);
           }
         }
         return;

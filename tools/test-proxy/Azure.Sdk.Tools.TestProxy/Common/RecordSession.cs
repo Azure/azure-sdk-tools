@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -171,11 +172,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
-                    for (int i = 0; i < entriesPreSanitize.Length; i++)
+                    if (entriesPreSanitize.Length > this.Entries.Count)
                     {
-                        if (this.Entries[i] == null || this.Entries[i].isModified())
+                        DebugLogger.LogDebug(GetSanitizerInfoLogPrefix(sanitizer.SanitizerId) + " has removed some entries");
+                    }
+                    else if (entriesPreSanitize.Length < this.Entries.Count)
+                    {
+                        throw new Exception("Something went wrong. The number of entries increased after sanitization with " + GetSanitizerInfoLogPrefix(sanitizer.SanitizerId));
+                    }
+                    else
+                    {
+                        for (int i = 0; i < entriesPreSanitize.Length; i++)
                         {
-                            LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
+                            if (this.Entries[i].isModified())
+                            {
+                                LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
+                            }
                         }
                     }
                 }
@@ -229,6 +241,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+        public string GetSanitizerInfoLogPrefix(string sanitizerId)
+        {
+            return (sanitizerId != null && sanitizerId.StartsWith("AZSDK") ? "Central sanitizer" : "User specified") + " rule " + sanitizerId;
+        }
+
         /// <summary>
         /// Logs the modifications made by a sanitizer to a record entry.
         /// </summary>
@@ -239,7 +256,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             StringBuilder logMessage = new StringBuilder();
 
-            logMessage.AppendLine((sanitizerId != null && sanitizerId.StartsWith("AZSDK") ? $"Central sanitizer " : "User specified ") + $"rule {sanitizerId} modified the entry");
+            logMessage.AppendLine(GetSanitizerInfoLogPrefix(sanitizerId)+" modified the entry");
             var before = $"{Environment.NewLine}before:{Environment.NewLine} ";
             var after = $"{Environment.NewLine}after: {Environment.NewLine} ";
 

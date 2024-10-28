@@ -1,29 +1,16 @@
+#suppress "deprecated"
 @service({name: "Service", version: "1"})
 namespace Azure.Test {
 
-  op GetFoo is ResourceRead<
+  op MyTemp is Temp<
     {
-      parameters:
-        {
-          fooId: string;
-        };
+      parameters: {
+        name: string;
+      }
     }
   >;
 
-  // op GetFoo is ResourceRead<
-  //   string,
-  //   {
-  //     parameters:
-  //       {
-  //         @doc("The collection id.")
-  //         fooId: string;
-  //       };
-  //   }
-  // >;
-
-  // op GetFoo is ResourceRead<string, string>;
-
-  op ResourceRead<T>(
-    params: T
+  op Temp<T>(
+    type: T
   ): void;
 }

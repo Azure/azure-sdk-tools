@@ -1,7 +1,6 @@
 import { apiViewFor, apiViewText, compare } from "./test-host.js";
 import { CodeFile } from "../src/schemas.js";
 import { describe, it } from "vitest";
-import { fail } from "assert";
 
 describe("apiview: tests", () => {
   /** Validates that there are no repeat defintion IDs. */
@@ -550,6 +549,57 @@ describe("apiview: tests", () => {
           resource: TResource,
           params: TParams
         ): TResource;
+      }`;
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 10);
+      validateLineIds(apiview);
+    });
+
+    it("templated with deeply nested models", async () => {
+      const input = `
+      #suppress "deprecated"
+      @service({name: "Service", version: "1"})
+      namespace Azure.Test {
+        op Foo is Temp< {
+          parameters: {
+            fooId: {
+              bar: {
+                baz: {
+                  qux: string;
+                };
+              };
+            };
+          };
+        }>;
+        
+        op Temp<T>(
+          params: T
+        ): void;
+      }`;
+      const expect = `
+      namespace Azure.Test {
+        op Foo is Temp<
+          {
+            parameters:
+              {
+                fooId: 
+                  {
+                    bar: 
+                      {
+                        baz: 
+                          {
+                            qux: string;
+                          };
+                      };
+                  };
+              };
+          }
+        >;
+        
+        op Temp<T>(
+          params: T
+        ): void;
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);

@@ -108,6 +108,6 @@ export function compare(expect: string, lines: string[], offset: number) {
   const expectedLines = trimLines(expect.split("\n"));
   const actualLines = trimLines(lines.slice(offset));
   for (let x = 0; x < actualLines.length; x++) {
-    strictEqual(actualLines[x].trimEnd(), expectedLines[x].trimEnd(), `Actual differed from expected at line #${x + 1}\nACTUAL: '${actualLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
+    strictEqual(actualLines[x], expectedLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${actualLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
   }
 }

@@ -56,9 +56,13 @@ export class ApiView {
   name: string;
   packageName: string;
   crossLanguagePackageId: string | undefined;
+  /** Stores the current line. All helper methods append to this. */
   currentLine: ReviewLine;
-  parentStack: ReviewLine[];
+  /** Stores the parent of the current line. */
   currentParent: ReviewLine | undefined;
+  /** Stores the stack of parent lines. */
+  parentStack: ReviewLine[];
+
   reviewLines: ReviewLine[] = [];
   navigationItems: NavigationItem[] = [];
   diagnostics: CodeDiagnostic[] = [];
@@ -241,33 +245,14 @@ export class ApiView {
     }
   }
 
-  private getLastLine(line: ReviewLine | undefined): ReviewLine | undefined {
-    if (!line) {
-      return undefined;
-    }
-    const lastLine = line.Children[line.Children.length - 1];
-    if (lastLine.Children.length > 0) {
-      return this.getLastLine(lastLine);
-    }
-    return lastLine
-  }
-
-  private removeLastLine(line: ReviewLine) {
-    const lastLine = line.Children[line.Children.length - 1];
-    if (lastLine.Children.length > 0) {
-      this.removeLastLine(lastLine);
-    } else {
-      line.Children.pop();
-    }
-  }
-
   /** Chomps whitespace to any of the provided characters. If the first non-whitespace
    * character is not one of the provided characters, the line is not trimmed.
    */
   private trimTo(characters: string) {
     const allowed = new Set(characters.split(""));
     const trimCurrent = (this.currentLine.Tokens.length !== 0);
-    const checkLine = trimCurrent ? this.currentLine : this.getLastLine(this.currentParent);
+    // FIXME: Fix this logic!
+    const checkLine = trimCurrent ? this.currentLine : this.currentParent?.Children[this.currentParent.Children.length - 1];
     if (!checkLine) {
       return;
     }
@@ -288,12 +273,9 @@ export class ApiView {
         if (allowed.has(token.Value)) {
           token.HasSuffixSpace = false;
           const trimmedTokens = checkLine.Tokens.slice(0, i + 1);
-          this.currentLine = checkLine;
-          this.currentLine.Tokens = trimmedTokens;
-          // get rid of the current last child since it's now currentLine
-          if (!trimCurrent && this.currentParent) {
-            this.removeLastLine(this.currentParent);
-          }
+          // FIXME: Fix this logic!
+          // this.currentLine = checkLine;
+          // this.currentLine.Tokens = trimmedTokens;
         }
         return;
       }

@@ -31,7 +31,7 @@ describe("apiview-options: tests", () => {
     `
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 9);
+    compare(expect, actual, 10);
   });
 
   it("outputs the global namespace when --include-global-namespace is set", async () => {
@@ -118,6 +118,6 @@ describe("apiview-options: tests", () => {
     `;
     const apiview = await apiViewFor(input, {"version": "1", "service": "OtherTest"});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 9);
+    compare(expect, actual, 10);
   });
 });

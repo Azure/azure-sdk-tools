@@ -151,7 +151,7 @@ export class ApiView {
     });
   }
 
-  private indent() {  
+  private indent() {
     // enure no trailing space at the end of the line
     const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
     if (lastToken && lastToken.HasPrefixSpace) {
@@ -208,14 +208,16 @@ export class ApiView {
     if (newlineCount == count) {
       return;
     } else if (newlineCount > count) {
-      throw new Error(`Cannot reduce blank lines from ${newlineCount} to ${count}`);
+      const toRemove = newlineCount - count;
+      for (let i = 0; i < toRemove; i++) {
+        parentLines.pop();
+      }
     } else {
       for (let i = newlineCount; i < count; i++) {
         this.newline();
       }
     }
-    return;
-}
+  }
 
   private newline(isEndContext?: boolean) {
     // ensure no trailing space at the end of the line
@@ -236,6 +238,58 @@ export class ApiView {
       CrossLanguageId: "",
       Tokens: [],
       Children: [],
+    }
+  }
+
+  private getLastNonBlankLine(): ReviewLine | undefined {
+    if (this.currentLine.Tokens.length > 0) {
+      return this.currentLine;
+    }
+    // FIXME: Need to recursively search
+    return this.currentParent?.Children[this.currentParent.Children.length - 1];
+  }
+
+  private removeLastNonBlankLine() {
+    // FIXME: Need to recursively search
+    this.currentParent?.Children.pop();
+  }
+
+  /** Chomps whitespace to any of the provided characters. If the first non-whitespace
+   * character is not one of the provided characters, the line is not trimmed.
+   */
+  private trimTo(characters: string) {
+    const allowed = new Set(characters.split(""));
+    const trimCurrent = (this.currentLine.Tokens.length !== 0);
+    const checkLine = trimCurrent ? this.currentLine : this.getLastNonBlankLine();
+    if (!checkLine) {
+      return;
+    }
+
+    // iterate through tokens in reverse order
+    for (let i = checkLine.Tokens.length - 1; i >= 0; i--) {
+      const token = checkLine.Tokens[i];
+      if (token.Kind === TokenKind.Text) {
+        // skip blank whitespace tokens
+        const value = token.Value.trim();
+        if (value.length === 0) {
+          continue;
+        } else {
+          return;
+        }
+      } else if (token.Kind === TokenKind.Punctuation) {
+        // ensure no whitespace after the trim character
+        if (allowed.has(token.Value)) {
+          token.HasSuffixSpace = false;
+          const trimmedTokens = checkLine.Tokens.slice(0, i + 1);
+          this.currentLine = checkLine;
+          this.currentLine.Tokens = trimmedTokens;
+          // get rid of the current last child since it's now currentLine
+          if (!trimCurrent) {
+            this.removeLastNonBlankLine();
+          }
+        }
+        return;
+      }
     }
   }
 
@@ -336,7 +390,6 @@ export class ApiView {
   private tokenize(node: BaseNode) {
     let obj;
     let last = 0;  // track the final index of an array
-    let isExpanded = false;
     switch (node.kind) {
       case SyntaxKind.AliasStatement:
         obj = node as AliasStatementNode;
@@ -496,7 +549,9 @@ export class ApiView {
         this.tokenizeIdentifier(node as MemberExpressionNode, "reference");
         break;
       case SyntaxKind.ModelExpression:
-        this.tokenizeModelExpression(node as ModelExpressionNode, false, false);
+        this.indent();
+        this.tokenizeModelExpression(node as ModelExpressionNode, {isOperationSignature: false});
+        this.deindent();
         break;
       case SyntaxKind.ModelProperty:
         this.tokenizeModelProperty(node as ModelPropertyNode, false);
@@ -548,11 +603,13 @@ export class ApiView {
       case SyntaxKind.OperationSignatureDeclaration:
         obj = node as OperationSignatureDeclarationNode;
         this.punctuation("(");
-        // TODO: heuristic for whether operation signature should be inlined or not.
-        const inline = false;
-        this.tokenizeModelExpression(obj.parameters, true, inline);
+        if (obj.parameters.properties.length) {
+          this.indent();
+          this.tokenizeModelExpression(obj.parameters, {isOperationSignature: true});
+          this.deindent();  
+        }
         this.punctuation("):", {HasSuffixSpace: true});
-        this.tokenizeReturnType(obj, inline);
+        this.tokenizeReturnType(obj, {isExpanded: true});
         break;
       case SyntaxKind.OperationSignatureReference:
         obj = node as OperationSignatureReferenceNode;
@@ -587,36 +644,15 @@ export class ApiView {
           const val = obj.values[x];
           this.tokenize(val);
           if (x !== obj.values.length - 1) {
-            this.renderPunctuation(",");
+            this.punctuation(",", {HasSuffixSpace: true});
           }
         }
         this.punctuation("]");
         break;
       case SyntaxKind.TypeReference:
         obj = node as TypeReferenceNode;
-        isExpanded = this.isTemplateExpanded(obj);
         this.tokenizeIdentifier(obj.target, "reference");
-        // Render the template parameter instantiations
-        if (obj.arguments.length) {
-          this.punctuation("<");
-          if (isExpanded) {
-            this.indent();
-          }
-          for (let x = 0; x < obj.arguments.length; x++) {
-            const arg = obj.arguments[x];
-            this.tokenize(arg);
-            if (x !== obj.arguments.length - 1) {
-              this.renderPunctuation(",");
-              if (isExpanded) {
-                this.newline();
-              }
-            }
-          }
-          if (isExpanded) {
-            this.deindent();
-          }
-          this.punctuation(">");
-        }
+        this.tokenizeTemplateInstantiation(obj);
         break;
       case SyntaxKind.UnionExpression:
         obj = node as UnionExpressionNode;
@@ -647,21 +683,7 @@ export class ApiView {
         this.keyword("void");
         break;
       case SyntaxKind.TemplateArgument:
-        obj = node as TemplateArgumentNode;
-        isExpanded = obj.argument.kind === SyntaxKind.ModelExpression && obj.argument.properties.length > 0;
-        if (isExpanded) {
-          this.newline()
-        }
-        if (obj.name) {
-          this.text(obj.name.sv);
-          this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
-        }
-        if (isExpanded) {
-          this.tokenizeModelExpressionExpanded(obj.argument as ModelExpressionNode, false);
-        } else {
-          this.tokenize(obj.argument);
-        }
-        break;
+        
       case SyntaxKind.StringTemplateExpression:
         obj = node as StringTemplateExpressionNode;
         const stringValue = this.buildTemplateString(obj);
@@ -699,6 +721,35 @@ export class ApiView {
         // All Projection* cases should fail here...
         throw new Error(`Case "${SyntaxKind[node.kind].toString()}" not implemented`);
     }
+  }
+
+  private tokenizeTemplateInstantiation(obj: TypeReferenceNode) {
+    if (!obj.arguments.length) {
+      return;
+    }
+
+    // if any argument is a ModelExpression, then we need to expand the template to multiple lines
+    const isExpanded = obj.arguments.some(arg => arg.argument.kind === SyntaxKind.ModelExpression);
+
+    this.punctuation("<");
+    if (isExpanded) {
+      this.indent();
+    }
+    for (let x = 0; x < obj.arguments.length; x++) {
+      const arg = obj.arguments[x];
+      this.tokenizeTemplateArgument(arg);
+      if (x !== obj.arguments.length - 1) {
+        this.trimTo("}");
+        this.punctuation(",", {HasSuffixSpace: true});
+        if (isExpanded && arg.argument.kind) {
+          this.newline();
+        }
+      }
+    }
+    if (isExpanded) {
+      this.deindent();
+    }
+    this.punctuation(">");
   }
 
   private buildExpressionString(node: Expression) {
@@ -869,45 +920,24 @@ export class ApiView {
     }
   }
 
-  private tokenizeModelExpressionInline(node: ModelExpressionNode, isOperationSignature: boolean) {
-    if (node.properties.length) {
-      if (!isOperationSignature) {
-        this.punctuation("{", {HasSuffixSpace: true, HasPrefixSpace: true});
-      }
-      for (let x = 0; x < node.properties.length; x++) {
-        const prop = node.properties[x];
-        switch (prop.kind) {
-          case SyntaxKind.ModelProperty:
-            this.tokenizeModelProperty(prop, true);
-            break;
-          case SyntaxKind.ModelSpreadProperty:
-            this.tokenize(prop);
-            break;
-        }
-        if (isOperationSignature) {
-          if (x !== node.properties.length - 1) {
-            this.punctuation(",", {HasSuffixSpace: true});
-          }
-        } else {
-          this.punctuation(";");
-        }
-      }
-      if (!isOperationSignature) {
-        this.punctuation("}", {HasSuffixSpace: true});
-      }
-    }
-  }
-
-  private tokenizeModelExpressionExpanded(
+  /** Expands and tokenizes a model expression (anonymous model) */
+  private tokenizeModelExpression(
     node: ModelExpressionNode,
-    isOperationSignature: boolean,
-  ) {
-    if (node.properties.length) {
-      if (!isOperationSignature) {
-        this.indent();
-        this.punctuation("{");
+    options: {isOperationSignature: boolean}) {
+      const isOperationSignature = options.isOperationSignature;
+
+      // display {} for empty model or nothing for empty operation signature
+      if (!node.properties.length) {
+        if (!isOperationSignature) {
+          this.punctuation("{}", {HasPrefixSpace: true});
+        }
+        return;
       }
-      this.indent();
+
+      if (!isOperationSignature) {
+        this.punctuation("{");
+        this.indent();
+      }
       this.namespaceStack.push("anonymous");
       for (let x = 0; x < node.properties.length; x++) {
         const prop = node.properties[x];
@@ -923,30 +953,21 @@ export class ApiView {
         this.namespaceStack.pop();
         if (isOperationSignature) {
           if (x !== node.properties.length - 1) {
-            this.renderPunctuation(",");
+            this.trimTo("}");
+            this.punctuation(",", {HasSuffixSpace: true});
           }
         } else {
-          this.renderPunctuation(";");
+          this.trimTo("}");
+          this.punctuation(";", {HasSuffixSpace: true});
         }
         this.newline()
       }
-      this.deindent();
       if (!isOperationSignature) {
-        this.punctuation("}");
         this.deindent();
+        this.punctuation("}");
+        this.newline();
       }
       this.namespaceStack.pop();
-    } else if (!isOperationSignature) {
-      this.punctuation("{}", {HasPrefixSpace: true});
-    }
-  }
-
-  private tokenizeModelExpression(node: ModelExpressionNode, isOperationSignature: boolean, inline: boolean) {
-    if (inline) {
-      this.tokenizeModelExpressionInline(node, isOperationSignature);
-    } else {
-      this.tokenizeModelExpressionExpanded(node, isOperationSignature);
-    }
   }
 
   private tokenizeOperationStatement(node: OperationStatementNode, suppressOpKeyword: boolean = false) {
@@ -1091,14 +1112,6 @@ export class ApiView {
     return getSourceLocation(node).file.text.slice(node.pos, node.end);
   }
 
-  private isTemplateExpanded(node: TypeReferenceNode): boolean {
-    if (node.arguments.length === 0) {
-      return false;
-    }
-    const first = node.arguments[0];
-    return first.argument.kind === SyntaxKind.ModelExpression;
-  }
-
   private tokenizeTemplateParameters(nodes: readonly TemplateParameterDeclarationNode[]) {
     if (nodes.length) {
       this.punctuation("<");
@@ -1106,15 +1119,27 @@ export class ApiView {
         const param = nodes[x];
         this.tokenize(param);
         if (x !== nodes.length - 1) {
-          this.renderPunctuation(",");
+          this.punctuation(",", {HasSuffixSpace: true});
         }
       }
       this.punctuation(">");
     }
   }
 
-  private tokenizeReturnType(node: OperationSignatureDeclarationNode, inline: boolean) {
-    if (!inline && node.parameters.properties.length) {
+  private tokenizeTemplateArgument(obj: TemplateArgumentNode) {
+    if (obj.name) {
+      this.text(obj.name.sv);
+      this.punctuation("=", {HasSuffixSpace: true, HasPrefixSpace: true});
+    }
+    if (obj.argument.kind === SyntaxKind.ModelExpression) {
+      this.tokenizeModelExpression(obj.argument, {isOperationSignature: false});
+    } else {
+      this.tokenize(obj.argument);
+    }
+  }
+
+  private tokenizeReturnType(node: OperationSignatureDeclarationNode, options: { isExpanded: boolean}) {
+    if (options.isExpanded && node.parameters.properties.length) {
       const offset = this.currentLine.Tokens.length;
       this.tokenize(node.returnType);
       const returnTokens = this.currentLine.Tokens.slice(offset);
@@ -1142,10 +1167,6 @@ export class ApiView {
     } else {
       throw new Error("Unable to get name for node.");
     }
-  }
-
-  private renderPunctuation(punctuation: string) {
-    this.punctuation(punctuation, {HasSuffixSpace: true});
   }
 
   private definitionIdFor(value: string, prefix: string): string | undefined {

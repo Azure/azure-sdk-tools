@@ -72,7 +72,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -149,7 +149,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -176,7 +176,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -197,7 +197,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -216,7 +216,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -237,7 +237,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -266,7 +266,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -293,7 +293,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -322,7 +322,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -347,7 +347,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -370,7 +370,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -393,7 +393,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -419,7 +419,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -473,7 +473,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -521,13 +521,43 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
 
   describe("operations", () => {
-    it("templated", async () => {
+    it("templated with simple types", async () => {
+      const input = `
+      #suppress "deprecated"
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {  
+        op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
+  
+        op GetFoo is ResourceRead<string, string>;
+
+        @route("/named")
+        op NamedGetFoo is ResourceRead<TResource = string, TParams = string>;
+      }`;
+      const expect = `
+      namespace Azure.Test {
+        op GetFoo is ResourceRead<string, string>;
+
+        @route("/named")
+        op NamedGetFoo is ResourceRead<TResource = string, TParams = string>;
+
+        op ResourceRead<TResource, TParams>(
+          resource: TResource,
+          params: TParams
+        ): TResource;
+      }`;
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 10);
+      validateLineIds(apiview);
+    });
+
+    it("templated with model types", async () => {
       const input = `
       #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
@@ -621,7 +651,86 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
+      validateLineIds(apiview);
+    });
+
+    it("templated with mixed types", async () => {
+      const input = `
+      #suppress "deprecated"
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {
+        model FooParams {
+          a: string;
+          b: string;
+        }
+  
+        op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
+  
+        op GetFoo is ResourceRead<
+          string,
+          {
+            parameters: {
+              @query
+              @doc("The collection id.")
+              fooId: string
+            };
+          }
+        >;
+
+                @route("/named")
+        op NamedGetFoo is ResourceRead<
+          TResource = string,
+          TParams = {
+            parameters:
+              {
+                @query
+                @doc("The collection id.")
+                fooId: string;
+              };
+          }
+        >;
+      }`;
+      const expect = `
+      namespace Azure.Test {
+        op GetFoo is ResourceRead<
+          string,
+          {
+            parameters:
+              {
+                @query
+                @doc("The collection id.")
+                fooId: string;
+              };
+          }
+        >;
+
+        @route("/named")
+        op NamedGetFoo is ResourceRead<
+          TResource = string,
+          TParams = {
+            parameters:
+              {
+                @query
+                @doc("The collection id.")
+                fooId: string;
+              };
+          }
+        >;
+
+        op ResourceRead<TResource, TParams>(
+          resource: TResource,
+          params: TParams
+        ): TResource;
+  
+        model FooParams {
+          a: string;
+          b: string;
+        }
+      }`;
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -661,7 +770,7 @@ describe("apiview: tests", () => {
         }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -694,7 +803,7 @@ describe("apiview: tests", () => {
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -734,7 +843,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -765,7 +874,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -786,7 +895,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -833,7 +942,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -862,7 +971,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -894,7 +1003,7 @@ describe("apiview: tests", () => {
       `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
 
@@ -915,7 +1024,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);
     });
   });
@@ -940,7 +1049,7 @@ describe("apiview: tests", () => {
         `;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
-      compare(expect, actual, 9);
+      compare(expect, actual, 10);
       validateLineIds(apiview);    
     });
   });

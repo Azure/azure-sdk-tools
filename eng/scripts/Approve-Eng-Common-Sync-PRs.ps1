@@ -34,7 +34,9 @@ $repos = @(
   "azure-sdk-for-java",
   "azure-sdk-for-js",
   "azure-sdk-for-net",
-  "azure-sdk-for-python"
+  "azure-sdk-for-python",
+  "azure-sdk-for-rust",
+  "azure-rest-api-specs"
 )
 
 foreach ($repo in $repos)

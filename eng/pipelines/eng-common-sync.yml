@@ -20,6 +20,7 @@ parameters:
     - azure-sdk-for-net
     - azure-sdk-for-python
     - azure-sdk-for-rust
+    - azure-rest-api-specs
 
 trigger: none
 

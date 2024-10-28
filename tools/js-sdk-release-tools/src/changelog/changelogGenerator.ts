@@ -1264,7 +1264,7 @@ function handleFunctionDiffPairs(pairs: DiffPair[], changelog: Changelog) {
         }
         if (p.location === DiffLocation.Signature_Overload && p.reasons === DiffReasons.Removed) {
             changelog.removedFunctionOverload.push({
-                line: `Removed function overload '${p.target!.node.getText()}'`,
+                line: `Removed function overload "${p.target!.node.getText()}"`,
                 oldName: p.target!.node.getText()
             })
             return;

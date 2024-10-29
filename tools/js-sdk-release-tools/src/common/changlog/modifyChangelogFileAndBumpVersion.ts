@@ -1,5 +1,4 @@
 import {Changelog} from "../../changelog/changelogGenerator";
-import { fixChangelogFormat } from "../../common/utils";
 
 const fs = require('fs');
 const path = require('path');

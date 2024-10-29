@@ -26,10 +26,22 @@ class TokenKind(int, Enum, metaclass=CaseInsensitiveEnumMeta):
     """Type of TokenKind."""
 
     TEXT = 0
+    """Text: Token kind should be set as Text for any plan text token. for e.g documentation,
+    namespace value, or attribute or decorator tokens *"""
     PUNCTUATION = 1
+    """Punctuation *"""
     KEYWORD = 2
+    """Keyword *"""
     TYPE_NAME = 3
+    """TypeName: Kind should be set as TypeName for class definitions, base class token, parameter
+    types etc *"""
     MEMBER_NAME = 4
+    """MemberName: Kind should be set as MemberName for method name tokens, member variable tokens *"""
     STRING_LITERAL = 5
+    """StringLiteral: Token kind for any metadata or string literals to show in API view *"""
     LITERAL = 6
+    """Literal: Token kind for any literals, for e.g. enum value or numerical constant literal or
+    default value *"""
     COMMENT = 7
+    """Comment: Comment text within the code that's really a documentation.
+    Few languages wants to show comments within API review that's not tagged as documentation *"""

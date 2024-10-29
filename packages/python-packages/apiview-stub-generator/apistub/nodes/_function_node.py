@@ -198,8 +198,8 @@ class FunctionNode(NodeEntityBase):
                 tokens=tokens,
                 add_line_marker=use_multi_line,
             )
-            # if final_item is False, then last item should not have a comma
-            if final_item or idx < len(items) - 1:
+            # if final_item is False, then items should not have commas
+            if not final_item or idx < len(items) - 1:
                 tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
             tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
         # multi-line will create new list of tokens for next line
@@ -222,25 +222,16 @@ class FunctionNode(NodeEntityBase):
     def _generate_signature_token(self, review_lines, tokens, use_multi_line):
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value="(", has_suffix_space=False))
 
-        # TODO: extra indent for all below
-
-        #else:
-        #    add_review_line(
-        #        review_lines=review_lines,
-        #        line_id=self.namespace_id,
-        #        tokens=tokens,
-        #        #related_to_line=self.namespace_id,
-        #        #add_cross_language_id=True     # TODO: add cross language id
-        #    )
         arg_count = self._argument_count()
+        # TODO: make rest of tokens all children
         tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
         # If length of positional args is less than total args, then all items should end with commas
         # as end of args list hasn't been reached. Else, last item reached, so no comma.
         current_count = len(self.posargs)
         if current_count < arg_count:
-            final_item = True
-        else:
             final_item = False
+        else:
+            final_item = True
 
         tokens = self._generate_args_for_collection(
             self.posargs,
@@ -260,18 +251,18 @@ class FunctionNode(NodeEntityBase):
 
         current_count += len(self.args)
         if current_count < arg_count:
-            final_item = True
-        else:
             final_item = False
+        else:
+            final_item = True
 
         tokens = self._generate_args_for_collection(
             self.args, review_lines=review_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
         )
         current_count += 1
         if current_count < arg_count:
-            final_item = True
-        else:
             final_item = False
+        else:
+            final_item = True
         if self.special_vararg:
             self.special_vararg.generate_tokens(
                 self.namespace_id,
@@ -282,19 +273,23 @@ class FunctionNode(NodeEntityBase):
             )
             if not final_item:
                 tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
+            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
 
         # add keyword argument marker        
         if self.kwargs:
             # TODO: only add this if self.special_vararg is not present
-            tokens.append(Token(kind=TokenKind.TEXT, value="*", has_suffix_space=False))
+            prefix = ""
+            if use_multi_line:
+                prefix = "    "
+            tokens.append(Token(kind=TokenKind.TEXT, value=f"{prefix}*", has_suffix_space=False))
             tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
             tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
 
         current_count += len(self.kwargs)
         if current_count < arg_count:
-            final_item = True
-        else:
             final_item = False
+        else:
+            final_item = True
         tokens = self._generate_args_for_collection(
             self.kwargs, review_lines=review_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
         )
@@ -322,7 +317,8 @@ class FunctionNode(NodeEntityBase):
         #    review_lines[-1]['Tokens'].pop()
         #    review_lines[-1]['Tokens'].pop()
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")", has_suffix_space=False))
-        add_review_line(review_lines, tokens=tokens)
+        add_review_line(review_lines, tokens=tokens, line_id=self.namespace_id)
+        set_blank_lines(review_lines)
 
     def generate_tokens(self, review_lines: List["ReviewLine"]):
         """Generates token for function signature

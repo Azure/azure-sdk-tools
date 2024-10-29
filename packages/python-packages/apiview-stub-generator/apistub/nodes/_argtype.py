@@ -54,9 +54,11 @@ class ArgType:
         """
         # Add arg name
         self.id = function_id
+        indent = ""
         if add_line_marker:
             self.id = f"{function_id}.param({self.argname})"
-        tokens.append(Token(kind=TokenKind.TEXT, value=f"{prefix}{self.argname}", has_suffix_space=False))
+            indent = " " * 4
+        tokens.append(Token(kind=TokenKind.TEXT, value=f"{indent}{prefix}{self.argname}", has_suffix_space=False))
         # add arg type
         if self.argtype:
             tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":"))

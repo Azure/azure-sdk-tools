@@ -67,8 +67,7 @@ class ArgType:
         # add arg default value
         default = self.default
         if default is not None:
-            # TODO: add has_prefix_space=True if prefix is not empty
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="="))
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="=", has_prefix_space=True))
             if isinstance(default, str) and default not in SPECIAL_DEFAULT_VALUES:
                 tokens.append(Token(kind=TokenKind.STRING_LITERAL, value=default, has_suffix_space=False))
             else:

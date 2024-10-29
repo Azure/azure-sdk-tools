@@ -159,10 +159,10 @@
                             <strong>Option 2:</strong> Create API review file locally using following steps.
                             <ul>
                                 <li>
-                                    Install  <code>@azure-tools/typespec-apiview</code>
+                                    Install  <code>&#64;azure-tools/typespec-apiview</code>
                                 </li>
                                 <li>
-                                    Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "@azure-tools/typespec-apiview"</code>
+                                    Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "&#64;azure-tools/typespec-apiview"</code>
                                 </li>
                                 <li>
                                     Select Json as the language option in Create review page.
@@ -182,7 +182,7 @@
                 *ngIf="createRevisionForm.get('selectedCRLanguage')!.value != undefined && createRevisionForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'"
                 chooseLabel="Select File" [customUpload]="true"
                 [customUpload]="true" [showUploadButton]="false" [showCancelButton]="false" [previewWidth]="0" 
-                accept="{{acceptedFilesForReviewUpload}}" class="mt-2" (onSelect)="onFileSelect($event)">
+                accept="{{acceptedFilesForReviewUpload}}" class="mt-2" (onSelect)="onFileSelect($event)" (onRemove)="createRevisionForm.get('selectedFile')?.reset()">
                 <ng-template pTemplate="content">
                     <div *ngIf="createRevisionForm.get('selectedFile')!.value == null" class="mx-2">or drag and drop files here</div>
                 </ng-template>

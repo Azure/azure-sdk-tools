@@ -4,7 +4,6 @@ options:
   "@typespec/json-schema":
     file-type: "json"
     emitter-output-dir: "{project-root}"
-    bundleId: "CodeFile.json"
     emitAllModels: false
     emitAllRefs: false
   "@azure-tools/typespec-python":

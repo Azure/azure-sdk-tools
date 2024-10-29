@@ -19,6 +19,7 @@ parameters:
       - Azure/azure-sdk-for-js
       - Azure/azure-sdk-for-net
       - Azure/azure-sdk-for-python
+      - Azure/azure-sdk-for-rust
       - Azure/azure-sdk-tools
       - Azure/azure-sdk
 

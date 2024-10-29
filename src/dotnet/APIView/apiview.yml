@@ -7,7 +7,7 @@ parameters:
     default: '1.0.0-dev.20240828.2'
   - name: JavaScriptAPIParser
     type: string
-    default: '@azure-tools/ts-genapi@2.0.0'
+    default: '@azure-tools/ts-genapi@2.0.3'
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'

@@ -5,6 +5,9 @@ parameters:
   - name: DryRun
     type: boolean
     default: false
+  - name: GroupFilter
+    type: string
+    default: '*'
   - name: Pool
     type: string
     default: azsdk-pool-mms-ubuntu-2204-general
@@ -40,16 +43,13 @@ parameters:
       - DisplayName: AzureCloud ACS - Resource Cleanup
         ServiceConnection: azure-sdk-tests-communication
         SubscriptionConfigurations:
-          - $(sub-config-azure-cloud-test-resources)
           - $(sub-config-communication-services-cloud-test-resources-common)
       - DisplayName: AzureCloud Cosmos - Resource Cleanup
         ServiceConnection: azure-sdk-tests-cosmos
         SubscriptionConfigurations:
-          - $(sub-config-azure-cloud-test-resources)
           - $(sub-config-cosmos-azure-cloud-test-resources)
       # - DisplayName: AzureCloud Storage NET - Resource Cleanup
       #   SubscriptionConfigurations:
-      #     - $(sub-config-azure-cloud-test-resources)
       #     - $(sub-config-storage-test-resources-net)
 
 stages:
@@ -97,6 +97,7 @@ stages:
       - template: ./live-test-cleanup-template.yml
         parameters:
           DryRun: ${{ parameters.DryRun }}
+          GroupFilter: ${{ parameters.GroupFilter }}
           DisplayName: ${{ subscription.DisplayName }}
           ServiceConnection: ${{ subscription.ServiceConnection }}
           SubscriptionConfigurationFilePaths: ${{ subscription.SubscriptionConfigurationFilePaths }}

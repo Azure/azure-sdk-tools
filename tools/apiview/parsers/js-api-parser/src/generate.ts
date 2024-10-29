@@ -57,6 +57,7 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
         Value: "Dependencies:",
         NavigationDisplayName: "Dependencies",
         RenderClasses: ["dependencies"],
+        SkipDiff: true,
       }),
     ],
   };
@@ -92,6 +93,69 @@ function getSubPathName(entryPoint: ApiEntryPoint): string {
 }
 
 /**
+ * Groups the {@link ApiItem}s by their kind
+ * @param members
+ * @returns
+ */
+function groupByKind(members: ApiItem[]): Record<ApiItemKind, ApiItem[]> {
+  const result: Record<ApiItemKind, ApiItem[]> = {
+    [ApiItemKind.Class]: [],
+    [ApiItemKind.Enum]: [],
+    [ApiItemKind.Interface]: [],
+    [ApiItemKind.Namespace]: [],
+    [ApiItemKind.TypeAlias]: [],
+    [ApiItemKind.Function]: [],
+    [ApiItemKind.Variable]: [],
+    [ApiItemKind.CallSignature]: [],
+    [ApiItemKind.Constructor]: [],
+    [ApiItemKind.ConstructSignature]: [],
+    [ApiItemKind.EntryPoint]: [],
+    [ApiItemKind.EnumMember]: [],
+    [ApiItemKind.IndexSignature]: [],
+    [ApiItemKind.Method]: [],
+    [ApiItemKind.MethodSignature]: [],
+    [ApiItemKind.Model]: [],
+    [ApiItemKind.Package]: [],
+    [ApiItemKind.Property]: [],
+    [ApiItemKind.PropertySignature]: [],
+    [ApiItemKind.None]: [],
+  };
+
+  for (const member of members) {
+    result[member.kind].push(member);
+  }
+
+  return result;
+}
+
+/**
+ * Gets ordering of {@link ApiItemKind}s.  The api items are saved in this order.
+ * @returns
+ */
+function* getApiKindOrdering() {
+  yield ApiItemKind.Function;
+  yield ApiItemKind.Class;
+  yield ApiItemKind.Enum;
+  yield ApiItemKind.Interface;
+  yield ApiItemKind.TypeAlias;
+  yield ApiItemKind.Namespace;
+  yield ApiItemKind.Variable;
+  yield ApiItemKind.Property;
+  yield ApiItemKind.PropertySignature;
+  yield ApiItemKind.IndexSignature;
+  yield ApiItemKind.Constructor;
+  yield ApiItemKind.ConstructSignature;
+  yield ApiItemKind.CallSignature;
+  yield ApiItemKind.EntryPoint;
+  yield ApiItemKind.EnumMember;
+  yield ApiItemKind.Method;
+  yield ApiItemKind.MethodSignature;
+  yield ApiItemKind.Model;
+  yield ApiItemKind.Package;
+  yield ApiItemKind.None;
+}
+
+/**
  * Builds review for all the entrypoints.  Each entrypoint represents a subpath export.
  * The regular output api.json file from api-extractor currently only contains one single entrypoint.
  * The dev-tool in azure-sdk-for-js repository augments the api to have multiple entrypoints,
@@ -115,15 +179,20 @@ function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel) {
         Children: [],
       };
 
-      for (const member of entryPoint.members) {
-        const canonicalRef = member.canonicalReference.toString();
-        const containingExport = exported.get(canonicalRef) ?? new Set<string>();
-        if (!containingExport.has(subpath)) {
-          containingExport.add(subpath);
-          exported.set(canonicalRef, containingExport);
+      const grouped = groupByKind(entryPoint.members as ApiItem[]);
+      for (const kind of getApiKindOrdering()) {
+        const members = grouped[kind];
+        for (const member of members) {
+          const canonicalRef = member.canonicalReference.toString();
+          const containingExport = exported.get(canonicalRef) ?? new Set<string>();
+          if (!containingExport.has(subpath)) {
+            containingExport.add(subpath);
+            exported.set(canonicalRef, containingExport);
+          }
+          buildMember(exportLine.Children!, member);
         }
-        buildMember(exportLine.Children!, member);
       }
+
       reviewLines.push(exportLine);
       reviewLines.push(emptyLine(exportLine.LineId));
     }
@@ -177,13 +246,14 @@ const ANNOTATION_TOKEN = "@";
  * Builds review line for a release tag
  * @param reviewLines The result array to push {@link ReviewLine}s to
  * @param tag release tag
+ * @param relatedLineId the id of the review line with which the release tag is associated
  */
-function buildReleaseTag(reviewLines: ReviewLine[], tag: string): void {
+function buildReleaseTag(reviewLines: ReviewLine[], tag: string, relatedLineId: string): void {
   const tagToken = buildToken({
     Kind: TokenKind.StringLiteral,
     Value: `${ANNOTATION_TOKEN}${tag}`,
   });
-  reviewLines.push({ Tokens: [tagToken] });
+  reviewLines.push({ Tokens: [tagToken], RelatedToLine: relatedLineId });
 }
 
 /**
@@ -201,42 +271,21 @@ function mayHaveChildren(item: ApiItem): boolean {
 }
 
 /**
- * Returns normalized item kind string of an {@link ApiDeclaredItem}
- * @param item {@link ApiDeclaredItem} instance
- * @returns
- */
-function getItemKindString(item: ApiDeclaredItem) {
-  let itemKind: string = "";
-  if (mayHaveChildren(item)) {
-    itemKind = item.kind.toLowerCase();
-  } else if (item.kind === ApiItemKind.Function) {
-    itemKind = "method";
-  } else if (item.kind === ApiItemKind.TypeAlias) {
-    itemKind = "struct";
-  }
-  return itemKind;
-}
-
-/**
  * Builds the token list for an Api and pushes to the review line that is passed in
  * @param line The {@link ReviewLine} to push {@link ReviewToken}s to
  * @param item {@link ApiItem} instance
  */
 function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
-  const itemId = item.canonicalReference.toString();
   if (item instanceof ApiDeclaredItem) {
-    const itemKind: string = getItemKindString(item);
-
     if (item.kind === ApiItemKind.Namespace) {
-      line.Tokens.push(
-        ...splitAndBuild(
-          `declare namespace ${item.displayName} `,
-          itemId,
-          item.displayName,
-          itemKind,
-        ),
-      );
+      splitAndBuild(line.Tokens, `declare namespace ${item.displayName} `, item);
     } else {
+      if (item.kind === ApiItemKind.Variable) {
+        line.Tokens.push(
+          buildToken({ Kind: TokenKind.Keyword, Value: "export", HasSuffixSpace: true }),
+          buildToken({ Kind: TokenKind.Keyword, Value: "const", HasSuffixSpace: true }),
+        );
+      }
       if (!item.excerptTokens.some((except) => except.text.includes("\n"))) {
         for (const excerpt of item.excerptTokens) {
           if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
@@ -247,11 +296,11 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
             });
             line.Tokens.push(token);
           } else {
-            line.Tokens.push(...splitAndBuild(excerpt.text, itemId, item.displayName, itemKind));
+            splitAndBuild(line.Tokens, excerpt.text, item);
           }
         }
       } else {
-        splitAndBuildMultipleLine(line, item.excerptTokens, itemId, item.displayName, itemKind);
+        splitAndBuildMultipleLine(line, item.excerptTokens, item);
       }
     }
   }
@@ -275,7 +324,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
   const releaseTag = getReleaseTag(item);
   const parentReleaseTag = getReleaseTag(item.parent);
   if (releaseTag && releaseTag !== parentReleaseTag) {
-    buildReleaseTag(reviewLines, releaseTag);
+    buildReleaseTag(reviewLines, releaseTag, line.LineId);
   }
 
   buildMemberLineTokens(line, item);
@@ -285,19 +334,25 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
       line.Tokens[line.Tokens.length - 1].HasSuffixSpace = true;
     }
     if (item.members.length > 0) {
-      line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: `{` }));
-      for (const member of item.members) {
-        buildMember(line.Children!, member);
+      line.Tokens.push(buildToken({ Kind: TokenKind.Punctuation, Value: "{" }));
+      const grouped = groupByKind(item.members as ApiItem[]);
+      for (const kind of getApiKindOrdering()) {
+        const members = grouped[kind];
+        for (const member of members) {
+          buildMember(line.Children!, member);
+        }
       }
+
       reviewLines.push(line);
       reviewLines.push({
-        Tokens: [buildToken({ Kind: TokenKind.Punctuation, Value: `}` })],
+        Tokens: [buildToken({ Kind: TokenKind.Punctuation, Value: "}" })],
         RelatedToLine: line.LineId,
+        IsContextEndLine: true,
       });
     } else {
       line.Tokens.push(
-        buildToken({ Kind: TokenKind.Punctuation, Value: `{`, HasSuffixSpace: true }),
-        buildToken({ Kind: TokenKind.Punctuation, Value: `}` }),
+        buildToken({ Kind: TokenKind.Punctuation, Value: "{", HasSuffixSpace: true }),
+        buildToken({ Kind: TokenKind.Punctuation, Value: "}" }),
       );
       reviewLines.push(line);
     }

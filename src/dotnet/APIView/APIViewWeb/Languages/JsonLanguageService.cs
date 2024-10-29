@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Threading.Tasks;
 using ApiView;
 
@@ -12,7 +11,7 @@ namespace APIViewWeb
     public class JsonLanguageService : LanguageService
     {
         public override string Name { get; } = "Json";
-        public override string[] Extensions { get; } = { ".json", ".json.tgz" };
+        public override string[] Extensions { get; } = { ".json" };
 
         public override bool CanUpdate(string versionString) => false;
 

@@ -15,12 +15,12 @@ export const AuthGuard: CanActivateFn = async (route: ActivatedRouteSnapshot, st
 
     if (isLoggedIn != true)
     {
-      window.location.href = configService.webAppUrl + "login";
+      window.location.href = configService.webAppUrl + "login?returnUrl=" + window.location.href;
     }
   }
   catch (error){
     isLoggedIn = false;
-    window.location.href = configService.webAppUrl + "login";
+    window.location.href = configService.webAppUrl + "login?returnUrl=" + window.location.href;
   }
   return isLoggedIn;
 };

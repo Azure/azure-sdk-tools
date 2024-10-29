@@ -238,7 +238,7 @@ namespace APIViewWeb
             return result;
         }
 
-        public async Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams)
+        public async Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, FilterAndSortParams filterAndSortParams)
         {
             var queryStringBuilder = new StringBuilder(@"
 SELECT VALUE {

@@ -2,7 +2,7 @@
   "name": "apiview-treestyle-parser-schema",
   "version": "0.1.0",
   "type": "module",
-  "peerDependencies": {
+  "dependencies": {
     "@typespec/compiler": "latest",
     "@typespec/json-schema": "latest"
   },

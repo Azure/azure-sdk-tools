@@ -34,32 +34,39 @@ class ArgType:
             self.argtype = argtype
         self.function_node = func_node
 
-    def generate_tokens(self, review_lines, function_id, namespace, *, add_line_marker: bool, prefix: str = ""):
+    def generate_tokens(
+        self,
+        function_id,
+        namespace,
+        tokens,
+        *,
+        add_line_marker: bool,
+        prefix: str = "",
+        post_comma: bool = False,
+    ):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ~ReviewLine apiview: The ApiView
         :param str function_id: Module level Unique ID created for function 
+        :param list[Token] tokens: List of tokens to add to.
         :keyword bool add_line_marker: Flag to indicate whether to include a line ID marker or not.
         :keyword str prefix: Optional prefix for *args and **kwargs.
+        :keyword bool post_comma: Flag to indicate whether to add a comma after the argument.
         """
         # Add arg name
         self.id = function_id
         if add_line_marker:
             self.id = f"{function_id}.param({self.argname})"
-
-        tokens = []
         tokens.append(Token(kind=TokenKind.TEXT, value=f"{prefix}{self.argname}", has_suffix_space=False))
         # add arg type
         if self.argtype:
             tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":"))
             tokens.append(Token(kind=TokenKind.TYPE_NAME, value=self.argtype, has_suffix_space=False))
 
-        add_review_line(review_lines, line_id=self.id, tokens=tokens)
-
         # add arg default value
         default = self.default
         if default is not None:
             # TODO: add has_prefix_space=True if prefix is not empty
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="=", has_suffix_space=True))
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="="))
             if isinstance(default, str) and default not in SPECIAL_DEFAULT_VALUES:
                 tokens.append(Token(kind=TokenKind.STRING_LITERAL, value=default, has_suffix_space=False))
             else:

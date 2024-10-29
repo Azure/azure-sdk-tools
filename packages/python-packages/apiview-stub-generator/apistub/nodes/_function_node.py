@@ -47,6 +47,7 @@ class FunctionNode(NodeEntityBase):
         self.args = OrderedDict()
         self.kwargs = OrderedDict()
         self.posargs = OrderedDict()
+        self.total_args = 0
 
         self.return_type = None
         self.namespace_id = self.generate_id()
@@ -161,10 +162,12 @@ class FunctionNode(NodeEntityBase):
                 if match:
                     self.special_vararg.argtype = match.argtype
 
-    def _newline_if_needed(self, apiview, use_multi_line):
+    def _reviewline_if_needed(self, review_lines, tokens, use_multi_line):
         if use_multi_line:
-            apiview.add_newline()
-            apiview.add_whitespace()
+            add_review_line(review_lines, tokens=tokens, line_id=self.namespace_id)
+            # new token list for next line if multi-line
+            tokens = []
+        return tokens
 
     def _argument_count(self) -> int:
         count = len(self.posargs) + len(self.args) + len(self.kwargs)
@@ -187,82 +190,138 @@ class FunctionNode(NodeEntityBase):
             short_type = short_type.replace(g[0], g[1])
         return short_type
 
-    def _generate_args_for_collection(self, items: Dict[str, ArgType], review_lines, use_multi_line):
-        for item in items.values():
-            item.generate_tokens(review_lines, self.namespace_id, namespace=self.namespace, add_line_marker=use_multi_line)
-            review_lines[-1]['Tokens'].append(Token(kind=TokenKind.PUNCTUATION, value=","))
+    def _generate_args_for_collection(self, items: Dict[str, ArgType], review_lines, tokens, use_multi_line, *, final_item=True):
+        for idx, item in enumerate(list(items.values())):
+            item.generate_tokens(
+                self.namespace_id,
+                namespace=self.namespace,
+                tokens=tokens,
+                add_line_marker=use_multi_line,
+            )
+            # if final_item is False, then last item should not have a comma
+            if final_item or idx < len(items) - 1:
+                tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
+            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+        # multi-line will create new list of tokens for next line
+        return tokens
+
+    #def _generate_single_line_signature(self, review_lines, tokens):
+    #    use_multi_line = False
+    #    self._generate_args_for_collection(self.posargs, review_lines, use_multi_line)
+    #    if self.posargs:
+    #        tokens = [
+    #            Token(kind=TokenKind.TEXT, value="/", has_suffix_space=False),
+    #            Token(kind=TokenKind.PUNCTUATION, value=",")
+    #        ]
+    #    tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")", has_suffix_space=False))
+    #    self._generate_args_for_collection(self.args, self.children, use_multi_line)
+    #    if self.special_vararg:
+    #        self.special_vararg.generate_tokens(self.children, self.namespace_id, namespace=self.namespace, add_line_marker=use_multi_line, prefix="*")
+    #    add_review_line(review_lines, line_id=self.namespace_id, tokens=tokens)
 
     def _generate_signature_token(self, review_lines, tokens, use_multi_line):
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value="(", has_suffix_space=False))
 
         # TODO: extra indent for all below
-        use_multi_line = False
-        if use_multi_line:
-            # TODO: if the goal is to not add whitespace tokens, should indent be built into review line as well?
-            add_review_line(
-                review_lines=review_lines,
-                line_id=self.namespace_id,
-                tokens=tokens,
-                #related_to_line=self.namespace_id,
-                #add_cross_language_id=True     # TODO: add cross language id
-            )
-            # render errors directly below definition line
-            for err in self.pylint_errors:
-                err.generate_tokens(review_lines, self.namespace_id)
-            #apiview.begin_group()
-        else:
-            add_review_line(
-                review_lines=review_lines,
-                tokens=tokens,
-                #related_to_line=self.namespace_id,
-                #add_cross_language_id=True     # TODO: add cross language id
-            )
 
-        self._generate_args_for_collection(self.posargs, review_lines, use_multi_line)
+        #else:
+        #    add_review_line(
+        #        review_lines=review_lines,
+        #        line_id=self.namespace_id,
+        #        tokens=tokens,
+        #        #related_to_line=self.namespace_id,
+        #        #add_cross_language_id=True     # TODO: add cross language id
+        #    )
+        arg_count = self._argument_count()
+        tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+        # If length of positional args is less than total args, then all items should end with commas
+        # as end of args list hasn't been reached. Else, last item reached, so no comma.
+        current_count = len(self.posargs)
+        if current_count < arg_count:
+            final_item = True
+        else:
+            final_item = False
+
+        tokens = self._generate_args_for_collection(
+            self.posargs,
+            review_lines=review_lines,
+            tokens=tokens,
+            use_multi_line=use_multi_line,
+            final_item=final_item
+        )
         # add postional-only marker if any posargs
         if self.posargs:
-            tokens = [
+            tokens.append([
                 Token(kind=TokenKind.TEXT, value="/", has_suffix_space=False),
                 Token(kind=TokenKind.PUNCTUATION, value=",")
-            ]
-            add_review_line(review_lines, tokens=tokens)
+            ])
+            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+            #add_review_line(review_lines, tokens=tokens)
 
-        self._generate_args_for_collection(self.args, review_lines, use_multi_line)
+        current_count += len(self.args)
+        if current_count < arg_count:
+            final_item = True
+        else:
+            final_item = False
+
+        tokens = self._generate_args_for_collection(
+            self.args, review_lines=review_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
+        )
+        current_count += 1
+        if current_count < arg_count:
+            final_item = True
+        else:
+            final_item = False
         if self.special_vararg:
-            self.special_vararg.generate_tokens(review_lines, self.namespace_id, namespace=self.namespace, add_line_marker=use_multi_line, prefix="*")
-            #apiview.add_punctuation(",", False, True)
+            self.special_vararg.generate_tokens(
+                self.namespace_id,
+                namespace=self.namespace,
+                tokens=tokens,
+                add_line_marker=use_multi_line,
+                prefix="*",
+            )
+            if not final_item:
+                tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
 
         # add keyword argument marker        
-        if self.kwargs and not self.special_vararg:
-            tokens = []
+        if self.kwargs:
             # TODO: only add this if self.special_vararg is not present
             tokens.append(Token(kind=TokenKind.TEXT, value="*", has_suffix_space=False))
             tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
-            add_review_line(review_lines, tokens=tokens)
+            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
 
-        self._generate_args_for_collection(self.kwargs, review_lines, use_multi_line)
+        current_count += len(self.kwargs)
+        if current_count < arg_count:
+            final_item = True
+        else:
+            final_item = False
+        tokens = self._generate_args_for_collection(
+            self.kwargs, review_lines=review_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
+        )
         if self.special_kwarg:
-            tokens = []
+            # if **kwargs is present, then no comma needed
             self.special_kwarg.generate_tokens(
-                review_lines,
                 self.namespace_id,
                 self.namespace,
+                tokens,
                 add_line_marker=use_multi_line,
-                prefix="**"
+                prefix="**",
             )
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
-            add_review_line(review_lines, tokens=tokens)
+            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
 
-        # pop the final ", " tokens
+        #print(review_lines)
         #if self._argument_count():
-        #    apiview.tokens.pop()
-        #    apiview.tokens.pop()
+        #    review_lines[-1]['Tokens'].pop()
+        #    review_lines[-1]['Tokens'].pop()
 
         #apiview.add_newline()
         #apiview.end_group()
         #apiview.add_whitespace()
-        tokens = []
-        tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")"))
+        # pop the final ", " tokens
+        #if review_lines[-1]['Tokens'][-1]['Value'] == ",":
+        #    review_lines[-1]['Tokens'].pop()
+        #    review_lines[-1]['Tokens'].pop()
+        tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")", has_suffix_space=False))
         add_review_line(review_lines, tokens=tokens)
 
     def generate_tokens(self, review_lines: List["ReviewLine"]):

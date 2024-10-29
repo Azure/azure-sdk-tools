@@ -111,7 +111,6 @@ class ModuleNode(NodeEntityBase):
             # Add classes
             for c in filter(filter_class, self.child_nodes):
                 c.generate_tokens(self.children)
-                set_blank_lines(review_lines, 2)
         # TODO: figure out why children only print when added before parent review line
         add_review_line(review_lines=review_lines, line_id=self.namespace_id, tokens=tokens, children=self.children)
 

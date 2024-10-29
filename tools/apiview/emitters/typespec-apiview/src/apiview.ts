@@ -258,60 +258,42 @@ export class ApiView {
     return lastGrandchild ?? lastChild;
   }
 
-  private updateCursorToLastLine() {
-    if (!this.currentParent) {
-      return undefined;
-    }
-    const lastChild = this.currentParent.Children[this.currentParent.Children.length - 1];
-    const lastGrandchild = lastChild?.Children[lastChild.Children.length - 1];
-    if (lastGrandchild?.Children.length > 0) {
-      throw new Error("Unexpected great-grandchild in getLastLine()!");
-    }
-
-    // Move the "cursor" back to the last line. It should
-    // always be either the last child or the last grandchild.
-    if (lastGrandchild) {
-      this.currentParent = lastChild
-      this.currentLine = lastGrandchild;
-    } else if (lastChild) {
-      this.currentLine = lastChild;
-    } else {
-      throw new Error("Couldn't find last line in updateCursorToLastLine()!");
-    }
-    // remove the last line since it is back in the editing queue
-    this.currentParent.Children.pop();
-  }
-
-  /** Chomps whitespace to any of the provided characters. If the first non-whitespace
-   * character is not one of the provided characters, the line is not trimmed.
+  /** 
+   * Places the provided token in the tree based on the provided characters.
+   * param token The token to snap.
+   * param characters The characters to snap to.
    */
-  private trimTo(characters: string) {
+  private snapToken(punctuationToken: ReviewToken, characters: string) {
     const allowed = new Set(characters.split(""));
-    const trimCurrent = (this.currentLine.Tokens.length !== 0);
-    const checkLine = trimCurrent ? this.currentLine : this.getLastLine();
-    if (!checkLine) {
-      return;
-    }
+    const lastLine = this.getLastLine() ?? this.currentLine;
 
     // iterate through tokens in reverse order
-    for (let i = checkLine.Tokens.length - 1; i >= 0; i--) {
-      const token = checkLine.Tokens[i];
+    for (let i = lastLine.Tokens.length - 1; i >= 0; i--) {
+      const token = lastLine.Tokens[i];
       if (token.Kind === TokenKind.Text) {
         // skip blank whitespace tokens
         const value = token.Value.trim();
         if (value.length === 0) {
           continue;
         } else {
+          // no snapping, so render in place
+          this.currentLine.Tokens.push(punctuationToken);
           return;
         }
       } else if (token.Kind === TokenKind.Punctuation) {
         // ensure no whitespace after the trim character
         if (allowed.has(token.Value)) {
           token.HasSuffixSpace = false;
-          const trimmedTokens = checkLine.Tokens.slice(0, i + 1);
-          this.updateCursorToLastLine();
-          this.currentLine.Tokens = trimmedTokens;
+          punctuationToken.HasSuffixSpace = false;
+          lastLine.Tokens.push(punctuationToken);
+        } else {
+          // no snapping, so render in place
+          this.currentLine.Tokens.push(punctuationToken);
+          return;
         }
+      } else {
+        // no snapping, so render in place
+        this.currentLine.Tokens.push(punctuationToken);
         return;
       }
     }
@@ -322,8 +304,21 @@ export class ApiView {
     this.currentLine.CrossLanguageId = options?.addCrossLanguageId ? (options?.value ?? this.namespaceStack.value()) : undefined;
   }
 
-  private punctuation(value: string, options?: ReviewTokenOptions) {
-    this.token(TokenKind.Punctuation, value, options);
+  private punctuation(value: string, options?: ReviewTokenOptions & {snapTo?: string}) {
+    const snapTo = options?.snapTo;
+    delete options?.snapTo;
+
+    const token = {
+      Kind: TokenKind.Punctuation,
+      Value: value,
+      ...options
+    }
+
+    if (snapTo) {
+      this.snapToken(token, snapTo);
+    } else {
+      this.currentLine.Tokens.push(token);
+    }
   }
 
   private text(text: string, options?: ReviewTokenOptions) {
@@ -763,10 +758,9 @@ export class ApiView {
       const arg = obj.arguments[x];
       this.tokenizeTemplateArgument(arg);
       if (x !== obj.arguments.length - 1) {
-        this.trimTo("}");
-        this.punctuation(",", {HasSuffixSpace: true});
+        this.punctuation(",", {HasSuffixSpace: true, snapTo: "}"});
         if (isExpanded && arg.argument.kind) {
-          this.newline();
+          this.blankLines(0);
         }
       }
     }
@@ -978,14 +972,12 @@ export class ApiView {
         this.namespaceStack.pop();
         if (isOperationSignature) {
           if (x !== node.properties.length - 1) {
-            this.trimTo("}");
-            this.punctuation(",", {HasSuffixSpace: true});
+            this.punctuation(",", {HasSuffixSpace: true, snapTo: "}"});
           }
         } else {
-          this.trimTo("}");
-          this.punctuation(";", {HasSuffixSpace: true});
+          this.punctuation(";", {HasSuffixSpace: true, snapTo: "}"});
         }
-        this.newline()
+        this.blankLines(0);
       }
       if (!isOperationSignature) {
         this.deindent();

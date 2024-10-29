@@ -303,6 +303,9 @@ class ReviewToken(_model_base.Model):
     :ivar has_suffix_space: Set this to false if there is no suffix space required before next
      token. For e.g, punctuation right after method name.
     :vartype has_suffix_space: bool
+    :ivar has_prefix_space: Set this to true if there is a prefix space required before current
+     token. For e.g, space before token for =.
+    :vartype has_prefix_space: bool
     :ivar is_documentation: Set isDocumentation to true if current token is part of documentation.
     :vartype is_documentation: bool
     :ivar render_classes: Language specific style css class names.
@@ -329,6 +332,9 @@ class ReviewToken(_model_base.Model):
     has_suffix_space: Optional[bool] = rest_field(name="HasSuffixSpace")
     """Set this to false if there is no suffix space required before next token. For e.g, punctuation
      right after method name."""
+    has_prefix_space: Optional[bool] = rest_field(name="HasPrefixSpace")
+    """Set this to true if there is a prefix space required before current token. For e.g, space
+     before token for =."""
     is_documentation: Optional[bool] = rest_field(name="IsDocumentation")
     """Set isDocumentation to true if current token is part of documentation."""
     render_classes: Optional[List[str]] = rest_field(name="RenderClasses")
@@ -345,6 +351,7 @@ class ReviewToken(_model_base.Model):
         skip_diff: Optional[bool] = None,
         is_deprecated: Optional[bool] = None,
         has_suffix_space: Optional[bool] = None,
+        has_prefix_space: Optional[bool] = None,
         is_documentation: Optional[bool] = None,
         render_classes: Optional[List[str]] = None,
     ): ...

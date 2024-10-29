@@ -166,7 +166,7 @@ describe("Breaking change detection", () => {
   - Function funcReturnType has a new signature
   - Function funcParameterCount has a new signature
   - Function funcParameterType has a new signature
-  - Removed function overload 'export function isUnexpected(response: C | D): response is A;'
+  - Removed function overload "export function isUnexpected(response: C | D): response is A;"
   - Removed Type Alias typesRemove
   - Type alias "typesChange" has been changed`
         );

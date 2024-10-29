@@ -19,6 +19,9 @@ namespace SwaggerApiParser
             var output = new Option<string>(name: "--output", description: "The output file path.",
                 getDefaultValue: () => "swagger.json");
 
+            var useTagForOutput = new Option<bool>(name: "--use-tag-for-output", description: "If set to true the output file will be named with the readmeTag used for the run",
+                getDefaultValue: () => false);
+
             var readmeFile = new Option<string>(name: "--readme", "The input readme file.");
 
             var readmeTag = new Option<string>(name: "--tag", description: "Readme tag used to generate swagger apiView",
@@ -37,6 +40,7 @@ namespace SwaggerApiParser
             {
                 swaggers,
                 output,
+                useTagForOutput,
                 packageName,
                 swaggerLinks,
                 readmeFile,
@@ -46,7 +50,7 @@ namespace SwaggerApiParser
 
             cmd.Description = "Parse swagger file into codefile.";
 
-            cmd.SetHandler(async (IEnumerable<string> swaggerFiles, string outputFile, string package, IEnumerable<string> links, string readme, string tag) =>
+            cmd.SetHandler(async (IEnumerable<string> swaggerFiles, string outputFile, bool useTagForOutputFileName, string package, IEnumerable<string> links, string readme, string tag) =>
             {
                 var swaggerLinksArray = links.ToList();
 
@@ -56,20 +60,20 @@ namespace SwaggerApiParser
                 {
                     readme = Path.GetFullPath(readme);
                 }
-                await HandleGenerateCodeFile(enumerable, outputFile, package, swaggerLinksArray, readme, tag);
-            }, swaggers, output, packageName, swaggerLinks, readmeFile, readmeTag);
+                await HandleGenerateCodeFile(enumerable, outputFile, useTagForOutputFileName, package, swaggerLinksArray, readme, tag);
+            }, swaggers, output, useTagForOutput, packageName, swaggerLinks, readmeFile, readmeTag);
 
             return Task.FromResult(cmd.Invoke(args));
         }
 
-        static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output, string packageName, List<string> swaggerLinks, string readmeFile, string readmeTag)
+        static async Task HandleGenerateCodeFile(IEnumerable<string> swaggers, string output, bool useTagForOutput, string packageName, List<string> swaggerLinks, string readmeFile, string readmeTag)
         {
           
             var swaggerFilePaths =  swaggers.ToList();
             if (readmeFile != null)
             {
                 var readmeFileDir = Path.GetDirectoryName(readmeFile);
-                var swaggerFiles = ReadmeParser.GetSwaggerFilesFromReadme(readmeFile, readmeTag);
+                var swaggerFiles = ReadmeParser.GetSwaggerFilesFromReadme(readmeFile, ref readmeTag);
                 swaggerFilePaths = swaggerFilePaths.Concat(swaggerFiles.Select(it => Path.Join(readmeFileDir, it))).ToList();
             }
             
@@ -114,6 +118,13 @@ namespace SwaggerApiParser
 
             var codeFile = root.GenerateCodeFile();
             var outputFilePath = Path.GetFullPath(output);
+
+            if (useTagForOutput)
+            {
+                output = $"{readmeTag}.json";
+                outputFilePath = Path.Combine(Path.GetDirectoryName(outputFilePath), output);
+            }
+
             await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
             Console.WriteLine($"Generate codefile {output} successfully.");
             await codeFile.SerializeAsync(writer);

@@ -158,9 +158,7 @@ export class ApiView {
   private indent() {
     // enure no trailing space at the end of the line
     const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
-    if (lastToken && lastToken.HasPrefixSpace) {
-      lastToken.HasSuffixSpace = false;
-    }
+    lastToken.HasSuffixSpace = false;
 
     if (this.currentParent) {
       this.currentParent.Children.push(this.currentLine);
@@ -245,14 +243,49 @@ export class ApiView {
     }
   }
 
+  private getLastLine(): ReviewLine | undefined {
+    if (!this.currentParent) {
+      return undefined;
+    }
+    const lastChild = this.currentParent.Children[this.currentParent.Children.length - 1];
+    const lastGrandchild = lastChild?.Children[lastChild.Children.length - 1];
+    if (lastGrandchild?.Children.length > 0) {
+      throw new Error("Unexpected great-grandchild in getLastLine()!");
+    }
+    return lastGrandchild ?? lastChild;
+  }
+
+  private updateCursorToLastLine() {
+    if (!this.currentParent) {
+      return undefined;
+    }
+    const lastChild = this.currentParent.Children[this.currentParent.Children.length - 1];
+    const lastGrandchild = lastChild?.Children[lastChild.Children.length - 1];
+    if (lastGrandchild?.Children.length > 0) {
+      throw new Error("Unexpected great-grandchild in getLastLine()!");
+    }
+
+    // Move the "cursor" back to the last line. It should
+    // always be either the last child or the last grandchild.
+    if (lastGrandchild) {
+      this.currentParent = lastChild
+      this.currentLine = lastGrandchild;
+    } else if (lastChild) {
+      this.currentLine = lastChild;
+    } else {
+      throw new Error("Couldn't find last line in updateCursorToLastLine()!");
+    }
+    // remove the last line since it is back in the editing queue
+    this.currentParent.Children.pop();
+  }
+
   /** Chomps whitespace to any of the provided characters. If the first non-whitespace
    * character is not one of the provided characters, the line is not trimmed.
    */
   private trimTo(characters: string) {
     const allowed = new Set(characters.split(""));
     const trimCurrent = (this.currentLine.Tokens.length !== 0);
-    // FIXME: Fix this logic!
-    const checkLine = trimCurrent ? this.currentLine : this.currentParent?.Children[this.currentParent.Children.length - 1];
+    const checkLine = trimCurrent ? this.currentLine : this.getLastLine();
     if (!checkLine) {
       return;
     }
@@ -273,9 +306,8 @@ export class ApiView {
         if (allowed.has(token.Value)) {
           token.HasSuffixSpace = false;
           const trimmedTokens = checkLine.Tokens.slice(0, i + 1);
-          // FIXME: Fix this logic!
-          // this.currentLine = checkLine;
-          // this.currentLine.Tokens = trimmedTokens;
+          this.updateCursorToLastLine();
+          this.currentLine.Tokens = trimmedTokens;
         }
         return;
       }

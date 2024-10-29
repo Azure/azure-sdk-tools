@@ -361,7 +361,7 @@ class ClassNode(NodeEntityBase):
             is_context_end_line=True,
             related_to_line=self.namespace_id,
         )
-        set_blank_lines(review_lines, 2)
+        #set_blank_lines(review_lines, 2)
 
     def _generate_child_tokens(self, review_lines):
         # Add members and methods
@@ -369,12 +369,12 @@ class ClassNode(NodeEntityBase):
         #for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
         #    e.generate_tokens(self.children)
         #    set_blank_lines(review_lines)
+        set_blank_lines(self.children)
         for func in [
             x
             for x in self.child_nodes
             if isinstance(x, FunctionNode) and x.hidden == False
         ]:
-            set_blank_lines(review_lines)
             func.generate_tokens(self.children)
         #apiview.end_group()
 

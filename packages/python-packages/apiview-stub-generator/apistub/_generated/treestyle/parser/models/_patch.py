@@ -18,17 +18,21 @@ from apistub._metadata_map import MetadataMap
 from ._models import CodeFile, ReviewToken as Token, ReviewLine as ReviewLineImpl, CodeDiagnostic as Diagnostic
 from ._enums import TokenKind
 
-HEADER_TEXT = "# Package is parsed using apiview-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
+HEADER_TEXT = "# Package is parsed using apiview-stub-generator(version:{0}), Python version: {1}".format(
+    VERSION, platform.python_version()
+)
 TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\d._]+)")
 TYPE_OR_SEPARATOR = " or "
 
+
 def set_blank_lines(review_lines, count=1):
-    """ Ensures a specific number of blank lines.
-        Will add or remove newline tokens as needed
-        to ensure the exact number of blank lines.
+    """Ensures a specific number of blank lines.
+    Will add or remove newline tokens as needed
+    to ensure the exact number of blank lines.
     """
     for _ in range(count):
         add_review_line(review_lines)
+
 
 def add_review_line(
     review_lines: List["ReviewLine"],
@@ -49,6 +53,7 @@ def add_review_line(
         )
     )
 
+
 def add_type(tokens, type_name):
     # TODO: add_type should require an ArgType or similar object so we can link *all* types
 
@@ -66,7 +71,7 @@ def add_type(tokens, type_name):
         type_name = "Union[{}]".format(", ".join(types))
 
     # TODO: figure out cross_language_id, pass into type token below
-    #cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
+    # cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
     tokens.append(Token(kind=TokenKind.TYPE_NAME, value=type_name, has_suffix_space=False))
 
 
@@ -112,8 +117,7 @@ class ApiView(CodeFile):
 
     @classmethod
     def get_root_path(cls):
-        """ Looks for the root of the apiview-stub-generator package.
-        """
+        """Looks for the root of the apiview-stub-generator package."""
         path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
         while os.path.split(path)[1]:
             dirname = os.path.split(path)[1]
@@ -123,17 +127,17 @@ class ApiView(CodeFile):
                 path = os.path.split(path)[0]
         return None
 
-    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None, pkg_version =""):
-        #self.package_name = pkg_name
-        #self.package_version = pkg_version
-        #self.language = "Python"
+    def __init__(self, *, pkg_name="", namespace="", metadata_map=None, source_url=None, pkg_version=""):
+        # self.package_name = pkg_name
+        # self.package_version = pkg_version
+        # self.language = "Python"
         self.metadata_map = metadata_map or MetadataMap("")
-        #self.cross_language_package_id = self.metadata_map.cross_language_package_id
-        #self.review_lines = []
-        #self.diagnostics = []
-        #self.navigation = []
-        # TODO: Version: 0 doesn't have a correpsonding value in new parser. 
-        #self.version = 0
+        # self.cross_language_package_id = self.metadata_map.cross_language_package_id
+        # self.review_lines = []
+        # self.diagnostics = []
+        # self.navigation = []
+        # TODO: Version: 0 doesn't have a correpsonding value in new parser.
+        # self.version = 0
         super().__init__(
             package_name=pkg_name,
             package_version=pkg_version,
@@ -142,7 +146,7 @@ class ApiView(CodeFile):
             review_lines=[],
             cross_language_package_id=self.metadata_map.cross_language_package_id,
             diagnostics=[],
-            #navigation=[], # TODO: Add later if needed
+            # navigation=[], # TODO: Add later if needed
         )
 
         self.source_url = source_url
@@ -156,14 +160,14 @@ class ApiView(CodeFile):
             has_suffix_space=False,
         )
         add_review_line(self.review_lines, line_id="GLOBAL", tokens=[token])
-        #if source_url:  # TODO: test source url
+        # if source_url:  # TODO: test source url
         #    self.set_blank_lines(1)
         #    self.add_literal("# Source URL: ")
         #    self.add_link(source_url)
-        #self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
+        # self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
         set_blank_lines(self.review_lines, 2)
 
-    #def set_blank_lines(self, count=1):
+    # def set_blank_lines(self, count=1):
     #    """ Ensures a specific number of blank lines.
     #        Will add or remove newline tokens as needed
     #        to ensure the exact number of blank lines.
@@ -171,42 +175,43 @@ class ApiView(CodeFile):
     #    for _ in range(count):
     #        add_review_line(self.review_lines)
 
-        # TODO: Find out why counting/removing was needed
-        # count the number of trailing newlines
-        #newline_count = 0
-        #for token in self.tokens[::-1]:
-        #    if token.kind == TokenKind.Newline:
-        #        newline_count += 1
-        #    else:
-        #        break
-        
-        #if newline_count < (count + 1):
-        #    # if there are not enough newlines, add some
-        #    for n in range((count + 1) - newline_count):
-        #        self.add_token(Token("", TokenKind.Newline))
-        #elif newline_count > (count + 1):
-        #    # if there are too many newlines, remove some
-        #    excess = newline_count - (count + 1)
-        #    for _ in range(excess):
-        #        self.tokens.pop()
+    # TODO: Find out why counting/removing was needed
+    # count the number of trailing newlines
+    # newline_count = 0
+    # for token in self.tokens[::-1]:
+    #    if token.kind == TokenKind.Newline:
+    #        newline_count += 1
+    #    else:
+    #        break
 
-    #def begin_group(self, group_name=""):
+    # if newline_count < (count + 1):
+    #    # if there are not enough newlines, add some
+    #    for n in range((count + 1) - newline_count):
+    #        self.add_token(Token("", TokenKind.Newline))
+    # elif newline_count > (count + 1):
+    #    # if there are too many newlines, remove some
+    #    excess = newline_count - (count + 1)
+    #    for _ in range(excess):
+    #        self.tokens.pop()
+
+    # def begin_group(self, group_name=""):
     #    """Begin a new group in API view by shifting to right
     #    """
     #    self.indent += 1
 
-    #def end_group(self):
+    # def end_group(self):
     #    """End current group by moving indent to left
     #    """
     #    if not self.indent:
     #        raise ValueError("Invalid indentation")
     #    self.indent -= 1
-    
+
     def add_diagnostic(self, *, obj, target_id):
         self.diagnostics.append(Diagnostic(obj=obj, target_id=target_id))
 
     def add_navigation(self, navigation):
         self.navigation.append(navigation)
+
 
 class ReviewLine(ReviewLineImpl):
 
@@ -219,7 +224,7 @@ class ReviewLine(ReviewLineImpl):
         children: Optional[List["ReviewLine"]] = None,
         is_context_end_line: Optional[bool] = False,
         related_to_line: Optional[str] = None,
-        parent: Optional["ReviewLine"] = None
+        parent: Optional["ReviewLine"] = None,
     ):
         super().__init__(
             tokens=tokens,
@@ -227,7 +232,7 @@ class ReviewLine(ReviewLineImpl):
             cross_language_id=cross_language_id,
             children=children,
             is_context_end_line=is_context_end_line,
-            related_to_line=related_to_line
+            related_to_line=related_to_line,
         )
         # TODO: is a rest field not mutable?
 
@@ -235,8 +240,8 @@ class ReviewLine(ReviewLineImpl):
         self.tokens.append(token)
 
     def add_whitespace(self, count: Optional[int] = None):
-        """ Inject appropriate whitespace for indentation,
-            or inject a specific number of whitespace characters.
+        """Inject appropriate whitespace for indentation,
+        or inject a specific number of whitespace characters.
         """
         if self.indent:
             self.add_token(Token(" " * (self.indent * 4)))
@@ -244,13 +249,12 @@ class ReviewLine(ReviewLineImpl):
             self.add_token(Token(" " * (count)))
 
     def add_space(self):
-        """ Used to add a single space. Cannot add multiple spaces.
-        """
+        """Used to add a single space. Cannot add multiple spaces."""
         if self.tokens[-1].kind != TokenKind.Whitespace:
             self.add_token(Token(" ", TokenKind.Whitespace))
 
     # TODO: check that it's no longer needed, since each RL will be a new line
-    #def add_newline(self):
+    # def add_newline(self):
     #    """ Used to END a line and wrap to the next.
     #        Cannot be used to inject blank lines.
     #    """
@@ -270,9 +274,9 @@ class ReviewLine(ReviewLineImpl):
         token.definition_id = line_id
         if add_cross_language_id:
             # Check if line_id ends with an underscore and a number
-            numeric_suffix = re.search(r'_(\d+)$', line_id)
+            numeric_suffix = re.search(r"_(\d+)$", line_id)
             # If it does, truncate the numeric portion
-            line_key = line_id[:numeric_suffix.start()] if numeric_suffix else line_id
+            line_key = line_id[: numeric_suffix.start()] if numeric_suffix else line_id
             cross_lang_id = self.metadata_map.cross_language_map.get(line_key, None)
             token.cross_language_definition_id = cross_lang_id
         self.add_token(token)
@@ -294,7 +298,7 @@ class ReviewLine(ReviewLineImpl):
         self.add_token(Token(url))
         self.add_token(Token(kind=TokenKind.ExternalLinkEnd))
 
-    def _add_token_for_type_name(self, type_name, line_id = None, cross_language_id = None):
+    def _add_token_for_type_name(self, type_name, line_id=None, cross_language_id=None):
         logging.debug("Generating tokens for type name {}".format(type_name))
         token = Token(type_name, TokenKind.TypeName)
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
@@ -305,7 +309,6 @@ class ReviewLine(ReviewLineImpl):
         if cross_language_id:
             token.cross_language_definition_id = cross_language_id
         self.add_token(token)
-
 
     def _add_type_token(self, type_name, line_id, cross_language_id):
         # parse to get individual type name
@@ -323,29 +326,27 @@ class ReviewLine(ReviewLineImpl):
                 self.add_punctuation(prefix)
             # process parsed type name. internal or built in
             self._add_token_for_type_name(parsed_type, cross_language_id)
-            postfix = type_name[index + len(parsed_type):]
+            postfix = type_name[index + len(parsed_type) :]
             # process remaining string in type recursively
             self._add_type_token(postfix, line_id, cross_language_id)
         else:
             # This is required group ending punctuations
             self.add_punctuation(type_name)
 
-
     def add_member(self, name, id):
         token = Token(name, TokenKind.MemberName)
         token.definition_id = id
         self.add_token(token)
 
-
     def add_string_literal(self, value):
         self.add_token(Token("\u0022{}\u0022".format(value), TokenKind.StringLiteral))
 
-
     def add_literal(self, value):
         self.add_token(Token(value, TokenKind.Literal))
-    
+
     def add_child_line(self, line):
         self.children.append(line)
+
 
 __all__: List[str] = [
     "ApiView",

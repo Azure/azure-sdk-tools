@@ -226,7 +226,10 @@ export class ApiView {
     if (this.currentLine.Tokens.length > 0) {
       const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
       lastToken.HasSuffixSpace = false;
+      const firstToken = this.currentLine.Tokens[0];
+      firstToken.HasPrefixSpace = false;
     }
+
     if (isEndContext) {
       this.currentLine.IsContextEndLine = true;
     }
@@ -768,6 +771,7 @@ export class ApiView {
       }
     }
     if (isExpanded) {
+      this.newline();
       this.deindent();
     }
     this.punctuation(">");

@@ -583,11 +583,11 @@ describe("apiview: tests", () => {
           {
             parameters:
               {
-                fooId: 
+                fooId:
                   {
-                    bar: 
+                    bar:
                       {
-                        baz: 
+                        baz:
                           {
                             qux: string;
                           };

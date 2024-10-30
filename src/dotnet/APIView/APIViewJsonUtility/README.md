@@ -23,7 +23,7 @@ APIViewJsonUtility is published to Azure DevOps artifact. You can install this .
 
 ### Usage
 
-Here are t of how to use APIViewJsonUtility:
+Here are two examplea of how to use APIViewJsonUtility:
 
 - Create APIView output text
 

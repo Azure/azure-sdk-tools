@@ -20,6 +20,9 @@ export interface Routes {
 export type typesChange = "basic" | "rEmove";
 export type typesAdd = "basic" | "rEmove";
 
+export type typesExpand = string | number | boolean;
+export type typesNarrow = string | number;
+
 export interface A {a: string;}
 export interface B {b: string;}
 export interface C {c: string;}

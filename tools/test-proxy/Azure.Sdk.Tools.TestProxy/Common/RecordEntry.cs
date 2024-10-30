@@ -27,48 +27,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public RequestOrResponse Response { get; set; } = new RequestOrResponse();
 
-        private string _requestUri;
-        public string RequestUri
-        {
-            get { return this._requestUri; }
-            set {
-                // If the requestUri is being modified, set the flag to true
-                if (this._requestUri != value) 
-                {
-                    RequestUriIsModified = true;
-                } 
-                this._requestUri = value; 
-            }
-        }
+        public string RequestUri;
 
         public bool IsTrack1Recording { get; set; }
 
         public RequestMethod RequestMethod { get; set; }
 
         public int StatusCode { get; set; }
-        // Flag to indicate if the requestUri has been modified
-        public bool RequestUriIsModified { get; set; } = false;
-
-        /// <summary>
-        /// Checks if the RecordEntry instance or any of its properties have been modified.
-        /// Primarily used to determine if the RecordEntry has been sanitized.
-        /// </summary>
-        /// <returns>True if any modification has been made, otherwise false.</returns>
-        public bool isModified()
-        {
-            return this.RequestUriIsModified || this.Request.IsModified.Headers || this.Request.IsModified.Body || this.Response.IsModified.Headers || this.Response.IsModified.Body;
-        }
-
-        /// <summary>
-        /// Resets the IsModified flags for the RecordEntry instance.
-        /// Primarily used to determine if the RecordEntry has been sanitized.
-        /// </summary>
-        public void ResetRecordEntryModificationStatus()
-        {
-            this.RequestUriIsModified = false;
-            this.Request.IsModified = new RequestOrResponse.ModificationStatus();
-            this.Response.IsModified = new RequestOrResponse.ModificationStatus();
-        }
 
         public static RecordEntry Deserialize(JsonElement element)
             {

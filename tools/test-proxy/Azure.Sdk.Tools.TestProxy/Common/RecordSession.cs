@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -108,13 +109,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 RecordEntry reqEntryPreSanitize = null;
                 if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
-                    requestEntry.ResetRecordEntryModificationStatus();
                     reqEntryPreSanitize = requestEntry.Clone();
                 }
 
                 sanitizer.Sanitize(requestEntry);
 
-                if (DebugLogger.CheckLogLevel(LogLevel.Debug) && requestEntry.isModified())
+                if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
                     LogSanitizerModification(sanitizer.SanitizerId, reqEntryPreSanitize, requestEntry);
                 }
@@ -165,7 +165,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var entriesPreSanitize = Array.Empty<RecordEntry>();
                 if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {
-                    entriesPreSanitize = this.Entries.Select(requestEntry => { requestEntry.ResetRecordEntryModificationStatus(); return requestEntry.Clone(); }).ToArray();
+                    entriesPreSanitize = this.Entries.Select(requestEntry => requestEntry.Clone()).ToArray();
                 }
 
                 sanitizer.Sanitize(this);
@@ -184,10 +184,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     {
                         for (int i = 0; i < entriesPreSanitize.Length; i++)
                         {
-                            if (this.Entries[i].isModified())
-                            {
+
                                 LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
-                            }
+                            
                         }
                     }
                 }
@@ -215,16 +214,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     var entriesPreSanitize = Array.Empty<RecordEntry>();
                     if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                     {
-                        entriesPreSanitize = this.Entries.Select(requestEntry => { requestEntry.ResetRecordEntryModificationStatus(); return requestEntry.Clone(); }).ToArray();
+                        entriesPreSanitize = this.Entries.Select(requestEntry => requestEntry.Clone()).ToArray();
                     }
 
                     sanitizer.Sanitize(this);
 
                     if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                     {
-                        for (int i = 0; i < entriesPreSanitize.Length; i++)
+                        if (entriesPreSanitize.Length > this.Entries.Count)
                         {
-                            if (this.Entries[i] == null || this.Entries[i].isModified())
+                            DebugLogger.LogDebug(GetSanitizerInfoLogPrefix(sanitizer.SanitizerId) + " has removed some entries");
+                        }
+                        else if (entriesPreSanitize.Length < this.Entries.Count)
+                        {
+                            throw new Exception("Something went wrong. The number of entries increased after sanitization with " + GetSanitizerInfoLogPrefix(sanitizer.SanitizerId));
+                        }
+                        else
+                        {
+                            for (int i = 0; i < entriesPreSanitize.Length; i++)
                             {
                                 LogSanitizerModification(sanitizer.SanitizerId, entriesPreSanitize[i], this.Entries[i]);
                             }
@@ -254,34 +261,45 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="entryPostSanitize">The record entry after sanitization.</param>
         private void LogSanitizerModification(string sanitizerId, RecordEntry entryPreSanitize, RecordEntry entryPostSanitize)
         {
-            StringBuilder logMessage = new StringBuilder();
+            bool isRequestUriModified = entryPreSanitize.RequestUri != entryPostSanitize.RequestUri;
+            bool areRequestHeadersModified = AreHeadersModified(entryPreSanitize.Request.Headers, entryPostSanitize.Request.Headers);
+            bool isRequestBodyModified = IsBodyModified(entryPreSanitize.Request.Body, entryPostSanitize.Request.Body);
+            bool areResponseHeadersModified = AreHeadersModified(entryPreSanitize.Response.Headers, entryPostSanitize.Response.Headers);
+            bool isResponseBodyModified = IsBodyModified(entryPreSanitize.Response.Body, entryPostSanitize.Response.Body);
 
-            logMessage.AppendLine(GetSanitizerInfoLogPrefix(sanitizerId)+" modified the entry");
+            bool isRecordModified = isRequestUriModified || areRequestHeadersModified || isRequestBodyModified || areResponseHeadersModified || isResponseBodyModified;
+            if (!isRecordModified)
+            {
+                return;
+            }
+
+            StringBuilder logMessage = new StringBuilder();
+            logMessage.AppendLine(GetSanitizerInfoLogPrefix(sanitizerId) + " modified the entry");
+
             var before = $"{Environment.NewLine}before:{Environment.NewLine} ";
             var after = $"{Environment.NewLine}after: {Environment.NewLine} ";
 
-            if (entryPostSanitize.RequestUriIsModified)
+            if (isRequestUriModified)
             {
                 logMessage.AppendLine($"RequestUri is modified{before}{entryPreSanitize.RequestUri}{after}{entryPostSanitize.RequestUri}");
             }
 
-            string HeadersAsString(SortedDictionary<string, string[]> sortedDict)
-            {
-                return string.Join(Environment.NewLine, sortedDict.Select(kvp => $"{kvp.Key}: {string.Join(", ", kvp.Value)}"));
-            }
-
             void LogHeadersModification(RequestOrResponse pre, RequestOrResponse post, bool isRequest)
             {
-                if (post.IsModified.Headers)
-                {
-                    logMessage.AppendLine($"{(isRequest ? "Request" : "Response")} Headers are modified{before}{HeadersAsString(pre.Headers)}{after}{post.Headers}");
-                }
+                logMessage.AppendLine($"{(isRequest ? "Request" : "Response")} Headers are modified{before}{HeadersAsString(pre.Headers)}{after}{HeadersAsString(post.Headers)}");
+            }
+            if (areRequestHeadersModified)
+            {
+                LogHeadersModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
+            }
+            if (areResponseHeadersModified)
+            {
+                LogHeadersModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
             }
 
             void LogBodyModification(RequestOrResponse pre, RequestOrResponse post, bool isRequest)
             {
-                if (post.IsModified.Body &&
-                    pre.TryGetBodyAsText(out string bodyTextPre) &&
+                if (pre.TryGetBodyAsText(out string bodyTextPre) &&
                     post.TryGetBodyAsText(out string bodyTextPost) &&
                     !string.IsNullOrWhiteSpace(bodyTextPre) &&
                     !string.IsNullOrWhiteSpace(bodyTextPost))
@@ -289,13 +307,55 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     logMessage.AppendLine($"{(isRequest ? "Request" : "Response")} Body is modified{before}{bodyTextPre}{after}{bodyTextPost}");
                 }
             }
-
-            LogHeadersModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
-            LogHeadersModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
-            LogBodyModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
-            LogBodyModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
+            if (isRequestBodyModified)
+            {
+                LogBodyModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
+            }
+            if (isResponseBodyModified)
+            {
+                LogBodyModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
+            }
 
             DebugLogger.LogDebug(logMessage.ToString());
+        }
+
+        /// <summary>
+        /// Checks if the headers in two dictionaries are modified.
+        /// </summary>
+        /// <param name="dict1">The first dictionary of headers.</param>
+        /// <param name="dict2">The second dictionary of headers.</param>
+        /// <returns>True if the headers are modified, otherwise false.</returns>
+        private bool AreHeadersModified(SortedDictionary<string, string[]> dict1, SortedDictionary<string, string[]> dict2)
+        {
+            if (dict1 == null || dict2 == null)
+                return !(dict1 == dict2);
+
+            if (dict1.Count != dict2.Count)
+                return true;
+
+            return !dict1.All(kvp => dict2.TryGetValue(kvp.Key, out var value) && kvp.Value.SequenceEqual(value));
+        }
+
+        /// <summary>
+        /// Checks if the body content has been modified.
+        /// </summary>
+        /// <param name="preBody">The body content before modification.</param>
+        /// <param name="postBody">The body content after modification.</param>
+        /// <returns>True if the body content is modified, otherwise false.</returns>
+        private bool IsBodyModified(byte[] preBody, byte[] postBody)
+        {
+            return (preBody != null || postBody != null) &&
+                (preBody == null || postBody == null || !preBody.SequenceEqual(postBody));
+        }
+
+        /// <summary>
+        /// Converts the headers dictionary to a string representation.
+        /// </summary>
+        /// <param name="sortedDict">The dictionary of headers.</param>
+        /// <returns>A string representation of the headers.</returns>
+        private string HeadersAsString(SortedDictionary<string, string[]> sortedDict)
+        {
+            return string.Join(Environment.NewLine, sortedDict.Select(kvp => $"{kvp.Key}: {string.Join(", ", kvp.Value)}"));
         }
     }
 }

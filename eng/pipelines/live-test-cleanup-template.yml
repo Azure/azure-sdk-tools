@@ -2,14 +2,16 @@ parameters:
   - name: DryRun
     type: boolean
     default: false
+  - name: GroupFilter
+    type: string
+    default: '*'
   - name: DisplayName
     type: string
   - name: ServiceConnection
     type: string
   - name: SubscriptionConfigurations
     type: object
-    default:
-      - $(sub-config-azure-cloud-test-resources)
+    default: []
   - name: SubscriptionConfigurationFilePaths
     type: object
     default: []
@@ -46,12 +48,26 @@ steps:
             $(SubscriptionConfiguration)
           '@ | ConvertFrom-Json -AsHashtable
 
+          $context = Get-AzContext
+          $subscriptionConfiguration["Environment"] = $context.Environment.Name
+          $subscriptionConfiguration["SubscriptionId"] = $context.Subscription.Id
+          $subscriptionConfiguration["TenantId"] = $context.Subscription.TenantId
+          $subscriptionConfiguration["TestApplicationId"] = $context.Account.Id
+          $subscriptionConfiguration["ProvisionerApplicationId"] = $context.Account.Id
+
+          $principal = Get-AzADServicePrincipal -ApplicationId $context.Account.Id
+          $subscriptionConfiguration["TestApplicationOid"] = $principal.Id
+          $subscriptionConfiguration["ProvisionerApplicationOid"] = $principal.Id
+
+          Write-Host ($subscriptionConfiguration | ConvertTo-Json)
+
           ./eng/scripts/live-test-resource-cleanup.ps1 `
             -OpensourceApiApplicationToken $(opensource-api-token) `
             -GithubAliasCachePath ${{ parameters.GithubAliasCachePath }} `
             @subscriptionConfiguration `
             -Verbose `
             ${{ parameters.AdditionalParameters }} `
+            -UseExistingAzContext `
             -WhatIf:$${{ parameters.DryRun }}
 
       displayName: ${{ parameters.DisplayName }}
@@ -74,7 +90,8 @@ steps:
           @subscriptionConfiguration `
           -Verbose `
           ${{ parameters.AdditionalParameters }} `
-          -WhatIf:$${{ parameters.DryRun }}
+          -WhatIf:$${{ parameters.DryRun }} `
+          -GroupFilter '${{ parameters.GroupFilter }}'
       displayName: ${{ parameters.DisplayName }}
       continueOnError: true
       env:

@@ -5,40 +5,31 @@ parameters:
   - name: DryRun
     type: boolean
     default: false
+  - name: GroupFilter
+    type: string
+    default: '*'
   - name: Pool
     type: string
     default: azsdk-pool-mms-ubuntu-2204-general
   - name: Subscriptions
     type: object
     default:
+      - DisplayName: AzureCloud TME - Resource Cleanup
+        ServiceConnection: azure-sdk-tests-public
+        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
       - DisplayName: AzureCloud - Resource Cleanup
         ServiceConnection: azure-sdk-tests
-        SubscriptionConfigurationFilePaths:
-          - eng/common/TestResources/sub-config/AzurePublicMsft.json
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
-      - DisplayName: AzureCloud-Preview - Resource Cleanup
-        ServiceConnection: azure-sdk-tests-preview
-        SubscriptionConfigurationFilePaths:
-          - eng/common/TestResources/sub-config/AzurePreviewMsft.json
-        AdditionalParameters: "-DeleteArmDeployments"
-        # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
-        # AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureUSGovernment - Resource Cleanup
-        ServiceConnection: usgov_azure-sdk-tests
-        SubscriptionConfigurationFilePaths:
-          - eng/common/TestResources/sub-config/AzureUsGovMsft.json
+        ServiceConnection: azure-sdk-tests-usgov
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
         # AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureChinaCloud - Resource Cleanup
-        ServiceConnection: china_azure-sdk-tests
-        SubscriptionConfigurationFilePaths:
-          - eng/common/TestResources/sub-config/AzureChinaMsft.json
+        ServiceConnection: azure-sdk-tests-china
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
         # AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureCloud Playground - Resource Cleanup
         ServiceConnection: azure-sdk-tests-playground
-        SubscriptionConfigurations:
-          - $(sub-config-azure-cloud-playground)
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments -MaxLifespanDeleteAfterHours 240"
       # TODO: Disabled this clean-up as the dogfood enviroment is busted and the tests are no longer running
       # see https://github.com/Azure/azure-sdk-for-python/pull/33483 were the tests were disabled.
@@ -52,16 +43,13 @@ parameters:
       - DisplayName: AzureCloud ACS - Resource Cleanup
         ServiceConnection: azure-sdk-tests-communication
         SubscriptionConfigurations:
-          - $(sub-config-azure-cloud-test-resources)
           - $(sub-config-communication-services-cloud-test-resources-common)
       - DisplayName: AzureCloud Cosmos - Resource Cleanup
         ServiceConnection: azure-sdk-tests-cosmos
         SubscriptionConfigurations:
-          - $(sub-config-azure-cloud-test-resources)
           - $(sub-config-cosmos-azure-cloud-test-resources)
       # - DisplayName: AzureCloud Storage NET - Resource Cleanup
       #   SubscriptionConfigurations:
-      #     - $(sub-config-azure-cloud-test-resources)
       #     - $(sub-config-storage-test-resources-net)
 
 stages:
@@ -109,6 +97,7 @@ stages:
       - template: ./live-test-cleanup-template.yml
         parameters:
           DryRun: ${{ parameters.DryRun }}
+          GroupFilter: ${{ parameters.GroupFilter }}
           DisplayName: ${{ subscription.DisplayName }}
           ServiceConnection: ${{ subscription.ServiceConnection }}
           SubscriptionConfigurationFilePaths: ${{ subscription.SubscriptionConfigurationFilePaths }}

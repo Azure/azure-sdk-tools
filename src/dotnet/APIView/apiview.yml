@@ -5,6 +5,12 @@ parameters:
   - name: CSharpAPIParserVersion
     type: string
     default: '1.0.0-dev.20240828.2'
+  - name: JavaScriptAPIParser
+    type: string
+    default: '@azure-tools/ts-genapi@2.0.3'
+  - name: JavaScriptArtifactRegistry
+    type: string
+    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
 
 trigger:
   branches:
@@ -47,8 +53,6 @@ extends:
         displayName: 'Build and Test'
 
         variables:
-          - name: 'PythonVersion'
-            value: '3.10'
           - name: 'WebClientProjectDirectory'
             value: 'src/dotnet/APIView/APIViewWeb/Client'
           - name: 'SPAClientProjectDirectory'
@@ -59,8 +63,6 @@ extends:
             value: '18.x'
           - name: BuildConfiguration
             value: 'Release'
-          - name: TypeScriptGeneratorDirectory
-            value: 'tools/apiview/parsers/js-api-parser'
           - name: GoParserPackagePath
             value: 'src/go'
           - name: GoVersion
@@ -130,37 +132,10 @@ extends:
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Configure Service Worker"
 
-              - script: |
-                  npm install
-                workingDirectory: $(TypeScriptGeneratorDirectory)
-                displayName: "Install npm packages typescript generator"
-
-              - script: |
-                  npm run-script build
-                workingDirectory: $(TypeScriptGeneratorDirectory)
-                displayName: "Build typescript generator"
-
               - task: Maven@3
                 inputs:
                   mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
                   goals: 'clean package'
-
-                # Below 3 steps to package Python 3.10 is temporary work around until we have sandboxing ready
-              - template: /eng/pipelines/templates/steps/use-python-version.yml
-                parameters:
-                  versionSpec: '$(PythonVersion)'
-
-              - script: |
-                  python --version
-                  python -m pip install virtualenv aiohttp chardet trio
-                displayName: 'Setup Python Environment'
-
-              - pwsh: |
-                  $pythonPath = split-path (get-command python).Path -Parent
-                  Write-Host "Python home path $($pythonPath)"
-                  copy-item -Path "$pythonPath" -Destination "$(Build.ArtifactStagingDirectory)/APIViewWeb/Python" -Recurse -Force
-                  Write-Host "Packaged Python"
-                displayName: 'Package Python'
 
               - script: |
                   go build
@@ -378,15 +353,10 @@ extends:
                   ScriptType: 'Inline Script'
                   InlineScript: |
                     @echo off
-                    echo Installing npm packages
-                    call npm install --prefix D:\home\site\wwwroot --force
-                    call npm run-script build --prefix D:\home\site\wwwroot --force
                     echo Installing .NET tool
-                    call mkdir D:\home\site\wwwroot\csharp-parser
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                    echo Installing Python tools
-                    call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
-                    call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                    echo Installing JavaScript parser
+                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}  
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
@@ -437,15 +407,10 @@ extends:
                         packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
                         InlineScript: |
                           @echo off
-                          echo Installing npm packages
-                          call npm install --prefix D:\home\site\wwwroot --force
-                          call npm run-script build --prefix D:\home\site\wwwroot --force
                           echo Installing .NET tool
-                          call mkdir D:\home\site\wwwroot\csharp-parser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                          echo Installing Python tools
-                          call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
-                          call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                          echo Installing JavaScript parser
+                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
@@ -500,14 +465,9 @@ extends:
                         packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
                         InlineScript: |
                           @echo off
-                          echo Installing npm packages
-                          call npm install --prefix D:\home\site\wwwroot --force
-                          call npm run-script build --prefix D:\home\site\wwwroot --force
                           echo Installing .NET tool
-                          call mkdir D:\home\site\wwwroot\csharp-parser
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                          echo Installing Python tools
-                          call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
-                          call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.3 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                          echo Installing JavaScript parser
+                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy

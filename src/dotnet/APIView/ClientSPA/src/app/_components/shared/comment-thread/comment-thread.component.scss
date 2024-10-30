@@ -19,7 +19,15 @@
     }
 
     .p-timeline-event-opposite {
-        flex: 0 0 auto !important;
+        display: none;
+    }
+
+    .p-timeline-event-separator {
+        margin-left: 3%;
+    }
+
+    .p-timeline-event-content {
+        flex: 1 1 auto;
     }
 
     .p-timeline .p-timeline-event-connector {
@@ -89,9 +97,53 @@
 
     .rendered-comment-content {
         overflow-wrap: anywhere;
+        white-space: normal;
         pre {
             max-width: 100%;
             white-space: pre-wrap;
+            background-color: var(--editor-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+
+            code {
+                background-color: var(--editor-bg-color);
+
+                .line-actions {
+                    text-align: right;
+                    white-space: nowrap;
+                    display: inline-block;
+                    cursor: pointer;
+                    width: 20px;
+                    padding-inline-end: 15px;
+                    position: sticky;
+                    left: 0;
+                    background-color: inherit;
+                    color: var(--base-text-color);
+
+                    .toggle-user-comments-btn  {
+                        color: transparent;
+                    }
+                }
+            }
+        }
+        blockquote {
+            padding: 10px 20px;
+            margin: 0 0 20px;
+            border-left: 5px solid var(--border-color);
+            background-color: var(base-bg-color);
+            font-style: italic;
+            color: var(--base-text-color);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+          
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
         }
     }
 }

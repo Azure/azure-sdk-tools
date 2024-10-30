@@ -252,7 +252,7 @@ select {
 }
 
 .nav-link:hover, .nav-link:focus {
-    text-decoration: none;
+    text-decoration: none !important;
     color: var(--link-active);
 }
 

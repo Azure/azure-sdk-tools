@@ -22,4 +22,5 @@ export interface CommentUpdatesDto {
     resolvedBy?: string;    
     associatedRowPositionInGroup?: number;
     allowAnyOneToResolve?: boolean;
+    title: string;
 }

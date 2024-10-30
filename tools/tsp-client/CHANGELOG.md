@@ -1,8 +1,13 @@
 # Release
 
-## Unreleased - 0.13.1
+## 2024-10-21 - 0.13.2
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.2`.
+
+## 2024-10-09 - 0.13.1
 
 - Add `@autorest/core` as a dependency, and run the package from its install folder, to guarantee the versions don't change after install.
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.1`.
 
 ## 2024-09-10 - 0.13.0
 

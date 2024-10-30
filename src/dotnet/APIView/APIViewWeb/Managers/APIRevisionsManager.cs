@@ -70,9 +70,15 @@ namespace APIViewWeb.Managers
         /// <param name="pageParams"></param> Contains paginationinfo
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
-        public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, APIRevisionsFilterAndSortParams filterAndSortParams)
+        public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, FilterAndSortParams filterAndSortParams)
         {
-             return await _apiRevisionsRepository.GetAPIRevisionsAsync(user, pageParams, filterAndSortParams);
+            var revisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(user, pageParams, filterAndSortParams);
+            List<APIRevisionListItemModel> upgradedList = [];
+            foreach (var item in revisions)
+            {
+                upgradedList.Add(await UpgradeAPIRevisionIfRequired(item));
+            }
+            return new PagedList<APIRevisionListItemModel>((IEnumerable<APIRevisionListItemModel>)upgradedList, revisions.NoOfItemsRead, revisions.TotalCount, pageParams.PageSize);
         }
 
         /// <summary>
@@ -85,6 +91,12 @@ namespace APIViewWeb.Managers
         public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId, string packageVersion = "", APIRevisionType apiRevisionType = APIRevisionType.All)
         {
             var apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            List<APIRevisionListItemModel> upgradedList = [];
+            foreach (var item in apiRevisions)
+            {
+                upgradedList.Add(await UpgradeAPIRevisionIfRequired(item));
+            }
+            apiRevisions = upgradedList;
 
             if (apiRevisionType != APIRevisionType.All)
                 apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
@@ -153,12 +165,14 @@ namespace APIViewWeb.Managers
             {
                 throw new UnauthorizedAccessException();
             }
-            return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            var revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            return await UpgradeAPIRevisionIfRequired(revisionModel);
         }
 
         public async Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId)
         {
-            return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            var revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            return await UpgradeAPIRevisionIfRequired(revisionModel);
         }
 
         /// <summary>
@@ -984,6 +998,21 @@ namespace APIViewWeb.Managers
                 }
             }
             return result;
+        }
+        private async Task<APIRevisionListItemModel> UpgradeAPIRevisionIfRequired(APIRevisionListItemModel revisionModel)
+        {
+            if (revisionModel == null)
+            {
+                return revisionModel;
+            }
+            var codeFileDetails = revisionModel.Files[0];
+            var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
+            if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
+            {
+                await UpdateAPIRevisionAsync(revisionModel, languageService, false);
+                revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
+            }
+            return revisionModel;
         }
     }
 }

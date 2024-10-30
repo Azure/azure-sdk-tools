@@ -41,7 +41,7 @@ export function initializeApp(configService: ConfigService) {
     TabMenuModule,
     ToolbarModule,
     ToastModule,
-    HttpClientModule,
+    HttpClientModule
   ],
   providers: [
     ConfigService,

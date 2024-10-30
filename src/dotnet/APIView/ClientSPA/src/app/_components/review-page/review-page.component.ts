@@ -7,17 +7,19 @@ import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision, ApiTreeBuilderData } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
-import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
-import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/common-helpers';
+import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
-import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
+import { SamplesRevision } from 'src/app/_models/samples';
 
 @Component({
   selector: 'app-review-page',
@@ -38,6 +40,7 @@ export class ReviewPageComponent implements OnInit {
   comments: CommentItemModel[] = [];
   activeAPIRevision : APIRevision | undefined = undefined;
   diffAPIRevision : APIRevision | undefined = undefined;
+  latestSampleRevision: SamplesRevision | undefined = undefined;
   revisionSidePanel : boolean | undefined = undefined;
   conversationSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
@@ -72,11 +75,14 @@ export class ReviewPageComponent implements OnInit {
 
   sideMenu: MenuItem[] | undefined;
 
-  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
+  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
-    private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService) {}
+    private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
+    private samplesRevisionService: SamplesRevisionService) {}
 
   ngOnInit() {
+    this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
+
     this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
@@ -94,14 +100,13 @@ export class ReviewPageComponent implements OnInit {
           this.showLineNumbers = false;
         }
       });
+      
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const navigationState = this.router.getCurrentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
         this.updateStateBasedOnQueryParams(params);
       }
     });
-
-    this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
 
     this.loadReview(this.reviewId!);
     this.loadPreferredApprovers(this.reviewId!);
@@ -110,6 +115,7 @@ export class ReviewPageComponent implements OnInit {
     this.createSideMenu();
     this.handleRealTimeReviewUpdates();
     this.handleRealTimeAPIRevisionUpdates();
+    this.loadLatestSampleRevision(this.reviewId!);
   }
 
   createSideMenu() {
@@ -124,6 +130,19 @@ export class ReviewPageComponent implements OnInit {
         tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => { this.conversationSidePanel = !this.conversationSidePanel; }
+      },
+      {
+        icon: 'bi bi-puzzle',
+        tooltip: 'Samples',
+        command: () => {
+          if (this.latestSampleRevision) {          
+            this.router.navigate(['/samples', this.reviewId],
+            { queryParams: { activeSamplesRevisionId: this.latestSampleRevision?.id } });
+          }
+          else {
+            this.router.navigate([`/samples/${this.reviewId}`])
+          }
+        }
       }
     ];
   }
@@ -236,12 +255,21 @@ export class ReviewPageComponent implements OnInit {
   }
 
   loadComments() {
-    this.commentsService.getComments(this.reviewId!)
+    this.commentsService.getComments(this.reviewId!, CommentType.APIRevision)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (comments: CommentItemModel[]) => {
           this.comments = comments;
         }
       });
+  }
+
+  loadLatestSampleRevision(reviewId: string) {
+    this.samplesRevisionService.getLatestSampleRevision(reviewId)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (sampleRevision: SamplesRevision) => {
+          this.latestSampleRevision = sampleRevision;
+        }
+    });
   }
 
   handlePageOptionsEmitter(showPageOptions: boolean) {

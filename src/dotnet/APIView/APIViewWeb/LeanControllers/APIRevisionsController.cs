@@ -37,13 +37,26 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Endpoint used by Client SPA for listing reviews.
+        /// Get the APIRevisions for a Review filtered by query parameters
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        [HttpGet("{reviewId}/latest", Name = "GetAPIRevision")]
+        public async Task<ActionResult<APIRevisionListItemModel>> GetLatestAPIRevisionAsync(string reviewId, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            var result = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: reviewId, apiRevisionType: apiRevisionType);
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA for listing API Revisions.
         /// </summary>
         /// <param name="pageParams"></param>
         /// <param name="filterAndSortParams"></param>
         /// <returns></returns>
         [HttpPost(Name = "GetAPIRevisions")]
-        public async Task<ActionResult<PagedList<APIRevisionListItemModel>>> GetAPIRevisionsAsync([FromQuery] PageParams pageParams, [FromBody] APIRevisionsFilterAndSortParams filterAndSortParams)
+        public async Task<ActionResult<PagedList<APIRevisionListItemModel>>> GetAPIRevisionsAsync([FromQuery] PageParams pageParams, [FromBody] FilterAndSortParams filterAndSortParams)
         {
             var result = await _apiRevisionsManager.GetAPIRevisionsAsync(User, pageParams, filterAndSortParams);
             Response.AddPaginationHeader(new PaginationHeader(result.NoOfItemsRead, result.PageSize, result.TotalCount));

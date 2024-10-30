@@ -79,6 +79,8 @@ namespace Stress.Watcher
             var namespaceEventHandler = new NamespaceEventHandler(
                 client, armClient, workloadConfig.SubscriptionId, workloadConfig.ClusterGroup,
                 workloadConfig.WorkloadAppPool, workloadConfig.WorkloadAppIssuer, options.Namespace);
+            await namespaceEventHandler.SyncCredentials();
+            _ = PollAndSyncCredentials(namespaceEventHandler, 288);  // poll every 12 hours
 
             var cts = new CancellationTokenSource();
             var taskList = new List<Task>
@@ -163,6 +165,15 @@ namespace Stress.Watcher
                 SubscriptionId = subscriptionId,
                 ClusterGroup = clusterGroup
             };
+        }
+
+        static async Task PollAndSyncCredentials(NamespaceEventHandler namespaceHandler, int minutes)
+        {
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromMinutes(minutes));
+                await namespaceHandler.SyncCredentials();
+            }
         }
     }
 }

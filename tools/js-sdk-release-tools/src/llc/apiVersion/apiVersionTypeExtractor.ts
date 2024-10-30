@@ -6,13 +6,12 @@ import { IApiVersionTypeExtractor } from "../../common/interfaces";
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string
 ): Promise<ApiVersionType> => {
-    let clientPattern = "src/*Context.ts";
-    let typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, clientPattern, tryFindRestClientPath);
-    if (typeFromClient !== ApiVersionType.None) return typeFromClient;
-    
-    clientPattern = "src/*Client.ts";
-    typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, clientPattern, tryFindRestClientPath);
-    if (typeFromClient !== ApiVersionType.None) return typeFromClient;
+    // NOTE: when there's customized code, emitter must put generated code in root/generated folder
+    const clientPatterns = ["generated/*Context.ts", "generated/*Client.ts", "src/*Context.ts", "src/*Client.ts"];
+    for (const pattern of clientPatterns) {
+        const typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, pattern, tryFindRestClientPath);
+        if (typeFromClient !== ApiVersionType.None) return typeFromClient;
+    }
     
     const parametersFolder = "src/";
     const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, parametersFolder, findParametersPath);

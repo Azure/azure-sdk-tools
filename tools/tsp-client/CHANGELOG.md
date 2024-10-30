@@ -1,5 +1,12 @@
 # Release
 
+## Unreleased - 0.14.0
+
+- Fix `init` command when using a local spec:
+  - `commit` and `repo` are no longer required.
+  - tsp-location.yaml will have default values for `commit` and `repo` that should be replaced when checking in a client library.
+  - Use the local tspconfig.yaml to create directory structure. (#9261)
+
 ## 2024-10-21 - 0.13.2
 
 - Bumped `@autorest/openapi-to-typespec` version to `0.10.2`.

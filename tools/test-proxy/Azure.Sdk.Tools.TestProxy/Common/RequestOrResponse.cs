@@ -11,8 +11,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public class RequestOrResponse
     {
-        public SortedDictionary<string, string[]> Headers;
-        public byte[] Body;
+        public SortedDictionary<string, string[]> Headers { get; set; } = new SortedDictionary<string, string[]>(StringComparer.InvariantCultureIgnoreCase);
+        public byte[] Body { get; set; }
 
         public bool TryGetContentType(out string contentType)
         {

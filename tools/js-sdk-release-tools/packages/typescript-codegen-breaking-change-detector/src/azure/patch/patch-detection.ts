@@ -74,7 +74,7 @@ export function patchRoutes(astContext: AstContext): DiffPair[] {
   return [...breakingChangePairs, ...newFeaturePairs];
 }
 
-export function patchUnionType(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
+export function patchTypeAlias(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
   const baseline = astContext.baseline.getTypeAlias(name);
   const current = astContext.current.getTypeAlias(name);
 

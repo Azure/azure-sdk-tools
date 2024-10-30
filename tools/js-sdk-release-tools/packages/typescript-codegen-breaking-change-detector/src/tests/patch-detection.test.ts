@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 import { join } from 'node:path';
 import { createAstContext } from '../azure/detect-breaking-changes';
-import { patchFunction, patchRoutes, patchUnionType } from '../azure/patch/patch-detection';
+import { patchFunction, patchRoutes, patchTypeAlias } from '../azure/patch/patch-detection';
 import { createTempFolder, getFormattedDate } from './utils';
 import { DiffLocation, DiffReasons, AssignDirection } from '../azure/common/types';
 
@@ -142,26 +142,40 @@ describe("patch current tool's breaking changes", async () => {
     try {
       const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
       const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
-      let breakingPairs = patchUnionType('typesChange', astContext, AssignDirection.CurrentToBaseline);
+      let breakingPairs = patchTypeAlias('typesChange', astContext, AssignDirection.CurrentToBaseline);
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
       expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
       expect(breakingPairs[0].target?.name).toBe('typesChange');
 
-      breakingPairs = patchUnionType('typesRemove', astContext, AssignDirection.CurrentToBaseline);
+      breakingPairs = patchTypeAlias('typesRemove', astContext, AssignDirection.CurrentToBaseline);
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
       expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
       expect(breakingPairs[0].target?.name).toBe('typesRemove');
 
-      breakingPairs = patchUnionType('typesAdd', astContext, AssignDirection.CurrentToBaseline);
+      breakingPairs = patchTypeAlias('typesAdd', astContext, AssignDirection.CurrentToBaseline);
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
       expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Added);
       expect(breakingPairs[0].source?.name).toBe('typesAdd');
+
+      breakingPairs = patchTypeAlias('typesExpand', astContext, AssignDirection.CurrentToBaseline);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+      expect(breakingPairs[0].source?.name).toBe('typesExpand');
+
+      breakingPairs = patchTypeAlias('typesNarrow', astContext, AssignDirection.CurrentToBaseline);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+      expect(breakingPairs[0].source?.name).toBe('typesNarrow');
     } finally {
       if (tempFolder) remove(tempFolder);
     }

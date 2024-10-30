@@ -73,7 +73,7 @@ export async function compileTsp({
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
-}): Promise<boolean> {
+}): Promise<[boolean, string]> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
   const { compile, NodeHost, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
 
@@ -109,13 +109,15 @@ export async function compileTsp({
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
 
   const cliOptions = Object.entries(options.options?.[emitterPackage] ?? {})
-    .map(([key, value]) => `--option ${key}=${value}`)
+    .map(([key, value]) => {
+      if (typeof value === "object") {
+        value = JSON.stringify(value);
+      }
+      return `--option ${key}=${value}`;
+    })
     .join(" ");
 
   const exampleCmd = `npx tsp compile ${resolvedMainFilePath} --emit ${emitterPackage} ${cliOptions}`;
-  Logger.debug(`Example of how to compile using the tsp commandline. tsp-client does NOT directly run this command, results may vary:
-    ${exampleCmd}
-    `);
 
   if (diagnostics.length > 0) {
     let errorDiagnostic = false;
@@ -132,7 +134,7 @@ export async function compileTsp({
       }
     }
     if (errorDiagnostic) {
-      return false;
+      return [false, exampleCmd];
     }
   }
 
@@ -152,11 +154,11 @@ export async function compileTsp({
       }
     }
     if (errorDiagnostic) {
-      return false;
+      return [false, exampleCmd];
     }
   }
   Logger.success("generation complete");
-  return true;
+  return [true, exampleCmd];
 }
 
 export async function importTsp(baseDir: string): Promise<typeof import("@typespec/compiler")> {

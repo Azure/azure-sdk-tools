@@ -136,6 +136,10 @@ export async function initCommand(argv: any) {
   if (!skipSyncAndGenerate) {
     // update argv in case anything changed and call into sync and generate
     argv["output-dir"] = outputDir;
+    if (!isUrl) {
+      // If the local spec repo is provided, we need to update the local-spec-repo argument for syncing as well
+      argv["local-spec-repo"] = tspConfig;
+    }
     await syncCommand(argv);
     await generateCommand(argv);
   }
@@ -144,7 +148,7 @@ export async function initCommand(argv: any) {
 
 export async function syncCommand(argv: any) {
   let outputDir = argv["output-dir"];
-  const localSpecRepo = argv["local-spec-repo"];
+  let localSpecRepo = argv["local-spec-repo"];
 
   const tempRoot = await createTempDirectory(outputDir);
   const repoRoot = await getRepoRoot(outputDir);
@@ -163,6 +167,10 @@ export async function syncCommand(argv: any) {
   await mkdir(srcDir, { recursive: true });
 
   if (localSpecRepo) {
+    if (localSpecRepo.endsWith("tspconfig.yaml")) {
+      // If the path is to tspconfig.yaml, we need to remove it to get the spec directory
+      localSpecRepo = localSpecRepo.split("tspconfig.yaml")[0];
+    }
     Logger.info(
       "NOTE: A path to a local spec was provided, will generate based off of local files...",
     );

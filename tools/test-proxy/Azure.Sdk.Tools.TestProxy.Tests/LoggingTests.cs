@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 HttpResponse response = new DefaultHttpContext().Response;
                 await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
 
-                AssertLogs(logger, 4, 10, 12, "playback");
+                AssertLogs(logger, 4, 16, 12, "playback");
             }
             finally
             {
@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await testRecordingHandler.StopRecording(recordingId);
             try
             {
-                AssertLogs(logger, 2, 9, 12, "record");
+                AssertLogs(logger, 2, 11, 12, "record");
             }
             finally
             {
@@ -117,19 +117,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 logger.Logs[2 + offset].ToString());
             if (testType == "playback")
             {
-                offset = offset + 1;
+                offset = offset + 5;
             }
             Assert.Equal("URI: [ https://Sanitized.table.core.windows.net/Tables]" +
                          Environment.NewLine + "Headers: [{\"Accept\":[\"application/json;odata=minimalmetadata\"],\"Accept-Encoding\":[\"gzip, deflate\"],\"Authorization\":[\"Sanitized\"],\"Connection\":[\"keep-alive\"]," +
                          "\"Content-Length\":[\"" + expectedContentLength + "\"],\"Content-Type\":[\"application/octet-stream\"],\"DataServiceVersion\":[\"3.0\"],\"Date\":[\"Tue, 18 May 2021 23:27:42 GMT\"]," +
                          "\"User-Agent\":[\"azsdk-python-data-tables/12.0.0b7 Python/3.8.6 (Windows-10-10.0.19041-SP0)\"],\"x-ms-client-request-id\":[\"Sanitized\"]," +
                          "\"x-ms-date\":[\"Tue, 18 May 2021 23:27:42 GMT\"],\"x-ms-version\":[\"2019-02-02\"]}]" + Environment.NewLine,
-                logger.Logs[3 + offset].ToString()); 
+                logger.Logs[3 + offset].ToString());
             if (testType == "playback")
             {
                 offset = offset - 1;
             }
-            Assert.Equal("Central sanitizer rule AZSDK4001 modified the entry"+Environment.NewLine+"RequestUri is modified" + Environment.NewLine + "before:" + Environment.NewLine + " https://fakeazsdktestaccount.table.core.windows.net/Tables" + Environment.NewLine + "after: " + Environment.NewLine + " https://Sanitized.table.core.windows.net/Tables" + Environment.NewLine , logger.Logs[5 + offset].ToString());
+            Assert.Equal("Central sanitizer rule AZSDK4001 modified the entry" + Environment.NewLine + "RequestUri is modified" + Environment.NewLine + "before:" + Environment.NewLine + " https://fakeazsdktestaccount.table.core.windows.net/Tables" + Environment.NewLine + "after: " + Environment.NewLine + " https://Sanitized.table.core.windows.net/Tables" + Environment.NewLine, logger.Logs[7 + offset].ToString());
         }
 
         private static async Task AddSanitizerAsync(RecordingHandler testRecordingHandler, TestLogger logger)

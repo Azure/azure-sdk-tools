@@ -76,7 +76,7 @@ stages:
   jobs:
   - job: Build
     steps:
-    - template: ../steps/emit-pipeline-repositories.yml
+    - template: /eng/pipelines/templates/steps/emit-pipeline-repositories.yml
       parameters:
         name: repositories
         displayName: 'Get repository details'
@@ -130,7 +130,7 @@ stages:
             -OutputDirectory '$(Build.ArtifactStagingDirectory)'
           workingDirectory: $(autorestRepositoryPath)
 
-    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+    - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
       parameters:
         artifactName: build_artifacts
         artifactPath: $(Build.ArtifactStagingDirectory)
@@ -204,7 +204,7 @@ stages:
 
     # Create authenticated .npmrc file for publishing
     - ${{ if eq(parameters.PublishInternal, 'true') }}:
-      - template: ../steps/create-authenticated-npmrc.yml
+      - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
         parameters:
           npmrcPath: $(buildArtifactsPath)/packages/.npmrc
           registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js-test-autorest/npm/registry/
@@ -243,7 +243,7 @@ stages:
             -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
             -OutputDirectory "$(Build.ArtifactStagingDirectory)"
 
-    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+    - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
       parameters:
         artifactName: publish_artifacts
         artifactPath: $(Build.ArtifactStagingDirectory)
@@ -292,7 +292,7 @@ stages:
           arguments: $(TestArguments)
           workingDirectory: $(autorestRepositoryPath)
 
-      - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
         parameters:
           artifactName: test_artifacts_$(System.JobName)
           artifactPath: $(Build.ArtifactStagingDirectory)
@@ -314,7 +314,7 @@ stages:
   jobs:
   - job: Initialize
     steps:
-    - template: ../../../common/pipelines/templates/steps/sparse-checkout.yml
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Paths:
         - "/*"
@@ -372,7 +372,7 @@ stages:
           -MinimumPerJob ${{ parameters.MinimumPerJob }}
           -OnlyTypespec ${{ parameters.OnlyGenerateTypespec }}
 
-    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+    - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
       parameters:
         artifactName: matrix_artifacts
         artifactPath: $(Build.ArtifactStagingDirectory)
@@ -386,7 +386,7 @@ stages:
     steps:
     - checkout: self
     - checkout: azure-sdk-tools
-    - template: ../../../common/pipelines/templates/steps/sparse-checkout.yml
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Paths:
         - "/*"

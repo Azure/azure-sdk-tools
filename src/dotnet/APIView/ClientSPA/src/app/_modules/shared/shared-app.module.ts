@@ -21,6 +21,13 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessagesModule } from 'primeng/messages';
 import { BadgeModule } from 'primeng/badge';
+import { SimplemdeModule } from 'ngx-simplemde';
+import { MonacoEditorModule, NgxMonacoEditorConfig  } from 'ngx-monaco-editor-v2';
+import { environment } from 'src/environments/environment';
+
+const monacoEditorConfig: NgxMonacoEditorConfig = {
+  baseUrl: environment.assetsPath 
+};
  
 
 @NgModule({
@@ -55,6 +62,8 @@ import { BadgeModule } from 'primeng/badge';
     SidebarModule,
     TimeagoModule,
     InputTextModule,
+    SimplemdeModule,
+    MonacoEditorModule
   ],
   imports: [
     CommonModule,
@@ -74,6 +83,8 @@ import { BadgeModule } from 'primeng/badge';
     SidebarModule,
     InputTextModule,
     TimeagoModule.forRoot(),
+    SimplemdeModule.forRoot(),
+    MonacoEditorModule.forRoot(monacoEditorConfig)
   ]
 })
 export class SharedAppModule { }

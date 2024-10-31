@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
-import { MenuItem, MenuItemCommandEvent } from 'primeng/api';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
@@ -20,7 +20,7 @@ import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers'
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
   @Input() associatedCodeLine: CodePanelRowData | undefined;
-  @Input() instanceLocation: "code-panel" | "conversations" = "code-panel";
+  @Input() instanceLocation: "code-panel" | "conversations" | "samples" = "code-panel";
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -32,7 +32,6 @@ export class CommentThreadComponent {
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
   
   userProfile : UserProfile | undefined;
-  commentEditText: string | undefined;
   assetsPath : string = environment.assetsPath;
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
@@ -50,7 +49,7 @@ export class CommentThreadComponent {
 
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
-  constructor(private userProfileService: UserProfileService) { }
+  constructor(private userProfileService: UserProfileService, private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.userProfileService.getUserProfile().subscribe(
@@ -147,7 +146,9 @@ export class CommentThreadComponent {
     if (comment && this.userProfile?.userName === comment.createdBy) {
       menu.push(...this.menuItemsLoggedInUsers);
     }
-    menu.push(...this.menuItemAllUsers);
+    if (this.instanceLocation !== "samples") {
+      menu.push(...this.menuItemAllUsers);
+    }
     return menu;
   }
 
@@ -216,12 +217,14 @@ export class CommentThreadComponent {
   deleteComment(event: MenuItemCommandEvent) {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
+    const title = target.getAttribute("data-element-id");
     this.deleteCommentActionEmitter.emit(
       {
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         commentId: commentId,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+        title: title // Used for Sample Instance of CommentThread
       } as CommentUpdatesDto
     );
   }
@@ -235,12 +238,14 @@ export class CommentThreadComponent {
   cancelCommentAction(event: Event) {
     const target = event.target as Element;
     const replyEditorContainer = target.closest(".reply-editor-container") as Element;
+    const title = target.closest(".user-comment-thread")?.getAttribute("title");
     if (replyEditorContainer) {
       this.codePanelRowData!.showReplyTextBox = false;
       this.cancelCommentActionEmitter.emit(
         {
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+          title: title // Used for Sample Instance of CommentThread
         }
       );
     } else {
@@ -254,48 +259,69 @@ export class CommentThreadComponent {
     const target = event.target as Element;
     const replyEditorContainer = target.closest(".reply-editor-container") as Element;
     let revisionIdForConversationGroup: string | null | undefined = null;
-    let elementIdForConversationGroup: string | null | undefined = null;
+    let elementId: string | null | undefined = null;
 
     if (this.instanceLocation === "conversations") {
       revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
-      elementIdForConversationGroup = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+      elementId = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
+    } else if (this.instanceLocation === "samples") {
+      elementId = target.closest(".user-comment-thread")?.getAttribute("title");
     }
 
+    const HTML_STRIP_REGEX = /<\/?[^>]+(>|$)/g
+    const emptyCommentContentWarning = "Comment content is empty. No action taken.";
+
     if (replyEditorContainer) {
-      const replyEditor = this.editor.find(e => e.editorId === "replyEditor");
-      const content = replyEditor?.getEditorContent();
-      this.saveCommentActionEmitter.emit(
-        { 
-          commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
-          nodeId: this.codePanelRowData!.nodeId,
-          nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-          commentText: content,
-          allowAnyOneToResolve: this.allowAnyOneToResolve,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-          elementId: elementIdForConversationGroup,
-          revisionId: revisionIdForConversationGroup
-        } as CommentUpdatesDto
-      );
+      const content = this.getEditorContent("replyEditor");
+      const contentText = content.replace(HTML_STRIP_REGEX, '');
+      if (contentText.length === 0) {
+        this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: emptyCommentContentWarning, key: 'bl', life: 3000 });
+      } else {
+        this.saveCommentActionEmitter.emit(
+          { 
+            commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+            nodeId: this.codePanelRowData!.nodeId,
+            nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+            commentText: content,
+            allowAnyOneToResolve: this.allowAnyOneToResolve,
+            associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+            elementId: elementId,
+            revisionId: revisionIdForConversationGroup
+          } as CommentUpdatesDto
+        );
+      }
       this.codePanelRowData!.showReplyTextBox = false;
     } else {
       const panel = target.closest("p-panel") as Element;
       const commentId = panel.getAttribute("data-comment-id");
-      const replyEditor = this.editor.find(e => e.editorId === commentId);
-      const content = replyEditor?.getEditorContent();
-      this.saveCommentActionEmitter.emit(
-        { 
-          commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
-          nodeId: this.codePanelRowData!.nodeId,
-          nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-          commentId: commentId,
-          commentText: content,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
-          elementId: elementIdForConversationGroup,
-          revisionId: revisionIdForConversationGroup
-        } as CommentUpdatesDto
-      );
+      const content = this.getEditorContent(commentId!);
+      const contentText = content.replace(HTML_STRIP_REGEX, '');
+      if (contentText.length === 0) {
+        this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: emptyCommentContentWarning, key: 'bl', life: 3000 });
+      } else {
+        this.saveCommentActionEmitter.emit(
+          { 
+            commentThreadUpdateAction: CommentThreadUpdateAction.CommentTextUpdate,
+            nodeId: this.codePanelRowData!.nodeId,
+            nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+            commentId: commentId,
+            commentText: content,
+            associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
+            elementId: elementId,
+            revisionId: revisionIdForConversationGroup
+          } as CommentUpdatesDto
+        );
+      }
       this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
     }
+  }
+
+  getEditorContent(editorId: string) : string{
+    if (this.editor) {
+      const replyEditor = this.editor.find(e => e.editorId === editorId);
+      return replyEditor?.getEditorContent() || "";
+    }
+    return "";
   }
 
   toggleUpVoteAction(event: Event) {
@@ -342,5 +368,9 @@ export class CommentThreadComponent {
       commentThreadNavaigationPointer: targetIndex,
       direction: direction
     });
+  }
+  
+  handleContentEmitter(event: string) {
+    this.changeDetectorRef.detectChanges();
   }
 }

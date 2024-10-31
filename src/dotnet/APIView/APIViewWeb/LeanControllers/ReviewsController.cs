@@ -57,7 +57,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="filterAndSortParams"></param>
         /// <returns></returns>
         [HttpGet(Name = "GetReviews")]
-        public async Task<ActionResult<PagedList<ReviewListItemModel>>> GetReviewsAsync([FromQuery] PageParams pageParams, [FromQuery] ReviewFilterAndSortParams filterAndSortParams)
+        public async Task<ActionResult<PagedList<ReviewListItemModel>>> GetReviewsAsync([FromQuery] PageParams pageParams, [FromQuery] FilterAndSortParams filterAndSortParams)
         {
             var result = await _reviewManager.GetReviewsAsync(pageParams, filterAndSortParams);
             Response.AddPaginationHeader(new PaginationHeader(result.NoOfItemsRead, result.PageSize, result.TotalCount));
@@ -151,7 +151,7 @@ namespace APIViewWeb.LeanControllers
 
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
-                var comments = await _commentsManager.GetCommentsAsync(reviewId);
+                var comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
                 var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
 
                 var codePanelRawData = new CodePanelRawData()

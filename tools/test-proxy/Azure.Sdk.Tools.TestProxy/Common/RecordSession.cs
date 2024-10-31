@@ -345,39 +345,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Checks if the body content has been modified.
         /// </summary>
-        /// <param name="preBody">The body content before modification.</param>
-        /// <param name="postBody">The body content after modification.</param>
+        /// <param name="array1">The body content before modification.</param>
+        /// <param name="array2">The body content after modification.</param>
         /// <returns>True if the body content is modified, otherwise false.</returns>
-        private bool IsBodyModified(byte[] preBody, byte[] postBody)
+        private bool IsBodyModified(byte[] array1, byte[] array2)
         {
-            // Treat null and empty arrays as the same
-            if ((preBody == null || preBody.Length == 0) && (postBody == null || postBody.Length == 0))
-            {
+            if (array1 == null && array2 == null)
                 return false;
-            }
 
-            // If one is null or empty and the other is not, they are different
-            if ((preBody == null || preBody.Length == 0) || (postBody == null || postBody.Length == 0))
-            {
+            if (array1 == null || array2 == null)
                 return true;
-            }
 
-            // If lengths are different, they are different
-            if (preBody.Length != postBody.Length)
-            {
-                return true;
-            }
-
-            // Compare byte by byte
-            for (int i = 0; i < preBody.Length; i++)
-            {
-                if (preBody[i] != postBody[i])
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return !array1.SequenceEqual(array2);
         }
 
         /// <summary>

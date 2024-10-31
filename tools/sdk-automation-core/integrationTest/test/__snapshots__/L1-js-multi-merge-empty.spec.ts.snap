@@ -1,0 +1,141 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`In open PR, SDK Automation should run in open pr (contains no spec update) after one merged pr 1`] = `
+Array [
+  Object {
+    "base": "master",
+    "head": "sdkAutomation/@azure_test-service",
+    "number": 1,
+    "state": "open",
+    "title": "sdkAutomation/@azure_test-service",
+  },
+  Object {
+    "base": "master",
+    "head": "sdkAuto/2/@azure_test-service",
+    "number": 2,
+    "state": "open",
+    "title": "[AutoPR @azure/test-service] patch2",
+  },
+]
+`;
+
+exports[`In open PR, SDK Automation should run in open pr (contains no spec update) after one merged pr 2`] = `
+"github	Get specificationRepositoryConfiguration.json from <org>/<spec_repo>
+info	mainRepository: <org>/<sdk_repo>
+info	mainBranch: master
+info	integrationRepository: <org>/<sdk_repo>
+info	integrationBranchPrefix: sdkAutomation
+info	secondaryRepository: <org>/<sdk_repo>
+info	secondaryBranch: master
+github	Get swagger_to_sdk_config.json from <org>/<sdk_repo>
+git	Set remote main on <org>/<spec_repo> with auth
+git	Delete branch refs/heads/master
+git	Delete branch refs/heads/patch0
+git	Delete branch refs/heads/patch2
+git	Fetch pull/2/merge on <org>/<spec_repo>
+git	Set remote main on <org>/<sdk_repo> with auth
+git	Set remote secondary on <org>/<sdk_repo> with auth
+git	Set remote integration on <org>/<sdk_repo> with auth
+git	Delete branch refs/heads/master
+git	Delete branch refs/heads/sdkAutomation/@azure_test-service
+git	Fetch <org>/<sdk_repo> to main
+git	Checkout main
+git	Checkout secondary from main
+warn	Skip initScript due to not configured
+info	1 changed files in spec PR:
+info	A	specification/testservice/resource-manager/readme.no-lang.md
+info	Related readme.md list:
+info		specification/testservice/resource-manager/readme.md
+info	Handle the following readme.md:
+info		specification/testservice/resource-manager/readme.md
+git	Checkout branch sdkGen
+section	Call legacy generate
+command	autorest --version=V2 --typescript --license-header=MICROSOFT_MIT_NO_VERSION --use=@microsoft.azure/autorest.typescript@4.4.4 --typescript-sdks-folder=<work_dir>/<sdk_repo> ../<spec_repo>/specification/testservice/resource-manager/readme.md
+info	Config: {\\"stdout\\":{\\"showInComment\\":{}},\\"stderr\\":{\\"showInComment\\":true,\\"scriptWarning\\":{}},\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"}}
+section	Commit generate result
+git	Add * in SDK repo
+info	13 changed files after SDK generate:
+info	A	sdk/testservice/arm-testservice/LICENSE.txt
+info	A	sdk/testservice/arm-testservice/README.md
+info	A	sdk/testservice/arm-testservice/package.json
+info	A	sdk/testservice/arm-testservice/rollup.config.js
+info	A	sdk/testservice/arm-testservice/src/models/index.ts
+info	A	sdk/testservice/arm-testservice/src/models/mappers.ts
+info	A	sdk/testservice/arm-testservice/src/models/parameters.ts
+info	A	sdk/testservice/arm-testservice/src/models/testMappers.ts
+info	A	sdk/testservice/arm-testservice/src/operations/index.ts
+info	A	sdk/testservice/arm-testservice/src/operations/test.ts
+info	A	sdk/testservice/arm-testservice/src/testServiceClient.ts
+info	A	sdk/testservice/arm-testservice/src/testServiceClientContext.ts
+info	A	sdk/testservice/arm-testservice/tsconfig.json
+git	Commit all the changes
+section	Detect changed packages
+info	Package from changed file search: /^package\\\\.json$/
+info	1 packages found after generation:
+info		sdk/testservice/arm-testservice
+git	Set remote main on <org>/<sdk_repo> with auth
+git	Set remote secondary on <org>/<sdk_repo> with auth
+git	Set remote integration on <org>/<sdk_repo> with auth
+section	Handle package @azure/test-service
+info	Package log to https://sdkautotest/dl/<org>/2/azure-sdk-for-js/@azure_test-service/logs.txt
+info	baseBranch [master] baseRepo [<org>/<sdk_repo>] baseRemote [integration]
+info	targetBranch [sdkAuto/2/@azure_test-service] targetRepo [<org>/<sdk_repo>] baseRemote [integration]
+info	Skip sync baseBranch due to same remote same branch
+git	Create targetBranch sdkAuto/2/@azure_test-service
+git	Checkout sdk folders from sdkGen and commit: sdk/testservice/arm-testservice
+git	Push sdkAuto/2/@azure_test-service to <org>/<sdk_repo>
+section	Call legacy build for azure-sdk-for-js
+command	npm pack --silent 
+info	Config: {\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"},\\"stderr\\":{\\"showInComment\\":true},\\"logPrefix\\":\\"npmPack\\"}
+info	changelogScript is not configured
+info	Use legacy artifact search option
+info	Search artifact with: /\\\\.tgz$/
+info	1 artifact found:
+info		sdk/testservice/arm-testservice/azure-test-service-1.0.0.tgz
+info	Upload 1 artifact:
+info		azure-test-service-1.0.0.tgz
+info	Legacy InstallInstruction
+github	Get PR in <org>/<sdk_repo> from <org>:sdkAuto/2/@azure_test-service to master
+github	Create new PR
+github	PR created at https://github.com/<org>/<sdk_repo>/pull/2
+section	Report status
+info	Main status [succeeded] hasBreakingChange [false]
+info	Rendered commentSubTitle: 
+info	Rendered commentBody: <ul>
+  <li>
+    <div>
+      <code>️✔️</code>Succeeded Generate from
+      <commit_sha>. SDK Automation <version>
+    </div>
+    <pre>
+warn	Skip initScript due to not configured
+command	autorest --version&#x3D;V2 --typescript --license-header&#x3D;MICROSOFT_MIT_NO_VERSION --use&#x3D;@microsoft.azure/autorest.typescript@4.4.4 --typescript-sdks-folder&#x3D;<work_dir>/<sdk_repo> ../<spec_repo>/specification/testservice/resource-manager/readme.md</pre
+    >
+  </li>
+  <li>
+    <div>
+      <span
+        ><code>️✔️</code><b>@azure/test-service</b> [<a
+          href=\\"https://sdkautotest/dl/<org>/2/azure-sdk-for-js/@azure_test-service/logs.txt\\"
+          >View full logs</a
+        >]&nbsp; [<a
+          href=\\"https://github.com/<org>/<sdk_repo>/pull/2\\"
+          >Preview SDK Changes</a
+        >]
+      </span>
+    </div>
+    <ul>
+      <li>
+        <a
+          href=\\"https://sdkautotest/dl/<org>/2/azure-sdk-for-js/@azure_test-service/azure-test-service-1.0.0.tgz\\"
+          >azure-test-service-1.0.0.tgz</a
+        >
+      </li>
+    </ul>
+    <pre>
+    >
+  </li>
+</ul>
+
+info	Writing unified pipeline message to pipe.log"
+`;

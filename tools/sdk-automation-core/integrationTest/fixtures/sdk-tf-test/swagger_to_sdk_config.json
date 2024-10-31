@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapistorageprod.blob.core.windows.net/sdkautomation/prod/schemas/swagger_to_sdk_config.schema.json",
+  "meta": {
+    "after_scripts_in_repo_with_service": ["bash ./scripts/trenton_run.sh"],
+    "autorest_options_for_otherSDK": {
+      "use": "@microsoft.azure/autorest.go@2.1.134",
+      "go": "",
+      "sdkrel:go-sdk-folder": "./vendor",
+      "use-onever": "",
+      "preview-chk": "",
+      "version": "V2"
+    },
+    "autorest_options": {
+      "trenton": "",
+      "use": "https://trenton.blob.core.windows.net/trenton/autorest-trenton-0.2.2.tgz",
+      "sdkrel:output-folder": "./azurerm/internal/services",
+      "clear-output-folder": "true"
+    },
+    "advanced_options": {
+      "create_sdk_pull_requests": true,
+      "sdk_generation_pull_request_base": "integration_branch"
+    },
+    "repotag": "azure-sdk-for-trenton",
+    "envs": {
+      "sdkrel:GOPATH": "../../../.."
+    },
+    "version": "0.1.0"
+  }
+}

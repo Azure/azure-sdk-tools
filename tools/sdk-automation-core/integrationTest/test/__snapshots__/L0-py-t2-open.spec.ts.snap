@@ -1,0 +1,215 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`In open PR, SDK Automation should create Python Track2 sdk pr on spec pr opened 1`] = `
+Array [
+  Object {
+    "base": "master",
+    "head": "enable-track2",
+    "number": 1,
+    "state": "closed",
+    "title": "enable-track2",
+  },
+  Object {
+    "base": "master",
+    "head": "sdkAuto/1/track2_azure-mgmt-testservice",
+    "number": 2,
+    "state": "open",
+    "title": "[AutoPR track2_azure-mgmt-testservice] patch0",
+  },
+]
+`;
+
+exports[`In open PR, SDK Automation should create Python Track2 sdk pr on spec pr opened 2`] = `
+"github	Get specificationRepositoryConfiguration.json from <org>/<spec_repo>
+info	mainRepository: <org>/<sdk_repo>
+info	mainBranch: master
+info	integrationRepository: <org>/<sdk_repo>
+info	integrationBranchPrefix: sdkAutomation
+info	secondaryRepository: <org>/<sdk_repo>
+info	secondaryBranch: master
+github	Get swagger_to_sdk_custom_config.json from <org>/<sdk_repo>
+git	Set remote main on <org>/<spec_repo> with auth
+git	Delete branch refs/heads/master
+git	Delete branch refs/heads/patch0
+git	Fetch pull/1/merge on <org>/<spec_repo>
+git	Set remote main on <org>/<sdk_repo> with auth
+git	Set remote secondary on <org>/<sdk_repo> with auth
+git	Set remote integration on <org>/<sdk_repo> with auth
+git	Delete branch refs/heads/enable-track2
+git	Delete branch refs/heads/master
+git	Fetch <org>/<sdk_repo> to main
+git	Checkout main
+git	Checkout secondary from main
+warn	Skip initScript due to not configured
+info	Legacy python init
+command	npx n 12 
+info	Config: {}
+command	python3 -m venv venv 
+info	Config: {}
+command	pip install --upgrade setuptools wheel pip 
+info	Config: {\\"logPrefix\\":\\"pip install\\"}
+command	pip install pathlib jinja2 msrestazure 
+info	Config: {\\"logPrefix\\":\\"pip install\\"}
+info	6 changed files in spec PR:
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/TestService.json
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/examples/TestGet.json
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/examples/TestPut.json
+info	A	specification/testservice/resource-manager/readme.azureresourceschema.md
+info	A	specification/testservice/resource-manager/readme.md
+info	A	specification/testservice/resource-manager/readme.python.md
+info	Related readme.md list:
+info		specification/testservice/resource-manager/readme.md
+info	Handle the following readme.md:
+info		specification/testservice/resource-manager/readme.md
+git	Checkout branch sdkGen
+section	Call legacy generate
+command	autorest --use=@autorest/python@5.3.0 --python --python-mode=update --multiapi --track2 --python-sdks-folder=<work_dir>/<sdk_repo>/sdk ../<spec_repo>/specification/testservice/resource-manager/readme.md
+info	Config: {\\"stdout\\":{\\"showInComment\\":{}},\\"stderr\\":{\\"showInComment\\":true,\\"scriptWarning\\":{}},\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"}}
+cmdout	[Autorest] WARNING (PreCheck/CheckDuplicateSchemas): Checking for duplicate schemas, this could take a (long) while.  Run with --verbose for more detail.
+section	Commit generate result
+git	Add * in SDK repo
+info	25 changed files after SDK generate:
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/__init__.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/_configuration.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/_test_service_client.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/_version.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/aio/__init__.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/aio/_configuration.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/aio/_test_service_client.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/models.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/py.typed
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/__init__.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/_configuration.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/_metadata.json
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/_test_service_client.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/_version.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/aio/__init__.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/aio/_configuration.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/aio/_test_service_client.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/aio/operations/__init__.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/aio/operations/_test_operations.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/models/__init__.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/models/_models.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/models/_models_py3.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/operations/__init__.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/operations/_test_operations.py
+info	A	sdk/testservice/azure-mgmt-testservice/azure/mgmt/testservice/v2020_01/py.typed
+git	Commit all the changes
+section	Detect changed packages
+info	Package from changed file search: /^setup.py$|^azure$/
+info	1 packages found after generation:
+info		sdk/testservice/azure-mgmt-testservice
+git	Set remote main on <org>/<sdk_repo> with auth
+git	Set remote secondary on <org>/<sdk_repo> with auth
+git	Set remote integration on <org>/<sdk_repo> with auth
+section	Handle package track2_azure-mgmt-testservice
+info	Package log to https://sdkautotest/dl/<org>/1/azure-sdk-for-python-track2/track2_azure-mgmt-testservice/logs.txt
+info	baseBranch [master] baseRepo [<org>/<sdk_repo>] baseRemote [integration]
+info	targetBranch [sdkAuto/1/track2_azure-mgmt-testservice] targetRepo [<org>/<sdk_repo>] baseRemote [integration]
+info	Skip sync baseBranch due to same remote same branch
+git	Create targetBranch sdkAuto/1/track2_azure-mgmt-testservice
+git	Checkout sdk folders from sdkGen and commit: sdk/testservice/azure-mgmt-testservice
+git	Push sdkAuto/1/track2_azure-mgmt-testservice to <org>/<sdk_repo>
+section	Call legacy build for azure-sdk-for-python
+command	pip install -e ./tools/azure-sdk-tools/
+info	Config: {\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"},\\"stderr\\":{\\"showInComment\\":true},\\"logPrefix\\":\\"buildConfInit\\"}
+command	python -m packaging_tools --build-conf azure-mgmt-testservice
+info	Config: {\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"},\\"stderr\\":{\\"showInComment\\":true},\\"logPrefix\\":\\"buildConf\\"}
+cmderr	[buildConf] INFO:packaging_tools:Building template azure-mgmt-testservice
+cmderr	[buildConf] INFO:packaging_tools.conf:Build default conf for azure-mgmt-testservice
+cmderr	[buildConf] INFO:packaging_tools:Template done azure-mgmt-testservice
+command	python ./build_package.py --dest sdk/testservice/azure-mgmt-testservice sdk/testservice/azure-mgmt-testservice
+info	Config: {\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"},\\"stderr\\":{\\"showInComment\\":true},\\"logPrefix\\":\\"buildPackage\\"}
+cmderr	[buildPackage] warning: no files found matching '*.py' under directory 'tests'
+cmderr	[buildPackage] warning: no files found matching '*.yaml' under directory 'tests'
+cmderr	[buildPackage] warning: no files found matching '*.py' under directory 'tests'
+cmderr	[buildPackage] warning: no files found matching '*.yaml' under directory 'tests'
+command	python ./scripts/dev_setup.py -p azure-mgmt-testservice
+info	Config: {\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"warning\\"},\\"stderr\\":{\\"showInComment\\":true},\\"logPrefix\\":\\"changelogSetup\\"}
+warn	Script return with result [warning] code [1] signal [null] cwd [<sdk_repo>]: python
+command	python -m packaging_tools.code_report azure-mgmt-testservice
+info	Config: {\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"warning\\"},\\"stderr\\":{\\"showInComment\\":true},\\"logPrefix\\":\\"changelogReport\\"}
+warn	Script return with result [warning] code [1] signal [null] cwd [<sdk_repo>]: python
+command	python -m packaging_tools.code_report azure-mgmt-testservice --last-pypi
+info	Config: {\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"warning\\"},\\"stderr\\":{\\"showInComment\\":true},\\"logPrefix\\":\\"changelogReportLatest\\"}
+warn	Script return with result [warning] code [1] signal [null] cwd [<sdk_repo>]: python
+warn	Not exact 2 reports found:
+warn	Not generating changelog.
+info	changelogScript is not configured
+info	Use legacy artifact search option
+info	Search artifact with: /\\\\.(whl|zip)$/
+info	2 artifact found:
+info		sdk/testservice/azure-mgmt-testservice/sdk/testservice/azure-mgmt-testservice/azure-mgmt-testservice-0.1.0.zip
+info		sdk/testservice/azure-mgmt-testservice/sdk/testservice/azure-mgmt-testservice/azure_mgmt_testservice-0.1.0-py2.py3-none-any.whl
+info	Upload 2 artifact:
+info		azure-mgmt-testservice-0.1.0.zip
+info		azure_mgmt_testservice-0.1.0-py2.py3-none-any.whl
+info	Legacy InstallInstruction
+github	Get PR in <org>/<sdk_repo> from <org>:sdkAuto/1/track2_azure-mgmt-testservice to master
+github	Create new PR
+github	PR created at https://github.com/<org>/<sdk_repo>/pull/2
+section	Report status
+info	Main status [warning] hasBreakingChange [false]
+github	Remove label on pull request: CI-BreakingChange-Python-Track2
+info	Rendered commentSubTitle: 
+info	Rendered commentBody: <ul>
+  <li>
+    <div>
+      <code>⚠️</code>Warning Generate from
+      <commit_sha>. SDK Automation <version>
+    </div>
+    <pre>
+warn	Skip initScript due to not configured
+command	npx n 12
+command	python3 -m venv venv
+command	pip install --upgrade setuptools wheel pip
+command	pip install pathlib jinja2 msrestazure
+command	autorest --use&#x3D;@autorest/python@5.3.0 --python --python-mode&#x3D;update --multiapi --track2 --python-sdks-folder&#x3D;<work_dir>/<sdk_repo>/sdk ../<spec_repo>/specification/testservice/resource-manager/readme.md
+cmdout	[Autorest] WARNING (PreCheck/CheckDuplicateSchemas): Checking for duplicate schemas, this could take a (long) while.  Run with --verbose for more detail.</pre
+    >
+  </li>
+  <li>
+    <div>
+      <span
+        ><code>⚠️</code><b>track2_azure-mgmt-testservice</b> [<a
+          href=\\"https://sdkautotest/dl/<org>/1/azure-sdk-for-python-track2/track2_azure-mgmt-testservice/logs.txt\\"
+          >View full logs</a
+        >]&nbsp; [<a
+          href=\\"https://github.com/<org>/<sdk_repo>/pull/2\\"
+          >Preview SDK Changes</a
+        >]
+      </span>
+    </div>
+    <ul>
+      <li>
+        <a
+          href=\\"https://sdkautotest/dl/<org>/1/azure-sdk-for-python-track2/track2_azure-mgmt-testservice/azure-mgmt-testservice-0.1.0.zip\\"
+          >azure-mgmt-testservice-0.1.0.zip</a
+        >
+      </li>
+      <li>
+        <a
+          href=\\"https://sdkautotest/dl/<org>/1/azure-sdk-for-python-track2/track2_azure-mgmt-testservice/azure_mgmt_testservice-0.1.0-py2.py3-none-any.whl\\"
+          >azure_mgmt_testservice-0.1.0-py2.py3-none-any.whl</a
+        >
+      </li>
+    </ul>
+    <pre>
+cmderr	[buildConf] INFO:packaging_tools:Building template azure-mgmt-testservice
+cmderr	[buildConf] INFO:packaging_tools.conf:Build default conf for azure-mgmt-testservice
+cmderr	[buildConf] INFO:packaging_tools:Template done azure-mgmt-testservice
+cmderr	[buildPackage] warning: no files found matching &#x27;*.py&#x27; under directory &#x27;tests&#x27;
+cmderr	[buildPackage] warning: no files found matching &#x27;*.yaml&#x27; under directory &#x27;tests&#x27;
+cmderr	[buildPackage] warning: no files found matching &#x27;*.py&#x27; under directory &#x27;tests&#x27;
+cmderr	[buildPackage] warning: no files found matching &#x27;*.yaml&#x27; under directory &#x27;tests&#x27;
+warn	Script return with result [warning] code [1] signal [null] cwd [<sdk_repo>]: python
+warn	Script return with result [warning] code [1] signal [null] cwd [<sdk_repo>]: python
+warn	Script return with result [warning] code [1] signal [null] cwd [<sdk_repo>]: python
+warn	Not exact 2 reports found:
+warn	Not generating changelog.</pre
+    >
+  </li>
+</ul>
+
+info	Writing unified pipeline message to pipe.log"
+`;

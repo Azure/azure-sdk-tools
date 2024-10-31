@@ -1,0 +1,14 @@
+{
+  "extends": "@microsoft/rush-stack-compiler-4.7/includes/tslint.json",
+  "rules": {
+    "typedef": [
+      true,
+      "call-signature",
+      "parameter",
+      "property-declaration",
+      "member-variable-declaration"
+    ],
+    "export-name": false,
+    "interface-name": false
+  }
+}

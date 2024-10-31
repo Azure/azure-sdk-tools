@@ -1,0 +1,45 @@
+> [!NOTE]<BR>> For more instructions, please refer to the <a target="_blank" href="https://aka.ms/azsdk/sdk-automation-faq">FAQ</a> .<BR>
+<ul>
+  <li>
+    <div>
+{{renderStatus status}}{{#if failureType}}{{failureType}}{{else}}{{renderStatusName status}}{{/if}}
+{{#if useMergedRoutine}}Release -{{/if}} in generating from {{specCommitSha}}. {{renderSDKNameMapping config.sdkName}} Automation {{version}} </div>
+    {{#if messages}}
+      {{renderMessagesUnifiedPipeline messages status}}
+    {{/if}}
+  </li>
+  {{#each handledPackages}}
+  <li>
+    <div>
+      <span>{{renderStatus status}}<b>{{name}}</b>
+        {{#if generationPullRequestUrl}}
+        [<a href="{{generationPullRequestUrl}}">{{#if ../useMergedRoutine}}Release{{else}}Preview{{/if}} {{renderSDKNameMapping ../config.sdkName}} Changes</a>]
+        {{/if}}
+        {{#if (shouldRender hasBreakingChange isBetaMgmtSdk)}}
+        <b>Breaking Change Detected</b> 
+          {{#if sdkSuppressionFilePath}}
+            [<a href="{{sdkSuppressionFilePath}}">Suppression File</a>]
+          {{/if}}
+        {{/if}}
+      </span>
+    </div>
+    {{#if (shouldRender messages isBetaMgmtSdk)}}
+      {{renderMessagesUnifiedPipeline messages status}}
+    {{/if}}
+    {{#if (shouldRender presentSuppressionLines isBetaMgmtSdk hasBreakingChange)}}
+      {{renderPresentSuppressionLines presentSuppressionLines}}
+    {{/if}}
+    {{#if (shouldRender absentSuppressionLines isBetaMgmtSdk hasBreakingChange)}}
+      {{renderAbsentSuppressionLines absentSuppressionLines}}
+    {{/if}}
+    {{#if (shouldRender parseSuppressionLinesErrors isBetaMgmtSdk hasBreakingChange)}}
+      {{renderParseSuppressionLinesErrors parseSuppressionLinesErrors}}
+    {{/if}}
+    {{#if (shouldRender messages isBetaMgmtSdk hasBreakingChange)}}
+    <div>
+      Please refer to the <a target="_blank" href="https://aka.ms/azsdk/sdk-suppression">guidance</a> for suppressing SDK breaking changes.
+    </div>
+    {{/if}}
+  </li>
+  {{/each}}
+</ul>

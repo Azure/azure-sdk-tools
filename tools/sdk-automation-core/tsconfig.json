@@ -1,0 +1,14 @@
+{
+  "extends": "./node_modules/@microsoft/rush-stack-compiler-4.7/includes/tsconfig-node.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "declaration": false,
+    "declarationMap": false,
+    "types": [
+      "node", "jest"
+    ],
+    "esModuleInterop": true
+  }
+}

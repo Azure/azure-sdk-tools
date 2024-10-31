@@ -125,8 +125,31 @@ export class ApiView {
     }
   }
 
+  private adjustLine(line: ReviewLine) {
+    for (const token of line.Tokens) {
+      this.adjustToken(token);
+    }
+    for (const child of line.Children) {
+      this.adjustLine(child);
+    }
+  }
+
+  private adjustToken(token: ReviewToken) {
+    // the server has a bizarre "true" default for HasSuffixSpace that we
+    // need to account for. Also, we can delete the property if it's true
+    // since that's the server default.
+    token.HasSuffixSpace = token.HasSuffixSpace ?? false;
+    if (token.HasSuffixSpace) {
+      delete token.HasSuffixSpace;
+    }
+  }
+
   /** Output the APIView model to the CodeFile JSON format. */
   asCodeFile(): CodeFile {
+    // apply workarounds to the model before output
+    for (const line of this.reviewLines) {
+      this.adjustLine(line);
+    }
     return {
       Name: this.name,
       PackageName: this.packageName,
@@ -151,7 +174,7 @@ export class ApiView {
     this.currentLine.Tokens.push({
       Kind: kind,
       Value: value,
-      ...options
+      ...options,
     });
   }
 
@@ -311,7 +334,7 @@ export class ApiView {
     const token = {
       Kind: TokenKind.Punctuation,
       Value: value,
-      ...options
+      ...options,
     }
 
     if (snapTo) {
@@ -588,7 +611,7 @@ export class ApiView {
       case SyntaxKind.NamespaceStatement:
         throw new Error(`Case "NamespaceStatement" not implemented`);
       case SyntaxKind.NeverKeyword:
-        this.keyword("never", {HasSuffixSpace: true});
+        this.keyword("never");
         break;
       case SyntaxKind.NumericLiteral:
         obj = node as NumericLiteralNode;
@@ -679,7 +702,7 @@ export class ApiView {
           const opt = obj.options[x];
           this.tokenize(opt);
           if (x !== obj.options.length - 1) {
-            this.punctuation("|", {HasSuffixSpace: true});
+            this.punctuation("|", {HasPrefixSpace: true, HasSuffixSpace: true});
           }
         }
         break;

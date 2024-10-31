@@ -1,22 +1,23 @@
 import { apiViewFor, apiViewText, compare } from "./test-host.js";
 import { CodeFile } from "../src/schemas.js";
 import { describe, it } from "vitest";
+import { fail } from "assert";
 
 describe("apiview: tests", () => {
   /** Validates that there are no repeat defintion IDs. */
   function validateLineIds(apiview: CodeFile) {
-    return;
-    // FIXME: Re-enable these once the syntax renders correctly.
-    // const definitionIds = new Set<string>();
-    // for (const line of apiview.ReviewLines) {
-    //   // ensure that there are no repeated definition IDs.
-    //   if (line.LineId !== undefined) {
-    //     if (definitionIds.has(line.LineId)) {
-    //       fail(`Duplicate defintion ID ${line.LineId}.`);
-    //     }
-    //     definitionIds.add(line.LineId);
-    //   }
-    // }
+    const definitionIds = new Set<string>();
+    for (const line of apiview.ReviewLines) {
+      // ensure that there are no repeated definition IDs.
+      if (line.LineId !== undefined) {
+        if (definitionIds.has(line.LineId)) {
+          fail(`Duplicate defintion ID ${line.LineId}.`);
+        }
+        if (line.LineId !== "") {
+          definitionIds.add(line.LineId);
+        }
+      }
+    }
   }
 
   describe("models", () => {

@@ -16,7 +16,8 @@ export function reviewLineText(line: ReviewLine, indent: number): string {
   
 function reviewTokenText(token: ReviewToken, preview: string): string {
   const previewEndsInSpace = preview.endsWith(" ");
-  const suffixSpace = token.HasSuffixSpace ? " " : "";
+  const hasSuffixSpace = token.HasSuffixSpace !== undefined ? token.HasSuffixSpace : true;
+  const suffixSpace = hasSuffixSpace ? " " : "";
   const prefixSpace = (token.HasPrefixSpace && !previewEndsInSpace) ? " " : "";
   const value = token.Value;
   return `${prefixSpace}${value}${suffixSpace}`;

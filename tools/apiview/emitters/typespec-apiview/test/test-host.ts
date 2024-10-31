@@ -8,7 +8,7 @@ import "@azure-tools/typespec-apiview";
 import { ApiViewEmitterOptions } from "../src/lib.js";
 import { Diagnostic, resolvePath } from "@typespec/compiler";
 import { strictEqual } from "assert";
-import { CodeFile, ReviewLine, ReviewToken } from "../src/schemas.js";
+import { CodeFile } from "../src/schemas.js";
 import { reviewLineText } from "../src/util.js";
 
 export async function createApiViewTestHost() {

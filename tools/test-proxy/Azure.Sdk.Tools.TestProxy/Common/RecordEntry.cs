@@ -331,7 +331,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             copiedRecordEntry.Request = new RequestOrResponse();
             copiedRecordEntry.Request.Headers = new SortedDictionary<string, string[]>(this.Request.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
-            copiedRecordEntry.Request.Body = this.Response.Body != null ? (byte[])this.Request.Body.Clone() : null;
+            copiedRecordEntry.Request.Body = this.Request.Body != null ? (byte[])this.Request.Body.Clone() : null;
 
             copiedRecordEntry.Response = new RequestOrResponse();
             copiedRecordEntry.Response.Headers = new SortedDictionary<string, string[]>(this.Response.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));

@@ -284,23 +284,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 logMessage.AppendLine($"RequestUri is modified{before}{entryPreSanitize.RequestUri}{after}{entryPostSanitize.RequestUri}");
             }
 
-            void LogHeadersModification(RequestOrResponse pre, RequestOrResponse post, bool isRequest)
-            {
-                logMessage.AppendLine($"{(isRequest ? "Request" : "Response")} Headers are modified{before}{HeadersAsString(pre.Headers)}{after}{HeadersAsString(post.Headers)}");
-            }
-            if (areRequestHeadersModified)
-            {
-                LogHeadersModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
-            }
-            if (areResponseHeadersModified)
-            {
-                LogHeadersModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
-            }
-
             void LogBodyModification(RequestOrResponse pre, RequestOrResponse post, bool isRequest)
             {
-                if (pre.TryGetBodyAsText(out string bodyTextPre) &&
-                    post.TryGetBodyAsText(out string bodyTextPost) &&
+                if (pre.Body != null && pre.TryGetBodyAsText(out string bodyTextPre) &&
+                    post.Body != null && post.TryGetBodyAsText(out string bodyTextPost) &&
                     !string.IsNullOrWhiteSpace(bodyTextPre) &&
                     !string.IsNullOrWhiteSpace(bodyTextPost))
                 {
@@ -314,6 +301,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             if (isResponseBodyModified)
             {
                 LogBodyModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
+            }
+
+            void LogHeadersModification(RequestOrResponse pre, RequestOrResponse post, bool isRequest)
+            {
+                logMessage.AppendLine($"{(isRequest ? "Request" : "Response")} Headers are modified{before}{HeadersAsString(pre.Headers)}{after}{HeadersAsString(post.Headers)}");
+            }
+            if (areRequestHeadersModified)
+            {
+                LogHeadersModification(entryPreSanitize.Request, entryPostSanitize.Request, true);
+            }
+            if (areResponseHeadersModified)
+            {
+                LogHeadersModification(entryPreSanitize.Response, entryPostSanitize.Response, false);
             }
 
             DebugLogger.LogDebug(logMessage.ToString());
@@ -344,8 +344,34 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns>True if the body content is modified, otherwise false.</returns>
         private bool IsBodyModified(byte[] preBody, byte[] postBody)
         {
-            return (preBody != null || postBody != null) &&
-                (preBody == null || postBody == null || !preBody.SequenceEqual(postBody));
+            // Treat null and empty arrays as the same
+            if ((preBody == null || preBody.Length == 0) && (postBody == null || postBody.Length == 0))
+            {
+                return false;
+            }
+
+            // If one is null or empty and the other is not, they are different
+            if ((preBody == null || preBody.Length == 0) || (postBody == null || postBody.Length == 0))
+            {
+                return true;
+            }
+
+            // If lengths are different, they are different
+            if (preBody.Length != postBody.Length)
+            {
+                return true;
+            }
+
+            // Compare byte by byte
+            for (int i = 0; i < preBody.Length; i++)
+            {
+                if (preBody[i] != postBody[i])
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -355,7 +381,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns>A string representation of the headers.</returns>
         private string HeadersAsString(SortedDictionary<string, string[]> sortedDict)
         {
-            return string.Join(Environment.NewLine, sortedDict.Select(kvp => $"{kvp.Key}: {string.Join(", ", kvp.Value)}"));
+            return string.Join(Environment.NewLine + " ", sortedDict.Select(kvp => $"{kvp.Key}: {string.Join(", ", kvp.Value)}"));
         }
     }
 }

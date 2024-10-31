@@ -355,7 +355,9 @@ function RemoveStorageAccount($Account) {
     }
   }
 
-  Remove-AzStorageAccount -StorageAccountName $Account.StorageAccountName -ResourceGroupName $Account.ResourceGroupName -Force
+  if ($containers) {
+    Remove-AzStorageAccount -StorageAccountName $Account.StorageAccountName -ResourceGroupName $Account.ResourceGroupName -Force
+  }
 }
 
 function EnableBlobDeletion($Blob, $StorageAccountName, $ResourceGroupName) {

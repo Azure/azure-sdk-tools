@@ -1,5 +1,10 @@
 # Release
 
+## 2024-10-31 - 0.13.3
+
+- Expose `fully-compatible` flag for the `convert` command
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.3`.
+
 ## 2024-10-21 - 0.13.2
 
 - Bumped `@autorest/openapi-to-typespec` version to `0.10.2`.

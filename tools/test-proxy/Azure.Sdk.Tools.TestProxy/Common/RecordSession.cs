@@ -248,11 +248,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        public string GetSanitizerInfoLogPrefix(string sanitizerId)
-        {
-            return (sanitizerId != null && sanitizerId.StartsWith("AZSDK") ? "Central sanitizer" : "User specified") + " rule " + sanitizerId;
-        }
-
         /// <summary>
         /// Logs the modifications made by a sanitizer to a record entry.
         /// </summary>
@@ -273,6 +268,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return;
             }
 
+            // Record has been modified by the sanitizer, log the granular changes to assist in debugging
             StringBuilder logMessage = new StringBuilder();
             logMessage.AppendLine(GetSanitizerInfoLogPrefix(sanitizerId) + " modified the entry");
 
@@ -317,6 +313,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
 
             DebugLogger.LogDebug(logMessage.ToString());
+        }
+
+        /// <summary>
+        /// Generates a log prefix string that provides information about the sanitizer.
+        /// </summary>
+        /// <param name="sanitizerId">The ID of the sanitizer.</param>
+        /// <returns>A string that indicates whether the sanitizer is a central sanitizer or user-specified, followed by the sanitizer ID.</returns>
+        private string GetSanitizerInfoLogPrefix(string sanitizerId)
+        {
+            return (sanitizerId != null && sanitizerId.StartsWith("AZSDK") ? "Central sanitizer" : "User specified") + " rule " + sanitizerId;
         }
 
         /// <summary>

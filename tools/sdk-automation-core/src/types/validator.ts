@@ -1,4 +1,7 @@
 import { default as ajvInit, ValidateFunction } from 'ajv';
+import * as TriggerType from './TriggerType';
+import * as InstallInstructionScriptInput from './InstallInstructionScriptInput';
+import * as InstallInstructionScriptOutput from './InstallInstructionScriptOutput';
 
 const ajv = ajvInit({
   coerceTypes: true,
@@ -11,9 +14,9 @@ let schemaAdded = false;
 const addSchema = () => {
   if (!schemaAdded) {
     schemaAdded = true;
-    ajv.addSchema(require('./TriggerType').triggerTypeSchema);
-    ajv.addSchema(require('./InstallInstructionScriptInput').installInstructionScriptInputSchema);
-    ajv.addSchema(require('./InstallInstructionScriptOutput').installInstructionScriptOutputSchema);
+    ajv.addSchema(TriggerType.triggerTypeSchema);
+    ajv.addSchema(InstallInstructionScriptInput.installInstructionScriptInputSchema);
+    ajv.addSchema(InstallInstructionScriptOutput.installInstructionScriptOutputSchema);
   }
 };
 

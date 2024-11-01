@@ -85,7 +85,9 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
   if (!runOptions) {
     context.logger.info('changelogScript is not configured');
     for (const changelog of pkg.changelogs) {
-      changelog && context.logger.info(`[Changelog] ${changelog}`, { showInComment: true });
+      if (changelog) {
+        context.logger.info(`[Changelog] ${changelog}`, { showInComment: true });
+      }
     }
   } else {
     context.logger.log('section', 'Call ChangelogScript');
@@ -322,7 +324,7 @@ const workflowPkgUpdateBranch = async (context: WorkflowContext, pkg: PackageDat
   context.logger.log('git', `Create targetBranch ${syncConfig.targetBranch}`);
   const baseCommit = await context.sdkRepo.revparse(branchSecondary);
   await context.sdkRepo.raw(['branch', syncConfig.targetBranch, baseCommit, '--force']);
-  await gitCheckoutBranch(context.sdkRepo, syncConfig.targetBranch, false);
+  await gitCheckoutBranch(context, context.sdkRepo, syncConfig.targetBranch, false);
 
   const foldersToAdd = [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths]
     .filter((p) => p !== undefined)

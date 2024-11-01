@@ -36,7 +36,8 @@ import {
 } from './logging';
 import { sdkAutoReportStatus } from './reportStatus';
 import { SDKAutomationState } from '../sdkAutomationState';
-const { DefaultAzureCredential } = require("@azure/identity");
+import { DefaultAzureCredential } from '@azure/identity';
+import * as pkginfo from 'pkginfo';
 
 interface SdkAutoOptions {
   specRepo: RepoKey;
@@ -172,7 +173,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     getStorageContext(options, logger)
   ]);
 
-  const version = require('pkginfo').read(module).package.version;
+  const version = pkginfo.read(module).package.version;
   logger.info(`SDK Automation ${version}`);
 
   logger.info(
@@ -208,7 +209,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
 
   const legacyLangConfig = getLegacyLanguageConfig(options.sdkName);
 
-  let logsBlobUrl = `${logsBlobName}`;
+  const logsBlobUrl = `${logsBlobName}`;
 
   return {
     config: options,
@@ -272,7 +273,7 @@ const getStorageContext = async (options: SdkAutoOptions, logger: winston.Logger
 };
 
 const getGithubContext = async (options: SdkAutoOptions, logger: winston.Logger) => {
-  const [octokit, getGithubAccessToken] = getAuthenticatedOctokit(options.github, logger);
+    const {octokit, getToken: getGithubAccessToken} = getAuthenticatedOctokit(options.github, logger);
 
   let specPR: RestEndpointMethodTypes['pulls']['get']['response']['data'];
   do {

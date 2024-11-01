@@ -1,14 +1,27 @@
 {
-  "extends": "./node_modules/@microsoft/rush-stack-compiler-4.7/includes/tsconfig-node.json",
+  "$schema": "http://json.schemastore.org/tsconfig",
   "compilerOptions": {
+    "target": "es2022",
     "module": "commonjs",
+    "lib": ["es2022"],
+    "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "declaration": false,
-    "declarationMap": false,
+    "outDir": "./lib",
+    "rootDir": "./src",
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "strict": false,
+    "sourceMap": true,
+    "declarationMap": true,
+    "inlineSources": true,
+    "experimentalDecorators": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
     "types": [
       "node", "jest"
     ],
-    "esModuleInterop": true
-  }
+  },
+  "include": ["./src/**/*.ts"],
+  "exclude": ["./node_modules", "./lib"]
 }

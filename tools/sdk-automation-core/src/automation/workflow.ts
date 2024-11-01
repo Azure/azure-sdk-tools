@@ -172,7 +172,7 @@ export const workflowFilterSdkMain = async (context: SdkAutoContext) => {
 
   const commit = await specContext.specRepo.revparse(branchMain);
   for (const ch of changedSpecs) {
-    if (!!ch.typespecProject) {
+    if (ch.typespecProject) {
       const entry = await specContext.specRepo.revparse(`${commit}:${ch.typespecProject}`);
       const blob = await specContext.specRepo.catFile(['-p', entry]);
       const content = blob.toString();
@@ -184,7 +184,7 @@ export const workflowFilterSdkMain = async (context: SdkAutoContext) => {
       for (const repo of config) {
         sdkToGenerate.add(repo);
       }
-    } else if (!!ch.readmeMd) {
+    } else if (ch.readmeMd) {
       const entry = await specContext.specRepo.revparse(`${commit}:${ch.readmeMd}`);
       const blob = await specContext.specRepo.catFile(['-p', entry]);
       const content = blob.toString();
@@ -234,13 +234,13 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   const specConfigContent = await workflowInitGetSpecConfig(context);
   const specConfig = getSpecConfig(specConfigContent, context.config.specRepo);
   for (const changedSpec of changedSpecs) {
-    if (!!changedSpec.typespecProject) {
+    if (changedSpec.typespecProject) {
       let content: string | undefined = undefined;
       try {
         content = fs.readFileSync(path.join(context.specFolder, changedSpec.typespecProject!)).toString();
       } catch (error) {
         const typespecPath = `${path.join(context.specFolder, changedSpec.typespecProject!)}`;
-        context.logger.error(`IOError: Fails to read typespec file with path of '${typespecPath}'. Skipping the typespec case and continue the run. Please ensure the typespec exists with the correct path.`);
+        context.logger.error(`IOError: Fails to read typespec file with path of '${typespecPath}'. Skipping the typespec case and continue the run. Please ensure the typespec exists with the correct path. Error: ${error.message}`);
       }
       const config = findSDKToGenerateFromTypeSpecProject(content, specConfig)?.filter(
         (r) => r === context.config.sdkName
@@ -254,12 +254,12 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
       context.logger.info(`\t${changedSpec.typespecProject}`);
       typespecProjectList.push(changedSpec.typespecProject!.replace('/tspconfig.yaml', ''));
       suppressionFileMap.set(changedSpec.typespecProject!.replace('/tspconfig.yaml', ''), changedSpec.suppressionFile);
-    } else if (!!changedSpec.readmeMd) {
+    } else if (changedSpec.readmeMd) {
       let content: string | undefined = undefined;
       try {
         content = fs.readFileSync(path.join(context.specFolder, changedSpec.readmeMd!)).toString();
       } catch (error) {
-        context.logger.error(`IOError: Fails to read readme file with path of '${path.join(context.specFolder, changedSpec.readmeMd!)}'. Skipping the swagger case and continue the run. Please ensure the readme exists with the correct path.`);
+        context.logger.error(`IOError: Fails to read readme file with path of '${path.join(context.specFolder, changedSpec.readmeMd!)}'. Skipping the swagger case and continue the run. Please ensure the readme exists with the correct path. Error: ${error.message}`);
       }
       const confSection = findSwaggerToSDKConfiguration(content);
       const config = confSection?.repositories.filter((r) => r.repo === context.config.sdkName)[0];
@@ -273,7 +273,7 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
       suppressionFileMap.set(changedSpec.readmeMd!, changedSpec.suppressionFile);
     }
     // Avoid the null error when both readme.md and tsp-config.yaml don't exist
-    if (!!changedSpec.specs) {
+    if (changedSpec.specs) {
       for (const filePath of changedSpec.specs) {
         changedFilesSet.add(filePath);
       }
@@ -290,9 +290,9 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   const headCommit = await context.sdkRepo.revparse(branchMain);
 
   context.logger.log('git', `Checkout branch ${branchSdkGen}`);
-  await gitCheckoutBranch(context.sdkRepo, branchMain);
+  await gitCheckoutBranch(context, context.sdkRepo, branchMain);
   await context.sdkRepo.raw(['branch', branchSdkGen, headCommit, '--force']);
-  await gitCheckoutBranch(context.sdkRepo, branchSdkGen);
+  await gitCheckoutBranch(context, context.sdkRepo, branchSdkGen);
 
   const { status, generateInput, generateOutput } = await workflowCallGenerateScript(
     context,
@@ -311,7 +311,7 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   // filter suppressionFileMap with generateInput readmeMdList and typespecProjectList
   const filterGenerateFiles = [...generateInput.relatedTypeSpecProjectFolder || [], ...generateInput.relatedReadmeMdFiles || []]
   const filterSuppressionFileMap: Map<string, string|undefined> = new Map(
-    Array.from(suppressionFileMap).filter(([key, value]) => filterGenerateFiles.includes(key))
+    Array.from(suppressionFileMap).filter(([key]) => filterGenerateFiles.includes(key))
   );
 
   const sdkSuppressionsYml = await workflowInitGetSdkSuppressionsYml(context, filterSuppressionFileMap);
@@ -348,7 +348,7 @@ export const workflowInitGetSdkSuppressionsYml = async (
   );
 
   const suppressionFileMap: SDKSuppressionContentList = new Map();
-  for (let [changedSpecFilePath, sdkSuppressionFilePath] of filterSuppressionFileMap) {
+  for (const [changedSpecFilePath, sdkSuppressionFilePath] of filterSuppressionFileMap) {
     context.logger.info(`${changedSpecFilePath} corresponding SDK suppression files ${sdkSuppressionFilePath}.`);
     if(!sdkSuppressionFilePath){
       suppressionFileMap.set(changedSpecFilePath, {content: null, sdkSuppressionFilePath, errors: ['No suppression file added.']});
@@ -363,7 +363,7 @@ export const workflowInitGetSdkSuppressionsYml = async (
     try {
       suppressionFileData = fs.readFileSync(filePath).toString();
     } catch (error) {
-      context.logger.error(`IOError: Fails to read SDK suppressions file with path of '${sdkSuppressionFilePath}'. Assuming no suppressions are present. Please ensure the suppression file exists in the right path in order to load the suppressions for the SDK breaking changes.`);
+      context.logger.error(`IOError: Fails to read SDK suppressions file with path of '${sdkSuppressionFilePath}'. Assuming no suppressions are present. Please ensure the suppression file exists in the right path in order to load the suppressions for the SDK breaking changes. Error: ${error.message}`);
       continue;
     }
     // parse file both to get yaml content and validate the suppression file has grammar error
@@ -484,7 +484,7 @@ const workflowInitSpecRepo = async (
     }
 
     if (opts.checkoutMainBranch) {
-      await gitCheckoutBranch(specRepo, branchMain);
+      await gitCheckoutBranch(context, specRepo, branchMain);
     }
 
     return { specFolder, specRepo };
@@ -533,7 +533,7 @@ const workflowInitSdkRepo = async (
   }
 
   context.logger.log('git', `Checkout ${branchMain}`);
-  await gitCheckoutBranch(sdkRepo, branchMain);
+  await gitCheckoutBranch(context, sdkRepo, branchMain);
 
   if (
     sdkRepoConfig.secondaryRepository.name === sdkRepoConfig.mainRepository.name &&
@@ -642,7 +642,7 @@ const workflowDetectChangedSpec = async (
     }
   );
   for (const folderPath of Object.keys(typespecProjectResultSearchedBySharedLibrary)) {
-    if (!!typespecProjectResult[folderPath]) {
+    if (typespecProjectResult[folderPath]) {
       typespecProjectResult[folderPath] = typespecProjectResult[folderPath].concat(
         typespecProjectResultSearchedBySharedLibrary[folderPath]
       );
@@ -672,7 +672,7 @@ const workflowDetectChangedSpec = async (
       specs: readmeMDResult[folderPath]
     };
 
-    if (!!typespecProjectResult[folderPath]) {
+    if (typespecProjectResult[folderPath]) {
       delete cs.readmeMd;
       cs.specs = typespecProjectResult[folderPath];
       cs.typespecProject = path.join(folderPath, 'tspconfig.yaml');
@@ -681,7 +681,7 @@ const workflowDetectChangedSpec = async (
       context.logger.info(`\t readme.md file: ${readmeMdPath}`);
     }
 
-    if (!!suppressionsResult[folderPath]) {
+    if (suppressionsResult[folderPath]) {
       // where suppression file exist path. It is a fixed file path, the same as the readme.md path.
       cs.suppressionFile = path.join(folderPath, sdkSuppressionsFileName);
       context.logger.info(`\t The ${cs.readmeMd ? 'readme' : 'tsp'} file corresponding ${sdkSuppressionsFileName} exists ${cs.suppressionFile}`);
@@ -703,7 +703,7 @@ const workflowCallGenerateScript = async (
   relatedReadmeMdFiles: string[],
   relatedTypeSpecProjectFolder: string[]
 ) => {
-  let statusContext = { status: 'succeeded' as SDKAutomationState };
+  const statusContext = { status: 'succeeded' as SDKAutomationState };
   let generateOutput: GenerateOutput | undefined = undefined;
 
   const generateInput: GenerateInput = {

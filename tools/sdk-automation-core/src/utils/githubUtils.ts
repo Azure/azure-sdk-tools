@@ -106,8 +106,9 @@ export async function updatePullRequestLabels(
     await github.addPullRequestLabels(sdkRepository, pullRequest, labelsToAdd);
   } catch (e) {
     // Retry because maybe the label doesn't exist.
+    logger.logInfo(`Retry to add labels ${labelsToAdd} for PR ${pullRequest.number} in ${sdkRepository}. Error: ${e.message}`);
     await ensurePullRequestLabelsExist(github, sdkRepository, pullRequestLabelsInfo, logger);
-    await github.addPullRequestLabels(sdkRepository, pullRequest, labelsToAdd);
+    await github.addPullRequestLabels(sdkRepository, pullRequest, labelsToAdd);    
   }
   await github.removePullRequestLabels(sdkRepository, pullRequest, labelsToRemove);
 }
@@ -188,18 +189,23 @@ export function repoKeyToString(repoKey: RepoKey): string {
   return `${repoKey.owner}/${repoKey.name}`;
 }
 
+interface AuthenticatedOctokit {
+  octokit: Octokit;
+  getToken: (owner: string) => Promise<string>;
+}
+
 export const getAuthenticatedOctokit = (
   opts: { id?: number; privateKey?: string; token?: string },
   logger: winston.Logger
-): [Octokit, (owner: string) => Promise<string>] => {
+): AuthenticatedOctokit => {
   if (opts.token) {
-    return [
-      new Octokit({
+    return {
+      octokit: new Octokit({
         auth: opts.token,
         log: logger
       }),
-      () => Promise.resolve(opts.token!)
-    ];
+      getToken: () => Promise.resolve(opts.token!)
+    };
   }
 
   if (opts.id && opts.privateKey) {
@@ -223,11 +229,12 @@ export const getAuthenticatedOctokit = (
           installationIdCache[owner] = id;
         } catch (e) {
           try {
+            logger.warn(`Retrying to get installation app from user. Error details: ${JSON.stringify(e)}.`);
             const {
               data: { id }
             } = await appAuthOctokit.apps.getUserInstallation({ username: owner });
             installationId = id;
-            installationIdCache[owner] = id;
+            installationIdCache[owner] = id;            
           } catch (e) {
             logger.error(`ConfigError: GitHubApp ${opts.id} doesn't have installation for: ${owner}. Please report this issue through https://aka.ms/azsdk/support/specreview-channel or reach out the SDK Automation owner to set up the GitHub application correctly.`);
             logger.error(`Error details: ${JSON.stringify(e)}.`);
@@ -259,10 +266,10 @@ export const getAuthenticatedOctokit = (
       options.headers.Authorization = `token ${token}`;
       return request(options);
     });
-    return [
+    return {
       octokit,
-      getAccessToken
-    ];
+      getToken: getAccessToken
+    };
   }
 
   throw new Error('ConfigError: Invalid GitHub auth config. Please report this issue through https://aka.ms/azsdk/support/specreview-channel.');

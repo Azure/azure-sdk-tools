@@ -12,7 +12,7 @@ import { formatSuppressionLine } from '../utils/reportFormat';
 import { removeAnsiEscapeCodes } from '../utils/utils';
 import { CommentCaptureTransport } from './logging';
 
-let commentLimit = 60;
+const commentLimit = 60;
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   context.logger.log('section', 'Report status');

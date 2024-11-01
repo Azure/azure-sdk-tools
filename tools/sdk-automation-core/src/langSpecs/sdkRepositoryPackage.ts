@@ -10,8 +10,6 @@ import { LanguageConfiguration } from './languageConfiguration';
 import { SDKAutomationState } from '../sdkAutomationState';
 import { SDKRepositoryContext } from '../sdkRepository';
 
-export interface SDKRepositoryPackageContext extends SDKRepositoryContext {}
-
 /**
  * The data that describes an SDK repository package.
  */
@@ -147,7 +145,7 @@ export class SDKRepositoryPackage {
     public readonly logsBlob: BlobStorageBlob,
     public readonly packagePrefix: BlobStoragePrefix,
     public readonly logger: Logger,
-    public readonly context: SDKRepositoryPackageContext,
+    public readonly context: SDKRepositoryContext,
     public readonly data: SDKRepositoryPackageData,
     public readonly packageIndex: number
   ) {}

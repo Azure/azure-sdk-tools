@@ -56,8 +56,8 @@ export function extractServiceName(path: string): string {
 const IsReadmeUnderRoot = /specification\/([^\/]*)\/([^\/]*)\/readme\.md/g;
 
 export function removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder: string[] | undefined, relatedReadmeMdFiles: string[] | undefined, context: WorkflowContext): string[] {
-  let _relatedTypeSpecProjectFolder = relatedTypeSpecProjectFolder || [];
-  let _relatedReadmeMdFiles = relatedReadmeMdFiles || [];
+  const _relatedTypeSpecProjectFolder = relatedTypeSpecProjectFolder || [];
+  const _relatedReadmeMdFiles = relatedReadmeMdFiles || [];
   const filteredReadmeMdFiles = _relatedReadmeMdFiles.filter(readmeFile => {
     const readmeServiceName = extractServiceName(readmeFile);
     const isResourceManager = readmeFile.includes('/resource-manager/');

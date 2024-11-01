@@ -14,7 +14,12 @@ import { App as GithubApp } from '@octokit/app';
 import { SDKAutomationCliConfig } from './config/schema';
 import { RealBlobProxy } from '../realBlobProxy';
 
-export const getClientsWithAccessToken = (config: SDKAutomationCliConfig, logger: Logger) => {
+interface Clients {
+  github: RealGitHub;
+  git: ExecutableGit;
+}
+
+export const getClientsWithAccessToken = (config: SDKAutomationCliConfig, logger: Logger): Clients => {
   const { githubToken, githubApp: appConfig } = config;
 
   if (githubToken) {
@@ -50,6 +55,7 @@ export const getClientsWithAccessToken = (config: SDKAutomationCliConfig, logger
           } = await octokit.apps.getUserInstallation({ username: scope });
           installationId = id;
           installationIdCache[scope] = id;
+          await logger.logError(JSON.stringify(e));
         } catch (e) {
           await logger.logError(`GithubApp ${appConfig.id} doesn't have installation for: ${scope}`);
           await logger.logError(JSON.stringify(e));
@@ -67,7 +73,7 @@ export const getClientsWithAccessToken = (config: SDKAutomationCliConfig, logger
 
   return {
     github: RealGitHub.fromOctokit(
-      async (scope: string) => {
+      async (scope: string): Promise<Octokit> => {
         const installationId = await getInstallationId(scope);
         return new Octokit({
           authStrategy: createAppAuth,
@@ -76,7 +82,7 @@ export const getClientsWithAccessToken = (config: SDKAutomationCliConfig, logger
             privateKey: appConfig.privateKey,
             installationId
           }
-        });
+        }) as Octokit;
       }
     ),
     git: new ExecutableGit({

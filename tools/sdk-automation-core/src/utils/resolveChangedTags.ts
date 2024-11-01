@@ -1,10 +1,8 @@
-import { AutoRestOptions } from '@ts-common/azure-js-dev-tools';
+// import { AutoRestOptions } from '@ts-common/azure-js-dev-tools';
 // import { Configuration, MessageEmitter } from '@microsoft.azure/autorest-core/dist/lib/configuration';
 // import { RealFileSystem } from '@microsoft.azure/autorest-core/dist/lib/file-system';
 
 export const resolveChangedTags = async (
-  autorestOptions: AutoRestOptions,
-  readmeMdFileUrl: string
 ): Promise<string[]> => {
   throw new Error('tags-changed-in-batch is not supported yet.');
 

@@ -25,6 +25,7 @@ export const gitRemoveAllBranches = async (context: SdkAutoContext, repo: Simple
     headCommit = await repo.revparse('HEAD');
   } catch (error) {
     // unknown revision or path not in the working tree. Pass
+    context.logger.warn('Failed to get HEAD commit. Error: ' + error.message);
   }
 
   if (headCommit) {
@@ -38,7 +39,7 @@ export const gitRemoveAllBranches = async (context: SdkAutoContext, repo: Simple
         await repo.deleteLocalBranch(branchRef);
         context.logger.log('git', `Delete branch ${branchRef}`);
       } catch (e) {
-        context.logger.warn(`Failed to delete ${branchRef}`);
+        context.logger.warn(`Failed to delete ${branchRef}. Error: ${e.message}`);
       }
     }
   }
@@ -67,12 +68,13 @@ export const gitAddAll = async (repo: SimpleGit) => {
   return await repo.raw(['write-tree']);
 };
 
-export const gitCheckoutBranch = async (repo: SimpleGit, branchName: string, reset: boolean = true) => {
+export const gitCheckoutBranch = async (context: SdkAutoContext, repo: SimpleGit, branchName: string, reset: boolean = true) => {
   let headCommit: string | undefined = undefined;
   try {
     headCommit = await repo.revparse('HEAD');
   } catch (error) {
     // unknown revision or path not in the working tree. Pass
+    context.logger.warn('Failed to get HEAD commit. Error: ' + error.message);
   }
   if (headCommit && reset) {
     await repo.clean(CleanOptions.RECURSIVE + CleanOptions.FORCE);

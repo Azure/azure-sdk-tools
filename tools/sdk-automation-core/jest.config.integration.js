@@ -27,5 +27,6 @@ module.exports = {
   ],
   setupFilesAfterEnv: [
     '<rootDir>/integrationTest/jest.setupAfterEnv.js'
-  ]
+  ],
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"]
 }

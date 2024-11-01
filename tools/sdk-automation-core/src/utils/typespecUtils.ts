@@ -9,15 +9,19 @@ export const findSDKToGenerateFromTypeSpecProject = (content: string | undefined
   if (!specConfig?.typespecEmitterToSdkRepositoryMapping || !content) {
     return [];
   }
-  let yamlContent: any;
+  interface YamlContent {
+    options?: Record<string, unknown>;
+    emitters?: Record<string, unknown>;
+  }
+  let yamlContent: YamlContent;
   try {
-    yamlContent = load(content) as any;
+    yamlContent = load(content) as YamlContent;
   } catch (error) {
     throw new Error(`The parsing of the file was unsuccessful. Please make the necessary corrections to the 'tspconfig.yaml' file! Error Details: ${error.stack}`);
   }
   const emitters = new Set<string>();
   const emittersInYaml = yamlContent.options ?? yamlContent.emitters;
-  if (!!emittersInYaml) {
+  if (emittersInYaml) {
     for (const emitter of Object.keys(emittersInYaml)) {
       if (!emittersInYaml[emitter]) {
         continue;

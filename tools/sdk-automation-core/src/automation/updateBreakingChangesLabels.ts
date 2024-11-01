@@ -110,9 +110,17 @@ export async function updateBreakingChangesLabel(
       sdkBreakingChangesLabel
     );
   } else {
-    presentLabels.includes(deprecatedBreakingChangeApproved) && context.logger.log('info', `Breakingchange label has been added`);
-    !hasBreakingChange && context.logger.log('info', `There is no breaking changes.`);
-    isBetaMgmtSdk && context.logger.log('info', `It is a beta management SDK.`);
-    !(!hasSuppressions || hasAbsentSuppressions) && context.logger.log('info', `All breaking changes are suppressed hence we should not add any label hence we do nothing.`);
+    if (presentLabels.includes(deprecatedBreakingChangeApproved)) {
+      context.logger.log('info', 'Breakingchange label has been added');
+    }
+    if (!hasBreakingChange) {
+      context.logger.log('info', 'There is no breaking changes.');
+    }
+    if (isBetaMgmtSdk) {
+      context.logger.log('info', 'It is a beta management SDK.');
+    }
+    if (!(!hasSuppressions || hasAbsentSuppressions)) {
+      context.logger.log('info', 'All breaking changes are suppressed hence we should not add any label hence we do nothing.');
+    }
   }
 }

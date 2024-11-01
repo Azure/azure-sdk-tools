@@ -1286,7 +1286,7 @@ export async function getResolvedAutoRestOptions(
   }
 
   // Try to resolve the changed tags
-  const changedTags = await resolveChangedTags(autorestOptions, readmeMdFileUrl);
+  const changedTags = await resolveChangedTags();
   delete autorestOptions[resolveChangedTagsOptionName];
   return changedTags.map((tagName) => ({
     ...autorestOptions,

@@ -11,6 +11,7 @@ export interface Routes {
     (path: "change_return_type", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
     (path: "change_para_count", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
     (path: "change_para_type", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
+    (path: "change_para_name", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
 }
 
 export type typesChange = "basic" | "remove";
@@ -31,4 +32,17 @@ export function funcReturnType(a: string): string
 export function funcParameterCount(a: string, b: string): string
 export function funcParameterType(a: string): string
 export function funcRemove(a: string): string
+
+export interface ModularOperations {
+    changeParameterName: (resourceGroupName: string, fleetName: string, options?: A) => B;
+}
+
+export interface HighLevelClientOpGroup {
+    changeParameterName(resourceGroupName: string, fleetName: string, options?: A): B;
+}
+
+export interface HighLevelClientSomeInterface {
+    method(resourceGroupName: string, fleetName: string, options?: A): B;
+    prop: string
+}
 ```

@@ -3,7 +3,15 @@ import { describe, expect, test } from 'vitest';
 
 import { join } from 'node:path';
 import { createAstContext } from '../azure/detect-breaking-changes';
-import { patchFunction, patchRoutes, patchTypeAlias } from '../azure/patch/patch-detection';
+import {
+  findOperationContextPairsInHighLevelClient,
+  findOperationContextPairsInModularClient,
+  findOperationContextPairsInRestLevelClient,
+  patchFunction,
+  patchOperationParameterName,
+  patchRoutes,
+  patchTypeAlias,
+} from '../azure/patch/patch-detection';
 import { createTempFolder, getFormattedDate } from './utils';
 import { DiffLocation, DiffReasons, AssignDirection } from '../azure/common/types';
 
@@ -176,6 +184,49 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs[0].location).toBe(DiffLocation.TypeAlias);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
       expect(breakingPairs[0].source?.name).toBe('typesNarrow');
+    } finally {
+      if (tempFolder) remove(tempFolder);
+    }
+  });
+
+  test('detect parameter name change', async () => {
+    const currentApiViewPath = join(__dirname, testCaseDir, 'current-package/patch.api.md');
+    const baselineApiViewPath = join(__dirname, testCaseDir, 'baseline-package/patch.api.md');
+    const date = getFormattedDate();
+
+    let tempFolder: string | undefined = undefined;
+    try {
+      const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
+      const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
+
+      // rest level client
+      let breakingPairs = patchOperationParameterName(astContext, findOperationContextPairsInRestLevelClient);
+      expect(breakingPairs.length).toBe(2);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.BaselineToCurrent);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Parameter);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.NameChanged);
+      expect(breakingPairs[0].target?.name).toBe('resourceGroupName');
+
+      expect(breakingPairs[1].assignDirection).toBe(AssignDirection.BaselineToCurrent);
+      expect(breakingPairs[1].location).toBe(DiffLocation.Parameter);
+      expect(breakingPairs[1].reasons).toBe(DiffReasons.NameChanged);
+      expect(breakingPairs[1].target?.name).toBe('subscriptionId');
+
+      // modular client
+      breakingPairs = patchOperationParameterName(astContext, findOperationContextPairsInModularClient);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.BaselineToCurrent);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Parameter);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.NameChanged);
+      expect(breakingPairs[0].target?.name).toBe('resourceGroupName1');
+
+      // high level client
+      breakingPairs = patchOperationParameterName(astContext, findOperationContextPairsInHighLevelClient);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.BaselineToCurrent);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Parameter);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.NameChanged);
+      expect(breakingPairs[0].target?.name).toBe('resourceGroupName2');
     } finally {
       if (tempFolder) remove(tempFolder);
     }

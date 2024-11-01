@@ -65,7 +65,6 @@ export interface AstContext {
   current: SourceFile;
 }
 
-// TODO: support more node types
 export interface NameNode {
   name: string;
   node: Node;
@@ -75,14 +74,15 @@ export enum DiffReasons {
   None = 0,
 
   // breaking changes
-  Removed = 1,
-  TypeChanged = 2,
-  CountChanged = 4,
-  RequiredToOptional = 8,
-  ReadonlyToMutable = 16,
+  Removed = 2 ** 0,
+  TypeChanged = 2 ** 1,
+  CountChanged = 2 ** 2,
+  NameChanged = 2 ** 3,
+  RequiredToOptional = 2 ** 4,
+  ReadonlyToMutable = 2 ** 5,
 
   // new features
-  Added = 1024,
+  Added = 2 ** 10,
 }
 
 export interface DiffPair {

@@ -908,14 +908,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 
             const string attachmentType = "AdditionalTags";
 
+            HashSet<string> additionalTags = [];
+
             List<Attachment> attachments = await this.buildClient.GetAttachmentsAsync(projectId, buildId, attachmentType);
 
             IEnumerable<string> attachmentLinks = attachments
-                .Select(x => x.Links.Links["self"])
+                .Select(x => x.Links?.Links?.TryGetValue("self", out var value) == true ? value : null)
                 .OfType<ReferenceLink>()
-                .Select(x => x.Href);
-
-            HashSet<string> additionalTags = [];
+                .Select(x => x.Href)
+                .Where(x => !string.IsNullOrEmpty(x));
 
             foreach (string attachmentLink in attachmentLinks)
             {
@@ -925,6 +926,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                     !Guid.TryParse(match.Groups["timelineId"].Value, out Guid timelineId) ||
                     !Guid.TryParse(match.Groups["recordId"].Value, out Guid recordId))
                 {
+                    // retries won't help here, so we log and continue
                     this.logger.LogWarning("Unable to parse attachment link {AttachmentLink}", attachmentLink);
                     continue;
                 }
@@ -941,11 +943,20 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                     attachmentType,
                     match.Groups["name"].Value);
 
-                using StreamReader reader = new StreamReader(contentStream);
+                using StreamReader reader = new (contentStream);
+                var content = reader.ReadToEnd();
 
-                string[] tags = JsonConvert.DeserializeObject<string[]>(reader.ReadToEnd());
-
-                additionalTags.UnionWith(tags);
+                try
+                {
+                    string[] tags = JsonConvert.DeserializeObject<string[]>(content);
+                    additionalTags.UnionWith(tags);
+                }
+                catch(Exception ex)
+                {
+                    // retries won't help here, so we log and continue
+                    this.logger.LogError(ex, "Error parsing AdditionalTags attachment {TimelineId}/{RecordId}/{Name} for build {BuildId}", timelineId, recordId, name, buildId);
+                    continue;
+                }
             }
 
             if (additionalTags.Count != 0)

@@ -102,7 +102,6 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
             services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
-            services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
             services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
@@ -116,6 +115,7 @@ namespace APIViewWeb
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
             services.AddSingleton<IAICommentsManager, AICommentsManager>();
             services.AddSingleton<UserPreferenceCache>();
+            services.AddSingleton<ArtifactRepositoryFactory>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();

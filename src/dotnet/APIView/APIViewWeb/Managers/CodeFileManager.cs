@@ -17,16 +17,16 @@ namespace APIViewWeb.Managers
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
-        private readonly IDevopsArtifactRepository _devopsArtifactRepository;
+        private readonly ArtifactRepositoryFactory _artifactsRepository;
 
         public CodeFileManager(
             IEnumerable<LanguageService> languageServices, IBlobCodeFileRepository codeFileRepository,
-            IBlobOriginalsRepository originalsRepository, IDevopsArtifactRepository devopsArtifactRepository)
+            IBlobOriginalsRepository originalsRepository, ArtifactRepositoryFactory artifactsRepository)
         {
             _originalsRepository = originalsRepository;
             _codeFileRepository = codeFileRepository;
             _languageServices = languageServices;
-            _devopsArtifactRepository = devopsArtifactRepository;
+            _artifactsRepository = artifactsRepository;
         }
 
         /// <summary>
@@ -42,6 +42,7 @@ namespace APIViewWeb.Managers
         /// <param name="baselineCodeFileName"></param>
         /// <param name="baselineStream"></param>
         /// <param name="project"></param>
+        /// <param name="location"></param>
         /// <returns></returns>
         public async Task<CodeFile> GetCodeFileAsync(string repoName,
             string buildId,
@@ -52,15 +53,17 @@ namespace APIViewWeb.Managers
             MemoryStream originalFileStream,
             string baselineCodeFileName = "",
             MemoryStream baselineStream = null,
-            string project = "public"
-            )
+            string project = "public",
+            string location = "DevOps")
         {
             Stream stream = null;
             CodeFile codeFile = null;
+            var artifactRepo = _artifactsRepository.CreateRepository(location: location);
+
             if (string.IsNullOrEmpty(codeFileName))
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
+                stream = await artifactRepo.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
                 try
                 {
                     codeFile = await CreateCodeFileAsync(originalName: Path.GetFileName(originalFileName), fileStream: stream, runAnalysis: false, memoryStream: originalFileStream);
@@ -72,7 +75,7 @@ namespace APIViewWeb.Managers
             }
             else
             {
-                stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, format: "zip", project: project);
+                stream = await artifactRepo.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, format: "zip", project: project);
                 var archive = new ZipArchive(stream);
                 try
                 {

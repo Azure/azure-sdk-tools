@@ -12,6 +12,7 @@ using System;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
 using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewUnitTests
 {
@@ -21,12 +22,13 @@ namespace APIViewUnitTests
 
         public APIRevisionsManagerTests()
         {
+            var mockConfiguration = new Mock<IConfiguration>();
             IAuthorizationService authorizationService = new Mock<IAuthorizationService>().Object;
             ICosmosReviewRepository cosmosReviewRepository = new Mock<ICosmosReviewRepository>().Object;
             ICosmosAPIRevisionsRepository cosmosAPIRevisionsRepository = new Mock<ICosmosAPIRevisionsRepository>().Object;
             IHubContext<SignalRHub> signalRHub = new Mock<IHubContext<SignalRHub>>().Object;
             IEnumerable<LanguageService> languageServices = new List<LanguageService>();
-            IDevopsArtifactRepository devopsArtifactRepository = new Mock<IDevopsArtifactRepository>().Object;
+            ArtifactRepositoryFactory artifactsRepository = new Mock<ArtifactRepositoryFactory>(mockConfiguration.Object).Object;
             ICodeFileManager codeFileManager = new Mock<ICodeFileManager>().Object;
             IBlobCodeFileRepository blobCodeFileRepository = new Mock<IBlobCodeFileRepository>().Object;
             IBlobOriginalsRepository blobOriginalRepository = new Mock<IBlobOriginalsRepository>().Object;
@@ -36,7 +38,7 @@ namespace APIViewUnitTests
             _apiRevisionsManager = new APIRevisionsManager(
                 authorizationService: authorizationService, reviewsRepository: cosmosReviewRepository,
                 apiRevisionsRepository: cosmosAPIRevisionsRepository, signalRHubContext: signalRHub,
-                languageServices: languageServices, devopsArtifactRepository: devopsArtifactRepository,
+                languageServices: languageServices, artifactsRepository: artifactsRepository,
                 codeFileManager: codeFileManager, codeFileRepository: blobCodeFileRepository,
                 originalsRepository: blobOriginalRepository, notificationManager: notificationManager, telemetryClient: telemetryClient);    
         }

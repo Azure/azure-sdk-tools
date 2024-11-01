@@ -63,7 +63,8 @@ namespace APIViewWeb.Controllers
             string baselineCodeFile = null,
             bool commentOnPR = true,
             string language = null,
-            string project = "internal")
+            string project = "internal",
+            string location = "DevOps")
         {
             if (!ValidateInputParams())
             {
@@ -80,7 +81,7 @@ namespace APIViewWeb.Controllers
                     repoName: repoName, packageName: packageName,
                     prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
                     codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
-                    commentOnPR: commentOnPR, language: language, project: project);
+                    commentOnPR: commentOnPR, language: language, project: project, location: location);
 
                 return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
             }
@@ -102,7 +103,8 @@ namespace APIViewWeb.Controllers
             string baselineCodeFileName = null,
             bool commentOnPR = true,
             string language = null,
-            string project = "internal")
+            string project = "internal",
+            string location = "DevOps")
         {
             language = LanguageServiceHelpers.MapLanguageAlias(language: language);
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
@@ -118,7 +120,7 @@ namespace APIViewWeb.Controllers
                 packageName: packageName, originalFileName: originalFileName,
                 codeFileName: codeFileName, originalFileStream: memoryStream,
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
-                project: project);
+                project: project, location: location);
 
             if (codeFile.PackageName != null && (packageName ==  null || packageName != codeFile.PackageName))
             {

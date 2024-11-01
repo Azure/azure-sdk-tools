@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.ApplicationInsights;
 using Azure.Identity;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace APIViewIntegrationTests
 {
@@ -100,16 +101,20 @@ namespace APIViewIntegrationTests
             authorizationServiceMoq.Setup(_ => _.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<Object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
                 .ReturnsAsync(AuthorizationResult.Success);
 
-            var telemetryClient = new Mock<TelemetryClient>();
+            var mockConfiguration = new Mock<IConfiguration>();
+            var telemetryConfig = TelemetryConfiguration.CreateDefault();
+            var telemetryClient = new TelemetryClient(telemetryConfig);
+            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, telemetryClient);
 
-            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, telemetryClient.Object);
-
-            var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
+            var devopsArtifactRepositoryMoq = new Mock<IArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new MemoryStream());
 
             devopsArtifactRepositoryMoq.Setup(_ => _.RunPipeline(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
+
+            Mock<ArtifactRepositoryFactory> artifactsRepositoryMoq = new Mock<ArtifactRepositoryFactory>(mockConfiguration.Object, telemetryClient);
+            artifactsRepositoryMoq.Setup(_ => _.CreateRepository(It.IsAny<string>())).Returns(devopsArtifactRepositoryMoq.Object);
 
             var signalRHubContextMoq = new Mock<IHubContext<SignalRHub>>();
             var options = new Mock<IOptions<OrganizationOptions>>();
@@ -120,21 +125,21 @@ namespace APIViewIntegrationTests
 
             CodeFileManager = new CodeFileManager(
             languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
-            originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
+            originalsRepository: blobOriginalsRepository, artifactsRepository: artifactsRepositoryMoq.Object);
 
             APIRevisionManager = new APIRevisionsManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
-                languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
+                languageServices: languageService, artifactsRepository: artifactsRepositoryMoq.Object,
                 codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
                 originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object);
+                telemetryClient: telemetryClient);
 
 
             ReviewManager = new ReviewManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
                 commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object, codeFileManager: CodeFileManager);
+                telemetryClient: telemetryClient, codeFileManager: CodeFileManager);
 
             TestDataPath = _config["TestPkgPath"];
         }

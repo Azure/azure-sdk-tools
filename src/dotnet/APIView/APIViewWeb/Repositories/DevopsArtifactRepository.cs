@@ -19,17 +19,17 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.Repositories
 {
-    public class DevopsArtifactRepository : IDevopsArtifactRepository
+    public class DevopsArtifactRepository : IArtifactRepository
     {
         private readonly IConfiguration _configuration;
-        private readonly string _hostUrl;
         private readonly TelemetryClient _telemetryClient;
+        private readonly string _hostUrl;
 
         public DevopsArtifactRepository(IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _configuration = configuration;
-            _hostUrl = _configuration["APIVIew-Host-Url"];
             _telemetryClient = telemetryClient;
+            _hostUrl = _configuration["APIVIew-Host-Url"];
         }
 
         public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string project, string format= "file")

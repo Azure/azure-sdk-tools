@@ -2,6 +2,7 @@ using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -15,11 +16,13 @@ namespace APIViewWeb.LeanControllers
     {
         private readonly ILogger<PullRequestsController> _logger;
         private readonly IPullRequestManager _pullRequestManager;
+        private readonly ArtifactRepositoryFactory _repositoryFactory;
 
-        public PullRequestsController(ILogger<PullRequestsController> logger, IPullRequestManager pullRequestManager)
+        public PullRequestsController(ILogger<PullRequestsController> logger, IPullRequestManager pullRequestManager, ArtifactRepositoryFactory repositoryFactory)
         {
             _logger = logger;
             _pullRequestManager = pullRequestManager;
+            _repositoryFactory = repositoryFactory;
         }
 
         /// <summary>

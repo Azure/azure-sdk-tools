@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.Repositories
 {
-    public interface IDevopsArtifactRepository
+    public interface IArtifactRepository
     {
         public Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string project, string format = "file");
 

@@ -3,16 +3,15 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Repositories;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
 using Moq;
 using Xunit;
-using Xunit.Abstractions;
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace APIViewUnitTests
 {
@@ -21,15 +20,18 @@ namespace APIViewUnitTests
         private readonly ICodeFileManager _codeFileManager;
 
         public CodeFileTests()
-        { 
+        {
+            var mockConfiguration = new Mock<IConfiguration>();
+            var telemetryConfig = TelemetryConfiguration.CreateDefault();
+            var telemetryClient = new TelemetryClient(telemetryConfig);
             IEnumerable<LanguageService> languageServices = new List<LanguageService>();
-            IDevopsArtifactRepository devopsArtifactRepository = new Mock<IDevopsArtifactRepository>().Object;
+            ArtifactRepositoryFactory artifactsRepository = new Mock<ArtifactRepositoryFactory>(mockConfiguration.Object, telemetryClient).Object;
             IBlobCodeFileRepository blobCodeFileRepository = new Mock<IBlobCodeFileRepository>().Object;
             IBlobOriginalsRepository blobOriginalRepository = new Mock<IBlobOriginalsRepository>().Object;
 
             _codeFileManager = new CodeFileManager(
             languageServices: languageServices, codeFileRepository: blobCodeFileRepository,
-            originalsRepository: blobOriginalRepository, devopsArtifactRepository: devopsArtifactRepository);
+            originalsRepository: blobOriginalRepository, artifactsRepository: artifactsRepository);
         }
 
         [Fact]

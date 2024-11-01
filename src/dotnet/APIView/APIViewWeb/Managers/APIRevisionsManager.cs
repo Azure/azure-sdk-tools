@@ -32,7 +32,7 @@ namespace APIViewWeb.Managers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly ICodeFileManager _codeFileManager;
-        private readonly IDevopsArtifactRepository _devopsArtifactRepository;
+        private readonly ArtifactRepositoryFactory _artifactsRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
         private readonly TelemetryClient _telemetryClient;
@@ -43,7 +43,7 @@ namespace APIViewWeb.Managers
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
             IHubContext<SignalRHub> signalRHubContext,
             IEnumerable<LanguageService> languageServices,
-            IDevopsArtifactRepository devopsArtifactRepository,
+            ArtifactRepositoryFactory artifactsRepository,
             ICodeFileManager codeFileManager,
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
@@ -57,7 +57,7 @@ namespace APIViewWeb.Managers
             _codeFileManager = codeFileManager;
             _codeFileRepository = codeFileRepository;
             _languageServices = languageServices;
-            _devopsArtifactRepository = devopsArtifactRepository;
+            _artifactsRepository = artifactsRepository;
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
             _telemetryClient = telemetryClient;
@@ -566,7 +566,9 @@ namespace APIViewWeb.Managers
             };
             var reviewParamString = JsonSerializer.Serialize(reviewGenParams, jsonSerializerOptions);
             reviewParamString = reviewParamString.Replace("\"", "'");
-            await _devopsArtifactRepository.RunPipeline($"tools - generate-{language}-apireview",
+
+            var artifactRepo = _artifactsRepository.CreateRepository();
+            await artifactRepo.RunPipeline($"tools - generate-{language}-apireview",
                 reviewParamString,
                 _originalsRepository.GetContainerUrl());
         }
@@ -669,7 +671,8 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project)
         {
-            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
+            var artifactRepo = _artifactsRepository.CreateRepository();
+            var stream = await artifactRepo.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
             foreach (var entry in archive.Entries)
             {

@@ -83,6 +83,7 @@ module cluster 'cluster/cluster.bicep' = {
         clusterName: clusterName
         defaultAgentPoolMinNodes: defaultAgentPoolMinNodes
         defaultAgentPoolMaxNodes: defaultAgentPoolMaxNodes
+        defaultAgentPoolSku: defaultAgentPoolSku 
         maintenanceWindowDay: maintenanceWindowDay 
         tags: tags
         groupSuffix: groupSuffix

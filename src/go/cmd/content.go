@@ -430,8 +430,8 @@ func (c *content) generateNavChildItems() []Navigation {
 		if cst.Exported() {
 			items = append(items, Navigation{
 				Text:         cst.Name(),
-				NavigationId: cst.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: cst.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "enum",
 				},
@@ -442,8 +442,8 @@ func (c *content) generateNavChildItems() []Navigation {
 		if f.Exported() {
 			items = append(items, Navigation{
 				Text:         f.Name(),
-				NavigationId: f.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: f.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "delegate",
 				},
@@ -454,8 +454,8 @@ func (c *content) generateNavChildItems() []Navigation {
 		if i.Exported() {
 			items = append(items, Navigation{
 				Text:         i.Name(),
-				NavigationId: i.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: i.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "interface",
 				},
@@ -466,8 +466,8 @@ func (c *content) generateNavChildItems() []Navigation {
 		if n.Exported() {
 			items = append(items, Navigation{
 				Text:         n.Name(),
-				NavigationId: n.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: n.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "struct",
 				},
@@ -478,8 +478,8 @@ func (c *content) generateNavChildItems() []Navigation {
 		if s.Exported() {
 			items = append(items, Navigation{
 				Text:         s.Name(),
-				NavigationId: s.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: s.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "class",
 				},
@@ -490,8 +490,8 @@ func (c *content) generateNavChildItems() []Navigation {
 		if v.Exported() {
 			items = append(items, Navigation{
 				Text:         v.Name(),
-				NavigationId: v.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: v.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "unknown",
 				},

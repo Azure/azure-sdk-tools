@@ -98,7 +98,7 @@ func (r *Review) Review() (PackageReview, error) {
 		navItems := p.c.generateNavChildItems()
 		nav = append(nav, Navigation{
 			Text:         n,
-			NavigationId: n,
+			NavigationID: n,
 			ChildItems:   navItems,
 			Tags: &map[string]string{
 				"TypeKind": "namespace",
@@ -119,13 +119,14 @@ func (r *Review) Review() (PackageReview, error) {
 			recursiveSortNavigation(n)
 		}
 	}
-	return PackageReview{
-		Diagnostics: diagnostics,
-		Language:    "Go",
-		Name:        r.reviewed.Name,
-		Navigation:  nav,
-		Tokens:      *tokenList,
-		PackageName: r.name,
+	return CodeFile{
+		Diagnostics:   diagnostics,
+		Language:      "Go",
+		Name:          r.reviewed.Name,
+		Navigation:    nav,
+		ParserVersion: "0.1",
+		ReviewLines:   lines,
+		PackageName:   r.name,
 	}, nil
 }
 

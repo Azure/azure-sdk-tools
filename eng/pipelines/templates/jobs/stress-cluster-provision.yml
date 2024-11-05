@@ -27,7 +27,7 @@ jobs:
           ${{ if eq(parameters.Environment, 'storage') }}:
             azureSubscription: storage-sdk-stress-tests
           scriptType: pscore
-          scriptPath: $(System.DefaultWorkingDirectory)/$(Repository)/tools/stress-cluster/cluster/provision.ps1
+          scriptPath: $(System.DefaultWorkingDirectory)/tools/stress-cluster/cluster/provision.ps1
           arguments:
             -WhatIf:$${{ parameters.WhatIf }} `
             -Environment ${{ parameters.Environment }}

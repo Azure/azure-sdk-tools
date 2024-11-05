@@ -403,7 +403,12 @@ function DeleteOrUpdateResourceGroups() {
   $hasError = DeleteAndPurgeGroups $toDelete
 
   foreach ($rg in $toClean) {
-    DeleteArmDeployments $rg
+    try {
+      DeleteArmDeployments $rg
+    } catch {
+      Write-Warning "Error deleting deployments for group '$($rg.ResourceGroupName)'"
+      Write-Warning $_
+    }
   }
 
   if ($hasError) {

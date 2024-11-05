@@ -518,7 +518,7 @@ if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
 
 try {
   DeleteOrUpdateResourceGroups
-  DeleteSubscriptionDeployments
+  #DeleteSubscriptionDeployments
 } finally {
   if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
     Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false

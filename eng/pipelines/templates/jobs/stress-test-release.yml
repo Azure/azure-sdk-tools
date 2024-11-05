@@ -68,7 +68,7 @@ jobs:
       displayName: Build and Deploy Stress Tests
       inputs:
         ${{ if eq(parameters.Environment, 'prod') }}:
-          azureSubscription: Azure SDK Test Resources
+          azureSubscription: azure-sdk-tests-public
         ${{ if eq(parameters.Environment, 'pg') }}:
           azureSubscription: Azure SDK Playground
         ${{ if eq(parameters.Environment, 'storage') }}:

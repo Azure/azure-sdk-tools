@@ -1,5 +1,0 @@
-lib/
-node_modules/
-package-deps.json
-.env
-.vscode

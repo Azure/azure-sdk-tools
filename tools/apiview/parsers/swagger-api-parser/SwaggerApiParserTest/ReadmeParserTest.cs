@@ -83,4 +83,18 @@ public class ReadmeParserTest
         var inputFiles = ReadmeParser.GetSwaggerFilesFromReadme(readmeFilePath, ref tag);
         Assert.Collection(inputFiles, x => Assert.Equal("a.json", x), x => Assert.Equal("z.json", x));
     }
+
+    [Fact]
+    public void TestTagRetrievalUsingGetSwaggerFilesFromReadme()
+    {
+        string readmeFilePath = "./fixtures/appconfigurationreadme.md";
+        var tag = "default";
+        var inputFile = ReadmeParser.GetSwaggerFilesFromReadme(readmeFilePath, ref tag);
+        Assert.Equal("package-2022-05-01", tag);
+
+        readmeFilePath = "./fixtures/unordered.md";
+        tag = "package-2023-02";
+        inputFile = ReadmeParser.GetSwaggerFilesFromReadme(readmeFilePath, ref tag);
+        Assert.Equal("package-2023-02", tag);
+    }
 }

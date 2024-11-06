@@ -1,0 +1,111 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`In open PR, SDK Automation should create Azure resource manager schemas pr on spec pr opened 1`] = `
+Array [
+  Object {
+    "base": "master",
+    "head": "sdkAuto/1/testservice",
+    "number": 1,
+    "state": "open",
+    "title": "[AutoPR testservice] patch0",
+  },
+]
+`;
+
+exports[`In open PR, SDK Automation should create Azure resource manager schemas pr on spec pr opened 2`] = `
+"github	Get specificationRepositoryConfiguration.json from <org>/<spec_repo>
+info	mainRepository: <org>/<sdk_repo>
+info	mainBranch: master
+info	integrationRepository: <org>/<sdk_repo>
+info	integrationBranchPrefix: sdkAutomation
+info	secondaryRepository: <org>/<sdk_repo>
+info	secondaryBranch: master
+github	Get swagger_to_sdk_config.json from <org>/<sdk_repo>
+git	Set remote main on <org>/<spec_repo> with auth
+git	Delete branch refs/heads/master
+git	Delete branch refs/heads/patch0
+git	Fetch pull/1/merge on <org>/<spec_repo>
+git	Set remote main on <org>/<sdk_repo> with auth
+git	Set remote secondary on <org>/<sdk_repo> with auth
+git	Set remote integration on <org>/<sdk_repo> with auth
+git	Delete branch refs/heads/master
+git	Fetch <org>/<sdk_repo> to main
+git	Checkout main
+git	Checkout secondary from main
+warn	Skip initScript due to not configured
+command	npx n 12 
+info	Config: {}
+info	6 changed files in spec PR:
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/TestService.json
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/examples/TestGet.json
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/examples/TestPut.json
+info	A	specification/testservice/resource-manager/readme.azureresourceschema.md
+info	A	specification/testservice/resource-manager/readme.md
+info	A	specification/testservice/resource-manager/readme.python.md
+info	Related readme.md list:
+info		specification/testservice/resource-manager/readme.md
+info	Handle the following readme.md:
+info		specification/testservice/resource-manager/readme.md
+git	Checkout branch sdkGen
+section	Call legacy generate
+command	autorest --use=@autorest/azureresourceschema@3.0.79 --azureresourceschema --multiapi --title=none --pass-thru:subset-reducer --azureresourceschema-folder=<work_dir>/<sdk_repo> ../<spec_repo>/specification/testservice/resource-manager/readme.md
+info	Config: {\\"stdout\\":{\\"showInComment\\":{}},\\"stderr\\":{\\"showInComment\\":true,\\"scriptWarning\\":{}},\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"}}
+section	Commit generate result
+git	Add * in SDK repo
+info	1 changed files after SDK generate:
+info	A	schemas/2020-01-01/Microsoft.TestService.json
+git	Commit all the changes
+section	Detect changed packages
+info	Package from changed file search: /^common$/
+info	1 packages found after generation:
+info		schemas
+git	Set remote main on <org>/<sdk_repo> with auth
+git	Set remote secondary on <org>/<sdk_repo> with auth
+git	Set remote integration on <org>/<sdk_repo> with auth
+section	Handle package testservice
+info	Package log to https://sdkautotest/dl/<org>/1/azure-resource-manager-schemas/testservice/logs.txt
+info	baseBranch [master] baseRepo [<org>/<sdk_repo>] baseRemote [integration]
+info	targetBranch [sdkAuto/1/testservice] targetRepo [<org>/<sdk_repo>] baseRemote [integration]
+info	Skip sync baseBranch due to same remote same branch
+git	Create targetBranch sdkAuto/1/testservice
+git	Checkout sdk folders from sdkGen and commit: schemas
+git	Push sdkAuto/1/testservice to <org>/<sdk_repo>
+info	changelogScript is not configured
+info	Skip artifact search
+info	Upload 0 artifact:
+info	Legacy InstallInstruction
+github	Get PR in <org>/<sdk_repo> from <org>:sdkAuto/1/testservice to master
+github	Create new PR
+github	PR created at https://github.com/<org>/<sdk_repo>/pull/1
+section	Report status
+info	Main status [succeeded] hasBreakingChange [false]
+info	Rendered commentSubTitle: 
+info	Rendered commentBody: <ul>
+  <li>
+    <div>
+      <code>️✔️</code>Succeeded Generate from
+      <commit_sha>. Schema Automation <version>
+    </div>
+    <pre>
+warn	Skip initScript due to not configured
+command	npx n 12
+command	autorest --use&#x3D;@autorest/azureresourceschema@3.0.79 --azureresourceschema --multiapi --title&#x3D;none --pass-thru:subset-reducer --azureresourceschema-folder&#x3D;<work_dir>/<sdk_repo> ../<spec_repo>/specification/testservice/resource-manager/readme.md</pre
+    >
+  </li>
+  <li>
+    <div>
+      <span
+        ><code>️✔️</code><b>testservice</b> [<a
+          href=\\"https://sdkautotest/dl/<org>/1/azure-resource-manager-schemas/testservice/logs.txt\\"
+          >View full logs</a
+        >]&nbsp; [<a
+          href=\\"https://github.com/<org>/<sdk_repo>/pull/1\\"
+          >Preview Schema Changes</a
+        >]
+      </span>
+    </div>
+  </li>
+</ul>
+
+info	Writing unified pipeline message to pipe.log"
+`;

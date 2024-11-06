@@ -1,0 +1,86 @@
+<h3>{{renderSDKTitleMapping sdkRepoName}}{{#if merged}} - Release{{/if}}</h3>
+
+<div>
+{{#if generation.message}}
+{{generation.message}}
+{{else}}
+{{#unless generation.sdkRepositories.length}}
+{{renderStatus 'pending'}} Pending...
+{{/unless}}
+{{/if}}
+</div>
+
+{{#if isShowInstruction}}
+{{#each generation.sdkRepositories}}
+  {{#each changedPackages}}
+  <ul>
+  <li>Installation instruction for service <b>{{name}}</b> [<a href="{{generationPullRequestDiffUrl}}" target="_blank">Preview Changes</a>]<br/>
+  <i><pre>{{liteInstallationInstruction}}</pre></i></li>
+  </ul>
+  {{/each}}
+{{/each}}
+{{/if}}
+
+{{#each generation.sdkRepositories}}
+{{#if hasBreakingChange}}
+<h3>
+
+```diff
+- Breaking Change detected in SDK
+```
+
+</h3>
+{{/if}}
+<details>
+  <summary>
+    {{renderStatus status}} {{status}}
+    {{#if ../generation.logsBlobUrl}}
+    [<a href="{{../generation.logsBlobUrl}}" target="_blank">Logs</a>] [Expand Details]
+    {{/if}}
+  </summary>
+
+  <ul>
+    <li>
+      <div>
+        {{renderStatus status}} Generate from {{../headCommit}} with merge commit {{../mergeCommit}}. {{renderSDKNameMapping ../sdkRepoName}} Automation {{../version}}
+      </div>
+      {{#if messages}}
+        {{renderMessages messages}}
+      {{/if}}
+    </li>
+    {{#each changedPackages}}
+    <li>
+      <div>
+        <span>{{renderStatus status}} <b>{{name}}</b>
+          {{#if logsBlobUrl}}
+          [<a href="{{logsBlobUrl}}" target="_blank">View full logs</a>]&nbsp;
+          {{/if}}
+          {{#if generationPullRequestUrl}}
+          [<a href="{{generationPullRequestUrl}}" target="_blank">{{#if ../../merged}}Release{{else}}Preview{{/if}} {{renderSDKNameMapping ../../sdkRepoName}} Changes</a>]
+          {{/if}}
+          {{#if hasBreakingChange}}
+          <b>Breaking Change Detected</b>
+          {{/if}}
+        </span>
+      </div>
+      {{#if (isPublicRelease this)}}
+      <ul>
+        {{#each artifactBlobUrls}}
+        <li>
+          <a href="{{.}}" target="_blank">{{renderFilename .}}</a>
+        </li>
+        {{/each}}
+      </ul>
+      {{/if}}
+      {{#if messages}}
+        {{renderMessages messages}}
+      {{/if}}
+      {{#unless messages}}{{#unless artifactBlobUrls}}
+      <div> No Artifact Generated. </div>
+      {{/unless}}{{/unless}}
+    </li>
+    {{/each}}
+  </ul>
+
+</details>
+{{/each}}

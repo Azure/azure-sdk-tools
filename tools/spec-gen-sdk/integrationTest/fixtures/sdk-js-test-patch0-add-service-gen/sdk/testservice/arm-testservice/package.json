@@ -1,0 +1,57 @@
+{
+  "name": "@azure/test-service",
+  "author": "Microsoft Corporation",
+  "description": "TestServiceClient Library with typescript type definitions for node.js and browser.",
+  "version": "1.0.0",
+  "dependencies": {
+    "@azure/ms-rest-azure-js": "^2.1.0",
+    "@azure/ms-rest-js": "^2.6.0",
+    "tslib": "^2.0.1"
+  },
+  "keywords": [
+    "node",
+    "azure",
+    "typescript",
+    "browser",
+    "isomorphic"
+  ],
+  "license": "MIT",
+  "main": "./dist/test-service.js",
+  "module": "./esm/testServiceClient.js",
+  "types": "./esm/testServiceClient.d.ts",
+  "devDependencies": {
+    "typescript": "~5.3.3",
+    "rollup": "^1.18.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "uglify-js": "^3.6.0"
+  },
+  "homepage": "https://github.com/Azure/azure-sdk-for-js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azure/azure-sdk-for-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Azure/azure-sdk-for-js/issues"
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "esm/**/*.js",
+    "esm/**/*.js.map",
+    "esm/**/*.d.ts",
+    "esm/**/*.d.ts.map",
+    "src/**/*.ts",
+    "README.md",
+    "rollup.config.js",
+    "tsconfig.json"
+  ],
+  "scripts": {
+    "build": "tsc && rollup -c rollup.config.js && npm run minify",
+    "minify": "uglifyjs -c -m --comments --source-map \"content='./dist/test-service.js.map'\" -o ./dist/test-service.min.js ./dist/test-service.js",
+    "prepack": "npm run build"
+  },
+  "sideEffects": false
+}

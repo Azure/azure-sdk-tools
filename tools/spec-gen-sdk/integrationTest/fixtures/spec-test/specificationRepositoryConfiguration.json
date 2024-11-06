@@ -1,0 +1,33 @@
+{
+  "sdkRepositoryMappings": {
+    "azure-sdk-for-go": {
+      "mainRepository": "azure-sdk-for-go-test"
+    },
+    "azure-sdk-for-js": {
+      "mainRepository": "azure-sdk-for-js-test"
+    },
+    "azure-sdk-for-python": {
+      "mainRepository": "azure-sdk-for-python-test",
+      "mainBranch": "release/v3"
+    },
+    "azure-sdk-for-python-track2": {
+      "mainRepository": "azure-sdk-for-python-track2-test",
+      "configFilePath": "swagger_to_sdk_custom_config.json"
+    },
+    "azure-sdk-for-trenton": {
+      "mainRepository": "azure-sdk-for-trenton-test"
+    },
+    "azure-resource-manager-schemas": {
+      "mainRepository": "azure-resource-manager-schemas-test"
+    }
+  },
+  "overrides": {
+    "azure-rest-api-specs-pr": {
+      "sdkRepositoryMappings": {
+        "azure-sdk-for-js": {
+          "mainRepository": "azure-sdk-for-js-test-pr"
+        }
+      }
+    }
+  }
+}

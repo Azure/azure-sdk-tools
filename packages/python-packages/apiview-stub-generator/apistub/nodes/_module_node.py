@@ -103,10 +103,11 @@ class ModuleNode(NodeEntityBase):
             Token(kind=TokenKind.TEXT, value=self.namespace, has_suffix_space=False)
         ]
         if self.child_nodes:
+            set_blank_lines(self.children, 1)
             # Add name space level functions first
-            #for c in filter(filter_function, self.child_nodes):
-            #    c.generate_tokens(apiview)
-            #    set_blank_lines(self.review_lines, 2)
+            for c in filter(filter_function, self.child_nodes):
+                c.generate_tokens(self.children)
+                set_blank_lines(self.children, 2)
 
             # Add classes
             for c in filter(filter_class, self.child_nodes):

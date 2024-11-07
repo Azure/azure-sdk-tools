@@ -162,9 +162,11 @@ class FunctionNode(NodeEntityBase):
                 if match:
                     self.special_vararg.argtype = match.argtype
 
-    def _reviewline_if_needed(self, review_lines, tokens, use_multi_line):
+    def _reviewline_if_needed(self, review_lines, tokens, use_multi_line, *, children=None, line_id=None):
         if use_multi_line:
-            add_review_line(review_lines, tokens=tokens, line_id=self.namespace_id)
+            if line_id is None:
+                line_id = self.namespace_id
+            add_review_line(review_lines, tokens=tokens, line_id=line_id, children=children)
             # new token list for next line if multi-line
             tokens = []
         return tokens
@@ -201,18 +203,41 @@ class FunctionNode(NodeEntityBase):
             # if final_item is False, then items should not have commas
             if not final_item or idx < len(items) - 1:
                 tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
+            # multi-line will create new list of tokens for next line
             tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
-        # multi-line will create new list of tokens for next line
         return tokens
 
     def _generate_signature_token(self, review_lines, tokens, use_multi_line):
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value="(", has_suffix_space=False))
+        # if multi-line, then def tokens are parent tokens
+        # to be used later when adding children
+        def_tokens = tokens
 
         # TODO: make rest of tokens all children
-        tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+        #tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+
+        #else:
+        #    add_review_line(
+        #        review_lines=review_lines,
+        #        line_id=self.namespace_id,
+        #        tokens=tokens,
+        #        #related_to_line=self.namespace_id,
+        #        #add_cross_language_id=True     # TODO: add cross language id
+        #    )
+
+        # If multi-line, then each param line will be a child.
+        if use_multi_line:
+            param_lines = self.children
+            tokens = []
+        else:
+            param_lines = review_lines
+
         # If length of positional args is less than total args, then all items should end with commas
         # as end of args list hasn't been reached. Else, last item reached, so no comma.
+        arg_count = self._argument_count()
         current_count = len(self.posargs)
+
+        # TODO: refactor this to calculate comma spot
         if current_count < self.arg_count:
             final_item = False
         else:
@@ -220,7 +245,7 @@ class FunctionNode(NodeEntityBase):
 
         tokens = self._generate_args_for_collection(
             self.posargs,
-            review_lines=review_lines,
+            review_lines=param_lines,
             tokens=tokens,
             use_multi_line=use_multi_line,
             final_item=final_item
@@ -231,7 +256,7 @@ class FunctionNode(NodeEntityBase):
                 Token(kind=TokenKind.TEXT, value="/", has_suffix_space=False),
                 Token(kind=TokenKind.PUNCTUATION, value=",")
             ])
-            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+            tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line)
             #add_review_line(review_lines, tokens=tokens)
 
         current_count += len(self.args)
@@ -241,7 +266,7 @@ class FunctionNode(NodeEntityBase):
             final_item = True
 
         tokens = self._generate_args_for_collection(
-            self.args, review_lines=review_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
+            self.args, review_lines=param_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
         )
         current_count += 1
         if current_count < self.arg_count:
@@ -258,7 +283,7 @@ class FunctionNode(NodeEntityBase):
             )
             if not final_item:
                 tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
-            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+            tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line)
 
         # add keyword argument marker        
         if self.kwargs:
@@ -268,7 +293,7 @@ class FunctionNode(NodeEntityBase):
                 indent = "    "
             tokens.append(Token(kind=TokenKind.TEXT, value=f"{indent}*", has_suffix_space=False))
             tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
-            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+            tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line)
 
         current_count += len(self.kwargs)
         if current_count < self.arg_count:
@@ -276,7 +301,7 @@ class FunctionNode(NodeEntityBase):
         else:
             final_item = True
         tokens = self._generate_args_for_collection(
-            self.kwargs, review_lines=review_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
+            self.kwargs, review_lines=param_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
         )
         if self.special_kwarg:
             # if **kwargs is present, then no comma needed
@@ -287,10 +312,29 @@ class FunctionNode(NodeEntityBase):
                 add_line_marker=use_multi_line,
                 prefix="**",
             )
-            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
+            tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line)
 
+        #tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line, children=self.children)
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")", has_suffix_space=False))
-        return tokens
+
+        if self.return_type:
+            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="->", has_prefix_space=True))
+            # Add line marker id if signature is displayed in multi lines
+            if use_multi_line:
+                line_id = f"{self.namespace_id}.returntype"
+            else:
+                line_id = self.namespace_id
+            add_type(tokens, self.return_type)
+
+        tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line, line_id=line_id)
+
+        # after children are added, add the review line
+        #self._reviewline_if_needed(review_lines, def_tokens, use_multi_line, children=self.children)
+        add_review_line(review_lines, line_id=self.namespace_id, tokens=def_tokens, children=self.children)
+        #add_review_line(review_lines, line_id=self.namespace_id)
+
+        set_blank_lines(review_lines)
+
 
     def generate_tokens(self, review_lines: List["ReviewLine"]):
         """Generates token for function signature
@@ -320,17 +364,6 @@ class FunctionNode(NodeEntityBase):
         # Add parameters
         tokens = self._generate_signature_token(review_lines, tokens, use_multi_line)
 
-        if self.return_type:
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="->", has_prefix_space=True))
-            # Add line marker id if signature is displayed in multi lines
-            if use_multi_line:
-                line_id = f"{self.namespace_id}.returntype"
-            else:
-                line_id = self.namespace_id
-            add_type(tokens, self.return_type)
-
-        add_review_line(review_lines, tokens=tokens, line_id=line_id)
-        set_blank_lines(review_lines)
         #if not use_multi_line:
         #    for err in self.pylint_errors:
         #        err.generate_tokens(apiview, self.namespace_id)            

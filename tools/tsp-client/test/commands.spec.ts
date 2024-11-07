@@ -12,18 +12,20 @@ import { getRepoRoot } from "../src/git.js";
 import { cwd } from "node:process";
 import { joinPaths } from "@typespec/compiler";
 
-describe.sequential("Verify commands", async function () {
-  beforeAll(async function () {
+describe.sequential("Verify commands", () => {
+  let repoRoot;
+  beforeAll(async () => {
+    repoRoot = await getRepoRoot(cwd());
     await cp(
       "./test/utils/emitter-package.json",
-      joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package.json"),
+      joinPaths(repoRoot, "eng", "emitter-package.json"),
     );
   });
 
-  afterAll(async function () {
-    await rm(joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package.json"));
+  afterAll(async () => {
+    await rm(joinPaths(repoRoot, "eng", "emitter-package.json"));
     // This is generated in the first test using the command
-    await rm(joinPaths(await getRepoRoot(cwd()), "eng", "emitter-package-lock.json"));
+    await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
     await rm(
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
       { recursive: true },
@@ -31,18 +33,17 @@ describe.sequential("Verify commands", async function () {
     await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
   });
 
-  it("Generate lock file", async function () {
+  it("Generate lock file", async () => {
     try {
       await generateLockFileCommand({});
 
-      const repoRoot = await getRepoRoot(cwd());
       assert.isTrue((await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"))).isFile());
     } catch (error) {
       assert.fail(`Failed to generate lock file. Error: ${error}`);
     }
   });
 
-  it("Sync example sdk", async function () {
+  it("Sync example sdk", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -60,7 +61,7 @@ describe.sequential("Verify commands", async function () {
     assert.isTrue(dir.isDirectory());
   });
 
-  it("Sync example sdk with local spec", async function () {
+  it("Sync example sdk with local spec", async () => {
     try {
       const args = {
         "output-dir": joinPaths(cwd(), "./test/examples/sdk/local-spec-sdk"),
@@ -75,7 +76,7 @@ describe.sequential("Verify commands", async function () {
     assert.isTrue(dir.isDirectory());
   });
 
-  it("Generate example sdk", async function () {
+  it("Generate example sdk", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -94,7 +95,7 @@ describe.sequential("Verify commands", async function () {
     assert.isTrue(dir.isFile());
   });
 
-  it("Update example sdk", async function () {
+  it("Update example sdk", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -109,7 +110,7 @@ describe.sequential("Verify commands", async function () {
     }
   });
 
-  it("Update example sdk & pass tspconfig.yaml", async function () {
+  it("Update example sdk & pass tspconfig.yaml", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -126,7 +127,7 @@ describe.sequential("Verify commands", async function () {
     }
   });
 
-  it("Update example sdk & pass commit", async function () {
+  it("Update example sdk & pass commit", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -142,7 +143,7 @@ describe.sequential("Verify commands", async function () {
     }
   });
 
-  it("Update example sdk & pass only --repo", async function () {
+  it("Update example sdk & pass only --repo", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -162,7 +163,7 @@ describe.sequential("Verify commands", async function () {
     }
   });
 
-  it.skip("Init example sdk", async function () {
+  it.skip("Init example sdk", async () => {
     try {
       const args = {
         "output-dir": joinPaths(cwd(), "./test/examples/"),
@@ -184,7 +185,7 @@ describe.sequential("Verify commands", async function () {
     }
   });
 
-  it.skip("Init with --skip-sync-and-generate", async function () {
+  it.skip("Init with --skip-sync-and-generate", async () => {
     try {
       const args = {
         "output-dir": joinPaths(cwd(), "./test/examples/"),

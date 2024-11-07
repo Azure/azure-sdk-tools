@@ -11,6 +11,7 @@ import { assert } from "chai";
 import { getRepoRoot } from "../src/git.js";
 import { cwd } from "node:process";
 import { joinPaths } from "@typespec/compiler";
+import { readTspLocation, removeDirectory } from "../src/fs.js";
 
 describe.sequential("Verify commands", () => {
   let repoRoot;
@@ -199,6 +200,25 @@ describe.sequential("Verify commands", () => {
         "./test/examples/sdk/contentsafety/ai-content-safety-rest/tsp-location.yaml",
       );
       assert.isTrue(tspLocation.isFile());
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  it("Init with local spec", async () => {
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/init/"),
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",
+        ),
+      };
+      const outputDir = await initCommand(args);
+      const tspLocation = await readTspLocation(outputDir);
+      assert.equal(tspLocation.commit, "<replace with your value>");
+      assert.equal(tspLocation.repo, "<replace with your value>");
+      await removeDirectory(joinPaths(cwd(), "./test/examples/init/sdk"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }

@@ -6,6 +6,8 @@
   - `commit` and `repo` are no longer required.
   - tsp-location.yaml will have default values for `commit` and `repo` that should be replaced when checking in a client library.
   - Use the local tspconfig.yaml to create directory structure. (#9261)
+- Fixed `formatDiagnostic` loading. [microsoft/typespec#5007](https://github.com/microsoft/typespec/issues/5007)
+- Migrated tests to `vitest`.
 
 ## 2024-10-31 - 0.13.3
 

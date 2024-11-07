@@ -7,6 +7,7 @@ class KeyNode(NodeEntityBase):
 
     def __init__(self, namespace, parent_node, name, type_data):
         super().__init__(namespace, parent_node, type_data)
+        print('type data', type_data)
         self.type = get_qualified_name(type_data, namespace)
         self.name = f'"{name}"'
         # Generate ID using name found by inspect
@@ -19,9 +20,7 @@ class KeyNode(NodeEntityBase):
         """
         tokens = []
         tokens.append(Token(kind=TokenKind.TEXT, value="key", has_suffix_space=False))
-        tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":"))
         tokens.append(Token(kind=TokenKind.TEXT, value=self.name, has_suffix_space=False))
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":"))
-        tokens.append(Token)
         add_type(tokens, self.type)
         add_review_line(review_lines, tokens=tokens, line_id=self.namespace_id)

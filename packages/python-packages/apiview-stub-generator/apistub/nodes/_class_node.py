@@ -226,6 +226,8 @@ class ClassNode(NodeEntityBase):
                     if item_name.startswith("_"):
                         continue
                     if is_typeddict and (inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing"):
+                        print('namespace', self.namespace)
+                        print('typeddict', item_name, item_type)
                         self.child_nodes.append(
                             KeyNode(self.namespace, self, item_name, item_type)
                         )
@@ -317,7 +319,6 @@ class ClassNode(NodeEntityBase):
         logging.info(f"Processing class {self.namespace_id}")
         # Generate class name line
         for decorator in self.decorators: 
-            print('adding decorator:', decorator)
             # TODO: may need to remove line id here
             add_review_line(
                 review_lines=review_lines,
@@ -333,8 +334,8 @@ class ClassNode(NodeEntityBase):
             Token(kind=TokenKind.TEXT, value=self.name, has_suffix_space=False),
         ]
 
-        #for err in self.pylint_errors:
-        #    err.generate_tokens(review_lines, self.namespace_id)
+        for err in self.pylint_errors:
+            err.generate_tokens(review_lines, self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:
@@ -364,10 +365,9 @@ class ClassNode(NodeEntityBase):
 
     def _generate_child_tokens(self, review_lines):
         # Add members and methods
-        #apiview.begin_group()
-        #for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
-        #    e.generate_tokens(self.children)
-        #    set_blank_lines(review_lines)
+        for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
+            e.generate_tokens(self.children)
+
         set_blank_lines(self.children)
         for func in [
             x

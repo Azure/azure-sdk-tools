@@ -98,11 +98,12 @@ class ModuleNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param review_lines: List of ReviewLine 
         """
-        tokens = [
-            Token(kind=TokenKind.KEYWORD, value="namespace"),
-            Token(kind=TokenKind.TEXT, value=self.namespace, has_suffix_space=False)
-        ]
+        # Add name space only if it has children
         if self.child_nodes:
+            tokens = [
+                Token(kind=TokenKind.KEYWORD, value="namespace"),
+                Token(kind=TokenKind.TEXT, value=self.namespace, has_suffix_space=False)
+            ]
             set_blank_lines(self.children, 1)
             # Add name space level functions first
             for c in filter(filter_function, self.child_nodes):
@@ -112,8 +113,9 @@ class ModuleNode(NodeEntityBase):
             # Add classes
             for c in filter(filter_class, self.child_nodes):
                 c.generate_tokens(self.children)
-        # TODO: figure out why children only print when added before parent review line
-        add_review_line(review_lines=review_lines, line_id=self.namespace_id, tokens=tokens, children=self.children)
+
+            # TODO: figure out why children only print when added before parent review line
+            add_review_line(review_lines=review_lines, line_id=self.namespace_id, tokens=tokens, children=self.children)
 
     def get_navigation(self):
         """Generate navigation tree recursively by generating Navigation obejct for classes and functions in name space

@@ -1,0 +1,104 @@
+trigger:
+  - master
+
+pool:
+  name: AzurePipelines-EO
+  demands:
+  - ImageOverride -equals AzurePipelinesUbuntu20.04compliant
+
+variables:
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  - job: Build_Verfication
+    steps:
+      - task: npmAuthenticate@0
+        inputs:
+          workingFile: .npmrc
+
+      - script: cp .npmrc .npmrc-registry
+        displayName: Disable .npmrc-registry
+
+      - script: sed -i -E 's/"version":\s*"([0-9\.]+)",/"version":"\1.$(Build.BuildNumber)",/' package.json
+        displayName: Set version in package.json
+
+      - task: Docker@2
+        displayName: Build Image
+        inputs:
+          command: build
+          repository: openapi/sdk-automation
+          tags: $(Build.BuildNumber)
+          Dockerfile: ./Dockerfile
+          containerRegistry: openapi_test_docker_connection
+          arguments: --build-arg UBUNTU_MIRROR=$(UBUNTU_MIRROR)
+
+      - task: Docker@2
+        displayName: Push Image
+        condition: notIn(variables['Build.Reason'], 'PullRequest')
+        inputs:
+          command: push
+          repository: openapi/sdk-automation
+          containerRegistry: openapi_test_docker_connection
+          tags: $(Build.BuildNumber)
+
+      - task: ComponentGovernanceComponentDetection@0
+        displayName: Dependencies Compliance Analysis
+        inputs:
+          verbosity: Verbose
+          snapshotForceEnabled: true
+          useDefaultDetectors: false
+          detectorsToRun: Npm
+
+  - job: Integration_Test
+    variables:
+      SDK_REPO_NAME: PLACEHOLDER
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '18.x'
+
+      - task: npmAuthenticate@0
+        inputs:
+          workingFile: .npmrc
+
+      - script: npm ci
+        displayName: NPM Install
+
+      - script: |
+          git config --global user.email "sdkautomation@microsoft.com"
+          git config --global user.name "SDK Automation"
+          rm .npmrc
+
+          npm config set audit false
+          sudo npm install -g npm@latest
+
+          sudo apt update
+          sudo apt install python3-setuptools python3-venv
+          /usr/bin/python3 -m venv work/pyenv
+          node ./node_modules/.bin/autorest --typescript
+
+          TEST_RUN_ID=`node -e "console.log(Math.random().toString(36).substring(2, 8))"`
+          echo "##vso[task.setvariable variable=TEST_RUN_ID]$TEST_RUN_ID"
+          echo "TEST_RUN_ID=$TEST_RUN_ID"
+        displayName: Init
+
+      - script: |
+          source work/pyenv/bin/activate
+          npm run test-ci
+        displayName: Integration Test
+        timeoutInMinutes: 30
+        env:
+          SPEC_REPO: $(spec-repo)
+          GITHUB_COMMENT_AUTHOR_NAME: $(github-comment-author-name)
+          GITHUBAPP_ID: $(githubapp-id)
+          GITHUBAPP_PRIVATE_KEY: $(githubapp-private-key)
+
+      - script: |
+          [ -z $TEST_RUN_ID ] || npm run clear-github-test-repos
+        displayName: Clean Up
+        condition: always()
+        env:
+          SPEC_REPO: $(spec-repo)
+          GITHUB_COMMENT_AUTHOR_NAME: $(github-comment-author-name)
+          GITHUBAPP_ID: $(githubapp-id)
+          GITHUBAPP_PRIVATE_KEY: $(githubapp-private-key)

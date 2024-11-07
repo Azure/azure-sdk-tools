@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.7.15",
+  "version": "2.7.16",
   "description": "",
   "files": [
     "dist"
@@ -41,7 +41,7 @@
     "simple-git": "^3.5.0",
     "ts-morph": "^23.0.0",
     "tslib": "^1.9.3",
-    "typescript-codegen-breaking-change-detector": "0.5.4",
+    "typescript-codegen-breaking-change-detector": "0.5.5",
     "unixify": "^1.0.0",
     "winston": "^3.13.1",
     "yaml": "^1.10.2"

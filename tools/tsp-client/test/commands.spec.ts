@@ -205,7 +205,7 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  await it("Init with local spec", async function () {
+  it("Init with local spec", async () => {
     try {
       const args = {
         "output-dir": joinPaths(cwd(), "./test/examples/init/"),

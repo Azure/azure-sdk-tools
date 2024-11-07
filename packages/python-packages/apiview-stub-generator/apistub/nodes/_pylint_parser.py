@@ -7,6 +7,8 @@ import re
 from typing import List
 from pylint.lint import Run
 
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line
+
 _HELP_LINK_REGEX = re.compile(r"(.+) See details: *([^\s]+)")
 
 class PylintError:
@@ -42,8 +44,10 @@ class PylintError:
             # if unable to parse, leave alone
             return
 
-    def generate_tokens(self, apiview, target_id):
-        apiview.add_diagnostic(obj=self, target_id=target_id)
+    def generate_tokens(self, review_lines, target_id):
+        # TODO: pass through diagnostic level
+        # apiview.add_diagnostic(obj=self, target_id=target_id)
+        pass
 
 
 class PylintParser:

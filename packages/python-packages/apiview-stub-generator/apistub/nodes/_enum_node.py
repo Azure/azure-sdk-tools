@@ -3,6 +3,7 @@ import inspect
 import astroid
 
 from ._base_node import NodeEntityBase
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line
 
 
 class EnumNode(NodeEntityBase):
@@ -15,18 +16,17 @@ class EnumNode(NodeEntityBase):
         self.value = obj.value
         self.namespace_id = self.generate_id()
 
-    def generate_tokens(self, apiview):
+    def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
-        apiview.add_line_marker(self.namespace_id)
-        apiview.add_text(self.name, definition_id=self.namespace_id)
-        apiview.add_space()
-        apiview.add_punctuation("=")
-        apiview.add_space()
+        tokens = []
+        tokens.append(Token(kind=TokenKind.TEXT, value=self.name))
+        tokens.append(Token(kind=TokenKind.PUNCTUATION, value="="))
         if isinstance(self.value, str):
-            apiview.add_string_literal(self.value)
+            tokens.append(Token(kind=TokenKind.STRING_LITERAL, value=self.value))
         else:
-            apiview.add_literal(str(self.value))
+            tokens.append(Token(kind=TokenKind.LITERAL, value=str(self.value)))
         for err in self.pylint_errors:
-            err.generate_tokens(apiview, self.namespace_id)
+            err.generate_tokens(review_lines, self.namespace_id)
+        add_review_line(review_lines=review_lines, line_id=self.namespace_id, tokens=tokens)

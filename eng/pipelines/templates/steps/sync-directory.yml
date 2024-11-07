@@ -51,11 +51,6 @@ steps:
       displayName: Apply Patch for ${{ parameters.DirectoryToSync }} from azure-sdk-tools to ${{ repo }}
       workingDirectory: $(System.DefaultWorkingDirectory)
 
-    - template: /eng/common/pipelines/templates/steps/emit-rate-limit-metrics.yml
-      parameters:
-        GitHubUser: azure-sdk
-        GitHubToken: $(azuresdk-github-pat)
-
     - task: PowerShell@2
       displayName: Push changes for creating Sync PRs
       condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
@@ -175,3 +170,8 @@ steps:
         PushArgs: -f
         WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo }}
         ScriptDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/${{ parameters.ScriptDirectory }}
+
+- template: /eng/common/pipelines/templates/steps/emit-rate-limit-metrics.yml
+  parameters:
+    GitHubUser: azure-sdk
+    GitHubToken: $(azuresdk-github-pat)

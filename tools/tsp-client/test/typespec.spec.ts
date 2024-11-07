@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { describe, it } from "node:test";
+import { describe, it } from "vitest";
 import { compileTsp, discoverMainFile } from "../src/typespec.js";
 import { joinPaths, resolvePath } from "@typespec/compiler";
 

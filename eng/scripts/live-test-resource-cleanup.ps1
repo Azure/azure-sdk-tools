@@ -344,6 +344,12 @@ function DeleteArmDeployments([object]$ResourceGroup) {
   $null = $toDelete | Remove-AzResourceGroupDeployment
 }
 
+function DeleteSubscriptionDeployments() {
+  $subDeployments = Get-AzSubscriptionDeployment 
+  Write-Host "Removing $($subDeployments.Count) subscription scoped deployments"
+  $subDeployments | Remove-AzSubscriptionDeployment
+}
+
 function DeleteOrUpdateResourceGroups() {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
   param()
@@ -403,7 +409,12 @@ function DeleteOrUpdateResourceGroups() {
   $hasError = DeleteAndPurgeGroups $toDelete
 
   foreach ($rg in $toClean) {
-    DeleteArmDeployments $rg
+    try {
+      DeleteArmDeployments $rg
+    } catch {
+      Write-Warning "Error deleting deployments for group '$($rg.ResourceGroupName)'"
+      Write-Warning $_
+    }
   }
 
   if ($hasError) {
@@ -507,6 +518,7 @@ if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
 
 try {
   DeleteOrUpdateResourceGroups
+  #DeleteSubscriptionDeployments
 } finally {
   if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
     Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false

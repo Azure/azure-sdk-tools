@@ -11,7 +11,6 @@ import { getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory } from
 import { logger } from "../../utils/logger";
 import { RunningEnvironment } from "../../utils/runningEnvironment";
 import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject';
-import { generateChangelog } from "../utils/generateChangelog";
 import {
     generateAutorestConfigurationFileForMultiClientByPrComment,
     generateAutorestConfigurationFileForSingleClientByPrComment, replaceRequireInAutorestConfigurationFile
@@ -20,6 +19,8 @@ import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYam
 import { getRelativePackagePath } from "../utils/utils";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory } from "../../common/utils";
 import { remove } from 'fs-extra';
+import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion";
+import { updateChangelogResult } from "../../common/packageResultUtils";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -242,8 +243,10 @@ export async function generateRLCInPipeline(options: {
         logger.info(`Start to run command 'node common/scripts/install-run-rush.js pack --to ${packageName} --verbose'.`);
         execSync(`node common/scripts/install-run-rush.js pack --to ${packageName} --verbose`, {stdio: 'inherit'});
         if (!options.skipGeneration) {
-            logger.info(`Start to generate changelog.`);
-            await generateChangelog(packagePath);
+            const changelog = await generateChangelogAndBumpVersion(relativePackagePath);
+            outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
+            outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
+            outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;
         }
         if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
             for (const file of fs.readdirSync(packagePath)) {

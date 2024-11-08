@@ -15,7 +15,7 @@
                 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <div style="margin-left: 15%; margin-right: 15%;" class="my-3" *ngIf="!isLoading && samplesContent" [innerHTML]="(samplesContent | markdownToHtml) | async">
+                <div style="margin-left: 15%; margin-right: 15%;" class="my-3" *ngIf="!isLoading && samplesContent" [innerHTML]="(samplesContent | markdownToHtml : true ) | async">
                 </div>
                 <div class="pt-4 d-flex justify-content-center align-items-center" *ngIf="!isLoading && !samplesContent">
                     <h5 *ngIf="samplesRevisions.length > 0; else noSampleRevision">Sample-Revision Content Load Failed...</h5>

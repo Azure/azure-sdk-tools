@@ -1,0 +1,168 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "2020-01-01",
+    "title": "TestServiceClient",
+    "description": "Test Service Client for SDK Automation integration test."
+  },
+  "host": "management.azure.com",
+  "schemes": [
+    "https"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "security": [
+    {
+      "azure_auth": [
+        "user_impersonation"
+      ]
+    }
+  ],
+  "securityDefinitions": {
+    "azure_auth": {
+      "type": "oauth2",
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
+      "flow": "implicit",
+      "description": "Azure Active Directory OAuth2 Flow",
+      "scopes": {
+        "user_impersonation": "impersonate your user account"
+      }
+    }
+  },
+  "paths": {
+    "/providers/Microsoft.TestService/test": {
+      "get": {
+        "operationId": "Test_Get",
+        "description": "Get test.",
+        "x-ms-examples": {
+          "MsiOperationsList": {
+            "$ref": "./examples/TestGet.json"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation was successful.",
+            "schema": {
+              "$ref": "#/definitions/TestGetResult"
+            }
+          },
+          "default": {
+            "description": "Error response describing why the operation failed.",
+            "schema": {
+              "$ref": "#/definitions/CloudError"
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "Test_Put",
+        "description": "Put test.",
+        "x-ms-examples": {
+          "MsiOperationsList": {
+            "$ref": "./examples/TestPut.json"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation was successful.",
+            "schema": {
+              "$ref": "#/definitions/TestPutResult"
+            }
+          },
+          "default": {
+            "description": "Error response describing why the operation failed.",
+            "schema": {
+              "$ref": "#/definitions/CloudError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "CloudError": {
+      "type": "object",
+      "x-ms-external": true,
+      "properties": {
+        "error": {
+          "description": "A list of additional details about the error.",
+          "$ref": "#/definitions/CloudErrorBody"
+        }
+      },
+      "description": "An error response from the ManagedServiceIdentity service."
+    },
+    "CloudErrorBody": {
+      "type": "object",
+      "x-ms-external": true,
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "An identifier for the error."
+        },
+        "message": {
+          "type": "string",
+          "description": "A message describing the error, intended to be suitable for display in a user interface."
+        },
+        "target": {
+          "type": "string",
+          "description": "The target of the particular error. For example, the name of the property in error."
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudErrorBody"
+          },
+          "description": "A list of additional details about the error."
+        }
+      },
+      "description": "An error response from the ManagedServiceIdentity service."
+    },
+    "TestGetResult": {
+      "type": "object",
+      "title": "Test Get.",
+      "description": "Mocked result.",
+      "properties": {
+        "value": {
+          "type": "string",
+          "title": "Test result.",
+          "description": "Test result."
+        }
+      }
+    },
+    "TestPutResult": {
+      "type": "object",
+      "title": "Test Put.",
+      "description": "Mocked result.",
+      "properties": {
+        "value": {
+          "type": "string",
+          "title": "Test result.",
+          "description": "Test result."
+        }
+      }
+    }
+  },
+  "parameters": {
+    "ApiVersionParameter": {
+      "name": "api-version",
+      "in": "query",
+      "description": "Version of API to invoke.",
+      "required": true,
+      "type": "string"
+    }
+  }
+}

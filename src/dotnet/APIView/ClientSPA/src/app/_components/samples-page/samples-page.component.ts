@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, ComponentFactoryResolver, ElementRef, Injector, NgZone, Renderer2, ViewContainerRef } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
+import { ChangeDetectorRef, Component, ElementRef, Injector, Renderer2, SimpleChange, ViewContainerRef } from '@angular/core';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
 import { FileSelectEvent } from 'primeng/fileupload';
 import { Subject, take, takeUntil } from 'rxjs';
@@ -18,6 +18,7 @@ import { APIRevisionsService } from 'src/app/_services/revisions/revisions.servi
 import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
+import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 
 @Component({
   selector: 'app-samples-page',
@@ -102,10 +103,12 @@ export class SamplesPageComponent {
   }
 
   ngAfterViewChecked(): void {
-    if (this.samplesContent && this.commentsLoaded && !this.commentableRegionsAdded) {
-      this.addCommentableRegions();
-      this.commentableRegionsAdded = true;
-    }
+    setTimeout(() => {
+      if (this.samplesContent && this.commentsLoaded && !this.commentableRegionsAdded) {
+        this.addCommentableRegions();
+        this.commentableRegionsAdded = true;
+      }
+    });
   }
 
   createSideMenu() {
@@ -115,11 +118,6 @@ export class SamplesPageComponent {
         tooltip: 'API',
         command: () => this.openLatestAPIReivisonForReview()
       }
-      //{
-      //  icon: 'bi bi-clock-history',
-      //  tooltip: 'Revisions',
-      //  command: () => this.router.navigate([`/revision/${this.reviewId}`])
-      //}
     ];
   }
 
@@ -455,6 +453,7 @@ export class SamplesPageComponent {
     this.renderer.addClass(commentThreadContainer, 'py-2');
 
     const componentRef = this.viewContainerRef.createComponent(CommentThreadComponent, { injector: this.injector });
+    
     if (commentThread) {
       componentRef.instance.codePanelRowData = commentThread;
     } else {
@@ -504,9 +503,54 @@ export class SamplesPageComponent {
       });
     });
 
+    componentRef.instance.commentResolutionActionEmitter.subscribe((commentUpdates: any) => {
+      commentUpdates.reviewId = this.reviewId!;
+      if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
+        this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
+          next: () => {
+            const ct = this.applyCommentResolutionUpdate(commentThread!, commentUpdates);
+            componentRef.instance.ngOnChanges({
+              codePanelRowData: new SimpleChange(null, ct, false)
+            });
+          }
+        });
+      }
+      if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
+        this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!).pipe(take(1)).subscribe({
+          next: () => {
+            const ct = this.applyCommentResolutionUpdate(commentThread!, commentUpdates);
+            componentRef.instance.ngOnChanges({
+              codePanelRowData: new SimpleChange(null, ct, false)
+            });
+          }
+        });
+      }
+    });
+
+    componentRef.instance.commentUpvoteActionEmitter.subscribe((commentUpdates: any) => {
+      this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
+        next: () => {
+          const comment = commentThread!.comments!.filter(x => x.id == commentUpdates.commentId)[0];
+          if (comment) {
+            if (comment.upvotes.includes(this.userProfile?.userName!)) {
+              commentThread!.comments!.filter(x => x.id == commentUpdates.commentId)[0].upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
+            } else {
+              commentThread!.comments!.filter(x => x.id == commentUpdates.commentId)[0].upvotes.push(this.userProfile?.userName!);
+            }
+          }
+        }
+      });
+    });
+
     componentRef.instance.instanceLocation = 'samples';
     this.renderer.appendChild(commentThreadContainer, componentRef.location.nativeElement);
     return commentThreadContainer;
+  }
+
+  private applyCommentResolutionUpdate(commentThread: CodePanelRowData, commentUpdates: CommentUpdatesDto) : CodePanelRowData {
+    commentThread.isResolvedCommentThread = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
+    commentThread.commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
+    return commentThread;
   }
 
   private removeCommentThread(title: string): void {

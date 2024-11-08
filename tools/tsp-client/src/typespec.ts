@@ -1,9 +1,4 @@
-import {
-  resolvePath,
-  getDirectoryPath,
-  ResolveCompilerOptionsOptions,
-  formatDiagnostic,
-} from "@typespec/compiler";
+import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
 import {
   ModuleResolutionResult,
   resolveModule,
@@ -75,7 +70,8 @@ export async function compileTsp({
   saveInputs?: boolean;
 }): Promise<[boolean, string]> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
-  const { compile, NodeHost, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
+  const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
+    await importTsp(parsedEntrypoint);
 
   const outputDir = resolvePath(outputPath);
   const overrideOptions: Record<string, Record<string, string>> = {

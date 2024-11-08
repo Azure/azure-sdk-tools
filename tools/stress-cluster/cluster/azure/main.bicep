@@ -8,6 +8,8 @@ param clusterLocation string = 'westus3'
 param monitoringLocation string = 'centralus'
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
+param defaultAgentPoolSku string = 'Standard_D8a_v4'
+param skipAcrRoleAssignment bool = false
 param maintenanceWindowDay string = 'Monday'
 param tags object
 // AKS does not allow agentPool updates via existing managed cluster resources
@@ -81,6 +83,7 @@ module cluster 'cluster/cluster.bicep' = {
         clusterName: clusterName
         defaultAgentPoolMinNodes: defaultAgentPoolMinNodes
         defaultAgentPoolMaxNodes: defaultAgentPoolMaxNodes
+        defaultAgentPoolSku: defaultAgentPoolSku 
         maintenanceWindowDay: maintenanceWindowDay 
         tags: tags
         groupSuffix: groupSuffix
@@ -95,6 +98,8 @@ module containerRegistry 'cluster/acr.bicep' = {
         registryName: '${replace(clusterName, '-', '')}${resourceSuffix}'
         location: clusterLocation
         objectIds: concat(accessGroups, array(cluster.outputs.kubeletIdentityObjectId))
+        // Cluster may be in a tenant that does not include the ACR access groups
+        skipAcrRoleAssignment: skipAcrRoleAssignment
     }
 }
 

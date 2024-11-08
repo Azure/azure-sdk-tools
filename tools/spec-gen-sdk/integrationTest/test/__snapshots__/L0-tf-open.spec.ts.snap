@@ -1,0 +1,132 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`In open PR, SDK Automation should create terraform/trenton sdk pr on spec pr opened 1`] = `
+Array [
+  Object {
+    "base": "master",
+    "head": "sdkAuto/1/testservice",
+    "number": 1,
+    "state": "open",
+    "title": "[AutoPR testservice] patch0",
+  },
+]
+`;
+
+exports[`In open PR, SDK Automation should create terraform/trenton sdk pr on spec pr opened 2`] = `
+"github	Get specificationRepositoryConfiguration.json from <org>/<spec_repo>
+info	mainRepository: <org>/<sdk_repo>
+info	mainBranch: master
+info	integrationRepository: <org>/<sdk_repo>
+info	integrationBranchPrefix: sdkAutomation
+info	secondaryRepository: <org>/<sdk_repo>
+info	secondaryBranch: master
+github	Get swagger_to_sdk_config.json from <org>/<sdk_repo>
+git	Set remote main on <org>/<spec_repo> with auth
+git	Delete branch refs/heads/master
+git	Delete branch refs/heads/patch0
+git	Fetch pull/1/merge on <org>/<spec_repo>
+git	Set remote main on <org>/<sdk_repo> with auth
+git	Set remote secondary on <org>/<sdk_repo> with auth
+git	Set remote integration on <org>/<sdk_repo> with auth
+git	Delete branch refs/heads/master
+git	Fetch <org>/<sdk_repo> to main
+git	Checkout main
+git	Checkout secondary from main
+warn	Skip initScript due to not configured
+info	6 changed files in spec PR:
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/TestService.json
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/examples/TestGet.json
+info	A	specification/testservice/resource-manager/Microsoft.TestService/stable/2020-01-01/examples/TestPut.json
+info	A	specification/testservice/resource-manager/readme.azureresourceschema.md
+info	A	specification/testservice/resource-manager/readme.md
+info	A	specification/testservice/resource-manager/readme.python.md
+info	Related readme.md list:
+info		specification/testservice/resource-manager/readme.md
+info	Handle the following readme.md:
+info		specification/testservice/resource-manager/readme.md
+git	Checkout branch sdkGen
+section	Call legacy generate
+command	autorest --use=@microsoft.azure/autorest.go@2.1.134 --go --use-onever --preview-chk --version=V2 --go-sdk-folder=<work_dir>/<sdk_repo>/vendor ../<spec_repo>/specification/testservice/resource-manager/readme.md
+info	Config: {\\"stdout\\":{\\"showInComment\\":{}},\\"stderr\\":{\\"showInComment\\":true,\\"scriptWarning\\":{}},\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"}}
+info	Finish autorest_option_for_otherSDK
+command	autorest --trenton --use=https://trenton.blob.core.windows.net/trenton/autorest-trenton-0.2.2.tgz --clear-output-folder=true --output-folder=<work_dir>/<sdk_repo>/azurerm/internal/services ../<spec_repo>/specification/testservice/resource-manager/readme.md
+info	Config: {\\"stdout\\":{\\"showInComment\\":{}},\\"stderr\\":{\\"showInComment\\":true,\\"scriptWarning\\":{}},\\"exitCode\\":{\\"showInComment\\":true,\\"result\\":\\"error\\"}}
+cmdout	[Autorest] WARNING (): 'cli.flatten.cli-flatten-set-enabled' is not set to true, skip flattenSetter
+cmdout	[Autorest] WARNING (): cli.auto-parameter-hidden is not true, skip visibility cleaner
+section	Commit generate result
+git	Add * in SDK repo
+info	7 changed files after SDK generate:
+info	A	azurerm/internal/services/testservice/client/client.go
+info	A	azurerm/internal/services/testservice/registration.go
+info	A	vendor/services/testservice/mgmt/2020-01-01/testservice/client.go
+info	A	vendor/services/testservice/mgmt/2020-01-01/testservice/models.go
+info	A	vendor/services/testservice/mgmt/2020-01-01/testservice/test.go
+info	A	vendor/services/testservice/mgmt/2020-01-01/testservice/testserviceapi/interfaces.go
+info	A	vendor/services/testservice/mgmt/2020-01-01/testservice/version.go
+git	Commit all the changes
+section	Detect changed packages
+info	Package from changed file search: /^registration\\\\.go$/
+info	1 packages found after generation:
+info		azurerm/internal/services/testservice
+git	Set remote main on <org>/<sdk_repo> with auth
+git	Set remote secondary on <org>/<sdk_repo> with auth
+git	Set remote integration on <org>/<sdk_repo> with auth
+section	Handle package testservice
+info	Package log to https://sdkautotest/dl/<org>/1/azure-sdk-for-trenton/testservice/logs.txt
+info	baseBranch [master] baseRepo [<org>/<sdk_repo>] baseRemote [integration]
+info	targetBranch [sdkAuto/1/testservice] targetRepo [<org>/<sdk_repo>] baseRemote [integration]
+info	Skip sync baseBranch due to same remote same branch
+git	Create targetBranch sdkAuto/1/testservice
+git	Checkout sdk folders from sdkGen and commit: azurerm/internal/services/testservice
+git	Push sdkAuto/1/testservice to <org>/<sdk_repo>
+info	changelogScript is not configured
+info	Skip artifact search
+info	Upload 0 artifact:
+info	Legacy InstallInstruction
+github	Get PR in <org>/<sdk_repo> from <org>:sdkAuto/1/testservice to master
+github	Create new PR
+github	PR created at https://github.com/<org>/<sdk_repo>/pull/1
+section	Report status
+info	Main status [succeeded] hasBreakingChange [false]
+info	Rendered commentSubTitle: <ul>
+  <li>
+    Installation instruction for service <b>testservice</b> [<a
+      href=\\"\\"
+      target=\\"_blank\\"
+      >Preview Changes</a
+    >]<br />
+    <i><pre></pre></i>
+  </li>
+</ul>
+
+info	Rendered commentBody: <ul>
+  <li>
+    <div>
+      <code>️✔️</code>Succeeded Generate from
+      <commit_sha>. Trenton Automation <version>
+    </div>
+    <pre>
+warn	Skip initScript due to not configured
+command	autorest --use&#x3D;@microsoft.azure/autorest.go@2.1.134 --go --use-onever --preview-chk --version&#x3D;V2 --go-sdk-folder&#x3D;<work_dir>/<sdk_repo>/vendor ../<spec_repo>/specification/testservice/resource-manager/readme.md
+command	autorest --trenton --use&#x3D;https://trenton.blob.core.windows.net/trenton/autorest-trenton-0.2.2.tgz --clear-output-folder&#x3D;true --output-folder&#x3D;<work_dir>/<sdk_repo>/azurerm/internal/services ../<spec_repo>/specification/testservice/resource-manager/readme.md
+cmdout	[Autorest] WARNING (): &#x27;cli.flatten.cli-flatten-set-enabled&#x27; is not set to true, skip flattenSetter
+cmdout	[Autorest] WARNING (): cli.auto-parameter-hidden is not true, skip visibility cleaner</pre
+    >
+  </li>
+  <li>
+    <div>
+      <span
+        ><code>️✔️</code><b>testservice</b> [<a
+          href=\\"https://sdkautotest/dl/<org>/1/azure-sdk-for-trenton/testservice/logs.txt\\"
+          >View full logs</a
+        >]&nbsp; [<a
+          href=\\"https://github.com/<org>/<sdk_repo>/pull/1\\"
+          >Preview Trenton Changes</a
+        >]
+      </span>
+    </div>
+  </li>
+</ul>
+
+info	Writing unified pipeline message to pipe.log"
+`;

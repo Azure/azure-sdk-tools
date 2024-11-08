@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "autorest_options": {
+      "version": "V2",
+      "typescript": "",
+      "license-header": "MICROSOFT_MIT_NO_VERSION",
+      "sdkrel:typescript-sdks-folder": ".",
+      "use": "@microsoft.azure/autorest.typescript@4.4.4"
+    },
+    "advanced_options": {
+      "create_sdk_pull_requests": true,
+      "sdk_generation_pull_request_base": "integration_branch"
+    },
+    "version": "0.2.0"
+  },
+  "advancedOptions": {
+    "generationCallMode": "one-per-config"
+  }
+}

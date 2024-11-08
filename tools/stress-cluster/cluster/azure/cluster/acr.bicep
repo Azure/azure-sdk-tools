@@ -1,6 +1,8 @@
 param registryName string
 param location string = resourceGroup().location
 param objectIds array
+// Cluster may be in a tenant that does not include the ACR access groups
+param skipAcrRoleAssignment bool
 
 resource registry 'Microsoft.ContainerRegistry/registries@2019-12-01-preview' = {
   name: registryName
@@ -18,7 +20,7 @@ resource registry 'Microsoft.ContainerRegistry/registries@2019-12-01-preview' = 
 }
 
 // Add AcrPush and AcrPull roles to access groups
-resource acrPushRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for objectId in objectIds: {
+resource acrPushRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for objectId in objectIds: if (!skipAcrRoleAssignment) {
   name: guid('azureContainerRegistryPushRole', objectId, resourceGroup().id)
   scope: registry
   properties: {
@@ -27,7 +29,7 @@ resource acrPushRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview
   }
 }]
 
-resource acrPullRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for objectId in objectIds: {
+resource acrPullRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for objectId in objectIds: if (!skipAcrRoleAssignment) {
   name: guid('azureContainerRegistryPullRole', objectId, resourceGroup().id)
   scope: registry
   properties: {

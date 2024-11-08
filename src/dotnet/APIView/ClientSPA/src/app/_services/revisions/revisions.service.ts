@@ -18,7 +18,7 @@ export class APIRevisionsService {
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
   getLatestAPIRevision(reviewId: string): Observable<APIRevision> {
-    return this.http.get<APIRevision>(this.baseUrl + `/${reviewId}/latest`);
+    return this.http.get<APIRevision>(this.baseUrl + `/${reviewId}/latest`, { withCredentials: true });
   }
 
   getAPIRevisions(noOfItemsRead: number, pageSize: number,

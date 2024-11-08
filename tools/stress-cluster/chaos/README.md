@@ -624,6 +624,17 @@ A more detailed information on the logic behind the matrix generation can be fou
 
 The `stress-test-addons` helm library will handle a scenarios matrix automatically, and deploy multiple instances of the stress test job, one for each scenario with customized values.
 
+NOTE: Matrix generation has two modes, 'sparse' and 'all', which generate either the minimum set of tests covering all parameters or an exhaustive set. See https://github.com/Azure/azure-sdk-tools/blob/main/doc/common/matrix_generator.md#matrix-generation-behavior for more details. The deploy script defaults to 'sparse' mode, but this can be customized either by passing `-MatrixSelection <mode>` to the deploy script or overriding the default selection via `annotations.matrixSelection` under Chart.yaml:
+
+```
+# Chart.yaml
+...
+annotations:
+  stressTest: 'true'
+  namespace: 'examples'
+  matrixSelection: 'all'
+```
+
 ### Node Size Requirements
 
 The stress test cluster may be deployed with several node SKUs (see [agentPoolProfiles declaration and

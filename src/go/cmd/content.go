@@ -243,7 +243,8 @@ func (c *content) addInterface(source Pkg, name, packageName string, i *ast.Inte
 }
 
 // adds the specified struct type to the exports list.
-func (c *content) parseInterface(tokenList *[]ReviewToken) {
+func (c *content) parseInterface() []ReviewLine {
+	ls := []ReviewLine{}
 	keys := []string{}
 	for name := range c.Interfaces {
 		if unicode.IsUpper(rune(name[0])) {
@@ -252,8 +253,10 @@ func (c *content) parseInterface(tokenList *[]ReviewToken) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		*tokenList = append(*tokenList, c.Interfaces[k].MakeTokens()...)
+		il := c.Interfaces[k].MakeReviewLine()
+		ls = append(ls, il)
 	}
+	return ls
 }
 
 // addStruct adds the specified struct type to the exports list.

@@ -224,13 +224,8 @@ func (f Func) MakeReviewLine() ReviewLine {
 
 func (f Func) MakeTokens() []ReviewToken {
 	tks := []ReviewToken{}
-	if f.embedded {
-		tks = append(tks, ReviewToken{
-			HasSuffixSpace: true,
-			Kind:           TokenKindPunctuation,
-			Value:          "\t",
-		})
-	} else {
+	// prefix with "func" if f isn't embedded in an interface
+	if !f.embedded {
 		tks = append(tks, ReviewToken{
 			HasSuffixSpace: true,
 			Kind:           TokenKindKeyword,
@@ -389,20 +384,38 @@ func (i Interface) ID() string {
 	return i.id
 }
 
-func (i Interface) MakeTokens() []ReviewToken {
-	ID := i.id
-	list := &[]ReviewToken{}
-	makeToken(nil, nil, "type", TokenKindKeyword, list)
-	makeToken(&ID, nil, i.name, TokenKindTypeName, list)
-	makeToken(nil, nil, "interface", TokenKindKeyword, list)
-	makeToken(nil, nil, "{", TokenKindPunctuation, list)
+func (i Interface) MakeReviewLine() ReviewLine {
+	interfaceLine := ReviewLine{
+		Children: []ReviewLine{},
+		LineID:   i.id,
+		Tokens: []ReviewToken{
+			{
+				Kind:  TokenKindKeyword,
+				Value: "type",
+			},
+			{
+				HasPrefixSpace:        true,
+				HasSuffixSpace:        true,
+				Kind:                  TokenKindTypeName,
+				NavigationDisplayName: i.id,
+				Value:                 i.name,
+			},
+			{
+				Kind:  TokenKindKeyword,
+				Value: "interface",
+			},
+		},
+	}
+
 	for _, name := range i.embeddedInterfaces {
 		if exportedFieldRgx.MatchString(name) {
-			// defID := ID + "-" + name
-			parseAndMakeTypeToken_old(name, list)
-			// makeToken(&defID, nil, name, TokenTypeTypeName, list)
+			// TODO: navigation link
+			interfaceLine.Children = append(interfaceLine.Children, ReviewLine{
+				Tokens: parseAndMakeTypeTokens(name),
+			})
 		}
 	}
+
 	if len(i.methods) > 0 {
 		keys := []string{}
 		for k := range i.methods {
@@ -412,11 +425,15 @@ func (i Interface) MakeTokens() []ReviewToken {
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
-			*list = append(*list, i.methods[k].MakeTokens()...)
+			methodLine := ReviewLine{
+				LineID: i.id + "-" + k,
+				Tokens: i.methods[k].MakeTokens(),
+			}
+			interfaceLine.Children = append(interfaceLine.Children, methodLine)
 		}
 	}
-	makeToken(nil, nil, "}", TokenKindPunctuation, list)
-	return *list
+	interfaceLine.Children = append(interfaceLine.Children, ReviewLine{})
+	return interfaceLine
 }
 
 func (i Interface) Name() string {
@@ -510,7 +527,8 @@ func (s Struct) MakeReviewLine() ReviewLine {
 		sort.Strings(exported)
 		for _, name := range exported {
 			fieldLine := ReviewLine{
-				LineID:        s.id + "-" + name,
+				LineID: s.id + "-" + name,
+				// TODO: semantics; is this just for e.g. docs?
 				RelatedToLine: structLine.LineID,
 				Tokens: []ReviewToken{
 					{

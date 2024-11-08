@@ -322,14 +322,17 @@ export class ApiView {
     }
   }
 
-  private lineMarker(options?: {value?: string, addCrossLanguageId?: boolean}) {
+  private lineMarker(options?: {value?: string, addCrossLanguageId?: boolean, relatedLineId?: string}) {
     this.currentLine.LineId = options?.value ?? this.namespaceStack.value();
+    this.currentLine.RelatedToLine = options?.relatedLineId;
     this.currentLine.CrossLanguageId = options?.addCrossLanguageId ? (options?.value ?? this.namespaceStack.value()) : undefined;
   }
 
-  private punctuation(value: string, options?: ReviewTokenOptions & {snapTo?: string}) {
+  private punctuation(value: string, options?: ReviewTokenOptions & {snapTo?: string, isContextEndLine?: boolean}) {
     const snapTo = options?.snapTo;
     delete options?.snapTo;
+    const isContextEndLine = options?.isContextEndLine;
+    delete options?.isContextEndLine;
 
     const token = {
       Kind: TokenKind.Punctuation,
@@ -341,6 +344,9 @@ export class ApiView {
       this.snapToken(token, snapTo);
     } else {
       this.currentLine.Tokens.push(token);
+    }
+    if (isContextEndLine) {
+      this.currentLine.IsContextEndLine = true;
     }
   }
 
@@ -432,6 +438,7 @@ export class ApiView {
   private tokenize(node: BaseNode) {
     let obj;
     let last = 0;  // track the final index of an array
+    let parentNamespace: string;
     switch (node.kind) {
       case SyntaxKind.AliasStatement:
         obj = node as AliasStatementNode;
@@ -504,9 +511,11 @@ export class ApiView {
         break;
       case SyntaxKind.DecoratorExpression:
         obj = node as DecoratorExpressionNode;
+        parentNamespace = this.namespaceStack.value();
+        this.namespaceStack.push(generateId(obj)!);
         this.punctuation("@");
         this.tokenizeIdentifier(obj.target, "keyword");
-        this.lineMarker();
+        this.lineMarker({relatedLineId: parentNamespace});
         if (obj.arguments.length) {
           last = obj.arguments.length - 1;
           this.punctuation("(");
@@ -519,11 +528,13 @@ export class ApiView {
           }
           this.punctuation(")");
         }
+        this.namespaceStack.pop();
         break;
       case SyntaxKind.DirectiveExpression:
         obj = node as DirectiveExpressionNode;
+        parentNamespace = this.namespaceStack.value();
         this.namespaceStack.push(generateId(node)!);
-        this.lineMarker();
+        this.lineMarker({relatedLineId: parentNamespace});
         this.keyword(`#${obj.target.sv}`, {HasSuffixSpace: true});
         for (const arg of obj.arguments) {
           switch (arg.kind) {
@@ -858,7 +869,7 @@ export class ApiView {
         this.newline()
       }
       this.deindent();
-      this.punctuation("}");
+      this.punctuation("}", {isContextEndLine: true});
     } else {
       this.punctuation("{}", {HasPrefixSpace: true});
     }
@@ -1059,7 +1070,7 @@ export class ApiView {
         this.blankLines(0);
     }
     this.deindent();
-    this.punctuation("}");
+    this.punctuation("}", {isContextEndLine: true});
     this.blankLines(1);
     this.namespaceStack.pop();
   }
@@ -1078,11 +1089,10 @@ export class ApiView {
     }
     // render each decorator
     for (const node of decorators || []) {
-      this.namespaceStack.push(generateId(node)!);
       const isDoc = docDecorators.includes((node.target as IdentifierNode).sv);
       this.tokenize(node);
-      this.namespaceStack.pop();
       if (isDoc) {
+        // if any token in a line is documentation, then the whole line is
         for (const token of this.currentLine.Tokens) {
           token.IsDocumentation = true;
         }

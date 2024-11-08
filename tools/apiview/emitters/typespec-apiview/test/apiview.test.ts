@@ -1,24 +1,88 @@
 import { apiViewFor, apiViewText, compare } from "./test-host.js";
-import { CodeFile } from "../src/schemas.js";
+import { CodeFile, ReviewLine } from "../src/schemas.js";
 import { describe, it } from "vitest";
 import { fail } from "assert";
 
+interface ReviewLineData {
+  prefixCount: number;
+  suffixCount: number;
+}
+
 describe("apiview: tests", () => {
+
+  function validateReviewLineIds(definitionIds: Set<string>, line: ReviewLine) {
+    // ensure that there are no repeated definition IDs.
+    if (line.LineId !== undefined) {
+      if (definitionIds.has(line.LineId)) {
+        fail(`Duplicate defintion ID ${line.LineId}.`);
+      }
+      if (line.LineId !== "") {
+        definitionIds.add(line.LineId);
+      }
+      for (const child of line.Children) {
+        validateReviewLineIds(definitionIds, child);
+      }
+    }
+  }
+
   /** Validates that there are no repeat defintion IDs. */
   function validateLineIds(apiview: CodeFile) {
     const definitionIds = new Set<string>();
     for (const line of apiview.ReviewLines) {
-      // ensure that there are no repeated definition IDs.
-      if (line.LineId !== undefined) {
-        if (definitionIds.has(line.LineId)) {
-          fail(`Duplicate defintion ID ${line.LineId}.`);
-        }
-        if (line.LineId !== "") {
-          definitionIds.add(line.LineId);
-        }
-      }
+      validateReviewLineIds(definitionIds, line);
     }
   }
+
+  /** Validates that related lines point to a valid line. */
+  function validateRelatedLines(apiview: CodeFile, data: Map<string, ReviewLineData>) {
+    const lineIdsFound = new Set<string>();
+
+    function validateReviewLines(lines: ReviewLine[] | undefined) {
+      if (lines === undefined) return;
+      lines.forEach((line, index) => {
+        const lineId = line.LineId;
+        const related = line.RelatedToLine;
+        // check for a closing } IsConextEndLine
+        if (lineId !== undefined && lineId !== "") {
+          lineIdsFound.add(lineId);
+          const next = lines[index + 1];
+          let meta = data.get(lineId);
+          if (meta) {
+            if (next?.IsContextEndLine) {
+              meta.suffixCount--;
+            }
+          }
+        }
+        // check is this is a prefix line
+        if (related !== undefined) {
+          let meta = data.get(related);
+          if (meta === undefined) {
+            return;
+          }
+          if (!lineIdsFound.has(related)) {
+            meta.prefixCount--;
+          }
+        }
+        validateReviewLines(line.Children);
+      });
+    }
+    
+    validateReviewLines(apiview.ReviewLines);
+    // verify that all counts are 0
+    const keysToRemove = [];
+    for (const [lineId, meta] of data) {
+      if (meta.prefixCount == 0 && meta.suffixCount == 0) {
+        keysToRemove.push(lineId);
+      }
+    }
+    for (const key of keysToRemove) {
+      data.delete(key);
+    }
+    if (data.size > 0) {
+      fail(`Related line mismatches found!: ${JSON.stringify(Object.fromEntries(data))}`);
+    }
+  }
+  
 
   describe("models", () => {
     it("composition", async () => {
@@ -74,6 +138,14 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Animal", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Cat", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Dog", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Pet", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Pig", { prefixCount: 0, suffixCount: 0 }],
+      ]));
     });
 
     it("templated", async () => {
@@ -151,6 +223,17 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.ConstrainedComplex", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.ConstrainedSimple", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.ConstrainedWithDefault", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.NamedStringThing", { prefixCount: 0, suffixCount: 0 }],
+        ["Azure.Test.Page", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.StringPage", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.StringThing", { prefixCount: 0, suffixCount: 0 }],
+        ["Azure.Test.Thing", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("with default values", async () => {
@@ -178,6 +261,11 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Foo", { prefixCount: 0, suffixCount: 1 }],
+      ]));
+
     });
   });
 
@@ -199,6 +287,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Password", { prefixCount: 0, suffixCount: 0 }],
+      ]));
     });
 
     it("new scalar type", async () => {
@@ -218,6 +310,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.ternary", { prefixCount: 0, suffixCount: 0 }],
+      ]));
     });
 
     it("templated", async () => {
@@ -239,6 +335,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Unreal", { prefixCount: 1, suffixCount: 0 }],
+      ]));
     });
   });
 
@@ -268,6 +368,11 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Animal", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Creature", { prefixCount: 0, suffixCount: 0 }],
+      ]));
     });
 
     it("templated alias", async () => {
@@ -295,6 +400,11 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Animal", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Template", { prefixCount: 0, suffixCount: 0 }],
+      ]));
     });
   });
 
@@ -324,6 +434,11 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Animal", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.@@doc.Animal", { prefixCount: 0, suffixCount: 0 }],
+      ]));
     });
   });
 
@@ -349,6 +464,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.SomeEnum", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("string-backed values", async () => {
@@ -372,6 +491,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.SomeStringEnum", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("int-backed values", async () => {
@@ -395,6 +518,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.SomeIntEnum", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("spread labels", async () => {
@@ -421,6 +548,11 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.SomeEnum", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.SomeSpreadEnum", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
   });
 
@@ -475,6 +607,13 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Cat", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Dog", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.MyUnion", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Snake", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("unnamed union", async () => {
@@ -523,6 +662,13 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Cat", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Dog", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Animals", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Snake", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
   });
 
@@ -555,6 +701,12 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.GetFoo", { prefixCount: 0, suffixCount: 0 }],
+        ["Azure.Test.NamedGetFoo", { prefixCount: 0, suffixCount: 0 }],
+        ["Azure.Test.ResourceRead", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("templated with deeply nested models", async () => {
@@ -606,6 +758,11 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Foo", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.Temp", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("templated with model types", async () => {
@@ -704,6 +861,13 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.GetFoo", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.NamedGetFoo", { prefixCount: 1, suffixCount: 0 }],
+        ["Azure.Test.ResourceRead", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.FooParams", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("templated with mixed types", async () => {
@@ -783,6 +947,13 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.GetFoo", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.NamedGetFoo", { prefixCount: 1, suffixCount: 0 }],
+        ["Azure.Test.ResourceRead", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.FooParams", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("templated with empty models", async () => {
@@ -823,6 +994,13 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.GetFoo", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.NamedGetFoo", { prefixCount: 1, suffixCount: 0 }],
+        ["Azure.Test.ResourceRead", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.FooParams", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
 
     it("with anonymous models", async () => {
@@ -856,6 +1034,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.SomeOp", { prefixCount: 0, suffixCount: 1 }],
+      ]));
     });
   });
 
@@ -896,6 +1078,12 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Foo", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.get", { prefixCount: 2, suffixCount: 1 }],
+        ["Azure.Test.list", { prefixCount: 2, suffixCount: 0 }],
+      ]));
     });
   });
 
@@ -927,6 +1115,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Bar", { prefixCount: 5, suffixCount: 0 }],
+      ]));
     });
 
     it("short strings", async () => {
@@ -948,6 +1140,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Foo", { prefixCount: 1, suffixCount: 0 }],
+      ]));
     });
   });
 
@@ -995,6 +1191,12 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Person", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.myconst", { prefixCount: 0, suffixCount: 0 }],
+        ["Azure.Test.Template", { prefixCount: 0, suffixCount: 0 }],
+      ]));
     });
   });
 
@@ -1024,6 +1226,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.Foo", { prefixCount: 2, suffixCount: 1 }],
+      ]));
     });
 
     it("suppression on namespace", async () => {
@@ -1056,6 +1262,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.SubNamespace", { prefixCount: 2, suffixCount: 1 }],
+      ]));
     });
 
     it("suppression on operation", async () => {
@@ -1077,6 +1287,10 @@ describe("apiview: tests", () => {
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
       validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.someOp", { prefixCount: 1, suffixCount: 0 }],
+      ]));
     });
   });
 
@@ -1101,7 +1315,13 @@ describe("apiview: tests", () => {
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);
       compare(expect, actual, 10);
-      validateLineIds(apiview);    
+      validateLineIds(apiview);
+      validateRelatedLines(apiview, new Map([
+        ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
+        ["Azure.Test.a", { prefixCount: 0, suffixCount: 0 }],
+        ["Azure.Test.b", { prefixCount: 0, suffixCount: 0 }],
+        ["Azure.Test.c", { prefixCount: 0, suffixCount: 0 }],
+      ]));
     });
   });
 });

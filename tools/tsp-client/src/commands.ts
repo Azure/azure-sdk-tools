@@ -276,13 +276,20 @@ export async function generateCommand(argv: any) {
     args.push("--force");
   }
   await npmCommand(srcDir, args);
-  const success = await compileTsp({
+
+  const [success, exampleCmd] = await compileTsp({
     emitterPackage: emitter,
     outputPath: outputDir,
     resolvedMainFilePath,
     saveInputs: saveInputs,
     additionalEmitterOptions: emitterOptions,
   });
+
+  if (argv["debug"]) {
+    Logger.warn(`Example of how to compile using the tsp commandline. NOTE: tsp-client does NOT directly run this command, results may vary:
+        ${exampleCmd}
+        `);
+  }
 
   if (saveInputs) {
     Logger.debug(`Skipping cleanup of temp directory: ${tempRoot}`);

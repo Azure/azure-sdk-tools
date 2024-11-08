@@ -1,5 +1,9 @@
 # Release
 
+## 2024-11-08 - 0.14.1
+
+- Print an example `tsp compile` call when the `--debug` flag is passed to a `tsp-client` command.
+
 ## 2024-11-07 - 0.14.0
 
 - Fix `init` command when using a local spec:

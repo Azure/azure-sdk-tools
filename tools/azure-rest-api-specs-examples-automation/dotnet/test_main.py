@@ -352,6 +352,7 @@ class TestMain(unittest.TestCase):
 
 using System;
 using System.Threading.Tasks;
+using NUnit.Framework;
 using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager.Compute.Models;
@@ -372,3 +373,4 @@ namespace Azure.ResourceManager.Compute.Samples
         self.assertIn("using Azure.Core;\n", usings)
         self.assertIn("using Azure.ResourceManager;\n", usings)
         self.assertIn("using Azure.ResourceManager.Compute;\n", usings)
+        self.assertNotIn("using using NUnit.Framework;\n", usings)

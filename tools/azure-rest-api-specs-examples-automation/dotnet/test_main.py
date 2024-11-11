@@ -384,9 +384,5 @@ namespace Azure.ResourceManager.Compute.Samples
     def test_example_usings(self, content: str, expected_usings: list[str]):
         lines = content.splitlines(keepends=True)
         usings = get_dotnet_using_statements(lines)
-
-        self.assertIn("using Azure;\n", usings)
-        self.assertIn("using Azure.Core;\n", usings)
-        self.assertIn("using Azure.ResourceManager;\n", usings)
-        self.assertIn("using Azure.ResourceManager.Compute;\n", usings)
+        
         self.assertSetEqual(set(expected_usings), set(usings))

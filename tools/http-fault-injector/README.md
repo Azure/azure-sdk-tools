@@ -43,8 +43,8 @@ After these steps, .NET clients should automatically trust the certificate.  Oth
 
 ### Java Windows
 1. Run `dotnet dev-certs https --export-path dotnet-dev-cert.pfx` to export the cert to a file
-2. Run `keytool -importcert -cacerts -file dotnet-dev-cert.pfx` to import the cert to the Java default cacerts keystore
-   1. Requires admin command prompt.
+2. Run `keytool -importcert -cacerts -file dotnet-dev-cert.pfx` (requires sudo/admin)
+   1. If prompted to `enter keystore password`, the default after installing Java is `changeit`
 
 ## Walkthrough
 1. Run `http-fault-injector`

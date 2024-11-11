@@ -373,4 +373,4 @@ namespace Azure.ResourceManager.Compute.Samples
         self.assertIn("using Azure.Core;\n", usings)
         self.assertIn("using Azure.ResourceManager;\n", usings)
         self.assertIn("using Azure.ResourceManager.Compute;\n", usings)
-        self.assertNotIn("using using NUnit.Framework;\n", usings)
+        self.assertNotIn("using NUnit.Framework;\n", usings)

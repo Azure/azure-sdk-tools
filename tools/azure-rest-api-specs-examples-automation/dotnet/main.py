@@ -98,10 +98,10 @@ def get_dotnet_using_statements(lines: List[str]) -> List[str]:
         "using Azure.ResourceManager;\n",
     ]
     for line in lines:
-        if line.startswith("using "):
+        if line.startsWith("using NUnit."):
             # ignore the NUnit namespaces if any
-            if line.startswith("using NUnit."):
-                continue
+            pass
+        elif line.startswith("using "):
             lines_using_statements.append(line)
         elif line.startswith("namespace "):
             # remove the prefix first

@@ -12,6 +12,7 @@ file_content = """// Copyright (c) Microsoft Corporation. All rights reserved.
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using NUnit.Framework;
 using Azure;
 using Azure.Core;
 using Azure.Identity;
@@ -26,8 +27,8 @@ namespace Azure.ResourceManager.ContainerInstance.Samples
     public partial class Sample_ContainerGroupCollection
     {
         // ContainerGroupsListByResourceGroup
-        [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("Only verifying that the sample builds")]
+        [Test]
+        [Ignore("Only verifying that the sample builds")]
         public async Task GetAll_ContainerGroupsListByResourceGroup()
         {
             // Generated from example definition: specification/containerinstance/resource-manager/Microsoft.ContainerInstance/stable/2021-10-01/examples/ContainerGroupsListByResourceGroup.json
@@ -62,8 +63,8 @@ namespace Azure.ResourceManager.ContainerInstance.Samples
         }
 
         // ContainerGroupsGet_Failed
-        [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("Only verifying that the sample builds")]
+        [Test]
+        [Ignore("Only verifying that the sample builds")]
         public async Task Get_ContainerGroupsGetFailed()
         {
             // Generated from example definition: specification/containerinstance/resource-manager/Microsoft.ContainerInstance/stable/2021-10-01/examples/ContainerGroupsGet_Failed.json
@@ -96,8 +97,8 @@ namespace Azure.ResourceManager.ContainerInstance.Samples
         }
 
         // ContainerGroupsGet_Failed
-        [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("Only verifying that the sample builds")]
+        [Test]
+        [Ignore("Only verifying that the sample builds")]
         public async Task Exists_ContainerGroupsGetFailed()
         {
             // Generated from example definition: specification/containerinstance/resource-manager/Microsoft.ContainerInstance/stable/2021-10-01/examples/ContainerGroupsGet_Failed.json
@@ -126,8 +127,8 @@ namespace Azure.ResourceManager.ContainerInstance.Samples
         }
 
         // ContainerGroupsGet_Succeeded
-        [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("Only verifying that the sample builds")]
+        [Test]
+        [Ignore("Only verifying that the sample builds")]
         public async Task Get_ContainerGroupsGetSucceeded()
         {
             // Generated from example definition: specification/containerinstance/resource-manager/Microsoft.ContainerInstance/stable/2021-10-01/examples/ContainerGroupsGet_Succeeded.json
@@ -160,8 +161,8 @@ namespace Azure.ResourceManager.ContainerInstance.Samples
         }
 
         // ContainerGroupsGet_Succeeded
-        [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("Only verifying that the sample builds")]
+        [Test]
+        [Ignore("Only verifying that the sample builds")]
         public async Task Exists_ContainerGroupsGetSucceeded()
         {
             // Generated from example definition: specification/containerinstance/resource-manager/Microsoft.ContainerInstance/stable/2021-10-01/examples/ContainerGroupsGet_Succeeded.json
@@ -190,8 +191,8 @@ namespace Azure.ResourceManager.ContainerInstance.Samples
         }
 
         // ContainerGroupsCreateOrUpdate
-        [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("Only verifying that the sample builds")]
+        [Test]
+        [Ignore("Only verifying that the sample builds")]
         public async Task CreateOrUpdate_ContainerGroupsCreateOrUpdate()
         {
             // Generated from example definition: specification/containerinstance/resource-manager/Microsoft.ContainerInstance/stable/2021-10-01/examples/ContainerGroupsCreateOrUpdate.json

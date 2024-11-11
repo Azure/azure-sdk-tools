@@ -99,6 +99,9 @@ def get_dotnet_using_statements(lines: List[str]) -> List[str]:
     ]
     for line in lines:
         if line.startswith("using "):
+            # ignore the NUnit namespaces if any
+            if line.startswith("using NUnit."):
+                continue
             lines_using_statements.append(line)
         elif line.startswith("namespace "):
             # remove the prefix first

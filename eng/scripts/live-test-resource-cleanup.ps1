@@ -346,8 +346,8 @@ function DeleteArmDeployments([object]$ResourceGroup) {
 
 function DeleteSubscriptionDeployments() {
   $subDeployments = Get-AzSubscriptionDeployment 
-  Write-Host "Removing $($subDeployments.Count) subscription scoped deployments"
-  $subDeployments | Remove-AzSubscriptionDeployment
+  Write-Host "Removing $($subDeployments.Count) subscription scoped deployments async"
+  $subDeployments | Remove-AzSubscriptionDeployment -AsJob
 }
 
 function DeleteOrUpdateResourceGroups() {

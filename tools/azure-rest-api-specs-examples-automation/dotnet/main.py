@@ -98,7 +98,7 @@ def get_dotnet_using_statements(lines: List[str]) -> List[str]:
         "using Azure.ResourceManager;\n",
     ]
     for line in lines:
-        if line.startsWith("using NUnit."):
+        if line.startswith("using NUnit."):
             # ignore the NUnit namespaces if any
             pass
         elif line.startswith("using "):

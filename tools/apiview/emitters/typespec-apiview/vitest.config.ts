@@ -6,11 +6,15 @@ export default defineConfig({
     isolate: false,
     coverage: {
       reporter: ['cobertura', 'json', 'text'],
+      include: ['src/**/*.ts'],
     },
     outputFile: {
       junit: './test-results.xml',
     },
     exclude: ['node_modules', 'dist/test', 'dist'],
+  },
+  esbuild: {
+    sourcemap: true,
   },
   server: {
     watch: {

@@ -389,9 +389,11 @@ export class ApiView {
       });
     } else {
       this.punctuation(`"""`, options);
+      this.copyRelatedToFromPreviousLine();
       this.newline();
       for (const line of lines) {
         this.literal(line, options);
+        this.copyRelatedToFromPreviousLine();
         this.newline();
       }
       this.punctuation(`"""`, options);
@@ -901,10 +903,10 @@ export class ApiView {
     for (let x = 0; x < node.operations.length; x++) {
       const op = node.operations[x];
       this.tokenizeOperationStatement(op, true);
-      this.newline()
+      this.blankLines(1)
     }
     this.deindent();
-    this.punctuation("}");
+    this.punctuation("}", {isContextEndLine: true});
     this.namespaceStack.pop();
   }
 
@@ -924,7 +926,7 @@ export class ApiView {
       this.newline()
     }
     this.deindent();
-    this.punctuation("}");
+    this.punctuation("}", {isContextEndLine: true});
     this.namespaceStack.pop();
   }
 
@@ -947,7 +949,7 @@ export class ApiView {
       this.newline()
     }
     this.deindent();
-    this.punctuation("}");
+    this.punctuation("}", {isContextEndLine: true});
     this.namespaceStack.pop();
   }
 
@@ -1030,7 +1032,7 @@ export class ApiView {
     this.tokenizeIdentifier(node.id, "declaration");
     this.tokenizeTemplateParameters(node.templateParameters);
     this.tokenize(node.signature);
-    this.punctuation(";");
+    this.punctuation(";", {isContextEndLine: true});
     this.namespaceStack.pop();
   }
 
@@ -1098,9 +1100,17 @@ export class ApiView {
         }
       }
       if (!inline) {
+        this.copyRelatedToFromPreviousLine();
         this.newline()
       }
     }
+  }
+
+  private copyRelatedToFromPreviousLine() {
+    const parentCollection = this.currentParent ? this.currentParent.Children : this.reviewLines;
+    const lastChild = parentCollection[parentCollection.length - 1];
+    if (!lastChild) return;
+    this.currentLine.RelatedToLine = lastChild.RelatedToLine;
   }
 
   private getFullyQualifiedIdentifier(node: MemberExpressionNode, suffix?: string): string {

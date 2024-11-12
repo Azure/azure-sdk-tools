@@ -41,7 +41,7 @@
     "clean": "rimraf ./dist ./temp ./tsp-output",
     "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "purge": "rimraf ./node_modules ./package-lock.json",
-    "build": "npm run prebuild && tsc -p . && npm run lint-typespec-library",
+    "build": "npm run clean && npm run prebuild && tsc -p . && npm run lint-typespec-library",
     "watch": "tsc -p . --watch",
     "lint-typespec-library": "tsp compile . --warn-as-error --import @typespec/library-linter --no-emit",
     "test": "vitest",

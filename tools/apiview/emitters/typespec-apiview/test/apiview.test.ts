@@ -38,7 +38,7 @@ describe("apiview: tests", () => {
     const lineIdsFound = new Set<string>();
 
     function validateReviewLines(lines: ReviewLine[] | undefined) {
-      if (lines === undefined) return;
+      if (lines === undefined || lines.length === 0) return;
       lines.forEach((line, index) => {
         const lineId = line.LineId;
         const related = line.RelatedToLine;
@@ -225,7 +225,7 @@ describe("apiview: tests", () => {
       validateLineIds(apiview);
       validateRelatedLines(apiview, new Map([
         ["Azure.Test", { prefixCount: 3, suffixCount: 1 }],
-        ["Azure.Test.ConstrainedComplex", { prefixCount: 0, suffixCount: 1 }],
+        ["Azure.Test.ConstrainedComplex", { prefixCount: 0, suffixCount: 2 }],
         ["Azure.Test.ConstrainedSimple", { prefixCount: 0, suffixCount: 1 }],
         ["Azure.Test.ConstrainedWithDefault", { prefixCount: 0, suffixCount: 1 }],
         ["Azure.Test.NamedStringThing", { prefixCount: 0, suffixCount: 0 }],
@@ -1052,7 +1052,6 @@ describe("apiview: tests", () => {
           @route("get/{name}")
           get(@path name: string): string;
   
-  
           @get
           @route("list")
           list(): string[];
@@ -1068,6 +1067,7 @@ describe("apiview: tests", () => {
             @path
             name: string
           ): string;
+
           @get
           @route("list")
           list(): string[];

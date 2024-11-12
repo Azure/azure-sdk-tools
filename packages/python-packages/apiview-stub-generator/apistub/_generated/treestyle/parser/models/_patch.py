@@ -24,32 +24,6 @@ HEADER_TEXT = "# Package is parsed using apiview-stub-generator(version:{0}), Py
 TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\d._]+)")
 TYPE_OR_SEPARATOR = " or "
 
-
-def set_blank_lines(review_lines, count=1):
-    """Ensures a specific number of blank lines.
-    Will add or remove newline tokens as needed
-    to ensure the exact number of blank lines.
-    """
-    for _ in range(count):
-
-        review_lines.append(create_review_line())
-
-def create_review_line(
-    *,
-    line_id: Optional[str] = None,
-    tokens: List[Token] = [],
-    children: Optional[List["ReviewLine"]] = None,
-    is_context_end_line: Optional[bool] = False,
-    related_to_line: Optional[str] = None,
-):
-    return ReviewLine(
-        line_id=line_id,
-        tokens=tokens,
-        children=children,
-        is_context_end_line=is_context_end_line,
-        related_to_line=related_to_line,
-    )
-
 def add_type(tokens, type_name):
     # TODO: add_type should require an ArgType or similar object so we can link *all* types
 
@@ -76,10 +50,6 @@ class ApiView(CodeFile):
 
     :param str pkg_name: The package name.
     :param str namespace: The package namespace.
-    :param ReviewLines review_lines: A metadata mapping object.
-    :param str source_url: An optional source URL to display in the preamble.
-    :param str pkg_name: The package name.
-    :param str namespace: The package namespace.
     :param ReviewLines review_lines: Required.
     :param str source_url: An optional source URL to display in the preamble.
 
@@ -100,7 +70,7 @@ class ApiView(CodeFile):
     :ivar cross_language_package_id:
     :vartype cross_language_package_id: str
     :ivar review_lines: Required.
-    :vartype review_lines: list[~treestyle.parser.models.ReviewLine]
+    :vartype review_lines: ReviewLines
     :ivar diagnostics: Add any system generated comments. Each comment is linked to review line ID.
     :vartype diagnostics: list[~treestyle.parser.models.CodeDiagnostic]
     :ivar navigation: Navigation items are used to create a tree view in the navigation panel. Each
@@ -129,17 +99,16 @@ class ApiView(CodeFile):
         # self.language = "Python"
         self.metadata_map = metadata_map or MetadataMap("")
         # self.cross_language_package_id = self.metadata_map.cross_language_package_id
-        # self.review_lines = []
-        # self.diagnostics = []
         # self.navigation = []
         # TODO: Version: 0 doesn't have a correpsonding value in new parser.
         # self.version = 0
+        self.review_lines: ReviewLines
         super().__init__(
             package_name=pkg_name,
             package_version=pkg_version,
             parser_version=VERSION,
             language="Python",
-            review_lines=[],
+            review_lines=ReviewLines(),
             cross_language_package_id=self.metadata_map.cross_language_package_id,
             diagnostics=[],
             # navigation=[], # TODO: Add later if needed
@@ -156,14 +125,14 @@ class ApiView(CodeFile):
             has_suffix_space=False,
         )
         self.review_lines.append(
-            create_review_line(line_id="GLOBAL", tokens=[token])
+            self.review_lines.create_review_line(line_id="GLOBAL", tokens=[token])
         )
         # if source_url:  # TODO: test source url
-        #    self.set_blank_lines(1)
+        #    self.review_lines.set_blank_lines(1)
         #    self.add_literal("# Source URL: ")
         #    self.add_link(source_url)
         # self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
-        set_blank_lines(self.review_lines, 2)
+        self.review_lines.set_blank_lines(2)
 
     # def begin_group(self, group_name=""):
     #    """Begin a new group in API view by shifting to right
@@ -182,6 +151,58 @@ class ApiView(CodeFile):
 
     def add_navigation(self, navigation):
         self.navigation.append(navigation)
+
+    def add_type(self, tokens, type_name):
+        # TODO: add_type should require an ArgType or similar object so we can link *all* types
+
+        # This method replace full qualified internal types to short name and generate tokens
+        if not type_name:
+            return
+
+        type_name = type_name.replace(":class:", "")
+        logging.debug("Processing type {}".format(type_name))
+        # Check if multiple types are listed with 'or' separator
+        # Encode multiple types with or separator into Union
+        if TYPE_OR_SEPARATOR in type_name:
+            types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
+            # Make a Union of types if multiple types are present
+            type_name = "Union[{}]".format(", ".join(types))
+
+        # TODO: figure out cross_language_id, pass into type token below
+        # cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
+        tokens.append(Token(kind=TokenKind.TYPE_NAME, value=type_name, has_suffix_space=False))
+
+
+class ReviewLines(list):
+    """A list of ReviewLine objects.
+    """
+    def __init__(self, *args):
+        super().__init__(*args)
+
+    def create_review_line(
+        self,
+        *,
+        line_id: Optional[str] = None,
+        tokens: List[Token] = [],
+        children: Optional[List["ReviewLine"]] = None,
+        is_context_end_line: Optional[bool] = False,
+        related_to_line: Optional[str] = None,
+    ):
+        return ReviewLine(
+            line_id=line_id,
+            tokens=tokens,
+            children=children,
+            is_context_end_line=is_context_end_line,
+            related_to_line=related_to_line,
+        )
+
+    def set_blank_lines(self, count=1):
+        """Ensures a specific number of blank lines.
+        Will add or remove newline tokens as needed
+        to ensure the exact number of blank lines.
+        """
+        for _ in range(count):
+            self.append(self.create_review_line())
 
 
 class ReviewLine(ReviewLineImpl):
@@ -321,8 +342,7 @@ class ReviewLine(ReviewLineImpl):
 
 __all__: List[str] = [
     "ApiView",
-    "create_review_line",
-    "set_blank_lines",
+    "ReviewLines",
     "ReviewLine",
     "add_type",
 ]  # Add all objects you want publicly available to users at this package level

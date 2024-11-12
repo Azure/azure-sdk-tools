@@ -12,7 +12,7 @@ from ._key_node import KeyNode
 from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line, set_blank_lines, add_type
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_type, ReviewLines
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ReviewLine
@@ -64,7 +64,7 @@ class ClassNode(NodeEntityBase):
         self.base_class_names = []
         # This is the name obtained by NodeEntityBase from __name__.
         # We must preserve it to detect the mismatch and issue a warning.
-        self.children = []
+        self.children = ReviewLines()
         self.name = name
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
@@ -312,7 +312,7 @@ class ClassNode(NodeEntityBase):
             base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 
-    def generate_tokens(self, review_lines: List["ReviewLine"]):
+    def generate_tokens(self, review_lines: "ReviewLines"):
         """Generates token for the node and it's children recursively and add it to apiview
         :param review_lines: List of ReviewLine 
         """
@@ -320,13 +320,13 @@ class ClassNode(NodeEntityBase):
         # Generate class name line
         for decorator in self.decorators: 
             # TODO: may need to remove line id here
-            line = create_review_line(
+            line = review_lines.create_review_line(
                 line_id=self.namespace_id,
                 tokens=[Token(kind=TokenKind.KEYWORD, value=decorator)],
                 related_to_line=self.namespace_id,
             )
             review_lines.append(line)
-            set_blank_lines(review_lines)
+            review_lines.set_blank_lines()
 
         #apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
         tokens = [
@@ -354,7 +354,7 @@ class ClassNode(NodeEntityBase):
         if self.child_nodes:
             self._generate_child_tokens(review_lines)
 
-        line = create_review_line(
+        line = review_lines.create_review_line(
             line_id=self.namespace_id,
             tokens=tokens,
             children=self.children,
@@ -368,14 +368,14 @@ class ClassNode(NodeEntityBase):
         for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
             e.generate_tokens(self.children)
 
-        set_blank_lines(self.children)
+        self.children.set_blank_lines()
         for func in [
             x
             for x in self.child_nodes
             if isinstance(x, FunctionNode) and x.hidden == False
         ]:
             func.generate_tokens(self.children)
-        set_blank_lines(self.children)
+        self.children.set_blank_lines()
         #apiview.end_group()
 
 

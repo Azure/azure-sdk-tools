@@ -8,7 +8,7 @@ from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub import Navigation, Kind, NavigationTag
-from apistub._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line, set_blank_lines
+from apistub._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, ReviewLines
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ApiView, ReviewLine
@@ -27,7 +27,7 @@ class ModuleNode(NodeEntityBase):
     def __init__(self, namespace, module, apiview: "ApiView", pkg_root_namespace):
         super().__init__(namespace=namespace, parent_node=None, obj=module)
         self.namespace_id = self.generate_id()
-        self.children = []
+        self.children = ReviewLines()
         self.node_index = apiview.node_index
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
@@ -104,18 +104,18 @@ class ModuleNode(NodeEntityBase):
                 Token(kind=TokenKind.KEYWORD, value="namespace"),
                 Token(kind=TokenKind.TEXT, value=self.namespace, has_suffix_space=False)
             ]
-            set_blank_lines(self.children, 1)
+            self.children.set_blank_lines(1)
             # Add name space level functions first
             for c in filter(filter_function, self.child_nodes):
                 c.generate_tokens(self.children)
-                set_blank_lines(self.children, 2)
+                self.children.set_blank_lines(2)
 
             # Add classes
             for c in filter(filter_class, self.child_nodes):
                 c.generate_tokens(self.children)
 
             # TODO: figure out why children only print when added before parent review line
-            line = create_review_line(line_id=self.namespace_id, tokens=tokens, children=self.children)
+            line = review_lines.create_review_line(line_id=self.namespace_id, tokens=tokens, children=self.children)
             review_lines.append(line)
 
     def get_navigation(self):

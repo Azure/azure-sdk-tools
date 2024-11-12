@@ -10,7 +10,7 @@ from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line, set_blank_lines, add_type
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, ReviewLines, add_type
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ReviewLine
@@ -38,7 +38,7 @@ class FunctionNode(NodeEntityBase):
             self.name = node.name
             self.display_name = node.name
         self.annotations = []
-        self.children = []
+        self.children = ReviewLines()
 
         # Track **kwargs and *args separately, the way astroid does
         self.special_kwarg = None
@@ -330,11 +330,11 @@ class FunctionNode(NodeEntityBase):
 
         # after children are added, add the review line
         #self._reviewline_if_needed(review_lines, def_tokens, use_multi_line, children=self.children)
-        line = create_review_line(line_id=self.namespace_id, tokens=def_tokens, children=self.children)
+        line = review_lines.create_review_line(line_id=self.namespace_id, tokens=def_tokens, children=self.children)
         review_lines.append(line)
         #add_review_line(review_lines, line_id=self.namespace_id)
 
-        set_blank_lines(review_lines)
+        review_lines.set_blank_lines()
 
 
     def generate_tokens(self, review_lines: List["ReviewLine"]):
@@ -349,7 +349,7 @@ class FunctionNode(NodeEntityBase):
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
-            line = create_review_line(
+            line = review_lines.create_review_line(
                 tokens=[Token(kind=TokenKind.KEYWORD, value=annot, has_suffix_space=False)]
             )
             review_lines.append(line)

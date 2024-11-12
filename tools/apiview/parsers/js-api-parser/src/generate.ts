@@ -67,6 +67,7 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
     const nameToken: ReviewToken = buildToken({
       Kind: TokenKind.StringLiteral,
       Value: dependency,
+      SkipDiff: true,
     });
     const versionToken: ReviewToken = buildToken({
       Kind: TokenKind.StringLiteral,
@@ -74,7 +75,11 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
       SkipDiff: true,
     });
     const dependencyLine: ReviewLine = {
-      Tokens: [nameToken, buildToken({ Kind: TokenKind.Punctuation, Value: ":" }), versionToken],
+      Tokens: [
+        nameToken,
+        buildToken({ Kind: TokenKind.Punctuation, Value: ":", SkipDiff: true }),
+        versionToken,
+      ],
     };
     dependencyLines.push(dependencyLine);
   }

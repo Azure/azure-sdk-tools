@@ -3,8 +3,7 @@ import inspect
 import astroid
 
 from ._base_node import NodeEntityBase
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line
-
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind
 
 class EnumNode(NodeEntityBase):
     """Enum node represents any Enum value
@@ -29,5 +28,5 @@ class EnumNode(NodeEntityBase):
             tokens.append(Token(kind=TokenKind.LITERAL, value=str(self.value)))
         for err in self.pylint_errors:
             err.generate_tokens(review_lines, self.namespace_id)
-        line = create_review_line(line_id=self.namespace_id, tokens=tokens)
+        line = review_lines.create_review_line(line_id=self.namespace_id, tokens=tokens)
         review_lines.append(line)

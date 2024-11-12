@@ -2,7 +2,7 @@ import astroid
 import inspect
 
 from ._base_node import get_qualified_name
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind
 
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]

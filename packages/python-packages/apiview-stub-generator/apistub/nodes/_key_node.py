@@ -1,5 +1,5 @@
 from ._base_node import NodeEntityBase, get_qualified_name
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line, add_type
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line, add_type
 
 class KeyNode(NodeEntityBase):
     """Key node represents a typed key defined in a TypedDict object
@@ -23,4 +23,5 @@ class KeyNode(NodeEntityBase):
         tokens.append(Token(kind=TokenKind.TEXT, value=self.name, has_suffix_space=False))
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":"))
         add_type(tokens, self.type)
-        add_review_line(review_lines, tokens=tokens, line_id=self.namespace_id)
+        line = create_review_line(tokens=tokens, line_id=self.namespace_id)
+        review_lines.append(line)

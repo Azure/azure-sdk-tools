@@ -31,11 +31,10 @@ def set_blank_lines(review_lines, count=1):
     to ensure the exact number of blank lines.
     """
     for _ in range(count):
-        add_review_line(review_lines)
 
+        review_lines.append(create_review_line())
 
-def add_review_line(
-    review_lines: List["ReviewLine"],
+def create_review_line(
     *,
     line_id: Optional[str] = None,
     tokens: List[Token] = [],
@@ -43,16 +42,13 @@ def add_review_line(
     is_context_end_line: Optional[bool] = False,
     related_to_line: Optional[str] = None,
 ):
-    review_lines.append(
-        ReviewLine(
-            line_id=line_id,
-            tokens=tokens,
-            children=children,
-            is_context_end_line=is_context_end_line,
-            related_to_line=related_to_line,
-        )
+    return ReviewLine(
+        line_id=line_id,
+        tokens=tokens,
+        children=children,
+        is_context_end_line=is_context_end_line,
+        related_to_line=related_to_line,
     )
-
 
 def add_type(tokens, type_name):
     # TODO: add_type should require an ArgType or similar object so we can link *all* types
@@ -159,40 +155,15 @@ class ApiView(CodeFile):
             value=HEADER_TEXT,
             has_suffix_space=False,
         )
-        add_review_line(self.review_lines, line_id="GLOBAL", tokens=[token])
+        self.review_lines.append(
+            create_review_line(line_id="GLOBAL", tokens=[token])
+        )
         # if source_url:  # TODO: test source url
         #    self.set_blank_lines(1)
         #    self.add_literal("# Source URL: ")
         #    self.add_link(source_url)
         # self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
         set_blank_lines(self.review_lines, 2)
-
-    # def set_blank_lines(self, count=1):
-    #    """ Ensures a specific number of blank lines.
-    #        Will add or remove newline tokens as needed
-    #        to ensure the exact number of blank lines.
-    #    """
-    #    for _ in range(count):
-    #        add_review_line(self.review_lines)
-
-    # TODO: Find out why counting/removing was needed
-    # count the number of trailing newlines
-    # newline_count = 0
-    # for token in self.tokens[::-1]:
-    #    if token.kind == TokenKind.Newline:
-    #        newline_count += 1
-    #    else:
-    #        break
-
-    # if newline_count < (count + 1):
-    #    # if there are not enough newlines, add some
-    #    for n in range((count + 1) - newline_count):
-    #        self.add_token(Token("", TokenKind.Newline))
-    # elif newline_count > (count + 1):
-    #    # if there are too many newlines, remove some
-    #    excess = newline_count - (count + 1)
-    #    for _ in range(excess):
-    #        self.tokens.pop()
 
     # def begin_group(self, group_name=""):
     #    """Begin a new group in API view by shifting to right
@@ -350,7 +321,7 @@ class ReviewLine(ReviewLineImpl):
 
 __all__: List[str] = [
     "ApiView",
-    "add_review_line",
+    "create_review_line",
     "set_blank_lines",
     "ReviewLine",
     "add_type",

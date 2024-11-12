@@ -10,7 +10,7 @@ from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line, set_blank_lines, add_type
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line, set_blank_lines, add_type
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ReviewLine
@@ -166,7 +166,8 @@ class FunctionNode(NodeEntityBase):
         if use_multi_line:
             if line_id is None:
                 line_id = self.namespace_id
-            add_review_line(review_lines, tokens=tokens, line_id=line_id, children=children)
+            line = create_review_line(tokens=tokens, line_id=line_id, children=children)
+            review_lines.append(line)
             # new token list for next line if multi-line
             tokens = []
         return tokens
@@ -317,20 +318,20 @@ class FunctionNode(NodeEntityBase):
         #tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line, children=self.children)
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")", has_suffix_space=False))
 
+        line_id = self.namespace_id
         if self.return_type:
             tokens.append(Token(kind=TokenKind.PUNCTUATION, value="->", has_prefix_space=True))
             # Add line marker id if signature is displayed in multi lines
             if use_multi_line:
                 line_id = f"{self.namespace_id}.returntype"
-            else:
-                line_id = self.namespace_id
             add_type(tokens, self.return_type)
 
         tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line, line_id=line_id)
 
         # after children are added, add the review line
         #self._reviewline_if_needed(review_lines, def_tokens, use_multi_line, children=self.children)
-        add_review_line(review_lines, line_id=self.namespace_id, tokens=def_tokens, children=self.children)
+        line = create_review_line(line_id=self.namespace_id, tokens=def_tokens, children=self.children)
+        review_lines.append(line)
         #add_review_line(review_lines, line_id=self.namespace_id)
 
         set_blank_lines(review_lines)
@@ -348,10 +349,10 @@ class FunctionNode(NodeEntityBase):
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
-            add_review_line(
-                review_lines=review_lines,
+            line = create_review_line(
                 tokens=[Token(kind=TokenKind.KEYWORD, value=annot, has_suffix_space=False)]
             )
+            review_lines.append(line)
 
         tokens = []
         if self.is_async:

@@ -12,7 +12,7 @@ from ._key_node import KeyNode
 from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line, set_blank_lines, add_type
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line, set_blank_lines, add_type
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ReviewLine
@@ -320,12 +320,12 @@ class ClassNode(NodeEntityBase):
         # Generate class name line
         for decorator in self.decorators: 
             # TODO: may need to remove line id here
-            add_review_line(
-                review_lines=review_lines,
+            line = create_review_line(
                 line_id=self.namespace_id,
                 tokens=[Token(kind=TokenKind.KEYWORD, value=decorator)],
                 related_to_line=self.namespace_id,
             )
+            review_lines.append(line)
             set_blank_lines(review_lines)
 
         #apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
@@ -354,14 +354,14 @@ class ClassNode(NodeEntityBase):
         if self.child_nodes:
             self._generate_child_tokens(review_lines)
 
-        add_review_line(
-            review_lines=review_lines,
+        line = create_review_line(
             line_id=self.namespace_id,
             tokens=tokens,
             children=self.children,
             is_context_end_line=True,
             related_to_line=self.namespace_id,
         )
+        review_lines.append(line)
 
     def _generate_child_tokens(self, review_lines):
         # Add members and methods

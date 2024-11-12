@@ -8,7 +8,7 @@ from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub import Navigation, Kind, NavigationTag
-from apistub._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line, set_blank_lines
+from apistub._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line, set_blank_lines
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ApiView, ReviewLine
@@ -115,7 +115,8 @@ class ModuleNode(NodeEntityBase):
                 c.generate_tokens(self.children)
 
             # TODO: figure out why children only print when added before parent review line
-            add_review_line(review_lines=review_lines, line_id=self.namespace_id, tokens=tokens, children=self.children)
+            line = create_review_line(line_id=self.namespace_id, tokens=tokens, children=self.children)
+            review_lines.append(line)
 
     def get_navigation(self):
         """Generate navigation tree recursively by generating Navigation obejct for classes and functions in name space

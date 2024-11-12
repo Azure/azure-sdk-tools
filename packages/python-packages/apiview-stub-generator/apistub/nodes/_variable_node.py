@@ -1,6 +1,6 @@
 import inspect
 from ._base_node import NodeEntityBase
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line, set_blank_lines, add_type
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, create_review_line, set_blank_lines, add_type
 
 
 class VariableNode(NodeEntityBase):
@@ -33,7 +33,8 @@ class VariableNode(NodeEntityBase):
             add_type(tokens, self.type)
 
         if not self.value:
-            add_review_line(review_lines=review_lines, line_id=self.namespace_id, tokens=tokens)
+            line = create_review_line(line_id=self.namespace_id, tokens=tokens)
+            review_lines.append(line)
             return
 
         tokens.append(Token(kind=TokenKind.PUNCTUATION, value="=", has_prefix_space=True))
@@ -53,4 +54,5 @@ class VariableNode(NodeEntityBase):
                 if i < len(properties) - 1:
                     tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
             tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")"))
-        add_review_line(review_lines=review_lines, line_id=self.namespace_id, tokens=tokens)
+        line = create_review_line(line_id=self.namespace_id, tokens=tokens)
+        review_lines.append(line)

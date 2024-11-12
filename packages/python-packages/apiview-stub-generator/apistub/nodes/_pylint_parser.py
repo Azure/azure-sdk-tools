@@ -7,8 +7,6 @@ import re
 from typing import List
 from pylint.lint import Run
 
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_review_line
-
 _HELP_LINK_REGEX = re.compile(r"(.+) See details: *([^\s]+)")
 
 class PylintError:

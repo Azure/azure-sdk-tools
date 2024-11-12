@@ -7,7 +7,7 @@ import {
   where,
   pathRelativeTo,
   copyFile
-} from '@ts-common/azure-js-dev-tools';
+} from '../../tools';
 import { LanguageConfiguration } from '../languageConfiguration';
 import { PackageCommandOptions } from '../packageCommandOptions';
 import { InstallationInstructionsOptions } from '../installationInstructions';

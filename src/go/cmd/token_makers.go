@@ -280,8 +280,9 @@ func (f Func) MakeTokens() []ReviewToken {
 				})
 			}
 			tks = append(tks, ReviewToken{
-				Kind:  TokenKindMemberName,
-				Value: p,
+				HasSuffixSpace: true,
+				Kind:           TokenKindMemberName,
+				Value:          p,
 			})
 			tks = append(tks, parseAndMakeTypeTokens(f.typeParamConstraints[i])...)
 		}
@@ -536,7 +537,7 @@ func (s Struct) MakeReviewLine() ReviewLine {
 	for name := range s.fields {
 		if exportedFieldRgx.MatchString(name) {
 			if len(name) > maxLen {
-				maxLen = len(name) + 1
+				maxLen = len(name)
 			}
 			exported = append(exported, name)
 		}
@@ -554,8 +555,10 @@ func (s Struct) MakeReviewLine() ReviewLine {
 						Value: name,
 					},
 					{
-						Kind:  TokenKindPunctuation,
-						Value: strings.Repeat(" ", maxLen-len(name)),
+						Kind: TokenKindPunctuation,
+						// The +2 aligns type names with and without a preceding *. It's hacky
+						// but much simpler than considering * when calculating the max length
+						Value: strings.Repeat(" ", maxLen-len(name)+2),
 					},
 				},
 			}
@@ -563,10 +566,6 @@ func (s Struct) MakeReviewLine() ReviewLine {
 			fieldLine.Tokens = append(fieldLine.Tokens, typeTks...)
 			structLine.Children = append(structLine.Children, fieldLine)
 		}
-	}
-	// add a blank line after fields
-	if len(structLine.Children) > 0 {
-		structLine.Children = append(structLine.Children, ReviewLine{})
 	}
 	return structLine
 }

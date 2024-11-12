@@ -374,7 +374,13 @@ func (c *content) parseStruct() []ReviewLine {
 	for _, typeName := range names {
 		sl := c.Structs[typeName].MakeReviewLine()
 
-		if ctors := c.searchForCtors(typeName); len(ctors) > 0 {
+		ctors := c.searchForCtors(typeName)
+		methods := c.findMethods(typeName)
+		if len(sl.Children) > 0 && (len(ctors) > 0 || len(methods) > 0) {
+			// add a blank link between fields and ctors/methods
+			sl.Children = append(sl.Children, ReviewLine{})
+		}
+		if len(ctors) > 0 {
 			names := make([]string, 0, len(ctors))
 			for name := range ctors {
 				names = append(names, name)
@@ -387,8 +393,7 @@ func (c *content) parseStruct() []ReviewLine {
 				delete(c.Funcs, name)
 			}
 		}
-
-		if methods := c.findMethods(typeName); len(methods) > 0 {
+		if len(methods) > 0 {
 			names := make([]string, 0, len(methods))
 			for name := range methods {
 				names = append(names, name)

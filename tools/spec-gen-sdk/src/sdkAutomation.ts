@@ -37,7 +37,6 @@ import {
 } from '@ts-common/azure-js-dev-tools';
 import { BlobProxy } from './blobProxy';
 import { FakeBlobProxy } from './fakeBlobProxy';
-import { pythonTrack2 } from './langSpecs/langs/pythonTrack2';
 import { dotnetTrack2 } from './langSpecs/langs/dotnetTrack2';
 import { dotnet } from './langSpecs/langs/dotnet';
 import { go } from './langSpecs/langs/go';
@@ -45,10 +44,6 @@ import { java } from './langSpecs/langs/java';
 import { javascript } from './langSpecs/langs/javascript';
 import { LanguageConfiguration } from './langSpecs/languageConfiguration';
 import { python } from './langSpecs/langs/python';
-import { ruby } from './langSpecs/langs/ruby';
-import { cli } from './langSpecs/langs/cli';
-import { trenton } from './langSpecs/langs/trenton';
-import { azureresourceschema } from './langSpecs/langs/azureresourceschema';
 
 import {
   getSDKAutomationStateImageBlob,
@@ -460,7 +455,7 @@ export async function ensureJSONSchemasExist(prefix: BlobStoragePrefix, logger?:
  * All of the languages that are supported by SwaggerToSDK.
  */
 export function getAllLanguages(): LanguageConfiguration[] {
-  return [dotnetTrack2, pythonTrack2, dotnet, go, java, javascript, python, ruby, cli, trenton, azureresourceschema];
+  return [dotnetTrack2, dotnet, go, java, javascript, python];
 }
 
 /**

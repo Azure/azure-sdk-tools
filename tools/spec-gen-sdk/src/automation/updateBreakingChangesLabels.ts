@@ -1,5 +1,5 @@
 import { addPullRequestLabelOctokit, getPullRequestLabelsOctokit, removePullRequestLabelOctokit } from '../utils/githubUtils';
-import { sdkLabels } from '@azure/swagger-validation-common';
+import { sdkLabels } from '../types/sdks';
 import { WorkflowContext } from './workflow';
 
 /**

@@ -1,4 +1,4 @@
-import { MessageRecord, sendSuccess, sendFailure } from '@azure/swagger-validation-common';
+import { MessageRecord, sendSuccess, sendFailure } from '../types/Message';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as prettier from 'prettier';

@@ -27,18 +27,18 @@ import {
   writeTmpJsonFile
 } from '../utils/fsUtils';
 import { GenerateInput } from '../types/GenerateInput';
-import { legacyGenerate, legacyInit } from './legacy';
 import { GenerateOutput, getGenerateOutput } from '../types/GenerateOutput';
 import { getPackageData, PackageData } from '../types/PackageData';
 import { workflowPkgMain } from './workflowPackage';
 import { SDKAutomationState } from '../sdkAutomationState';
 import { CommentCaptureTransport, getBlobName } from './logging';
-import { findSwaggerToSDKConfiguration } from '@ts-common/azure-js-dev-tools';
+import { findSwaggerToSDKConfiguration } from '../utils/readme';
 import { SwaggerToSDKConfiguration as LegacySwaggerToSdkConfig } from '../swaggerToSDKConfiguration';
 import { ReadmeMdFileProcessMod } from '../langSpecs/languageConfiguration';
 import { getInitOutput } from '../types/InitOutput';
-import { MessageRecord, sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, parseYamlContent, validateSdkSuppressionsFile } from '@azure/swagger-validation-common';
-import { removeDuplicatesFromRelatedFiles } from '../utils/utils';
+import { MessageRecord } from '../types/Message';
+import { sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, validateSdkSuppressionsFile } from '../types/sdkSuppressions';
+import { parseYamlContent, removeDuplicatesFromRelatedFiles } from '../utils/utils';
 import { SDKSuppressionContentList } from '../utils/handleSuppressionLines';
 
 export const remoteIntegration = 'integration';
@@ -564,9 +564,9 @@ const fileInitOutput = 'initOutput.json';
 const workflowCallInitScript = async (context: WorkflowContext) => {
   const initScriptConfig = context.swaggerToSdkConfig.initOptions?.initScript;
   if (initScriptConfig === undefined) {
-    context.logger.log('warn', `Skip initScript due to not configured`);
-    await legacyInit(context);
-    return;
+    context.logger.error('ConfigError: initScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    throw new Error('The initScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
   }
 
   writeTmpJsonFile(context, fileInitInput, {});
@@ -724,15 +724,9 @@ const workflowCallGenerateScript = async (
   };
 
   if (context.swaggerToSdkConfig.generateOptions.generateScript === undefined) {
-    // Fallback to legacy autorest
-    try {
-      await legacyGenerate(context, relatedReadmeMdFiles, statusContext);
-    } catch (e) {
-      setFailureType(context, FailureType.CodegenFailed);
-      throw e;
-    }
-    setSdkAutoStatus(context, statusContext.status);
-    return { ...statusContext, generateInput, generateOutput };
+    context.logger.error('ConfigError: generateScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    throw new Error('The generateScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
   }
 
   context.logger.log('section', 'Call generateScript');

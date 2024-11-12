@@ -15,15 +15,10 @@ import {
   workflowMain
 } from './workflow';
 import { TriggerType } from '../types/TriggerType';
-import { azureresourceschema } from '../langSpecs/langs/azureresourceschema';
-import { cli } from '../langSpecs/langs/cli';
-import { dotnet } from '../langSpecs/langs/dotnet';
 import { go } from '../langSpecs/langs/go';
 import { java } from '../langSpecs/langs/java';
 import { javascript } from '../langSpecs/langs/javascript';
 import { python } from '../langSpecs/langs/python';
-import { pythonTrack2 } from '../langSpecs/langs/pythonTrack2';
-import { trenton } from '../langSpecs/langs/trenton';
 import { LanguageConfiguration } from '../langSpecs/languageConfiguration';
 import {
   getBlobName,
@@ -90,12 +85,6 @@ export type SdkAutoContext = {
 
 const getLegacyLanguageConfig = (sdkName: string) => {
   switch (sdkName) {
-    case 'azure-resource-manager-schemas':
-      return azureresourceschema;
-    case 'azure-cli-extensions':
-      return cli;
-    case 'azure-sdk-for-net':
-      return dotnet;
     case 'azure-sdk-for-go':
       return go;
     case 'azure-sdk-for-java':
@@ -104,10 +93,6 @@ const getLegacyLanguageConfig = (sdkName: string) => {
       return javascript;
     case 'azure-sdk-for-python':
       return python;
-    case 'azure-sdk-for-python-track2':
-      return pythonTrack2;
-    case 'azure-sdk-for-trenton':
-      return trenton;
   }
   return undefined;
 };

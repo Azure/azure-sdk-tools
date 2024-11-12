@@ -50,9 +50,9 @@ import {
   getSpecificationRepositoryConfiguration
 } from './specificationRepositoryConfiguration';
 import { addPullRequestLabel, removePullRequestLabel } from './utils/githubUtils';
+import { MessageRecord, MessageLevel } from './types/Message';
 import { existsSync, readFileSync } from 'fs';
 import * as Handlebars from 'handlebars';
-import * as format from '@azure/swagger-validation-common';
 import * as fs from 'fs-extra';
 
 /**
@@ -233,10 +233,10 @@ export class SpecificationPullRequest {
 
     const type = statusMap.get(String(this.generation.sdkRepositories[0].data.status).toLowerCase());
 
-    const pipelineResultData: format.MessageRecord = {
+    const pipelineResultData: MessageRecord = {
       type: 'Markdown',
       mode: 'replace',
-      level: type as format.MessageLevel,
+      level: type as MessageLevel,
       message: commentBody,
       time: new Date()
     };

@@ -3,7 +3,7 @@ import { SpecConfig } from '../types/SpecConfig';
 import { join } from "path";
 import { readFileSync } from 'fs';
 import { WorkflowContext } from '../automation/workflow';
-import { parseYamlContent } from '@azure/swagger-validation-common';
+import { parseYamlContent } from './utils';
 
 export const findSDKToGenerateFromTypeSpecProject = (content: string | undefined, specConfig: SpecConfig) => {
   if (!specConfig?.typespecEmitterToSdkRepositoryMapping || !content) {

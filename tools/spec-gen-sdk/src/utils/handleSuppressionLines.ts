@@ -1,6 +1,6 @@
 
 import { diffStringArrays } from './utils';
-import { SdkSuppressionsYml, SdkPackageSuppressionsEntry } from '@azure/swagger-validation-common';
+import { SdkSuppressionsYml, SdkPackageSuppressionsEntry } from '../types/sdkSuppressions';
 import { WorkflowContext } from '../automation/workflow';
 
 export type SDKSuppressionContentList = Map<string, {content: SdkSuppressionsYml| null, sdkSuppressionFilePath: string | undefined, errors: string[]}>

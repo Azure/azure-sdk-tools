@@ -1,4 +1,4 @@
-import { getRepository } from '@ts-common/azure-js-dev-tools';
+import { getRepository } from '../utils/githubUtils';
 import { sdkAutoMain } from '../automation/entrypoint';
 import { SDKAutomationState } from '../sdkAutomationState';
 import { sdkAutomationCliConfig } from './config';

@@ -7,7 +7,7 @@ import { BreakingChangeReportOptions } from '../generateBreakingChnageReport';
 import { SDKRepository } from '../../sdkRepository';
 import { SDKRepositoryPackage } from '../sdkRepositoryPackage';
 import { createPackageCommandOptions } from '../packageCommand';
-import { sdkLabels } from '@azure/swagger-validation-common';
+import { sdkLabels } from '../../types/sdks';
 /**
  * A language configuration for Python.
  */
@@ -20,7 +20,7 @@ export const python: LanguageConfiguration = {
   installationInstructions: getInstallationInstructions,
   generateBreakingChangeReport: generateBreakingChangeReport,
   runLangAfterScripts : initSetupPy,
-  breakingChangeLabel: { name: sdkLabels['azure-sdk-for-python'].deprecatedBreakingChange as string, color: 'dc1432' },
+  breakingChangeLabel: { name: sdkLabels['azure-sdk-for-python'].breakingChange as string, color: 'dc1432' },
   breakingChangesLabel: { name: sdkLabels['azure-sdk-for-python'].breakingChange as string, color: 'dc1432' }
 };
 

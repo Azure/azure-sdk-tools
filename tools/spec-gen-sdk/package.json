@@ -50,7 +50,6 @@
     "js-yaml": "^3.14.0",
     "jsonc-parser": "^2.3.1",
     "lodash": "^4.17.20",
-    "openapi-github": "^2.0.7",
     "pkginfo": "^0.4.1",
     "prettier": "2.1.2",
     "rimraf": "^3.0.2",

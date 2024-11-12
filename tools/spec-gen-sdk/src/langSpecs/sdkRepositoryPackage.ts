@@ -120,6 +120,20 @@ export interface SDKRepositoryPackageData {
 /**
  * An SDK repository package.
  */
+
+export type SDKRepositoryPackage1 = {
+     repositoryFolderPath: string,
+    language: LanguageConfiguration,
+     logsBlob: BlobStorageBlob,
+     packagePrefix: BlobStoragePrefix,
+     logger: Logger,
+     context: SDKRepositoryContext,
+     data: SDKRepositoryPackageData,
+     packageIndex: number,
+     getRootedPackageFolderPath: () => string,
+     createAndUploadInstallationInstructions: () => Promise<void>,
+     logError: (errorMessage: string) => Promise<unknown>
+};
 export class SDKRepositoryPackage {
   /**
    * The file paths to the artifacts that were created as a result of running package commands.

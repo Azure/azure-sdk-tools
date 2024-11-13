@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from apistub import ApiView, TokenKind, StubGenerator
+from apistub import ApiView, TokenKind, StubGenerator, ReviewLines
 from apistub.nodes import PylintParser
 import os
 from pytest import fail
@@ -15,8 +15,8 @@ from importlib.util import find_spec
 class TestApiView:
     def _count_newlines(self, apiview: ApiView):
         newline_count = 0
-        for token in apiview.tokens[::-1]:
-            if token.kind == TokenKind.Newline:
+        for line in apiview.review_lines[::-1]:
+            if len(line.tokens) == 0:
                 newline_count += 1
             else:
                 break
@@ -56,25 +56,27 @@ class TestApiView:
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()
-        apiview.add_text("Something")
-        apiview.add_newline()
+        review_line = apiview.review_lines.create_review_line()
+        review_line.add_text("Something")
+        apiview.review_lines.append(review_line)
+        apiview.review_lines.set_blank_lines()
         # subsequent calls result in no change
-        apiview.add_newline()
-        apiview.add_newline()
+        apiview.review_lines.set_blank_lines()
+        apiview.review_lines.set_blank_lines()
         assert self._count_newlines(apiview) == 1
 
     def test_set_blank_lines(self):
         apiview = ApiView()
-        apiview.set_blank_lines(3)
-        assert self._count_newlines(apiview) == 4 # +1 for carriage return
+        apiview.review_lines.set_blank_lines(3)
+        assert self._count_newlines(apiview) == 3
 
-        apiview.add_text("Something")
-        apiview.add_newline()
-        apiview.set_blank_lines(1)
-        apiview.set_blank_lines(5)
+        review_line = apiview.review_lines.create_review_line()
+        review_line.add_text("Something")
+        apiview.review_lines.set_blank_lines(1)
+        apiview.review_lines.set_blank_lines(5)
         # only the last invocation matters
-        apiview.set_blank_lines(2)
-        assert self._count_newlines(apiview) == 3 # +1 for carriage return
+        apiview.review_lines.set_blank_lines(2)
+        assert self._count_newlines(apiview) == 2
 
     def test_api_view_diagnostic_warnings(self):
         pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
@@ -90,12 +92,13 @@ class TestApiView:
 
     def test_add_type(self):
         apiview = ApiView()
-        apiview.tokens = []
-        apiview.add_type(type_name="a.b.c.1.2.3.MyType")
-        tokens = apiview.tokens
+        review_line = apiview.review_lines.create_review_line()
+        review_line.add_type(type_name="a.b.c.1.2.3.MyType")
+        apiview.review_lines.append(review_line)
+        tokens = review_line.tokens
         assert len(tokens) == 2
-        assert tokens[0].kind == TokenKind.TypeName
-        assert tokens[1].kind == TokenKind.Punctuation
+        assert tokens[0].kind == TokenKind.TYPE_NAME
+        assert tokens[1].kind == TokenKind.PUNCTUATION
 
     def test_definition_ids(self):
         pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))

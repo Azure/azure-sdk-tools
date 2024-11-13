@@ -1,8 +1,12 @@
 import astroid
 import inspect
+from typing import TYPE_CHECKING
 
 from ._base_node import get_qualified_name
 from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind
+
+if TYPE_CHECKING:
+    from .._generated.treestyle.parser.models._patch import ReviewLine
 
 # Special default values that should not be treated as string literal
 SPECIAL_DEFAULT_VALUES = ["None", "..."]
@@ -38,11 +42,10 @@ class ArgType:
         self,
         function_id,
         namespace,
-        tokens,
+        review_line: "ReviewLine",
         *,
         add_line_marker: bool,
         prefix: str = "",
-        post_comma: bool = False,
     ):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ~ReviewLine apiview: The ApiView
@@ -50,7 +53,6 @@ class ArgType:
         :param list[Token] tokens: List of tokens to add to.
         :keyword bool add_line_marker: Flag to indicate whether to include a line ID marker or not.
         :keyword str prefix: Optional prefix for *args and **kwargs.
-        :keyword bool post_comma: Flag to indicate whether to add a comma after the argument.
         """
         # Add arg name
         self.id = function_id
@@ -58,18 +60,18 @@ class ArgType:
         if add_line_marker:
             self.id = f"{function_id}.param({self.argname})"
             indent = " " * 4
-        tokens.append(Token(kind=TokenKind.TEXT, value=f"{indent}{prefix}{self.argname}", has_suffix_space=False))
+        review_line.add_text(text=f"{indent}{prefix}{self.argname}", has_suffix_space=False)
         # add arg type
         if self.argtype:
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":"))
-            tokens.append(Token(kind=TokenKind.TYPE_NAME, value=self.argtype, has_suffix_space=False))
+            review_line.add_punctuation(":")
+            review_line.add_type(self.argtype, has_suffix_space=False)
 
         # add arg default value
         default = self.default
         if default is not None:
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="=", has_prefix_space=True))
+            review_line.add_punctuation("=", has_prefix_space=True)
             if isinstance(default, str) and default not in SPECIAL_DEFAULT_VALUES:
-                tokens.append(Token(kind=TokenKind.STRING_LITERAL, value=default, has_suffix_space=False))
+                review_line.add_string_literal(default, has_suffix_space=False)
             else:
                 if isinstance(default, astroid.node_classes.Name):
                     value = default.name
@@ -79,4 +81,4 @@ class ArgType:
                     value = get_qualified_name(default, namespace)
                 else:
                     value = str(default)
-                tokens.append(Token(kind=TokenKind.LITERAL, value=value, has_suffix_space=False))
+                review_line.add_literal(value, has_suffix_space=False)

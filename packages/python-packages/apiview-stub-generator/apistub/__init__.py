@@ -2,10 +2,14 @@ import os
 
 from ._version import VERSION
 from ._stub_generator import StubGenerator
-from ._token import Token
-from ._token_kind import TokenKind
-from ._apiview import ApiView, Navigation, NavigationTag, Kind
-from ._diagnostic import Diagnostic, DiagnosticLevel
+from ._generated.treestyle.parser.models import (
+    CodeDiagnostic as Diagnostic,
+    CodeDiagnosticLevel as DiagnosticLevel,
+    TokenKind,
+    ReviewToken as Token
+)
+from ._generated.treestyle.parser.models._patch import ApiView, ReviewLine, ReviewLines
+from ._apiview import Navigation, NavigationTag, Kind
 
 __version__ = VERSION
 
@@ -14,6 +18,8 @@ __all__ = [
     "Token",
     "TokenKind",
     "ApiView",
+    "ReviewLine",
+    "ReviewLines",
     "Navigation",
     "NavigationTag",
     "Kind",

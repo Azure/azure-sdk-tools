@@ -24,26 +24,6 @@ HEADER_TEXT = "# Package is parsed using apiview-stub-generator(version:{0}), Py
 TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\d._]+)")
 TYPE_OR_SEPARATOR = " or "
 
-def add_type(tokens, type_name):
-    # TODO: add_type should require an ArgType or similar object so we can link *all* types
-
-    # This method replace full qualified internal types to short name and generate tokens
-    if not type_name:
-        return
-
-    type_name = type_name.replace(":class:", "")
-    logging.debug("Processing type {}".format(type_name))
-    # Check if multiple types are listed with 'or' separator
-    # Encode multiple types with or separator into Union
-    if TYPE_OR_SEPARATOR in type_name:
-        types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
-        # Make a Union of types if multiple types are present
-        type_name = "Union[{}]".format(", ".join(types))
-
-    # TODO: figure out cross_language_id, pass into type token below
-    # cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
-    tokens.append(Token(kind=TokenKind.TYPE_NAME, value=type_name, has_suffix_space=False))
-
 
 class ApiView(CodeFile):
     """ReviewFile represents entire API review object. This will be processed to render review lines.
@@ -134,43 +114,11 @@ class ApiView(CodeFile):
         # self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
         self.review_lines.set_blank_lines(2)
 
-    # def begin_group(self, group_name=""):
-    #    """Begin a new group in API view by shifting to right
-    #    """
-    #    self.indent += 1
-
-    # def end_group(self):
-    #    """End current group by moving indent to left
-    #    """
-    #    if not self.indent:
-    #        raise ValueError("Invalid indentation")
-    #    self.indent -= 1
-
     def add_diagnostic(self, *, obj, target_id):
         self.diagnostics.append(Diagnostic(obj=obj, target_id=target_id))
 
     def add_navigation(self, navigation):
         self.navigation.append(navigation)
-
-    def add_type(self, tokens, type_name):
-        # TODO: add_type should require an ArgType or similar object so we can link *all* types
-
-        # This method replace full qualified internal types to short name and generate tokens
-        if not type_name:
-            return
-
-        type_name = type_name.replace(":class:", "")
-        logging.debug("Processing type {}".format(type_name))
-        # Check if multiple types are listed with 'or' separator
-        # Encode multiple types with or separator into Union
-        if TYPE_OR_SEPARATOR in type_name:
-            types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
-            # Make a Union of types if multiple types are present
-            type_name = "Union[{}]".format(", ".join(types))
-
-        # TODO: figure out cross_language_id, pass into type token below
-        # cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
-        tokens.append(Token(kind=TokenKind.TYPE_NAME, value=type_name, has_suffix_space=False))
 
 
 class ReviewLines(list):
@@ -201,8 +149,23 @@ class ReviewLines(list):
         Will add or remove newline tokens as needed
         to ensure the exact number of blank lines.
         """
-        for _ in range(count):
-            self.append(self.create_review_line())
+        # count the number of trailing newlines
+        newline_count = 0
+        for line in self[::-1]:
+            if len(line.tokens) == 0:
+                newline_count += 1
+            else:
+                break
+
+        if newline_count < count:
+            # if there are not enough newlines, add some
+            for n in range(count - newline_count):
+                self.append(self.create_review_line())
+        elif newline_count > (count + 1):
+            # if there are too many newlines, remove some
+            excess = newline_count - count
+            for _ in range(excess):
+                self.pop()
 
 
 class ReviewLine(ReviewLineImpl):
@@ -228,6 +191,9 @@ class ReviewLine(ReviewLineImpl):
         )
         # TODO: is a rest field not mutable?
 
+    def add_children(self, children):
+        self.children = children
+
     def add_token(self, token):
         self.tokens.append(token)
 
@@ -245,45 +211,50 @@ class ReviewLine(ReviewLineImpl):
         if self.tokens[-1].kind != TokenKind.Whitespace:
             self.add_token(Token(" ", TokenKind.Whitespace))
 
-    # TODO: check that it's no longer needed, since each RL will be a new line
-    # def add_newline(self):
-    #    """ Used to END a line and wrap to the next.
-    #        Cannot be used to inject blank lines.
-    #    """
-    #    # don't add newline if it already is in place
-    #    if self.tokens[-1].kind != TokenKind.Newline:
-    #        self.add_token(Token("", TokenKind.Newline))
+    def add_punctuation(self, value, has_prefix_space=False, has_suffix_space=True):
+        self.add_token(
+            Token(
+                kind=TokenKind.PUNCTUATION,
+                value=value,
+                has_prefix_space=has_prefix_space,
+                has_suffix_space=has_suffix_space
+            )
+        )
 
-    def add_punctuation(self, value, prefix_space=False, postfix_space=False):
-        if prefix_space:
-            self.add_space()
-        self.add_token(Token(value, TokenKind.Punctuation))
-        if postfix_space:
-            self.add_space()
+    # TODO: add back in
+    #def add_line_marker(self, line_id, add_cross_language_id=False):
+    #    token = Token("", TokenKind.LineIdMarker)
+    #    token.definition_id = line_id
+    #    if add_cross_language_id:
+    #        # Check if line_id ends with an underscore and a number
+    #        numeric_suffix = re.search(r"_(\d+)$", line_id)
+    #        # If it does, truncate the numeric portion
+    #        line_key = line_id[: numeric_suffix.start()] if numeric_suffix else line_id
+    #        cross_lang_id = self.metadata_map.cross_language_map.get(line_key, None)
+    #        token.cross_language_definition_id = cross_lang_id
+    #    self.add_token(token)
 
-    def add_line_marker(self, line_id, add_cross_language_id=False):
-        token = Token("", TokenKind.LineIdMarker)
-        token.definition_id = line_id
-        if add_cross_language_id:
-            # Check if line_id ends with an underscore and a number
-            numeric_suffix = re.search(r"_(\d+)$", line_id)
-            # If it does, truncate the numeric portion
-            line_key = line_id[: numeric_suffix.start()] if numeric_suffix else line_id
-            cross_lang_id = self.metadata_map.cross_language_map.get(line_key, None)
-            token.cross_language_definition_id = cross_lang_id
+    def add_text(
+        self, text, *, has_prefix_space=False, has_suffix_space=True
+    ):
+        token = Token(
+            kind=TokenKind.TEXT,
+            value=text,
+            has_prefix_space=has_prefix_space,
+            has_suffix_space=has_suffix_space
+        )
+        #self.definition_id = definition_id
         self.add_token(token)
 
-    def add_text(self, text, *, definition_id=None):
-        token = Token(text, TokenKind.Text)
-        self.definition_id = definition_id
-        self.add_token(token)
-
-    def add_keyword(self, keyword, prefix_space=False, postfix_space=False):
-        if prefix_space:
-            self.add_space()
-        self.add_token(Token(keyword, TokenKind.Keyword))
-        if postfix_space:
-            self.add_space()
+    def add_keyword(self, keyword, has_prefix_space=False, has_suffix_space=True):
+        self.add_token(
+            Token(
+                kind=TokenKind.KEYWORD,
+                value=keyword,
+                has_prefix_space=has_prefix_space,
+                has_suffix_space=has_suffix_space
+            )
+        )
 
     def add_link(self, url):
         self.add_token(Token(url, TokenKind.ExternalLinkStart))
@@ -330,21 +301,61 @@ class ReviewLine(ReviewLineImpl):
         token.definition_id = id
         self.add_token(token)
 
-    def add_string_literal(self, value):
-        self.add_token(Token("\u0022{}\u0022".format(value), TokenKind.StringLiteral))
+    def add_string_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
+        self.add_token(
+            Token(
+                kind=TokenKind.STRING_LITERAL,
+                value="\u0022{}\u0022".format(value),
+                has_prefix_space=has_prefix_space,
+                has_suffix_space=has_suffix_space
+            )
+        )
 
-    def add_literal(self, value):
-        self.add_token(Token(value, TokenKind.Literal))
+    def add_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
+        self.add_token(
+            Token(
+                kind=TokenKind.LITERAL,
+                value=value,
+                has_prefix_space=has_prefix_space,
+                has_suffix_space=has_suffix_space
+            )
+        )
 
     def add_child_line(self, line):
         self.children.append(line)
+
+    def add_type(self, type_name, has_prefix_space=False, has_suffix_space=True):
+        # TODO: add_type should require an ArgType or similar object so we can link *all* types
+
+        # This method replace full qualified internal types to short name and generate tokens
+        if not type_name:
+            return
+
+        type_name = type_name.replace(":class:", "")
+        logging.debug("Processing type {}".format(type_name))
+        # Check if multiple types are listed with 'or' separator
+        # Encode multiple types with or separator into Union
+        if TYPE_OR_SEPARATOR in type_name:
+            types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
+            # Make a Union of types if multiple types are present
+            type_name = "Union[{}]".format(", ".join(types))
+
+        # TODO: figure out cross_language_id, pass into type token below
+        # cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
+        self.add_token(
+            Token(
+                kind=TokenKind.TYPE_NAME,
+                value=type_name,
+                has_prefix_space=has_prefix_space,
+                has_suffix_space=has_suffix_space
+            )
+        )
 
 
 __all__: List[str] = [
     "ApiView",
     "ReviewLines",
     "ReviewLine",
-    "add_type",
 ]  # Add all objects you want publicly available to users at this package level
 
 

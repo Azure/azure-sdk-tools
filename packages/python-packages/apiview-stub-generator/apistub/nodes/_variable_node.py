@@ -1,6 +1,5 @@
 import inspect
 from ._base_node import NodeEntityBase
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_type
 
 
 class VariableNode(NodeEntityBase):
@@ -24,35 +23,33 @@ class VariableNode(NodeEntityBase):
         """
 
         var_keyword = "ivar" if self.is_ivar else "cvar"
-        tokens = []
-        tokens.append(Token(kind=TokenKind.KEYWORD, value=var_keyword))
-        tokens.append(Token(kind=TokenKind.TEXT, value=self.name))
+        review_line = review_lines.create_review_line(line_id=self.namespace_id)
+        review_line.add_keyword(var_keyword)
+        review_line.add_text(self.name)
         # Add type
         if self.type:
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":"))
-            add_type(tokens, self.type)
+            review_line.add_punctuation(":")
+            review_line.add_type(self.type)
 
         if not self.value:
-            line = review_lines.create_review_line(line_id=self.namespace_id, tokens=tokens)
-            review_lines.append(line)
+            review_lines.append(review_line)
             return
 
-        tokens.append(Token(kind=TokenKind.PUNCTUATION, value="=", has_prefix_space=True))
+        review_line.add_punctuation("=", has_prefix_space=True)
         if not self.dataclass_properties:
             if self.type in ["str", "Optional[str]"]:
-                tokens.append(Token(kind=TokenKind.STRING_LITERAL, value=self.value, has_suffix_space=False))
+                review_line.add_string_literal(self.value, has_suffix_space=False)
             else:
-                tokens.append(Token(kind=TokenKind.LITERAL, value=self.value, has_suffix_space=False))
+                review_line.add_literal(self.value, has_suffix_space=False)
         else:
-            tokens.append(Token(kind=TokenKind.TEXT, value="field"))
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="("))
+            review_line.add_text("field")
+            review_line.add_punctuation("(")
             properties = self.dataclass_properties
             for (i, property) in enumerate(properties):
                 print('in field', i, property)
                 func_id = f"{self.namespace_id}.field("
                 property.generate_tokens(review_lines, line_id=func_id)
                 if i < len(properties) - 1:
-                    tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")"))
-        line = review_lines.create_review_line(line_id=self.namespace_id, tokens=tokens)
-        review_lines.append(line)
+                    review_line.add_punctuation(",")
+            review_line.add_punctuation(")")
+        review_lines.append(review_line)

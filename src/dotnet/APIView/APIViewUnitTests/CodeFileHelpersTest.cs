@@ -330,7 +330,6 @@ namespace APIViewUnitTests
             var testCodeFilePath = Path.Combine("SampleTestFiles", "azure-core-1.47.0-sources4.json");
             FileInfo fileInfo = new FileInfo(testCodeFilePath);
             var codeFile = await CodeFile.DeserializeAsync(fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
-            //Assert.Equal(20, codeFile.ReviewLines.Count());
 
             CodePanelRawData codePanelRawData = new CodePanelRawData()
             {

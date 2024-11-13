@@ -325,7 +325,7 @@ namespace APIViewUnitTests
 
 
         [Fact]
-        public async void VerifyJavaPackageReviewLineCount()
+        public async void VerifyPackageReviewLineCount()
         {
             var testCodeFilePath = Path.Combine("SampleTestFiles", "azure-core-1.47.0-sources4.json");
             FileInfo fileInfo = new FileInfo(testCodeFilePath);

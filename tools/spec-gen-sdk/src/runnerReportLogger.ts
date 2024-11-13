@@ -1,5 +1,5 @@
 import { Logger } from '@azure/logger-js';
-import { toArray } from '@ts-common/azure-js-dev-tools';
+import { toArray } from './utils/arrays';
 
 export const getRunnerReportLogger = (output: string[]): Logger => {
   const logFn = (text: string | string[]) => {

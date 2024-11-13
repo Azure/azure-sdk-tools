@@ -33,8 +33,6 @@ import { workflowPkgMain } from './workflowPackage';
 import { SDKAutomationState } from '../sdkAutomationState';
 import { CommentCaptureTransport, getBlobName } from './logging';
 import { findSwaggerToSDKConfiguration } from '../utils/readme';
-import { SwaggerToSDKConfiguration as LegacySwaggerToSdkConfig } from '../swaggerToSDKConfiguration';
-import { ReadmeMdFileProcessMod } from '../langSpecs/languageConfiguration';
 import { getInitOutput } from '../types/InitOutput';
 import { MessageRecord } from '../types/Message';
 import { sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, validateSdkSuppressionsFile } from '../types/sdkSuppressions';
@@ -147,9 +145,8 @@ export const workflowMain = async (context: WorkflowContext) => {
 
   const callMode =
     context.swaggerToSdkConfig.advancedOptions.generationCallMode ??
-    context.legacyLangConfig?.readmeMdFileProcessMod ??
     'one-for-all-configs';
-  if (callMode === 'one-for-all-configs' || callMode === ReadmeMdFileProcessMod.Batch) {
+  if (callMode === 'one-for-all-configs') {
     await workflowHandleReadmeMdOrTypeSpecProject(context, changedSpecs);
   } else {
     for (const changedSpec of changedSpecs) {
@@ -506,8 +503,7 @@ const workflowInitSdkRepo = async (
   swaggerToSdkConfig: SwaggerToSdkConfig
 ) => {
   const cloneDir =
-    swaggerToSdkConfig.advancedOptions.cloneDir ??
-    (swaggerToSdkConfig as LegacySwaggerToSdkConfig).meta?.advanced_options?.clone_dir;
+    swaggerToSdkConfig.advancedOptions.cloneDir;
   const sdkFolderName = cloneDir
     ? path.join(sdkRepoConfig.mainRepository.name, cloneDir)
     : sdkRepoConfig.mainRepository.name;
@@ -799,46 +795,13 @@ const workflowSaveGenerateResult = async (context: WorkflowContext) => {
 const workflowDetectChangedPackages = async (context: WorkflowContext, fileList: string[], readmeMdList: string[]) => {
   context.logger.log('section', 'Detect changed packages');
   if (context.pendingPackages.length === 0) {
-    let searchConfig = context.swaggerToSdkConfig.packageOptions.packageFolderFromFileSearch;
-    if (searchConfig === false) {
-      context.logger.warn(`Warning: Skip detecting changed packages based on the config in readme.md. Please refer to the schema https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/SwaggerToSdkConfigSchema.json for 'packageOptions' configuration.`);
+    const searchConfig = context.swaggerToSdkConfig.packageOptions.packageFolderFromFileSearch;
+    if (!searchConfig) {
+      context.logger.warn(`Warning: Skip detecting changed packages based on the config in swagger_to_sdk.config. Please refer to the schema https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/SwaggerToSdkConfigSchema.json for 'packageOptions' configuration.`);
       return;
     }
-    if (searchConfig === undefined) {
-      const legacyFilenameConfig = context.legacyLangConfig?.packageRootFileName;
-      if (!legacyFilenameConfig) {
-        throw new Error('N/A (this code has been deprecated)');
-      }
-      searchConfig = {
-        packageNamePrefix: context.legacyLangConfig?.packageNameAltPrefix,
-        searchRegex:
-          typeof legacyFilenameConfig === 'string'
-            ? new RegExp(`^${legacyFilenameConfig.replace('.', '\\.')}$`)
-            : legacyFilenameConfig
-      };
-    }
-    context.logger.info(`Package from changed file search: ${searchConfig.searchRegex}`);
-    const packageFolderList = await searchRelatedParentFolders(fileList, {
-      rootFolder: context.sdkFolder,
-      searchFileRegex: searchConfig.searchRegex
-    });
-    for (const packageFolderPath of Object.keys(packageFolderList)) {
-      let packageName = await context.legacyLangConfig?.packageNameCreator?.(
-        context.sdkFolder,
-        packageFolderPath,
-        readmeMdList[0]
-      );
-      if (packageName && context.legacyLangConfig?.packageNameAltPrefix) {
-        packageName = context.legacyLangConfig.packageNameAltPrefix + packageName;
-      }
-      context.pendingPackages.push(
-        getPackageData(context, {
-          packageName,
-          path: [packageFolderPath],
-          result: 'succeeded'
-        })
-      );
-    }
+    //TODO can we delete this?
+    context.logger.info(`TODO ${fileList.length * readmeMdList.length}`);
   }
 
   context.logger.info(`${context.pendingPackages.length} packages found after generation:`);

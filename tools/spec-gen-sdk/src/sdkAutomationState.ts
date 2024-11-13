@@ -1,5 +1,3 @@
-import { BlobStorageBlockBlob, BlobStoragePrefix, map } from '@ts-common/azure-js-dev-tools';
-
 /**
  * The generation status strings for an SDK repository.
  */
@@ -68,37 +66,6 @@ const SDKAutomationStateImageNames = {
  */
 export function getSDKAutomationStateImageName(state: SDKAutomationState): string {
   return SDKAutomationStateImageNames[state];
-}
-
-/**
- * Get the image prefix relative to the SDK Automation application's working prefix.
- * @param automationWorkingPrefix The working prefix for the SDK Automation application.
- */
-export function getSDKAutomationStateImagePrefix(automationWorkingPrefix: BlobStoragePrefix): BlobStoragePrefix {
-  return automationWorkingPrefix.getPrefix('images/');
-}
-
-/**
- * Get the image blobs relative to the working prefix for the SDK Automation application.
- * @param automationWorkingPrefix The working prefix for the SDK Automation application.
- */
-export function getSDKAutomationStateImageBlobs(automationWorkingPrefix: BlobStoragePrefix): BlobStorageBlockBlob[] {
-  const imagePrefix: BlobStoragePrefix = getSDKAutomationStateImagePrefix(automationWorkingPrefix);
-  return map(Object.values(SDKAutomationStateImageNames), (imageName: string) => imagePrefix.getBlockBlob(imageName));
-}
-
-/**
- * Get the image blob associated with the provided state.
- * @param automationWorkingPrefix The working prefix for the SDK Automation application.
- * @param state The state to get the blob for.
- */
-export function getSDKAutomationStateImageBlob(
-  automationWorkingPrefix: BlobStoragePrefix,
-  state: SDKAutomationState
-): BlobStorageBlockBlob {
-  const imagePrefix: BlobStoragePrefix = getSDKAutomationStateImagePrefix(automationWorkingPrefix);
-  const imageName: string = getSDKAutomationStateImageName(state);
-  return imagePrefix.getBlockBlob(imageName);
 }
 
 /**

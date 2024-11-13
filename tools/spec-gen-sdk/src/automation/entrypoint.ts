@@ -15,11 +15,6 @@ import {
   workflowMain
 } from './workflow';
 import { TriggerType } from '../types/TriggerType';
-import { go } from '../langSpecs/langs/go';
-import { java } from '../langSpecs/langs/java';
-import { javascript } from '../langSpecs/langs/javascript';
-import { python } from '../langSpecs/langs/python';
-import { LanguageConfiguration } from '../langSpecs/languageConfiguration';
 import {
   getBlobName,
   loggerConsoleTransport,
@@ -76,25 +71,10 @@ export type SdkAutoContext = {
   specPrTitle: string;
   specPrHtmlUrl: string;
   workingFolder: string;
-  legacyLangConfig?: LanguageConfiguration;
   blobContainerClient: ContainerClient;
   logsBlobUrl?: string;
   version: string;
   autorestConfig?: string;
-};
-
-const getLegacyLanguageConfig = (sdkName: string) => {
-  switch (sdkName) {
-    case 'azure-sdk-for-go':
-      return go;
-    case 'azure-sdk-for-java':
-      return java;
-    case 'azure-sdk-for-js':
-      return javascript;
-    case 'azure-sdk-for-python':
-      return python;
-  }
-  return undefined;
 };
 
 const getAutorestConfigFromPRComment = async (
@@ -192,8 +172,6 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
 
   const workingFolder = '.';
 
-  const legacyLangConfig = getLegacyLanguageConfig(options.sdkName);
-
   const logsBlobUrl = `${logsBlobName}`;
 
   return {
@@ -222,7 +200,6 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     specPrTitle: specPR.title,
     specPrHtmlUrl: specPR.html_url,
     specHeadRef: useMergedRoutine ? specPR.base.ref : `refs/pull/${specPR.number}/merge`,
-    legacyLangConfig,
     blobContainerClient,
     logsBlobUrl,
     version,

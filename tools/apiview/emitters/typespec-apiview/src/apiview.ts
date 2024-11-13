@@ -125,13 +125,70 @@ export class ApiView {
     }
   }
 
+  /** Apply workarounds to the model before output */
+  private adjustLines(lines: ReviewLine[]) {
+    let currentContext: string | undefined = undefined;
+    let contextMatchFound: boolean = false;
+    for (const line of lines) {
+      // run the normal adjust line logic
+      this.adjustLine(line);
+
+      const lineId = line.LineId;
+      if (lineId === "Azure.Test.ConstrainedComplex") {
+        let test = "best";
+      }
+      const relatedTo = line.RelatedToLine;
+      const isContextEnd = line.IsContextEndLine;
+
+      if (isContextEnd && relatedTo) {
+        throw new Error("Context end line should not have a relatedTo line.");
+      }
+
+      if (currentContext) {
+        if (lineId === currentContext) {
+          contextMatchFound = true;
+          line.RelatedToLine = undefined;
+          line.IsContextEndLine = false;
+        }
+        if (relatedTo && currentContext !== relatedTo) {
+          if (!contextMatchFound) {
+            // catches the scenario where the relatedTo line is different within what should be the current context
+            throw new Error("Mismatched contexts. Expected ${currentContext}, got ${lineId}");
+          } else {
+            // covers the instance where there never is an IsContextEndLine set, which happens if there's no closing brace
+            // on a separate line
+            currentContext = relatedTo;
+          }
+        } else {
+          // key to this whole method. This copies RelatedToLine to all lines between the start and end of a context
+          line.RelatedToLine = currentContext;
+        }
+        if (isContextEnd) {
+          currentContext = undefined;
+          contextMatchFound = false;
+          line.RelatedToLine = undefined;
+        }
+      } else {
+        // if currentContext isn't set and we encounter a relatedTo line, set the current context
+        if (relatedTo) {
+          currentContext = relatedTo;
+        // if currentContext isn't set but there's a lineId with childrent, set the current context
+        } else if (lineId && line.Children.length > 0) {
+          currentContext = lineId;
+          contextMatchFound = true;
+        // If a context end is found without a start, then ignore the contextEnd
+        } else if (isContextEnd) {
+          line.IsContextEndLine = false;
+        }
+      }
+    }
+  }
+
   private adjustLine(line: ReviewLine) {
     for (const token of line.Tokens) {
       this.adjustToken(token);
     }
-    for (const child of line.Children) {
-      this.adjustLine(child);
-    }
+    this.adjustLines(line.Children);
   }
 
   private adjustToken(token: ReviewToken) {
@@ -146,10 +203,7 @@ export class ApiView {
 
   /** Output the APIView model to the CodeFile JSON format. */
   asCodeFile(): CodeFile {
-    // apply workarounds to the model before output
-    for (const line of this.reviewLines) {
-      this.adjustLine(line);
-    }
+    this.adjustLines(this.reviewLines);
     return {
       Name: this.name,
       PackageName: this.packageName,
@@ -244,7 +298,7 @@ export class ApiView {
     }
   }
 
-  private newline(isEndContext?: boolean) {
+  private newline() {
     // ensure no trailing space at the end of the line
     if (this.currentLine.Tokens.length > 0) {
       const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
@@ -252,10 +306,7 @@ export class ApiView {
       const firstToken = this.currentLine.Tokens[0];
       firstToken.HasPrefixSpace = false;
     }
-
-    if (isEndContext) {
-      this.currentLine.IsContextEndLine = true;
-    }
+    
     if (this.currentParent) {
       this.currentParent.Children.push(this.currentLine);
     } else {
@@ -324,8 +375,8 @@ export class ApiView {
 
   private lineMarker(options?: {value?: string, addCrossLanguageId?: boolean, relatedLineId?: string}) {
     this.currentLine.LineId = options?.value ?? this.namespaceStack.value();
-    this.currentLine.RelatedToLine = options?.relatedLineId;
     this.currentLine.CrossLanguageId = options?.addCrossLanguageId ? (options?.value ?? this.namespaceStack.value()) : undefined;
+    this.currentLine.RelatedToLine = options?.relatedLineId;
   }
 
   private punctuation(value: string, options?: ReviewTokenOptions & {snapTo?: string, isContextEndLine?: boolean}) {
@@ -389,11 +440,9 @@ export class ApiView {
       });
     } else {
       this.punctuation(`"""`, options);
-      this.copyRelatedToFromPreviousLine();
       this.newline();
       for (const line of lines) {
         this.literal(line, options);
-        this.copyRelatedToFromPreviousLine();
         this.newline();
       }
       this.punctuation(`"""`, options);
@@ -589,7 +638,7 @@ export class ApiView {
           const opt = obj.options[x];
           this.tokenize(opt);
           if (x !== obj.options.length - 1) {
-            this.punctuation("&", {HasSuffixSpace: true});
+            this.punctuation("&", {HasPrefixSpace: true, HasSuffixSpace: true});
           }
         }
         break;
@@ -1100,17 +1149,9 @@ export class ApiView {
         }
       }
       if (!inline) {
-        this.copyRelatedToFromPreviousLine();
         this.newline()
       }
     }
-  }
-
-  private copyRelatedToFromPreviousLine() {
-    const parentCollection = this.currentParent ? this.currentParent.Children : this.reviewLines;
-    const lastChild = parentCollection[parentCollection.length - 1];
-    if (!lastChild) return;
-    this.currentLine.RelatedToLine = lastChild.RelatedToLine;
   }
 
   private getFullyQualifiedIdentifier(node: MemberExpressionNode, suffix?: string): string {

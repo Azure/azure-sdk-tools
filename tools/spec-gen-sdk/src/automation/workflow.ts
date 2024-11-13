@@ -30,7 +30,7 @@ import { GenerateInput } from '../types/GenerateInput';
 import { GenerateOutput, getGenerateOutput } from '../types/GenerateOutput';
 import { getPackageData, PackageData } from '../types/PackageData';
 import { workflowPkgMain } from './workflowPackage';
-import { SDKAutomationState } from '../sdkAutomationState';
+import { SDKAutomationState } from './sdkAutomationState';
 import { CommentCaptureTransport, getBlobName } from './logging';
 import { findSwaggerToSDKConfiguration } from '../utils/readme';
 import { getInitOutput } from '../types/InitOutput';

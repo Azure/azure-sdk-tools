@@ -25,7 +25,7 @@ import {
   sdkAutoLogLevels
 } from './logging';
 import { sdkAutoReportStatus } from './reportStatus';
-import { SDKAutomationState } from '../sdkAutomationState';
+import { SDKAutomationState } from './sdkAutomationState';
 import { DefaultAzureCredential } from '@azure/identity';
 import * as pkginfo from 'pkginfo';
 

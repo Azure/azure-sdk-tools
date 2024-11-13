@@ -3,7 +3,7 @@ import { spawn } from 'child_process';
 import { FailureType, setFailureType, WorkflowContext } from '../automation/workflow';
 import { RunLogFilterOptions, RunLogOptions, RunOptions } from '../types/SwaggerToSdkConfig';
 import { Readable } from 'stream';
-import { SDKAutomationState } from '../sdkAutomationState';
+import { SDKAutomationState } from '../automation/sdkAutomationState';
 
 export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending'>;
 export type StatusContainer = { status: SDKAutomationState };

@@ -1,14 +1,7 @@
 import { getRepository } from '../utils/githubUtils';
 import { sdkAutoMain } from '../automation/entrypoint';
-import { SDKAutomationState } from '../sdkAutomationState';
+import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { sdkAutomationCliConfig } from './config';
-// import { cliMain } from './main';
-
-// tslint:disable-next-line: no-floating-promises
-// cliMain(sdkAutomationCliConfig).catch(e => {
-//   console.error(e);
-//   process.exit(-1);
-// });
 
 // tslint:disable-next-line: no-floating-promises
 (async () => {

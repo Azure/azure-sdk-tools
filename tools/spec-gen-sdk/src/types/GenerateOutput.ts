@@ -1,4 +1,4 @@
-import { SDKAutomationState } from '../sdkAutomationState';
+import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { requireJsonc } from '../utils/requireJsonc';
 import { InstallInstructionScriptOutput } from './InstallInstructionScriptOutput';
 import { getTypeTransformer } from './validator';

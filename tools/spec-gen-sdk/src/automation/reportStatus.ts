@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as prettier from 'prettier';
 import * as Handlebars from 'handlebars';
 
-import { getSDKAutomationStateString, SDKAutomationState } from '../sdkAutomationState';
+import { getSDKAutomationStateString, SDKAutomationState } from './sdkAutomationState';
 import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
 import { updateBreakingChangesLabel } from './updateBreakingChangesLabels';

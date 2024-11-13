@@ -345,9 +345,20 @@ function DeleteArmDeployments([object]$ResourceGroup) {
 }
 
 function DeleteSubscriptionDeployments() {
-  $subDeployments = Get-AzSubscriptionDeployment 
-  Write-Host "Removing $($subDeployments.Count) subscription scoped deployments"
-  $subDeployments | Remove-AzSubscriptionDeployment
+  $subDeployments = @(Get-AzSubscriptionDeployment)
+  if (!$subDeployments) {
+    return
+  }
+  Write-Host "Removing $($subDeployments.Count) subscription scoped deployments async"
+  $subDeployments | Remove-AzSubscriptionDeployment -AsJob | Out-Null
+  for ($i = 0; $i -lt 20; $i++) {
+      $notStarted = Get-Job | Where-Object { $_.State -eq 'NotStarted' }
+      if (!$notStarted) {
+          break
+      }
+      Write-Host "Waiting for async jobs to start..."
+      Start-Sleep 5
+  }
 }
 
 function DeleteOrUpdateResourceGroups() {
@@ -517,8 +528,8 @@ if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
 }
 
 try {
-  DeleteOrUpdateResourceGroups
-  #DeleteSubscriptionDeployments
+  #DeleteOrUpdateResourceGroups
+  DeleteSubscriptionDeployments
 } finally {
   if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
     Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false

@@ -104,7 +104,7 @@ func (r *Review) Review() (CodeFile, error) {
 		line.Children = append(line.Children, p.c.parseSimpleType()...)
 		line.Children = append(line.Children, p.c.parseVar()...)
 		line.Children = append(line.Children, p.c.parseConst()...)
-		// p.c.parseFunc(tokens)
+		line.Children = append(line.Children, p.c.parseFunc()...)
 		navItems := p.c.generateNavChildItems()
 		nav = append(nav, NavigationItem{
 			Text:         n,

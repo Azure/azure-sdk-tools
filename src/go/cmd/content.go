@@ -543,7 +543,8 @@ func isExampleOrTest(s string) bool {
 	return strings.Contains(s, "Example") || strings.Contains(s, "Test")
 }
 
-func (c *content) parseFunc(tokenList *[]ReviewToken) {
+func (c *content) parseFunc() []ReviewLine {
+	lns := []ReviewLine{}
 	keys := make([]string, 0, len(c.Funcs))
 	for key, fn := range c.Funcs {
 		name := fn.Name()
@@ -553,8 +554,9 @@ func (c *content) parseFunc(tokenList *[]ReviewToken) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		*tokenList = append(*tokenList, c.Funcs[k].MakeTokens()...)
+		lns = append(lns, c.Funcs[k].MakeReviewLine())
 	}
+	return lns
 }
 
 // generateNavChildItems will loop through all the consts, interfaces, structs and global functions

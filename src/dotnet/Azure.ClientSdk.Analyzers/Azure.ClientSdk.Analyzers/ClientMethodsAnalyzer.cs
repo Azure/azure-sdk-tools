@@ -279,6 +279,22 @@ namespace Azure.ClientSdk.Analyzers
             return false;
         }
 
+        private static bool DoReturnTypesMatch(ITypeSymbol asyncReturnType, ITypeSymbol syncReturnType)
+        {
+            if (asyncReturnType == null || syncReturnType == null)
+            {
+                return false;
+            }
+
+            if (asyncReturnType is INamedTypeSymbol asyncNamedType && asyncNamedType.IsGenericType && asyncNamedType.Name == TaskTypeName)
+            {
+                var asyncInnerType = asyncNamedType.TypeArguments.Single();
+                return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncReturnType);
+            }
+
+            return false;
+        }
+
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
@@ -304,6 +320,11 @@ namespace Azure.ClientSdk.Analyzers
                     }
                     else
                     {
+                        if (!DoReturnTypesMatch(methodSymbol.ReturnType, syncMember.ReturnType))
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
+                        }
+
                         CheckClientMethod(context, syncMember);
                     }
                 }

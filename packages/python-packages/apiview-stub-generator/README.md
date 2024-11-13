@@ -42,6 +42,17 @@ apistubgen --pkg-path C:\git\azure-sdk-for-python\sdk\core\azure-core --out-path
 
 Token file will be created with a naming convention `<package-name>_python.json'
 
+#### ApiStubGen options
+The following options are available when running `apistubgen`:
+```
+```
+
+### Running tests
+```
+apiview-stub-generator> pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+apiview-stub-generator> pip install -r dev_requirements.txt
+```
+
 
 ### Upload token file to API review portal
 - Go to ``https://apiview.dev``

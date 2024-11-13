@@ -11,7 +11,7 @@ from typing import List
 def _tokenize(node):
     apiview = ApiView(pkg_name="test", namespace="test")
     apiview.tokens = []
-    node.generate_tokens(apiview)
+    node.generate_tokens(apiview.review_lines)
     return apiview.tokens
 
 

@@ -12,7 +12,7 @@ from ._key_node import KeyNode
 from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, add_type, ReviewLines
+from .._generated.treestyle.parser.models import ReviewLines
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ReviewLine
@@ -322,48 +322,46 @@ class ClassNode(NodeEntityBase):
             # TODO: may need to remove line id here
             line = review_lines.create_review_line(
                 line_id=self.namespace_id,
-                tokens=[Token(kind=TokenKind.KEYWORD, value=decorator)],
                 related_to_line=self.namespace_id,
             )
+            line.add_keyword(decorator)
             review_lines.append(line)
             review_lines.set_blank_lines()
 
         #apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
-        tokens = [
-            Token(kind=TokenKind.KEYWORD, value="class"),
-            Token(kind=TokenKind.TEXT, value=self.name, has_suffix_space=False),
-        ]
+        line = review_lines.create_review_line(
+            line_id=self.namespace_id,
+            related_to_line=self.namespace_id,
+        )
+        line.add_keyword("class")
+        line.add_text(self.name, has_suffix_space=False)
 
         for err in self.pylint_errors:
+            # TODO: pass through apiview?
             err.generate_tokens(review_lines, self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="(", has_suffix_space=False))
-            self._generate_tokens_for_collection(self.base_class_names, tokens)
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")", has_suffix_space=False))
-        tokens.append(Token(kind=TokenKind.PUNCTUATION, value=":", has_suffix_space=False)) # TODO: is_context_end_line=True?
+            line.add_punctuation("(", has_suffix_space=False)
+            self._generate_tokens_for_collection(self.base_class_names, line, has_suffix_space=False)
+            line.add_punctuation(")", has_suffix_space=False)
+        line.add_punctuation(":", has_suffix_space=False)
 
         # Add any ABC implementation list
         if self.implements:
-            tokens.append(Token(kind=TokenKind.TEXT, value=" "))
-            tokens.append(Token(kind=TokenKind.KEYWORD, value="implements"))
-            self._generate_tokens_for_collection(self.implements, tokens)
+            line.add_text(" ", has_suffix_space=False)
+            line.add_keyword("implements")
+            self._generate_tokens_for_collection(self.implements, line)
 
         # Generate token for child nodes
         if self.child_nodes:
-            self._generate_child_tokens(review_lines)
+            self._generate_child_tokens()
 
-        line = review_lines.create_review_line(
-            line_id=self.namespace_id,
-            tokens=tokens,
-            children=self.children,
-            is_context_end_line=True,
-            related_to_line=self.namespace_id,
-        )
+        line.add_children(self.children)
+        line.is_context_end_line = True
         review_lines.append(line)
 
-    def _generate_child_tokens(self, review_lines):
+    def _generate_child_tokens(self):
         # Add members and methods
         for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
             e.generate_tokens(self.children)
@@ -376,14 +374,12 @@ class ClassNode(NodeEntityBase):
         ]:
             func.generate_tokens(self.children)
         self.children.set_blank_lines()
-        #apiview.end_group()
 
-
-    def _generate_tokens_for_collection(self, values, tokens):
+    def _generate_tokens_for_collection(self, values, line, *, has_suffix_space=True):
         # Helper method to concatenate list of values and generate tokens
         list_len = len(values)
         for (idx, value) in enumerate(values):
-            add_type(tokens, value)
+            line.add_type(value, has_suffix_space=has_suffix_space)
             # Add punctuation between types
             if idx < list_len - 1:
-                tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
+                line.add_punctuation(",")

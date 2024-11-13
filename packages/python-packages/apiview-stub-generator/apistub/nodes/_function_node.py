@@ -10,7 +10,7 @@ from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, ReviewLines, add_type
+from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, ReviewLines
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ReviewLine
@@ -162,15 +162,20 @@ class FunctionNode(NodeEntityBase):
                 if match:
                     self.special_vararg.argtype = match.argtype
 
-    def _reviewline_if_needed(self, review_lines, tokens, use_multi_line, *, children=None, line_id=None):
+    def _reviewline_if_needed(
+        self,
+        review_lines,
+        review_line,
+        use_multi_line,
+        *,
+        children=None,
+    ):
         if use_multi_line:
-            if line_id is None:
-                line_id = self.namespace_id
-            line = create_review_line(tokens=tokens, line_id=line_id, children=children)
-            review_lines.append(line)
+            review_line.add_children(children)
+            review_lines.append(review_line)
             # new token list for next line if multi-line
-            tokens = []
-        return tokens
+            review_line = review_lines.create_review_line()
+        return review_line
 
     def _argument_count(self) -> int:
         count = len(self.posargs) + len(self.args) + len(self.kwargs)
@@ -193,26 +198,34 @@ class FunctionNode(NodeEntityBase):
             short_type = short_type.replace(g[0], g[1])
         return short_type
 
-    def _generate_args_for_collection(self, items: Dict[str, ArgType], review_lines, tokens, use_multi_line, *, final_item=True):
+    def _generate_args_for_collection(
+        self,
+        items: Dict[str, ArgType],
+        review_lines,
+        review_line,
+        use_multi_line,
+        *,
+        final_item=True
+    ):
         for idx, item in enumerate(list(items.values())):
             item.generate_tokens(
                 self.namespace_id,
                 namespace=self.namespace,
-                tokens=tokens,
+                review_line=review_line,
                 add_line_marker=use_multi_line,
             )
             # if final_item is False, then items should not have commas
             if not final_item or idx < len(items) - 1:
-                tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
+                review_line.add_punctuation(",")
             # multi-line will create new list of tokens for next line
-            tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
-        return tokens
+            review_line = self._reviewline_if_needed(review_lines, review_line, use_multi_line)
+        return review_line
 
-    def _generate_signature_token(self, review_lines, tokens, use_multi_line):
-        tokens.append(Token(kind=TokenKind.PUNCTUATION, value="(", has_suffix_space=False))
+    def _generate_signature_token(self, review_lines, review_line, use_multi_line):
+        review_line.add_punctuation("(", has_suffix_space=False)
         # if multi-line, then def tokens are parent tokens
         # to be used later when adding children
-        def_tokens = tokens
+        def_line = review_line
 
         # TODO: make rest of tokens all children
         #tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
@@ -229,7 +242,7 @@ class FunctionNode(NodeEntityBase):
         # If multi-line, then each param line will be a child.
         if use_multi_line:
             param_lines = self.children
-            tokens = []
+            review_line = review_lines.create_review_line(line_id=self.namespace_id)
         else:
             param_lines = review_lines
 
@@ -244,20 +257,18 @@ class FunctionNode(NodeEntityBase):
         else:
             final_item = True
 
-        tokens = self._generate_args_for_collection(
+        review_line = self._generate_args_for_collection(
             self.posargs,
             review_lines=param_lines,
-            tokens=tokens,
+            review_line=review_line,
             use_multi_line=use_multi_line,
             final_item=final_item
         )
         # add postional-only marker if any posargs
         if self.posargs:
-            tokens.append([
-                Token(kind=TokenKind.TEXT, value="/", has_suffix_space=False),
-                Token(kind=TokenKind.PUNCTUATION, value=",")
-            ])
-            tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line)
+            review_line.add_text("/", has_suffix_space=False)
+            review_line.add_punctuation(",", has_suffix_space=False)
+            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
             #add_review_line(review_lines, tokens=tokens)
 
         current_count += len(self.args)
@@ -266,8 +277,8 @@ class FunctionNode(NodeEntityBase):
         else:
             final_item = True
 
-        tokens = self._generate_args_for_collection(
-            self.args, review_lines=param_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
+        review_line = self._generate_args_for_collection(
+            self.args, review_lines=param_lines, review_line=review_line, use_multi_line=use_multi_line, final_item=final_item
         )
         current_count += 1
         if current_count < self.arg_count:
@@ -278,13 +289,13 @@ class FunctionNode(NodeEntityBase):
             self.special_vararg.generate_tokens(
                 self.namespace_id,
                 namespace=self.namespace,
-                tokens=tokens,
+                review_line=review_line,
                 add_line_marker=use_multi_line,
                 prefix="*",
             )
             if not final_item:
-                tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
-            tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line)
+                review_line.add_punctuation(",")
+            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
         # add keyword argument marker        
         if self.kwargs:
@@ -292,52 +303,50 @@ class FunctionNode(NodeEntityBase):
             indent = ""
             if use_multi_line:
                 indent = "    "
-            tokens.append(Token(kind=TokenKind.TEXT, value=f"{indent}*", has_suffix_space=False))
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value=","))
-            tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line)
+            review_line.add_text(f"{indent}*", has_suffix_space=False)
+            review_line.add_punctuation(",")
+            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
         current_count += len(self.kwargs)
         if current_count < self.arg_count:
             final_item = False
         else:
             final_item = True
-        tokens = self._generate_args_for_collection(
-            self.kwargs, review_lines=param_lines, tokens=tokens, use_multi_line=use_multi_line, final_item=final_item
+        review_line = self._generate_args_for_collection(
+            self.kwargs, review_lines=param_lines, review_line=review_line, use_multi_line=use_multi_line, final_item=final_item
         )
         if self.special_kwarg:
             # if **kwargs is present, then no comma needed
             self.special_kwarg.generate_tokens(
                 self.namespace_id,
                 self.namespace,
-                tokens,
+                review_line,
                 add_line_marker=use_multi_line,
                 prefix="**",
             )
-            tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line)
+            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
-        #tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line, children=self.children)
-        tokens.append(Token(kind=TokenKind.PUNCTUATION, value=")", has_suffix_space=False))
+        review_line.add_punctuation(")", has_suffix_space=False)
 
-        line_id = self.namespace_id
+        review_line.line_id = self.namespace_id
         if self.return_type:
-            tokens.append(Token(kind=TokenKind.PUNCTUATION, value="->", has_prefix_space=True))
+            review_line.add_punctuation(" ->", has_prefix_space=True)
             # Add line marker id if signature is displayed in multi lines
             if use_multi_line:
-                line_id = f"{self.namespace_id}.returntype"
-            add_type(tokens, self.return_type)
+                review_line.line_id = f"{self.namespace_id}.returntype"
+            review_line.add_type(self.return_type)
 
-        tokens = self._reviewline_if_needed(param_lines, tokens, use_multi_line, line_id=line_id)
+        review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
         # after children are added, add the review line
         #self._reviewline_if_needed(review_lines, def_tokens, use_multi_line, children=self.children)
-        line = review_lines.create_review_line(line_id=self.namespace_id, tokens=def_tokens, children=self.children)
-        review_lines.append(line)
-        #add_review_line(review_lines, line_id=self.namespace_id)
-
+        def_line.add_children(self.children)
+        def_line.line_id = self.namespace_id
+        review_lines.append(def_line)
         review_lines.set_blank_lines()
 
 
-    def generate_tokens(self, review_lines: List["ReviewLine"]):
+    def generate_tokens(self, review_lines):
         """Generates token for function signature
         :param ApiView: apiview
         """
@@ -354,16 +363,16 @@ class FunctionNode(NodeEntityBase):
             )
             review_lines.append(line)
 
-        tokens = []
+        review_line = review_lines.create_review_line()
         if self.is_async:
-            tokens.append(Token(kind=TokenKind.KEYWORD, value="async"))
+            review_line.add_keyword("async")
 
-        tokens.append(Token(kind=TokenKind.KEYWORD, value="def"))
+        review_line.add_keyword("def")
         # Show fully qualified name for module level function and short name for instance functions
         value = self.full_name if self.is_module_level else self.name
-        tokens.append(Token(kind=TokenKind.TEXT, value=value, has_suffix_space=False))
+        review_line.add_text(value, has_suffix_space=False)
         # Add parameters
-        tokens = self._generate_signature_token(review_lines, tokens, use_multi_line)
+        review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
 
         #if not use_multi_line:
         #    for err in self.pylint_errors:

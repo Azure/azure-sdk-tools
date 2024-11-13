@@ -39,6 +39,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="SampleTestFiles\azure-core-1.47.0-sources4.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleTestFiles\azure.data.tables.12.9.0_doc_change.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

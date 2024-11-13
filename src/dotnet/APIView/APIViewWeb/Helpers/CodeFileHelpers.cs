@@ -57,7 +57,7 @@ namespace APIViewWeb.Helpers
             foreach (var reviewLine in reviewLines)
             {
                 if (reviewLine.IsDocumentation) continue;
-                nodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: reviewLines[idx],
+                nodeHashId = await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, reviewLine: reviewLine,
                     parentNodeIdHashed: rootNodeId, nodePositionAtLevel: idx, prevNodeHashId: nodeHashId, relatedLineMap: relatedLineMap);
                 idx++;
             }

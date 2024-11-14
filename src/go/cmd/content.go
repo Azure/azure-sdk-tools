@@ -240,50 +240,6 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string) [
 	return ls
 }
 
-func (c *content) parseDeclarations_old(decls map[string]Declaration, kind string, tokenList *[]ReviewToken) {
-	if len(decls) < 1 {
-		return
-	}
-	// create keys slice in order to later sort consts by their types
-	keys := []string{}
-	// create types slice in order to be able to separate consts by the type they represent
-	types := []string{}
-	for name, d := range decls {
-		if r := rune(name[0]); r != '_' && unicode.IsUpper(r) {
-			keys = append(keys, name)
-			if !includesType(types, d.Type) {
-				types = append(types, d.Type)
-			}
-		}
-	}
-	sort.Strings(keys)
-	sort.Strings(types)
-	// finalKeys will order const keys by their type
-	finalKeys := []string{}
-	for _, t := range types {
-		for _, k := range keys {
-			if t == decls[k].Type {
-				finalKeys = append(finalKeys, k)
-			}
-		}
-	}
-	for _, t := range types {
-		// this token parsing is performed so that const declarations of different types are declared
-		// in their own const block to make them easier to click on
-		makeToken(nil, nil, kind, TokenKindKeyword, tokenList)
-		makeToken(nil, nil, "(", TokenKindPunctuation, tokenList)
-		makeToken(nil, nil, "", 1, tokenList)
-		for _, v := range finalKeys {
-			if decls[v].Type == t {
-				*tokenList = append(*tokenList, decls[v].MakeTokens()...)
-			}
-		}
-		makeToken(nil, nil, ")", TokenKindPunctuation, tokenList)
-		makeToken(nil, nil, "", 1, tokenList)
-		c.searchForPossibleValuesMethod_old(t, tokenList)
-	}
-}
-
 func (c *content) searchForPossibleValuesMethod(t string) *ReviewLine {
 	for i, f := range c.Funcs {
 		if f.Name() == fmt.Sprintf("Possible%sValues", removeNavigatorString(t)) {
@@ -293,16 +249,6 @@ func (c *content) searchForPossibleValuesMethod(t string) *ReviewLine {
 		}
 	}
 	return nil
-}
-
-func (c *content) searchForPossibleValuesMethod_old(t string, tokenList *[]ReviewToken) {
-	for i, f := range c.Funcs {
-		if f.Name() == fmt.Sprintf("Possible%sValues", removeNavigatorString(t)) {
-			*tokenList = append(*tokenList, f.MakeTokens()...)
-			delete(c.Funcs, i)
-			return
-		}
-	}
 }
 
 // addFunc adds the specified function declaration to the exports list
@@ -493,21 +439,6 @@ func (c *content) searchForMethods(s string) []ReviewLine {
 		delete(c.Funcs, name)
 	}
 	return lines
-}
-
-// searchForMethods_old takes the name of the receiver and looks for Funcs that are methods on that receiver.
-func (c *content) searchForMethods_old(s string, tokenList *[]ReviewLine) {
-	methods := c.findMethods(s)
-	methodNames := []string{}
-	for key := range methods {
-		methodNames = append(methodNames, key)
-	}
-	sort.Strings(methodNames)
-	for _, name := range methodNames {
-		fn := methods[name]
-		*tokenList = append(*tokenList, fn.MakeReviewLine())
-		delete(c.Funcs, name)
-	}
 }
 
 // receiverRegex captures a receiver's type and optional name

@@ -97,32 +97,6 @@ func (d Declaration) ID() string {
 	return d.id
 }
 
-func (d Declaration) MakeTokens() []ReviewToken {
-	rts := []ReviewToken{
-		{
-			HasSuffixSpace:        true,
-			Kind:                  TokenKindTypeName,
-			NavigationDisplayName: d.Name(),
-			NavigateToID:          d.ID(),
-			Value:                 d.Name(),
-		},
-	}
-	if d.Type != skip {
-		rts = append(rts, parseAndMakeTypeTokens(d.Type)...)
-	}
-	rts = append(rts, ReviewToken{
-		HasPrefixSpace: true,
-		HasSuffixSpace: true,
-		Kind:           TokenKindPunctuation,
-		Value:          "=",
-	})
-	rts = append(rts, ReviewToken{
-		Kind:  TokenKindStringLiteral,
-		Value: d.value,
-	})
-	return rts
-}
-
 func (d Declaration) Name() string {
 	return d.name
 }
@@ -624,23 +598,6 @@ func (s Struct) Name() string {
 
 var _ TokenMaker = (*Struct)(nil)
 
-// makeToken builds the Token to be added to the Token slice that is passed in as a parameter.
-// defID and navID components can be passed in as nil to indicate that there is no definition ID or
-// navigation ID that is related to that token.
-// val is the value of the token and it was will be visible in the API view tool.
-// kind is the TokenType that will be assigned to the value and will determine how the value is
-// represented in the API view tool.
-// list is the slice of tokens that will be parsed in the API view tool, the new token will be appended to list.
-// TODO improve makeToken and make more similar to append
-func makeToken(defID, navID *string, val string, kind TokenKind, list *[]ReviewToken) {
-	tok := ReviewToken{Value: val, Kind: kind}
-	if navID != nil {
-		tok.NavigateToID = *navID
-	}
-	*list = append(*list, tok)
-}
-
-// TODO: this makes more tokens than necessary
 func parseAndMakeTypeTokens(val string) []ReviewToken {
 	toks := []ReviewToken{}
 	now := ""
@@ -673,54 +630,8 @@ func parseAndMakeTypeTokens(val string) []ReviewToken {
 	return toks
 }
 
-func parseAndMakeTypeToken_old(val string, list *[]ReviewToken) {
-	now := ""
-	for _, ch := range val {
-		switch string(ch) {
-		case "*", "[", "]", " ", "(", ")", "{", "}", ",":
-			if now != "" {
-				makeTypeSectionToken_old(now, list)
-				now = ""
-			}
-			if string(ch) == " " {
-				makeToken(nil, nil, " ", TokenKindText, list)
-			} else {
-				makeToken(nil, nil, string(ch), TokenKindPunctuation, list)
-			}
-		case ".":
-			if now == ".." {
-				makeToken(nil, nil, "...", TokenKindPunctuation, list)
-				now = ""
-			} else {
-				now = now + "."
-			}
-		default:
-			now = now + string(ch)
-		}
-	}
-	if now != "" {
-		makeTypeSectionToken_old(now, list)
-	}
-}
-
 var keywords = []string{"interface", "map", "any", "func"}
 var internalTypes = []string{"bool", "uint8", "uint16", "uint32", "uint64", "uint", "int8", "int16", "int32", "int64", "int", "float32", "float64", "complex64", "complex128", "byte", "rune", "string", "error", "uintptr", "nil"}
-
-func makeTypeSectionToken_old(section string, list *[]ReviewToken) {
-	switch {
-	case slices.Contains(keywords, section):
-		makeToken(nil, nil, section, TokenKindKeyword, list)
-	case slices.Contains(internalTypes, section):
-		makeToken(nil, nil, section, TokenKindTypeName, list)
-	default:
-		if strings.HasPrefix(section, "<") {
-			splits := strings.Split(section[1:], ">")
-			makeToken(nil, &splits[0], splits[1], TokenKindTypeName, list)
-		} else {
-			makeToken(nil, nil, section, TokenKindTypeName, list)
-		}
-	}
-}
 
 func makeTypeSectionToken(section string) ReviewToken {
 	switch {

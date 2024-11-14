@@ -245,7 +245,7 @@ class StubGenerator:
             module_obj = importlib.import_module(m)
 
             # TODO: for any namespaces under the package.name, make sure nested child namespaces are added
-            self.module_dict[m] = ModuleNode(m, module_obj, apiview, namespace)
+            self.module_dict[m] = ModuleNode(m, module_obj, namespace, apiview=apiview)
         
         ## Create navigation info to navigate within APIreview tool
         #navigation = Navigation(package_name, None)

@@ -32,13 +32,13 @@ class FunctionNode(NodeEntityBase):
     :param bool: is_module_level
     """
 
-    def __init__(self, namespace, parent_node, *, obj=None, node: astroid.FunctionDef=None, is_module_level=False):
+    def __init__(self, namespace, parent_node, *, apiview, obj=None, node: astroid.FunctionDef=None, is_module_level=False):
         super().__init__(namespace, parent_node, obj)
         if not obj and node:
             self.name = node.name
             self.display_name = node.name
         self.annotations = []
-        self.children = ReviewLines()
+        self.children = ReviewLines(apiview=apiview)
 
         # Track **kwargs and *args separately, the way astroid does
         self.special_kwarg = None
@@ -328,12 +328,12 @@ class FunctionNode(NodeEntityBase):
 
         review_line.add_punctuation(")", has_suffix_space=False)
 
-        review_line.line_id = self.namespace_id
         if self.return_type:
             review_line.add_punctuation(" ->", has_prefix_space=True)
             # Add line marker id if signature is displayed in multi lines
             if use_multi_line:
-                review_line.line_id = f"{self.namespace_id}.returntype"
+                line_id = f"{self.namespace_id}.returntype"
+                review_line.add_line_marker(line_id)
             review_line.add_type(self.return_type)
 
         review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
@@ -362,8 +362,8 @@ class FunctionNode(NodeEntityBase):
                 tokens=[Token(kind=TokenKind.KEYWORD, value=annot, has_suffix_space=False)]
             )
             review_lines.append(line)
-
         review_line = review_lines.create_review_line()
+        review_line.add_line_marker(self.namespace_id)
         if self.is_async:
             review_line.add_keyword("async")
 
@@ -374,6 +374,6 @@ class FunctionNode(NodeEntityBase):
         # Add parameters
         review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
 
-        #if not use_multi_line:
-        #    for err in self.pylint_errors:
-        #        err.generate_tokens(apiview, self.namespace_id)            
+        if not use_multi_line:
+            for err in self.pylint_errors:
+                err.generate_tokens(review_lines.apiview, err=err, target_id=self.namespace_id)

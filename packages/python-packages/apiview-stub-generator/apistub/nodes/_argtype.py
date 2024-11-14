@@ -59,6 +59,7 @@ class ArgType:
         indent = ""
         if add_line_marker:
             self.id = f"{function_id}.param({self.argname})"
+            review_line.add_line_marker(self.id)
             indent = " " * 4
         review_line.add_text(text=f"{indent}{prefix}{self.argname}", has_suffix_space=False)
         # add arg type

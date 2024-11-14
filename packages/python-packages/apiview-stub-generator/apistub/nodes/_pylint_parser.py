@@ -42,10 +42,11 @@ class PylintError:
             # if unable to parse, leave alone
             return
 
-    def generate_tokens(self, review_lines, target_id):
-        # TODO: pass through diagnostic level
-        # apiview.add_diagnostic(obj=self, target_id=target_id)
-        pass
+    def generate_tokens(self, apiview, err, target_id):
+        apiview.add_diagnostic(
+            err=self,
+            target_id=target_id
+        )
 
 
 class PylintParser:

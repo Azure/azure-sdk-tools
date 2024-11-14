@@ -24,10 +24,10 @@ class ModuleNode(NodeEntityBase):
     :param dict: node_index
     """
 
-    def __init__(self, namespace, module, apiview: "ApiView", pkg_root_namespace):
+    def __init__(self, namespace, module, pkg_root_namespace, apiview: "ApiView"):
         super().__init__(namespace=namespace, parent_node=None, obj=module)
         self.namespace_id = self.generate_id()
-        self.children = ReviewLines()
+        self.children = ReviewLines(apiview=apiview)
         self.node_index = apiview.node_index
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
@@ -63,6 +63,7 @@ class ModuleNode(NodeEntityBase):
                     parent_node=self,
                     obj=member_obj,
                     pkg_root_namespace=self.pkg_root_namespace,
+                    apiview=self.children.apiview
                 )
                 key = "{0}.{1}".format(self.namespace, class_node.name)
                 self.node_index.add(key, class_node)
@@ -107,7 +108,7 @@ class ModuleNode(NodeEntityBase):
             self.children.set_blank_lines(1)
             # Add name space level functions first
             for c in filter(filter_function, self.child_nodes):
-                c.generate_tokens(self.children)
+                c.generate_tokens(self.children, apiview=review_lines.apiview)
                 self.children.set_blank_lines(2)
 
             # Add classes

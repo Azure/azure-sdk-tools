@@ -3,7 +3,7 @@ import logging
 import inspect
 from enum import Enum
 import operator
-from typing import List, TYPE_CHECKING
+from typing import List
 
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._function_node import FunctionNode
@@ -13,9 +13,6 @@ from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
 from .._generated.treestyle.parser.models import ReviewLines
-
-if TYPE_CHECKING:
-    from .._generated.treestyle.parser.models import ReviewLine
 
 find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
@@ -59,12 +56,12 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, allow_list=None):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview, allow_list=None):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         # This is the name obtained by NodeEntityBase from __name__.
         # We must preserve it to detect the mismatch and issue a warning.
-        self.children = ReviewLines()
+        self.children = ReviewLines(apiview=apiview)
         self.name = name
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
@@ -173,7 +170,7 @@ class ClassNode(NodeEntityBase):
             for node in func.decorators.nodes:
                 try:
                     if node.name == "overload":
-                        overload_node = FunctionNode(self.namespace, self, node=func)
+                        overload_node = FunctionNode(self.namespace, self, node=func, apiview=self.children.apiview)
                         overload_nodes.append(overload_node)
                 except AttributeError:
                     continue
@@ -212,7 +209,7 @@ class ClassNode(NodeEntityBase):
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
-                    func_node = FunctionNode(self.namespace, self, obj=child_obj)
+                    func_node = FunctionNode(self.namespace, self, obj=child_obj, apiview=self.children.apiview)
                     func_overloads = [x for x in overloads if x.name == func_node.name]
 
                     # Append a numeric tag to overloads to distinguish them from one another.
@@ -256,7 +253,8 @@ class ClassNode(NodeEntityBase):
                         namespace=self.namespace,
                         parent_node=self,
                         obj=child_obj,
-                        pkg_root_namespace=self.pkg_root_namespace
+                        pkg_root_namespace=self.pkg_root_namespace,
+                        apiview=self.children.apiview
                     )
                 )
             elif isinstance(child_obj, property):
@@ -321,24 +319,20 @@ class ClassNode(NodeEntityBase):
         for decorator in self.decorators: 
             # TODO: may need to remove line id here
             line = review_lines.create_review_line(
-                line_id=self.namespace_id,
-                related_to_line=self.namespace_id,
+                related_to_line=self.namespace_id
             )
             line.add_keyword(decorator)
             review_lines.append(line)
             review_lines.set_blank_lines()
 
         #apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
-        line = review_lines.create_review_line(
-            line_id=self.namespace_id,
-            related_to_line=self.namespace_id,
-        )
+        line = review_lines.create_review_line()
+        line.add_line_marker(self.namespace_id, add_cross_language_id=True)
         line.add_keyword("class")
         line.add_text(self.name, has_suffix_space=False)
 
         for err in self.pylint_errors:
-            # TODO: pass through apiview?
-            err.generate_tokens(review_lines, self.namespace_id)
+            err.generate_tokens(review_lines.apiview, err=err, target_id=self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:

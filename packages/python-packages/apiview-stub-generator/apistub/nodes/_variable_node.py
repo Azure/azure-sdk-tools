@@ -26,11 +26,11 @@ class VariableNode(NodeEntityBase):
         review_line = review_lines.create_review_line()
         review_line.add_line_marker(self.namespace_id)
         review_line.add_keyword(var_keyword)
-        review_line.add_text(self.name)
+        review_line.add_text(self.name, has_suffix_space=False)
         # Add type
         if self.type:
             review_line.add_punctuation(":")
-            review_line.add_type(self.type)
+            review_line.add_type(self.type, has_suffix_space=False)
 
         if not self.value:
             review_lines.append(review_line)
@@ -49,7 +49,7 @@ class VariableNode(NodeEntityBase):
             for (i, property) in enumerate(properties):
                 print('in field', i, property)
                 func_id = f"{self.namespace_id}.field("
-                property.generate_tokens(review_lines, line_id=func_id)
+                property.generate_tokens(func_id, review_lines.apiview.namespace, review_line, add_line_marker=False)
                 if i < len(properties) - 1:
                     review_line.add_punctuation(",")
             review_line.add_punctuation(")")

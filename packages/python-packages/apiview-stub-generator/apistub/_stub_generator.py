@@ -263,6 +263,10 @@ class StubGenerator:
             self.module_dict[m].generate_diagnostics()
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
+
+            # Pass through apiview for diagnostics
+            apiview.review_lines.apiview = apiview
+
             self.module_dict[m].generate_tokens(apiview.review_lines)
             # Add navigation info for this modules. navigation info is used to build tree panel in API tool
         #    module_nav = self.module_dict[m].get_navigation()

@@ -27,7 +27,8 @@ class ModuleNode(NodeEntityBase):
     def __init__(self, namespace, module, pkg_root_namespace, apiview: "ApiView"):
         super().__init__(namespace=namespace, parent_node=None, obj=module)
         self.namespace_id = self.generate_id()
-        self.children = ReviewLines(apiview=apiview)
+        self.children = ReviewLines()
+        self.apiview = apiview
         self.node_index = apiview.node_index
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
@@ -62,8 +63,7 @@ class ModuleNode(NodeEntityBase):
                     namespace=self.namespace,
                     parent_node=self,
                     obj=member_obj,
-                    pkg_root_namespace=self.pkg_root_namespace,
-                    apiview=self.children.apiview
+                    pkg_root_namespace=self.pkg_root_namespace
                 )
                 key = "{0}.{1}".format(self.namespace, class_node.name)
                 self.node_index.add(key, class_node)
@@ -99,6 +99,9 @@ class ModuleNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param review_lines: List of ReviewLine 
         """
+        # Pass through apiview for diagnostics
+        self.children.apiview = review_lines.apiview
+
         # Add name space only if it has children
         if self.child_nodes:
             tokens = [
@@ -108,7 +111,7 @@ class ModuleNode(NodeEntityBase):
             self.children.set_blank_lines(1)
             # Add name space level functions first
             for c in filter(filter_function, self.child_nodes):
-                c.generate_tokens(self.children, apiview=review_lines.apiview)
+                c.generate_tokens(self.children)
                 self.children.set_blank_lines(2)
 
             # Add classes

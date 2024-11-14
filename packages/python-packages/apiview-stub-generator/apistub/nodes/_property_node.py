@@ -55,14 +55,12 @@ class PropertyNode(NodeEntityBase):
         """
         review_line = review_lines.create_review_line()
         review_line.add_keyword("property")
-        review_line.add_space()
         review_line.add_line_marker(self.namespace_id)
-        review_line.add_text(self.name)
+        review_line.add_text(self.name, has_suffix_space=False)
         review_line.add_punctuation(":")
-        review_line.add_space()
-        review_line.add_type(self.type)
+        review_line.add_type(self.type, has_suffix_space=False)
         if self.read_only:
-            review_line.add_whitespace(count=5)
+            review_line.add_text(" " * 5)
             review_line.add_literal("# Read-only")
         for err in self.pylint_errors:
             err.generate_tokens(review_lines.apiview, err=err, target_id=self.namespace_id)

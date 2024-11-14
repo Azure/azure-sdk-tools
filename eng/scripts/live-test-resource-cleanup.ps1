@@ -528,7 +528,7 @@ if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
 }
 
 try {
-  #DeleteOrUpdateResourceGroups
+  DeleteOrUpdateResourceGroups
   DeleteSubscriptionDeployments
 } finally {
   if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {

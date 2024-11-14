@@ -114,6 +114,38 @@ export class ApiView {
         this.buildNavigation(nsModel);
       }
     }
+    // Enable this if desired to debug the output
+    //this.appendDebugInfo();
+  }
+
+  private appendDebugInfo() {
+
+    function processLines(lines: ReviewLine[]) {
+      for (const line of lines) {
+        const lineId = line.LineId;
+        const relatedLineId = line.RelatedToLine;
+        const isContextEnd = line.IsContextEndLine
+        let string = "";
+        if (lineId && lineId !== "") {
+          string += ` LINE_ID: ${lineId} `;
+        }
+        if (relatedLineId && relatedLineId !== "") {
+          string += ` RELATED_TO: ${relatedLineId} `;
+        }
+        if (isContextEnd) {
+          string += " IS_CONTEXT_END TRUE ";
+        }
+        if (string !== "") {
+          line.Tokens.push({
+            Kind: TokenKind.Comment,
+            Value: `// ${string.trim()}`,
+          })
+        }
+        processLines(line.Children);
+      }  
+    }
+
+    processLines(this.reviewLines);
   }
 
   /** Attempts to resolve any type references marked as __MISSING__. */

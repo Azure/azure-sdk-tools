@@ -259,11 +259,7 @@ func (f Func) MakeTokens() []ReviewToken {
 		})
 	}
 	tks = append(tks, ReviewToken{
-		Kind: TokenKindTypeName,
-		// TODO: is this necessary?
-		// NavigationDisplayName: f.name,
-		// TODO: what should this value be? LineID of the target?
-		// NavigateToID:          f.ID(),
+		Kind:  TokenKindTypeName,
 		Value: f.name,
 	})
 	if len(f.typeParamNames) > 0 {
@@ -345,10 +341,6 @@ func (f Func) MakeTokens() []ReviewToken {
 			})
 		}
 	}
-	if !f.embedded {
-		// TODO: newline?
-	}
-	// TODO: newline?
 	return tks
 }
 
@@ -427,7 +419,8 @@ func (i Interface) MakeReviewLine() ReviewLine {
 
 	for _, name := range i.embeddedInterfaces {
 		if exportedFieldRgx.MatchString(name) {
-			// TODO: navigation link
+			// TODO: set NavigateToID to create a navigation link. Need the type's LineID i.e. qualified
+			// name but we don't have it here; similar to https://github.com/Azure/azure-sdk-tools/issues/6150
 			interfaceLine.Children = append(interfaceLine.Children, ReviewLine{
 				Tokens: parseAndMakeTypeTokens(name),
 			})
@@ -522,10 +515,11 @@ func (s Struct) MakeReviewLine() ReviewLine {
 	for _, field := range s.AnonymousFields {
 		if exportedFieldRgx.MatchString(field) {
 			structLine.Children = append(structLine.Children, ReviewLine{
-				// TODO: navigation link
 				Tokens: []ReviewToken{
 					{
-						Kind:  TokenKindTypeName,
+						Kind: TokenKindTypeName,
+						// TODO: set NavigateToID to create a navigation link. Need the type's LineID i.e. qualified
+						// name but we don't have it here https://github.com/Azure/azure-sdk-tools/issues/6150
 						Value: field,
 					},
 				},
@@ -547,8 +541,6 @@ func (s Struct) MakeReviewLine() ReviewLine {
 		for _, name := range exported {
 			fieldLine := ReviewLine{
 				LineID: s.id + "-" + name,
-				// TODO: semantics; is this just for e.g. docs?
-				RelatedToLine: structLine.LineID,
 				Tokens: []ReviewToken{
 					{
 						Kind:  TokenKindText,

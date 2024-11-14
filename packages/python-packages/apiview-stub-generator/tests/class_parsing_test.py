@@ -49,7 +49,7 @@ class TestClassParsing:
             "class ClassWithIvarsAndCvars:",
             'ivar captain: str = "Picard"',
             "ivar damage: int",
-            "cvar stats: ClassVar[typing.Dict[str, int]] = {}"
+            "cvar stats: ClassVar[Dict[str, int]] = {}"
         ]
         _check_all(actuals, expected, obj)
 
@@ -204,32 +204,27 @@ class TestClassParsing:
         obj = SomethingAsyncWithOverloads
         class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
         tokens = _tokenize(class_node)
-        line_ids = [x.definition_id for x in tokens if x.definition_id][1:]
+        line_ids = [x.line_id for x in tokens if x.line_id][1:]
         for def_id in line_ids:
             assert ":async" in def_id
 
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
-    def _validate_line_ids(self, tokens):
+    def _validate_line_ids(self, review_lines):
         line_ids = set()
-        def_ids_per_line = [[]]
-        index = 0
-        for token in tokens:
-            # ensure that there are no repeated definition IDs.
-            if token.line_id:
-                if token.line_id in definition_ids:
-                    fail(f"Duplicate defintion ID {token.line_id}.")
-                line_ids.add(token.definition_id)
-            # Collect the definition IDs that exist on each line
-            if token.line_id:
-                def_ids_per_line[index].append(token.line_id)
-            if token.kind == TokenKind.Newline:
-                index += 1
-                def_ids_per_line.append([])
-        # ensure that each line has either 0 or 1 definition ID.
-        failures = [row for row in def_ids_per_line if len(row) > 1]
-        if failures:
-            fail(f"Some lines have more than one definition ID. {failures}")
+        def collect_line_ids(review_lines, index=0):
+            for line in review_lines:
+                # Ensure that each line has either 0 or 1 definition ID.
+                if line.line_id and not isinstance(line.line_id, str):
+                    fail(f"Some lines have more than one definition ID. {line.line_id}")
+                # Ensure that there are no repeated definition IDs.
+                if line.line_id and line.line_id in line_ids:
+                    fail(f"Duplicate definition ID {line.line_id}.")
+                    line_ids.add(line.line_id)
+                # Recursively collect definition IDs from child lines
+                if line.children:
+                    collect_line_ids(line.children, index)
 
+        collect_line_ids(review_lines)
 
 
     def test_decorators(self):

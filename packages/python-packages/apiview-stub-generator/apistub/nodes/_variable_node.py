@@ -23,7 +23,8 @@ class VariableNode(NodeEntityBase):
         """
 
         var_keyword = "ivar" if self.is_ivar else "cvar"
-        review_line = review_lines.create_review_line(line_id=self.namespace_id)
+        review_line = review_lines.create_review_line()
+        review_line.add_line_marker(self.namespace_id)
         review_line.add_keyword(var_keyword)
         review_line.add_text(self.name)
         # Add type

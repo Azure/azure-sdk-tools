@@ -74,9 +74,7 @@ class ApiView(CodeFile):
         return None
 
     def __init__(self, *, pkg_name="", namespace="", metadata_map=None, source_url=None, pkg_version=""):
-        # self.package_name = pkg_name
-        # self.package_version = pkg_version
-        # self.language = "Python"
+        # TODO : ask Travis about metadata map
         self.metadata_map = metadata_map or MetadataMap("")
         # self.cross_language_package_id = self.metadata_map.cross_language_package_id
         # self.navigation = []
@@ -88,7 +86,7 @@ class ApiView(CodeFile):
             package_version=pkg_version,
             parser_version=VERSION,
             language="Python",
-            review_lines=ReviewLines(),
+            review_lines=ReviewLines(apiview=self),
             cross_language_package_id=self.metadata_map.cross_language_package_id,
             diagnostics=[],
             # navigation=[], # TODO: Add later if needed
@@ -104,6 +102,9 @@ class ApiView(CodeFile):
             value=HEADER_TEXT,
             has_suffix_space=False,
         )
+        line = self.review_lines.create_review_line()
+        line.add_line_marker("GLOBAL")
+        line.add_text(HEADER_TEXT, has_suffix_space=False)
         self.review_lines.append(
             self.review_lines.create_review_line(line_id="GLOBAL", tokens=[token])
         )
@@ -114,8 +115,16 @@ class ApiView(CodeFile):
         # self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
         self.review_lines.set_blank_lines(2)
 
-    def add_diagnostic(self, *, obj, target_id):
-        self.diagnostics.append(Diagnostic(obj=obj, target_id=target_id))
+    def add_diagnostic(self, *, err, target_id):
+        text = f"{err.message} [{err.symbol}]"
+        self.diagnostics.append(
+            Diagnostic(
+                level=err.level,
+                text=text,
+                help_link_uri=err.help_link,
+                target_id=target_id
+            )
+        )
 
     def add_navigation(self, navigation):
         self.navigation.append(navigation)
@@ -124,7 +133,8 @@ class ApiView(CodeFile):
 class ReviewLines(list):
     """A list of ReviewLine objects.
     """
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
+        self.apiview = kwargs.pop("apiview", None)
         super().__init__(*args)
 
     def create_review_line(
@@ -221,27 +231,30 @@ class ReviewLine(ReviewLineImpl):
             )
         )
 
-    # TODO: add back in
-    #def add_line_marker(self, line_id, add_cross_language_id=False):
-    #    token = Token("", TokenKind.LineIdMarker)
-    #    token.definition_id = line_id
-    #    if add_cross_language_id:
-    #        # Check if line_id ends with an underscore and a number
-    #        numeric_suffix = re.search(r"_(\d+)$", line_id)
-    #        # If it does, truncate the numeric portion
-    #        line_key = line_id[: numeric_suffix.start()] if numeric_suffix else line_id
-    #        cross_lang_id = self.metadata_map.cross_language_map.get(line_key, None)
-    #        token.cross_language_definition_id = cross_lang_id
-    #    self.add_token(token)
+    def add_line_marker(self, line_id, add_cross_language_id=False):
+        if add_cross_language_id:
+            # Check if line_id ends with an underscore and a number
+            numeric_suffix = re.search(r"_(\d+)$", line_id)
+            # If it does, truncate the numeric portion
+            line_key = line_id[: numeric_suffix.start()] if numeric_suffix else line_id
+            #cross_lang_id = self.metadata_map.cross_language_map.get(line_key, None)
+            #self.cross_language_definition_id = cross_lang_id
+        self.line_id = line_id
 
     def add_text(
-        self, text, *, has_prefix_space=False, has_suffix_space=True
+        self,
+        text,
+        *,
+        has_prefix_space=False,
+        has_suffix_space=True,
+        skip_diff=False
     ):
         token = Token(
             kind=TokenKind.TEXT,
             value=text,
             has_prefix_space=has_prefix_space,
-            has_suffix_space=has_suffix_space
+            has_suffix_space=has_suffix_space,
+            skip_diff=skip_diff
         )
         #self.definition_id = definition_id
         self.add_token(token)
@@ -261,6 +274,7 @@ class ReviewLine(ReviewLineImpl):
         self.add_token(Token(url))
         self.add_token(Token(kind=TokenKind.ExternalLinkEnd))
 
+    # TODO: integrate below
     def _add_token_for_type_name(self, type_name, line_id=None, cross_language_id=None):
         logging.debug("Generating tokens for type name {}".format(type_name))
         token = Token(type_name, TokenKind.TypeName)
@@ -273,6 +287,7 @@ class ReviewLine(ReviewLineImpl):
             token.cross_language_definition_id = cross_language_id
         self.add_token(token)
 
+    # TODO: integrate below
     def _add_type_token(self, type_name, line_id, cross_language_id):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))

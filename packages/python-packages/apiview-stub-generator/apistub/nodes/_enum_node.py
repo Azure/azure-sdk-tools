@@ -20,7 +20,8 @@ class EnumNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param ApiView: apiview
         """
-        line = review_lines.create_review_line(line_id=self.namespace_id)
+        line = review_lines.create_review_line()
+        line.add_line_marker(self.namespace_id)
         line.add_text(self.name)
         line.add_punctuation("=")
         if isinstance(self.value, str):
@@ -28,5 +29,5 @@ class EnumNode(NodeEntityBase):
         else:
             line.add_literal(str(self.value))
         for err in self.pylint_errors:
-            err.generate_tokens(review_lines, self.namespace_id)
+            err.generate_tokens(review_lines.apiview, err=err, target_id=self.namespace_id)
         review_lines.append(line)

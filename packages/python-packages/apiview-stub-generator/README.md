@@ -43,6 +43,7 @@ apistubgen --pkg-path C:\git\azure-sdk-for-python\sdk\core\azure-core --out-path
 Token file will be created with a naming convention `<package-name>_python.json'
 
 #### ApiStubGen options
+
 The following options are available when running `apistubgen`:
 ```
 ```

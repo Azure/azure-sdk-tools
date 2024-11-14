@@ -49,19 +49,21 @@ class PropertyNode(NodeEntityBase):
         if self.read_only:
             self.display_name += "   # Read-only"
 
-    def generate_tokens(self, apiview):
+    def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param ApiView: apiview
+        :param review_lines: ReviewLines
         """
-        apiview.add_keyword("property")
-        apiview.add_space()
-        apiview.add_line_marker(self.namespace_id)
-        apiview.add_text(self.name)
-        apiview.add_punctuation(":")
-        apiview.add_space()
-        apiview.add_type(self.type)
+        review_line = review_lines.create_review_line()
+        review_line.add_keyword("property")
+        review_line.add_space()
+        review_line.add_line_marker(self.namespace_id)
+        review_line.add_text(self.name)
+        review_line.add_punctuation(":")
+        review_line.add_space()
+        review_line.add_type(self.type)
         if self.read_only:
-            apiview.add_whitespace(count=5)
-            apiview.add_literal("# Read-only")
+            review_line.add_whitespace(count=5)
+            review_line.add_literal("# Read-only")
         for err in self.pylint_errors:
-            err.generate_tokens(apiview, self.namespace_id)
+            err.generate_tokens(review_lines.apiview, err=err, target_id=self.namespace_id)
+        review_lines.append(review_line)

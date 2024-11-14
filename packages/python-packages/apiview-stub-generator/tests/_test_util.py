@@ -18,12 +18,14 @@ def _tokenize(node):
 
 """ Returns the review line tokens rendered into distinct lines. """
 def _render_lines(review_lines) -> List[str]:
-    return review_lines.render()
+    lines = review_lines.render()
+    print(lines)
+    return lines
 
 
 """ Returns the review line tokens as a single concatenated string. """
-def _render_string(tokens) -> str:
-    lines = "".join([x.render() for x in tokens]).splitlines()
+def _render_string(review_lines) -> str:
+    lines = _render_lines(review_lines)
     return _merge_lines(lines)
 
 

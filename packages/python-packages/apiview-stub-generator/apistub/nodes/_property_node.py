@@ -60,8 +60,8 @@ class PropertyNode(NodeEntityBase):
         review_line.add_punctuation(":")
         review_line.add_type(self.type, has_suffix_space=False)
         if self.read_only:
-            review_line.add_text(" " * 5)
-            review_line.add_literal("# Read-only")
+            review_line.add_text(" " * 4, has_suffix_space=False)
+            review_line.add_literal("# Read-only", has_suffix_space=False)
         for err in self.pylint_errors:
             err.generate_tokens(review_lines.apiview, err=err, target_id=self.namespace_id)
         review_lines.append(review_line)

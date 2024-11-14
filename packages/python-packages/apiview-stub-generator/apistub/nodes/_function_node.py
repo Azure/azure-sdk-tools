@@ -3,17 +3,14 @@ import inspect
 from collections import OrderedDict
 import astroid
 import re
-from typing import TYPE_CHECKING, List, Dict
+from typing import Dict
 
 from ._annotation_parser import FunctionAnnotationParser
 from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
-from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, ReviewLines
-
-if TYPE_CHECKING:
-    from .._generated.treestyle.parser.models import ReviewLine
+from .._generated.treestyle.parser.models import ReviewLines
 
 
 # Find types like ~azure.core.paging.ItemPaged and group returns ItemPaged.
@@ -227,18 +224,6 @@ class FunctionNode(NodeEntityBase):
         # to be used later when adding children
         def_line = review_line
 
-        # TODO: make rest of tokens all children
-        #tokens = self._reviewline_if_needed(review_lines, tokens, use_multi_line)
-
-        #else:
-        #    add_review_line(
-        #        review_lines=review_lines,
-        #        line_id=self.namespace_id,
-        #        tokens=tokens,
-        #        #related_to_line=self.namespace_id,
-        #        #add_cross_language_id=True     # TODO: add cross language id
-        #    )
-
         # If multi-line, then each param line will be a child.
         if use_multi_line:
             param_lines = self.children
@@ -329,12 +314,12 @@ class FunctionNode(NodeEntityBase):
         review_line.add_punctuation(")", has_suffix_space=False)
 
         if self.return_type:
-            review_line.add_punctuation(" ->", has_prefix_space=True)
+            review_line.add_punctuation("->", has_prefix_space=True)
             # Add line marker id if signature is displayed in multi lines
             if use_multi_line:
                 line_id = f"{self.namespace_id}.returntype"
                 review_line.add_line_marker(line_id)
-            review_line.add_type(self.return_type)
+            review_line.add_type(self.return_type, has_suffix_space=False)
 
         review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
@@ -361,10 +346,9 @@ class FunctionNode(NodeEntityBase):
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
-            line = review_lines.create_review_line(
-                tokens=[Token(kind=TokenKind.KEYWORD, value=annot, has_suffix_space=False)]
-            )
-            review_lines.append(line)
+            review_line = review_lines.create_review_line()
+            review_line.add_keyword(annot, has_suffix_space=False)
+            review_lines.append(review_line)
         review_line = review_lines.create_review_line()
         review_line.add_line_marker(self.namespace_id)
         if self.is_async:

@@ -8,7 +8,7 @@ from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub import Navigation, Kind, NavigationTag
-from apistub._generated.treestyle.parser.models import ReviewToken as Token, TokenKind, ReviewLines
+from apistub._generated.treestyle.parser.models import ReviewLines
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ApiView, ReviewLine
@@ -104,10 +104,11 @@ class ModuleNode(NodeEntityBase):
 
         # Add name space only if it has children
         if self.child_nodes:
-            tokens = [
-                Token(kind=TokenKind.KEYWORD, value="namespace"),
-                Token(kind=TokenKind.TEXT, value=self.namespace, has_suffix_space=False)
-            ]
+            line = review_lines.create_review_line(line_id=self.namespace_id, children=self.children)
+            line.add_keyword("namespace")
+            line.add_text(self.namespace, has_suffix_space=False)
+            review_lines.append(line)
+
             self.children.set_blank_lines(1)
             # Add name space level functions first
             for c in filter(filter_function, self.child_nodes):
@@ -117,10 +118,6 @@ class ModuleNode(NodeEntityBase):
             # Add classes
             for c in filter(filter_class, self.child_nodes):
                 c.generate_tokens(self.children)
-
-            # TODO: figure out why children only print when added before parent review line
-            line = review_lines.create_review_line(line_id=self.namespace_id, tokens=tokens, children=self.children)
-            review_lines.append(line)
 
     def get_navigation(self):
         """Generate navigation tree recursively by generating Navigation obejct for classes and functions in name space

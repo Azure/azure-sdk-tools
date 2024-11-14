@@ -120,10 +120,10 @@ class ApiView(CodeFile):
         #    self.review_lines.set_blank_lines(1)
         #    self.add_literal("# Source URL: ")
         #    self.add_link(source_url)
-        # self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
+        # self.add_token(ReviewToken(kind=TokenKind.TEXT, value="", skip_diff=True))
         self.review_lines.set_blank_lines(2)
 
-class Token(TokenImpl):
+class ReviewToken(TokenImpl):
 
     def __init__(self, *args, **kwargs) -> None:  # pylint: disable=useless-super-delegation
         super().__init__(*args, **kwargs)
@@ -143,7 +143,7 @@ class ReviewLines(list):
         self,
         *,
         line_id: Optional[str] = None,
-        tokens: List[Token] = [],
+        tokens: List[ReviewToken] = [],
         children: Optional[List["ReviewLine"]] = None,
         is_context_end_line: Optional[bool] = False,
         related_to_line: Optional[str] = None,
@@ -192,7 +192,7 @@ class ReviewLine(ReviewLineImpl):
     def __init__(
         self,
         *,
-        tokens: List[Token],
+        tokens: List[ReviewToken],
         line_id: Optional[str] = None,
         cross_language_id: Optional[str] = None,
         children: Optional[List["ReviewLine"]] = None,
@@ -221,13 +221,13 @@ class ReviewLine(ReviewLineImpl):
         or inject a specific number of whitespace characters.
         """
         if self.indent:
-            self.add_token(Token(" " * (self.indent * 4)))
+            self.add_token(ReviewToken(" " * (self.indent * 4)))
         elif count:
-            self.add_token(Token(" " * (count)))
+            self.add_token(ReviewToken(" " * (count)))
 
     def add_punctuation(self, value, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
-            Token(
+            ReviewToken(
                 kind=TokenKind.PUNCTUATION,
                 value=value,
                 has_prefix_space=has_prefix_space,
@@ -253,7 +253,7 @@ class ReviewLine(ReviewLineImpl):
         has_suffix_space=True,
         skip_diff=False
     ):
-        token = Token(
+        token = ReviewToken(
             kind=TokenKind.TEXT,
             value=text,
             has_prefix_space=has_prefix_space,
@@ -265,7 +265,7 @@ class ReviewLine(ReviewLineImpl):
 
     def add_keyword(self, keyword, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
-            Token(
+            ReviewToken(
                 kind=TokenKind.KEYWORD,
                 value=keyword,
                 has_prefix_space=has_prefix_space,
@@ -274,14 +274,14 @@ class ReviewLine(ReviewLineImpl):
         )
 
     def add_link(self, url):
-        self.add_token(Token(url, TokenKind.ExternalLinkStart))
-        self.add_token(Token(url))
-        self.add_token(Token(kind=TokenKind.ExternalLinkEnd))
+        self.add_token(ReviewToken(url, TokenKind.ExternalLinkStart))
+        self.add_token(ReviewToken(url))
+        self.add_token(ReviewToken(kind=TokenKind.ExternalLinkEnd))
 
     # TODO: integrate below
     def _add_token_for_type_name(self, type_name, line_id=None, cross_language_id=None):
         logging.debug("Generating tokens for type name {}".format(type_name))
-        token = Token(type_name, TokenKind.TypeName)
+        token = ReviewToken(type_name, TokenKind.TYPE_NAME)
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
         token.value = type_full_name.split(".")[-1]
         navigate_to_id = self.node_index.get_id(type_full_name)
@@ -316,13 +316,13 @@ class ReviewLine(ReviewLineImpl):
             self.add_punctuation(type_name)
 
     def add_member(self, name, id):
-        token = Token(name, TokenKind.MemberName)
+        token = ReviewToken(name, TokenKind.MEMBER_NAME)
         token.definition_id = id
         self.add_token(token)
 
     def add_string_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
-            Token(
+            ReviewToken(
                 kind=TokenKind.STRING_LITERAL,
                 value="\u0022{}\u0022".format(value),
                 has_prefix_space=has_prefix_space,
@@ -332,7 +332,7 @@ class ReviewLine(ReviewLineImpl):
 
     def add_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
-            Token(
+            ReviewToken(
                 kind=TokenKind.LITERAL,
                 value=value,
                 has_prefix_space=has_prefix_space,
@@ -362,7 +362,7 @@ class ReviewLine(ReviewLineImpl):
         # TODO: figure out cross_language_id, pass into type token below
         # cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
         self.add_token(
-            Token(
+            ReviewToken(
                 kind=TokenKind.TYPE_NAME,
                 value=type_name,
                 has_prefix_space=has_prefix_space,
@@ -382,6 +382,7 @@ __all__: List[str] = [
     "ApiView",
     "ReviewLines",
     "ReviewLine",
+    "ReviewToken"
 ]  # Add all objects you want publicly available to users at this package level
 
 

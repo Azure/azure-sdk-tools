@@ -48,6 +48,7 @@ export function getValueByKey<T>(
 export function removeAnsiEscapeCodes(
     messages: string[] | string
 ): string[] | string {
+    // eslint-disable-next-line no-control-regex
     const ansiEscapeCodeRegex = /\x1b\[(\d{1,2}(;\d{0,2})*)?[A-HJKSTfimnsu]/g;
     if (typeof messages === "string") {
         return messages.replace(ansiEscapeCodeRegex, "");
@@ -56,12 +57,12 @@ export function removeAnsiEscapeCodes(
 }
 
 export function extractServiceName(path: string): string {
-    const match = path.match(/specification\/([^\/]*)\//);
+    const match = path.match(/specification\/([^/]*)\//);
     return match ? match[1] : "";
 }
 
 // Flag of the readme.md under root of 'resource-manager' or 'data-plane'
-const IsReadmeUnderRoot = /specification\/([^\/]*)\/([^\/]*)\/readme\.md/g;
+const IsReadmeUnderRoot = /specification\/([^/]*)\/([^/]*)\/readme\.md/g;
 
 export function removeDuplicatesFromRelatedFiles(
     relatedTypeSpecProjectFolder: string[] | undefined,

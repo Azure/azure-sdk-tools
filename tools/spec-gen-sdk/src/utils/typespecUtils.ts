@@ -34,12 +34,12 @@ export const findSDKToGenerateFromTypeSpecProject = (content: string | undefined
 };
 
 export function getTypeSpecProjectServiceName(outputFolder: string): string {
-  const match = outputFolder.match(/[^\/]*\/([^\/]*)\//);
+  const match = outputFolder.match(/[^/]*\/([^/]*)\//);
   return match ? match[1] : '';
 }
 
 export function getTypeSpecProjectResourceProvider(typespecProject: string): string {
-  const match = typespecProject.match(/[^\/]*\/([^\/]*)\/(.*)/);
+  const match = typespecProject.match(/[^/]*\/([^/]*)\/(.*)/);
   return match ? match[2] : '';
 }
 

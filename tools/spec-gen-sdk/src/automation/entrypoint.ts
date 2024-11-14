@@ -281,16 +281,15 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
       console.log(`##vso[task.setVariable variable=SkippedJobs]azure-sdk-for-go`);
       console.log(`##vso[task.complete result=Failed;]`);
     }
-  } finally {
-    if (workflowContext) {
-      await sdkAutoReportStatus(workflowContext);
-    }
-    await loggerWaitToFinish(sdkContext.logger);
-    if (runSdkFilter) {
-      return workflowFilterSdkMainStatus;
-    } else {
-      return workflowContext?.status;
-    }
+  }
+  if (workflowContext) {
+    await sdkAutoReportStatus(workflowContext);
+  }
+  await loggerWaitToFinish(sdkContext.logger);
+  if (runSdkFilter) {
+    return workflowFilterSdkMainStatus;
+  } else {
+    return workflowContext?.status;
   }
 };
 

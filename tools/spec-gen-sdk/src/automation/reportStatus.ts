@@ -106,7 +106,7 @@ export const sdkAutoReportStatus = async (context: WorkflowContext) => {
 };
 
 export const prettyFormatHtml = (s: string) => {
-  return prettier.format(s, { parser: 'html' }).replace(/\<br\>/gi, '<br>\n');
+  return prettier.format(s, { parser: 'html' }).replace(/<br>/gi, '<br>\n');
 };
 
 const commentDetailTemplate = fs.readFileSync(`${__dirname}/../templates/commentDetailNew.handlebars`).toString();
@@ -207,7 +207,7 @@ const renderHandlebarTemplate = (
     .replace(/(<\/?[a-z]+>)\s+(<\/?[a-z]+>)/gi, (_, p1, p2) => `${p1}${p2}`)
     .replace(/(<\/?[a-z]+>)\s+(<\/?[a-z]+>)/gi, (_, p1, p2) => `${p1}${p2}`);
 
-  commentBody = commentBody.replace(/\<BR\>/g, '\n');
+  commentBody = commentBody.replace(/<BR>/g, '\n');
 
   return commentBody;
 };

@@ -208,7 +208,6 @@ class ReviewLine(ReviewLineImpl):
             is_context_end_line=is_context_end_line,
             related_to_line=related_to_line,
         )
-        # TODO: is a rest field not mutable?
 
     def add_children(self, children):
         self.children = children

@@ -233,10 +233,11 @@ class FunctionNode(NodeEntityBase):
 
         # If length of positional args is less than total args, then all items should end with commas
         # as end of args list hasn't been reached. Else, last item reached, so no comma.
-        arg_count = self._argument_count()
-        current_count = len(self.posargs)
 
         # TODO: refactor this to calculate comma spot
+        current_count = len(self.posargs)
+        print('current_count', current_count)
+        print('arg_count', self.arg_count)
         if current_count < self.arg_count:
             final_item = False
         else:
@@ -252,7 +253,9 @@ class FunctionNode(NodeEntityBase):
         # add postional-only marker if any posargs
         if self.posargs:
             review_line.add_text("/", has_suffix_space=False)
-            review_line.add_punctuation(",", has_suffix_space=False)
+            review_line.add_punctuation(",")
+            current_count += 1 # account for /
+
             review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
             #add_review_line(review_lines, tokens=tokens)
 
@@ -263,7 +266,11 @@ class FunctionNode(NodeEntityBase):
             final_item = True
 
         review_line = self._generate_args_for_collection(
-            self.args, review_lines=param_lines, review_line=review_line, use_multi_line=use_multi_line, final_item=final_item
+            self.args,
+            review_lines=param_lines,
+            review_line=review_line,
+            use_multi_line=use_multi_line,
+            final_item=final_item
         )
         current_count += 1
         if current_count < self.arg_count:

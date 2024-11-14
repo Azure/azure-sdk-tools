@@ -22,27 +22,22 @@ class TestApiView:
         return newline_count
 
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
-    def _validate_definition_ids(self, apiview: ApiView):
-        definition_ids = set()
-        def_ids_per_line = [[]]
-        index = 0
-        for token in apiview.tokens:
-            # ensure that there are no repeated definition IDs.
-            if token.definition_id:
-                if token.definition_id in definition_ids:
-                    fail(f"Duplicate defintion ID {token.definition_id}.")
-                definition_ids.add(token.definition_id)
-            # Collect the definition IDs that exist on each line
-            if token.definition_id:
-                def_ids_per_line[index].append(token.definition_id)
-            if token.kind == TokenKind.Newline:
-                index += 1
-                def_ids_per_line.append([])
-        # ensure that each line has either 0 or 1 definition ID.
-        failures = [row for row in def_ids_per_line if len(row) > 1]
-        if failures:
-            fail(f"Some lines have more than one definition ID. {failures}")
-        
+    def _validate_line_ids(self, apiview: ApiView):
+        line_ids = set()
+        def collect_line_ids(review_lines, index=0):
+            for line in review_lines:
+                # Ensure that each line has either 0 or 1 definition ID.
+                if line.line_id and not isinstance(line.line_id, str):
+                    fail(f"Some lines have more than one definition ID. {line.line_id}")
+                # Ensure that there are no repeated definition IDs.
+                if line.line_id and line.line_id in line_ids:
+                    fail(f"Duplicate definition ID {line.line_id}.")
+                    line_ids.add(line.line_id)
+                # Recursively collect definition IDs from child lines
+                if line.children:
+                    collect_line_ids(line.children, index)
+
+        collect_line_ids(apiview.review_lines)
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()
@@ -80,6 +75,7 @@ class TestApiView:
         # represented in APIView
         assert len(unclaimed) == 1
 
+    # TODO: ask Travis about group ending punctuations
     def test_add_type(self):
         apiview = ApiView()
         review_line = apiview.review_lines.create_review_line()
@@ -90,12 +86,12 @@ class TestApiView:
         assert tokens[0].kind == TokenKind.TYPE_NAME
         assert tokens[1].kind == TokenKind.PUNCTUATION
 
-    def test_definition_ids(self):
+    def test_line_ids(self):
         pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
-        self._validate_definition_ids(apiview)
+        self._validate_line_ids(apiview)
 
     def test_mapping_file(self):
         pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
@@ -103,9 +99,9 @@ class TestApiView:
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, mapping_path=mapping_path)
         apiview = stub_gen.generate_tokens()
-        self._validate_definition_ids(apiview)
-        cross_language_tokens = [token for token in apiview.tokens if token.cross_language_definition_id]
-        assert cross_language_tokens[0].cross_language_definition_id == "Formal_Model_Id"
-        assert cross_language_tokens[1].cross_language_definition_id == "Docstring_DocstringWithFormalDefault"
+        self._validate_line_ids(apiview)
+        cross_language_tokens = [token for token in apiview.tokens if token.cross_language_line_id]
+        assert cross_language_tokens[0].cross_language_line_id == "Formal_Model_Id"
+        assert cross_language_tokens[1].cross_language_line_id == "Docstring_DocstringWithFormalDefault"
         assert len(cross_language_tokens) == 2
         assert apiview.cross_language_package_id == "ApiStubGenTest"

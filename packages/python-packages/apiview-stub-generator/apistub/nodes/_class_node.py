@@ -56,12 +56,12 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview, allow_list=None):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, allow_list=None):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         # This is the name obtained by NodeEntityBase from __name__.
         # We must preserve it to detect the mismatch and issue a warning.
-        self.children = ReviewLines(apiview=apiview)
+        self.children = ReviewLines()
         self.name = name
         self.namespace_id = self.generate_id()
         self.full_name = self.namespace_id
@@ -170,7 +170,7 @@ class ClassNode(NodeEntityBase):
             for node in func.decorators.nodes:
                 try:
                     if node.name == "overload":
-                        overload_node = FunctionNode(self.namespace, self, node=func, apiview=self.children.apiview)
+                        overload_node = FunctionNode(self.namespace, self, node=func)
                         overload_nodes.append(overload_node)
                 except AttributeError:
                     continue
@@ -209,7 +209,7 @@ class ClassNode(NodeEntityBase):
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
-                    func_node = FunctionNode(self.namespace, self, obj=child_obj, apiview=self.children.apiview)
+                    func_node = FunctionNode(self.namespace, self, obj=child_obj)
                     func_overloads = [x for x in overloads if x.name == func_node.name]
 
                     # Append a numeric tag to overloads to distinguish them from one another.
@@ -253,8 +253,7 @@ class ClassNode(NodeEntityBase):
                         namespace=self.namespace,
                         parent_node=self,
                         obj=child_obj,
-                        pkg_root_namespace=self.pkg_root_namespace,
-                        apiview=self.children.apiview
+                        pkg_root_namespace=self.pkg_root_namespace
                     )
                 )
             elif isinstance(child_obj, property):
@@ -315,6 +314,8 @@ class ClassNode(NodeEntityBase):
         :param review_lines: List of ReviewLine 
         """
         logging.info(f"Processing class {self.namespace_id}")
+        # Pass through apiview for diagnostics
+        self.children.apiview = review_lines.apiview
         # Generate class name line
         for decorator in self.decorators: 
             # TODO: may need to remove line id here

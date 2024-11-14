@@ -32,13 +32,13 @@ class FunctionNode(NodeEntityBase):
     :param bool: is_module_level
     """
 
-    def __init__(self, namespace, parent_node, *, apiview, obj=None, node: astroid.FunctionDef=None, is_module_level=False):
+    def __init__(self, namespace, parent_node, *,obj=None, node: astroid.FunctionDef=None, is_module_level=False):
         super().__init__(namespace, parent_node, obj)
         if not obj and node:
             self.name = node.name
             self.display_name = node.name
         self.annotations = []
-        self.children = ReviewLines(apiview=apiview)
+        self.children = ReviewLines()
 
         # Track **kwargs and *args separately, the way astroid does
         self.special_kwarg = None
@@ -350,6 +350,9 @@ class FunctionNode(NodeEntityBase):
         """Generates token for function signature
         :param ApiView: apiview
         """
+        # Pass through apiview for diagnostics
+        self.children.apiview = review_lines.apiview
+
         # Show args in individual line if method has more than 4 args and use two tabs to properly align them
         self.arg_count = self._argument_count()
         use_multi_line = self.arg_count > 2

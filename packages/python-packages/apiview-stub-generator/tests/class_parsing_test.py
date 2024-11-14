@@ -49,7 +49,7 @@ class TestClassParsing:
             "class ClassWithIvarsAndCvars:",
             'ivar captain: str = "Picard"',
             "ivar damage: int",
-            "cvar stats: ClassVar[Dict[str, int]] = {}"
+            "cvar stats: ClassVar[typing.Dict[str, int]] = {}"
         ]
         _check_all(actuals, expected, obj)
 
@@ -191,37 +191,37 @@ class TestClassParsing:
         _check(actual4, expected4, SomethingWithInheritedOverloads)
 
     
-    def test_overload_definition_ids(self):
+    def test_overload_line_ids(self):
         obj = SomethingWithOverloads
         obj2 = SomethingAsyncWithOverloads
         sync_class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
         async_class_node = ClassNode(name=obj2.__name__, namespace=obj2.__name__, parent_node=None, obj=obj2, pkg_root_namespace=self.pkg_namespace)
         tokens1 = _tokenize(sync_class_node)
         tokens2 = _tokenize(async_class_node)
-        self._validate_definition_ids(tokens1 + tokens2)
+        self._validate_line_ids(tokens1 + tokens2)
 
-    def test_async_definition_ids(self):
+    def test_async_line_ids(self):
         obj = SomethingAsyncWithOverloads
         class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
         tokens = _tokenize(class_node)
-        definition_ids = [x.definition_id for x in tokens if x.definition_id][1:]
-        for def_id in definition_ids:
+        line_ids = [x.definition_id for x in tokens if x.definition_id][1:]
+        for def_id in line_ids:
             assert ":async" in def_id
 
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
-    def _validate_definition_ids(self, tokens):
-        definition_ids = set()
+    def _validate_line_ids(self, tokens):
+        line_ids = set()
         def_ids_per_line = [[]]
         index = 0
         for token in tokens:
             # ensure that there are no repeated definition IDs.
-            if token.definition_id:
-                if token.definition_id in definition_ids:
-                    fail(f"Duplicate defintion ID {token.definition_id}.")
-                definition_ids.add(token.definition_id)
+            if token.line_id:
+                if token.line_id in definition_ids:
+                    fail(f"Duplicate defintion ID {token.line_id}.")
+                line_ids.add(token.definition_id)
             # Collect the definition IDs that exist on each line
-            if token.definition_id:
-                def_ids_per_line[index].append(token.definition_id)
+            if token.line_id:
+                def_ids_per_line[index].append(token.line_id)
             if token.kind == TokenKind.Newline:
                 index += 1
                 def_ids_per_line.append([])

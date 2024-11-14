@@ -12,14 +12,13 @@ class DataClassNode(ClassNode):
     """Class node to represent parsed data classes
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(
             name=name,
             namespace=namespace,
             parent_node=parent_node,
             obj=obj,
-            pkg_root_namespace=pkg_root_namespace,
-            apiview=apiview
+            pkg_root_namespace=pkg_root_namespace
         )
         self.decorators = [x for x in self.decorators if not x.startswith("@dataclass")]
         # explicitly set synthesized __init__ return type to None to fix test flakiness
@@ -64,7 +63,9 @@ class DataClassNode(ClassNode):
             review_line.add_punctuation("(")
             for (i, param) in enumerate(self.dataclass_params):
                 function_id = f"{self.namespace_id}.field[{param.argname}]("
-                param.generate_tokens(review_line, review_lines.apiview, function_id, add_line_marker=False)
+                param.generate_tokens(
+                    function_id, review_lines.apiview.namespace, review_line, add_line_marker=False
+                )
                 if i != len(self.dataclass_params) - 1:
                     review_line.add_punctuation(",")
             review_line.add_punctuation(")")
@@ -76,6 +77,10 @@ class DataClassNode(ClassNode):
         """
         # TODO: check if dataclass is being tested correctly
         logging.info(f"Processing dataclass {self.namespace_id}")
+
+        # Pass through apiview for diagnostics
+        self.children.apiview = review_lines.apiview
+
         # Generate class name line
         review_line = review_lines.create_review_line()
         review_line.add_keyword("@dataclass")

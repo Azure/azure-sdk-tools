@@ -10,17 +10,18 @@ from typing import List
 
 def _tokenize(node):
     apiview = ApiView(pkg_name="test", namespace="test")
-    apiview.tokens = []
+    # pass through apiview for diagnostics
+    apiview.review_lines.apiview = apiview
     node.generate_tokens(apiview.review_lines)
-    return apiview.tokens
+    return apiview.review_lines
 
 
-""" Returns the tokens rendered into distinct lines. """
-def _render_lines(tokens) -> List[str]:
-    return "".join([x.render() for x in tokens]).splitlines()
+""" Returns the review line tokens rendered into distinct lines. """
+def _render_lines(review_lines) -> List[str]:
+    return review_lines.render()
 
 
-""" Returns the tokens as a single concatenated string. """
+""" Returns the review line tokens as a single concatenated string. """
 def _render_string(tokens) -> str:
     lines = "".join([x.render() for x in tokens]).splitlines()
     return _merge_lines(lines)

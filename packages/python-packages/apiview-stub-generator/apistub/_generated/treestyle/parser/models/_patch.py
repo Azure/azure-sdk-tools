@@ -15,7 +15,7 @@ from apistub._version import VERSION
 from apistub._node_index import NodeIndex
 from apistub._metadata_map import MetadataMap
 
-from ._models import CodeFile, ReviewToken as Token, ReviewLine as ReviewLineImpl, CodeDiagnostic as Diagnostic
+from ._models import CodeFile, ReviewToken as TokenImpl, ReviewLine as ReviewLineImpl, CodeDiagnostic as Diagnostic
 from ._enums import TokenKind
 
 HEADER_TEXT = "# Package is parsed using apiview-stub-generator(version:{0}), Python version: {1}".format(
@@ -86,7 +86,7 @@ class ApiView(CodeFile):
             package_version=pkg_version,
             parser_version=VERSION,
             language="Python",
-            review_lines=ReviewLines(apiview=self),
+            review_lines=ReviewLines(),
             cross_language_package_id=self.metadata_map.cross_language_package_id,
             diagnostics=[],
             # navigation=[], # TODO: Add later if needed
@@ -96,24 +96,6 @@ class ApiView(CodeFile):
         self.indent = 0
         self.namespace = namespace
         self.node_index = NodeIndex()
-        token = Token(
-            kind=TokenKind.TEXT,
-            skip_diff=True,
-            value=HEADER_TEXT,
-            has_suffix_space=False,
-        )
-        line = self.review_lines.create_review_line()
-        line.add_line_marker("GLOBAL")
-        line.add_text(HEADER_TEXT, has_suffix_space=False)
-        self.review_lines.append(
-            self.review_lines.create_review_line(line_id="GLOBAL", tokens=[token])
-        )
-        # if source_url:  # TODO: test source url
-        #    self.review_lines.set_blank_lines(1)
-        #    self.add_literal("# Source URL: ")
-        #    self.add_link(source_url)
-        # self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
-        self.review_lines.set_blank_lines(2)
 
     def add_diagnostic(self, *, err, target_id):
         text = f"{err.message} [{err.symbol}]"
@@ -129,13 +111,33 @@ class ApiView(CodeFile):
     def add_navigation(self, navigation):
         self.navigation.append(navigation)
 
+    def generate_tokens(self):
+        line = self.review_lines.create_review_line()
+        line.add_line_marker("GLOBAL")
+        line.add_text(HEADER_TEXT, has_suffix_space=False)
+        self.review_lines.append(line)
+        # if source_url:  # TODO: test source url
+        #    self.review_lines.set_blank_lines(1)
+        #    self.add_literal("# Source URL: ")
+        #    self.add_link(source_url)
+        # self.add_token(Token(kind=TokenKind.TEXT, value="", skip_diff=True))
+        self.review_lines.set_blank_lines(2)
+
+class Token(TokenImpl):
+
+    def __init__(self, *args, **kwargs) -> None:  # pylint: disable=useless-super-delegation
+        super().__init__(*args, **kwargs)
+
+    def render(self):
+        return f"{self.has_prefix_space * ' '}{self.value}{self.has_suffix_space * ' '}"
+
 
 class ReviewLines(list):
     """A list of ReviewLine objects.
     """
-    def __init__(self, *args, **kwargs):
-        self.apiview = kwargs.pop("apiview", None)
+    def __init__(self, *args):
         super().__init__(*args)
+        self.apiview = None
 
     def create_review_line(
         self,
@@ -170,12 +172,19 @@ class ReviewLines(list):
         if newline_count < count:
             # if there are not enough newlines, add some
             for n in range(count - newline_count):
+                # TODO: skip diff?
                 self.append(self.create_review_line())
         elif newline_count > (count + 1):
             # if there are too many newlines, remove some
             excess = newline_count - count
             for _ in range(excess):
                 self.pop()
+    
+    def render(self):
+        lines = []
+        for line in self:
+            lines.extend(line.render())
+        return lines
 
 
 class ReviewLine(ReviewLineImpl):
@@ -215,11 +224,6 @@ class ReviewLine(ReviewLineImpl):
             self.add_token(Token(" " * (self.indent * 4)))
         elif count:
             self.add_token(Token(" " * (count)))
-
-    def add_space(self):
-        """Used to add a single space. Cannot add multiple spaces."""
-        if self.tokens[-1].kind != TokenKind.Whitespace:
-            self.add_token(Token(" ", TokenKind.Whitespace))
 
     def add_punctuation(self, value, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
@@ -365,6 +369,13 @@ class ReviewLine(ReviewLineImpl):
                 has_suffix_space=has_suffix_space
             )
         )
+    
+    def render(self):
+        lines = ["".join([token.render() for token in self.tokens])]
+        if self.children:
+            for child in self.children:
+                lines.extend(child.render())
+        return lines
 
 
 __all__: List[str] = [

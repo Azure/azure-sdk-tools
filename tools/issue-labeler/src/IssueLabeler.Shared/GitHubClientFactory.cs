@@ -1,4 +1,7 @@
-﻿using Azure.Identity;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using GitHubJwt;
 using Microsoft.Extensions.Configuration;

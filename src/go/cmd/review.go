@@ -138,8 +138,9 @@ func (r *Review) Review() (CodeFile, error) {
 			lines = append(lines, ReviewLine{
 				Tokens: []ReviewToken{
 					{
-						Kind:  TokenKindPunctuation,
-						Value: strings.Repeat("━", 120),
+						Kind:     TokenKindText,
+						SkipDiff: true,
+						Value:    strings.Repeat("━", 160),
 					},
 				},
 			})

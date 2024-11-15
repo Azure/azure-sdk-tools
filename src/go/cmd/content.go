@@ -214,8 +214,9 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string) [
 						Value:                 d.Name(),
 					},
 					{
-						Kind:  TokenKindPunctuation,
-						Value: strings.Repeat(" ", maxLen-len(d.Name())),
+						Kind:     TokenKindText,
+						SkipDiff: true,
+						Value:    strings.Repeat(" ", maxLen-len(d.Name())),
 					},
 					{
 						Kind:  TokenKindStringLiteral,

@@ -521,7 +521,8 @@ func (s Struct) MakeReviewLine() ReviewLine {
 						Value: name,
 					},
 					{
-						Kind: TokenKindPunctuation,
+						Kind:     TokenKindText,
+						SkipDiff: true,
 						// The +2 aligns type names with and without a preceding *. It's hacky
 						// but much simpler than considering * when calculating the max length
 						Value: strings.Repeat(" ", maxLen-len(name)+2),

@@ -124,7 +124,8 @@ func includesType(s []string, t string) bool {
 	return false
 }
 
-func (c *content) parseSimpleType(tokenList *[]ReviewToken) {
+func (c *content) parseSimpleType() []ReviewLine {
+	lns := []ReviewLine{}
 	keys := make([]string, 0, len(c.SimpleTypes))
 	for name := range c.SimpleTypes {
 		if unicode.IsUpper(rune(name[0])) {
@@ -134,29 +135,112 @@ func (c *content) parseSimpleType(tokenList *[]ReviewToken) {
 	sort.Strings(keys)
 	for _, name := range keys {
 		t := c.SimpleTypes[name]
-		line := ReviewLine{
-			Children: []ReviewLine{},
+		ln := ReviewLine{
+			Children: c.searchForMethods(t.Name()),
+			LineID:   t.ID(),
 			Tokens:   t.MakeTokens(),
 		}
-		c.searchForMethods_old(t.Name(), &line.Children)
+		if len(ln.Children) > 0 {
+			ln.Children = append(ln.Children, ReviewLine{})
+		}
 		if consts := c.filterDeclarations(t.Name(), c.Consts); len(consts) > 0 {
-			c.parseDeclarations(consts, "const", tokenList)
+			ln.Children = append(ln.Children, c.parseDeclarations(consts, "const")...)
 		}
 		if vars := c.filterDeclarations(t.Name(), c.Vars); len(vars) > 0 {
-			c.parseDeclarations(vars, "var", tokenList)
+			ln.Children = append(ln.Children, c.parseDeclarations(vars, "var")...)
+		}
+		lns = append(lns, ln)
+		if len(ln.Children) == 0 {
+			lns = append(lns, ReviewLine{IsContextEndLine: true})
 		}
 	}
+	return lns
 }
 
-func (c *content) parseConst(tokenList *[]ReviewToken) {
-	c.parseDeclarations(c.Consts, "const", tokenList)
+func (c *content) parseConst() []ReviewLine {
+	return c.parseDeclarations(c.Consts, "const")
 }
 
-func (c *content) parseVar(tokenList *[]ReviewToken) {
-	c.parseDeclarations(c.Vars, "var", tokenList)
+func (c *content) parseVar() []ReviewLine {
+	return c.parseDeclarations(c.Vars, "var")
 }
 
-func (c *content) parseDeclarations(decls map[string]Declaration, kind string, tokenList *[]ReviewToken) {
+func (c *content) parseDeclarations(decls map[string]Declaration, kind string) []ReviewLine {
+	ls := []ReviewLine{}
+	if len(decls) < 1 {
+		return ls
+	}
+	// create keys slice in order to later sort consts by their types
+	keys := []string{}
+	// create types slice in order to be able to separate consts by the type they represent
+	types := []string{}
+	for name, d := range decls {
+		if r := rune(name[0]); r != '_' && unicode.IsUpper(r) {
+			keys = append(keys, name)
+			if !includesType(types, d.Type) {
+				types = append(types, d.Type)
+			}
+		}
+	}
+	sort.Strings(keys)
+	sort.Strings(types)
+	// finalKeys will order const keys by their type
+	finalKeys := []string{}
+	for _, t := range types {
+		for _, k := range keys {
+			if t == decls[k].Type {
+				finalKeys = append(finalKeys, k)
+			}
+		}
+	}
+	for _, t := range types {
+		// this token parsing is performed so that const declarations of different types are declared
+		// in their own const block to make them easier to click on
+		ln := ReviewLine{
+			Tokens: []ReviewToken{
+				{
+					Kind:  TokenKindKeyword,
+					Value: kind,
+				},
+			},
+		}
+		for _, v := range finalKeys {
+			if d := decls[v]; d.Type == t {
+				rts := []ReviewToken{
+					{
+						HasSuffixSpace:        true,
+						Kind:                  TokenKindTypeName,
+						NavigationDisplayName: d.id,
+						Value:                 d.Name(),
+					},
+					{
+						Kind:  TokenKindPunctuation,
+						Value: strings.Repeat(" ", maxLen-len(d.Name())),
+					},
+					{
+						Kind:  TokenKindStringLiteral,
+						Value: d.value,
+					},
+				}
+				ln.Children = append(ln.Children, ReviewLine{
+					LineID: d.ID(),
+					Tokens: rts,
+				})
+			}
+		}
+		if pvm := c.searchForPossibleValuesMethod(t); pvm != nil {
+			ln.Children = append(ln.Children, ReviewLine{})
+			ln.Children = append(ln.Children, *pvm)
+		}
+		ls = append(ls, ln)
+	}
+	if len(finalKeys) > 0 {
+		ls = append(ls, ReviewLine{IsContextEndLine: true})
+	}
+	return ls
+}
+
+func (c *content) parseDeclarations_old(decls map[string]Declaration, kind string, tokenList *[]ReviewToken) {
 	if len(decls) < 1 {
 		return
 	}
@@ -196,11 +280,22 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string, t
 		}
 		makeToken(nil, nil, ")", TokenKindPunctuation, tokenList)
 		makeToken(nil, nil, "", 1, tokenList)
-		c.searchForPossibleValuesMethod(t, tokenList)
+		c.searchForPossibleValuesMethod_old(t, tokenList)
 	}
 }
 
-func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]ReviewToken) {
+func (c *content) searchForPossibleValuesMethod(t string) *ReviewLine {
+	for i, f := range c.Funcs {
+		if f.Name() == fmt.Sprintf("Possible%sValues", removeNavigatorString(t)) {
+			fl := f.MakeReviewLine()
+			delete(c.Funcs, i)
+			return &fl
+		}
+	}
+	return nil
+}
+
+func (c *content) searchForPossibleValuesMethod_old(t string, tokenList *[]ReviewToken) {
 	for i, f := range c.Funcs {
 		if f.Name() == fmt.Sprintf("Possible%sValues", removeNavigatorString(t)) {
 			*tokenList = append(*tokenList, f.MakeTokens()...)
@@ -306,12 +401,13 @@ func (c *content) parseStruct() []ReviewLine {
 				delete(c.Funcs, name)
 			}
 		}
+		if consts := c.filterDeclarations(typeName, c.Consts); len(consts) > 0 {
+			sl.Children = append(sl.Children, c.parseDeclarations(consts, "const")...)
+		}
+		if vars := c.filterDeclarations(typeName, c.Vars); len(vars) > 0 {
+			sl.Children = append(sl.Children, c.parseDeclarations(vars, "var")...)
+		}
 		ls = append(ls, sl)
-
-		// TODO
-		// if consts := c.filterDeclarations(typeName, c.Consts); len(consts) > 0 {
-		// 	c.parseDeclarations(consts, "const", &sl.Tokens)
-		// }
 		ls = append(ls, ReviewLine{IsContextEndLine: true})
 	}
 	return ls

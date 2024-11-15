@@ -98,15 +98,29 @@ func (d Declaration) ID() string {
 }
 
 func (d Declaration) MakeTokens() []ReviewToken {
-	list := &[]ReviewToken{}
-	ID := d.ID()
-	makeToken(&ID, nil, d.Name(), TokenKindTypeName, list)
-	if d.Type != skip {
-		parseAndMakeTypeToken_old(d.Type, list)
+	rts := []ReviewToken{
+		{
+			HasSuffixSpace:        true,
+			Kind:                  TokenKindTypeName,
+			NavigationDisplayName: d.Name(),
+			NavigateToID:          d.ID(),
+			Value:                 d.Name(),
+		},
 	}
-	makeToken(nil, nil, "=", TokenKindPunctuation, list)
-	makeToken(nil, nil, d.value, TokenKindStringLiteral, list)
-	return *list
+	if d.Type != skip {
+		rts = append(rts, parseAndMakeTypeTokens(d.Type)...)
+	}
+	rts = append(rts, ReviewToken{
+		HasPrefixSpace: true,
+		HasSuffixSpace: true,
+		Kind:           TokenKindPunctuation,
+		Value:          "=",
+	})
+	rts = append(rts, ReviewToken{
+		Kind:  TokenKindStringLiteral,
+		Value: d.value,
+	})
+	return rts
 }
 
 func (d Declaration) Name() string {
@@ -245,9 +259,12 @@ func (f Func) MakeTokens() []ReviewToken {
 		})
 	}
 	tks = append(tks, ReviewToken{
-		Kind:         TokenKindTypeName,
-		NavigateToID: f.ID(),
-		Value:        f.name,
+		Kind: TokenKindTypeName,
+		// TODO: is this necessary?
+		// NavigationDisplayName: f.name,
+		// TODO: what should this value be? LineID of the target?
+		// NavigateToID:          f.ID(),
+		Value: f.name,
 	})
 	if len(f.typeParamNames) > 0 {
 		tks = append(tks, ReviewToken{
@@ -448,13 +465,6 @@ type SimpleType struct {
 	underlyingType string
 }
 
-// MakeReviewLine implements TokenMaker.
-func (s SimpleType) MakeReviewLine() ReviewLine {
-	return ReviewLine{
-		Tokens: s.MakeTokens(),
-	}
-}
-
 func NewSimpleType(name, packageName, underlyingType string) SimpleType {
 	return SimpleType{id: packageName + "." + name, name: name, underlyingType: underlyingType}
 }
@@ -468,13 +478,21 @@ func (s SimpleType) ID() string {
 }
 
 func (s SimpleType) MakeTokens() []ReviewToken {
-	tokenList := &[]ReviewToken{}
-	ID := s.id
-	makeToken(nil, nil, "type", TokenKindKeyword, tokenList)
-	makeToken(&ID, nil, s.name, TokenKindTypeName, tokenList)
-	parseAndMakeTypeToken_old(s.underlyingType, tokenList)
-	// makeToken(nil, nil, s.underlyingType, TokenTypeText, tokenList)
-	return *tokenList
+	tks := []ReviewToken{
+		{
+			Kind:  TokenKindKeyword,
+			Value: "type",
+		},
+		{
+			HasPrefixSpace:        true,
+			HasSuffixSpace:        true,
+			Kind:                  TokenKindTypeName,
+			NavigationDisplayName: s.id,
+			Value:                 s.name,
+		},
+	}
+	tks = append(tks, parseAndMakeTypeTokens(s.underlyingType)...)
+	return tks
 }
 
 func (s SimpleType) Name() string {

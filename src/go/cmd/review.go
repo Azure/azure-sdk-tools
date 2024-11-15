@@ -101,9 +101,9 @@ func (r *Review) Review() (CodeFile, error) {
 		// TODO: reordering these calls reorders APIView output and can omit content
 		line.Children = append(line.Children, p.c.parseInterface()...)
 		line.Children = append(line.Children, p.c.parseStruct()...)
-		// p.c.parseSimpleType(tokens)
-		// p.c.parseVar(tokens)
-		// p.c.parseConst(tokens)
+		line.Children = append(line.Children, p.c.parseSimpleType()...)
+		line.Children = append(line.Children, p.c.parseVar()...)
+		line.Children = append(line.Children, p.c.parseConst()...)
 		// p.c.parseFunc(tokens)
 		navItems := p.c.generateNavChildItems()
 		nav = append(nav, NavigationItem{

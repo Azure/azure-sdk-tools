@@ -80,7 +80,7 @@ func (r *Review) Review() (CodeFile, error) {
 		packageNames = append(packageNames, name)
 	}
 	sort.Strings(packageNames)
-	for _, name := range packageNames {
+	for i, name := range packageNames {
 		p := r.reviewed.Packages[name]
 		n := p.relName
 		line := ReviewLine{
@@ -134,6 +134,17 @@ func (r *Review) Review() (CodeFile, error) {
 			Tokens:           []ReviewToken{},
 		})
 		lines = append(lines, line)
+		if i < len(packageNames)-1 {
+			lines = append(lines, ReviewLine{
+				Tokens: []ReviewToken{
+					{
+						Kind:  TokenKindPunctuation,
+						Value: strings.Repeat("━", 120),
+					},
+				},
+			})
+			lines = append(lines, ReviewLine{})
+		}
 	}
 	return CodeFile{
 		Diagnostics:   diagnostics,

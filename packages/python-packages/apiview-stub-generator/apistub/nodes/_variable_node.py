@@ -43,13 +43,13 @@ class VariableNode(NodeEntityBase):
             else:
                 review_line.add_literal(self.value, has_suffix_space=False)
         else:
-            review_line.add_text("field")
-            review_line.add_punctuation("(")
+            review_line.add_text("field", has_suffix_space=False)
+            review_line.add_punctuation("(", has_suffix_space=False)
             properties = self.dataclass_properties
             for (i, property) in enumerate(properties):
                 func_id = f"{self.namespace_id}.field("
                 property.generate_tokens(func_id, review_lines.apiview.namespace, review_line, add_line_marker=False)
                 if i < len(properties) - 1:
                     review_line.add_punctuation(",")
-            review_line.add_punctuation(")")
+            review_line.add_punctuation(")", has_suffix_space=False)
         review_lines.append(review_line)

@@ -73,12 +73,7 @@ class ApiView(CodeFile):
         return None
 
     def __init__(self, *, pkg_name="", namespace="", metadata_map=None, source_url=None, pkg_version=""):
-        # TODO : ask Travis about metadata map
         self.metadata_map = metadata_map or MetadataMap("")
-        # self.cross_language_package_id = self.metadata_map.cross_language_package_id
-        # self.navigation = []
-        # TODO: Version: 0 doesn't have a correpsonding value in new parser.
-        # self.version = 0
         self.review_lines: ReviewLines
         super().__init__(
             package_name=pkg_name,
@@ -197,7 +192,6 @@ class ReviewLine(ReviewLineImpl):
         children: Optional[List["ReviewLine"]] = None,
         is_context_end_line: Optional[bool] = False,
         related_to_line: Optional[str] = None,
-        parent: Optional["ReviewLine"] = None,
     ):
         super().__init__(
             tokens=tokens,
@@ -233,14 +227,14 @@ class ReviewLine(ReviewLineImpl):
             )
         )
 
-    def add_line_marker(self, line_id, add_cross_language_id=False):
+    def add_line_marker(self, line_id, add_cross_language_id=False, *, apiview=None):
         if add_cross_language_id:
             # Check if line_id ends with an underscore and a number
             numeric_suffix = re.search(r"_(\d+)$", line_id)
             # If it does, truncate the numeric portion
             line_key = line_id[: numeric_suffix.start()] if numeric_suffix else line_id
-            #cross_lang_id = self.metadata_map.cross_language_map.get(line_key, None)
-            #self.cross_language_definition_id = cross_lang_id
+            cross_lang_id = apiview.metadata_map.cross_language_map.get(line_key, None)
+            self.cross_language_id = cross_lang_id
         self.line_id = line_id
 
     def add_text(
@@ -360,8 +354,6 @@ class ReviewLine(ReviewLineImpl):
             # Make a Union of types if multiple types are present
             type_name = "Union[{}]".format(", ".join(types))
 
-        # TODO: figure out cross_language_id, pass into type token below
-        # cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
         self._add_type_token(type_name, has_prefix_space, has_suffix_space)
     
     def render(self):

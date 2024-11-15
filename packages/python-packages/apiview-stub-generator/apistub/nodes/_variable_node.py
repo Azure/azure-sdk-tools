@@ -6,7 +6,18 @@ class VariableNode(NodeEntityBase):
     """Variable node represents class and instance variable defined in a class
     """
 
-    def __init__(self, *, namespace, parent_node, name, type_name, value, is_ivar, dataclass_properties=None):
+    def __init__(
+        self,
+        *,
+        namespace,
+        parent_node,
+        name,
+        type_name,
+        value,
+        is_ivar,
+        dataclass_properties=None,
+        apiview=None,
+    ):
         super().__init__(namespace, parent_node, type_name)
         self.name = name
         self.type = type_name
@@ -16,6 +27,7 @@ class VariableNode(NodeEntityBase):
         )
         self.value = value
         self.dataclass_properties = dataclass_properties
+        self.apiview = apiview
 
     def generate_tokens(self, review_lines):
         """Generates token for the node
@@ -48,7 +60,7 @@ class VariableNode(NodeEntityBase):
             properties = self.dataclass_properties
             for (i, property) in enumerate(properties):
                 func_id = f"{self.namespace_id}.field("
-                property.generate_tokens(func_id, review_lines.apiview.namespace, review_line, add_line_marker=False)
+                property.generate_tokens(func_id, self.namespace, review_line, add_line_marker=False)
                 if i < len(properties) - 1:
                     review_line.add_punctuation(",")
             review_line.add_punctuation(")", has_suffix_space=False)

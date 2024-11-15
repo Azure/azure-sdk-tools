@@ -41,6 +41,7 @@ class NodeEntityBase:
             self.name = obj.__name__
         self.display_name = self.name
         self.child_nodes = []
+        self.apiview = None
         self.pylint_errors = []
         PylintParser.match_items(obj)
 

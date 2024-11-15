@@ -12,13 +12,14 @@ class DataClassNode(ClassNode):
     """Class node to represent parsed data classes
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview=None):
         super().__init__(
             name=name,
             namespace=namespace,
             parent_node=parent_node,
             obj=obj,
-            pkg_root_namespace=pkg_root_namespace
+            pkg_root_namespace=pkg_root_namespace,
+            apiview=apiview,
         )
         self.decorators = [x for x in self.decorators if not x.startswith("@dataclass")]
         # explicitly set synthesized __init__ return type to None to fix test flakiness
@@ -76,13 +77,10 @@ class DataClassNode(ClassNode):
         # TODO: check if dataclass is being tested correctly
         logging.info(f"Processing dataclass {self.namespace_id}")
 
-        # Pass through apiview for diagnostics
-        self.children.apiview = review_lines.apiview
-
         # Generate class name line
         review_line = review_lines.create_review_line()
         review_line.add_keyword("@dataclass", has_suffix_space=False)
         review_line.add_line_marker(f"{self.namespace_id}.@dataclass")
-        self._generate_dataclass_annotation_properties(review_line, review_lines.apiview.namespace)
+        self._generate_dataclass_annotation_properties(review_line, self.namespace)
         review_lines.append(review_line)
         super().generate_tokens(review_lines)

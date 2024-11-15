@@ -227,6 +227,9 @@ class FunctionNode(NodeEntityBase):
 
         # If multi-line, then each param line will be a child.
         if use_multi_line:
+            # render errors directly below definition line
+            for err in self.pylint_errors:
+                err.generate_tokens(self.apiview, self.namespace_id)
             param_lines = self.children
             review_line = review_lines.create_review_line(line_id=self.namespace_id)
         else:
@@ -367,5 +370,6 @@ class FunctionNode(NodeEntityBase):
         review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
         review_lines.set_blank_lines()
 
-        for err in self.pylint_errors:
-            err.generate_tokens(self.apiview, target_id=self.namespace_id)
+        if not use_multi_line:
+            for err in self.pylint_errors:
+                err.generate_tokens(self.apiview, target_id=self.namespace_id)

@@ -21,6 +21,7 @@ namespace Azure.Sdk.LabelTrainer
             "Azure/azure-sdk-for-js",
             "Azure/azure-sdk-for-go",
             "Azure/azure-sdk-for-cpp",
+            "Azure/azure-sdk-for-rust",
         };
 
         /// <summary>

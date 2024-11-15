@@ -16,9 +16,9 @@
 		<PackageReference Include="GitHubJwt" Version="0.0.6" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
-		<PackageReference Include="Microsoft.ML" Version="3.0.1" />
-		<PackageReference Include="Octokit" Version="13.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsLoggingAbstractionsVersion)" />
+		<PackageReference Include="Microsoft.ML" Version="$(MicrosoftMLVersion)" />
+		<PackageReference Include="Octokit" Version="$(OctokitVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.8.0" />
 	</ItemGroup>
 

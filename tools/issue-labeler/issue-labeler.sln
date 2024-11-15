@@ -5,7 +5,6 @@ VisualStudioVersion = 17.0.31808.319
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{162FF4CF-3941-40FD-B8EF-F0DF1FA84C6C}"
 	ProjectSection(SolutionItems) = preProject
-		NuGet.config = NuGet.config
 		eng\Versions.props = eng\Versions.props
 	EndProjectSection
 EndProject
@@ -19,7 +18,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IssueLabeler.Shared", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hubbup.MikLabelModel.Tests", "tests\Hubbup.MikLabelModel.Tests\Hubbup.MikLabelModel.Tests.csproj", "{CD3F13F1-8890-490A-BB47-9382E2131F5D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IssueLabeler", "src\IssueLabeler\IssueLabeler.csproj", "{4C9E75AF-468F-4DF7-BACD-EC0C2C66A96F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IssueLabelerService", "src\IssueLabelerService\IssueLabelerService.csproj", "{4C9E75AF-468F-4DF7-BACD-EC0C2C66A96F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

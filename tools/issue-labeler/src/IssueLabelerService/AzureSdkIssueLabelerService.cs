@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Hubbup.MikLabelModel;
 using IssueLabeler.Shared.Models;
@@ -13,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace IssueLabeler
+namespace IssueLabelerService
 {
     public class AzureSdkIssueLabelerService
     {

@@ -2,16 +2,10 @@
 <Project>
   <PropertyGroup>
     <!-- Libs -->
-    <MicrosoftAspNetCoreAllVersion>2.1.0</MicrosoftAspNetCoreAllVersion>
-    <!-- update MicrosoftDataAnalysisVersion to 2.0.0 -->
-    <MicrosoftDataAnalysisVersion>0.1.0</MicrosoftDataAnalysisVersion>
-    <OctokitVersion>10.0.0</OctokitVersion>
-    <MicrosoftAzureKeyVaultVersion>3.0.5</MicrosoftAzureKeyVaultVersion>
-    <MicrosoftExtensionsVersion>6.0.0</MicrosoftExtensionsVersion>
-    <MicrosoftDotNetGitHubIssueLabelerAssetsVersion>1.12.19</MicrosoftDotNetGitHubIssueLabelerAssetsVersion>
-    <MicrosoftAutoMLVersion>0.17.2</MicrosoftAutoMLVersion>
-    <MicrosoftMLVersion>1.5.2</MicrosoftMLVersion>
-    <MicrosoftVisualStudioWebCodeGenerationDesignVersion>2.0.4</MicrosoftVisualStudioWebCodeGenerationDesignVersion>
-    <PollyVersion>7.2.2</PollyVersion>
+    <OctokitVersion>13.0.1</OctokitVersion>
+    <MicrosoftAutoMLVersion>0.21.1</MicrosoftAutoMLVersion>
+    <MicrosoftMLVersion>3.0.1</MicrosoftMLVersion>
+    <PollyVersion>8.4.2</PollyVersion>
+    <MicrosoftExtensionsLoggingAbstractionsVersion>8.0.2</MicrosoftExtensionsLoggingAbstractionsVersion>
   </PropertyGroup>
 </Project>

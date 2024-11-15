@@ -42,7 +42,7 @@ class PylintError:
             # if unable to parse, leave alone
             return
 
-    def generate_tokens(self, apiview, err, target_id):
+    def generate_tokens(self, apiview, target_id):
         apiview.add_diagnostic(
             err=self,
             target_id=target_id

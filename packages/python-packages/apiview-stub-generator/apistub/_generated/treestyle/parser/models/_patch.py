@@ -60,7 +60,6 @@ class ApiView(CodeFile):
      navigation panel.
     :vartype navigation: list[~treestyle.parser.models.NavigationItem]
     """
-
     @classmethod
     def get_root_path(cls):
         """Looks for the root of the apiview-stub-generator package."""

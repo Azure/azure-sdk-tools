@@ -13,6 +13,7 @@ from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
 from .._generated.treestyle.parser.models import ReviewLines
+from ._pylint_parser import PylintError, PylintParser
 
 find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
@@ -56,7 +57,7 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, allow_list=None):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview=None, allow_list=None):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         # This is the name obtained by NodeEntityBase from __name__.
@@ -67,6 +68,7 @@ class ClassNode(NodeEntityBase):
         self.full_name = self.namespace_id
         self.implements = []
         self.pkg_root_namespace = pkg_root_namespace
+        self.apiview = apiview
         self._allow_list = allow_list or []
         self._inspect()
         self._set_abc_implements()
@@ -241,7 +243,8 @@ class ClassNode(NodeEntityBase):
                         name=name,
                         namespace=self.namespace,
                         parent_node=self,
-                        obj=child_obj
+                        obj=child_obj,
+                        apiview=self.apiview
                     )
                 )
             elif inspect.isclass(child_obj):
@@ -251,13 +254,14 @@ class ClassNode(NodeEntityBase):
                         namespace=self.namespace,
                         parent_node=self,
                         obj=child_obj,
-                        pkg_root_namespace=self.pkg_root_namespace
+                        pkg_root_namespace=self.pkg_root_namespace,
+                        apiview=self.apiview,
                     )
                 )
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
-                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
+                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj, apiview=self.apiview))
             else:
                 self._handle_variable(child_obj, name, value=str(child_obj))
 
@@ -275,7 +279,8 @@ class ClassNode(NodeEntityBase):
                     name=key,
                     type_name=var.argtype,
                     value=None,
-                    is_ivar=True
+                    is_ivar=True,
+                    apiview=self.apiview
                 )
                 self.child_nodes.append(ivar_node)
 
@@ -312,8 +317,6 @@ class ClassNode(NodeEntityBase):
         :param review_lines: List of ReviewLine 
         """
         logging.info(f"Processing class {self.namespace_id}")
-        # Pass through apiview for diagnostics
-        self.children.apiview = review_lines.apiview
         # Generate class name line
         for decorator in self.decorators: 
             # TODO: may need to remove line id here
@@ -323,14 +326,13 @@ class ClassNode(NodeEntityBase):
             line.add_keyword(decorator, has_suffix_space=False)
             review_lines.append(line)
 
-        #apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
         line = review_lines.create_review_line()
         line.add_line_marker(self.namespace_id, add_cross_language_id=True)
         line.add_keyword("class")
         line.add_text(self.name, has_suffix_space=False)
 
         for err in self.pylint_errors:
-            err.generate_tokens(review_lines.apiview, err=err, target_id=self.namespace_id)
+            err.generate_tokens(self.apiview, target_id=self.namespace_id)
 
         # Add inherited base classes
         if self.base_class_names:

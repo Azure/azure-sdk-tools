@@ -30,6 +30,7 @@ class ModuleNode(NodeEntityBase):
         self.children = ReviewLines()
         self.apiview = apiview
         self.node_index = apiview.node_index
+        self.apiview = apiview
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
 
@@ -63,13 +64,16 @@ class ModuleNode(NodeEntityBase):
                     namespace=self.namespace,
                     parent_node=self,
                     obj=member_obj,
-                    pkg_root_namespace=self.pkg_root_namespace
+                    pkg_root_namespace=self.pkg_root_namespace,
+                    apiview=self.apiview
                 )
                 key = "{0}.{1}".format(self.namespace, class_node.name)
                 self.node_index.add(key, class_node)
                 self.child_nodes.append(class_node)
             elif inspect.isroutine(member_obj):
-                func_node = FunctionNode(self.namespace, self, obj=member_obj, is_module_level=True)
+                func_node = FunctionNode(
+                    self.namespace, self, obj=member_obj, is_module_level=True, apiview=self.apiview
+                )
                 key = "{0}.{1}".format(self.namespace, func_node.name)
                 self.node_index.add(key, func_node)
                 self.child_nodes.append(func_node)
@@ -99,9 +103,6 @@ class ModuleNode(NodeEntityBase):
         """Generates token for the node and it's children recursively and add it to apiview
         :param review_lines: List of ReviewLine 
         """
-        # Pass through apiview for diagnostics
-        self.children.apiview = review_lines.apiview
-
         # Add name space only if it has children
         if self.child_nodes:
             line = review_lines.create_review_line(line_id=self.namespace_id)

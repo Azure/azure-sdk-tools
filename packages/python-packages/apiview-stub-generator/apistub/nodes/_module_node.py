@@ -104,10 +104,9 @@ class ModuleNode(NodeEntityBase):
 
         # Add name space only if it has children
         if self.child_nodes:
-            line = review_lines.create_review_line(line_id=self.namespace_id, children=self.children)
+            line = review_lines.create_review_line(line_id=self.namespace_id)
             line.add_keyword("namespace")
             line.add_text(self.namespace, has_suffix_space=False)
-            review_lines.append(line)
 
             self.children.set_blank_lines(1)
             # Add name space level functions first
@@ -118,6 +117,9 @@ class ModuleNode(NodeEntityBase):
             # Add classes
             for c in filter(filter_class, self.child_nodes):
                 c.generate_tokens(self.children)
+
+            line.add_children(self.children)
+            review_lines.append(line)
 
     def get_navigation(self):
         """Generate navigation tree recursively by generating Navigation obejct for classes and functions in name space

@@ -322,7 +322,6 @@ class ClassNode(NodeEntityBase):
             )
             line.add_keyword(decorator, has_suffix_space=False)
             review_lines.append(line)
-            review_lines.set_blank_lines()
 
         #apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
         line = review_lines.create_review_line()

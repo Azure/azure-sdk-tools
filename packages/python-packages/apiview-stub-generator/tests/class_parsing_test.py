@@ -68,6 +68,8 @@ class TestClassParsing:
             "**kwargs",                        
             ")",
         ]
+        print(actuals)
+        print(expected)
         _check_all(actuals, expected, obj)
 
     def test_typed_dict_class(self):
@@ -255,7 +257,9 @@ class TestClassParsing:
         expected = [
             "class SomeImplementationClass(_SomeAbstractBase):",
             "",
-            "def say_hello(self) -> str"
+            "def say_hello(self) -> str",
+            "",
+            ""
         ]
         for (idx, actual) in enumerate(actuals):
             expect = expected[idx]

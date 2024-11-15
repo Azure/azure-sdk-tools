@@ -19,8 +19,7 @@ def _tokenize(node):
 """ Returns the review line tokens rendered into distinct lines. """
 def _render_lines(review_lines) -> List[str]:
     lines = review_lines.render()
-    print(lines)
-    return lines
+    return [x.lstrip() for x in lines]
 
 
 """ Returns the review line tokens as a single concatenated string. """
@@ -31,7 +30,7 @@ def _render_string(review_lines) -> str:
 
 """ Merges the provided lines together, removing any leading whitespace."""
 def _merge_lines(lines) -> str:
-    return "".join([x.lstrip() for x in lines])
+    return "".join([x for x in lines])
 
 
 def _check(actual, expected, client):

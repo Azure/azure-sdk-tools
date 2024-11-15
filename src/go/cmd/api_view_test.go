@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -17,44 +18,34 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestFuncDecl(t *testing.T) {
-	t.Skip("needs an update for tree syntax")
-	p, err := createReview(filepath.Clean("testdata/test_func_decl"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(p.ReviewLines) != 42 {
-		t.Fatal("unexpected token length, signals a change in the output")
-	}
-	if p.Name != "test_func_decl" {
-		t.Fatal("unexpected package name")
-	}
-	if len(p.Navigation) != 1 {
-		t.Fatal("nagivation slice length should only be one for one package")
-	}
-	if len(p.Navigation[0].ChildItems) != 1 {
-		t.Fatal("unexpected number of child items")
-	}
-}
+func TestOutput(t *testing.T) {
+	f := filepath.Join("testdata", "test_module", "output.json")
+	expected, err := os.ReadFile(f)
+	require.NoError(t, err)
 
-func TestInterface(t *testing.T) {
-	t.Skip("needs an update for tree syntax")
-	p, err := createReview(filepath.Clean("testdata/test_interface"))
-	if err != nil {
-		t.Fatal(err)
+	review, err := createReview(filepath.Dir(f))
+	require.NoError(t, err)
+	actual, err := json.MarshalIndent(review, "", "  ")
+	require.NoError(t, err)
+	// unconditionally writing the output to disk creates a diff for debugging failures
+	require.NoError(t, os.WriteFile(f, actual, 0666))
+
+	if !bytes.Equal(expected, actual) {
+		t.Error("review content for testdata/test_output has changed")
 	}
-	if len(p.ReviewLines) != 46 {
-		t.Fatal("unexpected token length, signals a change in the output")
-	}
-	if p.Name != "test_interface" {
-		t.Fatal("unexpected package name")
-	}
-	if len(p.Navigation) != 1 {
-		t.Fatal("nagivation slice length should only be one for one package")
-	}
-	if len(p.Navigation[0].ChildItems) != 2 {
-		t.Fatal("unexpected number of child items")
-	}
+
+	t.Run("unique LineIDs", func(t *testing.T) {
+		seen := map[string]bool{}
+		searchLines(review.ReviewLines, func(rl ReviewLine) bool {
+			if id := rl.LineID; id != "" {
+				if seen[id] {
+					t.Error("duplicate LineID: " + id)
+				}
+				seen[id] = true
+			}
+			return false // examine all lines
+		})
+	})
 }
 
 func TestMultiModule(t *testing.T) {
@@ -69,46 +60,6 @@ func TestMultiModule(t *testing.T) {
 			require.Equal(t, 1, len(p.Navigation), "review should include only one package")
 			require.Equal(t, filepath.Base(path), p.Navigation[0].Text, "review includes the wrong module")
 		})
-	}
-}
-
-func TestStruct(t *testing.T) {
-	t.Skip("needs an update for tree syntax")
-	p, err := createReview(filepath.Clean("testdata/test_struct"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(p.ReviewLines) != 68 {
-		t.Fatal("unexpected token length, signals a change in the output")
-	}
-	if p.Name != "test_struct" {
-		t.Fatal("unexpected package name")
-	}
-	if len(p.Navigation) != 1 {
-		t.Fatal("nagivation slice length should only be one for one package")
-	}
-	if len(p.Navigation[0].ChildItems) != 1 {
-		t.Fatal("nagivation slice length should include link for ctor and struct")
-	}
-}
-
-func TestConst(t *testing.T) {
-	t.Skip("needs an update for tree syntax")
-	p, err := createReview(filepath.Clean("testdata/test_const"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(p.ReviewLines) != 76 {
-		t.Fatal("unexpected token length, signals a change in the output")
-	}
-	if p.Name != "test_const" {
-		t.Fatal("unexpected package name")
-	}
-	if len(p.Navigation) != 1 {
-		t.Fatal("nagivation slice length should only be one for one package")
-	}
-	if len(p.Navigation[0].ChildItems) != 4 {
-		t.Fatal("unexpected child navigation items length")
 	}
 }
 
@@ -346,6 +297,9 @@ func TestDeterministicOutput(t *testing.T) {
 	}
 }
 
+// searchLines recursively searches for a line matching the given predicate.
+// It returns true when the predicate returns true, and false if the predicate
+// returns false for every line.
 func searchLines(lines []ReviewLine, match func(ReviewLine) bool) bool {
 	for _, ln := range lines {
 		if match(ln) {
@@ -358,6 +312,9 @@ func searchLines(lines []ReviewLine, match func(ReviewLine) bool) bool {
 	return false
 }
 
+// searchTokens searches for a token matching the given predicate.
+// It returns true when the predicate returns true, and false if the predicate
+// returns false for every token.
 func searchTokens(lines []ReviewLine, match func(ReviewToken) bool) bool {
 	return searchLines(lines, func(rl ReviewLine) bool {
 		for _, tk := range rl.Tokens {

@@ -68,8 +68,6 @@ class TestClassParsing:
             "**kwargs",                        
             ")",
         ]
-        print(actuals)
-        print(expected)
         _check_all(actuals, expected, obj)
 
     def test_typed_dict_class(self):

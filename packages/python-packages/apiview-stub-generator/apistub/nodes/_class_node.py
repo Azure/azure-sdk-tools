@@ -172,7 +172,7 @@ class ClassNode(NodeEntityBase):
             for node in func.decorators.nodes:
                 try:
                     if node.name == "overload":
-                        overload_node = FunctionNode(self.namespace, self, node=func)
+                        overload_node = FunctionNode(self.namespace, self, node=func, apiview=self.apiview)
                         overload_nodes.append(overload_node)
                 except AttributeError:
                     continue
@@ -211,7 +211,7 @@ class ClassNode(NodeEntityBase):
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
-                    func_node = FunctionNode(self.namespace, self, obj=child_obj)
+                    func_node = FunctionNode(self.namespace, self, obj=child_obj, apiview=self.apiview)
                     func_overloads = [x for x in overloads if x.name == func_node.name]
 
                     # Append a numeric tag to overloads to distinguish them from one another.

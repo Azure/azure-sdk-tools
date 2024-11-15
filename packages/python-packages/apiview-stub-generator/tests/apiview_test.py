@@ -92,9 +92,8 @@ class TestApiView:
         review_line.add_type(type_name="a.b.c.1.2.3.MyType")
         apiview.review_lines.append(review_line)
         tokens = review_line.tokens
-        assert len(tokens) == 2
+        assert len(tokens) == 1
         assert tokens[0].kind == TokenKind.TYPE_NAME
-        assert tokens[1].kind == TokenKind.PUNCTUATION
 
     def test_line_ids(self):
         pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))

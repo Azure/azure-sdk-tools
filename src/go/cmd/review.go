@@ -85,6 +85,7 @@ func (r *Review) Review() (CodeFile, error) {
 		n := p.relName
 		line := ReviewLine{
 			Children: []ReviewLine{},
+			LineID:   n,
 			Tokens: []ReviewToken{
 				{
 					HasSuffixSpace: true,

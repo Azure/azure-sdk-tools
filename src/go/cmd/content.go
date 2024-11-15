@@ -8,6 +8,7 @@ import (
 	"go/ast"
 	"go/token"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -123,7 +124,7 @@ func includesType(s []string, t string) bool {
 	return false
 }
 
-func (c *content) parseSimpleType(tokenList *[]Token) {
+func (c *content) parseSimpleType(tokenList *[]ReviewToken) {
 	keys := make([]string, 0, len(c.SimpleTypes))
 	for name := range c.SimpleTypes {
 		if unicode.IsUpper(rune(name[0])) {
@@ -133,8 +134,11 @@ func (c *content) parseSimpleType(tokenList *[]Token) {
 	sort.Strings(keys)
 	for _, name := range keys {
 		t := c.SimpleTypes[name]
-		*tokenList = append(*tokenList, t.MakeTokens()...)
-		c.searchForMethods(t.Name(), tokenList)
+		line := ReviewLine{
+			Children: []ReviewLine{},
+			Tokens:   t.MakeTokens(),
+		}
+		c.searchForMethods_old(t.Name(), &line.Children)
 		if consts := c.filterDeclarations(t.Name(), c.Consts); len(consts) > 0 {
 			c.parseDeclarations(consts, "const", tokenList)
 		}
@@ -144,15 +148,15 @@ func (c *content) parseSimpleType(tokenList *[]Token) {
 	}
 }
 
-func (c *content) parseConst(tokenList *[]Token) {
+func (c *content) parseConst(tokenList *[]ReviewToken) {
 	c.parseDeclarations(c.Consts, "const", tokenList)
 }
 
-func (c *content) parseVar(tokenList *[]Token) {
+func (c *content) parseVar(tokenList *[]ReviewToken) {
 	c.parseDeclarations(c.Vars, "var", tokenList)
 }
 
-func (c *content) parseDeclarations(decls map[string]Declaration, kind string, tokenList *[]Token) {
+func (c *content) parseDeclarations(decls map[string]Declaration, kind string, tokenList *[]ReviewToken) {
 	if len(decls) < 1 {
 		return
 	}
@@ -182,24 +186,21 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string, t
 	for _, t := range types {
 		// this token parsing is performed so that const declarations of different types are declared
 		// in their own const block to make them easier to click on
-		makeToken(nil, nil, kind, TokenTypeKeyword, tokenList)
-		makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
-		makeToken(nil, nil, "(", TokenTypePunctuation, tokenList)
+		makeToken(nil, nil, kind, TokenKindKeyword, tokenList)
+		makeToken(nil, nil, "(", TokenKindPunctuation, tokenList)
 		makeToken(nil, nil, "", 1, tokenList)
 		for _, v := range finalKeys {
 			if decls[v].Type == t {
-				makeToken(nil, nil, "\t", TokenTypeWhitespace, tokenList)
 				*tokenList = append(*tokenList, decls[v].MakeTokens()...)
 			}
 		}
-		makeToken(nil, nil, ")", TokenTypePunctuation, tokenList)
+		makeToken(nil, nil, ")", TokenKindPunctuation, tokenList)
 		makeToken(nil, nil, "", 1, tokenList)
-		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
 		c.searchForPossibleValuesMethod(t, tokenList)
 	}
 }
 
-func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
+func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]ReviewToken) {
 	for i, f := range c.Funcs {
 		if f.Name() == fmt.Sprintf("Possible%sValues", removeNavigatorString(t)) {
 			*tokenList = append(*tokenList, f.MakeTokens()...)
@@ -242,7 +243,7 @@ func (c *content) addInterface(source Pkg, name, packageName string, i *ast.Inte
 }
 
 // adds the specified struct type to the exports list.
-func (c *content) parseInterface(tokenList *[]Token) {
+func (c *content) parseInterface(tokenList *[]ReviewToken) {
 	keys := []string{}
 	for name := range c.Interfaces {
 		if unicode.IsUpper(rune(name[0])) {
@@ -263,37 +264,54 @@ func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSp
 	return s
 }
 
-// adds the specified struct type to the exports list.
-func (c *content) parseStruct(tokenList *[]Token) {
-	keys := make([]string, 0, len(c.Structs))
+func (c *content) parseStruct() []ReviewLine {
+	ls := []ReviewLine{}
+	names := []string{}
 	for name := range c.Structs {
 		if unicode.IsUpper(rune(name[0])) {
-			keys = append(keys, name)
+			names = append(names, name)
 		}
 	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		*tokenList = append(*tokenList, c.Structs[k].MakeTokens()...)
-		typeName := k
-		ctors := c.searchForCtors(typeName)
-		if len(ctors) > 0 {
-			keys := make([]string, 0, len(ctors))
-			for k := range ctors {
-				keys = append(keys, k)
+	sort.Strings(names)
+	for _, typeName := range names {
+		sl := c.Structs[typeName].MakeReviewLine()
+
+		if ctors := c.searchForCtors(typeName); len(ctors) > 0 {
+			names := make([]string, 0, len(ctors))
+			for name := range ctors {
+				names = append(names, name)
 			}
-			sort.Strings(keys)
-			for _, k := range keys {
-				*tokenList = append(*tokenList, ctors[k].MakeTokens()...)
+			slices.Sort(names)
+			for _, name := range names {
+				cl := ctors[name].MakeReviewLine()
+				cl.RelatedToLine = sl.LineID
+				sl.Children = append(sl.Children, cl)
+				delete(c.Funcs, name)
 			}
 		}
-		c.searchForMethods(typeName, tokenList)
-		if consts := c.filterDeclarations(typeName, c.Consts); len(consts) > 0 {
-			c.parseDeclarations(consts, "const", tokenList)
+
+		if methods := c.findMethods(typeName); len(methods) > 0 {
+			names := make([]string, 0, len(methods))
+			for name := range methods {
+				names = append(names, name)
+			}
+			slices.Sort(names)
+			for _, name := range names {
+				ml := methods[name].MakeReviewLine()
+				ml.RelatedToLine = sl.LineID
+				sl.Children = append(sl.Children, ml)
+				delete(c.Funcs, name)
+			}
 		}
-		if vars := c.filterDeclarations(typeName, c.Vars); len(vars) > 0 {
-			c.parseDeclarations(vars, "var", tokenList)
-		}
+		ls = append(ls, sl)
+
+		// TODO
+		// if consts := c.filterDeclarations(typeName, c.Consts); len(consts) > 0 {
+		// 	c.parseDeclarations(consts, "const", &sl.Tokens)
+		// }
+		ls = append(ls, ReviewLine{IsContextEndLine: true})
 	}
+	return ls
 }
 
 // searchForCtors searches through exported Funcs for constructors of a type,
@@ -357,7 +375,8 @@ func (c *content) findMethods(s string) map[string]Func {
 }
 
 // searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
-func (c *content) searchForMethods(s string, tokenList *[]Token) {
+func (c *content) searchForMethods(s string) []ReviewLine {
+	lines := []ReviewLine{}
 	methods := c.findMethods(s)
 	methodNames := []string{}
 	for key := range methods {
@@ -366,7 +385,23 @@ func (c *content) searchForMethods(s string, tokenList *[]Token) {
 	sort.Strings(methodNames)
 	for _, name := range methodNames {
 		fn := methods[name]
-		*tokenList = append(*tokenList, fn.MakeTokens()...)
+		lines = append(lines, fn.MakeReviewLine())
+		delete(c.Funcs, name)
+	}
+	return lines
+}
+
+// searchForMethods_old takes the name of the receiver and looks for Funcs that are methods on that receiver.
+func (c *content) searchForMethods_old(s string, tokenList *[]ReviewLine) {
+	methods := c.findMethods(s)
+	methodNames := []string{}
+	for key := range methods {
+		methodNames = append(methodNames, key)
+	}
+	sort.Strings(methodNames)
+	for _, name := range methodNames {
+		fn := methods[name]
+		*tokenList = append(*tokenList, fn.MakeReviewLine())
 		delete(c.Funcs, name)
 	}
 }
@@ -404,7 +439,7 @@ func isExampleOrTest(s string) bool {
 	return strings.Contains(s, "Example") || strings.Contains(s, "Test")
 }
 
-func (c *content) parseFunc(tokenList *[]Token) {
+func (c *content) parseFunc(tokenList *[]ReviewToken) {
 	keys := make([]string, 0, len(c.Funcs))
 	for key, fn := range c.Funcs {
 		name := fn.Name()
@@ -424,11 +459,11 @@ func (c *content) parseFunc(tokenList *[]Token) {
 // For interfaces, a navigation item will point to the interface definition.
 // For structs, a navigation item will only point to the struct definition and not methods or functions related to the struct.
 // For funcs, global funcs that are not constructors for any structs will have a direct navigation item.
-func (c *content) generateNavChildItems() []Navigation {
-	items := []Navigation{}
+func (c *content) generateNavChildItems() []NavigationItem {
+	items := []NavigationItem{}
 	for _, cst := range c.Consts {
 		if cst.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         cst.Name(),
 				NavigationID: cst.ID(),
 				ChildItems:   []NavigationItem{},
@@ -440,7 +475,7 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, f := range c.Funcs {
 		if f.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         f.Name(),
 				NavigationID: f.ID(),
 				ChildItems:   []NavigationItem{},
@@ -452,7 +487,7 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, i := range c.Interfaces {
 		if i.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         i.Name(),
 				NavigationID: i.ID(),
 				ChildItems:   []NavigationItem{},
@@ -464,7 +499,7 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, n := range c.SimpleTypes {
 		if n.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         n.Name(),
 				NavigationID: n.ID(),
 				ChildItems:   []NavigationItem{},
@@ -476,7 +511,7 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, s := range c.Structs {
 		if s.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         s.Name(),
 				NavigationID: s.ID(),
 				ChildItems:   []NavigationItem{},
@@ -488,7 +523,7 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, v := range c.Vars {
 		if v.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         v.Name(),
 				NavigationID: v.ID(),
 				ChildItems:   []NavigationItem{},

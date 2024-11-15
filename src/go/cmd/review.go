@@ -58,14 +58,14 @@ func (r *Review) AddModule(m *Module) error {
 	return nil
 }
 
-func (r *Review) Review() (PackageReview, error) {
+func (r *Review) Review() (CodeFile, error) {
 	if err := r.resolveAliases(); err != nil {
-		return PackageReview{}, err
+		return CodeFile{}, err
 	}
 
-	tokenList := &[]Token{}
-	nav := []Navigation{}
-	diagnostics := []Diagnostic{}
+	lines := []ReviewLine{}
+	nav := []NavigationItem{}
+	diagnostics := []CodeDiagnostic{}
 	packageNames := []string{}
 	for name, p := range r.reviewed.Packages {
 		// we use a prefixed path separator so that we can handle the "internal" module.
@@ -83,20 +83,30 @@ func (r *Review) Review() (PackageReview, error) {
 	for _, name := range packageNames {
 		p := r.reviewed.Packages[name]
 		n := p.relName
-		makeToken(nil, nil, "package", TokenTypeMemberName, tokenList)
-		makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
-		makeToken(&n, nil, n, TokenTypeTypeName, tokenList)
-		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
-		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
+		line := ReviewLine{
+			Children: []ReviewLine{},
+			Tokens: []ReviewToken{
+				{
+					HasSuffixSpace: true,
+					Kind:           TokenKindKeyword,
+					Value:          "package",
+				},
+				{
+					Kind:                  TokenKindText,
+					NavigationDisplayName: n,
+					Value:                 n,
+				},
+			},
+		}
 		// TODO: reordering these calls reorders APIView output and can omit content
-		p.c.parseInterface(tokenList)
-		p.c.parseStruct(tokenList)
-		p.c.parseSimpleType(tokenList)
-		p.c.parseVar(tokenList)
-		p.c.parseConst(tokenList)
-		p.c.parseFunc(tokenList)
+		// p.c.parseInterface(tokens)
+		line.Children = append(line.Children, p.c.parseStruct()...)
+		// p.c.parseSimpleType(tokens)
+		// p.c.parseVar(tokens)
+		// p.c.parseConst(tokens)
+		// p.c.parseFunc(tokens)
 		navItems := p.c.generateNavChildItems()
-		nav = append(nav, Navigation{
+		nav = append(nav, NavigationItem{
 			Text:         n,
 			NavigationID: n,
 			ChildItems:   navItems,
@@ -105,7 +115,7 @@ func (r *Review) Review() (PackageReview, error) {
 			},
 		})
 		diagnostics = append(diagnostics, p.diagnostics...)
-		slices.SortFunc(diagnostics, func(a Diagnostic, b Diagnostic) int {
+		slices.SortFunc(diagnostics, func(a CodeDiagnostic, b CodeDiagnostic) int {
 			targetCmp := strings.Compare(a.TargetID, b.TargetID)
 			if targetCmp != 0 {
 				return targetCmp
@@ -118,6 +128,11 @@ func (r *Review) Review() (PackageReview, error) {
 		for _, n := range nav {
 			recursiveSortNavigation(n)
 		}
+		line.Children = append(line.Children, ReviewLine{
+			IsContextEndLine: true,
+			Tokens:           []ReviewToken{},
+		})
+		lines = append(lines, line)
 	}
 	return CodeFile{
 		Diagnostics:   diagnostics,

@@ -122,7 +122,7 @@ class ModuleNode(NodeEntityBase):
             review_lines.append(line)
 
     def get_navigation(self):
-        """Generate navigation tree recursively by generating Navigation obejct for classes and functions in name space
+        """Generate navigation tree recursively by generating Navigation object for classes and functions in name space
         """
         if self.child_nodes:
             navigation = Navigation(self.namespace_id, self.namespace_id)

@@ -143,7 +143,6 @@ class TestClassParsing:
         actual1 = _merge_lines(lines[3:10])
         expected1 = 'def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int'
         _check(actual1, expected1, SomethingWithOverloads)
-
         assert lines[11].lstrip() == "@overload"
         actual2 = _merge_lines(lines[12:19])
         expected2 = 'def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]'

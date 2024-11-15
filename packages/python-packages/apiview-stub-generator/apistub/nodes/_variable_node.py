@@ -47,7 +47,6 @@ class VariableNode(NodeEntityBase):
             review_line.add_punctuation("(")
             properties = self.dataclass_properties
             for (i, property) in enumerate(properties):
-                print('in field', i, property)
                 func_id = f"{self.namespace_id}.field("
                 property.generate_tokens(func_id, review_lines.apiview.namespace, review_line, add_line_marker=False)
                 if i < len(properties) - 1:

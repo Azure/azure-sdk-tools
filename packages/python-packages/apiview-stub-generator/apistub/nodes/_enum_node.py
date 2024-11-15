@@ -25,9 +25,9 @@ class EnumNode(NodeEntityBase):
         line.add_text(self.name)
         line.add_punctuation("=")
         if isinstance(self.value, str):
-            line.add_string_literal(self.value)
+            line.add_string_literal(self.value, has_suffix_space=False)
         else:
-            line.add_literal(str(self.value))
+            line.add_literal(str(self.value), has_suffix_space=False)
         for err in self.pylint_errors:
             err.generate_tokens(review_lines.apiview, err=err, target_id=self.namespace_id)
         review_lines.append(line)

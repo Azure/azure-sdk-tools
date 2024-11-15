@@ -18,8 +18,8 @@ class KeyNode(NodeEntityBase):
         """
         line = review_lines.create_review_line()
         line.add_line_marker(self.namespace_id)
-        line.add_text(text="key", has_suffix_space=False)
+        line.add_text(text="key")
         line.add_text(text=self.name, has_suffix_space=False)
         line.add_punctuation(":")
-        line.add_type(self.type)
+        line.add_type(self.type, has_suffix_space=False)
         review_lines.append(line)

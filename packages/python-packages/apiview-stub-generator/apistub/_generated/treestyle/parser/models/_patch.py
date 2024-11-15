@@ -277,43 +277,6 @@ class ReviewLine(ReviewLineImpl):
         self.add_token(ReviewToken(url))
         self.add_token(ReviewToken(kind=TokenKind.ExternalLinkEnd))
 
-    # TODO: integrate below
-    def _add_token_for_type_name(self, type_name, line_id=None, cross_language_id=None):
-        logging.debug("Generating tokens for type name {}".format(type_name))
-        token = ReviewToken(type_name, TokenKind.TYPE_NAME)
-        type_full_name = type_name[1:] if type_name.startswith("~") else type_name
-        token.value = type_full_name.split(".")[-1]
-        navigate_to_id = self.node_index.get_id(type_full_name)
-        if navigate_to_id:
-            token.navigate_to_id = navigate_to_id
-        if cross_language_id:
-            token.cross_language_definition_id = cross_language_id
-        self.add_token(token)
-
-    # TODO: integrate below
-    def _add_type_token(self, type_name, line_id, cross_language_id):
-        # parse to get individual type name
-        logging.debug("Generating tokens for type {}".format(type_name))
-
-        types = re.search(TYPE_NAME_REGEX, type_name)
-        if types:
-            # Generate token for the prefix before internal type
-            # process internal type
-            # process post fix of internal type recursively to find replace more internal types
-            parsed_type = types.groups()[0]
-            index = type_name.find(parsed_type)
-            prefix = type_name[:index]
-            if prefix:
-                self.add_punctuation(prefix)
-            # process parsed type name. internal or built in
-            self._add_token_for_type_name(parsed_type, cross_language_id)
-            postfix = type_name[index + len(parsed_type) :]
-            # process remaining string in type recursively
-            self._add_type_token(postfix, line_id, cross_language_id)
-        else:
-            # This is required group ending punctuations
-            self.add_punctuation(type_name)
-
     def add_member(self, name, id):
         token = ReviewToken(name, TokenKind.MEMBER_NAME)
         token.definition_id = id
@@ -342,6 +305,46 @@ class ReviewLine(ReviewLineImpl):
     def add_child_line(self, line):
         self.children.append(line)
 
+    def _add_token_for_type_name(self, type_name, has_prefix_space=False, has_suffix_space=True):
+        logging.debug("Generating tokens for type name {}".format(type_name))
+        token = ReviewToken(
+            kind=TokenKind.TYPE_NAME,
+            value=type_name,
+            has_prefix_space=has_prefix_space,
+            has_suffix_space=has_suffix_space
+        )
+        type_full_name = type_name[1:] if type_name.startswith("~") else type_name
+        token.value = type_full_name.split(".")[-1]
+        # TODO: fix below
+        #navigate_to_id = self.node_index.get_id(type_full_name)
+        #if navigate_to_id:
+        #    token.navigate_to_id = navigate_to_id
+        self.add_token(token)
+
+    def _add_type_token(self, type_name, has_prefix_space=False, has_suffix_space=True):
+        # parse to get individual type name
+        logging.debug("Generating tokens for type {}".format(type_name))
+
+        types = re.search(TYPE_NAME_REGEX, type_name)
+        if types:
+            # Generate token for the prefix before internal type
+            # process internal type
+            # process post fix of internal type recursively to find replace more internal types
+            parsed_type = types.groups()[0]
+            index = type_name.find(parsed_type)
+            prefix = type_name[:index]
+            if prefix:
+                self.add_punctuation(prefix, has_suffix_space=False)
+            # process parsed type name. internal or built in
+            self._add_token_for_type_name(parsed_type, has_prefix_space, has_suffix_space)
+            postfix = type_name[index + len(parsed_type) :]
+            # process remaining string in type recursively
+            self._add_type_token(postfix, has_prefix_space, has_suffix_space)
+        else:
+            # This is required group ending punctuations
+            if type_name: # if type name is empty, don't add punctuation
+                self.add_punctuation(type_name, has_suffix_space=False)
+
     def add_type(self, type_name, has_prefix_space=False, has_suffix_space=True):
         # TODO: add_type should require an ArgType or similar object so we can link *all* types
 
@@ -360,14 +363,7 @@ class ReviewLine(ReviewLineImpl):
 
         # TODO: figure out cross_language_id, pass into type token below
         # cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
-        self.add_token(
-            ReviewToken(
-                kind=TokenKind.TYPE_NAME,
-                value=type_name,
-                has_prefix_space=has_prefix_space,
-                has_suffix_space=has_suffix_space
-            )
-        )
+        self._add_type_token(type_name, has_prefix_space, has_suffix_space)
     
     def render(self):
         lines = ["".join([token.render() for token in self.tokens])]

@@ -223,8 +223,6 @@ class ClassNode(NodeEntityBase):
                     if item_name.startswith("_"):
                         continue
                     if is_typeddict and (inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing"):
-                        print('namespace', self.namespace)
-                        print('typeddict', item_name, item_type)
                         self.child_nodes.append(
                             KeyNode(self.namespace, self, item_name, item_type)
                         )
@@ -322,7 +320,7 @@ class ClassNode(NodeEntityBase):
             line = review_lines.create_review_line(
                 related_to_line=self.namespace_id
             )
-            line.add_keyword(decorator)
+            line.add_keyword(decorator, has_suffix_space=False)
             review_lines.append(line)
             review_lines.set_blank_lines()
 
@@ -368,7 +366,7 @@ class ClassNode(NodeEntityBase):
             if isinstance(x, FunctionNode) and x.hidden == False
         ]:
             func.generate_tokens(self.children)
-        self.children.set_blank_lines()
+        self.children.set_blank_lines(2)
 
     def _generate_tokens_for_collection(self, values, line, *, has_suffix_space=True):
         # Helper method to concatenate list of values and generate tokens

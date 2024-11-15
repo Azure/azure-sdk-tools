@@ -22,6 +22,7 @@ import zipfile
 from pathlib import Path
 from importlib.metadata import PathDistribution
 
+# TODO: Decide if navigation should be kept
 from apistub._apiview import Navigation, Kind, NavigationTag
 from apistub._metadata_map import MetadataMap
 

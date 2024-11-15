@@ -85,7 +85,6 @@ class TestApiView:
         # represented in APIView
         assert len(unclaimed) == 1
 
-    # TODO: ask Travis about group ending punctuations
     def test_add_type(self):
         apiview = ApiView()
         review_line = apiview.review_lines.create_review_line()
@@ -109,8 +108,15 @@ class TestApiView:
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, mapping_path=mapping_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
-        cross_language_tokens = [token for token in apiview.tokens if token.cross_language_line_id]
-        assert cross_language_tokens[0].cross_language_line_id == "Formal_Model_Id"
-        assert cross_language_tokens[1].cross_language_line_id == "Docstring_DocstringWithFormalDefault"
-        assert len(cross_language_tokens) == 2
+        cross_language_lines = []
+        def get_cross_language_id(review_lines):
+            for line in review_lines:
+                if line.cross_language_id:
+                    cross_language_lines.append(line)
+                if line.children:
+                    get_cross_language_id(line.children)
+        get_cross_language_id(apiview.review_lines)
+        assert cross_language_lines[0].cross_language_id == "Formal_Model_Id"
+        assert cross_language_lines[1].cross_language_id == "Docstring_DocstringWithFormalDefault"
+        assert len(cross_language_lines) == 2
         assert apiview.cross_language_package_id == "ApiStubGenTest"

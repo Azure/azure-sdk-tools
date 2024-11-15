@@ -327,7 +327,7 @@ class ClassNode(NodeEntityBase):
             review_lines.append(line)
 
         line = review_lines.create_review_line()
-        line.add_line_marker(self.namespace_id, add_cross_language_id=True)
+        line.add_line_marker(self.namespace_id, add_cross_language_id=True, apiview=self.apiview)
         line.add_keyword("class")
         line.add_text(self.name, has_suffix_space=False)
 

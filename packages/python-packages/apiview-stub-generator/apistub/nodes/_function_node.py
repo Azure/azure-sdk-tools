@@ -358,7 +358,7 @@ class FunctionNode(NodeEntityBase):
             review_line.add_keyword(annot, has_suffix_space=False)
             review_lines.append(review_line)
         review_line = review_lines.create_review_line()
-        review_line.add_line_marker(self.namespace_id)
+        review_line.add_line_marker(self.namespace_id, add_cross_language_id=True, apiview=self.apiview)
         if self.is_async:
             review_line.add_keyword("async")
 

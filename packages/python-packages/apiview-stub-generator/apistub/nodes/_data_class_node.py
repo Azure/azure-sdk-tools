@@ -57,19 +57,17 @@ class DataClassNode(ClassNode):
         else:
             return all_props
 
-    def _generate_dataclass_annotation_properties(self, review_lines):
+    def _generate_dataclass_annotation_properties(self, review_line, namespace):
         if self.dataclass_params:
-            review_line = review_lines.create_review_line()
-            review_line.add_punctuation("(")
+            review_line.add_punctuation("(", has_suffix_space=False)
             for (i, param) in enumerate(self.dataclass_params):
                 function_id = f"{self.namespace_id}.field[{param.argname}]("
                 param.generate_tokens(
-                    function_id, review_lines.apiview.namespace, review_line, add_line_marker=False
+                    function_id, namespace, review_line, add_line_marker=False
                 )
                 if i != len(self.dataclass_params) - 1:
                     review_line.add_punctuation(",")
-            review_line.add_punctuation(")")
-            review_lines.append(review_line)
+            review_line.add_punctuation(")", has_suffix_space=False)
 
     def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview
@@ -83,8 +81,8 @@ class DataClassNode(ClassNode):
 
         # Generate class name line
         review_line = review_lines.create_review_line()
-        review_line.add_keyword("@dataclass")
+        review_line.add_keyword("@dataclass", has_suffix_space=False)
         review_line.add_line_marker(f"{self.namespace_id}.@dataclass")
+        self._generate_dataclass_annotation_properties(review_line, review_lines.apiview.namespace)
         review_lines.append(review_line)
-        self._generate_dataclass_annotation_properties(review_lines)
         super().generate_tokens(review_lines)

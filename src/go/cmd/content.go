@@ -206,26 +206,9 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string) [
 		}
 		for _, v := range finalKeys {
 			if d := decls[v]; d.Type == t {
-				rts := []ReviewToken{
-					{
-						HasSuffixSpace:        true,
-						Kind:                  TokenKindTypeName,
-						NavigationDisplayName: d.id,
-						Value:                 d.Name(),
-					},
-					{
-						Kind:     TokenKindText,
-						SkipDiff: true,
-						Value:    strings.Repeat(" ", maxLen-len(d.Name())),
-					},
-					{
-						Kind:  TokenKindStringLiteral,
-						Value: d.value,
-					},
-				}
 				ln.Children = append(ln.Children, ReviewLine{
 					LineID: d.ID(),
-					Tokens: rts,
+					Tokens: d.MakeTokens(),
 				})
 			}
 		}

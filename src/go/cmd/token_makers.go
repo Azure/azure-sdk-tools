@@ -97,6 +97,32 @@ func (d Declaration) ID() string {
 	return d.id
 }
 
+func (d Declaration) MakeTokens() []ReviewToken {
+	rts := []ReviewToken{
+		{
+			HasSuffixSpace:        true,
+			Kind:                  TokenKindTypeName,
+			NavigationDisplayName: d.Name(),
+			NavigateToID:          d.ID(),
+			Value:                 d.Name(),
+		},
+	}
+	if d.Type != skip {
+		rts = append(rts, parseAndMakeTypeTokens(d.Type)...)
+	}
+	rts = append(rts, ReviewToken{
+		HasPrefixSpace: true,
+		HasSuffixSpace: true,
+		Kind:           TokenKindPunctuation,
+		Value:          "=",
+	})
+	rts = append(rts, ReviewToken{
+		Kind:  TokenKindStringLiteral,
+		Value: d.value,
+	})
+	return rts
+}
+
 func (d Declaration) Name() string {
 	return d.name
 }

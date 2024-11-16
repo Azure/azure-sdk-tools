@@ -118,17 +118,15 @@ func TestSubpackage(t *testing.T) {
 	require.Equal(t, "Go", review.Language)
 	require.Equal(t, "test_subpackage", review.Name)
 	seen := map[string]bool{}
-	// TODO
-	// for _, line := range review.ReviewLines {
-	// 	for _, token := range line.Tokens {
-	// 		if token.DefinitionID != nil {
-	// 			if seen[*token.DefinitionID] {
-	// 				t.Fatal("duplicate DefinitionID: " + *token.DefinitionID)
-	// 			}
-	// 			seen[*token.DefinitionID] = true
-	// 		}
-	// 	}
-	// }
+	searchLines(review.ReviewLines, func(rl ReviewLine) bool {
+		if id := rl.LineID; id != "" {
+			if seen[id] {
+				t.Error("duplicate LineID: " + id)
+			}
+			seen[id] = true
+		}
+		return false // examine all lines
+	})
 	// 2 packages * 10 exports each = 22 unique definition IDs expected
 	require.Equal(t, 22, len(seen))
 	// 10 exports - 4 methods = 6 nav links expected
@@ -138,7 +136,7 @@ func TestSubpackage(t *testing.T) {
 		require.Contains(t, expectedPackages, nav.Text)
 		require.Equal(t, 6, len(nav.ChildItems))
 		for _, item := range nav.ChildItems {
-			require.Contains(t, seen, item.NavigationId)
+			require.Contains(t, seen, item.NavigationID)
 		}
 	}
 }
@@ -177,18 +175,20 @@ func TestExternalModule(t *testing.T) {
 	require.Equal(t, 1, len(review.Navigation))
 	require.Equal(t, 1, len(review.Navigation[0].ChildItems))
 	foundDo, foundPolicy := false, false
-	// TODO
-	// for _, line := range review.ReviewLines {
-	// 	for _, token := range line.Tokens {
-	// 		if token.DefinitionID != nil && *token.DefinitionID == "test_external_module.MyPolicy" {
-	// 			require.Equal(t, "MyPolicy", token.Value)
-	// 			foundPolicy = true
-	// 		} else if token.Value == "Do" {
-	// 			foundDo = true
-	// 			require.Contains(t, *token.DefinitionID, "MyPolicy")
-	// 		}
-	// 	}
-	// }
+	searchLines(review.ReviewLines, func(rl ReviewLine) bool {
+		if rl.LineID == "test_external_module.MyPolicy" {
+			foundPolicy = true
+		}
+		if foundPolicy {
+			for _, token := range rl.Tokens {
+				if token.Value == "Do" {
+					foundDo = true
+					return true
+				}
+			}
+		}
+		return false
+	})
 	require.True(t, foundDo, "missing MyPolicy.Do()")
 	require.True(t, foundPolicy, "missing MyPolicy type")
 }
@@ -228,14 +228,8 @@ func TestAliasDefinitions(t *testing.T) {
 			require.Equal(t, aliasFor+test.sourceName, review.Diagnostics[0].Text)
 			require.Equal(t, 1, len(review.Navigation))
 			require.Equal(t, filepath.Base(test.path), review.Navigation[0].Text)
-			for _, line := range review.ReviewLines {
-				for _, token := range line.Tokens {
-					if token.Value == "Bar" {
-						return
-					}
-				}
-			}
-			t.Fatal("review doesn't contain the aliased struct's definition")
+			found := searchTokens(review.ReviewLines, func(rt ReviewToken) bool { return rt.Value == "Bar" })
+			require.True(t, found, "review doesn't contain the aliased struct's definition")
 		})
 	}
 }
@@ -261,14 +255,8 @@ func TestRecursiveAliasDefinitions(t *testing.T) {
 			require.Equal(t, aliasFor+test.sourceName, review.Diagnostics[0].Text)
 			require.Equal(t, 2, len(review.Navigation))
 			require.Equal(t, filepath.Base(test.path), review.Navigation[0].Text)
-			for _, line := range review.ReviewLines {
-				for _, token := range line.Tokens {
-					if token.Value == "Bar" {
-						return
-					}
-				}
-			}
-			t.Fatal("review doesn't contain the aliased struct's definition")
+			found := searchTokens(review.ReviewLines, func(rt ReviewToken) bool { return rt.Value == "Bar" })
+			require.True(t, found, "review doesn't contain the aliased struct's definition")
 		})
 	}
 }
@@ -319,15 +307,17 @@ func TestVars(t *testing.T) {
 	require.NotZero(t, review)
 	countSomeChoice := 0
 	hasHTTPClient := false
-	for _, line := range review.ReviewLines {
-		for i, token := range line.Tokens {
-			if token.Value == "SomeChoice" && line.Tokens[i-1].Value == "*" {
+	searchLines(review.ReviewLines, func(rl ReviewLine) bool {
+		for i, token := range rl.Tokens {
+			if token.Value == "SomeChoice" && rl.Tokens[i-1].Value == "*" {
 				countSomeChoice++
-			} else if token.Value == "http.Client" && line.Tokens[i-1].Value == "*" {
+			} else if token.Value == "http.Client" && rl.Tokens[i-1].Value == "*" {
 				hasHTTPClient = true
 			}
 		}
-	}
+		return false
+	})
+	require.NoError(t, err)
 	require.EqualValues(t, 2, countSomeChoice)
 	require.True(t, hasHTTPClient)
 }
@@ -354,4 +344,27 @@ func TestDeterministicOutput(t *testing.T) {
 
 		require.EqualValues(t, string(output1), string(output2))
 	}
+}
+
+func searchLines(lines []ReviewLine, match func(ReviewLine) bool) bool {
+	for _, ln := range lines {
+		if match(ln) {
+			return true
+		}
+		if searchLines(ln.Children, match) {
+			return true
+		}
+	}
+	return false
+}
+
+func searchTokens(lines []ReviewLine, match func(ReviewToken) bool) bool {
+	return searchLines(lines, func(rl ReviewLine) bool {
+		for _, tk := range rl.Tokens {
+			if match(tk) {
+				return true
+			}
+		}
+		return false
+	})
 }

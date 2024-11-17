@@ -1,10 +1,13 @@
 package com.azure.tools.apiview.processor.analysers.util;
 
+import com.azure.tools.apiview.processor.model.ReviewLine;
 import com.azure.tools.apiview.processor.model.ReviewToken;
+import com.azure.tools.apiview.processor.model.TokenKind;
 
 import java.util.regex.Pattern;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.MAVEN_VALUE;
+import static com.azure.tools.apiview.processor.model.TokenKind.PUNCTUATION;
 
 /**
  * Miscellaneous utility methods.
@@ -20,8 +23,11 @@ public final class MiscUtils {
      * @param value The value.
      * @return A token representing the key-value pair.
      */
-    public static ReviewToken tokeniseMavenKeyValue(String key, Object value) {
-        return new ReviewToken(MAVEN_VALUE, value == null ? "<default value>" : value.toString());//, prefix + key + "-" + value);
+    public static ReviewLine tokeniseMavenKeyValue(ReviewLine parentLine, String key, Object value) {
+        return parentLine.addChildLine("maven-lineid-" + key + "-" + value)
+                .addToken(new ReviewToken(TokenKind.MAVEN_KEY, key))
+                .addToken(new ReviewToken(PUNCTUATION, ":"))
+                .addToken(new ReviewToken(MAVEN_VALUE, value == null ? "<default value>" : value.toString()));
     }
 
     /**

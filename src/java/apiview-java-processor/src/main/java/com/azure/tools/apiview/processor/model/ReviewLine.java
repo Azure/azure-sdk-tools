@@ -5,9 +5,7 @@ import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.model.traits.Parent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
@@ -52,6 +50,11 @@ public class ReviewLine implements Parent, JsonSerializable<ReviewLine> {
      */
     private String relatedToLine;
 
+    /*
+     * This is not used by APIView - this is for use by the parser only, so that it may write more diagnostics
+     */
+    private final Map<String, String> properties;
+
     public ReviewLine(Parent parent) {
         this(parent, null);
     }
@@ -61,6 +64,7 @@ public class ReviewLine implements Parent, JsonSerializable<ReviewLine> {
         this.tokens = new ArrayList<>();
         this.children = new ArrayList<>();
         this.lineId = lineId;
+        this.properties = new HashMap<>();
     }
 
     public ReviewLine addToken(ReviewToken token) {
@@ -118,6 +122,19 @@ public class ReviewLine implements Parent, JsonSerializable<ReviewLine> {
         return children;
     }
 
+    public ReviewLine addProperty(String key, String value) {
+        properties.put(key, value);
+        return this;
+    }
+
+    public boolean hasProperty(String key) {
+        return properties.containsKey(key);
+    }
+
+    public String getProperty(String key) {
+        return properties.get(key);
+    }
+
     public List<ReviewToken> getTokens() {
         return tokens;
     }
@@ -147,6 +164,11 @@ public class ReviewLine implements Parent, JsonSerializable<ReviewLine> {
 
     public ReviewLine setRelatedToLine(String relatedToLineId) {
         this.relatedToLine = relatedToLineId;
+        return this;
+    }
+
+    public ReviewLine setCrossLanguageId(String crossLanguageId) {
+        this.crossLanguageId = crossLanguageId;
         return this;
     }
 

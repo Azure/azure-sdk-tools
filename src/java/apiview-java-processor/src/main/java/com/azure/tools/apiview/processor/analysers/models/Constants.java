@@ -18,32 +18,36 @@ public class Constants {
     public static final boolean VALIDATE_JSON_SCHEMA = true;
 
     /** More readable JSON, but also larger file size. Good for debugging, but turn off for production. */
-    public static final boolean PRETTY_PRINT_JSON = true;
+    public static final boolean PRETTY_PRINT_JSON = false;
 
 
     /************************************************************************************
      * Properties
      ************************************************************************************/
 
-    /** The filename of the icon to display for a TreeNode. */
-    public static final String PROPERTY_ICON_NAME = "IconName";
-
-    /**  */
-    public static final String PROPERTY_SUBKIND = "SubKind";
-
-    /**  */
-    public static final String PROPERTY_URL_LINK_TEXT = "LinkText";
-
-    /** Used to link to API elsewhere in the same review. */
-    public static final String PROPERTY_NAVIGATE_TO_ID = "NavigateToId";
-
-    /** The cross language definitionId for the node. */
-    public static final String PROPERTY_CROSS_LANGUAGE_ID = "CrossLangDefId";
+//    /** The filename of the icon to display for a TreeNode. */
+//    public static final String PROPERTY_ICON_NAME = "IconName";
+//
+//    /**  */
+//    public static final String PROPERTY_SUBKIND = "SubKind";
+//
+//    /**  */
+//    public static final String PROPERTY_URL_LINK_TEXT = "LinkText";
+//
+//    /** Used to link to API elsewhere in the same review. */
+//    public static final String PROPERTY_NAVIGATE_TO_ID = "NavigateToId";
+//
+//    /** The cross language definitionId for the node. */
+//    public static final String PROPERTY_CROSS_LANGUAGE_ID = "CrossLangDefId";
 
     public static final String PROPERTY_MODULE_NAME = "module-name";
     public static final String PROPERTY_MODULE_EXPORTS = "module-exports";
     public static final String PROPERTY_MODULE_REQUIRES = "module-requires";
     public static final String PROPERTY_MODULE_OPENS = "module-opens";
+
+    public static final String PROPERTY_MAVEN_NAME = "maven-name";
+    public static final String PROPERTY_MAVEN_DESCRIPTION = "maven-description";
+
 
 
     /************************************************************************************

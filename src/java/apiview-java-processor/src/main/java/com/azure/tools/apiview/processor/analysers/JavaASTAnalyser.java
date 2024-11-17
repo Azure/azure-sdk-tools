@@ -47,7 +47,6 @@ public class JavaASTAnalyser implements Analyser {
      *
      **********************************************************************************************/
 
-
     public static final String MAVEN_KEY = "Maven";
     public static final String MODULE_INFO_KEY = "module-info";
 
@@ -93,9 +92,6 @@ public class JavaASTAnalyser implements Analyser {
     // JSON that can be understood by APIView.
     private final APIListing apiListing;
     private final Diagnostics diagnostic;
-
-    // The parent line used for module and maven information
-//    private ReviewLine rootPackageLine;
 
     private final Map<String,String> shortClassNameToFullyQualfiedNameMap = new HashMap<>();
 
@@ -264,22 +260,20 @@ public class JavaASTAnalyser implements Analyser {
 
             // look for the module-info.java file, and put that second, after the maven pom
             scanElements.stream()
-                .filter(scanElement -> scanElement.elementType == ScanElementType.MODULE_INFO)
-                .findFirst()
-                .ifPresent(scanElement -> {
-                    scanElement.compilationUnit.getModule().ifPresent(this::visitModuleDeclaration);
-                });
+                    .filter(scanElement -> scanElement.elementType == ScanElementType.MODULE_INFO)
+                    .findFirst()
+                    .flatMap(scanElement -> scanElement.compilationUnit.getModule()).ifPresent(this::visitModuleDeclaration);
         } else {
-            // FIXME package level javadocs aren't working at the moment...
-            // lets see if we have javadoc for this packageName
-//            scanElements.stream()
-//                .filter(scanElement -> scanElement.elementType == ScanElementType.PACKAGE)
-//                .findFirst()
-//                .flatMap(scanElement -> scanElement.compilationUnit.getPackageDeclaration().flatMap(Node::getComment))
-//                .filter(Comment::isJavadocComment)
-//                .ifPresent(javadocComment -> visitJavaDoc((JavadocComment) javadocComment, apiListing));
+            final String lineId = makeId("package-" + packageName);
 
-            String lineId = makeId("package-" + packageName);
+            // lets see if we have javadoc for this packageName
+            scanElements.stream()
+                .filter(scanElement -> scanElement.elementType == ScanElementType.PACKAGE)
+                .findFirst()
+                .flatMap(scanElement -> scanElement.compilationUnit.getPackageDeclaration().flatMap(Node::getComment))
+                .filter(Comment::isJavadocComment)
+                .ifPresent(javadocComment -> visitJavaDoc((JavadocComment) javadocComment, apiListing, lineId));
+
             final ReviewLine packageLine = apiListing.addChildLine(lineId);
 
             packageLine
@@ -396,11 +390,11 @@ public class JavaASTAnalyser implements Analyser {
         // parent
         String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
                 + mavenPom.getParent().getVersion();
-        tokeniseMavenKeyValue(mavenLine, "parent", gavStr);
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr);
 
         // properties
         gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-        tokeniseMavenKeyValue(mavenLine, "properties", gavStr);
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "properties", gavStr);
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null
@@ -414,15 +408,15 @@ public class JavaASTAnalyser implements Analyser {
                 .addContextStartTokens();
 
             if (showCheckStyle) {
-                tokeniseMavenKeyValue(configurationLine, "checkstyle-excludes", mavenPom.getCheckstyleExcludes());
+                MiscUtils.tokeniseMavenKeyValue(configurationLine, "checkstyle-excludes", mavenPom.getCheckstyleExcludes());
             }
             if (showJacoco) {
                 ReviewLine jacocoLine = configurationLine.addChildLine()
                     .addToken(TokenKind.MAVEN_KEY, "jacoco")
                     .addContextStartTokens();
 
-                tokeniseMavenKeyValue(jacocoLine, "min-line-coverage", mavenPom.getJacocoMinLineCoverage());
-                tokeniseMavenKeyValue(jacocoLine, "min-branch-coverage", mavenPom.getJacocoMinBranchCoverage());
+                MiscUtils.tokeniseMavenKeyValue(jacocoLine, "min-line-coverage", mavenPom.getJacocoMinLineCoverage());
+                MiscUtils.tokeniseMavenKeyValue(jacocoLine, "min-branch-coverage", mavenPom.getJacocoMinBranchCoverage());
                 jacocoLine.addContextEndTokens();
             }
 
@@ -430,10 +424,12 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         // Maven name
-        tokeniseMavenKeyValue(mavenLine, "name", mavenPom.getName());
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "name", mavenPom.getName())
+                .addProperty(PROPERTY_MAVEN_NAME, mavenPom.getName());
 
         // Maven description
-        tokeniseMavenKeyValue(mavenLine, "description", mavenPom.getDescription());
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "description", mavenPom.getDescription())
+                .addProperty(PROPERTY_MAVEN_DESCRIPTION, mavenPom.getDescription());
 
         // dependencies
         ReviewLine dependenciesLine = mavenLine.addChildLine()
@@ -464,14 +460,6 @@ public class JavaASTAnalyser implements Analyser {
         mavenLine.addContextEndTokens();
     }
 
-    private void tokeniseMavenKeyValue(ReviewLine parentLine, String key, Object value) {
-        // add the key value as a new token on a newline
-        parentLine.addChildLine("maven-lineid-" + key + "-" + value)
-                .addToken(new ReviewToken(TokenKind.MAVEN_KEY, key))
-                .addToken(new ReviewToken(PUNCTUATION, ":"))
-                .addToken(MiscUtils.tokeniseMavenKeyValue(key, value));
-    }
-
 
 
     /************************************************************************************************
@@ -486,6 +474,8 @@ public class JavaASTAnalyser implements Analyser {
             .addToken(KEYWORD, "module")
             .addToken(new ReviewToken(MODULE_NAME, moduleDeclaration.getNameAsString())
                     .setNavigationDisplayName("module-info"))
+            .addProperty(MODULE_INFO_KEY, "true")
+            .addProperty(PROPERTY_MODULE_NAME, moduleDeclaration.getNameAsString())
             .addContextStartTokens();
 
         // Sometimes an exports or opens statement is conditional, so we need to handle that case
@@ -493,9 +483,7 @@ public class JavaASTAnalyser implements Analyser {
         BiConsumer<ReviewLine, NodeList<Name>> conditionalExportsToOrOpensToConsumer = (reviewLine, names) -> {
             if (!names.isEmpty()) {
                 reviewLine.addToken(KEYWORD, "to", Spacing.SPACE_BEFORE_AND_AFTER);
-                commaSeparateList(reviewLine, TYPE_NAME, names, name -> {
-                    return name.asString();
-                });
+                commaSeparateList(reviewLine, TYPE_NAME, names, Name::asString);
             }
         };
 
@@ -514,9 +502,9 @@ public class JavaASTAnalyser implements Analyser {
                 }
 
                 // adding property just to make diagnostics easier
-//                moduleChildNode.addProperty(PROPERTY_MODULE_REQUIRES, d.getNameAsString());
-//                moduleChildNode.addProperty("static", d.hasModifier(Modifier.Keyword.STATIC) ? "true" : "false");
-//                moduleChildNode.addProperty("transitive", d.isTransitive() ? "true" : "false");
+                moduleChildLine.addProperty(PROPERTY_MODULE_REQUIRES, d.getNameAsString());
+                moduleChildLine.addProperty("static", d.hasModifier(Modifier.Keyword.STATIC) ? "true" : "false");
+                moduleChildLine.addProperty("transitive", d.isTransitive() ? "true" : "false");
 
                 moduleChildLine.addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
                 moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
@@ -529,7 +517,7 @@ public class JavaASTAnalyser implements Analyser {
                     .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
 
                 // adding property just to make diagnostics easier
-//                moduleChildNode.addProperty(PROPERTY_MODULE_EXPORTS, d.getNameAsString());
+                moduleChildLine.addProperty(PROPERTY_MODULE_EXPORTS, d.getNameAsString());
 
                 conditionalExportsToOrOpensToConsumer.accept(moduleChildLine, d.getModuleNames());
                 moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
@@ -542,7 +530,7 @@ public class JavaASTAnalyser implements Analyser {
                     .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
 
                 // adding property just to make diagnostics easier
-//                moduleChildNode.addProperty(PROPERTY_MODULE_OPENS, d.getNameAsString());
+                moduleChildLine.addProperty(PROPERTY_MODULE_OPENS, d.getNameAsString());
 
                 conditionalExportsToOrOpensToConsumer.accept(moduleChildLine, d.getModuleNames());
                 moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
@@ -550,7 +538,7 @@ public class JavaASTAnalyser implements Analyser {
 
             moduleDirective.ifModuleUsesStmt(d -> {
                 String id = makeId(MODULE_INFO_KEY + "-uses-" + d.getNameAsString());
-                ReviewLine moduleChildLine = moduleLine.addChildLine(id)
+                moduleLine.addChildLine(id)
                     .addToken(KEYWORD, "uses")
                     .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE)
                     .addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
@@ -818,9 +806,8 @@ public class JavaASTAnalyser implements Analyser {
      * so that we may review cross languages with some level of confidence that the types and methods are the same.
      */
     private void checkForCrossLanguageDefinitionId(ReviewLine reviewLine, Node node) {
-//        final String fqn = getNodeFullyQualifiedName(node);
-//        apiListing.getApiViewProperties().getCrossLanguageDefinitionId(fqn)
-//            .ifPresent(crossLangId -> reviewLine.addProperty(PROPERTY_CROSS_LANGUAGE_ID, crossLangId));
+        final String fqn = getNodeFullyQualifiedName(node);
+        apiListing.getApiViewProperties().getCrossLanguageDefinitionId(fqn).ifPresent(reviewLine::setCrossLanguageId);
     }
 
     private void visitAnnotationMember(AnnotationDeclaration annotationDeclaration, final ReviewLine parentLine) {

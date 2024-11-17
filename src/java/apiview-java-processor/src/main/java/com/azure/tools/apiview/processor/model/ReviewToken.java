@@ -37,13 +37,6 @@ public class ReviewToken implements JsonSerializable<ReviewToken> {
     // Set isDocumentation to true if current token is part of documentation
     private boolean isDocumentation;
 
-//    // which will be used to navigate and find token on page.
-//    private final String id;
-
-    // Could be: LineBreak NoneBreakingSpace TabSpace ParameterSeparator Content
-    // All tokens should be content except for spacing tokens.
-    // ParameterSeparator should be used between method or function parameters. Spacing token dont need to have value.
-//    private final StructuredTokenKind structuredTokenKind;
     private final TokenKind tokenKind;
 
 //    // for things like deprecated, hidden, etc
@@ -128,6 +121,10 @@ public class ReviewToken implements JsonSerializable<ReviewToken> {
         this.isDeprecated = true;
         addRenderClass(RenderClass.DEPRECATED);
         return this;
+    }
+
+    public TokenKind getTokenKind() {
+        return tokenKind;
     }
 
     //    public ReviewToken addProperty(String key, String value) {

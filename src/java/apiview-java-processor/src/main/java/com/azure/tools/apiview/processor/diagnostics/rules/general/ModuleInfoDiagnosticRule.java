@@ -1,11 +1,16 @@
 package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
+import com.azure.tools.apiview.processor.analysers.models.Constants;
+import com.azure.tools.apiview.processor.analysers.util.ASTUtils;
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.*;
+import com.azure.tools.apiview.processor.model.traits.Parent;
 import com.github.javaparser.ast.CompilationUnit;
 
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.azure.tools.apiview.processor.analysers.JavaASTAnalyser.MODULE_INFO_KEY;
@@ -37,24 +42,21 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
                 .min(Comparator.comparingInt(String::length))
                 .orElse("");
 
-        TreeNode moduleInfoNode = null;
         Set<String> exportsPackages = new HashSet<>();
 
-        // FIXME disabled for now - reintroduce on other side of port
-//        for (TreeNode root : listing.getApiForest()) {
-//            moduleInfoNode = traverseTreeNodes(root, exportsPackages);
-//            if (moduleInfoNode != null) {
-//                break;
-//            }
-//        }
-
-        if (moduleInfoNode == null) {
+        Optional<ReviewLine> moduleInfoLineOptional = ASTUtils.findReviewLine(listing, line -> line.hasProperty(JavaASTAnalyser.MODULE_INFO_KEY));
+        if (moduleInfoLineOptional.isEmpty()) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, makeId(basePackageName),
                     "This module is missing module-info.java"));
             return;
         }
 
-        String moduleName = moduleInfoNode.getProperties().get(PROPERTY_MODULE_NAME);
+        ReviewLine moduleInfoLine = moduleInfoLineOptional.get();
+        moduleInfoLine.getChildren().stream()
+            .filter(childLine -> childLine.hasProperty(Constants.PROPERTY_MODULE_EXPORTS))
+            .forEach(childLine -> exportsPackages.add(childLine.getProperty(Constants.PROPERTY_MODULE_EXPORTS)));
+
+        String moduleName = moduleInfoLine.getProperty(PROPERTY_MODULE_NAME);
         if (moduleName != null) {
             // special casing azure-core as the base package doesn't have any classes and hence not included in the
             // list of packages
@@ -80,24 +82,5 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
                                 makeId(MODULE_INFO_KEY + "-exports-" + implementationPackage), "Implementation package should not be exported - " + implementationPackage));
                     });
         }
-    }
-
-    private TreeNode traverseTreeNodes(TreeNode node, Set<String> exportsPackages) {
-        if (TreeNodeKind.MODULE_INFO.equals(node.getKind())) {
-            // Collect all packages that are exported. These are the children TreeNodes that have kind MODULE_EXPORTS
-            node.getChildren().stream()
-                    .filter(child -> TreeNodeKind.MODULE_EXPORTS.equals(child.getKind()))
-                    .forEach(child -> exportsPackages.add(child.getProperties().get(PROPERTY_MODULE_EXPORTS)));
-            return node;
-        }
-
-        for (TreeNode child : node.getChildren()) {
-            TreeNode childNode = traverseTreeNodes(child, exportsPackages);
-            if (childNode != null) {
-                return childNode;
-            }
-        }
-
-        return null;
     }
 }

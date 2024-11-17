@@ -1,5 +1,8 @@
 package com.azure.tools.apiview.processor.analysers.util;
 
+import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ReviewLine;
+import com.azure.tools.apiview.processor.model.traits.Parent;
 import com.github.javaparser.Range;
 import com.github.javaparser.ast.AccessSpecifier;
 import com.github.javaparser.ast.CompilationUnit;
@@ -22,6 +25,7 @@ import com.github.javaparser.ast.type.WildcardType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -487,6 +491,28 @@ public final class ASTUtils {
             .map(c -> (JavadocComment) c)
             .filter(c -> c.getRange().map(range -> range.overlapsWith(expectedJavadocRangeOverlap)).orElse(false))
             .findFirst();
+    }
+
+    public static Optional<ReviewLine> findReviewLine(APIListing listing, Function<ReviewLine, Boolean> f) {
+        return findReviewLine((Parent)listing, f);
+    }
+
+    private static Optional<ReviewLine> findReviewLine(Parent parent, Function<ReviewLine, Boolean> f) {
+        for (ReviewLine line : parent.getChildren()) {
+            if (f.apply(line)) {
+                return Optional.of(line);
+            }
+        }
+
+        // check each child
+        for (ReviewLine line : parent.getChildren()) {
+            Optional<ReviewLine> result = findReviewLine(line, f);
+            if (result.isPresent()) {
+                return result;
+            }
+        }
+
+        return Optional.empty();
     }
 
     private ASTUtils() {

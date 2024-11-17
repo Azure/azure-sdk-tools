@@ -105,6 +105,7 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
     }
 
     private static String getId(String key, Object value) {
-        return MiscUtils.tokeniseMavenKeyValue(key, value).getId();
+        return "FIXME";
+        //return MiscUtils.tokeniseMavenKeyValue(key, value).getId(); // FIXME v1.5
     }
 }

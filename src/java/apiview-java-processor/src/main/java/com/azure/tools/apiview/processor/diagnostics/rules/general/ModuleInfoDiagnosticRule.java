@@ -40,12 +40,13 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
         TreeNode moduleInfoNode = null;
         Set<String> exportsPackages = new HashSet<>();
 
-        for (TreeNode root : listing.getApiForest()) {
-            moduleInfoNode = traverseTreeNodes(root, exportsPackages);
-            if (moduleInfoNode != null) {
-                break;
-            }
-        }
+        // FIXME disabled for now - reintroduce on other side of port
+//        for (TreeNode root : listing.getApiForest()) {
+//            moduleInfoNode = traverseTreeNodes(root, exportsPackages);
+//            if (moduleInfoNode != null) {
+//                break;
+//            }
+//        }
 
         if (moduleInfoNode == null) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, makeId(basePackageName),

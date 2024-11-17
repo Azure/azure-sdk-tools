@@ -6,6 +6,7 @@ import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
 import com.azure.tools.apiview.processor.model.*;
 import com.azure.tools.apiview.processor.model.maven.*;
+import com.azure.tools.apiview.processor.model.traits.Parent;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.JavaParserAdapter;
 import com.github.javaparser.ParserConfiguration;
@@ -93,10 +94,12 @@ public class JavaASTAnalyser implements Analyser {
     private final APIListing apiListing;
     private final Diagnostics diagnostic;
 
-    private final TreeNode libraryRootNode;
-    private TreeNode rootPackageNode;
+    // The parent line used for module and maven information
+//    private ReviewLine rootPackageLine;
 
     private final Map<String,String> shortClassNameToFullyQualfiedNameMap = new HashMap<>();
+
+
 
     /************************************************************************************************
      *
@@ -107,11 +110,6 @@ public class JavaASTAnalyser implements Analyser {
     public JavaASTAnalyser(APIListing apiListing) {
         this.apiListing = apiListing;
         this.diagnostic = new Diagnostics(apiListing);
-
-        // this is the root node of the library, and it will contain all the other nodes
-        final String name = apiListing.getMavenPom().getArtifactId();
-        this.libraryRootNode = new TreeNode(name, name, TreeNodeKind.ASSEMBLY);
-        apiListing.addTreeNode(libraryRootNode);
     }
 
 
@@ -137,11 +135,13 @@ public class JavaASTAnalyser implements Analyser {
                 .map(Optional::get)
                 .collect(Collectors.toSet());
 
+        // put all classes into the short class name -> fully qualified class name map
         scanElements.stream()
             .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
             .map(scanElement -> (ScanClass) scanElement)
             .forEach(scanClass -> shortClassNameToFullyQualfiedNameMap.put(scanClass.primaryTypeName, scanClass.fullyQualifiedName));
 
+        // and then group all classes into groups based on their package name, and process each package
         scanElements.stream()
             .collect(Collectors.groupingBy(e -> e.packageName, TreeMap::new, Collectors.toList()))
             .forEach(this::processPackage);
@@ -256,39 +256,47 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void processPackage(String packageName, List<ScanElement> scanElements) {
-        final boolean isRootPackage = packageName.isEmpty();
-        packageName = isRootPackage ? "<root package>" : packageName;
-
-        final TreeNode packageNode = addChild(libraryRootNode, packageName, makeId("package-"+packageName), TreeNodeKind.NAMESPACE);
-
-        // lets see if we have javadoc for this packageName
-        scanElements.stream()
-                .filter(scanElement -> scanElement.elementType == ScanElementType.PACKAGE)
-                .findFirst()
-                .flatMap(scanElement -> scanElement.compilationUnit.getPackageDeclaration().flatMap(Node::getComment))
-                .filter(Comment::isJavadocComment)
-                .ifPresent(javadocComment -> visitJavaDoc((JavadocComment) javadocComment, packageNode));
-
-        packageNode.addTopToken(KEYWORD, "package").addSpace();
-
-        if (isRootPackage) {
-            packageNode.hideFromNavigation().addTopToken(PACKAGE_NAME, packageName).addSpace().addTopToken(PUNCTUATION, "{");
-            this.rootPackageNode = packageNode;
+        if (packageName.isEmpty()) {
+            // we are dealing with the root package, so we are looking at the maven pom and module-info.
 
             // look for the maven pom.xml file, and put that in first, in the root package
             tokeniseMavenPom(apiListing.getMavenPom());
+
+            // look for the module-info.java file, and put that second, after the maven pom
+            scanElements.stream()
+                .filter(scanElement -> scanElement.elementType == ScanElementType.MODULE_INFO)
+                .findFirst()
+                .ifPresent(scanElement -> {
+                    scanElement.compilationUnit.getModule().ifPresent(this::visitModuleDeclaration);
+                });
         } else {
-            packageNode.addTopToken(PACKAGE_NAME, packageName, packageName).addSpace().addTopToken(PUNCTUATION, "{");
+            // FIXME package level javadocs aren't working at the moment...
+            // lets see if we have javadoc for this packageName
+//            scanElements.stream()
+//                .filter(scanElement -> scanElement.elementType == ScanElementType.PACKAGE)
+//                .findFirst()
+//                .flatMap(scanElement -> scanElement.compilationUnit.getPackageDeclaration().flatMap(Node::getComment))
+//                .filter(Comment::isJavadocComment)
+//                .ifPresent(javadocComment -> visitJavaDoc((JavadocComment) javadocComment, apiListing));
+
+            String lineId = makeId("package-" + packageName);
+            final ReviewLine packageLine = apiListing.addChildLine(lineId);
+
+            packageLine
+                .addToken(KEYWORD, "package")
+                .addToken(new ReviewToken(PACKAGE_NAME, packageName)
+                    .setNavigationDisplayName(packageName))
+                .addContextStartTokens();
+
+            // then do all classes in the package
+            scanElements.stream()
+                .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
+                .map(scanElement -> (ScanClass) scanElement)
+                .sorted(Comparator.comparing(e -> e.primaryTypeName))
+                .forEach(scanClass -> visitCompilationUnit(scanClass.compilationUnit, packageLine));
+
+            packageLine.addContextEndTokens();
         }
-
-        // then do all classes in the package
-        scanElements.stream()
-            .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
-            .map(scanElement -> (ScanClass) scanElement)
-            .sorted(Comparator.comparing(e -> e.primaryTypeName))
-            .forEach(scanClass -> visitCompilationUnit(scanClass.compilationUnit, packageNode));
-
-        packageNode.addBottomToken(PUNCTUATION, "}");
     }
 
     private int sortMethods(CallableDeclaration<?> c1, CallableDeclaration<?> c2) {
@@ -347,13 +355,13 @@ public class JavaASTAnalyser implements Analyser {
         return methodNameCompare;
     }
 
-    private void possiblyDeprecate(Token token, NodeWithAnnotations<?> n) {
+    private void possiblyDeprecate(ReviewToken token, NodeWithAnnotations<?> n) {
         if (n.isAnnotationPresent(ANNOTATION_DEPRECATED)) {
-            token.addRenderClass(RenderClass.DEPRECATED);
+            token.setDeprecated();
         }
     }
 
-    private void possiblyAddNavigationLink(Token token, Node node) {
+    private void possiblyAddNavigationLink(ReviewToken token, Node node) {
         if (node instanceof ClassOrInterfaceType classOrInterfaceType) {
             String shortName = classOrInterfaceType.getNameAsString();
 
@@ -362,7 +370,8 @@ public class JavaASTAnalyser implements Analyser {
                 // If it does, get the fully qualified name from the map. This is also the ID we should have used
                 // when we defined the token that we want to link to
                 String fullyQualifiedName = shortClassNameToFullyQualfiedNameMap.get(shortName);
-                token.addProperty(PROPERTY_NAVIGATE_TO_ID, fullyQualifiedName);
+//                token.addProperty(PROPERTY_NAVIGATE_TO_ID, fullyQualifiedName);
+                token.setNavigateToId(fullyQualifiedName);
             }
         }
     }
@@ -376,21 +385,22 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     private void tokeniseMavenPom(Pom mavenPom) {
-        TreeNode mavenNode = addChild(rootPackageNode, MAVEN_KEY, MAVEN_KEY, TreeNodeKind.MAVEN);
+        ReviewLine mavenLine = apiListing.addChildLine();
 
-        mavenNode.addTag(TAG_SKIP_DIFF)
-                .addTopToken(TokenKind.MAVEN_KEY, "maven").addSpace()
-                .addTopToken(PUNCTUATION, "{")
-                .addBottomToken(PUNCTUATION, "}");
+        mavenLine
+            .addToken(new ReviewToken(TokenKind.MAVEN, "maven")
+                .setNavigationDisplayName(MAVEN_KEY)
+                .setSkipDiff())
+            .addContextStartTokens();
 
         // parent
         String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
                 + mavenPom.getParent().getVersion();
-        tokeniseMavenKeyValue(mavenNode, "parent", gavStr);
+        tokeniseMavenKeyValue(mavenLine, "parent", gavStr);
 
         // properties
         gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-        tokeniseMavenKeyValue(mavenNode, "properties", gavStr);
+        tokeniseMavenKeyValue(mavenLine, "properties", gavStr);
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null
@@ -399,39 +409,36 @@ public class JavaASTAnalyser implements Analyser {
                 .isEmpty();
 
         if (showJacoco || showCheckStyle) {
-            TreeNode configurationNode = addChild(mavenNode, "configuration", "configuration", TreeNodeKind.MAVEN);
-            configurationNode.addTopToken(TokenKind.MAVEN_KEY, "configuration")
-                    .hideFromNavigation().addSpace()
-                    .addTopToken(PUNCTUATION, "{")
-                    .addBottomToken(PUNCTUATION, "}");
+            ReviewLine configurationLine = mavenLine.addChildLine()
+                .addToken(TokenKind.MAVEN_KEY, "configuration")
+                .addContextStartTokens();
 
             if (showCheckStyle) {
-                tokeniseMavenKeyValue(configurationNode, "checkstyle-excludes", mavenPom.getCheckstyleExcludes());
+                tokeniseMavenKeyValue(configurationLine, "checkstyle-excludes", mavenPom.getCheckstyleExcludes());
             }
             if (showJacoco) {
-                TreeNode jacocoNode = addChild(configurationNode, "jacoco", "jacoco", TreeNodeKind.MAVEN);
-                jacocoNode.addTopToken(TokenKind.MAVEN_KEY, "jacoco")
-                        .hideFromNavigation().addSpace()
-                        .addTopToken(PUNCTUATION, "{");
+                ReviewLine jacocoLine = configurationLine.addChildLine()
+                    .addToken(TokenKind.MAVEN_KEY, "jacoco")
+                    .addContextStartTokens();
 
-                tokeniseMavenKeyValue(jacocoNode, "min-line-coverage", mavenPom.getJacocoMinLineCoverage());
-                tokeniseMavenKeyValue(jacocoNode, "min-branch-coverage", mavenPom.getJacocoMinBranchCoverage());
+                tokeniseMavenKeyValue(jacocoLine, "min-line-coverage", mavenPom.getJacocoMinLineCoverage());
+                tokeniseMavenKeyValue(jacocoLine, "min-branch-coverage", mavenPom.getJacocoMinBranchCoverage());
+                jacocoLine.addContextEndTokens();
             }
+
+            configurationLine.addContextEndTokens();
         }
 
         // Maven name
-        tokeniseMavenKeyValue(mavenNode, "name", mavenPom.getName());
+        tokeniseMavenKeyValue(mavenLine, "name", mavenPom.getName());
 
         // Maven description
-        tokeniseMavenKeyValue(mavenNode, "description", mavenPom.getDescription());
+        tokeniseMavenKeyValue(mavenLine, "description", mavenPom.getDescription());
 
         // dependencies
-        TreeNode dependenciesNode = addChild(mavenNode,"dependencies", "dependencies", TreeNodeKind.MAVEN);
-        dependenciesNode
-                .hideFromNavigation()
-                .addTopToken(TokenKind.MAVEN_KEY, "dependencies").addSpace()
-                .addTopToken(PUNCTUATION, "{")
-                .addBottomToken(PUNCTUATION, "}");
+        ReviewLine dependenciesLine = mavenLine.addChildLine()
+            .addToken(TokenKind.MAVEN_KEY, "dependencies")
+            .addContextStartTokens();
 
         mavenPom.getDependencies()
                 .stream()
@@ -443,36 +450,26 @@ public class JavaASTAnalyser implements Analyser {
                     }
                     String scope = k.isEmpty() ? "compile" : k;
 
-//                    dependenciesNode.addChild(new TreeNode(scope, scope, TreeNodeKind.MAVEN)
-//                            .addTopToken(COMMENT, "// " + scope + " scope"));
-                    dependenciesNode
-                            .addNewline()
-                            .addTabSpace()
-                            .addTopToken(COMMENT, "// " + scope + " scope");
+                    dependenciesLine.addChildLine()
+                            .addToken(TokenKind.COMMENT, "// " + scope + " scope");
 
                     for (Dependency d : v) {
                         String gav = d.getGroupId() + ":" + d.getArtifactId() + ":" + d.getVersion();
-//                        dependenciesNode.addChild(new TreeNode(gav, gav, TreeNodeKind.MAVEN)
-//                                .addTopToken(MAVEN_DEPENDENCY, gav, gav));
-                        dependenciesNode
-                                .addNewline()
-                                .addTabSpace()
-                                .addTopToken(MAVEN_DEPENDENCY, gav, gav);
+                        dependenciesLine.addChildLine("maven-lineid-" + gav)
+                                .addToken(TokenKind.MAVEN_DEPENDENCY, gav);
                     }
                 });
+        dependenciesLine.addContextEndTokens();
+
+        mavenLine.addContextEndTokens();
     }
 
-    private void tokeniseMavenKeyValue(TreeNode parentNode, String key, Object value) {
-//        parentNode.addChild(TreeNode.createHiddenNode()
-//                .addTopToken(TokenKind.MAVEN_KEY, key)
-//                .addTopToken(PUNCTUATION, ":").addSpace()
-//                .addTopToken(MiscUtils.tokeniseMavenKeyValue(key, value, linkPrefix)));
+    private void tokeniseMavenKeyValue(ReviewLine parentLine, String key, Object value) {
         // add the key value as a new token on a newline
-        parentNode.addNewline()
-                .addTabSpace()
-                .addTopToken(TokenKind.MAVEN_KEY, key).addSpace()
-                .addTopToken(PUNCTUATION, ":").addSpace()
-                .addTopToken(MiscUtils.tokeniseMavenKeyValue(key, value));
+        parentLine.addChildLine("maven-lineid-" + key + "-" + value)
+                .addToken(new ReviewToken(TokenKind.MAVEN_KEY, key))
+                .addToken(new ReviewToken(PUNCTUATION, ":"))
+                .addToken(MiscUtils.tokeniseMavenKeyValue(key, value));
     }
 
 
@@ -484,113 +481,107 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     private void visitModuleDeclaration(ModuleDeclaration moduleDeclaration) {
-        TreeNode moduleNode = addChild(rootPackageNode, "module-info", MODULE_INFO_KEY, TreeNodeKind.MODULE_INFO);
-        moduleNode.addProperty(PROPERTY_MODULE_NAME, moduleDeclaration.getNameAsString());
-
-        moduleNode.addTopToken(KEYWORD, "module").addSpace()
-            .addTopToken(MODULE_NAME, moduleDeclaration.getNameAsString(), MODULE_INFO_KEY).addSpace()
-            .addTopToken(PUNCTUATION, "{")
-            .addBottomToken(PUNCTUATION, "}");
+//        moduleNode.addProperty(PROPERTY_MODULE_NAME, moduleDeclaration.getNameAsString());
+        ReviewLine moduleLine = apiListing.addChildLine(MODULE_INFO_KEY)
+            .addToken(KEYWORD, "module")
+            .addToken(new ReviewToken(MODULE_NAME, moduleDeclaration.getNameAsString())
+                    .setNavigationDisplayName("module-info"))
+            .addContextStartTokens();
 
         // Sometimes an exports or opens statement is conditional, so we need to handle that case
         // in a single location here, to remove duplication.
-        BiConsumer<TreeNode, NodeList<Name>> conditionalExportsToOrOpensToConsumer = (node, names) -> {
+        BiConsumer<ReviewLine, NodeList<Name>> conditionalExportsToOrOpensToConsumer = (reviewLine, names) -> {
             if (!names.isEmpty()) {
-                node.addSpace()
-                    .addTopToken(KEYWORD, "to").addSpace();
-                commaSeparateList(node, TYPE_NAME, names, Object::toString);
+                reviewLine.addToken(KEYWORD, "to", Spacing.SPACE_BEFORE_AND_AFTER);
+                commaSeparateList(reviewLine, TYPE_NAME, names, name -> {
+                    return name.asString();
+                });
             }
         };
 
         moduleDeclaration.getDirectives().forEach(moduleDirective -> {
             moduleDirective.ifModuleRequiresStmt(d -> {
-                TreeNode moduleChildNode;
                 String id = makeId(MODULE_INFO_KEY + "-requires-" + d.getNameAsString());
-                moduleNode.addChild(moduleChildNode = new TreeNode(PROPERTY_MODULE_REQUIRES, id, TreeNodeKind.MODULE_REQUIRES)
-                    .hideFromNavigation()
-                    .addTopToken(KEYWORD, "requires").addSpace());
+                ReviewLine moduleChildLine = moduleLine.addChildLine(id)
+                    .addToken(KEYWORD, "requires");
 
                 if (d.hasModifier(Modifier.Keyword.STATIC)) {
-                    moduleChildNode.addTopToken(KEYWORD, "static").addSpace();
+                    moduleChildLine.addToken(KEYWORD, "static");
                 }
 
                 if (d.isTransitive()) {
-                    moduleChildNode.addTopToken(KEYWORD, "transitive").addSpace();
+                    moduleChildLine.addToken(KEYWORD, "transitive");
                 }
 
                 // adding property just to make diagnostics easier
-                moduleChildNode.addProperty(PROPERTY_MODULE_REQUIRES, d.getNameAsString());
-                moduleChildNode.addProperty("static", d.hasModifier(Modifier.Keyword.STATIC) ? "true" : "false");
-                moduleChildNode.addProperty("transitive", d.isTransitive() ? "true" : "false");
+//                moduleChildNode.addProperty(PROPERTY_MODULE_REQUIRES, d.getNameAsString());
+//                moduleChildNode.addProperty("static", d.hasModifier(Modifier.Keyword.STATIC) ? "true" : "false");
+//                moduleChildNode.addProperty("transitive", d.isTransitive() ? "true" : "false");
 
-                moduleChildNode.addTopToken(TYPE_NAME, d.getNameAsString());
-                moduleChildNode.addTopToken(PUNCTUATION, ";");
+                moduleChildLine.addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
+                moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
             });
 
             moduleDirective.ifModuleExportsStmt(d -> {
-                TreeNode moduleChildNode;
                 String id = makeId(MODULE_INFO_KEY + "-exports-" + d.getNameAsString());
-                moduleNode.addChild(moduleChildNode = new TreeNode("exports", id, TreeNodeKind.MODULE_EXPORTS)
-                    .hideFromNavigation()
-                    .addTopToken(KEYWORD, "exports").addSpace()
-                    .addTopToken(TYPE_NAME, d.getNameAsString()));
+                ReviewLine moduleChildLine = moduleLine.addChildLine(id)
+                    .addToken(KEYWORD, "exports")
+                    .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
 
                 // adding property just to make diagnostics easier
-                moduleChildNode.addProperty(PROPERTY_MODULE_EXPORTS, d.getNameAsString());
+//                moduleChildNode.addProperty(PROPERTY_MODULE_EXPORTS, d.getNameAsString());
 
-                conditionalExportsToOrOpensToConsumer.accept(moduleChildNode, d.getModuleNames());
-                moduleChildNode.addTopToken(PUNCTUATION, ";");
+                conditionalExportsToOrOpensToConsumer.accept(moduleChildLine, d.getModuleNames());
+                moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
             });
 
             moduleDirective.ifModuleOpensStmt(d -> {
-                TreeNode moduleChildNode;
                 String id = makeId(MODULE_INFO_KEY + "-opens-" + d.getNameAsString());
-                moduleNode.addChild(moduleChildNode = new TreeNode("opens", id, TreeNodeKind.MODULE_OPENS)
-                    .hideFromNavigation()
-                    .addTopToken(KEYWORD, "opens").addSpace()
-                    .addTopToken(TYPE_NAME, d.getNameAsString()));
+                ReviewLine moduleChildLine = moduleLine.addChildLine(id)
+                    .addToken(KEYWORD, "opens")
+                    .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
 
                 // adding property just to make diagnostics easier
-                moduleChildNode.addProperty(PROPERTY_MODULE_OPENS, d.getNameAsString());
+//                moduleChildNode.addProperty(PROPERTY_MODULE_OPENS, d.getNameAsString());
 
-                conditionalExportsToOrOpensToConsumer.accept(moduleChildNode, d.getModuleNames());
-                moduleChildNode.addTopToken(PUNCTUATION, ";");
+                conditionalExportsToOrOpensToConsumer.accept(moduleChildLine, d.getModuleNames());
+                moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
             });
 
             moduleDirective.ifModuleUsesStmt(d -> {
                 String id = makeId(MODULE_INFO_KEY + "-uses-" + d.getNameAsString());
-                moduleNode.addChild(new TreeNode("uses", id, TreeNodeKind.MODULE_USES)
-                    .hideFromNavigation()
-                    .addTopToken(KEYWORD, "uses").addSpace()
-                    .addTopToken(TYPE_NAME, d.getNameAsString())
-                    .addTopToken(PUNCTUATION, ";"));
+                ReviewLine moduleChildLine = moduleLine.addChildLine(id)
+                    .addToken(KEYWORD, "uses")
+                    .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE)
+                    .addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
             });
 
             moduleDirective.ifModuleProvidesStmt(d -> {
-                TreeNode moduleChildNode;
                 String id = makeId(MODULE_INFO_KEY + "-provides-" + d.getNameAsString());
-                moduleNode.addChild(moduleChildNode = new TreeNode("provides", id, TreeNodeKind.MODULE_PROVIDES)
-                    .hideFromNavigation()
-                    .addTopToken(KEYWORD, "provides").addSpace()
-                    .addTopToken(TYPE_NAME, d.getNameAsString()).addSpace()
-                    .addTopToken(KEYWORD, "with").addSpace());
+                ReviewLine moduleChildLine = moduleLine.addChildLine(id)
+                    .addToken(KEYWORD, "provides")
+                    .addToken(TYPE_NAME, d.getNameAsString())
+                    .addToken(KEYWORD, "with");
 
-                commaSeparateList(moduleChildNode, TYPE_NAME, d.getWith(), Object::toString);
-                moduleChildNode.addTopToken(PUNCTUATION, ";");
+                commaSeparateList(moduleChildLine, TYPE_NAME, d.getWith(), Object::toString);
+                moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
             });
         });
+
+        moduleLine.addContextEndTokens();
     }
 
-    private <T> void commaSeparateList(TreeNode node,
+    private <T> void commaSeparateList(ReviewLine reviewLine,
                                    TokenKind kind,
                                    Iterable<T> it,
                                    Function<T, String> func) {
         Iterator<T> iterator = it.iterator();
         if (iterator.hasNext()) {
-            node.addTopToken(kind, func.apply(iterator.next()));
+            reviewLine.addToken(kind, func.apply(iterator.next()), Spacing.NO_SPACE);
             while (iterator.hasNext()) {
-                node.addTopToken(PUNCTUATION, ",").addSpace()
-                    .addTopToken(kind, func.apply(iterator.next()));
+                reviewLine
+                    .addToken(PUNCTUATION, ",")
+                    .addToken(kind, func.apply(iterator.next()), Spacing.NO_SPACE);
             }
         }
     }
@@ -601,9 +592,7 @@ public class JavaASTAnalyser implements Analyser {
      *
      **********************************************************************************************/
 
-    private void visitCompilationUnit(CompilationUnit compilationUnit, TreeNode parentNode) {
-        compilationUnit.getModule().ifPresent(this::visitModuleDeclaration);
-
+    private void visitCompilationUnit(CompilationUnit compilationUnit, ReviewLine parentNode) {
         NodeList<TypeDeclaration<?>> types = compilationUnit.getTypes();
         for (final TypeDeclaration<?> typeDeclaration : types) {
             visitDefinition(typeDeclaration, parentNode);
@@ -613,12 +602,10 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     // This method is for constructors, fields, methods, etc.
-    private void visitDefinition(BodyDeclaration<?> definition, TreeNode parentNode) {
-        // firstly, we need to make a definition node and attach it to its parent node. The kind of definitionNode we
-        // make depends on the kind of definition we are processing.
-        final TreeNode definitionNode;
-
+    private void visitDefinition(BodyDeclaration<?> definition, ReviewLine parentLine) {
         boolean isTypeDeclaration = false;
+        String id;
+        String name;
         switch (definition) {
             case TypeDeclaration<?> typeDeclaration -> {
                 // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
@@ -627,17 +614,19 @@ public class JavaASTAnalyser implements Analyser {
                 }
 
                 // FIXME getKnownTypes is...icky
-                final String id = makeId(typeDeclaration);
-                definitionNode = new TreeNode(typeDeclaration.getNameAsString(), id, getTreeNodeKind(typeDeclaration));
+                id = makeId(typeDeclaration);
+                name = typeDeclaration.getNameAsString();
                 apiListing.getKnownTypes().put(typeDeclaration.getFullyQualifiedName().orElse(""), id);
                 isTypeDeclaration = true;
             }
-            case FieldDeclaration fieldDeclaration ->
-                    definitionNode = new TreeNode(fieldDeclaration.toString(), makeId(fieldDeclaration), TreeNodeKind.FIELD)
-                            .hideFromNavigation();
-            case CallableDeclaration<?> callableDeclaration ->
-                    definitionNode = new TreeNode(callableDeclaration.getNameAsString(), makeId(callableDeclaration), TreeNodeKind.METHOD)
-                            .hideFromNavigation();
+            case FieldDeclaration fieldDeclaration -> {
+                id = makeId(fieldDeclaration);
+                name = fieldDeclaration.toString();
+            }
+            case CallableDeclaration<?> callableDeclaration -> {
+                id = makeId(callableDeclaration);
+                name = callableDeclaration.getNameAsString();
+            }
             case null, default -> {
                 System.out.println("Unknown definition type: " + definition.getClass().getName());
                 System.exit(-1);
@@ -645,61 +634,87 @@ public class JavaASTAnalyser implements Analyser {
             }
         }
 
-        parentNode.addChild(definitionNode);
+        // when we are dealing with a type declaration, annotations go on the line *before* the definition,
+        // as opposed to fields and methods where they go on the same line
+        final boolean showAnnotationsOnNewLine = isTypeDeclaration;
 
-        final TreeNodeKind kind = definitionNode.getKind();
+        final ReviewLine definitionLine;
 
-        // now we are ready to start visiting the various parts of the definition
-        visitJavaDoc(definition, definitionNode);
-        visitAnnotations(definition, isTypeDeclaration, isTypeDeclaration, definitionNode);
+        if (isTypeDeclaration) {
+            visitAnnotations(definition, isTypeDeclaration, showAnnotationsOnNewLine, parentLine, id);
+            visitJavaDoc(definition, parentLine, id);
+            definitionLine = parentLine.addChildLine(new ReviewLine(parentLine, id));
+        } else {
+            visitJavaDoc(definition, parentLine, id);
+            definitionLine = parentLine.addChildLine(new ReviewLine(parentLine, id));
+            visitAnnotations(definition, isTypeDeclaration, showAnnotationsOnNewLine, definitionLine, definitionLine);
+        }
 
-        // Add modifiers
+        // Add modifiers - public, protected, static, final, etc
         for (final Modifier modifier : ((NodeWithModifiers<?>)definition).getModifiers()) {
-            definitionNode.addTopToken(KEYWORD, modifier.toString());
+            definitionLine.addToken(new ReviewToken(KEYWORD, modifier.getKeyword().asString()));
         }
 
         // for type declarations, add in if it is a class, annotation, enum, interface, etc
         if (definition instanceof TypeDeclaration<?> typeDeclaration) {
-            definitionNode.addTopToken(KEYWORD, kind.getTypeDeclarationString()).addSpace();
+            TokenKind kind = getTokenKind(typeDeclaration);
+            definitionLine.addToken(new ReviewToken(KEYWORD, kind.getTypeDeclarationString()));
 
             // Note that it is not necessary to specify the ID here, as it is already specified on the TreeNode
-            Token typeNameToken = new Token(TYPE_NAME, typeDeclaration.getNameAsString());
+            ReviewToken typeNameToken = new ReviewToken(kind, name)
+                .setSpacing(Spacing.NO_SPACE); // no space here - we have to see if there is any type parameters below first
+
+            typeNameToken.setNavigationDisplayName(name);
+
             possiblyAddNavigationLink(typeNameToken, typeDeclaration);
             possiblyDeprecate(typeNameToken, typeDeclaration);
 
-            checkForCrossLanguageDefinitionId(definitionNode, typeDeclaration);
-            definitionNode.addTopToken(typeNameToken);
+            checkForCrossLanguageDefinitionId(definitionLine, typeDeclaration);
+            definitionLine.addToken(typeNameToken);
         }
+
+        boolean addedSpace = false;
 
         // Add type parameters for definition
         if (definition instanceof NodeWithTypeParameters<?> d) {
-            visitTypeParameters(d.getTypeParameters(), definitionNode);
+            spacingState = SpacingState.SKIP_NEXT_SUFFIX;
+            boolean modified = visitTypeParameters(d.getTypeParameters(), definitionLine);
+            spacingState = SpacingState.DEFAULT;
+
+            if (modified) {
+                // add the space we skipped earlier, due to the generics
+                definitionLine.addSpace();
+                addedSpace = true;
+            }
+        }
+
+        if (!addedSpace && definition instanceof TypeDeclaration<?>) {
+            // add the space we skipped earlier, due to the generics
+            definitionLine.addSpace();
         }
 
         // Add type for definition - this is the return type for methods
-        visitType(definition, definitionNode, RETURN_TYPE);
+        visitType(definition, definitionLine, RETURN_TYPE);
 
         if (definition instanceof FieldDeclaration fieldDeclaration) {
             // For Fields - we add the field type and name
-            visitDeclarationNameAndVariables(fieldDeclaration, definitionNode);
-            definitionNode.addTopToken(PUNCTUATION, ";");
+            visitDeclarationNameAndVariables(fieldDeclaration, definitionLine);
+            definitionLine.addToken(new ReviewToken(PUNCTUATION, ";"));
         } else if (definition instanceof CallableDeclaration<?> n) {
             // For Methods - Add name and parameters for definition
-            visitDeclarationNameAndParameters(n, n.getParameters(), definitionNode);
+            visitDeclarationNameAndParameters(n, n.getParameters(), definitionLine);
 
             // Add throw exceptions for definition
-            visitThrowException(n, definitionNode);
+            visitThrowException(n, definitionLine);
         } else if (definition instanceof TypeDeclaration<?> d) {
             // add in types that we are extending or implementing
-            visitExtendsAndImplements((TypeDeclaration<?>) definition, definitionNode);
+            visitExtendsAndImplements((TypeDeclaration<?>) definition, definitionLine);
 
-            // finish up with opening and closing brackets
-            definitionNode.addSpace().addTopToken(PUNCTUATION, "{");
-            definitionNode.addBottomToken(new Token(PUNCTUATION, "}"));
+            definitionLine.addContextStartTokens();
 
             // now process inner values (e.g. if it is a class, interface, enum, etc
             if (d.isEnumDeclaration()) {
-                visitEnumEntries((EnumDeclaration) d, definitionNode);
+                visitEnumEntries((EnumDeclaration) d, definitionLine);
             }
 
             // Get if the declaration is interface or not
@@ -708,27 +723,27 @@ public class JavaASTAnalyser implements Analyser {
             // public custom annotation @interface's members
             if (d.isAnnotationDeclaration() && isPublicOrProtected(d.getAccessSpecifier())) {
                 final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) d;
-                visitAnnotationMember(annotationDeclaration, definitionNode);
+                visitAnnotationMember(annotationDeclaration, definitionLine);
             }
 
             // get fields
-            visitFields(isInterfaceDeclaration, d, definitionNode);
+            visitFields(isInterfaceDeclaration, d, definitionLine);
 
             // get Constructors
             final List<ConstructorDeclaration> constructors = d.getConstructors();
             if (constructors.isEmpty()) {
                 // add default constructor if there is no constructor at all, except interface and enum
                 if (!isInterfaceDeclaration && !d.isEnumDeclaration() && !d.isAnnotationDeclaration()) {
-                    addDefaultConstructor(d, definitionNode);
+                    addDefaultConstructor(d, definitionLine);
                 } else {
                     // skip and do nothing if there is no constructor in the interface.
                 }
             } else {
-                visitConstructorsOrMethods(d, isInterfaceDeclaration, true, constructors, definitionNode);
+                visitConstructorsOrMethods(d, isInterfaceDeclaration, true, constructors, definitionLine);
             }
 
             // get Methods
-            visitConstructorsOrMethods(d, isInterfaceDeclaration, false, d.getMethods(), definitionNode);
+            visitConstructorsOrMethods(d, isInterfaceDeclaration, false, d.getMethods(), definitionLine);
 
             // get Inner classes
             d.getChildNodes()
@@ -737,7 +752,7 @@ public class JavaASTAnalyser implements Analyser {
                 .map(n -> (TypeDeclaration<?>) n)
                 .forEach(innerType -> {
                     if (innerType.isEnumDeclaration() || innerType.isClassOrInterfaceDeclaration()) {
-                        visitDefinition(innerType, definitionNode);
+                        visitDefinition(innerType, definitionLine);
                     }
                 });
 
@@ -745,54 +760,54 @@ public class JavaASTAnalyser implements Analyser {
                 if (d.getMembers().isEmpty()) {
                     // we have an empty interface declaration, it is probably a marker interface and we will leave a
                     // comment to that effect
-                    definitionNode.addNewline()
-                            .addTopToken(COMMENT, "// This interface does not declare any API.");
+                    definitionLine.addChildLine().addToken(COMMENT, "// This interface does not declare any API.");
                 }
             }
+            definitionLine.addContextEndTokens();
         }
     }
 
-    private void visitEnumEntries(EnumDeclaration enumDeclaration, TreeNode parentNode) {
+    private void visitEnumEntries(EnumDeclaration enumDeclaration, ReviewLine parentLine) {
         final NodeList<EnumConstantDeclaration> enumConstantDeclarations = enumDeclaration.getEntries();
         int size = enumConstantDeclarations.size();
 
         AtomicInteger counter = new AtomicInteger();
 
         enumConstantDeclarations.forEach(enumConstantDeclaration -> {
-            TreeNode enumConstantNode = addChild(parentNode, enumConstantDeclaration.getNameAsString(), makeId(enumConstantDeclaration), TreeNodeKind.ENUM_CONSTANT);
-            enumConstantNode.hideFromNavigation();
+            final String id = makeId(enumConstantDeclaration);
+            ReviewLine enumConstantLine = parentLine.addChildLine(id);
 
-            visitJavaDoc(enumConstantDeclaration, enumConstantNode);
+            visitJavaDoc(enumConstantDeclaration, enumConstantLine, id);
 
             // annotations
-            visitAnnotations(enumConstantDeclaration, false, false, enumConstantNode);
+            visitAnnotations(enumConstantDeclaration, false, false, enumConstantLine, enumConstantLine);
 
             // create a unique id for enum constants by using the fully-qualified constant name
             // (package, enum name, and enum constant name)
             final String name = enumConstantDeclaration.getNameAsString();
 
             // Note we do not place the id here, rather it goes on the treeNode
-            Token enumToken = new Token(ENUM_CONSTANT, name);
-            enumConstantNode.addTopToken(enumToken);
+            ReviewToken enumToken = new ReviewToken(ENUM_CONSTANT, name).setSpacing(Spacing.NO_SPACE);
+            enumConstantLine.addToken(enumToken);
             possiblyDeprecate(enumToken, enumConstantDeclaration);
 
             // add tokens for comma-separated list of arguments
             int argumentsSize = enumConstantDeclaration.getArguments().size();
             if (argumentsSize > 0) {
-                enumConstantNode.addTopToken(PUNCTUATION, "(");
+                enumConstantLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
                 for (int i = 0, max = enumConstantDeclaration.getArguments().size(); i < max; i++) {
-                    visitExpression(enumConstantDeclaration.getArguments().get(i), enumConstantNode);
+                    visitExpression(enumConstantDeclaration.getArguments().get(i), enumConstantLine);
                     if (i < max - 1) {
-                        enumConstantNode.addTopToken(PUNCTUATION, ",").addSpace();
+                        enumConstantLine.addToken(PUNCTUATION, ",");
                     }
                 }
-                enumConstantNode.addTopToken(PUNCTUATION, ")");
+                enumConstantLine.addToken(PUNCTUATION, ")", Spacing.NO_SPACE);
             }
 
             if (counter.getAndIncrement() < size - 1) {
-                enumConstantNode.addTopToken(PUNCTUATION, ",");
+                enumConstantLine.addToken(PUNCTUATION, ",");
             } else {
-                enumConstantNode.addTopToken(PUNCTUATION, ";");
+                enumConstantLine.addToken(PUNCTUATION, ";");
             }
         });
     }
@@ -802,15 +817,20 @@ public class JavaASTAnalyser implements Analyser {
      * apiview_properties.json file. This is used most commonly in conjunction with TypeSpec-generated libraries,
      * so that we may review cross languages with some level of confidence that the types and methods are the same.
      */
-    private void checkForCrossLanguageDefinitionId(TreeNode treeNode, Node node) {
-        final String fqn = getNodeFullyQualifiedName(node);
-        apiListing.getApiViewProperties().getCrossLanguageDefinitionId(fqn)
-            .ifPresent(crossLangId -> treeNode.addProperty(PROPERTY_CROSS_LANGUAGE_ID, crossLangId));
+    private void checkForCrossLanguageDefinitionId(ReviewLine reviewLine, Node node) {
+//        final String fqn = getNodeFullyQualifiedName(node);
+//        apiListing.getApiViewProperties().getCrossLanguageDefinitionId(fqn)
+//            .ifPresent(crossLangId -> reviewLine.addProperty(PROPERTY_CROSS_LANGUAGE_ID, crossLangId));
     }
 
-    private void visitAnnotationMember(AnnotationDeclaration annotationDeclaration, final TreeNode parentNode) {
+    private void visitAnnotationMember(AnnotationDeclaration annotationDeclaration, final ReviewLine parentLine) {
         // Member methods in the annotation declaration
         NodeList<BodyDeclaration<?>> annotationDeclarationMembers = annotationDeclaration.getMembers();
+        if (annotationDeclarationMembers.isEmpty()) {
+            parentLine.addChildLine().addToken(COMMENT, "// This annotation does not declare any members.");
+            return;
+        }
+
         for (BodyDeclaration<?> bodyDeclaration : annotationDeclarationMembers) {
             Optional<AnnotationMemberDeclaration> annotationMemberDeclarationOptional = bodyDeclaration.toAnnotationMemberDeclaration();
             if (annotationMemberDeclarationOptional.isEmpty()) {
@@ -818,36 +838,28 @@ public class JavaASTAnalyser implements Analyser {
             }
             final AnnotationMemberDeclaration annotationMemberDeclaration = annotationMemberDeclarationOptional.get();
 
-            TreeNode annotationMemberNode;
-            parentNode.addChild(annotationMemberNode = new TreeNode(
-                    annotationMemberDeclaration.getNameAsString(),
-                    makeId(annotationMemberDeclaration),
-                    TreeNodeKind.ANNOTATION));
-            annotationMemberNode.hideFromNavigation();
+            final String id = makeId(annotationMemberDeclaration);
+            ReviewLine annotationMemberLine = parentLine.addChildLine(id);
 
-            visitClassType(annotationMemberDeclaration.getType(), annotationMemberNode, RETURN_TYPE);
-            annotationMemberNode.addSpace();
+            visitClassType(annotationMemberDeclaration.getType(), annotationMemberLine, RETURN_TYPE);
 
-            annotationMemberNode.addTopToken(METHOD_NAME, annotationMemberDeclaration.getNameAsString());
-            annotationMemberNode.addTopToken(PUNCTUATION, "()");
+            annotationMemberLine.addToken(METHOD_NAME, annotationMemberDeclaration.getNameAsString(), Spacing.NO_SPACE);
+            annotationMemberLine.addToken(PUNCTUATION, "()", Spacing.NO_SPACE);
 
             // default value
             final Optional<Expression> defaultValueOptional = annotationMemberDeclaration.getDefaultValue();
             if (defaultValueOptional.isPresent()) {
-                annotationMemberNode.addSpace().addTopToken(KEYWORD, "default").addSpace();
+                annotationMemberLine.addToken(KEYWORD, "default", Spacing.SPACE_BEFORE_AND_AFTER);
 
                 final Expression defaultValueExpr = defaultValueOptional.get();
-                visitExpression(defaultValueExpr, annotationMemberNode);
-//                final String value = defaultValueExpr.toString();
-//                annotationMemberNode.addTopToken(KEYWORD, value);
+                visitExpression(defaultValueExpr, annotationMemberLine);
             }
-            annotationMemberNode.addTopToken(PUNCTUATION, ";");
         }
     }
 
     private void visitFields(final boolean isInterfaceDeclaration,
                              final TypeDeclaration<?> typeDeclaration,
-                             final TreeNode parentNode) {
+                             final ReviewLine parentLine) {
         final List<? extends FieldDeclaration> fieldDeclarations = typeDeclaration.getFields();
 
         for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
@@ -859,7 +871,7 @@ public class JavaASTAnalyser implements Analyser {
                 continue;
             }
 
-            visitDefinition(fieldDeclaration, parentNode);
+            visitDefinition(fieldDeclaration, parentLine);
         }
     }
 
@@ -867,7 +879,7 @@ public class JavaASTAnalyser implements Analyser {
                                             final boolean isInterfaceDeclaration,
                                             final boolean isConstructor,
                                             final List<? extends CallableDeclaration<?>> callableDeclarations,
-                                            final TreeNode parentNode) {
+                                            final ReviewLine parentLine) {
         if (isConstructor) {
             // determining if we are looking at a set of constructors that are all private, indicating that the
             // class is unlikely to be instantiable via 'new' calls.
@@ -882,10 +894,8 @@ public class JavaASTAnalyser implements Analyser {
                     return;
                 }
 
-                parentNode
-                    .addNewline()
-                    .addTabSpace()
-                    .addTopToken(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'.");
+                parentLine.addChildLine()
+                    .addToken(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'.");
                 return;
             }
         }
@@ -913,21 +923,21 @@ public class JavaASTAnalyser implements Analyser {
             .forEach((groupName, group) -> {
                 if (showGroupings && !group.isEmpty()) {
                     // we group inside the APIView each of the groups, so that we can visualise their operations more clearly
-                    parentNode.addNewline()
-                            .addTopToken(COMMENT, "// " + groupName + ":");
+                    parentLine.addChildLine()
+                        .addToken(COMMENT, "// " + groupName + ":");
                 }
-                group.forEach(callableDeclaration -> visitDefinition(callableDeclaration, parentNode));
+                group.forEach(callableDeclaration -> visitDefinition(callableDeclaration, parentLine));
             });
     }
 
-    private void visitExtendsAndImplements(TypeDeclaration<?> typeDeclaration, TreeNode definitionNode) {
+    private void visitExtendsAndImplements(TypeDeclaration<?> typeDeclaration, ReviewLine definitionLine) {
         BiConsumer<NodeList<ClassOrInterfaceType>, TokenKind> c = (nodeList, kind) -> {
             for (int i = 0, max = nodeList.size(); i < max; i++) {
                 final ClassOrInterfaceType node = nodeList.get(i);
-                visitType(node, definitionNode, kind);
+                visitType(node, definitionLine, kind);
 
                 if (i < max - 1) {
-                    definitionNode.addTopToken(PUNCTUATION, ",").addSpace();
+                    definitionLine.addToken(PUNCTUATION, ",");
                 }
             }
         };
@@ -935,7 +945,7 @@ public class JavaASTAnalyser implements Analyser {
         // Extends a class
         if (typeDeclaration instanceof NodeWithExtends<?> d) {
             if (d.getExtendedTypes().isNonEmpty()) {
-                definitionNode.addSpace().addTopToken(KEYWORD, "extends").addSpace();
+                definitionLine.addToken(KEYWORD, "extends");
                 c.accept(d.getExtendedTypes(), EXTENDS_TYPE);
             }
         }
@@ -943,29 +953,29 @@ public class JavaASTAnalyser implements Analyser {
         // implements a class
         if (typeDeclaration instanceof NodeWithImplements<?> d) {
             if (d.getImplementedTypes().isNonEmpty()) {
-                definitionNode.addSpace().addTopToken(KEYWORD, "implements").addSpace();
+                definitionLine.addToken(KEYWORD, "implements");
                 c.accept(d.getImplementedTypes(), IMPLEMENTS_TYPE);
             }
         }
     }
 
-    private void visitDeclarationNameAndVariables(FieldDeclaration fieldDeclaration, TreeNode definitionNode) {
+    private void visitDeclarationNameAndVariables(FieldDeclaration fieldDeclaration, ReviewLine definitionLine) {
         final NodeList<VariableDeclarator> variables = fieldDeclaration.getVariables();
         if (variables.size() > 1) {
             for (int i = 0; i < variables.size(); i++) {
                 final VariableDeclarator variableDeclarator = variables.get(i);
-                Token token = new Token(FIELD_NAME, variableDeclarator.getNameAsString());
-                definitionNode.addTopToken(token);
+                ReviewToken token = new ReviewToken(FIELD_NAME, variableDeclarator.getNameAsString());
+                definitionLine.addToken(token);
                 possiblyDeprecate(token, fieldDeclaration);
 
                 if (i < variables.size() - 1) {
-                    definitionNode.addTopToken(PUNCTUATION, ",").addSpace();
+                    definitionLine.addToken(PUNCTUATION, ",");
                 }
             }
         } else if (variables.size() == 1) {
             final VariableDeclarator variableDeclarator = variables.get(0);
-            Token token = new Token(FIELD_NAME, variableDeclarator.getNameAsString());
-            definitionNode.addTopToken(token);
+            ReviewToken token = new ReviewToken(FIELD_NAME, variableDeclarator.getNameAsString());
+            definitionLine.addToken(token);
             possiblyDeprecate(token, fieldDeclaration);
 
             final Optional<Expression> variableDeclaratorOption = variableDeclarator.getInitializer();
@@ -977,96 +987,96 @@ public class JavaASTAnalyser implements Analyser {
                 } else {
                     // we want to make string constants look like strings, so we need to look for them within the
                     // variable declarator
-                    definitionNode.addSpace().addTopToken(PUNCTUATION, "=").addSpace();
-                    visitExpression(e, definitionNode);
+                    definitionLine.addToken(PUNCTUATION, "=");
+                    visitExpression(e, definitionLine);
                 }
             }
         }
     }
 
-    private void visitExpression(Expression expression, TreeNode node) {
-        visitExpression(expression, node, false);
+    private void visitExpression(Expression expression, ReviewLine definitionLine) {
+        visitExpression(expression, definitionLine, false);
     }
 
-    private void visitExpression(Expression expression, TreeNode node, boolean condensed) {
+    private void visitExpression(Expression expression, ReviewLine definitionLine, boolean condensed) {
         if (expression instanceof MethodCallExpr methodCallExpr) {
-            node.addTopToken(METHOD_NAME, methodCallExpr.getNameAsString());
-            node.addTopToken(PUNCTUATION, "(");
+            definitionLine.addToken(METHOD_NAME, methodCallExpr.getNameAsString());
+            definitionLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
             NodeList<Expression> arguments = methodCallExpr.getArguments();
             for (int i = 0; i < arguments.size(); i++) {
                 Expression argument = arguments.get(i);
                 if (argument instanceof StringLiteralExpr) {
-                    node.addTopToken(STRING_LITERAL, argument.toString());
+                    definitionLine.addToken(STRING_LITERAL, argument.toString(), Spacing.NO_SPACE);
                 } else {
-                    node.addTopToken(TEXT, argument.toString());
+                    definitionLine.addToken(TEXT, argument.toString(), Spacing.NO_SPACE);
                 }
                 if (i < arguments.size() - 1) {
-                    node.addTopToken(PUNCTUATION, ",").addSpace();
+                    definitionLine.addToken(PUNCTUATION, ",");
                 }
             }
-            node.addTopToken(PUNCTUATION, ")");
+            definitionLine.addToken(PUNCTUATION, ")", Spacing.NO_SPACE);
             return;
         } else if (expression instanceof StringLiteralExpr stringLiteralExpr) {
-            node.addTopToken(STRING_LITERAL, stringLiteralExpr.toString());
+            definitionLine.addToken(STRING_LITERAL, stringLiteralExpr.toString());
             return;
         } else if (expression instanceof ArrayInitializerExpr arrayInitializerExpr) {
-//            node.addTopToken(STRING_LITERAL, arrayInitializerExpr.toString());
             if (!condensed) {
-                node.addTopToken(PUNCTUATION, "{ ");
+                definitionLine.addToken(PUNCTUATION, "{");
             }
             for (int i = 0; i < arrayInitializerExpr.getChildNodes().size(); i++) {
                 Node n = arrayInitializerExpr.getChildNodes().get(i);
 
                 if (n instanceof Expression) {
-                    visitExpression((Expression) n, node, condensed);
+                    visitExpression((Expression) n, definitionLine, condensed);
                 } else {
-                    node.addTopToken(TEXT, arrayInitializerExpr.toString()); // FIXME This was ANNOTATION_PARAMETER_VALUE
+                    definitionLine.addToken(TEXT, arrayInitializerExpr.toString()); // FIXME This was ANNOTATION_PARAMETER_VALUE
                 }
 
                 if (i < arrayInitializerExpr.getChildNodes().size() - 1) {
-                    node.addTopToken(PUNCTUATION, ", ");
+                    definitionLine.addToken(PUNCTUATION, ",");
                 }
             }
             if (!condensed) {
-                node.addTopToken(PUNCTUATION, " }");
+                definitionLine.addToken(PUNCTUATION, "}", Spacing.SPACE_BEFORE);
             }
             return;
         } else if (expression instanceof IntegerLiteralExpr ||
                    expression instanceof LongLiteralExpr ||
                    expression instanceof DoubleLiteralExpr) {
-            node.addTopToken(NUMBER, expression.toString());
+            definitionLine.addToken(NUMBER, expression.toString(), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof FieldAccessExpr fieldAccessExpr) {
-            visitExpression(fieldAccessExpr.getScope(), node);
-            node.addTopToken(PUNCTUATION, ".")
-                .addTopToken(FIELD_NAME, fieldAccessExpr.getNameAsString());
+            visitExpression(fieldAccessExpr.getScope(), definitionLine);
+            definitionLine
+                .addToken(PUNCTUATION, ".", Spacing.NO_SPACE)
+                .addToken(FIELD_NAME, fieldAccessExpr.getNameAsString(), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof BinaryExpr binaryExpr) {
-            visitExpression(binaryExpr.getLeft(), node);
-            node.addTopToken(TEXT, " " + binaryExpr.getOperator().asString() + " ");
-            visitExpression(binaryExpr.getRight(), node);
+            visitExpression(binaryExpr.getLeft(), definitionLine);
+            definitionLine.addToken(TEXT, " " + binaryExpr.getOperator().asString() + " ");
+            visitExpression(binaryExpr.getRight(), definitionLine);
             return;
         } else if (expression instanceof ClassExpr classExpr) {
             // lookup to see if the type is known about, if so, make it a link, otherwise leave it as text
             String typeName = classExpr.getChildNodes().getFirst().toString();
 //            if (apiListing.getKnownTypes().containsKey(typeName)) {
-            node.addTopToken(TYPE_NAME, typeName, null); // FIXME add ID
+            definitionLine.addToken(TYPE_NAME, typeName, null, Spacing.NO_SPACE); // FIXME add ID
             return;
 //            }
 //        } else {
-//            node.addTopToken(TEXT, expression.toString());
+//            node.addToken(TEXT, expression.toString());
         } else if (expression instanceof NameExpr nameExpr) {
-            node.addTopToken(TYPE_NAME, nameExpr.toString());
+            definitionLine.addToken(TYPE_NAME, nameExpr.toString(), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof BooleanLiteralExpr booleanLiteralExpr) {
-            node.addTopToken(KEYWORD, booleanLiteralExpr.toString());
+            definitionLine.addToken(KEYWORD, booleanLiteralExpr.toString(), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof ObjectCreationExpr) {
-            node.addTopToken(KEYWORD, "new").addSpace()
-                .addTopToken(TYPE_NAME, ((ObjectCreationExpr) expression).getTypeAsString())
-                .addTopToken(PUNCTUATION, "(")
-                .addTopToken(COMMENT, "/* Elided */")
-                .addTopToken(PUNCTUATION, ")");
+            definitionLine.addToken(KEYWORD, "new")
+                .addToken(TYPE_NAME, ((ObjectCreationExpr) expression).getTypeAsString())
+                .addToken(PUNCTUATION, "(")
+                .addToken(COMMENT, "/* Elided */")
+                .addToken(PUNCTUATION, ")");
             return;
         }
 
@@ -1078,16 +1088,28 @@ public class JavaASTAnalyser implements Analyser {
             if (lastPeriod != -1) {
                 value = value.substring(lastPeriod + 1);
             }
-            node.addTopToken(TEXT, upperCase(value));
+            definitionLine.addToken(TEXT, upperCase(value));
         } else {
-            node.addTopToken(TEXT, value);
+            definitionLine.addToken(TEXT, value);
         }
     }
 
     private void visitAnnotations(final NodeWithAnnotations<?> nodeWithAnnotations,
                                   final boolean showAnnotationProperties,
                                   final boolean addNewline,
-                                  final TreeNode methodNode) {
+                                  final ReviewLine parentLine,
+                                  final ReviewLine targetLine) {
+        visitAnnotations(nodeWithAnnotations, showAnnotationProperties, addNewline, parentLine, targetLine.getLineId());
+    }
+
+    private void visitAnnotations(final NodeWithAnnotations<?> nodeWithAnnotations,
+                                  final boolean showAnnotationProperties,
+                                  final boolean addNewline,
+                                  final ReviewLine parentLine,
+                                  final String targetLine) {
+
+        final ReviewLine[] currentReviewLine = new ReviewLine[] { parentLine };
+
         Consumer<AnnotationExpr> consumer = annotation -> {
             // Check the annotation rules map for any overrides
             final String annotationName = annotation.getName().toString();
@@ -1100,13 +1122,12 @@ public class JavaASTAnalyser implements Analyser {
                 return;
             }
 
-            renderAnnotation(model, methodNode);
-
             if (model.isAddNewline()) {
-                methodNode.addNewline();
-            } else {
-                methodNode.addTopToken(WHITESPACE, " ");
+                currentReviewLine[0] = parentLine.addChildLine();
+                currentReviewLine[0].setRelatedToLine(targetLine);
             }
+
+            renderAnnotation(model, currentReviewLine[0]);
         };
 
         nodeWithAnnotations.getAnnotations()
@@ -1116,12 +1137,13 @@ public class JavaASTAnalyser implements Analyser {
             .forEach(consumer);
     }
 
-    private void renderAnnotation(AnnotationRendererModel m, TreeNode node) {
+    private void renderAnnotation(AnnotationRendererModel m, ReviewLine reviewLine) {
         final AnnotationExpr a = m.getAnnotation();
-        node.addTopToken(ANNOTATION_NAME, "@" + a.getNameAsString());
+
+        reviewLine.addToken(ANNOTATION_NAME, "@" + a.getNameAsString(), Spacing.NO_SPACE);
         if (m.isShowProperties()) {
             if (a instanceof NormalAnnotationExpr d) {
-                node.addTopToken(PUNCTUATION, "(");
+                reviewLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
                 NodeList<MemberValuePair> pairs = d.getPairs();
                 for (int i = 0; i < pairs.size(); i++) {
                     MemberValuePair pair = pairs.get(i);
@@ -1132,50 +1154,51 @@ public class JavaASTAnalyser implements Analyser {
                     final Expression valueExpr = pair.getValue();
                     if (m.isCondensed()) {
                         if (valueExpr.isBooleanLiteralExpr()) {
-                            node.addTopToken(ANNOTATION_PARAMETER_NAME, upperCase(pair.getNameAsString()));
+                            reviewLine.addToken(ANNOTATION_PARAMETER_NAME, upperCase(pair.getNameAsString()));
                         } else {
-                            visitExpression(valueExpr, node, m.isCondensed());
+                            visitExpression(valueExpr, reviewLine, m.isCondensed());
                         }
                     } else {
-                        node.addTopToken(ANNOTATION_PARAMETER_NAME, pair.getNameAsString());
-                        node.addTopToken(PUNCTUATION, " = ");
-                        visitExpression(valueExpr, node, m.isCondensed());
+                        reviewLine.addToken(ANNOTATION_PARAMETER_NAME, pair.getNameAsString());
+                        reviewLine.addToken(PUNCTUATION, " = ");
+                        visitExpression(valueExpr, reviewLine, m.isCondensed());
                     }
 
                     if (i < pairs.size() - 1) {
-                        node.addTopToken(PUNCTUATION, ", ");
+                        reviewLine.addToken(PUNCTUATION, ",");
                     }
                 }
 
-                node.addTopToken(PUNCTUATION, ")");
+                reviewLine.addToken(PUNCTUATION, ")");
             } else if (a instanceof SingleMemberAnnotationExpr d) {
-                node.addTopToken(PUNCTUATION, "(");
-                visitExpression(d.getMemberValue(), node, m.isCondensed());
-                node.addTopToken(PUNCTUATION, ")");
+                reviewLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
+                visitExpression(d.getMemberValue(), reviewLine, m.isCondensed());
+                reviewLine.addToken(PUNCTUATION, ")", Spacing.NO_SPACE);
             }
+        } else {
+            reviewLine.addSpace();
         }
     }
 
     private void visitDeclarationNameAndParameters(CallableDeclaration<?> callableDeclaration,
                                                    NodeList<Parameter> parameters,
-                                                   TreeNode node) {
+                                                   ReviewLine definitionLine) {
         String name = callableDeclaration.getNameAsString();
-        Token nameToken = new Token(METHOD_NAME, name);
-        checkForCrossLanguageDefinitionId(node, callableDeclaration);
-        node.addTopToken(nameToken);
+        ReviewToken nameToken = new ReviewToken(METHOD_NAME, name).setSpacing(Spacing.NO_SPACE);
+        checkForCrossLanguageDefinitionId(definitionLine, callableDeclaration);
+        definitionLine.addToken(nameToken);
         possiblyDeprecate(nameToken, callableDeclaration);
 
-        node.addTopToken(PUNCTUATION, "(");
+        definitionLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
 
         if (!parameters.isEmpty()) {
             for (int i = 0, max = parameters.size(); i < max; i++) {
                 final Parameter parameter = parameters.get(i);
-                visitType(parameter, node, PARAMETER_TYPE);
-                node.addTopToken(WHITESPACE, " ");
-                node.addTopToken(PARAMETER_NAME, parameter.getNameAsString());
+                visitType(parameter, definitionLine, PARAMETER_TYPE);
+                definitionLine.addToken(PARAMETER_NAME, parameter.getNameAsString(), Spacing.NO_SPACE);
 
                 if (i < max - 1) {
-                    node.addTopToken(PUNCTUATION, ",").addTopToken(PARAMETER_SEPARATOR, " ");
+                    definitionLine.addToken(PUNCTUATION, ",");//.addToken(TokenKind.PARAMETER_SEPARATOR, " ");
                 }
             }
         }
@@ -1192,71 +1215,73 @@ public class JavaASTAnalyser implements Analyser {
                         m.getBody().flatMap(blockStmt -> blockStmt.getStatements().stream()
                                     .filter(Statement::isReturnStmt)
                                     .findFirst())
-                            .ifPresent(ret -> node.addTopToken(COMMENT, "// returns " + ret.getChildNodes().get(0)));
+                            .ifPresent(ret -> definitionLine.addToken(COMMENT, "// returns " + ret.getChildNodes().get(0)));
                     }
                 }
             }
         }
 
         // close declaration
-        node.addTopToken(PUNCTUATION, ")").addSpace();
+        definitionLine.addToken(PUNCTUATION, ")");
     }
 
-    private void visitTypeParameters(NodeList<TypeParameter> typeParameters, TreeNode node) {
+    private boolean visitTypeParameters(NodeList<TypeParameter> typeParameters, ReviewLine reviewLine) {
         final int size = typeParameters.size();
         if (size == 0) {
-            return;
+            return false;
         }
-        node.addTopToken(PUNCTUATION, "<");
+        reviewLine.addToken(PUNCTUATION, "<", Spacing.NO_SPACE);
         for (int i = 0; i < size; i++) {
             final TypeParameter typeParameter = typeParameters.get(i);
-            visitGenericTypeParameter(typeParameter, node);
+            visitGenericTypeParameter(typeParameter, reviewLine);
             if (i != size - 1) {
-                node.addTopToken(PUNCTUATION, ",").addSpace();
+                reviewLine.addToken(PUNCTUATION, ",");
             }
         }
-        node.addTopToken(PUNCTUATION, ">");
+        reviewLine.addToken(PUNCTUATION, ">", spacingState.getSpacing());
+        return true;
     }
 
-    private void visitGenericTypeParameter(TypeParameter typeParameter, TreeNode node) {
-        node.addTopToken(new Token(TYPE_NAME, typeParameter.getNameAsString()));
+    private void visitGenericTypeParameter(TypeParameter typeParameter, ReviewLine reviewLine) {
+        reviewLine.addToken(TYPE_NAME, typeParameter.getNameAsString(), spacingState.getSpacing());
 
         // get type bounds
         final NodeList<ClassOrInterfaceType> typeBounds = typeParameter.getTypeBound();
         final int size = typeBounds.size();
         if (size != 0) {
-            node.addSpace().addTopToken(KEYWORD, "extends").addSpace();
+            Spacing nextSpacing = spacingState == SpacingState.SKIP_NEXT_SUFFIX ? Spacing.SPACE_BEFORE : Spacing.NO_SPACE;
+            reviewLine.addToken(KEYWORD, "extends", nextSpacing);
             for (ClassOrInterfaceType typeBound : typeBounds) {
-                visitType(typeBound, node, TYPE_NAME);
+                visitType(typeBound, reviewLine, TYPE_NAME);
             }
         }
     }
 
-    private void visitThrowException(NodeWithThrownExceptions<?> node, TreeNode methodNode) {
+    private void visitThrowException(NodeWithThrownExceptions<?> node, ReviewLine methodLine) {
         final NodeList<ReferenceType> thrownExceptions = node.getThrownExceptions();
         if (thrownExceptions.isEmpty()) {
             return;
         }
 
-        methodNode.addTopToken(KEYWORD, "throws").addSpace();
-        commaSeparateList(methodNode, TYPE_NAME, thrownExceptions, e -> e.getElementType().toString());
-        methodNode.addSpace();
+        methodLine.addToken(KEYWORD, "throws");
+        commaSeparateList(methodLine, TYPE_NAME, thrownExceptions, e -> e.getElementType().toString());
     }
 
-    private void visitType(Object type, TreeNode parentNode, TokenKind kind) {
+    private void visitType(Object type, ReviewLine reviewLine, TokenKind kind) {
         if (type instanceof Parameter d) {
-            visitClassType(d.getType(), parentNode, kind);
-            if (((Parameter) type).isVarArgs()) {
-                parentNode.addTopToken(kind, "...");
+            boolean isVarArgs = d.isVarArgs();
+            spacingState = isVarArgs ? SpacingState.SKIP_NEXT_SUFFIX : SpacingState.DEFAULT;
+            visitClassType(d.getType(), reviewLine, kind);
+            spacingState = SpacingState.DEFAULT;
+            if (isVarArgs) {
+                reviewLine.addToken(kind, "...");
             }
         } else if (type instanceof MethodDeclaration d) {
-            visitClassType(d.getType(), parentNode, kind);
-            parentNode.addSpace();
+            visitClassType(d.getType(), reviewLine, kind);
         } else if (type instanceof FieldDeclaration d) {
-            visitClassType(d.getElementType(), parentNode, kind);
-            parentNode.addSpace();
+            visitClassType(d.getElementType(), reviewLine, kind);
         } else if (type instanceof ClassOrInterfaceType d) {
-            visitClassType(d, parentNode, kind);
+            visitClassType(d, reviewLine, kind);
         } else if (type instanceof AnnotationDeclaration ||
                    type instanceof ConstructorDeclaration ||
                    type instanceof ClassOrInterfaceDeclaration ||
@@ -1267,20 +1292,23 @@ public class JavaASTAnalyser implements Analyser {
         }
     }
 
-    private void visitClassType(Type type, TreeNode parentNode, TokenKind kind) {
+    private void visitClassType(Type type, ReviewLine reviewLine, TokenKind kind) {
+        SpacingState spacingBefore = spacingState;
+
         if (type.isPrimitiveType()) {
-            parentNode.addTopToken(kind, type.asPrimitiveType().toString());
+            reviewLine.addToken(kind, type.asPrimitiveType().toString(), spacingState.getSpacing());
         } else if (type.isVoidType()) {
-            parentNode.addTopToken(kind, "void");
+            reviewLine.addToken(kind, "void", spacingState.getSpacing());
         } else if (type.isReferenceType()) {
             // Array Type
             type.ifArrayType(arrayType -> {
-                visitClassType(arrayType.getComponentType(), parentNode, kind);
-                parentNode.addTopToken(kind, "[]");
+                // No space between the array type and the brackets
+                spacingState = SpacingState.SKIP_NEXT_SUFFIX;
+                visitClassType(arrayType.getComponentType(), reviewLine, kind);
+                reviewLine.addToken(kind, "[]", Spacing.DEFAULT);
             });
             // Class or Interface type
-            type.ifClassOrInterfaceType(t -> visitTypeDFS(t, parentNode, kind));
-
+            type.ifClassOrInterfaceType(t -> visitTypeDFS(t, reviewLine, kind));
         } else if (type.isWildcardType()) {
             // TODO: add wild card type implementation, #756
         } else if (type.isUnionType()) {
@@ -1290,29 +1318,30 @@ public class JavaASTAnalyser implements Analyser {
         } else {
             System.err.println("Unknown type");
         }
+        spacingState = spacingBefore;
     }
 
-    private void visitTypeDFS(Node node, TreeNode parentNode, TokenKind kind) {
+    private void visitTypeDFS(Node node, ReviewLine reviewLine, TokenKind kind) {
         final List<Node> nodes = node.getChildNodes();
         final int childrenSize = nodes.size();
         // Recursion's base case: leaf node
         if (childrenSize <= 1) {
             if (node instanceof WildcardType d) {
                 if (d.getExtendedType().isPresent()) {
-                    parentNode.addTopToken(kind, "?").addSpace()
-                              .addTopToken(KEYWORD, "extends").addSpace();
-                    visitTypeDFS(d.getExtendedType().get(), parentNode, kind);
+                    reviewLine.addToken(kind, "?")
+                              .addToken(KEYWORD, "extends");
+                    visitTypeDFS(d.getExtendedType().get(), reviewLine, kind);
                 } else if (d.getSuperType().isPresent()) {
-                    parentNode.addTopToken(kind, "?").addSpace()
-                              .addTopToken(KEYWORD, "super").addSpace();
-                    visitTypeDFS(d.getSuperType().get(), parentNode, kind);
+                    reviewLine.addToken(kind, "?")
+                              .addToken(KEYWORD, "super");
+                    visitTypeDFS(d.getSuperType().get(), reviewLine, kind);
                 } else {
-                    parentNode.addTopToken(kind, "?");
+                    reviewLine.addToken(kind, "?", Spacing.NO_SPACE);
                 }
             } else {
-                final String typeName = node.toString();
-                final Token token = new Token(kind, typeName);
-                parentNode.addTopToken(token);
+                final ReviewToken token = new ReviewToken(kind, node.toString());
+                token.setSpacing(spacingState.getSpacing());
+                reviewLine.addToken(token);
                 possiblyAddNavigationLink(token, node);
             }
             return;
@@ -1354,54 +1383,69 @@ public class JavaASTAnalyser implements Analyser {
             for (int i = 0; i < childNodes.size() - genericTypeArgsCount; i++) {
                 // for each child node that is not a type arg, use "." separator
                 if (i > 0) {
-                    parentNode.addTopToken(PUNCTUATION, ".");
+                    reviewLine.addToken(PUNCTUATION, ".", Spacing.NO_SPACE);
                 }
-                visitTypeDFS(childNodes.get(i), parentNode, kind);
+                SpacingState before = spacingState;
+                spacingState = SpacingState.SKIP_NEXT_SUFFIX;
+                visitTypeDFS(childNodes.get(i), reviewLine, kind);
+                spacingState = before;
             }
             // Now, add "<" before adding the type arg nodes
-            parentNode.addTopToken(PUNCTUATION, "<");
+            reviewLine.addToken(PUNCTUATION, "<", Spacing.NO_SPACE);
             for (int i = childNodes.size() - genericTypeArgsCount; i < childNodes.size(); i++) {
                 if (i > childNodes.size() - genericTypeArgsCount) {
                     // Add a "," separator if there are more two or more type args
-                    parentNode.addTopToken(PUNCTUATION, ",").addSpace();
+                    reviewLine.addToken(PUNCTUATION, ",");
                 }
-                visitTypeDFS(childNodes.get(i), parentNode, kind);
+                SpacingState before = spacingState;
+                spacingState = SpacingState.SKIP_NEXT_SUFFIX;
+                visitTypeDFS(childNodes.get(i), reviewLine, kind);
+                spacingState = before;
             }
             // Close the type args with ">"
-            parentNode.addTopToken(PUNCTUATION, ">");
+            reviewLine.addToken(PUNCTUATION, ">", spacingState.getSpacing());
         } else {
             // No type args, all child nodes are just part of the fully qualified class name
             for (int i = 0; i < childNodes.size(); i++) {
                 if (i > 0) {
-                    parentNode.addTopToken(PUNCTUATION, ".");
+                    reviewLine.addToken(PUNCTUATION, ".", Spacing.NO_SPACE);
                 }
-                visitTypeDFS(childNodes.get(i), parentNode, kind);
+                SpacingState before = spacingState;
+                spacingState = SpacingState.SKIP_NEXT_SUFFIX;
+                visitTypeDFS(childNodes.get(i), reviewLine, kind);
+                spacingState = before;
             }
         }
     }
 
-    private void addDefaultConstructor(TypeDeclaration<?> typeDeclaration, TreeNode parentNode) {
+    private void addDefaultConstructor(TypeDeclaration<?> typeDeclaration, ReviewLine definitionLine) {
         final String name = typeDeclaration.getNameAsString();
         final String definitionId = makeId(typeDeclaration.getNameAsString());
 
-        parentNode.addChild(new TreeNode(null, makeId(typeDeclaration)+"_default_ctor", TreeNodeKind.METHOD)
-            .hideFromNavigation()
-            .addTopToken(KEYWORD, "public").addSpace()
-            .addTopToken(METHOD_NAME, name, definitionId)
-            .addTopToken(PUNCTUATION, "()"));
+        definitionLine.addChildLine(makeId(typeDeclaration)+"_default_ctor")
+            .addToken(KEYWORD, "public")
+            .addToken(METHOD_NAME, name, definitionId)
+            .addToken(PUNCTUATION, "()");
     }
 
-    private void visitJavaDoc(BodyDeclaration<?> bodyDeclaration, TreeNode parentNode) {
-        attemptToFindJavadocComment(bodyDeclaration).ifPresent(jd -> visitJavaDoc(jd, parentNode));
+    private void visitJavaDoc(final BodyDeclaration<?> bodyDeclaration, final ReviewLine reviewLine, String targetLineId) {
+        attemptToFindJavadocComment(bodyDeclaration).ifPresent(jd -> visitJavaDoc(jd, reviewLine, targetLineId));
     }
 
-    private void visitJavaDoc(JavadocComment javadoc, TreeNode parentNode) {
+    private void visitJavaDoc(JavadocComment javadoc, Parent parent, String targetLineId) {
         String str = javadoc.toString();
         if (str == null || str.isEmpty()) {
             return;
         }
 
-        Stream.of(str.split("\n")).forEach(line -> {
+        String[] lines = str.split("\n");
+        if (lines.length == 0) {
+            return;
+        }
+
+        Stream.of(lines).forEach(line -> {
+            final ReviewLine reviewLine = parent.addChildLine().setRelatedToLine(targetLineId);
+
             if (line.contains("&")) {
                 line = HtmlEscape.unescapeHtml(line);
             }
@@ -1417,42 +1461,54 @@ public class JavaASTAnalyser implements Analyser {
                     // if the current search index != start of match, there was text between two hyperlinks
                     if (currentIndex != start) {
                         String betweenValue = line.substring(currentIndex, start);
-                        parentNode.addTopToken(new Token(JAVADOC, betweenValue).addTag(TAG_SKIP_DIFF));
+                        // FIXME
+//                        parentNode.addTopToken(new ReviewToken(JAVADOC, betweenValue).addTag(TAG_SKIP_DIFF));
                     }
 
                     String matchedValue = line.substring(start, end);
-                    parentNode.addTopToken(new Token(URL, matchedValue)
-                            .addProperty(PROPERTY_URL_LINK_TEXT, matchedValue)
-                            .addTag(TAG_SKIP_DIFF));
+                    // FIXME
+//                    parentNode.addTopToken(new ReviewToken(URL, matchedValue)
+//                            .addProperty(PROPERTY_URL_LINK_TEXT, matchedValue)
+//                            .addTag(TAG_SKIP_DIFF));
 
                     currentIndex = end;
                 }
 
                 // end of line will be anything between the end of the last found link, and the end of the string
                 String finalValue = line.substring(currentIndex);
-                parentNode.addTopToken(new Token(JAVADOC, finalValue).addTag(TAG_SKIP_DIFF)).addNewline();
+                reviewLine.addToken(new ReviewToken(JAVADOC, finalValue).setDocumentation().setSkipDiff());
             } else {
-                parentNode.addTopToken(new Token(JAVADOC, line).addTag(TAG_SKIP_DIFF)).addNewline();
+                reviewLine.addToken(new ReviewToken(JAVADOC, line).setDocumentation().setSkipDiff());
             }
         });
     }
 
-    // Note: Returns the CHILD node that was added, not the parent node (which is what TreeNode.addChild does).
-    private static TreeNode addChild(TreeNode parent, String name, String id, TreeNodeKind kind) {
-        TreeNode child = new TreeNode(Objects.requireNonNull(name), Objects.requireNonNull(id), kind);
-        parent.addChild(child);
-        return child;
+    private static TokenKind getTokenKind(TypeDeclaration<?> typeDeclaration) {
+        if (typeDeclaration.isClassOrInterfaceDeclaration()) {
+            return ((ClassOrInterfaceDeclaration) typeDeclaration).isInterface() ? TokenKind.INTERFACE : TokenKind.CLASS;
+        } else if (typeDeclaration.isEnumDeclaration()) {
+            return TokenKind.ENUM;
+        } else if (typeDeclaration.isAnnotationDeclaration()) {
+            return TokenKind.ANNOTATION;
+        } else {
+            return TokenKind.CLASS;
+        }
     }
 
-    private static TreeNodeKind getTreeNodeKind(TypeDeclaration<?> typeDeclaration) {
-        if (typeDeclaration.isClassOrInterfaceDeclaration()) {
-            return ((ClassOrInterfaceDeclaration) typeDeclaration).isInterface() ? TreeNodeKind.INTERFACE : TreeNodeKind.CLASS;
-        } else if (typeDeclaration.isEnumDeclaration()) {
-            return TreeNodeKind.ENUM;
-        } else if (typeDeclaration.isAnnotationDeclaration()) {
-            return TreeNodeKind.ANNOTATION;
-        } else {
-            return TreeNodeKind.UNKNOWN;
+    private static SpacingState spacingState = SpacingState.DEFAULT;
+    private enum SpacingState {
+        DEFAULT(Spacing.DEFAULT),
+
+        SKIP_NEXT_SUFFIX(Spacing.NO_SPACE);
+
+        private final Spacing spacing;
+
+        SpacingState(Spacing spacing) {
+            this.spacing = spacing;
+        }
+
+        public Spacing getSpacing() {
+            return spacing;
         }
     }
 }

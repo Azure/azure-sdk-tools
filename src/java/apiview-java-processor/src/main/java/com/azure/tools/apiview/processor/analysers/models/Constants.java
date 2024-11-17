@@ -2,18 +2,23 @@ package com.azure.tools.apiview.processor.analysers.models;
 
 public class Constants {
 
+    public static final String APIVIEW_JSON_SCHEMA = "https://raw.githubusercontent.com/Azure/azure-sdk-tools/00aacf7f4e224e008702c3e77ecde46d25434e44/tools/apiview/parsers/apiview-treestyle-parser-schema/CodeFile.json";
+
     /************************************************************************************
      * Mode Flags
      ************************************************************************************/
 
     /** If true, we will output two files - a standard .json file, as well as a gzipped .json.tgz file. */
-    public static final boolean GZIP_OUTPUT = true;
-
-    /** Short names were a short-lived idea to reduce output size, before gzip support was added, kept here for posterity. */
-    public static final boolean JSON_USE_SHORT_NAMES = false;
+    public static final boolean GZIP_OUTPUT = false;
 
     /** Converts links within JavaDoc to hyperlinks, but can result in unintended links. */
     public static final boolean JAVADOC_EXTRACT_LINKS = false;
+
+    /** Validate against the published schema, that is referenced from the JSON output itself **/
+    public static final boolean VALIDATE_JSON_SCHEMA = true;
+
+    /** More readable JSON, but also larger file size. Good for debugging, but turn off for production. */
+    public static final boolean PRETTY_PRINT_JSON = true;
 
 
     /************************************************************************************
@@ -77,21 +82,27 @@ public class Constants {
      * JSON output names
      ************************************************************************************/
 
-    public static final String JSON_NAME_VERSION_STRING = JSON_USE_SHORT_NAMES ? "vs" : "VersionString";
-    public static final String JSON_NAME_LANGUAGE = JSON_USE_SHORT_NAMES ? "l" : "Language";
-    public static final String JSON_NAME_LANGUAGE_VARIANT = JSON_USE_SHORT_NAMES ? "lv" : "LanguageVariant";
-    public static final String JSON_NAME_PACKAGE_NAME = JSON_USE_SHORT_NAMES ? "pn" : "PackageName";
-    public static final String JSON_NAME_PACKAGE_VERSION = JSON_USE_SHORT_NAMES ? "pv" : "PackageVersion";
-    public static final String JSON_NAME_API_FOREST = JSON_USE_SHORT_NAMES ? "af" : "APIForest";
-    public static final String JSON_NAME_DIAGNOSTICS = JSON_USE_SHORT_NAMES ? "d" : "Diagnostics";
-    public static final String JSON_NAME_NAME = JSON_USE_SHORT_NAMES ? "n" : "Name";
-    public static final String JSON_NAME_ID = JSON_USE_SHORT_NAMES ? "i" : "Id";
-    public static final String JSON_NAME_KIND = JSON_USE_SHORT_NAMES ? "k" : "Kind";
-    public static final String JSON_NAME_TAGS = JSON_USE_SHORT_NAMES ? "t" : "Tags";
-    public static final String JSON_NAME_PROPERTIES = JSON_USE_SHORT_NAMES ? "p" : "Properties";
-    public static final String JSON_NAME_TOP_TOKENS = JSON_USE_SHORT_NAMES ? "tt" : "TopTokens";
-    public static final String JSON_NAME_BOTTOM_TOKENS = JSON_USE_SHORT_NAMES ? "bt" : "BottomTokens";
-    public static final String JSON_NAME_CHILDREN = JSON_USE_SHORT_NAMES ? "c" : "Children";
-    public static final String JSON_NAME_VALUE = JSON_USE_SHORT_NAMES ? "v" : "Value";
-    public static final String JSON_NAME_RENDER_CLASSES = JSON_USE_SHORT_NAMES ? "rc" : "RenderClasses";
+    public static final String JSON_NAME_PARSER_VERSION = "ParserVersion";
+    public static final String JSON_NAME_LANGUAGE = "Language";
+    public static final String JSON_NAME_LANGUAGE_VARIANT = "LanguageVariant";
+    public static final String JSON_NAME_PACKAGE_NAME = "PackageName";
+    public static final String JSON_NAME_PACKAGE_VERSION = "PackageVersion";
+//    public static final String JSON_NAME_API_FOREST = "APIForest";
+    public static final String JSON_NAME_REVIEW_LINES = "ReviewLines";
+    public static final String JSON_NAME_DIAGNOSTICS = "Diagnostics";
+    public static final String JSON_LINE_ID = "LineId";
+    public static final String JSON_CROSS_LANGUAGE_ID = "CrossLanguageId";
+    public static final String JSON_NAME_TOKENS = "Tokens";
+    public static final String JSON_IS_HIDDEN = "IsHidden";
+    public static final String JSON_IS_CONTEXT_END_LINE = "IsContextEndLine";
+    public static final String JSON_RELATED_TO_LINE = "RelatedToLine";
+    public static final String JSON_NAME_ID = "Id";
+    public static final String JSON_NAME_KIND = "Kind";
+    public static final String JSON_NAME_TAGS = "Tags";
+    public static final String JSON_NAME_PROPERTIES = "Properties";
+    @Deprecated public static final String JSON_NAME_TOP_TOKENS = "TopTokens";
+    @Deprecated public static final String JSON_NAME_BOTTOM_TOKENS = "BottomTokens";
+    public static final String JSON_NAME_CHILDREN = "Children";
+    public static final String JSON_NAME_VALUE = "Value";
+    public static final String JSON_NAME_RENDER_CLASSES = "RenderClasses";
 }

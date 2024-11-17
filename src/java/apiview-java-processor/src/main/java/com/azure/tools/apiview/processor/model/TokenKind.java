@@ -3,60 +3,65 @@ package com.azure.tools.apiview.processor.model;
 
 import java.util.*;
 
-import static com.azure.tools.apiview.processor.model.TokenKind.StructuredTokenKind.*;
-
 public enum TokenKind {
-    TEXT(CONTENT),
-    NEW_LINE(LINE_BREAK),
-    WHITESPACE(NONE_BREAKING_SPACE),
-    TAB_SPACE(StructuredTokenKind.TAB_SPACE),
-    PARAMETER_SEPARATOR(StructuredTokenKind.PARAMETER_SEPARATOR),
-    PUNCTUATION(CONTENT, RenderClass.PUNCTUATION),
-    KEYWORD(CONTENT, RenderClass.KEYWORD),
+    TEXT(StructuredTokenKind.TEXT),
+//    NEW_LINE(LINE_BREAK),
+//    WHITESPACE(NONE_BREAKING_SPACE),
+//    TAB_SPACE(StructuredTokenKind.TAB_SPACE),
+//    PARAMETER_SEPARATOR(StructuredTokenKind.PARAMETER_SEPARATOR),
+    PUNCTUATION(StructuredTokenKind.PUNCTUATION, RenderClass.PUNCTUATION),
+    KEYWORD(StructuredTokenKind.KEYWORD, RenderClass.KEYWORD),
 
-    TYPE_NAME(CONTENT, RenderClass.TYPE_NAME),
-    STRING_LITERAL(CONTENT, RenderClass.STRING_LITERAL),
-    NUMBER(CONTENT, RenderClass.NUMBER),
+    CLASS(StructuredTokenKind.TYPE_NAME, "class", /*RenderClass.TYPE_NAME,*/ RenderClass.CLASS),
+    INTERFACE(StructuredTokenKind.TYPE_NAME, "interface", /*RenderClass.TYPE_NAME,*/ RenderClass.INTERFACE),
+    ENUM(StructuredTokenKind.TYPE_NAME, "enum", /*RenderClass.TYPE_NAME,*/ RenderClass.ENUM),
+    ANNOTATION(StructuredTokenKind.TYPE_NAME, "@annotation", /*RenderClass.TYPE_NAME,*/ RenderClass.ANNOTATION),
+    MODULE_INFO(StructuredTokenKind.TYPE_NAME, /*RenderClass.TYPE_NAME,*/ RenderClass.MODULE_INFO),
 
-    PACKAGE_NAME(CONTENT, RenderClass.TYPE_NAME, RenderClass.PACKAGE_NAME),
-    MODULE_NAME(CONTENT, RenderClass.TYPE_NAME, RenderClass.MODULE_NAME),
+    TYPE_NAME(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME),
+    STRING_LITERAL(StructuredTokenKind.STRING_LITERAL, RenderClass.STRING_LITERAL),
+    NUMBER(StructuredTokenKind.TEXT, RenderClass.NUMBER),
 
-    ENUM_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.ENUM_TYPE),
-    ENUM_CONSTANT(CONTENT, RenderClass.TYPE_NAME, RenderClass.ENUM_CONSTANT),
+    PACKAGE_NAME(StructuredTokenKind.TYPE_NAME, /*RenderClass.TYPE_NAME,*/ RenderClass.PACKAGE_NAME),
+    MODULE_NAME(StructuredTokenKind.TYPE_NAME, /*RenderClass.TYPE_NAME,*/ RenderClass.MODULE_NAME),
 
-    ANNOTATION_NAME(CONTENT, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_NAME),
-    ANNOTATION_PARAMETER_NAME(CONTENT, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_PARAMETER_NAME),
-    ANNOTATION_PARAMETER_VALUE(CONTENT, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_PARAMETER_VALUE),
+    ENUM_TYPE(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ENUM_TYPE),
+    ENUM_CONSTANT(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ENUM_CONSTANT),
 
-    RETURN_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.RETURN_TYPE),
-    PARAMETER_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.PARAMETER_TYPE),
-    PARAMETER_NAME(CONTENT, RenderClass.PARAMETER_NAME),
-    EXTENDS_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.EXTENDS_TYPE),
-    IMPLEMENTS_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.IMPLEMENTS_TYPE),
+    ANNOTATION_NAME(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_NAME),
+    ANNOTATION_PARAMETER_NAME(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_PARAMETER_NAME),
+    ANNOTATION_PARAMETER_VALUE(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_PARAMETER_VALUE),
 
-    METHOD_NAME(CONTENT, RenderClass.MEMBER_NAME, RenderClass.METHOD_NAME),
-    FIELD_NAME(CONTENT, RenderClass.MEMBER_NAME, RenderClass.FIELD_NAME),
+    RETURN_TYPE(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.RETURN_TYPE),
+    PARAMETER_TYPE(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.PARAMETER_TYPE),
+    PARAMETER_NAME(StructuredTokenKind.TYPE_NAME, RenderClass.PARAMETER_NAME),
+    EXTENDS_TYPE(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.EXTENDS_TYPE),
+    IMPLEMENTS_TYPE(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.IMPLEMENTS_TYPE),
 
-    MAVEN_KEY(CONTENT, RenderClass.KEYWORD, RenderClass.MAVEN_KEY),
-    MAVEN_VALUE(CONTENT, RenderClass.MAVEN_VALUE),
-    MAVEN_DEPENDENCY(CONTENT, RenderClass.MAVEN_VALUE, RenderClass.MAVEN_DEPENDENCY),
+    METHOD_NAME(StructuredTokenKind.MEMBER_NAME, RenderClass.MEMBER_NAME, RenderClass.METHOD_NAME),
+    FIELD_NAME(StructuredTokenKind.MEMBER_NAME, RenderClass.MEMBER_NAME, RenderClass.FIELD_NAME),
 
-    JAVADOC(CONTENT, RenderClass.COMMENT, RenderClass.JAVADOC) {
-        @Override public Map<String, String> getProperties() {
-            return Map.of("GroupId", "doc");
-        }
-    },
+    MAVEN(StructuredTokenKind.KEYWORD, RenderClass.MAVEN),
+    MAVEN_KEY(StructuredTokenKind.KEYWORD, RenderClass.KEYWORD, RenderClass.MAVEN_KEY),
+    MAVEN_VALUE(StructuredTokenKind.TEXT, RenderClass.MAVEN_VALUE),
+    MAVEN_DEPENDENCY(StructuredTokenKind.TEXT, RenderClass.MAVEN_VALUE, RenderClass.MAVEN_DEPENDENCY),
+
+    JAVADOC(StructuredTokenKind.COMMENT, RenderClass.COMMENT, RenderClass.JAVADOC),
 
     // comment is a single line comment
-    COMMENT(CONTENT, RenderClass.COMMENT),
-
-    URL(StructuredTokenKind.URL);
+    COMMENT(StructuredTokenKind.COMMENT, RenderClass.COMMENT);
 
     private final StructuredTokenKind structuredTokenKind;
     private Set<RenderClass> renderClasses;
+    private final String typeDeclarationString;
 
     TokenKind(StructuredTokenKind structuredTokenKind, RenderClass... renderClasses) {
+        this(structuredTokenKind, null, renderClasses);
+    }
+
+    TokenKind(StructuredTokenKind structuredTokenKind, String typeDeclarationString, RenderClass... renderClasses) {
         this.structuredTokenKind = structuredTokenKind;
+        this.typeDeclarationString = typeDeclarationString;
 
         if (renderClasses != null) {
             this.renderClasses = new LinkedHashSet<>();
@@ -68,21 +73,46 @@ public enum TokenKind {
         return structuredTokenKind;
     }
 
+    public int getTokenKindId() {
+        return structuredTokenKind.getId();
+    }
+
     public Set<RenderClass> getRenderClasses() {
         return renderClasses;
     }
 
-    public Map<String, String> getProperties() {
-        return Collections.emptyMap();
+    public String getTypeDeclarationString() {
+        return typeDeclarationString;
     }
 
-    public enum StructuredTokenKind {
-        CONTENT(0),
-        LINE_BREAK(1),
-        NONE_BREAKING_SPACE(2),
-        TAB_SPACE(3),
-        PARAMETER_SEPARATOR(4),
-        URL(5);
+    private enum StructuredTokenKind {
+        /**
+         * Text: Token kind should be set as Text for any plan text token.
+         * for e.g documentation, namespace value, or attribute or decorator tokens.
+         **/
+        TEXT(0),
+
+        /** Punctuation **/
+        PUNCTUATION(1),
+
+        /** Keyword **/
+        KEYWORD(2),
+
+        /** TypeName: Kind should be set as TypeName for class definitions, base class token, parameter types etc **/
+        TYPE_NAME(3),
+
+        /** MemberName: Kind should be set as MemberName for method name tokens, member variable tokens **/
+        MEMBER_NAME(4),
+
+        /** StringLiteral: Token kind for any metadata or string literals to show in API view **/
+        STRING_LITERAL(5),
+
+        /** Literal: Token kind for any literals, for e.g. enum value or numerical constant literal or default value **/
+        LITERAL(6),
+
+        /** Comment: Comment text within the code that's really a documentation.
+         *  Few languages wants to show comments within API review that's not tagged as documentation **/
+        COMMENT(7);
 
         private final int id;
 

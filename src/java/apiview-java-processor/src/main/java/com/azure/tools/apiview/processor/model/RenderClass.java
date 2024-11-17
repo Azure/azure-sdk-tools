@@ -1,13 +1,25 @@
 package com.azure.tools.apiview.processor.model;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 public enum RenderClass {
+    ASSEMBLY("assembly", "java-assembly"),
+
+    CLASS("java-class", "class"),
+    INTERFACE("java-interface", "interface"),
+    ENUM("java-enum", "enum"),
+    ANNOTATION("java-annotation", "annotation"),
+    MODULE_INFO("java-module", "moduleInfo"),
+
     PUNCTUATION("punctuation"),
     TYPE_NAME("typeName"),
     KEYWORD("keyword"),
     STRING_LITERAL("stringLiteral"),
     NUMBER("number"),
-    PACKAGE_NAME("packageName"),
-    MODULE_NAME("moduleName"),
+    PACKAGE_NAME("java-package", "package", "packageName"),
+    MODULE_NAME("java-module", "moduleName"),
     ENUM_TYPE("enumType"),
     ENUM_CONSTANT("enumConstant"),
     ANNOTATION_NAME("annotationName"),
@@ -21,6 +33,7 @@ public enum RenderClass {
     MEMBER_NAME("memberName"),
     METHOD_NAME("methodName"),
     FIELD_NAME("fieldName"),
+    MAVEN("java-maven", "maven"),
     MAVEN_KEY("mavenKey"),
     MAVEN_VALUE("mavenValue"),
     MAVEN_DEPENDENCY("dependency"),
@@ -28,13 +41,13 @@ public enum RenderClass {
     JAVADOC("javadoc"),
     DEPRECATED("deprecated");
 
-    private final String value;
+    private final Set<String> values;
 
-    RenderClass(String value) {
-        this.value = value;
+    RenderClass(String... values) {
+        this.values = new LinkedHashSet<>(Arrays.asList(values));
     }
 
-    public String getValue() {
-        return value;
+    public Set<String> getValues() {
+        return values;
     }
 }

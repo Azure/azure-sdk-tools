@@ -29,6 +29,26 @@
       <version>3.25.10</version>
     </dependency>
 
+    <!-- JSON schema validation -->
+    <dependency>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>1.5.2</version>
+      <exclusions>
+          <exclusion>
+              <groupId>com.fasterxml.jackson.dataformat</groupId>
+              <artifactId>jackson-dataformat-yaml</artifactId>
+          </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- Logging - slf4j-nop to disable warning message -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <version>2.0.13</version>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>

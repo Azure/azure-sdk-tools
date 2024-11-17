@@ -3,8 +3,8 @@ package com.azure.tools.apiview.processor.model;
 import com.azure.json.JsonProviders;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonWriter;
-import com.azure.tools.apiview.processor.analysers.models.Constants;
 import com.azure.tools.apiview.processor.model.maven.Pom;
+import com.azure.tools.apiview.processor.model.traits.Parent;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -18,16 +18,15 @@ import java.util.zip.GZIPOutputStream;
 
 import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
-public class APIListing implements JsonSerializable<APIListing> {
-    private static final String versionString = "26";
+public class APIListing implements Parent, JsonSerializable<APIListing> {
+    private static final String parserVersion = "27";
 
-    private String name;
     private Language language;
     private LanguageVariant languageVariant;
     private String packageName;
     private String packageVersion;
 
-    private final List<TreeNode> apiForest;
+    private final List<ReviewLine> reviewLines;
     private final List<Diagnostic> diagnostics;
     private final Map<String, String> knownTypes;
 
@@ -39,24 +38,34 @@ public class APIListing implements JsonSerializable<APIListing> {
         this.diagnostics = new ArrayList<>();
         this.knownTypes = new HashMap<>();
         this.typeToPackageNameMap = new HashMap<>();
-        this.apiForest = new ArrayList<>();
+        this.reviewLines = new ArrayList<>();
         this.apiViewProperties = new ApiViewProperties();
     }
 
-    public void setReviewName(final String name) {
-        this.name = name;
+    @Override
+    public ReviewLine addChildLine(ReviewLine reviewLine) {
+        this.reviewLines.add(reviewLine);
+        return reviewLine;
     }
 
-    public void addTreeNode(TreeNode node) {
-        if (node != null) {
-            node.setApiListing(this);
-        }
-        this.apiForest.add(node);
+    @Override
+    public ReviewLine addChildLine(final String lineId) {
+        return addChildLine(new ReviewLine(this, lineId));
     }
 
-    public List<TreeNode> getApiForest() {
-        return Collections.unmodifiableList(apiForest);
+    @Override
+    public ReviewLine addChildLine() {
+        return addChildLine(new ReviewLine(this));
     }
+
+    @Override
+    public List<ReviewLine> getChildren() {
+        return reviewLines;
+    }
+
+    //    public List<TreeNode> getApiForest() {
+//        return Collections.unmodifiableList(apiForest);
+//    }
 
     public void addDiagnostic(Diagnostic diagnostic) {
         this.diagnostics.add(diagnostic);
@@ -133,16 +142,16 @@ public class APIListing implements JsonSerializable<APIListing> {
     @Override
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         return jsonWriter.writeStartObject()
+            .writeStringField("$schema", APIVIEW_JSON_SCHEMA)
             // Version?
-            .writeStringField(JSON_NAME_VERSION_STRING, versionString)
-            .writeStringField(JSON_NAME_NAME, name)
+            .writeStringField(JSON_NAME_PARSER_VERSION, parserVersion)
             .writeStringField(JSON_NAME_LANGUAGE, language.toString())
             .writeStringField(JSON_NAME_LANGUAGE_VARIANT, languageVariant.toString())
             .writeStringField(JSON_NAME_PACKAGE_NAME, packageName)
             .writeStringField(JSON_NAME_PACKAGE_VERSION, packageVersion)
             // ServiceName?
             // PackageDisplayName?
-            .writeArrayField(JSON_NAME_API_FOREST, apiForest, JsonWriter::writeJson)
+            .writeArrayField(JSON_NAME_REVIEW_LINES, reviewLines, JsonWriter::writeJson)
             .writeArrayField(JSON_NAME_DIAGNOSTICS, diagnostics, JsonWriter::writeJson)
             .writeEndObject();
     }
@@ -162,7 +171,6 @@ public class APIListing implements JsonSerializable<APIListing> {
             try (JsonWriter jsonWriter = JsonProviders.createWriter(writer)) {
                 toJson(jsonWriter);
             }
-            System.out.println("Output written to file: " + outputFile);
         } catch (IOException e) {
             e.printStackTrace();
         }

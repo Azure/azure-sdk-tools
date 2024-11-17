@@ -6,10 +6,9 @@ import com.azure.json.JsonWriter;
 import java.io.IOException;
 import java.util.*;
 
-import static com.azure.tools.apiview.processor.model.TokenKind.TAB_SPACE;
-import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
+@Deprecated
 public class TreeNode implements JsonSerializable<TreeNode> {
 
     // The name of the tree node which will be used for page navigation.
@@ -30,10 +29,10 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     private final Map<String, String> properties;
 
     // The main data of the node.
-    private final List<Token> topTokens;
+    private final List<ReviewToken> topTokens;
 
     // Data that closes out the node.
-    private final List<Token> bottomTokens;
+    private final List<ReviewToken> bottomTokens;
 
     // Node immediate descendants.
     private final List<TreeNode> children;
@@ -43,6 +42,7 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     // Using this to customise output based on language, flavor, etc
     private APIListing apiListing;
 
+    @Deprecated
     public TreeNode(String name, String id, TreeNodeKind kind) {
         this.name = Objects.requireNonNull(name);
         if (name.isEmpty()) {
@@ -82,11 +82,11 @@ public class TreeNode implements JsonSerializable<TreeNode> {
         return Collections.unmodifiableMap(properties);
     }
 
-    public List<Token> getTopTokens() {
+    public List<ReviewToken> getTopTokens() {
         return Collections.unmodifiableList(topTokens);
     }
 
-    public List<Token> getBottomTokens() {
+    public List<ReviewToken> getBottomTokens() {
         return Collections.unmodifiableList(bottomTokens);
     }
 
@@ -113,36 +113,36 @@ public class TreeNode implements JsonSerializable<TreeNode> {
         return this;
     }
 
-    public TreeNode addSpace() {
-       return addTopToken(new Token(WHITESPACE, ""));
-    }
-
-    public TreeNode addTabSpace() {
-        return addTopToken(new Token(TAB_SPACE, ""));
-    }
-
-    public TreeNode addNewline() {
-        return addTopToken(new Token(TokenKind.NEW_LINE, "\n"));
-    }
+//    public TreeNode addSpace() {
+//       return addTopToken(new ReviewToken(WHITESPACE, ""));
+//    }
+//
+//    public TreeNode addTabSpace() {
+//        return addTopToken(new ReviewToken(TAB_SPACE, ""));
+//    }
+//
+//    public TreeNode addNewline() {
+//        return addTopToken(new ReviewToken(TokenKind.NEW_LINE, "\n"));
+//    }
 
     public TreeNode addTopToken(TokenKind kind, String value) {
-        return addTopToken(new Token(kind, value));
+        return addTopToken(new ReviewToken(kind, value));
     }
 
     public TreeNode addTopToken(TokenKind kind, String value, String id) {
-        return addTopToken(new Token(kind, value, id));
+        return addTopToken(new ReviewToken(kind, value, id));
     }
 
-    public TreeNode addTopToken(Token token) {
+    public TreeNode addTopToken(ReviewToken token) {
         topTokens.add(token);
         return this;
     }
 
     public TreeNode addBottomToken(TokenKind kind, String value) {
-        return addBottomToken(new Token(kind, value));
+        return addBottomToken(new ReviewToken(kind, value));
     }
 
-    public TreeNode addBottomToken(Token token) {
+    public TreeNode addBottomToken(ReviewToken token) {
         bottomTokens.add(token);
         return this;
     }
@@ -169,7 +169,7 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
 
-        jsonWriter.writeStringField(JSON_NAME_NAME, name)
+        jsonWriter//.writeStringField(JSON_NAME_NAME, name)
                   .writeStringField(JSON_NAME_KIND, kind.getName());
 
         if (id != null) {

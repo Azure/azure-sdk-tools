@@ -1,13 +1,10 @@
 package com.azure.tools.apiview.processor.analysers.util;
 
-import com.azure.tools.apiview.processor.model.Token;
+import com.azure.tools.apiview.processor.model.ReviewToken;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.MAVEN_VALUE;
-import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 
 /**
  * Miscellaneous utility methods.
@@ -23,8 +20,8 @@ public final class MiscUtils {
      * @param value The value.
      * @return A token representing the key-value pair.
      */
-    public static Token tokeniseMavenKeyValue(String key, Object value) {
-        return new Token(MAVEN_VALUE, value == null ? "<default value>" : value.toString());//, prefix + key + "-" + value);
+    public static ReviewToken tokeniseMavenKeyValue(String key, Object value) {
+        return new ReviewToken(MAVEN_VALUE, value == null ? "<default value>" : value.toString());//, prefix + key + "-" + value);
     }
 
     /**

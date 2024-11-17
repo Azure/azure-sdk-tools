@@ -10,10 +10,10 @@ public class Diagnostic implements JsonSerializable<Diagnostic> {
     private static int diagnosticIdCounter = 1;
 
     private String diagnosticId;
-    private String text;
-    private String helpLinkUri;
-    private String targetId;
-    private DiagnosticKind level;
+    private final String text;
+    private final String helpLinkUri;
+    private final String targetId;
+    private final DiagnosticKind level;
 
     public Diagnostic(DiagnosticKind level, String targetId, String text) {
         this(level, targetId, text, null);

@@ -8,8 +8,13 @@ import com.azure.tools.apiview.processor.model.ApiViewProperties;
 import com.azure.tools.apiview.processor.model.Language;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.maven.Pom;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.*;
 
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -65,10 +70,45 @@ public class Main {
             File[] files = new File[Constants.GZIP_OUTPUT ? 2 : 1];
             files[0] = new File(outputDir, outputFileName);
             apiListing.get().toFile(files[0], false);
+            System.out.println("  Output written to file: " + files[0]);
+
+            if (Constants.PRETTY_PRINT_JSON) {
+                try {
+                    String json = new String(Files.readAllBytes(files[0].toPath()));
+                    ObjectMapper mapper = new ObjectMapper();
+                    Object jsonObject = mapper.readValue(json, Object.class);
+                    mapper.writerWithDefaultPrettyPrinter().writeValue(files[0], jsonObject);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (Constants.VALIDATE_JSON_SCHEMA) {
+                System.out.println("  Validating the generated JSON file against the schema...");
+                try {
+                    JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7);
+                    JsonSchema schema = factory.getSchema(new URL(Constants.APIVIEW_JSON_SCHEMA).toURI());
+
+                    JsonNode jsonNode = new ObjectMapper().readTree(files[0]);
+                    schema.initializeValidators();
+                    Set<ValidationMessage> validationMessages = schema.validate(jsonNode);
+                    if (validationMessages.isEmpty()) {
+                        System.out.println("    Validation passed.");
+                    } else {
+                        System.out.println("    Validation failed. Errors:");
+                        validationMessages.forEach(msg -> System.out.println("      " + msg.getMessage()));
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
             if (Constants.GZIP_OUTPUT) {
                 files[1] = new File(outputDir, outputFileName + ".tgz");
                 apiListing.get().toFile(files[1], true);
+                System.out.println("  Output written to file: " + files[1]);
             }
 
             return files;
@@ -93,15 +133,11 @@ public class Main {
         final String groupId = mavenPom.getGroupId();
         final String artifactId = mavenPom.getArtifactId();
 
-        final String reviewName = artifactId + " (version " + mavenPom.getVersion() + ")";
-        System.out.println("  Using '" + reviewName + "' for the review name");
-
         final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + artifactId;
         System.out.println("  Using '" + packageName + "' for the package name");
 
         System.out.println("  Using '" + mavenPom.getVersion() + "' for the package version");
 
-        apiListing.setReviewName(reviewName);
         apiListing.setPackageName(packageName);
         apiListing.setPackageVersion(mavenPom.getVersion());
         apiListing.setLanguage(Language.JAVA);

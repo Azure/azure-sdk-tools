@@ -334,6 +334,9 @@ func (a *TypeAlias) Resolve(def typeDef) error {
 	} else {
 		level = CodeDiagnosticLevelWarning
 	}
+	// Index() may have recorded the alias as a SimpleType we're about to replace with something more
+	// detailed, so we remove that SimpleType to avoid displaying it as a duplicate type in the review
+	delete(a.Package.c.SimpleTypes, a.Name)
 	var t TokenMaker
 	if def.n == nil || def.p == nil {
 		t = a.Package.c.addSimpleType(*a.Package, a.Name, a.Package.Name(), a.QualifiedName, nil)

@@ -848,6 +848,9 @@ public class JavaASTAnalyser implements Analyser {
                              final TypeDeclaration<?> typeDeclaration,
                              final ReviewLine parentLine) {
         final List<? extends FieldDeclaration> fieldDeclarations = typeDeclaration.getFields();
+        if (fieldDeclarations.isEmpty()) {
+            return;
+        }
 
         for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
             // By default , interface has public abstract methods if there is no access specifier declared
@@ -987,7 +990,7 @@ public class JavaASTAnalyser implements Analyser {
 
     private void visitExpression(Expression expression, ReviewLine definitionLine, boolean condensed) {
         if (expression instanceof MethodCallExpr methodCallExpr) {
-            definitionLine.addToken(METHOD_NAME, methodCallExpr.getNameAsString());
+            definitionLine.addToken(METHOD_NAME, methodCallExpr.getNameAsString(), Spacing.NO_SPACE);
             definitionLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
             NodeList<Expression> arguments = methodCallExpr.getArguments();
             for (int i = 0; i < arguments.size(); i++) {
@@ -1004,7 +1007,7 @@ public class JavaASTAnalyser implements Analyser {
             definitionLine.addToken(PUNCTUATION, ")", Spacing.NO_SPACE);
             return;
         } else if (expression instanceof StringLiteralExpr stringLiteralExpr) {
-            definitionLine.addToken(STRING_LITERAL, stringLiteralExpr.toString());
+            definitionLine.addToken(STRING_LITERAL, stringLiteralExpr.toString(), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof ArrayInitializerExpr arrayInitializerExpr) {
             if (!condensed) {
@@ -1400,6 +1403,11 @@ public class JavaASTAnalyser implements Analyser {
                 SpacingState before = spacingState;
                 spacingState = SpacingState.SKIP_NEXT_SUFFIX;
                 visitTypeDFS(childNodes.get(i), reviewLine, kind);
+
+                if (i == childNodes.size() - 1) {
+                    reviewLine.addSpace();
+                }
+
                 spacingState = before;
             }
         }

@@ -45,4 +45,4 @@ extends:
             steps:
               - template: /tools/spec-gen-sdk/build-spec-gen-sdk.yml
                 parameters:
-                  Publish: $(Publish)
+                  Publish: ${{ parameters.Publish }}

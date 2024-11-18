@@ -292,6 +292,7 @@ export function joinPath(...pathSegments: string[]): string {
 
   async function _entryExists(entryPath: string, condition?: (stats: fs.Stats) => (boolean | Promise<boolean>)): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-undef
       fs.lstat(entryPath, (error: NodeJS.ErrnoException | null, stats: fs.Stats) => {
         if (error) {
           if (error.code === "ENOENT" || error.code === "ENOTDIR") {
@@ -366,6 +367,7 @@ export function joinPath(...pathSegments: string[]): string {
   
   export function _createFolder(folderPath: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-undef
       fs.mkdir(folderPath, (error: NodeJS.ErrnoException | null) => {
         if (error) {
           if (error.code === "EEXIST") {
@@ -450,6 +452,7 @@ export function joinPath(...pathSegments: string[]): string {
     } else if (await folderExists(sourceEntryPath)) {
       result = copyFolder(sourceEntryPath, destinationEntryPath);
     } else {
+      // eslint-disable-next-line no-undef
       const error: NodeJS.ErrnoException = new Error(`ENOENT: no such file or directory: ${sourceEntryPath}`);
       error.code = "ENOENT";
       error.path = sourceEntryPath;
@@ -467,6 +470,7 @@ export function joinPath(...pathSegments: string[]): string {
    */
   export async function copyFile(sourceFilePath: string, destinationFilePath: string, createDestinationFolder = true): Promise<void> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-undef
       fs.copyFile(sourceFilePath, destinationFilePath, async (error: NodeJS.ErrnoException | null) => {
         if (!error) {
           resolve();
@@ -501,6 +505,7 @@ export function joinPath(...pathSegments: string[]): string {
     let result: Promise<void>;
     const childEntryPaths: string[] | undefined = await getChildEntryPaths(sourceFolderPath);
     if (!childEntryPaths) {
+      // eslint-disable-next-line no-undef
       const error: NodeJS.ErrnoException = new Error(`ENOENT: no such file or directory: ${sourceFolderPath}`);
       error.code = "ENOENT";
       error.path = sourceFolderPath;
@@ -672,6 +677,7 @@ export function joinPath(...pathSegments: string[]): string {
    */
   export function getChildEntryPaths(folderPath: string, options: GetChildEntriesOptions = {}): Promise<string[] | undefined> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-undef
       fs.readdir(folderPath, async (error: NodeJS.ErrnoException | null, entryNames: string[]) => {
         if (error) {
           if (error.code === "ENOENT" || error.code === "ENOTDIR") {
@@ -751,6 +757,7 @@ export function joinPath(...pathSegments: string[]): string {
    */
   export function readFileContents(filePath: string): Promise<string | undefined> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-undef
       fs.readFile(filePath, { encoding: "utf8" }, (error: NodeJS.ErrnoException | null, content: string) => {
         if (error) {
           if (error.code === "ENOENT") {
@@ -772,6 +779,7 @@ export function joinPath(...pathSegments: string[]): string {
    */
   export function writeFileContents(filePath: string, contents: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-undef
       fs.writeFile(filePath, contents, (error: NodeJS.ErrnoException | null) => {
         if (error) {
           reject(error);
@@ -794,6 +802,7 @@ export function joinPath(...pathSegments: string[]): string {
    */
   export function deleteFile(filePath: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-undef
       fs.unlink(filePath, (error: NodeJS.ErrnoException | null) => {
         if (error) {
           if (error.code === "ENOENT") {
@@ -822,6 +831,7 @@ export function joinPath(...pathSegments: string[]): string {
   
   function _deleteFolder(folderPath: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      // eslint-disable-next-line no-undef
       fs.rmdir(folderPath, (error: NodeJS.ErrnoException | null) => {
         if (error) {
           if (error.code === "ENOENT") {

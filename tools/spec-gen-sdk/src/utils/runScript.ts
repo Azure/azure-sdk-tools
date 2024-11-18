@@ -64,7 +64,7 @@ export const runSdkAutoCustomScript = async (
   const scriptSplit = scriptPath.split(' ');
   args.unshift(...scriptSplit.splice(1));
 
-  // tslint:disable: no-null-keyword
+  // eslint-disable-next-line no-undef
   let cmdRet: { code: number | null; signal: NodeJS.Signals | null } = {
     code: null,
     signal: null

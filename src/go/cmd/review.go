@@ -129,10 +129,7 @@ func (r *Review) Review() (CodeFile, error) {
 		for _, n := range nav {
 			recursiveSortNavigation(n)
 		}
-		line.Children = append(line.Children, ReviewLine{
-			IsContextEndLine: true,
-			Tokens:           []ReviewToken{},
-		})
+		line.Children = endContext(line.Children)
 		lines = append(lines, line)
 		if i < len(packageNames)-1 {
 			lines = append(lines, ReviewLine{

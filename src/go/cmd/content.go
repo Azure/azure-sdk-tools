@@ -150,9 +150,7 @@ func (c *content) parseSimpleType() []ReviewLine {
 			ln.Children = append(ln.Children, c.parseDeclarations(vars, "var")...)
 		}
 		lns = append(lns, ln)
-		if len(ln.Children) == 0 {
-			lns = append(lns, ReviewLine{IsContextEndLine: true})
-		}
+		lns = endContext(lns)
 	}
 	return lns
 }
@@ -217,9 +215,7 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string) [
 			ln.Children = append(ln.Children, *pvm)
 		}
 		ls = append(ls, ln)
-	}
-	if len(finalKeys) > 0 {
-		ls = append(ls, ReviewLine{IsContextEndLine: true})
+		ls = endContext(ls)
 	}
 	return ls
 }
@@ -343,7 +339,7 @@ func (c *content) parseStruct() []ReviewLine {
 			sl.Children = append(sl.Children, c.parseDeclarations(vars, "var")...)
 		}
 		ls = append(ls, sl)
-		ls = append(ls, ReviewLine{IsContextEndLine: true})
+		ls = endContext(ls)
 	}
 	return ls
 }
@@ -566,4 +562,28 @@ func removeNavigatorString(str string) string {
 		str = str[i+1:]
 	}
 	return str
+}
+
+// endContext adds a context end line to the end of the slice, if it doesn't contain one
+func endContext(lines []ReviewLine) []ReviewLine {
+	var ended func(ReviewLine) bool
+	ended = func(rl ReviewLine) bool {
+		if rl.IsContextEndLine {
+			return true
+		}
+		for _, c := range rl.Children {
+			if ended(c) {
+				return true
+			}
+		}
+		return false
+	}
+	hasEnd := false
+	if len(lines) > 0 {
+		hasEnd = ended(lines[len(lines)-1])
+	}
+	if !hasEnd {
+		lines = append(lines, ReviewLine{IsContextEndLine: true})
+	}
+	return lines
 }

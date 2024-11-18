@@ -10,7 +10,7 @@ export default [
     languageOptions: {
       globals: {
         ...globals.node
-      },
+      },      
       parser: tsParser,
       parserOptions: {
         ecmaVersion: "latest", // Use the latest ECMAScript features
@@ -18,6 +18,7 @@ export default [
         project: "./tsconfig.json", // Ensure this points to your tsconfig file
       },
     },
+    ignores: ["test/**/*", "jest.config.js", "eslint.config.mjs"],
     plugins: {
       "@typescript-eslint": tsPlugin,
     },

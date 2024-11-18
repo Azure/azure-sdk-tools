@@ -14,6 +14,11 @@ pr:
     include:
       - tools/spec-gen-sdk
 
+parameters:
+  - name: Publish
+    type: boolean
+    default: false
+
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
@@ -40,4 +45,4 @@ extends:
             steps:
               - template: /tools/spec-gen-sdk/build-spec-gen-sdk.yml
                 parameters:
-                  Publish: false
+                  Publish: $(Publish)

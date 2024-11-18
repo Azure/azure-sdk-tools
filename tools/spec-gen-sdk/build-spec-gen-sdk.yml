@@ -23,15 +23,18 @@ steps:
       npm pack
     displayName: 'npm pack'
     workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+    condition: ${{ parameters.Publish }}
 
   - bash: 'cp azure-tools-spec-gen-sdk-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
     displayName: 'copy to staging directory'
     workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+    condition: ${{ parameters.Publish }}
 
   - pwsh: |
       Get-ChildItem -Path $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY) `
         | ForEach-Object { Write-Host "npm install $($_.FullName)"; npm install $_.FullName }
     displayName: Smoke test a package installation
+    condition: ${{ parameters.Publish }}
 
   - task: 1ES.PublishPipelineArtifact@1
     inputs:

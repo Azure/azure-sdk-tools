@@ -287,9 +287,13 @@ func (f Func) MakeTokens() []ReviewToken {
 			Value: "]",
 		})
 	}
+	paren := "("
+	if len(f.paramNames) == 0 {
+		paren += ")"
+	}
 	tks = append(tks, ReviewToken{
 		Kind:  TokenKindPunctuation,
-		Value: "(",
+		Value: paren,
 	})
 	for i, p := range f.paramNames {
 		if p != "" {
@@ -311,11 +315,12 @@ func (f Func) MakeTokens() []ReviewToken {
 			})
 		}
 	}
-	tks = append(tks, ReviewToken{
-		HasSuffixSpace: true,
-		Kind:           TokenKindPunctuation,
-		Value:          ")",
-	})
+	if len(f.paramNames) > 0 {
+		tks = append(tks, ReviewToken{
+			Kind:  TokenKindPunctuation,
+			Value: ")",
+		})
+	}
 	if len(f.Returns) > 0 {
 		if len(f.Returns) > 1 {
 			tks = append(tks, ReviewToken{
@@ -323,6 +328,8 @@ func (f Func) MakeTokens() []ReviewToken {
 				Kind:           TokenKindPunctuation,
 				Value:          "(",
 			})
+		} else {
+			tks[len(tks)-1].HasSuffixSpace = true
 		}
 		for i, t := range f.Returns {
 			tks = append(tks, parseAndMakeTypeTokens(t)...)

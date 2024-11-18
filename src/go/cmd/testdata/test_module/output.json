@@ -268,12 +268,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 }
               ]
             },
@@ -288,10 +284,6 @@
                 {
                   "Kind": 1,
                   "Value": "()"
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -315,12 +307,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -493,10 +481,6 @@
                     },
                     {
                       "Kind": 1,
-                      "Value": ")"
-                    },
-                    {
-                      "Kind": 1,
                       "Value": "[",
                       "HasSuffixSpace": false
                     },
@@ -644,12 +628,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 }
               ]
             },
@@ -687,12 +667,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -813,12 +789,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -887,10 +859,6 @@
                 {
                   "Kind": 1,
                   "Value": "()"
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 3,
@@ -1054,12 +1022,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -1153,12 +1117,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 }
               ]
             },
@@ -1212,10 +1172,6 @@
                     {
                       "Kind": 1,
                       "Value": "()"
-                    },
-                    {
-                      "Kind": 1,
-                      "Value": ")"
                     },
                     {
                       "Kind": 1,
@@ -1414,12 +1370,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 }
               ]
             },
@@ -1434,10 +1386,6 @@
                 {
                   "Kind": 1,
                   "Value": "()"
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -1461,12 +1409,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -1636,10 +1580,6 @@
                   "Value": "()"
                 },
                 {
-                  "Kind": 1,
-                  "Value": ")"
-                },
-                {
                   "Kind": 3,
                   "Value": "StructA",
                   "NavigateToId": "test_module/subpackage.StructA",
@@ -1715,12 +1655,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 }
               ]
             },
@@ -1758,12 +1694,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -1884,12 +1816,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -1958,10 +1886,6 @@
                 {
                   "Kind": 1,
                   "Value": "()"
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 3,
@@ -2235,12 +2159,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -2450,12 +2370,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 },
                 {
                   "Kind": 1,
@@ -2554,12 +2470,8 @@
                 },
                 {
                   "Kind": 1,
-                  "Value": "(",
+                  "Value": "()",
                   "HasSuffixSpace": false
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
                 }
               ]
             },
@@ -2667,10 +2579,6 @@
                     {
                       "Kind": 1,
                       "Value": "()"
-                    },
-                    {
-                      "Kind": 1,
-                      "Value": ")"
                     },
                     {
                       "Kind": 1,
@@ -2843,12 +2751,8 @@
             },
             {
               "Kind": 1,
-              "Value": "(",
+              "Value": "()",
               "HasSuffixSpace": false
-            },
-            {
-              "Kind": 1,
-              "Value": ")"
             },
             {
               "Kind": 1,
@@ -3094,10 +2998,6 @@
               "Value": "()"
             },
             {
-              "Kind": 1,
-              "Value": ")"
-            },
-            {
               "Kind": 3,
               "Value": "Enum",
               "NavigateToId": "test_module/subpackage.Enum",
@@ -3120,10 +3020,6 @@
             {
               "Kind": 1,
               "Value": "()"
-            },
-            {
-              "Kind": 1,
-              "Value": ")"
             },
             {
               "Kind": 1,

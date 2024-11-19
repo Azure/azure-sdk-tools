@@ -14,11 +14,6 @@ pr:
     include:
       - tools/spec-gen-sdk
 
-parameters:
-  - name: Publish
-    type: boolean
-    default: false
-
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
@@ -43,6 +38,36 @@ extends:
               image: $(LINUXVMIMAGE)
               os: linux
             steps:
-              - template: /tools/spec-gen-sdk/build-spec-gen-sdk.yml
-                parameters:
-                  Publish: ${{ parameters.Publish }}
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '$(NodeVersion)'
+                displayName: 'Install Node.js'
+
+              - bash: |
+                  npm ci
+                displayName: 'npm ci'
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+
+              - bash: |
+                  npm run build-test
+                displayName: 'build and test'
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+
+              - bash: |
+                  npm pack
+                displayName: 'npm pack'
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+
+              - bash: 'cp azure-tools-spec-gen-sdk-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+                displayName: 'copy to staging directory'
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+
+              - pwsh: |
+                  Get-ChildItem -Path $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY) `
+                    | ForEach-Object { Write-Host "npm install $($_.FullName)"; npm install $_.FullName }
+                displayName: Smoke test a package installation
+
+              - task: 1ES.PublishPipelineArtifact@1
+                inputs:
+                  targetPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+                  artifactName: '$(VAR_ARTIFACT_NAME)'

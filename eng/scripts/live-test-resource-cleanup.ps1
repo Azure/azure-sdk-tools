@@ -371,6 +371,10 @@ function DeleteOrUpdateResourceGroups() {
 
   Write-Verbose "Fetching groups"
   [Array]$allGroups = Retry { Get-AzResourceGroup } | Where-Object { $_.ResourceGroupName -like $GroupFilter }
+  if (!$allGroups) {
+      Write-Warning "No resource groups found"
+      return
+  }
   $toDelete = @()
   $toClean = @()
   $toDeleteSoon = @()
@@ -461,9 +465,9 @@ function DeleteAndPurgeGroups([array]$toDelete) {
         if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
           SetStorageNetworkAccessRules -ResourceGroupName $rg.ResourceGroupName -SetFirewall -CI:($null -ne $env:SYSTEM_TEAMPROJECTID) 
           Remove-WormStorageAccounts -GroupPrefix $rg.ResourceGroupName -CI:($null -ne $env:SYSTEM_TEAMPROJECTID)
-        } else {
-          Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
         }
+
+        Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
       }
     } catch {
       Write-Warning "Failure deleting/purging group $($rg.ResourceGroupName):"

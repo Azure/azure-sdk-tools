@@ -7,7 +7,6 @@ using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -117,13 +116,25 @@ namespace APIViewWeb.Helpers
             {
                 //Set current line as bottom token if it is end of context line.
                 codePanelData.NodeMetaDataObj[prevNodeHashId].BottomTokenNodeIdHash = nodeIdHashed;
+                codePanelData.NodeMetaDataObj[nodeIdHashed].RelatedNodeIdHash = prevNodeHashId;
+                if (reviewLine.DiffKind != DiffKind.NoneDiff)
+                {
+                    codePanelData.NodeMetaDataObj[prevNodeHashId].IsNodeWithDiffInDescendants = true;
+                    codePanelData.NodeMetaDataObj[prevNodeHashId].IsNodeWithNoneDocDiffInDescendants = true;
+                }
                 //Copy added removed classes from parent node to bottom node.
                 var classes = codePanelData.NodeMetaDataObj[prevNodeHashId].CodeLinesObj.LastOrDefault()?.RowClassesObj;
-                if (classes != null)
+                if (classes != null && reviewLine.DiffKind == DiffKind.NoneDiff)
                 {
                     classes = classes.Where(c => c == "added" || c == "removed").ToHashSet();
                     codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.LastOrDefault()?.RowClassesObj.UnionWith(classes);
                 }
+            }
+
+            //Set previous node as related if current line is empty and if parser didn't set a related line ID for empty line.
+            if (reviewLine.Tokens.Count == 0 && string.IsNullOrEmpty(reviewLine.RelatedToLine))
+            {
+                codePanelData.NodeMetaDataObj[nodeIdHashed].RelatedNodeIdHash = prevNodeHashId;
             }
 
             return nodeIdHashed;

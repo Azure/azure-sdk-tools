@@ -506,7 +506,7 @@ public class JavaASTAnalyser implements Analyser {
                 moduleChildLine.addProperty("static", d.hasModifier(Modifier.Keyword.STATIC) ? "true" : "false");
                 moduleChildLine.addProperty("transitive", d.isTransitive() ? "true" : "false");
 
-                moduleChildLine.addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
+                moduleChildLine.addToken(MODULE_REFERENCE, d.getNameAsString(), Spacing.NO_SPACE);
                 moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
             });
 
@@ -514,7 +514,7 @@ public class JavaASTAnalyser implements Analyser {
                 String id = makeId(MODULE_INFO_KEY + "-exports-" + d.getNameAsString());
                 ReviewLine moduleChildLine = moduleLine.addChildLine(id)
                     .addToken(KEYWORD, "exports")
-                    .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
+                    .addToken(MODULE_REFERENCE, d.getNameAsString(), Spacing.NO_SPACE);
 
                 // adding property just to make diagnostics easier
                 moduleChildLine.addProperty(PROPERTY_MODULE_EXPORTS, d.getNameAsString());
@@ -527,7 +527,7 @@ public class JavaASTAnalyser implements Analyser {
                 String id = makeId(MODULE_INFO_KEY + "-opens-" + d.getNameAsString());
                 ReviewLine moduleChildLine = moduleLine.addChildLine(id)
                     .addToken(KEYWORD, "opens")
-                    .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE);
+                    .addToken(MODULE_REFERENCE, d.getNameAsString(), Spacing.NO_SPACE);
 
                 // adding property just to make diagnostics easier
                 moduleChildLine.addProperty(PROPERTY_MODULE_OPENS, d.getNameAsString());
@@ -540,7 +540,7 @@ public class JavaASTAnalyser implements Analyser {
                 String id = makeId(MODULE_INFO_KEY + "-uses-" + d.getNameAsString());
                 moduleLine.addChildLine(id)
                     .addToken(KEYWORD, "uses")
-                    .addToken(TYPE_NAME, d.getNameAsString(), Spacing.NO_SPACE)
+                    .addToken(MODULE_REFERENCE, d.getNameAsString(), Spacing.NO_SPACE)
                     .addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
             });
 
@@ -548,10 +548,10 @@ public class JavaASTAnalyser implements Analyser {
                 String id = makeId(MODULE_INFO_KEY + "-provides-" + d.getNameAsString());
                 ReviewLine moduleChildLine = moduleLine.addChildLine(id)
                     .addToken(KEYWORD, "provides")
-                    .addToken(TYPE_NAME, d.getNameAsString())
+                    .addToken(MODULE_REFERENCE, d.getNameAsString())
                     .addToken(KEYWORD, "with");
 
-                commaSeparateList(moduleChildLine, TYPE_NAME, d.getWith(), Object::toString);
+                commaSeparateList(moduleChildLine, MODULE_REFERENCE, d.getWith(), Object::toString);
                 moduleChildLine.addToken(PUNCTUATION, ";", Spacing.NO_SPACE);
             });
         });

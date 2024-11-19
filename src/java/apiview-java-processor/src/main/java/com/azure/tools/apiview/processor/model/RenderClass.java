@@ -13,6 +13,8 @@ public enum RenderClass {
     ANNOTATION("java-annotation", "annotation"),
     MODULE_INFO("java-module", "moduleInfo"),
 
+    MODULE_REFERENCE("moduleReference"),
+
     PUNCTUATION("punctuation"),
     TYPE_NAME("typeName"),
     KEYWORD("keyword"),

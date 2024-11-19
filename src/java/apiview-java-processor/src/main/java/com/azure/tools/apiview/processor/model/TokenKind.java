@@ -22,11 +22,13 @@ public enum TokenKind {
     STRING_LITERAL(StructuredTokenKind.STRING_LITERAL, RenderClass.STRING_LITERAL),
     NUMBER(StructuredTokenKind.TEXT, RenderClass.NUMBER),
 
+    MODULE_REFERENCE(StructuredTokenKind.TYPE_NAME, RenderClass.MODULE_REFERENCE),
+
     PACKAGE_NAME(StructuredTokenKind.TYPE_NAME, /*RenderClass.TYPE_NAME,*/ RenderClass.PACKAGE_NAME),
     MODULE_NAME(StructuredTokenKind.TYPE_NAME, /*RenderClass.TYPE_NAME,*/ RenderClass.MODULE_NAME),
 
     ENUM_TYPE(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ENUM_TYPE),
-    ENUM_CONSTANT(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ENUM_CONSTANT),
+    ENUM_CONSTANT(StructuredTokenKind.LITERAL, RenderClass.TYPE_NAME, RenderClass.ENUM_CONSTANT),
 
     ANNOTATION_NAME(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_NAME),
     ANNOTATION_PARAMETER_NAME(StructuredTokenKind.TYPE_NAME, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_PARAMETER_NAME),

@@ -262,6 +262,7 @@ def process_sdk(operation: OperationConfiguration, sdk: SdkConfiguration, report
 
     logging.info(f"Processing sdk: {sdk.name}")
     count = 0
+    max_count = 5000
     releases: List[Release] = []
     repo = GitHubRepository(sdk.repository_owner, sdk.repository_name, github_token)
     # since there is no ordering from GitHub, just get all releases (exclude draft=True), and hope paging is correct
@@ -283,6 +284,9 @@ def process_sdk(operation: OperationConfiguration, sdk: SdkConfiguration, report
                             release = Release(release_tag, package, version, published_at)
                             releases.append(release)
                             logging.info(f"Found release tag: {release.tag}")
+            if count > max_count:
+                # typically we only need releases from recent 10 days, abort before hit GitHub rate limit
+                break
         except Exception as e:
             report.aggregated_error.errors.append(e)
             break

@@ -3,6 +3,7 @@ import parameterized
 from main import break_down_aggregated_dotnet_example, format_dotnet, get_dotnet_using_statements
 from typing import List
 
+
 class TestMain(unittest.TestCase):
     @parameterized.parameterized.expand(
         [
@@ -378,12 +379,12 @@ namespace Azure.ResourceManager.Compute.Samples
                     "using Azure.ResourceManager.Compute.Models;\n",
                     "using Azure.ResourceManager.Resources;\n",
                     "using Azure.ResourceManager.Resources.Models;\n",
-                ]
+                ],
             )
         ]
     )
     def test_example_usings(self, content: str, expected_usings: List[str]):
         lines = content.splitlines(keepends=True)
         usings = get_dotnet_using_statements(lines)
-        
+
         self.assertSetEqual(set(expected_usings), set(usings))

@@ -8,7 +8,6 @@ import (
 	"go/ast"
 	"go/token"
 	"regexp"
-	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -290,16 +289,15 @@ func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSp
 
 func (c *content) parseStruct() []ReviewLine {
 	ls := []ReviewLine{}
-	names := []string{}
+	keys := make([]string, 0, len(c.Structs))
 	for name := range c.Structs {
 		if unicode.IsUpper(rune(name[0])) {
-			names = append(names, name)
+			keys = append(keys, name)
 		}
 	}
-	sort.Strings(names)
-	for _, typeName := range names {
+	sort.Strings(keys)
+	for _, typeName := range keys {
 		sl := c.Structs[typeName].MakeReviewLine()
-
 		ctors := c.searchForCtors(typeName)
 		methods := c.findMethods(typeName)
 		if len(sl.Children) > 0 && (len(ctors) > 0 || len(methods) > 0) {
@@ -307,16 +305,16 @@ func (c *content) parseStruct() []ReviewLine {
 			sl.Children = append(sl.Children, ReviewLine{})
 		}
 		if len(ctors) > 0 {
-			names := make([]string, 0, len(ctors))
-			for name := range ctors {
-				names = append(names, name)
+			keys := make([]string, 0, len(ctors))
+			for k := range ctors {
+				keys = append(keys, k)
 			}
-			slices.Sort(names)
-			for _, name := range names {
-				cl := ctors[name].MakeReviewLine()
+			sort.Strings(keys)
+			for _, k := range keys {
+				cl := ctors[k].MakeReviewLine()
 				cl.RelatedToLine = sl.LineID
 				sl.Children = append(sl.Children, cl)
-				delete(c.Funcs, name)
+				delete(c.Funcs, k)
 			}
 		}
 		if len(methods) > 0 {
@@ -324,7 +322,7 @@ func (c *content) parseStruct() []ReviewLine {
 			for name := range methods {
 				names = append(names, name)
 			}
-			slices.Sort(names)
+			sort.Strings(names)
 			for _, name := range names {
 				ml := methods[name].MakeReviewLine()
 				ml.RelatedToLine = sl.LineID

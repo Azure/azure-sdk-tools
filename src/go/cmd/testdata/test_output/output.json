@@ -2,255 +2,255 @@
   "Diagnostics": [
     {
       "Level": 1,
-      "TargetId": "test_module.Enum",
+      "TargetId": "test_output.Enum",
       "Text": "Alias for subpackage.Enum"
     },
     {
       "Level": 1,
-      "TargetId": "test_module.InterfaceA",
+      "TargetId": "test_output.InterfaceA",
       "Text": "Alias for subpackage.Interface"
     },
     {
       "Level": 1,
-      "TargetId": "test_module.StructA",
+      "TargetId": "test_output.StructA",
       "Text": "Alias for subpackage.StructA"
     },
     {
       "Level": 1,
-      "TargetId": "test_module.StructB",
+      "TargetId": "test_output.StructB",
       "Text": "Alias for subpackage.StructB"
     },
     {
       "Level": 1,
-      "TargetId": "test_module.StructEmpty",
+      "TargetId": "test_output.StructEmpty",
       "Text": "Alias for subpackage.StructEmpty"
     },
     {
       "Level": 1,
-      "TargetId": "test_module.Unimplementable",
+      "TargetId": "test_output.Unimplementable",
       "Text": "Alias for subpackage.Unimplementable"
     },
     {
       "Level": 1,
-      "TargetId": "test_module/subpackage.Unimplementable",
+      "TargetId": "test_output/subpackage.Unimplementable",
       "Text": "Applications can't implement this interface"
     }
   ],
   "Language": "Go",
-  "Name": "test_module",
+  "Name": "test_output",
   "Navigation": [
     {
-      "Text": "test_module",
-      "NavigationId": "test_module",
       "ChildItems": [
         {
-          "Text": "Enum",
-          "NavigationId": "test_module.Enum",
           "ChildItems": [],
+          "NavigationId": "test_output.Enum",
           "Tags": {
             "TypeKind": "struct"
-          }
+          },
+          "Text": "Enum"
         },
         {
-          "Text": "Enum2",
-          "NavigationId": "test_module.Enum2",
           "ChildItems": [],
+          "NavigationId": "test_output.Enum2",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "Enum2"
         },
         {
-          "Text": "Enum3",
-          "NavigationId": "test_module.Enum3",
           "ChildItems": [],
+          "NavigationId": "test_output.Enum3",
           "Tags": {
             "TypeKind": "struct"
-          }
+          },
+          "Text": "Enum3"
         },
         {
-          "Text": "InterfaceA",
-          "NavigationId": "test_module.InterfaceA",
           "ChildItems": [],
+          "NavigationId": "test_output.InterfaceA",
           "Tags": {
             "TypeKind": "interface"
-          }
+          },
+          "Text": "InterfaceA"
         },
         {
-          "Text": "String",
-          "NavigationId": "test_module.String",
           "ChildItems": [],
+          "NavigationId": "test_output.String",
           "Tags": {
             "TypeKind": "enum"
-          }
+          },
+          "Text": "String"
         },
         {
-          "Text": "StructA",
-          "NavigationId": "test_module.StructA",
           "ChildItems": [],
+          "NavigationId": "test_output.StructA",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "StructA"
         },
         {
-          "Text": "StructB",
-          "NavigationId": "test_module.StructB",
           "ChildItems": [],
+          "NavigationId": "test_output.StructB",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "StructB"
         },
         {
-          "Text": "StructEmpty",
-          "NavigationId": "test_module.StructEmpty",
           "ChildItems": [],
+          "NavigationId": "test_output.StructEmpty",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "StructEmpty"
         },
         {
-          "Text": "Unimplementable",
-          "NavigationId": "test_module.Unimplementable",
           "ChildItems": [],
+          "NavigationId": "test_output.Unimplementable",
           "Tags": {
             "TypeKind": "interface"
-          }
+          },
+          "Text": "Unimplementable"
         }
       ],
+      "NavigationId": "test_output",
       "Tags": {
         "TypeKind": "namespace"
-      }
+      },
+      "Text": "test_output"
     },
     {
-      "Text": "test_module/subpackage",
-      "NavigationId": "test_module/subpackage",
       "ChildItems": [
         {
-          "Text": "Bar",
-          "NavigationId": "test_module/subpackage-Bar",
           "ChildItems": [],
+          "NavigationId": "test_output/subpackage-Bar",
           "Tags": {
             "TypeKind": "delegate"
-          }
+          },
+          "Text": "Bar"
         },
         {
-          "Text": "Enum",
-          "NavigationId": "test_module/subpackage.Enum",
           "ChildItems": [],
+          "NavigationId": "test_output/subpackage-Foo",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "Foo"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-GenericFunction",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "GenericFunction"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-GenericFunctionTwoConstraints",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "GenericFunctionTwoConstraints"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-NewEnum",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "NewEnum"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage-NewEnumPointer",
+          "Tags": {
+            "TypeKind": "delegate"
+          },
+          "Text": "NewEnumPointer"
+        },
+        {
+          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.Enum",
           "Tags": {
             "TypeKind": "struct"
-          }
+          },
+          "Text": "Enum"
         },
         {
-          "Text": "Foo",
-          "NavigationId": "test_module/subpackage-Foo",
           "ChildItems": [],
-          "Tags": {
-            "TypeKind": "delegate"
-          }
-        },
-        {
-          "Text": "GenericFunction",
-          "NavigationId": "test_module/subpackage-GenericFunction",
-          "ChildItems": [],
-          "Tags": {
-            "TypeKind": "delegate"
-          }
-        },
-        {
-          "Text": "GenericFunctionTwoConstraints",
-          "NavigationId": "test_module/subpackage-GenericFunctionTwoConstraints",
-          "ChildItems": [],
-          "Tags": {
-            "TypeKind": "delegate"
-          }
-        },
-        {
-          "Text": "Interface",
-          "NavigationId": "test_module/subpackage.Interface",
-          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.Interface",
           "Tags": {
             "TypeKind": "interface"
-          }
+          },
+          "Text": "Interface"
         },
         {
-          "Text": "NewEnum",
-          "NavigationId": "test_module/subpackage-NewEnum",
           "ChildItems": [],
-          "Tags": {
-            "TypeKind": "delegate"
-          }
-        },
-        {
-          "Text": "NewEnumPointer",
-          "NavigationId": "test_module/subpackage-NewEnumPointer",
-          "ChildItems": [],
-          "Tags": {
-            "TypeKind": "delegate"
-          }
-        },
-        {
-          "Text": "String",
-          "NavigationId": "test_module/subpackage.String",
-          "ChildItems": [],
+          "NavigationId": "test_output/subpackage.String",
           "Tags": {
             "TypeKind": "enum"
-          }
+          },
+          "Text": "String"
         },
         {
-          "Text": "StructA",
-          "NavigationId": "test_module/subpackage.StructA",
           "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructA",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "StructA"
         },
         {
-          "Text": "StructB",
-          "NavigationId": "test_module/subpackage.StructB",
           "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructB",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "StructB"
         },
         {
-          "Text": "StructC",
-          "NavigationId": "test_module/subpackage.StructC",
           "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructC",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "StructC"
         },
         {
-          "Text": "StructEmpty",
-          "NavigationId": "test_module/subpackage.StructEmpty",
           "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructEmpty",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "StructEmpty"
         },
         {
-          "Text": "StructGeneric",
-          "NavigationId": "test_module/subpackage.StructGeneric",
           "ChildItems": [],
+          "NavigationId": "test_output/subpackage.StructGeneric",
           "Tags": {
             "TypeKind": "class"
-          }
+          },
+          "Text": "StructGeneric"
         },
         {
-          "Text": "Unimplementable",
-          "NavigationId": "test_module/subpackage.Unimplementable",
           "ChildItems": [],
+          "NavigationId": "test_output/subpackage.Unimplementable",
           "Tags": {
             "TypeKind": "interface"
-          }
+          },
+          "Text": "Unimplementable"
         }
       ],
+      "NavigationId": "test_output/subpackage",
       "Tags": {
         "TypeKind": "namespace"
-      }
+      },
+      "Text": "test_output/subpackage"
     }
   ],
-  "PackageName": "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_module",
+  "PackageName": "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output",
   "PackageVersion": "",
   "ParserVersion": "0.1",
   "ReviewLines": [
@@ -259,7 +259,7 @@
         {
           "Children": [
             {
-              "LineId": "test_module.InterfaceA-MethodNoReturn",
+              "LineId": "test_output.InterfaceA-MethodNoReturn",
               "Tokens": [
                 {
                   "Kind": 3,
@@ -274,7 +274,7 @@
               ]
             },
             {
-              "LineId": "test_module.InterfaceA-MethodOneReturn",
+              "LineId": "test_output.InterfaceA-MethodOneReturn",
               "Tokens": [
                 {
                   "Kind": 3,
@@ -298,7 +298,7 @@
               ]
             },
             {
-              "LineId": "test_module.InterfaceA-MethodTwoReturns",
+              "LineId": "test_output.InterfaceA-MethodTwoReturns",
               "Tokens": [
                 {
                   "Kind": 3,
@@ -311,9 +311,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -346,7 +346,7 @@
               "Tokens": []
             }
           ],
-          "LineId": "test_module.InterfaceA",
+          "LineId": "test_output.InterfaceA",
           "Tokens": [
             {
               "Kind": 2,
@@ -354,10 +354,10 @@
               "HasSuffixSpace": false
             },
             {
-              "Kind": 3,
-              "Value": "InterfaceA",
               "HasPrefixSpace": true,
-              "NavigationDisplayName": "test_module.InterfaceA"
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.InterfaceA",
+              "Value": "InterfaceA"
             },
             {
               "Kind": 2,
@@ -372,7 +372,7 @@
               "Tokens": []
             }
           ],
-          "LineId": "test_module.Unimplementable",
+          "LineId": "test_output.Unimplementable",
           "Tokens": [
             {
               "Kind": 2,
@@ -380,10 +380,10 @@
               "HasSuffixSpace": false
             },
             {
-              "Kind": 3,
-              "Value": "Unimplementable",
               "HasPrefixSpace": true,
-              "NavigationDisplayName": "test_module.Unimplementable"
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.Unimplementable",
+              "Value": "Unimplementable"
             },
             {
               "Kind": 2,
@@ -397,13 +397,13 @@
             {
               "Children": [
                 {
-                  "LineId": "test_module.Enum2_1",
+                  "LineId": "test_output.Enum2_1",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "Enum2_1",
+                      "NavigateToId": "test_output.Enum2_1",
                       "NavigationDisplayName": "Enum2_1",
-                      "NavigateToId": "test_module.Enum2_1"
+                      "Value": "Enum2_1"
                     },
                     {
                       "Kind": 1,
@@ -412,14 +412,14 @@
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output.Enum2",
                       "Value": "Enum2",
-                      "NavigateToId": "test_module.Enum2",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -429,13 +429,13 @@
                   ]
                 },
                 {
-                  "LineId": "test_module.Enum2_2",
+                  "LineId": "test_output.Enum2_2",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "Enum2_2",
+                      "NavigateToId": "test_output.Enum2_2",
                       "NavigationDisplayName": "Enum2_2",
-                      "NavigateToId": "test_module.Enum2_2"
+                      "Value": "Enum2_2"
                     },
                     {
                       "Kind": 1,
@@ -444,14 +444,14 @@
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output.Enum2",
                       "Value": "Enum2",
-                      "NavigateToId": "test_module.Enum2",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -464,7 +464,7 @@
                   "Tokens": []
                 },
                 {
-                  "LineId": "test_module-PossibleEnum2Values",
+                  "LineId": "test_output-PossibleEnum2Values",
                   "Tokens": [
                     {
                       "Kind": 2,
@@ -491,8 +491,8 @@
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output.Enum2",
                       "Value": "Enum2",
-                      "NavigateToId": "test_module.Enum2",
                       "HasSuffixSpace": false
                     }
                   ]
@@ -511,7 +511,7 @@
               "Tokens": []
             }
           ],
-          "LineId": "test_module.Enum2",
+          "LineId": "test_output.Enum2",
           "Tokens": [
             {
               "Kind": 2,
@@ -519,14 +519,14 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output.Enum2",
               "Value": "Enum2",
-              "NavigationDisplayName": "test_module.Enum2",
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -534,7 +534,7 @@
         {
           "Children": [
             {
-              "LineId": "test_module.StructA-Exported",
+              "LineId": "test_output.StructA-Exported",
               "Tokens": [
                 {
                   "Kind": 0,
@@ -543,8 +543,8 @@
                 },
                 {
                   "Kind": 0,
-                  "Value": "        ",
                   "SkipDiff": true,
+                  "Value": "        ",
                   "HasSuffixSpace": false
                 },
                 {
@@ -555,7 +555,7 @@
               ]
             },
             {
-              "LineId": "test_module.StructA-ExportedAsWell",
+              "LineId": "test_output.StructA-ExportedAsWell",
               "Tokens": [
                 {
                   "Kind": 0,
@@ -564,8 +564,8 @@
                 },
                 {
                   "Kind": 0,
-                  "Value": "  ",
                   "SkipDiff": true,
+                  "Value": "  ",
                   "HasSuffixSpace": false
                 },
                 {
@@ -576,7 +576,7 @@
               ]
             },
             {
-              "LineId": "test_module.StructA-N",
+              "LineId": "test_output.StructA-N",
               "Tokens": [
                 {
                   "Kind": 0,
@@ -585,8 +585,8 @@
                 },
                 {
                   "Kind": 0,
-                  "Value": "               ",
                   "SkipDiff": true,
+                  "Value": "               ",
                   "HasSuffixSpace": false
                 },
                 {
@@ -600,8 +600,8 @@
               "Tokens": []
             },
             {
-              "LineId": "test_module-(StructA) MethodNoReturn",
-              "RelatedToLine": "test_module.StructA",
+              "LineId": "test_output-(StructA) MethodNoReturn",
+              "RelatedToLine": "test_output.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -634,8 +634,8 @@
               ]
             },
             {
-              "LineId": "test_module-(s *StructA) MethodTwoReturns",
-              "RelatedToLine": "test_module.StructA",
+              "LineId": "test_output-(s *StructA) MethodTwoReturns",
+              "RelatedToLine": "test_output.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -671,9 +671,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -698,8 +698,8 @@
               ]
             },
             {
-              "LineId": "test_module-(s *StructA) UnmarshalJSON",
-              "RelatedToLine": "test_module.StructA",
+              "LineId": "test_output-(s *StructA) UnmarshalJSON",
+              "RelatedToLine": "test_output.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -761,8 +761,8 @@
               ]
             },
             {
-              "LineId": "test_module-(s StructA) MarshalJSON",
-              "RelatedToLine": "test_module.StructA",
+              "LineId": "test_output-(s StructA) MarshalJSON",
+              "RelatedToLine": "test_output.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -793,9 +793,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -830,8 +830,8 @@
               ]
             },
             {
-              "LineId": "test_module-(s StructA) MethodOneReturn",
-              "RelatedToLine": "test_module.StructA",
+              "LineId": "test_output-(s StructA) MethodOneReturn",
+              "RelatedToLine": "test_output.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -868,7 +868,7 @@
               ]
             }
           ],
-          "LineId": "test_module.StructA",
+          "LineId": "test_output.StructA",
           "Tokens": [
             {
               "Kind": 2,
@@ -876,14 +876,14 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output.StructA",
               "Value": "StructA",
-              "NavigationDisplayName": "test_module.StructA",
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -904,7 +904,7 @@
               ]
             }
           ],
-          "LineId": "test_module.StructB",
+          "LineId": "test_output.StructB",
           "Tokens": [
             {
               "Kind": 2,
@@ -912,14 +912,14 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output.StructB",
               "Value": "StructB",
-              "NavigationDisplayName": "test_module.StructB",
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -931,8 +931,8 @@
         {
           "Children": [
             {
-              "LineId": "test_module-(s *StructEmpty) UnmarshalJSON",
-              "RelatedToLine": "test_module.StructEmpty",
+              "LineId": "test_output-(s *StructEmpty) UnmarshalJSON",
+              "RelatedToLine": "test_output.StructEmpty",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -994,8 +994,8 @@
               ]
             },
             {
-              "LineId": "test_module-(s StructEmpty) MarshalJSON",
-              "RelatedToLine": "test_module.StructEmpty",
+              "LineId": "test_output-(s StructEmpty) MarshalJSON",
+              "RelatedToLine": "test_output.StructEmpty",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1026,9 +1026,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -1063,7 +1063,7 @@
               ]
             }
           ],
-          "LineId": "test_module.StructEmpty",
+          "LineId": "test_output.StructEmpty",
           "Tokens": [
             {
               "Kind": 2,
@@ -1071,14 +1071,14 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output.StructEmpty",
               "Value": "StructEmpty",
-              "NavigationDisplayName": "test_module.StructEmpty",
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -1090,7 +1090,7 @@
         {
           "Children": [
             {
-              "LineId": "test_module-(Enum) Method",
+              "LineId": "test_output-(Enum) Method",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1128,24 +1128,24 @@
             {
               "Children": [
                 {
-                  "LineId": "test_module.EnumValue",
+                  "LineId": "test_output.EnumValue",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "EnumValue",
+                      "NavigateToId": "test_output.EnumValue",
                       "NavigationDisplayName": "EnumValue",
-                      "NavigateToId": "test_module.EnumValue"
+                      "Value": "EnumValue"
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module.Enum",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -1158,7 +1158,7 @@
                   "Tokens": []
                 },
                 {
-                  "LineId": "test_module-PossibleEnumValues",
+                  "LineId": "test_output-PossibleEnumValues",
                   "Tokens": [
                     {
                       "Kind": 2,
@@ -1185,8 +1185,8 @@
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module.Enum",
                       "HasSuffixSpace": false
                     }
                   ]
@@ -1207,24 +1207,24 @@
             {
               "Children": [
                 {
-                  "LineId": "test_module.EnumValue2",
+                  "LineId": "test_output.EnumValue2",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "EnumValue2",
+                      "NavigateToId": "test_output.EnumValue2",
                       "NavigationDisplayName": "EnumValue2",
-                      "NavigateToId": "test_module.EnumValue2"
+                      "Value": "EnumValue2"
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module.Enum",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -1247,7 +1247,7 @@
               "Tokens": []
             }
           ],
-          "LineId": "test_module.Enum",
+          "LineId": "test_output.Enum",
           "Tokens": [
             {
               "Kind": 2,
@@ -1255,10 +1255,10 @@
               "HasSuffixSpace": false
             },
             {
-              "Kind": 3,
-              "Value": "Enum",
               "HasPrefixSpace": true,
-              "NavigationDisplayName": "test_module.Enum"
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.Enum",
+              "Value": "Enum"
             },
             {
               "Kind": 3,
@@ -1268,7 +1268,7 @@
           ]
         },
         {
-          "LineId": "test_module.Enum3",
+          "LineId": "test_output.Enum3",
           "Tokens": [
             {
               "Kind": 2,
@@ -1276,10 +1276,10 @@
               "HasSuffixSpace": false
             },
             {
-              "Kind": 3,
-              "Value": "Enum3",
               "HasPrefixSpace": true,
-              "NavigationDisplayName": "test_module.Enum3"
+              "Kind": 3,
+              "NavigationDisplayName": "test_output.Enum3",
+              "Value": "Enum3"
             },
             {
               "Kind": 3,
@@ -1295,18 +1295,18 @@
         {
           "Children": [
             {
-              "LineId": "test_module.String",
+              "LineId": "test_output.String",
               "Tokens": [
                 {
                   "Kind": 3,
-                  "Value": "String",
+                  "NavigateToId": "test_output.String",
                   "NavigationDisplayName": "String",
-                  "NavigateToId": "test_module.String"
+                  "Value": "String"
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
-                  "Value": "=",
-                  "HasPrefixSpace": true
+                  "Value": "="
                 },
                 {
                   "Kind": 5,
@@ -1329,7 +1329,7 @@
           "Tokens": []
         }
       ],
-      "LineId": "test_module",
+      "LineId": "test_output",
       "Tokens": [
         {
           "Kind": 2,
@@ -1337,8 +1337,8 @@
         },
         {
           "Kind": 0,
-          "Value": "test_module",
-          "NavigationDisplayName": "test_module",
+          "NavigationDisplayName": "test_output",
+          "Value": "test_output",
           "HasSuffixSpace": false
         }
       ]
@@ -1347,8 +1347,8 @@
       "Tokens": [
         {
           "Kind": 0,
-          "Value": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
           "SkipDiff": true,
+          "Value": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
           "HasSuffixSpace": false
         }
       ]
@@ -1361,7 +1361,7 @@
         {
           "Children": [
             {
-              "LineId": "test_module/subpackage.Interface-MethodNoReturn",
+              "LineId": "test_output/subpackage.Interface-MethodNoReturn",
               "Tokens": [
                 {
                   "Kind": 3,
@@ -1376,7 +1376,7 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage.Interface-MethodOneReturn",
+              "LineId": "test_output/subpackage.Interface-MethodOneReturn",
               "Tokens": [
                 {
                   "Kind": 3,
@@ -1400,7 +1400,7 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage.Interface-MethodTwoReturns",
+              "LineId": "test_output/subpackage.Interface-MethodTwoReturns",
               "Tokens": [
                 {
                   "Kind": 3,
@@ -1413,9 +1413,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -1448,7 +1448,7 @@
               "Tokens": []
             }
           ],
-          "LineId": "test_module/subpackage.Interface",
+          "LineId": "test_output/subpackage.Interface",
           "Tokens": [
             {
               "Kind": 2,
@@ -1456,10 +1456,10 @@
               "HasSuffixSpace": false
             },
             {
-              "Kind": 3,
-              "Value": "Interface",
               "HasPrefixSpace": true,
-              "NavigationDisplayName": "test_module/subpackage.Interface"
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.Interface",
+              "Value": "Interface"
             },
             {
               "Kind": 2,
@@ -1474,7 +1474,7 @@
               "Tokens": []
             }
           ],
-          "LineId": "test_module/subpackage.Unimplementable",
+          "LineId": "test_output/subpackage.Unimplementable",
           "Tokens": [
             {
               "Kind": 2,
@@ -1482,10 +1482,10 @@
               "HasSuffixSpace": false
             },
             {
-              "Kind": 3,
-              "Value": "Unimplementable",
               "HasPrefixSpace": true,
-              "NavigationDisplayName": "test_module/subpackage.Unimplementable"
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.Unimplementable",
+              "Value": "Unimplementable"
             },
             {
               "Kind": 2,
@@ -1497,7 +1497,7 @@
         {
           "Children": [
             {
-              "LineId": "test_module/subpackage.StructA-Exported",
+              "LineId": "test_output/subpackage.StructA-Exported",
               "Tokens": [
                 {
                   "Kind": 0,
@@ -1506,8 +1506,8 @@
                 },
                 {
                   "Kind": 0,
-                  "Value": "        ",
                   "SkipDiff": true,
+                  "Value": "        ",
                   "HasSuffixSpace": false
                 },
                 {
@@ -1518,7 +1518,7 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage.StructA-ExportedAsWell",
+              "LineId": "test_output/subpackage.StructA-ExportedAsWell",
               "Tokens": [
                 {
                   "Kind": 0,
@@ -1527,8 +1527,8 @@
                 },
                 {
                   "Kind": 0,
-                  "Value": "  ",
                   "SkipDiff": true,
+                  "Value": "  ",
                   "HasSuffixSpace": false
                 },
                 {
@@ -1539,7 +1539,7 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage.StructA-N",
+              "LineId": "test_output/subpackage.StructA-N",
               "Tokens": [
                 {
                   "Kind": 0,
@@ -1548,8 +1548,8 @@
                 },
                 {
                   "Kind": 0,
-                  "Value": "               ",
                   "SkipDiff": true,
+                  "Value": "               ",
                   "HasSuffixSpace": false
                 },
                 {
@@ -1563,8 +1563,8 @@
               "Tokens": []
             },
             {
-              "LineId": "test_module/subpackage-NewStructA",
-              "RelatedToLine": "test_module/subpackage.StructA",
+              "LineId": "test_output/subpackage-NewStructA",
+              "RelatedToLine": "test_output/subpackage.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1581,15 +1581,15 @@
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructA",
                   "Value": "StructA",
-                  "NavigateToId": "test_module/subpackage.StructA",
                   "HasSuffixSpace": false
                 }
               ]
             },
             {
-              "LineId": "test_module/subpackage-NewStructAWithString",
-              "RelatedToLine": "test_module/subpackage.StructA",
+              "LineId": "test_output/subpackage-NewStructAWithString",
+              "RelatedToLine": "test_output/subpackage.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1620,15 +1620,15 @@
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructA",
                   "Value": "StructA",
-                  "NavigateToId": "test_module/subpackage.StructA",
                   "HasSuffixSpace": false
                 }
               ]
             },
             {
-              "LineId": "test_module/subpackage-(StructA) MethodNoReturn",
-              "RelatedToLine": "test_module/subpackage.StructA",
+              "LineId": "test_output/subpackage-(StructA) MethodNoReturn",
+              "RelatedToLine": "test_output/subpackage.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1661,8 +1661,8 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage-(s *StructA) MethodTwoReturns",
-              "RelatedToLine": "test_module/subpackage.StructA",
+              "LineId": "test_output/subpackage-(s *StructA) MethodTwoReturns",
+              "RelatedToLine": "test_output/subpackage.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1698,9 +1698,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -1725,8 +1725,8 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage-(s *StructA) UnmarshalJSON",
-              "RelatedToLine": "test_module/subpackage.StructA",
+              "LineId": "test_output/subpackage-(s *StructA) UnmarshalJSON",
+              "RelatedToLine": "test_output/subpackage.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1788,8 +1788,8 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage-(s StructA) MarshalJSON",
-              "RelatedToLine": "test_module/subpackage.StructA",
+              "LineId": "test_output/subpackage-(s StructA) MarshalJSON",
+              "RelatedToLine": "test_output/subpackage.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1820,9 +1820,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -1857,8 +1857,8 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage-(s StructA) MethodOneReturn",
-              "RelatedToLine": "test_module/subpackage.StructA",
+              "LineId": "test_output/subpackage-(s StructA) MethodOneReturn",
+              "RelatedToLine": "test_output/subpackage.StructA",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -1895,7 +1895,7 @@
               ]
             }
           ],
-          "LineId": "test_module/subpackage.StructA",
+          "LineId": "test_output/subpackage.StructA",
           "Tokens": [
             {
               "Kind": 2,
@@ -1903,14 +1903,14 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructA",
               "Value": "StructA",
-              "NavigationDisplayName": "test_module/subpackage.StructA",
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -1931,7 +1931,7 @@
               ]
             }
           ],
-          "LineId": "test_module/subpackage.StructB",
+          "LineId": "test_output/subpackage.StructB",
           "Tokens": [
             {
               "Kind": 2,
@@ -1939,14 +1939,14 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructB",
               "Value": "StructB",
-              "NavigationDisplayName": "test_module/subpackage.StructB",
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -1976,7 +1976,7 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage.StructC-Field",
+              "LineId": "test_output/subpackage.StructC-Field",
               "Tokens": [
                 {
                   "Kind": 0,
@@ -1985,14 +1985,14 @@
                 },
                 {
                   "Kind": 0,
-                  "Value": "  ",
                   "SkipDiff": true,
+                  "Value": "  ",
                   "HasSuffixSpace": false
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructB",
                   "Value": "StructB",
-                  "NavigateToId": "test_module/subpackage.StructB",
                   "HasSuffixSpace": false
                 }
               ]
@@ -2001,8 +2001,8 @@
               "Tokens": []
             },
             {
-              "LineId": "test_module/subpackage-NewStructC",
-              "RelatedToLine": "test_module/subpackage.StructC",
+              "LineId": "test_output/subpackage-NewStructC",
+              "RelatedToLine": "test_output/subpackage.StructC",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -2024,8 +2024,8 @@
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructB",
                   "Value": "StructB",
-                  "NavigateToId": "test_module/subpackage.StructB",
                   "HasSuffixSpace": false
                 },
                 {
@@ -2034,14 +2034,14 @@
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructC",
                   "Value": "StructC",
-                  "NavigateToId": "test_module/subpackage.StructC",
                   "HasSuffixSpace": false
                 }
               ]
             }
           ],
-          "LineId": "test_module/subpackage.StructC",
+          "LineId": "test_output/subpackage.StructC",
           "Tokens": [
             {
               "Kind": 2,
@@ -2049,14 +2049,14 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructC",
               "Value": "StructC",
-              "NavigationDisplayName": "test_module/subpackage.StructC",
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -2068,8 +2068,8 @@
         {
           "Children": [
             {
-              "LineId": "test_module/subpackage-(s *StructEmpty) UnmarshalJSON",
-              "RelatedToLine": "test_module/subpackage.StructEmpty",
+              "LineId": "test_output/subpackage-(s *StructEmpty) UnmarshalJSON",
+              "RelatedToLine": "test_output/subpackage.StructEmpty",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -2131,8 +2131,8 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage-(s StructEmpty) MarshalJSON",
-              "RelatedToLine": "test_module/subpackage.StructEmpty",
+              "LineId": "test_output/subpackage-(s StructEmpty) MarshalJSON",
+              "RelatedToLine": "test_output/subpackage.StructEmpty",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -2163,9 +2163,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -2200,7 +2200,7 @@
               ]
             }
           ],
-          "LineId": "test_module/subpackage.StructEmpty",
+          "LineId": "test_output/subpackage.StructEmpty",
           "Tokens": [
             {
               "Kind": 2,
@@ -2208,14 +2208,14 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructEmpty",
               "Value": "StructEmpty",
-              "NavigationDisplayName": "test_module/subpackage.StructEmpty",
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -2227,7 +2227,7 @@
         {
           "Children": [
             {
-              "LineId": "test_module/subpackage.StructGeneric-Value",
+              "LineId": "test_output/subpackage.StructGeneric-Value",
               "Tokens": [
                 {
                   "Kind": 0,
@@ -2236,14 +2236,14 @@
                 },
                 {
                   "Kind": 0,
-                  "Value": "  ",
                   "SkipDiff": true,
+                  "Value": "  ",
                   "HasSuffixSpace": false
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.T",
                   "Value": "T",
-                  "NavigateToId": "test_module/subpackage.T",
                   "HasSuffixSpace": false
                 }
               ]
@@ -2252,8 +2252,8 @@
               "Tokens": []
             },
             {
-              "LineId": "test_module/subpackage-NewStructGeneric",
-              "RelatedToLine": "test_module/subpackage.StructGeneric",
+              "LineId": "test_output/subpackage-NewStructGeneric",
+              "RelatedToLine": "test_output/subpackage.StructGeneric",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -2294,8 +2294,8 @@
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.T",
                   "Value": "T",
-                  "NavigateToId": "test_module/subpackage.T",
                   "HasSuffixSpace": false
                 },
                 {
@@ -2304,8 +2304,8 @@
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.StructGeneric",
                   "Value": "StructGeneric",
-                  "NavigateToId": "test_module/subpackage.StructGeneric",
                   "HasSuffixSpace": false
                 },
                 {
@@ -2315,8 +2315,8 @@
                 },
                 {
                   "Kind": 3,
+                  "NavigateToId": "test_output/subpackage.T",
                   "Value": "T",
-                  "NavigateToId": "test_module/subpackage.T",
                   "HasSuffixSpace": false
                 },
                 {
@@ -2327,8 +2327,8 @@
               ]
             },
             {
-              "LineId": "test_module/subpackage-(s StructGeneric[int]) Method",
-              "RelatedToLine": "test_module/subpackage.StructGeneric",
+              "LineId": "test_output/subpackage-(s StructGeneric[int]) Method",
+              "RelatedToLine": "test_output/subpackage.StructGeneric",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -2374,9 +2374,9 @@
                   "HasSuffixSpace": false
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
                   "Value": "(",
-                  "HasPrefixSpace": true,
                   "HasSuffixSpace": false
                 },
                 {
@@ -2401,7 +2401,7 @@
               ]
             }
           ],
-          "LineId": "test_module/subpackage.StructGeneric",
+          "LineId": "test_output/subpackage.StructGeneric",
           "Tokens": [
             {
               "Kind": 2,
@@ -2409,8 +2409,8 @@
             },
             {
               "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.StructGeneric",
               "Value": "StructGeneric",
-              "NavigationDisplayName": "test_module/subpackage.StructGeneric",
               "HasSuffixSpace": false
             },
             {
@@ -2429,9 +2429,9 @@
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 2,
               "Value": "struct",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             }
           ]
@@ -2443,7 +2443,7 @@
         {
           "Children": [
             {
-              "LineId": "test_module/subpackage-(Enum) Method",
+              "LineId": "test_output/subpackage-(Enum) Method",
               "Tokens": [
                 {
                   "Kind": 2,
@@ -2481,24 +2481,24 @@
             {
               "Children": [
                 {
-                  "LineId": "test_module/subpackage.EnumA",
+                  "LineId": "test_output/subpackage.EnumA",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "EnumA",
+                      "NavigateToId": "test_output/subpackage.EnumA",
                       "NavigationDisplayName": "EnumA",
-                      "NavigateToId": "test_module/subpackage.EnumA"
+                      "Value": "EnumA"
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module/subpackage.Enum",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -2508,24 +2508,24 @@
                   ]
                 },
                 {
-                  "LineId": "test_module/subpackage.EnumB",
+                  "LineId": "test_output/subpackage.EnumB",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "EnumB",
+                      "NavigateToId": "test_output/subpackage.EnumB",
                       "NavigationDisplayName": "EnumB",
-                      "NavigateToId": "test_module/subpackage.EnumB"
+                      "Value": "EnumB"
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module/subpackage.Enum",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -2535,24 +2535,24 @@
                   ]
                 },
                 {
-                  "LineId": "test_module/subpackage.EnumCD",
+                  "LineId": "test_output/subpackage.EnumCD",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "EnumCD",
+                      "NavigateToId": "test_output/subpackage.EnumCD",
                       "NavigationDisplayName": "EnumCD",
-                      "NavigateToId": "test_module/subpackage.EnumCD"
+                      "Value": "EnumCD"
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module/subpackage.Enum",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -2565,7 +2565,7 @@
                   "Tokens": []
                 },
                 {
-                  "LineId": "test_module/subpackage-PossibleEnumValues",
+                  "LineId": "test_output/subpackage-PossibleEnumValues",
                   "Tokens": [
                     {
                       "Kind": 2,
@@ -2592,8 +2592,8 @@
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module/subpackage.Enum",
                       "HasSuffixSpace": false
                     }
                   ]
@@ -2614,24 +2614,24 @@
             {
               "Children": [
                 {
-                  "LineId": "test_module/subpackage.EnumC",
+                  "LineId": "test_output/subpackage.EnumC",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "EnumC",
+                      "NavigateToId": "test_output/subpackage.EnumC",
                       "NavigationDisplayName": "EnumC",
-                      "NavigateToId": "test_module/subpackage.EnumC"
+                      "Value": "EnumC"
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module/subpackage.Enum",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -2641,24 +2641,24 @@
                   ]
                 },
                 {
-                  "LineId": "test_module/subpackage.EnumD",
+                  "LineId": "test_output/subpackage.EnumD",
                   "Tokens": [
                     {
                       "Kind": 3,
-                      "Value": "EnumD",
+                      "NavigateToId": "test_output/subpackage.EnumD",
                       "NavigationDisplayName": "EnumD",
-                      "NavigateToId": "test_module/subpackage.EnumD"
+                      "Value": "EnumD"
                     },
                     {
                       "Kind": 3,
+                      "NavigateToId": "test_output/subpackage.Enum",
                       "Value": "Enum",
-                      "NavigateToId": "test_module/subpackage.Enum",
                       "HasSuffixSpace": false
                     },
                     {
+                      "HasPrefixSpace": true,
                       "Kind": 1,
-                      "Value": "=",
-                      "HasPrefixSpace": true
+                      "Value": "="
                     },
                     {
                       "Kind": 5,
@@ -2681,7 +2681,7 @@
               "Tokens": []
             }
           ],
-          "LineId": "test_module/subpackage.Enum",
+          "LineId": "test_output/subpackage.Enum",
           "Tokens": [
             {
               "Kind": 2,
@@ -2689,10 +2689,10 @@
               "HasSuffixSpace": false
             },
             {
-              "Kind": 3,
-              "Value": "Enum",
               "HasPrefixSpace": true,
-              "NavigationDisplayName": "test_module/subpackage.Enum"
+              "Kind": 3,
+              "NavigationDisplayName": "test_output/subpackage.Enum",
+              "Value": "Enum"
             },
             {
               "Kind": 3,
@@ -2704,18 +2704,18 @@
         {
           "Children": [
             {
-              "LineId": "test_module/subpackage.String",
+              "LineId": "test_output/subpackage.String",
               "Tokens": [
                 {
                   "Kind": 3,
-                  "Value": "String",
+                  "NavigateToId": "test_output/subpackage.String",
                   "NavigationDisplayName": "String",
-                  "NavigateToId": "test_module/subpackage.String"
+                  "Value": "String"
                 },
                 {
+                  "HasPrefixSpace": true,
                   "Kind": 1,
-                  "Value": "=",
-                  "HasPrefixSpace": true
+                  "Value": "="
                 },
                 {
                   "Kind": 5,
@@ -2738,7 +2738,7 @@
           "Tokens": []
         },
         {
-          "LineId": "test_module/subpackage-Bar",
+          "LineId": "test_output/subpackage-Bar",
           "Tokens": [
             {
               "Kind": 2,
@@ -2755,9 +2755,9 @@
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 1,
               "Value": "(",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             },
             {
@@ -2782,7 +2782,7 @@
           ]
         },
         {
-          "LineId": "test_module/subpackage-Foo",
+          "LineId": "test_output/subpackage-Foo",
           "Tokens": [
             {
               "Kind": 2,
@@ -2804,8 +2804,8 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.StructA",
               "Value": "StructA",
-              "NavigateToId": "test_module/subpackage.StructA",
               "HasSuffixSpace": false
             },
             {
@@ -2816,7 +2816,7 @@
           ]
         },
         {
-          "LineId": "test_module/subpackage-GenericFunction",
+          "LineId": "test_output/subpackage-GenericFunction",
           "Tokens": [
             {
               "Kind": 2,
@@ -2857,8 +2857,8 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.T",
               "Value": "T",
-              "NavigateToId": "test_module/subpackage.T",
               "HasSuffixSpace": false
             },
             {
@@ -2867,14 +2867,14 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.T",
               "Value": "T",
-              "NavigateToId": "test_module/subpackage.T",
               "HasSuffixSpace": false
             }
           ]
         },
         {
-          "LineId": "test_module/subpackage-GenericFunctionTwoConstraints",
+          "LineId": "test_output/subpackage-GenericFunctionTwoConstraints",
           "Tokens": [
             {
               "Kind": 2,
@@ -2896,8 +2896,8 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.Interface",
               "Value": "Interface",
-              "NavigateToId": "test_module/subpackage.Interface",
               "HasSuffixSpace": false
             },
             {
@@ -2929,8 +2929,8 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.T",
               "Value": "T",
-              "NavigateToId": "test_module/subpackage.T",
               "HasSuffixSpace": false
             },
             {
@@ -2943,8 +2943,8 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.U",
               "Value": "U",
-              "NavigateToId": "test_module/subpackage.U",
               "HasSuffixSpace": false
             },
             {
@@ -2953,15 +2953,15 @@
               "HasSuffixSpace": false
             },
             {
+              "HasPrefixSpace": true,
               "Kind": 1,
               "Value": "(",
-              "HasPrefixSpace": true,
               "HasSuffixSpace": false
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.T",
               "Value": "T",
-              "NavigateToId": "test_module/subpackage.T",
               "HasSuffixSpace": false
             },
             {
@@ -2970,8 +2970,8 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.U",
               "Value": "U",
-              "NavigateToId": "test_module/subpackage.U",
               "HasSuffixSpace": false
             },
             {
@@ -2982,7 +2982,7 @@
           ]
         },
         {
-          "LineId": "test_module/subpackage-NewEnum",
+          "LineId": "test_output/subpackage-NewEnum",
           "Tokens": [
             {
               "Kind": 2,
@@ -2999,14 +2999,14 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.Enum",
               "Value": "Enum",
-              "NavigateToId": "test_module/subpackage.Enum",
               "HasSuffixSpace": false
             }
           ]
         },
         {
-          "LineId": "test_module/subpackage-NewEnumPointer",
+          "LineId": "test_output/subpackage-NewEnumPointer",
           "Tokens": [
             {
               "Kind": 2,
@@ -3028,8 +3028,8 @@
             },
             {
               "Kind": 3,
+              "NavigateToId": "test_output/subpackage.Enum",
               "Value": "Enum",
-              "NavigateToId": "test_module/subpackage.Enum",
               "HasSuffixSpace": false
             }
           ]
@@ -3039,7 +3039,7 @@
           "Tokens": []
         }
       ],
-      "LineId": "test_module/subpackage",
+      "LineId": "test_output/subpackage",
       "Tokens": [
         {
           "Kind": 2,
@@ -3047,8 +3047,8 @@
         },
         {
           "Kind": 0,
-          "Value": "test_module/subpackage",
-          "NavigationDisplayName": "test_module/subpackage",
+          "NavigationDisplayName": "test_output/subpackage",
+          "Value": "test_output/subpackage",
           "HasSuffixSpace": false
         }
       ]

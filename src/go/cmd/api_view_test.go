@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestOutput(t *testing.T) {
-	f := filepath.Join("testdata", "test_module", "output.json")
+	f := filepath.Join("testdata", "test_output", "output.json")
 	expected, err := os.ReadFile(f)
 	require.NoError(t, err)
 

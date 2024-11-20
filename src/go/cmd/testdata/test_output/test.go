@@ -1,6 +1,6 @@
-package test_module
+package test_output
 
-import "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_module/subpackage"
+import "github.com/Azure/azure-sdk-tools/src/go/cmd/testdata/test_output/subpackage"
 
 type InterfaceA = subpackage.Interface
 

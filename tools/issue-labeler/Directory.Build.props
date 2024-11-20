@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project>
+
   <PropertyGroup>
     <!-- Libs -->
     <OctokitVersion>13.0.1</OctokitVersion>
@@ -8,4 +8,6 @@
     <PollyVersion>8.4.2</PollyVersion>
     <MicrosoftExtensionsLoggingAbstractionsVersion>8.0.2</MicrosoftExtensionsLoggingAbstractionsVersion>
   </PropertyGroup>
+  
+  <Import Project="../../Directory.Build.props" />
 </Project>

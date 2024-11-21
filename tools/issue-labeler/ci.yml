@@ -22,7 +22,7 @@ pr:
       - tools/issue-labeler
   
 extends:
-  template: ../../eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
   parameters:
     ToolName: issue-labeler
     FunctionProject: src/IssueLabelerService

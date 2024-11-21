@@ -1,6 +1,7 @@
 <Project>
 
   <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
     <!-- Libs -->
     <OctokitVersion>13.0.1</OctokitVersion>
     <MicrosoftAutoMLVersion>0.21.1</MicrosoftAutoMLVersion>

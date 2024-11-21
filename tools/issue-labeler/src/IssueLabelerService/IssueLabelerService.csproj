@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <UserSecretsId>401bcdfb-b94b-448f-80ac-36ea8a447a97</UserSecretsId>
     <OutputType>Exe</OutputType>

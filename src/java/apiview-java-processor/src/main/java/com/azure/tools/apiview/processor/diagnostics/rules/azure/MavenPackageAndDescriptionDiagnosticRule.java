@@ -92,25 +92,36 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
             // TODO
         } else {
             // Maven name
-            ASTUtils.findReviewLine(listing, line -> line.hasProperty(Constants.PROPERTY_MAVEN_NAME)).ifPresent(line -> {
-                String mavenName = pom.getName();
-                if (mavenName == null || !mavenNamePattern.matcher(pom.getName()).matches()) {
+            final String mavenName = pom.getName();
+            if (mavenName == null || !mavenNamePattern.matcher(pom.getName()).matches()) {
+                ASTUtils.findReviewLine(listing, line -> line.hasProperty(Constants.PROPERTY_MAVEN_NAME)).ifPresentOrElse(line -> {
                     listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, line.getLineId(),
                             "Maven library name should follow the pattern '" + mavenNamePattern.pattern() + "'.",
                             mavenNameGuidelineLink));
-                }
-            });
+                }, () -> {
+                    // we have a bad maven name, but we can't find the point where the diagnostic should be attached to.
+                    listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, null,
+                            "Maven library name should follow the pattern '" + mavenNamePattern.pattern() + "'.",
+                            mavenNameGuidelineLink));
+                    System.err.println("Unable to find the line to attach the diagnostic to for the maven name.");
+                });
+            }
 
 
             // Maven description
-            ASTUtils.findReviewLine(listing, line -> line.hasProperty(Constants.PROPERTY_MAVEN_DESCRIPTION)).ifPresent(line -> {
-                String mavenDescription = pom.getDescription();
-                if (mavenDescription == null || !mavenDescriptionPattern.matcher(pom.getDescription()).matches()) {
+            final String mavenDescription = pom.getDescription();
+            if (mavenDescription == null || !mavenDescriptionPattern.matcher(pom.getDescription()).matches()) {
+                ASTUtils.findReviewLine(listing, line -> line.hasProperty(Constants.PROPERTY_MAVEN_DESCRIPTION)).ifPresentOrElse(line -> {
                     listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, line.getLineId(),
                             "Maven library description should follow the pattern '" + mavenDescriptionPattern.pattern() + "'.",
                             mavenDescriptionGuidelineLink));
-                }
-            });
+                }, () -> {
+                    listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, null,
+                            "Maven library description should follow the pattern '" + mavenDescriptionPattern.pattern() + "'.",
+                            mavenDescriptionGuidelineLink));
+                    System.err.println("Unable to find the line to attach the diagnostic to for the maven description.");
+                });
+            }
         }
     }
 }

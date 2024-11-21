@@ -195,14 +195,19 @@ public final class ASTUtils {
 
     public static String makeId(Node node) {
         // switch based on known subtypes
-        return switch (node) {
-            case TypeDeclaration<?> td -> makeId(td);
-            case AnnotationMemberDeclaration amd -> makeId(amd);
-            case CallableDeclaration<?> cd -> makeId(cd);
-            case FieldDeclaration fd -> makeId(fd);
-            case EnumConstantDeclaration ecd -> makeId(ecd);
-            case null, default -> makeId(node.toString());
-        };
+        if (node instanceof TypeDeclaration<?>) {
+            return makeId((TypeDeclaration<?>) node);
+        } else if (node instanceof AnnotationMemberDeclaration) {
+            return makeId((AnnotationMemberDeclaration) node);
+        } else if (node instanceof CallableDeclaration<?>) {
+            return makeId((CallableDeclaration<?>) node);
+        } else if (node instanceof FieldDeclaration) {
+            return makeId((FieldDeclaration) node);
+        } else if (node instanceof EnumConstantDeclaration) {
+            return makeId((EnumConstantDeclaration) node);
+        } else {
+            return makeId(node.toString());
+        }
     }
 
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
@@ -281,18 +286,24 @@ public final class ASTUtils {
     }
 
     private static String getAnnotationContext(NodeWithAnnotations<?> nodeWithAnnotations) {
-        return switch (nodeWithAnnotations) {
-            case MethodDeclaration methodDeclaration ->
-                // use the method declaration string instead of method name as there can be overloads
-                methodDeclaration.getDeclarationAsString(true, true, true);
-            case ClassOrInterfaceDeclaration classOrInterfaceDeclaration -> classOrInterfaceDeclaration.getNameAsString();
-            case EnumDeclaration enumDeclaration -> enumDeclaration.getNameAsString();
-            case EnumConstantDeclaration enumConstantDeclaration -> enumConstantDeclaration.getNameAsString();
-            case ConstructorDeclaration constructorDeclaration ->
-                // use the constructor declaration string instead of the name as there can be overloads
-                constructorDeclaration.getDeclarationAsString(true, true, true);
-            case null, default -> "";
-        };
+        if (nodeWithAnnotations instanceof MethodDeclaration) {
+            MethodDeclaration methodDeclaration = (MethodDeclaration) nodeWithAnnotations;
+            return methodDeclaration.getDeclarationAsString(true, true, true);
+        } else if (nodeWithAnnotations instanceof ClassOrInterfaceDeclaration) {
+            ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) nodeWithAnnotations;
+            return classOrInterfaceDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof EnumDeclaration) {
+            EnumDeclaration enumDeclaration = (EnumDeclaration) nodeWithAnnotations;
+            return enumDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof EnumConstantDeclaration) {
+            EnumConstantDeclaration enumConstantDeclaration = (EnumConstantDeclaration) nodeWithAnnotations;
+            return enumConstantDeclaration.getNameAsString();
+        } else if (nodeWithAnnotations instanceof ConstructorDeclaration) {
+            ConstructorDeclaration constructorDeclaration = (ConstructorDeclaration) nodeWithAnnotations;
+            return constructorDeclaration.getDeclarationAsString(true, true, true);
+        } else {
+            return "";
+        }
     }
 
     /**

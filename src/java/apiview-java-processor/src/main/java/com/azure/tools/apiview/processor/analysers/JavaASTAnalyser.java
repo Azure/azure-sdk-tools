@@ -594,32 +594,31 @@ public class JavaASTAnalyser implements Analyser {
         boolean isTypeDeclaration = false;
         String id;
         String name;
-        switch (definition) {
-            case TypeDeclaration<?> typeDeclaration -> {
-                // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
-                if (!isTypeAPublicAPI(typeDeclaration)) {
-                    return;
-                }
 
-                // FIXME getKnownTypes is...icky
-                id = makeId(typeDeclaration);
-                name = typeDeclaration.getNameAsString();
-                apiListing.getKnownTypes().put(typeDeclaration.getFullyQualifiedName().orElse(""), id);
-                isTypeDeclaration = true;
-            }
-            case FieldDeclaration fieldDeclaration -> {
-                id = makeId(fieldDeclaration);
-                name = fieldDeclaration.toString();
-            }
-            case CallableDeclaration<?> callableDeclaration -> {
-                id = makeId(callableDeclaration);
-                name = callableDeclaration.getNameAsString();
-            }
-            case null, default -> {
-                System.out.println("Unknown definition type: " + definition.getClass().getName());
-                System.exit(-1);
+        if (definition instanceof TypeDeclaration<?>) {
+            TypeDeclaration<?> typeDeclaration = (TypeDeclaration<?>) definition;
+            // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
+            if (!isTypeAPublicAPI(typeDeclaration)) {
                 return;
             }
+
+            // FIXME getKnownTypes is...icky
+            id = makeId(typeDeclaration);
+            name = typeDeclaration.getNameAsString();
+            apiListing.getKnownTypes().put(typeDeclaration.getFullyQualifiedName().orElse(""), id);
+            isTypeDeclaration = true;
+        } else if (definition instanceof FieldDeclaration) {
+            FieldDeclaration fieldDeclaration = (FieldDeclaration) definition;
+            id = makeId(fieldDeclaration);
+            name = fieldDeclaration.toString();
+        } else if (definition instanceof CallableDeclaration<?>) {
+            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) definition;
+            id = makeId(callableDeclaration);
+            name = callableDeclaration.getNameAsString();
+        } else {
+            System.out.println("Unknown definition type: " + definition.getClass().getName());
+            System.exit(-1);
+            return;
         }
 
         // when we are dealing with a type declaration, annotations go on the line *before* the definition,
@@ -1048,7 +1047,7 @@ public class JavaASTAnalyser implements Analyser {
             return;
         } else if (expression instanceof ClassExpr classExpr) {
             // lookup to see if the type is known about, if so, make it a link, otherwise leave it as text
-            String typeName = classExpr.getChildNodes().getFirst().toString();
+            String typeName = classExpr.getChildNodes().get(0).toString();
 //            if (apiListing.getKnownTypes().containsKey(typeName)) {
             definitionLine.addToken(TYPE_NAME, typeName, null, Spacing.NO_SPACE); // FIXME add ID
             return;

@@ -9,10 +9,10 @@
   <version>1.31.0</version>
 
   <properties>
-    <maven.compiler.target>21</maven.compiler.target>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.testTarget>21</maven.compiler.testTarget>
-    <maven.compiler.testSource>21</maven.compiler.testSource>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.testTarget>17</maven.compiler.testTarget>
+    <maven.compiler.testSource>17</maven.compiler.testSource>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 

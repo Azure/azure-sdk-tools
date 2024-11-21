@@ -326,7 +326,8 @@ public final class ASTUtils {
         // otherwise there are more rules we want to consider...
         final boolean isInterfaceType = isInterfaceType(type);
 
-        if (parentNode instanceof ClassOrInterfaceDeclaration parentClass) {
+        if (parentNode instanceof ClassOrInterfaceDeclaration) {
+            ClassOrInterfaceDeclaration parentClass = (ClassOrInterfaceDeclaration) parentNode;
             boolean isInPublicParent = isPublicOrProtected(parentClass.getAccessSpecifier());
             boolean isParentAnInterface = isInterfaceType(parentClass);
 
@@ -396,7 +397,8 @@ public final class ASTUtils {
             throw new NullPointerException("node cannot be null");
         }
 
-        if (node instanceof CompilationUnit cu) {
+        if (node instanceof CompilationUnit) {
+            CompilationUnit cu = (CompilationUnit) node;
             String packageName = cu.getPackageDeclaration()
                     .map(PackageDeclaration::getNameAsString)
                     .orElse("");
@@ -406,23 +408,27 @@ public final class ASTUtils {
             return packageName.isEmpty() ? typeName : packageName + "." + typeName;
         }
 
-        if (node instanceof TypeDeclaration<?> type) {
-            return type.getFullyQualifiedName().orElse("");
+        if (node instanceof TypeDeclaration<?>) {
+            return ((TypeDeclaration<?>)node).getFullyQualifiedName().orElse("");
         }
 
-        if (node instanceof CallableDeclaration<?> callableDeclaration) {
+        if (node instanceof CallableDeclaration<?>) {
+            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
             return getNodeFullyQualifiedName(callableDeclaration.getParentNode().orElse(null)) + "." + callableDeclaration.getSignature();
         }
 
-        if (node instanceof FieldDeclaration fieldDeclaration) {
+        if (node instanceof FieldDeclaration) {
+            FieldDeclaration fieldDeclaration = (FieldDeclaration) node;
             return getNodeFullyQualifiedName(fieldDeclaration.getParentNode().orElse(null)) + "." + fieldDeclaration.getVariables().get(0).getNameAsString();
         }
 
-        if (node instanceof EnumConstantDeclaration enumConstantDeclaration) {
+        if (node instanceof EnumConstantDeclaration) {
+            EnumConstantDeclaration enumConstantDeclaration = (EnumConstantDeclaration) node;
             return getNodeFullyQualifiedName(enumConstantDeclaration.getParentNode().orElse(null)) + "." + enumConstantDeclaration.getNameAsString();
         }
 
-        if (node instanceof ClassOrInterfaceType classOrInterfaceType) {
+        if (node instanceof ClassOrInterfaceType) {
+            ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) node;
             if (classOrInterfaceType.getScope().isPresent()) {
                 return getNodeFullyQualifiedName(classOrInterfaceType.getScope().get()) + "." + classOrInterfaceType.getNameAsString();
             } else {
@@ -430,16 +436,17 @@ public final class ASTUtils {
             }
         }
 
-        if (node instanceof NodeWithSimpleName<?> nodeWithSimpleName) {
+        if (node instanceof NodeWithSimpleName<?>) {
+            NodeWithSimpleName<?> nodeWithSimpleName = (NodeWithSimpleName<?>) node;
             return getNodeFullyQualifiedName(node.getParentNode().orElse(null)) + "." + nodeWithSimpleName.getNameAsString();
         }
 
-        if (node instanceof SimpleName simpleName) {
-            return simpleName.getIdentifier();
+        if (node instanceof SimpleName) {
+            return ((SimpleName)node).getIdentifier();
         }
 
-        if (node instanceof PrimitiveType pt) {
-            return pt.toString();
+        if (node instanceof PrimitiveType) {
+            return ((PrimitiveType)node).toString();
         }
 
         throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
@@ -467,9 +474,10 @@ public final class ASTUtils {
      * Optional#empty()}.
      */
     public static Optional<JavadocComment> attemptToFindJavadocComment(BodyDeclaration<?> bodyDeclaration) {
-        if (!(bodyDeclaration instanceof NodeWithJavadoc<?> nodeWithJavadoc)) {
+        if (!(bodyDeclaration instanceof NodeWithJavadoc<?>)) {
             return Optional.empty();
         }
+        NodeWithJavadoc<?> nodeWithJavadoc = (NodeWithJavadoc<?>) bodyDeclaration;
 
         // BodyDeclaration has a Javadoc.
         if (nodeWithJavadoc.getJavadocComment().isPresent()) {

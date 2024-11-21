@@ -356,7 +356,8 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void possiblyAddNavigationLink(ReviewToken token, Node node) {
-        if (node instanceof ClassOrInterfaceType classOrInterfaceType) {
+        if (node instanceof ClassOrInterfaceType) {
+            ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) node;
             String shortName = classOrInterfaceType.getNameAsString();
 
             // Check if the short name exists in the map
@@ -643,7 +644,8 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         // for type declarations, add in if it is a class, annotation, enum, interface, etc
-        if (definition instanceof TypeDeclaration<?> typeDeclaration) {
+        if (definition instanceof TypeDeclaration<?>) {
+            TypeDeclaration<?> typeDeclaration = (TypeDeclaration<?>) definition;
             TokenKind kind = getTokenKind(typeDeclaration);
             definitionLine.addToken(new ReviewToken(KEYWORD, kind.getTypeDeclarationString()));
 
@@ -663,7 +665,8 @@ public class JavaASTAnalyser implements Analyser {
         boolean addedSpace = false;
 
         // Add type parameters for definition
-        if (definition instanceof NodeWithTypeParameters<?> d) {
+        if (definition instanceof NodeWithTypeParameters<?>) {
+            NodeWithTypeParameters<?> d = (NodeWithTypeParameters<?>) definition;
             spacingState = SpacingState.SKIP_NEXT_SUFFIX;
             boolean modified = visitTypeParameters(d.getTypeParameters(), definitionLine);
             spacingState = SpacingState.DEFAULT;
@@ -683,17 +686,20 @@ public class JavaASTAnalyser implements Analyser {
         // Add type for definition - this is the return type for methods
         visitType(definition, definitionLine, RETURN_TYPE);
 
-        if (definition instanceof FieldDeclaration fieldDeclaration) {
+        if (definition instanceof FieldDeclaration) {
             // For Fields - we add the field type and name
-            visitDeclarationNameAndVariables(fieldDeclaration, definitionLine);
+            visitDeclarationNameAndVariables((FieldDeclaration) definition, definitionLine);
             definitionLine.addToken(new ReviewToken(PUNCTUATION, ";"));
-        } else if (definition instanceof CallableDeclaration<?> n) {
+        } else if (definition instanceof CallableDeclaration<?>) {
             // For Methods - Add name and parameters for definition
+            CallableDeclaration<?> n = (CallableDeclaration<?>) definition;
             visitDeclarationNameAndParameters(n, n.getParameters(), definitionLine);
 
             // Add throw exceptions for definition
             visitThrowException(n, definitionLine);
-        } else if (definition instanceof TypeDeclaration<?> d) {
+        } else if (definition instanceof TypeDeclaration<?>) {
+            TypeDeclaration<?> d = (TypeDeclaration<?>) definition;
+
             // add in types that we are extending or implementing
             visitExtendsAndImplements((TypeDeclaration<?>) definition, definitionLine);
 
@@ -819,7 +825,7 @@ public class JavaASTAnalyser implements Analyser {
 
         for (BodyDeclaration<?> bodyDeclaration : annotationDeclarationMembers) {
             Optional<AnnotationMemberDeclaration> annotationMemberDeclarationOptional = bodyDeclaration.toAnnotationMemberDeclaration();
-            if (annotationMemberDeclarationOptional.isEmpty()) {
+            if (!annotationMemberDeclarationOptional.isPresent()) {
                 continue;
             }
             final AnnotationMemberDeclaration annotationMemberDeclaration = annotationMemberDeclarationOptional.get();
@@ -932,7 +938,8 @@ public class JavaASTAnalyser implements Analyser {
         };
 
         // Extends a class
-        if (typeDeclaration instanceof NodeWithExtends<?> d) {
+        if (typeDeclaration instanceof NodeWithExtends<?>) {
+            final NodeWithExtends<?> d = (NodeWithExtends<?>) typeDeclaration;
             if (d.getExtendedTypes().isNonEmpty()) {
                 definitionLine.addToken(KEYWORD, "extends");
                 c.accept(d.getExtendedTypes(), EXTENDS_TYPE);
@@ -940,7 +947,8 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         // implements a class
-        if (typeDeclaration instanceof NodeWithImplements<?> d) {
+        if (typeDeclaration instanceof NodeWithImplements<?>) {
+            final NodeWithImplements<?> d = (NodeWithImplements<?>) typeDeclaration;
             if (d.getImplementedTypes().isNonEmpty()) {
                 definitionLine.addToken(KEYWORD, "implements");
                 c.accept(d.getImplementedTypes(), IMPLEMENTS_TYPE);
@@ -988,7 +996,8 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void visitExpression(Expression expression, ReviewLine definitionLine, boolean condensed) {
-        if (expression instanceof MethodCallExpr methodCallExpr) {
+        if (expression instanceof MethodCallExpr) {
+            MethodCallExpr methodCallExpr = (MethodCallExpr) expression;
             definitionLine.addToken(METHOD_NAME, methodCallExpr.getNameAsString(), Spacing.NO_SPACE);
             definitionLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
             NodeList<Expression> arguments = methodCallExpr.getArguments();
@@ -1005,10 +1014,12 @@ public class JavaASTAnalyser implements Analyser {
             }
             definitionLine.addToken(PUNCTUATION, ")", Spacing.NO_SPACE);
             return;
-        } else if (expression instanceof StringLiteralExpr stringLiteralExpr) {
+        } else if (expression instanceof StringLiteralExpr) {
+            StringLiteralExpr stringLiteralExpr = (StringLiteralExpr) expression;
             definitionLine.addToken(STRING_LITERAL, stringLiteralExpr.toString(), Spacing.NO_SPACE);
             return;
-        } else if (expression instanceof ArrayInitializerExpr arrayInitializerExpr) {
+        } else if (expression instanceof ArrayInitializerExpr) {
+            ArrayInitializerExpr arrayInitializerExpr = (ArrayInitializerExpr) expression;
             if (!condensed) {
                 definitionLine.addToken(PUNCTUATION, "{");
             }
@@ -1034,18 +1045,21 @@ public class JavaASTAnalyser implements Analyser {
                    expression instanceof DoubleLiteralExpr) {
             definitionLine.addToken(NUMBER, expression.toString(), Spacing.NO_SPACE);
             return;
-        } else if (expression instanceof FieldAccessExpr fieldAccessExpr) {
+        } else if (expression instanceof FieldAccessExpr) {
+            FieldAccessExpr fieldAccessExpr = (FieldAccessExpr) expression;
             visitExpression(fieldAccessExpr.getScope(), definitionLine);
             definitionLine
                 .addToken(PUNCTUATION, ".", Spacing.NO_SPACE)
                 .addToken(FIELD_NAME, fieldAccessExpr.getNameAsString(), Spacing.NO_SPACE);
             return;
-        } else if (expression instanceof BinaryExpr binaryExpr) {
+        } else if (expression instanceof BinaryExpr) {
+            BinaryExpr binaryExpr = (BinaryExpr) expression;
             visitExpression(binaryExpr.getLeft(), definitionLine);
             definitionLine.addToken(TEXT, " " + binaryExpr.getOperator().asString() + " ");
             visitExpression(binaryExpr.getRight(), definitionLine);
             return;
-        } else if (expression instanceof ClassExpr classExpr) {
+        } else if (expression instanceof ClassExpr) {
+            ClassExpr classExpr = (ClassExpr) expression;
             // lookup to see if the type is known about, if so, make it a link, otherwise leave it as text
             String typeName = classExpr.getChildNodes().get(0).toString();
 //            if (apiListing.getKnownTypes().containsKey(typeName)) {
@@ -1054,10 +1068,12 @@ public class JavaASTAnalyser implements Analyser {
 //            }
 //        } else {
 //            node.addToken(TEXT, expression.toString());
-        } else if (expression instanceof NameExpr nameExpr) {
+        } else if (expression instanceof NameExpr) {
+            NameExpr nameExpr = (NameExpr) expression;
             definitionLine.addToken(TYPE_NAME, nameExpr.toString(), Spacing.NO_SPACE);
             return;
-        } else if (expression instanceof BooleanLiteralExpr booleanLiteralExpr) {
+        } else if (expression instanceof BooleanLiteralExpr) {
+            BooleanLiteralExpr booleanLiteralExpr = (BooleanLiteralExpr) expression;
             definitionLine.addToken(KEYWORD, booleanLiteralExpr.toString(), Spacing.NO_SPACE);
             return;
         } else if (expression instanceof ObjectCreationExpr) {
@@ -1131,7 +1147,8 @@ public class JavaASTAnalyser implements Analyser {
 
         reviewLine.addToken(ANNOTATION_NAME, "@" + a.getNameAsString(), Spacing.NO_SPACE);
         if (m.isShowProperties()) {
-            if (a instanceof NormalAnnotationExpr d) {
+            if (a instanceof NormalAnnotationExpr) {
+                NormalAnnotationExpr d = (NormalAnnotationExpr) a;
                 reviewLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
                 NodeList<MemberValuePair> pairs = d.getPairs();
                 for (int i = 0; i < pairs.size(); i++) {
@@ -1159,7 +1176,8 @@ public class JavaASTAnalyser implements Analyser {
                 }
 
                 reviewLine.addToken(PUNCTUATION, ")");
-            } else if (a instanceof SingleMemberAnnotationExpr d) {
+            } else if (a instanceof SingleMemberAnnotationExpr) {
+                SingleMemberAnnotationExpr d = (SingleMemberAnnotationExpr) a;
                 reviewLine.addToken(PUNCTUATION, "(", Spacing.NO_SPACE);
                 visitExpression(d.getMemberValue(), reviewLine, m.isCondensed());
                 reviewLine.addToken(PUNCTUATION, ")", Spacing.NO_SPACE);
@@ -1197,9 +1215,11 @@ public class JavaASTAnalyser implements Analyser {
         // `ServiceVersion` interface. We want to add a comment to the method to indicate that it is a special method
         // that is used to get the latest version of a service.
         Node parentNode = callableDeclaration.getParentNode().orElse(null);
-        if (callableDeclaration instanceof MethodDeclaration m) {
+        if (callableDeclaration instanceof MethodDeclaration) {
+            MethodDeclaration m = (MethodDeclaration) callableDeclaration;
             if (callableDeclaration.getNameAsString().equals("getLatest")) {
-                if (parentNode instanceof EnumDeclaration d) {
+                if (parentNode instanceof EnumDeclaration) {
+                    EnumDeclaration d = (EnumDeclaration) parentNode;
                     if (d.getImplementedTypes().stream().anyMatch(implementedType -> implementedType.getName().toString().equals("ServiceVersion"))) {
                         m.getBody().flatMap(blockStmt -> blockStmt.getStatements().stream()
                                     .filter(Statement::isReturnStmt)
@@ -1257,7 +1277,8 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void visitType(Object type, ReviewLine reviewLine, TokenKind kind) {
-        if (type instanceof Parameter d) {
+        if (type instanceof Parameter) {
+            Parameter d = (Parameter) type;
             boolean isVarArgs = d.isVarArgs();
             spacingState = isVarArgs ? SpacingState.SKIP_NEXT_SUFFIX : SpacingState.DEFAULT;
             visitClassType(d.getType(), reviewLine, kind);
@@ -1265,12 +1286,12 @@ public class JavaASTAnalyser implements Analyser {
             if (isVarArgs) {
                 reviewLine.addToken(kind, "...");
             }
-        } else if (type instanceof MethodDeclaration d) {
-            visitClassType(d.getType(), reviewLine, kind);
-        } else if (type instanceof FieldDeclaration d) {
-            visitClassType(d.getElementType(), reviewLine, kind);
-        } else if (type instanceof ClassOrInterfaceType d) {
-            visitClassType(d, reviewLine, kind);
+        } else if (type instanceof MethodDeclaration) {
+            visitClassType(((MethodDeclaration)type).getType(), reviewLine, kind);
+        } else if (type instanceof FieldDeclaration) {
+            visitClassType(((FieldDeclaration)type).getElementType(), reviewLine, kind);
+        } else if (type instanceof ClassOrInterfaceType) {
+            visitClassType(((ClassOrInterfaceType)type), reviewLine, kind);
         } else if (type instanceof AnnotationDeclaration ||
                    type instanceof ConstructorDeclaration ||
                    type instanceof ClassOrInterfaceDeclaration ||
@@ -1315,7 +1336,8 @@ public class JavaASTAnalyser implements Analyser {
         final int childrenSize = nodes.size();
         // Recursion's base case: leaf node
         if (childrenSize <= 1) {
-            if (node instanceof WildcardType d) {
+            if (node instanceof WildcardType) {
+                final WildcardType d = (WildcardType) node;
                 if (d.getExtendedType().isPresent()) {
                     reviewLine.addToken(kind, "?")
                               .addToken(KEYWORD, "extends");

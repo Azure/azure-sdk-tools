@@ -392,13 +392,30 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private void SetOrigin(GitAssetsConfiguration config)
         {
             var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-            GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+
+            // in cases of failure to initialize a real git repo. we need to NOT run git remote set-url
+            if (config.IsAssetsRepoInitialized())
+            {
+                GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+            }
+            else
+            {
+                _consoleWrapper.WriteLine($"The assets folder within \"{config.AssetsRepoLocation.ToString()}\" was not properly initialized, and as such the proxy is skipping override of the origin url.");
+            }
         }
 
         private void HideOrigin(GitAssetsConfiguration config)
         {
             var publicOrigin = GetCloneUrl(config.AssetsRepo, config.RepoRoot, honorToken: false);
-            GitHandler.Run($"remote set-url origin {publicOrigin}", config);
+            
+            if (config.IsAssetsRepoInitialized())
+            {
+                GitHandler.Run($"remote set-url origin {publicOrigin}", config);
+            }
+            else
+            {
+                _consoleWrapper.WriteLine($"The assets folder within \"{config.AssetsRepoLocation.ToString()}\" was not properly initialized, and as such the proxy is skipping override of the origin url.");
+            }
         }
 
         /// <summary>

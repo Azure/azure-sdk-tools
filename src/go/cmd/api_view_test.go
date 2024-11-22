@@ -46,6 +46,19 @@ func TestOutput(t *testing.T) {
 			return false // examine all lines
 		})
 	})
+
+	t.Run("navigation links", func(t *testing.T) {
+		lineIDs := map[string]bool{}
+		forAll(review.ReviewLines, func(rl ReviewLine) {
+			lineIDs[rl.LineID] = true
+		})
+		searchTokens(review.ReviewLines, func(rt ReviewToken) bool {
+			if !lineIDs[rt.NavigateToID] {
+				t.Errorf("broken navigation link: no LineID corresponds to NavigateToID %q", rt.NavigateToID)
+			}
+			return false
+		})
+	})
 }
 
 func TestMultiModule(t *testing.T) {
@@ -301,15 +314,13 @@ func TestDeterministicOutput(t *testing.T) {
 // It returns true when the predicate returns true, and false if the predicate
 // returns false for every line.
 func searchLines(lines []ReviewLine, match func(ReviewLine) bool) bool {
-	for _, ln := range lines {
+	found := false
+	forAll(lines, func(ln ReviewLine) {
 		if match(ln) {
-			return true
+			found = true
 		}
-		if searchLines(ln.Children, match) {
-			return true
-		}
-	}
-	return false
+	})
+	return found
 }
 
 // searchTokens searches for a token matching the given predicate.

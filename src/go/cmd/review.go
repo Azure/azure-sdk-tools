@@ -144,6 +144,24 @@ func (r *Review) Review() (CodeFile, error) {
 			lines = append(lines, ReviewLine{})
 		}
 	}
+
+	// Any ReviewToken having a nonempty NavigateToID that doesn't match some ReviewLine's
+	// LineID will be clickable in API View but won't navigate to anything when clicked. It
+	// would be best simply not to assign such values, but parseAndMakeTypeTokens() does so
+	// in some uncommon cases and preventing that is difficult in the current implementation.
+	// So, we instead remove invalid NavigateToID values here.
+	lineIDs := map[string]bool{}
+	forAll(lines, func(ln ReviewLine) {
+		lineIDs[ln.LineID] = true
+	})
+	forAll(lines, func(ln ReviewLine) {
+		for i, tk := range ln.Tokens {
+			if !lineIDs[tk.NavigateToID] {
+				ln.Tokens[i].NavigateToID = ""
+			}
+		}
+	})
+
 	return CodeFile{
 		Diagnostics:   diagnostics,
 		Language:      "Go",
@@ -237,4 +255,12 @@ func (r *Review) resolveAliases() error {
 		}
 	}
 	return nil
+}
+
+// forAll recursively applies a function to all lines and their children
+func forAll(lines []ReviewLine, fn func(ReviewLine)) {
+	for _, ln := range lines {
+		fn(ln)
+		forAll(ln.Children, fn)
+	}
 }

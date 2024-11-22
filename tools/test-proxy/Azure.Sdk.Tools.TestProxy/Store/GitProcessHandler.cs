@@ -195,16 +195,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         }
                     }
                 }
-                // exceptions caught here will be to do with inability to start the git process
-                // otherwise all "error" states should be handled by the output to stdErr and non-zero exitcode.
-                catch (Exception e)
+                // exceptions caught here will be to do with inability to recover from a failed git process
+                // rather than endlessly retrying and concealing the git error from the user, immediately report and exit the process with an error code
+                catch (GitProcessException e)
                 {
-                    DebugLogger.LogDebug(e.Message);
+                    DebugLogger.LogError("Git ran into an unrecoverable error and had to exit. The error output from git is: ");
+                    DebugLogger.LogError(e.Result.StdErr);
 
-                    result.ExitCode = -1;
-                    result.CommandException = e;
-
-                    throw new GitProcessException(result);
+                    Environment.Exit(1);
                 }
             });
 

@@ -124,22 +124,9 @@ jobs:
     workingDirectory: $(Build.ArtifactStagingDirectory)
   
   - pwsh: |
-      Get-ChildItem env: | Where-Object Name -like '*OPENSSL*' | ForEach-Object {
-        "$(Host), $(OSVmImage), Environment, $($_.Name), $($_.Value), all"
-      } > environment-inventory.csv
-    displayName: Environment Variables
-    workingDirectory: $(Build.ArtifactStagingDirectory)
-
-  - pwsh: |
       Get-ChildItem "${env:ProgramFiles}" | ForEach-Object {
         "$(Host), $(OSVmImage), ProgramFiles, $($_.Name), , all"
       } > programfiles-inventory.csv
-      if (Test-Path "${env:ProgramFiles}\OpenSSL") {
-        Get-ChildItem "${env:ProgramFiles}\OpenSSL" -Recurse -Dir | Resolve-Path -Relative -RelativeBasePath "${env:ProgramFiles}" | ForEach-Object {
-          # Strip ".\" from the front of the relative path.
-          "$(Host), $(OSVmImage), ProgramFiles, $($_.Substring(2)), , all"
-        } >> programfiles-inventory.csv
-      }
     displayName: Program Files
     workingDirectory: $(Build.ArtifactStagingDirectory)
     condition: and(succeeded(), eq(variables.Host, 'Windows'))

@@ -34,10 +34,6 @@ jobs:
         Pool: azsdk-pool-mms-win-2022-general
         OSVmImage: MMS2022
         Host: Windows
-      CustomMacOS:
-        Pool: Azure Pipelines
-        OSVmImage: macos-latest
-        Host: MacOS
 
   pool:
     name: $(Pool)
@@ -146,7 +142,7 @@ jobs:
       Get-ChildItem "${env:ProgramFiles(x86)}" | ForEach-Object {
         "$(Host), $(OSVmImage), ProgramFilesX86, $($_.Name), , all"
       } >> programfiles-inventory.csv
-    displayName: Program Files
+    displayName: Program Files (x86)
     workingDirectory: $(Build.ArtifactStagingDirectory)
     condition: and(succeeded(), eq(variables.Host, 'Windows'))
 

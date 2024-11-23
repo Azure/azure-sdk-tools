@@ -134,8 +134,8 @@ jobs:
       Get-ChildItem "${env:ProgramFiles}" | ForEach-Object {
         "$(Host), $(OSVmImage), ProgramFiles, $($_.Name), , all"
       } > programfiles-inventory.csv
-      if (Test-Path "${env:ProgramFiles}\OpenSSL") Get-ChildItem {
-        "${env:ProgramFiles}\OpenSSL" -Recurse -Dir | ForEach-Object {
+      if (Test-Path "${env:ProgramFiles}\OpenSSL") {
+        Get-ChildItem "${env:ProgramFiles}\OpenSSL" -Recurse -Dir | ForEach-Object {
           "$(Host), $(OSVmImage), ProgramFiles, $($_.Name), , all"
         } >> programfiles-inventory.csv
       }

@@ -157,6 +157,7 @@ jobs:
 
 - job: assemble
   dependsOn: inventory
+  condition: succeededOrFailed()
   pool:
     vmImage: ubuntu-latest
   steps:

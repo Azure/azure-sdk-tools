@@ -1,5 +1,5 @@
 import { addPullRequestLabelOctokit, getPullRequestLabelsOctokit, removePullRequestLabelOctokit } from '../utils/githubUtils';
-import { sdkLabels } from '@azure/swagger-validation-common';
+import { sdkLabels } from '../types/sdks';
 import { WorkflowContext } from './workflow';
 
 /**
@@ -39,8 +39,7 @@ export async function updateBreakingChangesLabel(
 
   // Using Github config setting. To control which language's breaking change label should be processed.
   const sdkBreakingChangesLabel =
-    context.swaggerToSdkConfig.packageOptions.breakingChangesLabel ??
-    context.legacyLangConfig?.breakingChangesLabel?.name;
+    context.swaggerToSdkConfig.packageOptions.breakingChangesLabel;
     
   // Support language: azure-sdk-for-go azure-sdk-for-js azure-sdk-for-python
   const sdkNameList = ['azure-sdk-for-go', 'azure-sdk-for-js', 'azure-sdk-for-python'];

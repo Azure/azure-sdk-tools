@@ -45,7 +45,7 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
         Set<String> exportsPackages = new HashSet<>();
 
         Optional<ReviewLine> moduleInfoLineOptional = ASTUtils.findReviewLine(listing, line -> line.hasProperty(JavaASTAnalyser.MODULE_INFO_KEY));
-        if (moduleInfoLineOptional.isEmpty()) {
+        if (!moduleInfoLineOptional.isPresent()) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, makeId(basePackageName),
                     "This module is missing module-info.java"));
             return;

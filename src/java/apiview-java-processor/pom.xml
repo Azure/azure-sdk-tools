@@ -90,6 +90,7 @@
         <configuration>
           <source>${maven.compiler.source}</source>
           <target>${maven.compiler.target}</target>
+          <release>${maven.compiler.target}</release>
           <testSource>${maven.compiler.testSource}</testSource>
           <testTarget>${maven.compiler.testTarget}</testTarget>
         </configuration>

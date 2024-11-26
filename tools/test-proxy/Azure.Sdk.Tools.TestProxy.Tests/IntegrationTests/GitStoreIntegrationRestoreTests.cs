@@ -305,7 +305,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
               ""Tag"": ""INVALID_TAG""
-        }", "Invocation of \"git fetch origin refs/tags/INVALID_TAG:refs/tags/INVALID_TAG\" had a non-zero exit code -1")]
+        }", "Invocation of \"git fetch origin refs/tags/INVALID_TAG:refs/tags/INVALID_TAG\" had a non-zero exit code 128")]
         [Trait("Category", "Integration")]
         public async Task InvalidTagThrows(string inputJson, string httpException)
         {

@@ -204,16 +204,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     // we rethrow here in contexts where we can expect the ASP.NET middleware to handle the thrown exception
                     if (ThrowOnException)
                     {
-                        DebugLogger.LogError(e.Message);
-                        result.ExitCode = -1;
-                        result.CommandException = e;
+                        DebugLogger.LogError(e.Result.StdErr);
 
-                        throw new GitProcessException(result);
+                        throw new GitProcessException(e.Result);
                     }
                     // otherwise, we log the error, then early exit from the proces (in CLI contexts)
                     else
                     {
-                        DebugLogger.LogError("Git ran into an unrecoverable error and had to exit. The error output from git is: ");
+                        DebugLogger.LogError("Git ran into an unrecoverable error. Test-Proxy is exiting. The error output from git is: ");
                         DebugLogger.LogError(e.Result.StdErr);
 
                         Environment.Exit(1);

@@ -80,10 +80,12 @@ namespace Azure.Sdk.Tools.TestProxy
             switch (commandObj)
             {
                 case ConfigLocateOptions configOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
                     System.Console.WriteLine(await DefaultStore.GetPath(assetsJson));
                     break;
                 case ConfigShowOptions configOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
                     using(var f = File.OpenRead(assetsJson))
                     {
@@ -92,6 +94,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                     break;
                 case ConfigCreateOptions configOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
                     throw new NotImplementedException("Interactive creation of assets.json feature is not yet implemented.");
                 case ConfigOptions configOptions:
@@ -101,14 +104,17 @@ namespace Azure.Sdk.Tools.TestProxy
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(pushOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Push(assetsJson);
                     break;
                 case ResetOptions resetOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(resetOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Reset(assetsJson);
                     break;
                 case RestoreOptions restoreOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Restore(assetsJson);
                     break;

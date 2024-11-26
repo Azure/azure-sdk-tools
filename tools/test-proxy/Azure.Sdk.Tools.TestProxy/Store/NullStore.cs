@@ -25,5 +25,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         public Task<NormalizedString> GetPath(string pathToAssetsJson) { return null; }
+        public void SetStoreExceptionMode(bool throwOnException) { }
     }
 }

@@ -164,10 +164,11 @@ func (r *Review) Review() (CodeFile, error) {
 	})
 
 	return CodeFile{
-		Diagnostics:   diagnostics,
-		Language:      "Go",
-		Name:          r.reviewed.Name,
-		Navigation:    nav,
+		Diagnostics: diagnostics,
+		Language:    "Go",
+		Name:        r.reviewed.Name,
+		Navigation:  nav,
+		// this must match the value in src/dotnet/APIView/APIViewWeb/Languages/GoLanguageService.cs
 		ParserVersion: "0.1",
 		ReviewLines:   lines,
 		PackageName:   r.name,

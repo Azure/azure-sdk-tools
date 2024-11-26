@@ -27,6 +27,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     public class GitProcessHandler
     {
         public const int RETRY_INTERMITTENT_FAILURE_COUNT = 3;
+
+        public bool ThrowOnException = true;
         /// <summary>
         /// Internal class to hold the minimum supported version of git. If that
         /// version changes we only need to change it here.
@@ -199,10 +201,23 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // rather than endlessly retrying and concealing the git error from the user, immediately report and exit the process with an error code
                 catch (GitProcessException e)
                 {
-                    DebugLogger.LogError("Git ran into an unrecoverable error and had to exit. The error output from git is: ");
-                    DebugLogger.LogError(e.Result.StdErr);
+                    // we rethrow here in contexts where we can expect the ASP.NET middleware to handle the thrown exception
+                    if (ThrowOnException)
+                    {
+                        DebugLogger.LogError(e.Message);
+                        result.ExitCode = -1;
+                        result.CommandException = e;
 
-                    Environment.Exit(1);
+                        throw new GitProcessException(result);
+                    }
+                    // otherwise, we log the error, then early exit from the proces (in CLI contexts)
+                    else
+                    {
+                        DebugLogger.LogError("Git ran into an unrecoverable error and had to exit. The error output from git is: ");
+                        DebugLogger.LogError(e.Result.StdErr);
+
+                        Environment.Exit(1);
+                    }
                 }
             });
 

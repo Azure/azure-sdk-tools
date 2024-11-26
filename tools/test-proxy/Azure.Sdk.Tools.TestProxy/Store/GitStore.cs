@@ -76,6 +76,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         #region push, reset, restore, and other asset repo implementations
         /// <summary>
+        /// Set the GitHandler exception mode.
+        ///
+        /// When false: unrecoverable git exceptions will print the error, and early exit
+        /// When true: unrecoverable git exceptions will log, then be rethrown for the Exception middleware to handle and return as a valid non-successful http response.
+        /// </summary>
+        /// <param name="throwOnException"></param>
+        public void SetStoreExceptionMode(bool throwOnException)
+        {
+            this.GitHandler.ThrowOnException = throwOnException;
+        }
+
+        /// <summary>
         /// Given a config, locate the cloned assets.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>

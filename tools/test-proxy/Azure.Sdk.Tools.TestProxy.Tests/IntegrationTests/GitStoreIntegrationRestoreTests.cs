@@ -304,6 +304,44 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
+              ""Tag"": ""INVALID_TAG""
+        }", "Invocation of \"git fetch origin refs/tags/INVALID_TAG:refs/tags/INVALID_TAG\" had a non-zero exit code -1")]
+        [Trait("Category", "Integration")]
+        public async Task InvalidTagThrows(string inputJson, string httpException)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+
+                var assertion = await Assert.ThrowsAsync<HttpException>(async () =>
+                {
+                    await _defaultStore.Restore(jsonFileLocation);
+                });
+                Assert.Contains(httpException, assertion.Message);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
               ""Tag"": ""python/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]

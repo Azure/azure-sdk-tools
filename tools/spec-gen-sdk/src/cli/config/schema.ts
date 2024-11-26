@@ -15,9 +15,13 @@ export type SDKAutomationCliConfig = {
     azureDevopsPat: string;
     buildId: string;
   };
+  localSpecRepoPath: string;
+  localSdkRepoPath: string;
   specRepo: string;
   sdkRepoName: string;
   prNumber: number;
+  specCommitSha: string;
+  specPrHttpsUrl: string;
   githubApp: {
     id: number;
     privateKey: string;
@@ -85,6 +89,20 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
       format: String
     }
   },
+  localSpecRepoPath: {
+    default: '',
+    doc: 'Example: /path/to/azure-rest-api-specs',
+    env: 'LOCAL_SPEC_REPO_PATH',
+    arg: 'local-spec-repo-path',
+    format: String
+  },
+  localSdkRepoPath: {
+    default: '',
+    doc: 'Example: /path/to/azure-sdk-for-go',
+    env: 'LOCAL_SDK_REPO_PATH',
+    arg: 'local-sdk-repo-path',
+    format: String
+  },
   specRepo: {
     default: '',
     doc: 'Example: Azure/azure-rest-api-specs',
@@ -105,6 +123,20 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
     env: 'PR_NUMBER',
     arg: 'pr',
     format: Number
+  },
+  specCommitSha: {
+    default: '',
+    doc: 'Commit sha of the spec pull request',
+    env: 'SPEC_COMMIT_SHA',
+    arg: 'spec-commit-sha',
+    format: String
+  },
+  specPrHttpsUrl: {
+    default: '',
+    doc: 'https://github.com/azure/azure-rest-api-specs/pull/1234',
+    env: 'SPEC_PR_HTTPS_URL',
+    arg: 'spec-pr-https-url',
+    format: String
   },
   githubApp: {
     id: {

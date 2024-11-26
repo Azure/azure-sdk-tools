@@ -242,7 +242,7 @@ const getGithubContext = async (options: SdkAutoOptions, logger: winston.Logger)
     const rsp = await octokit.pulls.get({
       owner: options.specRepo.owner,
       repo: options.specRepo.name,
-      pull_number: options.pullNumber
+      pull_number: options.pullNumber,
     });
     specPR = rsp.data;
   } while (specPR.mergeable === null && !specPR.merged);

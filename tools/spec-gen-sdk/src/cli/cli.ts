@@ -1,7 +1,7 @@
 import { getRepository } from '../utils/githubUtils';
-import { sdkAutoMain } from '../automation/entrypoint';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { sdkAutomationCliConfig } from './config';
+import { sdkAutoMain_New } from '../automation/entrypoint2';
 
 // tslint:disable-next-line: no-floating-promises
 (async () => {
@@ -13,17 +13,17 @@ import { sdkAutomationCliConfig } from './config';
     const repo = getRepository(config.specRepo);
 
     process.chdir(config.workingFolder);
-    status = await sdkAutoMain({
+    status = await sdkAutoMain_New({
       specRepo: repo,
-      pullNumber: config.prNumber,
+      localSpecRepoPath: config.localSpecRepoPath,
+      localSdkRepoPath: config.localSdkRepoPath,
+      pullNumber: config.specPrHttpsUrl ? Number(config.specPrHttpsUrl.substring(config.specPrHttpsUrl.lastIndexOf('/') + 1)) : 0,
       sdkName: config.sdkRepoName,
-      filterSwaggerToSdk: config.executionMode === 'SDK_FILTER',
       github: {
         token: config.githubToken,
         id: config.githubApp.id,
         privateKey: config.githubApp.privateKey
       },
-      storage: config.blobStorage,
       runEnv: config.isTriggeredByUP ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto'
     });

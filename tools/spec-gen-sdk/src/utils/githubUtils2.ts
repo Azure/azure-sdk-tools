@@ -2,6 +2,7 @@ import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
 import * as winston from 'winston';
 import { SdkAutoContext } from '../automation/entrypoint';
+import { SdkAutoContext_New } from '../automation/entrypoint2';
 
 
 /**
@@ -208,7 +209,7 @@ export const getAuthenticatedOctokit = (
 };
 
 export const getGithubFileContent = async (
-  context: SdkAutoContext, repo: RepoKey, path: string, branch?: string
+  context: SdkAutoContext_New, repo: RepoKey, path: string, branch?: string
 ) => {
   try {
     const rsp = await context.octokit.repos.getContent({

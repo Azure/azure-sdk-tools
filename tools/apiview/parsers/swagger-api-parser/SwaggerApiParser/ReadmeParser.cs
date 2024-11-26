@@ -43,17 +43,17 @@ namespace SwaggerApiParser
             return matchResult.Success ? matchResult.Groups[1].Value : "";
         }
 
-        public static IEnumerable<string> GetSwaggerFilesFromReadme(string readme, ref string tag)
+        public static IEnumerable<string> GetSwaggerFilesFromReadme(string readme, string tag)
         {
             ReadmeParser parser = new ReadmeParser(readme);
             parser.ParseReadmeConfig();
-
+            string readmeTag = tag;
             if (tag == "default" && parser.basicConfig != null)
             {
-                tag = parser.basicConfig.tag;
+                readmeTag = parser.basicConfig.tag;
             }
 
-            parser.inputSwaggerFilesMap.TryGetValue(tag, out InputSwaggerFiles inputFiles);
+            parser.inputSwaggerFilesMap.TryGetValue(readmeTag, out InputSwaggerFiles inputFiles);
             return inputFiles?.input ?? Enumerable.Empty<string>();
         }
         private void ParseReadmeConfig()

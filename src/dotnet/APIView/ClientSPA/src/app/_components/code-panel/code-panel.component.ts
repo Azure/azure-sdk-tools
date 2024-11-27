@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
@@ -11,10 +11,11 @@ import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { Message } from 'primeng/api/message';
-import { MessageService } from 'primeng/api';
+import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { Menu } from 'primeng/menu';
 
 @Component({
   selector: 'app-code-panel',
@@ -36,7 +37,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() loadFailed : boolean = false;
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-
+  @ViewChildren(Menu) menus!: QueryList<Menu>;
   
   noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
 
@@ -52,12 +53,19 @@ export class CodePanelComponent implements OnChanges{
   commentThreadNavaigationPointer: number | undefined = undefined;
   diffNodeNavaigationPointer: number | undefined = undefined;
 
+  menuItemsLineActions: MenuItem[] = [];
+
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router, private messageService: MessageService) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
     this.handleRealTimeCommentUpdates();
+
+    this.menuItemsLineActions = [
+        { label: 'Copy line', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLineToClipBoard(event) },
+        { label: 'Copy permalink', icon: 'bi bi-clipboard' }
+      ];
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -156,6 +164,13 @@ export class CodePanelComponent implements OnChanges{
       return token.properties['NavigateToUrl'];
     }
     return "";
+  }
+
+  toggleLineActionMenu(event: any, id: string) {
+    const menu: Menu | undefined = this.menus.find(menu => menu.el.nativeElement.getAttribute('data-line-action-menu-id') == id);
+    if (menu) {
+      menu.toggle(event);
+    }
   }
 
   toggleNodeComments(target: Element) {
@@ -619,6 +634,18 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
+  showNoDiffInContentMessage() {
+    return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
+  }
+
+  private copyCodeLineToClipBoard(event: MenuItemCommandEvent) {
+    const target = (event.originalEvent?.target as Element).closest("span") as Element;
+    const codeLineIndex = target.getAttribute('data-item-id');
+    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
+    console.log(codeLineIndex);
+    console.log(codeLine);
+  }
+
   private findNextCommentThread (index: number) : CodePanelRowData | undefined {
     while (index < this.codePanelRowData.length) {
       if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
@@ -669,10 +696,6 @@ export class CodePanelComponent implements OnChanges{
       index--;
     }
     return undefined;
-  }
-  
-  showNoDiffInContentMessage() {
-    return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
   }
 
   private updateHasActiveConversations() {

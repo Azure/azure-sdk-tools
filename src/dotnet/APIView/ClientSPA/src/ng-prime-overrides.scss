@@ -303,9 +303,14 @@ p-contextmenusub {
     }
 }
 
-.p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text, .p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
-    text-decoration: none;
+.p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link {
     color: var(--base-text-color);
+    padding: 0.2rem 0.25rem;
+
+    .p-menuitem-text, .p-menuitem-icon {
+        text-decoration: none;
+        color: var(--base-text-color);
+    }
 }
 
 .p-menu .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover {

@@ -140,6 +140,7 @@ func (r *Review) Review() (CodeFile, error) {
 						Value:    strings.Repeat("━", 160),
 					},
 				},
+				IsContextEndLine: true,
 			})
 			lines = append(lines, ReviewLine{})
 		}

@@ -382,10 +382,11 @@ export const workflowInitGetSpecConfig = (context: SdkAutoContext_New) => {
   const localSpecConfigPath = path.join(context.config.localSpecRepoPath, specConfigPath);
   try {
     const fileContent = fs.readFileSync(localSpecConfigPath).toString();
-    return fileContent;
+    const result = JSON.parse(fileContent);
+    return result;
   }
   catch (error) {
-    context.logger.error(`IOError: Fails to read spec repo config file with path of '${localSpecConfigPath}'. Please ensure the spec config exists with the correct path. Error: ${error.message}`);
+    context.logger.error(`IOError: Fails to read spec repo config file with path of '${localSpecConfigPath}'. Please ensure the spec config exists with the correct path and the content is valid. Error: ${error.message}`);
     throw error;
   }
 };
@@ -489,8 +490,8 @@ const workflowInitConfig = async (context: SdkAutoContext_New) => {
 const workflowInitSpecRepo = (
   context: SdkAutoContext_New,
 ) => {
-  const specFolder = path.join(context.workingFolder, context.config.specRepo.name);
-  const specRepo = simpleGit({ ...simpleGitOptions, baseDir: path.resolve(process.cwd(), specFolder) });
+  const specFolder = context.config.localSpecRepoPath;
+  const specRepo = simpleGit({ ...simpleGitOptions, baseDir: specFolder });
   return { specFolder, specRepo };
 }
 

@@ -35,7 +35,7 @@
         "@azure-tools/codegen": "^2.9.2",
         "@types/jest": "^29.5.13",
         "@types/node": "^22.7.5",
-        "@typescript-eslint/eslint-plugin": "^5.17.0",
+        "@typescript-eslint/eslint-plugin": "^8.16.0",
         "@typescript-eslint/parser": "^5.17.0",
         "@types/lodash": "^4.17.5",
         "autorest": "^3.2.3",

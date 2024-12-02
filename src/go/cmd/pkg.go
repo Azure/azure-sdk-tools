@@ -265,10 +265,10 @@ func (pkg Pkg) translateType(oriVal string, imports map[string]string) string {
 				result += "..."
 				now = ""
 			} else {
-				now = now + "."
+				now += "."
 			}
 		default:
-			now = now + string(ch)
+			now += string(ch)
 		}
 	}
 	if now != "" {

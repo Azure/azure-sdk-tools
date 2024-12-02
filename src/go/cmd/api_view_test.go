@@ -36,22 +36,36 @@ func TestOutput(t *testing.T) {
 
 	t.Run("unique LineIDs", func(t *testing.T) {
 		seen := map[string]bool{}
-		searchLines(review.ReviewLines, func(rl ReviewLine) bool {
+		forAll(review.ReviewLines, func(rl ReviewLine) {
 			if id := rl.LineID; id != "" {
 				if seen[id] {
 					t.Error("duplicate LineID: " + id)
 				}
 				seen[id] = true
 			}
-			return false // examine all lines
 		})
 	})
 
+	lineIDs := map[string]bool{}
+	forAll(review.ReviewLines, func(rl ReviewLine) {
+		lineIDs[rl.LineID] = true
+	})
+
+	t.Run("diagnostics", func(t *testing.T) {
+		for _, diagnostic := range review.Diagnostics {
+			if diagnostic.Text == "" {
+				t.Errorf("broken diagnostic: empty text for %q", diagnostic.TargetID)
+			}
+			if diagnostic.Level == 0 {
+				t.Errorf("broken diagnostic: no level for %q", diagnostic.TargetID)
+			}
+			if !lineIDs[diagnostic.TargetID] {
+				t.Errorf("broken diagnostic: no LineID corresponds to TargetID %q", diagnostic.TargetID)
+			}
+		}
+	})
+
 	t.Run("navigation links", func(t *testing.T) {
-		lineIDs := map[string]bool{}
-		forAll(review.ReviewLines, func(rl ReviewLine) {
-			lineIDs[rl.LineID] = true
-		})
 		searchTokens(review.ReviewLines, func(rt ReviewToken) bool {
 			if !lineIDs[rt.NavigateToID] {
 				t.Errorf("broken navigation link: no LineID corresponds to NavigateToID %q", rt.NavigateToID)

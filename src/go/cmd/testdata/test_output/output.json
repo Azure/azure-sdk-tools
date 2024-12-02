@@ -505,10 +505,6 @@
                   "HasSuffixSpace": false
                 }
               ]
-            },
-            {
-              "IsContextEndLine": true,
-              "Tokens": []
             }
           ],
           "LineId": "test_output.Enum2",
@@ -530,6 +526,10 @@
               "HasSuffixSpace": false
             }
           ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
         },
         {
           "Children": [
@@ -1201,10 +1201,6 @@
               ]
             },
             {
-              "IsContextEndLine": true,
-              "Tokens": []
-            },
-            {
               "Children": [
                 {
                   "LineId": "test_output.EnumValue2",
@@ -1241,10 +1237,6 @@
                   "HasSuffixSpace": false
                 }
               ]
-            },
-            {
-              "IsContextEndLine": true,
-              "Tokens": []
             }
           ],
           "LineId": "test_output.Enum",
@@ -1266,6 +1258,10 @@
               "HasSuffixSpace": false
             }
           ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
         },
         {
           "LineId": "test_output.Enum3",
@@ -1344,6 +1340,7 @@
       ]
     },
     {
+      "IsContextEndLine": true,
       "Tokens": [
         {
           "Kind": 0,
@@ -1352,9 +1349,6 @@
           "HasSuffixSpace": false
         }
       ]
-    },
-    {
-      "Tokens": []
     },
     {
       "Children": [
@@ -2242,7 +2236,6 @@
                 },
                 {
                   "Kind": 3,
-                  "NavigateToId": "test_output/subpackage.T",
                   "Value": "T",
                   "HasSuffixSpace": false
                 }
@@ -2294,7 +2287,6 @@
                 },
                 {
                   "Kind": 3,
-                  "NavigateToId": "test_output/subpackage.T",
                   "Value": "T",
                   "HasSuffixSpace": false
                 },
@@ -2315,7 +2307,6 @@
                 },
                 {
                   "Kind": 3,
-                  "NavigateToId": "test_output/subpackage.T",
                   "Value": "T",
                   "HasSuffixSpace": false
                 },
@@ -2608,10 +2599,6 @@
               ]
             },
             {
-              "IsContextEndLine": true,
-              "Tokens": []
-            },
-            {
               "Children": [
                 {
                   "LineId": "test_output/subpackage.EnumC",
@@ -2675,10 +2662,6 @@
                   "HasSuffixSpace": false
                 }
               ]
-            },
-            {
-              "IsContextEndLine": true,
-              "Tokens": []
             }
           ],
           "LineId": "test_output/subpackage.Enum",
@@ -2700,6 +2683,10 @@
               "HasSuffixSpace": false
             }
           ]
+        },
+        {
+          "IsContextEndLine": true,
+          "Tokens": []
         },
         {
           "Children": [
@@ -2857,7 +2844,6 @@
             },
             {
               "Kind": 3,
-              "NavigateToId": "test_output/subpackage.T",
               "Value": "T",
               "HasSuffixSpace": false
             },
@@ -2867,7 +2853,6 @@
             },
             {
               "Kind": 3,
-              "NavigateToId": "test_output/subpackage.T",
               "Value": "T",
               "HasSuffixSpace": false
             }
@@ -2929,7 +2914,6 @@
             },
             {
               "Kind": 3,
-              "NavigateToId": "test_output/subpackage.T",
               "Value": "T",
               "HasSuffixSpace": false
             },
@@ -2943,7 +2927,6 @@
             },
             {
               "Kind": 3,
-              "NavigateToId": "test_output/subpackage.U",
               "Value": "U",
               "HasSuffixSpace": false
             },
@@ -2960,7 +2943,6 @@
             },
             {
               "Kind": 3,
-              "NavigateToId": "test_output/subpackage.T",
               "Value": "T",
               "HasSuffixSpace": false
             },
@@ -2970,7 +2952,6 @@
             },
             {
               "Kind": 3,
-              "NavigateToId": "test_output/subpackage.U",
               "Value": "U",
               "HasSuffixSpace": false
             },
@@ -3033,10 +3014,6 @@
               "HasSuffixSpace": false
             }
           ]
-        },
-        {
-          "IsContextEndLine": true,
-          "Tokens": []
         }
       ],
       "LineId": "test_output/subpackage",
@@ -3052,6 +3029,10 @@
           "HasSuffixSpace": false
         }
       ]
+    },
+    {
+      "IsContextEndLine": true,
+      "Tokens": []
     }
   ]
 }

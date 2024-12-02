@@ -294,7 +294,7 @@ func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSp
 	return s
 }
 
-func (c *content) parseStruct() []ReviewLine {
+func (c *content) parseStructs() []ReviewLine {
 	ls := []ReviewLine{}
 	keys := make([]string, 0, len(c.Structs))
 	for name := range c.Structs {

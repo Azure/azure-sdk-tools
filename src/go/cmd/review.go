@@ -101,7 +101,7 @@ func (r *Review) Review() (CodeFile, error) {
 		}
 		// TODO: reordering these calls reorders APIView output and can omit content
 		line.Children = append(line.Children, p.c.parseInterface()...)
-		line.Children = append(line.Children, p.c.parseStruct()...)
+		line.Children = append(line.Children, p.c.parseStructs()...)
 		line.Children = append(line.Children, p.c.parseSimpleType()...)
 		line.Children = append(line.Children, p.c.parseVar()...)
 		line.Children = append(line.Children, p.c.parseConst()...)

@@ -108,13 +108,14 @@ class ApiView(CodeFile):
     def generate_tokens(self):
         line = self.review_lines.create_review_line()
         line.add_line_marker("GLOBAL")
-        line.add_text(HEADER_TEXT, has_suffix_space=False)
+        line.add_text(HEADER_TEXT, has_suffix_space=False, skip_diff=True)
         self.review_lines.append(line)
-        # if source_url:  # TODO: test source url
-        #    self.review_lines.set_blank_lines(1)
-        #    self.add_literal("# Source URL: ")
-        #    self.add_link(source_url)
-        # self.add_token(ReviewToken(kind=TokenKind.TEXT, value="", skip_diff=True))
+        if self.source_url:  # TODO: test source url
+           self.review_lines.set_blank_lines(skip_diff=True)
+           line = self.review_lines.create_review_line()
+           line.add_literal("# Source URL: ", skip_diff=True)
+           line.add_link(self.source_url, skip_diff=True)
+           self.review_lines.append(line)
         self.review_lines.set_blank_lines(2)
 
 class ReviewToken(TokenImpl):
@@ -150,7 +151,7 @@ class ReviewLines(list):
             related_to_line=related_to_line,
         )
 
-    def set_blank_lines(self, count=1):
+    def set_blank_lines(self, count=1, last_is_context_end_line=True):
         """Ensures a specific number of blank lines.
         Will add or remove newline tokens as needed
         to ensure the exact number of blank lines.
@@ -166,13 +167,18 @@ class ReviewLines(list):
         if newline_count < count:
             # if there are not enough newlines, add some
             for n in range(count - newline_count):
-                # TODO: skip diff?
-                self.append(self.create_review_line())
+                # if last line and is context end, specify context end line
+                if n == count - 1 and last_is_context_end_line:
+                    self.append(self.create_review_line(is_context_end_line=True))
+                else:
+                    self.append(self.create_review_line())
         elif newline_count > (count + 1):
             # if there are too many newlines, remove some
             excess = newline_count - count
             for _ in range(excess):
                 self.pop()
+            if last_is_context_end_line:
+                self[-1].is_context_end_line = True
     
     def render(self):
         lines = []
@@ -285,13 +291,14 @@ class ReviewLine(ReviewLineImpl):
             )
         )
 
-    def add_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
+    def add_literal(self, value, *, has_prefix_space=False, has_suffix_space=True, skip_diff=False):
         self.add_token(
             ReviewToken(
                 kind=TokenKind.LITERAL,
                 value=value,
                 has_prefix_space=has_prefix_space,
-                has_suffix_space=has_suffix_space
+                has_suffix_space=has_suffix_space,
+                skip_diff=skip_diff
             )
         )
 

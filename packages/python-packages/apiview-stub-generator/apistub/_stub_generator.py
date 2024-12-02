@@ -210,6 +210,7 @@ class StubGenerator:
             source_url=source_url,
             pkg_version=package_version
         )
+        apiview.generate_tokens()
 
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))

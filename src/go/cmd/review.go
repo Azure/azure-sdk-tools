@@ -129,21 +129,16 @@ func (r *Review) Review() (CodeFile, error) {
 		for _, n := range nav {
 			recursiveSortNavigation(n)
 		}
-		line.Children = endContext(line.Children)
 		lines = append(lines, line)
+		var tks []ReviewToken
 		if i < len(packageNames)-1 {
-			lines = append(lines, ReviewLine{
-				Tokens: []ReviewToken{
-					{
-						Kind:     TokenKindText,
-						SkipDiff: true,
-						Value:    strings.Repeat("━", 160),
-					},
-				},
-				IsContextEndLine: true,
+			tks = append(tks, ReviewToken{
+				Kind:     TokenKindText,
+				SkipDiff: true,
+				Value:    strings.Repeat("━", 160),
 			})
-			lines = append(lines, ReviewLine{})
 		}
+		lines = append(lines, ReviewLine{IsContextEndLine: true, Tokens: tks})
 	}
 
 	// Any ReviewToken having a nonempty NavigateToID that doesn't match some ReviewLine's

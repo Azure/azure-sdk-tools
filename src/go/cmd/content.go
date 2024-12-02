@@ -155,11 +155,19 @@ func (c *content) parseSimpleType() []ReviewLine {
 }
 
 func (c *content) parseConst() []ReviewLine {
-	return c.parseDeclarations(c.Consts, "const")
+	lns := c.parseDeclarations(c.Consts, "const")
+	if len(lns) > 0 {
+		lns = append(lns, ReviewLine{IsContextEndLine: true})
+	}
+	return lns
 }
 
 func (c *content) parseVar() []ReviewLine {
-	return c.parseDeclarations(c.Vars, "var")
+	lns := c.parseDeclarations(c.Vars, "var")
+	if len(lns) > 0 {
+		lns = append(lns, ReviewLine{IsContextEndLine: true})
+	}
+	return lns
 }
 
 func (c *content) parseDeclarations(decls map[string]Declaration, kind string) []ReviewLine {
@@ -214,7 +222,6 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string) [
 			ln.Children = append(ln.Children, *pvm)
 		}
 		ls = append(ls, ln)
-		ls = append(ls, ReviewLine{IsContextEndLine: true})
 	}
 	return ls
 }

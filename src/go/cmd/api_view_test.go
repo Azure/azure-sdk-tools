@@ -27,6 +27,7 @@ func TestOutput(t *testing.T) {
 	require.NoError(t, err)
 	actual, err := json.MarshalIndent(review, "", "  ")
 	require.NoError(t, err)
+	actual = append(actual, '\n')
 	// unconditionally writing the output to disk creates a diff for debugging failures
 	require.NoError(t, os.WriteFile(f, actual, 0666))
 

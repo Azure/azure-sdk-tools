@@ -352,7 +352,6 @@ class ClassNode(NodeEntityBase):
             self._generate_child_tokens()
 
         line.add_children(self.children)
-        line.is_context_end_line = True
         review_lines.append(line)
 
     def _generate_child_tokens(self):

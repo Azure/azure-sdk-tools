@@ -333,7 +333,6 @@ class FunctionNode(NodeEntityBase):
         review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
         # after children are added, add the review line
-        #self._reviewline_if_needed(review_lines, def_tokens, use_multi_line, children=self.children)
         def_line.add_children(self.children)
         def_line.line_id = self.namespace_id
         review_lines.append(def_line)
@@ -368,7 +367,7 @@ class FunctionNode(NodeEntityBase):
         review_line.add_text(value, has_suffix_space=False)
         # Add parameters
         review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
-        review_lines.set_blank_lines()
+        review_lines.set_blank_lines(last_is_context_end_line=True)
 
         if not use_multi_line:
             for err in self.pylint_errors:

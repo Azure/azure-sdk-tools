@@ -62,7 +62,7 @@ Create following Azure resources in your Azure subscription.
  - Create three blob storage containers with names as follows within the storage account created in previous step: `originals`, `codefiles`, and `usagesamples`
 
 #### Azure Cosmos DB
- - Create a Cosmos DB account in Azure and then create a database with name `APIViewV2` in this account. Once database is created successfully then create three containers in `APIViewV2` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
+ - Create a Cosmos DB account in Azure and then create a database with name `APIViewV2` in this account. Once database is created successfully then create required containers in `APIViewV2` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
 
    | Container Name      | Partition Key      |
    |---------------------|--------------------|
@@ -76,6 +76,8 @@ Create following Azure resources in your Azure subscription.
 #### Azure App Configuration
 
 - Create an Azure App Configuration instance in Azure. [Azure App Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/quickstart-azure-app-configuration-create?tabs=azure-portal), it can be empty for basic local debugging.
+
+The required Azure Resources can be created manually, or via Azure Developer CLI with `azd up` then provide the principal id of your user.
 
 ## Getting Started
 
@@ -131,7 +133,20 @@ Note: User requires following role based access to storage account and cosmos DB
 APIView Azure web app instance requires role based access to storage and cosmos DB instances to access using managed identity. Following are the required RBAC roles.
 
 - `Storage Blob Contributor` to access storage account
-- `Cosmos DB Built-in Data Contributor` to access Cosmos DB
+- `Cosmos DB Built-in Data Contributor` to access Cosmos DB. If you cannot find this role in the Azure Portal, one alternative is to use Azure CLI to achieve it
+
+   - First retrieve your user principal id
+    ```shell
+    az rest --method GET --uri https://graph.microsoft.com/v1.0/me
+    ```
+  - list the role definitions
+    ```shell
+    az cosmosdb sql role definition list --account-name <cosmos_account_name_> --resource-group <resource_group>
+    ```
+  - Then copy the id of the "Cosmos DB Built-in Data Contributor" role and add the role assignment for our principal id
+    ```shell
+    az cosmosdb sql role assignment create <cosmos_account_name_> --resource-group <resource_group> --scope "/" --principal-id <principal_id> --role-definition-id <role_definition_id>
+    ```
 
 ### Compile TypeScript code
 
@@ -167,7 +182,7 @@ If any of the above steps is showing errors, following are the items to check:
 
 - Verify and ensure storage account has two containers as mentioned above
 
-- Verify and ensure cosmos DB instance has all 3 containers as per the instructions above and verify partition key for each of them.
+- Verify and ensure cosmos DB instance has all required containers as per the instructions above and verify partition key for each of them.
 
 ### SPA Client
 

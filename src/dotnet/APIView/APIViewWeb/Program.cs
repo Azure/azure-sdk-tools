@@ -1,3 +1,4 @@
+using System;
 using Azure.Identity;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -17,14 +18,14 @@ namespace APIViewWeb
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    config.AddEnvironmentVariables(prefix: "APIVIEW_");                  
+                    config.AddEnvironmentVariables(prefix: "APIVIEW_");
                     IConfiguration settings = config.Build();
-                    string connectionString = settings.GetValue<string>("APPCONFIG");
+                    string endpoint = settings.GetValue<string>("AppConfigEndpoint");
                     // Load configuration from Azure App Configuration
                     config.AddAzureAppConfiguration(options =>
                     {
-                        options.Connect(connectionString).ConfigureKeyVault(kv => 
-                        { 
+                        options.Connect(new Uri(endpoint), new DefaultAzureCredential()).ConfigureKeyVault(kv =>
+                        {
                             kv.SetCredential(new DefaultAzureCredential());
                         });
                     });

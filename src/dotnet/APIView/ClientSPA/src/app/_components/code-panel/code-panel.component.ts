@@ -4,7 +4,7 @@ import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CodeLineRowNavigationDirection, isDiffRow } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow } from 'src/app/_helpers/common-helpers';
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
@@ -64,7 +64,7 @@ export class CodePanelComponent implements OnChanges{
 
     this.menuItemsLineActions = [
         { label: 'Copy line', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLineToClipBoard(event) },
-        { label: 'Copy permalink', icon: 'bi bi-clipboard' }
+        { label: 'Copy permalink', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLinePermaLinkToClipBoard(event) }
       ];
   }
 
@@ -634,16 +634,48 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
+  copyReviewTextToClipBoard() {
+    const reviewText : string [] = [];
+    this.codePanelRowData.forEach((row) => {
+      if (row.rowOfTokens && row.rowOfTokens.length > 0) {
+        let codeLineText = convertRowOfTokensToString(row.rowOfTokens);
+        if (row.indent && row.indent > 0) {
+          codeLineText = '\t'.repeat(row.indent - 1) + codeLineText;
+        }
+        reviewText.push(codeLineText);
+      }
+    });
+    navigator.clipboard.writeText(reviewText.join('\n'));
+  }
+
   showNoDiffInContentMessage() {
     return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
   }
 
-  private copyCodeLineToClipBoard(event: MenuItemCommandEvent) {
+  private getCodeLineIndex(event: MenuItemCommandEvent) {
     const target = (event.originalEvent?.target as Element).closest("span") as Element;
-    const codeLineIndex = target.getAttribute('data-item-id');
+    return target.getAttribute('data-item-id');
+  }
+
+  private copyCodeLinePermaLinkToClipBoard(event: MenuItemCommandEvent) {
+    const codeLineIndex = this.getCodeLineIndex(event);
     const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
-    console.log(codeLineIndex);
-    console.log(codeLine);
+    const queryParams = { ...this.route.snapshot.queryParams };
+    queryParams[SCROLL_TO_NODE_QUERY_PARAM] = codeLine.nodeId;
+    const updatedUrl = this.router.createUrlTree([], {
+      relativeTo: this.route,
+      queryParams: queryParams,
+      queryParamsHandling: 'merge'
+    }).toString();
+    const fullExternalUrl = window.location.origin + updatedUrl;
+    navigator.clipboard.writeText(fullExternalUrl);
+  }
+
+  private copyCodeLineToClipBoard(event: MenuItemCommandEvent) {
+    const codeLineIndex = this.getCodeLineIndex(event);
+    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
+    const codeLineText = convertRowOfTokensToString(codeLine.rowOfTokens);
+    navigator.clipboard.writeText(codeLineText);
   }
 
   private findNextCommentThread (index: number) : CodePanelRowData | undefined {

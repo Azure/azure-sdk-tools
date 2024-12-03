@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Test Proxy",
-    "version": "2021-11",
+    "version": "2024-11",
     "description": "The Test Proxy is used to record and playback live tests."
   },
   "schemes": [
@@ -20,9 +20,16 @@
         "parameters": [
           {
             "name": "x-recording-file",
-            "in": "header",
+            "in": "body",
             "description": "File location of the recording.",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "x-recording-assets-file",
+            "in": "body",
+            "description": "File location of assets.json location associated with the recording (if one exists).",
+            "required": false,
             "type": "string"
           }
         ],
@@ -43,11 +50,8 @@
           },
           "default": {
             "description": "An error response received from the Test Proxy.",
-            "headers": {
-              "x-ms-error-code": {
-                "type": "string",
-                "description": "Error code for specific error that occurred."
-              }
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
             }
           }
         }
@@ -76,11 +80,8 @@
           },
           "default": {
             "description": "An error response received from the Test Proxy.",
-            "headers": {
-              "x-ms-error-code": {
-                "type": "string",
-                "description": "Error code for specific error that occurred."
-              }
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
             }
           }
         }
@@ -97,9 +98,16 @@
         "parameters": [
           {
             "name": "x-recording-file",
-            "in": "header",
+            "in": "body",
             "description": "File location of the recording.",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "x-recording-assets-file",
+            "in": "body",
+            "description": "File location of assets.json location associated with the recording (if one exists).",
+            "required": false,
             "type": "string"
           }
         ],
@@ -115,11 +123,8 @@
           },
           "default": {
             "description": "An error response received from the Test Proxy.",
-            "headers": {
-              "x-ms-error-code": {
-                "type": "string",
-                "description": "Error code for specific error that occurred."
-              }
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
             }
           }
         }
@@ -163,12 +168,106 @@
           },
           "default": {
             "description": "An error response received from the Test Proxy.",
-            "headers": {
-              "x-ms-error-code": {
-                "type": "string",
-                "description": "Error code for specific error that occurred."
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/admin/RemoveSanitizers": {
+      "post": {
+        "summary": "Remove a set of sanitizers from the session or a specific recording.",
+        "description": "Remove a set of sanitizers from the session or a specific recording. If the recording id is not provided, the session-level sanitizers will be removed.",
+        "operationId": "TestProxy_RemoveSanitizers",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "x-recording-id",
+            "in": "header",
+            "description": "The recording ID. If not provided, the session-level sanitizers will be removed.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "Sanitizers",
+            "in": "body",
+            "description": "Set of sanitizerIds that should be removed.",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
               }
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Removed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": ["Removed"]
+            }
+          },
+          "default": {
+            "description": "An error response received from the Test Proxy.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/admin/SetRecordingOptions": {
+      "summary": "Set recording options for a test",
+      "description": "Sets one or multiple customizations for the recording. See https://github.com/Azure/azure-sdk-tools/blob/main/tools/test-proxy/Azure.Sdk.Tools.TestProxy/README.md#recording-options.",
+      "operationId": "TestProxy_SetRecordingOptions",
+      "consumes": [
+        "application/json"
+      ],
+      "produces": [
+        "application/json"
+      ],
+      "parameters": [
+        {
+          "name": "x-recording-id",
+          "in": "header",
+          "description": "The recording ID.If not provided, the customizations will be applied to the session.",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "variables",
+          "in": "body",
+          "description": "Variables for the recording.",
+          "required": true,
+          "schema": {
+            "$ref": "#/definitions/RecordingOptions"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK"
+        },
+        "default": {
+          "description": "An error response received from the Test Proxy.",
+          "schema": {
+            "$ref": "#/definitions/ErrorResponse"
           }
         }
       }
@@ -220,11 +319,8 @@
           },
           "default": {
             "description": "An error response received from the Test Proxy.",
-            "headers": {
-              "x-ms-error-code": {
-                "type": "string",
-                "description": "Error code for specific error that occurred."
-              }
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
             }
           }
         }
@@ -275,11 +371,8 @@
           },
           "default": {
             "description": "An error response received from the Test Proxy.",
-            "headers": {
-              "x-ms-error-code": {
-                "type": "string",
-                "description": "Error code for specific error that occurred."
-              }
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
             }
           }
         }
@@ -330,11 +423,8 @@
           },
           "default": {
             "description": "An error response received from the Test Proxy.",
-            "headers": {
-              "x-ms-error-code": {
-                "type": "string",
-                "description": "Error code for specific error that occurred."
-              }
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
             }
           }
         }
@@ -373,11 +463,8 @@
           },
           "default": {
             "description": "An error response received from the Test Proxy.",
-            "headers": {
-              "x-ms-error-code": {
-                "type": "string",
-                "description": "Error code for specific error that occurred."
-              }
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
             }
           }
         }
@@ -385,6 +472,28 @@
     }
   },
   "definitions": {
+    "ErrorResponse": {
+      "type": "object",
+      "description": "Error response received from the Test Proxy.",
+      "properties": {
+        "Status": {
+          "type": "integer",
+          "description": "The HTTP status code."
+        },
+        "Message": {
+          "type": "string",
+          "description": "The error message."
+        },
+        "StackTrace": {
+          "type": "string",
+          "description": "The stack trace of the error. This is optional and may not be present on a well-understood error."
+        }
+      },
+      "required": [
+        "Status",
+        "Message"
+      ]
+    },
     "SanitizerType": {
       "type": "string",
       "enum": [
@@ -445,6 +554,64 @@
         "value",
         "regex"
       ]
+    },
+    "Certificate": {
+      "type": "object",
+      "description": "A certificate to be used for TLS validation.",
+      "properties": {
+        "PemValue": {
+          "type": "string"
+        },
+        "PemKey": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "PemValue",
+        "PemKey"
+      ]
+    },
+    "TransportCustomizations": {
+      "type": "object",
+      "description": "Customizations for the transpot layer of the testproxy. Either for a specific recording or all recordings after this point.",
+      "properties": {
+        "AllowAutoRedirect": {
+          "type": "boolean"
+        },
+        "TLSValidationCert": {
+          "type": "string"
+        },
+        "TLSValidationCertHost": {
+          "type": "string"
+        },
+        "Certificates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Certificate"
+          }
+        },
+        "PlaybackResponseTime": {
+          "type": "integer"
+        }
+      }
+    },
+    "RecordingOptions": {
+      "type": "object",
+      "description": "Options for recording a test.",
+      "properties": {
+        "HandleRedirects": {
+          "type": "boolean"
+        },
+        "ContextDirectory": {
+          "type": "string"
+        },
+        "AssetsStore": {
+          "type": "string"
+        },
+        "Transport": {
+          "$ref": "#/definitions/TransportCustomizations"
+        }
+      }
     },
     "HeaderRegexSanitizer": {
       "type": "object",

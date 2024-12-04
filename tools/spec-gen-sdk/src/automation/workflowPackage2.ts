@@ -3,25 +3,15 @@ import path from 'path';
 import fs, { copyFileSync, existsSync } from 'fs';
 import { InstallInstructionScriptInput } from '../types/InstallInstructionScriptInput';
 import { getInstallInstructionScriptOutput } from '../types/InstallInstructionScriptOutput';
-import { getGenerationBranchName, getIntegrationBranchName, PackageData } from '../types/PackageData2';
+import { PackageData } from '../types/PackageData2';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils2';
-import { RepoKey, repoKeyToString } from '../utils/githubUtils2';
-import { gitCheckoutBranch, gitGetCommitter } from '../utils/gitUtils2';
 import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript2';
 import { CommentCaptureTransport } from './logging';
 import {
-  branchMain,
-  branchSdkGen,
-  branchSecondary,
-  FailureType,
-  remoteIntegration,
-  remoteMain,
-  setFailureType,
   WorkflowContext
 } from './workflow2';
 import { mkdirpSync } from 'fs-extra';
 import { getLanguageByRepoName } from './entrypoint2';
-import { FileStatusResult } from 'simple-git';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);
@@ -35,16 +25,12 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
 
   context.logger.info(`Package log to a new logFile`);
 
-  const syncConfig = workflowPkgGetSyncConfig(context, pkg);
-  const pushBranchPromise = (await workflowPkgUpdateBranch(context, pkg, syncConfig))();
-
   await workflowPkgCallBuildScript(context, pkg);
   await workflowPkgCallChangelogScript(context, pkg);
   await workflowPkgDetectArtifacts(context, pkg);
   await workflowPkgSaveSDKArtifact(context, pkg);
   await workflowPkgSaveApiViewArtifact(context, pkg);
   await workflowPkgCallInstallInstructionScript(context, pkg);
-  await pushBranchPromise;
 
   setSdkAutoStatus(pkg, 'succeeded');
 
@@ -242,99 +228,5 @@ const workflowPkgCallInstallInstructionScript = async (
   }
 
   context.logger.log('section', 'Call InstallInstructionScript');
-};
-
-export type SyncConfig = {
-  baseBranch: string;
-  baseRepo: RepoKey;
-  baseRemote: string;
-  targetBranch: string;
-  targetRepo: RepoKey;
-  targetRemote: string;
-  hasChanges?: boolean;
-};
-
-const workflowPkgGetSyncConfig = (context: WorkflowContext, pkg: PackageData) => {
-  const config: SyncConfig = {
-    baseBranch: context.sdkRepoConfig.mainBranch,
-    baseRepo: context.sdkRepoConfig.mainRepository,
-    baseRemote: remoteMain,
-    targetBranch: getIntegrationBranchName(context, pkg.name),
-    targetRepo: context.sdkRepoConfig.integrationRepository,
-    targetRemote: remoteIntegration
-  };
-
-  config.baseRepo = context.sdkRepoConfig.integrationRepository;
-  config.baseRemote = remoteIntegration;
-  config.targetBranch = getGenerationBranchName(context, pkg.name);
-  context.logger.info(
-    `baseBranch [${config.baseBranch}] baseRepo [${repoKeyToString(config.baseRepo)}] baseRemote [${config.baseRemote}]`
-  );
-  context.logger.info(
-    `targetBranch [${config.targetBranch}] targetRepo [${repoKeyToString(config.targetRepo)}] baseRemote [${config.targetRemote
-    }]`
-  );
-  return config;
-};
-
-const workflowPkgUpdateBranch = async (context: WorkflowContext, pkg: PackageData, syncConfig: SyncConfig) => {
-  if (
-    repoKeyToString(context.sdkRepoConfig.mainRepository) === repoKeyToString(syncConfig.baseRepo) &&
-    context.sdkRepoConfig.mainBranch === syncConfig.baseBranch
-  ) {
-    context.logger.info('Skip sync baseBranch due to same remote same branch');
-  } else {
-    context.logger.log('git', `Push ${branchMain} to ${repoKeyToString(syncConfig.baseRepo)}:${syncConfig.baseBranch}`);
-    const pushResult = await context.sdkRepo.push([syncConfig.baseRemote, `+refs/heads/${branchMain}:refs/heads/${syncConfig.baseBranch}`]);
-    if (!pushResult) {
-      context.logger.warn(
-        `Warning: Failed to push with code [${pushResult}]: ${repoKeyToString(syncConfig.baseRepo)}:${syncConfig.baseBranch}. This doesn't impact SDK generation.`
-      );
-      setSdkAutoStatus(pkg, 'warning');
-    }
-  }
-
-  context.logger.log('git', `Create targetBranch ${syncConfig.targetBranch}`);
-  const baseCommit = await context.sdkRepo.revparse(branchSecondary);
-  await context.sdkRepo.raw(['branch', syncConfig.targetBranch, baseCommit, '--force']);
-  await gitCheckoutBranch(context, context.sdkRepo, syncConfig.targetBranch, false);
-
-  const foldersToAdd = [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths]
-    .filter((p) => p !== undefined)
-    .map((p) => path.relative('.', p));
-  context.logger.log('git', `Checkout sdk folders from ${branchSdkGen} and commit: ${foldersToAdd.join(' ')}`);
-  const sdkGenCommit = await context.sdkRepo.revparse(branchSdkGen);
-  const sdkGenTree = await context.sdkRepo.revparse(`${sdkGenCommit}^{tree}`);
-  if (foldersToAdd.length > 0) {
-    await context.sdkRepo.raw(['read-tree', sdkGenTree]);
-    await context.sdkRepo.raw(['checkout', '--', '.']);
-  }
-
-  await context.sdkRepo.raw(['update-index', '--refresh']);
-
-  const statusFiles = await context.sdkRepo.status();
-  const fileList = statusFiles.files.map((item: FileStatusResult) => item.path);
-
-  let commitMsg = `CodeGen from PR ${context.config.pullNumber} in ${repoKeyToString(context.config.specRepo)}\n`;
-  const commitMsgsuffix = await context.specRepo.log();
-  commitMsg += commitMsgsuffix.latest?.message;
-
-  await gitGetCommitter(context.sdkRepo);
-  await context.sdkRepo.raw(['commit', '-m', commitMsg]);
-  syncConfig.hasChanges = fileList.length > 0;
-
-  context.logger.log('git', `Push ${syncConfig.targetBranch} to ${repoKeyToString(syncConfig.targetRepo)}`);
-
-  // Push in parallel to speed up
-  return async () => {
-    const result = await context.sdkRepo.push([syncConfig.targetRemote, `+refs/heads/${syncConfig.targetBranch}:refs/heads/${syncConfig.targetBranch}`]);
-    if (!result) {
-      context.logger.error(
-        `GitError: Failed to push with code [${result}]: ${repoKeyToString(syncConfig.targetRepo)}:${syncConfig.targetBranch}. Please re-run the pipeline if the error is retryable or report this issue through https://aka.ms/azsdk/support/specreview-channel.`
-      );
-      setSdkAutoStatus(pkg, 'failed');
-      setFailureType(context, FailureType.PipelineFrameworkFailed);
-    }
-  };
 };
 

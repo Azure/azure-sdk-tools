@@ -21,7 +21,7 @@ export type SDKAutomationCliConfig = {
   sdkRepoName: string;
   prNumber: number;
   specCommitSha: string;
-  specPrHttpsUrl: string;
+  specRepoHttpsUrl: string;
   githubApp: {
     id: number;
     privateKey: string;
@@ -131,11 +131,11 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
     arg: 'spec-commit-sha',
     format: String
   },
-  specPrHttpsUrl: {
+  specRepoHttpsUrl: {
     default: '',
-    doc: 'https://github.com/azure/azure-rest-api-specs/pull/1234',
-    env: 'SPEC_PR_HTTPS_URL',
-    arg: 'spec-pr-https-url',
+    doc: 'https://github.com/azure/azure-rest-api-specs',
+    env: 'SPEC_REPO_HTTPS_URL',
+    arg: 'spec-repo-https-url',
     format: String
   },
   githubApp: {

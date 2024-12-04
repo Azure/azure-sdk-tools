@@ -17,7 +17,7 @@ import { sdkAutoMain_New } from '../automation/entrypoint2';
       specRepo: repo,
       localSpecRepoPath: config.localSpecRepoPath,
       localSdkRepoPath: config.localSdkRepoPath,
-      pullNumber: config.specPrHttpsUrl ? Number(config.specPrHttpsUrl.substring(config.specPrHttpsUrl.lastIndexOf('/') + 1)) : 0,
+      pullNumber: config.prNumber,
       sdkName: config.sdkRepoName,
       github: {
         token: config.githubToken,

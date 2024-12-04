@@ -6,12 +6,7 @@ import { default as Transport } from 'winston-transport';
 import { findSDKToGenerateFromTypeSpecProject } from '../utils/typespecUtils';
 import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
 import {
-  gitAddAll,
-  gitCheckoutBranch,
-  gitGetCommitter,
-  gitGetDiffFileList,
-  gitRemoveAllBranches,
-  gitSetRemoteWithAuth
+  gitGetDiffFileList
 } from '../utils/gitUtils2';
 import { getSdkRepoConfig, getSpecConfig, SdkRepoConfig, specConfigPath } from '../types/SpecConfig2';
 import { getGithubFileContent, RepoKey, repoKeyToString } from '../utils/githubUtils2';
@@ -82,7 +77,6 @@ export type WorkflowContext = SdkAutoContext_New & {
   legacyAfterScripts: string[];
   scriptEnvs: { [key: string]: string | undefined };
   tmpFolder: string;
-  skipLegacy: boolean;
   extraResultRecords: MessageRecord[];
 };
 
@@ -105,12 +99,10 @@ export const workflowInit = async (context: SdkAutoContext_New): Promise<Workflo
   const specContext = workflowInitSpecRepo(context);
 
   const configs = await configsPromise;
-  const sdkContext = await workflowInitSdkRepo(context, configs.sdkRepoConfig, configs.swaggerToSdkConfig);
+  const sdkContext = workflowInitSdkRepo(context);
 
   const tmpFolder = path.join(context.workingFolder, `${configs.sdkRepoConfig.mainRepository.name}_tmp`);
   mkdirpSync(tmpFolder);
-
-  const skipLegacy = configs.swaggerToSdkConfig.generateOptions.generateScript !== undefined;
 
   return {
     ...context,
@@ -125,7 +117,6 @@ export const workflowInit = async (context: SdkAutoContext_New): Promise<Workflo
     messageCaptureTransport: captureTransport,
     legacyAfterScripts: [],
     tmpFolder,
-    skipLegacy,
     scriptEnvs: {
       USER: process.env.USER,
       HOME: process.env.HOME,
@@ -333,12 +324,12 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
 
   const changedFiles = [...changedFilesSet];
 
-  const headCommit = await context.sdkRepo.revparse(branchMain);
+  //const headCommit = await context.sdkRepo.revparse(branchMain);
 
-  context.logger.log('git', `Checkout branch ${branchSdkGen}`);
-  await gitCheckoutBranch(context, context.sdkRepo, branchMain);
-  await context.sdkRepo.raw(['branch', branchSdkGen, headCommit, '--force']);
-  await gitCheckoutBranch(context, context.sdkRepo, branchSdkGen);
+  //context.logger.log('git', `Checkout branch ${branchSdkGen}`);
+  //await gitCheckoutBranch(context, context.sdkRepo, branchMain);
+  //await context.sdkRepo.raw(['branch', branchSdkGen, headCommit, '--force']);
+  //await gitCheckoutBranch(context, context.sdkRepo, branchSdkGen);
 
   const { status, generateInput, generateOutput } = await workflowCallGenerateScript(
     context,
@@ -364,12 +355,10 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   context.pendingPackages =
     (generateOutput?.packages ?? []).map((result) => getPackageData(context, result, sdkSuppressionsYml));
 
-  const fileList = await workflowSaveGenerateResult(context);
-  await workflowDetectChangedPackages(context, fileList, readmeMdList);
+  workflowDetectChangedPackages(context);
 
   context.logger.remove(context.messageCaptureTransport);
   for (const pkg of context.pendingPackages) {
-    await workflowSetSdkRemoteAuth(context);
     await workflowPkgMain(context, pkg);
   }
 
@@ -495,70 +484,11 @@ const workflowInitSpecRepo = (
   return { specFolder, specRepo };
 }
 
-const workflowSetSdkRemoteAuth = async (
-  context: Pick<WorkflowContext, 'sdkRepo' | 'sdkRepoConfig' | 'logger' | 'getGithubAccessToken'>
-) => {
-  const { sdkRepo, sdkRepoConfig } = context;
-  await gitSetRemoteWithAuth(context, sdkRepo, remoteMain, sdkRepoConfig.mainRepository);
-  await gitSetRemoteWithAuth(context, sdkRepo, remoteSecondary, sdkRepoConfig.secondaryRepository);
-  await gitSetRemoteWithAuth(context, sdkRepo, remoteIntegration, sdkRepoConfig.integrationRepository);
-};
-
-const workflowInitSdkRepo = async (
+const workflowInitSdkRepo = (
   context: SdkAutoContext_New,
-  sdkRepoConfig: SdkRepoConfig,
-  swaggerToSdkConfig: SwaggerToSdkConfig
 ) => {
-  const cloneDir =
-    swaggerToSdkConfig.advancedOptions.cloneDir;
-  const sdkFolderName = cloneDir
-    ? path.join(sdkRepoConfig.mainRepository.name, cloneDir)
-    : sdkRepoConfig.mainRepository.name;
-  const sdkFolder = path.join(context.workingFolder, sdkFolderName);
-  mkdirpSync(sdkFolder);
-
-  const sdkRepo = simpleGit({ ...simpleGitOptions, baseDir: path.resolve(process.cwd(), sdkFolder) });
-  await sdkRepo.init(false);
-
-  await workflowSetSdkRemoteAuth({ ...context, sdkRepo, sdkRepoConfig });
-  await gitRemoveAllBranches(context, sdkRepo);
-
-  context.logger.log('git', `Fetch ${repoKeyToString(sdkRepoConfig.mainRepository)} to ${branchMain}`);
-
-  let fetchResult = await sdkRepo.fetch([
-    branchMain,
-    '--update-head-ok',
-    '--force',
-    `+refs/heads/${sdkRepoConfig.mainBranch}:refs/heads/${branchMain}`
-  ]);
-  if (!fetchResult) {
-    throw new Error(`Error: Failed to fetch spec repo. Code: ${fetchResult}. Please re-run the failed job in pipeline run or emit '/azp run' in the PR comment to trigger the re-run if the error is retryable.`);
-  }
-
-  context.logger.log('git', `Checkout ${branchMain}`);
-  await gitCheckoutBranch(context, sdkRepo, branchMain);
-
-  if (
-    sdkRepoConfig.secondaryRepository.name === sdkRepoConfig.mainRepository.name &&
-    sdkRepoConfig.secondaryRepository.owner === sdkRepoConfig.mainRepository.owner &&
-    sdkRepoConfig.secondaryBranch === sdkRepoConfig.mainBranch
-  ) {
-    context.logger.log('git', `Checkout ${branchSecondary} from ${branchMain}`);
-    await sdkRepo.raw(['branch', '--copy', '--force', branchMain, branchSecondary]);
-  } else {
-    context.logger.log('git', `Fetch ${repoKeyToString(sdkRepoConfig.secondaryRepository)} to ${branchSecondary}`);
-
-    fetchResult = await sdkRepo.fetch([
-      branchSecondary,
-      '--update-head-ok',
-      '--force',
-      `+refs/heads/${sdkRepoConfig.secondaryBranch}:refs/heads/${branchSecondary}`
-    ]);
-    if (!fetchResult) {
-      throw new Error(`Error: Failed to fetch spec repo. Code: ${fetchResult}. Please re-run the failed job in pipeline run or emit '/azp run' in the PR comment to trigger the re-run if the error is retryable.`);
-    }
-  }
-
+  const sdkFolder = context.config.localSdkRepoPath;
+  const sdkRepo = simpleGit({ ...simpleGitOptions, baseDir: sdkFolder });
   return { sdkRepo, sdkFolder };
 };
 
@@ -714,7 +644,7 @@ const workflowCallGenerateScript = async (
     specFolder: path.relative(context.sdkFolder, context.specFolder),
     headSha: context.config.specCommitSha ?? "",
     headRef: "",
-    repoHttpsUrl: context.config.specPrHttpsUrl ?? "",
+    repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
     trigger: "pullRequest",
     changedFiles,
     installInstructionInput: {
@@ -778,38 +708,8 @@ const workflowCallGenerateScript = async (
   return { ...statusContext, generateInput, generateOutput };
 };
 
-const workflowSaveGenerateResult = async (context: WorkflowContext) => {
-  context.logger.log('section', 'Commit generate result');
-  context.logger.log('git', 'Add * in SDK repo');
-  await gitAddAll(context.sdkRepo);
-
-  const diff = await context.sdkRepo.diff(['--name-status', 'HEAD']);
-  const fileList = await gitGetDiffFileList(diff, context, 'after SDK generate');
-  if (fileList.length === 0) {
-    context.logger.warn('Warning: No file changes detected after the generation. Please refer to the generation errors to understand the reasons.');
-    setSdkAutoStatus(context, 'warning');
-  }
-
-  context.logger.log('git', 'Commit all the changes');
-  await gitGetCommitter(context.sdkRepo);
-  await context.sdkRepo.raw(['commit', '-m', 'CodeGen Result']);
-
-  context.logger.log('endsection', 'Commit generate result');
-  return fileList;
-};
-
-const workflowDetectChangedPackages = async (context: WorkflowContext, fileList: string[], readmeMdList: string[]) => {
+const workflowDetectChangedPackages = (context: WorkflowContext) => {
   context.logger.log('section', 'Detect changed packages');
-  if (context.pendingPackages.length === 0) {
-      const searchConfig = context.swaggerToSdkConfig.packageOptions.packageFolderFromFileSearch;
-      if (!searchConfig) {
-      context.logger.warn(`Warning: Skip detecting changed packages based on the config in swagger_to_sdk.config. Please refer to the schema https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/SwaggerToSdkConfigSchema.json for 'packageOptions' configuration.`);
-      return;
-      }
-      //TODO can we delete this?
-      context.logger.info(`TODO ${fileList.length * readmeMdList.length}`);
-  }
-
   context.logger.info(`${context.pendingPackages.length} packages found after generation:`);
   for (const pkg of context.pendingPackages) {
       context.logger.info(`\t${pkg.relativeFolderPath}`);

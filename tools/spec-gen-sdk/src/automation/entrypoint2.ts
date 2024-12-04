@@ -28,7 +28,7 @@ interface SdkAutoOptions_New {
   readmePath?: string;  
   pullNumber?: number;
   specCommitSha?: string;
-  specPrHttpsUrl?: string;
+  specRepoHttpsUrl?: string;
 
   github: {
     token?: string;

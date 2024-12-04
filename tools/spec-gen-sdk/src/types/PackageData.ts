@@ -191,6 +191,9 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
     sdkSuppressionFilePath = suppressionContent.sdkSuppressionFilePath;
   }
 
+  if(context.specPrInfo) {
+    sdkSuppressionFilePath = `https://github.com/${context.specPrInfo.head.owner}/${context.specPrInfo.head.repo}/blob/${context.specPrHeadBranch}/${sdkSuppressionFilePath}`;
+  }
   return {
     name,
     isDataPlane,
@@ -201,10 +204,10 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
     absentSuppressionLines,
     presentSuppressionLines,
     parseSuppressionLinesErrors,
-    sdkSuppressionFilePath: sdkSuppressionFilePath && `https://github.com/${context.specPrInfo.head.owner}/${context.specPrInfo.head.repo}/blob/${context.specPrHeadBranch}/${sdkSuppressionFilePath}`,
+    sdkSuppressionFilePath: sdkSuppressionFilePath,
     isBetaMgmtSdk,
     logsBlobUrl: '',
-    isPrivatePackage: !context.config.storage.isPublic,
+    isPrivatePackage: false,
     changedFilePaths: [],
     generationBranch: getGenerationBranchName(context, name),
     generationRepository: integrationRepository,

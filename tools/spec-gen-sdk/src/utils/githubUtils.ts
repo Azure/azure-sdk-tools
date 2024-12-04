@@ -35,8 +35,8 @@ export function getRepository(repository: string | Repository): Repository {
       slashIndex = repository.indexOf("\\");
     }
     result = {
-      name: repository.substr(slashIndex + 1),
-      owner: slashIndex === -1 ? "" : repository.substr(0, slashIndex)
+      name: repository.substring(slashIndex + 1),
+      owner: slashIndex === -1 ? "" : repository.substring(0, slashIndex)
     };
   } else {
     result = repository;

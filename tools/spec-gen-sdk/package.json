@@ -31,8 +31,6 @@
     "node": ">=20.10.0"
   },
   "dependencies": {
-    "@azure/identity": "^4.2.0",
-    "@azure/storage-blob": "~12.17.0",
     "@octokit/auth-app": "^2.4.5",
     "@octokit/rest": "18.0.3",
     "ajv": "^6.12.6",

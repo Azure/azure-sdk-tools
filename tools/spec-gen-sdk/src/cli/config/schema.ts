@@ -8,28 +8,24 @@ dotenv.config();
 export type SDKAutomationCliConfig = {
   env: string;
   workingFolder: string;
-  executionMode: string;
   isTriggeredByUP: boolean;
   githubToken: string;
   azureCliArgs: {
     azureDevopsPat: string;
     buildId: string;
   };
+  localSpecRepoPath: string;
+  localSdkRepoPath: string;
   specRepo: string;
   sdkRepoName: string;
   prNumber: number;
+  specCommitSha: string;
+  specRepoHttpsUrl: string;
   githubApp: {
     id: number;
     privateKey: string;
   };
   githubCommentAuthorName: string;
-  blobStorage: {
-    name: string;
-    prefix: string;
-    downloadCommand: string;
-    isPublic: boolean;
-  };
-  testRunId?: string;
 };
 
 const emptyValidator = (value?: string): void => {
@@ -50,12 +46,6 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
     env: 'WORKING_FOLDER',
     arg: 'working-folder',
     format: String
-  },
-  executionMode: {
-    default: 'SDK_GEN',
-    env: 'EXECUTION_MODE',
-    arg: 'execution-mode',
-    format: ['SDK_GEN', 'SDK_FILTER']
   },
   isTriggeredByUP: {
     default: false,
@@ -85,6 +75,20 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
       format: String
     }
   },
+  localSpecRepoPath: {
+    default: '',
+    doc: 'Example: /path/to/azure-rest-api-specs',
+    env: 'LOCAL_SPEC_REPO_PATH',
+    arg: 'local-spec-repo-path',
+    format: String
+  },
+  localSdkRepoPath: {
+    default: '',
+    doc: 'Example: /path/to/azure-sdk-for-go',
+    env: 'LOCAL_SDK_REPO_PATH',
+    arg: 'local-sdk-repo-path',
+    format: String
+  },
   specRepo: {
     default: '',
     doc: 'Example: Azure/azure-rest-api-specs',
@@ -106,6 +110,20 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
     arg: 'pr',
     format: Number
   },
+  specCommitSha: {
+    default: '',
+    doc: 'Commit sha of the spec pull request',
+    env: 'SPEC_COMMIT_SHA',
+    arg: 'spec-commit-sha',
+    format: String
+  },
+  specRepoHttpsUrl: {
+    default: '',
+    doc: 'https://github.com/azure/azure-rest-api-specs',
+    env: 'SPEC_REPO_HTTPS_URL',
+    arg: 'spec-repo-https-url',
+    format: String
+  },
   githubApp: {
     id: {
       default: 0,
@@ -125,44 +143,6 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
     doc: 'Comment author name shown on github comment. Add [bot] if githubApp is used',
     env: 'GITHUB_COMMENT_AUTHOR_NAME',
     arg: 'comment-author-name',
-    format: String
-  },
-  blobStorage: {
-    name: {
-      default: '',
-      doc: 'The blob storage name that should be used to store all data that is created as a result of the automation.',
-      env: 'BLOB_STORAGE_NAME',
-      arg: 'blob-name',
-      format: String
-    },
-    prefix: {
-      default: 'sdkautomation-pipeline',
-      doc:
-        'The blob storage prefix that should be used to store all data that is created as a result of the automation.',
-      env: 'BLOB_STORAGE_PREFIX',
-      arg: 'blob-prefix',
-      format: String
-    },
-    isPublic: {
-      default: true,
-      format: Boolean,
-      doc: '',
-      env: 'BLOB_STORAGE_IS_PUBLIC',
-      arg: 'blob-is-public'
-    },
-    downloadCommand: {
-      default: 'az rest --resource <client_id> -u {URL} -o {FILENAME}',
-      doc: '',
-      env: 'BLOB_DOWNLOAD_COMMAND',
-      arg: 'blob-download-command',
-      format: String
-    }
-  },
-  testRunId: {
-    default: '',
-    doc: 'Used in integration test only. See ./integrationtest/utils.ts#getRunIdPrefix()',
-    env: 'TEST_RUN_ID',
-    arg: 'test-run-id',
     format: String
   }
 });

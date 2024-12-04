@@ -16,13 +16,39 @@ model StartPayload {
     "x-recording-assets-file"?: string;
 }
 
+model CommonErrorResponse {
+    Message: string;
+    Status: int32;
+    StackTrace?: string;
+    @header("x-request-exception") requestException: boolean;
+    @header("x-request-exception-error") requestExceptionError: string;
+}
+
+model BadRequestErrorResponse {
+
+    @statusCode statusCode: 400;
+    ...CommonErrorResponse
+}
+
+model NotFoundErrorResponse {
+
+    @statusCode statusCode: 404;
+    ...CommonErrorResponse
+}
+
+model UnhandledErrorResponse {
+
+    @statusCode statusCode: 500;
+    ...CommonErrorResponse
+}
+
 @route("/Record/Start")
 namespace RecordStart {
     @post
     op start(@body body: StartPayload): {
         @statusCode statusCode: 200;
         @header("x-recording-id") recordingId: string;
-    };
+    } | BadRequestErrorResponse | NotFoundErrorResponse | UnhandledErrorResponse;
 }
 
 @route("/Record/Stop")
@@ -33,7 +59,7 @@ namespace RecordStop {
     @post
     op stop(@header("x-recording-id") recordingId: string, @body body: VariablePayload): {
         @statusCode statusCode: 200;
-    };
+    } | BadRequestErrorResponse | UnhandledErrorResponse;
 }
 
 // when the recordingId is provided in a header on the request, the server will duplicate an existing playback
@@ -46,7 +72,7 @@ namespace PlaybackStart {
         @statusCode statusCode: 200;
         @header("x-recording-id") recordingId: string;
         @body body: Record<string>
-    };
+    } | BadRequestErrorResponse | NotFoundErrorResponse | UnhandledErrorResponse;
 }
 
 @route("/Playback/Stop")
@@ -54,7 +80,7 @@ namespace PlaybackStop {
     @post
     op stop(@header("x-recording-id") recordingId: string): {
         @statusCode statusCode: 200;
-    };
+    } | BadRequestErrorResponse | UnhandledErrorResponse;
 }
 
 // below all of the Admin/ routes, if a recordingid is provided in a header, then the server will apply whatever the customization is
@@ -80,7 +106,7 @@ namespace SetMatcher {
     @post
     op set(@body body: CustomDefaultMatcherBody | null, @header("x-abstraction-identifier") matcherType: MatcherType): {
         @statusCode statusCode: 200;
-    };
+    } | BadRequestErrorResponse | UnhandledErrorResponse;
 }
 
 @route("/Admin/AddSanitizers")
@@ -229,7 +255,7 @@ namespace AddSanitizers {
     @post
     op add(@body sanitizers: SanitizerAddition[], @header("x-recording-id") recordingId: string | null): {
         @statusCode statusCode: 200;
-    };
+    } | BadRequestErrorResponse | UnhandledErrorResponse;
 }
 
 @route("/Admin/RemoveSanitizers")
@@ -242,7 +268,7 @@ namespace RemoveSanitizers {
     op remove(@body sanitizers: SanitizerList, @header("x-recording-id") recordingId: string | null): {
         @statusCode statusCode: 200;
         @body removed: SanitizerList
-    };
+    } | BadRequestErrorResponse | UnhandledErrorResponse;
 }
 
 @route("/Admin/SetRecordingOptions")
@@ -274,5 +300,5 @@ namespace SetRecordingOptions {
     @post
     op set(@body body: RecordingOptions, @header("x-recording-id") recordingId: string | null): {
         @statusCode statusCode: 200;
-    };
+    } | BadRequestErrorResponse | UnhandledErrorResponse;
 }

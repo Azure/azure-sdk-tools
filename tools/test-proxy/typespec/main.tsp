@@ -1,6 +1,4 @@
 import "@typespec/http";
-import "@typespec/rest";
-import "@typespec/openapi3";
 
 using TypeSpec.Http;
 
@@ -25,19 +23,16 @@ model CommonErrorResponse {
 }
 
 model BadRequestErrorResponse {
-
     @statusCode statusCode: 400;
     ...CommonErrorResponse
 }
 
 model NotFoundErrorResponse {
-
     @statusCode statusCode: 404;
     ...CommonErrorResponse
 }
 
 model UnhandledErrorResponse {
-
     @statusCode statusCode: 500;
     ...CommonErrorResponse
 }

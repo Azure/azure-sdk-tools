@@ -53,8 +53,9 @@ extends:
         displayName: "Use Node 20"
       - pwsh: |
           npm install -g @typespec/compiler
-        displayName: Install typespec
+        displayName: Install typespec and tooling
       - pwsh: |
+          npm ci
           tsp compile .
         displayName: TSP Compile
         workingDirectory: tools/test-proxy/typespec

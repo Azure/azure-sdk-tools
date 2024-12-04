@@ -1,4 +1,13 @@
-import { FunctionDeclaration, Node, Signature, SourceFile, SyntaxKind } from 'ts-morph';
+import {
+  CallSignatureDeclaration,
+  FunctionDeclaration,
+  InterfaceDeclaration,
+  Node,
+  ParameterDeclaration,
+  Signature,
+  SourceFile,
+  SyntaxKind,
+} from 'ts-morph';
 import { AstContext, DiffLocation, DiffPair, DiffReasons, AssignDirection } from '../common/types';
 import {
   findFunctionBreakingChanges,
@@ -72,6 +81,145 @@ export function patchRoutes(astContext: AstContext): DiffPair[] {
       return p;
     });
   return [...breakingChangePairs, ...newFeaturePairs];
+}
+
+interface OperationParametersContext {
+  name: string;
+  parameters: ParameterDeclaration[];
+  operation: Node;
+}
+
+interface OperationGroupParametersContext {
+  //   name: string;
+  context: Map<string, OperationParametersContext>;
+}
+
+interface OperationGroupParameterContextPairs {
+  baseline: Map<string, OperationGroupParametersContext>;
+  current: Map<string, OperationGroupParametersContext>;
+}
+
+interface FindOperationGroupContextPairs {
+  (astContext: AstContext): OperationGroupParameterContextPairs;
+}
+
+function findParameterNamesChanges(operationGroupContextsPairs: OperationGroupParameterContextPairs): DiffPair[] {
+  const findParameterNamesChangesCore = (
+    baselineOpCtx: OperationParametersContext,
+    currentOpCtx: OperationParametersContext
+  ) => {
+    currentOpCtx.parameters.forEach((currentParameter, i) => {
+      const baselineParameter = baselineOpCtx.parameters[i];
+      if (baselineParameter.getName() !== currentParameter.getName()) {
+        const source = { name: baselineOpCtx.parameters[i].getName(), node: baselineOpCtx.parameters[i] };
+        const target = { name: currentOpCtx.parameters[i].getName(), node: currentOpCtx.parameters[i] };
+        const direction = AssignDirection.BaselineToCurrent;
+        const location = DiffLocation.Parameter;
+        const pair = createDiffPair(location, DiffReasons.NameChanged, source, target, direction);
+        pairs.push(pair);
+      }
+    });
+  };
+
+  const pairs = new Array<DiffPair>();
+  operationGroupContextsPairs.baseline.forEach((baselineOpGroupCtx, name) => {
+    const currentGroupOpCtx = operationGroupContextsPairs.current.get(name);
+
+    baselineOpGroupCtx.context.forEach((baselineOpCtx) => {
+      const currentOpCtx = currentGroupOpCtx?.context.get(baselineOpCtx.name);
+
+      // NOTE: already handle it
+      if (!currentOpCtx || currentOpCtx.parameters.length !== baselineOpCtx.parameters.length) return;
+
+      findParameterNamesChangesCore(baselineOpCtx, currentOpCtx);
+    });
+  });
+  return pairs;
+}
+
+export const findOperationContextPairsCore = (
+  astContext: AstContext,
+  operationGroupPredicate: (int: InterfaceDeclaration) => boolean,
+  extractOperationParametersContextFromMember: (member: Node) => OperationParametersContext
+): OperationGroupParameterContextPairs => {
+  const getOperationGroupParaCtxMap = (source: SourceFile) => {
+    const operationGroups = source.getInterfaces().filter(operationGroupPredicate);
+
+    // extract op
+    const operationGroupParaCtxMap = operationGroups.reduce((operationGroupParaCtxMap, operationGroup) => {
+      const operationParaContext = operationGroup.getMembers().reduce((map, member) => {
+        const context = extractOperationParametersContextFromMember(member);
+        map.set(context.name, context);
+        return map;
+      }, new Map<string, OperationParametersContext>());
+
+      const operationGroupParaCtx: OperationGroupParametersContext = {
+        context: operationParaContext,
+      };
+      operationGroupParaCtxMap.set(operationGroup.getName(), operationGroupParaCtx);
+      return operationGroupParaCtxMap;
+    }, new Map<string, OperationGroupParametersContext>());
+    return operationGroupParaCtxMap;
+  };
+
+  return {
+    baseline: getOperationGroupParaCtxMap(astContext.baseline),
+    current: getOperationGroupParaCtxMap(astContext.current),
+  };
+};
+
+// TODO: find operation without group
+export const findOperationContextPairsInHighLevelClient: FindOperationGroupContextPairs = (astContext: AstContext) => {
+  const operationGroupPredicate = (i: InterfaceDeclaration) =>
+    i.getMembers().every((m) => m.getKind() === SyntaxKind.MethodSignature);
+
+  const extractOpParaCtxFromMember = (member: Node) => {
+    // high level client's operation group contains only methods
+    const operation = member.asKindOrThrow(SyntaxKind.MethodSignature);
+    const name = operation.getName();
+    const parameters = operation.getParameters();
+    const context = { name, parameters, operation };
+    return context;
+  };
+
+  return findOperationContextPairsCore(astContext, operationGroupPredicate, extractOpParaCtxFromMember);
+};
+
+export const findOperationContextPairsInModularClient: FindOperationGroupContextPairs = (astContext: AstContext) => {
+  const operationGroupPredicate = (i: InterfaceDeclaration) => i.getName().endsWith('Operations');
+  const extractOpParaCtxFromMember = (member: Node) => {
+    // modular client's operation group contains only arrow functions
+    const operation = member.asKindOrThrow(SyntaxKind.PropertySignature);
+    const functionType = operation.getTypeNodeOrThrow().asKindOrThrow(SyntaxKind.FunctionType);
+
+    const name = operation.getName();
+    const parameters = functionType.getParameters();
+    const context = { name, parameters, operation };
+    return context;
+  };
+
+  return findOperationContextPairsCore(astContext, operationGroupPredicate, extractOpParaCtxFromMember);
+};
+
+export const findOperationContextPairsInRestLevelClient: FindOperationGroupContextPairs = (astContext: AstContext) => {
+  const operationGroupPredicate = (i: InterfaceDeclaration) => i.getName() === 'Routes';
+  const extractOpParaCtxFromMember = (member: Node) => {
+    const operation = member.asKindOrThrow(SyntaxKind.CallSignature).asKindOrThrow(SyntaxKind.CallSignature);
+    const name = operation.getParameterOrThrow('path').getTypeNodeOrThrow().getText();
+    const parameters = operation.getParameters();
+    const context = { name, parameters, operation };
+    return context;
+  };
+  return findOperationContextPairsCore(astContext, operationGroupPredicate, extractOpParaCtxFromMember);
+};
+
+export function patchOperationParameterName(
+  astContext: AstContext,
+  findOperationContextPairs: FindOperationGroupContextPairs
+): DiffPair[] {
+  const operationContextsPairs = findOperationContextPairs(astContext);
+  const pairs = findParameterNamesChanges(operationContextsPairs);
+  return pairs;
 }
 
 export function patchTypeAlias(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {

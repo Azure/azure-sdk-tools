@@ -312,10 +312,7 @@ namespace Azure.ClientSdk.Analyzers
 
                     var syncMemberName = member.Name.Substring(0, member.Name.Length - AsyncSuffix.Length);
 
-                    var syncMember = FindMethod(
-                        type.GetMembers(syncMemberName).OfType<IMethodSymbol>(),
-                        methodSymbol.TypeParameters,
-                        methodSymbol.Parameters);
+                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.TypeParameters, methodSymbol.Parameters);
 
                     if (syncMember == null)
                     {
@@ -328,10 +325,6 @@ namespace Azure.ClientSdk.Analyzers
                             context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
                         }
 
-                        if (!methodSymbol.Parameters.SequenceEqual(syncMember.Parameters, ParameterEquivalenceComparer.Default))
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0005, member.Locations.First()), member);
-                        }
                         CheckClientMethod(context, syncMember);
                     }
                 }

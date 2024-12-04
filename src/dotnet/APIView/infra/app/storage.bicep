@@ -50,15 +50,15 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   kind: 'StorageV2'
 }
 
-var contributorRoleDefinitionId = '/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+var blobContributorRoleDefinitionId = '/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
 resource blobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid('blob-rbac', storage.id, resourceGroup().id, principalId, contributorRoleDefinitionId)
+  name: guid('blob-rbac', storage.id, resourceGroup().id, principalId, blobContributorRoleDefinitionId)
   scope: storage
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
-      '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+      'ba92f5b4-2d11-453d-a403-e96b0029c9fe' // Storage Blob Data Contributor
     )
     principalId: principalId
   }

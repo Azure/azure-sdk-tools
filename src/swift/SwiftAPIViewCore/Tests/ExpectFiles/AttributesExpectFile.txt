@@ -7,7 +7,7 @@ package AttributesTestFile.swifttxt {
     }
 
     @available(iOS 10.0, macOS 10.12, *)
-    public class MyClass
+    public class MyClass {}
 
     @available(*, unavailable, renamed: "MyRenamedProtocol")
     public typealias MyProtocol = MyRenamedProtocol

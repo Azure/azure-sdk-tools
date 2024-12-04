@@ -8,20 +8,16 @@ package FunctionsTestFile.swifttxt {
         public func funcWithoutReturnValue(person: String)
         public func funcWithReturnValue(string: String) -> Int
         public func funcWithMultipleReturnValues(array: [Int]) -> (min: Int, max: Int)?
-        public func funcWithArgumentLabels(argumentLabel parameterName: Int)
-        public func funcWithoutArgumentLabels(_ firstParameterName: Int, _ secondParameterName: Int)
+        public func funcWithArgumentLabels(argumentLabel: Int)
+        public func funcWithoutArgumentLabels(_: Int, _: Int)
         public func funcWithDefaultValue(parameterWithoutDefault: Int, parameterWithDefault: Int = 12)
-        public func funcWithVariadicParam(_ numbers: Double...) -> Double
-        public func funcWithInOutParams(_ a: inout Int, _ b: inout Int)
-        public func addTwoInts(_ a: Int, _ b: Int) -> Int
+        public func funcWithVariadicParam(_: Double...) -> Double
+        public func funcWithInOutParams(_: inout Int, _: inout Int)
+        public func addTwoInts(_: Int, _: Int) -> Int
         public var mathFunction: (Int, Int) -> Int
-        public func funcWithFuncTypeParam(_ mathFunction: (Int, Int) -> Int, _ a: Int, _ b: Int)
-        public func funcWithFuncReturnType(backward: Bool) -> (Int) -> Int {
-            func stepForward(input: Int) -> Int { return input + 1 }
-            func stepBackward(input: Int) -> Int { return input - 1 }
-            return backward ? stepBackward : stepForward
-        }
+        public func funcWithFuncTypeParam(_: (Int, Int) -> Int, _: Int, _: Int)
+        public func funcWithFuncReturnType(backward: Bool) -> (Int) -> Int
         public func funcWithEscapingClosure(completionHandler: @escaping () -> Void)
-        public func funcWithAutoclosureEscapingClosure(_ customerProvider: @autoclosure @escaping () -> String)
+        public func funcWithAutoclosureEscapingClosure(_: @autoclosure @escaping () -> String)
     }
 }

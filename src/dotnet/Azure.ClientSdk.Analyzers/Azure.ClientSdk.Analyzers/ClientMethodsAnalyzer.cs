@@ -325,6 +325,11 @@ namespace Azure.ClientSdk.Analyzers
                             context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
                         }
 
+                        if (!methodSymbol.Parameters.SequenceEqual(syncMember.Parameters, ParameterEquivalenceComparer.Default))
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0005, member.Locations.First()), member);
+                        }
+
                         CheckClientMethod(context, syncMember);
                     }
                 }

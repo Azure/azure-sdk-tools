@@ -33,6 +33,9 @@ namespace PipelineGenerator.CommandParserOptions
         [Option('v', "variablegroups", Required = false, HelpText = "Variable groups to link, separated by a space, e.g. --variablegroups 1 9 64")]
         public IEnumerable<int> VariableGroups { get; set; }
 
+        [Option("serviceconnections", Required = false, HelpText = "Name of service connection to grant permission, separated by a space, e.g. --serviceconnections \"Azure\" \"azure-sdk-tests-public\"")]
+        public IEnumerable<string> ServiceConnections { get; set; }
+
         [Option("open", Required = false, HelpText = "Open a browser window to the definitions that are created")]
         public bool Open { get; set; }
 

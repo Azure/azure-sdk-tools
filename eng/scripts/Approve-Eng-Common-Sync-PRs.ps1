@@ -41,7 +41,7 @@ $repos = @(
 
 foreach ($repo in $repos)
 {
-  $prstate = gh pr view $engCommonSyncBranch -R Azure/$repo --json "url,state,mergeable,mergeStateStatus,reviews,number" | ConvertFrom-Json
+  $prstate = gh pr view $engCommonSyncBranch -R Azure/$repo --json "url,state,mergeable,mergeStateStatus,reviews" | ConvertFrom-Json
 
   Write-Host "$($prstate.url) - " -NoNewline
   if ($prstate.state -eq "MERGED") {
@@ -59,6 +59,6 @@ foreach ($repo in $repos)
   }
 
   if ($prstate.mergeStateStatus -ne "CLEAN") {
-    Write-Host "****PR $($prstate.number) is not mergeable [state: $($prstate.mergeStateStatus)] and may need to be manually merged"
+    Write-Host "****PR $($prstate.url) is not mergeable [state: $($prstate.mergeStateStatus)] and may need to be manually merged"
   }
 }

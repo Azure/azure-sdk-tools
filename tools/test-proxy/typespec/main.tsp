@@ -246,7 +246,6 @@ namespace AddSanitizers {
         };
     }
 
-    //todo: confirm that these SanitizerAddition are being checked against the discriminator and converted to the correct type
     @post
     op add(@body sanitizers: SanitizerAddition[], @header("x-recording-id") recordingId: string | null): {
         @statusCode statusCode: 200;
@@ -259,10 +258,14 @@ namespace RemoveSanitizers {
         "Sanitizers": string[];
     }
 
+    model RemovedSanitizers {
+        "Removed": string[];
+    }
+
     @post
     op remove(@body sanitizers: SanitizerList, @header("x-recording-id") recordingId: string | null): {
         @statusCode statusCode: 200;
-        @body removed: SanitizerList
+        @body removed: RemovedSanitizers
     } | BadRequestErrorResponse | UnhandledErrorResponse;
 }
 

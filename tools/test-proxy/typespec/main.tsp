@@ -76,7 +76,7 @@ namespace SetMatcher {
         ignoredQueryParameters?: string;
     }
 
-    // we need to only allow CustomDefaultMatcherBody when the MatcherType is CustomDefaultMatcher
+    // todo: we need to only allow CustomDefaultMatcherBody when the MatcherType is CustomDefaultMatcher
     @post
     op set(@body body: CustomDefaultMatcherBody | null, @header("x-abstraction-identifier") matcherType: MatcherType): {
         @statusCode statusCode: 200;
@@ -101,44 +101,133 @@ namespace AddSanitizers {
         UriSubscriptionIdSanitizer: "UriSubscriptionIdSanitizer",
     }
 
-    model HeaderCondition {
-        Key: string;
-    }
-
+    // todo: handle the additional HeaderCondition (where the header must match a certain value)
     model ApplyCondition {
         UriRegex: string;
-        HeaderCondition: HeaderCondition;
     }
 
-    model SanitizerAdditionBody {
-        key?: string;
+    @discriminator("Name")
+    model SanitizerAddition {
+        Name: SanitizerType;
+    }
+
+    model CommonRegexProperties {
         value?: string;
         regex?: string;
         groupForReplace?: string;
         condition?: ApplyCondition;
     }
 
-    // how to strongly tie Body type to SanitizerType? That's the goal here.
-    model SanitizerAddition {
-        Name: SanitizerType;
-        Body: SanitizerAdditionBody;
+    model BodyKeySanitizer extends SanitizerAddition {
+        Name: SanitizerType.BodyKeySanitizer;
+        Body: {
+            jsonPath: string;
+            ...CommonRegexProperties
+        };
     }
 
+    model BodyRegexSanitizer extends SanitizerAddition {
+        Name: SanitizerType.BodyRegexSanitizer;
+        Body: {
+            ...CommonRegexProperties
+        };
+    }
+
+    model BodyStringSanitizer extends SanitizerAddition {
+        Name: SanitizerType.BodyStringSanitizer;
+        Body:  {
+            target: string;
+            value?: string;
+            condition?: ApplyCondition;
+        };
+    }
+
+    model GeneralRegexSanitizer extends SanitizerAddition {
+        Name: SanitizerType.GeneralRegexSanitizer;
+        Body: {
+            ...CommonRegexProperties
+        };
+    }
+
+    model GeneralStringSanitizer extends SanitizerAddition {
+        Name: SanitizerType.GeneralStringSanitizer;
+        Body: {
+            target: string;
+            value?: string;
+            condition?: ApplyCondition;
+        };
+    }
+
+    model HeaderRegexSanitizer extends SanitizerAddition {
+        Name: SanitizerType.HeaderRegexSanitizer;
+        Body: {
+            key: string;
+            ...CommonRegexProperties
+        };
+    }
+
+    model HeaderStringSanitizer extends SanitizerAddition {
+        Name: SanitizerType.HeaderStringSanitizer;
+        Body: {
+            key: string;
+            target: string;
+            value?: string;
+            condition?: ApplyCondition;
+        };
+    }
+
+    model OAuthResponseSanitizer extends SanitizerAddition {
+        Name: SanitizerType.OAuthResponseSanitizer;
+    }
+
+    enum RegexEntryValues {
+        body: "body",
+        header: "header",
+        uri: "uri"
+    }
+
+    model RegexEntrySanitizer extends SanitizerAddition {
+        Name: SanitizerType.RegexEntrySanitizer;
+        Body: {
+            target: RegexEntryValues;
+            regex: string;
+        };
+    }
+
+    model RemoveHeaderSanitizer extends SanitizerAddition {
+        Name: SanitizerType.RemoveHeaderSanitizer;
+        Body: {
+            headersForRemoval: string;
+        };
+    }
+
+    model UriRegexSanitizer extends SanitizerAddition {
+        Name: SanitizerType.UriRegexSanitizer;
+        Body: {
+            ...CommonRegexProperties
+        };
+    }
+
+    model UriStringSanitizer extends SanitizerAddition {
+        Name: SanitizerType.UriStringSanitizer;
+        Body: {
+            target: string;
+            value?: string;
+            condition?: ApplyCondition;
+        };
+    }
+
+    model UriSubscriptionIdSanitizer extends SanitizerAddition {
+        Name: SanitizerType.UriSubscriptionIdSanitizer;
+        Body: {
+            value?: string;
+            condition?: ApplyCondition;
+        };
+    }
+
+    //todo: confirm that these SanitizerAddition are being checked against the discriminator and converted to the correct type
     @post
     op add(@body sanitizers: SanitizerAddition[], @header("x-recording-id") recordingId: string | null): {
-        @statusCode statusCode: 200;
-    };
-}
-
-@route("/Admin/AddSanitizer")
-namespace AddSanitizer {
-    model SanitizerAddition {
-        Name: AddSanitizers.SanitizerType;
-        Body: AddSanitizers.SanitizerAdditionBody;
-    }
-
-    @post
-    op add(@body sanitizer: AddSanitizers.SanitizerAdditionBody, @header("x-abstraction-identifier") sanitizerType: AddSanitizers.SanitizerType): {
         @statusCode statusCode: 200;
     };
 }

@@ -45,7 +45,6 @@ extension SyntaxProtocol {
                     child.tokenize(apiview: a, parent: parent)
                 }
             }
-            a.whitespace()
         case .classRestrictionType:
             // in this simple context, class should not have a trailing space
             a.keyword("class", spacing: .Neither)

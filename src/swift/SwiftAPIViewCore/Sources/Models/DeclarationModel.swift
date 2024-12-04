@@ -154,9 +154,9 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                 // attributes on declarations should have newlines
                 let obj = AttributeListSyntax(child)!
                 for attr in obj.children(viewMode: .sourceAccurate) {
-                    attr.tokenize(apiview: a, parent: parent)
                     let attrText = attr.withoutTrivia().description.filter { !$0.isWhitespace }
                     a.lineIdMarker(definitionId: "\(definitionId!).\(attrText)")
+                    attr.tokenize(apiview: a, parent: parent)
                     a.blankLines(set: 0)
                 }
             case .token:

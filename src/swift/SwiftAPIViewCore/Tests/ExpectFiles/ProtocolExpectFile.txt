@@ -2,90 +2,6 @@ Package parsed using Swift APIView (version 0.2.2)
 
 
 package ProtocolTestFile.swifttxt {
-    public protocol SomeProtocol {
-        var mustBeSettable: Int { get set }
-        var doesNotNeedToBeSettable: Int { get }
-    }
-
-    public protocol FullyNamed {
-        var fullName: String { get }
-    }
-
-    public struct Person: FullyNamed {
-        public var fullName: String
-    }
-
-    public protocol RandomNumberGenerator {
-        func random() -> Double
-    }
-
-    public protocol Togglable {
-        mutating func toggle()
-    }
-
-    public enum OnOffSwitch: Togglable {
-        case off, on
-        public mutating func toggle()
-    }
-
-    public protocol SomeInitProtocol {
-        init(someParameter: Int)
-    }
-
-    public class SomeClass: SomeInitProtocol {
-        public required init(someParameter: Int)
-    }
-
-    public protocol SomeOtherInitProtocol {
-        init()
-    }
-
-    open class SomeSuperClass {
-        public init()
-    }
-
-    public class SomeSubClass: SomeSuperClass, SomeOtherInitProtocol {
-        public required override init()
-    }
-
-    public class Dice {
-        public let sides: Int
-        public let generator: RandomNumberGenerator
-        public init(sides: Int, generator: RandomNumberGenerator)
-        public func roll() -> Int
-    }
-
-    public protocol TextRepresentable {
-        var textualDescription: String { get }
-    }
-
-    extension Dice: TextRepresentable {
-        public var textualDescription: String
-    }
-
-    extension Array: TextRepresentable where Element: TextRepresentable {
-        public var textualDescription: String
-    }
-
-    public struct Hamster {
-        public var name: String
-        public var textualDescription: String
-    }
-
-    extension Hamster: TextRepresentable {}
-
-    public protocol PrettyTextRepresentable: TextRepresentable {
-        var prettyTextualDescription: String { get }
-    }
-
-    public protocol SomeClassOnlyProtocol: AnyObject, TextRepresentable {}
-
-    public protocol SomeOtherClassOnlyProtocol: class, TextRepresentable {}
-
-    public protocol Named {
-        var name: String { get }
-    }
-
     public protocol Aged {
         var age: Int { get }
     }
@@ -95,19 +11,107 @@ package ProtocolTestFile.swifttxt {
         public var age: Int
     }
 
-    public func wishHappyBirthday(to celebrator: Named & Aged)
-
-    @objc public protocol CounterDataSource {
-        @objc optional func increment(forCount count: Int) -> Int
+    @objc
+    public protocol CounterDataSource {
+        @objc
+        optional func increment(forCount: Int) -> Int
         @objc optional var fixedIncrement: Int { get }
+    }
+
+    public class Dice {
+        public let sides: Int
+        public let generator: RandomNumberGenerator
+        public init(sides: Int, generator: RandomNumberGenerator)
+        public func roll() -> Int
+    }
+
+    extension Dice: TextRepresentable {
+        public var textualDescription: String
+    }
+
+    public protocol FullyNamed {
+        var fullName: String { get }
+    }
+
+    public struct Hamster {
+        public var name: String
+        public var textualDescription: String
+    }
+
+    extension Hamster: TextRepresentable {
+    }
+
+    public protocol Named {
+        var name: String { get }
+    }
+
+    public enum OnOffSwitch: Togglable {
+        case off, on
+        public mutating func toggle()
+    }
+
+    public struct Person: FullyNamed {
+        public var fullName: String
+    }
+
+    public protocol PrettyTextRepresentable: TextRepresentable {
+        var prettyTextualDescription: String { get }
+    }
+
+    public extension PrettyTextRepresentable {
+        var prettyTextualDescription: String
+    }
+
+    public protocol RandomNumberGenerator {
+        func random() -> Double
     }
 
     public extension RandomNumberGenerator {
         func randomBool() -> Bool
     }
 
-    public extension PrettyTextRepresentable  {
-        var prettyTextualDescription: String
+    public class SomeClass: SomeInitProtocol {
+        public required init(someParameter: Int)
+    }
+
+    public protocol SomeClassOnlyProtocol: AnyObject, TextRepresentable {}
+
+    public protocol SomeInitProtocol {
+        init(someParameter: Int)
+    }
+
+    public protocol SomeOtherClassOnlyProtocol: class, TextRepresentable {}
+
+    public protocol SomeOtherInitProtocol {
+        init()
+    }
+
+    public protocol SomeProtocol {
+        var mustBeSettable: Int { get set }
+        var doesNotNeedToBeSettable: Int { get }
+    }
+
+    public class SomeSubClass: SomeSuperClass, SomeOtherInitProtocol {
+        public required override init()
+    }
+
+    open class SomeSuperClass {
+        public init()
+    }
+
+    public protocol TextRepresentable {
+        var textualDescription: String { get }
+    }
+
+    public protocol Togglable {
+        mutating func toggle()
+    }
+
+    public func wishHappyBirthday(to: Named & Aged)
+
+    \\ Non-package extensions
+    extension Array: TextRepresentable where Element: TextRepresentable {
+        public var textualDescription: String
     }
 
     public extension Collection where Element: Equatable {

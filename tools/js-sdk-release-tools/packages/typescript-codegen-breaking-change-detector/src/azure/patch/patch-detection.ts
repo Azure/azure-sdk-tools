@@ -7,6 +7,7 @@ import {
   checkRemovedDeclaration,
   createDiffPair,
   checkAddedDeclaration,
+  findClassDeclarationBreakingChanges,
 } from '../diff/declaration-diff';
 import { logger } from '../../logging/logger';
 
@@ -132,6 +133,41 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
     currentFunctions[0]
   );
   return pairs;
+}
+
+export function patchClass(name: string, astContext: AstContext): DiffPair[] {
+  const baseline = astContext.baseline.getClass(name);
+  const current = astContext.current.getClass(name);
+  const addPair = checkAddedDeclaration(DiffLocation.Class, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = checkRemovedDeclaration(DiffLocation.Class, baseline, current);
+  if (removePair) return [removePair];
+  const breakingChangePairs = patchDeclaration(
+    AssignDirection.CurrentToBaseline,
+    findClassDeclarationBreakingChanges,
+    baseline!,
+    current!,
+    findMappingCallSignature
+  );
+
+  const newFeaturePairs = patchDeclaration(
+    AssignDirection.BaselineToCurrent,
+    findClassDeclarationBreakingChanges,
+    baseline!,
+    current!,
+    findMappingCallSignature
+  )
+    .filter((p) => p.reasons === DiffReasons.Removed)
+    .map((p) => {
+      p.reasons = DiffReasons.Added;
+      p.assignDirection = AssignDirection.CurrentToBaseline;
+      const temp = p.source;
+      p.source = p.target;
+      p.target = temp;
+      return p;
+    });
+  return [...breakingChangePairs, ...newFeaturePairs];
 }
 
 export function patchDeclaration<T extends Node>(

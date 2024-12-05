@@ -11,6 +11,7 @@ import {
   TypeNode,
   TypeAliasDeclaration,
   CallSignatureDeclaration,
+  ClassDeclaration,
 } from 'ts-morph';
 import {
   DiffLocation,
@@ -381,6 +382,14 @@ export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, targe
   let sourceNameNode: NameNode = { name: source.getName(), node: source };
   let targetNameNode: NameNode = { name: target.getName(), node: target };
   return [createDiffPair(DiffLocation.TypeAlias, DiffReasons.TypeChanged, sourceNameNode, targetNameNode)];
+}
+
+export function findClassDeclarationBreakingChanges(source: ClassDeclaration, target: ClassDeclaration, findMappingCallSignature?: FindMappingCallSignature): DiffPair[] {
+  const targetProperties = target.getType().getProperties();
+  const sourceProperties = source.getType().getProperties();
+
+  const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
+  return [...propertyBreakingChanges];
 }
 
 export function createDiffPair(

@@ -53,6 +53,7 @@ extension SwiftSyntax.TokenKind {
         case .arrow: return .Both
         case .postfixQuestionMark: return .TrimLeft
         case .leftBrace: return .Leading
+        case .leftParen: return .TrimLeft
         case .initKeyword: return .Leading
         case .wildcardKeyword: return .Neither
         case let .contextualKeyword(val):

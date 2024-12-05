@@ -157,6 +157,7 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                     let attrText = attr.withoutTrivia().description.filter { !$0.isWhitespace }
                     a.lineIdMarker(definitionId: "\(definitionId!).\(attrText)")
                     attr.tokenize(apiview: a, parent: parent)
+                    a.newline()
                     a.blankLines(set: 0)
                 }
             case .token:

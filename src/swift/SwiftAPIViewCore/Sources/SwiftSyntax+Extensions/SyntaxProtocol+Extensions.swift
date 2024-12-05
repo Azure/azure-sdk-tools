@@ -40,7 +40,7 @@ extension SyntaxProtocol {
             for child in self.children(viewMode: .sourceAccurate) {
                 if child.childNameInParent == "name" {
                     let attrName = child.withoutTrivia().description
-                    a.keyword(attrName, spacing: .Neither)
+                    a.keyword(attrName, spacing: .Trailing)
                 } else {
                     child.tokenize(apiview: a, parent: parent)
                 }

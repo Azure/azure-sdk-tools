@@ -186,6 +186,22 @@ extension SyntaxProtocol {
             tokenize(token: token, apiview: a, parent: (parent as? DeclarationModel))
         case .typealiasDecl:
             DeclarationModel(from: TypealiasDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
+        case .accessorBlock:
+            let obj = AccessorBlockSyntax(self)!
+            for child in obj.children(viewMode: .sourceAccurate) {
+                if child.kind == .token {
+                    let token = TokenSyntax(child)!
+                    let tokenKind = token.tokenKind
+                    let tokenText = token.withoutTrivia().description
+                    if tokenKind == .leftBrace || tokenKind == .rightBrace {
+                        a.punctuation(tokenText, spacing: .Both)
+                    } else {
+                        child.tokenize(token: token, apiview: a, parent: nil)
+                    }
+                } else {
+                    child.tokenize(apiview: a, parent: parent)
+                }
+            }
         default:
             // default behavior for all nodes is to render all children
             tokenizeChildren(apiview: a, parent: parent)

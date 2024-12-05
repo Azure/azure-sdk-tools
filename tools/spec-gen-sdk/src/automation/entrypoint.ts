@@ -12,10 +12,12 @@ import {
 import {
   loggerConsoleTransport,
   loggerDevOpsTransport,
+  loggerFileTransport,
   loggerTestTransport,
   sdkAutoLogLevels
 } from './logging';
-//import { sdkAutoReportStatus } from './reportStatus';
+import path from 'path';
+import { generateReport } from './reportStatus';
 
 interface SdkAutoOptions {
   specRepo: RepoKey;
@@ -28,6 +30,7 @@ interface SdkAutoOptions {
   pullNumber?: number;
   specCommitSha?: string;
   specRepoHttpsUrl?: string;
+  workingFolder: string;
 
   github: {
     token?: string;
@@ -52,7 +55,8 @@ export type SdkAutoContext = {
   specPrInfo: SpecPrInfo | undefined;
   specPrBaseBranch: string | undefined;
   specPrHeadBranch: string | undefined;
-  workingFolder: string;
+  fullLogFileName: string;
+  filterLogFileName: string;
 };
 
 
@@ -69,11 +73,15 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     logger.add(loggerTestTransport());
   }
 
+  const fullLogFileName = path.join(options.workingFolder, 'full.log');
+  const filterLogFileName = path.join(options.workingFolder, 'filter.log');
+  logger.info(`Log to ${fullLogFileName}`);
+  logger.add(loggerFileTransport(fullLogFileName));
+
   const [{ octokit, getGithubAccessToken, specPR }] = await Promise.all([
     getGithubContext(options, logger),
   ]);
 
-  const workingFolder = '.';
   let specPrInfo: SpecPrInfo | undefined
   if (specPR) {
     specPrInfo = {
@@ -95,7 +103,8 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     specPrInfo,
     specPrBaseBranch: specPR?.base.ref,
     specPrHeadBranch: specPR?.head.ref,
-    workingFolder,
+    fullLogFileName,
+    filterLogFileName
   };
 };
 
@@ -136,7 +145,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     }
   }
   if (workflowContext) {
-    //await sdkAutoReportStatus(workflowContext);
+    await generateReport(workflowContext);
   }
   return workflowContext?.status;
 };

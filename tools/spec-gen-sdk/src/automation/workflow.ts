@@ -68,13 +68,14 @@ export type WorkflowContext = SdkAutoContext & {
   specFolder: string;
   sdkRepo: SimpleGit;
   sdkFolder: string;
+  sdkArtifactFolder?: string;
+  sdkApiViewArtifactFolder?: string;
   pendingPackages: PackageData[];
   handledPackages: PackageData[];
   status: SDKAutomationState;
   failureType?: FailureType;
   messages: string[];
   messageCaptureTransport: Transport;
-  legacyAfterScripts: string[];
   scriptEnvs: { [key: string]: string | undefined };
   tmpFolder: string;
   extraResultRecords: MessageRecord[];
@@ -101,7 +102,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
   const configs = await configsPromise;
   const sdkContext = workflowInitSdkRepo(context);
 
-  const tmpFolder = path.join(context.workingFolder, `${configs.sdkRepoConfig.mainRepository.name}_tmp`);
+  const tmpFolder = path.join(context.config.workingFolder, `${configs.sdkRepoConfig.mainRepository.name}_tmp`);
   mkdirpSync(tmpFolder);
 
   return {
@@ -115,7 +116,6 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
     status: 'inProgress',
     messages,
     messageCaptureTransport: captureTransport,
-    legacyAfterScripts: [],
     tmpFolder,
     scriptEnvs: {
       USER: process.env.USER,
@@ -304,7 +304,6 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
         context.logger.warn(`\tWarning: ${context.config.sdkName} cannot be found in ${changedSpec.readmeMd}. This SDK will be skipped from SDK generation. Please add the right config to the readme file according to this guidance https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/code-gen/configure-go-sdk.md#swagger-to-sdk.`);
         continue;
       }
-      context.legacyAfterScripts.push(...(config.after_scripts ?? []));
       context.logger.info(`\t${changedSpec.readmeMd}`);
       readmeMdList.push(changedSpec.readmeMd!);
       suppressionFileMap.set(changedSpec.readmeMd!, changedSpec.suppressionFile);

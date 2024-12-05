@@ -119,3 +119,14 @@ export class CommentCaptureTransport extends Transport {
     callback();
   }
 }
+
+export const loggerFileTransport = (fileName: string) => {
+  return new winston.transports.File({
+    filename: fileName,
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp({ format: 'hh:mm:ss.SSS' }),
+      winston.format.printf(formatLog)
+    ),
+  });
+};

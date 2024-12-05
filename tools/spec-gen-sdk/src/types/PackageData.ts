@@ -130,6 +130,8 @@ export type PackageData = SDKRepositoryPackageData & {
    */
   isBetaMgmtSdk?: boolean;
   isDataPlane: boolean;
+  readmeMd?: string[];
+  typespecProject?: string[];
 };
 
 export const getGenerationBranchName = (context: WorkflowContext, packageName: string) => {
@@ -224,6 +226,8 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
     artifactBlobUrls: [],
     changelogs: result.changelog?.content.split('\n') ?? [],
     breakingChangeItems,
-    version: result.version
+    version: result.version,
+    readmeMd: result.readmeMd,
+    typespecProject: result.typespecProject
   };
 };

@@ -145,10 +145,11 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
     return; 
   }
   
-  const destination = path.join(context.workingFolder, 'generatedSdkArtifacts');
+  const destination = path.join(context.config.workingFolder, 'generatedSdkArtifacts');
   if (!existsSync(destination)) {
     mkdirpSync(destination);
   }
+  context.sdkArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasSDKArtifact]true`);
   const artifactName = `SDK_Artifact_${language}`; // it's the artifact in pipeline artifacts
   console.log(`##vso[task.setVariable variable=sdkArtifactName]${artifactName}`);
@@ -170,10 +171,11 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   }
 
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
-  const destination = path.join(context.workingFolder, 'sdkApiViewArtifacts');
+  const destination = path.join(context.config.workingFolder, 'sdkApiViewArtifacts');
   if (!existsSync(destination)) {
     mkdirpSync(destination);
   }
+  context.sdkApiViewArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasApiViewArtifact]true`);
   const artifactName = `sdkApiViewArtifact_${language}`; // it's the artifact in pipeline artifacts
   console.log(`##vso[task.setVariable variable=ArtifactName]${artifactName}`);

@@ -19,6 +19,7 @@ import { sdkAutoMain } from '../automation/entrypoint';
       localSdkRepoPath: config.localSdkRepoPath,
       pullNumber: config.prNumber,
       sdkName: config.sdkRepoName,
+      workingFolder: config.workingFolder,
       github: {
         token: config.githubToken,
         id: config.githubApp.id,

@@ -40,7 +40,7 @@ extension SyntaxProtocol {
             for child in self.children(viewMode: .sourceAccurate) {
                 if child.childNameInParent == "name" {
                     let attrName = child.withoutTrivia().description
-                    a.keyword(attrName, spacing: .Trailing)
+                    a.keyword(attrName, spacing: .Neither)
                 } else {
                     child.tokenize(apiview: a, parent: parent)
                 }
@@ -51,6 +51,16 @@ extension SyntaxProtocol {
         case .codeBlock:
             // Don't render code blocks. APIView is unconcerned with implementation
             break
+        case .constrainedSugarType:
+            let obj = ConstrainedSugarTypeSyntax(self)!
+            let children = obj.children(viewMode: .sourceAccurate)
+            assert(children.count == 2)
+            for child in children {
+                child.tokenize(apiview: a, parent: parent)
+                if (child.kind == .token) {
+                    a.whitespace()
+                }
+            }
         case .enumCaseElement:
             for child in self.children(viewMode: .sourceAccurate) {
                 let childIndex = child.indexInParent
@@ -74,6 +84,7 @@ extension SyntaxProtocol {
         case .functionParameter:
             let param = FunctionParameterSyntax(self)!
             for child in param.children(viewMode: .sourceAccurate) {
+                let childKind = child.kind
                 let childIndex = child.indexInParent
                 // index 7 is the interal name, which we don't render at all
                 guard childIndex != 7 else { continue }
@@ -86,6 +97,16 @@ extension SyntaxProtocol {
                         a.text("_")
                     } else {
                         SharedLogger.warn("Unhandled tokenKind '\(token.tokenKind)' for function parameter label")
+                    }
+                } else if childKind == .attributeList {
+                    let attrs = AttributeListSyntax(child)!
+                    let lastAttrs = attrs.count - 1
+                    for attr in attrs {
+                        let attrIndex = attrs.indexInParent
+                        attr.tokenize(apiview: a, parent: parent)
+                        if attrIndex != lastAttrs {
+                            a.whitespace()
+                        }
                     }
                 } else {
                     child.tokenize(apiview: a, parent: parent)

@@ -86,6 +86,7 @@
 				PrivateInternalTestFile.swifttxt,
 				PropertiesTestFile.swifttxt,
 				ProtocolTestFile.swifttxt,
+				SwiftUITestFile.swifttxt,
 			);
 			target = 0A8469E827879AE200C967A8 /* SwiftAPIViewCoreTests */;
 		};
@@ -102,6 +103,7 @@
 				PrivateInternalTestFile.swifttxt,
 				PropertiesTestFile.swifttxt,
 				ProtocolTestFile.swifttxt,
+				SwiftUITestFile.swifttxt,
 			);
 			target = 0A8469E027879AE200C967A8 /* SwiftAPIViewCore */;
 		};
@@ -118,6 +120,7 @@
 				PrivateInternalExpectFile.txt,
 				PropertiesExpectFile.txt,
 				ProtocolExpectFile.txt,
+				SwiftUIExpectFile.txt,
 			);
 			target = 0A8469E827879AE200C967A8 /* SwiftAPIViewCoreTests */;
 		};
@@ -134,6 +137,7 @@
 				PrivateInternalExpectFile.txt,
 				PropertiesExpectFile.txt,
 				ProtocolExpectFile.txt,
+				SwiftUIExpectFile.txt,
 			);
 			target = 0A8469E027879AE200C967A8 /* SwiftAPIViewCore */;
 		};
@@ -152,6 +156,7 @@
 				PrivateInternalTestFile.swifttxt,
 				PropertiesTestFile.swifttxt,
 				ProtocolTestFile.swifttxt,
+				SwiftUITestFile.swifttxt,
 			);
 		};
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */

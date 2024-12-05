@@ -25,45 +25,14 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import SwiftSyntax
+import SwiftUI
 
-enum SpacingKind {
-    /// Leading space
-    case Leading
-    /// Trailing space
-    case Trailing
-    /// Leading and trailing space
-    case Both
-    /// No spacing
-    case Neither
-    /// chomps any leading whitespace to the left
-    case TrimLeft
-}
+public class ViewBuilderExample {
+    public func testViewBuilder(@ViewBuilder content: () -> Content) {
+        self.content = content
+    }
 
-extension SwiftSyntax.TokenKind {
-    var spacing: SpacingKind {
-        switch self {
-        case .anyKeyword: return .Neither
-        case .nilKeyword: return .Neither
-        case .prefixPeriod: return .Leading
-        case .comma: return .Trailing
-        case .colon: return .Trailing
-        case .semicolon: return .Trailing
-        case .equal: return .Both
-        case .arrow: return .Both
-        case .postfixQuestionMark: return .TrimLeft
-        case .leftBrace: return .Leading
-        case .initKeyword: return .Leading
-        case .wildcardKeyword: return .Neither
-        case let .contextualKeyword(val):
-            switch val {
-            case "objc": return .TrimLeft
-            case "lowerThan", "higherThan", "associativity": return .Neither
-            case "available", "unavailable", "introduced", "deprecated", "obsoleted", "message", "renamed": return .Neither
-            default: return .Both
-            }
-        default:
-            return self.isKeyword ? .Both : .Neither
-        }
+    @ViewBuilder public func createView() -> some View {
+        return Button()
     }
 }

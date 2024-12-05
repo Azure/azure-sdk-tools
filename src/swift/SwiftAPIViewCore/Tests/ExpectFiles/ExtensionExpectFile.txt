@@ -30,17 +30,8 @@ package ExtensionTestFile.swifttxt {
 
     public extension Int {
         func repetitions(task: () -> Void)
-    }
-
-    extension Int {
         public mutating func square()
-    }
-
-    extension Int {
         public subscript(digitIndex: Int) -> Int
-    }
-
-    public extension Int {
         enum Kind {
             case negative, zero, positive
         }
@@ -49,13 +40,10 @@ package ExtensionTestFile.swifttxt {
 
     extension Stack {
         public var count: Int
-    }
-
-    public extension Stack {
         var underestimatedCount: Int
     }
 
     extension Stack where Element: Equatable {
-        public func isTop(_ item: Element) -> Bool
+        public func isTop(_: Element) -> Bool
     }
 }

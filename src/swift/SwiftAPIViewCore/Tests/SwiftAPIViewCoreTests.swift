@@ -152,4 +152,13 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let expected = contentsOf(expectFile: "ProtocolExpectFile")
         compare(expected: expected, actual: generated)
     }
+
+    func testSwiftUI() throws {
+        let manager = APIViewManager(mode: .testing)
+        manager.config.sourcePath = pathFor(testFile: "SwiftUITestFile")
+        manager.config.packageVersion = "1.0.0"
+        let generated = try manager.run()
+        let expected = contentsOf(expectFile: "SwiftUIExpectFile")
+        compare(expected: expected, actual: generated)
+    }
 }

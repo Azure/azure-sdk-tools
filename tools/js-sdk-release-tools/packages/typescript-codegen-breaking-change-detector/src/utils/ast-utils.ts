@@ -11,6 +11,7 @@ import {
   ParameterDeclaration,
   SymbolFlags,
   Symbol,
+  ConstructorDeclaration,
 } from 'ts-morph';
 import { ParserServices, ParserServicesWithTypeInformation } from '@typescript-eslint/typescript-estree';
 import { Scope, ScopeManager } from '@typescript-eslint/scope-manager';
@@ -236,4 +237,24 @@ export function isPropertyArrowFunction(p: Symbol) {
 
 export function isMethodOrArrowFunction(p: Symbol) {
   return isPropertyMethod(p) || isPropertyArrowFunction(p);
+}
+
+export function isSameConstructor(left: ConstructorDeclaration, right: ConstructorDeclaration): boolean {
+  if (left.getTypeParameters().length !== right.getTypeParameters().length) return false;
+  if (left.getParameters().length !== right.getParameters().length) return false;
+
+  const sameParameters = left.getParameters().filter((leftParameter, i) => {
+    const rightParameter = right.getParameters()[i];
+    if (leftParameter.getName() !== rightParameter.getName()) return false;
+
+    const getParameterType = (parameter: ParameterDeclaration) => parameter?.getTypeNode()?.getType();
+    const leftParaType = getParameterType(leftParameter);
+    const rightParaType = getParameterType(rightParameter);
+
+    if (!leftParaType && !rightParaType) return true;
+    if (!leftParaType || !rightParaType) return false;
+    if (!leftParaType.isAssignableTo(rightParaType) || !rightParaType.isAssignableTo(leftParaType)) return false;
+    return true;
+  });
+  return sameParameters.length === left.getParameters().length;
 }

@@ -190,7 +190,7 @@ describe("patch current tool's breaking changes", async () => {
     try {
       tempFolder = await createTempFolder(`.tmp/temp-${date}`);
       const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
-      let breakingPairs = patchClass('classParameterType', astContext);
+      let breakingPairs = patchClass('classPropertyType', astContext);
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
       expect(breakingPairs[0].location).toBe(DiffLocation.Property);
@@ -224,6 +224,43 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs[0].location).toBe(DiffLocation.Property);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
       expect(breakingPairs[0].target?.name).toBe('b');
+
+      breakingPairs = patchClass('classConstructorParameterCount', astContext);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature_ParameterList);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.CountChanged);
+      expect(breakingPairs[0].target?.node.getText()).toBe(
+        'constructor(a: string, b: string){}'
+      );
+
+      breakingPairs = patchClass('classConstructorParameterType', astContext);
+      expect(breakingPairs.length).toBe(2);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Parameter);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+      expect(breakingPairs[0].target?.node.getText()).toBe('a: string');
+
+      expect(breakingPairs[1].location).toBe(DiffLocation.Parameter);
+      expect(breakingPairs[1].reasons).toBe(DiffReasons.TypeChanged);
+      expect(breakingPairs[1].target?.node.getText()).toBe('b: string');
+
+      breakingPairs = patchClass('classConstructorRemove', astContext);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Constructor);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+      expect(breakingPairs[0].source).toBeUndefined();
+      expect(breakingPairs[0].target?.node.getText()).toBe(
+        'constructor(a: number, b: number){}'
+      );
+
+      breakingPairs = patchClass('classConstructorAdd', astContext);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Constructor);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Added);
+      expect(breakingPairs[0].target).toBeUndefined();
+      expect(breakingPairs[0].source?.node.getText()).toBe(
+        'constructor(a: number, b: number){}'
+      );
+      
     } finally {
       if (tempFolder) remove(tempFolder);
     }

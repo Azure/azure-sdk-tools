@@ -148,7 +148,6 @@ export function patchClass(name: string, astContext: AstContext): DiffPair[] {
     findClassDeclarationBreakingChanges,
     baseline!,
     current!,
-    findMappingCallSignature
   );
 
   const newFeaturePairs = patchDeclaration(
@@ -156,7 +155,6 @@ export function patchClass(name: string, astContext: AstContext): DiffPair[] {
     findClassDeclarationBreakingChanges,
     baseline!,
     current!,
-    findMappingCallSignature
   )
     .filter((p) => p.reasons === DiffReasons.Removed)
     .map((p) => {

@@ -36,8 +36,12 @@ export function funcParameterCount(a: string, b: string, c: string): string
 export function funcParameterType(a: number): string
 export function funcAdd(a: string): string
 
-export class classParameterType {a: number;}
+export class classPropertyType {a: number;}
 export class classAdd {a: string;}
 export class classExpand {a: string;b: string;}
 export class classNarrow {a: string;}
+export class classConstructorParameterCount { constructor(a: string){} }
+export class classConstructorParameterType { constructor(a: number, b: number){} }
+export class classConstructorRemove {  }
+export class classConstructorAdd { constructor(a: number, b: number){} }
 ```

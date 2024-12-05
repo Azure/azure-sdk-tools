@@ -22,11 +22,14 @@ func TestOutput(t *testing.T) {
 	f := filepath.Join("testdata", "test_output", "output.json")
 	expected, err := os.ReadFile(f)
 	require.NoError(t, err)
+	// normalizing line endings prevents flakiness due to git's handling of CRLF
+	expected = bytes.ReplaceAll(expected, []byte("\r\n"), []byte("\n"))
 
 	review, err := createReview(filepath.Dir(f))
 	require.NoError(t, err)
 	actual, err := json.MarshalIndent(review, "", "  ")
 	require.NoError(t, err)
+	actual = bytes.ReplaceAll(append(actual, '\n'), []byte("\r\n"), []byte("\n"))
 	// unconditionally writing the output to disk creates a diff for debugging failures
 	require.NoError(t, os.WriteFile(f, actual, 0666))
 

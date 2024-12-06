@@ -343,9 +343,6 @@ class FunctionNode(NodeEntityBase):
         """Generates token for function signature
         :param ApiView: apiview
         """
-        # Pass through apiview for diagnostics
-        self.children.apiview = review_lines.apiview
-
         # Show args in individual line if method has more than 4 args and use two tabs to properly align them
         self.arg_count = self._argument_count()
         use_multi_line = self.arg_count > 2
@@ -365,7 +362,11 @@ class FunctionNode(NodeEntityBase):
         review_line.add_keyword("def")
         # Show fully qualified name for module level function and short name for instance functions
         value = self.full_name if self.is_module_level else self.name
-        review_line.add_text(value, has_suffix_space=False)
+        # Add to navigation if module level function
+        navigation_display_name = None
+        if self.is_module_level:
+            navigation_display_name = self.name
+        review_line.add_text(value, has_suffix_space=False, navigation_display_name=navigation_display_name)
         # Add parameters
         review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
         review_lines.set_blank_lines(last_is_context_end_line=True)

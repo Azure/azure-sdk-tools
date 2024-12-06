@@ -131,7 +131,6 @@ class ReviewLines(list):
     """
     def __init__(self, *args):
         super().__init__(*args)
-        self.apiview = None
 
     def create_review_line(
         self,
@@ -248,7 +247,8 @@ class ReviewLine(ReviewLineImpl):
         *,
         has_prefix_space=False,
         has_suffix_space=True,
-        skip_diff=False
+        skip_diff=False,
+        navigation_display_name=None
     ):
         token = ReviewToken(
             kind=TokenKind.TEXT,
@@ -257,7 +257,8 @@ class ReviewLine(ReviewLineImpl):
             has_suffix_space=has_suffix_space,
             skip_diff=skip_diff
         )
-        #self.definition_id = definition_id
+        if navigation_display_name:
+            token.navigation_display_name = navigation_display_name
         self.add_token(token)
 
     def add_keyword(self, keyword, has_prefix_space=False, has_suffix_space=True):

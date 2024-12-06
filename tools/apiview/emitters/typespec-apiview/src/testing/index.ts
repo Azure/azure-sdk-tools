@@ -1,20 +1,6 @@
-import { resolvePath } from "@typespec/compiler";
-import { TypeSpecTestLibrary } from "@typespec/compiler/testing";
-import { fileURLToPath } from "url";
+import { createTestLibrary, findTestPackageRoot, TypeSpecTestLibrary } from "@typespec/compiler/testing";
 
-export const ApiViewTestLibrary: TypeSpecTestLibrary = {
+export const ApiViewTestLibrary: TypeSpecTestLibrary = createTestLibrary({
   name: "@azure-tools/typespec-apiview",
-  packageRoot: resolvePath(fileURLToPath(import.meta.url), "../../../../"),
-  files: [
-    {
-      realDir: "",
-      pattern: "package.json",
-      virtualPath: "./node_modules/@azure-tools/typespec-apiview",
-    },
-    {
-      realDir: "dist/src",
-      pattern: "*.js",
-      virtualPath: "./node_modules/@azure-tools/typespec-apiview/dist/src",
-    },
-  ],
-};
+  packageRoot: await findTestPackageRoot(import.meta.url),
+});

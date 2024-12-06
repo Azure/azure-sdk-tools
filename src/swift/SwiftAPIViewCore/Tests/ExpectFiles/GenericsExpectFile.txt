@@ -1,0 +1,90 @@
+Package parsed using Swift APIView (version 0.2.2)
+
+
+package GenericsTestFile.swifttxt {
+    public protocol Container {
+        associatedtype Item: Equatable
+        mutating func append(_: Item)
+        var count: Int { get }
+        subscript(i: Int) -> Item { get }
+    }
+
+    public extension Container {
+        func average() -> Double where Item == Int
+        func endsWith(_: Item) -> Bool where Item: Equatable
+        subscript<Indices: Sequence>(indices: Indices) -> [Item] where Indices.Iterator.Element == Int
+    }
+
+    public extension Container where Item: Equatable {
+        func startsWith(_: Item) -> Bool
+    }
+
+    public extension Container where Item == Double {
+        func average() -> Double
+    }
+
+    public protocol ContainerAlt {
+        associatedtype Item
+        mutating func append(_: Item)
+        var count: Int { get }
+        subscript(i: Int) -> Item { get }
+        associatedtype Iterator: IteratorProtocol where Iterator.Element == Item
+        func makeIterator() -> Iterator
+    }
+
+    public struct ContainerStack<Element: Equatable>: Container {
+        public var items: [Element] = []
+        public mutating func push(_: Element)
+        public mutating func pop() -> Element
+        public mutating func append(_: Element)
+        public var count: Int
+        public subscript(i: Int) -> Element
+    }
+
+    extension ContainerStack: SuffixableContainer {
+        public func suffix(_: Int) -> ContainerStack
+    }
+
+    public struct IntContainerStack: Container {
+        public typealias Item = Int
+        public mutating func append(_: Int)
+        public var count: Int
+        public subscript(i: Int) -> Int
+    }
+
+    extension IntContainerStack: SuffixableContainer {
+        public func suffix(_: Int) -> ContainerStack<Int>
+    }
+
+    public protocol Shape {
+        func draw() -> String
+    }
+
+    public struct Square: Shape {
+        public var size: Int
+        public func draw() -> String
+    }
+
+    public struct Stack<Element> {
+        public var items: [Element] = []
+        public mutating func push(_: Element)
+        public mutating func pop() -> Element
+    }
+
+    public extension Stack {
+        var topItem: Element?
+    }
+
+    public protocol SuffixableContainer: Container {
+        associatedtype Suffix: SuffixableContainer where Suffix.Item == Item
+        func suffix(_: Int) -> Suffix
+    }
+
+    public func allItemsMatch<C1: Container, C2: Container>(_: C1, _: C2) -> Bool where C1.Item == C2.Item, C1.Item: Equatable
+
+    public func findIndex<T: Equatable>(of: T, in: [T]) -> Int?
+
+    public func makeTrapezoid() -> some Shape
+
+    public func swapTwoValues<T>(_: inout T, _: inout T)
+}

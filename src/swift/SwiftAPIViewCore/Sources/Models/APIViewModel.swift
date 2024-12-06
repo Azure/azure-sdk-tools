@@ -294,6 +294,7 @@ class APIViewModel: Tokenizable, Encodable {
 //        self.diagnostics.append(Diagnostic(line_id, text))
 
     func comment(_ text: String) {
+        checkIndent()
         var message = text
         if !text.starts(with: "\\") {
             message = "\\\\ \(message)"

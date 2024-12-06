@@ -25,47 +25,35 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import SwiftSyntax
 
-enum SpacingKind {
-    /// Leading space
-    case Leading
-    /// Trailing space
-    case Trailing
-    /// Leading and trailing space
-    case Both
-    /// No spacing
-    case Neither
-    /// chomps any leading whitespace to the left
-    case TrimLeft
-}
+public class PropertiesTestClass {
 
-extension SwiftSyntax.TokenKind {
-    var spacing: SpacingKind {
-        switch self {
-        case .anyKeyword: return .Neither
-        case .nilKeyword: return .Neither
-        case .prefixPeriod: return .Leading
-        case .comma: return .Trailing
-        case .colon: return .Trailing
-        case .semicolon: return .Trailing
-        case .equal: return .Both
-        case .arrow: return .Both
-        case .postfixQuestionMark: return .TrimLeft
-        case .leftBrace: return .Leading
-        case .initKeyword: return .Leading
-        case .wildcardKeyword: return .Neither
-        case let .contextualKeyword(val):
-            switch val {
-            case "objc": return .TrimLeft
-            case "lowerThan", "higherThan", "associativity": return .Neither
-            case "available", "unavailable", "introduced", "deprecated", "obsoleted", "message", "renamed": return .Neither
-            case "willSet", "didSet", "get", "set":
-                return .Leading
-            default: return .Both
+    public var totalSteps: Int = 0 {
+        willSet(newTotalSteps) {
+            print("About to set totalSteps to \(newTotalSteps)")
+
+        }
+        didSet {
+            if totalSteps > oldValue  {
+                print("Added \(totalSteps - oldValue) steps")
+
             }
-        default:
-            return self.isKeyword ? .Both : .Neither
+        }
+    }
+
+    public var someReadOnly: String {
+        return "test"
+    }
+
+    private var _secretValue: String = ""
+    public var someReadWrite: String {
+        get {
+            return "test"
+        }
+
+        set {
+            self._secretValue = newValue
         }
     }
 }
+

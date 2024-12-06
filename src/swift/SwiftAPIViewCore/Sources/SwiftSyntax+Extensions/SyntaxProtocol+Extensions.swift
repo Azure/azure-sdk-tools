@@ -37,21 +37,32 @@ extension SyntaxProtocol {
         case .customAttribute: fallthrough
         case .attribute:
             // default implementation should not have newlines
-            for child in self.children(viewMode: .sourceAccurate) {
+            let children = self.children(viewMode: .sourceAccurate)
+            for child in children {
                 if child.childNameInParent == "name" {
                     let attrName = child.withoutTrivia().description
-                    a.keyword(attrName, spacing: .Neither)
+                    // don't add space if the attribute has parameters
+                    a.keyword(attrName, spacing: children.count == 2 ? .Trailing : .Neither)
                 } else {
                     child.tokenize(apiview: a, parent: parent)
                 }
             }
-            a.whitespace()
         case .classRestrictionType:
             // in this simple context, class should not have a trailing space
             a.keyword("class", spacing: .Neither)
         case .codeBlock:
             // Don't render code blocks. APIView is unconcerned with implementation
             break
+        case .constrainedSugarType:
+            let obj = ConstrainedSugarTypeSyntax(self)!
+            let children = obj.children(viewMode: .sourceAccurate)
+            assert(children.count == 2)
+            for child in children {
+                child.tokenize(apiview: a, parent: parent)
+                if (child.kind == .token) {
+                    a.whitespace()
+                }
+            }
         case .enumCaseElement:
             for child in self.children(viewMode: .sourceAccurate) {
                 let childIndex = child.indexInParent
@@ -75,6 +86,7 @@ extension SyntaxProtocol {
         case .functionParameter:
             let param = FunctionParameterSyntax(self)!
             for child in param.children(viewMode: .sourceAccurate) {
+                let childKind = child.kind
                 let childIndex = child.indexInParent
                 // index 7 is the interal name, which we don't render at all
                 guard childIndex != 7 else { continue }
@@ -87,6 +99,16 @@ extension SyntaxProtocol {
                         a.text("_")
                     } else {
                         SharedLogger.warn("Unhandled tokenKind '\(token.tokenKind)' for function parameter label")
+                    }
+                } else if childKind == .attributeList {
+                    let attrs = AttributeListSyntax(child)!
+                    let lastAttrs = attrs.count - 1
+                    for attr in attrs {
+                        let attrIndex = attrs.indexInParent
+                        attr.tokenize(apiview: a, parent: parent)
+                        if attrIndex != lastAttrs {
+                            a.whitespace()
+                        }
                     }
                 } else {
                     child.tokenize(apiview: a, parent: parent)
@@ -166,6 +188,22 @@ extension SyntaxProtocol {
             tokenize(token: token, apiview: a, parent: (parent as? DeclarationModel))
         case .typealiasDecl:
             DeclarationModel(from: TypealiasDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
+        case .accessorBlock:
+            let obj = AccessorBlockSyntax(self)!
+            for child in obj.children(viewMode: .sourceAccurate) {
+                if child.kind == .token {
+                    let token = TokenSyntax(child)!
+                    let tokenKind = token.tokenKind
+                    let tokenText = token.withoutTrivia().description
+                    if tokenKind == .leftBrace || tokenKind == .rightBrace {
+                        a.punctuation(tokenText, spacing: .Both)
+                    } else {
+                        child.tokenize(token: token, apiview: a, parent: nil)
+                    }
+                } else {
+                    child.tokenize(apiview: a, parent: parent)
+                }
+            }
         default:
             // default behavior for all nodes is to render all children
             tokenizeChildren(apiview: a, parent: parent)

@@ -20,8 +20,9 @@ class ArgType:
     :param str keyword: The keyword for the arg type.
     :param FunctionNode func_node: The function node this belongs to.
     """
-    def __init__(self, name, *, argtype, default, keyword, func_node=None):
+    def __init__(self, name, *, argtype, default, keyword, apiview, func_node=None):
         self.argname = name
+        self.apiview = apiview
         if default == inspect.Parameter.empty:
             self.is_required = True
             self.default = None
@@ -48,7 +49,6 @@ class ArgType:
         prefix: str = "",
     ):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param ~ReviewLine apiview: The ApiView
         :param str function_id: Module level Unique ID created for function 
         :param list[Token] tokens: List of tokens to add to.
         :keyword bool add_line_marker: Flag to indicate whether to include a line ID marker or not.
@@ -65,7 +65,7 @@ class ArgType:
         # add arg type
         if self.argtype:
             review_line.add_punctuation(":")
-            review_line.add_type(self.argtype, has_suffix_space=False)
+            review_line.add_type(self.argtype, apiview=self.apiview, has_suffix_space=False)
 
         # add arg default value
         default = self.default

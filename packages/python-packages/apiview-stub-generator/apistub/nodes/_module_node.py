@@ -7,7 +7,6 @@ from ._base_node import NodeEntityBase
 from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
-from apistub import Navigation, Kind, NavigationTag
 from apistub._generated.treestyle.parser.models import ReviewLines
 
 if TYPE_CHECKING:

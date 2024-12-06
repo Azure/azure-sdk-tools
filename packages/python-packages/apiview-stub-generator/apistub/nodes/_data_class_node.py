@@ -12,7 +12,7 @@ class DataClassNode(ClassNode):
     """Class node to represent parsed data classes
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview=None):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview):
         super().__init__(
             name=name,
             namespace=namespace,
@@ -48,7 +48,7 @@ class DataClassNode(ClassNode):
     """
     def _extract_properties(self, params, *, filter: bool = True, allow_list: Optional[List[str]] = None)-> List[ArgType]:
         all_props = [
-            ArgType(name, argtype=None, default=obj, keyword=None) for (name, obj) in inspect.getmembers(params)
+            ArgType(name, argtype=None, default=obj, apiview=self.apiview, keyword=None) for (name, obj) in inspect.getmembers(params)
         ]
         if filter:
             allow_list = allow_list or []

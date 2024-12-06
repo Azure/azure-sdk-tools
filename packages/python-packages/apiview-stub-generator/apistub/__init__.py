@@ -9,7 +9,6 @@ from ._generated.treestyle.parser.models import (
     ReviewToken as Token
 )
 from ._generated.treestyle.parser.models._patch import ApiView, ReviewLine, ReviewLines
-from ._apiview import Navigation, NavigationTag, Kind
 
 __version__ = VERSION
 
@@ -20,9 +19,6 @@ __all__ = [
     "ApiView",
     "ReviewLine",
     "ReviewLines",
-    "Navigation",
-    "NavigationTag",
-    "Kind",
     "Diagnostic",
     "DiagnosticLevel",
 ]

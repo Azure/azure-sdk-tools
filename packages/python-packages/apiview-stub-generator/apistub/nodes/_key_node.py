@@ -11,6 +11,7 @@ class KeyNode(NodeEntityBase):
         # Generate ID using name found by inspect
         self.namespace_id = self.generate_id()
         self.display_name = f"{self.name}: {self.type}"
+        self.apiview = parent_node.apiview
 
     def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview
@@ -21,5 +22,5 @@ class KeyNode(NodeEntityBase):
         line.add_text(text="key")
         line.add_text(text=self.name, has_suffix_space=False)
         line.add_punctuation(":")
-        line.add_type(self.type, has_suffix_space=False)
+        line.add_type(self.type, apiview=self.apiview, has_suffix_space=False)
         review_lines.append(line)

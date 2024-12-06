@@ -57,7 +57,7 @@ class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview=None, allow_list=None):
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview, allow_list=None):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         # This is the name obtained by NodeEntityBase from __name__.
@@ -244,7 +244,6 @@ class ClassNode(NodeEntityBase):
                         namespace=self.namespace,
                         parent_node=self,
                         obj=child_obj,
-                        apiview=self.apiview
                     )
                 )
             elif inspect.isclass(child_obj):
@@ -261,7 +260,7 @@ class ClassNode(NodeEntityBase):
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
-                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj, apiview=self.apiview))
+                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
             else:
                 self._handle_variable(child_obj, name, value=str(child_obj))
 
@@ -271,7 +270,7 @@ class ClassNode(NodeEntityBase):
             return
         docstring = getattr(self.obj, "__doc__")
         if docstring:
-            docstring_parser = DocstringParser(docstring)
+            docstring_parser = DocstringParser(docstring, apiview=self.apiview)
             for key, var in docstring_parser.ivars.items():
                 ivar_node = VariableNode(
                     namespace=self.namespace,
@@ -280,7 +279,6 @@ class ClassNode(NodeEntityBase):
                     type_name=var.argtype,
                     value=None,
                     is_ivar=True,
-                    apiview=self.apiview
                 )
                 self.child_nodes.append(ivar_node)
 
@@ -319,7 +317,6 @@ class ClassNode(NodeEntityBase):
         logging.info(f"Processing class {self.namespace_id}")
         # Generate class name line
         for decorator in self.decorators: 
-            # TODO: may need to remove line id here
             line = review_lines.create_review_line(
                 related_to_line=self.namespace_id
             )
@@ -329,7 +326,8 @@ class ClassNode(NodeEntityBase):
         line = review_lines.create_review_line()
         line.add_line_marker(self.namespace_id, add_cross_language_id=True, apiview=self.apiview)
         line.add_keyword("class")
-        line.add_text(self.name, has_suffix_space=False)
+        # TODO: Change below to self.name once sticky parent node context window feature is added - #9454
+        line.add_text(self.full_name, has_suffix_space=False)
 
         for err in self.pylint_errors:
             err.generate_tokens(self.apiview, target_id=self.namespace_id)
@@ -372,7 +370,7 @@ class ClassNode(NodeEntityBase):
         # Helper method to concatenate list of values and generate tokens
         list_len = len(values)
         for (idx, value) in enumerate(values):
-            line.add_type(value, has_suffix_space=has_suffix_space)
+            line.add_type(value, apiview=self.apiview, has_suffix_space=has_suffix_space)
             # Add punctuation between types
             if idx < list_len - 1:
                 line.add_punctuation(",")

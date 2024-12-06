@@ -22,8 +22,6 @@ import zipfile
 from pathlib import Path
 from importlib.metadata import PathDistribution
 
-# TODO: Decide if navigation should be kept
-from apistub._apiview import Navigation, Kind, NavigationTag
 from apistub._metadata_map import MetadataMap
 
 from apistub._generated.treestyle.parser.models import ApiView
@@ -246,14 +244,8 @@ class StubGenerator:
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
 
-            # TODO: for any namespaces under the package.name, make sure nested child namespaces are added
             self.module_dict[m] = ModuleNode(m, module_obj, namespace, apiview=apiview)
         
-        ## Create navigation info to navigate within APIreview tool
-        #navigation = Navigation(package_name, None)
-        #navigation.tags = NavigationTag(Kind.type_package)
-        #apiview.add_navigation(navigation)
-
         ## Generate any global diagnostics
         global_errors = PylintParser.get_items("GLOBAL")
         for g in global_errors or []:
@@ -266,10 +258,6 @@ class StubGenerator:
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
             self.module_dict[m].generate_tokens(apiview.review_lines)
-            # Add navigation info for this modules. navigation info is used to build tree panel in API tool
-        #    module_nav = self.module_dict[m].get_navigation()
-        #    if module_nav:
-        #        navigation.add_child(module_nav)
         return apiview
 
     def _extract_wheel(self):

@@ -29,7 +29,7 @@ class FunctionNode(NodeEntityBase):
     :param bool: is_module_level
     """
 
-    def __init__(self, namespace, parent_node, *,obj=None, node: astroid.FunctionDef=None, is_module_level=False, apiview=None):
+    def __init__(self, namespace, parent_node, *, apiview, obj=None, node: astroid.FunctionDef=None, is_module_level=False):
         super().__init__(namespace, parent_node, obj)
         if not obj and node:
             self.name = node.name
@@ -86,12 +86,13 @@ class FunctionNode(NodeEntityBase):
         """ Find positional and keyword arguments, type and default value and return type of method."""
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
-            self.args["cls"] = ArgType(name="cls", argtype=None, default=inspect.Parameter.empty, keyword=None)
+            self.args["cls"] = ArgType(name="cls", argtype=None, default=inspect.Parameter.empty, keyword=None, apiview=self.apiview, func_node=self)
+
 
         if self.node:
-            parser = AstroidFunctionParser(self.node, self.namespace, self)
+            parser = AstroidFunctionParser(self.node, self.namespace, apiview=self.apiview, func_node=self)
         else:
-            parser = FunctionAnnotationParser(self.obj, self.namespace, self)
+            parser = FunctionAnnotationParser(self.obj, self.namespace, apiview=self.apiview, func_node=self)
         if parser:
             self.args = parser.args
             self.posargs = parser.posargs
@@ -117,7 +118,7 @@ class FunctionNode(NodeEntityBase):
 
         if docstring:
             #  Parse doc string to find missing types, kwargs and return type
-            parsed_docstring = DocstringParser(docstring)
+            parsed_docstring = DocstringParser(docstring, apiview=self.apiview)
 
             # Set return type if not already set
             if not self.return_type and parsed_docstring.ret_type:
@@ -293,7 +294,7 @@ class FunctionNode(NodeEntityBase):
 
         # add keyword argument marker        
         if self.kwargs:
-            # TODO: only add this if self.special_vararg is not present
+            # TODO: https://github.com/Azure/azure-sdk-tools/issues/8574
             indent = ""
             if use_multi_line:
                 indent = "    "
@@ -328,7 +329,7 @@ class FunctionNode(NodeEntityBase):
             if use_multi_line:
                 line_id = f"{self.namespace_id}.returntype"
                 review_line.add_line_marker(line_id)
-            review_line.add_type(self.return_type, has_suffix_space=False)
+            review_line.add_type(self.return_type, apiview=self.apiview, has_suffix_space=False)
 
         review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 

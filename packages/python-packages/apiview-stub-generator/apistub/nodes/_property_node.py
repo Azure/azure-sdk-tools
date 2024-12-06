@@ -10,13 +10,13 @@ class PropertyNode(NodeEntityBase):
     """Property node represents property defined in a class
     """
 
-    def __init__(self, namespace, parent_node, name, obj, apiview):
+    def __init__(self, namespace, parent_node, name, obj):
         super().__init__(namespace, parent_node, obj)
         self.obj = obj
         self.read_only = True
         self.type = None
         self.name = name
-        self.apiview = apiview
+        self.apiview = parent_node.apiview
         self._inspect()
         # Generate ID using name found by inspect
         self.namespace_id = self.generate_id()
@@ -30,14 +30,14 @@ class PropertyNode(NodeEntityBase):
         if hasattr(self.obj, "fget"):
             # Get property type if type hint 
             node = astroid.extract_node(inspect.getsource(self.obj.fget))
-            parser = AstroidFunctionParser(node, self.namespace, None)
+            parser = AstroidFunctionParser(node, self.namespace, apiview=self.apiview, func_node=None)
             self.type = get_qualified_name(parser.return_type, self.namespace)
 
         # get type from docstring
         if hasattr(self.obj, "__doc__") and not self.type:
             docstring = getattr(self.obj, "__doc__")
             if docstring:
-                docstring_parser = DocstringParser(getattr(self.obj, "__doc__"))
+                docstring_parser = DocstringParser(getattr(self.obj, "__doc__"), apiview=self.apiview)
                 try:
                     self.type = docstring_parser.type_for(self.name)
                     # Check for rtype docstring
@@ -59,7 +59,7 @@ class PropertyNode(NodeEntityBase):
         review_line.add_line_marker(self.namespace_id)
         review_line.add_text(self.name, has_suffix_space=False)
         review_line.add_punctuation(":")
-        review_line.add_type(self.type, has_suffix_space=False)
+        review_line.add_type(self.type, apiview=self.apiview, has_suffix_space=False)
         if self.read_only:
             review_line.add_text(" " * 4, has_suffix_space=False)
             review_line.add_literal("# Read-only", has_suffix_space=False)

@@ -83,7 +83,6 @@ class ApiView(CodeFile):
             review_lines=ReviewLines(),
             cross_language_package_id=self.metadata_map.cross_language_package_id,
             diagnostics=[],
-            # navigation=[], # TODO: Add later if needed
         )
 
         self.source_url = source_url
@@ -107,7 +106,7 @@ class ApiView(CodeFile):
 
     def generate_tokens(self):
         line = self.review_lines.create_review_line()
-        line.add_line_marker("GLOBAL")
+        line.add_line_marker("GLOBAL", apiview=self)
         line.add_text(HEADER_TEXT, has_suffix_space=False, skip_diff=True)
         self.review_lines.append(line)
         if self.source_url:  # TODO: test source url
@@ -305,7 +304,13 @@ class ReviewLine(ReviewLineImpl):
     def add_child_line(self, line):
         self.children.append(line)
 
-    def _add_token_for_type_name(self, type_name, has_prefix_space=False, has_suffix_space=True):
+    def _add_token_for_type_name(
+        self,
+        type_name,
+        apiview,
+        has_prefix_space=False,
+        has_suffix_space=True,
+    ):
         logging.debug("Generating tokens for type name {}".format(type_name))
         token = ReviewToken(
             kind=TokenKind.TYPE_NAME,
@@ -315,13 +320,12 @@ class ReviewLine(ReviewLineImpl):
         )
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
         token.value = type_full_name.split(".")[-1]
-        # TODO: fix below
-        #navigate_to_id = self.node_index.get_id(type_full_name)
-        #if navigate_to_id:
-        #    token.navigate_to_id = navigate_to_id
+        navigate_to_id = apiview.node_index.get_id(type_full_name)
+        if navigate_to_id:
+            token.navigate_to_id = navigate_to_id
         self.add_token(token)
 
-    def _add_type_token(self, type_name, has_prefix_space=False, has_suffix_space=True):
+    def _add_type_token(self, type_name, apiview, has_prefix_space=False, has_suffix_space=True):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))
 
@@ -336,16 +340,26 @@ class ReviewLine(ReviewLineImpl):
             if prefix:
                 self.add_punctuation(prefix, has_suffix_space=False)
             # process parsed type name. internal or built in
-            self._add_token_for_type_name(parsed_type, has_prefix_space, has_suffix_space)
+            self._add_token_for_type_name(
+                parsed_type,
+                apiview=apiview,
+                has_prefix_space=has_prefix_space,
+                has_suffix_space=has_suffix_space
+            )
             postfix = type_name[index + len(parsed_type) :]
             # process remaining string in type recursively
-            self._add_type_token(postfix, has_prefix_space, has_suffix_space)
+            self._add_type_token(
+                postfix,
+                apiview=apiview,
+                has_prefix_space=has_prefix_space,
+                has_suffix_space=has_suffix_space
+            )
         else:
             # This is required group ending punctuations
             if type_name: # if type name is empty, don't add punctuation
                 self.add_punctuation(type_name, has_suffix_space=False)
 
-    def add_type(self, type_name, has_prefix_space=False, has_suffix_space=True):
+    def add_type(self, type_name, apiview, has_prefix_space=False, has_suffix_space=True):
         # TODO: add_type should require an ArgType or similar object so we can link *all* types
 
         # This method replace full qualified internal types to short name and generate tokens
@@ -361,7 +375,12 @@ class ReviewLine(ReviewLineImpl):
             # Make a Union of types if multiple types are present
             type_name = "Union[{}]".format(", ".join(types))
 
-        self._add_type_token(type_name, has_prefix_space, has_suffix_space)
+        self._add_type_token(
+            type_name,
+            apiview=apiview,
+            has_prefix_space=has_prefix_space,
+            has_suffix_space=has_suffix_space
+        )
     
     def render(self):
         lines = ["".join([token.render() for token in self.tokens])]

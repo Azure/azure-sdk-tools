@@ -16,7 +16,6 @@ class VariableNode(NodeEntityBase):
         value,
         is_ivar,
         dataclass_properties=None,
-        apiview=None,
     ):
         super().__init__(namespace, parent_node, type_name)
         self.name = name
@@ -27,11 +26,11 @@ class VariableNode(NodeEntityBase):
         )
         self.value = value
         self.dataclass_properties = dataclass_properties
-        self.apiview = apiview
+        self.apiview = parent_node.apiview
 
     def generate_tokens(self, review_lines):
         """Generates token for the node
-        :param ApiView apiview: apiview
+        :param ReviewLines review_lines: ReviewLines
         """
 
         var_keyword = "ivar" if self.is_ivar else "cvar"
@@ -42,7 +41,7 @@ class VariableNode(NodeEntityBase):
         # Add type
         if self.type:
             review_line.add_punctuation(":")
-            review_line.add_type(self.type, has_suffix_space=False)
+            review_line.add_type(self.type, apiview=self.apiview, has_suffix_space=False)
 
         if not self.value:
             review_lines.append(review_line)

@@ -35,3 +35,5 @@ def _merge_lines(lines) -> str:
 
 def _check(actual, expected, client):
     assert actual.lstrip() == expected, f"\n*******\nClient: {client.__name__}\nActual:   {actual}\nExpected: {expected}\n*******"    
+
+MockApiView = ApiView(pkg_name="test", namespace="test")

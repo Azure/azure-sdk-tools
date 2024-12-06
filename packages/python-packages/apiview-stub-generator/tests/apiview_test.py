@@ -78,7 +78,7 @@ class TestApiView:
     def test_add_type(self):
         apiview = ApiView()
         review_line = apiview.review_lines.create_review_line()
-        review_line.add_type(type_name="a.b.c.1.2.3.MyType")
+        review_line.add_type(type_name="a.b.c.1.2.3.MyType", apiview=apiview)
         apiview.review_lines.append(review_line)
         tokens = review_line.tokens
         assert len(tokens) == 1
@@ -110,3 +110,9 @@ class TestApiView:
         assert cross_language_lines[1].cross_language_id == "Docstring_DocstringWithFormalDefault"
         assert len(cross_language_lines) == 2
         assert apiview.cross_language_package_id == "ApiStubGenTest"
+    
+    def test_related_to_line(self):
+        pass
+    
+    def test_is_context_end_line(self):
+        pass

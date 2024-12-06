@@ -8,6 +8,7 @@ import (
 	"go/ast"
 	"go/token"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -116,15 +117,6 @@ func getExprValue(pkg Pkg, expr ast.Expr) string {
 	}
 }
 
-func includesType(s []string, t string) bool {
-	for _, j := range s {
-		if j == t {
-			return true
-		}
-	}
-	return false
-}
-
 // parseSimpleType returns ReviewLines for each [SimpleType], including consts and vars of that type.
 // const declarations appear before var declarations, with each set of declarations sorted by name.
 func (c *content) parseSimpleType() []ReviewLine {
@@ -190,7 +182,7 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string) [
 	for name, d := range decls {
 		if r := rune(name[0]); r != '_' && unicode.IsUpper(r) {
 			keys = append(keys, name)
-			if !includesType(types, d.Type) {
+			if !slices.Contains(types, d.Type) {
 				types = append(types, d.Type)
 			}
 		}

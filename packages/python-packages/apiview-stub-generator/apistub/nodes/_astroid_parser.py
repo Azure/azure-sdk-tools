@@ -6,7 +6,7 @@ from ._argtype import ArgType
 
 class AstroidFunctionParser:
 
-    def __init__(self, node: astroid.FunctionDef, namespace: str, func_node):
+    def __init__(self, node: astroid.FunctionDef, namespace: str, apiview, func_node):
         if not isinstance(node, astroid.FunctionDef):
             raise TypeError(f"Can only pass in an astroid FunctionDef node, not {node}")
         self._namespace = namespace
@@ -20,6 +20,7 @@ class AstroidFunctionParser:
         self.posargs = {}
         self.varargs = None
         self.return_type = node.returns or node.type_comment_returns or inspect.Parameter.empty
+        self.apiview = apiview
         self._parse_args()
         self._parse_kwargs()
         self._parse_posonly_args()
@@ -46,21 +47,21 @@ class AstroidFunctionParser:
             name = arg.name
             argtype = self._argtype(name, idx, self._args.annotations, self._args.type_comment_args)
             default = self._default_value(name)
-            self.args[name] = ArgType(name, argtype=argtype, default=default, keyword=None, func_node=self._parent)
+            self.args[name] = ArgType(name, argtype=argtype, default=default, keyword=None, apiview=self.apiview, func_node=self._parent)
 
     def _parse_kwargs(self):
         for (idx, arg) in enumerate(self._args.kwonlyargs):
             name = arg.name
             argtype = self._argtype(name, idx, self._args.kwonlyargs_annotations, self._args.type_comment_kwonlyargs)
             default = self._default_value(name)
-            self.kwargs[name] = ArgType(name, argtype=argtype, default=default, keyword="keyword", func_node=self._parent)
+            self.kwargs[name] = ArgType(name, argtype=argtype, default=default, keyword="keyword", apiview=self.apiview, func_node=self._parent)
 
     def _parse_posonly_args(self):
         for (idx, arg) in enumerate(self._args.posonlyargs):
             name = arg.name
             argtype = self._argtype(name, idx, self._args.posonlyargs_annotations, self._args.type_comment_posonlyargs)
             default = self._default_value(name)
-            self.posargs[name] = ArgType(name, argtype=argtype, default=default, keyword=None, func_node=self._parent)
+            self.posargs[name] = ArgType(name, argtype=argtype, default=default, keyword=None, apiview=self.apiview, func_node=self._parent)
 
     def _parse_kwarg_and_vararg(self):
         if self._args.vararg:
@@ -69,7 +70,7 @@ class AstroidFunctionParser:
                 argtype = self._args.varargannotation.as_string()
             else:
                 argtype = None
-            arg = ArgType(name, argtype=argtype, default=inspect.Parameter.empty, keyword=None, func_node=self._parent)
+            arg = ArgType(name, argtype=argtype, default=inspect.Parameter.empty, keyword=None, apiview=self.apiview, func_node=self._parent)
             self.special_vararg = arg
         if self._args.kwarg:
             kwarg_name = self._args.kwarg
@@ -77,5 +78,5 @@ class AstroidFunctionParser:
                 kwarg_type = self._args.kwargannotation.as_string()
             else:
                 kwarg_type = None
-            arg = ArgType(kwarg_name, argtype=kwarg_type, default=inspect.Parameter.empty, keyword="keyword", func_node=self._parent)
+            arg = ArgType(kwarg_name, argtype=kwarg_type, default=inspect.Parameter.empty, keyword="keyword", apiview=self.apiview, func_node=self._parent)
             self.special_kwarg = arg

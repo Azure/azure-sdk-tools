@@ -10,12 +10,12 @@ class EnumNode(NodeEntityBase):
     """Enum node represents any Enum value
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, apiview):
+    def __init__(self, *, name, namespace, parent_node, obj):
         super().__init__(namespace, parent_node, obj)
         self.name = name
         self.value = obj.value
         self.namespace_id = self.generate_id()
-        self.apiview = apiview
+        self.apiview = parent_node.apiview
 
     def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview

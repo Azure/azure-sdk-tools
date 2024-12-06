@@ -37,10 +37,12 @@ extension SyntaxProtocol {
         case .customAttribute: fallthrough
         case .attribute:
             // default implementation should not have newlines
-            for child in self.children(viewMode: .sourceAccurate) {
+            let children = self.children(viewMode: .sourceAccurate)
+            for child in children {
                 if child.childNameInParent == "name" {
                     let attrName = child.withoutTrivia().description
-                    a.keyword(attrName, spacing: .Neither)
+                    // don't add space if the attribute has parameters
+                    a.keyword(attrName, spacing: children.count == 2 ? .Trailing : .Neither)
                 } else {
                     child.tokenize(apiview: a, parent: parent)
                 }

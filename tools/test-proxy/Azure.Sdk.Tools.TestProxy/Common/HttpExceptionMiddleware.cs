@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var bodyObj = new
                 {
                     Message = e.Message,
-                    Status = e.StatusCode.ToString()
+                    Status = e.StatusCode
                 };
 
                 DebugLogger.LogError(e.Message);
@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var bodyObj = new
                 {
                     Message = e.Message,
-                    Status = unexpectedStatusCode.ToString(),
+                    Status = unexpectedStatusCode,
                     StackTrace = e.StackTrace,
                 };
 

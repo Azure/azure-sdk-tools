@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 55;
+	objectVersion = 73;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -71,6 +71,100 @@
 		0AA1BFBD2953839E00AE8C11 /* ExtensionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionModel.swift; sourceTree = "<group>"; };
 		0AA1BFBF2953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PatternBindingListSyntax+Extensions.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0ACFCCB72CFE32E2006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AttributesTestFile.swifttxt,
+				EnumerationsTestFile.swifttxt,
+				ExtensionTestFile.swifttxt,
+				FunctionsTestFile.swifttxt,
+				GenericsTestFile.swifttxt,
+				InitializersTestFile.swifttxt,
+				OperatorTestFile.swifttxt,
+				PrivateInternalTestFile.swifttxt,
+				PropertiesTestFile.swifttxt,
+				ProtocolTestFile.swifttxt,
+				SwiftUITestFile.swifttxt,
+			);
+			target = 0A8469E827879AE200C967A8 /* SwiftAPIViewCoreTests */;
+		};
+		0ACFCCBA2CFE332E006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AttributesTestFile.swifttxt,
+				EnumerationsTestFile.swifttxt,
+				ExtensionTestFile.swifttxt,
+				FunctionsTestFile.swifttxt,
+				GenericsTestFile.swifttxt,
+				InitializersTestFile.swifttxt,
+				OperatorTestFile.swifttxt,
+				PrivateInternalTestFile.swifttxt,
+				PropertiesTestFile.swifttxt,
+				ProtocolTestFile.swifttxt,
+				SwiftUITestFile.swifttxt,
+			);
+			target = 0A8469E027879AE200C967A8 /* SwiftAPIViewCore */;
+		};
+		0ACFCCBD2CFE3BC0006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AttributesExpectFile.txt,
+				EnumerationsExpectFile.txt,
+				ExtensionExpectFile.txt,
+				FunctionsExpectFile.txt,
+				GenericsExpectFile.txt,
+				InitializersExpectFile.txt,
+				OperatorExpectFile.txt,
+				PrivateInternalExpectFile.txt,
+				PropertiesExpectFile.txt,
+				ProtocolExpectFile.txt,
+				SwiftUIExpectFile.txt,
+			);
+			target = 0A8469E827879AE200C967A8 /* SwiftAPIViewCoreTests */;
+		};
+		0ACFCCBF2CFE3BC3006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AttributesExpectFile.txt,
+				EnumerationsExpectFile.txt,
+				ExtensionExpectFile.txt,
+				FunctionsExpectFile.txt,
+				GenericsExpectFile.txt,
+				InitializersExpectFile.txt,
+				OperatorExpectFile.txt,
+				PrivateInternalExpectFile.txt,
+				PropertiesExpectFile.txt,
+				ProtocolExpectFile.txt,
+				SwiftUIExpectFile.txt,
+			);
+			target = 0A8469E027879AE200C967A8 /* SwiftAPIViewCore */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		0ACFCCC22CFE614B006BFBE8 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 0A8469DD27879AE200C967A8 /* Sources */;
+			membershipExceptions = (
+				EnumerationsTestFile.swifttxt,
+				FunctionsTestFile.swifttxt,
+				GenericsTestFile.swifttxt,
+				InitializersTestFile.swifttxt,
+				OperatorTestFile.swifttxt,
+				PrivateInternalTestFile.swifttxt,
+				PropertiesTestFile.swifttxt,
+				ProtocolTestFile.swifttxt,
+				SwiftUITestFile.swifttxt,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		0ACFCCB22CFE3288006BFBE8 /* TestFiles */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0ACFCCBA2CFE332E006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 0ACFCCC22CFE614B006BFBE8 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, 0ACFCCB72CFE32E2006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = TestFiles; sourceTree = "<group>"; };
+		0ACFCCB32CFE32B9006BFBE8 /* ExpectFiles */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0ACFCCBF2CFE3BC3006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 0ACFCCBD2CFE3BC0006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ExpectFiles; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		0A8469DE27879AE200C967A8 /* Frameworks */ = {
@@ -146,6 +240,8 @@
 		0A846A0227879D0400C967A8 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				0ACFCCB32CFE32B9006BFBE8 /* ExpectFiles */,
+				0ACFCCB22CFE3288006BFBE8 /* TestFiles */,
 				0A846A0327879D0400C967A8 /* SwiftAPIViewCoreTests.swift */,
 			);
 			path = Tests;
@@ -239,6 +335,10 @@
 			dependencies = (
 				0A8469EC27879AE200C967A8 /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				0ACFCCB22CFE3288006BFBE8 /* TestFiles */,
+				0ACFCCB32CFE32B9006BFBE8 /* ExpectFiles */,
+			);
 			name = SwiftAPIViewCoreTests;
 			productName = SwiftAPIViewCoreTests;
 			productReference = 0A8469E927879AE200C967A8 /* SwiftAPIViewCoreTests.xctest */;
@@ -263,7 +363,6 @@
 				};
 			};
 			buildConfigurationList = 0A8469DB27879AE200C967A8 /* Build configuration list for PBXProject "SwiftAPIViewCore" */;
-			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -276,6 +375,7 @@
 				0A1CA129292D8B5800CC2367 /* XCRemoteSwiftPackageReference "swift-syntax" */,
 				0A6C6596292E98890075C56F /* XCRemoteSwiftPackageReference "SourceKitten" */,
 			);
+			preferredProjectObjectVersion = 55;
 			productRefGroup = 0A8469E227879AE200C967A8 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";

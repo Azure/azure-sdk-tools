@@ -78,6 +78,8 @@ func (c *content) addGenDecl(pkg Pkg, tok token.Token, vs *ast.ValueSpec, import
 	return decl
 }
 
+// getExprValue returns a string representation of an expression's value. This is used to display
+// literal values of const and var declarations.
 func getExprValue(pkg Pkg, expr ast.Expr) string {
 	switch x := expr.(type) {
 	case *ast.BasicLit:
@@ -123,6 +125,8 @@ func includesType(s []string, t string) bool {
 	return false
 }
 
+// parseSimpleType returns ReviewLines for each [SimpleType], including consts and vars of that type.
+// const declarations appear before var declarations, with each set of declarations sorted by name.
 func (c *content) parseSimpleType() []ReviewLine {
 	lns := []ReviewLine{}
 	keys := make([]string, 0, len(c.SimpleTypes))
@@ -154,6 +158,7 @@ func (c *content) parseSimpleType() []ReviewLine {
 	return lns
 }
 
+// parseConst is a helper for parseSimpleType returning [ReviewLine]s for const declarations
 func (c *content) parseConst() []ReviewLine {
 	lns := c.parseDeclarations(c.Consts, "const")
 	if len(lns) > 0 {
@@ -162,6 +167,7 @@ func (c *content) parseConst() []ReviewLine {
 	return lns
 }
 
+// parseVar is a helper for parseSimpleType returning [ReviewLine]s for var declarations
 func (c *content) parseVar() []ReviewLine {
 	lns := c.parseDeclarations(c.Vars, "var")
 	if len(lns) > 0 {
@@ -170,6 +176,8 @@ func (c *content) parseVar() []ReviewLine {
 	return lns
 }
 
+// parseDeclarations returns ReviewLines for each pseudo-enum type of the specified kind ("const" or "var")
+// in decls. It also includes a ReviewLine for each type's PossibleValues function, if one exists.
 func (c *content) parseDeclarations(decls map[string]Declaration, kind string) []ReviewLine {
 	ls := []ReviewLine{}
 	if len(decls) < 1 {
@@ -226,6 +234,10 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string) [
 	return ls
 }
 
+// searchForPossibleValuesMethod returns a [ReviewLine] for the specified type's PossibleValues function,
+// if it exists, and deletes that function from the content so it isn't presented as an independent package-
+// level function by parseFunc. Note this means searchForPossibleValuesMethod must be called before parseFunc.
+// If the type doesn't have a corresponding PossibleValues function, searchForPossibleValuesMethod returns nil.
 func (c *content) searchForPossibleValuesMethod(t string) *ReviewLine {
 	for i, f := range c.Funcs {
 		if f.Name() == fmt.Sprintf("Possible%sValues", removeNavigatorString(t)) {
@@ -294,6 +306,10 @@ func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSp
 	return s
 }
 
+// parseStructs returns ReviewLines for each struct, including their fields, constructors, methods,
+// and const and var declarations of the struct's type. parseStructs deletes constructors and methods
+// from the content so they aren't presented as independent package-level functions, so it must be
+// called before parseFunc.
 func (c *content) parseStructs() []ReviewLine {
 	ls := []ReviewLine{}
 	keys := make([]string, 0, len(c.Structs))
@@ -350,7 +366,8 @@ func (c *content) parseStructs() []ReviewLine {
 }
 
 // searchForCtors searches through exported Funcs for constructors of a type,
-// given that type's name. A Func is a constructor of type T when:
+// deleting any that are found so they won't be parsed by parseFunc. A Func
+// is a constructor of type T when:
 // 1. it has no receiver
 // 2. its name begins with "New"
 // 3. it returns T or *T
@@ -410,6 +427,7 @@ func (c *content) findMethods(s string) map[string]Func {
 }
 
 // searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
+// It deletes the methods from the content so they won't be parsed by parseFunc.
 func (c *content) searchForMethods(s string) []ReviewLine {
 	lines := []ReviewLine{}
 	methods := c.findMethods(s)

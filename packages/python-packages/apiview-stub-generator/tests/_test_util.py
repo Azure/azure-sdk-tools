@@ -10,8 +10,6 @@ from typing import List
 
 def _tokenize(node):
     apiview = ApiView(pkg_name="test", namespace="test")
-    # pass through apiview for diagnostics
-    apiview.review_lines.apiview = apiview
     node.generate_tokens(apiview.review_lines)
     return apiview.review_lines
 

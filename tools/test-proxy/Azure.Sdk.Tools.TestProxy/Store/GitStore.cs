@@ -76,6 +76,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         #region push, reset, restore, and other asset repo implementations
         /// <summary>
+        /// Set the GitHandler exception mode.
+        ///
+        /// When false: unrecoverable git exceptions will print the error, and early exit
+        /// When true: unrecoverable git exceptions will log, then be rethrown for the Exception middleware to handle and return as a valid non-successful http response.
+        /// </summary>
+        /// <param name="throwOnException"></param>
+        public void SetStoreExceptionMode(bool throwOnException)
+        {
+            this.GitHandler.ThrowOnException = throwOnException;
+        }
+
+        /// <summary>
         /// Given a config, locate the cloned assets.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
@@ -392,13 +404,30 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         private void SetOrigin(GitAssetsConfiguration config)
         {
             var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-            GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+
+            // in cases of failure to initialize a real git repo. we need to NOT run git remote set-url
+            if (config.IsAssetsRepoInitialized())
+            {
+                GitHandler.Run($"remote set-url origin {cloneUrl}", config);
+            }
+            else
+            {
+                _consoleWrapper.WriteLine($"The assets folder within \"{config.AssetsRepoLocation.ToString()}\" was not properly initialized, and as such the proxy is skipping override of the origin url.");
+            }
         }
 
         private void HideOrigin(GitAssetsConfiguration config)
         {
             var publicOrigin = GetCloneUrl(config.AssetsRepo, config.RepoRoot, honorToken: false);
-            GitHandler.Run($"remote set-url origin {publicOrigin}", config);
+            
+            if (config.IsAssetsRepoInitialized())
+            {
+                GitHandler.Run($"remote set-url origin {publicOrigin}", config);
+            }
+            else
+            {
+                _consoleWrapper.WriteLine($"The assets folder within \"{config.AssetsRepoLocation.ToString()}\" was not properly initialized, and as such the proxy is skipping override of the origin url.");
+            }
         }
 
         /// <summary>

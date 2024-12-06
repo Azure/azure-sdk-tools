@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -16,6 +16,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common.Exceptions
         {
             Result = result;
         }
+
+        public override string Message { get { return this.Result.StdErr; } }
 
         // Override the ToString so it'll give the command exception's toString which
         // will contain the accurate message and callstack. This is necessary in the

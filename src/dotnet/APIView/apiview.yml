@@ -10,7 +10,7 @@ parameters:
     default: '@azure-tools/ts-genapi@2.0.3'
   - name: JavaScriptArtifactRegistry
     type: string
-    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
+    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
 
 trigger:
   branches:
@@ -234,15 +234,15 @@ extends:
                   DOTNET_CLI_TELEMETRY_OPTOUT: 1
                   DOTNET_MULTILEVEL_LOOKUP: 0
 
-              #- task: GoTool@0
-              #  inputs:
-              #    version: '$(GoVersion)'
-              #  displayName: "Use Go $(GoVersion)"
-              #
-              #- script: |
-              #    go test ./... -v
-              #  workingDirectory: $(GoParserPackagePath)
-              #  displayName: 'Test Go parser'
+              - task: GoTool@0
+                inputs:
+                 version: '$(GoVersion)'
+                displayName: "Use Go $(GoVersion)"
+              
+              - script: |
+                 go test ./... -v
+                workingDirectory: $(GoParserPackagePath)
+                displayName: 'Test Go parser'
 
               #- task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
               #  condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))

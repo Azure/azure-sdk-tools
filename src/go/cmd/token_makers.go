@@ -17,10 +17,14 @@ import (
 // exportedFieldRgx matches exported field names like "policy.ClientOptions", "Transport", and "GetToken(...)"
 var exportedFieldRgx = regexp.MustCompile(`^(?:[a-zA-Z]*\.)?[A-Z]+[a-zA-Z]*`)
 
+type ReviewLineMaker interface {
+	MakeReviewLine() ReviewLine
+}
+
 type TokenMaker interface {
 	Exported() bool
 	ID() string
-	MakeTokens() []Token
+	MakeTokens() []ReviewToken
 	Name() string
 }
 
@@ -93,20 +97,30 @@ func (d Declaration) ID() string {
 	return d.id
 }
 
-func (d Declaration) MakeTokens() []Token {
-	list := &[]Token{}
-	ID := d.ID()
-	makeToken(&ID, nil, d.Name(), TokenTypeTypeName, list)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	if d.Type != skip {
-		parseAndMakeTypeToken(d.Type, list)
+func (d Declaration) MakeTokens() []ReviewToken {
+	rts := []ReviewToken{
+		{
+			HasSuffixSpace:        true,
+			Kind:                  TokenKindTypeName,
+			NavigationDisplayName: d.Name(),
+			NavigateToID:          d.ID(),
+			Value:                 d.Name(),
+		},
 	}
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	makeToken(nil, nil, "=", TokenTypePunctuation, list)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	makeToken(nil, nil, d.value, TokenTypeStringLiteral, list)
-	makeToken(nil, nil, "", TokenTypeNewline, list)
-	return *list
+	if d.Type != skip {
+		rts = append(rts, parseAndMakeTypeTokens(d.Type)...)
+	}
+	rts = append(rts, ReviewToken{
+		HasPrefixSpace: true,
+		HasSuffixSpace: true,
+		Kind:           TokenKindPunctuation,
+		Value:          "=",
+	})
+	rts = append(rts, ReviewToken{
+		Kind:  TokenKindStringLiteral,
+		Value: d.value,
+	})
+	return rts
 }
 
 func (d Declaration) Name() string {
@@ -214,76 +228,127 @@ func (f Func) ForAlias(pkg string) Func {
 	return clone
 }
 
-func (f Func) MakeTokens() []Token {
-	list := &[]Token{}
-	if f.embedded {
-		makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
-	} else {
-		makeToken(nil, nil, "func", TokenTypeKeyword, list)
-		makeToken(nil, nil, " ", TokenTypeWhitespace, list)
+func (f Func) MakeReviewLine() ReviewLine {
+	line := ReviewLine{
+		LineID: f.ID(),
+		Tokens: f.MakeTokens(),
+	}
+	return line
+}
+
+func (f Func) MakeTokens() []ReviewToken {
+	tks := []ReviewToken{}
+	// prefix with "func" if f isn't embedded in an interface
+	if !f.embedded {
+		tks = append(tks, ReviewToken{
+			HasSuffixSpace: true,
+			Kind:           TokenKindKeyword,
+			Value:          "func",
+		})
 	}
 	if f.ReceiverType != "" {
-		makeToken(nil, nil, "(", TokenTypePunctuation, list)
-		if f.ReceiverName != "" {
-			makeToken(nil, nil, f.ReceiverName, TokenTypeMemberName, list)
-			makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-		}
-		parseAndMakeTypeToken(f.ReceiverType, list)
-		makeToken(nil, nil, ")", TokenTypePunctuation, list)
-		makeToken(nil, nil, " ", TokenTypeWhitespace, list)
+		tks = append(tks, ReviewToken{
+			Kind:  TokenKindText,
+			Value: "(",
+		})
+		tks = append(tks, parseAndMakeTypeTokens(f.ReceiverType)...)
+		tks = append(tks, ReviewToken{
+			HasSuffixSpace: true,
+			Kind:           TokenKindPunctuation,
+			Value:          ")",
+		})
 	}
-	ID := f.ID()
-	makeToken(&ID, nil, f.name, TokenTypeTypeName, list)
+	tks = append(tks, ReviewToken{
+		Kind:  TokenKindTypeName,
+		Value: f.name,
+	})
 	if len(f.typeParamNames) > 0 {
-		makeToken(nil, nil, "[", TokenTypePunctuation, list)
+		tks = append(tks, ReviewToken{
+			Kind:  TokenKindPunctuation,
+			Value: "[",
+		})
 		for i, p := range f.typeParamNames {
 			if i > 0 {
-				makeToken(nil, nil, ",", TokenTypePunctuation, list)
-				makeToken(nil, nil, " ", TokenTypeWhitespace, list)
+				tks = append(tks, ReviewToken{
+					HasSuffixSpace: true,
+					Kind:           TokenKindPunctuation,
+					Value:          ",",
+				})
 			}
-			makeToken(nil, nil, p, TokenTypeMemberName, list)
-			makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-			parseAndMakeTypeToken(f.typeParamConstraints[i], list)
+			tks = append(tks, ReviewToken{
+				HasSuffixSpace: true,
+				Kind:           TokenKindMemberName,
+				Value:          p,
+			})
+			tks = append(tks, parseAndMakeTypeTokens(f.typeParamConstraints[i])...)
 		}
-		makeToken(nil, nil, "]", TokenTypePunctuation, list)
+		tks = append(tks, ReviewToken{
+			Kind:  TokenKindPunctuation,
+			Value: "]",
+		})
 	}
-	makeToken(nil, nil, "(", TokenTypePunctuation, list)
+	paren := "("
+	if len(f.paramNames) == 0 {
+		paren += ")"
+	}
+	tks = append(tks, ReviewToken{
+		Kind:  TokenKindPunctuation,
+		Value: paren,
+	})
 	for i, p := range f.paramNames {
 		if p != "" {
-			makeToken(nil, nil, p, TokenTypeMemberName, list)
-			makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-			parseAndMakeTypeToken(f.paramTypes[i], list)
+			tks = append(tks, ReviewToken{
+				HasSuffixSpace: true,
+				Kind:           TokenKindMemberName,
+				Value:          p,
+			})
+			tks = append(tks, parseAndMakeTypeTokens(f.paramTypes[i])...)
 		} else {
 			// parameter names are optional
-			parseAndMakeTypeToken(f.paramTypes[i], list)
+			tks = append(tks, parseAndMakeTypeTokens(f.paramTypes[i])...)
 		}
 		if i < len(f.paramNames)-1 {
-			makeToken(nil, nil, ",", TokenTypePunctuation, list)
-			makeToken(nil, nil, " ", TokenTypeWhitespace, list)
+			tks = append(tks, ReviewToken{
+				HasSuffixSpace: true,
+				Kind:           TokenKindPunctuation,
+				Value:          ",",
+			})
 		}
 	}
-	makeToken(nil, nil, ")", TokenTypePunctuation, list)
+	if len(f.paramNames) > 0 {
+		tks = append(tks, ReviewToken{
+			Kind:  TokenKindPunctuation,
+			Value: ")",
+		})
+	}
 	if len(f.Returns) > 0 {
-		makeToken(nil, nil, " ", TokenTypeWhitespace, list)
 		if len(f.Returns) > 1 {
-			makeToken(nil, nil, "(", TokenTypePunctuation, list)
+			tks = append(tks, ReviewToken{
+				HasPrefixSpace: true,
+				Kind:           TokenKindPunctuation,
+				Value:          "(",
+			})
+		} else {
+			tks[len(tks)-1].HasSuffixSpace = true
 		}
 		for i, t := range f.Returns {
-			parseAndMakeTypeToken(t, list)
+			tks = append(tks, parseAndMakeTypeTokens(t)...)
 			if i < len(f.Returns)-1 {
-				makeToken(nil, nil, ",", TokenTypePunctuation, list)
-				makeToken(nil, nil, " ", TokenTypeWhitespace, list)
+				tks = append(tks, ReviewToken{
+					HasSuffixSpace: true,
+					Kind:           TokenKindPunctuation,
+					Value:          ",",
+				})
 			}
 		}
 		if len(f.Returns) > 1 {
-			makeToken(nil, nil, ")", TokenTypePunctuation, list)
+			tks = append(tks, ReviewToken{
+				Kind:  TokenKindPunctuation,
+				Value: ")",
+			})
 		}
 	}
-	if !f.embedded {
-		makeToken(nil, nil, "", TokenTypeNewline, list)
-	}
-	makeToken(nil, nil, "", TokenTypeNewline, list)
-	return *list
+	return tks
 }
 
 func (f Func) Name() string {
@@ -336,27 +401,40 @@ func (i Interface) ID() string {
 	return i.id
 }
 
-func (i Interface) MakeTokens() []Token {
-	ID := i.id
-	list := &[]Token{}
-	makeToken(nil, nil, "type", TokenTypeKeyword, list)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	makeToken(&ID, nil, i.name, TokenTypeTypeName, list)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	makeToken(nil, nil, "interface", TokenTypeKeyword, list)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	makeToken(nil, nil, "{", TokenTypePunctuation, list)
+func (i Interface) MakeReviewLine() ReviewLine {
+	interfaceLine := ReviewLine{
+		Children: []ReviewLine{},
+		LineID:   i.id,
+		Tokens: []ReviewToken{
+			{
+				Kind:  TokenKindKeyword,
+				Value: "type",
+			},
+			{
+				HasPrefixSpace:        true,
+				HasSuffixSpace:        true,
+				Kind:                  TokenKindTypeName,
+				NavigationDisplayName: i.id,
+				Value:                 i.name,
+			},
+			{
+				Kind:  TokenKindKeyword,
+				Value: "interface",
+			},
+		},
+	}
+
 	for _, name := range i.embeddedInterfaces {
 		if exportedFieldRgx.MatchString(name) {
-			// defID := ID + "-" + name
-			makeToken(nil, nil, "", TokenTypeNewline, list)
-			makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
-			parseAndMakeTypeToken(name, list)
-			// makeToken(&defID, nil, name, TokenTypeTypeName, list)
+			// TODO: set NavigateToID to create a navigation link. Need the type's LineID i.e. qualified
+			// name but we don't have it here; similar to https://github.com/Azure/azure-sdk-tools/issues/6150
+			interfaceLine.Children = append(interfaceLine.Children, ReviewLine{
+				Tokens: parseAndMakeTypeTokens(name),
+			})
 		}
 	}
+
 	if len(i.methods) > 0 {
-		makeToken(nil, nil, "", TokenTypeNewline, list)
 		keys := []string{}
 		for k := range i.methods {
 			if unicode.IsUpper(rune(k[0])) {
@@ -365,13 +443,15 @@ func (i Interface) MakeTokens() []Token {
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
-			*list = append(*list, i.methods[k].MakeTokens()...)
+			methodLine := ReviewLine{
+				LineID: i.id + "-" + k,
+				Tokens: i.methods[k].MakeTokens(),
+			}
+			interfaceLine.Children = append(interfaceLine.Children, methodLine)
 		}
 	}
-	makeToken(nil, nil, "}", TokenTypePunctuation, list)
-	makeToken(nil, nil, "", TokenTypeNewline, list)
-	makeToken(nil, nil, "", TokenTypeNewline, list)
-	return *list
+	interfaceLine.Children = append(interfaceLine.Children, ReviewLine{})
+	return interfaceLine
 }
 
 func (i Interface) Name() string {
@@ -398,18 +478,22 @@ func (s SimpleType) ID() string {
 	return s.id
 }
 
-func (s SimpleType) MakeTokens() []Token {
-	tokenList := &[]Token{}
-	ID := s.id
-	makeToken(nil, nil, "type", TokenTypeKeyword, tokenList)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
-	makeToken(&ID, nil, s.name, TokenTypeTypeName, tokenList)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
-	parseAndMakeTypeToken(s.underlyingType, tokenList)
-	// makeToken(nil, nil, s.underlyingType, TokenTypeText, tokenList)
-	makeToken(nil, nil, "", TokenTypeNewline, tokenList)
-	makeToken(nil, nil, "", TokenTypeNewline, tokenList)
-	return *tokenList
+func (s SimpleType) MakeTokens() []ReviewToken {
+	tks := []ReviewToken{
+		{
+			Kind:  TokenKindKeyword,
+			Value: "type",
+		},
+		{
+			HasPrefixSpace:        true,
+			HasSuffixSpace:        true,
+			Kind:                  TokenKindTypeName,
+			NavigationDisplayName: s.id,
+			Value:                 s.name,
+		},
+	}
+	tks = append(tks, parseAndMakeTypeTokens(s.underlyingType)...)
+	return tks
 }
 
 func (s SimpleType) Name() string {
@@ -427,6 +511,63 @@ type Struct struct {
 	// typeParams lists the func's type parameters as strings of the form "name constraint"
 	typeParams []string
 	pkgName    string
+}
+
+func (s Struct) MakeReviewLine() ReviewLine {
+	structLine := ReviewLine{
+		Children: []ReviewLine{},
+		LineID:   s.id,
+		Tokens:   s.MakeTokens(),
+	}
+	for _, field := range s.AnonymousFields {
+		if exportedFieldRgx.MatchString(field) {
+			structLine.Children = append(structLine.Children, ReviewLine{
+				Tokens: []ReviewToken{
+					{
+						Kind: TokenKindTypeName,
+						// TODO: set NavigateToID to create a navigation link. Need the type's LineID i.e. qualified
+						// name but we don't have it here https://github.com/Azure/azure-sdk-tools/issues/6150
+						Value: field,
+					},
+				},
+			})
+		}
+	}
+	exported := []string{}
+	maxLen := 0
+	for name := range s.fields {
+		if exportedFieldRgx.MatchString(name) {
+			if len(name) > maxLen {
+				maxLen = len(name)
+			}
+			exported = append(exported, name)
+		}
+	}
+	if len(exported) > 0 {
+		sort.Strings(exported)
+		for _, name := range exported {
+			fieldLine := ReviewLine{
+				LineID: s.id + "-" + name,
+				Tokens: []ReviewToken{
+					{
+						Kind:  TokenKindText,
+						Value: name,
+					},
+					{
+						Kind:     TokenKindText,
+						SkipDiff: true,
+						// The +2 aligns type names with and without a preceding *. It's hacky
+						// but much simpler than considering * when calculating the max length
+						Value: strings.Repeat(" ", maxLen-len(name)+2),
+					},
+				},
+			}
+			typeTks := parseAndMakeTypeTokens(s.fields[name])
+			fieldLine.Tokens = append(fieldLine.Tokens, typeTks...)
+			structLine.Children = append(structLine.Children, fieldLine)
+		}
+	}
+	return structLine
 }
 
 func NewStruct(source Pkg, name, packageName string, ts *ast.TypeSpec, imports map[string]string) Struct {
@@ -459,57 +600,30 @@ func (s Struct) ID() string {
 	return s.id
 }
 
-func (s Struct) MakeTokens() []Token {
-	list := &[]Token{}
-	ID := s.id
-	makeToken(nil, nil, "type", TokenTypeKeyword, list)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	makeToken(&ID, nil, s.name, TokenTypeTypeName, list)
+func (s Struct) MakeTokens() []ReviewToken {
+	rts := []ReviewToken{
+		{
+			HasSuffixSpace: true,
+			Kind:           TokenKindKeyword,
+			Value:          "type",
+		},
+		{
+			Kind:                  TokenKindTypeName,
+			NavigationDisplayName: s.id,
+			Value:                 s.name,
+		},
+	}
 	if len(s.typeParams) > 0 {
-		makeToken(nil, nil, "[", TokenTypePunctuation, list)
-		makeToken(nil, nil, strings.Join(s.typeParams, ", "), TokenTypeMemberName, list)
-		makeToken(nil, nil, "]", TokenTypePunctuation, list)
+		rts = append(rts, ReviewToken{Kind: TokenKindPunctuation, Value: "["})
+		rts = append(rts, ReviewToken{Kind: TokenKindTypeName, Value: strings.Join(s.typeParams, ", ")})
+		rts = append(rts, ReviewToken{Kind: TokenKindPunctuation, Value: "]"})
 	}
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	makeToken(nil, nil, "struct", TokenTypeKeyword, list)
-	makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-	makeToken(nil, nil, "{", TokenTypePunctuation, list)
-	exportedFields := false
-	for _, name := range s.AnonymousFields {
-		if exportedFieldRgx.MatchString(name) {
-			// defID := name + "-" + s.id
-			makeToken(nil, nil, "", TokenTypeNewline, list)
-			makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
-			parseAndMakeTypeToken(name, list)
-			// makeToken(&defID, nil, name, TokenTypeTypeName, list)
-			exportedFields = true
-		}
-	}
-	keys := make([]string, 0, len(s.fields))
-	for k := range s.fields {
-		if exportedFieldRgx.MatchString(k) {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	for _, field := range keys {
-		typ := s.fields[field]
-		defID := field + "-" + s.id
-		makeToken(nil, nil, "", TokenTypeNewline, list)
-		makeToken(nil, nil, "\t", TokenTypeWhitespace, list)
-		makeToken(&defID, nil, field, TokenTypeTypeName, list)
-		makeToken(nil, nil, " ", TokenTypeWhitespace, list)
-		parseAndMakeTypeToken(typ, list)
-		// makeToken(nil, nil, typ, TokenTypeMemberName, list)
-		exportedFields = true
-	}
-	if exportedFields {
-		makeToken(nil, nil, "", TokenTypeNewline, list)
-	}
-	makeToken(nil, nil, "}", TokenTypePunctuation, list)
-	makeToken(nil, nil, "", TokenTypeNewline, list)
-	makeToken(nil, nil, "", TokenTypeNewline, list)
-	return *list
+	rts = append(rts, ReviewToken{
+		HasPrefixSpace: true,
+		Kind:           TokenKindKeyword,
+		Value:          "struct",
+	})
+	return rts
 }
 
 func (s Struct) Name() string {
@@ -518,64 +632,52 @@ func (s Struct) Name() string {
 
 var _ TokenMaker = (*Struct)(nil)
 
-// makeToken builds the Token to be added to the Token slice that is passed in as a parameter.
-// defID and navID components can be passed in as nil to indicate that there is no definition ID or
-// navigation ID that is related to that token.
-// val is the value of the token and it was will be visible in the API view tool.
-// kind is the TokenType that will be assigned to the value and will determine how the value is
-// represented in the API view tool.
-// list is the slice of tokens that will be parsed in the API view tool, the new token will be appended to list.
-// TODO improve makeToken and make more similar to append
-func makeToken(defID, navID *string, val string, kind TokenType, list *[]Token) {
-	tok := Token{DefinitionID: defID, NavigateToID: navID, Value: val, Kind: kind}
-	*list = append(*list, tok)
-}
-
-func parseAndMakeTypeToken(val string, list *[]Token) {
+func parseAndMakeTypeTokens(val string) []ReviewToken {
+	toks := []ReviewToken{}
 	now := ""
-	for _, ch := range val {
-		switch string(ch) {
+	for _, r := range val {
+		switch s := string(r); s {
 		case "*", "[", "]", " ", "(", ")", "{", "}", ",":
 			if now != "" {
-				makeTypeSectionToken(now, list)
+				toks = append(toks, makeTypeSectionToken(now))
 				now = ""
 			}
-			if string(ch) == " " {
-				makeToken(nil, nil, " ", TokenTypeWhitespace, list)
+			if s == " " && len(toks) > 0 {
+				toks[len(toks)-1].HasSuffixSpace = true
 			} else {
-				makeToken(nil, nil, string(ch), TokenTypePunctuation, list)
+				toks = append(toks, ReviewToken{Kind: TokenKindPunctuation, Value: s})
 			}
 		case ".":
 			if now == ".." {
-				makeToken(nil, nil, "...", TokenTypePunctuation, list)
+				toks = append(toks, ReviewToken{Kind: TokenKindPunctuation, Value: "..."})
 				now = ""
 			} else {
-				now = now + "."
+				now += "."
 			}
 		default:
-			now = now + string(ch)
+			now += s
 		}
 	}
 	if now != "" {
-		makeTypeSectionToken(now, list)
+		toks = append(toks, makeTypeSectionToken(now))
 	}
+	return toks
 }
 
 var keywords = []string{"interface", "map", "any", "func"}
 var internalTypes = []string{"bool", "uint8", "uint16", "uint32", "uint64", "uint", "int8", "int16", "int32", "int64", "int", "float32", "float64", "complex64", "complex128", "byte", "rune", "string", "error", "uintptr", "nil"}
 
-func makeTypeSectionToken(section string, list *[]Token) {
+func makeTypeSectionToken(section string) ReviewToken {
 	switch {
 	case slices.Contains(keywords, section):
-		makeToken(nil, nil, section, TokenTypeKeyword, list)
+		return ReviewToken{Kind: TokenKindKeyword, Value: section}
 	case slices.Contains(internalTypes, section):
-		makeToken(nil, nil, section, TokenTypeTypeName, list)
+		return ReviewToken{Kind: TokenKindTypeName, Value: section}
 	default:
 		if strings.HasPrefix(section, "<") {
 			splits := strings.Split(section[1:], ">")
-			makeToken(nil, &splits[0], splits[1], TokenTypeTypeName, list)
-		} else {
-			makeToken(nil, nil, section, TokenTypeTypeName, list)
+			return ReviewToken{Kind: TokenKindTypeName, NavigateToID: splits[0], Value: splits[1]}
 		}
+		return ReviewToken{Kind: TokenKindTypeName, Value: section}
 	}
 }

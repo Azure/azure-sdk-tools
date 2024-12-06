@@ -1,0 +1,23 @@
+{{#each generation.sdkRepositories}}
+<ul> <li>{{#if ../merged}}Release - {{/if}}{{status}} 
+  {{#if ../generation.logsBlobUrl}} [<a href="{{../generation.logsBlobUrl}}" target="_blank">Logs</a>] 
+  {{/if}} </li>
+
+{{#if isShowInstruction}}
+  {{#each changedPackages}}
+  <li>Installation instruction for service <b>{{name}}</b> [<a href="{{generationPullRequestDiffUrl}}" target="_blank">Preview Changes</a>]<br/>
+  <i><pre>{{liteInstallationInstruction}}</pre></i></li>
+  {{/each}}
+{{/if}}
+ </ul>
+
+{{#if hasBreakingChange}}
+<b>
+
+```diff
+- Breaking Change detected in SDK
+```
+
+</b>
+{{/if}}
+{{/each}}

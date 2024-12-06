@@ -1,0 +1,31 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/issue-labeler
+  
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/issue-labeler
+  
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-azure-function.yml
+  parameters:
+    ToolName: issue-labeler
+    FunctionProject: src/IssueLabelerService
+    TestProject: tests/Hubbup.MikLabelModel.Tests
+    ProductionEnvironmentName: gh-issue-labeler
+    StagingEnvironmentName: skip

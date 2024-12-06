@@ -1,3 +1,7 @@
+# 2.0.4
+
+- update models from latest CodeFile schemas
+
 # 2.0.3
 
 - add `SkipDiff: true` for dependency header line

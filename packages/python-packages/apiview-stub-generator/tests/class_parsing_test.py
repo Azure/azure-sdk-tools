@@ -28,7 +28,7 @@ from apistubgentest.models import (
 
 from pytest import fail
 
-from ._test_util import _check, _tokenize, _merge_lines, _render_lines
+from ._test_util import _check, _tokenize, _merge_lines, _render_lines, MockApiView
 
 
 def _check_all(actual, expect, obj):
@@ -43,7 +43,9 @@ class TestClassParsing:
     
     def test_class_with_ivars_and_cvars(self):
         obj = ClassWithIvarsAndCvars
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class ClassWithIvarsAndCvars:",
@@ -55,7 +57,9 @@ class TestClassParsing:
 
     def test_class_with_decorators(self):
         obj = ClassWithDecorators
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "@add_id",
@@ -72,7 +76,9 @@ class TestClassParsing:
 
     def test_typed_dict_class(self):
         obj = FakeTypedDict
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class FakeTypedDict(dict):",
@@ -84,7 +90,9 @@ class TestClassParsing:
 
     def test_object(self):
         obj = FakeObject
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class FakeObject:",
@@ -99,7 +107,9 @@ class TestClassParsing:
 
     def test_public_private(self):
         obj = PublicPrivateClass
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class PublicPrivateClass:",
@@ -112,20 +122,26 @@ class TestClassParsing:
         assert actuals[7].lstrip() == "def public_func(self, **kwargs) -> str"
     def test_required_kwargs(self):
         obj = RequiredKwargObject
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         init_string = _merge_lines(actuals[2:])
         assert init_string == "def __init__(self, id: str, *, age: int, name: str, other: str = ..., **kwargs: Any)"
 
     def test_model_aliases(self):
         obj = SomeAwesomelyNamedObject
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         lines = _render_lines(_tokenize(class_node))
         assert lines[0].lstrip() == "class SomeAwesomelyNamedObject(SomePoorlyNamedObject):"
 
     def test_enum(self):
         obj = PetEnumPy3MetaclassAlt
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class PetEnumPy3MetaclassAlt(str, Enum):",
@@ -137,7 +153,9 @@ class TestClassParsing:
 
     def test_overloads(self):
         obj = SomethingWithOverloads
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         lines = _render_lines(_tokenize(class_node))
         assert lines[2].lstrip() == "@overload"
         actual1 = _merge_lines(lines[3:10])
@@ -168,7 +186,9 @@ class TestClassParsing:
 
     def test_inherited_overloads(self):
         obj = SomethingWithInheritedOverloads
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         lines = _render_lines(_tokenize(class_node))
         assert lines[2].lstrip() == "@overload"
         actual1 = lines[3]
@@ -193,15 +213,21 @@ class TestClassParsing:
     def test_overload_line_ids(self):
         obj = SomethingWithOverloads
         obj2 = SomethingAsyncWithOverloads
-        sync_class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
-        async_class_node = ClassNode(name=obj2.__name__, namespace=obj2.__name__, parent_node=None, obj=obj2, pkg_root_namespace=self.pkg_namespace)
+        sync_class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
+        async_class_node = ClassNode(
+            name=obj2.__name__, namespace=obj2.__name__, parent_node=None, obj=obj2, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         tokens1 = _tokenize(sync_class_node)
         tokens2 = _tokenize(async_class_node)
         self._validate_line_ids(tokens1 + tokens2)
 
     def test_async_line_ids(self):
         obj = SomethingAsyncWithOverloads
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         tokens = _tokenize(class_node)
         line_ids = [x.line_id for x in tokens if x.line_id][1:]
         for def_id in line_ids:
@@ -228,7 +254,9 @@ class TestClassParsing:
 
     def test_decorators(self):
         obj = SomethingWithDecorators
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
 
         assert actuals[2].lstrip() == "@another_decorator('Test')"
@@ -238,7 +266,9 @@ class TestClassParsing:
 
     def test_properties(self):
         obj = SomethingWithProperties
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class SomethingWithProperties:",
@@ -250,7 +280,9 @@ class TestClassParsing:
 
     def test_abstract_class(self):
         obj = SomeImplementationClass
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class SomeImplementationClass(_SomeAbstractBase):",
@@ -265,7 +297,9 @@ class TestClassParsing:
         
     def test_generic_class(self):
         obj = GenericStack
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class GenericStack(Generic[T]):"
@@ -274,7 +308,9 @@ class TestClassParsing:
 
     def test_new_type_alias(self):
         obj = AliasNewType
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class AliasNewType(Dict[str, str]):"
@@ -283,7 +319,9 @@ class TestClassParsing:
 
     def test_union_alias(self):
         obj = AliasUnion
-        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class AliasUnion(Union[str, int, bool]):"

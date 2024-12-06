@@ -30,26 +30,37 @@ import SwiftSyntax
 
 class APIViewModel: Tokenizable, Encodable {
 
-    /// The name to be used in the APIView review list
-    var name: String
-
     /// The package name used by APIView
     var packageName: String
 
-    /// The version string
-    var versionString: String
+    /// The package version
+    var packageVersion: String
 
-    /// Language string.
+    /// Version of the APIView language parser used to create the token file
+    let parserVersion: String
+
+    /// Language discriminator
     let language = "Swift"
 
-    /// The APIView tokens to display
-    var tokens: [Token]
+    /// Only applicable currently to Java language variants
+    let languageVariant: String? = nil
 
-    /// The navigation tokens to display
-    var navigation: [NavigationToken]
+    /// The cross-language ID of the package
+    let crossLanguagePackageId: String?
+
+    /// The top level review lines for the APIView
+    var reviewLines: [ReviewLine]
+
+    /// System generated comments. Each is linked to a review line ID.
+    var diagnostics: [CodeDiagnostic]?
+
+    /// Navigation items are used to create a tree view in the Navigation panel.
+    /// Each item is linked to a review line ID. If omitted, the Navigation panel
+    /// will automatically be generated using the review lines.
+    var navigation: [NavigationToken]? = nil
 
     /// Node-based representation of the Swift package
-    var model: PackageModel
+    private var model: PackageModel
 
     /// Current indentation level
     private var indentLevel = 0
@@ -76,12 +87,15 @@ class APIViewModel: Tokenizable, Encodable {
     
     // MARK: Initializers
 
-    init(name: String, packageName: String, versionString: String, statements: [CodeBlockItemSyntax.Item]) {
-        self.name = name
-        self.versionString = versionString
+    init(packageName: String, packageVersion: String, statements: [CodeBlockItemSyntax.Item]) {
+        // Renders the APIView "preamble"
+        let bundle = Bundle(for: Swift.type(of: self))
+        let versionKey = "CFBundleShortVersionString"
+        self.packageVersion = packageVersion
         self.packageName = packageName
-        navigation = [NavigationToken]()
-        tokens = [Token]()
+        self.parserVersion = bundle.object(forInfoDictionaryKey: versionKey) as? String ?? "Unknown"
+        reviewLines = [ReviewLine]()
+        diagnostics = [CodeDiagnostic]()
         model = PackageModel(name: packageName, statements: statements)
         self.tokenize(apiview: self, parent: nil)
         model.navigationTokenize(apiview: self, parent: nil)
@@ -90,37 +104,39 @@ class APIViewModel: Tokenizable, Encodable {
     // MARK: Codable
 
     enum CodingKeys: String, CodingKey {
-        case name = "Name"
-        case tokens = "Tokens"
-        case language = "Language"
         case packageName = "PackageName"
+        case packageVersion = "PackageVersion"
+        case parserVersion = "ParserVersion"
+        case language = "Language"
+        case languageVariant = "LanguageVariant"
+        case crossLanguagePackageId = "CrossLanguagePackageId"
+        case reviewLines = "ReviewLines"
+        case diagnostics = "Diagnostics"
         case navigation = "Navigation"
-        case versionString = "VersionString"
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
         try container.encode(packageName, forKey: .packageName)
+        try container.encode(packageVersion, forKey: .packageVersion)
+        try container.encode(parserVersion, forKey: .parserVersion)
         try container.encode(language, forKey: .language)
-        try container.encode(tokens, forKey: .tokens)
-        try container.encode(navigation, forKey: .navigation)
-        try container.encode(versionString, forKey: .versionString)
+        try container.encode(languageVariant, forKey: .languageVariant)
+        try container.encode(reviewLines, forKey: .reviewLines)
+        try container.encodeIfPresent(crossLanguagePackageId, forKey: .crossLanguagePackageId)
+        try container.encodeIfPresent(diagnostics, forKey: .diagnostics)
+        try container.encodeIfPresent(navigation, forKey: .navigation)
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        // Renders the APIView "preamble"
-        let bundle = Bundle(for: Swift.type(of: self))
-        let versionKey = "CFBundleShortVersionString"
-        let apiViewVersion = bundle.object(forInfoDictionaryKey: versionKey) as? String ?? "Unknown"
-        a.text("Package parsed using Swift APIView (version \(apiViewVersion))")
+        a.text("Package parsed using Swift APIView (version \(self.parserVersion))")
         a.newline()
         a.blankLines(set: 2)
         model.tokenize(apiview: a, parent: parent)
     }
 
     // MARK: Token Emitters
-    func add(token: Token) {
+    func add(token: ReviewToken) {
         self.tokens.append(token)
     }
 
@@ -130,7 +146,7 @@ class APIViewModel: Tokenizable, Encodable {
 
     func text(_ text: String, definitionId: String? = nil) {
         checkIndent()
-        let item = Token(definitionId: definitionId, navigateToId: nil, value: text, kind: .text)
+        let item = ReviewToken(definitionId: definitionId, navigateToId: nil, value: text, kind: .text)
         // TODO: Add cross-language definition ID
         // if add_cross_language_id:
         //    token.cross_language_definition_id = self.metadata_map.cross_language_map.get(id, None)
@@ -150,7 +166,7 @@ class APIViewModel: Tokenizable, Encodable {
         checkIndent()
         // don't add newline if one already in place
         if tokens.last?.kind != .newline {
-            let item = Token(definitionId: nil, navigateToId: nil, value: nil, kind: .newline)
+            let item = ReviewToken(definitionId: nil, navigateToId: nil, value: nil, kind: .newline)
             add(token: item)
         }
         needsIndent = true
@@ -172,7 +188,7 @@ class APIViewModel: Tokenizable, Encodable {
             // if not enough newlines, add some
             let linesToAdd = (count + 1) - newlineCount
             for _ in 0..<linesToAdd {
-                add(token: Token(definitionId: nil, navigateToId: nil, value: nil, kind: .newline))
+                add(token: ReviewToken(definitionId: nil, navigateToId: nil, value: nil, kind: .newline))
             }
         } else if newlineCount > (count + 1) {
             // if there are too many newlines, remove some
@@ -188,7 +204,7 @@ class APIViewModel: Tokenizable, Encodable {
         // don't double up on whitespace
         guard tokens.lastVisible != .whitespace else { return }
         let value = String(repeating: " ", count: count)
-        let item = Token(definitionId: nil, navigateToId: nil, value: value, kind: .whitespace)
+        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: value, kind: .whitespace)
         add(token: item)
     }
 
@@ -200,7 +216,7 @@ class APIViewModel: Tokenizable, Encodable {
         if [SpacingKind.Leading, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
-        let item = Token(definitionId: nil, navigateToId: nil, value: value, kind: .punctuation)
+        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: value, kind: .punctuation)
         add(token: item)
         if [SpacingKind.Trailing, SpacingKind.Both].contains(spacing) {
             self.whitespace()
@@ -215,7 +231,7 @@ class APIViewModel: Tokenizable, Encodable {
         if [SpacingKind.Leading, SpacingKind.Both].contains(spacing) {
             self.whitespace()
         }
-        let item = Token(definitionId: nil, navigateToId: nil, value: keyword, kind: .keyword)
+        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: keyword, kind: .keyword)
         add(token: item)
         if [SpacingKind.Trailing, SpacingKind.Both].contains(spacing) {
             self.whitespace()
@@ -225,7 +241,7 @@ class APIViewModel: Tokenizable, Encodable {
     /// Create a line ID marker (only needed if no other token has a definition ID)
     func lineIdMarker(definitionId: String?) {
         checkIndent()
-        let item = Token(definitionId: definitionId, navigateToId: nil, value: nil, kind: .lineIdMarker)
+        let item = ReviewToken(definitionId: definitionId, navigateToId: nil, value: nil, kind: .lineIdMarker)
         add(token: item)
     }
 
@@ -236,7 +252,7 @@ class APIViewModel: Tokenizable, Encodable {
             return
         }
         checkIndent()
-        let item = Token(definitionId: definitionId, navigateToId: definitionId, value: name, kind: .typeName)
+        let item = ReviewToken(definitionId: definitionId, navigateToId: definitionId, value: name, kind: .typeName)
         definitionIds.insert(definitionId)
         add(token: item)
     }
@@ -255,11 +271,8 @@ class APIViewModel: Tokenizable, Encodable {
     /// Link to a registered type
     func typeReference(name: String, parent: DeclarationModel?) {
         checkIndent()
-        if name == "IncomingAudioStream" {
-            let test = "best"
-        }
         let linkId = definitionId(for: name, withParent: parent) ?? APIViewModel.unresolved
-        let item = Token(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)
+        let item = ReviewToken(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)
         add(token: item)
     }
 
@@ -285,7 +298,7 @@ class APIViewModel: Tokenizable, Encodable {
 
     func member(name: String, definitionId: String? = nil) {
         checkIndent()
-        let item = Token(definitionId: definitionId, navigateToId: nil, value: name, kind: .memberName)
+        let item = ReviewToken(definitionId: definitionId, navigateToId: nil, value: name, kind: .memberName)
         add(token: item)
     }
 
@@ -299,17 +312,17 @@ class APIViewModel: Tokenizable, Encodable {
         if !text.starts(with: "\\") {
             message = "\\\\ \(message)"
         }
-        let item = Token(definitionId: nil, navigateToId: nil, value: message, kind: .comment)
+        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: message, kind: .comment)
         add(token: item)
     }
 
     func literal(_ value: String) {
-        let item = Token(definitionId: nil, navigateToId: nil, value: value, kind: .literal)
+        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: value, kind: .literal)
         add(token: item)
     }
 
     func stringLiteral(_ text: String) {
-        let item = Token(definitionId: nil, navigateToId: nil, value: "\"\(text)\"", kind: .stringLiteral)
+        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: "\"\(text)\"", kind: .stringLiteral)
         add(token: item)
     }
 
@@ -345,7 +358,7 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Trims whitespace tokens
     func trim(removeNewlines: Bool = false) {
-        var lineIds = [Token]()
+        var lineIds = [ReviewToken]()
         while (!tokens.isEmpty) {
             var continueTrim = true
             if let kind = tokens.last?.kind {

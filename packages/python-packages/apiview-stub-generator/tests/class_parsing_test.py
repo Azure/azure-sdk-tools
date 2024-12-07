@@ -24,6 +24,7 @@ from apistubgentest.models import (
     SomethingWithInheritedOverloads,
     SomethingWithOverloads,
     SomethingWithProperties,
+    SomeProtocolDecorator
 )
 
 from pytest import fail
@@ -156,11 +157,13 @@ class TestClassParsing:
         class_node = ClassNode(
             name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
         )
-        lines = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        lines = _render_lines(tokens)
         assert lines[2].lstrip() == "@overload"
         actual1 = _merge_lines(lines[3:10])
         expected1 = 'def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int'
         _check(actual1, expected1, SomethingWithOverloads)
+
         assert lines[11].lstrip() == "@overload"
         actual2 = _merge_lines(lines[12:19])
         expected2 = 'def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]'
@@ -184,12 +187,22 @@ class TestClassParsing:
         expected6 = 'def something(self, id: int | str, *args, **kwargs) -> str'
         _check(actual6, expected6, SomethingWithOverloads)
 
+        # If the token is an overload decorator, it should have the correct RelatedToLine.
+        for idx, token in enumerate(tokens[0]['Children']):
+            if len(token['Tokens']) > 0 and token['Tokens'][0]['Value'] == "@overload":
+                assert 'RelatedToLine' in token
+                # Check that LineID of next token is the same as RelatedToLine of the overload decorator.
+                func_line_id = tokens[0]['Children'][idx + 1]['LineId']
+                assert token['RelatedToLine'] == func_line_id
+
+
     def test_inherited_overloads(self):
         obj = SomethingWithInheritedOverloads
         class_node = ClassNode(
             name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
         )
-        lines = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        lines = _render_lines(tokens)
         assert lines[2].lstrip() == "@overload"
         actual1 = lines[3]
         expected1 = 'def do_thing(val: str) -> str'
@@ -208,6 +221,14 @@ class TestClassParsing:
         actual4 = lines[11]
         expected4 = 'def do_thing(val: str | int | bool) -> str | int | bool'
         _check(actual4, expected4, SomethingWithInheritedOverloads)
+
+        # If the token is an overload decorator, it should have the correct RelatedToLine.
+        for idx, token in enumerate(tokens[0]['Children']):
+            if len(token['Tokens']) > 0 and token['Tokens'][0]['Value'] == "@overload":
+                assert 'RelatedToLine' in token
+                # Check that LineID of next token is the same as RelatedToLine of the overload decorator.
+                func_line_id = tokens[0]['Children'][idx + 1]['LineId']
+                assert token['RelatedToLine'] == func_line_id
 
     
     def test_overload_line_ids(self):
@@ -251,7 +272,6 @@ class TestClassParsing:
 
         collect_line_ids(review_lines)
 
-
     def test_decorators(self):
         obj = SomethingWithDecorators
         class_node = ClassNode(
@@ -263,7 +283,24 @@ class TestClassParsing:
         assert actuals[5].lstrip() == "@another_decorator('Test')"
         assert actuals[8].lstrip() == "@my_decorator"
         assert actuals[11].lstrip() == "@my_decorator"
+    
+    def test_protocol_decorator_related_to_line(self):
+        obj = SomeProtocolDecorator
+        class_node = ClassNode(
+            name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
+        expected = [
+            "@runtime_checkable",
+            "class SomeProtocolDecorator(Protocol):",
+        ]
+        _check_all(actuals, expected, obj)
+        print(tokens)
 
+        assert tokens[0]['Tokens'][0]['Value'] == "@runtime_checkable"
+        assert tokens[0]['RelatedToLine'] == "SomeProtocolDecorator"
+    
     def test_properties(self):
         obj = SomethingWithProperties
         class_node = ClassNode(

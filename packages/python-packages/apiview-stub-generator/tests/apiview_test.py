@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from apistub import ApiView, TokenKind, StubGenerator, ReviewLines
+from apistub import ApiView, TokenKind, StubGenerator
 from apistub.nodes import PylintParser
 import os
 from pytest import fail
@@ -121,8 +121,3 @@ class TestApiView:
         assert len(cross_language_lines) == 2
         assert apiview.cross_language_package_id == "ApiStubGenTest"
     
-    def test_related_to_line(self):
-        pass
-    
-    def test_is_context_end_line(self):
-        pass

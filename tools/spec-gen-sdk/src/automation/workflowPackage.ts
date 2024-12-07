@@ -14,15 +14,13 @@ import { mkdirpSync } from 'fs-extra';
 import { getLanguageByRepoName } from './entrypoint';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
-  context.logger.log('section', `Handle package ${pkg.name}`);
-
   const captureTransport = new CommentCaptureTransport({
     extraLevelFilter: ['error', 'warn'],
     level: 'debug',
     output: pkg.messages
   });
   context.logger.add(captureTransport);
-
+  context.logger.log('section', `Handle package ${pkg.name}`);
   context.logger.info(`Package log to a new logFile`);
 
   await workflowPkgCallBuildScript(context, pkg);

@@ -10,22 +10,24 @@ import { sdkAutoMain } from '../automation/entrypoint';
 
   let status: SDKAutomationState | undefined = undefined;
   try {
-    const repo = getRepository(config.specRepo);
+    const repo = getRepository(config.specRepoHttpsUrl);
 
     process.chdir(config.workingFolder);
     status = await sdkAutoMain({
       specRepo: repo,
       localSpecRepoPath: config.localSpecRepoPath,
       localSdkRepoPath: config.localSdkRepoPath,
+      tspConfigPath: config.tspConfigPath,
+      readmePath: config.readmePath,
+      specCommitSha: config.specCommitSha,
+      specRepoHttpsUrl: config.specRepoHttpsUrl,
       pullNumber: config.prNumber,
       sdkName: config.sdkRepoName,
       workingFolder: config.workingFolder,
       github: {
         token: config.githubToken,
-        id: config.githubApp.id,
-        privateKey: config.githubApp.privateKey
       },
-      runEnv: config.isTriggeredByUP ? 'azureDevOps' : 'local',
+      runEnv: config.isTriggeredByPipeline ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto'
     });
   } catch (e) {

@@ -8,23 +8,16 @@ dotenv.config();
 export type SDKAutomationCliConfig = {
   env: string;
   workingFolder: string;
-  isTriggeredByUP: boolean;
+  isTriggeredByPipeline: boolean;
   githubToken: string;
-  azureCliArgs: {
-    azureDevopsPat: string;
-    buildId: string;
-  };
   localSpecRepoPath: string;
   localSdkRepoPath: string;
-  specRepo: string;
+  tspConfigPath?: string;
+  readmePath?: string;
   sdkRepoName: string;
   prNumber: number;
   specCommitSha: string;
   specRepoHttpsUrl: string;
-  githubApp: {
-    id: number;
-    privateKey: string;
-  };
   githubCommentAuthorName: string;
 };
 
@@ -47,10 +40,10 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
     arg: 'working-folder',
     format: String
   },
-  isTriggeredByUP: {
+  isTriggeredByPipeline: {
     default: false,
-    env: 'IS_TRIGGERED_BY_UP',
-    arg: 'is-triggered-by-up',
+    env: 'IS_TRIGGERED_BY_Pipeline',
+    arg: 'is-triggered-by-pipeline',
     format: Boolean
   },
   githubToken: {
@@ -60,47 +53,39 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
     arg: 'github-token',
     format: String
   },
-  azureCliArgs: {
-    azureDevopsPat: {
-      default: '',
-      doc: 'Used for az cli command',
-      env: 'AZURE_DEVOPS_EXT_PAT',
-      arg: 'azure-devops-ext-pat',
-      format: String
-    },
-    buildId: {
-      default: '1',
-      doc: 'Used for az cli package version',
-      env: 'BUILD_ID',
-      format: String
-    }
-  },
   localSpecRepoPath: {
     default: '',
     doc: 'Example: /path/to/azure-rest-api-specs',
     env: 'LOCAL_SPEC_REPO_PATH',
     arg: 'local-spec-repo-path',
-    format: String
+    format: emptyValidator
   },
   localSdkRepoPath: {
     default: '',
     doc: 'Example: /path/to/azure-sdk-for-go',
     env: 'LOCAL_SDK_REPO_PATH',
     arg: 'local-sdk-repo-path',
+    format: emptyValidator
+  },
+  tspConfigPath: {
+    default: '',
+    doc: 'Example: specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml',
+    env: 'TSP_CONFIG_RELATIVE_PATH',
+    arg: 'tsp-config-relative-path',
     format: String
   },
-  specRepo: {
+  readmePath: {
     default: '',
-    doc: 'Example: Azure/azure-rest-api-specs',
-    env: 'SPEC_REPO',
-    arg: 'spec-repo',
-    format: emptyValidator
+    doc: 'Example: specification/contosowidgetmanager/resource-manager/readme.md',
+    env: 'README_RELATIVE_PATH',
+    arg: 'readme-relative-path',
+    format: String
   },
   sdkRepoName: {
     default: '',
     doc: 'Example: azure-sdk-for-go',
     env: 'SDK_REPO_NAME',
-    arg: 'sdk',
+    arg: 'sdk-repo-name',
     format: String
   },
   prNumber: {
@@ -123,20 +108,6 @@ export const configurationSchema: Config<SDKAutomationCliConfig> = convict<SDKAu
     env: 'SPEC_REPO_HTTPS_URL',
     arg: 'spec-repo-https-url',
     format: String
-  },
-  githubApp: {
-    id: {
-      default: 0,
-      env: 'GITHUBAPP_ID',
-      arg: 'app-id',
-      format: Number
-    },
-    privateKey: {
-      default: '',
-      env: 'GITHUBAPP_PRIVATE_KEY',
-      arg: 'app-private-key',
-      format: String
-    }
   },
   githubCommentAuthorName: {
     default: 'openapi-bot[bot]',

@@ -18,12 +18,13 @@ const commentLimit = 60;
 
 export const generateReport = (context: WorkflowContext) => {
   context.logger.log('section', 'Generate report');
+  /*
   const captureTransport = new CommentCaptureTransport({
     extraLevelFilter: ['error', 'warn'],
     level: 'debug',
     output: context.messages
-  });
-  context.logger.add(captureTransport);
+  });*/
+  //context.logger.add(captureTransport);
 
   let executionReport: ExecutionReport;
   const packageReports: PackageReport[] = [];
@@ -87,7 +88,7 @@ export const generateReport = (context: WorkflowContext) => {
   }
 
   context.logger.log('endsection', 'Generate report');
-  context.logger.remove(captureTransport);
+  //context.logger.remove(captureTransport);
 }
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {

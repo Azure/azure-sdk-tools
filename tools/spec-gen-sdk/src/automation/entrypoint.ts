@@ -1,7 +1,8 @@
 import { RestEndpointMethodTypes } from '@octokit/rest';
 import { Octokit } from '@octokit/rest';
+import * as fs from 'fs';
 import * as winston from 'winston';
-import { getAuthenticatedOctokit, RepoKey } from '../utils/githubUtils';
+import { getAuthenticatedOctokit, getRepoKey, RepoKey } from '../utils/githubUtils';
 import {
   FailureType,
   setFailureType,
@@ -18,6 +19,8 @@ import {
 } from './logging';
 import path from 'path';
 import { generateReport } from './reportStatus';
+import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
+import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 
 interface SdkAutoOptions {
   specRepo: RepoKey;
@@ -34,8 +37,6 @@ interface SdkAutoOptions {
 
   github: {
     token?: string;
-    id?: number;
-    privateKey?: string;
     commentAuthorName?: string;
   };
 
@@ -57,6 +58,9 @@ export type SdkAutoContext = {
   specPrHeadBranch: string | undefined;
   fullLogFileName: string;
   filterLogFileName: string;
+  specRepoConfig: SpecConfig;
+  sdkRepoConfig: SdkRepoConfig;
+  swaggerToSdkConfig: SwaggerToSdkConfig
 };
 
 
@@ -75,8 +79,16 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
 
   const fullLogFileName = path.join(options.workingFolder, 'full.log');
   const filterLogFileName = path.join(options.workingFolder, 'filter.log');
-  logger.info(`Log to ${fullLogFileName}`);
   logger.add(loggerFileTransport(fullLogFileName));
+  logger.info(`Log to ${fullLogFileName}`);
+  const localSpecConfigPath = path.join(options.localSpecRepoPath, specConfigPath);
+  const specConfigContent = loadConfigContent(localSpecConfigPath, logger);  
+  const specRepoConfig = getSpecConfig(specConfigContent, options.specRepo);
+
+  const sdkRepoConfig = await getSdkRepoConfig(options, specRepoConfig);
+  const swaggerToSdkConfigPath = path.join(options.localSdkRepoPath, sdkRepoConfig.configFilePath);
+  const swaggerToSdkConfigContent = loadConfigContent(swaggerToSdkConfigPath, logger);
+  const swaggerToSdkConfig = getSwaggerToSdkConfig(swaggerToSdkConfigContent);
 
   const [{ octokit, getGithubAccessToken, specPR }] = await Promise.all([
     getGithubContext(options, logger),
@@ -104,7 +116,10 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     specPrBaseBranch: specPR?.base.ref,
     specPrHeadBranch: specPR?.head.ref,
     fullLogFileName,
-    filterLogFileName
+    filterLogFileName,
+    specRepoConfig,
+    sdkRepoConfig,
+    swaggerToSdkConfig
   };
 };
 
@@ -166,4 +181,59 @@ export const getLanguageByRepoName = (repoName: string) => {
   } else {
     return repoName;
   }
+};
+
+export const loadConfigContent = (fileName: string, logger: winston.Logger) => {
+  logger.info(`Load config file: ${specConfigPath}`);
+  try {
+    const fileContent = fs.readFileSync(fileName).toString();
+    const result = JSON.parse(fileContent);
+    return result;
+  }
+  catch (error) {
+    logger.error(`IOError: Fails to read config [${fileName}]'. Please ensure the spec config exists with the correct path and the content is valid. Error: ${error.message}`);
+    throw error;
+  }
+};
+
+export const getSdkRepoConfig = async (options: SdkAutoOptions, specRepoConfig: SpecConfig) => {
+  const specRepo = options.specRepo;
+  const sdkName = options.sdkName;
+  const getConfigRepoKey = (repo: RepoKey | string | undefined, fallback: RepoKey): RepoKey => {
+    if (repo === undefined) {
+      return fallback;
+    }
+    const repoKey = getRepoKey(repo);
+    if (!repoKey.owner) {
+      repoKey.owner = fallback.owner;
+    }
+    return repoKey;
+  };
+  let sdkRepoConfig = specRepoConfig.sdkRepositoryMappings[sdkName];
+  if (sdkRepoConfig === undefined) {
+    throw new Error(`ConfigError: SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository.`);
+  }
+
+  if (typeof sdkRepoConfig === 'string') {
+    sdkRepoConfig = {
+      mainRepository: getRepoKey(sdkRepoConfig)
+    } as SdkRepoConfig;
+  }
+
+  sdkRepoConfig.mainRepository = getConfigRepoKey(sdkRepoConfig.mainRepository, {
+    owner: specRepo.owner,
+    name: sdkName
+  });
+  sdkRepoConfig.mainBranch =
+    sdkRepoConfig.mainBranch ?? "main";
+  sdkRepoConfig.integrationRepository = getConfigRepoKey(
+    sdkRepoConfig.integrationRepository,
+    sdkRepoConfig.mainRepository
+  );
+  sdkRepoConfig.integrationBranchPrefix = sdkRepoConfig.integrationBranchPrefix ?? 'sdkAutomation';
+  sdkRepoConfig.secondaryRepository = getConfigRepoKey(sdkRepoConfig.secondaryRepository, sdkRepoConfig.mainRepository);
+  sdkRepoConfig.secondaryBranch = sdkRepoConfig.secondaryBranch ?? sdkRepoConfig.mainBranch;
+  sdkRepoConfig.configFilePath = sdkRepoConfig.configFilePath ?? 'swagger_to_sdk_config.json';
+
+  return sdkRepoConfig;
 };

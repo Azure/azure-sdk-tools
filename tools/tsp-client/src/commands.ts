@@ -9,7 +9,12 @@ import {
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import { npmCommand, nodeCommand } from "./npm.js";
-import { compileTsp, discoverMainFile, resolveTspConfigUrl, TspLocation } from "./typespec.js";
+import {
+  compileTsp,
+  discoverEntrypointFile,
+  resolveTspConfigUrl,
+  TspLocation,
+} from "./typespec.js";
 import {
   writeTspLocationYaml,
   getAdditionalDirectoryName,
@@ -257,7 +262,7 @@ export async function generateCommand(argv: any) {
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
-  const mainFilePath = await discoverMainFile(srcDir);
+  const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   Logger.info("Installing dependencies from npm...");
   const args: string[] = [];

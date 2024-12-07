@@ -43,7 +43,10 @@ class PylintError:
             return
 
     def generate_tokens(self, apiview, target_id):
-        apiview.add_diagnostic(obj=self, target_id=target_id)
+        apiview.add_diagnostic(
+            err=self,
+            target_id=target_id
+        )
 
 
 class PylintParser:

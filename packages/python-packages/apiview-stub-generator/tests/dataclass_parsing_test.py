@@ -9,7 +9,7 @@ from apistubgentest.models import (
     DataClassSimple, DataClassWithFields, DataClassDynamic, DataClassWithKeywordOnly, DataClassWithPostInit
 )
 
-from ._test_util import _check, _tokenize, _merge_lines, _render_lines, _render_string
+from ._test_util import _check, _tokenize, _merge_lines, _render_lines, _render_string, MockApiView
 
 
 def _check_all(actual, expect, obj):
@@ -24,7 +24,9 @@ class TestDataClassParsing:
     
     def test_dataclass_simple(self):
         obj = DataClassSimple
-        class_node = DataClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = DataClassNode(
+             name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         lines = _render_lines(_tokenize(class_node))        
         assert lines[0].startswith("@dataclass")
 
@@ -43,7 +45,9 @@ class TestDataClassParsing:
 
     def test_dataclass_fields(self):
         obj = DataClassWithFields
-        class_node = DataClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = DataClassNode(
+             name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         lines = _render_lines(_tokenize(class_node))
         assert lines[0].startswith("@dataclass")
 
@@ -68,7 +72,9 @@ class TestDataClassParsing:
             obj = DataClassDynamic
             # TODO: Support make_dataclass
             try:
-                class_node = DataClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+                class_node = DataClassNode(
+             name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
                 lines = _render_lines(_tokenize(class_node))
                 assert lines[0].startswith("@dataclass")
                 # TODO: Flesh this out
@@ -77,7 +83,9 @@ class TestDataClassParsing:
 
     def test_dataclass_with_kw_only(self):
         obj = DataClassWithKeywordOnly
-        class_node = DataClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        class_node = DataClassNode(
+             name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
         lines = _render_lines(_tokenize(class_node))
         assert lines[0].startswith("@dataclass")
         ivars = lines[2:5]
@@ -94,7 +102,9 @@ class TestDataClassParsing:
 
     def test_dataclass_with_post_init(self):
             obj = DataClassWithPostInit
-            class_node = DataClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+            class_node = DataClassNode(
+             name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace, apiview=MockApiView
+        )
             lines = _render_lines(_tokenize(class_node))
             assert lines[0].startswith("@dataclass")
             ivars = lines[2:5]

@@ -1,0 +1,12 @@
+{
+    "CrossLanguagePackageId": "Schemas",
+    "CrossLanguageDefinitionId": {
+        "treestyle.parser.models.CodeDiagnostic": "Schemas.CodeDiagnostic",
+        "treestyle.parser.models.CodeFile": "Schemas.CodeFile",
+        "treestyle.parser.models.NavigationItem": "Schemas.NavigationItem",
+        "treestyle.parser.models.ReviewLine": "Schemas.ReviewLine",
+        "treestyle.parser.models.ReviewToken": "Schemas.ReviewToken",
+        "treestyle.parser.models.TokenKind": "Schemas.TokenKind",
+        "treestyle.parser.models.CodeDiagnosticLevel": "Schemas.CodeDiagnosticLevel"
+    }
+}

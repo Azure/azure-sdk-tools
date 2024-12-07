@@ -21,8 +21,10 @@ from subprocess import check_call
 import zipfile
 
 
-from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 from apistub._metadata_map import MetadataMap
+
+from apistub._generated.treestyle.parser.models import ApiView
+from apistub._generated.treestyle.parser._model_base import SdkJSONEncoder as APIViewEncoder
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"
@@ -206,6 +208,8 @@ class StubGenerator:
             source_url=source_url,
             pkg_version=package_version
         )
+        apiview.generate_tokens()
+
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 
@@ -217,14 +221,10 @@ class StubGenerator:
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
-            self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
 
-        # Create navigation info to navigate within APIreview tool
-        navigation = Navigation(package_name, None)
-        navigation.tags = NavigationTag(Kind.type_package)
-        apiview.add_navigation(navigation)
-
-        # Generate any global diagnostics
+            self.module_dict[m] = ModuleNode(m, module_obj, namespace, apiview=apiview)
+        
+        ## Generate any global diagnostics
         global_errors = PylintParser.get_items("GLOBAL")
         for g in global_errors or []:
             g.generate_tokens(apiview, "GLOBAL")
@@ -235,11 +235,7 @@ class StubGenerator:
             self.module_dict[m].generate_diagnostics()
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
-            self.module_dict[m].generate_tokens(apiview)
-            # Add navigation info for this modules. navigation info is used to build tree panel in API tool
-            module_nav = self.module_dict[m].get_navigation()
-            if module_nav:
-                navigation.add_child(module_nav)
+            self.module_dict[m].generate_tokens(apiview.review_lines)
         return apiview
 
     def _extract_wheel(self):

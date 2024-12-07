@@ -6,6 +6,7 @@
 
 from pydoc import Doc
 from apistub.nodes import DocstringParser
+from ._test_util import MockApiView
 
 
 docstring_default_legacy = """
@@ -133,13 +134,13 @@ docstring_type_with_quotes = """
 class TestDocstringParser:
 
     def _test_variable_type(self, docstring, expected):
-        parser = DocstringParser(docstring)
+        parser = DocstringParser(docstring, apiview=MockApiView)
         for varname, expect_val in expected.items():
             actual = parser.type_for(varname)
             assert expect_val == actual
 
     def _test_return_type(self, docstring, expected):
-        parser = DocstringParser(docstring)
+        parser = DocstringParser(docstring, apiview=MockApiView)
         assert expected == parser.ret_type
 
     def test_docstring_param_type(self):
@@ -207,13 +208,13 @@ class TestDocstringParser:
         self._test_return_type(docstring_type_with_quotes, "list[str]")
     
     def test_defaults(self):
-        parser = DocstringParser(docstring_multi_complex_type)
+        parser = DocstringParser(docstring_multi_complex_type, apiview=MockApiView)
         # optional keyword-arguments are documented with "..."
         assert parser.default_for("country_hint") == "..."
         assert parser.default_for("documents") == None
 
     def test_docstring_defaults_legacy(self):
-        parser = DocstringParser(docstring_default_legacy)
+        parser = DocstringParser(docstring_default_legacy, apiview=MockApiView)
         assert parser.default_for("value") == "cat"
         assert parser.default_for("another") == "dog"
         assert parser.default_for("some_class") == ":py:class:`apistubgen.test.models.FakeObject`"

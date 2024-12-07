@@ -12,8 +12,15 @@ class DataClassNode(ClassNode):
     """Class node to represent parsed data classes
     """
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
-        super().__init__(name=name, namespace=namespace, parent_node=parent_node, obj=obj, pkg_root_namespace=pkg_root_namespace)
+    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview):
+        super().__init__(
+            name=name,
+            namespace=namespace,
+            parent_node=parent_node,
+            obj=obj,
+            pkg_root_namespace=pkg_root_namespace,
+            apiview=apiview,
+        )
         self.decorators = [x for x in self.decorators if not x.startswith("@dataclass")]
         # explicitly set synthesized __init__ return type to None to fix test flakiness
         for child in self.child_nodes:
@@ -41,7 +48,7 @@ class DataClassNode(ClassNode):
     """
     def _extract_properties(self, params, *, filter: bool = True, allow_list: Optional[List[str]] = None)-> List[ArgType]:
         all_props = [
-            ArgType(name, argtype=None, default=obj, keyword=None) for (name, obj) in inspect.getmembers(params)
+            ArgType(name, argtype=None, default=obj, apiview=self.apiview, keyword=None) for (name, obj) in inspect.getmembers(params)
         ]
         if filter:
             allow_list = allow_list or []
@@ -51,25 +58,29 @@ class DataClassNode(ClassNode):
         else:
             return all_props
 
-    def _generate_dataclass_annotation_properties(self, apiview):
+    def _generate_dataclass_annotation_properties(self, review_line, namespace):
         if self.dataclass_params:
-            apiview.add_punctuation("(")
+            review_line.add_punctuation("(", has_suffix_space=False)
             for (i, param) in enumerate(self.dataclass_params):
                 function_id = f"{self.namespace_id}.field[{param.argname}]("
-                param.generate_tokens(apiview, function_id, add_line_marker=False)
+                param.generate_tokens(
+                    function_id, namespace, review_line, add_line_marker=False
+                )
                 if i != len(self.dataclass_params) - 1:
-                    apiview.add_punctuation(",", postfix_space=True)
-            apiview.add_punctuation(")")
+                    review_line.add_punctuation(",")
+            review_line.add_punctuation(")", has_suffix_space=False)
 
-    def generate_tokens(self, apiview):
+    def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param ApiView: apiview
+        :param review_lines: ReviewLines
         """
+        # TODO: check if dataclass is being tested correctly
         logging.info(f"Processing dataclass {self.namespace_id}")
+
         # Generate class name line
-        apiview.add_whitespace()
-        apiview.add_keyword("@dataclass")
-        apiview.add_line_marker(f"{self.namespace_id}.@dataclass")
-        self._generate_dataclass_annotation_properties(apiview)
-        apiview.add_newline()
-        super().generate_tokens(apiview)
+        review_line = review_lines.create_review_line()
+        review_line.add_keyword("@dataclass", has_suffix_space=False)
+        review_line.add_line_marker(f"{self.namespace_id}.@dataclass")
+        self._generate_dataclass_annotation_properties(review_line, self.namespace)
+        review_lines.append(review_line)
+        super().generate_tokens(review_lines)

@@ -1,7 +1,7 @@
 import { getRepository } from '../utils/githubUtils';
-import { sdkAutoMain } from '../automation/entrypoint';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { sdkAutomationCliConfig } from './config';
+import { sdkAutoMain } from '../automation/entrypoint';
 
 // tslint:disable-next-line: no-floating-promises
 (async () => {
@@ -10,30 +10,30 @@ import { sdkAutomationCliConfig } from './config';
 
   let status: SDKAutomationState | undefined = undefined;
   try {
-    const repo = getRepository(config.specRepo);
+    const repo = getRepository(config.specRepoHttpsUrl);
 
     process.chdir(config.workingFolder);
     status = await sdkAutoMain({
       specRepo: repo,
+      localSpecRepoPath: config.localSpecRepoPath,
+      localSdkRepoPath: config.localSdkRepoPath,
+      tspConfigPath: config.tspConfigPath,
+      readmePath: config.readmePath,
+      specCommitSha: config.specCommitSha,
+      specRepoHttpsUrl: config.specRepoHttpsUrl,
       pullNumber: config.prNumber,
       sdkName: config.sdkRepoName,
-      filterSwaggerToSdk: config.executionMode === 'SDK_FILTER',
+      workingFolder: config.workingFolder,
       github: {
         token: config.githubToken,
-        id: config.githubApp.id,
-        privateKey: config.githubApp.privateKey
       },
-      storage: config.blobStorage,
-      runEnv: config.isTriggeredByUP ? 'azureDevOps' : 'local',
+      runEnv: config.isTriggeredByPipeline ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto'
     });
   } catch (e) {
     console.error(e.message);
     console.error(e.stack);
     status = 'failed';
-    if (config.executionMode === 'SDK_FILTER') {
-      console.log(`##vso[task.setVariable variable=SkipAll;isOutput=true]true`);
-    }
   }
 
   const elapsed = process.hrtime(start);

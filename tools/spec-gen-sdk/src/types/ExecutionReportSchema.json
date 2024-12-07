@@ -1,0 +1,104 @@
+{
+    "type": "object",
+    "properties": {
+      "packages": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/PackageResult"
+        }
+      },
+      "executionResult": {
+        "type": "string",
+        "enum": ["failed", "succeeded", "warning"],
+        "default": "succeeded"
+      },
+      "fullLogPath": {
+        "type": "string"
+      },
+      "filteredLogPath": {
+        "type": "string"
+      },
+      "sdkArtifactFolder": {
+        "type": "string"
+      },
+      "sdkApiViewArtifactFolder": {
+        "type": "string"
+      }
+    },
+    "required": ["packages", "executionResult", "fullLogPath", "filteredLogPath"],
+    "definitions": {
+      "PackageResult": {
+        "properties": {
+          "packageName": {
+            // Name of package. Will be used in branch name and PR title.
+            // By default it's folder name of first entry in path.
+            "type": "string"
+          },
+          "result": {
+            // Status of package. By default it's succeeded.
+            "type": "string",
+            "enum": ["failed", "succeeded", "warning"],
+            "default": "succeeded"
+          },
+          "readmeMd": {
+            // List of related readmeMd of this package.
+            // Must provide this field if dryRun is true.
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "typespecProject": {
+            // List of related typespec project of this package.
+            // Must provide this field if dryRun is true.
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "version": {
+            "type": "string"
+          },
+          "artifactPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "apiViewArtifact": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "hasBreakingChange": {
+            "type": "boolean"
+          },
+          "breakingChangeLabel": {
+            "type": "string"
+          },
+          "areBreakingChangeSuppressed": {
+            "type": "boolean"
+          },
+          "presentBreakingChangeSuppressions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "absentBreakingChangeSuppressions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "installInstructions": {
+            // See #InstallInstructionScriptOutput
+            "$ref": "InstallInstructionScriptOutput"
+          }          
+        },
+        "required": ["executionResult", "artifactPaths", "language"]
+      }
+    }
+  }
+  

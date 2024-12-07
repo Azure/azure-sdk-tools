@@ -351,7 +351,7 @@ class FunctionNode(NodeEntityBase):
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
-            review_line = review_lines.create_review_line()
+            review_line = review_lines.create_review_line(related_to_line=self.namespace_id)
             review_line.add_keyword(annot, has_suffix_space=False)
             review_lines.append(review_line)
         review_line = review_lines.create_review_line()

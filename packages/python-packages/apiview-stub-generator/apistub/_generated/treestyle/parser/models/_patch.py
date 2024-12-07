@@ -271,15 +271,11 @@ class ReviewLine(ReviewLineImpl):
             )
         )
 
-    def add_link(self, url):
-        self.add_token(ReviewToken(url, TokenKind.ExternalLinkStart))
-        self.add_token(ReviewToken(url))
-        self.add_token(ReviewToken(kind=TokenKind.ExternalLinkEnd))
-
-    def add_member(self, name, id):
-        token = ReviewToken(name, TokenKind.MEMBER_NAME)
-        token.definition_id = id
-        self.add_token(token)
+    # TODO: check what external link start/end map should be replaced by
+    #def add_link(self, url):
+    #    self.add_token(ReviewToken(url, TokenKind.ExternalLinkStart))
+    #    self.add_token(ReviewToken(url))
+    #    self.add_token(ReviewToken(kind=TokenKind.ExternalLinkEnd))
 
     def add_string_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
@@ -301,9 +297,6 @@ class ReviewLine(ReviewLineImpl):
                 skip_diff=skip_diff
             )
         )
-
-    def add_child_line(self, line):
-        self.children.append(line)
 
     def _add_token_for_type_name(
         self,

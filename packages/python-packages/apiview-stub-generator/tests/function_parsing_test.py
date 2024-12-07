@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from apistub.nodes import FunctionNode, ClassNode
+from apistub.nodes import FunctionNode
 from apistubgentest import (
     Python2TypeHintClient,
     Python3TypeHintClient,
@@ -57,9 +57,13 @@ class TestTypeHints:
         ]
         for client in clients:
             node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_variadic_typehint)
-            actual = _render_string(_tokenize(node))
+            tokens = _tokenize(node)
+            actual = _render_string(tokens)
             expected = "def with_variadic_typehint(self, *vars: str, **kwargs: Any) -> None"
             _check(actual, expected, client)
+            # Ensure that the last token/blank line is a context end line
+            assert len(tokens[-1]['Tokens']) == 0
+            assert tokens[-1]['IsContextEndLine']
 
     """ Ensure list type return typehint renders correctly. """
     def test_str_list_return_type(self):
@@ -103,9 +107,13 @@ class TestDefaultValues:
     """ Ensure that simple default values appear correctly. """
     def test_simple_default(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_simple_default)
-        actual = _render_string(_tokenize(node))
+        tokens = _tokenize(node)
+        actual = _render_string(tokens)
         expected = 'def with_simple_default(name: str = "Bill", *, age: int = 21) -> None'
         _check(actual, expected, DefaultValuesClient)
+        # Ensure that the last token/blank line is a context end line
+        assert len(tokens[-1]['Tokens']) == 0
+        assert tokens[-1]['IsContextEndLine']
 
     """ Ensure that optional types with defaults display correctly. """
     def test_simple_optional_default(self):

@@ -11,6 +11,8 @@ import {
   TypeNode,
   TypeAliasDeclaration,
   CallSignatureDeclaration,
+  ClassDeclaration,
+  ConstructorDeclaration,
 } from 'ts-morph';
 import {
   DiffLocation,
@@ -19,6 +21,7 @@ import {
   FindMappingCallSignature,
   AssignDirection,
   NameNode,
+  FindMappingConstructor,
 } from '../common/types';
 import {
   getCallableEntityParametersFromSymbol,
@@ -26,6 +29,7 @@ import {
   isPropertyArrowFunction,
   isPropertyMethod,
   isSameSignature,
+  isSameConstructor,
 } from '../../utils/ast-utils';
 
 function findBreakingReasons(source: Node, target: Node): DiffReasons {
@@ -381,6 +385,63 @@ export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, targe
   let sourceNameNode: NameNode = { name: source.getName(), node: source };
   let targetNameNode: NameNode = { name: target.getName(), node: target };
   return [createDiffPair(DiffLocation.TypeAlias, DiffReasons.TypeChanged, sourceNameNode, targetNameNode)];
+}
+
+export function findClassDeclarationBreakingChanges(source: ClassDeclaration, target: ClassDeclaration, findMappingCallSignature?: FindMappingCallSignature): DiffPair[] {
+  const targetConstraints = target.getConstructors();
+  const sourceConstraints = source.getConstructors();
+  const constraintBreakingChanges = findConstraintBreakingChanges(sourceConstraints, targetConstraints);
+
+  const targetProperties = target.getType().getProperties();
+  const sourceProperties = source.getType().getProperties();
+  const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
+  return [...constraintBreakingChanges, ...propertyBreakingChanges];
+}
+
+function findConstraintBreakingChanges(
+  sourceConstraints: ConstructorDeclaration[],
+  targetConstraints: ConstructorDeclaration[]
+): DiffPair[] {
+  const pairs = targetConstraints.reduce((result, targetConstraint, currentIndex) => {
+    const defaultFindMappingConstructor: FindMappingConstructor = (
+      currentIndex: number,
+      constraints: ConstructorDeclaration[]
+    ) => {
+      if (currentIndex >= constraints.length) {
+        return undefined;
+      } else {
+        return constraints[currentIndex]
+      }
+    };
+    const resolvedFindMappingConstructor = defaultFindMappingConstructor;
+    const sourceContext = resolvedFindMappingConstructor(currentIndex, sourceConstraints);
+    if (sourceContext) {
+      const sourceConstraint = sourceContext;
+
+      // handle parameters
+      //const path = sourceContext.id;
+      const getParameters = (s: ConstructorDeclaration): ParameterDeclaration[] => s.getParameters();
+      const parameterPairs = findParameterBreakingChangesCore(
+        getParameters(sourceConstraint),
+        getParameters(targetConstraint),
+        currentIndex.toString(),
+        currentIndex.toString(),
+        sourceConstraint,
+        targetConstraint
+      );
+      if (parameterPairs.length > 0) result.push(...parameterPairs);
+
+      return result;
+    }
+
+    // not found
+    const getNameNode = (c: ConstructorDeclaration): NameNode => ({ name: c.getText(), node: c });
+    const targetNameNode = getNameNode(targetConstraint);
+    const pair = createDiffPair(DiffLocation.Constructor, DiffReasons.Removed, undefined, targetNameNode);
+    result.push(pair);
+    return result;
+  }, new Array<DiffPair>());
+  return pairs;
 }
 
 export function createDiffPair(

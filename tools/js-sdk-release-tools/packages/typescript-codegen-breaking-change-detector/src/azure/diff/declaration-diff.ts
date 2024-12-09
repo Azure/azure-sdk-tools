@@ -398,7 +398,7 @@ export function findClassDeclarationBreakingChanges(source: ClassDeclaration, ta
   return [...constraintBreakingChanges, ...propertyBreakingChanges];
 }
 
-function findConstraintBreakingChanges(
+function findConstructorBreakingChanges(
   sourceConstraints: ConstructorDeclaration[],
   targetConstraints: ConstructorDeclaration[]
 ): DiffPair[] {

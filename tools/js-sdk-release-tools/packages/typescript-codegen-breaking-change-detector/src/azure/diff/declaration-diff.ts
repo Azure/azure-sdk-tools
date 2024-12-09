@@ -11,6 +11,8 @@ import {
   TypeNode,
   TypeAliasDeclaration,
   CallSignatureDeclaration,
+  ClassDeclaration,
+  ConstructorDeclaration,
 } from 'ts-morph';
 import {
   DiffLocation,
@@ -19,6 +21,7 @@ import {
   FindMappingCallSignature,
   AssignDirection,
   NameNode,
+  FindMappingConstructor,
 } from '../common/types';
 import {
   getCallableEntityParametersFromSymbol,
@@ -381,6 +384,78 @@ export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, targe
   let sourceNameNode: NameNode = { name: source.getName(), node: source };
   let targetNameNode: NameNode = { name: target.getName(), node: target };
   return [createDiffPair(DiffLocation.TypeAlias, DiffReasons.TypeChanged, sourceNameNode, targetNameNode)];
+}
+
+export function findClassDeclarationBreakingChanges(source: ClassDeclaration, target: ClassDeclaration): DiffPair[] {
+  const targetConstructors = target.getConstructors();
+  const sourceConstructors = source.getConstructors();
+  const constructorBreakingChanges = findConstructorBreakingChanges(sourceConstructors, targetConstructors);
+
+  const targetProperties = target.getType().getProperties();
+  const sourceProperties = source.getType().getProperties();
+  const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
+  return [...constructorBreakingChanges, ...propertyBreakingChanges];
+}
+
+export function isSameConstructor(left: ConstructorDeclaration, right: ConstructorDeclaration): boolean {
+  const leftOverloads = left.getOverloads()
+  const rightOverloads = right.getOverloads()
+  const overloads = leftOverloads.filter((t) => {
+    const compatibleSourceFunction = rightOverloads.find((s) => {
+      // NOTE: isTypeAssignableTo does not work for overloads
+      const parameterPairs = [
+        ...findParameterBreakingChangesCore(s.getParameters(), t.getParameters(), '', '', s, t),
+        ...findParameterBreakingChangesCore(t.getParameters(), s.getParameters(), '', '', t, s),
+      ];
+      return parameterPairs.length === 0;
+    });
+    return compatibleSourceFunction === undefined;
+  });
+  return overloads.length === 0;
+}
+
+
+function findConstructorBreakingChanges(
+  sourceConstraints: ConstructorDeclaration[],
+  targetConstraints: ConstructorDeclaration[]
+): DiffPair[] {
+  const pairs = targetConstraints.reduce((result, targetConstraint, currentIndex) => {
+    const defaultFindMappingConstructor: FindMappingConstructor = (
+      target: ConstructorDeclaration,
+      constraints: ConstructorDeclaration[]
+    ) => {
+      const constraint = constraints.find((s) => isSameConstructor(target, s));
+      if (!constraint) return undefined;
+      return constraint;
+    };
+    const resolvedFindMappingConstructor = defaultFindMappingConstructor;
+    const sourceContext = resolvedFindMappingConstructor(targetConstraint, sourceConstraints);
+    if (sourceContext) {
+      const sourceConstraint = sourceContext;
+
+      // handle parameters
+      const getParameters = (s: ConstructorDeclaration): ParameterDeclaration[] => s.getParameters();
+      const parameterPairs = findParameterBreakingChangesCore(
+        getParameters(sourceConstraint),
+        getParameters(targetConstraint),
+        currentIndex.toString(),
+        currentIndex.toString(),
+        sourceConstraint,
+        targetConstraint
+      );
+      if (parameterPairs.length > 0) result.push(...parameterPairs);
+
+      return result;
+    }
+
+    // not found
+    const getNameNode = (c: ConstructorDeclaration): NameNode => ({ name: c.getText(), node: c });
+    const targetNameNode = getNameNode(targetConstraint);
+    const pair = createDiffPair(DiffLocation.Constructor, DiffReasons.Removed, undefined, targetNameNode);
+    result.push(pair);
+    return result;
+  }, new Array<DiffPair>());
+  return pairs;
 }
 
 export function createDiffPair(

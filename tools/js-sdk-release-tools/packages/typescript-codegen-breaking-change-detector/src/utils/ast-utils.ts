@@ -11,6 +11,7 @@ import {
   ParameterDeclaration,
   SymbolFlags,
   Symbol,
+  ConstructorDeclaration,
 } from 'ts-morph';
 import { ParserServices, ParserServicesWithTypeInformation } from '@typescript-eslint/typescript-estree';
 import { Scope, ScopeManager } from '@typescript-eslint/scope-manager';

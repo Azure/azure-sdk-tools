@@ -68,7 +68,20 @@ class PublicCaseInsensitiveEnumMeta(EnumMeta):
 
 class DocstringClass:
     """A class for testing docstring behavior.
+
+    :param str or None name: Dummy name.
+    :keyword dict[str, str] or None values: Dummy values. Defaults
+     to None.
+
+    :ivar str name: Dummy name. If None, sets to "Contoso".
+    :ivar dict[str, str] or None values: Dummy values, defaults to
+     None.
+    :rtype: None
     """
+
+    def __init__(self, name: Optional[str], *args: Any, values: Optional[Dict[str, str]] = None) -> None:
+        self.name: str = name if name else "Contoso"
+        self.values: Dict[str, str] = values
 
     def docstring_with_default_formal(self, value, another, some_class, **kwargs) -> str:
         """Docstring containing a formal default.

@@ -387,15 +387,15 @@ export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, targe
   return [createDiffPair(DiffLocation.TypeAlias, DiffReasons.TypeChanged, sourceNameNode, targetNameNode)];
 }
 
-export function findClassDeclarationBreakingChanges(source: ClassDeclaration, target: ClassDeclaration, findMappingCallSignature?: FindMappingCallSignature): DiffPair[] {
+export function findClassDeclarationBreakingChanges(source: ClassDeclaration, target: ClassDeclaration): DiffPair[] {
   const targetConstructors = target.getConstructors();
-  const sourceConstraints = source.getConstructors();
-  const constraintBreakingChanges = findConstraintBreakingChanges(sourceConstraints, targetConstraints);
+  const sourceConstructors = source.getConstructors();
+  const constructorBreakingChanges = findConstructorBreakingChanges(sourceConstructors, targetConstructors);
 
   const targetProperties = target.getType().getProperties();
   const sourceProperties = source.getType().getProperties();
   const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
-  return [...constraintBreakingChanges, ...propertyBreakingChanges];
+  return [...constructorBreakingChanges, ...propertyBreakingChanges];
 }
 
 function findConstructorBreakingChanges(

@@ -388,7 +388,7 @@ export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, targe
 }
 
 export function findClassDeclarationBreakingChanges(source: ClassDeclaration, target: ClassDeclaration, findMappingCallSignature?: FindMappingCallSignature): DiffPair[] {
-  const targetConstraints = target.getConstructors();
+  const targetConstructors = target.getConstructors();
   const sourceConstraints = source.getConstructors();
   const constraintBreakingChanges = findConstraintBreakingChanges(sourceConstraints, targetConstraints);
 

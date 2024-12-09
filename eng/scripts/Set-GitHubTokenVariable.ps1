@@ -5,6 +5,9 @@ param(
     [string]$VariableName
 )
 
+$keyLength = $AppKey.Length
+Write-Host "AppKey: $($AppKey.Substring(0, 30)) ... $($keyLength - 60) ... $($AppKey.Substring($keyLength - 31, 30))"
+
 $now = [System.DateTimeOffset]::UtcNow
 $payload = [ordered]@{ iss = $AppId; iat = $now.ToUnixTimeSeconds(); exp = $now.AddMinutes(1).ToUnixTimeSeconds() }
 

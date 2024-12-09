@@ -249,7 +249,7 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
       expect(breakingPairs[0].source).toBeUndefined();
       expect(breakingPairs[0].target?.node.getText()).toBe(
-        'constructor(a: number, b: number){}'
+        'constructor(a?: number, b?: number, c?: number){}'
       );
 
       breakingPairs = patchClass('classConstructorAdd', astContext);

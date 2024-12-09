@@ -125,6 +125,6 @@ export type FindMappingCallSignature = (
 ) => { signature: Signature; id: string } | undefined;
 
 export type FindMappingConstructor = (
-  currentIndex: number,
+  currentIndex: ConstructorDeclaration,
   constraints: ConstructorDeclaration[],
 ) => ConstructorDeclaration | undefined;

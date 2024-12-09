@@ -29,7 +29,6 @@ import {
   isPropertyArrowFunction,
   isPropertyMethod,
   isSameSignature,
-  isSameConstructor,
 } from '../../utils/ast-utils';
 
 function findBreakingReasons(source: Node, target: Node): DiffReasons {
@@ -398,28 +397,43 @@ export function findClassDeclarationBreakingChanges(source: ClassDeclaration, ta
   return [...constructorBreakingChanges, ...propertyBreakingChanges];
 }
 
+export function isSameConstructor(left: ConstructorDeclaration, right: ConstructorDeclaration): boolean {
+  const leftOverloads = left.getOverloads()
+  const rightOverloads = right.getOverloads()
+  const overloads = leftOverloads.filter((t) => {
+    const compatibleSourceFunction = rightOverloads.find((s) => {
+      // NOTE: isTypeAssignableTo does not work for overloads
+      const parameterPairs = [
+        ...findParameterBreakingChangesCore(s.getParameters(), t.getParameters(), '', '', s, t),
+        ...findParameterBreakingChangesCore(t.getParameters(), s.getParameters(), '', '', t, s),
+      ];
+      return parameterPairs.length === 0;
+    });
+    return compatibleSourceFunction === undefined;
+  });
+  return overloads.length === 0;
+}
+
+
 function findConstructorBreakingChanges(
   sourceConstraints: ConstructorDeclaration[],
   targetConstraints: ConstructorDeclaration[]
 ): DiffPair[] {
   const pairs = targetConstraints.reduce((result, targetConstraint, currentIndex) => {
     const defaultFindMappingConstructor: FindMappingConstructor = (
-      currentIndex: number,
+      target: ConstructorDeclaration,
       constraints: ConstructorDeclaration[]
     ) => {
-      if (currentIndex >= constraints.length) {
-        return undefined;
-      } else {
-        return constraints[currentIndex]
-      }
+      const constraint = constraints.find((s) => isSameConstructor(target, s));
+      if (!constraint) return undefined;
+      return constraint;
     };
     const resolvedFindMappingConstructor = defaultFindMappingConstructor;
-    const sourceContext = resolvedFindMappingConstructor(currentIndex, sourceConstraints);
+    const sourceContext = resolvedFindMappingConstructor(targetConstraint, sourceConstraints);
     if (sourceContext) {
       const sourceConstraint = sourceContext;
 
       // handle parameters
-      //const path = sourceContext.id;
       const getParameters = (s: ConstructorDeclaration): ParameterDeclaration[] => s.getParameters();
       const parameterPairs = findParameterBreakingChangesCore(
         getParameters(sourceConstraint),

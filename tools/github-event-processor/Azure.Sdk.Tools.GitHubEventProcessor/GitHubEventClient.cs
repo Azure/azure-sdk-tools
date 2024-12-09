@@ -1339,7 +1339,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 Console.WriteLine("LABEL_SERVICE_API_KEY is null or empty.");
                 return new List<string>();
             }
-            string requestUrl = $"https://issuelabeler.azurewebsites.net/api/AzureSdkIssueLabelerService?code={AIServiceKey}";
+            string requestUrl = $"https://gh-issue-labeler-function.azurewebsites.net/api/AzureSdkIssueLabelerService?code={AIServiceKey}";
 
             var payload = new
             {

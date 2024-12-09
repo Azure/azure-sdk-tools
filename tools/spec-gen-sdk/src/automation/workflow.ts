@@ -4,19 +4,12 @@ import * as fs from 'fs';
 import { mkdirpSync } from 'fs-extra';
 import { default as Transport } from 'winston-transport';
 import { findSDKToGenerateFromTypeSpecProject } from '../utils/typespecUtils';
-import { SdkAutoContext } from './entrypoint';
 import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
 import {
-  gitAddAll,
-  gitCheckoutBranch,
-  gitGetCommitter,
-  gitGetDiffFileList,
-  gitRemoveAllBranches,
-  gitSetRemoteWithAuth
+  gitGetDiffFileList
 } from '../utils/gitUtils';
-import { getSdkRepoConfig, getSpecConfig, SdkRepoConfig, specConfigPath } from '../types/SpecConfig';
-import { getGithubFileContent, RepoKey, repoKeyToString } from '../utils/githubUtils';
-import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
+import { specConfigPath } from '../types/SpecConfig';
+import { repoKeyToString } from '../utils/githubUtils';
 import { runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
 import {
   deleteTmpJsonFile,
@@ -31,13 +24,14 @@ import { GenerateOutput, getGenerateOutput } from '../types/GenerateOutput';
 import { getPackageData, PackageData } from '../types/PackageData';
 import { workflowPkgMain } from './workflowPackage';
 import { SDKAutomationState } from './sdkAutomationState';
-import { CommentCaptureTransport, getBlobName } from './logging';
+import { CommentCaptureTransport } from './logging';
 import { findSwaggerToSDKConfiguration } from '../utils/readme';
 import { getInitOutput } from '../types/InitOutput';
 import { MessageRecord } from '../types/Message';
 import { sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, validateSdkSuppressionsFile } from '../types/sdkSuppressions';
 import { parseYamlContent, removeDuplicatesFromRelatedFiles } from '../utils/utils';
 import { SDKSuppressionContentList } from '../utils/handleSuppressionLines';
+import { SdkAutoContext } from './entrypoint';
 
 export const remoteIntegration = 'integration';
 export const remoteMain = 'main';
@@ -67,22 +61,20 @@ export enum FailureType {
 }
 
 export type WorkflowContext = SdkAutoContext & {
-  sdkRepoConfig: SdkRepoConfig;
-  swaggerToSdkConfig: SwaggerToSdkConfig;
   specRepo: SimpleGit;
   specFolder: string;
   sdkRepo: SimpleGit;
   sdkFolder: string;
+  sdkArtifactFolder?: string;
+  sdkApiViewArtifactFolder?: string;
   pendingPackages: PackageData[];
   handledPackages: PackageData[];
   status: SDKAutomationState;
   failureType?: FailureType;
   messages: string[];
   messageCaptureTransport: Transport;
-  legacyAfterScripts: string[];
   scriptEnvs: { [key: string]: string | undefined };
   tmpFolder: string;
-  skipLegacy: boolean;
   extraResultRecords: MessageRecord[];
 };
 
@@ -101,21 +93,14 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
   });
   context.logger.add(captureTransport);
 
-  const configsPromise = (await workflowInitConfig(context))();
-  const specContextPromise = (await workflowInitSpecRepo(context))();
+  const specContext = workflowInitSpecRepo(context);
+  const sdkContext = workflowInitSdkRepo(context);
 
-  const configs = await configsPromise;
-  const sdkContext = await workflowInitSdkRepo(context, configs.sdkRepoConfig, configs.swaggerToSdkConfig);
-
-  const tmpFolder = path.join(context.workingFolder, `${configs.sdkRepoConfig.mainRepository.name}_tmp`);
+  const tmpFolder = path.join(context.config.workingFolder, `${context.sdkRepoConfig.mainRepository.name}_tmp`);
   mkdirpSync(tmpFolder);
 
-  const skipLegacy = configs.swaggerToSdkConfig.generateOptions.generateScript !== undefined;
-
-  const specContext = await specContextPromise;
   return {
     ...context,
-    ...configs,
     ...specContext,
     ...sdkContext,
     pendingPackages: [],
@@ -124,9 +109,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
     status: 'inProgress',
     messages,
     messageCaptureTransport: captureTransport,
-    legacyAfterScripts: [],
     tmpFolder,
-    skipLegacy,
     scriptEnvs: {
       USER: process.env.USER,
       HOME: process.env.HOME,
@@ -139,32 +122,23 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 };
 
 export const workflowMain = async (context: WorkflowContext) => {
-  await workflowCallInitScript(context);
-  const changedSpecs = await workflowDetectChangedSpec(context);
-  context.logger.remove(context.messageCaptureTransport);
-
-  const callMode =
-    context.swaggerToSdkConfig.advancedOptions.generationCallMode ??
-    'one-for-all-configs';
-  if (callMode === 'one-for-all-configs') {
-    await workflowHandleReadmeMdOrTypeSpecProject(context, changedSpecs);
+  if (context.specPrInfo) {
+    await workflowValidateSdkConfigForSpecPr(context);
+    await workflowCallInitScript(context);
+    await workflowGenerateSdkForSpecPr(context);
   } else {
-    for (const changedSpec of changedSpecs) {
-      await workflowHandleReadmeMdOrTypeSpecProject(context, [changedSpec]);
-    }
+    await workflowValidateSdkConfig(context);
+    await workflowCallInitScript(context);
+    await workflowGenerateSdk(context);
   }
   setSdkAutoStatus(context, 'succeeded');
 };
 
-export const workflowFilterSdkMain = async (context: SdkAutoContext) => {
-  const specConfigContentPromise = workflowInitGetSpecConfig(context);
-  const specContextPromise = (await workflowInitSpecRepo(context, { checkoutMainBranch: false }))();
-  const specContext = await specContextPromise;
-  const specConfigContent = await specConfigContentPromise;
-  const specConfig = getSpecConfig(specConfigContent, context.config.specRepo);
+export const workflowValidateSdkConfigForSpecPr = async (context: SdkAutoContext) => {
+  const specContext = workflowInitSpecRepo(context);
   const changedSpecs = await workflowDetectChangedSpec({ ...context, ...specContext });
 
-  context.logger.log('section', 'Filter SDK to generate');
+  context.logger.log('section', 'Validate SDK configuration');
   const sdkToGenerate = new Set<string>();
 
   const commit = await specContext.specRepo.revparse(branchMain);
@@ -173,51 +147,92 @@ export const workflowFilterSdkMain = async (context: SdkAutoContext) => {
       const entry = await specContext.specRepo.revparse(`${commit}:${ch.typespecProject}`);
       const blob = await specContext.specRepo.catFile(['-p', entry]);
       const content = blob.toString();
-      const config = findSDKToGenerateFromTypeSpecProject(content, specConfig);
-      if (!config || config.length === 0) {
-        context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${ch.typespecProject}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml.`);
+      const config = findSDKToGenerateFromTypeSpecProject(content, context.specRepoConfig);
+      // todo map the sdkName by the sdk language
+      if (!config || config.length === 0 || !config.includes(context.config.sdkName)) {
+        context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${ch.typespecProject}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://aka.ms/azsdk/sample-arm-tsproject-tspconfig`);
         continue;
       }
-      for (const repo of config) {
-        sdkToGenerate.add(repo);
-      }
+      sdkToGenerate.add(context.config.sdkName);
     } else if (ch.readmeMd) {
       const entry = await specContext.specRepo.revparse(`${commit}:${ch.readmeMd}`);
       const blob = await specContext.specRepo.catFile(['-p', entry]);
       const content = blob.toString();
       const config = findSwaggerToSDKConfiguration(content);
       if (!config || config.repositories.length === 0) {
-        context.logger.warn(`Warning: 'swagger-to-sdk' section cannot be found in ${ch.readmeMd}. This readme file will be skipped from SDK generation. Please add the section to the readme file according to this guidance https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/code-gen/configure-go-sdk.md#swagger-to-sdk.`);
+        context.logger.warn(`Warning: 'swagger-to-sdk' section cannot be found in ${ch.readmeMd}. This readme file will be skipped from SDK generation. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
         continue;
       }
-      for (const repoConfig of config.repositories) {
-        sdkToGenerate.add(repoConfig.repo);
+      else if (!config.repositories.some(r => r.repo === context.config.sdkName)) {
+        context.logger.warn(`Warning: ${context.config.sdkName} cannot be found in the 'swagger-to-sdk' section in the ${ch.readmeMd}. This SDK will be skipped from SDK generation. Please add the right config to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
+        continue;
       }
+      sdkToGenerate.add(context.config.sdkName);
     }
   }
 
+  if (sdkToGenerate.size === 0) {
+    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
+  }
   context.logger.info(`SDK to generate:`);
   const enabledJobs: { [sdkName: string]: { sdkName: string } } = {};
   for (const sdkName of [...sdkToGenerate]) {
-    if (specConfig.sdkRepositoryMappings[sdkName] === undefined) {
-      context.logger.warn(`\tWarning: ${sdkName} not found in ${specConfigPath}. This SDK will be skipped from SDK generation. Please add the right config to the readme file according to this guidance https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/code-gen/configure-go-sdk.md#swagger-to-sdk.`);
+    if (context.specRepoConfig.sdkRepositoryMappings[sdkName] === undefined) {
+      context.logger.warn(`\tWarning: ${sdkName} not found in ${specConfigPath}. This SDK will be skipped from SDK generation. Please add the right config to the ${specConfigPath} according to this guidance https://aka.ms/azsdk/spec-repo-config`);
       continue;
     }
     context.logger.info(`\t${sdkName}`);
     enabledJobs[sdkName] = { sdkName };
   }
-  console.log(`##vso[task.setVariable variable=EnabledJobs;isOutput=true]${JSON.stringify(enabledJobs)}`);
-  if (sdkToGenerate.size === 0 || Object.keys(enabledJobs).length === 0) {
-    console.log(`##vso[task.setVariable variable=SkipAll;isOutput=true]true`);
+  context.logger.log('endsection', 'Validate SDK config for spec PR scenario');
+};
+
+export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
+  context.logger.log('section', 'Validate SDK configuration');
+  let sdkToGenerate = "";
+
+  let tspConfigPath, readmeMdPath;
+  if(context.config.tspConfigPath) {
+    tspConfigPath = path.join(context.config.localSpecRepoPath, context.config.tspConfigPath);
   }
-
-  const skipJobs: string[] = Object.keys(specConfig.sdkRepositoryMappings).filter(
-    (sdkName) => !sdkToGenerate.has(sdkName)
-  );
-  console.log(`##vso[task.setVariable variable=SkippedJobs]${skipJobs.join(' ')}`);
-  console.log(`##vso[task.setVariable variable=QueueJobs]${Object.keys(enabledJobs).join(' ')}`);
-
-  context.logger.log('endsection', 'Filter SDK to generate');
+  if(context.config.readmePath) {
+    readmeMdPath = path.join(context.config.localSpecRepoPath, context.config.readmePath);
+  }
+  
+  if (!tspConfigPath && !readmeMdPath) {
+    throw new Error(`ConfigError: 'tspConfigPath' and 'readmePath' are not provided. Please provide at least one of them.`);
+  }
+  
+  if (tspConfigPath) {
+    const tspConfigContent = fs.readFileSync(tspConfigPath).toString();
+    const config = findSDKToGenerateFromTypeSpecProject(tspConfigContent, context.specRepoConfig);
+    if (!config || config.length === 0 || !config.includes(context.config.sdkName)) {
+      context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://aka.ms/azsdk/sample-arm-tsproject-tspconfig`);
+    }
+    else {
+      sdkToGenerate = context.config.sdkName;
+    }
+  }
+  else if (readmeMdPath) {
+    const readmeContent = fs.readFileSync(readmeMdPath).toString();
+    const config = findSwaggerToSDKConfiguration(readmeContent);
+    if (!config || config.repositories.length === 0) {
+      context.logger.warn(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath}. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
+    }
+    else if (!config.repositories.some(r => r.repo === context.config.sdkName)) {
+      context.logger.warn(`Warning: ${context.config.sdkName} cannot be found in the 'swagger-to-sdk' section in the ${readmeMdPath}. Please add the right config to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
+    }
+    else {
+      sdkToGenerate = context.config.sdkName;
+    }
+  }
+  if (sdkToGenerate) {
+    context.logger.info(`SDK to generate:${context.config.sdkName}`);
+  }
+  else {
+    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
+  }
+  context.logger.log('endsection', 'Validate SDK configuration');
 };
 
 const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext, changedSpecs: ChangedSpecs[]) => {
@@ -228,8 +243,6 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   const typespecProjectList: string[] = [];
   const suppressionFileMap: Map<string, string|undefined> = new Map();
 
-  const specConfigContent = await workflowInitGetSpecConfig(context);
-  const specConfig = getSpecConfig(specConfigContent, context.config.specRepo);
   for (const changedSpec of changedSpecs) {
     if (changedSpec.typespecProject) {
       let content: string | undefined = undefined;
@@ -239,7 +252,7 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
         const typespecPath = `${path.join(context.specFolder, changedSpec.typespecProject!)}`;
         context.logger.error(`IOError: Fails to read typespec file with path of '${typespecPath}'. Skipping the typespec case and continue the run. Please ensure the typespec exists with the correct path. Error: ${error.message}`);
       }
-      const config = findSDKToGenerateFromTypeSpecProject(content, specConfig)?.filter(
+      const config = findSDKToGenerateFromTypeSpecProject(content, context.specRepoConfig)?.filter(
         (r) => r === context.config.sdkName
       )[0];
       if (config === undefined || config.length === 0) {
@@ -264,7 +277,6 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
         context.logger.warn(`\tWarning: ${context.config.sdkName} cannot be found in ${changedSpec.readmeMd}. This SDK will be skipped from SDK generation. Please add the right config to the readme file according to this guidance https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/code-gen/configure-go-sdk.md#swagger-to-sdk.`);
         continue;
       }
-      context.legacyAfterScripts.push(...(config.after_scripts ?? []));
       context.logger.info(`\t${changedSpec.readmeMd}`);
       readmeMdList.push(changedSpec.readmeMd!);
       suppressionFileMap.set(changedSpec.readmeMd!, changedSpec.suppressionFile);
@@ -283,14 +295,6 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   }
 
   const changedFiles = [...changedFilesSet];
-
-  const headCommit = await context.sdkRepo.revparse(branchMain);
-
-  context.logger.log('git', `Checkout branch ${branchSdkGen}`);
-  await gitCheckoutBranch(context, context.sdkRepo, branchMain);
-  await context.sdkRepo.raw(['branch', branchSdkGen, headCommit, '--force']);
-  await gitCheckoutBranch(context, context.sdkRepo, branchSdkGen);
-
   const { status, generateInput, generateOutput } = await workflowCallGenerateScript(
     context,
     changedFiles,
@@ -315,12 +319,10 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   context.pendingPackages =
     (generateOutput?.packages ?? []).map((result) => getPackageData(context, result, sdkSuppressionsYml));
 
-  const fileList = await workflowSaveGenerateResult(context);
-  await workflowDetectChangedPackages(context, fileList, readmeMdList);
+  workflowDetectChangedPackages(context);
 
   context.logger.remove(context.messageCaptureTransport);
   for (const pkg of context.pendingPackages) {
-    await workflowSetSdkRemoteAuth(context);
     await workflowPkgMain(context, pkg);
   }
 
@@ -328,10 +330,70 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   context.pendingPackages = [];
 };
 
-export const workflowInitGetSpecConfig = async (context: SdkAutoContext) => {
-  context.logger.log('github', `Get ${specConfigPath} from ${repoKeyToString(context.config.specRepo)}`);
-  const fileContent = await getGithubFileContent(context, context.config.specRepo, specConfigPath);
-  return fileContent;
+const workflowGenerateSdkForSpecPr = async (context: WorkflowContext) => {
+  const changedSpecs = await workflowDetectChangedSpec(context);
+  context.logger.remove(context.messageCaptureTransport);
+  const callMode =
+    context.swaggerToSdkConfig.advancedOptions.generationCallMode ??
+    'one-for-all-configs';
+  if (callMode === 'one-for-all-configs') {
+    await workflowHandleReadmeMdOrTypeSpecProject(context, changedSpecs);
+  } else {
+    for (const changedSpec of changedSpecs) {
+      await workflowHandleReadmeMdOrTypeSpecProject(context, [changedSpec]);
+    }
+  }
+}
+
+const workflowGenerateSdk = async (context: WorkflowContext) => {
+  let readmeMdList: string[] = [];
+  let typespecProjectList: string[] = [];
+  let suppressionFile;
+  const filterSuppressionFileMap: Map<string, string|undefined> = new Map();
+  if (context.config.tspConfigPath) {
+    context.logger.log('info', `Handle the following typespec project: ${context.config.tspConfigPath}`);
+	typespecProjectList.push(context.config.tspConfigPath.replace('/tspconfig.yaml', ''));
+    suppressionFile = path.join(context.config.localSpecRepoPath, context.config.tspConfigPath.replace('tspconfig.yaml', sdkSuppressionsFileName));
+    if (fs.existsSync(suppressionFile)) {
+      filterSuppressionFileMap.set(context.config.tspConfigPath, suppressionFile);
+    }
+  } else if (context.config.readmePath) {
+    context.logger.log('info', `Handle the following readme.md: ${context.config.readmePath}`);
+	readmeMdList.push(context.config.readmePath);
+    suppressionFile = path.join(context.config.localSpecRepoPath, context.config.readmePath.replace('readme.md', sdkSuppressionsFileName));
+    if (fs.existsSync(suppressionFile)) {
+      filterSuppressionFileMap.set(context.config.readmePath, suppressionFile);
+    }
+  }
+  else {
+    context.logger.error(`ConfigError: 'tspConfigPath' and 'readmePath' are not provided. Please provide at least one of them.`);
+    return;
+  }
+
+  const { status, generateOutput } = await workflowCallGenerateScript(
+    context,
+    [],
+    readmeMdList,
+    typespecProjectList
+  );
+  
+  if (!generateOutput && status === 'failed') {
+    context.logger.warn('Warning: Package processing is skipped as the SDK generation fails. Please look into the above generation errors or report this issue through https://aka.ms/azsdk/support/specreview-channel.');
+    return;
+  }
+  const sdkSuppressionsYml = await workflowInitGetSdkSuppressionsYml(context, filterSuppressionFileMap);
+  context.pendingPackages =
+    (generateOutput?.packages ?? []).map((result) => getPackageData(context, result, sdkSuppressionsYml));
+
+  workflowDetectChangedPackages(context);
+
+  context.logger.remove(context.messageCaptureTransport);
+  for (const pkg of context.pendingPackages) {
+    await workflowPkgMain(context, pkg);
+  }
+
+  context.handledPackages.push(...context.pendingPackages);
+  context.pendingPackages = [];
 };
 
 export const workflowInitGetSdkSuppressionsYml = async (
@@ -389,170 +451,20 @@ export const workflowInitGetSdkSuppressionsYml = async (
   return suppressionFileMap;
 };
 
-export const workflowInitGetDefaultBranch = async (context: SdkAutoContext, repo: RepoKey) => {
-  const rsp = await context.octokit.repos.get({
-    owner: repo.owner,
-    repo: repo.name
-  });
-
-  return rsp.data.default_branch;
-};
-
-const workflowInitConfig = async (context: SdkAutoContext) => {
-  const sdkRepoConfig = await getSdkRepoConfig(context);
-
-  context.logger.info(`mainRepository: ${repoKeyToString(sdkRepoConfig.mainRepository)}`);
-  context.logger.info(`mainBranch: ${sdkRepoConfig.mainBranch}`);
-  context.logger.info(`integrationRepository: ${repoKeyToString(sdkRepoConfig.integrationRepository)}`);
-  context.logger.info(`integrationBranchPrefix: ${sdkRepoConfig.integrationBranchPrefix}`);
-  context.logger.info(`secondaryRepository: ${repoKeyToString(sdkRepoConfig.secondaryRepository)}`);
-  context.logger.info(`secondaryBranch: ${sdkRepoConfig.secondaryBranch}`);
-
-  context.logger.log(
-    'github',
-    `Get ${sdkRepoConfig.configFilePath} from ${repoKeyToString(sdkRepoConfig.mainRepository)}`
-  );
-  return async () => {
-    const fileContent = await getGithubFileContent(
-      context,
-      sdkRepoConfig.mainRepository,
-      sdkRepoConfig.configFilePath,
-      sdkRepoConfig.mainBranch
-    );
-
-    if (!fileContent) {
-      throw new Error(`ConfigError: ${repoKeyToString(sdkRepoConfig.mainRepository)} ${sdkRepoConfig.configFilePath} doesn't exist. Please refer to the https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/samplefiles/README.md#swagger-to-sdk sample file to add the right configuration.`);
-    }
-
-    const swaggerToSdkConfig = getSwaggerToSdkConfig(fileContent);
-
-    return { sdkRepoConfig, swaggerToSdkConfig };
-  };
-};
-
-const workflowInitSpecRepo = async (
+const workflowInitSpecRepo = (
   context: SdkAutoContext,
-  opts: { checkoutMainBranch: boolean } = { checkoutMainBranch: true }
 ) => {
-  const specFolder = path.join(context.workingFolder, context.config.specRepo.name);
-  mkdirpSync(specFolder);
+  const specFolder = context.config.localSpecRepoPath;
+  const specRepo = simpleGit({ ...simpleGitOptions, baseDir: specFolder });
+  return { specFolder, specRepo };
+}
 
-  const specRepo = simpleGit({ ...simpleGitOptions, baseDir: path.resolve(process.cwd(), specFolder) });
-  await specRepo.init(false);
-
-  await gitSetRemoteWithAuth(context, specRepo, remoteMain, context.config.specRepo);
-
-  await gitRemoveAllBranches(context, specRepo);
-
-  let refSpec = `pull/${context.config.pullNumber}/merge`;
-  let fetchResult;
-  let toFetch: string[];
-  if (context.trigger === 'pullRequest') {
-    toFetch = [
-      `+refs/${refSpec}:refs/heads/${branchMain}`,
-      `+refs/heads/${context.specPrBaseBranch}:refs/heads/${branchBase}`
-    ];
-  } else {
-    refSpec = `heads/${context.specPrBaseBranch}`;
-    toFetch = [`+refs/${refSpec}:refs/${refSpec}`];
-  }
-
-  context.logger.log('git', `Fetch ${refSpec} on ${repoKeyToString(context.config.specRepo)}`);
-
-  return async () => {
-    fetchResult = await specRepo.fetch([remoteMain, '--update-head-ok', '--force', ...toFetch]);
-    if (!fetchResult) {
-      throw new Error(`Error: Failed to fetch spec repo. Code: ${fetchResult}. Please re-run the failed job in pipeline run or emit '/azp run' in the PR comment to trigger the re-run if the error is retryable`);
-    }
-
-    if (context.trigger === 'pullRequest') {
-      const headSha = await specRepo.revparse(branchMain);
-      if (headSha !== context.specCommitSha) {
-        if (context.config.runEnv !== 'test') {
-          context.logger.warn(`Warning: HeadSha mismatches. Update to ${headSha}.`);
-        }
-        context.specCommitSha = headSha;
-      }
-    } else {
-      const headCommit = await specRepo.show([context.specCommitSha]);
-      await specRepo.raw(['branch', '--copy', headCommit, branchMain, '--force']);
-      const baseCommit = await specRepo.revparse('HEAD');
-      await specRepo.raw(['branch', '--copy', baseCommit, branchBase, '--force']);
-    }
-
-    if (opts.checkoutMainBranch) {
-      await gitCheckoutBranch(context, specRepo, branchMain);
-    }
-
-    return { specFolder, specRepo };
-  };
-};
-
-const workflowSetSdkRemoteAuth = async (
-  context: Pick<WorkflowContext, 'sdkRepo' | 'sdkRepoConfig' | 'logger' | 'getGithubAccessToken'>
-) => {
-  const { sdkRepo, sdkRepoConfig } = context;
-  await gitSetRemoteWithAuth(context, sdkRepo, remoteMain, sdkRepoConfig.mainRepository);
-  await gitSetRemoteWithAuth(context, sdkRepo, remoteSecondary, sdkRepoConfig.secondaryRepository);
-  await gitSetRemoteWithAuth(context, sdkRepo, remoteIntegration, sdkRepoConfig.integrationRepository);
-};
-
-const workflowInitSdkRepo = async (
+const workflowInitSdkRepo = (
   context: SdkAutoContext,
-  sdkRepoConfig: SdkRepoConfig,
-  swaggerToSdkConfig: SwaggerToSdkConfig
 ) => {
-  const cloneDir =
-    swaggerToSdkConfig.advancedOptions.cloneDir;
-  const sdkFolderName = cloneDir
-    ? path.join(sdkRepoConfig.mainRepository.name, cloneDir)
-    : sdkRepoConfig.mainRepository.name;
-  const sdkFolder = path.join(context.workingFolder, sdkFolderName);
-  mkdirpSync(sdkFolder);
-
-  const sdkRepo = simpleGit({ ...simpleGitOptions, baseDir: path.resolve(process.cwd(), sdkFolder) });
-  await sdkRepo.init(false);
-
-  await workflowSetSdkRemoteAuth({ ...context, sdkRepo, sdkRepoConfig });
-  await gitRemoveAllBranches(context, sdkRepo);
-
-  context.logger.log('git', `Fetch ${repoKeyToString(sdkRepoConfig.mainRepository)} to ${branchMain}`);
-
-  let fetchResult = await sdkRepo.fetch([
-    branchMain,
-    '--update-head-ok',
-    '--force',
-    `+refs/heads/${sdkRepoConfig.mainBranch}:refs/heads/${branchMain}`
-  ]);
-  if (!fetchResult) {
-    throw new Error(`Error: Failed to fetch spec repo. Code: ${fetchResult}. Please re-run the failed job in pipeline run or emit '/azp run' in the PR comment to trigger the re-run if the error is retryable.`);
-  }
-
-  context.logger.log('git', `Checkout ${branchMain}`);
-  await gitCheckoutBranch(context, sdkRepo, branchMain);
-
-  if (
-    sdkRepoConfig.secondaryRepository.name === sdkRepoConfig.mainRepository.name &&
-    sdkRepoConfig.secondaryRepository.owner === sdkRepoConfig.mainRepository.owner &&
-    sdkRepoConfig.secondaryBranch === sdkRepoConfig.mainBranch
-  ) {
-    context.logger.log('git', `Checkout ${branchSecondary} from ${branchMain}`);
-    await sdkRepo.raw(['branch', '--copy', '--force', branchMain, branchSecondary]);
-  } else {
-    context.logger.log('git', `Fetch ${repoKeyToString(sdkRepoConfig.secondaryRepository)} to ${branchSecondary}`);
-
-    fetchResult = await sdkRepo.fetch([
-      branchSecondary,
-      '--update-head-ok',
-      '--force',
-      `+refs/heads/${sdkRepoConfig.secondaryBranch}:refs/heads/${branchSecondary}`
-    ]);
-    if (!fetchResult) {
-      throw new Error(`Error: Failed to fetch spec repo. Code: ${fetchResult}. Please re-run the failed job in pipeline run or emit '/azp run' in the PR comment to trigger the re-run if the error is retryable.`);
-    }
-  }
-
-  return { sdkRepo, sdkFolder };
+  const sdkFolder = context.config.localSdkRepoPath;
+  const sdkRepo = simpleGit({ ...simpleGitOptions, baseDir: sdkFolder });
+  return { sdkFolder, sdkRepo };
 };
 
 const fileInitInput = 'initInput.json';
@@ -593,8 +505,8 @@ const workflowDetectChangedSpec = async (
   context: Pick<WorkflowContext, 'specRepo' | 'logger' | 'specFolder' | keyof SdkAutoContext>
 ) => {
   const repo = context.specRepo;
-  const headCommit = await repo.revparse(branchMain);
-  const baseCommit = await repo.revparse(branchBase);
+  const headCommit = await repo.revparse("HEAD");
+  const baseCommit = await repo.revparse("HEAD^");
   const diff = await repo.diff(['--name-status', headCommit, baseCommit]);
 
   const diffFileList = await gitGetDiffFileList(diff, context, 'in spec PR');
@@ -704,19 +616,18 @@ const workflowCallGenerateScript = async (
 
   const generateInput: GenerateInput = {
     dryRun: false,
-    specFolder: path.relative(context.sdkFolder, context.specFolder),
-    headSha: context.specCommitSha,
-    headRef: context.specHeadRef,
-    repoHttpsUrl: context.specHtmlUrl,
-    trigger: context.trigger,
+    specFolder: path.relative(context.config.workingFolder, context.specFolder),
+    headSha: context.config.specCommitSha ?? "",
+    headRef: "",
+    repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
+    trigger: "pullRequest",
     changedFiles,
     installInstructionInput: {
-      isPublic: context.config.storage.isPublic,
-      downloadUrlPrefix: `${getBlobName(context, '')}`,
-      downloadCommandTemplate: context.config.storage.downloadCommand,
-      trigger: context.trigger
-    },
-    autorestConfig: context.autorestConfig
+      isPublic: false,
+      downloadUrlPrefix: "https://artprodcus3.artifacts.visualstudio.com",
+      downloadCommandTemplate: "downloadCommand",
+      trigger: "pullRequest"
+    }
   };
 
   if (context.swaggerToSdkConfig.generateOptions.generateScript === undefined) {
@@ -772,47 +683,17 @@ const workflowCallGenerateScript = async (
   return { ...statusContext, generateInput, generateOutput };
 };
 
-const workflowSaveGenerateResult = async (context: WorkflowContext) => {
-  context.logger.log('section', 'Commit generate result');
-  context.logger.log('git', 'Add * in SDK repo');
-  await gitAddAll(context.sdkRepo);
-
-  const diff = await context.sdkRepo.diff(['--name-status', 'HEAD']);
-  const fileList = await gitGetDiffFileList(diff, context, 'after SDK generate');
-  if (fileList.length === 0) {
-    context.logger.warn('Warning: No file changes detected after the generation. Please refer to the generation errors to understand the reasons.');
-    setSdkAutoStatus(context, 'warning');
-  }
-
-  context.logger.log('git', 'Commit all the changes');
-  await gitGetCommitter(context.sdkRepo);
-  await context.sdkRepo.raw(['commit', '-m', 'CodeGen Result']);
-
-  context.logger.log('endsection', 'Commit generate result');
-  return fileList;
-};
-
-const workflowDetectChangedPackages = async (context: WorkflowContext, fileList: string[], readmeMdList: string[]) => {
+const workflowDetectChangedPackages = (context: WorkflowContext) => {
   context.logger.log('section', 'Detect changed packages');
-  if (context.pendingPackages.length === 0) {
-    const searchConfig = context.swaggerToSdkConfig.packageOptions.packageFolderFromFileSearch;
-    if (!searchConfig) {
-      context.logger.warn(`Warning: Skip detecting changed packages based on the config in swagger_to_sdk.config. Please refer to the schema https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/SwaggerToSdkConfigSchema.json for 'packageOptions' configuration.`);
-      return;
-    }
-    //TODO can we delete this?
-    context.logger.info(`TODO ${fileList.length * readmeMdList.length}`);
-  }
-
   context.logger.info(`${context.pendingPackages.length} packages found after generation:`);
   for (const pkg of context.pendingPackages) {
-    context.logger.info(`\t${pkg.relativeFolderPath}`);
-    for (const extraPath of pkg.extraRelativeFolderPaths) {
+      context.logger.info(`\t${pkg.relativeFolderPath}`);
+      for (const extraPath of pkg.extraRelativeFolderPaths) {
       context.logger.info(`\t- ${extraPath}`);
-    }
+      }
   }
 
   if (context.pendingPackages.length === 0) {
-    context.logger.warn(`Warning: No package detected after generation. Please refer to the above logs to understand why the package hasn't been generated. `);
+      context.logger.warn(`Warning: No package detected after generation. Please refer to the above logs to understand why the package hasn't been generated. `);
   }
 };

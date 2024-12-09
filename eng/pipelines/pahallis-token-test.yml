@@ -33,4 +33,4 @@ jobs:
     inputs:
       targetType: inline
       script: |
-        gh pr list --repo $env:REPOSITORY --limit 2
+        gh run list --repo $env:REPOSITORY --limit 2

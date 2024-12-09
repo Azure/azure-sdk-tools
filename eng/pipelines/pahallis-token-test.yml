@@ -17,7 +17,7 @@ jobs:
       REPOSITORY: Azure/azure-sdk-for-net-pr
     inputs:
       targetType: filePath
-      filePath: eng/scripts/set-github-token-variable.ps1
+      filePath: eng/scripts/Set-GitHubTokenVariable.ps1
       arguments: >
         -AppId 1003147
         -AppKey $env:APP_KEY

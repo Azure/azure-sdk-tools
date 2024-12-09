@@ -19,6 +19,7 @@ jobs:
       targetType: filePath
       filePath: eng/scripts/set-github-token-variable.ps1
       arguments: >
+        -AppId 1003147
         -AppKey $env:APP_KEY
         -Repository $env:REPOSITORY
         -VariableName 'githubtoken'

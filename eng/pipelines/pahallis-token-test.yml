@@ -13,14 +13,15 @@ jobs:
   - task: Powershell@2
     displayName: Get an installation token
     env:
-      APP_KEY: $(AppPrivateKey)
+      APP_PRIVATE_KEY: $(AppPrivateKey)
       REPOSITORY: Azure/azure-sdk-for-net-pr
     inputs:
       targetType: filePath
       filePath: eng/scripts/Set-GitHubTokenVariable.ps1
+      pwsh: true
       arguments: >
         -AppId 1003147
-        -AppKey $env:APP_KEY
+        -AppKey $env:APP_PRIVATE_KEY
         -Repository $env:REPOSITORY
         -VariableName 'githubtoken'
   

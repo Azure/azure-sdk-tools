@@ -1,3 +1,4 @@
+#requires -Version 7.0
 using namespace System.Security.Cryptography
 using namespace System.Text
 

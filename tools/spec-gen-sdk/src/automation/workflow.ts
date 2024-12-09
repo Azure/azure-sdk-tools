@@ -153,9 +153,7 @@ export const workflowValidateSdkConfigForSpecPr = async (context: SdkAutoContext
         context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${ch.typespecProject}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://aka.ms/azsdk/sample-arm-tsproject-tspconfig`);
         continue;
       }
-      for (const repo of config) {
-        sdkToGenerate.add(repo);
-      }
+      sdkToGenerate.add(context.config.sdkName);
     } else if (ch.readmeMd) {
       const entry = await specContext.specRepo.revparse(`${commit}:${ch.readmeMd}`);
       const blob = await specContext.specRepo.catFile(['-p', entry]);
@@ -169,12 +167,13 @@ export const workflowValidateSdkConfigForSpecPr = async (context: SdkAutoContext
         context.logger.warn(`Warning: ${context.config.sdkName} cannot be found in the 'swagger-to-sdk' section in the ${ch.readmeMd}. This SDK will be skipped from SDK generation. Please add the right config to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
         continue;
       }
-      for (const repoConfig of config.repositories) {
-        sdkToGenerate.add(repoConfig.repo);
-      }
+      sdkToGenerate.add(context.config.sdkName);
     }
   }
 
+  if (sdkToGenerate.size === 0) {
+    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
+  }
   context.logger.info(`SDK to generate:`);
   const enabledJobs: { [sdkName: string]: { sdkName: string } } = {};
   for (const sdkName of [...sdkToGenerate]) {
@@ -185,16 +184,12 @@ export const workflowValidateSdkConfigForSpecPr = async (context: SdkAutoContext
     context.logger.info(`\t${sdkName}`);
     enabledJobs[sdkName] = { sdkName };
   }
-
   context.logger.log('endsection', 'Validate SDK config for spec PR scenario');
-  if (sdkToGenerate.size === 0) {
-    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
-  }
 };
 
 export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
   context.logger.log('section', 'Validate SDK configuration');
-  const sdkToGenerate = new Set<string>();
+  let sdkToGenerate = "";
 
   let tspConfigPath, readmeMdPath;
   if(context.config.tspConfigPath) {
@@ -205,8 +200,7 @@ export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
   }
   
   if (!tspConfigPath && !readmeMdPath) {
-    context.logger.error(`ConfigError: 'tspConfigPath' and 'readmePath' are not provided. Please provide at least one of them.`);
-    return;
+    throw new Error(`ConfigError: 'tspConfigPath' and 'readmePath' are not provided. Please provide at least one of them.`);
   }
   
   if (tspConfigPath) {
@@ -215,8 +209,8 @@ export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
     if (!config || config.length === 0 || !config.includes(context.config.sdkName)) {
       context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://aka.ms/azsdk/sample-arm-tsproject-tspconfig`);
     }
-    for (const repo of config) {
-      sdkToGenerate.add(repo);
+    else {
+      sdkToGenerate = context.config.sdkName;
     }
   }
   else if (readmeMdPath) {
@@ -229,24 +223,16 @@ export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
       context.logger.warn(`Warning: ${context.config.sdkName} cannot be found in the 'swagger-to-sdk' section in the ${readmeMdPath}. Please add the right config to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
     }
     else {
-      for (const repoConfig of config.repositories) {
-        sdkToGenerate.add(repoConfig.repo);
-      }
+      sdkToGenerate = context.config.sdkName;
     }
   }
-  context.logger.info(`SDK to generate:`);
-  for (const sdkName of [...sdkToGenerate]) {
-    if (context.specRepoConfig.sdkRepositoryMappings[sdkName] === undefined) {
-      context.logger.warn(`\tWarning: ${sdkName} not found in ${specConfigPath}. Please add the right config to ${specConfigPath}. according to this guidance https://aka.ms/azsdk/spec-repo-config`);
-      continue;
-    }
-    context.logger.info(`\t${sdkName}`);
+  if (sdkToGenerate) {
+    context.logger.info(`SDK to generate:${context.config.sdkName}`);
   }
-
-  context.logger.log('endsection', 'Validate SDK configuration');
-  if (sdkToGenerate.size === 0) {
+  else {
     throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
   }
+  context.logger.log('endsection', 'Validate SDK configuration');
 };
 
 const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext, changedSpecs: ChangedSpecs[]) => {
@@ -366,15 +352,15 @@ const workflowGenerateSdk = async (context: WorkflowContext) => {
   const filterSuppressionFileMap: Map<string, string|undefined> = new Map();
   if (context.config.tspConfigPath) {
     context.logger.log('info', `Handle the following typespec project: ${context.config.tspConfigPath}`);
-	typespecProjectList.push(context.config.tspConfigPath);
-    suppressionFile = path.join(context.config.localSpecRepoPath, context.config.tspConfigPath.replace('/tspconfig.yaml', sdkSuppressionsFileName));
+	typespecProjectList.push(context.config.tspConfigPath.replace('/tspconfig.yaml', ''));
+    suppressionFile = path.join(context.config.localSpecRepoPath, context.config.tspConfigPath.replace('tspconfig.yaml', sdkSuppressionsFileName));
     if (fs.existsSync(suppressionFile)) {
       filterSuppressionFileMap.set(context.config.tspConfigPath, suppressionFile);
     }
   } else if (context.config.readmePath) {
     context.logger.log('info', `Handle the following readme.md: ${context.config.readmePath}`);
 	readmeMdList.push(context.config.readmePath);
-    suppressionFile = path.join(context.config.localSpecRepoPath, context.config.readmePath.replace('/readme.md', sdkSuppressionsFileName));
+    suppressionFile = path.join(context.config.localSpecRepoPath, context.config.readmePath.replace('readme.md', sdkSuppressionsFileName));
     if (fs.existsSync(suppressionFile)) {
       filterSuppressionFileMap.set(context.config.readmePath, suppressionFile);
     }
@@ -478,7 +464,7 @@ const workflowInitSdkRepo = (
 ) => {
   const sdkFolder = context.config.localSdkRepoPath;
   const sdkRepo = simpleGit({ ...simpleGitOptions, baseDir: sdkFolder });
-  return { sdkRepo, sdkFolder };
+  return { sdkFolder, sdkRepo };
 };
 
 const fileInitInput = 'initInput.json';
@@ -630,7 +616,7 @@ const workflowCallGenerateScript = async (
 
   const generateInput: GenerateInput = {
     dryRun: false,
-    specFolder: path.relative(context.sdkFolder, context.specFolder),
+    specFolder: path.relative(context.config.workingFolder, context.specFolder),
     headSha: context.config.specCommitSha ?? "",
     headRef: "",
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",

@@ -79,6 +79,12 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
 
   const fullLogFileName = path.join(options.workingFolder, 'full.log');
   const filterLogFileName = path.join(options.workingFolder, 'filter.log');
+  if (fs.existsSync(fullLogFileName)) {
+    fs.rmSync(fullLogFileName);
+  }
+  if (fs.existsSync(filterLogFileName)) {
+    fs.rmSync(filterLogFileName);
+  }
   logger.add(loggerFileTransport(fullLogFileName));
   logger.info(`Log to ${fullLogFileName}`);
   const localSpecConfigPath = path.join(options.localSpecRepoPath, specConfigPath);

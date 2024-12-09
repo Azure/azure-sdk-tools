@@ -13,8 +13,8 @@ jobs:
   - task: Powershell@2
     displayName: Get an installation token
     env:
-      APP_KEY: $(PipelineWitnessPrivate)
-      REPOSITORY: $(REPOSITORY)
+      APP_KEY: $(AppPrivateKey)
+      REPOSITORY: Azure/azure-sdk-for-net-pr
     inputs:
       targetType: filePath
       filePath: eng/scripts/set-github-token-variable.ps1
@@ -22,4 +22,13 @@ jobs:
         -AppKey $env:APP_KEY
         -Repository $env:REPOSITORY
         -VariableName 'githubtoken'
-      
+  
+  - task: Powershell@2
+    displayName: Use the token
+    env:
+      GH_TOKEN: $(githubtoken)
+      REPOSITORY: Azure/azure-sdk-for-net-pr
+    inputs:
+      targetType: inline
+      script: |
+        gh pr list --repo $env:REPOSITORY --limit 2

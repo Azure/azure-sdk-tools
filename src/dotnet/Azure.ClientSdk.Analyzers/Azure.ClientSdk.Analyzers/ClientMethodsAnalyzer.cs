@@ -295,31 +295,9 @@ namespace Azure.ClientSdk.Analyzers
             return false;
         }
 
-        private bool IsAmqpBasedLibrary(INamedTypeSymbol type)
-        {
-            var namespaceName = type.ContainingNamespace.ToDisplayString();
-
-            // List of AMQP-based libraries that are exempted from this rule.
-            if (namespaceName.StartsWith("Azure.Messaging.EventHubs") ||
-                namespaceName.StartsWith("Azure.Messaging.ServiceBus") ||
-                namespaceName.StartsWith("Azure.Messaging.WebPubSub"))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
-
-            // Skip the verification for AMQP-based SDKs
-            if (IsAmqpBasedLibrary(type))
-            {
-                return;
-            }
-
             foreach (var member in type.GetMembers())
             {
                 var methodSymbol = member as IMethodSymbol;

@@ -26,11 +26,28 @@
 
 import Foundation
 
-/// Protocol which designates that a given entity should be shown in the
-/// navigation sidebar and should be clickable to jump to definitions within
-/// APIView.
-protocol Linkable {
-    var name: String { get }
-    var definitionId: String? { get }
-    var parent: Linkable? { get }
+
+/// Simple structure to track namespaces
+public struct NamespaceStack {
+    private var stack: [String] = []
+
+    /// Push a namespace segment onto the stack
+    mutating func push(_ val: String) {
+        self.stack.append(val)
+    }
+
+    /// Remove the last namespace segment from the stack
+    mutating func pop() -> String? {
+        return self.stack.popLast()
+    }
+
+    /// Get the fully qualified namespace
+    func value() -> String {
+        return self.stack.joined(separator: ".")
+    }
+
+    /// Reset the namespace stack to empty
+    mutating func reset() {
+        self.stack = []
+    }
 }

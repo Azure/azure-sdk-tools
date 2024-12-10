@@ -478,6 +478,10 @@ export class ReviewPageComponent implements OnInit {
     this.codePanelComponent.navigateToDiffNode(direction);
   }
 
+  handleCopyReviewTextEmitter(event: boolean) {
+    this.codePanelComponent.copyReviewTextToClipBoard();
+  }
+
   handleHasActiveConversationEmitter(value: boolean) {
     this.hasActiveConversation = value;
   }

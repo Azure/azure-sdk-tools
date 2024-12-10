@@ -102,10 +102,13 @@ class PackageModel: Tokenizable, Linkable {
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        a.text("package")
-        a.whitespace()
-        a.text(name, definitionId: definitionId)
-        a.punctuation("{", spacing: SwiftSyntax.TokenKind.leftBrace.spacing)
+        var options = ReviewTokenOptions()
+        options.hasSuffixSpace = true
+        a.text("package", options: options)
+        a.lineMarker(definitionId)
+        a.text(name)
+        options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
+        a.punctuation("{", options: options)
         a.newline()
         a.indent {
             for member in members {
@@ -125,7 +128,8 @@ class PackageModel: Tokenizable, Linkable {
                 }
             }
         }
-        a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
+        options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
+        a.punctuation("}", options: options)
         a.newline()
         resolveTypeReferences(apiview: a)
     }
@@ -174,10 +178,12 @@ class PackageModel: Tokenizable, Linkable {
 
     /// attempt to resolve type references that are declared after they are used
     func resolveTypeReferences(apiview a: APIViewModel) {
-        for (idx, token) in a.tokens.enumerated() {
-            guard token.navigateToId == APIViewModel.unresolved else { continue }
-            a.tokens[idx].navigateToId = a.definitionId(for: token.value!, withParent: nil)
-            assert (a.tokens[idx].navigateToId != APIViewModel.unresolved)
+        for line in a.reviewLines {
+            for (idx, token) in line.tokens.enumerated() {
+                guard token.navigateToId == APIViewModel.unresolved else { continue }
+                line.tokens[idx].navigateToId = a.definitionId(for: token.value!, withParent: nil)
+                assert (line.tokens[idx].navigateToId != APIViewModel.unresolved)
+            }
         }
     }
 
@@ -195,14 +201,5 @@ class PackageModel: Tokenizable, Linkable {
             SharedLogger.warn("Unexpectedly found \(result.count) matches for type \(name).")
         }
         return result.first
-    }
-
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
-        let packageToken = NavigationToken(name: name, navigationId: name, typeKind: .assembly, members: members)
-        a.add(token: packageToken)
-        if !extensions.isEmpty {
-            let extensionsToken = NavigationToken(name: "Other Extensions", navigationId: "", typeKind: .assembly, extensions: extensions)
-            a.add(token: extensionsToken)
-        }
     }
 }

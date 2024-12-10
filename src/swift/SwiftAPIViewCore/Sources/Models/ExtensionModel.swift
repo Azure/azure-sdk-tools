@@ -132,10 +132,12 @@ class ExtensionModel: Tokenizable {
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
         for child in childNodes {
+            var options = ReviewTokenOptions()
             let childIdx = child.indexInParent
             if childIdx == 13 {
                 // special case for extension members
-                a.punctuation("{", spacing: SwiftSyntax.TokenKind.leftBrace.spacing)
+                options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
+                a.punctuation("{", options: options)
                 if !members.isEmpty {
                     a.indent {
                         for member in members {
@@ -145,16 +147,17 @@ class ExtensionModel: Tokenizable {
                     }
                 }
                 a.newline()
-                a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
+                options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
+                a.punctuation("}", options: options)
                 a.newline()
             } else if childIdx == 7 {
                 child.tokenize(apiview: a, parent: parent)
-                if var last = a.tokens.popLast() {
+                if var last = a.currentLine.tokens.popLast() {
                     // These are made as type references, but they should be
                     // type declarations
-                    last.definitionId = self.definitionId
+                    a.currentLine.lineId = self.definitionId
                     last.navigateToId = self.definitionId
-                    a.tokens.append(last)
+                    a.currentLine.tokens.append(last)
                 }
             } else {
                 child.tokenize(apiview: a, parent: parent)

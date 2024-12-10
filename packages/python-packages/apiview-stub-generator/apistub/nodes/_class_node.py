@@ -315,7 +315,6 @@ class ClassNode(NodeEntityBase):
         :param review_lines: List of ReviewLine 
         """
         logging.info(f"Processing class {self.namespace_id}")
-        # Generate class name line
         for decorator in self.decorators: 
             line = review_lines.create_review_line(
                 related_to_line=self.namespace_id
@@ -325,6 +324,7 @@ class ClassNode(NodeEntityBase):
 
         line = review_lines.create_review_line()
         line.add_line_marker(self.namespace_id, add_cross_language_id=True, apiview=self.apiview)
+        # Generate class name line
         line.add_keyword("class")
         # TODO: Change below to self.name once sticky parent node context window feature is added - #9454
         line.add_text(self.full_name, has_suffix_space=False, navigation_display_name=self.name)

@@ -52,6 +52,11 @@ class ReviewLine: Tokenizable, Encodable {
     /// The final line of a context does not need this set. Instead, it should set `isContextEndLine`.
     var relatedToLine: String?
 
+    /// Returns the text-based representation of all tokens
+    var text: String {
+        return tokens.map { $0.text }.joined()
+    }
+
     // MARK: Codable
 
     enum CodingKeys: String, CodingKey {

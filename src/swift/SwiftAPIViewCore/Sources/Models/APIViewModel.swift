@@ -54,11 +54,6 @@ class APIViewModel: Tokenizable, Encodable {
     /// System generated comments. Each is linked to a review line ID.
     var diagnostics: [CodeDiagnostic]?
 
-    /// Navigation items are used to create a tree view in the Navigation panel.
-    /// Each item is linked to a review line ID. If omitted, the Navigation panel
-    /// will automatically be generated using the review lines.
-    var navigation: [NavigationToken]? = nil
-
     /// Node-based representation of the Swift package
     private var model: PackageModel
 
@@ -68,6 +63,9 @@ class APIViewModel: Tokenizable, Encodable {
     /// sentinel value for unresolved type references
     static let unresolved = "__UNRESOLVED__"
 
+    /// sentinel value for missing IDs
+    static let missingId  = "__MISSING__"
+
     /// Tracks assigned definition IDs so they can be linked
     private var definitionIds = Set<String>()
 
@@ -75,14 +73,20 @@ class APIViewModel: Tokenizable, Encodable {
     private var currentLine: ReviewLine
 
     /// Stores the parent of the current line.
-    private var currentParent: ReviewLine?
+    private var currentParent: ReviewLine? = nil
 
     /// Stores the stack of parent lines
-    private var parentStack: [ReviewLine]
+    private var parentStack: [ReviewLine] = []
 
-    /// Returns the text-based representation of all tokens
+    /// Used to track the currently processed namespace.
+    private var namespaceStack = NamespaceStack()
+
+    /// Keeps track of which types have been declared.
+    private var typeDeclarations = Set<String>()
+
+    /// Returns the text-based representation of all lines
     var text: String {
-        return tokens.map { $0.text }.joined()
+        return reviewLines.map { $0.text }.joined()
     }
     
     // MARK: Initializers
@@ -94,9 +98,12 @@ class APIViewModel: Tokenizable, Encodable {
         self.packageVersion = packageVersion
         self.packageName = packageName
         self.parserVersion = bundle.object(forInfoDictionaryKey: versionKey) as? String ?? "Unknown"
+        self.currentLine = ReviewLine()
         reviewLines = [ReviewLine]()
         diagnostics = [CodeDiagnostic]()
         model = PackageModel(name: packageName, statements: statements)
+        // FIXME: Actually wire this up!
+        self.crossLanguagePackageId = nil
         self.tokenize(apiview: self, parent: nil)
         model.navigationTokenize(apiview: self, parent: nil)
     }
@@ -125,7 +132,6 @@ class APIViewModel: Tokenizable, Encodable {
         try container.encode(reviewLines, forKey: .reviewLines)
         try container.encodeIfPresent(crossLanguagePackageId, forKey: .crossLanguagePackageId)
         try container.encodeIfPresent(diagnostics, forKey: .diagnostics)
-        try container.encodeIfPresent(navigation, forKey: .navigation)
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
@@ -136,17 +142,12 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     // MARK: Token Emitters
-    func token(kind: TokenKind, value: String, options: ReviewTokenOptions?) {
+    func token(kind: TokenKind, value: String, options: ReviewTokenOptions? = nil) {
         let token = ReviewToken(kind: kind, value: value, options: options)
         self.currentLine.tokens.append(token)
     }
 
-    // FIXME: We are going to eliminate this essentially...
-    func add(token: NavigationToken) {
-        self.navigation.append(token)
-    }
-
-    func text(_ text: String, options: ReviewTokenOptions?) {
+    func text(_ text: String, options: ReviewTokenOptions? = nil) {
         self.token(kind: .text, value: text, options: options)
     }
 
@@ -160,7 +161,8 @@ class APIViewModel: Tokenizable, Encodable {
         }
 
         if let currentParent = self.currentParent {
-            currentParent.children.append(self.currentLine)
+            currentParent.children = currentParent.children ?? []
+            currentParent.children!.append(self.currentLine)
         } else {
             self.reviewLines.append(self.currentLine)
         }
@@ -197,83 +199,83 @@ class APIViewModel: Tokenizable, Encodable {
         }
     }
 
-    func punctuation(_ value: String, options: ReviewTokenOptions?) {
-        let snapTo = options?.snapTo
-        let isContextEndLine = options?.isContextEndLine
-
+    func punctuation(_ value: String, options: PunctuationOptions? = nil) {
         let token = ReviewToken(kind: .punctuation, value: value, options: options)
-
-        if snapTo {
+        if let snapTo = options?.snapTo {
             self.snap(token: token, to: snapTo)
         } else {
             self.currentLine.tokens.append(token)
         }
-        if isContextEndLine {
+        if let isContextEndLine = options?.isContextEndLine {
             self.currentLine.isContextEndLine = true
         }
     }
 
-    func keyword(_ keyword: String, options: ReviewTokenOptions?) {
+    func keyword(_ keyword: String, options: ReviewTokenOptions? = nil) {
         self.token(kind: .keyword, value: keyword, options: options)
     }
 
-    // FIXME: THIS!
-    func lineMarker(value: String?, addCrossLanguageId: Bool?, relatedLineId: String?) {
+    func lineMarker(_ options: LineMarkerOptions) {
+        self.currentLine.lineId = options.value ?? self.namespaceStack.value()
+        if options.addCrossLanguageId == true {
+            self.currentLine.crossLanguageId = options.value ?? self.namespaceStack.value()
+        }
+        self.currentLine.relatedToLine = options.relatedLineId
     }
 
     /// Register the declaration of a new type
-    func typeDeclaration(name: String, typeId: String?, addCrossLanguageId: Bool = false, options: ReviewTokenOptions?) {
+    func typeDeclaration(name: String, typeId: String?, addCrossLanguageId: Bool = false, options: ReviewTokenOptions? = nil) {
         if let typeId = typeId {
-            if self.typeDeclarations.has(typeId) {
+            if self.typeDeclarations.contains(typeId) {
                 fatalError("Duplicate ID '\(typeId)' for declaration will result in bugs.")
             }
-            self.typeDeclarations.add(typeId)
+            self.typeDeclarations.insert(typeId)
         }
-        self.lineMarker(value: typeId, addCrossLanguageId: true)
+        self.lineMarker(LineMarkerOptions(value: typeId, addCrossLanguageId: true))
         self.token(kind: .typeName, value: name, options: options)
     }
 
-    // FIXME: This!
-    func findNonFunctionParent(from item: DeclarationModel?) -> DeclarationModel? {
-        guard let item = item else { return nil }
-        switch item.kind {
-        case .method:
-            // look to the parent of the function
-            return findNonFunctionParent(from: (item.parent as? DeclarationModel))
-        default:
-            return item
-        }
-    }
+//    // FIXME: This!
+//    func findNonFunctionParent(from item: DeclarationModel?) -> DeclarationModel? {
+//        guard let item = item else { return nil }
+//        switch item.kind {
+//        case .method:
+//            // look to the parent of the function
+//            return findNonFunctionParent(from: (item.parent as? DeclarationModel))
+//        default:
+//            return item
+//        }
+//    }
 
     /// Link to a registered type
-    func typeReference(name: String, options: ReviewTokenOptions?) {\
+    func typeReference(name: String, options: ReviewTokenOptions? = nil) {
         var newOptions = options ?? ReviewTokenOptions()
-        newOptions.navigateToId = options?.navigateToId ?? "__MISSING__"
+        newOptions.navigateToId = options?.navigateToId ?? APIViewModel.missingId
         self.token(kind: .typeName, value: name, options: newOptions)
     }
 
-    // FIXME: This!
-    func definitionId(for val: String, withParent parent: DeclarationModel?) -> String? {
-        var matchVal = val
-        if !matchVal.contains("."), let parentObject = findNonFunctionParent(from: parent), let parentDefId = parentObject.definitionId {
-            // if a plain, undotted name is provided, try to append the parent prefix
-            matchVal = "\(parentDefId).\(matchVal)"
-        }
-        let matches: [String]
-        if matchVal.contains(".") {
-            matches = definitionIds.filter { $0.hasSuffix(matchVal) }
-        } else {
-            // if type does not contain a dot, then suffix is insufficient
-            // we must completely match the final segment of the type name
-            matches = definitionIds.filter { $0.split(separator: ".").last! == matchVal }
-        }
-        if matches.count > 1 {
-            SharedLogger.warn("Found \(matches.count) matches for \(matchVal). Using \(matches.first!). Swift APIView may not link correctly.")
-        }
-        return matches.first
-    }
+//    // FIXME: This!
+//    func definitionId(for val: String, withParent parent: DeclarationModel?) -> String? {
+//        var matchVal = val
+//        if !matchVal.contains("."), let parentObject = findNonFunctionParent(from: parent), let parentDefId = parentObject.definitionId {
+//            // if a plain, undotted name is provided, try to append the parent prefix
+//            matchVal = "\(parentDefId).\(matchVal)"
+//        }
+//        let matches: [String]
+//        if matchVal.contains(".") {
+//            matches = definitionIds.filter { $0.hasSuffix(matchVal) }
+//        } else {
+//            // if type does not contain a dot, then suffix is insufficient
+//            // we must completely match the final segment of the type name
+//            matches = definitionIds.filter { $0.split(separator: ".").last! == matchVal }
+//        }
+//        if matches.count > 1 {
+//            SharedLogger.warn("Found \(matches.count) matches for \(matchVal). Using \(matches.first!). Swift APIView may not link correctly.")
+//        }
+//        return matches.first
+//    }
 
-    func member(name: String, options: ReviewTokenOptions?) {
+    func member(name: String, options: ReviewTokenOptions? = nil) {
         self.token(kind: .memberName, value: name, options: options)
     }
 
@@ -283,7 +285,7 @@ class APIViewModel: Tokenizable, Encodable {
         self.diagnostics?.append(diagnostic)
     }
 
-    func comment(_ text: String, options: ReviewTokenOptions?) {
+    func comment(_ text: String, options: ReviewTokenOptions? = nil) {
         var message = text
         if !text.starts(with: "\\") {
             message = "\\\\ \(message)"
@@ -291,22 +293,23 @@ class APIViewModel: Tokenizable, Encodable {
         self.token(kind: .comment, value: message, options: options)
     }
 
-    func literal(_ value: String, options: ReviewTokenOptions?) {
+    func literal(_ value: String, options: ReviewTokenOptions? = nil) {
         self.token(kind: .literal, value: value, options: options)
     }
 
-    func stringLiteral(_ text: String, options: ReviewTokenOptions?) {
-        let lines = text.split("\n")
+    func stringLiteral(_ text: String, options: ReviewTokenOptions? = nil) {
+        let lines = text.split(separator: "\n")
         if lines.count > 1 {
-            self.currentLine.tokens.append(ReviewToken(kind: .stringLiteral, value: "\u0022\(text)\u0022"), options: options)
+            let token = ReviewToken(kind: .stringLiteral, value: "\u{0022}\(text)\u{0022}", options: options)
+            self.currentLine.tokens.append(token)
         } else {
-            self.punctuation("\"\"\"", options: options)
+            self.punctuation("\u{0022}\u{0022}\u{0022}", options: PunctuationOptions(options))
             self.newline()
             for line in lines {
-                self.literal(line, options: options)
+                self.literal(String(line), options: options)
                 self.newline()
             }
-            self.punctuation("\"\"\"", options: options)
+            self.punctuation("\u{0022}\u{0022}\u{0022}", options: PunctuationOptions(options))
         }
     }
 

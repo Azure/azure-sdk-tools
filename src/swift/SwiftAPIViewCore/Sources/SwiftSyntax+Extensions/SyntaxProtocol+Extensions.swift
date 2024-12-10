@@ -171,14 +171,14 @@ extension SyntaxProtocol {
             a.newline()
             if let name = PrecedenceGroupRelationSyntax(self)!.keyword {
                 let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
-                a.lineIdMarker(definitionId: lineId)
+                a.lineMarker(definitionId: lineId)
             }
             tokenizeChildren(apiview: a, parent: parent)
         case .precedenceGroupAssociativity:
             a.newline()
             if let name = PrecedenceGroupAssociativitySyntax(self)!.keyword {
                 let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
-                a.lineIdMarker(definitionId: lineId)
+                a.lineMarker(definitionId: lineId)
             }
             tokenizeChildren(apiview: a, parent: parent)
         case .subscriptDecl:

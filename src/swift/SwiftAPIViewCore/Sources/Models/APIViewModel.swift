@@ -70,7 +70,7 @@ class APIViewModel: Tokenizable, Encodable {
     private var definitionIds = Set<String>()
 
     /// Stores the current line. All helper methods append to this.
-    private var currentLine: ReviewLine
+    internal var currentLine: ReviewLine
 
     /// Stores the parent of the current line.
     private var currentParent: ReviewLine? = nil
@@ -199,14 +199,14 @@ class APIViewModel: Tokenizable, Encodable {
         }
     }
 
-    func punctuation(_ value: String, options: PunctuationOptions? = nil) {
+    func punctuation(_ value: String, options: ReviewTokenOptions? = nil, punctuationOptions: PunctuationOptions? = nil) {
         let token = ReviewToken(kind: .punctuation, value: value, options: options)
-        if let snapTo = options?.snapTo {
+        if let snapTo = punctuationOptions?.snapTo {
             self.snap(token: token, to: snapTo)
         } else {
             self.currentLine.tokens.append(token)
         }
-        if let isContextEndLine = options?.isContextEndLine {
+        if let isContextEndLine = punctuationOptions?.isContextEndLine {
             self.currentLine.isContextEndLine = true
         }
     }
@@ -215,12 +215,12 @@ class APIViewModel: Tokenizable, Encodable {
         self.token(kind: .keyword, value: keyword, options: options)
     }
 
-    func lineMarker(_ options: LineMarkerOptions) {
-        self.currentLine.lineId = options.value ?? self.namespaceStack.value()
-        if options.addCrossLanguageId == true {
-            self.currentLine.crossLanguageId = options.value ?? self.namespaceStack.value()
+    func lineMarker(_ value: String? = nil, options: LineMarkerOptions? = nil) {
+        self.currentLine.lineId = value ?? self.namespaceStack.value()
+        if options?.addCrossLanguageId == true {
+            self.currentLine.crossLanguageId = value ?? self.namespaceStack.value()
         }
-        self.currentLine.relatedToLine = options.relatedLineId
+        self.currentLine.relatedToLine = options?.relatedLineId
     }
 
     /// Register the declaration of a new type
@@ -231,7 +231,7 @@ class APIViewModel: Tokenizable, Encodable {
             }
             self.typeDeclarations.insert(typeId)
         }
-        self.lineMarker(LineMarkerOptions(value: typeId, addCrossLanguageId: true))
+        self.lineMarker(typeId, options: LineMarkerOptions(addCrossLanguageId: true))
         self.token(kind: .typeName, value: name, options: options)
     }
 
@@ -303,13 +303,13 @@ class APIViewModel: Tokenizable, Encodable {
             let token = ReviewToken(kind: .stringLiteral, value: "\u{0022}\(text)\u{0022}", options: options)
             self.currentLine.tokens.append(token)
         } else {
-            self.punctuation("\u{0022}\u{0022}\u{0022}", options: PunctuationOptions(options))
+            self.punctuation("\u{0022}\u{0022}\u{0022}", options: options)
             self.newline()
             for line in lines {
                 self.literal(String(line), options: options)
                 self.newline()
             }
-            self.punctuation("\u{0022}\u{0022}\u{0022}", options: PunctuationOptions(options))
+            self.punctuation("\u{0022}\u{0022}\u{0022}", options: options)
         }
     }
 

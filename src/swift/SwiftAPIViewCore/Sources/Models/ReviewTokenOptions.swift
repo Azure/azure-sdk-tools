@@ -27,7 +27,7 @@
 import Foundation
 
 /// Struct for setting reivew token options
-public class ReviewTokenOptions {
+public struct ReviewTokenOptions {
     /// NavigationDisplayName is used to create a tree node in the navigation panel. Navigation nodes will be created only if token
     /// contains navigation display name.
     var navigationDisplayName: String?
@@ -55,65 +55,36 @@ public class ReviewTokenOptions {
     /// Language specific style css class names
     var renderClasses: [String]?
 
-    init(navigationDisplayName: String? = nil, navigateToId: String? = nil, skipDiff: Bool? = nil, isDeprecated: Bool? = nil, hasPrefixSpace: Bool? = nil, hasSuffixSpace: Bool? = nil, isDocumentation: Bool? = nil, renderClasses: [String]? = nil) {
-        self.navigateToId = navigateToId
-        self.hasPrefixSpace = hasPrefixSpace
-        self.hasSuffixSpace = hasSuffixSpace
-        self.isDeprecated = isDeprecated
-        self.isDocumentation = isDocumentation
-        self.navigationDisplayName = navigationDisplayName
-        self.skipDiff = skipDiff
-        self.renderClasses = renderClasses
+    mutating func applySpacing(_ spacing: SpacingKind) {
+        switch spacing {
+        case .Leading:
+            hasPrefixSpace = true
+            hasSuffixSpace = false
+        case .Trailing:
+            hasPrefixSpace = false
+            hasSuffixSpace = true
+        case .Both:
+            hasPrefixSpace = true
+            hasSuffixSpace = true
+        case .Neither:
+            hasPrefixSpace = false
+            hasSuffixSpace = false
+        }
     }
 }
 
 /// Struct for setting line marker options
-public class LineMarkerOptions {
-    /// The line marker ID
-    var value: String?
-
+public struct LineMarkerOptions {
     /// Flag to add the cross language ID
     var addCrossLanguageId: Bool?
 
     /// Related line ID
     var relatedLineId: String?
-
-    init(value: String? = nil, addCrossLanguageId: Bool? = nil, relatedLineId: String? = nil) {
-        self.value = value
-        self.addCrossLanguageId = addCrossLanguageId
-        self.relatedLineId = relatedLineId
-    }
 }
 
-public class PunctuationOptions: ReviewTokenOptions {
+public struct PunctuationOptions {
     /// A string of punctuation characters you can snap to
     var snapTo: String?
     /// Flags that this marks the end of a context
     var isContextEndLine: Bool?
-
-    init(_ options: ReviewTokenOptions?) {
-        super.init()
-        self.navigateToId = options?.navigateToId
-        self.hasPrefixSpace = options?.hasPrefixSpace
-        self.hasSuffixSpace = options?.hasSuffixSpace
-        self.isDeprecated = options?.isDeprecated
-        self.isDocumentation = options?.isDocumentation
-        self.navigationDisplayName = options?.navigationDisplayName
-        self.skipDiff = options?.skipDiff
-        self.renderClasses = options?.renderClasses
-    }
-
-    init(navigationDisplayName: String? = nil, navigateToId: String? = nil, skipDiff: Bool? = nil, isDeprecated: Bool? = nil, hasPrefixSpace: Bool? = nil, hasSuffixSpace: Bool? = nil, isDocumentation: Bool? = nil, renderClasses: [String]? = nil, snapTo: String? = nil, isContextEndLine: Bool? = nil) {
-        super.init()
-        self.navigateToId = navigateToId
-        self.hasPrefixSpace = hasPrefixSpace
-        self.hasSuffixSpace = hasSuffixSpace
-        self.isDeprecated = isDeprecated
-        self.isDocumentation = isDocumentation
-        self.navigationDisplayName = navigationDisplayName
-        self.skipDiff = skipDiff
-        self.renderClasses = renderClasses
-        self.snapTo = snapTo
-        self.isContextEndLine = isContextEndLine
-    }
 }

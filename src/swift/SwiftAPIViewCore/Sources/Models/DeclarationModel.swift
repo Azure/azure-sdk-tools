@@ -156,7 +156,7 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                 let children = obj.children(viewMode: .sourceAccurate)
                 for attr in children {
                     let attrText = attr.withoutTrivia().description.filter { !$0.isWhitespace }
-                    a.lineMarker(definitionId: "\(definitionId!).\(attrText)")
+                    a.lineMarker("\(definitionId!).\(attrText)")
                     attr.tokenize(apiview: a, parent: parent)
                     a.newline()
                     a.blankLines(set: 0)
@@ -166,21 +166,24 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                     // render as the correct APIView token type
                     switch self.kind {
                     case .class:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .enum:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .method:
-                        a.member(name: name, definitionId: definitionId)
+                        a.lineMarker(definitionId)
+                        a.member(name: name)
                     case .package:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .protocol:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .struct:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .unknown:
-                        a.typeDeclaration(name: name, definitionId: definitionId)
+                        a.typeDeclaration(name: name, typeId: definitionId)
                     case .variable:
-                        a.member(name: name, definitionId: definitionId)
+                        a.lineMarker(definitionId)
+                        a.member(name: name)
                     }
                 } else {
                     child.tokenize(apiview: a, parent: nil)
@@ -197,11 +200,6 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                 a.blankLines(set: 1)
             }
         }
-    }
-
-    func navigationTokenize(apiview a: APIViewModel, parent: Linkable?) {
-        let navigationId = parent != nil ? "\(parent!.name).\(name)" : name
-        a.add(token: NavigationToken(name: name, navigationId: navigationId, typeKind: kind.navigationSymbol, members: []))
     }
 
     func shouldShow() -> Bool {

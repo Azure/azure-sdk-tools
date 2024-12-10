@@ -62,15 +62,6 @@ class APIViewModel: Tokenizable, Encodable {
     /// Node-based representation of the Swift package
     private var model: PackageModel
 
-    /// Current indentation level
-    private var indentLevel = 0
-
-    /// Whether indentation is needed
-    private var needsIndent = false
-
-    /// Number of spaces to indent per level
-    let indentSpaces = 4
-
     /// Access modifier to expose via APIView
     static let publicModifiers: [AccessLevel] = [.public, .open]
 
@@ -79,6 +70,15 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Tracks assigned definition IDs so they can be linked
     private var definitionIds = Set<String>()
+
+    /// Stores the current line. All helper methods append to this.
+    private var currentLine: ReviewLine
+
+    /// Stores the parent of the current line.
+    private var currentParent: ReviewLine?
+
+    /// Stores the stack of parent lines
+    private var parentStack: [ReviewLine]
 
     /// Returns the text-based representation of all tokens
     var text: String {
@@ -136,127 +136,104 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     // MARK: Token Emitters
-    func add(token: ReviewToken) {
-        self.tokens.append(token)
+    func token(kind: TokenKind, value: String, options: ReviewTokenOptions?) {
+        let token = ReviewToken(kind: kind, value: value, options: options)
+        self.currentLine.tokens.append(token)
     }
 
+    // FIXME: We are going to eliminate this essentially...
     func add(token: NavigationToken) {
         self.navigation.append(token)
     }
 
-    func text(_ text: String, definitionId: String? = nil) {
-        checkIndent()
-        let item = ReviewToken(definitionId: definitionId, navigateToId: nil, value: text, kind: .text)
-        // TODO: Add cross-language definition ID
-        // if add_cross_language_id:
-        //    token.cross_language_definition_id = self.metadata_map.cross_language_map.get(id, None)
-        add(token: item)
+    func text(_ text: String, options: ReviewTokenOptions?) {
+        self.token(kind: .text, value: text, options: options)
     }
 
-    /// Used to END a line and wrap to the next. Cannot be used to inject blank lines.
     func newline() {
-        // strip trailing whitespace token, except blank lines
-        if tokens.last?.kind == .whitespace {
-            let popped  = tokens.popLast()!
-            // lines that consist only of whitespace must be preserved
-            if tokens.last?.kind == .newline {
-                add(token: popped)
-            }
+        // ensure no trailing space at the end of the line
+        if self.currentLine.tokens.count > 0 {
+            let lastToken = currentLine.tokens.last
+            lastToken?.hasSuffixSpace = false
+            let firstToken = currentLine.tokens.first
+            firstToken?.hasPrefixSpace =  false
         }
-        checkIndent()
-        // don't add newline if one already in place
-        if tokens.last?.kind != .newline {
-            let item = ReviewToken(definitionId: nil, navigateToId: nil, value: nil, kind: .newline)
-            add(token: item)
+
+        if let currentParent = self.currentParent {
+            currentParent.children.append(self.currentLine)
+        } else {
+            self.reviewLines.append(self.currentLine)
         }
-        needsIndent = true
+        self.currentLine = ReviewLine()
     }
 
-    /// Ensures a specific number of blank lines. Will add or remove newline
-    /// tokens as needed to ensure the exact number of blank lines.
+    /// Set the exact number of desired newlines.
     func blankLines(set count: Int) {
+        self.newline()
+        var parentLines = self.currentParent?.children ?? self.reviewLines
         // count the number of trailing newlines
         var newlineCount = 0
-        for token in self.tokens.reversed() {
-            if token.kind == .newline {
+        for line in self.reviewLines.reversed() {
+            if line.tokens.count == 0 {
                 newlineCount += 1
             } else {
                 break
             }
         }
-        if newlineCount < (count + 1) {
-            // if not enough newlines, add some
-            let linesToAdd = (count + 1) - newlineCount
-            for _ in 0..<linesToAdd {
-                add(token: ReviewToken(definitionId: nil, navigateToId: nil, value: nil, kind: .newline))
-            }
-        } else if newlineCount > (count + 1) {
+        if newlineCount == count {
+            return
+        } else if (newlineCount > count) {
             // if there are too many newlines, remove some
-            let linesToRemove = newlineCount - (count + 1)
+            let linesToRemove = newlineCount - count
             for _ in 0..<linesToRemove {
-                _ = tokens.popLast()
+                _ = parentLines.popLast()
+            }
+        } else {
+            // if not enough newlines, add some
+            let linesToAdd = count - newlineCount
+            for _ in 0..<linesToAdd {
+                self.newline()
             }
         }
-        needsIndent = true
     }
 
-    func whitespace(count: Int = 1) {
-        // don't double up on whitespace
-        guard tokens.lastVisible != .whitespace else { return }
-        let value = String(repeating: " ", count: count)
-        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: value, kind: .whitespace)
-        add(token: item)
-    }
+    func punctuation(_ value: String, options: ReviewTokenOptions?) {
+        let snapTo = options?.snapTo
+        let isContextEndLine = options?.isContextEndLine
 
-    func punctuation(_ value: String, spacing: SpacingKind) {
-        checkIndent()
-        if spacing  == .TrimLeft {
-            self.trim()
+        let token = ReviewToken(kind: .punctuation, value: value, options: options)
+
+        if snapTo {
+            self.snap(token: token, to: snapTo)
+        } else {
+            self.currentLine.tokens.append(token)
         }
-        if [SpacingKind.Leading, SpacingKind.Both].contains(spacing) {
-            self.whitespace()
-        }
-        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: value, kind: .punctuation)
-        add(token: item)
-        if [SpacingKind.Trailing, SpacingKind.Both].contains(spacing) {
-            self.whitespace()
+        if isContextEndLine {
+            self.currentLine.isContextEndLine = true
         }
     }
 
-    func keyword(_ keyword: String, spacing: SpacingKind) {
-        checkIndent()
-        if spacing  == .TrimLeft {
-            self.trim()
-        }
-        if [SpacingKind.Leading, SpacingKind.Both].contains(spacing) {
-            self.whitespace()
-        }
-        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: keyword, kind: .keyword)
-        add(token: item)
-        if [SpacingKind.Trailing, SpacingKind.Both].contains(spacing) {
-            self.whitespace()
-        }
+    func keyword(_ keyword: String, options: ReviewTokenOptions?) {
+        self.token(kind: .keyword, value: keyword, options: options)
     }
 
-    /// Create a line ID marker (only needed if no other token has a definition ID)
-    func lineIdMarker(definitionId: String?) {
-        checkIndent()
-        let item = ReviewToken(definitionId: definitionId, navigateToId: nil, value: nil, kind: .lineIdMarker)
-        add(token: item)
+    // FIXME: THIS!
+    func lineMarker(value: String?, addCrossLanguageId: Bool?, relatedLineId: String?) {
     }
 
     /// Register the declaration of a new type
-    func typeDeclaration(name: String, definitionId: String?) {
-        guard let definitionId = definitionId else {
-            SharedLogger.warn("Type declaration '\(name)' does not have a definition ID. APIView linking and commenting will not work correclty.")
-            return
+    func typeDeclaration(name: String, typeId: String?, addCrossLanguageId: Bool = false, options: ReviewTokenOptions?) {
+        if let typeId = typeId {
+            if self.typeDeclarations.has(typeId) {
+                fatalError("Duplicate ID '\(typeId)' for declaration will result in bugs.")
+            }
+            self.typeDeclarations.add(typeId)
         }
-        checkIndent()
-        let item = ReviewToken(definitionId: definitionId, navigateToId: definitionId, value: name, kind: .typeName)
-        definitionIds.insert(definitionId)
-        add(token: item)
+        self.lineMarker(value: typeId, addCrossLanguageId: true)
+        self.token(kind: .typeName, value: name, options: options)
     }
 
+    // FIXME: This!
     func findNonFunctionParent(from item: DeclarationModel?) -> DeclarationModel? {
         guard let item = item else { return nil }
         switch item.kind {
@@ -269,13 +246,13 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     /// Link to a registered type
-    func typeReference(name: String, parent: DeclarationModel?) {
-        checkIndent()
-        let linkId = definitionId(for: name, withParent: parent) ?? APIViewModel.unresolved
-        let item = ReviewToken(definitionId: nil, navigateToId: linkId, value: name, kind: .typeName)
-        add(token: item)
+    func typeReference(name: String, options: ReviewTokenOptions?) {\
+        var newOptions = options ?? ReviewTokenOptions()
+        newOptions.navigateToId = options?.navigateToId ?? "__MISSING__"
+        self.token(kind: .typeName, value: name, options: newOptions)
     }
 
+    // FIXME: This!
     func definitionId(for val: String, withParent parent: DeclarationModel?) -> String? {
         var matchVal = val
         if !matchVal.contains("."), let parentObject = findNonFunctionParent(from: parent), let parentDefId = parentObject.definitionId {
@@ -296,55 +273,75 @@ class APIViewModel: Tokenizable, Encodable {
         return matches.first
     }
 
-    func member(name: String, definitionId: String? = nil) {
-        checkIndent()
-        let item = ReviewToken(definitionId: definitionId, navigateToId: nil, value: name, kind: .memberName)
-        add(token: item)
+    func member(name: String, options: ReviewTokenOptions?) {
+        self.token(kind: .memberName, value: name, options: options)
     }
 
-    // TODO: Add support for diagnostics
-//    func diagnostic(self, text, line_id):
-//        self.diagnostics.append(Diagnostic(line_id, text))
+    func diagnostic(message: String, targetId: String, level: CodeDiagnosticLevel, helpLink: String?) {
+        let diagnostic = CodeDiagnostic(message, targetId: targetId, level: level, helpLink: helpLink)
+        self.diagnostics = self.diagnostics ?? []
+        self.diagnostics?.append(diagnostic)
+    }
 
-    func comment(_ text: String) {
-        checkIndent()
+    func comment(_ text: String, options: ReviewTokenOptions?) {
         var message = text
         if !text.starts(with: "\\") {
             message = "\\\\ \(message)"
         }
-        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: message, kind: .comment)
-        add(token: item)
+        self.token(kind: .comment, value: message, options: options)
     }
 
-    func literal(_ value: String) {
-        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: value, kind: .literal)
-        add(token: item)
+    func literal(_ value: String, options: ReviewTokenOptions?) {
+        self.token(kind: .literal, value: value, options: options)
     }
 
-    func stringLiteral(_ text: String) {
-        let item = ReviewToken(definitionId: nil, navigateToId: nil, value: "\"\(text)\"", kind: .stringLiteral)
-        add(token: item)
-    }
-
-    /// Wraps code in an indentation
-    func indent(_ indentedCode: () -> Void) {
-        indentLevel += 1
-        indentedCode()
-        // Don't end an indentation block with blank lines
-        let tokenSuffix = Array(tokens.suffix(2))
-        if tokenSuffix.count == 2 && tokenSuffix[0].kind == .newline && tokenSuffix[1].kind == .newline {
-            _ = tokens.popLast()
+    func stringLiteral(_ text: String, options: ReviewTokenOptions?) {
+        let lines = text.split("\n")
+        if lines.count > 1 {
+            self.currentLine.tokens.append(ReviewToken(kind: .stringLiteral, value: "\u0022\(text)\u0022"), options: options)
+        } else {
+            self.punctuation("\"\"\"", options: options)
+            self.newline()
+            for line in lines {
+                self.literal(line, options: options)
+                self.newline()
+            }
+            self.punctuation("\"\"\"", options: options)
         }
-        indentLevel -= 1
     }
 
-    /// Checks if indentation is needed and adds whitespace as needed
-    func checkIndent() {
-        guard needsIndent else { return }
-        whitespace(count: indentLevel * indentSpaces)
-        needsIndent = false
+    func indent(_ indentedLines: () -> Void) {
+        // ensure no trailing space at the end of the line
+        let lastToken = self.currentLine.tokens.last
+        lastToken?.hasSuffixSpace = false
+
+        if let currentParent = self.currentParent {
+            currentParent.children?.append(self.currentLine)
+            self.parentStack.append(currentParent)
+        } else {
+            self.reviewLines.append(self.currentLine)
+        }
+        self.currentParent = self.currentLine
+        self.currentLine = ReviewLine()
+
+        // handle the indented bodies
+        indentedLines()
+
+        // handle the de-indent logic
+        guard let currentParent = self.currentParent else {
+            fatalError("Cannot de-indent without a parent")
+        }
+        // ensure that the last line before the deindent has no blank lines
+        if let lastChild = currentParent.children?.popLast() {
+            if (lastChild.tokens.count > 0) {
+                currentParent.children?.append(lastChild)
+            }
+        }
+        self.currentParent = self.parentStack.popLast()
+        self.currentLine = ReviewLine()
     }
 
+    // FIXME: This!
     /// Constructs a definition ID and ensures it is unique.
     func defId(forName name: String, withPrefix prefix: String?) -> String {
         var defId = prefix != nil ? "\(prefix!).\(name)" : name
@@ -356,38 +353,53 @@ class APIViewModel: Tokenizable, Encodable {
         return defId
     }
 
-    /// Trims whitespace tokens
-    func trim(removeNewlines: Bool = false) {
-        var lineIds = [ReviewToken]()
-        while (!tokens.isEmpty) {
-            var continueTrim = true
-            if let kind = tokens.last?.kind {
-                switch kind {
-                case .whitespace:
-                    _ = tokens.popLast()
-                case .newline:
-                    if removeNewlines {
-                        _ = tokens.popLast()
-                    } else {
-                        continueTrim = false
-                    }
-                case .lineIdMarker:
-                    if let popped = tokens.popLast() {
-                        lineIds.append(popped)
-                    }
-                default:
-                    continueTrim = false
+    /// Places the provided token in the tree based on the provided characters.
+    func snap(token target: ReviewToken, to characters: String) {
+        let allowed = Set(characters)
+        let lastLine = self.getLastLine() ?? self.currentLine
+
+        // iterate through tokens in reverse order
+        for token in lastLine.tokens.reversed() {
+            switch token.kind {
+            case .text:
+                // skip blank whitespace tokens
+                let value = token.value.trimmingTrailingCharacters(in: .whitespaces)
+                if value.count == 0 {
+                    continue
+                } else {
+                    // no snapping, so render in place
+                    self.currentLine.tokens.append(target)
+                    return
                 }
-            }
-            if !continueTrim {
-                break
+            case .punctuation:
+                // ensure no whitespace after the trim character
+                if allowed.first(where: { String($0) == token.value }) != nil {
+                    token.hasSuffixSpace = false
+                    target.hasSuffixSpace = false
+                    lastLine.tokens.append(target)
+                } else {
+                    // no snapping, so render in place
+                    self.currentLine.tokens.append(target)
+                    return
+                }
+            default:
+                // no snapping, so render in place
+                self.currentLine.tokens.append(target)
+                return
             }
         }
-        // reappend the line id tokens
-        while (!lineIds.isEmpty) {
-            if let popped = lineIds.popLast() {
-                tokens.append(popped)
+    }
+
+    /// Retrieves the last line from the review
+    func getLastLine() -> ReviewLine? {
+        guard let currentParent = self.currentParent else { return nil }
+        let lastChild = currentParent.children?.last
+        let lastGrandchild = lastChild?.children?.last
+        if let greatGrandChildren = lastGrandchild?.children {
+            if greatGrandChildren.count > 0 {
+                fatalError("Unexpected great-grandchild in getLastLine()!")
             }
         }
+        return lastGrandchild ?? lastChild
     }
 }

@@ -72,9 +72,17 @@ class ReviewToken: Codable {
     /// Language-specific style css class names
     var renderClasses: [String]?
 
-    init(value: String, kind: TokenKind) {
+    init(kind: TokenKind, value: String, options: ReviewTokenOptions?) {
         self.value = value
         self.kind = kind
+        self.navigationDisplayName = options?.navigationDisplayName
+        self.navigateToId = options?.navigateToId
+        self.skipDiff = options?.skipDiff
+        self.isDeprecated = options?.isDeprecated
+        self.isDocumentation = options?.isDocumentation
+        self.hasSuffixSpace = options?.hasSuffixSpace
+        self.hasPrefixSpace = options?.hasPrefixSpace
+        self.renderClasses = options?.renderClasses
     }
 
     // MARK: Codable

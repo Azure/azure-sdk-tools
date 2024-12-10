@@ -86,7 +86,10 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Returns the text-based representation of all lines
     var text: String {
-        return reviewLines.map { $0.text }.joined()
+        return reviewLines.map { line in
+            let lineText = line.text()
+            return lineText
+        }.joined()
     }
     
     // MARK: Initializers
@@ -312,7 +315,8 @@ class APIViewModel: Tokenizable, Encodable {
         }
     }
 
-    func indent(_ indentedLines: () -> Void) {
+    /// Wraps code in indentattion
+    func indent(_ indentedCode: () -> Void) {
         // ensure no trailing space at the end of the line
         let lastToken = self.currentLine.tokens.last
         lastToken?.hasSuffixSpace = false
@@ -327,7 +331,7 @@ class APIViewModel: Tokenizable, Encodable {
         self.currentLine = ReviewLine()
 
         // handle the indented bodies
-        indentedLines()
+        indentedCode()
 
         // handle the de-indent logic
         guard let currentParent = self.currentParent else {

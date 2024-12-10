@@ -279,6 +279,45 @@ namespace Azure.ClientSdk.Analyzers
             return false;
         }
 
+        private static bool DoReturnTypesMatch(ITypeSymbol asyncReturnType, ITypeSymbol syncReturnType)
+        {
+            if (asyncReturnType == null || syncReturnType == null)
+            {
+                return false;
+            }
+
+            // If the async return type is non-generic Task
+            if (asyncReturnType.Name == TaskTypeName && !((INamedTypeSymbol)asyncReturnType).IsGenericType)
+            {
+                if (syncReturnType.Name == TaskTypeName && !((INamedTypeSymbol)syncReturnType).IsGenericType)
+                {
+                    return true;
+                }
+                else
+                {
+                    // Async method returns Task, sync method should return void
+                    return syncReturnType.SpecialType == SpecialType.System_Void;
+                }
+            }
+
+            if (asyncReturnType is INamedTypeSymbol asyncNamedType && asyncNamedType.IsGenericType && asyncNamedType.Name == TaskTypeName)
+            {
+                if (syncReturnType is INamedTypeSymbol syncNamedType && syncNamedType.IsGenericType && syncNamedType.Name == TaskTypeName)
+                {
+                    var asyncInnerType = asyncNamedType.TypeArguments.Single();
+                    var syncInnerType = syncNamedType.TypeArguments.Single();
+                    return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncInnerType);
+                }
+                else
+                {
+                    var asyncInnerType = asyncNamedType.TypeArguments.FirstOrDefault();
+                    return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncReturnType);
+                }
+            }
+
+            return SymbolEqualityComparer.Default.Equals(asyncReturnType, syncReturnType);
+        }
+
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
@@ -304,6 +343,16 @@ namespace Azure.ClientSdk.Analyzers
                     }
                     else
                     {
+                        if (!DoReturnTypesMatch(methodSymbol.ReturnType, syncMember.ReturnType))
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
+                        }
+
+                        if (!methodSymbol.Parameters.SequenceEqual(syncMember.Parameters, ParameterEquivalenceComparer.Default))
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0005, member.Locations.First()), member);
+                        }
+
                         CheckClientMethod(context, syncMember);
                     }
                 }

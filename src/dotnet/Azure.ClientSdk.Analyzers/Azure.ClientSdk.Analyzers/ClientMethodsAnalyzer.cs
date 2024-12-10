@@ -286,13 +286,36 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            if (asyncReturnType is INamedTypeSymbol asyncNamedType && asyncNamedType.IsGenericType && asyncNamedType.Name == TaskTypeName)
+            // If the async return type is non-generic Task
+            if (asyncReturnType.Name == TaskTypeName && !((INamedTypeSymbol)asyncReturnType).IsGenericType)
             {
-                var asyncInnerType = asyncNamedType.TypeArguments.Single();
-                return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncReturnType);
+                if (syncReturnType.Name == TaskTypeName && !((INamedTypeSymbol)syncReturnType).IsGenericType)
+                {
+                    return true;
+                }
+                else
+                {
+                    // Async method returns Task, sync method should return void
+                    return syncReturnType.SpecialType == SpecialType.System_Void;
+                }
             }
 
-            return false;
+            if (asyncReturnType is INamedTypeSymbol asyncNamedType && asyncNamedType.IsGenericType && asyncNamedType.Name == TaskTypeName)
+            {
+                if (syncReturnType is INamedTypeSymbol syncNamedType && syncNamedType.IsGenericType && syncNamedType.Name == TaskTypeName)
+                {
+                    var asyncInnerType = asyncNamedType.TypeArguments.Single();
+                    var syncInnerType = syncNamedType.TypeArguments.Single();
+                    return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncInnerType);
+                }
+                else
+                {
+                    var asyncInnerType = asyncNamedType.TypeArguments.FirstOrDefault();
+                    return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncReturnType);
+                }
+            }
+
+            return SymbolEqualityComparer.Default.Equals(asyncReturnType, syncReturnType);
         }
 
         public override void AnalyzeCore(ISymbolAnalysisContext context)

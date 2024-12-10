@@ -54,7 +54,9 @@ class ReviewLine: Tokenizable, Encodable {
 
     /// Returns the text-based representation of all tokens
     var text: String {
-        return tokens.map { $0.text }.joined()
+        var tokenText = tokens.map { $0.text }
+        tokenText.append("\n")
+        return tokenText.joined()
     }
 
     // MARK: Codable

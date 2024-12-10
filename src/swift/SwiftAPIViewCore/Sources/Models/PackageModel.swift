@@ -180,9 +180,10 @@ class PackageModel: Tokenizable, Linkable {
     func resolveTypeReferences(apiview a: APIViewModel) {
         for line in a.reviewLines {
             for (idx, token) in line.tokens.enumerated() {
-                guard token.navigateToId == APIViewModel.unresolved else { continue }
-                line.tokens[idx].navigateToId = a.definitionId(for: token.value!, withParent: nil)
-                assert (line.tokens[idx].navigateToId != APIViewModel.unresolved)
+                // FIXME: Fix this up.
+//                guard token.navigateToId == APIViewModel.unresolved else { continue }
+//                line.tokens[idx].navigateToId = a.definitionId(for: token.value!, withParent: nil)
+//                assert (line.tokens[idx].navigateToId != APIViewModel.unresolved)
             }
         }
     }

@@ -62,13 +62,8 @@ export type MarkdownMessageRecord = BaseMessageRecord & {
  *
  * MessageRecords end up being printed in the contents of tables in relevant validation tool check in GitHub PR. 
  * These records are transferred from the Azure DevOps Azure.azure-rest-api-specs-pipeline build runs 
- * to the GitHub via pipe.log file (pipeline.ts / unifiedPipelineResultFileName) and Azure blob. 
+ * to the GitHub via pipe.log file (pipeline.ts / unifiedPipelineResultFileName). 
  * 
- * The pipe.log gets uploaded to the blob via 
- *   publishResult.ts / resultPublisher.uploadLog
- *
- * The blob contents are read by the pipeline-bot via
- *   resultComposer.ts / parseCompleteMessageData    
  *
  * Examples:
  *   Save message record from OAD to pipe.log:

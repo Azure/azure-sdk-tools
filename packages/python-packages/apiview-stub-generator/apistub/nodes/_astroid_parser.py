@@ -8,7 +8,7 @@ class AstroidFunctionParser:
 
     def __init__(self, node: astroid.FunctionDef, namespace: str, apiview, func_node):
         if not isinstance(node, astroid.FunctionDef):
-            raise TypeError(f"Can only pass in an astroid FunctionDef node, not {node}")
+            raise TypeError(f"Can only pass in an astroid FunctionDef node, not {func_node}")
         self._namespace = namespace
         self._node = node
         self._args = node.args

@@ -105,7 +105,6 @@ class APIViewModel: Tokenizable, Encodable {
         // FIXME: Actually wire this up!
         self.crossLanguagePackageId = nil
         self.tokenize(apiview: self, parent: nil)
-        model.navigationTokenize(apiview: self, parent: nil)
     }
 
     // MARK: Codable

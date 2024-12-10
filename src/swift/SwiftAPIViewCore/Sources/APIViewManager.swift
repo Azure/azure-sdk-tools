@@ -232,8 +232,7 @@ public class APIViewManager: SyntaxVisitor {
         }
         config.packageName = packageName!
         config.packageVersion = packageVersion!
-        let apiViewName = "\(packageName!) (version \(packageVersion!))"
-        let apiView = APIViewModel(name: apiViewName, packageName: packageName!, versionString: packageVersion!, statements: Array(statements.values))
+        let apiView = APIViewModel(packageName: packageName!, packageVersion: packageVersion!, statements: Array(statements.values))
         return apiView
     }
 

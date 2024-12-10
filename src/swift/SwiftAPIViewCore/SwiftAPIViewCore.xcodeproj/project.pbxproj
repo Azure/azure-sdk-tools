@@ -375,7 +375,7 @@
 				0A1CA129292D8B5800CC2367 /* XCRemoteSwiftPackageReference "swift-syntax" */,
 				0A6C6596292E98890075C56F /* XCRemoteSwiftPackageReference "SourceKitten" */,
 			);
-			preferredProjectObjectVersion = 55;
+			preferredProjectObjectVersion = 63;
 			productRefGroup = 0A8469E227879AE200C967A8 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";

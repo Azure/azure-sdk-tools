@@ -16,7 +16,7 @@ model StartPayload {
 
 model CommonErrorResponse {
     Message: string;
-    Status: int32;
+    Status: string;
     StackTrace?: string;
     @header("x-request-exception") requestException: boolean;
     @header("x-request-exception-error") requestExceptionError: string;

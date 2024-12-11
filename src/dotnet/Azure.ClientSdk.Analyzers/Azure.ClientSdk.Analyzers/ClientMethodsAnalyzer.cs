@@ -279,6 +279,82 @@ namespace Azure.ClientSdk.Analyzers
             return false;
         }
 
+        private static bool CompareReturnTypesRecursively(ITypeSymbol asyncType, ITypeSymbol syncType)
+        {
+            // Unwrap Task<T> for async methods
+            if (asyncType is INamedTypeSymbol asyncNamedType && asyncNamedType.Name == TaskTypeName)
+            {
+                if (asyncNamedType.IsGenericType)
+                {
+                    asyncType = asyncNamedType.TypeArguments.Single();
+                }
+                else
+                {
+                    // async returns Task, sync should return void or non-generic Task
+                    if (syncType.SpecialType == SpecialType.System_Void ||
+                        (syncType is INamedTypeSymbol syncNamedType && syncNamedType.Name == TaskTypeName && !syncNamedType.IsGenericType))
+                    {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+
+            // Map AsyncPageable<T> to Pageable<T> for easy comparison since they are equivalent for these purposes
+            if (asyncType is INamedTypeSymbol asyncTypeSymbol && asyncTypeSymbol.Name == AsyncPageableTypeName && asyncTypeSymbol.IsGenericType)
+            {
+                asyncType = asyncTypeSymbol.ContainingNamespace.GetTypeMembers(PageableTypeName).FirstOrDefault()?.Construct(asyncTypeSymbol.TypeArguments.ToArray());
+            }
+
+            // Compare directly if sync method return type is not a named type symbol
+            if (syncType is not INamedTypeSymbol syncTypeSymbol)
+            {
+                return SymbolEqualityComparer.Default.Equals(asyncType, syncType);
+            }
+
+            // Compare type names and namespaces
+            if (asyncType is INamedTypeSymbol asyncNamedTypeSymbol && syncType is INamedTypeSymbol syncNamedTypeSymbol)
+            {
+                if (asyncNamedTypeSymbol.Name != syncNamedTypeSymbol.Name ||
+                    asyncNamedTypeSymbol.ContainingNamespace.ToDisplayString() != syncNamedTypeSymbol.ContainingNamespace.ToDisplayString())
+                {
+                    return false;
+                }
+
+                // Compare nested types recursively
+                if (asyncNamedTypeSymbol.IsGenericType && syncNamedTypeSymbol.IsGenericType)
+                {
+                    var asyncTypeArguments = asyncNamedTypeSymbol.TypeArguments;
+                    var syncTypeArguments = syncNamedTypeSymbol.TypeArguments;
+
+                    if (asyncTypeArguments.Length != syncTypeArguments.Length)
+                    {
+                        return false;
+                    }
+
+                    for (int i = 0; i < asyncTypeArguments.Length; i++)
+                    {
+                        if (!CompareReturnTypesRecursively(asyncTypeArguments[i], syncTypeArguments[i]))
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                else if (!asyncNamedTypeSymbol.IsGenericType && !syncNamedTypeSymbol.IsGenericType)
+                {
+                    return true;
+                }
+                else
+                {
+                    // One is a generic type and the other is not
+                    return false;
+                }
+            }
+
+            return SymbolEqualityComparer.Default.Equals(asyncType, syncType);
+        }
+
         private static bool DoReturnTypesMatch(ITypeSymbol asyncReturnType, ITypeSymbol syncReturnType)
         {
             if (asyncReturnType == null || syncReturnType == null)
@@ -286,51 +362,7 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            // If the async return type is non-generic Task
-            if (asyncReturnType.Name == TaskTypeName && !((INamedTypeSymbol)asyncReturnType).IsGenericType)
-            {
-                if (syncReturnType.Name == TaskTypeName && !((INamedTypeSymbol)syncReturnType).IsGenericType)
-                {
-                    return true;
-                }
-                else
-                {
-                    // Async method returns Task, sync method should return void
-                    return syncReturnType.SpecialType == SpecialType.System_Void;
-                }
-            }
-
-            if (asyncReturnType is INamedTypeSymbol asyncNamedType && asyncNamedType.IsGenericType && asyncNamedType.Name == TaskTypeName)
-            {
-                if (syncReturnType is INamedTypeSymbol syncNamedType && syncNamedType.IsGenericType && syncNamedType.Name == TaskTypeName)
-                {
-                    var asyncInnerType = asyncNamedType.TypeArguments.Single();
-                    var syncInnerType = syncNamedType.TypeArguments.Single();
-                    return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncInnerType);
-                }
-                else
-                {
-                    var asyncInnerType = asyncNamedType.TypeArguments.FirstOrDefault();
-
-                    string asyncInnerTypeName = asyncNamedType.Name;
-
-                    return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncReturnType);
-
-                }
-            }
-
-            // Add scenario to handle AsyncPageable<T> and Pageable<T> return types
-            if (asyncReturnType is INamedTypeSymbol asyncNamedTypeSymbol && asyncNamedTypeSymbol.IsGenericType && asyncNamedTypeSymbol.Name == AsyncPageableTypeName)
-            {
-                if (syncReturnType is INamedTypeSymbol syncNamedTypeSymbol && syncNamedTypeSymbol.IsGenericType && syncNamedTypeSymbol.Name == PageableTypeName)
-                {
-                    var asyncInnerType = asyncNamedTypeSymbol.TypeArguments.Single();
-                    var syncInnerType = syncNamedTypeSymbol.TypeArguments.Single();
-                    return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncInnerType);
-                }
-            }
-
-            return SymbolEqualityComparer.Default.Equals(asyncReturnType, syncReturnType);
+            return CompareReturnTypesRecursively(asyncReturnType, syncReturnType);
         }
 
         public override void AnalyzeCore(ISymbolAnalysisContext context)

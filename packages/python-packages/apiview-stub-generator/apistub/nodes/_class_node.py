@@ -326,7 +326,7 @@ class ClassNode(NodeEntityBase):
         line.add_line_marker(self.namespace_id, add_cross_language_id=True, apiview=self.apiview)
         # Generate class name line
         line.add_keyword("class")
-        # TODO: Change below to self.name once sticky parent node context window feature is added - #9454
+        # TODO: #9454 - Change below to self.name once sticky parent node context window feature is added
         line.add_text(self.full_name, has_suffix_space=False, navigation_display_name=self.name)
 
         for err in self.pylint_errors:

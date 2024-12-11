@@ -238,13 +238,8 @@ class FunctionNode(NodeEntityBase):
 
         # If length of positional args is less than total args, then all items should end with commas
         # as end of args list hasn't been reached. Else, last item reached, so no comma.
-
-        # TODO: refactor this to calculate comma spot
         current_count = len(self.posargs)
-        if current_count < self.arg_count:
-            final_item = False
-        else:
-            final_item = True
+        final_item = current_count >= self.arg_count
 
         review_line = self._generate_args_for_collection(
             self.posargs,
@@ -260,13 +255,9 @@ class FunctionNode(NodeEntityBase):
             current_count += 1 # account for /
 
             review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
-            #add_review_line(review_lines, tokens=tokens)
 
         current_count += len(self.args)
-        if current_count < self.arg_count:
-            final_item = False
-        else:
-            final_item = True
+        final_item = current_count >= self.arg_count
 
         review_line = self._generate_args_for_collection(
             self.args,
@@ -276,10 +267,7 @@ class FunctionNode(NodeEntityBase):
             final_item=final_item
         )
         current_count += 1
-        if current_count < self.arg_count:
-            final_item = False
-        else:
-            final_item = True
+        final_item = current_count >= self.arg_count
         if self.special_vararg:
             self.special_vararg.generate_tokens(
                 self.namespace_id,
@@ -303,10 +291,7 @@ class FunctionNode(NodeEntityBase):
             review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
         current_count += len(self.kwargs)
-        if current_count < self.arg_count:
-            final_item = False
-        else:
-            final_item = True
+        final_item = current_count >= self.arg_count
         review_line = self._generate_args_for_collection(
             self.kwargs, review_lines=param_lines, review_line=review_line, use_multi_line=use_multi_line, final_item=final_item
         )

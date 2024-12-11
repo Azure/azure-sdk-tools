@@ -74,7 +74,6 @@ class DataClassNode(ClassNode):
         """Generates token for the node and it's children recursively and add it to apiview
         :param review_lines: ReviewLines
         """
-        # TODO: check if dataclass is being tested correctly
         logging.info(f"Processing dataclass {self.namespace_id}")
 
         # Generate class name line

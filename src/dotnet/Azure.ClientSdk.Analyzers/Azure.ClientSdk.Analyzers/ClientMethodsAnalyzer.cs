@@ -311,7 +311,22 @@ namespace Azure.ClientSdk.Analyzers
                 else
                 {
                     var asyncInnerType = asyncNamedType.TypeArguments.FirstOrDefault();
+
+                    string asyncInnerTypeName = asyncNamedType.Name;
+
                     return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncReturnType);
+
+                }
+            }
+
+            // Add scenario to handle AsyncPageable<T> and Pageable<T> return types
+            if (asyncReturnType is INamedTypeSymbol asyncNamedTypeSymbol && asyncNamedTypeSymbol.IsGenericType && asyncNamedTypeSymbol.Name == AsyncPageableTypeName)
+            {
+                if (syncReturnType is INamedTypeSymbol syncNamedTypeSymbol && syncNamedTypeSymbol.IsGenericType && syncNamedTypeSymbol.Name == PageableTypeName)
+                {
+                    var asyncInnerType = asyncNamedTypeSymbol.TypeArguments.Single();
+                    var syncInnerType = syncNamedTypeSymbol.TypeArguments.Single();
+                    return SymbolEqualityComparer.Default.Equals(asyncInnerType, syncInnerType);
                 }
             }
 

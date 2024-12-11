@@ -396,5 +396,60 @@ namespace RandomNamespace
             await Verifier.CreateAnalyzer(code)
                 .RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0004ProducedForMethodsWithMismatchedReturnTypes()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task<string> {|AZC0004:GetAsync|}(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual int Get(CancellationToken cancellationToken = default)
+        {
+            return 0;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForMethotsWithMismatchedParameters()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task<string> {|AZC0004:GetAsync|}(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual string Get(string foo, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
     }
 }

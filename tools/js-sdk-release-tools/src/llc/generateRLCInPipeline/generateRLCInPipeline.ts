@@ -21,6 +21,7 @@ import { defaultChildProcessTimeout, getGeneratedPackageDirectory } from "../../
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion";
 import { updateChangelogResult } from "../../common/packageResultUtils";
+import { migratePackage } from "../../common/migration";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -235,6 +236,8 @@ export async function generateRLCInPipeline(options: {
             }
         }
 
+        await migratePackage(packagePath);
+        
         logger.info(`Start to update rush.`);
         execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);

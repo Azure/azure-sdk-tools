@@ -341,7 +341,7 @@ namespace Azure.ClientSdk.Analyzers
                     }
                     return true;
                 }
-                else if (!asyncNamedTypeSymbol.IsGenericType && !syncNamedTypeSymbol.IsGenericType)
+                else if ((!asyncNamedTypeSymbol.IsGenericType) && (!syncNamedTypeSymbol.IsGenericType))
                 {
                     return true;
                 }

@@ -11,8 +11,85 @@ import { updateBreakingChangesLabel } from './updateBreakingChangesLabels';
 import { formatSuppressionLine } from '../utils/reportFormat';
 import { removeAnsiEscapeCodes } from '../utils/utils';
 import { CommentCaptureTransport } from './logging';
+import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
+import { writeTmpJsonFile } from '../utils/fsUtils';
 
 const commentLimit = 60;
+
+export const generateReport = (context: WorkflowContext) => {
+  context.logger.log('section', 'Generate report');
+  /*
+  const captureTransport = new CommentCaptureTransport({
+    extraLevelFilter: ['error', 'warn'],
+    level: 'debug',
+    output: context.messages
+  });*/
+  //context.logger.add(captureTransport);
+
+  let executionReport: ExecutionReport;
+  const packageReports: PackageReport[] = [];
+
+  let hasSuppressions = false
+  let hasAbsentSuppressions = false;
+  let areBreakingChangeSuppressed = false;
+  if (context.pendingPackages.length > 0) {
+    setSdkAutoStatus(context, 'failed');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    context.logger.error(`GenerationError: The following packages are still pending.`);
+    for (const pkg of context.pendingPackages) {
+      context.logger.error(`\t${pkg.name}`);
+      context.handledPackages.push(pkg);
+    }
+  }
+
+  for (const pkg of context.handledPackages) {
+    setSdkAutoStatus(context, pkg.status);
+    hasSuppressions = Boolean(pkg.presentSuppressionLines.length > 0);
+    hasAbsentSuppressions = Boolean(pkg.absentSuppressionLines.length > 0);
+    if(pkg.hasBreakingChange && hasSuppressions && !hasAbsentSuppressions) {
+      areBreakingChangeSuppressed = true;
+    }
+    const packageReport: PackageReport = {
+        packageName: pkg.name,
+        result: pkg.status,
+        artifactPaths: pkg.artifactPaths,
+        readmeMd: pkg.readmeMd,
+        typespecProject: pkg.typespecProject,
+        version: pkg.version,
+        apiViewArtifact: pkg.apiViewArtifactPath,
+        language: pkg.language,
+        hasBreakingChange: pkg.hasBreakingChange,
+        breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
+        areBreakingChangeSuppressed,
+        presentBreakingChangeSuppressions: pkg.presentSuppressionLines,
+        absentBreakingChangeSuppressions: pkg.absentSuppressionLines,
+        installInstructions: pkg.installationInstructions
+    }
+    packageReports.push(packageReport);
+    context.logger.info(`package [${pkg.name}] hasBreakingChange [${pkg.hasBreakingChange}] isBetaMgmtSdk [${pkg.isBetaMgmtSdk}] hasSuppressions [${hasSuppressions}] hasAbsentSuppressions [${hasAbsentSuppressions}]`);
+  }
+
+  executionReport = {
+    packages: packageReports,
+    executionResult: context.status,
+    fullLogPath: context.fullLogFileName,
+    filteredLogPath: context.filterLogFileName,
+    sdkArtifactFolder: context.sdkArtifactFolder,
+    sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder
+  };
+
+  writeTmpJsonFile(context, 'executionReport.json', executionReport);
+  context.logger.info(`Main status [${context.status}]`);
+  if (context.status === 'failed') {
+    console.log(`##vso[task.complete result=Failed;]`);
+    sendFailure();
+  } else {
+    sendSuccess();
+  }
+
+  context.logger.log('endsection', 'Generate report');
+  //context.logger.remove(captureTransport);
+}
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   context.logger.log('section', 'Report status');
@@ -95,7 +172,7 @@ export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   const encode = (str: string): string => Buffer.from(str, 'binary').toString('base64');
   console.log(`##vso[task.setVariable variable=SubTitle]${encode(subTitle)}`);
 
-  const outputPath = path.join(context.workingFolder, 'pipe.log');
+  const outputPath = path.join(context.config.workingFolder, 'pipe.log');
   context.logger.info(`Writing unified pipeline message to ${outputPath}`);
   const content = JSON.stringify(pipelineResultData);
 

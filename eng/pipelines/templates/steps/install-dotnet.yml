@@ -9,7 +9,7 @@ steps:
     inputs:
       useGlobalJson: true
 
-  # We install .NET 9.0.x SDK in addition to .NET coming from global.json because most of our tools target 9.0.x.
+  # We install .NET 8.0.x SDK in addition to .NET coming from global.json because most of our tools target 8.0.x.
   # Once we migrate all tools to a newer .NET version, we should update this to install that version instead.
   - task: UseDotNet@2
     displayName: "Use .NET SDK 9.0.x"

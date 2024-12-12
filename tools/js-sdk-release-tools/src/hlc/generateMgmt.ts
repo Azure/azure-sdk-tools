@@ -105,7 +105,7 @@ export async function generateMgmt(options: {
                 }
             }
 
-            await migratePackage(packagePath);
+            await migratePackage(packagePath, "common/scripts/install-run-rushx.js");
             
             logger.info(`Start to run command: 'rush update'.`);
             execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});

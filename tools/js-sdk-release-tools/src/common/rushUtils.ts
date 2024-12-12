@@ -65,7 +65,7 @@ export async function buildPackage(
     rushxScript: string
 ) {
     const relativePackageDirectoryToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
-    logger.info(`Start building package in '${relativePackageDirectoryToSdkRoot}'.`);
+    logger.info(`Start to build package in '${relativePackageDirectoryToSdkRoot}'.`);
 
     const { name } = await getNpmPackageInfo(relativePackageDirectoryToSdkRoot);
     await updateRushJson({

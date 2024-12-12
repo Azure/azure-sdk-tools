@@ -1,14 +1,18 @@
 import { logger } from "../utils/logger";
-import { getNpmPackageInfo } from "./npmUtils";
 import { runCommand, runCommandOptions } from "./utils";
+import { load } from "@npmcli/package-json";
 
-export async function migratePackage(packageDirectory: string): Promise<void> {
-    const info = await getNpmPackageInfo(packageDirectory);
-    logger.info(`Start to migrate package '${info.name}'`);
-    await runCommand(
-        "npx",
-        `dev-tool admin migrate-package --package-name=${info.name}`.split(" "),
-        { ...runCommandOptions, cwd: packageDirectory }
-    );
-    logger.info(`Migrated package '${info.name}' successfully`);
+// TODO: remove when emitter is ready
+export async function migratePackage(packageDirectory: string, rushxScript: string): Promise<void> {
+    let packageJson = await load(packageDirectory);
+    packageJson.content.scripts![
+        "migrate"
+    ] = `dev-tool admin migrate-package --package-name=${packageJson.content.name}`;
+    packageJson = packageJson.update(packageJson.content);
+    packageJson.save();
+    await runCommand("node", [rushxScript, "migrate"], {
+        ...runCommandOptions,
+        cwd: packageDirectory,
+    });
+    logger.info(`Migrated package '${packageJson.content.name}' successfully`);
 }

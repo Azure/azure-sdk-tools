@@ -36,7 +36,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
         const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
 
-        await migratePackage(packageDirectory);
+        await migratePackage(packageDirectory, rushxScript);
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
 
         // changelog generation will compute package version and bump it in package.json,

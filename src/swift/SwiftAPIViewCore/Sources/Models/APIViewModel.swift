@@ -195,7 +195,11 @@ class APIViewModel: Tokenizable, Encodable {
             // if there are too many newlines, remove some
             let linesToRemove = newlineCount - count
             for _ in 0..<linesToRemove {
-                _ = parentLines.popLast()
+                if currentParent != nil {
+                    _ = currentParent!.children.popLast()
+                } else {
+                    _ = self.reviewLines.popLast()
+                } 
             }
         } else {
             // if not enough newlines, add some

@@ -235,11 +235,12 @@ export async function generateRLCInPipeline(options: {
                 outputPackageInfo.packageFolder = relativePackagePath;
             }
         }
-
-        await migratePackage(packagePath, "common/scripts/install-run-rushx.js");
         
         logger.info(`Start to update rush.`);
         execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+        
+        await migratePackage(packagePath, "common/scripts/install-run-rushx.js");
+        
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
         execSync(`node common/scripts/install-run-rush.js build -t ${packageName} --verbose`, {stdio: 'inherit'});

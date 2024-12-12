@@ -11,7 +11,6 @@ import { getNpmPackageInfo } from '../../common/npmUtils';
 import { logger } from '../../utils/logger';
 import { exists, remove } from 'fs-extra';
 import unixify from 'unixify';
-import { migratePackage } from '../../common/migration';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -36,7 +35,6 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
         const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
 
-        await migratePackage(packageDirectory, rushxScript);
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
 
         // changelog generation will compute package version and bump it in package.json,

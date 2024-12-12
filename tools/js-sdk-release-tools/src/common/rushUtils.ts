@@ -9,6 +9,7 @@ import { runCommand, runCommandOptions } from './utils';
 import { glob } from 'glob';
 import { logger } from '../utils/logger';
 import unixify from 'unixify';
+import { migratePackage } from './migration';
 
 interface ProjectItem {
     packageName: string;
@@ -77,6 +78,8 @@ export async function buildPackage(
     logger.info(`Start to rush update.`);
     await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
     logger.info(`Rush update successfully.`);
+
+    await migratePackage(packageDirectory, rushxScript);
 
     logger.info(`Start to build package '${name}'.`);
     await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);

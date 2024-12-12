@@ -147,6 +147,12 @@ class APIViewModel: Tokenizable, Encodable {
     func token(kind: TokenKind, value: String, options: ReviewTokenOptions? = nil) {
         let token = ReviewToken(kind: kind, value: value, options: options)
         self.currentLine.tokens.append(token)
+        return
+    }
+
+    func token(_ token: ReviewToken) {
+        self.currentLine.tokens.append(token)
+        return
     }
 
     func text(_ text: String, options: ReviewTokenOptions? = nil) {
@@ -163,8 +169,7 @@ class APIViewModel: Tokenizable, Encodable {
         }
 
         if let currentParent = self.currentParent {
-            currentParent.children = currentParent.children ?? []
-            currentParent.children!.append(self.currentLine)
+            currentParent.children.append(self.currentLine)
         } else {
             self.reviewLines.append(self.currentLine)
         }
@@ -177,7 +182,7 @@ class APIViewModel: Tokenizable, Encodable {
         var parentLines = self.currentParent?.children ?? self.reviewLines
         // count the number of trailing newlines
         var newlineCount = 0
-        for line in self.reviewLines.reversed() {
+        for line in parentLines.reversed() {
             if line.tokens.count == 0 {
                 newlineCount += 1
             } else {
@@ -206,10 +211,10 @@ class APIViewModel: Tokenizable, Encodable {
         if let snapTo = punctuationOptions?.snapTo {
             self.snap(token: token, to: snapTo)
         } else {
-            self.currentLine.tokens.append(token)
+            self.token(token)
         }
         if let isContextEndLine = punctuationOptions?.isContextEndLine {
-            self.currentLine.isContextEndLine = true
+            self.currentLine.isContextEndLine = isContextEndLine
         }
     }
 
@@ -303,7 +308,7 @@ class APIViewModel: Tokenizable, Encodable {
         let lines = text.split(separator: "\n")
         if lines.count > 1 {
             let token = ReviewToken(kind: .stringLiteral, value: "\u{0022}\(text)\u{0022}", options: options)
-            self.currentLine.tokens.append(token)
+            self.token(token)
         } else {
             self.punctuation("\u{0022}\u{0022}\u{0022}", options: options)
             self.newline()
@@ -322,7 +327,7 @@ class APIViewModel: Tokenizable, Encodable {
         lastToken?.hasSuffixSpace = false
 
         if let currentParent = self.currentParent {
-            currentParent.children?.append(self.currentLine)
+            currentParent.children.append(self.currentLine)
             self.parentStack.append(currentParent)
         } else {
             self.reviewLines.append(self.currentLine)
@@ -338,9 +343,9 @@ class APIViewModel: Tokenizable, Encodable {
             fatalError("Cannot de-indent without a parent")
         }
         // ensure that the last line before the deindent has no blank lines
-        if let lastChild = currentParent.children?.popLast() {
+        if let lastChild = currentParent.children.popLast() {
             if (lastChild.tokens.count > 0) {
-                currentParent.children?.append(lastChild)
+                currentParent.children.append(lastChild)
             }
         }
         self.currentParent = self.parentStack.popLast()
@@ -374,7 +379,7 @@ class APIViewModel: Tokenizable, Encodable {
                     continue
                 } else {
                     // no snapping, so render in place
-                    self.currentLine.tokens.append(target)
+                    self.token(target)
                     return
                 }
             case .punctuation:
@@ -385,12 +390,12 @@ class APIViewModel: Tokenizable, Encodable {
                     lastLine.tokens.append(target)
                 } else {
                     // no snapping, so render in place
-                    self.currentLine.tokens.append(target)
+                    self.token(target)
                     return
                 }
             default:
                 // no snapping, so render in place
-                self.currentLine.tokens.append(target)
+                self.token(target)
                 return
             }
         }
@@ -399,8 +404,8 @@ class APIViewModel: Tokenizable, Encodable {
     /// Retrieves the last line from the review
     func getLastLine() -> ReviewLine? {
         guard let currentParent = self.currentParent else { return nil }
-        let lastChild = currentParent.children?.last
-        let lastGrandchild = lastChild?.children?.last
+        let lastChild = currentParent.children.last
+        let lastGrandchild = lastChild?.children.last
         if let greatGrandChildren = lastGrandchild?.children {
             if greatGrandChildren.count > 0 {
                 fatalError("Unexpected great-grandchild in getLastLine()!")

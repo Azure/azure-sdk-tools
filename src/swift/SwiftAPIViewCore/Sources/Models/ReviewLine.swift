@@ -40,7 +40,7 @@ class ReviewLine: Tokenizable, Encodable {
     /// Add any child lines as children. For e.g. all classes and namespace level methods are added as a children of a
     /// namespace(module) level code line. Similarly all method level code lines are added as children of it's class
     /// code line. Identation will automatically be applied to children.
-    var children: [ReviewLine]?
+    var children: [ReviewLine] = []
     /// Flag the line as hidden so it will not be shown to architects by default.
     var isHidden: Bool?
     /// Identifies that this line completes the existing context, usually the immediately previous reviewLine. For example,
@@ -57,14 +57,18 @@ class ReviewLine: Tokenizable, Encodable {
         let indentString = String(repeating: " ", count: indent)
         var tokenText = ""
         for token in tokens {
-            tokenText += token.text
+            tokenText += token.text(withPreview: tokenText)
         }
-        let childrenText = self.children?.map { $0.text(indent: indent + 2) }.joined(separator: "\n")
-        if let childrenText {
-            return "\(indentString)\(tokenText)\n\(childrenText)"
+        let childrenText = self.children.map { $0.text(indent: indent + 2) }.joined(separator: "\n")
+        let value: String
+        if childrenText != "" {
+            value = "\(indentString)\(tokenText)\n\(childrenText)"
+        } else if tokenText != "" {
+            value = "\(indentString)\(tokenText)"
         } else {
-            return "\(indentString)\(tokenText)"
+            value = ""
         }
+        return value
     }
 
     // MARK: Codable
@@ -84,10 +88,12 @@ class ReviewLine: Tokenizable, Encodable {
         try container.encode(tokens, forKey: .tokens)
         try container.encodeIfPresent(lineId, forKey: .lineId)
         try container.encodeIfPresent(crossLanguageId, forKey: .crossLanguageId)
-        try container.encodeIfPresent(children, forKey: .children)
         try container.encodeIfPresent(isHidden, forKey: .isHidden)
         try container.encodeIfPresent(isContextEndLine, forKey: .isContextEndLine)
         try container.encodeIfPresent(relatedToLine, forKey: .relatedToLine)
+        if (!children.isEmpty) {
+            try container.encode(children, forKey: .children)
+        }
     }
 
     // MARK: Tokenizable

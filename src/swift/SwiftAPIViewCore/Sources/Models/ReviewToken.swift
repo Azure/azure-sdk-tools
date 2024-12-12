@@ -114,8 +114,12 @@ class ReviewToken: Codable {
         try container.encodeIfPresent(renderClasses, forKey: .renderClasses)
     }
 
-    var text: String {
-        return value
+    func text(withPreview preview: String) -> String {
+        let previewEndsInSpace = preview.hasSuffix(" ")
+        let hasSuffixSpace = self.hasSuffixSpace ?? true
+        let suffixSpace = hasSuffixSpace ? " " : ""
+        let prefixSpace = (hasSuffixSpace && !previewEndsInSpace) ? " " : ""
+        return "\(prefixSpace)\(value)\(suffixSpace)"
     }
 }
 

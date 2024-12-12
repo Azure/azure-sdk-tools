@@ -109,7 +109,6 @@ class PackageModel: Tokenizable, Linkable {
         a.text(name)
         options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
         a.punctuation("{", options: options)
-        a.newline()
         a.indent {
             for member in members {
                 member.tokenize(apiview: a, parent: self)

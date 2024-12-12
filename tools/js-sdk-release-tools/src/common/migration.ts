@@ -1,10 +1,11 @@
+import { posix } from "node:path";
 import { logger } from "../utils/logger";
 import { runCommand, runCommandOptions } from "./utils";
 import { load } from "@npmcli/package-json";
 
 // TODO: remove when emitter is ready
 export async function migratePackage(packageDirectory: string, rushxScript: string): Promise<void> {
-    let packageJson = await load(packageDirectory);
+    let packageJson = await load(posix.join(packageDirectory, 'package.json'));
     packageJson.content.scripts![
         "migrate"
     ] = `dev-tool admin migrate-package --package-name=${packageJson.content.name}`;

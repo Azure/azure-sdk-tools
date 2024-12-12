@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: APIView
+metadata:
+  template: azd-init@1.5.0
+services:
+hooks:
+  postprovision:
+    windows:
+      run: |
+        dotnet user-secrets set "CosmosEndpoint" "$env:AZURE_COSMOS_ENDPOINT" --project ./APIViewWeb/APIViewWeb.csproj
+        dotnet user-secrets set "CosmosDBName" "$env:AZURE_COSMOS_DATABASE_NAME" --project ./APIViewWeb/APIViewWeb.csproj
+        dotnet user-secrets set "StorageAccountUrl" "$env:AZURE_STORAGE_BLOB_ENDPOINT" --project ./APIViewWeb/APIViewWeb.csproj
+        dotnet user-secrets set "AppConfigEndpoint" "$env:AZURE_APPCONFIG_ENDPOINT" --project ./APIViewWeb/APIViewWeb.csproj
+      shell: pwsh
+      continueOnError: false
+      interactive: true
+    posix:
+      run: |
+        dotnet user-secrets set "CosmosEndpoint" "$AZURE_COSMOS_ENDPOINT" --project ./APIViewWeb/APIViewWeb.csproj
+        dotnet user-secrets set "CosmosDBName" "$AZURE_COSMOS_DATABASE_NAME" --project ./APIViewWeb/APIViewWeb.csproj
+        dotnet user-secrets set "StorageAccountUrl" "$AZURE_STORAGE_BLOB_ENDPOINT" --project ./APIViewWeb/APIViewWeb.csproj
+        dotnet user-secrets set "AppConfigEndpoint" "$AZURE_APPCONFIG_ENDPOINT" --project ./APIViewWeb/APIViewWeb.csproj
+      shell: sh
+      continueOnError: false
+      interactive: true

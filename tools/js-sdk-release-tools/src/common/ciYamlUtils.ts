@@ -82,7 +82,7 @@ async function updateManagementPlaneCiYaml(
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciMgmtPath) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
 
-    writeCiYaml(ciMgmtPath, parsed);
+    await writeCiYaml(ciMgmtPath, parsed);
 }
 
 function getArtifact(npmPackageInfo: NpmPackageInfo): ArtifactInfo {

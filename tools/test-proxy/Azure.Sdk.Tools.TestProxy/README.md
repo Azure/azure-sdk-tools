@@ -25,6 +25,7 @@ to documentation in your specific language repository in order to configure reco
     - [Port Assignation](#port-assignation)
       - [Environment Variable](#environment-variable)
       - [Input arguments](#input-arguments)
+      - [Auto port binding](#auto-port-binding)
   - [Environment Variables](#environment-variables)
   - [How do I use the test-proxy to get a recording?](#how-do-i-use-the-test-proxy-to-get-a-recording)
     - [Installation and initial run](#installation-and-initial-run)
@@ -234,6 +235,27 @@ For example, you can use command line argument `--urls` to bind to a non-default
 ```powershell
 test-proxy -- --urls "http://localhost:9000;https://localhost:9001"
 ```
+
+#### Auto port binding
+
+Because the test-proxy honors the ASP.NET server configuration environment variable and CLI arguments, users can allow the test-proxy to automatically choose what port it binds to.
+
+The trick is to provide override the default ASP.NET url to `http://0.0.0.0:0;https://0.0.0.0:0` via `ASPNETCORE_URLS` env variable or `-- --urls` CLI argument.
+
+Then, the user must listen to the stdout from the `test-proxy` process and parse out the following:
+
+```
+|>test-proxy start -- --urls "http://0.0.0.0:0;https://0.0.0.0:0"
+Running proxy version is Azure.Sdk.Tools.TestProxy 20241209.1
+...
+[11:40:31] info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://0.0.0.0:55552
+[11:40:31] info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: https://0.0.0.0:55553
+...
+```
+
+To discover the mapped ports.
 
 ## Environment Variables
 

@@ -12,7 +12,7 @@ steps:
   # We install .NET 8.0.x SDK in addition to .NET coming from global.json because most of our tools target 8.0.x.
   # Once we migrate all tools to a newer .NET version, we should update this to install that version instead.
   - task: UseDotNet@2
-    displayName: "Use .NET SDK 9.0.x"
+    displayName: "Use .NET SDK 8.0.x"
     retryCountOnTaskFailure: 3
     inputs:
       # We must install sdk, not just runtime, as it is required by some of our tools, like test-proxy.

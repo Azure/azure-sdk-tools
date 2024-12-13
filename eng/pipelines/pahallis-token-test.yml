@@ -41,6 +41,7 @@ jobs:
     parameters:
       BaseBranchName: main
       PRBranchName: users/pahallis/test-things
+      PROwner: Azure
       RepoOwner: Azure
       RepoName: azure-sdk-tools
       CommitMsg: 'Test token usage'

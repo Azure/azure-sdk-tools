@@ -170,6 +170,17 @@ class ExtensionModel: Tokenizable {
 }
 
 extension Array<ExtensionModel> {
+    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+        a.blankLines(set: 1)
+        let lastIdx = self.count - 1
+        for (idx, ext) in self.enumerated() {
+            ext.tokenize(apiview: a, parent: parent)
+            if idx != lastIdx {
+                a.blankLines(set: 1)
+            }
+        }
+    }
+
     func resolveDuplicates() -> [ExtensionModel] {
         var resolved = [String: ExtensionModel]()
         for ext in self {

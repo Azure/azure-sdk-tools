@@ -229,12 +229,10 @@ extension SyntaxProtocol {
         for (idx, child) in children.enumerated() {
             let beforeCount = a.currentLine.tokens.count
             child.tokenize(apiview: a, parent: parent)
-            // no blank lines for the last member, or if tokenizing didn't
-            // actually add anything
-            if (idx != lastIdx && a.currentLine.tokens.count > beforeCount) {
-                // FIXME: Newline
-                //a.blankLines(set: 1)
-            }
+            // skip if no tokens were actually added
+            guard (a.currentLine.tokens.count > beforeCount) else { continue }
+            // add 1 blank line, except for the last member
+            a.blankLines(set: idx != lastIdx ? 1 : 0)
         }
     }
 

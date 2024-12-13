@@ -110,34 +110,21 @@ class PackageModel: Tokenizable, Linkable {
         options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
         a.punctuation("{", options: options)
         a.indent {
-            // FIXME: Newline
-            //a.blankLines(set: 0)
+            a.blankLines(set: 0)
             for member in members {
                 member.tokenize(apiview: a, parent: self)
-                // FIXME: Newline
-                //a.blankLines(set: 1)
+                a.blankLines(set: 1)
             }
             // render any orphaned extensions
             if !extensions.isEmpty {
                 a.comment("Non-package extensions")
-                // FIXME: Newline
-                //a.newline()
-                let endIdx = extensions.count - 1
-                for (idx, ext) in extensions.enumerated() {
-                    ext.tokenize(apiview: a, parent: nil)
-                    if idx != endIdx {
-                        // FIXME: Newline
-                        //a.blankLines(set: 1)
-                    }
-                }
+                extensions.tokenize(apiview: a, parent: nil)
             }
         }
         options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
-        // FIXME: Newline
-        //a.blankLines(set: 0)
+        a.blankLines(set: 0)
         a.punctuation("}", options: options)
-        // FIXME: Newline
-        // a.newline()
+        a.newline()
         resolveTypeReferences(apiview: a)
     }
 

@@ -86,10 +86,12 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Returns the text-based representation of all lines
     var text: String {
-        return reviewLines.map { line in
+        var value = ""
+        for line in reviewLines {
             let lineText = line.text()
-            return lineText
-        }.joined()
+            value += lineText
+        }
+        return value
     }
     
     // MARK: Initializers

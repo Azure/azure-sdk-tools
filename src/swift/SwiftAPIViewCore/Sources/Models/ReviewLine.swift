@@ -54,6 +54,7 @@ class ReviewLine: Tokenizable, Encodable {
 
     /// Returns the text-based representation of all tokens
     func text(indent: Int = 0) -> String {
+        let indentCount = 4
         let indentString = String(repeating: " ", count: indent)
         if tokens.count == 0 && children.count == 0 {
             return "\n"
@@ -62,11 +63,13 @@ class ReviewLine: Tokenizable, Encodable {
         for token in tokens {
             value += token.text(withPreview: value)
         }
-        let childrenLines = self.children.map { $0.text(indent: indent + 2) }
-        for line in childrenLines {
-            value += "\(line)\n"
+        if tokens.count > 0 {
+            value += "\n"
         }
-        value += "\n"
+        let childrenLines = self.children.map { $0.text(indent: indent + indentCount) }
+        for line in childrenLines {
+            value += line
+        }
         return value
     }
 

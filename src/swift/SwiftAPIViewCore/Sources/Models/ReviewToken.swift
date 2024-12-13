@@ -116,9 +116,10 @@ class ReviewToken: Codable {
 
     func text(withPreview preview: String) -> String {
         let previewEndsInSpace = preview.hasSuffix(" ")
-        let hasSuffixSpace = self.hasSuffixSpace ?? true
+        let hasSuffixSpace = self.hasSuffixSpace != nil ? self.hasSuffixSpace! : true
+        let hasPrefixSpace = self.hasPrefixSpace != nil ? self.hasPrefixSpace! : false
         let suffixSpace = hasSuffixSpace ? " " : ""
-        let prefixSpace = (hasSuffixSpace && !previewEndsInSpace) ? " " : ""
+        let prefixSpace = (hasPrefixSpace && !previewEndsInSpace) ? " " : ""
         return "\(prefixSpace)\(value)\(suffixSpace)"
     }
 }

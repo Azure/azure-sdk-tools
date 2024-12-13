@@ -27,7 +27,7 @@
 import XCTest
 @testable import SwiftAPIViewCore
 
-class UtilTests: XCTestCase {
+class TestUtilityTests: XCTestCase {
 
     override func setUpWithError() throws {
         try super.setUpWithError()
@@ -73,11 +73,62 @@ class UtilTests: XCTestCase {
         line2.tokens = [ReviewToken(kind: .text, value: "public class Foo()", options: options)]
         let child1 = ReviewLine()
         child1.tokens = [ReviewToken(kind: .text, value: "func getFoo() -> Foo", options: options)]
-        line2.children = [child1]
-
+        let child2 = ReviewLine()
+        let child3 = ReviewLine()
+        child3.tokens = [ReviewToken(kind: .text, value: "func setFoo(_: Foo)", options: options)]
+        line2.children = [child1, child2, child3]
         model.reviewLines = [line1, ReviewLine(), ReviewLine(), line2]
         let generated = model.text
-        let expected = "Some text\n\n\npublic class Foo()\n  func getFoo() -> Foo\n\n"
+        let expected = "Some text\n\n\npublic class Foo()\n    func getFoo() -> Foo\n\n    func setFoo(_: Foo)\n"
+        compare(expected: expected, actual: generated)
+    }
+
+    func testSuffixSpaceBehavior() throws {
+        let model = APIViewModel(packageName: "Test", packageVersion: "0.0", statements: [])
+        let line = ReviewLine()
+        var options = ReviewTokenOptions()
+        options.hasPrefixSpace = false
+        line.tokens = [ReviewToken(kind: .text, value: "A", options: options)]
+        options.hasSuffixSpace = true
+        line.tokens.append(ReviewToken(kind: .text, value: "B", options: options))
+        options.hasSuffixSpace = false
+        line.tokens.append(ReviewToken(kind: .text, value: "C", options: options))
+        model.reviewLines = [line]
+        let generated = model.text
+        let expected = "A B C\n"
+        compare(expected: expected, actual: generated)
+    }
+
+    func testPrefixSpaceBehavior() throws {
+        let model = APIViewModel(packageName: "Test", packageVersion: "0.0", statements: [])
+        let line1 = ReviewLine()
+        var options = ReviewTokenOptions()
+        options.hasSuffixSpace = false
+        line1.tokens = [ReviewToken(kind: .text, value: "A", options: options)]
+        options.hasPrefixSpace = true
+        line1.tokens.append(ReviewToken(kind: .text, value: "B", options: options))
+        options.hasPrefixSpace = false
+        line1.tokens.append(ReviewToken(kind: .text, value: "C", options: options))
+
+        let line2 = ReviewLine()
+        options = ReviewTokenOptions()
+        options.hasPrefixSpace = true
+        options.hasSuffixSpace = nil
+        line2.tokens = [ReviewToken(kind: .text, value: "A", options: options)]
+        line2.tokens.append(ReviewToken(kind: .text, value: "B", options: options))
+        line2.tokens.append(ReviewToken(kind: .text, value: "C", options: options))
+
+        let line3 = ReviewLine()
+        options = ReviewTokenOptions()
+        options.hasPrefixSpace = true
+        options.hasSuffixSpace = true
+        line3.tokens = [ReviewToken(kind: .text, value: "A", options: options)]
+        line3.tokens.append(ReviewToken(kind: .text, value: "B", options: options))
+        line3.tokens.append(ReviewToken(kind: .text, value: "C", options: options))
+
+        model.reviewLines = [line1, line2, line3]
+        let generated = model.text
+        let expected = "A BC\n A B C \n A B C \n"
         compare(expected: expected, actual: generated)
     }
 }

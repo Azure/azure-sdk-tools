@@ -30,10 +30,10 @@ interface SdkAutoOptions {
   tspConfigPath?: string;
   readmePath?: string;  
   pullNumber?: number;
-  specCommitSha?: string;
-  specRepoHttpsUrl?: string;
+  specCommitSha: string;
+  specRepoHttpsUrl: string;
   workingFolder: string;
-
+  isTriggeredByPipeline: boolean;
   github: {
     token?: string;
     commentAuthorName?: string;

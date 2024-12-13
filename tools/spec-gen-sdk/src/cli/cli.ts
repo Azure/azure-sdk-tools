@@ -23,7 +23,7 @@ export type SpecGenSdkCliConfig = {
   readmePath?: string;
   sdkRepoName: string;
   prNumber?: number;
-  specCommitSha?: string;
+  specCommitSha: string;
   specRepoHttpsUrl: string;
 };
 
@@ -67,6 +67,7 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       github: {
         token: config.githubToken,
       },
+      isTriggeredByPipeline: config.isTriggeredByPipeline,
       runEnv: config.isTriggeredByPipeline ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto'
     });
@@ -150,8 +151,10 @@ yargs(hideBin(process.argv))
           description: "The spec pull request number",
         },
         'spec-commit-sha': {
+          alias: "c",
           type: "string",
           description: "The spec commit sha to use for the generation",
+          demandOption: true,
         },
         'spec-repo-https-url': {
           alias: "u",

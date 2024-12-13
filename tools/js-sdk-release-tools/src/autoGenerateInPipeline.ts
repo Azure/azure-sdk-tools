@@ -74,7 +74,7 @@ async function automationGenerateInPipeline(
 
             case SDKType.ModularClient: {
                 const typeSpecDirectory = path.posix.join(specFolder, typespecProject!);
-                const sdkRepoRoot = String(shell.pwd());
+                const sdkRepoRoot = String(shell.pwd()).replaceAll('\\', '/');
                 const skip = skipGeneration ?? false;
                 const repoUrl = repoHttpsUrl;
                 const options: ModularClientPackageOptions = {

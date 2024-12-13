@@ -14,7 +14,7 @@ param(
 $now = [System.DateTimeOffset]::UtcNow
 $payload = [ordered]@{ iss = $AppId; iat = $now.ToUnixTimeSeconds(); exp = $now.AddMinutes(1).ToUnixTimeSeconds() }
 
-$jwt = ./eng/scripts/New-JsonWebToken.ps1 -payload $payload -privateKeyPem $AppKey
+$jwt = &"$PSScriptRoot/New-JsonWebToken.ps1" -Payload $payload -PrivateKeyPem $AppKey
 
 $headers = @{
     "Authorization" = "Bearer $jwt"

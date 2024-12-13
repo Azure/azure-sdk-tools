@@ -10,27 +10,39 @@ jobs:
   displayName: TestToken
 
   steps:
+  - checkout: self
+
   - task: Powershell@2
-    displayName: Get an installation token
+    displayName: Get org token
     env:
-      APP_PRIVATE_KEY: $(AppPrivateKey)
-      REPOSITORY: Azure/azure-sdk-for-net-pr
+      APP_CLIENT_ID: $(azure-sdk-automation-client-id)
+      APP_PRIVATE_KEY: $(azure-sdk-automation-private-key)
     inputs:
       targetType: filePath
-      filePath: eng/scripts/Set-GitHubTokenVariable.ps1
+      filePath: $(Build.SourcesDirectory)/eng/common/scripts/Set-GitHubTokenVariable.ps1
       pwsh: true
       arguments: >
-        -AppId 1003147
+        -AppId $env:APP_CLIENT_ID
         -AppKey $env:APP_PRIVATE_KEY
-        -Repository $env:REPOSITORY
-        -VariableName 'githubtoken'
+        -Organization 'Azure'
+        -VariableName 'azuresdk-github-pat'
+
+  - pwsh: |
+      "Some test file contents" | Out-File -FilePath $(Build.SourcesDirectory)/TestFile.md -Encoding utf8
+    displayName: Create a test file
   
-  - task: Powershell@2
-    displayName: Use the token
+  - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+    parameters:
+      BaseBranchName: main
+      PRBranchName: users/pahallis/test-things
+      RepoOwner: Azure
+      RepoName: azure-sdk-tools
+      CommitMsg: 'Test token usage'
+      PRTitle: "DO NOT MERGE: Test token usage"
+      WorkingDirectory: $(System.DefaultWorkingDirectory)
+  
+  - pwsh: |
+      gh pr comment 40732 --repo Azure/azure-sdk-for-net --body "This is a test comment"
+    displayName: Add a pr comment
     env:
-      GH_TOKEN: $(githubtoken)
-      REPOSITORY: Azure/azure-sdk-for-net-pr
-    inputs:
-      targetType: inline
-      script: |
-        gh run list --repo $env:REPOSITORY --limit 2
+      GH_TOKEN: $(azuresdk-github-pat)

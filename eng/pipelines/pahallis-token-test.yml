@@ -1,0 +1,49 @@
+trigger: none
+pr: none
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
+
+jobs:
+- job: TestTokenUsage
+  displayName: TestToken
+
+  steps:
+  - checkout: self
+
+  - task: Powershell@2
+    displayName: Get org token
+    env:
+      APP_CLIENT_ID: $(azure-sdk-automation-client-id)
+      APP_PRIVATE_KEY: $(azure-sdk-automation-private-key)
+    inputs:
+      targetType: filePath
+      filePath: $(Build.SourcesDirectory)/eng/common/scripts/Set-GitHubTokenVariable.ps1
+      pwsh: true
+      arguments: >
+        -AppId $env:APP_CLIENT_ID
+        -AppKey $env:APP_PRIVATE_KEY
+        -Organization 'Azure'
+        -VariableName 'azuresdk-github-pat'
+  
+  - pwsh: |
+      gh pr comment 40732 --repo Azure/azure-sdk-for-net --body "This is a test comment"
+    displayName: Add a pr comment
+    env:
+      GH_TOKEN: $(azuresdk-github-pat)
+
+  - pwsh: |
+      "Some test file contents" | Out-File -FilePath $(Build.SourcesDirectory)/TestFile.md -Encoding utf8
+    displayName: Create a test file
+  
+  - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+    parameters:
+      BaseBranchName: main
+      PRBranchName: users/pahallis/test-things
+      PROwner: Azure
+      RepoOwner: Azure
+      RepoName: azure-sdk-tools
+      CommitMsg: 'Test token usage'
+      PRTitle: "DO NOT MERGE: Test token usage"
+      WorkingDirectory: $(System.DefaultWorkingDirectory)

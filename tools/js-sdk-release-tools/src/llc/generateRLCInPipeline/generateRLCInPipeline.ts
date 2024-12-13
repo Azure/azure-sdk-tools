@@ -235,7 +235,7 @@ export async function generateRLCInPipeline(options: {
                 outputPackageInfo.packageFolder = relativePackagePath;
             }
         }
-        
+
         logger.info(`Start to update rush.`);
         execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
         

@@ -4,7 +4,6 @@ import { any } from './arrays';
 import { WorkflowContext } from '../automation/workflow';
 import { SimpleGit } from 'simple-git';
 import { TreeType, gitTreeResultToStringArray } from './gitUtils';
-import { sdkAutomationCliConfig } from '../cli/config';
 
 export type FsSearchOptions = {
   searchFileRegex: RegExp
@@ -131,7 +130,7 @@ const getFilesInFolder = async (searchPath: string, opts: FsSearchOptions): Prom
     return fs.readdirSync(p);
   }
 
-  const workingFolder = sdkAutomationCliConfig.workingFolder;
+  const workingFolder = ".";
   const workPath = path.resolve(process.cwd(), workingFolder, opts.specFolder, searchPath);
   const tree = await opts.repo.raw(['ls-tree', `${opts.treeId}`, workPath]);
   const subTree = gitTreeResultToStringArray(tree);

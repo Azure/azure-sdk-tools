@@ -13,18 +13,19 @@
   "keywords": [
     "spec-gen-sdk"
   ],
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "lib/**/*.js",
-    "lib/**/*.json",
-    "lib/**/*.js.map",
-    "lib/**/*.d.ts",
-    "lib/**/*.d.ts.map",
-    "lib/**/*.handlebars",
+    "dist/**/*.js",
+    "dist/**/*.json",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "dist/**/*.handlebars",
     "images/**/*",
     "src/**/*.ts",
-    "README.md"
+    "README.md",
+    "cmd/spec-gen-sdk.js"
   ],
   "license": "MIT",
   "engines": {
@@ -52,7 +53,7 @@
     "tslib": "1.14.1",
     "winston": "^3.3.3",
     "winston-transport": "^4.4.0",
-    "yargs": "~16.2.0"
+    "yargs": "^17.7.2"
   },
   "overrides": {
     "@octokit/rest": "18.0.3",
@@ -92,19 +93,20 @@
   },
   "scripts": {
     "build": "npm run clean && npm run lint && tsc && npm run copy",
-    "clean": "rimraf -rf lib",
+    "clean": "rimraf -rf dist",
     "purge": "rimraf -rf node_modules package-lock.json",
-    "copy": "cd src && find . \\( -name '*.handlebars' -o -name '*.json' \\) -exec cp --parents {} ../lib \\; && cd ..",
+    "copy": "cd src && find . \\( -name '*.handlebars' -o -name '*.json' \\) -exec cp --parents {} ../dist \\; && cd ..",
     "watch": "tsc --watch",
     "test": "jest -c jest.config.js --verbose",
-    "start": "node lib/cli/cli.js",
+    "start": "node dist/cli/cli.js",
     "build-test": "npm run build && npm test",
     "lint": "eslint src/**/*.ts",
     "lint-fix": "eslint src/**/*.ts --fix",
     "test-reportFormat": "jest -c jest.config.js --verbose ./test/reportFormat.test.ts",
-    "test-utils": "jest -c jest.config.js --verbose ./test/utils.test.ts"
+    "test-utils": "jest -c jest.config.js --verbose ./test/utils.test.ts",
+    "spec-gen-sdk": "node cmd/spec-gen-sdk.js"
   },
   "bin": {
-    "spec-gen-sdk": "bin/spec-gen-sdk"
+    "spec-gen-sdk": "cmd/spec-gen-sdk.js"
   }
 }

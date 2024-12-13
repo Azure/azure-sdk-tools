@@ -1,7 +1,6 @@
-import { RestEndpointMethodTypes } from '@octokit/rest';
-import { Octokit } from '@octokit/rest';
 import * as fs from 'fs';
 import * as winston from 'winston';
+import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
 import { getAuthenticatedOctokit, getRepoKey, RepoKey } from '../utils/githubUtils';
 import {
   FailureType,

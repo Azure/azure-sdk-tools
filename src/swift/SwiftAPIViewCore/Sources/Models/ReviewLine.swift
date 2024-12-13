@@ -55,20 +55,19 @@ class ReviewLine: Tokenizable, Encodable {
     /// Returns the text-based representation of all tokens
     func text(indent: Int = 0) -> String {
         let indentString = String(repeating: " ", count: indent)
-        var tokenText = ""
+        if tokens.count == 0 && children.count == 0 {
+            return "\n"
+        }
+        var value = indentString
         for token in tokens {
-            tokenText += token.text(withPreview: tokenText)
+            value += token.text(withPreview: value)
         }
-        let childrenText = self.children.map { $0.text(indent: indent + 2) }.joined(separator: "\n")
-        let value: String
-        if childrenText != "" {
-            value = "\(indentString)\(tokenText)\n\(childrenText)"
-        } else if tokenText != "" {
-            value = "\(indentString)\(tokenText)"
-        } else {
-            value = ""
+        let childrenLines = self.children.map { $0.text(indent: indent + 2) }
+        for line in childrenLines {
+            value += "\(line)\n"
         }
-        return "\(value)\n"
+        value += "\n"
+        return value
     }
 
     // MARK: Codable

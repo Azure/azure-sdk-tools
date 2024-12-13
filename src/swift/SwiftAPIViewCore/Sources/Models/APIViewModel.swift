@@ -137,9 +137,9 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        a.text("Package parsed using Swift APIView (version \(self.parserVersion))")
-        a.newline()
-        a.blankLines(set: 2)
+        self.text("Package parsed using Swift APIView (version \(self.parserVersion))")
+        self.newline()
+        self.blankLines(set: 2)
         model.tokenize(apiview: a, parent: parent)
     }
 
@@ -180,7 +180,6 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Set the exact number of desired newlines.
     func blankLines(set count: Int) {
-        print("SET BLANKLINES: \(count)")
         self.newline()
         var parentLines = self.currentParent?.children ?? self.reviewLines
         // count the number of trailing newlines
@@ -193,6 +192,7 @@ class APIViewModel: Tokenizable, Encodable {
             }
         }
         if newlineCount == count {
+            print("SET BLANKLINES: \(count). PERFECT!")
             return
         } else if (newlineCount > count) {
             // if there are too many newlines, remove some
@@ -204,9 +204,11 @@ class APIViewModel: Tokenizable, Encodable {
                     _ = self.reviewLines.popLast()
                 } 
             }
+            print("SET BLANKLINES: \(count). Removed \(linesToRemove).")
         } else {
             // if not enough newlines, add some
             let linesToAdd = count - newlineCount
+            print("SET BLANKLINES: \(count). Add \(linesToAdd).")
             for _ in 0..<linesToAdd {
                 self.newline()
             }

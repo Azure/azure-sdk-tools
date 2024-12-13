@@ -136,12 +136,7 @@ extension SyntaxProtocol {
             DeclarationModel(from: InitializerDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .memberDeclList:
             a.indent {
-                let beforeCount = a.currentLine.tokens.count
-                tokenizeChildren(apiview: a, parent: parent)
-                // only render newline if tokens were actually added
-                if a.currentLine.tokens.count > beforeCount {
-                    a.newline()
-                }
+                tokenizeMembers(apiview: a, parent: parent)
             }
         case .memberDeclListItem:
             let decl = MemberDeclListItemSyntax(self)!.decl
@@ -173,7 +168,6 @@ extension SyntaxProtocol {
                 showDecl = true
             }
             if showDecl {
-                a.newline()
                 tokenizeChildren(apiview: a, parent: parent)
             }
         case .precedenceGroupAttributeList:
@@ -223,6 +217,20 @@ extension SyntaxProtocol {
         default:
             // default behavior for all nodes is to render all children
             tokenizeChildren(apiview: a, parent: parent)
+        }
+    }
+
+    func tokenizeMembers(apiview a: APIViewModel, parent: Linkable?) {
+        let children = self.children(viewMode: .sourceAccurate)
+        let lastIdx = children.count - 1
+        for (idx, child) in children.enumerated() {
+            let beforeCount = a.currentLine.tokens.count
+            child.tokenize(apiview: a, parent: parent)
+            // no blank lines for the last member, or if tokenizing didn't
+            // actually add anything
+            if (idx != lastIdx && a.currentLine.tokens.count > beforeCount) {
+                a.blankLines(set: 1)
+            }
         }
     }
 

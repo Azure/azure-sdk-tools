@@ -68,7 +68,7 @@ class ReviewLine: Tokenizable, Encodable {
         } else {
             value = ""
         }
-        return value
+        return "\(value)\n"
     }
 
     // MARK: Codable

@@ -160,6 +160,8 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     func newline() {
+        let text = self.currentLine.text()
+        print("NEWLINE: \(text)")
         // ensure no trailing space at the end of the line
         if self.currentLine.tokens.count > 0 {
             let lastToken = currentLine.tokens.last
@@ -178,6 +180,7 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Set the exact number of desired newlines.
     func blankLines(set count: Int) {
+        print("SET BLANKLINES: \(count)")
         self.newline()
         var parentLines = self.currentParent?.children ?? self.reviewLines
         // count the number of trailing newlines
@@ -329,6 +332,8 @@ class APIViewModel: Tokenizable, Encodable {
         // ensure no trailing space at the end of the line
         let lastToken = self.currentLine.tokens.last
         lastToken?.hasSuffixSpace = false
+
+        print("INDENT: \(self.currentLine.text())")
 
         if let currentParent = self.currentParent {
             currentParent.children.append(self.currentLine)

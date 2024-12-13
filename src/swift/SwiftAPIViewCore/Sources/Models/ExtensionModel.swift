@@ -141,15 +141,18 @@ class ExtensionModel: Tokenizable {
                 if !members.isEmpty {
                     a.indent {
                         for member in members {
-                            a.newline()
+                            // FIXME: Newline
+                            // a.newline()
                             member.tokenize(apiview: a, parent: parent)
                         }
                     }
                 }
-                a.newline()
+                // FIXME: Newline
+                //a.newline()
                 options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
                 a.punctuation("}", options: options)
-                a.newline()
+                // FIXME: Newline
+                // a.newline()
             } else if childIdx == 7 {
                 child.tokenize(apiview: a, parent: parent)
                 if var last = a.currentLine.tokens.popLast() {

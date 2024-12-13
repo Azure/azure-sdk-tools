@@ -158,8 +158,9 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                     let attrText = attr.withoutTrivia().description.filter { !$0.isWhitespace }
                     a.lineMarker("\(definitionId!).\(attrText)")
                     attr.tokenize(apiview: a, parent: parent)
-                    a.newline()
-                    a.blankLines(set: 0)
+                    // FIXME: Newline
+//                    a.newline()
+//                    a.blankLines(set: 0)
                 }
             case .token:
                 if child.withoutTrivia().description == self.name {
@@ -194,10 +195,12 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
             }
         }
         if !extensions.isEmpty {
-            a.blankLines(set: 1)
+            // FIXME: Newline
+            //a.blankLines(set: 1)
             for ext in extensions {
                 ext.tokenize(apiview: a, parent: self)
-                a.blankLines(set: 1)
+                // FIXME: Newline
+                //a.blankLines(set: 1)
             }
         }
     }

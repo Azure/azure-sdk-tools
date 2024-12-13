@@ -26,6 +26,12 @@ jobs:
         -AppKey $env:APP_PRIVATE_KEY
         -Organization 'Azure'
         -VariableName 'azuresdk-github-pat'
+  
+  - pwsh: |
+      gh pr comment 40732 --repo Azure/azure-sdk-for-net --body "This is a test comment"
+    displayName: Add a pr comment
+    env:
+      GH_TOKEN: $(azuresdk-github-pat)
 
   - pwsh: |
       "Some test file contents" | Out-File -FilePath $(Build.SourcesDirectory)/TestFile.md -Encoding utf8
@@ -40,9 +46,3 @@ jobs:
       CommitMsg: 'Test token usage'
       PRTitle: "DO NOT MERGE: Test token usage"
       WorkingDirectory: $(System.DefaultWorkingDirectory)
-  
-  - pwsh: |
-      gh pr comment 40732 --repo Azure/azure-sdk-for-net --body "This is a test comment"
-    displayName: Add a pr comment
-    env:
-      GH_TOKEN: $(azuresdk-github-pat)

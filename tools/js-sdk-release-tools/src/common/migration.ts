@@ -1,18 +1,28 @@
 import { logger } from "../utils/logger";
 import { runCommand, runCommandOptions } from "./utils";
-import { load } from "@npmcli/package-json";
+import { getNpmPackageInfo } from "./npmUtils";
+import { ensureDir } from "fs-extra";
+import { posix } from "path";
 
 // TODO: remove when emitter is ready
-export async function migratePackage(packageDirectory: string, rushxScript: string): Promise<void> {
-    let packageJson = await load(packageDirectory);
-    packageJson.content.scripts![
-        "migrate"
-    ] = `dev-tool admin migrate-package --package-name=${packageJson.content.name}`;
-    packageJson = packageJson.update(packageJson.content);
-    packageJson.save();
-    await runCommand("node", [rushxScript, "migrate"], {
-        ...runCommandOptions,
-        cwd: packageDirectory,
-    });
-    logger.info(`Migrated package '${packageJson.content.name}' successfully`);
+export async function migratePackage(packageDirectory: string): Promise<void> {
+    const info = await getNpmPackageInfo(packageDirectory);
+    // Note: bug in migration tool: failed to create review directory
+    await ensureDir(posix.join(packageDirectory, 'review'));
+    await runCommand(
+        "pnpm",
+        `exec dev-tool admin migrate-package --package-name=${info.name}`.split(
+            " "
+        ),
+        {
+            ...runCommandOptions,
+            cwd: packageDirectory,
+        }
+    );
+
+    logger.info(`Start to rush update after migration.`);
+    await runCommand(`node`, ['common/scripts/install-run-rush.js', 'update'], runCommandOptions, false);
+    logger.info(`Rush update successfully.`);
+
+    logger.info(`Migrated package '${info.name}' successfully`);
 }

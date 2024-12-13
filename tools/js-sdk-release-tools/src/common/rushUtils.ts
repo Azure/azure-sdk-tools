@@ -79,7 +79,7 @@ export async function buildPackage(
     await runCommand(`node`, [rushScript, 'update'], runCommandOptions, false);
     logger.info(`Rush update successfully.`);
 
-    await migratePackage(packageDirectory, rushxScript);
+    await migratePackage(packageDirectory);
 
     logger.info(`Start to build package '${name}'.`);
     await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);

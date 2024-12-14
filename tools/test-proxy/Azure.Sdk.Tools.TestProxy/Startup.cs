@@ -24,6 +24,7 @@ using Azure.Sdk.Tools.TestProxy.CommandOptions;
 using System.Text.Json;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
+using Azure.Sdk.Tools.TestProxy.Common.AutoShutdown;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -125,6 +126,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         StorageLocation = defaultOpts.StorageLocation,
                         StoragePlugin = defaultOpts.StoragePlugin,
                         Insecure = false,
+                        AutoShutdownTime = -1,
                         Dump = false
                     });
                     break;
@@ -147,6 +149,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 newLine: true, statusThreadCts.Token);
 
             var host = Host.CreateDefaultBuilder((startOptions.AdditionalArgs??new string[] { }).ToArray());
+            
 
             host.ConfigureWebHostDefaults(
                 builder =>
@@ -179,6 +182,14 @@ namespace Azure.Sdk.Tools.TestProxy
                 );
 
             var app = host.Build();
+
+            var shutdownService = app.Services.GetRequiredService<ShutdownConfiguration>();
+            if (startOptions.AutoShutdownTime > -1)
+            {
+                shutdownService.EnableAutoShutdown = true;
+                // start the first iteration of the shutdown timer
+                app.Services.GetRequiredService<ShutdownTimer>().ResetTimer();
+            }
 
             if (startOptions.Dump)
             {
@@ -227,6 +238,8 @@ namespace Azure.Sdk.Tools.TestProxy
             );
 
             services.AddSingleton<RecordingHandler>(singletonRecordingHandler);
+            services.AddSingleton<ShutdownConfiguration>();
+            services.AddSingleton<ShutdownTimer>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -237,6 +250,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             app.UseCors("DefaultPolicy");
             app.UseMiddleware<HttpExceptionMiddleware>();
+            app.UseMiddleware<ShutdownTimerMiddleware>();
 
             DebugLogger.ConfigureLogger(loggerFactory);
 

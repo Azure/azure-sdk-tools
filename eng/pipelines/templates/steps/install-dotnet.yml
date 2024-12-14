@@ -23,7 +23,7 @@ steps:
       # https://github.com/Azure/azure-sdk-tools/pull/5405#discussion_r1105006774
       # https://github.com/Azure/azure-sdk-tools/pull/5405
       packageType: sdk
-      version: 9.0.x
+      version: 8.0.x
       # performMultiLevelLookup comes into play when given .NET executable target runtime is different
       # than the installed .NET SDK. Without this, such runtime would not be found.
       performMultiLevelLookup: true

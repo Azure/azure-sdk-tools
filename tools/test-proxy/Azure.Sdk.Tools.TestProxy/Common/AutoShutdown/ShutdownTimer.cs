@@ -6,13 +6,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common.AutoShutdown
 {
     public class ShutdownTimer
     {
-        private readonly int _timeoutSeconds;
+        private readonly ShutdownConfiguration _shutdownConfig;
         private CancellationTokenSource _cts;
         private Task _shutdownTask;
 
-        public ShutdownTimer(int timeoutSeconds = 300)
+        public ShutdownTimer(ShutdownConfiguration shutdownConfiguration)
         {
-            _timeoutSeconds = timeoutSeconds;
+            _shutdownConfig = shutdownConfiguration;
         }
 
         public void ResetTimer()
@@ -24,21 +24,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common.AutoShutdown
             {
                 try
                 {
-                    await Task.Delay(_timeoutSeconds * 1000, _cts.Token);
+                    await Task.Delay(_shutdownConfig.TimeoutInSeconds * 1000, _cts.Token);
 
-                    System.Console.WriteLine("Server idle timeout reached. Shutting down...");
-                    Environment.Exit(0);
+                    if (_shutdownConfig.EnableAutoShutdown)
+                    {
+                        System.Console.WriteLine("Server idle timeout reached. Shutting down...");
+                        Environment.Exit(0);
+                    }
                 }
                 catch (TaskCanceledException)
                 {
                     // Timer was reset or canceled
                 }
             });
-        }
-
-        public void StopTimer()
-        {
-            _cts?.Cancel();
         }
     }
 }

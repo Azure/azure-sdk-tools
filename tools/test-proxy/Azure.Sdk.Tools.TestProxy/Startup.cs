@@ -150,7 +150,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var host = Host.CreateDefaultBuilder((startOptions.AdditionalArgs??new string[] { }).ToArray());
             
-
             host.ConfigureWebHostDefaults(
                 builder =>
                     builder.UseStartup<Startup>()
@@ -187,6 +186,7 @@ namespace Azure.Sdk.Tools.TestProxy
             if (startOptions.AutoShutdownTime > -1)
             {
                 shutdownService.EnableAutoShutdown = true;
+                shutdownService.TimeoutInSeconds = startOptions.AutoShutdownTime;
                 // start the first iteration of the shutdown timer
                 app.Services.GetRequiredService<ShutdownTimer>().ResetTimer();
             }

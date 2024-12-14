@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             universalOption.AddAlias("-u");
 
             var autoShutdownOption = new Option<int>(
-                name: "--shutdownInSeconds",
+                name: "--auto-shutdown-in-seconds",
                 description: "Integer argument; When provided, the proxy will auto-shutdown after not being contacted over any HTTP route for this number of seconds.",
                 getDefaultValue: () => -1);
 

@@ -106,7 +106,12 @@ class ModuleNode(NodeEntityBase):
         if self.child_nodes:
             line = review_lines.create_review_line(line_id=self.namespace_id)
             line.add_keyword("namespace")
-            line.add_text(self.namespace, has_suffix_space=False, navigation_display_name=self.namespace)
+            line.add_text(
+                self.namespace,
+                has_suffix_space=False,
+                navigation_display_name=self.namespace,
+                render_classes=["namespace"]
+            )
 
             self.children.set_blank_lines(1)
             # Add name space level functions first

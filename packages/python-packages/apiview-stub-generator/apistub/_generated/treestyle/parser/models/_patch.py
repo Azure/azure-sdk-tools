@@ -248,7 +248,8 @@ class ReviewLine(ReviewLineImpl):
         has_prefix_space=False,
         has_suffix_space=True,
         skip_diff=False,
-        navigation_display_name=None
+        navigation_display_name=None,
+        render_classes=None
     ):
         token = ReviewToken(
             kind=TokenKind.TEXT,
@@ -259,6 +260,8 @@ class ReviewLine(ReviewLineImpl):
         )
         if navigation_display_name:
             token.navigation_display_name = navigation_display_name
+        if render_classes:
+            token.render_classes = render_classes
         self.add_token(token)
 
     def add_keyword(self, keyword, has_prefix_space=False, has_suffix_space=True):

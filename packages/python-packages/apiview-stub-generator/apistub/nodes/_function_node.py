@@ -351,7 +351,12 @@ class FunctionNode(NodeEntityBase):
         navigation_display_name = None
         if self.is_module_level:
             navigation_display_name = self.name
-        review_line.add_text(value, has_suffix_space=False, navigation_display_name=navigation_display_name)
+        review_line.add_text(
+            value,
+            has_suffix_space=False,
+            navigation_display_name=navigation_display_name,
+            render_classes=["method"]
+        )
         # Add parameters
         review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
         review_lines.set_blank_lines(last_is_context_end_line=True)

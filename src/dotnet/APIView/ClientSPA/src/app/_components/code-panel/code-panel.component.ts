@@ -1,20 +1,21 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CodeLineRowNavigationDirection, isDiffRow } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow } from 'src/app/_helpers/common-helpers';
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { Message } from 'primeng/api/message';
-import { MessageService } from 'primeng/api';
+import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { Menu } from 'primeng/menu';
 
 @Component({
   selector: 'app-code-panel',
@@ -36,7 +37,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() loadFailed : boolean = false;
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-
+  @ViewChildren(Menu) menus!: QueryList<Menu>;
   
   noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
 
@@ -52,12 +53,19 @@ export class CodePanelComponent implements OnChanges{
   commentThreadNavaigationPointer: number | undefined = undefined;
   diffNodeNavaigationPointer: number | undefined = undefined;
 
+  menuItemsLineActions: MenuItem[] = [];
+
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router, private messageService: MessageService) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
     this.handleRealTimeCommentUpdates();
+
+    this.menuItemsLineActions = [
+        { label: 'Copy line', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLineToClipBoard(event) },
+        { label: 'Copy permalink', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLinePermaLinkToClipBoard(event) }
+      ];
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -156,6 +164,13 @@ export class CodePanelComponent implements OnChanges{
       return token.properties['NavigateToUrl'];
     }
     return "";
+  }
+
+  toggleLineActionMenu(event: any, id: string) {
+    const menu: Menu | undefined = this.menus.find(menu => menu.el.nativeElement.getAttribute('data-line-action-menu-id') == id);
+    if (menu) {
+      menu.toggle(event);
+    }
   }
 
   toggleNodeComments(target: Element) {
@@ -619,6 +634,50 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
+  copyReviewTextToClipBoard() {
+    const reviewText : string [] = [];
+    this.codePanelRowData.forEach((row) => {
+      if (row.rowOfTokens && row.rowOfTokens.length > 0) {
+        let codeLineText = convertRowOfTokensToString(row.rowOfTokens);
+        if (row.indent && row.indent > 0) {
+          codeLineText = '\t'.repeat(row.indent - 1) + codeLineText;
+        }
+        reviewText.push(codeLineText);
+      }
+    });
+    navigator.clipboard.writeText(reviewText.join('\n'));
+  }
+
+  showNoDiffInContentMessage() {
+    return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
+  }
+
+  private getCodeLineIndex(event: MenuItemCommandEvent) {
+    const target = (event.originalEvent?.target as Element).closest("span") as Element;
+    return target.getAttribute('data-item-id');
+  }
+
+  private copyCodeLinePermaLinkToClipBoard(event: MenuItemCommandEvent) {
+    const codeLineIndex = this.getCodeLineIndex(event);
+    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
+    const queryParams = { ...this.route.snapshot.queryParams };
+    queryParams[SCROLL_TO_NODE_QUERY_PARAM] = codeLine.nodeId;
+    const updatedUrl = this.router.createUrlTree([], {
+      relativeTo: this.route,
+      queryParams: queryParams,
+      queryParamsHandling: 'merge'
+    }).toString();
+    const fullExternalUrl = window.location.origin + updatedUrl;
+    navigator.clipboard.writeText(fullExternalUrl);
+  }
+
+  private copyCodeLineToClipBoard(event: MenuItemCommandEvent) {
+    const codeLineIndex = this.getCodeLineIndex(event);
+    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
+    const codeLineText = convertRowOfTokensToString(codeLine.rowOfTokens);
+    navigator.clipboard.writeText(codeLineText);
+  }
+
   private findNextCommentThread (index: number) : CodePanelRowData | undefined {
     while (index < this.codePanelRowData.length) {
       if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
@@ -669,10 +728,6 @@ export class CodePanelComponent implements OnChanges{
       index--;
     }
     return undefined;
-  }
-  
-  showNoDiffInContentMessage() {
-    return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
   }
 
   private updateHasActiveConversations() {

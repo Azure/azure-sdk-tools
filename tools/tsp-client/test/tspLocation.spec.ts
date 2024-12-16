@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { normalizeDirectory, readTspLocation } from "../src/fs.js";
-import { describe, it } from "node:test";
+import { describe, it } from "vitest";
 import { writeTspLocationYaml } from "../src/utils.js";
 import { stat } from "node:fs/promises";
 

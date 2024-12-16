@@ -322,5 +322,24 @@ namespace APIViewUnitTests
             var navTreeNodeCount = result.NodeMetaData.Values.Count(n => n.NavigationTreeNode != null);
             Assert.Equal(42, navTreeNodeCount);
         }
+
+
+        [Fact]
+        public async void VerifyPackageReviewLineCount()
+        {
+            var testCodeFilePath = Path.Combine("SampleTestFiles", "azure-core-1.47.0-sources4.json");
+            FileInfo fileInfo = new FileInfo(testCodeFilePath);
+            var codeFile = await CodeFile.DeserializeAsync(fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read));
+
+            CodePanelRawData codePanelRawData = new CodePanelRawData()
+            {
+                activeRevisionCodeFile = codeFile
+            };
+            var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+            Assert.NotNull(result);
+            Assert.False(result.HasDiff);
+            Assert.Equal(2159, result.NodeMetaData.Count);
+        }
+
     }
 }

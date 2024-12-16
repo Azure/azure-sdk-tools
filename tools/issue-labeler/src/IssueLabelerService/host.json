@@ -1,0 +1,20 @@
+{
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": false
+      }
+    },
+    "fileLoggingMode": "always",
+    "logLevel": {
+      "default": "Information",
+      "IssueLabeler.Shared.ModelHolder": "Information",
+      "IssueLabeler.Shared.GitHubClientWrapper": "Information",
+      "Hubbup.MikLabelModel.LabelerLite": "Information",
+      "console": "Information",
+      "applicationInsights": "Information",
+      "Azure": "Warning"
+    }
+  }
+}

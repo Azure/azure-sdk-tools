@@ -8,6 +8,7 @@ import (
 	"go/ast"
 	"go/token"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -78,6 +79,8 @@ func (c *content) addGenDecl(pkg Pkg, tok token.Token, vs *ast.ValueSpec, import
 	return decl
 }
 
+// getExprValue returns a string representation of an expression's value. This is used to display
+// literal values of const and var declarations.
 func getExprValue(pkg Pkg, expr ast.Expr) string {
 	switch x := expr.(type) {
 	case *ast.BasicLit:
@@ -114,16 +117,10 @@ func getExprValue(pkg Pkg, expr ast.Expr) string {
 	}
 }
 
-func includesType(s []string, t string) bool {
-	for _, j := range s {
-		if j == t {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *content) parseSimpleType(tokenList *[]Token) {
+// parseSimpleType returns ReviewLines for each [SimpleType], including consts and vars of that type.
+// const declarations appear before var declarations, with each set of declarations sorted by name.
+func (c *content) parseSimpleType() []ReviewLine {
+	lns := []ReviewLine{}
 	keys := make([]string, 0, len(c.SimpleTypes))
 	for name := range c.SimpleTypes {
 		if unicode.IsUpper(rune(name[0])) {
@@ -133,28 +130,50 @@ func (c *content) parseSimpleType(tokenList *[]Token) {
 	sort.Strings(keys)
 	for _, name := range keys {
 		t := c.SimpleTypes[name]
-		*tokenList = append(*tokenList, t.MakeTokens()...)
-		c.searchForMethods(t.Name(), tokenList)
+		ln := ReviewLine{
+			Children: c.searchForMethods(t.Name()),
+			LineID:   t.ID(),
+			Tokens:   t.MakeTokens(),
+		}
+		if len(ln.Children) > 0 {
+			ln.Children = append(ln.Children, ReviewLine{})
+		}
 		if consts := c.filterDeclarations(t.Name(), c.Consts); len(consts) > 0 {
-			c.parseDeclarations(consts, "const", tokenList)
+			ln.Children = append(ln.Children, c.parseDeclarations(consts, "const")...)
 		}
 		if vars := c.filterDeclarations(t.Name(), c.Vars); len(vars) > 0 {
-			c.parseDeclarations(vars, "var", tokenList)
+			ln.Children = append(ln.Children, c.parseDeclarations(vars, "var")...)
 		}
+		lns = append(lns, ln)
+		lns = append(lns, ReviewLine{IsContextEndLine: true})
 	}
+	return lns
 }
 
-func (c *content) parseConst(tokenList *[]Token) {
-	c.parseDeclarations(c.Consts, "const", tokenList)
+// parseConst is a helper for parseSimpleType returning [ReviewLine]s for const declarations
+func (c *content) parseConst() []ReviewLine {
+	lns := c.parseDeclarations(c.Consts, "const")
+	if len(lns) > 0 {
+		lns = append(lns, ReviewLine{IsContextEndLine: true})
+	}
+	return lns
 }
 
-func (c *content) parseVar(tokenList *[]Token) {
-	c.parseDeclarations(c.Vars, "var", tokenList)
+// parseVar is a helper for parseSimpleType returning [ReviewLine]s for var declarations
+func (c *content) parseVar() []ReviewLine {
+	lns := c.parseDeclarations(c.Vars, "var")
+	if len(lns) > 0 {
+		lns = append(lns, ReviewLine{IsContextEndLine: true})
+	}
+	return lns
 }
 
-func (c *content) parseDeclarations(decls map[string]Declaration, kind string, tokenList *[]Token) {
+// parseDeclarations returns ReviewLines for each pseudo-enum type of the specified kind ("const" or "var")
+// in decls. It also includes a ReviewLine for each type's PossibleValues function, if one exists.
+func (c *content) parseDeclarations(decls map[string]Declaration, kind string) []ReviewLine {
+	ls := []ReviewLine{}
 	if len(decls) < 1 {
-		return
+		return ls
 	}
 	// create keys slice in order to later sort consts by their types
 	keys := []string{}
@@ -163,7 +182,7 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string, t
 	for name, d := range decls {
 		if r := rune(name[0]); r != '_' && unicode.IsUpper(r) {
 			keys = append(keys, name)
-			if !includesType(types, d.Type) {
+			if !slices.Contains(types, d.Type) {
 				types = append(types, d.Type)
 			}
 		}
@@ -182,31 +201,44 @@ func (c *content) parseDeclarations(decls map[string]Declaration, kind string, t
 	for _, t := range types {
 		// this token parsing is performed so that const declarations of different types are declared
 		// in their own const block to make them easier to click on
-		makeToken(nil, nil, kind, TokenTypeKeyword, tokenList)
-		makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
-		makeToken(nil, nil, "(", TokenTypePunctuation, tokenList)
-		makeToken(nil, nil, "", 1, tokenList)
+		ln := ReviewLine{
+			Tokens: []ReviewToken{
+				{
+					Kind:  TokenKindKeyword,
+					Value: kind,
+				},
+			},
+		}
 		for _, v := range finalKeys {
-			if decls[v].Type == t {
-				makeToken(nil, nil, "\t", TokenTypeWhitespace, tokenList)
-				*tokenList = append(*tokenList, decls[v].MakeTokens()...)
+			if d := decls[v]; d.Type == t {
+				ln.Children = append(ln.Children, ReviewLine{
+					LineID: d.ID(),
+					Tokens: d.MakeTokens(),
+				})
 			}
 		}
-		makeToken(nil, nil, ")", TokenTypePunctuation, tokenList)
-		makeToken(nil, nil, "", 1, tokenList)
-		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
-		c.searchForPossibleValuesMethod(t, tokenList)
+		if pvm := c.searchForPossibleValuesMethod(t); pvm != nil {
+			ln.Children = append(ln.Children, ReviewLine{})
+			ln.Children = append(ln.Children, *pvm)
+		}
+		ls = append(ls, ln)
 	}
+	return ls
 }
 
-func (c *content) searchForPossibleValuesMethod(t string, tokenList *[]Token) {
+// searchForPossibleValuesMethod returns a [ReviewLine] for the specified type's PossibleValues function,
+// if it exists, and deletes that function from the content so it isn't presented as an independent package-
+// level function by parseFunc. Note this means searchForPossibleValuesMethod must be called before parseFunc.
+// If the type doesn't have a corresponding PossibleValues function, searchForPossibleValuesMethod returns nil.
+func (c *content) searchForPossibleValuesMethod(t string) *ReviewLine {
 	for i, f := range c.Funcs {
 		if f.Name() == fmt.Sprintf("Possible%sValues", removeNavigatorString(t)) {
-			*tokenList = append(*tokenList, f.MakeTokens()...)
+			fl := f.MakeReviewLine()
 			delete(c.Funcs, i)
-			return
+			return &fl
 		}
 	}
+	return nil
 }
 
 // addFunc adds the specified function declaration to the exports list
@@ -242,7 +274,8 @@ func (c *content) addInterface(source Pkg, name, packageName string, i *ast.Inte
 }
 
 // adds the specified struct type to the exports list.
-func (c *content) parseInterface(tokenList *[]Token) {
+func (c *content) parseInterface() []ReviewLine {
+	ls := []ReviewLine{}
 	keys := []string{}
 	for name := range c.Interfaces {
 		if unicode.IsUpper(rune(name[0])) {
@@ -251,8 +284,10 @@ func (c *content) parseInterface(tokenList *[]Token) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		*tokenList = append(*tokenList, c.Interfaces[k].MakeTokens()...)
+		il := c.Interfaces[k].MakeReviewLine()
+		ls = append(ls, il)
 	}
+	return ls
 }
 
 // addStruct adds the specified struct type to the exports list.
@@ -263,8 +298,12 @@ func (c *content) addStruct(source Pkg, name, packageName string, ts *ast.TypeSp
 	return s
 }
 
-// adds the specified struct type to the exports list.
-func (c *content) parseStruct(tokenList *[]Token) {
+// parseStructs returns ReviewLines for each struct, including their fields, constructors, methods,
+// and const and var declarations of the struct's type. parseStructs deletes constructors and methods
+// from the content so they aren't presented as independent package-level functions, so it must be
+// called before parseFunc.
+func (c *content) parseStructs() []ReviewLine {
+	ls := []ReviewLine{}
 	keys := make([]string, 0, len(c.Structs))
 	for name := range c.Structs {
 		if unicode.IsUpper(rune(name[0])) {
@@ -272,10 +311,14 @@ func (c *content) parseStruct(tokenList *[]Token) {
 		}
 	}
 	sort.Strings(keys)
-	for _, k := range keys {
-		*tokenList = append(*tokenList, c.Structs[k].MakeTokens()...)
-		typeName := k
+	for _, typeName := range keys {
+		sl := c.Structs[typeName].MakeReviewLine()
 		ctors := c.searchForCtors(typeName)
+		methods := c.findMethods(typeName)
+		if len(sl.Children) > 0 && (len(ctors) > 0 || len(methods) > 0) {
+			// add a blank link between fields and ctors/methods
+			sl.Children = append(sl.Children, ReviewLine{})
+		}
 		if len(ctors) > 0 {
 			keys := make([]string, 0, len(ctors))
 			for k := range ctors {
@@ -283,21 +326,40 @@ func (c *content) parseStruct(tokenList *[]Token) {
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
-				*tokenList = append(*tokenList, ctors[k].MakeTokens()...)
+				cl := ctors[k].MakeReviewLine()
+				cl.RelatedToLine = sl.LineID
+				sl.Children = append(sl.Children, cl)
+				delete(c.Funcs, k)
 			}
 		}
-		c.searchForMethods(typeName, tokenList)
+		if len(methods) > 0 {
+			names := make([]string, 0, len(methods))
+			for name := range methods {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, name := range names {
+				ml := methods[name].MakeReviewLine()
+				ml.RelatedToLine = sl.LineID
+				sl.Children = append(sl.Children, ml)
+				delete(c.Funcs, name)
+			}
+		}
 		if consts := c.filterDeclarations(typeName, c.Consts); len(consts) > 0 {
-			c.parseDeclarations(consts, "const", tokenList)
+			sl.Children = append(sl.Children, c.parseDeclarations(consts, "const")...)
 		}
 		if vars := c.filterDeclarations(typeName, c.Vars); len(vars) > 0 {
-			c.parseDeclarations(vars, "var", tokenList)
+			sl.Children = append(sl.Children, c.parseDeclarations(vars, "var")...)
 		}
+		ls = append(ls, sl)
+		ls = append(ls, ReviewLine{IsContextEndLine: true})
 	}
+	return ls
 }
 
 // searchForCtors searches through exported Funcs for constructors of a type,
-// given that type's name. A Func is a constructor of type T when:
+// deleting any that are found so they won't be parsed by parseFunc. A Func
+// is a constructor of type T when:
 // 1. it has no receiver
 // 2. its name begins with "New"
 // 3. it returns T or *T
@@ -357,7 +419,9 @@ func (c *content) findMethods(s string) map[string]Func {
 }
 
 // searchForMethods takes the name of the receiver and looks for Funcs that are methods on that receiver.
-func (c *content) searchForMethods(s string, tokenList *[]Token) {
+// It deletes the methods from the content so they won't be parsed by parseFunc.
+func (c *content) searchForMethods(s string) []ReviewLine {
+	lines := []ReviewLine{}
 	methods := c.findMethods(s)
 	methodNames := []string{}
 	for key := range methods {
@@ -366,9 +430,10 @@ func (c *content) searchForMethods(s string, tokenList *[]Token) {
 	sort.Strings(methodNames)
 	for _, name := range methodNames {
 		fn := methods[name]
-		*tokenList = append(*tokenList, fn.MakeTokens()...)
+		lines = append(lines, fn.MakeReviewLine())
 		delete(c.Funcs, name)
 	}
+	return lines
 }
 
 // receiverRegex captures a receiver's type and optional name
@@ -404,7 +469,8 @@ func isExampleOrTest(s string) bool {
 	return strings.Contains(s, "Example") || strings.Contains(s, "Test")
 }
 
-func (c *content) parseFunc(tokenList *[]Token) {
+func (c *content) parseFunc() []ReviewLine {
+	lns := []ReviewLine{}
 	keys := make([]string, 0, len(c.Funcs))
 	for key, fn := range c.Funcs {
 		name := fn.Name()
@@ -414,8 +480,9 @@ func (c *content) parseFunc(tokenList *[]Token) {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		*tokenList = append(*tokenList, c.Funcs[k].MakeTokens()...)
+		lns = append(lns, c.Funcs[k].MakeReviewLine())
 	}
+	return lns
 }
 
 // generateNavChildItems will loop through all the consts, interfaces, structs and global functions
@@ -424,14 +491,14 @@ func (c *content) parseFunc(tokenList *[]Token) {
 // For interfaces, a navigation item will point to the interface definition.
 // For structs, a navigation item will only point to the struct definition and not methods or functions related to the struct.
 // For funcs, global funcs that are not constructors for any structs will have a direct navigation item.
-func (c *content) generateNavChildItems() []Navigation {
-	items := []Navigation{}
+func (c *content) generateNavChildItems() []NavigationItem {
+	items := []NavigationItem{}
 	for _, cst := range c.Consts {
 		if cst.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         cst.Name(),
-				NavigationId: cst.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: cst.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "enum",
 				},
@@ -440,10 +507,10 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, f := range c.Funcs {
 		if f.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         f.Name(),
-				NavigationId: f.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: f.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "delegate",
 				},
@@ -452,10 +519,10 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, i := range c.Interfaces {
 		if i.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         i.Name(),
-				NavigationId: i.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: i.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "interface",
 				},
@@ -464,10 +531,10 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, n := range c.SimpleTypes {
 		if n.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         n.Name(),
-				NavigationId: n.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: n.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "struct",
 				},
@@ -476,10 +543,10 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, s := range c.Structs {
 		if s.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         s.Name(),
-				NavigationId: s.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: s.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "class",
 				},
@@ -488,10 +555,10 @@ func (c *content) generateNavChildItems() []Navigation {
 	}
 	for _, v := range c.Vars {
 		if v.Exported() {
-			items = append(items, Navigation{
+			items = append(items, NavigationItem{
 				Text:         v.Name(),
-				NavigationId: v.ID(),
-				ChildItems:   []Navigation{},
+				NavigationID: v.ID(),
+				ChildItems:   []NavigationItem{},
 				Tags: &map[string]string{
 					"TypeKind": "unknown",
 				},

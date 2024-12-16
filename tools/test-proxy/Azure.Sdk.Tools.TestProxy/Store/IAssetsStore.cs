@@ -33,5 +33,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
         public abstract Task<NormalizedString> GetPath(string pathToAssetsJson);
+
+        /// <summary>
+        /// Set the mode of the store to throw exceptions or to simply early exit for CLI mode.
+        /// </summary>
+        /// <param name="throwOnException"></param>
+        /// <returns></returns>
+        public abstract void SetStoreExceptionMode(bool throwOnException);
     }
 }

@@ -62,6 +62,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
                 return;
             }
 
+            await this.runProcessor.AddAdditionalBuildTagsAsync(queueMessage.Account, queueMessage.ProjectId, queueMessage.BuildId);
+
             await this.runProcessor.UploadBuildBlobsAsync(queueMessage.Account, queueMessage.ProjectId, queueMessage.BuildId);
         }
     }

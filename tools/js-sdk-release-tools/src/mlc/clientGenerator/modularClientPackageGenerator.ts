@@ -1,10 +1,10 @@
 import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types';
 import { buildPackage, createArtifact } from '../../common/rushUtils';
 import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
-import { join, normalize, posix, relative } from 'node:path';
+import { posix } from 'node:path';
 
 import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
-import { generateChangelogAndBumpVersion } from '../changlog/generateChangelog';
+import { generateChangelogAndBumpVersion } from '../../common/changlog/automaticGenerateChangeLogAndBumpVersion';
 import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
 import { getGeneratedPackageDirectory } from '../../common/utils';
 import { getNpmPackageInfo } from '../../common/npmUtils';
@@ -21,19 +21,19 @@ import unixify from 'unixify';
 export async function generateAzureSDKPackage(options: ModularClientPackageOptions): Promise<PackageResult> {
     logger.info(`Start to generate modular client package for azure-sdk-for-js.`);
     const packageResult = initPackageResult();
-    const rushScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
-    const rushxScript = join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
+    const rushScript = posix.join(options.sdkRepoRoot, 'common/scripts/install-run-rush.js');
+    const rushxScript = posix.join(options.sdkRepoRoot, 'common/scripts/install-run-rushx.js');
 
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
-        const packageJsonPath = join(packageDirectory, 'package.json');
+        const packageJsonPath = posix.join(packageDirectory, 'package.json');
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
         await remove(packageDirectory);
 
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
-        const relativePackageDirToSdkRoot = relative(normalize(options.sdkRepoRoot), normalize(packageDirectory));
+        const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
 
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
 

@@ -4,7 +4,7 @@ import {execSync} from "child_process";
 import fs from "fs";
 import * as path from "path";
 import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git";
-import {generateChangelogAndBumpVersion} from "./utils/automaticGenerateChangeLogAndBumpVersion";
+import {generateChangelogAndBumpVersion} from "../common/changlog/automaticGenerateChangeLogAndBumpVersion";
 import {Changelog} from "../changelog/changelogGenerator";
 import {changeRushJson} from "../utils/changeRushJson";
 import {modifyOrGenerateCiYml} from "../utils/changeCiYaml";

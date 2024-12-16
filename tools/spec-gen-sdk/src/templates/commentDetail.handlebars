@@ -1,0 +1,44 @@
+{{#each generation.sdkRepositories}}
+<ul>
+  <li>
+    <div>
+      {{renderStatus status}} Generate from {{../headCommit}} with merge commit {{../mergeCommit}}. {{renderSDKNameMapping ../sdkRepoName}} Automation {{../version}}
+    </div>
+    {{#if messages}}
+      {{renderMessagesUnifiedPipeline messages}}
+    {{/if}}
+  </li>
+  {{#each changedPackages}}
+  <li>
+    <div>
+      <span>{{renderStatus status}} <b>{{name}}</b>
+        {{#if logsBlobUrl}}
+        [<a href="{{logsBlobUrl}}" target="_blank">View full logs</a>]&nbsp;
+        {{/if}}
+        {{#if generationPullRequestUrl}}
+        [<a href="{{generationPullRequestUrl}}" target="_blank">{{#if ../../merged}}Release{{else}}Preview{{/if}} {{renderSDKNameMapping ../../sdkRepoName}} Changes</a>]
+        {{/if}}
+        {{#if hasBreakingChange}}
+        <b>Breaking Change Detected</b>
+        {{/if}}
+      </span>
+    </div>
+    {{#if (isPublicRelease this)}}
+    <ul>
+      {{#each artifactBlobUrls}}
+      <li>
+        <a href="{{.}}" target="_blank">{{renderFilename .}}</a>
+      </li>
+      {{/each}}
+    </ul>
+    {{/if}}
+    {{#if messages}}
+      {{renderMessagesUnifiedPipeline messages}}
+    {{/if}}
+    {{#unless messages}}{{#unless artifactBlobUrls}}
+    <div> No Artifact Generated. </div>
+    {{/unless}}{{/unless}}
+  </li>
+  {{/each}}
+</ul>
+{{/each}}

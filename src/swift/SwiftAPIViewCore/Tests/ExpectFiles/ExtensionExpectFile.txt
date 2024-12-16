@@ -1,0 +1,49 @@
+Package parsed using Swift APIView (version 0.2.2)
+
+
+package ExtensionTestFile.swifttxt {
+    public struct Point {
+        public var x = 0.0, y = 0.0
+    }
+
+    public struct Rect {
+        public var origin = Point()
+        public var size = Size()
+    }
+
+    public extension Rect {
+        init(center: Point, size: Size)
+    }
+
+    public struct Size {
+        public var width = 0.0, height = 0.0
+    }
+
+    \\ Non-package extensions
+    public extension Double {
+        var km: Double
+        var m: Double
+        var cm: Double
+        var mm: Double
+        var ft: Double
+    }
+
+    public extension Int {
+        func repetitions(task: () -> Void)
+        public mutating func square()
+        public subscript(digitIndex: Int) -> Int
+        enum Kind {
+            case negative, zero, positive
+        }
+        var kind: Kind
+    }
+
+    extension Stack {
+        public var count: Int
+        var underestimatedCount: Int
+    }
+
+    extension Stack where Element: Equatable {
+        public func isTop(_: Element) -> Bool
+    }
+}

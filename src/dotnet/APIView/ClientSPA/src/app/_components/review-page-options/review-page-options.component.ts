@@ -7,18 +7,19 @@ import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
-import { take } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject, take, takeUntil } from 'rxjs';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { PullRequestsService } from 'src/app/_services/pull-requests/pull-requests.service';
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
-import { MenuItemCommandEvent } from 'primeng/api';
+import { FormControl } from '@angular/forms';
+import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 
 @Component({
   selector: 'app-review-page-options',
   templateUrl: './review-page-options.component.html',
   styleUrls: ['./review-page-options.component.scss']
 })
-export class ReviewPageOptionsComponent implements OnInit, OnChanges{
+export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
   @Input() contentHasDiff: boolean | undefined = false;
@@ -31,7 +32,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
   @Input() hasHiddenAPIThatIsDiff : boolean = false;
-
+  @Input() codeLineSearchInfo : CodeLineSearchInfo = new CodeLineSearchInfo();
+  
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -47,7 +49,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>(); 
+  @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
+  @Output() codeLineSearchNaviationEmmiter : EventEmitter<number> = new EventEmitter<number>();
 
+  private destroy$ = new Subject<void>();
+  
   webAppUrl : string = this.configService.webAppUrl
   
   showCommentsSwitch : boolean = true;
@@ -75,9 +81,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   reviewApprover: string = 'azure-sdk';
   copyReviewTextButtonText : string = 'Copy review text';
 
+  codeLineSearchText: FormControl = new FormControl('');
+
   associatedPullRequests  : PullRequestModel[] = [];
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
+
+  codeLineSearchNavigationPosition : number = 0;
 
   //Approvers Options
   selectedApprovers: string[] = [];
@@ -110,6 +120,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
     this.setAPIRevisionApprovalStates();
     this.setReviewApprovalStatus();
+
+    this.codeLineSearchText.valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe((searchText: string) => {
+      this.codeLineSearchTextEmitter.emit(searchText);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -234,7 +252,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showHiddenAPIEmitter.emit(event.checked);
   }
 
-
   handleAssignedReviewersChange() {
 
     const existingApprovers = new Set(this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo));
@@ -346,6 +363,23 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.copyReviewTextEmitter.emit(true);
   }
 
+  clearReviewSearch() {
+    this.codeLineSearchText.setValue('');
+  }
+
+  navigateCommentThread(direction: CodeLineRowNavigationDirection) {
+    this.commentThreadNavaigationEmitter.emit(direction);
+  }
+
+  /**
+   * Use positive number to navigate to the next search result and negative number to navigate to the previous search result
+   * @param number 
+   */
+  navigateSearch(number: number) {
+    this.codeLineSearchNavigationPosition += number;
+    this.codeLineSearchNaviationEmmiter.emit(this.codeLineSearchNavigationPosition);
+  }
+
   handleAPIRevisionApprovalAction() {
     if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
       this.showAPIRevisionApprovalModal = true;
@@ -373,5 +407,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   updateRoute() {
     let newQueryParams = getQueryParams(this.route); // this automatically excludes the nId query parameter
     this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+  }
+
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

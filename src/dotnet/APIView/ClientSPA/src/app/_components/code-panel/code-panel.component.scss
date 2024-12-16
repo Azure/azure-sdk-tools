@@ -9,7 +9,7 @@
     line-height: 1.5;
     display: block;
 
-    .viewport {
+    #viewport {
         overflow: auto;
         height: calc(100vh - 132px);
         will-change: scroll-position, contents;
@@ -219,6 +219,12 @@
         text-decoration: line-through;
     }
 
+    .codeline-search-match-highlight {
+        background-color: var(--primary-color);
+        color: var(--primary-btn-color);
+        padding: 0px;
+        margin: 0px;
+    }
 
     .java {
         .javadoc {

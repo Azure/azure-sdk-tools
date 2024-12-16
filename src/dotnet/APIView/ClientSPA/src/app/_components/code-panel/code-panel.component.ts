@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import { take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
@@ -16,6 +16,7 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Menu } from 'primeng/menu';
+import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 
 @Component({
   selector: 'app-code-panel',
@@ -35,8 +36,12 @@ export class CodePanelComponent implements OnChanges{
   @Input() userProfile : UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
   @Input() loadFailed : boolean = false;
+  @Input() codeLineSearchText: string | undefined;
+  @Input() codeLineNavigationDirection: number | undefined;
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
+  
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   
   noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
@@ -48,6 +53,8 @@ export class CodePanelComponent implements OnChanges{
   codePanelRowSource: IDatasource<CodePanelRowData> | undefined;
   CodePanelRowDatatype = CodePanelRowDatatype;
 
+  searchMatchedRowInfo: Map<string, RegExpMatchArray[]> = new Map<string, RegExpMatchArray[]>();
+
   destroy$ = new Subject<void>();
 
   commentThreadNavaigationPointer: number | undefined = undefined;
@@ -56,7 +63,8 @@ export class CodePanelComponent implements OnChanges{
   menuItemsLineActions: MenuItem[] = [];
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
-    private signalRService: SignalRService, private route: ActivatedRoute, private router: Router, private messageService: MessageService) { }
+    private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
+    private messageService: MessageService, private elementRef: ElementRef<HTMLElement>) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
@@ -85,6 +93,17 @@ export class CodePanelComponent implements OnChanges{
 
     if (changes['loadFailed'] && changes['loadFailed'].currentValue) {
       this.isLoading = false;
+    }
+
+    if (changes['codeLineSearchText']) {
+      this.searchCodePanelRowData(this.codeLineSearchText!);
+    }
+
+    if (changes['codeLineNavigationDirection']) {
+      this.navigateToCodeLineWithSearchMatch(
+        changes['codeLineNavigationDirection'].previousValue,
+        changes['codeLineNavigationDirection'].currentValue
+      );
     }
   }
 
@@ -677,6 +696,97 @@ export class CodePanelComponent implements OnChanges{
     const codeLineText = convertRowOfTokensToString(codeLine.rowOfTokens);
     navigator.clipboard.writeText(codeLineText);
   }
+  
+  private searchCodePanelRowData(searchText: string) {
+    this.searchMatchedRowInfo.clear();
+    if (!searchText || searchText.length === 0) {
+      this.clearSearchMatchHighlights();
+      return;
+    }
+
+    let totalMatches = 0;
+    let matchedNodeIds = new Set<string>();
+    this.codePanelRowData.forEach((row) => {
+      if (row.rowOfTokens && row.rowOfTokens.length > 0) {
+        let codeLineInfo = convertRowOfTokensToString(row.rowOfTokens);
+        const regex = new RegExp(searchText, "gi");
+        const matches = [...codeLineInfo.matchAll(regex)];
+        if (matches.length > 0) {
+          totalMatches += matches.length;
+          matchedNodeIds.add(row.nodeIdHashed!);
+          this.searchMatchedRowInfo.set(row.nodeIdHashed!, matches);
+        }
+      }
+    });
+    this.highlightSearchMatches();
+    this.codeLineSearchInfoEmitter.emit({ 
+      current: 0, 
+      total: totalMatches,
+      matchedNodeIds: matchedNodeIds
+    });
+  }
+
+  private highlightSearchMatches() {
+    this.clearSearchMatchHighlights();
+    const codeLines = this.elementRef.nativeElement.querySelectorAll('.code-line');
+    
+    codeLines.forEach((codeLine) => {
+      const nodeIdhashed = codeLine.getAttribute('data-node-id');
+      if (nodeIdhashed && this.searchMatchedRowInfo.has(nodeIdhashed)) {
+        const tokens = codeLine.querySelectorAll('.code-line-content > span');
+        const matches = this.searchMatchedRowInfo.get(nodeIdhashed)!;
+  
+        matches.forEach((match) => {
+          const matchStartIndex = match.index!;
+          const matchEndIndex = matchStartIndex + match[0].length;
+  
+          let currentOffset = 0;
+          tokens.forEach((token) => {
+            const tokenText = token.textContent || '';
+            const tokenLength = tokenText.length;
+
+            const tokenStart = currentOffset;
+            const tokenEnd = currentOffset + tokenLength;
+  
+            if (matchStartIndex < tokenEnd && matchEndIndex > tokenStart) {
+              const highlightStart = Math.max(0, matchStartIndex - tokenStart);
+              const highlightEnd = Math.min(tokenLength, matchEndIndex - tokenStart);
+
+              const beforeMatch = tokenText.slice(0, highlightStart);
+              const matchText = tokenText.slice(highlightStart, highlightEnd);
+              const afterMatch = tokenText.slice(highlightEnd);
+
+              token.innerHTML = `${beforeMatch}<mark class="codeline-search-match-highlight">${matchText}</mark>${afterMatch}`;
+            }
+  
+            currentOffset += tokenLength;
+          });
+        });
+      }
+    });
+  }
+
+  /**
+   * Navigates to the next or previous code line that contains a search match but is outside the viewport
+   */
+  private navigateToCodeLineWithSearchMatch(previousPosition: number, newPosition: number) {
+    if (newPosition > previousPosition) {
+      // Find the next code line that contains a search match but is below the visible viewport
+      return;
+    } else if (newPosition < previousPosition) {
+      // Find the previous code line that contains a search match but is above the visible viewport
+      return;
+    }
+  }
+
+  private clearSearchMatchHighlights() {
+    this.elementRef.nativeElement.querySelectorAll('.codeline-search-match-highlight').forEach((element) => {
+      const parent = element.parentNode as HTMLElement;
+      if (parent) {
+        parent.innerHTML = parent.textContent || '';
+      }
+    });
+  }
 
   private findNextCommentThread (index: number) : CodePanelRowData | undefined {
     while (index < this.codePanelRowData.length) {
@@ -743,15 +853,22 @@ export class CodePanelComponent implements OnChanges{
     this.hasActiveConversationEmitter.emit(hasActiveConversation);
   }
 
-  private loadCodePanelViewPort() {
+  private loadCodePanelViewPort() { 
     this.setMaxLineNumberWidth();
     this.initializeDataSource().then(() => {
       this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
         this.isLoading = false;
         setTimeout(() => {
           this.scrollToNode(undefined, this.scrollToNodeId);
+          const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
+          if (viewport) {
+            viewport.addEventListener('scroll', (event) => {
+              if (this.codeLineSearchText && this.codeLineSearchText.length > 0) {
+                this.highlightSearchMatches();
+              }
+            });
+          }
         }, 500);
-        
       });
     }).catch((error) => {
       console.error(error);

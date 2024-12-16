@@ -29,7 +29,10 @@
                     [loadFailed]="loadFailed"
                     [showLineNumbers]="showLineNumbers" [scrollToNodeIdHashed]="scrollToNodeIdHashed"
                     [scrollToNodeId]="scrollToNodeId"
-                    (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"></app-code-panel>
+                    [codeLineSearchText]="codeLineSearchText"
+                    [codeLineNavigationDirection]="codeLineNavigationDirection"
+                    (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
+                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"></app-code-panel>
             </div>
         </ng-template>
         <ng-template pTemplate>
@@ -46,6 +49,7 @@
                     [hasFatalDiagnostics]="hasFatalDiagnostics"
                     [hasActiveConversation]="hasActiveConversation"
                     [hasHiddenAPIs]="hasHiddenAPIs"
+                    [codeLineSearchInfo]="codeLineSearchInfo"
                     (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
                     (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
                     (showCommentsEmitter)="handleShowCommentsEmitter($event)"
@@ -60,7 +64,9 @@
                     (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
                     (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)"
                     (diffNavaigationEmitter)="handleDiffNavaigationEmitter($event)"
-                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"></app-review-page-options>
+                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
+                    (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
+                    (codeLineSearchNaviationEmmiter)="handleCodeLineSearchNaviationEmmiter($event)"></app-review-page-options>
             </div>
         </ng-template>
     </p-splitter>

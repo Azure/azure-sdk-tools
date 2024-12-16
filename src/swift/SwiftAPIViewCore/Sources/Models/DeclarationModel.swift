@@ -167,7 +167,6 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                     case .class:
                         a.typeDeclaration(name: name, typeId: definitionId)
                     case .enum:
-
                         a.typeDeclaration(name: name, typeId: definitionId)
                     case .method:
                         a.lineMarker(definitionId)

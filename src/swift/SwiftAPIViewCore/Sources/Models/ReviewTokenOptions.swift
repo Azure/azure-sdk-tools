@@ -81,10 +81,3 @@ public struct LineMarkerOptions {
     /// Related line ID
     var relatedLineId: String?
 }
-
-public struct PunctuationOptions {
-    /// A string of punctuation characters you can snap to
-    var snapTo: String?
-    /// Flags that this marks the end of a context
-    var isContextEndLine: Bool?
-}

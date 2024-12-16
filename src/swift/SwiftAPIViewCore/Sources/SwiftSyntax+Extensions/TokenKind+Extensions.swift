@@ -57,7 +57,7 @@ extension SwiftSyntax.TokenKind {
             case "lowerThan", "higherThan", "associativity": return .Neither
             case "available", "unavailable", "introduced", "deprecated", "obsoleted", "message", "renamed": return .Neither
             case "willSet", "didSet", "get", "set":
-                return .Leading
+                return .Both
             default: return .Both
             }
         default:

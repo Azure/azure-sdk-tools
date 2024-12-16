@@ -147,15 +147,11 @@ class ExtensionModel: Tokenizable {
                         }
                     }
                 }
-                // FIXME: Newline
-                //a.newline()
                 options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
                 a.punctuation("}", options: options)
-                // FIXME: Newline
-                // a.newline()
             } else if childIdx == 7 {
                 child.tokenize(apiview: a, parent: parent)
-                if var last = a.currentLine.tokens.popLast() {
+                if let last = a.currentLine.tokens.popLast() {
                     // These are made as type references, but they should be
                     // type declarations
                     a.currentLine.lineId = self.definitionId

@@ -44,12 +44,10 @@ extension SyntaxProtocol {
                     let attrName = child.withoutTrivia().description
                     // don't add space if the attribute has parameters
                     if children.count == 2 {
-                        options.hasPrefixSpace = false
-                        options.hasSuffixSpace = true
+                        options.applySpacing(.Trailing)
                         a.keyword(attrName, options: options)
                     } else {
-                        options.hasPrefixSpace = false
-                        options.hasSuffixSpace = false
+                        options.applySpacing(.Neither)
                         a.keyword(attrName, options: options)
                     }
 
@@ -59,8 +57,7 @@ extension SyntaxProtocol {
             }
         case .classRestrictionType:
             // in this simple context, class should not have a trailing space
-            options.hasPrefixSpace = false
-            options.hasSuffixSpace = false
+            options.applySpacing(.Neither)
             a.keyword("class", options: options)
         case .codeBlock:
             // Don't render code blocks. APIView is unconcerned with implementation
@@ -107,7 +104,8 @@ extension SyntaxProtocol {
                     // index 5 is the external name, which we always render as text
                     let token = TokenSyntax(child)!
                     if case let SwiftSyntax.TokenKind.identifier(val) = token.tokenKind {
-                        a.text(val)
+                        options.hasSuffixSpace = false
+                        a.text(val, options: options)
                     } else if case SwiftSyntax.TokenKind.wildcardKeyword = token.tokenKind {
                         a.text("_")
                     } else {
@@ -207,8 +205,7 @@ extension SyntaxProtocol {
                     let tokenKind = token.tokenKind
                     let tokenText = token.withoutTrivia().description
                     if tokenKind == .leftBrace || tokenKind == .rightBrace {
-                        options.hasPrefixSpace = true
-                        options.hasSuffixSpace = true
+                        options.applySpacing(tokenKind.spacing)
                         a.punctuation(tokenText, options: options)
                     } else {
                         child.tokenize(token: token, apiview: a, parent: nil)
@@ -231,8 +228,9 @@ extension SyntaxProtocol {
             child.tokenize(apiview: a, parent: parent)
             // skip if no tokens were actually added
             guard (a.currentLine.tokens.count > beforeCount) else { continue }
+            // FIXME: Only add a blank line between members if there's attributes
             // add 1 blank line, except for the last member
-            a.blankLines(set: idx != lastIdx ? 1 : 0)
+            a.blankLines(set: idx != lastIdx ? 0 : 0)
         }
     }
 

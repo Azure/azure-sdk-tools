@@ -147,6 +147,9 @@ class APIViewModel: Tokenizable, Encodable {
 
     // MARK: Token Emitters
     func token(kind: TokenKind, value: String, options: ReviewTokenOptions? = nil) {
+        var options = options ?? ReviewTokenOptions()
+        // workaround the silly server default
+        options.hasSuffixSpace = options.hasSuffixSpace != nil ? options.hasSuffixSpace : false
         let token = ReviewToken(kind: kind, value: value, options: options)
         self.currentLine.tokens.append(token)
         return
@@ -163,7 +166,6 @@ class APIViewModel: Tokenizable, Encodable {
 
     func newline() {
         let text = self.currentLine.text()
-        print("NEWLINE: \(text)")
         // ensure no trailing space at the end of the line
         if self.currentLine.tokens.count > 0 {
             let lastToken = currentLine.tokens.last
@@ -194,7 +196,6 @@ class APIViewModel: Tokenizable, Encodable {
             }
         }
         if newlineCount == count {
-            print("SET BLANKLINES: \(count). PERFECT!")
             return
         } else if (newlineCount > count) {
             // if there are too many newlines, remove some
@@ -206,26 +207,22 @@ class APIViewModel: Tokenizable, Encodable {
                     _ = self.reviewLines.popLast()
                 } 
             }
-            print("SET BLANKLINES: \(count). Removed \(linesToRemove).")
         } else {
             // if not enough newlines, add some
             let linesToAdd = count - newlineCount
-            print("SET BLANKLINES: \(count). Add \(linesToAdd).")
             for _ in 0..<linesToAdd {
                 self.newline()
             }
         }
     }
 
-    func punctuation(_ value: String, options: ReviewTokenOptions? = nil, punctuationOptions: PunctuationOptions? = nil) {
+    func punctuation(_ value: String, options: ReviewTokenOptions? = nil) {
         let token = ReviewToken(kind: .punctuation, value: value, options: options)
-        if let snapTo = punctuationOptions?.snapTo {
-            self.snap(token: token, to: snapTo)
+        if value == "}" {
+            self.snap(token: token, to: "{")
+            self.currentLine.isContextEndLine = true
         } else {
             self.token(token)
-        }
-        if let isContextEndLine = punctuationOptions?.isContextEndLine {
-            self.currentLine.isContextEndLine = isContextEndLine
         }
     }
 
@@ -337,8 +334,6 @@ class APIViewModel: Tokenizable, Encodable {
         let lastToken = self.currentLine.tokens.last
         lastToken?.hasSuffixSpace = false
 
-        print("INDENT: \(self.currentLine.text())")
-
         if let currentParent = self.currentParent {
             currentParent.children.append(self.currentLine)
             self.parentStack.append(currentParent)
@@ -401,6 +396,7 @@ class APIViewModel: Tokenizable, Encodable {
                     token.hasSuffixSpace = false
                     target.hasSuffixSpace = false
                     lastLine.tokens.append(target)
+                    return
                 } else {
                     // no snapping, so render in place
                     self.token(target)
@@ -416,7 +412,7 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Retrieves the last line from the review
     func getLastLine() -> ReviewLine? {
-        guard let currentParent = self.currentParent else { return nil }
+        guard let currentParent = self.currentParent ?? self.reviewLines.last else { return nil }
         let lastChild = currentParent.children.last
         let lastGrandchild = lastChild?.children.last
         if let greatGrandChildren = lastGrandchild?.children {

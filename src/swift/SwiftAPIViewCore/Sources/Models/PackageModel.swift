@@ -121,8 +121,8 @@ class PackageModel: Tokenizable, Linkable {
                 extensions.tokenize(apiview: a, parent: nil)
             }
         }
-        options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
         a.blankLines(set: 0)
+        options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
         a.punctuation("}", options: options)
         a.newline()
         resolveTypeReferences(apiview: a)

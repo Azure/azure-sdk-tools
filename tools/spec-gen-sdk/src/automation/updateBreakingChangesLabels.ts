@@ -27,6 +27,11 @@ export async function updateBreakingChangesLabel(
   hasSuppressions: boolean,
   hasAbsentSuppressions: boolean,
 ): Promise<void> {
+
+  if (!context.config.pullNumber) {
+    context.logger.error('Error: Pull request number is not provided.');
+    return;
+  }
   const sdkName = context.config.sdkName;
   const sdkBreakingChangesLabelsConfig: {
     breakingChange: string | undefined;

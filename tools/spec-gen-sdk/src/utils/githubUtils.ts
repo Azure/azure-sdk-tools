@@ -1,5 +1,4 @@
 import { Octokit } from '@octokit/rest';
-import { createAppAuth } from '@octokit/auth-app';
 import * as winston from 'winston';
 import { SdkAutoContext } from '../automation/entrypoint';
 
@@ -22,24 +21,21 @@ export interface Repository {
  * Get a GitHubRepository object from the provided string or GitHubRepository object.
  * @param repository The repository name or object.
  */
-export function getRepository(repository: string | Repository): Repository {
-  let result: Repository;
-  if (!repository) {
-    result = {
-      name: repository,
-      owner: ""
-    };
-  } else if (typeof repository === "string") {
-    let slashIndex: number = repository.indexOf("/");
-    if (slashIndex === -1) {
-      slashIndex = repository.indexOf("\\");
+export function getRepository(repoUrl: string): Repository {
+  let result: Repository = {
+    owner: '',
+    name: ''
+  };
+  const urlPattern = /https:\/\/github\.com\/([^/]+)\/([^/]+)/;
+  if (repoUrl) {
+    const match = repoUrl.match(urlPattern);
+    if (!match) {
+      throw new Error(`Error: Invalid spec repository URL [${repoUrl}] provided. This is a sample of correct format: https://github.com/azure/azure-rest-api-specs`);
     }
     result = {
-      name: repository.substr(slashIndex + 1),
-      owner: slashIndex === -1 ? "" : repository.substr(0, slashIndex)
+      owner: match[1],
+      name: match[2]
     };
-  } else {
-    result = repository;
   }
   return result;
 }
@@ -127,7 +123,7 @@ interface AuthenticatedOctokit {
 }
 
 export const getAuthenticatedOctokit = (
-  opts: { id?: number; privateKey?: string; token?: string },
+  opts: { token?: string },
   logger: winston.Logger
 ): AuthenticatedOctokit => {
   if (opts.token) {
@@ -139,71 +135,6 @@ export const getAuthenticatedOctokit = (
       getToken: () => Promise.resolve(opts.token!)
     };
   }
-
-  if (opts.id && opts.privateKey) {
-    const appAuthOctokit = new Octokit({
-      authStrategy: createAppAuth,
-      auth: {
-        appId: opts.id,
-        privateKey: opts.privateKey
-      },
-      log: logger
-    });
-    const installationIdCache: { [owner: string]: number } = {};
-    const getInstallationId = async (owner: string) => {
-      let installationId = installationIdCache[owner];
-      if (installationId === undefined) {
-        try {
-          const {
-            data: { id }
-          } = await appAuthOctokit.apps.getOrgInstallation({ org: owner });
-          installationId = id;
-          installationIdCache[owner] = id;
-        } catch (e) {
-          try {
-            logger.warn(`Retrying to get installation app from user. Error details: ${JSON.stringify(e)}.`);
-            const {
-              data: { id }
-            } = await appAuthOctokit.apps.getUserInstallation({ username: owner });
-            installationId = id;
-            installationIdCache[owner] = id;            
-          } catch (e) {
-            logger.error(`ConfigError: GitHubApp ${opts.id} doesn't have installation for: ${owner}. Please report this issue through https://aka.ms/azsdk/support/specreview-channel or reach out the SDK Automation owner to set up the GitHub application correctly.`);
-            logger.error(`Error details: ${JSON.stringify(e)}.`);
-            return undefined;
-          }
-        }
-      }
-      return installationId;
-    };
-
-    const getAccessToken = async (owner: string) => {
-      const installationId = await getInstallationId(owner);
-      const auth = await appAuthOctokit.auth({
-        type: 'installation',
-        installationId
-      }) as { token: string };
-      return auth.token;
-    };
-
-    const octokit = new Octokit({
-      log: logger
-    });
-    octokit.hook.wrap('request', async (request, options) => {
-      const owner = options.owner ?? options.org;
-      if (typeof owner !== 'string') {
-        return request(options);
-      }
-      const token = await getAccessToken(owner);
-      options.headers.Authorization = `token ${token}`;
-      return request(options);
-    });
-    return {
-      octokit,
-      getToken: getAccessToken
-    };
-  }
-
   throw new Error('ConfigError: Invalid GitHub auth config. Please report this issue through https://aka.ms/azsdk/support/specreview-channel.');
 };
 

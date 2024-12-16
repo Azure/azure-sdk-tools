@@ -1,5 +1,5 @@
-import { SdkAutoContext } from '../automation/entrypoint';
 import { CleanOptions, ResetMode, SimpleGit } from 'simple-git';
+import { SdkAutoContext } from '../automation/entrypoint';
 
 export const gitSetRemoteWithAuth = async (
   context: Pick<SdkAutoContext, 'logger' | 'getGithubAccessToken'>,

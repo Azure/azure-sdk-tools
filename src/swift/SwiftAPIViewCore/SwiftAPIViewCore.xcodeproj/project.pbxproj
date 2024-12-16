@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 73;
+	objectVersion = 55;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -33,6 +33,37 @@
 		0AA1BFC02953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AA1BFBF2953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift */; };
 		0AA207462A3B7DD900ED963F /* SwiftSyntax in Frameworks */ = {isa = PBXBuildFile; productRef = 0AA207452A3B7DD900ED963F /* SwiftSyntax */; };
 		0AA207482A3B7DED00ED963F /* SwiftSyntaxParser in Frameworks */ = {isa = PBXBuildFile; productRef = 0AA207472A3B7DED00ED963F /* SwiftSyntaxParser */; };
+		B2DA7E0B2D0A0A6A0059E51F /* ProtocolExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DFD2D0A0A6A0059E51F /* ProtocolExpectFile.txt */; };
+		B2DA7E0C2D0A0A6A0059E51F /* SwiftUIExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DFE2D0A0A6A0059E51F /* SwiftUIExpectFile.txt */; };
+		B2DA7E0D2D0A0A6A0059E51F /* EnumerationsExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DF52D0A0A6A0059E51F /* EnumerationsExpectFile.txt */; };
+		B2DA7E0E2D0A0A6A0059E51F /* PrivateInternalExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DFB2D0A0A6A0059E51F /* PrivateInternalExpectFile.txt */; };
+		B2DA7E0F2D0A0A6A0059E51F /* ExtensionExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DF62D0A0A6A0059E51F /* ExtensionExpectFile.txt */; };
+		B2DA7E102D0A0A6A0059E51F /* InitializersExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DF92D0A0A6A0059E51F /* InitializersExpectFile.txt */; };
+		B2DA7E112D0A0A6A0059E51F /* FunctionsExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DF72D0A0A6A0059E51F /* FunctionsExpectFile.txt */; };
+		B2DA7E122D0A0A6A0059E51F /* GenericsExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DF82D0A0A6A0059E51F /* GenericsExpectFile.txt */; };
+		B2DA7E132D0A0A6A0059E51F /* PropertiesExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DFC2D0A0A6A0059E51F /* PropertiesExpectFile.txt */; };
+		B2DA7E142D0A0A6A0059E51F /* OperatorExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DFA2D0A0A6A0059E51F /* OperatorExpectFile.txt */; };
+		B2DA7E152D0A0A6A0059E51F /* AttributesExpectFile.txt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7DF42D0A0A6A0059E51F /* AttributesExpectFile.txt */; };
+		B2DA7E2D2D0A0A6F0059E51F /* SwiftUITestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E202D0A0A6F0059E51F /* SwiftUITestFile.swifttxt */; };
+		B2DA7E2E2D0A0A6F0059E51F /* GenericsTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E1A2D0A0A6F0059E51F /* GenericsTestFile.swifttxt */; };
+		B2DA7E2F2D0A0A6F0059E51F /* AttributesTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E162D0A0A6F0059E51F /* AttributesTestFile.swifttxt */; };
+		B2DA7E302D0A0A6F0059E51F /* PropertiesTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E1E2D0A0A6F0059E51F /* PropertiesTestFile.swifttxt */; };
+		B2DA7E312D0A0A6F0059E51F /* InitializersTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E1B2D0A0A6F0059E51F /* InitializersTestFile.swifttxt */; };
+		B2DA7E322D0A0A6F0059E51F /* EnumerationsTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E172D0A0A6F0059E51F /* EnumerationsTestFile.swifttxt */; };
+		B2DA7E332D0A0A6F0059E51F /* ProtocolTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E1F2D0A0A6F0059E51F /* ProtocolTestFile.swifttxt */; };
+		B2DA7E342D0A0A6F0059E51F /* OperatorTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E1C2D0A0A6F0059E51F /* OperatorTestFile.swifttxt */; };
+		B2DA7E352D0A0A6F0059E51F /* PrivateInternalTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E1D2D0A0A6F0059E51F /* PrivateInternalTestFile.swifttxt */; };
+		B2DA7E362D0A0A6F0059E51F /* ExtensionTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E182D0A0A6F0059E51F /* ExtensionTestFile.swifttxt */; };
+		B2DA7E372D0A0A6F0059E51F /* FunctionsTestFile.swifttxt in Resources */ = {isa = PBXBuildFile; fileRef = B2DA7E192D0A0A6F0059E51F /* FunctionsTestFile.swifttxt */; };
+		B2DA7E382D0A0A6F0059E51F /* GenericsTestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E1A2D0A0A6F0059E51F /* GenericsTestFile.swifttxt */; };
+		B2DA7E392D0A0A6F0059E51F /* SwiftUITestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E202D0A0A6F0059E51F /* SwiftUITestFile.swifttxt */; };
+		B2DA7E3A2D0A0A6F0059E51F /* PropertiesTestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E1E2D0A0A6F0059E51F /* PropertiesTestFile.swifttxt */; };
+		B2DA7E3B2D0A0A6F0059E51F /* PrivateInternalTestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E1D2D0A0A6F0059E51F /* PrivateInternalTestFile.swifttxt */; };
+		B2DA7E3C2D0A0A6F0059E51F /* FunctionsTestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E192D0A0A6F0059E51F /* FunctionsTestFile.swifttxt */; };
+		B2DA7E3D2D0A0A6F0059E51F /* OperatorTestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E1C2D0A0A6F0059E51F /* OperatorTestFile.swifttxt */; };
+		B2DA7E3E2D0A0A6F0059E51F /* EnumerationsTestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E172D0A0A6F0059E51F /* EnumerationsTestFile.swifttxt */; };
+		B2DA7E3F2D0A0A6F0059E51F /* InitializersTestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E1B2D0A0A6F0059E51F /* InitializersTestFile.swifttxt */; };
+		B2DA7E402D0A0A6F0059E51F /* ProtocolTestFile.swifttxt in Sources */ = {isa = PBXBuildFile; fileRef = B2DA7E1F2D0A0A6F0059E51F /* ProtocolTestFile.swifttxt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,101 +101,29 @@
 		0A846A342787A88E00C967A8 /* CoreInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = CoreInfo.plist; sourceTree = "<group>"; };
 		0AA1BFBD2953839E00AE8C11 /* ExtensionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionModel.swift; sourceTree = "<group>"; };
 		0AA1BFBF2953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PatternBindingListSyntax+Extensions.swift"; sourceTree = "<group>"; };
+		B2DA7DF42D0A0A6A0059E51F /* AttributesExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = AttributesExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DF52D0A0A6A0059E51F /* EnumerationsExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = EnumerationsExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DF62D0A0A6A0059E51F /* ExtensionExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ExtensionExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DF72D0A0A6A0059E51F /* FunctionsExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = FunctionsExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DF82D0A0A6A0059E51F /* GenericsExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = GenericsExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DF92D0A0A6A0059E51F /* InitializersExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = InitializersExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DFA2D0A0A6A0059E51F /* OperatorExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OperatorExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DFB2D0A0A6A0059E51F /* PrivateInternalExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = PrivateInternalExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DFC2D0A0A6A0059E51F /* PropertiesExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = PropertiesExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DFD2D0A0A6A0059E51F /* ProtocolExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ProtocolExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7DFE2D0A0A6A0059E51F /* SwiftUIExpectFile.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = SwiftUIExpectFile.txt; sourceTree = "<group>"; };
+		B2DA7E162D0A0A6F0059E51F /* AttributesTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = AttributesTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E172D0A0A6F0059E51F /* EnumerationsTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = EnumerationsTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E182D0A0A6F0059E51F /* ExtensionTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ExtensionTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E192D0A0A6F0059E51F /* FunctionsTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = FunctionsTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E1A2D0A0A6F0059E51F /* GenericsTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = GenericsTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E1B2D0A0A6F0059E51F /* InitializersTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = InitializersTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E1C2D0A0A6F0059E51F /* OperatorTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OperatorTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E1D2D0A0A6F0059E51F /* PrivateInternalTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = PrivateInternalTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E1E2D0A0A6F0059E51F /* PropertiesTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = PropertiesTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E1F2D0A0A6F0059E51F /* ProtocolTestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = ProtocolTestFile.swifttxt; sourceTree = "<group>"; };
+		B2DA7E202D0A0A6F0059E51F /* SwiftUITestFile.swifttxt */ = {isa = PBXFileReference; lastKnownFileType = text; path = SwiftUITestFile.swifttxt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		0ACFCCB72CFE32E2006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AttributesTestFile.swifttxt,
-				EnumerationsTestFile.swifttxt,
-				ExtensionTestFile.swifttxt,
-				FunctionsTestFile.swifttxt,
-				GenericsTestFile.swifttxt,
-				InitializersTestFile.swifttxt,
-				OperatorTestFile.swifttxt,
-				PrivateInternalTestFile.swifttxt,
-				PropertiesTestFile.swifttxt,
-				ProtocolTestFile.swifttxt,
-				SwiftUITestFile.swifttxt,
-			);
-			target = 0A8469E827879AE200C967A8 /* SwiftAPIViewCoreTests */;
-		};
-		0ACFCCBA2CFE332E006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AttributesTestFile.swifttxt,
-				EnumerationsTestFile.swifttxt,
-				ExtensionTestFile.swifttxt,
-				FunctionsTestFile.swifttxt,
-				GenericsTestFile.swifttxt,
-				InitializersTestFile.swifttxt,
-				OperatorTestFile.swifttxt,
-				PrivateInternalTestFile.swifttxt,
-				PropertiesTestFile.swifttxt,
-				ProtocolTestFile.swifttxt,
-				SwiftUITestFile.swifttxt,
-			);
-			target = 0A8469E027879AE200C967A8 /* SwiftAPIViewCore */;
-		};
-		0ACFCCBD2CFE3BC0006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AttributesExpectFile.txt,
-				EnumerationsExpectFile.txt,
-				ExtensionExpectFile.txt,
-				FunctionsExpectFile.txt,
-				GenericsExpectFile.txt,
-				InitializersExpectFile.txt,
-				OperatorExpectFile.txt,
-				PrivateInternalExpectFile.txt,
-				PropertiesExpectFile.txt,
-				ProtocolExpectFile.txt,
-				SwiftUIExpectFile.txt,
-			);
-			target = 0A8469E827879AE200C967A8 /* SwiftAPIViewCoreTests */;
-		};
-		0ACFCCBF2CFE3BC3006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AttributesExpectFile.txt,
-				EnumerationsExpectFile.txt,
-				ExtensionExpectFile.txt,
-				FunctionsExpectFile.txt,
-				GenericsExpectFile.txt,
-				InitializersExpectFile.txt,
-				OperatorExpectFile.txt,
-				PrivateInternalExpectFile.txt,
-				PropertiesExpectFile.txt,
-				ProtocolExpectFile.txt,
-				SwiftUIExpectFile.txt,
-			);
-			target = 0A8469E027879AE200C967A8 /* SwiftAPIViewCore */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		0ACFCCC22CFE614B006BFBE8 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 0A8469DD27879AE200C967A8 /* Sources */;
-			membershipExceptions = (
-				EnumerationsTestFile.swifttxt,
-				FunctionsTestFile.swifttxt,
-				GenericsTestFile.swifttxt,
-				InitializersTestFile.swifttxt,
-				OperatorTestFile.swifttxt,
-				PrivateInternalTestFile.swifttxt,
-				PropertiesTestFile.swifttxt,
-				ProtocolTestFile.swifttxt,
-				SwiftUITestFile.swifttxt,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		0ACFCCB22CFE3288006BFBE8 /* TestFiles */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0ACFCCBA2CFE332E006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 0ACFCCC22CFE614B006BFBE8 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, 0ACFCCB72CFE32E2006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = TestFiles; sourceTree = "<group>"; };
-		0ACFCCB32CFE32B9006BFBE8 /* ExpectFiles */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (0ACFCCBF2CFE3BC3006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 0ACFCCBD2CFE3BC0006BFBE8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ExpectFiles; sourceTree = "<group>"; };
-/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		0A8469DE27879AE200C967A8 /* Frameworks */ = {
@@ -240,8 +199,8 @@
 		0A846A0227879D0400C967A8 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				0ACFCCB32CFE32B9006BFBE8 /* ExpectFiles */,
-				0ACFCCB22CFE3288006BFBE8 /* TestFiles */,
+				B2DA7DFF2D0A0A6A0059E51F /* ExpectFiles */,
+				B2DA7E212D0A0A6F0059E51F /* TestFiles */,
 				0A846A0327879D0400C967A8 /* SwiftAPIViewCoreTests.swift */,
 			);
 			path = Tests;
@@ -283,6 +242,42 @@
 				0A846A1227879D0400C967A8 /* Token.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		B2DA7DFF2D0A0A6A0059E51F /* ExpectFiles */ = {
+			isa = PBXGroup;
+			children = (
+				B2DA7DF42D0A0A6A0059E51F /* AttributesExpectFile.txt */,
+				B2DA7DF52D0A0A6A0059E51F /* EnumerationsExpectFile.txt */,
+				B2DA7DF62D0A0A6A0059E51F /* ExtensionExpectFile.txt */,
+				B2DA7DF72D0A0A6A0059E51F /* FunctionsExpectFile.txt */,
+				B2DA7DF82D0A0A6A0059E51F /* GenericsExpectFile.txt */,
+				B2DA7DF92D0A0A6A0059E51F /* InitializersExpectFile.txt */,
+				B2DA7DFA2D0A0A6A0059E51F /* OperatorExpectFile.txt */,
+				B2DA7DFB2D0A0A6A0059E51F /* PrivateInternalExpectFile.txt */,
+				B2DA7DFC2D0A0A6A0059E51F /* PropertiesExpectFile.txt */,
+				B2DA7DFD2D0A0A6A0059E51F /* ProtocolExpectFile.txt */,
+				B2DA7DFE2D0A0A6A0059E51F /* SwiftUIExpectFile.txt */,
+			);
+			path = ExpectFiles;
+			sourceTree = "<group>";
+		};
+		B2DA7E212D0A0A6F0059E51F /* TestFiles */ = {
+			isa = PBXGroup;
+			children = (
+				B2DA7E162D0A0A6F0059E51F /* AttributesTestFile.swifttxt */,
+				B2DA7E172D0A0A6F0059E51F /* EnumerationsTestFile.swifttxt */,
+				B2DA7E182D0A0A6F0059E51F /* ExtensionTestFile.swifttxt */,
+				B2DA7E192D0A0A6F0059E51F /* FunctionsTestFile.swifttxt */,
+				B2DA7E1A2D0A0A6F0059E51F /* GenericsTestFile.swifttxt */,
+				B2DA7E1B2D0A0A6F0059E51F /* InitializersTestFile.swifttxt */,
+				B2DA7E1C2D0A0A6F0059E51F /* OperatorTestFile.swifttxt */,
+				B2DA7E1D2D0A0A6F0059E51F /* PrivateInternalTestFile.swifttxt */,
+				B2DA7E1E2D0A0A6F0059E51F /* PropertiesTestFile.swifttxt */,
+				B2DA7E1F2D0A0A6F0059E51F /* ProtocolTestFile.swifttxt */,
+				B2DA7E202D0A0A6F0059E51F /* SwiftUITestFile.swifttxt */,
+			);
+			path = TestFiles;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -335,10 +330,6 @@
 			dependencies = (
 				0A8469EC27879AE200C967A8 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				0ACFCCB22CFE3288006BFBE8 /* TestFiles */,
-				0ACFCCB32CFE32B9006BFBE8 /* ExpectFiles */,
-			);
 			name = SwiftAPIViewCoreTests;
 			productName = SwiftAPIViewCoreTests;
 			productReference = 0A8469E927879AE200C967A8 /* SwiftAPIViewCoreTests.xctest */;
@@ -363,6 +354,7 @@
 				};
 			};
 			buildConfigurationList = 0A8469DB27879AE200C967A8 /* Build configuration list for PBXProject "SwiftAPIViewCore" */;
+			compatibilityVersion = "Xcode 13.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -375,7 +367,6 @@
 				0A1CA129292D8B5800CC2367 /* XCRemoteSwiftPackageReference "swift-syntax" */,
 				0A6C6596292E98890075C56F /* XCRemoteSwiftPackageReference "SourceKitten" */,
 			);
-			preferredProjectObjectVersion = 55;
 			productRefGroup = 0A8469E227879AE200C967A8 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -391,6 +382,28 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2DA7E0B2D0A0A6A0059E51F /* ProtocolExpectFile.txt in Resources */,
+				B2DA7E0C2D0A0A6A0059E51F /* SwiftUIExpectFile.txt in Resources */,
+				B2DA7E0D2D0A0A6A0059E51F /* EnumerationsExpectFile.txt in Resources */,
+				B2DA7E0E2D0A0A6A0059E51F /* PrivateInternalExpectFile.txt in Resources */,
+				B2DA7E0F2D0A0A6A0059E51F /* ExtensionExpectFile.txt in Resources */,
+				B2DA7E102D0A0A6A0059E51F /* InitializersExpectFile.txt in Resources */,
+				B2DA7E112D0A0A6A0059E51F /* FunctionsExpectFile.txt in Resources */,
+				B2DA7E122D0A0A6A0059E51F /* GenericsExpectFile.txt in Resources */,
+				B2DA7E132D0A0A6A0059E51F /* PropertiesExpectFile.txt in Resources */,
+				B2DA7E142D0A0A6A0059E51F /* OperatorExpectFile.txt in Resources */,
+				B2DA7E152D0A0A6A0059E51F /* AttributesExpectFile.txt in Resources */,
+				B2DA7E2D2D0A0A6F0059E51F /* SwiftUITestFile.swifttxt in Resources */,
+				B2DA7E2E2D0A0A6F0059E51F /* GenericsTestFile.swifttxt in Resources */,
+				B2DA7E2F2D0A0A6F0059E51F /* AttributesTestFile.swifttxt in Resources */,
+				B2DA7E302D0A0A6F0059E51F /* PropertiesTestFile.swifttxt in Resources */,
+				B2DA7E312D0A0A6F0059E51F /* InitializersTestFile.swifttxt in Resources */,
+				B2DA7E322D0A0A6F0059E51F /* EnumerationsTestFile.swifttxt in Resources */,
+				B2DA7E332D0A0A6F0059E51F /* ProtocolTestFile.swifttxt in Resources */,
+				B2DA7E342D0A0A6F0059E51F /* OperatorTestFile.swifttxt in Resources */,
+				B2DA7E352D0A0A6F0059E51F /* PrivateInternalTestFile.swifttxt in Resources */,
+				B2DA7E362D0A0A6F0059E51F /* ExtensionTestFile.swifttxt in Resources */,
+				B2DA7E372D0A0A6F0059E51F /* FunctionsTestFile.swifttxt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -424,6 +437,15 @@
 				0A6C658C292D9ED60075C56F /* Errors.swift in Sources */,
 				0A76BF95294BA10A007C776E /* AccessLevel.swift in Sources */,
 				0AA1BFC02953955500AE8C11 /* PatternBindingListSyntax+Extensions.swift in Sources */,
+				B2DA7E382D0A0A6F0059E51F /* GenericsTestFile.swifttxt in Sources */,
+				B2DA7E392D0A0A6F0059E51F /* SwiftUITestFile.swifttxt in Sources */,
+				B2DA7E3A2D0A0A6F0059E51F /* PropertiesTestFile.swifttxt in Sources */,
+				B2DA7E3B2D0A0A6F0059E51F /* PrivateInternalTestFile.swifttxt in Sources */,
+				B2DA7E3C2D0A0A6F0059E51F /* FunctionsTestFile.swifttxt in Sources */,
+				B2DA7E3D2D0A0A6F0059E51F /* OperatorTestFile.swifttxt in Sources */,
+				B2DA7E3E2D0A0A6F0059E51F /* EnumerationsTestFile.swifttxt in Sources */,
+				B2DA7E3F2D0A0A6F0059E51F /* InitializersTestFile.swifttxt in Sources */,
+				B2DA7E402D0A0A6F0059E51F /* ProtocolTestFile.swifttxt in Sources */,
 				0A6C658D292D9ED60075C56F /* Identifiers.swift in Sources */,
 				0A6C658E292D9ED60075C56F /* Logger.swift in Sources */,
 				0A76BF8F294B8BCD007C776E /* SyntaxProtocol+Extensions.swift in Sources */,

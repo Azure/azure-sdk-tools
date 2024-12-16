@@ -9,7 +9,7 @@ import {
   gitGetDiffFileList
 } from '../utils/gitUtils';
 import { specConfigPath } from '../types/SpecConfig';
-import { repoKeyToString } from '../utils/githubUtils';
+import { repoKeyToString } from '../utils/repo';
 import { runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
 import {
   deleteTmpJsonFile,
@@ -122,7 +122,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 };
 
 export const workflowMain = async (context: WorkflowContext) => {
-  if (context.specPrInfo) {
+  if (context.config.pullNumber) {
     await workflowValidateSdkConfigForSpecPr(context);
     await workflowCallInitScript(context);
     await workflowGenerateSdkForSpecPr(context);
@@ -623,7 +623,7 @@ const workflowCallGenerateScript = async (
     trigger,
     changedFiles,
     installInstructionInput: {
-      isPublic: false,
+      isPublic: !context.isPrivateSpecRepo,
       downloadUrlPrefix: "https://artprodcus3.artifacts.visualstudio.com",
       downloadCommandTemplate: "downloadCommand",
       trigger,

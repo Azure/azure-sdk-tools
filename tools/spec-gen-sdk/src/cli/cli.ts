@@ -1,6 +1,6 @@
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
-import { getRepository } from '../utils/githubUtils';
+import { getRepository } from '../utils/repo';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { sdkAutoMain } from '../automation/entrypoint';
 import { requireJsonc } from "../utils/requireJsonc";
@@ -25,6 +25,8 @@ export type SpecGenSdkCliConfig = {
   prNumber?: number;
   specCommitSha: string;
   specRepoHttpsUrl: string;
+  headRepoHttpsUrl?: string;
+  headBranch?: string;
 };
 
 const initCliConfig = (argv) : SpecGenSdkCliConfig => {
@@ -41,6 +43,8 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     prNumber: argv.prNumber,
     specCommitSha: argv.specCommitSha,
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
+    headRepoHttpsUrl: argv.headRepoHttpsUrl,
+    headBranch: argv.headBranch,
   };
 };
 
@@ -64,9 +68,8 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       pullNumber: config.prNumber,
       sdkName: config.sdkRepoName,
       workingFolder: config.workingFolder,
-      github: {
-        token: config.githubToken,
-      },
+      headRepoHttpsUrl: config.headRepoHttpsUrl,
+      headBranch: config.headBranch,
       isTriggeredByPipeline: config.isTriggeredByPipeline,
       runEnv: config.isTriggeredByPipeline ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto'
@@ -162,6 +165,16 @@ yargs(hideBin(process.argv))
           description: "Url of the specification repository",
           default: "https://github.com/azure/azure-rest-api-specs",
           demandOption: true,
+        },
+        'head-repo-https-url': {
+          alias: "hu",
+          type: "string",
+          description: "Url of the head repository of the specification pull request",
+        },
+        'head-branch': {
+          alias: "hb",
+          type: "string",
+          description: "The branch of the head repository of the specification pull request",
         }
     })},
     async (argv) => {

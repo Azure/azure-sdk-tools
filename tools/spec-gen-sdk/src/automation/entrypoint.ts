@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as winston from 'winston';
-import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
-import { getAuthenticatedOctokit, getRepoKey, RepoKey } from '../utils/githubUtils';
+import { getRepoKey, RepoKey } from '../utils/repo';
 import {
   FailureType,
   setFailureType,
@@ -34,32 +33,20 @@ interface SdkAutoOptions {
   specRepoHttpsUrl: string;
   workingFolder: string;
   isTriggeredByPipeline: boolean;
-  github: {
-    token?: string;
-    commentAuthorName?: string;
-  };
-
+  headRepoHttpsUrl?: string;
+  headBranch?: string;
   runEnv: 'local' | 'azureDevOps' | 'test';
-}
-
-type SpecPrInfo = {
-  head: {owner: string; repo: string};
-  base: {owner: string; repo: string};
 }
 
 export type SdkAutoContext = {
   config: SdkAutoOptions;
-  octokit: Octokit;
-  getGithubAccessToken: (owner: string) => Promise<string>;
   logger: winston.Logger;
-  specPrInfo: SpecPrInfo | undefined;
-  specPrBaseBranch: string | undefined;
-  specPrHeadBranch: string | undefined;
   fullLogFileName: string;
   filterLogFileName: string;
   specRepoConfig: SpecConfig;
   sdkRepoConfig: SdkRepoConfig;
   swaggerToSdkConfig: SwaggerToSdkConfig
+  isPrivateSpecRepo: boolean;
 };
 
 
@@ -95,55 +82,16 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   const swaggerToSdkConfigContent = loadConfigContent(swaggerToSdkConfigPath, logger);
   const swaggerToSdkConfig = getSwaggerToSdkConfig(swaggerToSdkConfigContent);
 
-  const [{ octokit, getGithubAccessToken, specPR }] = await Promise.all([
-    getGithubContext(options, logger),
-  ]);
-
-  let specPrInfo: SpecPrInfo | undefined
-  if (specPR) {
-    specPrInfo = {
-      head: {
-        owner: specPR.head.repo.owner.login,
-        repo: specPR.head.repo.name
-      },
-      base: {
-        owner: specPR.base.repo.owner.login,
-        repo: specPR.base.repo.name
-      }
-    };
-  }
   return {
     config: options,
-    octokit,
-    getGithubAccessToken,
     logger,
-    specPrInfo,
-    specPrBaseBranch: specPR?.base.ref,
-    specPrHeadBranch: specPR?.head.ref,
     fullLogFileName,
     filterLogFileName,
     specRepoConfig,
     sdkRepoConfig,
-    swaggerToSdkConfig
+    swaggerToSdkConfig,
+    isPrivateSpecRepo: options.specRepo.name.endsWith('-pr')
   };
-};
-
-const getGithubContext = async (options: SdkAutoOptions, logger: winston.Logger) => {
-  const {octokit, getToken: getGithubAccessToken} = getAuthenticatedOctokit(options.github, logger);
-
-  if (!options.pullNumber) {
-    return { octokit, getGithubAccessToken, specPR: undefined };
-  }
-  let specPR: RestEndpointMethodTypes['pulls']['get']['response']['data'];
-  do {
-    const rsp = await octokit.pulls.get({
-      owner: options.specRepo.owner,
-      repo: options.specRepo.name,
-      pull_number: options.pullNumber
-    });
-    specPR = rsp.data;
-  } while (specPR.mergeable === null && !specPR.merged);
-  return { octokit, getGithubAccessToken, specPR };
 };
 
 export const sdkAutoMain = async (options: SdkAutoOptions) => {

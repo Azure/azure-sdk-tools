@@ -1,4 +1,4 @@
-import { RepoKey } from '../utils/githubUtils';
+import { RepoKey } from '../utils/repo';
 import { requireJsonc } from '../utils/requireJsonc';
 import { getTypeTransformer } from './validator';
 export const specConfigPath = 'specificationRepositoryConfiguration.json';

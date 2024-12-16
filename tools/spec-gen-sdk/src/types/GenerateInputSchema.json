@@ -25,6 +25,10 @@
       // Spec repo url in https without auth.
       "type": "string"
     },
+    "sdkVersion": {
+      // Sdk version to be used when generate the sdk code, the value could be 'beta | GA'or specific version number such as '1.2.0-beta.1'.
+      "type": "string"
+    },
     "trigger": {
       "$ref": "TriggerType#"
     },

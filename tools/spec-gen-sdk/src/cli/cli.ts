@@ -22,6 +22,7 @@ export type SpecGenSdkCliConfig = {
   tspConfigPath?: string;
   readmePath?: string;
   sdkRepoName: string;
+  sdkVersion: string;
   prNumber?: number;
   specCommitSha: string;
   specRepoHttpsUrl: string;
@@ -40,6 +41,7 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     tspConfigPath: argv.tspConfigRelativePath,
     readmePath: argv.readmeRelativePath,
     sdkRepoName: argv.sdkRepoName,
+    sdkVersion: argv.sdkVersion,
     prNumber: argv.prNumber,
     specCommitSha: argv.specCommitSha,
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
@@ -67,6 +69,7 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       specRepoHttpsUrl: config.specRepoHttpsUrl,
       pullNumber: config.prNumber,
       sdkName: config.sdkRepoName,
+      sdkVersion: config.sdkVersion,
       workingFolder: config.workingFolder,
       headRepoHttpsUrl: config.headRepoHttpsUrl,
       headBranch: config.headBranch,
@@ -175,6 +178,13 @@ yargs(hideBin(process.argv))
           alias: "hb",
           type: "string",
           description: "The branch of the head repository of the specification pull request",
+        },
+        'sdk-version': {
+          alias: "sv",
+          type: "string",
+          description: "The version of the SDK to generate",
+          default: "preview",
+          demandOption: true,
         }
     })},
     async (argv) => {

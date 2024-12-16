@@ -622,6 +622,7 @@ const workflowCallGenerateScript = async (
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
     trigger,
     changedFiles,
+    sdkVersion: context.config.sdkVersion,
     installInstructionInput: {
       isPublic: !context.isPrivateSpecRepo,
       downloadUrlPrefix: "https://artprodcus3.artifacts.visualstudio.com",

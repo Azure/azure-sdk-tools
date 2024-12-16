@@ -10,6 +10,7 @@ export type GenerateInput = {
   headSha: string;
   headRef: string;
   repoHttpsUrl: string;
+  sdkVersion?: string;
   trigger: TriggerType;
   changedFiles: string[];
   relatedReadmeMdFiles?: string[];

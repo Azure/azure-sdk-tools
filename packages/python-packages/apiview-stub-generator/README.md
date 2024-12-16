@@ -16,9 +16,9 @@ Following are the steps to create an API review request for python package.
 ### Generate stub File
 `apiview-stub-generator` package is used to generate stub file tokens from either source code repo or from prebuilt wheel package. Following are the steps to generate stub file token.
 
-Install `apiview-stub-generator` package. From the root of the apiview-stub-generator package, run:
+Install `apiview-stub-generator` package on Python <=3.10. From the root of the apiview-stub-generator package, run:
 ```
-pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+(venv310) apiview-stub-generator> pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
 ```
 
 Run `apistubgen` command with source repo or whl package as parameter and this will generate a json file with tokens.

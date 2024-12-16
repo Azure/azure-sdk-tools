@@ -260,6 +260,17 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs[0].source?.node.getText()).toBe(
         'constructor(a: number, b: number){}'
       );
+
+      breakingPairs = patchClass('classConstructorParameterOptional', astContext);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Parameter);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.RequiredToOptional);
+      expect(breakingPairs[0].target?.node.getText()).toBe(
+        'b?: string'
+      );;
+      expect(breakingPairs[0].source?.node.getText()).toBe(
+        'b: string'
+      );
       
     } finally {
       if (tempFolder) remove(tempFolder);

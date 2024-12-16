@@ -42,6 +42,7 @@ export class classExpand {a: string;b: string;}
 export class classNarrow {a: string;}
 export class classConstructorParameterCount { constructor(a: string){} }
 export class classConstructorParameterType { constructor(a: number, b: number){} }
+export class classConstructorParameterOptional { constructor(a: string, b?: string){} }
 export class classConstructorRemove { constructor(a?: number, b?: number, c?: number){} }
 export class classConstructorAdd { constructor(a: number, b: number){} }
 ```

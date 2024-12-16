@@ -66,7 +66,7 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   if (!assignable) breakingReasons |= DiffReasons.TypeChanged;
 
   // check required -> optional
-  const isOptional = (node: Node) => node.getSymbolOrThrow().isOptional();
+  const isOptional = (node: Node) => node.asKind(SyntaxKind.Parameter)?.isOptional();
   const incompatibleOptional = isOptional(target) && !isOptional(source);
   if (incompatibleOptional) breakingReasons |= DiffReasons.RequiredToOptional;
 
@@ -435,6 +435,7 @@ function findConstructorBreakingChanges(
 
       // handle parameters
       const getParameters = (s: ConstructorDeclaration): ParameterDeclaration[] => s.getParameters();
+
       const parameterPairs = findParameterBreakingChangesCore(
         getParameters(sourceConstraint),
         getParameters(targetConstraint),

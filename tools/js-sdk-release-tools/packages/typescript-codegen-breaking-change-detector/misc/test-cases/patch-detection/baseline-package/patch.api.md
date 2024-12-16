@@ -38,6 +38,7 @@ export class classExpand {a: string;}
 export class classNarrow {a: string;b: string;}
 export class classConstructorParameterCount { constructor(a: string, b: string){} }
 export class classConstructorParameterType { constructor(a: string, b: string){} }
+export class classConstructorParameterOptional { constructor(a: string, b: string){} }
 export class classConstructorRemove { constructor(a: number, b: number); constructor(a?: number, b?: number, c?: number){} }
 export class classConstructorAdd { }
 ```

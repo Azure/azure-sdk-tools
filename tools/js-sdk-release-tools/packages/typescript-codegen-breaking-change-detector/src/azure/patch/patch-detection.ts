@@ -155,16 +155,20 @@ export function patchClass(name: string, astContext: AstContext): DiffPair[] {
     findClassDeclarationBreakingChanges,
     baseline!,
     current!,
-  )
-    .filter((p) => p.reasons === DiffReasons.Removed)
-    .map((p) => {
+  ).filter((p) => 
+    p.reasons === DiffReasons.Removed ||
+    p.reasons === DiffReasons.RequiredToOptional)
+  .map((p) => {
+    if(p.reasons === DiffReasons.Removed)
+    {
       p.reasons = DiffReasons.Added;
       p.assignDirection = AssignDirection.CurrentToBaseline;
       const temp = p.source;
       p.source = p.target;
-      p.target = temp;
-      return p;
-    });
+      p.target = temp;      
+    }
+    return p;
+  });
   return [...breakingChangePairs, ...newFeaturePairs];
 }
 

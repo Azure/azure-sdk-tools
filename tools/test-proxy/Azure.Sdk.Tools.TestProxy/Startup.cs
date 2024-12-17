@@ -24,6 +24,7 @@ using Azure.Sdk.Tools.TestProxy.CommandOptions;
 using System.Text.Json;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
+using Azure.Sdk.Tools.TestProxy.Common.AutoShutdown;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -80,10 +81,12 @@ namespace Azure.Sdk.Tools.TestProxy
             switch (commandObj)
             {
                 case ConfigLocateOptions configOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
                     System.Console.WriteLine(await DefaultStore.GetPath(assetsJson));
                     break;
                 case ConfigShowOptions configOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
                     using(var f = File.OpenRead(assetsJson))
                     {
@@ -92,6 +95,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                     break;
                 case ConfigCreateOptions configOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
                     throw new NotImplementedException("Interactive creation of assets.json feature is not yet implemented.");
                 case ConfigOptions configOptions:
@@ -101,14 +105,17 @@ namespace Azure.Sdk.Tools.TestProxy
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(pushOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Push(assetsJson);
                     break;
                 case ResetOptions resetOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(resetOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Reset(assetsJson);
                     break;
                 case RestoreOptions restoreOptions:
+                    DefaultStore.SetStoreExceptionMode(false);
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Restore(assetsJson);
                     break;
@@ -119,6 +126,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         StorageLocation = defaultOpts.StorageLocation,
                         StoragePlugin = defaultOpts.StoragePlugin,
                         Insecure = false,
+                        AutoShutdownTime = -1,
                         Dump = false
                     });
                     break;
@@ -141,7 +149,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 newLine: true, statusThreadCts.Token);
 
             var host = Host.CreateDefaultBuilder((startOptions.AdditionalArgs??new string[] { }).ToArray());
-
+            
             host.ConfigureWebHostDefaults(
                 builder =>
                     builder.UseStartup<Startup>()
@@ -173,6 +181,15 @@ namespace Azure.Sdk.Tools.TestProxy
                 );
 
             var app = host.Build();
+
+            var shutdownService = app.Services.GetRequiredService<ShutdownConfiguration>();
+            if (startOptions.AutoShutdownTime > -1)
+            {
+                shutdownService.EnableAutoShutdown = true;
+                shutdownService.TimeoutInSeconds = startOptions.AutoShutdownTime;
+                // start the first iteration of the shutdown timer
+                app.Services.GetRequiredService<ShutdownTimer>().ResetTimer();
+            }
 
             if (startOptions.Dump)
             {
@@ -221,6 +238,8 @@ namespace Azure.Sdk.Tools.TestProxy
             );
 
             services.AddSingleton<RecordingHandler>(singletonRecordingHandler);
+            services.AddSingleton<ShutdownConfiguration>();
+            services.AddSingleton<ShutdownTimer>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -231,6 +250,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             app.UseCors("DefaultPolicy");
             app.UseMiddleware<HttpExceptionMiddleware>();
+            app.UseMiddleware<ShutdownTimerMiddleware>();
 
             DebugLogger.ConfigureLogger(loggerFactory);
 

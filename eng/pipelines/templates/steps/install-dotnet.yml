@@ -9,10 +9,10 @@ steps:
     inputs:
       useGlobalJson: true
 
-  # We install .NET 6.0.x SDK in addition to .NET coming from global.json because most of our tools target 6.0.x.
+  # We install .NET 8.0.x SDK in addition to .NET coming from global.json because most of our tools target 8.0.x.
   # Once we migrate all tools to a newer .NET version, we should update this to install that version instead.
   - task: UseDotNet@2
-    displayName: "Use .NET SDK 6.0.x"
+    displayName: "Use .NET SDK 8.0.x"
     retryCountOnTaskFailure: 3
     inputs:
       # We must install sdk, not just runtime, as it is required by some of our tools, like test-proxy.
@@ -23,7 +23,7 @@ steps:
       # https://github.com/Azure/azure-sdk-tools/pull/5405#discussion_r1105006774
       # https://github.com/Azure/azure-sdk-tools/pull/5405
       packageType: sdk
-      version: 6.0.x
+      version: 8.0.x
       # performMultiLevelLookup comes into play when given .NET executable target runtime is different
       # than the installed .NET SDK. Without this, such runtime would not be found.
       performMultiLevelLookup: true

@@ -59,6 +59,6 @@ foreach ($repo in $repos)
   }
 
   if ($prstate.mergeStateStatus -ne "CLEAN") {
-    Write-Host "****PR is not mergeable [$($prstate.mergeStateStatus)] and may need to be manually merged"
+    Write-Host "****PR $($prstate.url) is not mergeable [state: $($prstate.mergeStateStatus)] and may need to be manually merged"
   }
 }

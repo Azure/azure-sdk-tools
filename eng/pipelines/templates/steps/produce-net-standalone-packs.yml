@@ -10,13 +10,13 @@ parameters:
 
 # A `BuildMatrix` is merely a list of possible targeted platforms. .NET 6+ can build for any target from any other target.
   # - rid: win-x64
-  #   framework: net6.0
+  #   framework: net8.0
   #   assembly: Azure.Sdk.Tools.TestProxy
   # - rid: linux-x64
-  #   framework: net6.0
+  #   framework: net8.0
   #   assembly: Azure.Sdk.Tools.TestProxy
   # - rid: osx-x64
-  #   framework: net6.0
+  #   framework: net8.0
   #   assembly: Azure.Sdk.Tools.TestProxy
 
 steps:
@@ -65,7 +65,7 @@ steps:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
-      
+
       - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
         parameters:
           ArtifactName: "standalone-${{ target.rid }}"

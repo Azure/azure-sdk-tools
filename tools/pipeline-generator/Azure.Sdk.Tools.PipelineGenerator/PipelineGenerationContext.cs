@@ -1,19 +1,22 @@
+using Azure.Core;
 using Azure.Identity;
-using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.VisualStudio.Services.Client;
-using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using ServiceEndpoint = Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint;
 
 namespace PipelineGenerator
 {
@@ -70,14 +73,19 @@ namespace PipelineGenerator
 
         private VssConnection cachedConnection;
 
+        private TokenCredential GetAzureCredentials()
+        {
+            return new ChainedTokenCredential(
+                new AzureCliCredential(),
+                new AzurePowerShellCredential()
+            );
+        }
+
         private async Task<VssConnection> GetConnectionAsync()
         {
             if (cachedConnection == null)
             {
-                var azureCredential = new ChainedTokenCredential(
-                    new AzureCliCredential(),
-                    new AzurePowerShellCredential()
-                );
+                var azureCredential = GetAzureCredentials();
                 var devopsCredential = new VssAzureIdentityCredential(azureCredential);
                 cachedConnection = new VssConnection(new Uri(organization), devopsCredential);
                 await cachedConnection.ConnectAsync();
@@ -136,7 +144,7 @@ namespace PipelineGenerator
 
         private Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint cachedServiceEndpoint;
 
-        public async Task<Microsoft.VisualStudio.Services.ServiceEndpoints.WebApi.ServiceEndpoint> GetServiceEndpointAsync(CancellationToken cancellationToken)
+        public async Task<ServiceEndpoint> GetServiceEndpointAsync(CancellationToken cancellationToken)
         {
             if (cachedServiceEndpoint == null)
             {
@@ -159,6 +167,85 @@ namespace PipelineGenerator
             }
 
             return cachedServiceEndpoint;
+        }
+
+        public async Task<IEnumerable<ServiceEndpoint>> GetServiceConnectionsAsync(IEnumerable<string> serviceConnections, CancellationToken cancellationToken)
+        {
+            var serviceEndpointClient = await GetServiceEndpointClientAsync(cancellationToken);
+            var projectReference = await GetProjectReferenceAsync(cancellationToken);
+
+            var allServiceConnections = await serviceEndpointClient.GetServiceEndpointsAsync(projectReference.Id.ToString(), cancellationToken: cancellationToken);
+
+            this.logger.LogDebug("Returned a total of {Count} service endpoints", allServiceConnections.Count);
+            
+            List<ServiceEndpoint> endpoints = new List<ServiceEndpoint>();
+            foreach (var serviceConnection in allServiceConnections)
+            {
+                if (serviceConnections.Contains(serviceConnection.Name))
+                {
+                    endpoints.Add(serviceConnection);
+                }
+            }
+            return endpoints;
+        }
+
+        private HttpClient cachedRawHttpClient = null;
+
+        private async Task<HttpClient> GetRawHttpClient(CancellationToken cancellationToken)
+        {
+            if (this.cachedRawHttpClient == null)
+            {
+                var credential = GetAzureCredentials();
+                // Get token for Azure DevOps
+                var tokenRequestContext = new TokenRequestContext(new[] { "499b84ac-1321-427f-aa17-267ca6975798/.default" });
+                var accessToken = await credential.GetTokenAsync(tokenRequestContext, cancellationToken);
+                var client = new HttpClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.Token);
+                this.cachedRawHttpClient = client;
+            }
+            return this.cachedRawHttpClient;
+        }
+
+        private string GetPipelinePermissionsUrlForServiceConnections(Guid serviceConnectionId)
+        {
+            var apiVersion = "7.1-preview.1";
+            // https://learn.microsoft.com/en-us/rest/api/azure/devops/approvalsandchecks/pipeline-permissions/update-pipeline-permisions-for-resource?view=azure-devops-rest-7.1&tabs=HTTP
+            return $"{this.organization}/{this.project}/_apis/pipelines/pipelinepermissions/endpoint/{serviceConnectionId}?api-version={apiVersion}";
+        }
+        
+        public async Task<JsonNode> GetPipelinePermissionsAsync(Guid serviceConnectionId, CancellationToken cancellationToken)
+        {
+            var url = GetPipelinePermissionsUrlForServiceConnections(serviceConnectionId);
+            var client = await GetRawHttpClient(cancellationToken);
+            var response = await client.GetAsync(url, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return JsonNode.Parse(await response.Content.ReadAsStringAsync());
+            }
+            else
+            {
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new Exception($"GetPipelinePermissionsAsync throw an error [{response.StatusCode}]: {responseContent}");
+            }
+        }
+
+        public async Task UpdatePipelinePermissionsAsync(Guid serviceConnectionId, JsonNode serviceConnectionPermissions, CancellationToken cancellationToken)
+        {
+            var url = GetPipelinePermissionsUrlForServiceConnections(serviceConnectionId);
+            var client = await GetRawHttpClient(cancellationToken);
+            var request = new HttpRequestMessage(new HttpMethod("PATCH"), url)
+            { 
+                Content = new StringContent(serviceConnectionPermissions.ToString(), Encoding.UTF8, "application/json")
+            };
+
+            var response = await client.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new Exception($"UpdatePipelinePermissionsAsync throw an error [{response.StatusCode}]: {responseContent}");
+            }
         }
 
         private BuildHttpClient cachedBuildClient;

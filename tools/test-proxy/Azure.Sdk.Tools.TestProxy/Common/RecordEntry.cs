@@ -2,13 +2,14 @@
 // Licensed under the MIT License.
 
 using Azure.Core;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Unicode;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -35,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public int StatusCode { get; set; }
 
         public static RecordEntry Deserialize(JsonElement element)
-        {
+            {
             var record = new RecordEntry();
 
             if (element.TryGetProperty(nameof(RequestMethod), out JsonElement property))
@@ -315,6 +316,27 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             encoding = null;
             return TryGetContentType(requestHeaders, out string contentType) &&
                    ContentTypeUtilities.TryGetTextEncoding(contentType, out encoding);
+        }
+
+        /// <summary>
+        /// Creates a copy of the provided record entry (Only the RequestUri, Request and Response are copied over).
+        /// Used primarily for sanitization logging.
+        /// </summary>
+        /// <returns>The copied record entry.</returns>
+        public RecordEntry Clone()
+        {
+            // Create a copy of the record entry
+            var copiedRecordEntry = new RecordEntry();
+            copiedRecordEntry.RequestUri = this.RequestUri;
+
+            copiedRecordEntry.Request = new RequestOrResponse();
+            copiedRecordEntry.Request.Headers = new SortedDictionary<string, string[]>(this.Request.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
+            copiedRecordEntry.Request.Body = this.Request.Body != null ? (byte[])this.Request.Body.Clone() : null;
+
+            copiedRecordEntry.Response = new RequestOrResponse();
+            copiedRecordEntry.Response.Headers = new SortedDictionary<string, string[]>(this.Response.Headers.ToDictionary(kvp => kvp.Key, kvp => (string[])kvp.Value.Clone()));
+            copiedRecordEntry.Response.Body = this.Response.Body != null ? (byte[])this.Response.Body.Clone() : null;
+            return copiedRecordEntry;
         }
     }
 }

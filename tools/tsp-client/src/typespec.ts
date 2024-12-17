@@ -1,9 +1,4 @@
-import {
-  resolvePath,
-  getDirectoryPath,
-  ResolveCompilerOptionsOptions,
-  formatDiagnostic,
-} from "@typespec/compiler";
+import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
 import {
   ModuleResolutionResult,
   resolveModule,
@@ -73,9 +68,10 @@ export async function compileTsp({
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
-}): Promise<boolean> {
+}): Promise<[boolean, string]> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
-  const { compile, NodeHost, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
+  const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
+    await importTsp(parsedEntrypoint);
 
   const outputDir = resolvePath(outputPath);
   const overrideOptions: Record<string, Record<string, string>> = {
@@ -107,6 +103,18 @@ export async function compileTsp({
     overrides,
   });
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
+
+  const cliOptions = Object.entries(options.options?.[emitterPackage] ?? {})
+    .map(([key, value]) => {
+      if (typeof value === "object") {
+        value = JSON.stringify(value);
+      }
+      return `--option ${key}=${value}`;
+    })
+    .join(" ");
+
+  const exampleCmd = `npx tsp compile ${resolvedMainFilePath} --emit ${emitterPackage} ${cliOptions}`;
+
   if (diagnostics.length > 0) {
     let errorDiagnostic = false;
     // This should not happen, but if it does, we should log it.
@@ -122,7 +130,7 @@ export async function compileTsp({
       }
     }
     if (errorDiagnostic) {
-      return false;
+      return [false, exampleCmd];
     }
   }
 
@@ -142,11 +150,11 @@ export async function compileTsp({
       }
     }
     if (errorDiagnostic) {
-      return false;
+      return [false, exampleCmd];
     }
   }
   Logger.success("generation complete");
-  return true;
+  return [true, exampleCmd];
 }
 
 export async function importTsp(baseDir: string): Promise<typeof import("@typespec/compiler")> {

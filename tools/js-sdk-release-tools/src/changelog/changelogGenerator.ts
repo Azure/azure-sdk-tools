@@ -15,7 +15,7 @@ import {
     RuleMessageKind,
     detectBreakingChangesBetweenPackages,
     patchRoutes,
-    patchUnionType,
+    patchTypeAlias,
     patchFunction,
 } from "typescript-codegen-breaking-change-detector";
 
@@ -1223,7 +1223,7 @@ export const changelogGenerator = (
 
         const typeAliasNames = new Set([...Object.keys(metaDataOld.typeAlias), ...Object.keys(metadataNew.typeAlias)]);
         const typeAliasPairs = [...typeAliasNames].reduce((pairs, typeAliasName) => {
-            pairs.push(...patchUnionType(typeAliasName, astContext, AssignDirection.CurrentToBaseline));
+            pairs.push(...patchTypeAlias(typeAliasName, astContext, AssignDirection.CurrentToBaseline));
             return pairs;
         }, new Array<DiffPair>());
         handleAddedRemovedTypeAliasDiffPairs(typeAliasPairs, changLog);
@@ -1231,7 +1231,7 @@ export const changelogGenerator = (
         // NOTE: handle type alias's type change case in simple way for now, and exclude intersection type, since already handled
         // TODO: handle type alias's type change case in a general way
         const typeAliasPairsReverse = [...typeAliasNames].reduce((pairs, typeAliasName) => {
-            pairs.push(...patchUnionType(typeAliasName, astContext, AssignDirection.BaselineToCurrent));
+            pairs.push(...patchTypeAlias(typeAliasName, astContext, AssignDirection.BaselineToCurrent));
             return pairs;
         }, new Array<DiffPair>());
         

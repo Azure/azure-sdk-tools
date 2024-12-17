@@ -16,7 +16,7 @@ The root directory which will receive the compressed standalone executable.
 The targeted folder that should be built and assembled into a standalone executable.
 
 .PARAMETER Framework
-The targeted .NET framework. Defaults to "net6.0."
+The targeted .NET framework. Defaults to "net8.0."
 
 #>
 param(
@@ -29,7 +29,7 @@ param(
    [Parameter(mandatory=$true)]
    [string] $AssemblyName,
    [Parameter(mandatory=$false)]
-   [string] $Framework = "net6.0"
+   [string] $Framework = "net8.0"
 )
 
 # resolves to <artifactfolder>/win-x64

@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-client-generator-cli",
-  "version": "0.13.2",
+  "version": "0.14.2",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
@@ -18,7 +18,7 @@
     "purge": "rimraf ./node_modules package-lock.json",
     "example": "npx tsx src/index.ts update -o ./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/",
     "prepack": "npm run build",
-    "test": "mocha",
+    "test": "vitest run",
     "test:commands": "npx tsx ./test/run_commands.ts",
     "tsp-client": "node cmd/tsp-client.js",
     "watch": "tsc -p . --watch"
@@ -38,24 +38,23 @@
   ],
   "devDependencies": {
     "@types/chai": "^4.3.5",
-    "@types/mocha": "^10.0.1",
     "@types/node": "^20.4.8",
     "@types/prompt-sync": "^4.2.1",
     "@typespec/compiler": "^0.58.0",
     "chai": "^4.3.7",
-    "mocha": "^10.5.2",
     "prettier": "^3.0.1",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
     "tsx": "^4.16.2",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vitest": "^2.1.4"
   },
   "dependencies": {
     "@autorest/core": "^3.10.2",
-    "@autorest/openapi-to-typespec": "0.10.2",
+    "@autorest/openapi-to-typespec": "0.10.4",
+    "@azure-tools/rest-api-diff": ">=0.1.0 <1.0.0",
     "@azure-tools/typespec-autorest": ">=0.44.0 <1.0.0",
     "@azure/core-rest-pipeline": "^1.12.0",
-    "@azure-tools/rest-api-diff": ">=0.1.0 <1.0.0",
     "@types/yargs": "^17.0.32",
     "autorest": "^3.7.1",
     "chalk": "^5.3.0",
@@ -67,12 +66,5 @@
   },
   "peerDependencies": {
     "@typespec/compiler": ">=0.58.0 <1.0.0"
-  },
-  "mocha": {
-    "extension": [
-      "ts"
-    ],
-    "spec": "test/*.spec.ts",
-    "loader": "ts-node/esm"
   }
 }

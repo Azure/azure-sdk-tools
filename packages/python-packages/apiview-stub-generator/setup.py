@@ -27,7 +27,13 @@ setup(
     packages=find_packages(),
     package_data={"": [".pylintrc"]},
     include_package_data=True,
-    install_requires=["charset-normalizer", "pylint", "azure-pylint-guidelines-checker"],
+    install_requires=[
+        "charset-normalizer",
+        "pylint",
+        "azure-pylint-guidelines-checker",
+        "isodate>=0.6.1",
+        "typing-extensions>=4.6.0"
+    ],
     python_requires=">=3.8.0",
     entry_points={
         "console_scripts": [

@@ -13,6 +13,7 @@ import {
   SourceFile,
   TypeAliasDeclaration,
   Node,
+  ConstructorDeclaration,
 } from 'ts-morph';
 
 export interface ParseForESLintResult {
@@ -81,6 +82,8 @@ export enum DiffReasons {
   RequiredToOptional = 8,
   ReadonlyToMutable = 16,
 
+  ModifierFlag = 17,
+
   // new features
   Added = 1024,
 }
@@ -108,6 +111,8 @@ export enum DiffLocation {
   Property,
   TypeAlias,
   Interface,
+  Class,
+  Constructor
 }
 
 export enum AssignDirection {
@@ -120,3 +125,8 @@ export type FindMappingCallSignature = (
   target: Signature,
   signatures: Signature[]
 ) => { signature: Signature; id: string } | undefined;
+
+export type FindMappingConstructor = (
+  currentIndex: ConstructorDeclaration,
+  constraints: ConstructorDeclaration[],
+) => ConstructorDeclaration | undefined;

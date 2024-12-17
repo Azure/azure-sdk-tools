@@ -28,8 +28,8 @@ def _test_return(node, _type):
 
 
 class TestTypeHints:
+    """Ensure simple typehints render correctly."""
 
-    """ Ensure simple typehints render correctly. """
     def test_simple_typehints(self):
         clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
         for client in clients:
@@ -39,6 +39,7 @@ class TestTypeHints:
             _check(actual, expected, client)
 
     """ Ensure complicated typehints render correctly. """
+
     def test_complex_typehints(self):
         clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
         for client in clients:
@@ -48,12 +49,13 @@ class TestTypeHints:
             _check(actual, expected, client)
 
     """ Ensure typehints for *args and **kwargs render correctly. Note that Py2-style typehints are not supported. """
+
     def test_variadic_typehints(self):
         clients = [
             # TODO: Known limitation of astroid (See: https://github.com/Azure/azure-sdk-tools/issues/3131)
             # Python2TypeHintClient,
             Python3TypeHintClient,
-            DocstringTypeHintClient
+            DocstringTypeHintClient,
         ]
         for client in clients:
             node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_variadic_typehint)
@@ -62,10 +64,11 @@ class TestTypeHints:
             expected = "def with_variadic_typehint(self, *vars: str, **kwargs: Any) -> None"
             _check(actual, expected, client)
             # Ensure that the last token/blank line is a context end line
-            assert len(tokens[-1]['Tokens']) == 0
-            assert tokens[-1]['IsContextEndLine']
+            assert len(tokens[-1]["Tokens"]) == 0
+            assert tokens[-1]["IsContextEndLine"]
 
     """ Ensure list type return typehint renders correctly. """
+
     def test_str_list_return_type(self):
         clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
         for client in clients:
@@ -75,6 +78,7 @@ class TestTypeHints:
             _check(actual, expected, client)
 
     """ Ensure list return type typehint renders correctly with a class. """
+
     def test_list_return_type(self):
         clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
         for client in clients:
@@ -84,6 +88,7 @@ class TestTypeHints:
             _check(actual, expected, client)
 
     """ Ensure union return type typehint renders correctly. """
+
     def test_list_union_return_type(self):
         clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
         for client in clients:
@@ -93,18 +98,19 @@ class TestTypeHints:
             _check(actual, expected, client)
 
     """ Ensure datetime typehint renders correctly. """
+
     def test_datetime_typehint(self):
         clients = [Python2TypeHintClient, Python3TypeHintClient, DocstringTypeHintClient]
         for client in clients:
             node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_datetime_typehint)
             actual = _render_string(_tokenize(node))
             expected = "def with_datetime_typehint(self, date: datetime) -> datetime"
-            _check(actual, expected, client)    
+            _check(actual, expected, client)
 
 
 class TestDefaultValues:
+    """Ensure that simple default values appear correctly."""
 
-    """ Ensure that simple default values appear correctly. """
     def test_simple_default(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_simple_default)
         tokens = _tokenize(node)
@@ -112,10 +118,11 @@ class TestDefaultValues:
         expected = 'def with_simple_default(name: str = "Bill", *, age: int = 21) -> None'
         _check(actual, expected, DefaultValuesClient)
         # Ensure that the last token/blank line is a context end line
-        assert len(tokens[-1]['Tokens']) == 0
-        assert tokens[-1]['IsContextEndLine']
+        assert len(tokens[-1]["Tokens"]) == 0
+        assert tokens[-1]["IsContextEndLine"]
 
     """ Ensure that optional types with defaults display correctly. """
+
     def test_simple_optional_default(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_simple_optional_defaults)
         actual = _render_string(_tokenize(node))
@@ -123,6 +130,7 @@ class TestDefaultValues:
         _check(actual, expected, DefaultValuesClient)
 
     """ Ensure that falsy defaults for Optional kwargs do not translate to ... """
+
     def test_falsy_optional_defaults(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_falsy_optional_defaults)
         actual = _render_string(_tokenize(node))
@@ -130,28 +138,33 @@ class TestDefaultValues:
         _check(actual, expected, DefaultValuesClient)
 
     """ Ensure that falsy defaults for Optional kwargs do not translate to ... when a docstring is provided. """
+
     def test_falsy_optional_defaults_and_docstring(self):
-        node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_falsy_optional_defaults_and_docstring)
+        node = FunctionNode(
+            "test", None, apiview=MockApiView, obj=DefaultValuesClient.with_falsy_optional_defaults_and_docstring
+        )
         actual = _render_string(_tokenize(node))
         expected = 'def with_falsy_optional_defaults_and_docstring(*, bool: Optional[bool] = False, int: Optional[int] = 0, string: Optional[str] = "") -> None'
         _check(actual, expected, DefaultValuesClient)
 
-
     """ Ensures that optional values appear with the correct default annotation. `None` for normal args and `...` for kwargs. """
+
     def test_optional_none_default(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_optional_none_defaults)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_optional_none_defaults(name: Optional[str] = None, *, age: Optional[int] = ...) -> None'
+        expected = "def with_optional_none_defaults(name: Optional[str] = None, *, age: Optional[int] = ...) -> None"
         _check(actual, expected, DefaultValuesClient)
 
     """ Ensure that a default value that is a class type appears correctly. """
+
     def test_class_default(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_class_default)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_class_default(my_class: Any = FakeObject) -> None'
+        expected = "def with_class_default(my_class: Any = FakeObject) -> None"
         _check(actual, expected, DefaultValuesClient)
 
     """ Ensure docstring-parsed defaults are displayed. Note that if they cannot be cast they will appear as strings. """
+
     def test_parsed_docstring_defaults(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_parsed_docstring_defaults)
         actual = _render_string(_tokenize(node))
@@ -159,6 +172,7 @@ class TestDefaultValues:
         _check(actual, expected, DefaultValuesClient)
 
     """ Ensure string-based enum default values can specify either a string or an enum value. """
+
     def test_enum_defaults(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_enum_defaults)
         actual = _render_string(_tokenize(node))
@@ -167,45 +181,50 @@ class TestDefaultValues:
 
 
 class TestSpecialArguments:
+    """Ensure the variadic and keyword-only arguments have the correct prefixes."""
 
-    """ Ensure the variadic and keyword-only arguments have the correct prefixes. """
     def test_standard_names(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=SpecialArgsClient.with_standard_names)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_standard_names(self, *args, **kwargs) -> None'
+        expected = "def with_standard_names(self, *args, **kwargs) -> None"
         _check(actual, expected, SpecialArgsClient)
 
     """ Ensure the variadic and keyword-only arguments can be given custom names. """
+
     def test_nonstandard_names(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=SpecialArgsClient.with_nonstandard_names)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_nonstandard_names(self, *vars, **kwds) -> None'
+        expected = "def with_nonstandard_names(self, *vars, **kwds) -> None"
         _check(actual, expected, SpecialArgsClient)
 
     """ Ensure a basic function with no args renders appropriately. """
+
     def test_no_args(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=SpecialArgsClient.with_no_args)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_no_args() -> None'
+        expected = "def with_no_args() -> None"
         _check(actual, expected, SpecialArgsClient)
 
     """ Ensure keyword only argument marker (*) is displayed. """
+
     def test_keyword_only_args(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=SpecialArgsClient.with_keyword_only_args)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_keyword_only_args(self, *, value, **kwargs) -> None'
+        expected = "def with_keyword_only_args(self, *, value, **kwargs) -> None"
         _check(actual, expected, SpecialArgsClient)
-        
+
     """ Ensure positional only argument marker (/) is displayed. """
+
     def test_positional_only_args(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=SpecialArgsClient.with_positional_only_args)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_positional_only_args(self, a, b, /, c) -> None'
+        expected = "def with_positional_only_args(self, a, b, /, c) -> None"
         _check(actual, expected, SpecialArgsClient)
 
     """ Ensure kwargs are sorted alphabetically. """
+
     def test_alphabetical_kwargs(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=SpecialArgsClient.with_sorted_kwargs)
         actual = _render_string(_tokenize(node))
-        expected = 'def with_sorted_kwargs(self, *, a, b, c, d, **kwargs) -> None'
+        expected = "def with_sorted_kwargs(self, *, a, b, c, d, **kwargs) -> None"
         _check(actual, expected, SpecialArgsClient)

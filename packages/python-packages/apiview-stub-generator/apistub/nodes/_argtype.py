@@ -20,6 +20,7 @@ class ArgType:
     :param str keyword: The keyword for the arg type.
     :param FunctionNode func_node: The function node this belongs to.
     """
+
     def __init__(self, name, *, argtype, default, keyword, apiview, func_node=None):
         self.argname = name
         self.apiview = apiview
@@ -33,7 +34,14 @@ class ArgType:
             self.is_required = False
             self.default = default
 
-        if argtype and all([not self.is_required, self.default is None, not keyword in ["ivar", "param"], not argtype.startswith("Optional")]):
+        if argtype and all(
+            [
+                not self.is_required,
+                self.default is None,
+                not keyword in ["ivar", "param"],
+                not argtype.startswith("Optional"),
+            ]
+        ):
             self.argtype = f"Optional[{argtype}]"
         else:
             self.argtype = argtype
@@ -49,7 +57,7 @@ class ArgType:
         prefix: str = "",
     ):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param str function_id: Module level Unique ID created for function 
+        :param str function_id: Module level Unique ID created for function
         :param list[Token] tokens: List of tokens to add to.
         :keyword bool add_line_marker: Flag to indicate whether to include a line ID marker or not.
         :keyword str prefix: Optional prefix for *args and **kwargs.

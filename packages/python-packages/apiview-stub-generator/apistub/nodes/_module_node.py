@@ -34,8 +34,7 @@ class ModuleNode(NodeEntityBase):
         self._inspect()
 
     def _inspect(self):
-        """Imports module, identify public entities in module and inspect them recursively
-        """
+        """Imports module, identify public entities in module and inspect them recursively"""
         # Parse public entities only if __all is present. Otherwise all Classes and Functions not starting with "_" can be included.
         public_entities = []
         if hasattr(self.obj, "__all__"):
@@ -64,7 +63,7 @@ class ModuleNode(NodeEntityBase):
                     parent_node=self,
                     obj=member_obj,
                     pkg_root_namespace=self.pkg_root_namespace,
-                    apiview=self.apiview
+                    apiview=self.apiview,
                 )
                 key = "{0}.{1}".format(self.namespace, class_node.name)
                 self.node_index.add(key, class_node)
@@ -82,9 +81,7 @@ class ModuleNode(NodeEntityBase):
     def _should_skip_parsing(self, name, member_obj, public_entities):
         # If module has list of published entities ( __all__) then include only those members
         if public_entities and name not in public_entities:
-            logging.debug(
-                "Object is not listed in __all__. Skipping object {}".format(name)
-            )
+            logging.debug("Object is not listed in __all__. Skipping object {}".format(name))
             return True
 
         # Skip any private members
@@ -100,7 +97,7 @@ class ModuleNode(NodeEntityBase):
 
     def generate_tokens(self, review_lines: List["ReviewLine"]):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param review_lines: List of ReviewLine 
+        :param review_lines: List of ReviewLine
         """
         # Add name space only if it has children
         if self.child_nodes:
@@ -110,7 +107,7 @@ class ModuleNode(NodeEntityBase):
                 self.namespace,
                 has_suffix_space=False,
                 navigation_display_name=self.namespace,
-                render_classes=["namespace"]
+                render_classes=["namespace"],
             )
 
             self.children.set_blank_lines(1)
@@ -127,8 +124,7 @@ class ModuleNode(NodeEntityBase):
             review_lines.append(line)
 
     def get_navigation(self):
-        """Generate navigation tree recursively by generating Navigation object for classes and functions in name space
-        """
+        """Generate navigation tree recursively by generating Navigation object for classes and functions in name space"""
         if self.child_nodes:
             navigation = Navigation(self.namespace_id, self.namespace_id)
             navigation.tags = NavigationTag(Kind.type_module)

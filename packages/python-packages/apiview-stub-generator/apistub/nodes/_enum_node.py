@@ -6,9 +6,9 @@ from .._generated.treestyle.parser.models import ReviewToken as Token, TokenKind
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models._patch import ReviewLine
 
+
 class EnumNode(NodeEntityBase):
-    """Enum node represents any Enum value
-    """
+    """Enum node represents any Enum value"""
 
     def __init__(self, *, name, namespace, parent_node, obj):
         super().__init__(namespace, parent_node, obj)

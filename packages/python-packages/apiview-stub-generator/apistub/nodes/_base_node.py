@@ -12,12 +12,13 @@ name_regex = re.compile(r"([^[]*)")
 # Monkey patch NodeNG's as_string method
 def as_string(self, preserve_quotes=False) -> str:
     """Get the source code that this node represents."""
-    value =  astroid.nodes.as_string.AsStringVisitor()(self)
+    value = astroid.nodes.as_string.AsStringVisitor()(self)
     if not preserve_quotes:
         # strip any exterior quotes
         for char in ["'", '"']:
             value = value.replace(char, "")
     return value
+
 
 astroid.NodeNG.as_string = as_string
 
@@ -46,8 +47,7 @@ class NodeEntityBase:
         PylintParser.match_items(obj)
 
     def generate_id(self):
-        """Generates ID for current object using parent object's ID and name
-        """
+        """Generates ID for current object using parent object's ID and name"""
         namespace_id = self.namespace
         if self.parent_node:
             namespace_id = "{0}.{1}".format(self.parent_node.namespace_id, self.name)
@@ -68,6 +68,7 @@ class NodeEntityBase:
         self.pylint_errors = PylintParser.get_items(self.obj)
         for child in self.child_nodes or []:
             child.generate_diagnostics()
+
 
 def get_qualified_name(obj, namespace: str) -> str:
     """Generate and return fully qualified name of object with module name for internal types.
@@ -119,7 +120,7 @@ def get_qualified_name(obj, namespace: str) -> str:
         value = f"{module_name}.{name}"
     elif module_name and module_name != value and value.startswith(module_name):
         # strip the module name if it isn't the namespace (example: typing)
-        value = value[len(module_name) + 1:]
+        value = value[len(module_name) + 1 :]
 
     if args and "[" not in value:
         arg_string = ", ".join(args)

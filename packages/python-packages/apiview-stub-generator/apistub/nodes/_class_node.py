@@ -17,11 +17,7 @@ from ._pylint_parser import PylintError, PylintParser
 
 find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
-find_instancefunc = (
-    lambda x: isinstance(x, FunctionNode)
-    and not x.is_class_method
-    and not x.name.startswith("__")
-)
+find_instancefunc = lambda x: isinstance(x, FunctionNode) and not x.is_class_method and not x.name.startswith("__")
 find_enum = lambda x: isinstance(x, EnumNode)
 find_var = lambda x: isinstance(x, VariableNode)
 find_classfunc = lambda x: isinstance(x, FunctionNode) and x.is_class_method
@@ -54,8 +50,7 @@ ABSTRACT_CLASS_METHODS = {
 
 
 class ClassNode(NodeEntityBase):
-    """Class node to represent parsed class node and children
-    """
+    """Class node to represent parsed class node and children"""
 
     def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview, allow_list=None):
         super().__init__(namespace, parent_node, obj)
@@ -79,9 +74,7 @@ class ClassNode(NodeEntityBase):
         # If class has implementation for all required abstract methods then tag this class
         # as implementing that abstract class. For e.g. if class has both __iter__ and __next__
         # then this class implements Iterator
-        instance_functions = [
-            x for x in self.child_nodes if isinstance(x, FunctionNode)
-        ]
+        instance_functions = [x for x in self.child_nodes if isinstance(x, FunctionNode)]
         instance_function_names = [x.name for x in instance_functions]
 
         is_implemented = lambda func: func in instance_function_names
@@ -109,7 +102,11 @@ class ClassNode(NodeEntityBase):
         if hasattr(func_obj, "__module__"):
             function_module = getattr(func_obj, "__module__")
             # TODO: Remove the "_model_base" workaround when this stuff is moved into azure-core.
-            return function_module and function_module.startswith(self.pkg_root_namespace) and not function_module.endswith("_model_base")
+            return (
+                function_module
+                and function_module.startswith(self.pkg_root_namespace)
+                and not function_module.endswith("_model_base")
+            )
         return False
 
     def _handle_variable(self, child_obj, name, *, type_string=None, value=None):
@@ -135,7 +132,7 @@ class ClassNode(NodeEntityBase):
                     name=name,
                     type_name=type_string,
                     value=value,
-                    is_ivar=is_ivar
+                    is_ivar=is_ivar,
                 )
             )
 
@@ -158,6 +155,7 @@ class ClassNode(NodeEntityBase):
         because inspect cannot see these. Note that this will not
         find overloads for module-level functions.
     """
+
     def _parse_overloads(self) -> List[FunctionNode]:
         overload_nodes = []
         functions = self._parse_functions_from_class(self.obj)
@@ -221,13 +219,13 @@ class ClassNode(NodeEntityBase):
                         self.child_nodes.append(overload)
                     self.child_nodes.append(func_node)
             elif name == "__annotations__":
-                for (item_name, item_type) in child_obj.items():
+                for item_name, item_type in child_obj.items():
                     if item_name.startswith("_"):
                         continue
-                    if is_typeddict and (inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing"):
-                        self.child_nodes.append(
-                            KeyNode(self.namespace, self, item_name, item_type)
-                        )
+                    if is_typeddict and (
+                        inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing"
+                    ):
+                        self.child_nodes.append(KeyNode(self.namespace, self, item_name, item_type))
                     else:
                         type_string = get_qualified_name(item_type, self.namespace)
                         self._handle_variable(child_obj, item_name, type_string=type_string)
@@ -312,13 +310,11 @@ class ClassNode(NodeEntityBase):
 
     def generate_tokens(self, review_lines: "ReviewLines"):
         """Generates token for the node and it's children recursively and add it to apiview
-        :param review_lines: List of ReviewLine 
+        :param review_lines: List of ReviewLine
         """
         logging.info(f"Processing class {self.namespace_id}")
-        for decorator in self.decorators: 
-            line = review_lines.create_review_line(
-                related_to_line=self.namespace_id
-            )
+        for decorator in self.decorators:
+            line = review_lines.create_review_line(related_to_line=self.namespace_id)
             line.add_keyword(decorator, has_suffix_space=False)
             review_lines.append(line)
 
@@ -332,10 +328,7 @@ class ClassNode(NodeEntityBase):
             render_classes = ["class"]
         # TODO: #9454 - Change below to self.name once sticky parent node context window feature is added
         line.add_text(
-            self.full_name,
-            has_suffix_space=False,
-            navigation_display_name=self.name,
-            render_classes=render_classes
+            self.full_name, has_suffix_space=False, navigation_display_name=self.name, render_classes=render_classes
         )
 
         for err in self.pylint_errors:
@@ -367,18 +360,14 @@ class ClassNode(NodeEntityBase):
             e.generate_tokens(self.children)
 
         self.children.set_blank_lines()
-        for func in [
-            x
-            for x in self.child_nodes
-            if isinstance(x, FunctionNode) and x.hidden == False
-        ]:
+        for func in [x for x in self.child_nodes if isinstance(x, FunctionNode) and x.hidden == False]:
             func.generate_tokens(self.children)
         self.children.set_blank_lines(2)
 
     def _generate_tokens_for_collection(self, values, line, *, has_suffix_space=True):
         # Helper method to concatenate list of values and generate tokens
         list_len = len(values)
-        for (idx, value) in enumerate(values):
+        for idx, value in enumerate(values):
             line.add_type(value, apiview=self.apiview, has_suffix_space=has_suffix_space)
             # Add punctuation between types
             if idx < list_len - 1:

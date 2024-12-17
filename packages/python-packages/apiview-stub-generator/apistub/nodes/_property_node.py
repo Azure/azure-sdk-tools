@@ -7,8 +7,7 @@ from ._astroid_parser import AstroidFunctionParser
 
 
 class PropertyNode(NodeEntityBase):
-    """Property node represents property defined in a class
-    """
+    """Property node represents property defined in a class"""
 
     def __init__(self, namespace, parent_node, name, obj):
         super().__init__(namespace, parent_node, obj)
@@ -22,13 +21,12 @@ class PropertyNode(NodeEntityBase):
         self.namespace_id = self.generate_id()
 
     def _inspect(self):
-        """Identify property name, type and readonly property
-        """
+        """Identify property name, type and readonly property"""
         if getattr(self.obj, "fset", None):
             self.read_only = False
 
         if hasattr(self.obj, "fget"):
-            # Get property type if type hint 
+            # Get property type if type hint
             node = astroid.extract_node(inspect.getsource(self.obj.fget))
             parser = AstroidFunctionParser(node, self.namespace, apiview=self.apiview, func_node=None)
             self.type = get_qualified_name(parser.return_type, self.namespace)

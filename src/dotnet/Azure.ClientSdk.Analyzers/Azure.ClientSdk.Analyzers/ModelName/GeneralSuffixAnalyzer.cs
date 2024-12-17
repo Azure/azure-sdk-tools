@@ -27,11 +27,27 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             if (reservedNames.Contains(symbol.Name))
                 return true;
 
-            // skip property bag classes which have `Options` suffix and don't have serialization
-            if (symbol.Name.EndsWith("Options") && !SupportSerialization(symbol))
+            // skip classes which have `Options` suffix and:
+            //   - not in Azure.ResourceManager namespace
+            //   - or does not have serialization
+            if (symbol.Name.EndsWith("Options") && (!HasMgmtNamespace(symbol) || !SupportSerialization(symbol)))
                 return true;
 
             return false;
+        }
+
+        private bool HasMgmtNamespace(INamedTypeSymbol symbol)
+        {
+            var namespaces = new Stack<string>();
+            var namespaceSymbol = symbol.ContainingNamespace;
+            while (namespaceSymbol is not null && namespaceSymbol.IsGlobalNamespace is false)
+            {
+                namespaces.Push(namespaceSymbol.Name);
+                namespaceSymbol = namespaceSymbol.ContainingNamespace;
+            }
+
+            var namespaceArray = namespaces.ToArray();
+            return namespaceArray.Length >= 2 && namespaceArray[0] == "Azure" && namespaceArray[1] == "ResourceManager";
         }
 
         private bool SupportSerialization(INamedTypeSymbol symbol)

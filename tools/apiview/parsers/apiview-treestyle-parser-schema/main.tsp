@@ -17,7 +17,6 @@ model CodeFile {
   ParserVersion: string;
   Language: "C"|"C++"|"C#"|"Go"|"Java"|"JavaScript"|"Kotlin"|"Python"|"Swagger"|"Swift"|"TypeSpec";
   /** Language variant is applicable only for java variants*/
-  /** TODO: Set to internal for non-Java once access decorator is supported for model properties: https://github.com/Azure/typespec-azure/issues/546 */
   LanguageVariant?: "None" | "Spring" | "Android" = "None";
   CrossLanguagePackageId?: string;
   ReviewLines: Array<ReviewLine>;
@@ -45,7 +44,6 @@ model ReviewLine {
    *  Similarly all method level code lines are added as children of it's class code line.*/
   Children?: Array<ReviewLine>;
   /** Set current line as hidden code line by default. .NET has hidden APIs and architects don't want to see them by default. */
-  /** TODO: Set to internal for non-.NET once access decorator is supported for model properties: https://github.com/Azure/typespec-azure/issues/546 */
   IsHidden?: boolean;
   /** Set current line as context end line. For e.g. line with token } or empty line after the class or function/method to mark end of context. */
   IsContextEndLine?: boolean;
@@ -77,7 +75,6 @@ model ReviewToken {
   /** Set this to true if there is a prefix space required before current token. For e.g, space before token for = */
   HasPrefixSpace?: boolean = false;
   /** Set isDocumentation to true if current token is part of documentation */
-  /** TODO: Set to internal for Python once access decorator is supported for model properties: https://github.com/Azure/typespec-azure/issues/546 */
   IsDocumentation?: boolean = false;
   /** Language specific style css class names. To render navigation icons, one of the following must be specified:
    * "namespace", "class", "method", "enum". If NavigationDisplayName is specified, then this field should be set.

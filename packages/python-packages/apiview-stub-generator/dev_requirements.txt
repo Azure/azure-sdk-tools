@@ -1,3 +1,2 @@
 ../apistubgentest
 pytest
-isodate

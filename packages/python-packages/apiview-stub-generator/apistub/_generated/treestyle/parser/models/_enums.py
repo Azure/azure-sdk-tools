@@ -45,3 +45,5 @@ class TokenKind(int, Enum, metaclass=CaseInsensitiveEnumMeta):
     COMMENT = 7
     """Comment: Comment text within the code that's really a documentation.
     Few languages wants to show comments within API review that's not tagged as documentation *"""
+    EXTERNAL_URL = 8
+    """External Url"""

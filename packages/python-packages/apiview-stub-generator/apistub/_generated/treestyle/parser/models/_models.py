@@ -220,12 +220,13 @@ class ReviewLine(_model_base.Model):
      architects don't want to see them by default.
     :vartype is_hidden: bool
     :ivar is_context_end_line: Set current line as context end line. For e.g. line with token } or
-     empty line after the class to mark end of context.
+     empty line after the class or function/method to mark end of context.
     :vartype is_context_end_line: bool
     :ivar related_to_line: Set ID of related line to ensure current line is not visible when a
      related line is hidden.
-     One e.g. is a code line for class attribute should set class line's Line ID as related line
-     ID.
+     One e.g. is a code line for class attribute that should set class line's Line ID as related
+     line ID.
+     OR a method line decorator that should set method's line ID as related line ID.
     :vartype related_to_line: str
     """
 
@@ -248,10 +249,12 @@ class ReviewLine(_model_base.Model):
      to see them by default."""
     is_context_end_line: Optional[bool] = rest_field(name="IsContextEndLine")
     """Set current line as context end line. For e.g. line with token } or empty line after the class
-     to mark end of context."""
+     or function/method to mark end of context."""
     related_to_line: Optional[str] = rest_field(name="RelatedToLine")
     """Set ID of related line to ensure current line is not visible when a related line is hidden.
-     One e.g. is a code line for class attribute should set class line's Line ID as related line ID."""
+     One e.g. is a code line for class attribute that should set class line's Line ID as related
+     line ID.
+     OR a method line decorator that should set method's line ID as related line ID."""
 
     @overload
     def __init__(
@@ -282,7 +285,7 @@ class ReviewToken(_model_base.Model):
     keyword, punctuation, type name, text etc.
 
 
-    :ivar kind: Required. Known values are: 0, 1, 2, 3, 4, 5, 6, and 7.
+    :ivar kind: Required. Known values are: 0, 1, 2, 3, 4, 5, 6, 7, and 8.
     :vartype kind: int or ~treestyle.parser.models.TokenKind
     :ivar value: Required.
     :vartype value: str
@@ -294,7 +297,7 @@ class ReviewToken(_model_base.Model):
      displayed as HREF to another type within the review.
      For e.g. a param type which is class name in the same package.
     :vartype navigate_to_id: str
-    :ivar skip_diff: set skipDiff to true if underlying token needs to be ignored from diff
+    :ivar skip_diff: Set skipDiff to true if underlying token needs to be ignored from diff
      calculation. For e.g. package metadata or dependency versions
      are usually excluded when comparing two revisions to avoid reporting them as API changes.
     :vartype skip_diff: bool
@@ -308,12 +311,15 @@ class ReviewToken(_model_base.Model):
     :vartype has_prefix_space: bool
     :ivar is_documentation: Set isDocumentation to true if current token is part of documentation.
     :vartype is_documentation: bool
-    :ivar render_classes: Language specific style css class names.
+    :ivar render_classes: Language specific style css class names. To render navigation icons, one
+     of the following must be specified:
+     "namespace", "class", "method", "enum". If NavigationDisplayName is specified, then this field
+     should be set.
     :vartype render_classes: list[str]
     """
 
     kind: Union[int, "_models.TokenKind"] = rest_field(name="Kind")
-    """Required. Known values are: 0, 1, 2, 3, 4, 5, 6, and 7."""
+    """Required. Known values are: 0, 1, 2, 3, 4, 5, 6, 7, and 8."""
     value: str = rest_field(name="Value")
     """Required."""
     navigation_display_name: Optional[str] = rest_field(name="NavigationDisplayName")
@@ -324,7 +330,7 @@ class ReviewToken(_model_base.Model):
      another type within the review.
      For e.g. a param type which is class name in the same package."""
     skip_diff: Optional[bool] = rest_field(name="SkipDiff")
-    """set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g.
+    """Set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g.
      package metadata or dependency versions
      are usually excluded when comparing two revisions to avoid reporting them as API changes."""
     is_deprecated: Optional[bool] = rest_field(name="IsDeprecated")
@@ -338,7 +344,10 @@ class ReviewToken(_model_base.Model):
     is_documentation: Optional[bool] = rest_field(name="IsDocumentation")
     """Set isDocumentation to true if current token is part of documentation."""
     render_classes: Optional[List[str]] = rest_field(name="RenderClasses")
-    """Language specific style css class names."""
+    """Language specific style css class names. To render navigation icons, one of the following must
+     be specified:
+     \"namespace\", \"class\", \"method\", \"enum\". If NavigationDisplayName is specified, then
+     this field should be set."""
 
     @overload
     def __init__(

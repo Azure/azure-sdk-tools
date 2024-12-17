@@ -8,9 +8,9 @@ options:
     emitAllModels: false
     emitAllRefs: false
   "@azure-tools/typespec-python":
-    package-dir: "apiview-treestyle-parser-schema"
+    package-dir: "apiview-stub-generator/apistub/_generated"
     package-name: "treestyle-parser"
-    emitter-output-dir: "{project-root}/apistub/_generated"
+    emitter-output-dir: "{project-root}"
     package-version: 0.3.13
     generate-packaging-files: false
     generate-test: false

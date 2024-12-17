@@ -60,6 +60,7 @@ class ApiView(CodeFile):
      navigation panel.
     :vartype navigation: list[~treestyle.parser.models.NavigationItem]
     """
+
     @classmethod
     def get_root_path(cls):
         """Looks for the root of the apiview-stub-generator package."""
@@ -93,12 +94,7 @@ class ApiView(CodeFile):
     def add_diagnostic(self, *, err, target_id):
         text = f"{err.message} [{err.symbol}]"
         self.diagnostics.append(
-            Diagnostic(
-                level=err.level,
-                text=text,
-                help_link_uri=err.help_link,
-                target_id=target_id
-            )
+            Diagnostic(level=err.level, text=text, help_link_uri=err.help_link, target_id=target_id)
         )
 
     def add_navigation(self, navigation):
@@ -110,12 +106,13 @@ class ApiView(CodeFile):
         line.add_text(HEADER_TEXT, has_suffix_space=False, skip_diff=True)
         self.review_lines.append(line)
         if self.source_url:  # TODO: test source url
-           self.review_lines.set_blank_lines(skip_diff=True)
-           line = self.review_lines.create_review_line()
-           line.add_literal("# Source URL: ", skip_diff=True)
-           line.add_link(self.source_url, skip_diff=True)
-           self.review_lines.append(line)
+            self.review_lines.set_blank_lines(skip_diff=True)
+            line = self.review_lines.create_review_line()
+            line.add_literal("# Source URL: ", skip_diff=True)
+            line.add_link(self.source_url, skip_diff=True)
+            self.review_lines.append(line)
         self.review_lines.set_blank_lines(2)
+
 
 class ReviewToken(TokenImpl):
 
@@ -127,8 +124,8 @@ class ReviewToken(TokenImpl):
 
 
 class ReviewLines(list):
-    """A list of ReviewLine objects.
-    """
+    """A list of ReviewLine objects."""
+
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -177,7 +174,7 @@ class ReviewLines(list):
                 self.pop()
             if last_is_context_end_line:
                 self[-1].is_context_end_line = True
-    
+
     def render(self):
         lines = []
         for line in self:
@@ -227,7 +224,7 @@ class ReviewLine(ReviewLineImpl):
                 kind=TokenKind.PUNCTUATION,
                 value=value,
                 has_prefix_space=has_prefix_space,
-                has_suffix_space=has_suffix_space
+                has_suffix_space=has_suffix_space,
             )
         )
 
@@ -249,14 +246,14 @@ class ReviewLine(ReviewLineImpl):
         has_suffix_space=True,
         skip_diff=False,
         navigation_display_name=None,
-        render_classes=None
+        render_classes=None,
     ):
         token = ReviewToken(
             kind=TokenKind.TEXT,
             value=text,
             has_prefix_space=has_prefix_space,
             has_suffix_space=has_suffix_space,
-            skip_diff=skip_diff
+            skip_diff=skip_diff,
         )
         if navigation_display_name:
             token.navigation_display_name = navigation_display_name
@@ -270,16 +267,16 @@ class ReviewLine(ReviewLineImpl):
                 kind=TokenKind.KEYWORD,
                 value=keyword,
                 has_prefix_space=has_prefix_space,
-                has_suffix_space=has_suffix_space
+                has_suffix_space=has_suffix_space,
             )
         )
 
     def add_link(self, url):
         return
         # TODO: check what external link start/end map should be replaced by
-        #self.add_token(ReviewToken(url, TokenKind.ExternalLinkStart))
-        #self.add_token(ReviewToken(url))
-        #self.add_token(ReviewToken(kind=TokenKind.ExternalLinkEnd))
+        # self.add_token(ReviewToken(url, TokenKind.ExternalLinkStart))
+        # self.add_token(ReviewToken(url))
+        # self.add_token(ReviewToken(kind=TokenKind.ExternalLinkEnd))
 
     def add_string_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
         self.add_token(
@@ -287,7 +284,7 @@ class ReviewLine(ReviewLineImpl):
                 kind=TokenKind.STRING_LITERAL,
                 value="\u0022{}\u0022".format(value),
                 has_prefix_space=has_prefix_space,
-                has_suffix_space=has_suffix_space
+                has_suffix_space=has_suffix_space,
             )
         )
 
@@ -298,7 +295,7 @@ class ReviewLine(ReviewLineImpl):
                 value=value,
                 has_prefix_space=has_prefix_space,
                 has_suffix_space=has_suffix_space,
-                skip_diff=skip_diff
+                skip_diff=skip_diff,
             )
         )
 
@@ -314,7 +311,7 @@ class ReviewLine(ReviewLineImpl):
             kind=TokenKind.TYPE_NAME,
             value=type_name,
             has_prefix_space=has_prefix_space,
-            has_suffix_space=has_suffix_space
+            has_suffix_space=has_suffix_space,
         )
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
         token.value = type_full_name.split(".")[-1]
@@ -339,22 +336,16 @@ class ReviewLine(ReviewLineImpl):
                 self.add_punctuation(prefix, has_suffix_space=False)
             # process parsed type name. internal or built in
             self._add_token_for_type_name(
-                parsed_type,
-                apiview=apiview,
-                has_prefix_space=has_prefix_space,
-                has_suffix_space=has_suffix_space
+                parsed_type, apiview=apiview, has_prefix_space=has_prefix_space, has_suffix_space=has_suffix_space
             )
             postfix = type_name[index + len(parsed_type) :]
             # process remaining string in type recursively
             self._add_type_token(
-                postfix,
-                apiview=apiview,
-                has_prefix_space=has_prefix_space,
-                has_suffix_space=has_suffix_space
+                postfix, apiview=apiview, has_prefix_space=has_prefix_space, has_suffix_space=has_suffix_space
             )
         else:
             # This is required group ending punctuations
-            if type_name: # if type name is empty, don't add punctuation
+            if type_name:  # if type name is empty, don't add punctuation
                 self.add_punctuation(type_name, has_suffix_space=False)
 
     def add_type(self, type_name, apiview, has_prefix_space=False, has_suffix_space=True):
@@ -374,12 +365,9 @@ class ReviewLine(ReviewLineImpl):
             type_name = "Union[{}]".format(", ".join(types))
 
         self._add_type_token(
-            type_name,
-            apiview=apiview,
-            has_prefix_space=has_prefix_space,
-            has_suffix_space=has_suffix_space
+            type_name, apiview=apiview, has_prefix_space=has_prefix_space, has_suffix_space=has_suffix_space
         )
-    
+
     def render(self):
         lines = ["".join([token.render() for token in self.tokens])]
         if self.children:
@@ -392,7 +380,7 @@ __all__: List[str] = [
     "ApiView",
     "ReviewLines",
     "ReviewLine",
-    "ReviewToken"
+    "ReviewToken",
 ]  # Add all objects you want publicly available to users at this package level
 
 

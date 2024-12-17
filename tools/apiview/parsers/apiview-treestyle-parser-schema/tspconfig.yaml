@@ -1,6 +1,4 @@
 parameters:
-  "python-output-dir":
-      default: "packages/python-packages/apiview-stub-generator/apistub/_generated"
 emit:
   - "@typespec/json-schema"
 options:
@@ -12,6 +10,7 @@ options:
   "@azure-tools/typespec-python":
     package-dir: "apiview-treestyle-parser-schema"
     package-name: "treestyle-parser"
+    emitter-output-dir: "{project-root}/apistub/_generated"
     package-version: 0.3.13
     generate-packaging-files: false
     generate-test: false

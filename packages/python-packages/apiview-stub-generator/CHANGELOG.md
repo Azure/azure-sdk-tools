@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.14 (Unreleased)
+Update for tree token style parser.
+
 ## Version 0.3.13 (2025-01-13)
 Fix bug with missing optional dependencies.
 

@@ -20,6 +20,16 @@ import tempfile
 from subprocess import check_call
 import zipfile
 
+import os
+
+apistub_dir = os.path.join(os.getcwd(), 'apistub')
+
+if os.path.isdir(apistub_dir):
+    entries = os.listdir(apistub_dir)
+    for entry in entries:
+        print(entry)
+else:
+    print("'apistub' directory does not exist.")
 
 from apistub._metadata_map import MetadataMap
 

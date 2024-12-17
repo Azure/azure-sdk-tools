@@ -1,12 +1,7 @@
 import "@typespec/json-schema";
-import "@azure-tools/typespec-client-generator-core";
 
-using Azure.ClientGenerator.Core;
 using TypeSpec.JsonSchema;
 
-@usage(Usage.input | Usage.output)
-@jsonSchema
-@service({title: "Schemas"})  // TODO: remove the @service decorator, keeping for now for generation
 namespace Schemas;
 
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
@@ -17,16 +12,8 @@ model CodeFile {
   /** version of the APIview language parser used to create token file*/
   ParserVersion: string;
   Language: "C"|"C++"|"C#"|"Go"|"Java"|"JavaScript"|"Kotlin"|"Python"|"Swagger"|"Swift"|"TypeSpec";
-  // TODO: python language generates the following:
-  //:ivar language: Required. Is one of the following types: Literal["C"], Literal["C++"],
-  //  Literal["C#"], Literal["Go"], Literal["Java"], Literal["JavaScript"], Literal["Kotlin"],
-  //  Literal["Python"], Literal["Swagger"], Literal["Swift"], Literal["TypeSpec"]
-  //:vartype language: str or str or str or str or str or str or str or str or str or str or str
-  //:ivar language_variant: Language variant is applicable only for java variants. Is one of the
-  //  following types: Literal["None"], Literal["Spring"], Literal["Android"]
-  //:vartype language_variant: str or str or str
   /** Language variant is applicable only for java variants*/
-  LanguageVariant?: "None" | "Spring" | "Android" = "None"; // TODO: make property hidden except for java in client.tsp
+  LanguageVariant?: "None" | "Spring" | "Android" = "None";
   CrossLanguagePackageId?: string;
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
@@ -53,7 +40,7 @@ model ReviewLine {
    *  Similarly all method level code lines are added as children of it's class code line.*/
   Children?: Array<ReviewLine>;
   /** Set current line as hidden code line by default. .NET has hidden APIs and architects don't want to see them by default. */
-  IsHidden?: boolean; // TODO: property should be hidden in Python
+  IsHidden?: boolean;
   /** Set current line as context end line. For e.g. line with token } or empty line after the class to mark end of context. */
   IsContextEndLine?: boolean;
   /** Set ID of related line to ensure current line is not visible when a related line is hidden.
@@ -83,7 +70,7 @@ model ReviewToken {
   /** Set this to true if there is a prefix space required before current token. For e.g, space before token for = */
   HasPrefixSpace?: boolean = false;
   /** Set isDocumentation to true if current token is part of documentation */
-  IsDocumentation?: boolean = false; // TODO: property should be hidden in Python
+  IsDocumentation?: boolean = false;
   /** Language specific style css class names */
   RenderClasses?: Array<string>;
 }
@@ -91,7 +78,7 @@ model ReviewToken {
 
 /** System comment object is to add system generated comment. It can be one of the 4 different types of system comments. */
 model CodeDiagnostic {
-  /** Diagnostic ID is auto generated ID by CSharp analyzer. */ // TODO: confirm CSharp only?
+  /** Diagnostic ID is auto generated ID by CSharp analyzer. */
   DiagnosticId?: string;
   /** Id of ReviewLine object where this diagnostic needs to be displayed */
   TargetId: string;

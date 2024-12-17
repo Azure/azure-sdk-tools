@@ -82,6 +82,8 @@ export enum DiffReasons {
   RequiredToOptional = 8,
   ReadonlyToMutable = 16,
 
+  ModifierFlag = 17,
+
   // new features
   Added = 1024,
 }

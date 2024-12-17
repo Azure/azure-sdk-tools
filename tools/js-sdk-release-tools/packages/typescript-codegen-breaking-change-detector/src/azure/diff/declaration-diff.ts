@@ -13,6 +13,7 @@ import {
   CallSignatureDeclaration,
   ClassDeclaration,
   ConstructorDeclaration,
+  ClassMemberTypes,
 } from 'ts-morph';
 import {
   DiffLocation,
@@ -394,7 +395,13 @@ export function findClassDeclarationBreakingChanges(source: ClassDeclaration, ta
   const targetProperties = target.getType().getProperties();
   const sourceProperties = source.getType().getProperties();
   const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
-  return [...constructorBreakingChanges, ...propertyBreakingChanges];
+
+  //source.getMembers().forEach((p) => console.log(p.getText() + ' ' + p.getCombinedModifierFlags()));
+  const targetMembers = target.getMembers();
+  const sourceMembers = source.getMembers();
+  const memberBreakingChanges = findMemberBreakingChanges(sourceMembers, targetMembers);
+  
+  return [...constructorBreakingChanges, ...propertyBreakingChanges, ...memberBreakingChanges];
 }
 
 export function isSameConstructor(left: ConstructorDeclaration, right: ConstructorDeclaration): boolean {
@@ -459,6 +466,50 @@ function findConstructorBreakingChanges(
   return pairs;
 }
 
+function findMemberBreakingChanges(sourceMembers: ClassMemberTypes[], targetMembers: ClassMemberTypes[]): DiffPair[] {
+  const sourcePropMap = sourceMembers.reduce((map, p) => {
+    map.set(p.getSymbol()!.getName(), p);
+    return map;
+  }, new Map<string, ClassMemberTypes>());
+
+  const getLocation = (symbol: Symbol): DiffLocation => {
+    let location;
+    switch(symbol.getFlags()){
+      case SymbolFlags.Method:
+        location = DiffLocation.Signature;
+        break;
+      case SymbolFlags.Property:  
+        location = DiffLocation.Property;
+        break;  
+      default:
+        location = DiffLocation.Constructor;
+    }
+    return location
+  };  
+
+  const changed = targetMembers.reduce((result, targetMember) => {
+    const name = targetMember.getSymbol()!.getName();
+    const sourceMember = sourcePropMap.get(name);
+    if (!sourceMember) return result;
+
+    const targetMemberModifierFlag = targetMember.getCombinedModifierFlags();
+    const sourceMemberModifierFlag = sourceMember.getCombinedModifierFlags();
+    const location = getLocation(targetMember.getSymbol()!);
+    if (targetMemberModifierFlag !== sourceMemberModifierFlag) {
+      return [
+        ...result,
+        createDiffPair(
+          location,
+          DiffReasons.ModifierFlag,
+          getNameNodeFromSymbol(sourceMember.getSymbol()!),
+          getNameNodeFromSymbol(targetMember.getSymbol()!)
+        ),
+      ];
+    }
+    return result;
+  }, new Array<DiffPair>());
+  return [ ...changed];
+}
 export function createDiffPair(
   location: DiffLocation,
   reasons: DiffReasons,

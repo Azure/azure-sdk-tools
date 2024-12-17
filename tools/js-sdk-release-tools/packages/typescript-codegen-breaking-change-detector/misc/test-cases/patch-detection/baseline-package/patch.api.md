@@ -32,6 +32,7 @@ export function funcParameterCount(a: string, b: string): string
 export function funcParameterType(a: string): string
 export function funcRemove(a: string): string
 
+export class classPropertyChange {a: string;}
 export class classPropertyType {a: string;}
 export class classRemove {a: string;}
 export class classExpand {a: string;}

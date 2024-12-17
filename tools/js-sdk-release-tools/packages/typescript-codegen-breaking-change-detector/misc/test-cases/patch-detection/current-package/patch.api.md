@@ -36,6 +36,7 @@ export function funcParameterCount(a: string, b: string, c: string): string
 export function funcParameterType(a: number): string
 export function funcAdd(a: string): string
 
+export class classPropertyChange {private a: string;}
 export class classPropertyType {a: number;}
 export class classAdd {a: string;}
 export class classExpand {a: string;b: string;}

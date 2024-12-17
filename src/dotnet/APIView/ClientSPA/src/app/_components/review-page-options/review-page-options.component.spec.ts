@@ -61,7 +61,7 @@ describe('ReviewPageOptionsComponent', () => {
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).not.toBeTruthy();
       const message : HTMLElement = fixture.nativeElement.querySelector('#first-release-approval-message');
-      expect(message.textContent?.startsWith("Approved for First Release By:")).toBeTruthy()
+      expect(message.textContent?.startsWith("Approved for first release by:")).toBeTruthy()
     });
     it('should disable first release approval button when review is not approved and user is not an approver', () => {
       component.reviewIsApproved = false;
@@ -72,7 +72,7 @@ describe('ReviewPageOptionsComponent', () => {
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).not.toBeTruthy();
       const message : HTMLElement = fixture.nativeElement.querySelector('#first-release-approval-message');
-      expect(message.textContent).toEqual("First Release Approval Pending");
+      expect(message.textContent).toEqual("First release approval pending");
     });
     it('should enable first release approval button when review is not approved and user is an approver', () => {
       component.reviewIsApproved = false;
@@ -83,7 +83,7 @@ describe('ReviewPageOptionsComponent', () => {
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
       expect(button).toBeTruthy();
       const message : HTMLElement = fixture.nativeElement.querySelector('#first-release-approval-message');
-      expect(message.textContent).toEqual("First Release Approval Pending");
+      expect(message.textContent).toEqual("First release approval pending");
     });
   });
 

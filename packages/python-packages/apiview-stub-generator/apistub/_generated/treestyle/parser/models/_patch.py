@@ -272,11 +272,7 @@ class ReviewLine(ReviewLineImpl):
         )
 
     def add_link(self, url):
-        return
-        # TODO: check what external link start/end map should be replaced by
-        # self.add_token(ReviewToken(url, TokenKind.ExternalLinkStart))
-        # self.add_token(ReviewToken(url))
-        # self.add_token(ReviewToken(kind=TokenKind.ExternalLinkEnd))
+        self.add_token(ReviewToken(kind=TokenKind.EXTERNAL_URL, value=url))
 
     def add_string_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
         self.add_token(

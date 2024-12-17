@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class DiagnosticLevel(int, Enum):
     DEFAULT = 0
     INFO = 1

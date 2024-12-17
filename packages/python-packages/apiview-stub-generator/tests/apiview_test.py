@@ -24,6 +24,7 @@ class TestApiView:
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
     def _validate_line_ids(self, apiview: ApiView):
         line_ids = set()
+
         def collect_line_ids(review_lines, index=0):
             for line in review_lines:
                 # Ensure that each line has either 0 or 1 definition ID.
@@ -93,21 +94,24 @@ class TestApiView:
 
     def test_mapping_file(self):
         pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
-        mapping_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest", "apiview_mapping_python.json"))
+        mapping_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest", "apiview_mapping_python.json")
+        )
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, mapping_path=mapping_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
         cross_language_lines = []
+
         def get_cross_language_id(review_lines):
             for line in review_lines:
                 if line.cross_language_id:
                     cross_language_lines.append(line)
                 if line.children:
                     get_cross_language_id(line.children)
+
         get_cross_language_id(apiview.review_lines)
         assert cross_language_lines[0].cross_language_id == "Formal_Model_Id"
         assert cross_language_lines[1].cross_language_id == "Docstring_DocstringWithFormalDefault"
         assert len(cross_language_lines) == 2
         assert apiview.cross_language_package_id == "ApiStubGenTest"
-    

@@ -1,8 +1,8 @@
 from ._base_node import NodeEntityBase, get_qualified_name
 
+
 class KeyNode(NodeEntityBase):
-    """Key node represents a typed key defined in a TypedDict object
-    """
+    """Key node represents a typed key defined in a TypedDict object"""
 
     def __init__(self, namespace, parent_node, name, type_data):
         super().__init__(namespace, parent_node, type_data)

@@ -6,6 +6,7 @@
 
 from pydoc import Doc
 from apistub.nodes import DocstringParser
+from ._test_util import MockApiView
 
 
 docstring_default_legacy = """
@@ -130,62 +131,69 @@ docstring_type_with_quotes = """
 :rtype: list[`str`]
 """
 
+
 class TestDocstringParser:
 
     def _test_variable_type(self, docstring, expected):
-        parser = DocstringParser(docstring)
+        parser = DocstringParser(docstring, apiview=MockApiView)
         for varname, expect_val in expected.items():
             actual = parser.type_for(varname)
             assert expect_val == actual
 
     def _test_return_type(self, docstring, expected):
-        parser = DocstringParser(docstring)
+        parser = DocstringParser(docstring, apiview=MockApiView)
         assert expected == parser.ret_type
 
     def test_docstring_param_type(self):
-        self._test_variable_type(docstring_param_type, {
-            "name": "str",
-            "val": "str"
-        })
+        self._test_variable_type(docstring_param_type, {"name": "str", "val": "str"})
 
     def test_docstring_param_type_split(self):
-        self._test_variable_type(docstring_param_type_split, {
-            "name": "str",
-            "val": "str",
-            "pipeline": "~azure.core.pipeline",
-            "pipe_id": "Union[str, int]",
-            "data": "str or ~azure.dummy.datastream"
-        })
+        self._test_variable_type(
+            docstring_param_type_split,
+            {
+                "name": "str",
+                "val": "str",
+                "pipeline": "~azure.core.pipeline",
+                "pipe_id": "Union[str, int]",
+                "data": "str or ~azure.dummy.datastream",
+            },
+        )
 
     def test_docstring_param_typing_optional(self):
-        self._test_variable_type(docstring_param_typing_optional, {
-            "group": "typing.Optional[str]"
-        })
+        self._test_variable_type(docstring_param_typing_optional, {"group": "typing.Optional[str]"})
 
     def test_docstring_param_nested_union(self):
-        self._test_variable_type(docstring_param_nested_union, {
-            "dummyarg": "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]"
-        })
+        self._test_variable_type(
+            docstring_param_nested_union,
+            {"dummyarg": "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]"},
+        )
 
     def test_docstring_param_multi_line_type_followed_by_irrelevant_text(self):
-        self._test_variable_type(docstring_param_multi_line_type_followed_by_irrelevant_text, {
-            "dummyarg": "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]"
-        })
+        self._test_variable_type(
+            docstring_param_multi_line_type_followed_by_irrelevant_text,
+            {"dummyarg": "typing.Union[~azure.eventhub.EventDataBatch, List[~azure.eventhub.EventData]]"},
+        )
 
     def test_docstring_multi_complex_type(self):
-        self._test_variable_type(docstring_multi_complex_type, {
-            "documents": "list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]",
-            "country_hint": "Optional[str]",
-            "model_version": "Optional[str]",
-            "show_stats": "Optional[bool]"
-        })
+        self._test_variable_type(
+            docstring_multi_complex_type,
+            {
+                "documents": "list[str] or list[~azure.ai.textanalytics.DetectLanguageInput] or list[dict[str, str]]",
+                "country_hint": "Optional[str]",
+                "model_version": "Optional[str]",
+                "show_stats": "Optional[bool]",
+            },
+        )
 
     def test_docstring_param_type_private(self):
-        self._test_variable_type(docstring_param_type_private, {
-            "name": "str",
-            "client": "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase"
-        })
-    
+        self._test_variable_type(
+            docstring_param_type_private,
+            {
+                "name": "str",
+                "client": "~azure.search.documents._search_index_document_batching_client_base.SearchIndexDocumentBatchingClientBase",
+            },
+        )
+
     def test_return_union_return_type_followed_by_irrelevant_text(self):
         self._test_return_type(docstring_union_return_type_followed_by_irrelevant_text, "Union(str, int)")
 
@@ -199,21 +207,17 @@ class TestDocstringParser:
         self._test_return_type(docstring_dict_ret_type, "dict[str, int]")
 
     def test_type_removes_quotes(self):
-        self._test_variable_type(docstring_type_with_quotes, {
-            "name": "str",
-            "name2": "str",
-            "name3": "str"
-        })
+        self._test_variable_type(docstring_type_with_quotes, {"name": "str", "name2": "str", "name3": "str"})
         self._test_return_type(docstring_type_with_quotes, "list[str]")
-    
+
     def test_defaults(self):
-        parser = DocstringParser(docstring_multi_complex_type)
+        parser = DocstringParser(docstring_multi_complex_type, apiview=MockApiView)
         # optional keyword-arguments are documented with "..."
         assert parser.default_for("country_hint") == "..."
         assert parser.default_for("documents") == None
 
     def test_docstring_defaults_legacy(self):
-        parser = DocstringParser(docstring_default_legacy)
+        parser = DocstringParser(docstring_default_legacy, apiview=MockApiView)
         assert parser.default_for("value") == "cat"
         assert parser.default_for("another") == "dog"
         assert parser.default_for("some_class") == ":py:class:`apistubgen.test.models.FakeObject`"

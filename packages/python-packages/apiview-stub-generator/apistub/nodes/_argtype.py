@@ -58,7 +58,8 @@ class ArgType:
     ):
         """Generates token for the node and it's children recursively and add it to apiview
         :param str function_id: Module level Unique ID created for function
-        :param list[Token] tokens: List of tokens to add to.
+        :param str namespace: Namespace.
+        :param ReviewLine review_line: Line to add tokens to.
         :keyword bool add_line_marker: Flag to indicate whether to include a line ID marker or not.
         :keyword str prefix: Optional prefix for *args and **kwargs.
         """

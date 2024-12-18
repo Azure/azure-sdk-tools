@@ -16,7 +16,6 @@ export type SpecGenSdkCliConfig = {
   env: string;
   workingFolder: string;
   isTriggeredByPipeline: boolean;
-  githubToken: string;
   localSpecRepoPath: string;
   localSdkRepoPath: string;
   tspConfigPath?: string;
@@ -35,7 +34,6 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     env: argv.env,
     workingFolder: argv.workingFolder,
     isTriggeredByPipeline: argv.isTriggeredByPipeline,
-    githubToken: argv.githubToken,
     localSpecRepoPath: argv.localSpecRepoPath,
     localSdkRepoPath: argv.localSdkRepoPath,
     tspConfigPath: argv.tspConfigRelativePath,
@@ -133,10 +131,6 @@ yargs(hideBin(process.argv))
           type: 'boolean',
           description: 'Flag to indicate if triggered by pipeline',
           default: false,
-        },
-        'github-token': {
-          type: "string",
-          description: "The token to access the github repository",
         },
         'tsp-config-relative-path': {
           type: "string",

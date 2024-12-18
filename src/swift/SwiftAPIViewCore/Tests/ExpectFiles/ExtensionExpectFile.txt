@@ -20,6 +20,7 @@ package ExtensionTestFile.swifttxt {
     }
 
     \\ Non-package extensions
+
     public extension Double {
         var km: Double
         var m: Double

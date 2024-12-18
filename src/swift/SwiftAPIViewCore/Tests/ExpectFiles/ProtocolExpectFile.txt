@@ -110,6 +110,7 @@ package ProtocolTestFile.swifttxt {
     public func wishHappyBirthday(to: Named & Aged)
 
     \\ Non-package extensions
+
     extension Array: TextRepresentable where Element: TextRepresentable {
         public var textualDescription: String
     }

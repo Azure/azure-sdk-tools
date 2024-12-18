@@ -168,23 +168,15 @@ extension SyntaxProtocol {
             if showDecl {
                 tokenizeChildren(apiview: a, parent: parent)
             }
-        case .precedenceGroupAttributeList:
-            a.indent {
-                tokenizeChildren(apiview: a, parent: parent)
-                // FIXME: Newline
-                //a.newline()
-            }
         case .precedenceGroupRelation:
-            // FIXME: Newline
-            //a.newline()
+            a.blankLines(set: 0)
             if let name = PrecedenceGroupRelationSyntax(self)!.keyword {
                 let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
                 a.lineMarker(lineId)
             }
             tokenizeChildren(apiview: a, parent: parent)
         case .precedenceGroupAssociativity:
-            // FIXME: Newline
-            //a.newline()
+            a.blankLines(set: 0)
             if let name = PrecedenceGroupAssociativitySyntax(self)!.keyword {
                 let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
                 a.lineMarker(lineId)
@@ -228,9 +220,7 @@ extension SyntaxProtocol {
             child.tokenize(apiview: a, parent: parent)
             // skip if no tokens were actually added
             guard (a.currentLine.tokens.count > beforeCount) else { continue }
-            // FIXME: Only add a blank line between members if there's attributes
-            // add 1 blank line, except for the last member
-            a.blankLines(set: idx != lastIdx ? 0 : 0)
+            a.blankLines(set: 0)
         }
     }
 

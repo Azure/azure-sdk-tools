@@ -122,6 +122,7 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
     /// Used for most declaration types that have members
     convenience init(from decl: SyntaxProtocol, parent: Linkable?) {
         let name = (decl as? hasIdentifier)!.identifier.withoutTrivia().text
+
         let defId = identifier(forName: name, withPrefix: parent?.definitionId)
         self.init(name: name, decl: decl, defId: defId, parent: parent, kind: .struct)
     }
@@ -148,9 +149,13 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        for child in childNodes {
+        for (idx, child) in childNodes.enumerated() {
             switch child.kind {
             case .attributeList:
+                let lastToken = a.getLastLine()?.tokens.last
+                // Ensure declarations that have an attributeList have a blank line,
+                // unless it is the first child
+                a.blankLines(set: lastToken?.value == "{" ? 0 : 1)
                 // attributes on declarations should have newlines
                 let obj = AttributeListSyntax(child)!
                 let children = obj.children(viewMode: .sourceAccurate)
@@ -158,6 +163,14 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                     let attrText = attr.withoutTrivia().description.filter { !$0.isWhitespace }
                     a.lineMarker("\(definitionId!).\(attrText)")
                     attr.tokenize(apiview: a, parent: parent)
+                    a.blankLines(set: 0)
+                }
+            case .precedenceGroupAttributeList:
+                let obj = PrecedenceGroupAttributeListSyntax(child)!
+                a.indent {
+                    for item in obj.children(viewMode: .sourceAccurate) {
+                        item.tokenize(apiview: a, parent: nil)
+                    }
                     a.blankLines(set: 0)
                 }
             case .token:

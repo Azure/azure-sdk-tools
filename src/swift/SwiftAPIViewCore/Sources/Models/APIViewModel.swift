@@ -146,7 +146,7 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     // MARK: Token Emitters
-    func token(kind: TokenKind, value: String, options: ReviewTokenOptions? = nil) {
+    func token(kind: TokenKind, value: String, options: ReviewTokenOptions? = nil) { 
         var options = options ?? ReviewTokenOptions()
         // workaround the silly server default
         options.hasSuffixSpace = options.hasSuffixSpace != nil ? options.hasSuffixSpace : false
@@ -413,13 +413,10 @@ class APIViewModel: Tokenizable, Encodable {
     /// Retrieves the last line from the review
     func getLastLine() -> ReviewLine? {
         guard let currentParent = self.currentParent ?? self.reviewLines.last else { return nil }
-        let lastChild = currentParent.children.last
-        let lastGrandchild = lastChild?.children.last
-        if let greatGrandChildren = lastGrandchild?.children {
-            if greatGrandChildren.count > 0 {
-                fatalError("Unexpected great-grandchild in getLastLine()!")
-            }
+        var current = currentParent.children.last
+        if let lastChild = current?.children.last {
+            current = lastChild
         }
-        return lastGrandchild ?? lastChild
+        return current
     }
 }

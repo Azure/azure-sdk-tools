@@ -146,7 +146,7 @@ class ReviewLines(list):
             related_to_line=related_to_line,
         )
 
-    def set_blank_lines(self, count=1, last_is_context_end_line=True):
+    def set_blank_lines(self, count=1, last_is_context_end_line=False):
         """Ensures a specific number of blank lines.
         Will add or remove newline tokens as needed
         to ensure the exact number of blank lines.
@@ -161,12 +161,13 @@ class ReviewLines(list):
 
         if newline_count < count:
             # if there are not enough newlines, add some
-            for n in range(count - newline_count):
+            for _ in range(count - newline_count):
+                line = self.create_review_line()
                 # if last line and is context end, specify context end line
-                if n == count - 1 and last_is_context_end_line:
-                    self.append(self.create_review_line(is_context_end_line=True))
-                else:
-                    self.append(self.create_review_line())
+                if newline_count + 1 == count and last_is_context_end_line:
+                    line.is_context_end_line = True
+                self.append(line)
+                newline_count += 1
         elif newline_count > (count + 1):
             # if there are too many newlines, remove some
             excess = newline_count - count

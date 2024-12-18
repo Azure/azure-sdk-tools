@@ -365,7 +365,8 @@ class FunctionNode(NodeEntityBase):
         )
         # Add parameters
         review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
-        review_lines.set_blank_lines(last_is_context_end_line=True)
+        # If multi-line function, mark blank line as context end.
+        review_lines.set_blank_lines(last_is_context_end_line=use_multi_line)
 
         if not use_multi_line:
             for err in self.pylint_errors:

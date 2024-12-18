@@ -25,43 +25,29 @@
 // --------------------------------------------------------------------------
 
 import Foundation
-import SwiftSyntax
 
-enum SpacingKind {
-    /// Leading space
-    case Leading
-    /// Trailing space
-    case Trailing
-    /// Leading and trailing space
-    case Both
-    /// No spacing
-    case Neither
-}
 
-extension SwiftSyntax.TokenKind {
-    var spacing: SpacingKind {
-        switch self {
-        case .anyKeyword: return .Neither
-        case .nilKeyword: return .Neither
-        case .prefixPeriod: return .Leading
-        case .comma: return .Trailing
-        case .colon: return .Trailing
-        case .semicolon: return .Trailing
-        case .equal: return .Both
-        case .arrow: return .Both
-        case .leftBrace: return .Leading
-        case .initKeyword: return .Leading
-        case .wildcardKeyword: return .Neither
-        case let .contextualKeyword(val):
-            switch val {
-            case "lowerThan", "higherThan", "associativity": return .Neither
-            case "available", "unavailable", "introduced", "deprecated", "obsoleted", "message", "renamed": return .Neither
-            case "willSet", "didSet", "get", "set":
-                return .Both
-            default: return .Both
-            }
-        default:
-            return self.isKeyword ? .Both : .Neither
-        }
+/// Simple structure to track namespaces
+public struct NamespaceStack {
+    private var stack: [String] = []
+
+    /// Push a namespace segment onto the stack
+    mutating func push(_ val: String) {
+        self.stack.append(val)
+    }
+
+    /// Remove the last namespace segment from the stack
+    mutating func pop() -> String? {
+        return self.stack.popLast()
+    }
+
+    /// Get the fully qualified namespace
+    func value() -> String {
+        return self.stack.joined(separator: ".")
+    }
+
+    /// Reset the namespace stack to empty
+    mutating func reset() {
+        self.stack = []
     }
 }

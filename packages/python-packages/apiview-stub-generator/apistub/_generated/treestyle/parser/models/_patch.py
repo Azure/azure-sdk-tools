@@ -105,8 +105,8 @@ class ApiView(CodeFile):
         line.add_line_marker("GLOBAL", apiview=self)
         line.add_text(HEADER_TEXT, has_suffix_space=False, skip_diff=True)
         self.review_lines.append(line)
-        if self.source_url:  # TODO: test source url
-            self.review_lines.set_blank_lines(skip_diff=True)
+        if self.source_url:
+            self.review_lines.set_blank_lines()
             line = self.review_lines.create_review_line()
             line.add_literal("# Source URL: ", skip_diff=True)
             line.add_link(self.source_url, skip_diff=True)
@@ -271,8 +271,8 @@ class ReviewLine(ReviewLineImpl):
             )
         )
 
-    def add_link(self, url):
-        self.add_token(ReviewToken(kind=TokenKind.EXTERNAL_URL, value=url))
+    def add_link(self, url, *, skip_diff=False):
+        self.add_token(ReviewToken(kind=TokenKind.EXTERNAL_URL, value=url, skip_diff=skip_diff))
 
     def add_string_literal(self, value, *, has_prefix_space=False, has_suffix_space=True):
         self.add_token(

@@ -124,8 +124,8 @@ class PackageModel: Tokenizable, Linkable {
         a.blankLines(set: 0)
         options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
         a.punctuation("}", options: options)
-        a.newline()
         resolveTypeReferences(apiview: a)
+        a.blankLines(set: 0)
     }
 
     /// Move extensions into the model representations for declared package types

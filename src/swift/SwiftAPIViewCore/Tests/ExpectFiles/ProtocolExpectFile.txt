@@ -38,8 +38,7 @@ package ProtocolTestFile.swifttxt {
         public var textualDescription: String
     }
 
-    extension Hamster: TextRepresentable {
-    }
+    extension Hamster: TextRepresentable {}
 
     public protocol Named {
         var name: String { get }

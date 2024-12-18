@@ -73,7 +73,7 @@ class APIViewModel: Tokenizable, Encodable {
     internal var currentLine: ReviewLine
 
     /// Stores the parent of the current line.
-    private var currentParent: ReviewLine? = nil
+    internal var currentParent: ReviewLine? = nil
 
     /// Stores the stack of parent lines
     private var parentStack: [ReviewLine] = []
@@ -146,7 +146,7 @@ class APIViewModel: Tokenizable, Encodable {
     }
 
     // MARK: Token Emitters
-    func token(kind: TokenKind, value: String, options: ReviewTokenOptions? = nil) { 
+    func token(kind: TokenKind, value: String, options: ReviewTokenOptions? = nil) {
         var options = options ?? ReviewTokenOptions()
         // workaround the silly server default
         options.hasSuffixSpace = options.hasSuffixSpace != nil ? options.hasSuffixSpace : false

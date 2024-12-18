@@ -152,10 +152,9 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
         for (idx, child) in childNodes.enumerated() {
             switch child.kind {
             case .attributeList:
-                let lastToken = a.getLastLine()?.tokens.last
                 // Ensure declarations that have an attributeList have a blank line,
                 // unless it is the first child
-                a.blankLines(set: lastToken?.value == "{" ? 0 : 1)
+                a.blankLines(set: a.currentParent?.children.count ?? 0 == 0 ? 0 : 1)
                 // attributes on declarations should have newlines
                 let obj = AttributeListSyntax(child)!
                 let children = obj.children(viewMode: .sourceAccurate)

@@ -131,10 +131,20 @@ class ExtensionModel: Tokenizable {
     }
 
     func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        for child in childNodes {
+        for (idx, child) in childNodes.enumerated() {
             var options = ReviewTokenOptions()
             let childIdx = child.indexInParent
-            if childIdx == 13 {
+            print("\(childIdx) \(idx) \(child.kind)")
+            if childIdx == 7 {
+                child.tokenize(apiview: a, parent: parent)
+                if let last = a.currentLine.tokens.popLast() {
+                    // These are made as type references, but they should be
+                    // type declarations
+                    a.currentLine.lineId = self.definitionId
+                    last.navigateToId = self.definitionId
+                    a.currentLine.tokens.append(last)
+                }
+            } else if childIdx == 13 {
                 // special case for extension members
                 options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
                 a.punctuation("{", options: options)
@@ -146,18 +156,10 @@ class ExtensionModel: Tokenizable {
                         }
                     }
                 }
-                options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
+                a.blankLines(set: 0)
+                options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
                 a.punctuation("}", options: options)
                 a.newline()
-            } else if childIdx == 7 {
-                child.tokenize(apiview: a, parent: parent)
-                if let last = a.currentLine.tokens.popLast() {
-                    // These are made as type references, but they should be
-                    // type declarations
-                    a.currentLine.lineId = self.definitionId
-                    last.navigateToId = self.definitionId
-                    a.currentLine.tokens.append(last)
-                }
             } else {
                 child.tokenize(apiview: a, parent: parent)
             }

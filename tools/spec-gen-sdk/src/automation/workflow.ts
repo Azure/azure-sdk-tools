@@ -9,7 +9,7 @@ import {
   gitGetDiffFileList
 } from '../utils/gitUtils';
 import { specConfigPath } from '../types/SpecConfig';
-import { repoKeyToString } from '../utils/githubUtils';
+import { repoKeyToString } from '../utils/repo';
 import { runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
 import {
   deleteTmpJsonFile,
@@ -122,7 +122,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 };
 
 export const workflowMain = async (context: WorkflowContext) => {
-  if (context.specPrInfo) {
+  if (context.config.pullNumber) {
     await workflowValidateSdkConfigForSpecPr(context);
     await workflowCallInitScript(context);
     await workflowGenerateSdkForSpecPr(context);
@@ -613,20 +613,16 @@ const workflowCallGenerateScript = async (
 ) => {
   const statusContext = { status: 'succeeded' as SDKAutomationState };
   let generateOutput: GenerateOutput | undefined = undefined;
-
   const generateInput: GenerateInput = {
-    dryRun: false,
     specFolder: path.relative(context.config.workingFolder, context.specFolder),
-    headSha: context.config.specCommitSha ?? "",
-    headRef: "",
+    headSha: context.config.specCommitSha,
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
-    trigger: "pullRequest",
     changedFiles,
+    apiVersion: context.config.apiVersion,
     installInstructionInput: {
-      isPublic: false,
+      isPublic: !context.isPrivateSpecRepo,
       downloadUrlPrefix: "https://artprodcus3.artifacts.visualstudio.com",
       downloadCommandTemplate: "downloadCommand",
-      trigger: "pullRequest"
     }
   };
 

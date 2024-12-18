@@ -7,7 +7,6 @@ import * as Handlebars from 'handlebars';
 import { getSDKAutomationStateString, SDKAutomationState } from './sdkAutomationState';
 import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
-import { updateBreakingChangesLabel } from './updateBreakingChangesLabels';
 import { formatSuppressionLine } from '../utils/reportFormat';
 import { removeAnsiEscapeCodes } from '../utils/utils';
 import { CommentCaptureTransport } from './logging';
@@ -32,6 +31,7 @@ export const generateReport = (context: WorkflowContext) => {
   let hasSuppressions = false
   let hasAbsentSuppressions = false;
   let areBreakingChangeSuppressed = false;
+  let shouldLabelBreakingChange = false;
   if (context.pendingPackages.length > 0) {
     setSdkAutoStatus(context, 'failed');
     setFailureType(context, FailureType.PipelineFrameworkFailed);
@@ -49,6 +49,9 @@ export const generateReport = (context: WorkflowContext) => {
     if(pkg.hasBreakingChange && hasSuppressions && !hasAbsentSuppressions) {
       areBreakingChangeSuppressed = true;
     }
+    if(pkg.hasBreakingChange && !pkg.isBetaMgmtSdk && !pkg.isDataPlane && !areBreakingChangeSuppressed) {
+      shouldLabelBreakingChange = true;
+    }
     const packageReport: PackageReport = {
         packageName: pkg.name,
         result: pkg.status,
@@ -60,6 +63,7 @@ export const generateReport = (context: WorkflowContext) => {
         language: pkg.language,
         hasBreakingChange: pkg.hasBreakingChange,
         breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
+        shouldLabelBreakingChange,
         areBreakingChangeSuppressed,
         presentBreakingChangeSuppressions: pkg.presentSuppressionLines,
         absentBreakingChangeSuppressions: pkg.absentSuppressionLines,
@@ -134,8 +138,6 @@ export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   } else {
     sendSuccess();
   }
-
-  await updateBreakingChangesLabel(context, hasBreakingChange, isDataPlane, isBetaMgmtSdk, hasSuppressions, hasAbsentSuppressions);
 
   const extra = { hasBreakingChange, showLiteInstallInstruction };
   let subTitle = renderHandlebarTemplate(commentSubTitleView, context, extra);

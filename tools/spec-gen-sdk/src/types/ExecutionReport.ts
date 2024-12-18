@@ -24,6 +24,7 @@ export type PackageReport = {
   language?: string;
   hasBreakingChange?: boolean;
   breakingChangeLabel?: string;
+  shouldLabelBreakingChange: boolean;
   areBreakingChangeSuppressed?: boolean;
   presentBreakingChangeSuppressions?: string[];
   absentBreakingChangeSuppressions?: string[];

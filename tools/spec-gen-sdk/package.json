@@ -13,54 +13,42 @@
   "keywords": [
     "spec-gen-sdk"
   ],
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
-    "lib/**/*.js",
-    "lib/**/*.json",
-    "lib/**/*.js.map",
-    "lib/**/*.d.ts",
-    "lib/**/*.d.ts.map",
-    "lib/**/*.handlebars",
+    "dist/**/*.js",
+    "dist/**/*.json",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "dist/**/*.handlebars",
     "images/**/*",
     "src/**/*.ts",
-    "README.md"
+    "README.md",
+    "cmd/spec-gen-sdk.js"
   ],
   "license": "MIT",
   "engines": {
     "node": ">=20.10.0"
   },
   "dependencies": {
-    "@octokit/auth-app": "^2.4.5",
-    "@octokit/rest": "18.0.3",
     "ajv": "^6.12.6",
     "commonmark": "0.31.2",
-    "convict": "^6.2.4",
     "difflib": "^0.2.4",
-    "dotenv": "^8.2.0",
     "filehound": "^1.17.5",
     "fs-extra": "^9.0.0",
     "handlebars": "~4.7.7",
     "js-yaml": "^3.14.0",
     "jsonc-parser": "^2.3.1",
     "lodash": "^4.17.20",
-    "pkginfo": "^0.4.1",
     "prettier": "2.1.2",
-    "rimraf": "^5.0.10",
     "simple-git": "^3.16.0",
-    "source-map": "0.7.3",
-    "tslib": "1.14.1",
     "winston": "^3.3.3",
     "winston-transport": "^4.4.0",
-    "yargs": "~16.2.0"
-  },
-  "overrides": {
-    "@octokit/rest": "18.0.3",
-    "rimraf": "^5.0.10"
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
-    "@types/convict": "^5.2.0",
     "@types/difflib": "^0.2.0",
     "@types/fs-extra": "^9.0.1",
     "@types/jest": "^29.5.11",
@@ -71,6 +59,7 @@
     "@types/rimraf": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
+    "rimraf": "^5.0.10",
     "eslint": "^9.14.0",
     "fs-extra": "^9.0.0",
     "globals": "^15.12.0",
@@ -92,19 +81,20 @@
   },
   "scripts": {
     "build": "npm run clean && npm run lint && tsc && npm run copy",
-    "clean": "rimraf -rf lib",
+    "clean": "rimraf -rf dist",
     "purge": "rimraf -rf node_modules package-lock.json",
-    "copy": "cd src && find . \\( -name '*.handlebars' -o -name '*.json' \\) -exec cp --parents {} ../lib \\; && cd ..",
+    "copy": "cd src && find . \\( -name '*.handlebars' -o -name '*.json' \\) -exec cp --parents {} ../dist \\; && cd ..",
     "watch": "tsc --watch",
     "test": "jest -c jest.config.js --verbose",
-    "start": "node lib/cli/cli.js",
+    "start": "node dist/cli/cli.js",
     "build-test": "npm run build && npm test",
     "lint": "eslint src/**/*.ts",
     "lint-fix": "eslint src/**/*.ts --fix",
     "test-reportFormat": "jest -c jest.config.js --verbose ./test/reportFormat.test.ts",
-    "test-utils": "jest -c jest.config.js --verbose ./test/utils.test.ts"
+    "test-utils": "jest -c jest.config.js --verbose ./test/utils.test.ts",
+    "spec-gen-sdk": "node cmd/spec-gen-sdk.js"
   },
   "bin": {
-    "spec-gen-sdk": "bin/spec-gen-sdk"
+    "spec-gen-sdk": "cmd/spec-gen-sdk.js"
   }
 }

@@ -209,8 +209,7 @@ const workflowPkgCallInstallInstructionScript = async (
     downloadUrlPrefix: "",
     downloadCommandTemplate: "",
     packageName: pkg.name,
-    artifacts: pkg.artifactPaths.map((p) => path.basename(p)),
-    trigger: "pullRequest"
+    artifacts: pkg.artifactPaths.map((p) => path.basename(p))
   };
   writeTmpJsonFile(context, fileInstallInstructionInput, input);
   deleteTmpJsonFile(context, fileInstallInstructionOutput);

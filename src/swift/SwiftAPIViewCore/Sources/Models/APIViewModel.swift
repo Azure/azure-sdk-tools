@@ -221,6 +221,15 @@ class APIViewModel: Tokenizable, Encodable {
         if value == "}" {
             self.snap(token: token, to: "{")
             self.currentLine.isContextEndLine = true
+        } else if value == "(" {
+            // Remove suffix space if preceding token is text
+            if let lastToken = currentLine.tokens.last {
+                let shorten = ["get", "set", "willSet", "didSet"]
+                if shorten.contains(lastToken.value) {
+                    lastToken.hasSuffixSpace = false
+                }
+            }
+            self.token(token)
         } else {
             self.token(token)
         }

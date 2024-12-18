@@ -17,6 +17,7 @@ namespace PipelineGenerator
 {
     public class Program
     {
+        public static string[] DisallowedCIRepositories = ["azure/azure-sdk-for-python", "azure/azure-sdk-for-js"];
         public static async Task Main(string[] args)
         {
             var cancellationTokenSource = new CancellationTokenSource();
@@ -168,6 +169,12 @@ namespace PipelineGenerator
                     setManagedVariables,
                     overwriteTriggers
                     );
+
+                if (convention.ToLower() == "ci" && DisallowedCIRepositories.Contains(repository.ToLower()))
+                {
+                    logger.LogWarning($"The pullrequest convention has been disabled for the repository '{repository}'.");
+                    return ExitCondition.Success;
+                }
 
                 var pipelineConvention = GetPipelineConvention(convention, context);
                 var components = ScanForComponents(path, pipelineConvention.SearchPattern);

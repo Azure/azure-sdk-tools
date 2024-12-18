@@ -362,7 +362,8 @@ class ClassNode(NodeEntityBase):
         self.children.set_blank_lines()
         for func in [x for x in self.child_nodes if isinstance(x, FunctionNode) and x.hidden == False]:
             func.generate_tokens(self.children)
-        self.children.set_blank_lines(2)
+        # Last blank line should end class context.
+        self.children.set_blank_lines(2, last_is_context_end_line=True)
 
     def _generate_tokens_for_collection(self, values, line, *, has_suffix_space=True):
         # Helper method to concatenate list of values and generate tokens

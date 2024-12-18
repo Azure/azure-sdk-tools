@@ -119,7 +119,7 @@ class TestApiView:
     def test_source_url(self):
         pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, source_url='https://www.bing.com/')
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, source_url="https://www.bing.com/")
         apiview = stub_gen.generate_tokens()
         # Check that TokenKind is EXTERNAL_URL
-        assert apiview.review_lines[2]['Tokens'][1]['Kind'] == 8
+        assert apiview.review_lines[2]["Tokens"][1]["Kind"] == 8

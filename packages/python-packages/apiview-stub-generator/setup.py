@@ -33,7 +33,7 @@ setup(
         "azure-pylint-guidelines-checker",
         "azure-core<2.0.0,>=1.28.0",
         "isodate>=0.6.1",
-        "typing-extensions>=4.6.0"
+        "typing-extensions>=4.6.0",
     ],
     python_requires=">=3.8.0",
     entry_points={

@@ -421,8 +421,12 @@ class APIViewModel: Tokenizable, Encodable {
 
     /// Retrieves the last line from the review
     func getLastLine() -> ReviewLine? {
-        guard let currentParent = self.currentParent ?? self.reviewLines.last else { return nil }
-        var current = currentParent.children.last
+        var current: ReviewLine? = nil
+        if let currentParent = self.currentParent {
+            current = currentParent.children.last
+        } else if let lastReviewLine = self.reviewLines.last {
+            current = lastReviewLine
+        }
         if let lastChild = current?.children.last {
             current = lastChild
         }

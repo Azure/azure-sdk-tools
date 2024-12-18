@@ -1,5 +1,4 @@
 import { requireJsonc } from '../utils/requireJsonc';
-import { TriggerType } from './TriggerType';
 
 export const installInstructionScriptInputSchema = requireJsonc(
   __dirname + '/InstallInstructionScriptInputSchema.json'
@@ -11,5 +10,4 @@ export type InstallInstructionScriptInput = {
   isPublic: boolean;
   downloadUrlPrefix: string;
   downloadCommandTemplate: string;
-  trigger: TriggerType;
 };

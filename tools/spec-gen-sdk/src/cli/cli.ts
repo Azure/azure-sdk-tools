@@ -22,7 +22,7 @@ export type SpecGenSdkCliConfig = {
   tspConfigPath?: string;
   readmePath?: string;
   sdkRepoName: string;
-  sdkVersion: string;
+  apiVersion?: string;
   prNumber?: number;
   specCommitSha: string;
   specRepoHttpsUrl: string;
@@ -41,7 +41,7 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     tspConfigPath: argv.tspConfigRelativePath,
     readmePath: argv.readmeRelativePath,
     sdkRepoName: argv.sdkRepoName,
-    sdkVersion: argv.sdkVersion,
+    apiVersion: argv.apiVersion,
     prNumber: argv.prNumber,
     specCommitSha: argv.specCommitSha,
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
@@ -69,7 +69,7 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       specRepoHttpsUrl: config.specRepoHttpsUrl,
       pullNumber: config.prNumber,
       sdkName: config.sdkRepoName,
-      sdkVersion: config.sdkVersion,
+      apiVersion: config.apiVersion,
       workingFolder: config.workingFolder,
       headRepoHttpsUrl: config.headRepoHttpsUrl,
       headBranch: config.headBranch,
@@ -166,8 +166,7 @@ yargs(hideBin(process.argv))
           alias: "u",
           type: "string",
           description: "Url of the specification repository",
-          default: "https://github.com/azure/azure-rest-api-specs",
-          demandOption: true,
+          default: "https://github.com/azure/azure-rest-api-specs"
         },
         'head-repo-https-url': {
           alias: "hu",
@@ -179,12 +178,10 @@ yargs(hideBin(process.argv))
           type: "string",
           description: "The branch of the head repository of the specification pull request",
         },
-        'sdk-version': {
-          alias: "sv",
+        'api-version': {
+          alias: "v",
           type: "string",
-          description: "The version of the SDK to generate",
-          default: "preview",
-          demandOption: true,
+          description: "The version of the API spec to be used to generate the SDK",
         }
     })},
     async (argv) => {

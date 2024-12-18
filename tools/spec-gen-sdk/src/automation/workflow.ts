@@ -613,21 +613,16 @@ const workflowCallGenerateScript = async (
 ) => {
   const statusContext = { status: 'succeeded' as SDKAutomationState };
   let generateOutput: GenerateOutput | undefined = undefined;
-  const trigger = context.config.isTriggeredByPipeline ? context.config.pullNumber ? "pullRequest" : "continuousIntegration" : "manual";
   const generateInput: GenerateInput = {
-    dryRun: false,
     specFolder: path.relative(context.config.workingFolder, context.specFolder),
     headSha: context.config.specCommitSha,
-    headRef: "",
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
-    trigger,
     changedFiles,
-    sdkVersion: context.config.sdkVersion,
+    apiVersion: context.config.apiVersion,
     installInstructionInput: {
       isPublic: !context.isPrivateSpecRepo,
       downloadUrlPrefix: "https://artprodcus3.artifacts.visualstudio.com",
       downloadCommandTemplate: "downloadCommand",
-      trigger,
     }
   };
 

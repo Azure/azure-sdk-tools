@@ -1,13 +1,6 @@
 {
   "type": "object",
   "properties": {
-    "dryRun": {
-      // If dryRun is true, generateScript is expected to parse readme.md
-      // and output the package list with package name and related readme.md.
-      // Should not run codegen at this time.
-      // ** Not supported yet **
-      "type": "boolean"
-    },
     "specFolder": {
       // Path to local spec folder.
       "type": "string"
@@ -16,21 +9,13 @@
       // Git head sha.
       "type": "string"
     },
-    "headRef": {
-      // Git head ref.
-      // Format will be "refs/pull/<number>/merge" or "refs/heads/<branch>".
-      "type": "string"
-    },
     "repoHttpsUrl": {
       // Spec repo url in https without auth.
       "type": "string"
     },
-    "sdkVersion": {
-      // Sdk version to be used when generate the sdk code, the value could be 'beta | GA'or specific version number such as '1.2.0-beta.1'.
+    "apiVersion": {
+      // API version to be used to generate the SDK code.
       "type": "string"
-    },
-    "trigger": {
-      "$ref": "TriggerType#"
     },
     "changedFiles": {
       // Changed file list in spec PR.
@@ -62,5 +47,5 @@
       "type": "string"
     }
   },
-  "required": ["specFolder", "headSha", "headRef", "repoHttpsUrl", "trigger", "changedFiles", "relatedReadmeMdFiles"]
+  "required": ["specFolder", "headSha", "repoHttpsUrl", "changedFiles"]
 }

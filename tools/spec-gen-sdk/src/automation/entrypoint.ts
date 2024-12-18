@@ -29,7 +29,7 @@ interface SdkAutoOptions {
   tspConfigPath?: string;
   readmePath?: string;  
   pullNumber?: number;
-  sdkVersion: string;
+  apiVersion?: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   workingFolder: string;

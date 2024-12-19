@@ -1,5 +1,9 @@
 # Release
 
+## 2024-12-20 - 0.14.3
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.5`.
+
 ## 2024-12-03 - 0.14.2
 
 - Bumped `@autorest/openapi-to-typespec` version to `0.10.4`.

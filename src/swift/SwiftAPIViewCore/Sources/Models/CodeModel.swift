@@ -81,9 +81,6 @@ class CodeModel: Tokenizable, Encodable {
     /// Used to track the currently processed namespace.
     private var namespaceStack = NamespaceStack()
 
-    /// Keeps track of which types have been declared.
-    private var typeDeclarations = Set<String>()
-
     /// Returns the text-based representation of all lines
     var text: String {
         var value = ""
@@ -165,7 +162,6 @@ class CodeModel: Tokenizable, Encodable {
     }
 
     func newline() {
-        let text = self.currentLine.text()
         // ensure no trailing space at the end of the line
         if self.currentLine.tokens.count > 0 {
             let lastToken = currentLine.tokens.last
@@ -185,7 +181,7 @@ class CodeModel: Tokenizable, Encodable {
     /// Set the exact number of desired newlines.
     func blankLines(set count: Int) {
         self.newline()
-        var parentLines = self.currentParent?.children ?? self.reviewLines
+        let parentLines = self.currentParent?.children ?? self.reviewLines
         // count the number of trailing newlines
         var newlineCount = 0
         for line in parentLines.reversed() {
@@ -249,17 +245,11 @@ class CodeModel: Tokenizable, Encodable {
 
     /// Register the declaration of a new type
     func typeDeclaration(name: String, typeId: String?, addCrossLanguageId: Bool = false, options: ReviewTokenOptions? = nil) {
-        if let typeId = typeId {
-            if self.typeDeclarations.contains(typeId) {
-                fatalError("Duplicate ID '\(typeId)' for declaration will result in bugs.")
-            }
-            self.typeDeclarations.insert(typeId)
-        }
         self.lineMarker(typeId, options: LineMarkerOptions(addCrossLanguageId: true))
         var newOptions = options ?? ReviewTokenOptions()
         newOptions.navigationDisplayName = options?.navigationDisplayName ?? name
         newOptions.navigateToId = options?.navigateToId ?? typeId
-        self.token(kind: .typeName, value: name, options: options)
+        self.token(kind: .typeName, value: name, options: newOptions)
     }
 
 //    // FIXME: This!
@@ -278,7 +268,6 @@ class CodeModel: Tokenizable, Encodable {
     func typeReference(name: String, options: ReviewTokenOptions? = nil) {
         var newOptions = options ?? ReviewTokenOptions()
         newOptions.navigateToId = options?.navigateToId ?? CodeModel.missingId
-        newOptions.navigationDisplayName = options?.navigationDisplayName ?? name
         self.token(kind: .typeName, value: name, options: newOptions)
     }
 

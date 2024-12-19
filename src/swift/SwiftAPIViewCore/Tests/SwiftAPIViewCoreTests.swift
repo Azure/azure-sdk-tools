@@ -74,7 +74,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
 
     /// Ensure there are no duplicate line IDs in the review, as that would lead
     /// to functional bugs on the web.
-    private func validateLineIds(apiview: APIViewModel) {
+    private func validateLineIds(apiview: CodeModel) {
 
         func validate(line: ReviewLine) {
             // ensure there are no repeated definition IDs
@@ -96,7 +96,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
     }
 
     /// Extracts related lines from the APIView to ensure proper collapsing behavior on the web.
-    private func getRelatedLineMetadata(apiview: APIViewModel) -> [String: ReviewLineData] {
+    private func getRelatedLineMetadata(apiview: CodeModel) -> [String: ReviewLineData] {
         ///  Extracts the `ReviewLineData` for the provided review lines.
         func getReviewLinesMetadata(lines: [ReviewLine]?) -> [String: ReviewLineData]? {
             guard let lines = lines else { return nil }

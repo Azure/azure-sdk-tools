@@ -54,7 +54,7 @@ class TestUtilityTests: XCTestCase {
         options.hasSuffixSpace = false
         options.hasPrefixSpace = false
         line.tokens = [ReviewToken(kind: .text, value: "Some text", options: options)]
-        let model = APIViewModel(packageName: "Test", packageVersion: "0.0", statements: [])
+        let model = CodeModel(packageName: "Test", packageVersion: "0.0", statements: [])
         model.reviewLines = [line, ReviewLine(), ReviewLine(), line]
         let generated = model.text
         let expected = "Some text\n\n\nSome text\n"
@@ -62,7 +62,7 @@ class TestUtilityTests: XCTestCase {
     }
 
     func testReviewLineTextWithChildren() throws {
-        let model = APIViewModel(packageName: "Test", packageVersion: "0.0", statements: [])
+        let model = CodeModel(packageName: "Test", packageVersion: "0.0", statements: [])
         var options = ReviewTokenOptions()
         options.hasSuffixSpace = false
         options.hasPrefixSpace = false
@@ -84,7 +84,7 @@ class TestUtilityTests: XCTestCase {
     }
 
     func testSuffixSpaceBehavior() throws {
-        let model = APIViewModel(packageName: "Test", packageVersion: "0.0", statements: [])
+        let model = CodeModel(packageName: "Test", packageVersion: "0.0", statements: [])
         let line = ReviewLine()
         var options = ReviewTokenOptions()
         options.hasPrefixSpace = false
@@ -100,7 +100,7 @@ class TestUtilityTests: XCTestCase {
     }
 
     func testPrefixSpaceBehavior() throws {
-        let model = APIViewModel(packageName: "Test", packageVersion: "0.0", statements: [])
+        let model = CodeModel(packageName: "Test", packageVersion: "0.0", statements: [])
         let line1 = ReviewLine()
         var options = ReviewTokenOptions()
         options.hasSuffixSpace = false

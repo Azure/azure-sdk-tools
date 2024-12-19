@@ -256,6 +256,9 @@ class CodeModel: Tokenizable, Encodable {
             self.typeDeclarations.insert(typeId)
         }
         self.lineMarker(typeId, options: LineMarkerOptions(addCrossLanguageId: true))
+        var newOptions = options ?? ReviewTokenOptions()
+        newOptions.navigationDisplayName = options?.navigationDisplayName ?? name
+        newOptions.navigateToId = options?.navigateToId ?? typeId
         self.token(kind: .typeName, value: name, options: options)
     }
 
@@ -275,6 +278,7 @@ class CodeModel: Tokenizable, Encodable {
     func typeReference(name: String, options: ReviewTokenOptions? = nil) {
         var newOptions = options ?? ReviewTokenOptions()
         newOptions.navigateToId = options?.navigateToId ?? CodeModel.missingId
+        newOptions.navigationDisplayName = options?.navigationDisplayName ?? name
         self.token(kind: .typeName, value: name, options: newOptions)
     }
 

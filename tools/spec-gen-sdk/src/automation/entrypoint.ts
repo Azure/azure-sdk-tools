@@ -13,10 +13,11 @@ import {
   loggerDevOpsTransport,
   loggerFileTransport,
   loggerTestTransport,
+  loggerWaitToFinish,
   sdkAutoLogLevels
 } from './logging';
 import path from 'path';
-import { generateReport } from './reportStatus';
+import { generateReport, saveFilterLog } from './reportStatus';
 import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 
@@ -114,8 +115,10 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     }
   }
   if (workflowContext) {
-    await generateReport(workflowContext);
+    generateReport(workflowContext);
+    saveFilterLog(workflowContext);
   }
+  await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;
 };
 

@@ -17,14 +17,6 @@ const commentLimit = 60;
 
 export const generateReport = (context: WorkflowContext) => {
   context.logger.log('section', 'Generate report');
-  /*
-  const captureTransport = new CommentCaptureTransport({
-    extraLevelFilter: ['error', 'warn'],
-    level: 'debug',
-    output: context.messages
-  });*/
-  //context.logger.add(captureTransport);
-
   let executionReport: ExecutionReport;
   const packageReports: PackageReport[] = [];
 
@@ -92,8 +84,33 @@ export const generateReport = (context: WorkflowContext) => {
   }
 
   context.logger.log('endsection', 'Generate report');
-  //context.logger.remove(captureTransport);
 }
+
+export const saveFilterLog = async (context: WorkflowContext) => {
+	context.logger.log('section', 'Save filter log');
+	const statusMap = {
+		pending: 'Error',
+		inProgress: 'Error',
+		failed: 'Error',
+		warning: 'Warning',
+		succeeded: 'Info'
+	} as const;
+	const type = statusMap[context.status];
+	const filterResultData = [
+		{
+			type: 'Markdown',
+			mode: 'replace',
+			level: type,
+			message: context.messages.join('\n'),
+			time: new Date()
+		} as MessageRecord
+	].concat(context.extraResultRecords);
+
+	context.logger.info(`Writing filter log to ${context.filterLogFileName}`);
+	const content = JSON.stringify(filterResultData);
+	fs.writeFileSync(context.filterLogFileName, content);
+	context.logger.log('endsection', 'Save filter log status');
+};
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   context.logger.log('section', 'Report status');

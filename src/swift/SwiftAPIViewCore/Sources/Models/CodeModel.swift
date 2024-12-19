@@ -28,7 +28,7 @@ import Foundation
 import SwiftSyntax
 
 
-class APIViewModel: Tokenizable, Encodable {
+class CodeModel: Tokenizable, Encodable {
 
     /// The package name used by APIView
     var packageName: String
@@ -138,7 +138,7 @@ class APIViewModel: Tokenizable, Encodable {
         try container.encodeIfPresent(diagnostics, forKey: .diagnostics)
     }
 
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
         self.text("Package parsed using Swift APIView (version \(self.parserVersion))")
         self.newline()
         self.blankLines(set: 2)
@@ -274,7 +274,7 @@ class APIViewModel: Tokenizable, Encodable {
     /// Link to a registered type
     func typeReference(name: String, options: ReviewTokenOptions? = nil) {
         var newOptions = options ?? ReviewTokenOptions()
-        newOptions.navigateToId = options?.navigateToId ?? APIViewModel.missingId
+        newOptions.navigateToId = options?.navigateToId ?? CodeModel.missingId
         self.token(kind: .typeName, value: name, options: newOptions)
     }
 

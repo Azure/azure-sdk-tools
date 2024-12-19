@@ -111,7 +111,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
                     subMap.relatedToCount += 1
                     mainMap[related] = subMap
                 }
-                if let isEndContext = line.isContextEndLine {
+                if let _ = line.isContextEndLine {
                     guard lastKey != nil else {
                         XCTFail("isEndContext found without a related line.")
                         return nil

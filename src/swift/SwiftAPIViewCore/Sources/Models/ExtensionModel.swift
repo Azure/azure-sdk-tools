@@ -124,13 +124,13 @@ class ExtensionModel: Tokenizable {
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {
-        let publicModifiers = APIViewModel.publicModifiers
+        let publicModifiers = CodeModel.publicModifiers
         if publicModifiers.contains(decl.accessLevel) || publicModifiers.contains(self.accessLevel) {
             self.members.append(decl)
         }
     }
 
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
         for (idx, child) in childNodes.enumerated() {
             var options = ReviewTokenOptions()
             let childIdx = child.indexInParent
@@ -167,7 +167,7 @@ class ExtensionModel: Tokenizable {
 }
 
 extension Array<ExtensionModel> {
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
         a.blankLines(set: 1)
         let lastIdx = self.count - 1
         for (idx, ext) in self.enumerated() {

@@ -148,7 +148,7 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
         self.extensions = []
     }
 
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
         for (idx, child) in childNodes.enumerated() {
             switch child.kind {
             case .attributeList:
@@ -209,7 +209,7 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
     }
 
     func shouldShow() -> Bool {
-        let publicModifiers = APIViewModel.publicModifiers
+        let publicModifiers = CodeModel.publicModifiers
         guard let parentDecl = (parent as? DeclarationModel) else {
             return publicModifiers.contains(self.accessLevel)
         }

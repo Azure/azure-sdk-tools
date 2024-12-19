@@ -28,7 +28,7 @@ import Foundation
 import SwiftSyntax
 
 extension SyntaxProtocol {
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
         var options = ReviewTokenOptions()
         let syntaxKind = self.kind
         switch syntaxKind {
@@ -138,7 +138,7 @@ extension SyntaxProtocol {
             }
         case .memberDeclListItem:
             let decl = MemberDeclListItemSyntax(self)!.decl
-            let publicModifiers = APIViewModel.publicModifiers
+            let publicModifiers = CodeModel.publicModifiers
             var showDecl = publicModifiers.contains(decl.modifiers?.accessLevel ?? .unspecified)
             switch decl.kind {
             case .associatedtypeDecl:
@@ -158,7 +158,7 @@ extension SyntaxProtocol {
             case .variableDecl:
                 // Public protocols should expose all members even if they have no access level modifier
                 if let parentDecl = (parent as? DeclarationModel), parentDecl.kind == .protocol {
-                    showDecl = showDecl || APIViewModel.publicModifiers.contains(parentDecl.accessLevel)
+                    showDecl = showDecl || CodeModel.publicModifiers.contains(parentDecl.accessLevel)
                 }
             default:
                 // show the unrecognized member by default
@@ -212,7 +212,7 @@ extension SyntaxProtocol {
         }
     }
 
-    func tokenizeMembers(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenizeMembers(apiview a: CodeModel, parent: Linkable?) {
         let children = self.children(viewMode: .sourceAccurate)
         let lastIdx = children.count - 1
         for (idx, child) in children.enumerated() {
@@ -224,13 +224,13 @@ extension SyntaxProtocol {
         }
     }
 
-    func tokenizeChildren(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenizeChildren(apiview a: CodeModel, parent: Linkable?) {
         for child in self.children(viewMode: .sourceAccurate) {
             child.tokenize(apiview: a, parent: parent)
         }
     }
 
-    func tokenize(token: TokenSyntax, apiview a: APIViewModel, parent: DeclarationModel?) {
+    func tokenize(token: TokenSyntax, apiview a: CodeModel, parent: DeclarationModel?) {
         let tokenKind = token.tokenKind
         let tokenText = token.withoutTrivia().description
         var options = ReviewTokenOptions()

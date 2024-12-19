@@ -76,7 +76,7 @@ class CodeDiagnostic: Tokenizable, Encodable {
 
     // MARK: Tokenizable
 
-    func tokenize(apiview: APIViewModel, parent: (any Linkable)?) {
+    func tokenize(apiview: CodeModel, parent: (any Linkable)?) {
         fatalError("Not implemented!")
     }
 }

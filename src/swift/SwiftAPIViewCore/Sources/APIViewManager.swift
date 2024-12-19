@@ -66,7 +66,7 @@ public class APIViewManager: SyntaxVisitor {
 
     var mode: APIViewManagerMode
 
-    var model: APIViewModel?
+    var model: CodeModel?
 
     var statements = OrderedDictionary<Int, CodeBlockItemSyntax.Item>()
 
@@ -98,7 +98,7 @@ public class APIViewManager: SyntaxVisitor {
     }
 
     /// Persist the token file to disk
-    func save(apiView: APIViewModel) {
+    func save(apiView: CodeModel) {
         let destUrl: URL
         if let destPath = config.destPath {
             destUrl = URL(fileURLWithPath: destPath)
@@ -191,7 +191,7 @@ public class APIViewManager: SyntaxVisitor {
         return filePaths
     }
 
-    func createApiView(from sourceUrl: URL) throws -> APIViewModel {
+    func createApiView(from sourceUrl: URL) throws -> CodeModel {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
         var packageName: String?
         var packageVersion: String?
@@ -234,7 +234,7 @@ public class APIViewManager: SyntaxVisitor {
         }
         config.packageName = packageName!
         config.packageVersion = packageVersion!
-        let apiView = APIViewModel(packageName: packageName!, packageVersion: packageVersion!, statements: Array(statements.values))
+        let apiView = CodeModel(packageName: packageName!, packageVersion: packageVersion!, statements: Array(statements.values))
         return apiView
     }
 

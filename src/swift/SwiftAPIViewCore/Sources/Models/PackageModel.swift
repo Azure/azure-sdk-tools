@@ -101,7 +101,7 @@ class PackageModel: Tokenizable, Linkable {
         }
     }
 
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
         var options = ReviewTokenOptions()
         options.hasSuffixSpace = true
         a.text("package", options: options)
@@ -171,13 +171,13 @@ class PackageModel: Tokenizable, Linkable {
     }
 
     /// attempt to resolve type references that are declared after they are used
-    func resolveTypeReferences(apiview a: APIViewModel) {
+    func resolveTypeReferences(apiview a: CodeModel) {
         for line in a.reviewLines {
             for (idx, token) in line.tokens.enumerated() {
                 // FIXME: Fix this up.
-//                guard token.navigateToId == APIViewModel.unresolved else { continue }
+//                guard token.navigateToId == CodeModel.unresolved else { continue }
 //                line.tokens[idx].navigateToId = a.definitionId(for: token.value!, withParent: nil)
-//                assert (line.tokens[idx].navigateToId != APIViewModel.unresolved)
+//                assert (line.tokens[idx].navigateToId != CodeModel.unresolved)
             }
         }
     }

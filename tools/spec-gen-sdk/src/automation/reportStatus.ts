@@ -87,29 +87,57 @@ export const generateReport = (context: WorkflowContext) => {
 }
 
 export const saveFilterLog = async (context: WorkflowContext) => {
-	context.logger.log('section', 'Save filter log');
-	const statusMap = {
-		pending: 'Error',
-		inProgress: 'Error',
-		failed: 'Error',
-		warning: 'Warning',
-		succeeded: 'Info'
-	} as const;
-	const type = statusMap[context.status];
-	const filterResultData = [
-		{
-			type: 'Markdown',
-			mode: 'replace',
-			level: type,
-			message: context.messages.join('\n'),
-			time: new Date()
-		} as MessageRecord
-	].concat(context.extraResultRecords);
+  context.logger.log('section', 'Save filter log');
+  let hasBreakingChange = false;
+  let isBetaMgmtSdk = true;
+  let isDataPlane = true;
+  let showLiteInstallInstruction = false;
+  let hasSuppressions = false
+  let hasAbsentSuppressions = false;
+  if (context.pendingPackages.length > 0) {
+    setSdkAutoStatus(context, 'failed');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    context.logger.error(`GenerationError: The following packages are still pending.`);
+    for (const pkg of context.pendingPackages) {
+      context.logger.error(`\t${pkg.name}`);
+      context.handledPackages.push(pkg);
+    }
+  }
+  
+  for (const pkg of context.handledPackages) {
+    setSdkAutoStatus(context, pkg.status);
+    hasBreakingChange = hasBreakingChange || Boolean(pkg.hasBreakingChange);
+    isBetaMgmtSdk = isBetaMgmtSdk && Boolean(pkg.isBetaMgmtSdk);
+    isDataPlane = isDataPlane && Boolean(pkg.isDataPlane);
+    hasSuppressions = hasSuppressions || Boolean(pkg.presentSuppressionLines.length > 0);
+    hasAbsentSuppressions = hasAbsentSuppressions || Boolean(pkg.absentSuppressionLines.length > 0);
+    showLiteInstallInstruction = showLiteInstallInstruction || !!pkg.liteInstallationInstruction;
+  }
 
-	context.logger.info(`Writing filter log to ${context.filterLogFileName}`);
-	const content = JSON.stringify(filterResultData);
-	fs.writeFileSync(context.filterLogFileName, content);
-	context.logger.log('endsection', 'Save filter log status');
+  const extra = { hasBreakingChange, showLiteInstallInstruction };
+  let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
+  const statusMap = {
+    pending: 'Error',
+    inProgress: 'Error',
+    failed: 'Error',
+    warning: 'Warning',
+    succeeded: 'Info'
+  } as const;
+  const type = statusMap[context.status];
+  const filterResultData = [
+    {
+      type: 'Markdown',
+      mode: 'replace',
+      level: type,
+      message: commentBody,
+      time: new Date()
+    } as MessageRecord
+  ].concat(context.extraResultRecords);
+
+  context.logger.info(`Writing filter log to ${context.filterLogFileName}`);
+  const content = JSON.stringify(filterResultData);
+  fs.writeFileSync(context.filterLogFileName, content);
+  context.logger.log('endsection', 'Save filter log status');
 };
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {

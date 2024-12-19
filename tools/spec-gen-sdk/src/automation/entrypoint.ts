@@ -38,6 +38,7 @@ interface SdkAutoOptions {
   headRepoHttpsUrl?: string;
   headBranch?: string;
   runEnv: 'local' | 'azureDevOps' | 'test';
+  version: string;
 }
 
 export type SdkAutoContext = {

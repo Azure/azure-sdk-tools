@@ -134,7 +134,6 @@ class ExtensionModel: Tokenizable {
         for (idx, child) in childNodes.enumerated() {
             var options = ReviewTokenOptions()
             let childIdx = child.indexInParent
-            print("\(childIdx) \(idx) \(child.kind)")
             if childIdx == 7 {
                 child.tokenize(apiview: a, parent: parent)
                 if let last = a.currentLine.tokens.popLast() {

@@ -29,6 +29,14 @@ import XCTest
 
 class SwiftAPIViewCoreTests: XCTestCase {
 
+    /// Simple structure to track validation metadata on `ReviewLine`
+    struct ReviewLineData: Equatable {
+        /// Counts the number of `relatedLineId`
+        var relatedToCount: Int;
+        /// Counts the number of `isContextEndLine`
+        var isContextEndCount: Int;
+    }
+
     override func setUpWithError() throws {
         try super.setUpWithError()
         continueAfterFailure = false
@@ -50,6 +58,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
         return try! String(contentsOfFile: path)
     }
 
+    /// Compares the text syntax of the APIView against what is expected.
     private func compare(expected: String, actual: String) {
         let actualLines = actual.split(separator: "\n", omittingEmptySubsequences: false).map { String($0) }
         let expectedLines = expected.split(separator: "\n", omittingEmptySubsequences: false).map { String($0) }
@@ -63,6 +72,88 @@ class SwiftAPIViewCoreTests: XCTestCase {
         XCTAssertEqual(actualLines.count, expectedLines.count, "Number of lines does not match")
     }
 
+    /// Ensure there are no duplicate line IDs in the review, as that would lead
+    /// to functional bugs on the web.
+    private func validateLineIds(apiview: APIViewModel) {
+
+        func validate(line: ReviewLine) {
+            // ensure there are no repeated definition IDs
+            if let lineId = line.lineId {
+                XCTAssertFalse(lineIds.contains(lineId), "Duplicate line ID: \(lineId)")
+                if lineId != "" {
+                    lineIds.insert(lineId)
+                }
+                for child in line.children {
+                    validate(line: child)
+                }
+            }
+        }
+
+        var lineIds = Set<String>()
+        for line in apiview.reviewLines {
+            validate(line: line)
+        }
+    }
+
+    /// Extracts related lines from the APIView to ensure proper collapsing behavior on the web.
+    private func getRelatedLineMetadata(apiview: APIViewModel) -> [String: ReviewLineData] {
+        ///  Extracts the `ReviewLineData` for the provided review lines.
+        func getReviewLinesMetadata(lines: [ReviewLine]?) -> [String: ReviewLineData]? {
+            guard let lines = lines else { return nil }
+            guard !lines.isEmpty else { return nil }
+            var mainMap = [String: ReviewLineData]()
+            var lastKey: String? = nil
+            for line in lines {
+                let lineId = line.lineId
+                if let related = line.relatedToLine {
+                    lastKey = related
+                    var subMap = mainMap[related] ?? ReviewLineData(relatedToCount: 0, isContextEndCount: 0)
+                    subMap.relatedToCount += 1
+                    mainMap[related] = subMap
+                }
+                if let isEndContext = line.isContextEndLine {
+                    guard lastKey != nil else {
+                        XCTFail("isEndContext found without a related line.")
+                        return nil
+                    }
+                    var subMap = mainMap[lastKey!] ?? ReviewLineData(relatedToCount: 0, isContextEndCount: 0)
+                    subMap.isContextEndCount += 1
+                    mainMap[lastKey!] = subMap
+                }
+                if !line.children.isEmpty {
+                    guard lineId != nil else {
+                        XCTFail("Child without a line ID.")
+                        return nil
+                    }
+                    lastKey = lineId
+                    if let subMap = getReviewLinesMetadata(lines: line.children) {
+                        for (key, value) in subMap {
+                            mainMap[key] = value
+                        }
+                    }
+                }
+            }
+            return mainMap
+        }
+        let countMap = getReviewLinesMetadata(lines: apiview.reviewLines)
+        return countMap ?? [String: ReviewLineData]()
+    }
+
+    /// Compare `ReviewLineData` information for equality
+    func compareCounts(_ lhs: [String: ReviewLineData], _ rhs: [String: ReviewLineData]) {
+        // ensure keys are the same
+        let lhsKeys = Set(lhs.keys)
+        let rhsKeys = Set(rhs.keys)
+        let combined = lhsKeys.union(rhsKeys)
+        if (combined.count != lhsKeys.count) {
+            XCTFail("Key mismatch: \(lhsKeys.description) vs \(rhsKeys.description)")
+            return
+        }
+        XCTAssertEqual(lhs, rhs)
+    }
+
+    // MARK: Tests
+
     func testAttributes() throws {
         let manager = APIViewManager(mode: .testing)
         manager.config.sourcePath = pathFor(testFile: "AttributesTestFile")
@@ -70,6 +161,18 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "AttributesExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
+        let expectedCounts: [String: ReviewLineData] = [
+            "AttributesTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "AttributesTestFile.swifttxt.ExampleClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "AttributesTestFile.swifttxt.MyClass": ReviewLineData(relatedToCount: 1, isContextEndCount: 0),
+            "AttributesTestFile.swifttxt.MyProtocol": ReviewLineData(relatedToCount: 1, isContextEndCount: 0),
+            "AttributesTestFile.swifttxt.MyRenamedProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 0),
+            "AttributesTestFile.swifttxt.MyStruct": ReviewLineData(relatedToCount: 2, isContextEndCount: 0),
+            "AttributesTestFile.swifttxt.SomeSendable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testEnumerations() throws {
@@ -79,6 +182,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "EnumerationsExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testExtensions() throws {
@@ -88,6 +193,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "ExtensionExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testFunctions() throws {
@@ -97,6 +204,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "FunctionsExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testGenerics() throws {
@@ -106,6 +215,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "GenericsExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testInitializers() throws {
@@ -115,6 +226,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "InitializersExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testOperators() throws {
@@ -124,6 +237,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "OperatorExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testPrivateInternal() throws {
@@ -133,6 +248,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "PrivateInternalExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testProperties() throws {
@@ -142,6 +259,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "PropertiesExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testProtocols() throws {
@@ -151,6 +270,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "ProtocolExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 
     func testSwiftUI() throws {
@@ -160,5 +281,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
         let generated = try manager.run()
         let expected = contentsOf(expectFile: "SwiftUIExpectFile")
         compare(expected: expected, actual: generated)
+        validateLineIds(apiview: manager.model!)
+        let counts = getRelatedLineMetadata(apiview: manager.model!)
     }
 }

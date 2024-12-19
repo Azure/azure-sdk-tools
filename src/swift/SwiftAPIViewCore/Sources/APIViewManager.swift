@@ -66,12 +66,15 @@ public class APIViewManager: SyntaxVisitor {
 
     var mode: APIViewManagerMode
 
+    var model: APIViewModel?
+
     var statements = OrderedDictionary<Int, CodeBlockItemSyntax.Item>()
 
     // MARK: Initializer
 
     public init(mode: APIViewManagerMode = .commandLine) {
         self.mode = mode
+        self.model = nil
         super.init(viewMode: .all)
     }
 
@@ -84,14 +87,13 @@ public class APIViewManager: SyntaxVisitor {
         guard let sourceUrl = URL(string: config.sourcePath) else {
             SharedLogger.fail("usage error: source path was invalid.")
         }
-        let apiView = try createApiView(from: sourceUrl)
-
+        model = try createApiView(from: sourceUrl)
         switch mode {
         case .commandLine:
-            save(apiView: apiView)
+            save(apiView: model!)
             return ""
         case .testing:
-            return apiView.text
+            return model!.text
         }
     }
 

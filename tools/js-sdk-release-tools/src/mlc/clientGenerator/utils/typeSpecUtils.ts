@@ -7,7 +7,7 @@ import { load } from '@npmcli/package-json';
 export async function updatePackageVersion(packageDirectory: string, version: string): Promise<void> {
     const packageJson = await load(packageDirectory);
     packageJson.content.version = version;
-    packageJson.save();
+    await packageJson.save();
 }
 
 export async function generateTypeScriptCodeFromTypeSpec(

@@ -16,4 +16,7 @@
    <FileRef
       location = "group:SwiftAPIView/../README.md">
    </FileRef>
+   <FileRef
+      location = "group:../SwiftAPIViewCore.xctestplan">
+   </FileRef>
 </Workspace>

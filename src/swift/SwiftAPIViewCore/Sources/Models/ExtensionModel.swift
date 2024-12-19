@@ -124,38 +124,41 @@ class ExtensionModel: Tokenizable {
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {
-        let publicModifiers = APIViewModel.publicModifiers
+        let publicModifiers = CodeModel.publicModifiers
         if publicModifiers.contains(decl.accessLevel) || publicModifiers.contains(self.accessLevel) {
             self.members.append(decl)
         }
     }
 
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
-        for child in childNodes {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
+        for (idx, child) in childNodes.enumerated() {
+            var options = ReviewTokenOptions()
             let childIdx = child.indexInParent
-            if childIdx == 13 {
+            if childIdx == 7 {
+                child.tokenize(apiview: a, parent: parent)
+                if let last = a.currentLine.tokens.popLast() {
+                    // These are made as type references, but they should be
+                    // type declarations
+                    a.currentLine.lineId = self.definitionId
+                    last.navigateToId = self.definitionId
+                    a.currentLine.tokens.append(last)
+                }
+            } else if childIdx == 13 {
                 // special case for extension members
-                a.punctuation("{", spacing: SwiftSyntax.TokenKind.leftBrace.spacing)
+                options.applySpacing(SwiftSyntax.TokenKind.leftBrace.spacing)
+                a.punctuation("{", options: options)
                 if !members.isEmpty {
                     a.indent {
                         for member in members {
-                            a.newline()
                             member.tokenize(apiview: a, parent: parent)
+                            a.blankLines(set: 0)
                         }
                     }
                 }
+                a.blankLines(set: 0)
+                options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
+                a.punctuation("}", options: options)
                 a.newline()
-                a.punctuation("}", spacing: SwiftSyntax.TokenKind.rightBrace.spacing)
-                a.newline()
-            } else if childIdx == 7 {
-                child.tokenize(apiview: a, parent: parent)
-                if var last = a.tokens.popLast() {
-                    // These are made as type references, but they should be
-                    // type declarations
-                    last.definitionId = self.definitionId
-                    last.navigateToId = self.definitionId
-                    a.tokens.append(last)
-                }
             } else {
                 child.tokenize(apiview: a, parent: parent)
             }
@@ -164,6 +167,17 @@ class ExtensionModel: Tokenizable {
 }
 
 extension Array<ExtensionModel> {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
+        a.blankLines(set: 1)
+        let lastIdx = self.count - 1
+        for (idx, ext) in self.enumerated() {
+            ext.tokenize(apiview: a, parent: parent)
+            if idx != lastIdx {
+                a.blankLines(set: 1)
+            }
+        }
+    }
+
     func resolveDuplicates() -> [ExtensionModel] {
         var resolved = [String: ExtensionModel]()
         for ext in self {

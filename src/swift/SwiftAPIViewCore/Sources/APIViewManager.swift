@@ -66,12 +66,15 @@ public class APIViewManager: SyntaxVisitor {
 
     var mode: APIViewManagerMode
 
+    var model: CodeModel?
+
     var statements = OrderedDictionary<Int, CodeBlockItemSyntax.Item>()
 
     // MARK: Initializer
 
     public init(mode: APIViewManagerMode = .commandLine) {
         self.mode = mode
+        self.model = nil
         super.init(viewMode: .all)
     }
 
@@ -84,19 +87,18 @@ public class APIViewManager: SyntaxVisitor {
         guard let sourceUrl = URL(string: config.sourcePath) else {
             SharedLogger.fail("usage error: source path was invalid.")
         }
-        let apiView = try createApiView(from: sourceUrl)
-
+        model = try createApiView(from: sourceUrl)
         switch mode {
         case .commandLine:
-            save(apiView: apiView)
+            save(apiView: model!)
             return ""
         case .testing:
-            return apiView.text
+            return model!.text
         }
     }
 
     /// Persist the token file to disk
-    func save(apiView: APIViewModel) {
+    func save(apiView: CodeModel) {
         let destUrl: URL
         if let destPath = config.destPath {
             destUrl = URL(fileURLWithPath: destPath)
@@ -189,7 +191,7 @@ public class APIViewManager: SyntaxVisitor {
         return filePaths
     }
 
-    func createApiView(from sourceUrl: URL) throws -> APIViewModel {
+    func createApiView(from sourceUrl: URL) throws -> CodeModel {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
         var packageName: String?
         var packageVersion: String?
@@ -232,8 +234,7 @@ public class APIViewManager: SyntaxVisitor {
         }
         config.packageName = packageName!
         config.packageVersion = packageVersion!
-        let apiViewName = "\(packageName!) (version \(packageVersion!))"
-        let apiView = APIViewModel(name: apiViewName, packageName: packageName!, versionString: packageVersion!, statements: Array(statements.values))
+        let apiView = CodeModel(packageName: packageName!, packageVersion: packageVersion!, statements: Array(statements.values))
         return apiView
     }
 

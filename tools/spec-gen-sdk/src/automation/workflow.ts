@@ -230,7 +230,7 @@ export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
     context.logger.info(`SDK to generate:${context.config.sdkName}`);
   }
   else {
-    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
+    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the related tspconfig.yaml or readme.md`);
   }
   context.logger.log('endsection', 'Validate SDK configuration');
 };

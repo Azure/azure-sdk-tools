@@ -17,14 +17,6 @@ const commentLimit = 60;
 
 export const generateReport = (context: WorkflowContext) => {
   context.logger.log('section', 'Generate report');
-  /*
-  const captureTransport = new CommentCaptureTransport({
-    extraLevelFilter: ['error', 'warn'],
-    level: 'debug',
-    output: context.messages
-  });*/
-  //context.logger.add(captureTransport);
-
   let executionReport: ExecutionReport;
   const packageReports: PackageReport[] = [];
 
@@ -77,7 +69,7 @@ export const generateReport = (context: WorkflowContext) => {
     packages: packageReports,
     executionResult: context.status,
     fullLogPath: context.fullLogFileName,
-    filteredLogPath: context.filterLogFileName,
+    filteredLogPath: context.filteredLogFileName,
     sdkArtifactFolder: context.sdkArtifactFolder,
     sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder
   };
@@ -92,8 +84,61 @@ export const generateReport = (context: WorkflowContext) => {
   }
 
   context.logger.log('endsection', 'Generate report');
-  //context.logger.remove(captureTransport);
 }
+
+export const saveFilteredLog = async (context: WorkflowContext) => {
+  context.logger.log('section', 'Save filtered log');
+  let hasBreakingChange = false;
+  let isBetaMgmtSdk = true;
+  let isDataPlane = true;
+  let showLiteInstallInstruction = false;
+  let hasSuppressions = false
+  let hasAbsentSuppressions = false;
+  if (context.pendingPackages.length > 0) {
+    setSdkAutoStatus(context, 'failed');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    context.logger.error(`GenerationError: The following packages are still pending.`);
+    for (const pkg of context.pendingPackages) {
+      context.logger.error(`\t${pkg.name}`);
+      context.handledPackages.push(pkg);
+    }
+  }
+  
+  for (const pkg of context.handledPackages) {
+    setSdkAutoStatus(context, pkg.status);
+    hasBreakingChange = hasBreakingChange || Boolean(pkg.hasBreakingChange);
+    isBetaMgmtSdk = isBetaMgmtSdk && Boolean(pkg.isBetaMgmtSdk);
+    isDataPlane = isDataPlane && Boolean(pkg.isDataPlane);
+    hasSuppressions = hasSuppressions || Boolean(pkg.presentSuppressionLines.length > 0);
+    hasAbsentSuppressions = hasAbsentSuppressions || Boolean(pkg.absentSuppressionLines.length > 0);
+    showLiteInstallInstruction = showLiteInstallInstruction || !!pkg.liteInstallationInstruction;
+  }
+
+  const extra = { hasBreakingChange, showLiteInstallInstruction };
+  let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
+  const statusMap = {
+    pending: 'Error',
+    inProgress: 'Error',
+    failed: 'Error',
+    warning: 'Warning',
+    succeeded: 'Info'
+  } as const;
+  const type = statusMap[context.status];
+  const filteredResultData = [
+    {
+      type: 'Markdown',
+      mode: 'replace',
+      level: type,
+      message: commentBody,
+      time: new Date()
+    } as MessageRecord
+  ].concat(context.extraResultRecords);
+
+  context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
+  const content = JSON.stringify(filteredResultData);
+  fs.writeFileSync(context.filteredLogFileName, content);
+  context.logger.log('endsection', 'Save filtered log status');
+};
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   context.logger.log('section', 'Report status');

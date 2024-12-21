@@ -1,6 +1,7 @@
 import * as winston from 'winston';
 import { default as Transport } from 'winston-transport';
 import { SDKAutomationState } from './sdkAutomationState';
+import { setTimeout } from 'timers/promises';
 
 export const sdkAutoLogLevels = {
   levels: {
@@ -129,4 +130,16 @@ export const loggerFileTransport = (fileName: string) => {
       winston.format.printf(formatLog)
     ),
   });
+};
+
+export const loggerWaitToFinish = async (logger: winston.Logger) => {
+  logger.info('Wait for logger transports to complete');
+  for (const transport of logger.transports) {
+    if (transport instanceof winston.transports.File) {
+      if (transport.end) {
+          transport.end();
+          await setTimeout(2000);
+        }
+    }
+  }
 };

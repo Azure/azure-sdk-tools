@@ -69,7 +69,7 @@ export const generateReport = (context: WorkflowContext) => {
     packages: packageReports,
     executionResult: context.status,
     fullLogPath: context.fullLogFileName,
-    filteredLogPath: context.filterLogFileName,
+    filteredLogPath: context.filteredLogFileName,
     sdkArtifactFolder: context.sdkArtifactFolder,
     sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder
   };
@@ -86,8 +86,8 @@ export const generateReport = (context: WorkflowContext) => {
   context.logger.log('endsection', 'Generate report');
 }
 
-export const saveFilterLog = async (context: WorkflowContext) => {
-  context.logger.log('section', 'Save filter log');
+export const saveFilteredLog = async (context: WorkflowContext) => {
+  context.logger.log('section', 'Save filtered log');
   let hasBreakingChange = false;
   let isBetaMgmtSdk = true;
   let isDataPlane = true;
@@ -124,7 +124,7 @@ export const saveFilterLog = async (context: WorkflowContext) => {
     succeeded: 'Info'
   } as const;
   const type = statusMap[context.status];
-  const filterResultData = [
+  const filteredResultData = [
     {
       type: 'Markdown',
       mode: 'replace',
@@ -134,10 +134,10 @@ export const saveFilterLog = async (context: WorkflowContext) => {
     } as MessageRecord
   ].concat(context.extraResultRecords);
 
-  context.logger.info(`Writing filter log to ${context.filterLogFileName}`);
-  const content = JSON.stringify(filterResultData);
-  fs.writeFileSync(context.filterLogFileName, content);
-  context.logger.log('endsection', 'Save filter log status');
+  context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
+  const content = JSON.stringify(filteredResultData);
+  fs.writeFileSync(context.filteredLogFileName, content);
+  context.logger.log('endsection', 'Save filtered log status');
 };
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {

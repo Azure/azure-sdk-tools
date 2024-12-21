@@ -400,6 +400,51 @@ export async function convertCommand(argv: any): Promise<void> {
   }
 }
 
+export async function generateConfigFilesCommand(argv: any) {
+  const outputDir = argv["output-dir"];
+  const repoRoot = await getRepoRoot(outputDir);
+  const packageJsonPath = normalizePath(resolve(argv["package-json"]));
+
+  if (packageJsonPath === undefined || !(await doesFileExist(packageJsonPath))) {
+    throw new Error(`package.json not found in: ${packageJsonPath ?? "[Not Specified]"}`);
+  }
+  Logger.info("Generating emitter-package.json file...");
+  const content = await readFile(packageJsonPath);
+  const packageJson: Record<string, any> = JSON.parse(content.toString());
+  const emitterPackageJson: Record<string, any> = {
+    name: "dist/src/index.js",
+    dependencies: {},
+  };
+
+  // Add emitter as dependency
+  emitterPackageJson["dependencies"][packageJson["name"]] = packageJson["version"];
+
+  const devDependencies: Record<string, any> = {};
+
+  const possiblyPinnedPackages =
+    packageJson["azure-sdk/emitter-package-json-pinning"] ?? packageJson["peerDependencies"];
+
+  for (const pinnedPackage in possiblyPinnedPackages) {
+    const pinnedVersion = packageJson["devDependencies"][pinnedPackage];
+    if (pinnedVersion) {
+      Logger.info(`Pinning ${pinnedPackage} to ${pinnedVersion}`);
+      devDependencies[pinnedPackage] = pinnedVersion;
+    } else {
+      devDependencies[pinnedPackage] = possiblyPinnedPackages[pinnedPackage];
+    }
+  }
+
+  emitterPackageJson["devDependencies"] = devDependencies;
+
+  await writeFile(
+    joinPaths(repoRoot, "eng", "emitter-package.json"),
+    JSON.stringify(emitterPackageJson, null, 2),
+  );
+  Logger.info(`emitter-package.json file generated in '${joinPaths(repoRoot, "eng")}' directory`);
+
+  generateLockFileCommand(argv);
+}
+
 export async function generateLockFileCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repoRoot = await getRepoRoot(outputDir);

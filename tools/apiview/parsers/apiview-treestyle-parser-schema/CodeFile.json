@@ -142,11 +142,11 @@
                 },
                 "IsContextEndLine": {
                     "type": "boolean",
-                    "description": "Set current line as context end line. For e.g. line with token } or empty line after the class to mark end of context."
+                    "description": "Set current line as context end line. For e.g. line with token } or empty line after the class or function/method to mark end of context."
                 },
                 "RelatedToLine": {
                     "type": "string",
-                    "description": "Set ID of related line to ensure current line is not visible when a related line is hidden.\nOne e.g. is a code line for class attribute should set class line's Line ID as related line ID."
+                    "description": "Set ID of related line to ensure current line is not visible when a related line is hidden.\nOne e.g. is a code line for class attribute that should set class line's Line ID as related line ID.\nOR a method line decorator that should set method's line ID as related line ID."
                 }
             },
             "required": [
@@ -229,7 +229,7 @@
                 "SkipDiff": {
                     "type": "boolean",
                     "default": false,
-                    "description": "set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions \nare usually excluded when comparing two revisions to avoid reporting them as API changes"
+                    "description": "Set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or dependency versions \nare usually excluded when comparing two revisions to avoid reporting them as API changes"
                 },
                 "IsDeprecated": {
                     "type": "boolean",
@@ -256,7 +256,7 @@
                     "items": {
                         "type": "string"
                     },
-                    "description": "Language specific style css class names"
+                    "description": "Language specific style css class names. To render navigation icons, one of the following must be specified:\n\"namespace\", \"class\", \"method\", \"enum\". If NavigationDisplayName is specified, then this field should be set."
                 }
             },
             "required": [
@@ -291,7 +291,8 @@
                 4,
                 5,
                 6,
-                7
+                7,
+                8
             ]
         }
     }

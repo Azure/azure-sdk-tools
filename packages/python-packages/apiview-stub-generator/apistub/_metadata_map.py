@@ -14,6 +14,8 @@ MAPPING_FILE_NAME = "apiview_mapping_python.json"
 Loads metadata from the mapping file for use
 by the stub generator.
 """
+
+
 class MetadataMap:
 
     def __init__(self, pkg_path, mapping_path=None):

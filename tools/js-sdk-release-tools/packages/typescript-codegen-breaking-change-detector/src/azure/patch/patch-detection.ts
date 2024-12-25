@@ -14,7 +14,7 @@ import { logger } from '../../logging/logger';
 function findMappingCallSignature(
   target: Signature,
   signatures: Signature[]
-): { signature: Signature; id: string } | undefined {
+): { mapped: Signature; id: string } | undefined {
   const path = target
     .getParameters()
     .find((p) => p.getName() === 'path')
@@ -33,7 +33,7 @@ function findMappingCallSignature(
 
   if (foundPaths.length === 0) return undefined;
   if (foundPaths.length > 1) logger.warn(`Found more than one mapping call signature for path '${path}'`);
-  return { signature: foundPaths[0], id: path };
+  return { mapped: foundPaths[0], id: path };
 }
 
 export function patchRoutes(astContext: AstContext): DiffPair[] {

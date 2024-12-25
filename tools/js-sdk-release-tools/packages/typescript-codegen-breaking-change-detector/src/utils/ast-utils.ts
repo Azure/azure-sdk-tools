@@ -20,6 +20,7 @@ import { RenameAbleDeclarations } from '../azure/common/types';
 import { TSESTree } from '@typescript-eslint/types';
 import { findVariable } from '@typescript-eslint/utils/ast-utils';
 import { logger } from '../logging/logger';
+import { findRemovedFunctionOverloads } from "../azure/diff/declaration-diff";
 
 function tryFindDeclaration<TNode extends TSESTree.Node>(
   name: string,
@@ -237,4 +238,11 @@ export function isPropertyArrowFunction(p: Symbol) {
 
 export function isMethodOrArrowFunction(p: Symbol) {
   return isPropertyMethod(p) || isPropertyArrowFunction(p);
+}
+
+export function isSameConstructor(left: ConstructorDeclaration, right: ConstructorDeclaration): boolean {
+  const leftOverloads = left.getOverloads()
+  const rightOverloads = right.getOverloads()
+  const overloads = findRemovedFunctionOverloads(rightOverloads, leftOverloads);
+  return overloads.length === 0;
 }

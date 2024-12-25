@@ -30,6 +30,7 @@ import {
   isPropertyArrowFunction,
   isPropertyMethod,
   isSameSignature,
+  isSameConstructor,
 } from '../../utils/ast-utils';
 
 function findBreakingReasons(source: Node, target: Node): DiffReasons {
@@ -67,7 +68,7 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   if (!assignable) breakingReasons |= DiffReasons.TypeChanged;
 
   // check required -> optional
-  const isOptional = (node: Node) => node.asKind(SyntaxKind.Parameter)?.isOptional();
+  const isOptional = (node: Node) => node.asKind(SyntaxKind.Parameter)?.isOptional() || node.getSymbolOrThrow().isOptional();
   const incompatibleOptional = isOptional(target) && !isOptional(source);
   if (incompatibleOptional) breakingReasons |= DiffReasons.RequiredToOptional;
 
@@ -79,41 +80,46 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   return breakingReasons;
 }
 
-function findCallSignatureBreakingChanges(
-  sourceSignatures: Signature[],
-  targetSignatures: Signature[],
+function findBreakingChanges<T extends Signature | ConstructorDeclaration>(
+  sources: T[],
+  targets: T[],
+  isSame: (a: T, b: T) => boolean,
+  getParameters: (s: T) => any[],
+  getNameNode: (s: T) => NameNode,
+  getDeclaration?: (s: T) => any,  
   findMappingCallSignature?: FindMappingCallSignature
 ): DiffPair[] {
-  const pairs = targetSignatures.reduce((result, targetSignature) => {
-    const defaultFindMappingCallSignature: FindMappingCallSignature = (target: Signature, signatures: Signature[]) => {
-      const signature = signatures.find((s) => isSameSignature(target, s));
-      if (!signature) return undefined;
-      const id = signature.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getText();
-      return { id, signature };
-    };
-    const resolvedFindMappingCallSignature = findMappingCallSignature || defaultFindMappingCallSignature;
-    const sourceContext = resolvedFindMappingCallSignature(targetSignature, sourceSignatures);
+  const defaultFindMapping = (target: any, constraints: any[]) => {
+    const mapped = constraints.find((s) => isSame(target, s));
+    if (!mapped) return undefined;
+    const id = mapped instanceof Signature ? mapped.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getText():"";
+    return { mapped, id: id};
+  };
+
+  const pairs = targets.reduce((result, target) => {    
+    const resolvedFindMappingCallSignature = findMappingCallSignature || defaultFindMapping;
+    const sourceContext = resolvedFindMappingCallSignature(target as Node, sources);
     if (sourceContext) {
-      const sourceSignature = sourceContext.signature;
-      // handle return type
-      const getDeclaration = (s: Signature): CallSignatureDeclaration =>
-        s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
-      const targetDeclaration = getDeclaration(targetSignature)!;
-      const sourceDeclaration = getDeclaration(sourceSignature)!;
-      const returnPairs = findReturnTypeBreakingChangesCore(sourceDeclaration, targetDeclaration);
-      if (returnPairs.length > 0) result.push(...returnPairs);
+      const source = sourceContext.mapped;
+      if(getDeclaration) {
+        // handle return type
+        const targetDeclaration = getDeclaration(target)!;
+        const sourceDeclaration = getDeclaration(source)!;
+        const returnPairs = findReturnTypeBreakingChangesCore(sourceDeclaration, targetDeclaration);
+        if (returnPairs.length > 0) result.push(...returnPairs);
+      }      
 
       // handle parameters
       const path = sourceContext.id;
-      const getParameters = (s: Signature): ParameterDeclaration[] =>
-        s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getParameters();
+      const sourceNode = source instanceof Signature ? source.getDeclaration(): source;
+      const targetNode = target instanceof Signature ? target.getDeclaration(): target as Node;
       const parameterPairs = findParameterBreakingChangesCore(
-        getParameters(sourceSignature),
-        getParameters(targetSignature),
+        getParameters(source),
+        getParameters(target),
         path,
         path,
-        sourceSignature.getDeclaration(),
-        targetSignature.getDeclaration()
+        sourceNode,
+        targetNode
       );
       if (parameterPairs.length > 0) result.push(...parameterPairs);
 
@@ -121,9 +127,9 @@ function findCallSignatureBreakingChanges(
     }
 
     // not found
-    const getNameNode = (s: Signature): NameNode => ({ name: s.getDeclaration().getText(), node: s.getDeclaration() });
-    const targetNameNode = getNameNode(targetSignature);
-    const pair = createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, targetNameNode);
+    const targetNameNode = getNameNode(target);
+    const location = target instanceof Signature ? DiffLocation.Signature : DiffLocation.Constructor;
+    const pair = createDiffPair(location, DiffReasons.Removed, undefined, targetNameNode);
     result.push(pair);
     return result;
   }, new Array<DiffPair>());
@@ -305,13 +311,16 @@ export function findInterfaceBreakingChanges(
   target: InterfaceDeclaration,
   findMappingCallSignature?: FindMappingCallSignature
 ): DiffPair[] {
+  const getDeclaration = (s: Signature): CallSignatureDeclaration => 
+    s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
+  const getParameters = (s: Signature): ParameterDeclaration[] =>
+    s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getParameters();
+  const getNameNode = (s: Signature): NameNode => 
+    ({ name: s.getDeclaration().getText(), node: s.getDeclaration() });
+
   const targetSignatures = target.getType().getCallSignatures();
   const sourceSignatures = source.getType().getCallSignatures();
-  const callSignatureBreakingChanges = findCallSignatureBreakingChanges(
-    sourceSignatures,
-    targetSignatures,
-    findMappingCallSignature
-  );
+  const callSignatureBreakingChanges = findBreakingChanges(sourceSignatures , targetSignatures, isSameSignature, getParameters, getNameNode, getDeclaration, findMappingCallSignature)
   const targetProperties = target.getType().getProperties();
   const sourceProperties = source.getType().getProperties();
 
@@ -320,10 +329,10 @@ export function findInterfaceBreakingChanges(
   return [...callSignatureBreakingChanges, ...propertyBreakingChanges];
 }
 
-function findRemovedFunctionOverloads(
-  sourceOverloads: FunctionDeclaration[],
-  targetOverloads: FunctionDeclaration[]
-): FunctionDeclaration[] {
+export function findRemovedFunctionOverloads<T extends ConstructorDeclaration | FunctionDeclaration>(
+  sourceOverloads: T[],
+  targetOverloads: T[]
+): T[] {
   const overloads = targetOverloads.filter((t) => {
     const compatibleSourceFunction = sourceOverloads.find((s) => {
       // NOTE: isTypeAssignableTo does not work for overloads
@@ -388,82 +397,23 @@ export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, targe
 }
 
 export function findClassDeclarationBreakingChanges(source: ClassDeclaration, target: ClassDeclaration): DiffPair[] {
+  const getParameters = (s: ConstructorDeclaration): ParameterDeclaration[] => 
+    s.getParameters();
+  const getNameNode = (c: ConstructorDeclaration): NameNode => 
+    ({ name: c.getText(), node: c });
+  
   const targetConstructors = target.getConstructors();
-  const sourceConstructors = source.getConstructors();
-  const constructorBreakingChanges = findConstructorBreakingChanges(sourceConstructors, targetConstructors);
-
+  const sourceConstructors = source.getConstructors();  
+  const constructorBreakingChanges = findBreakingChanges(sourceConstructors, targetConstructors, isSameConstructor, getParameters, getNameNode);
   const targetProperties = target.getType().getProperties();
   const sourceProperties = source.getType().getProperties();
   const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
 
-  //source.getMembers().forEach((p) => console.log(p.getText() + ' ' + p.getCombinedModifierFlags()));
   const targetMembers = target.getMembers();
   const sourceMembers = source.getMembers();
   const memberBreakingChanges = findMemberBreakingChanges(sourceMembers, targetMembers);
   
   return [...constructorBreakingChanges, ...propertyBreakingChanges, ...memberBreakingChanges];
-}
-
-export function isSameConstructor(left: ConstructorDeclaration, right: ConstructorDeclaration): boolean {
-  const leftOverloads = left.getOverloads()
-  const rightOverloads = right.getOverloads()
-  const overloads = leftOverloads.filter((t) => {
-    const compatibleSourceFunction = rightOverloads.find((s) => {
-      // NOTE: isTypeAssignableTo does not work for overloads
-      const parameterPairs = [
-        ...findParameterBreakingChangesCore(s.getParameters(), t.getParameters(), '', '', s, t),
-        ...findParameterBreakingChangesCore(t.getParameters(), s.getParameters(), '', '', t, s),
-      ];
-      return parameterPairs.length === 0;
-    });
-    return compatibleSourceFunction === undefined;
-  });
-  return overloads.length === 0;
-}
-
-
-function findConstructorBreakingChanges(
-  sourceConstraints: ConstructorDeclaration[],
-  targetConstraints: ConstructorDeclaration[]
-): DiffPair[] {
-  const pairs = targetConstraints.reduce((result, targetConstraint, currentIndex) => {
-    const defaultFindMappingConstructor: FindMappingConstructor = (
-      target: ConstructorDeclaration,
-      constraints: ConstructorDeclaration[]
-    ) => {
-      const constraint = constraints.find((s) => isSameConstructor(target, s));
-      if (!constraint) return undefined;
-      return constraint;
-    };
-    const resolvedFindMappingConstructor = defaultFindMappingConstructor;
-    const sourceContext = resolvedFindMappingConstructor(targetConstraint, sourceConstraints);
-    if (sourceContext) {
-      const sourceConstraint = sourceContext;
-
-      // handle parameters
-      const getParameters = (s: ConstructorDeclaration): ParameterDeclaration[] => s.getParameters();
-
-      const parameterPairs = findParameterBreakingChangesCore(
-        getParameters(sourceConstraint),
-        getParameters(targetConstraint),
-        currentIndex.toString(),
-        currentIndex.toString(),
-        sourceConstraint,
-        targetConstraint
-      );
-      if (parameterPairs.length > 0) result.push(...parameterPairs);
-
-      return result;
-    }
-
-    // not found
-    const getNameNode = (c: ConstructorDeclaration): NameNode => ({ name: c.getText(), node: c });
-    const targetNameNode = getNameNode(targetConstraint);
-    const pair = createDiffPair(DiffLocation.Constructor, DiffReasons.Removed, undefined, targetNameNode);
-    result.push(pair);
-    return result;
-  }, new Array<DiffPair>());
-  return pairs;
 }
 
 function findMemberBreakingChanges(sourceMembers: ClassMemberTypes[], targetMembers: ClassMemberTypes[]): DiffPair[] {

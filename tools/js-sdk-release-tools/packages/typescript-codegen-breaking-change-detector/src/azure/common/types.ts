@@ -82,7 +82,7 @@ export enum DiffReasons {
   RequiredToOptional = 8,
   ReadonlyToMutable = 16,
 
-  ModifierFlag = 17,
+  ModifierFlag = 18,
 
   // new features
   Added = 1024,
@@ -122,9 +122,9 @@ export enum AssignDirection {
 }
 
 export type FindMappingCallSignature = (
-  target: Signature,
-  signatures: Signature[]
-) => { signature: Signature; id: string } | undefined;
+  target: Node,
+  signatures: any[]
+) => { mapped: Signature| ConstructorDeclaration ; id: string } | undefined;
 
 export type FindMappingConstructor = (
   currentIndex: ConstructorDeclaration,

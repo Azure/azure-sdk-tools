@@ -230,6 +230,10 @@ export function isPropertyMethod(p: Symbol) {
   return p.getFlags() === SymbolFlags.Method;
 }
 
+export function isClassMethod(p: Symbol) {
+  return p.hasFlags(SymbolFlags.Method);
+}
+
 export function isPropertyArrowFunction(p: Symbol) {
   return (
     p.getFlags() === SymbolFlags.Property && p.getValueDeclarationOrThrow().getType().getCallSignatures().length > 0

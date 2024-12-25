@@ -42,4 +42,5 @@ export class classConstructorParameterType { constructor(a: string, b: string){}
 export class classConstructorParameterOptional { constructor(a: string, b: string){} }
 export class classConstructorRemove { constructor(a: number, b: number); constructor(a?: number, b?: number, c?: number){} }
 export class classConstructorAdd { }
+export class classMethodOptionalToRequired {private func(a: string){};}
 ```

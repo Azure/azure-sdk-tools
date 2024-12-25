@@ -190,7 +190,10 @@ describe("patch current tool's breaking changes", async () => {
     try {
       tempFolder = await createTempFolder(`.tmp/temp-${date}`);
       const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
-      let breakingPairs = patchClass('classPropertyChange', astContext);
+      let breakingPairs = patchClass('classMethodOptionalToRequired', astContext);
+      expect(breakingPairs.length).toBe(0);
+
+      breakingPairs = patchClass('classPropertyChange', astContext);
       expect(breakingPairs.length).toBe(1);
       expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
       expect(breakingPairs[0].location).toBe(DiffLocation.Property);

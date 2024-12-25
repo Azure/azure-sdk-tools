@@ -14,6 +14,7 @@ import {
   ClassDeclaration,
   ConstructorDeclaration,
   ClassMemberTypes,
+  ts,
 } from 'ts-morph';
 import {
   DiffLocation,
@@ -29,6 +30,7 @@ import {
   isMethodOrArrowFunction,
   isPropertyArrowFunction,
   isPropertyMethod,
+  isClassMethod,
   isSameSignature,
   isSameConstructor,
 } from '../../utils/ast-utils';
@@ -224,6 +226,10 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
     ) {
       const functionPropertyDetails = findFunctionPropertyBreakingChangeDetails(sourceProperty, targetProperty);
       return [...result, ...functionPropertyDetails];
+    }
+
+    if(isClassMethod(targetProperty) && isClassMethod(sourceProperty)) {
+      return []
     }
 
     throw new Error('Should never reach here');
@@ -445,6 +451,11 @@ function findMemberBreakingChanges(sourceMembers: ClassMemberTypes[], targetMemb
     const targetMemberModifierFlag = targetMember.getCombinedModifierFlags();
     const sourceMemberModifierFlag = sourceMember.getCombinedModifierFlags();
     const location = getLocation(targetMember.getSymbol()!);
+    const allowedFlags = [ts.ModifierFlags.Public, ts.ModifierFlags.None];
+    if(location === DiffLocation.Signature && allowedFlags.includes(sourceMemberModifierFlag)) {
+      // optional method becomes required method is not a breaking change.
+      return [];      
+    }
     if (targetMemberModifierFlag !== sourceMemberModifierFlag) {
       return [
         ...result,

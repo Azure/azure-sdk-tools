@@ -7,13 +7,14 @@ import {
   checkRemovedDeclaration,
   createDiffPair,
   checkAddedDeclaration,
+  findClassDeclarationBreakingChanges,
 } from '../diff/declaration-diff';
 import { logger } from '../../logging/logger';
 
 function findMappingCallSignature(
   target: Signature,
   signatures: Signature[]
-): { signature: Signature; id: string } | undefined {
+): { mapped: Signature; id: string } | undefined {
   const path = target
     .getParameters()
     .find((p) => p.getName() === 'path')
@@ -32,7 +33,7 @@ function findMappingCallSignature(
 
   if (foundPaths.length === 0) return undefined;
   if (foundPaths.length > 1) logger.warn(`Found more than one mapping call signature for path '${path}'`);
-  return { signature: foundPaths[0], id: path };
+  return { mapped: foundPaths[0], id: path };
 }
 
 export function patchRoutes(astContext: AstContext): DiffPair[] {
@@ -132,6 +133,43 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
     currentFunctions[0]
   );
   return pairs;
+}
+
+export function patchClass(name: string, astContext: AstContext): DiffPair[] {
+  const baseline = astContext.baseline.getClass(name);
+  const current = astContext.current.getClass(name);
+  const addPair = checkAddedDeclaration(DiffLocation.Class, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = checkRemovedDeclaration(DiffLocation.Class, baseline, current);
+  if (removePair) return [removePair];
+  const breakingChangePairs = patchDeclaration(
+    AssignDirection.CurrentToBaseline,
+    findClassDeclarationBreakingChanges,
+    baseline!,
+    current!,
+  );
+
+  const newFeaturePairs = patchDeclaration(
+    AssignDirection.BaselineToCurrent,
+    findClassDeclarationBreakingChanges,
+    baseline!,
+    current!,
+  ).filter((p) => 
+    p.reasons === DiffReasons.Removed ||
+    p.reasons === DiffReasons.RequiredToOptional)
+  .map((p) => {
+    if(p.reasons === DiffReasons.Removed)
+    {
+      p.reasons = DiffReasons.Added;
+      p.assignDirection = AssignDirection.CurrentToBaseline;
+      const temp = p.source;
+      p.source = p.target;
+      p.target = temp;      
+    }
+    return p;
+  });
+  return [...breakingChangePairs, ...newFeaturePairs];
 }
 
 export function patchDeclaration<T extends Node>(

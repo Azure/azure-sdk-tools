@@ -11,6 +11,10 @@ import {
   TypeNode,
   TypeAliasDeclaration,
   CallSignatureDeclaration,
+  ClassDeclaration,
+  ConstructorDeclaration,
+  ClassMemberTypes,
+  ts,
 } from 'ts-morph';
 import {
   DiffLocation,
@@ -19,13 +23,16 @@ import {
   FindMappingCallSignature,
   AssignDirection,
   NameNode,
+  FindMappingConstructor,
 } from '../common/types';
 import {
   getCallableEntityParametersFromSymbol,
   isMethodOrArrowFunction,
   isPropertyArrowFunction,
   isPropertyMethod,
+  isClassMethod,
   isSameSignature,
+  isSameConstructor,
 } from '../../utils/ast-utils';
 
 function findBreakingReasons(source: Node, target: Node): DiffReasons {
@@ -63,7 +70,7 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   if (!assignable) breakingReasons |= DiffReasons.TypeChanged;
 
   // check required -> optional
-  const isOptional = (node: Node) => node.getSymbolOrThrow().isOptional();
+  const isOptional = (node: Node) => node.asKind(SyntaxKind.Parameter)?.isOptional() || node.getSymbolOrThrow().isOptional();
   const incompatibleOptional = isOptional(target) && !isOptional(source);
   if (incompatibleOptional) breakingReasons |= DiffReasons.RequiredToOptional;
 
@@ -75,41 +82,46 @@ function findBreakingReasons(source: Node, target: Node): DiffReasons {
   return breakingReasons;
 }
 
-function findCallSignatureBreakingChanges(
-  sourceSignatures: Signature[],
-  targetSignatures: Signature[],
+function findBreakingChanges<T extends Signature | ConstructorDeclaration>(
+  sources: T[],
+  targets: T[],
+  isSame: (a: T, b: T) => boolean,
+  getParameters: (s: T) => any[],
+  getNameNode: (s: T) => NameNode,
+  getDeclaration?: (s: T) => any,  
   findMappingCallSignature?: FindMappingCallSignature
 ): DiffPair[] {
-  const pairs = targetSignatures.reduce((result, targetSignature) => {
-    const defaultFindMappingCallSignature: FindMappingCallSignature = (target: Signature, signatures: Signature[]) => {
-      const signature = signatures.find((s) => isSameSignature(target, s));
-      if (!signature) return undefined;
-      const id = signature.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getText();
-      return { id, signature };
-    };
-    const resolvedFindMappingCallSignature = findMappingCallSignature || defaultFindMappingCallSignature;
-    const sourceContext = resolvedFindMappingCallSignature(targetSignature, sourceSignatures);
+  const defaultFindMapping = (target: any, constraints: any[]) => {
+    const mapped = constraints.find((s) => isSame(target, s));
+    if (!mapped) return undefined;
+    const id = mapped instanceof Signature ? mapped.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getText():"";
+    return { mapped, id: id};
+  };
+
+  const pairs = targets.reduce((result, target) => {    
+    const resolvedFindMappingCallSignature = findMappingCallSignature || defaultFindMapping;
+    const sourceContext = resolvedFindMappingCallSignature(target as Node, sources);
     if (sourceContext) {
-      const sourceSignature = sourceContext.signature;
-      // handle return type
-      const getDeclaration = (s: Signature): CallSignatureDeclaration =>
-        s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
-      const targetDeclaration = getDeclaration(targetSignature)!;
-      const sourceDeclaration = getDeclaration(sourceSignature)!;
-      const returnPairs = findReturnTypeBreakingChangesCore(sourceDeclaration, targetDeclaration);
-      if (returnPairs.length > 0) result.push(...returnPairs);
+      const source = sourceContext.mapped;
+      if(getDeclaration) {
+        // handle return type
+        const targetDeclaration = getDeclaration(target)!;
+        const sourceDeclaration = getDeclaration(source)!;
+        const returnPairs = findReturnTypeBreakingChangesCore(sourceDeclaration, targetDeclaration);
+        if (returnPairs.length > 0) result.push(...returnPairs);
+      }      
 
       // handle parameters
       const path = sourceContext.id;
-      const getParameters = (s: Signature): ParameterDeclaration[] =>
-        s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getParameters();
+      const sourceNode = source instanceof Signature ? source.getDeclaration(): source;
+      const targetNode = target instanceof Signature ? target.getDeclaration(): target as Node;
       const parameterPairs = findParameterBreakingChangesCore(
-        getParameters(sourceSignature),
-        getParameters(targetSignature),
+        getParameters(source),
+        getParameters(target),
         path,
         path,
-        sourceSignature.getDeclaration(),
-        targetSignature.getDeclaration()
+        sourceNode,
+        targetNode
       );
       if (parameterPairs.length > 0) result.push(...parameterPairs);
 
@@ -117,9 +129,9 @@ function findCallSignatureBreakingChanges(
     }
 
     // not found
-    const getNameNode = (s: Signature): NameNode => ({ name: s.getDeclaration().getText(), node: s.getDeclaration() });
-    const targetNameNode = getNameNode(targetSignature);
-    const pair = createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, targetNameNode);
+    const targetNameNode = getNameNode(target);
+    const location = target instanceof Signature ? DiffLocation.Signature : DiffLocation.Constructor;
+    const pair = createDiffPair(location, DiffReasons.Removed, undefined, targetNameNode);
     result.push(pair);
     return result;
   }, new Array<DiffPair>());
@@ -216,6 +228,10 @@ function findPropertyBreakingChanges(sourceProperties: Symbol[], targetPropertie
       return [...result, ...functionPropertyDetails];
     }
 
+    if(isClassMethod(targetProperty) && isClassMethod(sourceProperty)) {
+      return []
+    }
+
     throw new Error('Should never reach here');
   }, new Array<DiffPair>());
   return [...removed, ...changed];
@@ -301,13 +317,16 @@ export function findInterfaceBreakingChanges(
   target: InterfaceDeclaration,
   findMappingCallSignature?: FindMappingCallSignature
 ): DiffPair[] {
+  const getDeclaration = (s: Signature): CallSignatureDeclaration => 
+    s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature);
+  const getParameters = (s: Signature): ParameterDeclaration[] =>
+    s.getDeclaration().asKindOrThrow(SyntaxKind.CallSignature).getParameters();
+  const getNameNode = (s: Signature): NameNode => 
+    ({ name: s.getDeclaration().getText(), node: s.getDeclaration() });
+
   const targetSignatures = target.getType().getCallSignatures();
   const sourceSignatures = source.getType().getCallSignatures();
-  const callSignatureBreakingChanges = findCallSignatureBreakingChanges(
-    sourceSignatures,
-    targetSignatures,
-    findMappingCallSignature
-  );
+  const callSignatureBreakingChanges = findBreakingChanges(sourceSignatures , targetSignatures, isSameSignature, getParameters, getNameNode, getDeclaration, findMappingCallSignature)
   const targetProperties = target.getType().getProperties();
   const sourceProperties = source.getType().getProperties();
 
@@ -316,10 +335,10 @@ export function findInterfaceBreakingChanges(
   return [...callSignatureBreakingChanges, ...propertyBreakingChanges];
 }
 
-function findRemovedFunctionOverloads(
-  sourceOverloads: FunctionDeclaration[],
-  targetOverloads: FunctionDeclaration[]
-): FunctionDeclaration[] {
+export function findRemovedFunctionOverloads<T extends ConstructorDeclaration | FunctionDeclaration>(
+  sourceOverloads: T[],
+  targetOverloads: T[]
+): T[] {
   const overloads = targetOverloads.filter((t) => {
     const compatibleSourceFunction = sourceOverloads.find((s) => {
       // NOTE: isTypeAssignableTo does not work for overloads
@@ -383,6 +402,75 @@ export function findTypeAliasBreakingChanges(source: TypeAliasDeclaration, targe
   return [createDiffPair(DiffLocation.TypeAlias, DiffReasons.TypeChanged, sourceNameNode, targetNameNode)];
 }
 
+export function findClassDeclarationBreakingChanges(source: ClassDeclaration, target: ClassDeclaration): DiffPair[] {
+  const getParameters = (s: ConstructorDeclaration): ParameterDeclaration[] => 
+    s.getParameters();
+  const getNameNode = (c: ConstructorDeclaration): NameNode => 
+    ({ name: c.getText(), node: c });
+  
+  const targetConstructors = target.getConstructors();
+  const sourceConstructors = source.getConstructors();  
+  const constructorBreakingChanges = findBreakingChanges(sourceConstructors, targetConstructors, isSameConstructor, getParameters, getNameNode);
+  const targetProperties = target.getType().getProperties();
+  const sourceProperties = source.getType().getProperties();
+  const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
+
+  const targetMembers = target.getMembers();
+  const sourceMembers = source.getMembers();
+  const memberBreakingChanges = findMemberBreakingChanges(sourceMembers, targetMembers);
+  
+  return [...constructorBreakingChanges, ...propertyBreakingChanges, ...memberBreakingChanges];
+}
+
+function findMemberBreakingChanges(sourceMembers: ClassMemberTypes[], targetMembers: ClassMemberTypes[]): DiffPair[] {
+  const sourcePropMap = sourceMembers.reduce((map, p) => {
+    map.set(p.getSymbol()!.getName(), p);
+    return map;
+  }, new Map<string, ClassMemberTypes>());
+
+  const getLocation = (symbol: Symbol): DiffLocation => {
+    let location;
+    switch(symbol.getFlags()){
+      case SymbolFlags.Method:
+        location = DiffLocation.Signature;
+        break;
+      case SymbolFlags.Property:  
+        location = DiffLocation.Property;
+        break;  
+      default:
+        location = DiffLocation.Constructor;
+    }
+    return location
+  };  
+
+  const changed = targetMembers.reduce((result, targetMember) => {
+    const name = targetMember.getSymbol()!.getName();
+    const sourceMember = sourcePropMap.get(name);
+    if (!sourceMember) return result;
+
+    const targetMemberModifierFlag = targetMember.getCombinedModifierFlags();
+    const sourceMemberModifierFlag = sourceMember.getCombinedModifierFlags();
+    const location = getLocation(targetMember.getSymbol()!);
+    const allowedFlags = [ts.ModifierFlags.Public, ts.ModifierFlags.None];
+    if(location === DiffLocation.Signature && allowedFlags.includes(sourceMemberModifierFlag)) {
+      // optional method becomes required method is not a breaking change.
+      return [];      
+    }
+    if (targetMemberModifierFlag !== sourceMemberModifierFlag) {
+      return [
+        ...result,
+        createDiffPair(
+          location,
+          DiffReasons.ModifierFlag,
+          getNameNodeFromSymbol(sourceMember.getSymbol()!),
+          getNameNodeFromSymbol(targetMember.getSymbol()!)
+        ),
+      ];
+    }
+    return result;
+  }, new Array<DiffPair>());
+  return [ ...changed];
+}
 export function createDiffPair(
   location: DiffLocation,
   reasons: DiffReasons,

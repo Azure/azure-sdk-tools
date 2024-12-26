@@ -1209,6 +1209,9 @@ export const changelogGenerator = (
     changLog.removedEnumValue = findRemovedEnumValue(metaDataOld, metadataNew);
     changLog.removedFunction = findRemovedFunction(metaDataOld, metadataNew);
 
+    // patch parameter name
+    const p = pat
+
     // patch RLC
     if (newSdkType === SDKType.RestLevelClient && oldSdkType === SDKType.RestLevelClient) {
         const routesDiffPairs = patchRoutes(astContext);

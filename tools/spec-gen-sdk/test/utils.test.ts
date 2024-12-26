@@ -1,7 +1,10 @@
 import { parseSemverVersionString } from '../src/utils/parseSemverVersionString';
-import { removeAnsiEscapeCodes, removeDuplicatesFromRelatedFiles } from '../src/utils/utils';
+import { removeAnsiEscapeCodes, removeDuplicatesFromRelatedFiles, diffStringArrays } from '../src/utils/utils';
 import { WorkflowContext } from '../src/automation/workflow';
 import * as typespecUtils from '../src/utils/typespecUtils';
+import { findSwaggerToSDKBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
+import path from 'path';
+import fs from 'fs';
 
 // To invoke these tests, run `npm run test-utils` from the "private/openapi-sdk-automation" directory.
 describe('parseSemverVersionString', () => {
@@ -215,4 +218,36 @@ describe('remove relatedTypeSpecProjectFolder & relatedReadmeMdFiles duplicates'
   })
 })
 
+describe('test diffStringArrays between breakingchanges from generate script and present suppressions', () => {
+  it('test diffStringArrays only added', () => {
+    const left = [
+      "Function `*LinkerClient.NewListPager` has been removed",
+    ]
+    const right = [
+      "Function `*LinkerClient.NewListPager` has been select",
+      "'Type of `OperationStatus.Properties` has been changed from `map[string]interface{}` to `interface{}`'",
+    ]
+    const res = diffStringArrays(left, right);
+    expect(res.hasDiff).toEqual(true)
+    expect(res.diffResult).toEqual([
+      '+\tFunction `*LinkerClient.NewListPager` has been select',
+      "+\t'Type of `OperationStatus.Properties` has been changed from `map[string]interface{}` to `interface{}`'",
+    ])
+  })
+})
 
+describe('find SDK Swagger Config from readme.md', () => {
+  const rootPath = process.cwd();
+  const readmeMdPath = path.join(rootPath, './test/test.readme.md');
+  const readmeContent = fs.readFileSync(readmeMdPath).toString();
+  it('test findSwaggerToSDKBlocks from readme.md', () => {
+    const blockContent = findSwaggerToSDKBlocks(readmeContent);
+    expect(blockContent.length).toEqual(6);
+  })
+
+  it('test findSwaggerToSDKConfiguration from readme.md', () => {
+    const blockContent = findSwaggerToSDKConfiguration(readmeContent);
+    expect(blockContent).toEqual({"repositories": [{"repo": "azure-cli-extensions"}, {"repo": "azure-resource-manager-schemas"}, {"repo": "azure-powershell"}]});
+  })
+
+})

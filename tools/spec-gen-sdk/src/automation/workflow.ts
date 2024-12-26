@@ -656,7 +656,7 @@ const workflowCallGenerateScript = async (
     argTmpFileList: [fileGenerateInput, fileGenerateOutput],
     statusContext
   });
-  context.logger.log('endsection', 'Call generateScript');
+  context. logger.log('endsection', 'Call generateScript');
 
   setSdkAutoStatus(context, statusContext.status);
 

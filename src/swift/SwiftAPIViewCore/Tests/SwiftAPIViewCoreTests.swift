@@ -194,6 +194,16 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        let expectedCounts: [String: ReviewLineData] = [
+            "EnumerationsTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "EnumerationsTestFile.swifttxt.ASCIIControlCharacter": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "EnumerationsTestFile.swifttxt.ArithmeticExpression": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "EnumerationsTestFile.swifttxt.Barcode": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "EnumerationsTestFile.swifttxt.CompassPoint": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "EnumerationsTestFile.swifttxt.Planet": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
+
     }
 
     func testExtensions() throws {
@@ -205,6 +215,20 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        // FIXME: Fix the wonky line IDs for extensions
+        let expectedCounts: [String: ReviewLineData] = [
+            "ExtensionTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ExtensionTestFile.swifttxt.Point": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ExtensionTestFile.swifttxt.Rect": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionRect": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ExtensionTestFile.swifttxt.Size": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionDouble": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionInt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "Kind": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionStackwhereElement:Equatable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testFunctions() throws {
@@ -216,6 +240,11 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        let expectedCounts: [String: ReviewLineData] = [
+            "FunctionsTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "FunctionsTestFile.swifttxt.FunctionTestClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testGenerics() throws {
@@ -227,6 +256,24 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        // FIXME: Fix extension line IDs
+        let expectedCounts: [String: ReviewLineData] = [
+            "GenericsTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "GenericsTestFile.swifttxt.Container": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionContainer": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionContainerwhereItem==Double": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "GenericsTestFile.swifttxt.ContainerAlt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "GenericsTestFile.swifttxt.ContainerStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionContainerStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "GenericsTestFile.swifttxt.IntContainerStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionIntContainerStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "GenericsTestFile.swifttxt.Shape": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "GenericsTestFile.swifttxt.Square": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "GenericsTestFile.swifttxt.Stack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "GenericsTestFile.swifttxt.SuffixableContainer": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testInitializers() throws {
@@ -238,6 +285,11 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        let expectedCounts: [String: ReviewLineData] = [
+            "InitializersTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "InitializersTestFile.swifttxt.InitializersTestClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testOperators() throws {
@@ -249,6 +301,15 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        // FIXME: Fix extension line IDs
+        let expectedCounts: [String: ReviewLineData] = [
+            "OperatorTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "OperatorTestFile.swifttxt.CongruentPrecedence": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "OperatorTestFile.swifttxt.Vector2D": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionVector2D": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionVector2D:Equatable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testPrivateInternal() throws {
@@ -260,6 +321,10 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        let expectedCounts: [String: ReviewLineData] = [
+            "PrivateInternalTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 0),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testProperties() throws {
@@ -271,6 +336,11 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        let expectedCounts: [String: ReviewLineData] = [
+            "PropertiesTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "PropertiesTestFile.swifttxt.PropertiesTestClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testProtocols() throws {
@@ -282,6 +352,37 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        let expectedCounts: [String: ReviewLineData] = [
+            "ProtocolTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.Aged": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.ComposedPerson": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.CounterDataSource": ReviewLineData(relatedToCount: 1, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.Dice": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionDice": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.FullyNamed": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.Hamster": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionHamster": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.Named": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.OnOffSwitch": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.Person": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.PrettyTextRepresentable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionPrettyTextRepresentable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.RandomNumberGenerator": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionRandomNumberGenerator": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.SomeClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.SomeClassOnlyProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 0),
+            "ProtocolTestFile.swifttxt.SomeInitProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.SomeOtherClassOnlyProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 0),
+            "ProtocolTestFile.swifttxt.SomeOtherInitProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.SomeProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.SomeSubClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.SomeSuperClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.TextRepresentable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.Togglable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionArray:TextRepresentablewhereElement:TextRepresentable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionCollectionwhereElement:Equatable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 
     func testSwiftUI() throws {
@@ -293,5 +394,11 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
+        let expectedCounts: [String: ReviewLineData] = [
+            "SwiftUITestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "SwiftUITestFile.swifttxt.ViewBuilderExample": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "SwiftUITestFile.swifttxt.ViewBuilderExample.createView()->someView": ReviewLineData(relatedToCount: 1, isContextEndCount: 0),
+        ]
+        compareCounts(counts, expectedCounts)
     }
 }

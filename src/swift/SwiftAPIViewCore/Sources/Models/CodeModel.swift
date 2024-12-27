@@ -216,7 +216,7 @@ class CodeModel: Tokenizable, Encodable {
         let token = ReviewToken(kind: .punctuation, value: value, options: options)
         if value == "}" {
             self.snap(token: token, to: "{")
-            self.currentLine.isContextEndLine = true
+            self.currentLine.isContextEndLine = self.currentLine.tokens.count == 1
         } else if value == "(" {
             // Remove suffix space if preceding token is text
             if let lastToken = currentLine.tokens.last {

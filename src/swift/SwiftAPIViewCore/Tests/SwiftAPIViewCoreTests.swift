@@ -35,6 +35,10 @@ class SwiftAPIViewCoreTests: XCTestCase {
         var relatedToCount: Int;
         /// Counts the number of `isContextEndLine`
         var isContextEndCount: Int;
+
+        var description: String {
+            return "relatedToCount: \(relatedToCount), isContextEndCount: \(isContextEndCount)"
+        }
     }
 
     override func setUpWithError() throws {
@@ -103,7 +107,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
             guard !lines.isEmpty else { return nil }
             var mainMap = [String: ReviewLineData]()
             var lastKey: String? = nil
-            for line in lines {
+            for (idx, line) in lines.enumerated() {
                 let lineId = line.lineId
                 if let related = line.relatedToLine {
                     lastKey = related
@@ -111,7 +115,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
                     subMap.relatedToCount += 1
                     mainMap[related] = subMap
                 }
-                if let _ = line.isContextEndLine {
+                if line.isContextEndLine == true {
                     guard lastKey != nil else {
                         XCTFail("isEndContext found without a related line.")
                         return nil
@@ -132,6 +136,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
                         }
                     }
                 }
+                lastKey = lineId
             }
             return mainMap
         }
@@ -149,7 +154,13 @@ class SwiftAPIViewCoreTests: XCTestCase {
             XCTFail("Key mismatch: \(lhsKeys.description) vs \(rhsKeys.description)")
             return
         }
-        XCTAssertEqual(lhs, rhs)
+        for key in lhs.keys {
+            let lhsVal = lhs[key]!
+            let rhsVal = rhs[key]!
+            if lhsVal != rhsVal {
+                XCTFail("Value mismatch for key \(key): \(lhsVal.description) vs \(rhsVal.description)")
+            }
+        }
     }
 
     // MARK: Tests
@@ -168,7 +179,6 @@ class SwiftAPIViewCoreTests: XCTestCase {
             "AttributesTestFile.swifttxt.ExampleClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "AttributesTestFile.swifttxt.MyClass": ReviewLineData(relatedToCount: 1, isContextEndCount: 0),
             "AttributesTestFile.swifttxt.MyProtocol": ReviewLineData(relatedToCount: 1, isContextEndCount: 0),
-            "AttributesTestFile.swifttxt.MyRenamedProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 0),
             "AttributesTestFile.swifttxt.MyStruct": ReviewLineData(relatedToCount: 2, isContextEndCount: 0),
             "AttributesTestFile.swifttxt.SomeSendable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
         ]

@@ -161,6 +161,7 @@ class DeclarationModel: Tokenizable, Linkable, Equatable {
                 for attr in children {
                     let attrText = attr.withoutTrivia().description.filter { !$0.isWhitespace }
                     a.lineMarker("\(definitionId!).\(attrText)")
+                    a.currentLine.relatedToLine = definitionId
                     attr.tokenize(apiview: a, parent: parent)
                     a.blankLines(set: 0)
                 }

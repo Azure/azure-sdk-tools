@@ -142,13 +142,13 @@ class PackageModel: Tokenizable, Linkable {
         self.extensions = otherExtensions
         // process orphaned extensions
         for ext in extensions {
-            ext.processMembers(withParent: nil)
+            ext.processMembers()
         }
         extensions = extensions.resolveDuplicates()
         // process all extensions associated with members
         for member in members {
             for ext in member.extensions {
-                ext.processMembers(withParent: ext.parent)
+                ext.processMembers()
             }
             member.extensions = member.extensions.resolveDuplicates()
         }

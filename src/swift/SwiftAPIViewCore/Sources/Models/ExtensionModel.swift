@@ -28,13 +28,15 @@ import Foundation
 import SwiftSyntax
 
 
-class ExtensionModel: Tokenizable {
+class ExtensionModel: Tokenizable, Linkable {
     var accessLevel: AccessLevel
     var extendedType: String
-    var definitionId: String
+    var name: String
+    var definitionId: String?
+    // treat extensions as if they have no parents
+    var parent: Linkable? = nil
     var members: [DeclarationModel]
     let childNodes: SyntaxChildren
-    var parent: Linkable?
     private let decl: ExtensionDeclSyntax
 
     /// Initialize from initializer declaration
@@ -53,8 +55,8 @@ class ExtensionModel: Tokenizable {
         }
         self.members = [DeclarationModel]()
         self.decl = decl
-        self.definitionId = ""
-        self.parent = nil
+        self.definitionId = nil
+        self.name = ""
     }
 
     private func identifier(for decl: ExtensionDeclSyntax) -> String {
@@ -71,54 +73,53 @@ class ExtensionModel: Tokenizable {
         return defId
     }
 
-    func processMembers(withParent parent: Linkable?) {
-        self.parent = parent
+    func processMembers() {
         self.definitionId = identifier(for: decl)
         for member in decl.members.members {
             let decl = member.decl
             switch decl.kind {
                 case .actorDecl:
-                    appendIfVisible(DeclarationModel(from: ActorDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: ActorDeclSyntax(decl)!, parent: self))
                 case .classDecl:
-                    appendIfVisible(DeclarationModel(from: ClassDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: ClassDeclSyntax(decl)!, parent: self))
                 case .deinitializerDecl:
                     // deinitializers cannot be called by users, so it makes no sense
                     // to expose them in APIView
                     break
                 case .enumDecl:
-                    appendIfVisible(DeclarationModel(from: EnumDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: EnumDeclSyntax(decl)!, parent: self))
                 case .functionDecl:
-                    appendIfVisible(DeclarationModel(from: FunctionDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: FunctionDeclSyntax(decl)!, parent: self))
                 case .importDecl:
                     // purposely ignore import declarations
                     break
                 case .operatorDecl:
-                    let model = DeclarationModel(from: OperatorDeclSyntax(decl)!, parent: parent)
+                    let model = DeclarationModel(from: OperatorDeclSyntax(decl)!, parent: self)
                     // operators are global and must always be displayed
                     model.accessLevel = .public
                     appendIfVisible(model)
                 case .precedenceGroupDecl:
-                    let model = DeclarationModel(from: PrecedenceGroupDeclSyntax(decl)!, parent: parent)
+                    let model = DeclarationModel(from: PrecedenceGroupDeclSyntax(decl)!, parent: self)
                     // precedence groups are public and must always be displayed
                     model.accessLevel = .public
                     appendIfVisible(model)
                 case .protocolDecl:
-                    appendIfVisible(DeclarationModel(from: ProtocolDeclSyntax(decl)!, parent:  parent))
+                    appendIfVisible(DeclarationModel(from: ProtocolDeclSyntax(decl)!, parent:  self))
                 case .structDecl:
-                    appendIfVisible(DeclarationModel(from: StructDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: StructDeclSyntax(decl)!, parent: self))
                 case .typealiasDecl:
-                    appendIfVisible(DeclarationModel(from: TypealiasDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: TypealiasDeclSyntax(decl)!, parent: self))
                 case .extensionDecl:
                     SharedLogger.warn("Extensions containing extensions is not supported. Contact the Swift APIView team.")
                 case .initializerDecl:
-                    appendIfVisible(DeclarationModel(from: InitializerDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: InitializerDeclSyntax(decl)!, parent: self))
                 case .subscriptDecl:
-                    appendIfVisible(DeclarationModel(from: SubscriptDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: SubscriptDeclSyntax(decl)!, parent: self))
                 case .variableDecl:
-                    appendIfVisible(DeclarationModel(from: VariableDeclSyntax(decl)!, parent: parent))
+                    appendIfVisible(DeclarationModel(from: VariableDeclSyntax(decl)!, parent: self))
                 default:
                     // Create an generic declaration model of unknown type
-                    appendIfVisible(DeclarationModel(from: decl, parent: parent))
+                    appendIfVisible(DeclarationModel(from: decl, parent: self))
                 }
         }
     }
@@ -131,7 +132,7 @@ class ExtensionModel: Tokenizable {
     }
 
     func tokenize(apiview a: CodeModel, parent: Linkable?) {
-        for (idx, child) in childNodes.enumerated() {
+        for child in childNodes {
             var options = ReviewTokenOptions()
             let childIdx = child.indexInParent
             if childIdx == 7 {
@@ -181,7 +182,10 @@ extension Array<ExtensionModel> {
     func resolveDuplicates() -> [ExtensionModel] {
         var resolved = [String: ExtensionModel]()
         for ext in self {
-            if let match = resolved[ext.definitionId] {
+            guard let defId = ext.definitionId else {
+                fatalError("No definition ID found for extension!")
+            }
+            if let match = resolved[defId] {
                 let resolvedMembers = Dictionary(uniqueKeysWithValues: match.members.map { ($0.definitionId, $0) } )
                 for member in ext.members {
                     if resolvedMembers[member.definitionId] != nil {
@@ -191,9 +195,9 @@ extension Array<ExtensionModel> {
                     }
                 }
             } else {
-                resolved[ext.definitionId] = ext
+                resolved[defId] = ext
             }
         }
-        return Array(resolved.values).sorted(by: {$0.definitionId < $1.definitionId })
+        return Array(resolved.values).sorted(by: {$0.definitionId! < $1.definitionId! })
     }
 }

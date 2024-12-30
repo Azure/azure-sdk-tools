@@ -83,7 +83,9 @@ class SwiftAPIViewCoreTests: XCTestCase {
         func validate(line: ReviewLine) {
             // ensure there are no repeated definition IDs
             if let lineId = line.lineId {
-                XCTAssertFalse(lineIds.contains(lineId), "Duplicate line ID: \(lineId)")
+                if lineIds.contains(lineId) {
+                    XCTFail("Duplicate line ID: \(lineId)")
+                }
                 if lineId != "" {
                     lineIds.insert(lineId)
                 }
@@ -215,7 +217,6 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
-        // FIXME: Fix the wonky line IDs for extensions
         let expectedCounts: [String: ReviewLineData] = [
             "ExtensionTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ExtensionTestFile.swifttxt.Point": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
@@ -224,7 +225,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
             "ExtensionTestFile.swifttxt.Size": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "extensionDouble": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "extensionInt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "Kind": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionInt.Kind": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "extensionStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "extensionStackwhereElement:Equatable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
         ]
@@ -256,22 +257,22 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
-        // FIXME: Fix extension line IDs
         let expectedCounts: [String: ReviewLineData] = [
             "GenericsTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "GenericsTestFile.swifttxt.Container": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "extensionContainer": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "extensionContainerwhereItem==Double": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "GenericsTestFile.swifttxt.ContainerAlt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "GenericsTestFile.swifttxt.ContainerStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "extensionContainerStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "GenericsTestFile.swifttxt.IntContainerStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "extensionIntContainerStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "GenericsTestFile.swifttxt.Shape": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "GenericsTestFile.swifttxt.Square": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "GenericsTestFile.swifttxt.Stack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "extensionStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "GenericsTestFile.swifttxt.SuffixableContainer": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionContainer": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionContainerwhereItem==Double": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionContainerwhereItem:Equatable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionContainerStack:SuffixableContainer": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionIntContainerStack:SuffixableContainer": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionStack": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
         ]
         compareCounts(counts, expectedCounts)
     }
@@ -301,7 +302,6 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
-        // FIXME: Fix extension line IDs
         let expectedCounts: [String: ReviewLineData] = [
             "OperatorTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "OperatorTestFile.swifttxt.CongruentPrecedence": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
@@ -321,9 +321,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
         compare(expected: expected, actual: generated)
         validateLineIds(apiview: manager.model!)
         let counts = getRelatedLineMetadata(apiview: manager.model!)
-        let expectedCounts: [String: ReviewLineData] = [
-            "PrivateInternalTestFile.swifttxt": ReviewLineData(relatedToCount: 0, isContextEndCount: 0),
-        ]
+        let expectedCounts: [String: ReviewLineData] = [:]
         compareCounts(counts, expectedCounts)
     }
 
@@ -358,10 +356,9 @@ class SwiftAPIViewCoreTests: XCTestCase {
             "ProtocolTestFile.swifttxt.ComposedPerson": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.CounterDataSource": ReviewLineData(relatedToCount: 1, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.Dice": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "extensionDice": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "extensionDice:TextRepresentable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.FullyNamed": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.Hamster": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "extensionHamster": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.Named": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.OnOffSwitch": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.Person": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
@@ -370,9 +367,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
             "ProtocolTestFile.swifttxt.RandomNumberGenerator": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "extensionRandomNumberGenerator": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.SomeClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "ProtocolTestFile.swifttxt.SomeClassOnlyProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 0),
             "ProtocolTestFile.swifttxt.SomeInitProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
-            "ProtocolTestFile.swifttxt.SomeOtherClassOnlyProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 0),
             "ProtocolTestFile.swifttxt.SomeOtherInitProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.SomeProtocol": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "ProtocolTestFile.swifttxt.SomeSubClass": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
@@ -381,6 +376,8 @@ class SwiftAPIViewCoreTests: XCTestCase {
             "ProtocolTestFile.swifttxt.Togglable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "extensionArray:TextRepresentablewhereElement:TextRepresentable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
             "extensionCollectionwhereElement:Equatable": ReviewLineData(relatedToCount: 0, isContextEndCount: 1),
+            "ProtocolTestFile.swifttxt.CounterDataSource.increment(forCount:Int)->Int": ReviewLineData(relatedToCount: 1, isContextEndCount: 0)
+
         ]
         compareCounts(counts, expectedCounts)
     }

@@ -55,7 +55,7 @@ class NavigationToken: Codable {
         self.navigationId = navigationId
         tags = NavigationTags(typeKind: typeKind)
         for ext in extensions {
-            let extNav = NavigationToken(name: ext.extendedType, navigationId: ext.definitionId, typeKind: .class, members: [])
+            let extNav = NavigationToken(name: ext.extendedType, navigationId: ext.definitionId!, typeKind: .class, members: [])
             childItems.append(extNav)
         }
         // sort the navigation elements by name

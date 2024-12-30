@@ -4,31 +4,31 @@ exports[`ExampleParameter constructor(...) create normal ExampleParameter 1`] = 
 ExampleParameter {
   "exampleValue": ExampleValue {
     "language": undefined,
-    "rawValue": Array [
+    "rawValue": [
       1,
       2,
       3,
     ],
-    "schema": Object {
-      "language": Object {
-        "default": Object {
+    "schema": {
+      "language": {
+        "default": {
           "description": "mocked description",
           "name": "mocked name",
         },
       },
-      "protocol": Object {},
+      "protocol": {},
       "type": "integer",
     },
   },
-  "parameter": Object {
-    "schema": Object {
-      "language": Object {
-        "default": Object {
+  "parameter": {
+    "schema": {
+      "language": {
+        "default": {
           "description": "mocked description",
           "name": "mocked name",
         },
       },
-      "protocol": Object {},
+      "protocol": {},
       "type": "integer",
     },
   },
@@ -37,17 +37,17 @@ ExampleParameter {
 
 exports[`ExampleValue.createInstance(...) create with DataFactoryElement 1`] = `
 ExampleValue {
-  "language": Object {
-    "default": Object {
+  "language": {
+    "default": {
       "description": "mocked description",
       "name": "mocked name",
     },
   },
-  "parentsValue": Object {},
-  "properties": Object {
+  "parentsValue": {},
+  "properties": {
     "type": ExampleValue {
       "language": Languages {
-        "default": Object {
+        "default": {
           "description": "",
           "name": "type",
         },
@@ -55,7 +55,7 @@ ExampleValue {
       "rawValue": "Expression",
       "schema": StringSchema {
         "language": Languages {
-          "default": Object {
+          "default": {
             "description": "",
             "name": "dfe-string-type",
           },
@@ -66,7 +66,7 @@ ExampleValue {
     },
     "value": ExampleValue {
       "language": Languages {
-        "default": Object {
+        "default": {
           "description": "",
           "name": "value",
         },
@@ -74,7 +74,7 @@ ExampleValue {
       "rawValue": "@dataset().MyFolderPath",
       "schema": StringSchema {
         "language": Languages {
-          "default": Object {
+          "default": {
             "description": "",
             "name": "dfe-string-value",
           },
@@ -86,15 +86,15 @@ ExampleValue {
   },
   "schema": ObjectSchema {
     "language": Languages {
-      "default": Object {
+      "default": {
         "description": "",
         "name": "DataFactoryElement-Expression",
       },
     },
-    "properties": Array [
+    "properties": [
       Property {
         "language": Languages {
-          "default": Object {
+          "default": {
             "description": "",
             "name": "type",
           },
@@ -102,7 +102,7 @@ ExampleValue {
         "protocol": Protocols {},
         "schema": StringSchema {
           "language": Languages {
-            "default": Object {
+            "default": {
               "description": "",
               "name": "dfe-string-type",
             },
@@ -114,7 +114,7 @@ ExampleValue {
       },
       Property {
         "language": Languages {
-          "default": Object {
+          "default": {
             "description": "",
             "name": "value",
           },
@@ -122,7 +122,7 @@ ExampleValue {
         "protocol": Protocols {},
         "schema": StringSchema {
           "language": Languages {
-            "default": Object {
+            "default": {
               "description": "",
               "name": "dfe-string-value",
             },
@@ -141,13 +141,13 @@ ExampleValue {
 
 exports[`ExampleValue.createInstance(...) create with DataFactoryElement with Literal value 1`] = `
 ExampleValue {
-  "elements": Array [
+  "elements": [
     ExampleValue {
       "language": undefined,
       "rawValue": "a",
       "schema": StringSchema {
         "language": Languages {
-          "default": Object {
+          "default": {
             "description": "",
             "name": "dfe-list-string-element",
           },
@@ -161,7 +161,7 @@ ExampleValue {
       "rawValue": "b",
       "schema": StringSchema {
         "language": Languages {
-          "default": Object {
+          "default": {
             "description": "",
             "name": "dfe-list-string-element",
           },
@@ -175,7 +175,7 @@ ExampleValue {
       "rawValue": "c",
       "schema": StringSchema {
         "language": Languages {
-          "default": Object {
+          "default": {
             "description": "",
             "name": "dfe-list-string-element",
           },
@@ -185,8 +185,8 @@ ExampleValue {
       },
     },
   ],
-  "language": Object {
-    "default": Object {
+  "language": {
+    "default": {
       "description": "mocked description",
       "name": "mocked name",
     },
@@ -194,7 +194,7 @@ ExampleValue {
   "schema": ArraySchema {
     "elementType": StringSchema {
       "language": Languages {
-        "default": Object {
+        "default": {
           "description": "",
           "name": "dfe-list-string-element",
         },
@@ -203,7 +203,7 @@ ExampleValue {
       "type": "string",
     },
     "language": Languages {
-      "default": Object {
+      "default": {
         "description": "",
         "name": "dfe-list-string",
       },
@@ -216,25 +216,25 @@ ExampleValue {
 
 exports[`ExampleValue.createInstance(...) create with primitive schema 1`] = `
 ExampleValue {
-  "language": Object {
-    "default": Object {
+  "language": {
+    "default": {
       "description": "mocked description",
       "name": "mocked name",
     },
   },
-  "rawValue": Array [
+  "rawValue": [
     1,
     2,
     3,
   ],
-  "schema": Object {
-    "language": Object {
-      "default": Object {
+  "schema": {
+    "language": {
+      "default": {
         "description": "mocked description",
         "name": "mocked name",
       },
     },
-    "protocol": Object {},
+    "protocol": {},
     "type": "any",
   },
 }
@@ -242,65 +242,65 @@ ExampleValue {
 
 exports[`ExampleValue.createInstance(...) recursively call on array element schema 1`] = `
 ExampleValue {
-  "elements": Array [
+  "elements": [
     ExampleValue {
       "language": undefined,
       "rawValue": 1,
-      "schema": Object {
-        "language": Object {
-          "default": Object {
+      "schema": {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
+        "protocol": {},
         "type": "integer",
       },
     },
     ExampleValue {
       "language": undefined,
       "rawValue": 2,
-      "schema": Object {
-        "language": Object {
-          "default": Object {
+      "schema": {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
+        "protocol": {},
         "type": "integer",
       },
     },
     ExampleValue {
       "language": undefined,
       "rawValue": 3,
-      "schema": Object {
-        "language": Object {
-          "default": Object {
+      "schema": {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
+        "protocol": {},
         "type": "integer",
       },
     },
   ],
-  "language": Object {
-    "default": Object {
+  "language": {
+    "default": {
       "description": "mocked description",
       "name": "mocked name",
     },
   },
-  "schema": Object {
-    "elementType": Object {
-      "language": Object {
-        "default": Object {
+  "schema": {
+    "elementType": {
+      "language": {
+        "default": {
           "description": "mocked description",
           "name": "mocked name",
         },
       },
-      "protocol": Object {},
+      "protocol": {},
       "type": "integer",
     },
     "type": "array",
@@ -310,60 +310,60 @@ ExampleValue {
 
 exports[`ExampleValue.createInstance(...) recursively call on dictionary element schema 1`] = `
 ExampleValue {
-  "language": Object {
-    "default": Object {
+  "language": {
+    "default": {
       "description": "mocked description",
       "name": "mocked name",
     },
   },
-  "properties": Object {
+  "properties": {
     "abc": ExampleValue {
       "language": undefined,
       "rawValue": 1,
-      "schema": Object {
-        "language": Object {
-          "default": Object {
+      "schema": {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
+        "protocol": {},
         "type": "integer",
       },
     },
     "bcd": ExampleValue {
       "language": undefined,
       "rawValue": 2,
-      "schema": Object {
-        "language": Object {
-          "default": Object {
+      "schema": {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
+        "protocol": {},
         "type": "integer",
       },
     },
   },
-  "schema": Object {
-    "elementType": Object {
-      "language": Object {
-        "default": Object {
+  "schema": {
+    "elementType": {
+      "language": {
+        "default": {
           "description": "mocked description",
           "name": "mocked name",
         },
       },
-      "protocol": Object {},
+      "protocol": {},
       "type": "integer",
     },
-    "language": Object {
-      "default": Object {
+    "language": {
+      "default": {
         "description": "mocked description",
         "name": "mocked name",
       },
     },
-    "protocol": Object {},
+    "protocol": {},
     "type": "dictionary",
   },
 }
@@ -371,103 +371,103 @@ ExampleValue {
 
 exports[`ExampleValue.createInstance(...) recursively call on object element schema 1`] = `
 ExampleValue {
-  "language": Object {
-    "default": Object {
+  "language": {
+    "default": {
       "description": "mocked description",
       "name": "mocked name",
     },
   },
-  "parentsValue": Object {},
-  "properties": Object {
+  "parentsValue": {},
+  "properties": {
     "abc": ExampleValue {
-      "language": Object {
-        "default": Object {
+      "language": {
+        "default": {
           "description": "mocked description",
           "name": "mocked name",
         },
       },
       "rawValue": 1,
-      "schema": Object {
-        "language": Object {
-          "default": Object {
+      "schema": {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
+        "protocol": {},
         "type": "integer",
       },
     },
     "bcd": ExampleValue {
-      "language": Object {
-        "default": Object {
+      "language": {
+        "default": {
           "description": "mocked description",
           "name": "mocked name",
         },
       },
       "rawValue": 2,
-      "schema": Object {
-        "language": Object {
-          "default": Object {
+      "schema": {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
+        "protocol": {},
         "type": "integer",
       },
     },
   },
-  "schema": Object {
-    "language": Object {
-      "default": Object {
+  "schema": {
+    "language": {
+      "default": {
         "description": "mocked description",
         "name": "mocked name",
       },
     },
-    "properties": Array [
-      Object {
-        "language": Object {
-          "default": Object {
+    "properties": [
+      {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
-        "schema": Object {
-          "language": Object {
-            "default": Object {
+        "protocol": {},
+        "schema": {
+          "language": {
+            "default": {
               "description": "mocked description",
               "name": "mocked name",
             },
           },
-          "protocol": Object {},
+          "protocol": {},
           "type": "integer",
         },
         "serializedName": "abc",
       },
-      Object {
-        "language": Object {
-          "default": Object {
+      {
+        "language": {
+          "default": {
             "description": "mocked description",
             "name": "mocked name",
           },
         },
-        "protocol": Object {},
-        "schema": Object {
-          "language": Object {
-            "default": Object {
+        "protocol": {},
+        "schema": {
+          "language": {
+            "default": {
               "description": "mocked description",
               "name": "mocked name",
             },
           },
-          "protocol": Object {},
+          "protocol": {},
           "type": "integer",
         },
         "serializedName": "bcd",
       },
     ],
-    "protocol": Object {},
+    "protocol": {},
     "type": "object",
   },
 }
@@ -619,7 +619,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                   - version: '2.0'
                 maxLength: 90
                 minLength: 1
-                pattern: ^[-\\\\w\\\\._\\\\(\\\\)]+$
+                pattern: ^[-\\w\\._\\(\\)]+$
                 language:
                   default:
                     name: String
@@ -1213,20 +1213,20 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                                         language:
                                           default:
                                             name: ResourceType
-                                            description: The type of the resource. E.g. \\"Microsoft.Compute/virtualMachines\\" or \\"Microsoft.Storage/storageAccounts\\"
+                                            description: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                                           go:
                                             name: string
-                                            description: The type of the resource. E.g. \\"Microsoft.Compute/virtualMachines\\" or \\"Microsoft.Storage/storageAccounts\\"
+                                            description: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                                         protocol: {}
                                       readOnly: true
                                       serializedName: type
                                       language: &ref_47
                                         default:
                                           name: type
-                                          description: The type of the resource. E.g. \\"Microsoft.Compute/virtualMachines\\" or \\"Microsoft.Storage/storageAccounts\\"
+                                          description: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                                         go:
                                           name: Type
-                                          description: READ-ONLY; The type of the resource. E.g. \\"Microsoft.Compute/virtualMachines\\" or \\"Microsoft.Storage/storageAccounts\\"
+                                          description: READ-ONLY; The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                                       protocol: {}
                                   serializationFormats:
                                     - json
@@ -1345,7 +1345,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                                           - version: 2020-05-12-preview
                                         maxLength: 100
                                         minLength: 2
-                                        pattern: ^([1-9]|10).\\\\d$
+                                        pattern: ^([1-9]|10).\\d$
                                         language:
                                           default:
                                             name: FarmBeatsExtensionPropertiesFarmBeatsExtensionVersion
@@ -1900,7 +1900,7 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                             type: string
                             apiVersions:
                               - version: 2020-05-12-preview
-                            pattern: ^([1-9]|10).\\\\d$
+                            pattern: ^([1-9]|10).\\d$
                             language:
                               default:
                                 name: ExtensionPropertiesInstalledExtensionVersion
@@ -9083,40 +9083,40 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                               language:
                                 default:
                                   name: OperationName
-                                  description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: \\"Microsoft.Compute/virtualMachines/write\\", \\"Microsoft.Compute/virtualMachines/capture/action\\"'
+                                  description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: "Microsoft.Compute/virtualMachines/write", "Microsoft.Compute/virtualMachines/capture/action"'
                                 go:
                                   name: string
-                                  description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: \\"Microsoft.Compute/virtualMachines/write\\", \\"Microsoft.Compute/virtualMachines/capture/action\\"'
+                                  description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: "Microsoft.Compute/virtualMachines/write", "Microsoft.Compute/virtualMachines/capture/action"'
                               protocol: {}
                             readOnly: true
                             serializedName: name
                             language: &ref_372
                               default:
                                 name: name
-                                description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: \\"Microsoft.Compute/virtualMachines/write\\", \\"Microsoft.Compute/virtualMachines/capture/action\\"'
+                                description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: "Microsoft.Compute/virtualMachines/write", "Microsoft.Compute/virtualMachines/capture/action"'
                               go:
                                 name: Name
-                                description: 'READ-ONLY; The name of the operation, as per Resource-Based Access Control (RBAC). Examples: \\"Microsoft.Compute/virtualMachines/write\\", \\"Microsoft.Compute/virtualMachines/capture/action\\"'
+                                description: 'READ-ONLY; The name of the operation, as per Resource-Based Access Control (RBAC). Examples: "Microsoft.Compute/virtualMachines/write", "Microsoft.Compute/virtualMachines/capture/action"'
                             protocol: {}
                           - schema: &ref_375
                               type: boolean
                               language:
                                 default:
                                   name: Boolean
-                                  description: Whether the operation applies to data-plane. This is \\"true\\" for data-plane operations and \\"false\\" for ARM/control-plane operations.
+                                  description: Whether the operation applies to data-plane. This is "true" for data-plane operations and "false" for ARM/control-plane operations.
                                 go:
                                   name: bool
-                                  description: Whether the operation applies to data-plane. This is \\"true\\" for data-plane operations and \\"false\\" for ARM/control-plane operations.
+                                  description: Whether the operation applies to data-plane. This is "true" for data-plane operations and "false" for ARM/control-plane operations.
                               protocol: {}
                             readOnly: true
                             serializedName: isDataAction
                             language: &ref_374
                               default:
                                 name: isDataAction
-                                description: Whether the operation applies to data-plane. This is \\"true\\" for data-plane operations and \\"false\\" for ARM/control-plane operations.
+                                description: Whether the operation applies to data-plane. This is "true" for data-plane operations and "false" for ARM/control-plane operations.
                               go:
                                 name: IsDataAction
-                                description: READ-ONLY; Whether the operation applies to data-plane. This is \\"true\\" for data-plane operations and \\"false\\" for ARM/control-plane operations.
+                                description: READ-ONLY; Whether the operation applies to data-plane. This is "true" for data-plane operations and "false" for ARM/control-plane operations.
                             protocol: {}
                           - schema: &ref_377
                               type: object
@@ -9130,20 +9130,20 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                                     language:
                                       default:
                                         name: OperationDisplayProvider
-                                        description: The localized friendly form of the resource provider name, e.g. \\"Microsoft Monitoring Insights\\" or \\"Microsoft Compute\\".
+                                        description: The localized friendly form of the resource provider name, e.g. "Microsoft Monitoring Insights" or "Microsoft Compute".
                                       go:
                                         name: string
-                                        description: The localized friendly form of the resource provider name, e.g. \\"Microsoft Monitoring Insights\\" or \\"Microsoft Compute\\".
+                                        description: The localized friendly form of the resource provider name, e.g. "Microsoft Monitoring Insights" or "Microsoft Compute".
                                     protocol: {}
                                   readOnly: true
                                   serializedName: provider
                                   language: &ref_378
                                     default:
                                       name: provider
-                                      description: The localized friendly form of the resource provider name, e.g. \\"Microsoft Monitoring Insights\\" or \\"Microsoft Compute\\".
+                                      description: The localized friendly form of the resource provider name, e.g. "Microsoft Monitoring Insights" or "Microsoft Compute".
                                     go:
                                       name: Provider
-                                      description: READ-ONLY; The localized friendly form of the resource provider name, e.g. \\"Microsoft Monitoring Insights\\" or \\"Microsoft Compute\\".
+                                      description: READ-ONLY; The localized friendly form of the resource provider name, e.g. "Microsoft Monitoring Insights" or "Microsoft Compute".
                                   protocol: {}
                                 - schema: &ref_381
                                     type: string
@@ -9152,20 +9152,20 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                                     language:
                                       default:
                                         name: OperationDisplayResource
-                                        description: The localized friendly name of the resource type related to this operation. E.g. \\"Virtual Machines\\" or \\"Job Schedule Collections\\".
+                                        description: The localized friendly name of the resource type related to this operation. E.g. "Virtual Machines" or "Job Schedule Collections".
                                       go:
                                         name: string
-                                        description: The localized friendly name of the resource type related to this operation. E.g. \\"Virtual Machines\\" or \\"Job Schedule Collections\\".
+                                        description: The localized friendly name of the resource type related to this operation. E.g. "Virtual Machines" or "Job Schedule Collections".
                                     protocol: {}
                                   readOnly: true
                                   serializedName: resource
                                   language: &ref_380
                                     default:
                                       name: resource
-                                      description: The localized friendly name of the resource type related to this operation. E.g. \\"Virtual Machines\\" or \\"Job Schedule Collections\\".
+                                      description: The localized friendly name of the resource type related to this operation. E.g. "Virtual Machines" or "Job Schedule Collections".
                                     go:
                                       name: Resource
-                                      description: READ-ONLY; The localized friendly name of the resource type related to this operation. E.g. \\"Virtual Machines\\" or \\"Job Schedule Collections\\".
+                                      description: READ-ONLY; The localized friendly name of the resource type related to this operation. E.g. "Virtual Machines" or "Job Schedule Collections".
                                   protocol: {}
                                 - schema: &ref_383
                                     type: string
@@ -9174,20 +9174,20 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                                     language:
                                       default:
                                         name: OperationDisplayOperation
-                                        description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. \\"Create or Update Virtual Machine\\", \\"Restart Virtual Machine\\".
+                                        description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
                                       go:
                                         name: string
-                                        description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. \\"Create or Update Virtual Machine\\", \\"Restart Virtual Machine\\".
+                                        description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
                                     protocol: {}
                                   readOnly: true
                                   serializedName: operation
                                   language: &ref_382
                                     default:
                                       name: operation
-                                      description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. \\"Create or Update Virtual Machine\\", \\"Restart Virtual Machine\\".
+                                      description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
                                     go:
                                       name: Operation
-                                      description: READ-ONLY; The concise, localized friendly name for the operation; suitable for dropdowns. E.g. \\"Create or Update Virtual Machine\\", \\"Restart Virtual Machine\\".
+                                      description: READ-ONLY; The concise, localized friendly name for the operation; suitable for dropdowns. E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
                                   protocol: {}
                                 - schema: &ref_385
                                     type: string
@@ -9271,10 +9271,10 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                               language:
                                 default:
                                   name: Origin
-                                  description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is \\"user,system\\"
+                                  description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is "user,system"
                                 go:
                                   name: Origin
-                                  description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is \\"user,system\\"
+                                  description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is "user,system"
                                   possibleValuesFunc: PossibleOriginValues
                               protocol: {}
                             readOnly: true
@@ -9282,10 +9282,10 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                             language:
                               default:
                                 name: origin
-                                description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is \\"user,system\\"
+                                description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is "user,system"
                               go:
                                 name: Origin
-                                description: READ-ONLY; The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is \\"user,system\\"
+                                description: READ-ONLY; The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is "user,system"
                             protocol: {}
                           - schema:
                               choices:
@@ -9304,10 +9304,10 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                               language:
                                 default:
                                   name: ActionType
-                                  description: Enum. Indicates the action type. \\"Internal\\" refers to actions that are for internal only APIs.
+                                  description: Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
                                 go:
                                   name: ActionType
-                                  description: Enum. Indicates the action type. \\"Internal\\" refers to actions that are for internal only APIs.
+                                  description: Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
                                   possibleValuesFunc: PossibleActionTypeValues
                               protocol: {}
                             readOnly: true
@@ -9315,10 +9315,10 @@ exports[`TestCodeModel functions genMockTests genMockTests 1`] = `
                             language:
                               default:
                                 name: actionType
-                                description: Enum. Indicates the action type. \\"Internal\\" refers to actions that are for internal only APIs.
+                                description: Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
                               go:
                                 name: ActionType
-                                description: READ-ONLY; Enum. Indicates the action type. \\"Internal\\" refers to actions that are for internal only APIs.
+                                description: READ-ONLY; Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
                             protocol: {}
                         serializationFormats:
                           - json
@@ -10029,7 +10029,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                   - version: '2.0'
                 maxLength: 90
                 minLength: 1
-                pattern: ^[-\\\\w\\\\._\\\\(\\\\)]+$
+                pattern: ^[-\\w\\._\\(\\)]+$
                 language:
                   default:
                     name: String
@@ -10623,20 +10623,20 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                                         language:
                                           default:
                                             name: ResourceType
-                                            description: The type of the resource. E.g. \\"Microsoft.Compute/virtualMachines\\" or \\"Microsoft.Storage/storageAccounts\\"
+                                            description: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                                           go:
                                             name: string
-                                            description: The type of the resource. E.g. \\"Microsoft.Compute/virtualMachines\\" or \\"Microsoft.Storage/storageAccounts\\"
+                                            description: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                                         protocol: {}
                                       readOnly: true
                                       serializedName: type
                                       language: &ref_47
                                         default:
                                           name: type
-                                          description: The type of the resource. E.g. \\"Microsoft.Compute/virtualMachines\\" or \\"Microsoft.Storage/storageAccounts\\"
+                                          description: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                                         go:
                                           name: Type
-                                          description: READ-ONLY; The type of the resource. E.g. \\"Microsoft.Compute/virtualMachines\\" or \\"Microsoft.Storage/storageAccounts\\"
+                                          description: READ-ONLY; The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or "Microsoft.Storage/storageAccounts"
                                       protocol: {}
                                   serializationFormats:
                                     - json
@@ -10755,7 +10755,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                                           - version: 2020-05-12-preview
                                         maxLength: 100
                                         minLength: 2
-                                        pattern: ^([1-9]|10).\\\\d$
+                                        pattern: ^([1-9]|10).\\d$
                                         language:
                                           default:
                                             name: FarmBeatsExtensionPropertiesFarmBeatsExtensionVersion
@@ -11310,7 +11310,7 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                             type: string
                             apiVersions:
                               - version: 2020-05-12-preview
-                            pattern: ^([1-9]|10).\\\\d$
+                            pattern: ^([1-9]|10).\\d$
                             language:
                               default:
                                 name: ExtensionPropertiesInstalledExtensionVersion
@@ -18345,40 +18345,40 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                               language:
                                 default:
                                   name: OperationName
-                                  description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: \\"Microsoft.Compute/virtualMachines/write\\", \\"Microsoft.Compute/virtualMachines/capture/action\\"'
+                                  description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: "Microsoft.Compute/virtualMachines/write", "Microsoft.Compute/virtualMachines/capture/action"'
                                 go:
                                   name: string
-                                  description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: \\"Microsoft.Compute/virtualMachines/write\\", \\"Microsoft.Compute/virtualMachines/capture/action\\"'
+                                  description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: "Microsoft.Compute/virtualMachines/write", "Microsoft.Compute/virtualMachines/capture/action"'
                               protocol: {}
                             readOnly: true
                             serializedName: name
                             language: &ref_365
                               default:
                                 name: name
-                                description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: \\"Microsoft.Compute/virtualMachines/write\\", \\"Microsoft.Compute/virtualMachines/capture/action\\"'
+                                description: 'The name of the operation, as per Resource-Based Access Control (RBAC). Examples: "Microsoft.Compute/virtualMachines/write", "Microsoft.Compute/virtualMachines/capture/action"'
                               go:
                                 name: Name
-                                description: 'READ-ONLY; The name of the operation, as per Resource-Based Access Control (RBAC). Examples: \\"Microsoft.Compute/virtualMachines/write\\", \\"Microsoft.Compute/virtualMachines/capture/action\\"'
+                                description: 'READ-ONLY; The name of the operation, as per Resource-Based Access Control (RBAC). Examples: "Microsoft.Compute/virtualMachines/write", "Microsoft.Compute/virtualMachines/capture/action"'
                             protocol: {}
                           - schema: &ref_368
                               type: boolean
                               language:
                                 default:
                                   name: Boolean
-                                  description: Whether the operation applies to data-plane. This is \\"true\\" for data-plane operations and \\"false\\" for ARM/control-plane operations.
+                                  description: Whether the operation applies to data-plane. This is "true" for data-plane operations and "false" for ARM/control-plane operations.
                                 go:
                                   name: bool
-                                  description: Whether the operation applies to data-plane. This is \\"true\\" for data-plane operations and \\"false\\" for ARM/control-plane operations.
+                                  description: Whether the operation applies to data-plane. This is "true" for data-plane operations and "false" for ARM/control-plane operations.
                               protocol: {}
                             readOnly: true
                             serializedName: isDataAction
                             language: &ref_367
                               default:
                                 name: isDataAction
-                                description: Whether the operation applies to data-plane. This is \\"true\\" for data-plane operations and \\"false\\" for ARM/control-plane operations.
+                                description: Whether the operation applies to data-plane. This is "true" for data-plane operations and "false" for ARM/control-plane operations.
                               go:
                                 name: IsDataAction
-                                description: READ-ONLY; Whether the operation applies to data-plane. This is \\"true\\" for data-plane operations and \\"false\\" for ARM/control-plane operations.
+                                description: READ-ONLY; Whether the operation applies to data-plane. This is "true" for data-plane operations and "false" for ARM/control-plane operations.
                             protocol: {}
                           - schema: &ref_370
                               type: object
@@ -18392,20 +18392,20 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                                     language:
                                       default:
                                         name: OperationDisplayProvider
-                                        description: The localized friendly form of the resource provider name, e.g. \\"Microsoft Monitoring Insights\\" or \\"Microsoft Compute\\".
+                                        description: The localized friendly form of the resource provider name, e.g. "Microsoft Monitoring Insights" or "Microsoft Compute".
                                       go:
                                         name: string
-                                        description: The localized friendly form of the resource provider name, e.g. \\"Microsoft Monitoring Insights\\" or \\"Microsoft Compute\\".
+                                        description: The localized friendly form of the resource provider name, e.g. "Microsoft Monitoring Insights" or "Microsoft Compute".
                                     protocol: {}
                                   readOnly: true
                                   serializedName: provider
                                   language: &ref_371
                                     default:
                                       name: provider
-                                      description: The localized friendly form of the resource provider name, e.g. \\"Microsoft Monitoring Insights\\" or \\"Microsoft Compute\\".
+                                      description: The localized friendly form of the resource provider name, e.g. "Microsoft Monitoring Insights" or "Microsoft Compute".
                                     go:
                                       name: Provider
-                                      description: READ-ONLY; The localized friendly form of the resource provider name, e.g. \\"Microsoft Monitoring Insights\\" or \\"Microsoft Compute\\".
+                                      description: READ-ONLY; The localized friendly form of the resource provider name, e.g. "Microsoft Monitoring Insights" or "Microsoft Compute".
                                   protocol: {}
                                 - schema: &ref_374
                                     type: string
@@ -18414,20 +18414,20 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                                     language:
                                       default:
                                         name: OperationDisplayResource
-                                        description: The localized friendly name of the resource type related to this operation. E.g. \\"Virtual Machines\\" or \\"Job Schedule Collections\\".
+                                        description: The localized friendly name of the resource type related to this operation. E.g. "Virtual Machines" or "Job Schedule Collections".
                                       go:
                                         name: string
-                                        description: The localized friendly name of the resource type related to this operation. E.g. \\"Virtual Machines\\" or \\"Job Schedule Collections\\".
+                                        description: The localized friendly name of the resource type related to this operation. E.g. "Virtual Machines" or "Job Schedule Collections".
                                     protocol: {}
                                   readOnly: true
                                   serializedName: resource
                                   language: &ref_373
                                     default:
                                       name: resource
-                                      description: The localized friendly name of the resource type related to this operation. E.g. \\"Virtual Machines\\" or \\"Job Schedule Collections\\".
+                                      description: The localized friendly name of the resource type related to this operation. E.g. "Virtual Machines" or "Job Schedule Collections".
                                     go:
                                       name: Resource
-                                      description: READ-ONLY; The localized friendly name of the resource type related to this operation. E.g. \\"Virtual Machines\\" or \\"Job Schedule Collections\\".
+                                      description: READ-ONLY; The localized friendly name of the resource type related to this operation. E.g. "Virtual Machines" or "Job Schedule Collections".
                                   protocol: {}
                                 - schema: &ref_376
                                     type: string
@@ -18436,20 +18436,20 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                                     language:
                                       default:
                                         name: OperationDisplayOperation
-                                        description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. \\"Create or Update Virtual Machine\\", \\"Restart Virtual Machine\\".
+                                        description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
                                       go:
                                         name: string
-                                        description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. \\"Create or Update Virtual Machine\\", \\"Restart Virtual Machine\\".
+                                        description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
                                     protocol: {}
                                   readOnly: true
                                   serializedName: operation
                                   language: &ref_375
                                     default:
                                       name: operation
-                                      description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. \\"Create or Update Virtual Machine\\", \\"Restart Virtual Machine\\".
+                                      description: The concise, localized friendly name for the operation; suitable for dropdowns. E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
                                     go:
                                       name: Operation
-                                      description: READ-ONLY; The concise, localized friendly name for the operation; suitable for dropdowns. E.g. \\"Create or Update Virtual Machine\\", \\"Restart Virtual Machine\\".
+                                      description: READ-ONLY; The concise, localized friendly name for the operation; suitable for dropdowns. E.g. "Create or Update Virtual Machine", "Restart Virtual Machine".
                                   protocol: {}
                                 - schema: &ref_378
                                     type: string
@@ -18533,10 +18533,10 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                               language:
                                 default:
                                   name: Origin
-                                  description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is \\"user,system\\"
+                                  description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is "user,system"
                                 go:
                                   name: Origin
-                                  description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is \\"user,system\\"
+                                  description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is "user,system"
                                   possibleValuesFunc: PossibleOriginValues
                               protocol: {}
                             readOnly: true
@@ -18544,10 +18544,10 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                             language:
                               default:
                                 name: origin
-                                description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is \\"user,system\\"
+                                description: The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is "user,system"
                               go:
                                 name: Origin
-                                description: READ-ONLY; The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is \\"user,system\\"
+                                description: READ-ONLY; The intended executor of the operation; as in Resource Based Access Control (RBAC) and audit logs UX. Default value is "user,system"
                             protocol: {}
                           - schema:
                               choices:
@@ -18566,10 +18566,10 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                               language:
                                 default:
                                   name: ActionType
-                                  description: Enum. Indicates the action type. \\"Internal\\" refers to actions that are for internal only APIs.
+                                  description: Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
                                 go:
                                   name: ActionType
-                                  description: Enum. Indicates the action type. \\"Internal\\" refers to actions that are for internal only APIs.
+                                  description: Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
                                   possibleValuesFunc: PossibleActionTypeValues
                               protocol: {}
                             readOnly: true
@@ -18577,10 +18577,10 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
                             language:
                               default:
                                 name: actionType
-                                description: Enum. Indicates the action type. \\"Internal\\" refers to actions that are for internal only APIs.
+                                description: Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
                               go:
                                 name: ActionType
-                                description: READ-ONLY; Enum. Indicates the action type. \\"Internal\\" refers to actions that are for internal only APIs.
+                                description: READ-ONLY; Enum. Indicates the action type. "Internal" refers to actions that are for internal only APIs.
                             protocol: {}
                         serializationFormats:
                           - json
@@ -19151,21 +19151,21 @@ exports[`TestCodeModel functions genMockTests with some example disabled genMock
 `;
 
 exports[`tools for core getFlattenedNames() 1`] = `
-Array [
+[
   "AA",
   "BB",
 ]
 `;
 
 exports[`tools for core getFlattenedNames() 2`] = `
-Array [
+[
   "CC",
   "DD",
 ]
 `;
 
 exports[`tools for core getFlattenedNames() 3`] = `
-Array [
+[
   "EE",
 ]
 `;

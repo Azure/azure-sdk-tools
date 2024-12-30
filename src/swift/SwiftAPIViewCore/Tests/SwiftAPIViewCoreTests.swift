@@ -109,7 +109,7 @@ class SwiftAPIViewCoreTests: XCTestCase {
             guard !lines.isEmpty else { return nil }
             var mainMap = [String: ReviewLineData]()
             var lastKey: String? = nil
-            for (idx, line) in lines.enumerated() {
+            for line in lines {
                 let lineId = line.lineId
                 if let related = line.relatedToLine {
                     lastKey = related

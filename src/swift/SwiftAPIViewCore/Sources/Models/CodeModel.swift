@@ -252,45 +252,12 @@ class CodeModel: Tokenizable, Encodable {
         self.token(kind: .typeName, value: name, options: newOptions)
     }
 
-//    // FIXME: This!
-//    func findNonFunctionParent(from item: DeclarationModel?) -> DeclarationModel? {
-//        guard let item = item else { return nil }
-//        switch item.kind {
-//        case .method:
-//            // look to the parent of the function
-//            return findNonFunctionParent(from: (item.parent as? DeclarationModel))
-//        default:
-//            return item
-//        }
-//    }
-
     /// Link to a registered type
     func typeReference(name: String, options: ReviewTokenOptions? = nil) {
         var newOptions = options ?? ReviewTokenOptions()
         newOptions.navigateToId = options?.navigateToId ?? CodeModel.missingId
         self.token(kind: .typeName, value: name, options: newOptions)
     }
-
-//    // FIXME: This!
-//    func definitionId(for val: String, withParent parent: DeclarationModel?) -> String? {
-//        var matchVal = val
-//        if !matchVal.contains("."), let parentObject = findNonFunctionParent(from: parent), let parentDefId = parentObject.definitionId {
-//            // if a plain, undotted name is provided, try to append the parent prefix
-//            matchVal = "\(parentDefId).\(matchVal)"
-//        }
-//        let matches: [String]
-//        if matchVal.contains(".") {
-//            matches = definitionIds.filter { $0.hasSuffix(matchVal) }
-//        } else {
-//            // if type does not contain a dot, then suffix is insufficient
-//            // we must completely match the final segment of the type name
-//            matches = definitionIds.filter { $0.split(separator: ".").last! == matchVal }
-//        }
-//        if matches.count > 1 {
-//            SharedLogger.warn("Found \(matches.count) matches for \(matchVal). Using \(matches.first!). Swift APIView may not link correctly.")
-//        }
-//        return matches.first
-//    }
 
     func member(name: String, options: ReviewTokenOptions? = nil) {
         self.token(kind: .memberName, value: name, options: options)
@@ -362,7 +329,6 @@ class CodeModel: Tokenizable, Encodable {
         self.currentLine = ReviewLine()
     }
 
-    // FIXME: This!
     /// Constructs a definition ID and ensures it is unique.
     func defId(forName name: String, withPrefix prefix: String?) -> String {
         var defId = prefix != nil ? "\(prefix!).\(name)" : name

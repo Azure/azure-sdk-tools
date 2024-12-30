@@ -124,7 +124,6 @@ class PackageModel: Tokenizable, Linkable {
         a.blankLines(set: 0)
         options.applySpacing(SwiftSyntax.TokenKind.rightBrace.spacing)
         a.punctuation("}", options: options)
-        resolveTypeReferences(apiview: a)
         a.blankLines(set: 0)
     }
 
@@ -168,18 +167,6 @@ class PackageModel: Tokenizable, Linkable {
         }
         members = Array(uniqueMembers.values)
         members = members.sorted(by: { $0.definitionId! < $1.definitionId! })
-    }
-
-    /// attempt to resolve type references that are declared after they are used
-    func resolveTypeReferences(apiview a: CodeModel) {
-        for line in a.reviewLines {
-            for (idx, token) in line.tokens.enumerated() {
-                // FIXME: Fix this up.
-//                guard token.navigateToId == CodeModel.unresolved else { continue }
-//                line.tokens[idx].navigateToId = a.definitionId(for: token.value!, withParent: nil)
-//                assert (line.tokens[idx].navigateToId != CodeModel.unresolved)
-            }
-        }
     }
 
     func appendIfVisible(_ decl: DeclarationModel) {

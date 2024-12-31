@@ -161,15 +161,20 @@ class CodeModel: Tokenizable, Encodable {
         self.token(kind: .text, value: text, options: options)
     }
 
-    func newline() {
-        // ensure no trailing space at the end of the line
-        if self.currentLine.tokens.count > 0 {
-            let lastToken = currentLine.tokens.last
-            lastToken?.hasSuffixSpace = false
-            let firstToken = currentLine.tokens.first
-            firstToken?.hasPrefixSpace =  false
+
+    /// Ensure that `currentLine` has no leading or trailing space
+    func trimBeginningAndEnd() {
+        if let firstToken = currentLine.tokens.first {
+            firstToken.hasPrefixSpace =  false
         }
 
+        if let lastToken = currentLine.tokens.last {
+            lastToken.hasSuffixSpace = false
+        }
+    }
+
+    func newline() {
+        trimBeginningAndEnd()
         if let currentParent = self.currentParent {
             currentParent.children.append(self.currentLine)
         } else {
@@ -299,10 +304,7 @@ class CodeModel: Tokenizable, Encodable {
 
     /// Wraps code in indentattion
     func indent(_ indentedCode: () -> Void) {
-        // ensure no trailing space at the end of the line
-        let lastToken = self.currentLine.tokens.last
-        lastToken?.hasSuffixSpace = false
-
+        trimBeginningAndEnd()
         if let currentParent = self.currentParent {
             currentParent.children.append(self.currentLine)
             self.parentStack.append(currentParent)

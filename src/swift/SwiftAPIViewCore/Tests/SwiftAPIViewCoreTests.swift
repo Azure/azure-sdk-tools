@@ -81,6 +81,20 @@ class SwiftAPIViewCoreTests: XCTestCase {
     private func validateLineIds(apiview: CodeModel) {
 
         func validate(line: ReviewLine) {
+            // ensure first token does not have prefix space
+            // and last does not have suffix space
+            if let firstToken = line.tokens.first {
+                if firstToken.hasPrefixSpace ?? false {
+                    XCTFail("Unexpected prefix space on first token")
+                }
+            }
+
+            if let lastToken = line.tokens.last {
+                if lastToken.hasSuffixSpace ?? false {
+                    XCTFail("Unexpected suffix space on last token")
+                }
+            }
+
             // ensure there are no repeated definition IDs
             if let lineId = line.lineId {
                 if lineIds.contains(lineId) {

@@ -4,6 +4,7 @@ Package parsed using Swift APIView (version 0.2.2)
 package SwiftUITestFile.swifttxt {
     public class ViewBuilderExample {
         public func testViewBuilder(@ViewBuilder content: () -> Content)
+
         @ViewBuilder
         public func createView() -> some View
     }

@@ -1,4 +1,3 @@
-import * as commonmark from "commonmark";
 import * as jsYaml from "js-yaml";
 
 /**
@@ -27,27 +26,23 @@ export interface RepositoryConfiguration {
   after_scripts: string[];
 }
 
-function findSwaggerToSDKYamlBlocks(parsedMarkdownNode: commonmark.Node | undefined | null): commonmark.Node[] {
-  const result: commonmark.Node[] = [];
-  if (parsedMarkdownNode) {
-    const nodesToVisit: commonmark.Node[] = [parsedMarkdownNode];
-    while (nodesToVisit.length > 0) {
-      const node: commonmark.Node = nodesToVisit.shift()!;
-
-      if (node.firstChild) {
-        nodesToVisit.push(node.firstChild);
-      }
-      if (node.next) {
-        nodesToVisit.push(node.next);
-      }
-
-      if (node.type === "code_block" && node.info && node.info.toLowerCase().indexOf("$(swagger-to-sdk)") !== -1) {
-        result.push(node);
-      }
-    }
+/**
+ * Extract the code block from the markdown.
+ * @param parseMarkdown 
+ */
+export function findMarkdownCodeBlocks(parseMarkdown: string):{ info: string; content: string;}[] {
+  const codeBlockRegex = /```(.*?)\n([\s\S]*?)```/g;
+  const codeBlocks: { info: string; content: string }[] = [];
+  let match: null | RegExpExecArray;
+  
+  while ((match = codeBlockRegex.exec(parseMarkdown)) !== null) {
+    const info = match[1].trim();
+    const content = match[2].trim();
+    codeBlocks.push({ info, content });
   }
-  return result;
-}
+
+  return codeBlocks;
+ }
 
 /**
  * Parse the contents of an AutoRest readme.md configuration file and return the parsed swagger to
@@ -57,12 +52,11 @@ function findSwaggerToSDKYamlBlocks(parsedMarkdownNode: commonmark.Node | undefi
 export function findSwaggerToSDKConfiguration(readmeMdFileContents: string | undefined): ReadmeMdSwaggerToSDKConfiguration | undefined {
   let result: ReadmeMdSwaggerToSDKConfiguration | undefined;
   if (readmeMdFileContents) {
-    const markdownParser = new commonmark.Parser();
-    const parsedReadmeMd: commonmark.Node = markdownParser.parse(readmeMdFileContents);
-    const swaggerToSDKYamlBlocks: commonmark.Node[] = findSwaggerToSDKYamlBlocks(parsedReadmeMd);
+    const swaggerToSDKBlocks:{ info: string; content: string;}[] = findMarkdownCodeBlocks(readmeMdFileContents);
+    const swaggerToSDKYamlBlocks = swaggerToSDKBlocks.filter((block) => block.info.toLowerCase().indexOf("$(swagger-to-sdk)") !== -1);
     const repositories: RepositoryConfiguration[] = [];
     for (const swaggerToSDKYamlBlock of swaggerToSDKYamlBlocks) {
-      const yamlBlockContents: string | null = swaggerToSDKYamlBlock.literal;
+      const yamlBlockContents: string | null = swaggerToSDKYamlBlock.content;
       if (yamlBlockContents) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const yaml: any = jsYaml.safeLoad(yamlBlockContents);
@@ -73,8 +67,8 @@ export function findSwaggerToSDKConfiguration(readmeMdFileContents: string | und
             repositories.push(...swaggerToSDK);
           }
         }
-      }
-    }
+      }  
+    } 
     result = { repositories };
   }
   return result;

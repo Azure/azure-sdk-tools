@@ -2,7 +2,7 @@ import { parseSemverVersionString } from '../src/utils/parseSemverVersionString'
 import { removeAnsiEscapeCodes, removeDuplicatesFromRelatedFiles, diffStringArrays } from '../src/utils/utils';
 import { WorkflowContext } from '../src/automation/workflow';
 import * as typespecUtils from '../src/utils/typespecUtils';
-import { findSwaggerToSDKBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
+import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
 import path from 'path';
 import fs from 'fs';
 
@@ -219,6 +219,20 @@ describe('remove relatedTypeSpecProjectFolder & relatedReadmeMdFiles duplicates'
 })
 
 describe('test diffStringArrays between breakingchanges from generate script and present suppressions', () => {
+  it('test diffStringArrays if both same', () => {
+    const left = [
+      "Function `*LinkerClient.NewListPager` has been removed",
+    ]
+    const right = [
+      "Function `*LinkerClient.NewListPager` has been removed",
+    ]
+    const res = diffStringArrays(left, right);
+    expect(res.hasDiff).toEqual(false)
+    expect(res.diffResult).toEqual([
+      "\tFunction `*LinkerClient.NewListPager` has been removed",
+    ])
+  })
+
   it('test diffStringArrays only added', () => {
     const left = [
       "Function `*LinkerClient.NewListPager` has been removed",
@@ -234,14 +248,40 @@ describe('test diffStringArrays between breakingchanges from generate script and
       "+\t'Type of `OperationStatus.Properties` has been changed from `map[string]interface{}` to `interface{}`'",
     ])
   })
+
+  
+  it('test diffStringArrays only removed', () => {
+    const left = [
+      "Function `*LinkerClient.NewListPager` has been removed",
+    ]
+    const right = []
+    const res = diffStringArrays(left, right);
+    expect(res.hasDiff).toEqual(false)
+    expect(res.diffResult).toEqual([])
+  })
+
+  
+  it('test diffStringArrays edit both', () => {
+    const left = [
+      "Function `*LinkerClient.NewListPager` has been select",
+    ]
+    const right = [
+      "'Type of `OperationStatus.Properties` has been changed from `map[string]interface{}` to `interface{}`'",
+    ]
+    const res = diffStringArrays(left, right);
+    expect(res.hasDiff).toEqual(true)
+    expect(res.diffResult).toEqual([
+      "+\t'Type of `OperationStatus.Properties` has been changed from `map[string]interface{}` to `interface{}`'",
+    ])
+  })
 })
 
 describe('find SDK Swagger Config from readme.md', () => {
   const rootPath = process.cwd();
   const readmeMdPath = path.join(rootPath, './test/test.readme.md');
   const readmeContent = fs.readFileSync(readmeMdPath).toString();
-  it('test findSwaggerToSDKBlocks from readme.md', () => {
-    const blockContent = findSwaggerToSDKBlocks(readmeContent);
+  it('test findMarkdownCodeBlocks from readme.md', () => {
+    const blockContent = findMarkdownCodeBlocks(readmeContent);
     expect(blockContent.length).toEqual(6);
   })
 

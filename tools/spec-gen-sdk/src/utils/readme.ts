@@ -26,7 +26,11 @@ export interface RepositoryConfiguration {
   after_scripts: string[];
 }
 
-export function findSwaggerToSDKBlocks(parseMarkdown: string):{ info: string; content: string;}[] {
+/**
+ * Extract the code block from the markdown.
+ * @param parseMarkdown 
+ */
+export function findMarkdownCodeBlocks(parseMarkdown: string):{ info: string; content: string;}[] {
   const codeBlockRegex = /```(.*?)\n([\s\S]*?)```/g;
   const codeBlocks: { info: string; content: string }[] = [];
   let match: null | RegExpExecArray;
@@ -48,7 +52,7 @@ export function findSwaggerToSDKBlocks(parseMarkdown: string):{ info: string; co
 export function findSwaggerToSDKConfiguration(readmeMdFileContents: string | undefined): ReadmeMdSwaggerToSDKConfiguration | undefined {
   let result: ReadmeMdSwaggerToSDKConfiguration | undefined;
   if (readmeMdFileContents) {
-    const swaggerToSDKBlocks:{ info: string; content: string;}[] = findSwaggerToSDKBlocks(readmeMdFileContents);
+    const swaggerToSDKBlocks:{ info: string; content: string;}[] = findMarkdownCodeBlocks(readmeMdFileContents);
     const swaggerToSDKYamlBlocks = swaggerToSDKBlocks.filter((block) => block.info.toLowerCase().indexOf("$(swagger-to-sdk)") !== -1);
     const repositories: RepositoryConfiguration[] = [];
     for (const swaggerToSDKYamlBlock of swaggerToSDKYamlBlocks) {

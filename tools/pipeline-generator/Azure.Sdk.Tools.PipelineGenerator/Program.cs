@@ -185,7 +185,7 @@ namespace PipelineGenerator
                     return ExitCondition.DuplicateComponentsFound;
                 }
 
-                var updatedDefinitions = new List<BuildDefinition>();
+                var definitions = new List<BuildDefinition>();
                 foreach (var component in components)
                 {
                     logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
@@ -202,7 +202,7 @@ namespace PipelineGenerator
                             OpenBrowser(definition.GetWebUrl());
                         }
 
-                        updatedDefinitions.Add(definition);
+                        definitions.Add(definition);
                     }
                 }
 
@@ -216,8 +216,8 @@ namespace PipelineGenerator
                     var pipelines = pipelinePermissions["pipelines"].AsArray();
                     var pipelineIdsWithPermissions = new HashSet<int>(pipelines.Select(p => p["id"].GetValue<int>()));
 
-                    bool needsUpdate = false;
-                    foreach (var definition in updatedDefinitions)
+                    int definitionsToAdd = 0;
+                    foreach (var definition in definitions)
                     {
                         // Check this pipeline has permissions
                         if (!pipelineIdsWithPermissions.Contains(definition.Id))
@@ -232,12 +232,15 @@ namespace PipelineGenerator
                                 }
                             );
 
-                            needsUpdate = true;
+                            definitionsToAdd++;
                         }
                     }
 
-                    if (needsUpdate)
+                    logger.LogInformation("'{0}' pipelines already have permissions to service connection '{1}'. Need to grant permission to '{2}' more.", pipelineIdsWithPermissions.Count, serviceConnection.Id, definitionsToAdd);
+
+                    if (definitionsToAdd > 0)
                     {
+                        logger.LogInformation("Granting permissions for '{0}' definitions to service connection '{1}'.", definitionsToAdd, serviceConnection.Id);
                         // Update the permissions if we added anything
                         await context.UpdatePipelinePermissionsAsync(serviceConnection.Id, pipelinePermissions, cancellationToken);
                     }

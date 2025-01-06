@@ -29,8 +29,14 @@ function main() {
 
     // Create a structured document
     let document = '';
+    const processedItems = new Set<string>();
 
     function processItem(item: Item, indent: string = '') {
+        if (item.name && processedItems.has(item.name)) {
+            return;
+        }
+        item.name && processedItems.add(item.name);
+
         if (item.docs) {
             document += `${indent}/// ${item.docs}\n`;
         }
@@ -45,14 +51,40 @@ function main() {
                 }
                 document += `${indent}}\n`;
             } else if (item.inner.function) {
-                document += `${indent}pub fn ${item.name}()\n`;
+                document += `${indent}pub fn ${item.name}`;
+                if (item.inner.function.generics.params.length > 0) {
+                    document += `<${item.inner.function.generics.params.map((param: any) => param.name).join(', ')}>`;
+                }
+                document += `(${item.inner.function.sig.inputs.map((input: any) => {
+                    if (input[1].primitive) {
+                        return `${input[0]}: ${input[1].primitive}`;
+                    } else if (input[1].resolved_path) {
+                        return `${input[0]}: ${input[1].resolved_path.name}`;
+                    } else if (input[1].borrowed_ref) {
+                        return `${input[0]}: &${input[1].borrowed_ref.type.generic}`;
+                    } else {
+                        return `${input[0]}: unknown`;
+                    }
+                }).join(', ')})`;
+                if (item.inner.function.sig.output) {
+                    if (item.inner.function.sig.output.primitive) {
+                        document += ` -> ${item.inner.function.sig.output.primitive}`;
+                    } else if (item.inner.function.sig.output.resolved_path) {
+                        document += ` -> ${item.inner.function.sig.output.resolved_path.name}`;
+                    }
+                }
+                document += `\n`;
             } else if (item.inner.struct) {
                 document += `${indent}pub struct ${item.name} {\n`;
                 if (item.inner.struct.fields) {
                     item.inner.struct.fields.forEach((fieldId: string) => {
                         const fieldItem = apiJson.index[fieldId];
                         if (fieldItem && fieldItem.inner.struct_field) {
-                            document += `${indent}    pub ${fieldItem.name}: ${fieldItem.inner.struct_field.primitive},\n`;
+                            if (fieldItem.inner.struct_field.primitive) {
+                                document += `${indent}    pub ${fieldItem.name}: ${fieldItem.inner.struct_field.primitive},\n`;
+                            } else if (fieldItem.inner.struct_field.resolved_path) {
+                                document += `${indent}    pub ${fieldItem.name}: ${fieldItem.inner.struct_field.resolved_path.name},\n`;
+                            }
                         }
                     });
                 }
@@ -62,8 +94,30 @@ function main() {
                 if (item.inner.trait.items) {
                     item.inner.trait.items.forEach((methodId: string) => {
                         const methodItem = apiJson.index[methodId];
-                        if (methodItem && methodItem.name) {
-                            document += `${indent}    fn ${methodItem.name}(&self);\n`;
+                        if (methodItem && methodItem.inner.function) {
+                            document += `${indent}    fn ${methodItem.name}`;
+                            if (methodItem.inner.function.generics.params.length > 0) {
+                                document += `<${methodItem.inner.function.generics.params.map((param: any) => param.name).join(', ')}>`;
+                            }
+                            document += `(${methodItem.inner.function.sig.inputs.map((input: any) => {
+                                if (input[1].primitive) {
+                                    return `${input[0]}: ${input[1].primitive}`;
+                                } else if (input[1].resolved_path) {
+                                    return `${input[0]}: ${input[1].resolved_path.name}`;
+                                } else if (input[1].borrowed_ref) {
+                                    return `${input[0]}: &${input[1].borrowed_ref.type.generic}`;
+                                } else {
+                                    return `${input[0]}: unknown`;
+                                }
+                            }).join(', ')})`;
+                            if (methodItem.inner.function.sig.output) {
+                                if (methodItem.inner.function.sig.output.primitive) {
+                                    document += ` -> ${methodItem.inner.function.sig.output.primitive}`;
+                                } else if (methodItem.inner.function.sig.output.resolved_path) {
+                                    document += ` -> ${methodItem.inner.function.sig.output.resolved_path.name}`;
+                                }
+                            }
+                            document += `;\n`;
                         }
                     });
                 }
@@ -72,9 +126,14 @@ function main() {
         }
     }
 
-    for (const item of Object.values(apiJson.index)) {
-        processItem(item);
-    }
+    // Find the root modules
+    const rootModules = Object.values(apiJson.index).filter(item => item.inner.module && item.span && item.span.filename === 'sdk/temp-project/docs/src/lib.rs');
+
+    // Debug: Print root modules
+    console.log('Root Modules:', rootModules.map(item => item.name));
+
+    // Process each root module
+    rootModules.forEach(rootModule => processItem(rootModule));
 
     // Write the document to a file
     const outputFilePath = 'outputs/exported_api_surface.rs';

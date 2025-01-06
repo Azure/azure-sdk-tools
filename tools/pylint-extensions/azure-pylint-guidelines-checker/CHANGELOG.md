@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.0 (unreleased)
+## 0.5.0 (2025-01-06)
 
 - Added `httpx` as an import flagged by C4749(networking-import-outside-azure-core-transport)
 - Checker to warn against legacy typing (do-not-use-legacy-typing)

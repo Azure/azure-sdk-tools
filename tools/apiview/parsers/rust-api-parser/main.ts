@@ -7,7 +7,7 @@ interface Span {
 }
 
 interface Item {
-    id: any;
+    id: string;
     name?: string;
     docs?: string;
     visibility: string;

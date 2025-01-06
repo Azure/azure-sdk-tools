@@ -40,8 +40,6 @@ function main() {
 
     const rootModules = Object.values(apiJson.index).filter(item =>
         item.inner.module &&
-        item.span &&
-        item.span.filename === 'sdk/temp-project/docs/src/lib.rs' &&
         item.id && !childModuleIds.has(item.id)
     );
 

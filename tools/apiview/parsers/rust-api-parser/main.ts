@@ -7,6 +7,7 @@ interface Span {
 }
 
 interface Item {
+    id: any;
     name?: string;
     docs?: string;
     visibility: string;
@@ -26,6 +27,26 @@ function main() {
 
     // Parse the JSON data
     const apiJson: ApiJson = JSON.parse(data);
+
+    // Identify root modules
+    const childModuleIds = new Set<string>();
+    Object.values(apiJson.index).forEach(item => {
+        if (item.inner.module && item.inner.module.items) {
+            item.inner.module.items.forEach((childId: string) => {
+                childModuleIds.add(childId);
+            });
+        }
+    });
+
+    const rootModules = Object.values(apiJson.index).filter(item =>
+        item.inner.module &&
+        item.span &&
+        item.span.filename === 'sdk/temp-project/docs/src/lib.rs' &&
+        item.id && !childModuleIds.has(item.id)
+    );
+
+    // Debug: Print root modules
+    console.log('Root Modules:', rootModules.map(item => item.name));
 
     // Create a structured document
     let document = '';
@@ -125,12 +146,6 @@ function main() {
             }
         }
     }
-
-    // Find the root modules
-    const rootModules = Object.values(apiJson.index).filter(item => item.inner.module && item.span && item.span.filename === 'sdk/temp-project/docs/src/lib.rs');
-
-    // Debug: Print root modules
-    console.log('Root Modules:', rootModules.map(item => item.name));
 
     // Process each root module
     rootModules.forEach(rootModule => processItem(rootModule));

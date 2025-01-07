@@ -1,6 +1,7 @@
 import * as fs from 'fs';
-import { ApiJson, Item } from './utils/interfaces';
+import { ApiJson } from './utils/interfaces';
 import { getDocument, processItem } from './utils/processItem';
+import { getRootModules } from './utils/rootModules';
 
 function main() {
     // Read the JSON file
@@ -9,20 +10,7 @@ function main() {
     // Parse the JSON data
     let apiJson: ApiJson = JSON.parse(data);
 
-    // Identify root modules
-    const childModuleIds = new Set<string>();
-    Object.values(apiJson.index).forEach(item => {
-        if (item.inner.module && item.inner.module.items) {
-            item.inner.module.items.forEach((childId: string) => {
-                childModuleIds.add(childId);
-            });
-        }
-    });
-
-    const rootModules = Object.values(apiJson.index).filter(item =>
-        item.inner.module &&
-        item.id && !childModuleIds.has(item.id)
-    );
+    const rootModules = getRootModules(apiJson);
 
     // Debug: Print root modules
     console.log('Root Modules:', rootModules.map(item => item.name));

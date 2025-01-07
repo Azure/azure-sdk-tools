@@ -10,7 +10,7 @@ export async function migratePackage(packageDirectory: string): Promise<void> {
     // Note: bug in migration tool: failed to create review directory
     await ensureDir(posix.join(packageDirectory, 'review'));
     await runCommand(
-        "pnpm",
+        "npm",
         `exec dev-tool admin migrate-package --package-name=${info.name}`.split(
             " "
         ),

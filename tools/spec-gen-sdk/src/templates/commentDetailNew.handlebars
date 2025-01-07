@@ -3,7 +3,7 @@
   <li>
     <div>
 {{renderStatus status}}{{#if failureType}}{{failureType}}{{else}}{{renderStatusName status}}{{/if}}
-{{#if useMergedRoutine}}Release -{{/if}} in generating from {{specCommitSha}}. {{renderSDKNameMapping config.sdkName}} Automation {{version}} </div>
+ in generating from {{config.specCommitSha}}. spec-gen-sdk {{config.version}} </div>
     {{#if messages}}
       {{renderMessagesUnifiedPipeline messages status}}
     {{/if}}
@@ -13,7 +13,7 @@
     <div>
       <span>{{renderStatus status}}<b>{{name}}</b>
         {{#if generationPullRequestUrl}}
-        [<a href="{{generationPullRequestUrl}}">{{#if ../useMergedRoutine}}Release{{else}}Preview{{/if}} {{renderSDKNameMapping ../config.sdkName}} Changes</a>]
+        [<a href="{{generationPullRequestUrl}}">Preview {{config.sdkName}} Changes</a>]
         {{/if}}
         {{#if (shouldRender hasBreakingChange isBetaMgmtSdk)}}
         <b>Breaking Change Detected</b> 

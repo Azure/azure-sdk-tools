@@ -96,6 +96,21 @@ describe.sequential("Verify commands", () => {
     assert.isTrue(dir.isFile());
   });
 
+  it("Generate with alternate entrypoint", async () => {
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/sdk/alternate-entrypoint"),
+        "local-spec-repo":
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
+      };
+      await updateCommand(args);
+    } catch (error) {
+      assert.fail(`Failed to generate. Error: ${error}`);
+    }
+    const tspLocation = await readTspLocation("./test/examples/sdk/alternate-entrypoint");
+    assert.equal(tspLocation.entrypointFile, "foo.tsp");
+  });
+
   it("Update example sdk", async () => {
     try {
       const args = {

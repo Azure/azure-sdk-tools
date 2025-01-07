@@ -13,6 +13,7 @@ export interface TspLocation {
   commit: string;
   repo: string;
   additionalDirectories?: string[];
+  entrypointFile?: string;
 }
 
 export function resolveTspConfigUrl(configUrl: string): {
@@ -42,18 +43,32 @@ export function resolveTspConfigUrl(configUrl: string): {
   }
 }
 
-export async function discoverMainFile(srcDir: string): Promise<string> {
+export async function discoverEntrypointFile(
+  srcDir: string,
+  specifiedEntrypointFile?: string,
+): Promise<string> {
   Logger.debug(`Discovering entry file in ${srcDir}`);
-  let entryTsp = "";
+  let entryTsp: string | undefined = undefined;
   const files = await readdir(srcDir, { recursive: true });
-  for (const file of files) {
-    if (file.includes("client.tsp") || file.includes("main.tsp")) {
-      entryTsp = file;
-      Logger.debug(`Found entry file: ${entryTsp}`);
-      return entryTsp;
+
+  function findEntrypoint(name: string): string | undefined {
+    return files.find((file) => file.endsWith(name)) ?? undefined;
+  }
+  if (specifiedEntrypointFile) {
+    entryTsp = findEntrypoint(specifiedEntrypointFile);
+    if (!entryTsp) {
+      throw new Error(
+        `Couldn't find the entrypoint file specified in tsp-location.yaml: "${specifiedEntrypointFile}". Please verify that the entrypoint file name is correct.`,
+      );
+    }
+  } else {
+    entryTsp = findEntrypoint("client.tsp") ?? findEntrypoint("main.tsp");
+    if (!entryTsp) {
+      throw new Error(`No main.tsp or client.tsp found`);
     }
   }
-  throw new Error(`No main.tsp or client.tsp found`);
+  Logger.debug(`Found entry file: ${entryTsp}`);
+  return entryTsp;
 }
 
 export async function compileTsp({

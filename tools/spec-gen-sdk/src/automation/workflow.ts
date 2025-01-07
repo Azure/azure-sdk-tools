@@ -230,7 +230,7 @@ export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
     context.logger.info(`SDK to generate:${context.config.sdkName}`);
   }
   else {
-    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
+    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the related tspconfig.yaml or readme.md`);
   }
   context.logger.log('endsection', 'Validate SDK configuration');
 };
@@ -614,7 +614,7 @@ const workflowCallGenerateScript = async (
   const statusContext = { status: 'succeeded' as SDKAutomationState };
   let generateOutput: GenerateOutput | undefined = undefined;
   const generateInput: GenerateInput = {
-    specFolder: path.relative(context.config.workingFolder, context.specFolder),
+    specFolder: path.relative(context.sdkFolder, context.specFolder),
     headSha: context.config.specCommitSha,
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
     changedFiles,

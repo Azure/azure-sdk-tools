@@ -27,6 +27,7 @@ export type SpecGenSdkCliConfig = {
   specRepoHttpsUrl: string;
   headRepoHttpsUrl?: string;
   headBranch?: string;
+  version: string;
 };
 
 const initCliConfig = (argv) : SpecGenSdkCliConfig => {
@@ -45,6 +46,7 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
     headRepoHttpsUrl: argv.headRepoHttpsUrl,
     headBranch: argv.headBranch,
+    version: packageJson.version
   };
 };
 
@@ -73,7 +75,8 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       headBranch: config.headBranch,
       isTriggeredByPipeline: config.isTriggeredByPipeline,
       runEnv: config.isTriggeredByPipeline ? 'azureDevOps' : 'local',
-      branchPrefix: 'sdkAuto'
+      branchPrefix: 'sdkAuto',
+      version: config.version
     });
   } catch (e) {
     console.error(e.message);
@@ -173,7 +176,7 @@ yargs(hideBin(process.argv))
           description: "The branch of the head repository of the specification pull request",
         },
         'api-version': {
-          alias: "v",
+          alias: "apiv",
           type: "string",
           description: "The version of the API spec to be used to generate the SDK",
         }

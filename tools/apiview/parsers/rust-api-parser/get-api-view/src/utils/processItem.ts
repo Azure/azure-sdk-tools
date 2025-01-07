@@ -3,16 +3,26 @@ import { ApiJson, Item } from "./interfaces";
 let document = '';
 const processedItems = new Set<string>();
 
+/**
+ * Processes an item from the API JSON and appends its documentation to the document.
+ * 
+ * @param {ApiJson} apiJson - The API JSON object containing all items.
+ * @param {Item} item - The item to process.
+ * @param {string} [indent=''] - The indentation to use for the item's documentation.
+ */
 export function processItem(apiJson: ApiJson, item: Item, indent: string = '') {
+    // Check if the item has already been processed
     if (item.name && processedItems.has(item.name)) {
         return;
     }
     item.name && processedItems.add(item.name);
 
+    // Append the item's documentation to the document
     if (item.docs) {
         document += `${indent}/// ${item.docs}\n`;
     }
 
+    // Process the item based on its visibility and type
     if (item.visibility === 'public') {
         if (item.inner.module) {
             processModule(apiJson, item, indent);
@@ -26,6 +36,13 @@ export function processItem(apiJson: ApiJson, item: Item, indent: string = '') {
     }
 }
 
+/**
+ * Processes a module item and appends its documentation to the document.
+ * 
+ * @param {ApiJson} apiJson - The API JSON object containing all items.
+ * @param {Item} item - The module item to process.
+ * @param {string} indent - The indentation to use for the module's documentation.
+ */
 function processModule(apiJson: ApiJson, item: Item, indent: string) {
     document += `${indent}pub mod ${item.name} {\n`;
     if (item.inner.module.items) {
@@ -37,6 +54,12 @@ function processModule(apiJson: ApiJson, item: Item, indent: string) {
     document += `${indent}}\n`;
 }
 
+/**
+ * Processes a function item and appends its documentation to the document.
+ * 
+ * @param {Item} item - The function item to process.
+ * @param {string} indent - The indentation to use for the function's documentation.
+ */
 function processFunction(item: Item, indent: string) {
     document += `${indent}pub fn ${item.name}`;
     if (item.inner.function.generics.params.length > 0) {
@@ -63,6 +86,13 @@ function processFunction(item: Item, indent: string) {
     document += `\n`;
 }
 
+/**
+ * Processes a struct item and appends its documentation to the document.
+ * 
+ * @param {ApiJson} apiJson - The API JSON object containing all items.
+ * @param {Item} item - The struct item to process.
+ * @param {string} indent - The indentation to use for the struct's documentation.
+ */
 function processStruct(apiJson: ApiJson, item: Item, indent: string) {
     document += `${indent}pub struct ${item.name} {\n`;
     if (item.inner.struct.kind.plain.fields) {
@@ -80,6 +110,13 @@ function processStruct(apiJson: ApiJson, item: Item, indent: string) {
     document += `${indent}}\n`;
 }
 
+/**
+ * Processes a trait item and appends its documentation to the document.
+ * 
+ * @param {ApiJson} apiJson - The API JSON object containing all items.
+ * @param {Item} item - The trait item to process.
+ * @param {string} indent - The indentation to use for the trait's documentation.
+ */
 function processTrait(apiJson: ApiJson, item: Item, indent: string) {
     document += `${indent}pub trait ${item.name} {\n`;
     if (item.inner.trait.items) {

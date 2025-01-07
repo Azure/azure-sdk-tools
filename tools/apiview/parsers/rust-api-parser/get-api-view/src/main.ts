@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import { ApiJson, Item } from './interfaces';
-import { getDocument, processItem } from './processItem';
+import { ApiJson, Item } from './utils/interfaces';
+import { getDocument, processItem } from './utils/processItem';
 
 function main() {
     // Read the JSON file

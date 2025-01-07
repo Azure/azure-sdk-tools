@@ -35,7 +35,7 @@ This TypeScript tool processes the cleaned JSON output from `clean-rust-doc-outp
    ```
 4. Run the tool using:
    ```sh
-   ts-node main.ts
+   ts-node src/main.ts
    ```
 
 ## Contributing

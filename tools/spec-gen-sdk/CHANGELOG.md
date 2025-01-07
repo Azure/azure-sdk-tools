@@ -1,6 +1,6 @@
 # Release
 
-## 2025-01-7 - 0.1.2
+## 2025-01-07 - 0.1.2
 
 - Cleaned up dependencies
 - Set variables for pipeline scenarios

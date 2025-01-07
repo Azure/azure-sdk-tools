@@ -21,11 +21,13 @@ This Rust project reads a Rustdoc JSON file and generates a new JSON file captur
         cargo +nightly rustdoc -Z unstable-options --output-format json --package docs --no-default-features
     ```
 
-2. **Run the project**:
+2. Put the generted `docs.json` file in the `inputs` folder of this project.
+
+3. **Run the project**:
 
     ```sh
     cargo run
     ```
 
-3. **Output**:
+4. **Output**:
    The exported API surface will be saved to `docs.api.json` in the root directory.

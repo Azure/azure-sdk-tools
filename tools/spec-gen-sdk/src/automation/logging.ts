@@ -1,9 +1,7 @@
 import * as winston from 'winston';
 import { default as Transport } from 'winston-transport';
-import { AppendBlobClient } from '@azure/storage-blob';
-import { SdkAutoContext } from './entrypoint';
-import { PackageData } from '../types/PackageData';
 import { SDKAutomationState } from './sdkAutomationState';
+import { setTimeout } from 'timers/promises';
 
 export const sdkAutoLogLevels = {
   levels: {
@@ -123,121 +121,25 @@ export class CommentCaptureTransport extends Transport {
   }
 }
 
-export const getBlobName = (context: Pick<SdkAutoContext, 'config'>, fileName: string, pkg?: PackageData) => {
-  let blobName = `${context.config.specRepo.owner}/${context.config.pullNumber}/${context.config.sdkName}`;
-  if (pkg) {
-    blobName = `${blobName}/${pkg.name.replace('/', '_')}`;
-  }
-  return `${blobName}/${fileName}`;
-};
-
-export const loggerStorageAccountTransport = async (
-  context: Pick<SdkAutoContext, 'blobContainerClient' | 'config'>,
-  blobName: string
-) => {
-  const blobClient = context.blobContainerClient.getAppendBlobClient(blobName);
-  if (context.config.runEnv === 'test') {
-    return {
-      blobTransport: new CommentCaptureTransport({ extraLevelFilter: [], output: [] }),
-      blobUrl: blobClient.url,
-      blobName
-    };
-  }
-
-  await blobClient.deleteIfExists();
-  await blobClient.create();
-  const blobTransport = new StorageBlobTransport({
-    format: winston.format.combine(winston.format.timestamp({ format: 'hh:mm:ss.SS' })),
-    blobClient
+export const loggerFileTransport = (fileName: string) => {
+  return new winston.transports.File({
+    filename: fileName,
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp({ format: 'hh:mm:ss.SSS' }),
+      winston.format.printf(formatLog)
+    ),
   });
-
-  return {
-    blobTransport,
-    blobUrl: blobClient.url,
-    blobName
-  };
 };
-
-interface StorageBlobTransportOptions extends winston.transport.TransportStreamOptions {
-  blobClient: AppendBlobClient;
-}
-
-class StorageBlobTransport extends Transport {
-  private bufferedMessages: string[] = [];
-  private bufferedCallbacks: (() => void)[] = [];
-  private waitToFlushCallbacks: (() => void)[] = [];
-  private isWriting: boolean = false;
-
-  constructor(private opts: StorageBlobTransportOptions) {
-    super(opts);
-  }
-
-  public log(info: WinstonInfo, callback: () => void): void {
-    this.bufferedMessages.push(formatLog(info) + '\n');
-    // this.bufferedCallbacks.push(callback);
-    // tslint:disable-next-line: no-floating-promises
-    this.writeBufferedMessages();
-    callback();
-  }
-
-  public async waitToFlush(): Promise<void> {
-    if (!this.isWriting) {
-      return;
-    }
-    return new Promise(resolve => {
-      this.waitToFlushCallbacks.push(resolve);
-    });
-  }
-
-  // public close() {
-  //   if (!this.isWriting) {
-  //     this.emit('finish');
-  //     return;
-  //   }
-
-  //   this.bufferedCallbacks.push(() => this.emit('finish'));
-  // }
-
-  private async writeBufferedMessages(): Promise<void> {
-    if (this.isWriting) {
-      return;
-    }
-
-    this.isWriting = true;
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    while (this.bufferedMessages.length > 0 || this.bufferedCallbacks.length > 0) {
-      const toWrite = this.bufferedMessages.join('');
-      const toCall = this.bufferedCallbacks;
-      this.bufferedMessages = [];
-      this.bufferedCallbacks = [];
-
-      try {
-        if (toWrite.length > 0) {
-          await this.opts.blobClient.appendBlock(toWrite, toWrite.length);
-        }
-      } catch (err) {
-        this.emit('error', err);
-      }
-
-      for (const cb of toCall) {
-        cb();
-      }
-    }
-    this.isWriting = false;
-
-    const waitToFlushCallbacks = this.waitToFlushCallbacks;
-    this.waitToFlushCallbacks = [];
-    for (const cb of waitToFlushCallbacks) {
-      cb();
-    }
-  }
-}
 
 export const loggerWaitToFinish = async (logger: winston.Logger) => {
   logger.info('Wait for logger transports to complete');
   for (const transport of logger.transports) {
-    if (transport instanceof StorageBlobTransport) {
-      await transport.waitToFlush();
+    if (transport instanceof winston.transports.File) {
+      if (transport.end) {
+          transport.end();
+          await setTimeout(2000);
+        }
     }
   }
 };

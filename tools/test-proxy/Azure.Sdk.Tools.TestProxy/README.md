@@ -25,6 +25,7 @@ to documentation in your specific language repository in order to configure reco
     - [Port Assignation](#port-assignation)
       - [Environment Variable](#environment-variable)
       - [Input arguments](#input-arguments)
+      - [Auto port binding](#auto-port-binding)
   - [Environment Variables](#environment-variables)
   - [How do I use the test-proxy to get a recording?](#how-do-i-use-the-test-proxy-to-get-a-recording)
     - [Installation and initial run](#installation-and-initial-run)
@@ -213,7 +214,7 @@ By default, the server will listen on the following port mappings:
 | http | 5000 |
 | https | 5001 |
 
-> [!WARNING]  
+> [!WARNING]
 > **MacOS** users should be aware that `airplay` by default utilizes port 5000. Ensure the port is free or use a non-default port as described below.
 
 #### Environment Variable
@@ -234,6 +235,27 @@ For example, you can use command line argument `--urls` to bind to a non-default
 ```powershell
 test-proxy -- --urls "http://localhost:9000;https://localhost:9001"
 ```
+
+#### Auto port binding
+
+Because the test-proxy honors the ASP.NET server configuration environment variable and CLI arguments, users can allow the test-proxy to automatically choose what port it binds to.
+
+The trick is to provide override the default ASP.NET url to `http://0.0.0.0:0;https://0.0.0.0:0` via `ASPNETCORE_URLS` env variable or `-- --urls` CLI argument.
+
+Then, the user must listen to the stdout from the `test-proxy` process and parse out the following:
+
+```
+|>test-proxy start -- --urls "http://0.0.0.0:0;https://0.0.0.0:0"
+Running proxy version is Azure.Sdk.Tools.TestProxy 20241209.1
+...
+[11:40:31] info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://0.0.0.0:55552
+[11:40:31] info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: https://0.0.0.0:55553
+...
+```
+
+To discover the mapped ports.
 
 ## Environment Variables
 
@@ -282,6 +304,8 @@ test-proxy --storage-location "C:/repo/sdk-for-net/"
 ```
 
 We start a test run by POST-ing to either `/Record/Start` or `/Playback/Start`. Within the body of the post request we provide a file location within JSON body key `x-recording-file`.
+
+**Note:** The test-proxy supports external storage of recordings. In this context there is an additional body key `x-recording-assets-file` that must be provided. Read more about this in the `asset-sync` [documentation.](../documentation/asset-sync/README.md).
 
 This key is used in combination with the `context` directory to either **store** or **load** an existing recording.
 
@@ -534,7 +558,7 @@ In some cases, users need to register a lot (10+) of sanitizers. In this case, g
 [
     {
         "Name": "GeneralRegexSanitizer",
-        "Body": { 
+        "Body": {
             "regex": "[a-zA-Z]?",
             "value": "hello_there",
             "condition": {
@@ -576,7 +600,7 @@ Example response body:
 
 #### Removing a sanitizer
 
-Following #8120, sanitizers were given identifiers so that they can be removed. 
+Following #8120, sanitizers were given identifiers so that they can be removed.
 
 - The default `session` sanitizers list can be found in code here.
 - Visiting `http://localhost:5000/Info/Active` on your browser when the proxy is running on your machine will present you with an easy summary of these available sanitizers as well.
@@ -657,7 +681,7 @@ If a dev must only change a _couple_ elements of the default matcher, the `Custo
     // Should the body value be compared during lookup operations?
     "compareBodies": true,
     // A comma separated list of additional headers that should be excluded during matching. "Excluded" headers are entirely ignored.
-    "excludedHeaders": "traceparent", 
+    "excludedHeaders": "traceparent",
     // A comma separated list of additional headers that should be ignored during matching. Any headers that are "ignored" will not do value comparison when matching.
     // The "presence" of the headers will still be checked however.
     "ignoredHeaders": "User-Agent, Origin, Content-Length",

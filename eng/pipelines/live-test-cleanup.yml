@@ -20,8 +20,9 @@ parameters:
       - DisplayName: AzureCloud - Resource Cleanup
         ServiceConnection: azure-sdk-tests
         AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
-      - DisplayName: AzureUSGovernment - Resource Cleanup
-        ServiceConnection: azure-sdk-tests-usgov
+     # This tenant has been disabled for now so removing it from clean-up 
+     # - DisplayName: AzureUSGovernment - Resource Cleanup
+     #   ServiceConnection: azure-sdk-tests-usgov
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
         # AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureChinaCloud - Resource Cleanup

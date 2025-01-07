@@ -56,11 +56,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     response.Headers.Append("x-request-known-exception", "true");
                     response.Headers.Append("x-request-known-exception-error", encodedException);
                 }
-                
+
                 var bodyObj = new
                 {
                     Message = e.Message,
-                    Status = e.StatusCode
+                    Status = e.StatusCode.ToString()
                 };
 
                 DebugLogger.LogError(e.Message);
@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 var bodyObj = new
                 {
                     Message = e.Message,
-                    Status = unexpectedStatusCode,
+                    Status = unexpectedStatusCode.ToString(),
                     StackTrace = e.StackTrace,
                 };
 

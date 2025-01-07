@@ -7,12 +7,138 @@ import * as Handlebars from 'handlebars';
 import { getSDKAutomationStateString, SDKAutomationState } from './sdkAutomationState';
 import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
-import { updateBreakingChangesLabel } from './updateBreakingChangesLabels';
 import { formatSuppressionLine } from '../utils/reportFormat';
 import { removeAnsiEscapeCodes } from '../utils/utils';
 import { CommentCaptureTransport } from './logging';
+import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
+import { writeTmpJsonFile } from '../utils/fsUtils';
 
 const commentLimit = 60;
+
+export const generateReport = (context: WorkflowContext) => {
+  context.logger.log('section', 'Generate report');
+  let executionReport: ExecutionReport;
+  const packageReports: PackageReport[] = [];
+
+  let hasSuppressions = false
+  let hasAbsentSuppressions = false;
+  let areBreakingChangeSuppressed = false;
+  let shouldLabelBreakingChange = false;
+  if (context.pendingPackages.length > 0) {
+    setSdkAutoStatus(context, 'failed');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    context.logger.error(`GenerationError: The following packages are still pending.`);
+    for (const pkg of context.pendingPackages) {
+      context.logger.error(`\t${pkg.name}`);
+      context.handledPackages.push(pkg);
+    }
+  }
+
+  for (const pkg of context.handledPackages) {
+    setSdkAutoStatus(context, pkg.status);
+    hasSuppressions = Boolean(pkg.presentSuppressionLines.length > 0);
+    hasAbsentSuppressions = Boolean(pkg.absentSuppressionLines.length > 0);
+    if(pkg.hasBreakingChange && hasSuppressions && !hasAbsentSuppressions) {
+      areBreakingChangeSuppressed = true;
+    }
+    if(pkg.hasBreakingChange && !pkg.isBetaMgmtSdk && !pkg.isDataPlane && !areBreakingChangeSuppressed) {
+      shouldLabelBreakingChange = true;
+    }
+    const packageReport: PackageReport = {
+        packageName: pkg.name,
+        result: pkg.status,
+        artifactPaths: pkg.artifactPaths,
+        readmeMd: pkg.readmeMd,
+        typespecProject: pkg.typespecProject,
+        version: pkg.version,
+        apiViewArtifact: pkg.apiViewArtifactPath,
+        language: pkg.language,
+        hasBreakingChange: pkg.hasBreakingChange,
+        breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
+        shouldLabelBreakingChange,
+        areBreakingChangeSuppressed,
+        presentBreakingChangeSuppressions: pkg.presentSuppressionLines,
+        absentBreakingChangeSuppressions: pkg.absentSuppressionLines,
+        installInstructions: pkg.installationInstructions
+    }
+    packageReports.push(packageReport);
+    context.logger.info(`package [${pkg.name}] hasBreakingChange [${pkg.hasBreakingChange}] isBetaMgmtSdk [${pkg.isBetaMgmtSdk}] hasSuppressions [${hasSuppressions}] hasAbsentSuppressions [${hasAbsentSuppressions}]`);
+  }
+
+  executionReport = {
+    packages: packageReports,
+    executionResult: context.status,
+    fullLogPath: context.fullLogFileName,
+    filteredLogPath: context.filteredLogFileName,
+    sdkArtifactFolder: context.sdkArtifactFolder,
+    sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder
+  };
+
+  writeTmpJsonFile(context, 'executionReport.json', executionReport);
+  context.logger.info(`Main status [${context.status}]`);
+  if (context.status === 'failed') {
+    console.log(`##vso[task.complete result=Failed;]`);
+    sendFailure();
+  } else {
+    sendSuccess();
+  }
+
+  context.logger.log('endsection', 'Generate report');
+}
+
+export const saveFilteredLog = async (context: WorkflowContext) => {
+  context.logger.log('section', 'Save filtered log');
+  let hasBreakingChange = false;
+  let isBetaMgmtSdk = true;
+  let isDataPlane = true;
+  let showLiteInstallInstruction = false;
+  let hasSuppressions = false
+  let hasAbsentSuppressions = false;
+  if (context.pendingPackages.length > 0) {
+    setSdkAutoStatus(context, 'failed');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    context.logger.error(`GenerationError: The following packages are still pending.`);
+    for (const pkg of context.pendingPackages) {
+      context.logger.error(`\t${pkg.name}`);
+      context.handledPackages.push(pkg);
+    }
+  }
+  
+  for (const pkg of context.handledPackages) {
+    setSdkAutoStatus(context, pkg.status);
+    hasBreakingChange = hasBreakingChange || Boolean(pkg.hasBreakingChange);
+    isBetaMgmtSdk = isBetaMgmtSdk && Boolean(pkg.isBetaMgmtSdk);
+    isDataPlane = isDataPlane && Boolean(pkg.isDataPlane);
+    hasSuppressions = hasSuppressions || Boolean(pkg.presentSuppressionLines.length > 0);
+    hasAbsentSuppressions = hasAbsentSuppressions || Boolean(pkg.absentSuppressionLines.length > 0);
+    showLiteInstallInstruction = showLiteInstallInstruction || !!pkg.liteInstallationInstruction;
+  }
+
+  const extra = { hasBreakingChange, showLiteInstallInstruction };
+  let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
+  const statusMap = {
+    pending: 'Error',
+    inProgress: 'Error',
+    failed: 'Error',
+    warning: 'Warning',
+    succeeded: 'Info'
+  } as const;
+  const type = statusMap[context.status];
+  const filteredResultData = [
+    {
+      type: 'Markdown',
+      mode: 'replace',
+      level: type,
+      message: commentBody,
+      time: new Date()
+    } as MessageRecord
+  ].concat(context.extraResultRecords);
+
+  context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
+  const content = JSON.stringify(filteredResultData);
+  fs.writeFileSync(context.filteredLogFileName, content);
+  context.logger.log('endsection', 'Save filtered log status');
+};
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   context.logger.log('section', 'Report status');
@@ -58,8 +184,6 @@ export const sdkAutoReportStatus = async (context: WorkflowContext) => {
     sendSuccess();
   }
 
-  await updateBreakingChangesLabel(context, hasBreakingChange, isDataPlane, isBetaMgmtSdk, hasSuppressions, hasAbsentSuppressions);
-
   const extra = { hasBreakingChange, showLiteInstallInstruction };
   let subTitle = renderHandlebarTemplate(commentSubTitleView, context, extra);
   let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
@@ -95,7 +219,7 @@ export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   const encode = (str: string): string => Buffer.from(str, 'binary').toString('base64');
   console.log(`##vso[task.setVariable variable=SubTitle]${encode(subTitle)}`);
 
-  const outputPath = path.join(context.workingFolder, 'pipe.log');
+  const outputPath = path.join(context.config.workingFolder, 'pipe.log');
   context.logger.info(`Writing unified pipeline message to ${outputPath}`);
   const content = JSON.stringify(pipelineResultData);
 

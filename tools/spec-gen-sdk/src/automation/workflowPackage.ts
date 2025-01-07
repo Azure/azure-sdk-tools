@@ -3,46 +3,18 @@ import path from 'path';
 import fs, { copyFileSync, existsSync } from 'fs';
 import { InstallInstructionScriptInput } from '../types/InstallInstructionScriptInput';
 import { getInstallInstructionScriptOutput } from '../types/InstallInstructionScriptOutput';
-import { getGenerationBranchName, getIntegrationBranchName, PackageData } from '../types/PackageData';
+import { PackageData } from '../types/PackageData';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
-import { RepoKey, repoKeyToString } from '../utils/githubUtils';
-import { gitCheckoutBranch, gitGetCommitter } from '../utils/gitUtils';
 import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
-import { CommentCaptureTransport, getBlobName, loggerStorageAccountTransport } from './logging';
 import {
-  branchMain,
-  branchSdkGen,
-  branchSecondary,
-  FailureType,
-  remoteIntegration,
-  remoteMain,
-  setFailureType,
   WorkflowContext
 } from './workflow';
 import { mkdirpSync } from 'fs-extra';
 import { getLanguageByRepoName } from './entrypoint';
-import { FileStatusResult } from 'simple-git';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.log('section', `Handle package ${pkg.name}`);
-
-  const captureTransport = new CommentCaptureTransport({
-    extraLevelFilter: ['error', 'warn'],
-    level: 'debug',
-    output: pkg.messages
-  });
-  context.logger.add(captureTransport);
-
-  const { blobTransport, blobName } = await loggerStorageAccountTransport(
-    context,
-    getBlobName(context, 'logs.txt', pkg)
-  );
-  pkg.logsBlobUrl = `${blobName}`;
-  context.logger.add(blobTransport);
-  context.logger.info(`Package log to ${pkg.logsBlobUrl}`);
-
-  const syncConfig = workflowPkgGetSyncConfig(context, pkg);
-  const pushBranchPromise = (await workflowPkgUpdateBranch(context, pkg, syncConfig))();
+  context.logger.info(`Package log to a new logFile`);
 
   await workflowPkgCallBuildScript(context, pkg);
   await workflowPkgCallChangelogScript(context, pkg);
@@ -50,13 +22,8 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
   await workflowPkgSaveSDKArtifact(context, pkg);
   await workflowPkgSaveApiViewArtifact(context, pkg);
   await workflowPkgCallInstallInstructionScript(context, pkg);
-  await pushBranchPromise;
-  await workflowPkgUpdatePR(context, pkg, syncConfig);
 
   setSdkAutoStatus(pkg, 'succeeded');
-
-  context.logger.remove(blobTransport);
-  context.logger.remove(captureTransport);
   context.logger.log('endsection', `Handle package ${pkg.name}`);
 };
 
@@ -90,19 +57,12 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
     }
   } else {
     context.logger.log('section', 'Call ChangelogScript');
-
-    const captureTransport = new CommentCaptureTransport({
-      extraLevelFilter: ['cmdout', 'cmderr'],
-      output: pkg.changelogs
-    });
-    context.logger.add(captureTransport);
     const result = await runSdkAutoCustomScript(context, runOptions, {
       cwd: context.sdkFolder,
       fallbackName: 'Changelog',
       argList: [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths],
       statusContext: pkg
     });
-    context.logger.remove(captureTransport);
 
     setSdkAutoStatus(pkg, result);
     if (result !== 'failed') {
@@ -167,10 +127,11 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
     return; 
   }
   
-  const destination = path.join(context.workingFolder, 'generatedSdkArtifacts');
+  const destination = path.join(context.config.workingFolder, 'generatedSdkArtifacts');
   if (!existsSync(destination)) {
     mkdirpSync(destination);
   }
+  context.sdkArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasSDKArtifact]true`);
   const artifactName = `SDK_Artifact_${language}`; // it's the artifact in pipeline artifacts
   console.log(`##vso[task.setVariable variable=sdkArtifactName]${artifactName}`);
@@ -192,10 +153,11 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   }
 
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
-  const destination = path.join(context.workingFolder, 'sdkApiViewArtifacts');
+  const destination = path.join(context.config.workingFolder, 'sdkApiViewArtifacts');
   if (!existsSync(destination)) {
     mkdirpSync(destination);
   }
+  context.sdkApiViewArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasApiViewArtifact]true`);
   const artifactName = `sdkApiViewArtifact_${language}`; // it's the artifact in pipeline artifacts
   console.log(`##vso[task.setVariable variable=ArtifactName]${artifactName}`);
@@ -205,7 +167,7 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   const apiViewArtifactMeta = {
     packageName: pkg.name,
     apiViewArtifact: fileName,
-    specCommitSha: context.specCommitSha,
+    specCommitSha: context.config.specCommitSha,
     language,
     artifactName
   };
@@ -227,12 +189,11 @@ const workflowPkgCallInstallInstructionScript = async (
   context.logger.log('section', 'Call InstallInstructionScript');
 
   const input: InstallInstructionScriptInput = {
-    isPublic: context.config.storage.isPublic,
-    downloadUrlPrefix: `${getBlobName(context, '', pkg)}`,
-    downloadCommandTemplate: context.config.storage.downloadCommand,
+    isPublic: false,
+    downloadUrlPrefix: "",
+    downloadCommandTemplate: "",
     packageName: pkg.name,
-    artifacts: pkg.artifactPaths.map((p) => path.basename(p)),
-    trigger: context.trigger
+    artifacts: pkg.artifactPaths.map((p) => path.basename(p))
   };
   writeTmpJsonFile(context, fileInstallInstructionInput, input);
   deleteTmpJsonFile(context, fileInstallInstructionOutput);
@@ -252,198 +213,3 @@ const workflowPkgCallInstallInstructionScript = async (
   context.logger.log('section', 'Call InstallInstructionScript');
 };
 
-export type SyncConfig = {
-  baseBranch: string;
-  baseRepo: RepoKey;
-  baseRemote: string;
-  targetBranch: string;
-  targetRepo: RepoKey;
-  targetRemote: string;
-  hasChanges?: boolean;
-};
-
-const workflowPkgGetSyncConfig = (context: WorkflowContext, pkg: PackageData) => {
-  const config: SyncConfig = {
-    baseBranch: context.sdkRepoConfig.mainBranch,
-    baseRepo: context.sdkRepoConfig.mainRepository,
-    baseRemote: remoteMain,
-    targetBranch: getIntegrationBranchName(context, pkg.name),
-    targetRepo: context.sdkRepoConfig.integrationRepository,
-    targetRemote: remoteIntegration
-  };
-
-  if (!context.useMergedRoutine) {
-    config.baseRepo = context.sdkRepoConfig.integrationRepository;
-    config.baseRemote = remoteIntegration;
-    config.targetBranch = getGenerationBranchName(context, pkg.name);
-  }
-
-  context.logger.info(
-    `baseBranch [${config.baseBranch}] baseRepo [${repoKeyToString(config.baseRepo)}] baseRemote [${config.baseRemote}]`
-  );
-  context.logger.info(
-    `targetBranch [${config.targetBranch}] targetRepo [${repoKeyToString(config.targetRepo)}] baseRemote [${config.targetRemote
-    }]`
-  );
-  return config;
-};
-
-const workflowPkgUpdateBranch = async (context: WorkflowContext, pkg: PackageData, syncConfig: SyncConfig) => {
-  if (
-    repoKeyToString(context.sdkRepoConfig.mainRepository) === repoKeyToString(syncConfig.baseRepo) &&
-    context.sdkRepoConfig.mainBranch === syncConfig.baseBranch
-  ) {
-    context.logger.info('Skip sync baseBranch due to same remote same branch');
-  } else {
-    context.logger.log('git', `Push ${branchMain} to ${repoKeyToString(syncConfig.baseRepo)}:${syncConfig.baseBranch}`);
-    const pushResult = await context.sdkRepo.push([syncConfig.baseRemote, `+refs/heads/${branchMain}:refs/heads/${syncConfig.baseBranch}`]);
-    if (!pushResult) {
-      context.logger.warn(
-        `Warning: Failed to push with code [${pushResult}]: ${repoKeyToString(syncConfig.baseRepo)}:${syncConfig.baseBranch}. This doesn't impact SDK generation.`
-      );
-      setSdkAutoStatus(pkg, 'warning');
-    }
-  }
-
-  context.logger.log('git', `Create targetBranch ${syncConfig.targetBranch}`);
-  const baseCommit = await context.sdkRepo.revparse(branchSecondary);
-  await context.sdkRepo.raw(['branch', syncConfig.targetBranch, baseCommit, '--force']);
-  await gitCheckoutBranch(context, context.sdkRepo, syncConfig.targetBranch, false);
-
-  const foldersToAdd = [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths]
-    .filter((p) => p !== undefined)
-    .map((p) => path.relative('.', p));
-  context.logger.log('git', `Checkout sdk folders from ${branchSdkGen} and commit: ${foldersToAdd.join(' ')}`);
-  const sdkGenCommit = await context.sdkRepo.revparse(branchSdkGen);
-  const sdkGenTree = await context.sdkRepo.revparse(`${sdkGenCommit}^{tree}`);
-  if (foldersToAdd.length > 0) {
-    await context.sdkRepo.raw(['read-tree', sdkGenTree]);
-    await context.sdkRepo.raw(['checkout', '--', '.']);
-  }
-
-  await context.sdkRepo.raw(['update-index', '--refresh']);
-
-  const statusFiles = await context.sdkRepo.status();
-  const fileList = statusFiles.files.map((item: FileStatusResult) => item.path);
-
-  let commitMsg = `CodeGen from PR ${context.config.pullNumber} in ${repoKeyToString(context.config.specRepo)}\n`;
-  const commitMsgsuffix = await context.specRepo.log();
-  commitMsg += commitMsgsuffix.latest?.message;
-
-  await gitGetCommitter(context.sdkRepo);
-  await context.sdkRepo.raw(['commit', '-m', commitMsg]);
-  syncConfig.hasChanges = fileList.length > 0;
-
-  context.logger.log('git', `Push ${syncConfig.targetBranch} to ${repoKeyToString(syncConfig.targetRepo)}`);
-
-  // Push in parallel to speed up
-  return async () => {
-    const result = await context.sdkRepo.push([syncConfig.targetRemote, `+refs/heads/${syncConfig.targetBranch}:refs/heads/${syncConfig.targetBranch}`]);
-    if (!result) {
-      context.logger.error(
-        `GitError: Failed to push with code [${result}]: ${repoKeyToString(syncConfig.targetRepo)}:${syncConfig.targetBranch}. Please re-run the pipeline if the error is retryable or report this issue through https://aka.ms/azsdk/support/specreview-channel.`
-      );
-      setSdkAutoStatus(pkg, 'failed');
-      setFailureType(context, FailureType.PipelineFrameworkFailed);
-    }
-  };
-};
-
-const workflowPkgUpdatePR = async (context: WorkflowContext, pkg: PackageData, syncConfig: SyncConfig) => {
-  if (context.useMergedRoutine) {
-    const intRepo = context.sdkRepoConfig.integrationRepository;
-    const genPrHead = `${intRepo.owner}:${getGenerationBranchName(context, pkg.name)}`;
-    context.logger.log('github', `Get GenerationPR and close it if exist`);
-    const { data: genPr } = await context.octokit.pulls.list({
-      owner: intRepo.owner,
-      repo: intRepo.name,
-      state: 'open',
-      head: genPrHead
-    });
-    for (const pr of genPr) {
-      context.logger.log('github', `Close GenerationPR ${repoKeyToString(intRepo)}/${pr.number}`);
-      await context.octokit.pulls.update({
-        owner: intRepo.owner,
-        repo: intRepo.name,
-        pull_number: pr.number,
-        state: 'closed'
-      });
-    }
-  }
-
-  const head = `${syncConfig.targetRepo.owner}:${syncConfig.targetBranch}`;
-  const headLabel = syncConfig.targetRepo.owner === syncConfig.baseRepo.owner ? syncConfig.targetBranch : head;
-
-  const title = `[${context.useMergedRoutine ? 'ReleasePR' : 'AutoPR'} ${pkg.name}] ${context.specPrTitle}`;
-  let body = `Create to sync ${context.specPrHtmlUrl}`;
-  if (context.useMergedRoutine) {
-    body = `${body}\n[ReCreate this PR](https://github.com/${syncConfig.baseRepo.name}/compare/${syncConfig.baseBranch}...${headLabel}?expand=1)`;
-  }
-
-  body = `${body}\n\n${pkg.installationInstructions ?? ''}`;
-  body = `${body}\n This pull request has been automatically generated for preview purposes.`;
-  context.logger.log(
-    'github',
-    `Get PR in ${repoKeyToString(syncConfig.baseRepo)} from ${head} to ${syncConfig.baseBranch}`
-  );
-  const { data: existingPrs } = await context.octokit.pulls.list({
-    owner: syncConfig.baseRepo.owner,
-    repo: syncConfig.baseRepo.name,
-    state: context.useMergedRoutine ? 'all' : 'open',
-    head,
-    base: syncConfig.baseBranch,
-    sort: 'created',
-    direction: 'desc'
-  });
-
-  let targetPr: typeof existingPrs[0] | undefined = existingPrs[0];
-  const draft =
-    context.trigger === 'pullRequest'
-      ? context.swaggerToSdkConfig.advancedOptions.draftGenerationPR
-      : context.swaggerToSdkConfig.advancedOptions.draftIntegrationPR;
-  if (targetPr !== undefined && (targetPr.merged_at === null || targetPr.merged_at === undefined)) {
-    context.logger.log('github', `Update existing PR ${targetPr.html_url}`);
-    await context.octokit.pulls.update({
-      owner: syncConfig.baseRepo.owner,
-      repo: syncConfig.baseRepo.name,
-      pull_number: targetPr.number,
-      title,
-      body,
-      maintainer_can_modify: false,
-      draft
-    });
-    if (!syncConfig.hasChanges) {
-      context.logger.log('github', 'Not showing PR in comment because there is no diff');
-      targetPr = undefined;
-    }
-  } else if (!syncConfig.hasChanges) {
-    context.logger.log('github', 'Skip creating PR because there is no diff');
-    targetPr = undefined;
-  } else {
-    context.logger.log('github', `Create new PR`);
-    const rsp = await context.octokit.pulls.create({
-      owner: syncConfig.baseRepo.owner,
-      repo: syncConfig.baseRepo.name,
-      head: headLabel,
-      base: syncConfig.baseBranch,
-      title,
-      body,
-      maintainer_can_modify: false,
-      draft
-    });
-    targetPr = rsp.data;
-    context.logger.log('github', `PR created at ${targetPr.html_url}`);
-
-    if (context.useMergedRoutine && context.swaggerToSdkConfig.advancedOptions.closeIntegrationPR) {
-      context.logger.log('github', `Close IntegrationPR`);
-      await context.octokit.pulls.update({
-        owner: syncConfig.baseRepo.owner,
-        repo: syncConfig.baseRepo.name,
-        pull_number: targetPr.number,
-        state: 'closed'
-      });
-    }
-  }
-
-  pkg.generationPullRequestUrl = targetPr?.html_url;
-};

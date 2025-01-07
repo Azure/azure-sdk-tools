@@ -1,49 +1,5 @@
-import { SdkAutoContext } from '../automation/entrypoint';
 import { CleanOptions, ResetMode, SimpleGit } from 'simple-git';
-
-export const gitSetRemoteWithAuth = async (
-  context: Pick<SdkAutoContext, 'logger' | 'getGithubAccessToken'>,
-  repo: SimpleGit,
-  remoteName: string,
-  remoteRepo: {
-    owner: string;
-    name: string;
-  }
-) => {
-  context.logger.log('git', `Set remote ${remoteName} on ${remoteRepo.owner}/${remoteRepo.name} with auth`);
-  const token = await context.getGithubAccessToken(remoteRepo.owner);
-  const url = `https://x-access-token:${token}@github.com/${remoteRepo.owner}/${remoteRepo.name}`;
-
-  await gitAddRemote(repo, remoteName, url);
-};
-
-export const gitRemoveAllBranches = async (context: SdkAutoContext, repo: SimpleGit) => {
-  const branches = await repo.branchLocal();
-  if (branches.all.length === 0) { return; }
-  let headCommit: string | undefined = undefined;
-  try {
-    headCommit = await repo.revparse('HEAD');
-  } catch (error) {
-    // unknown revision or path not in the working tree. Pass
-    context.logger.warn('Failed to get HEAD commit. Error: ' + error.message);
-  }
-
-  if (headCommit) {
-    await repo.raw(['checkout', headCommit]);
-  }
-
-  const currentBranch = await getCurrentBranch(repo);
-  for (const branchRef in branches.branches) {
-    if (branchRef && branchRef !== currentBranch) {
-      try {
-        await repo.deleteLocalBranch(branchRef);
-        context.logger.log('git', `Delete branch ${branchRef}`);
-      } catch (e) {
-        context.logger.warn(`Failed to delete ${branchRef}. Error: ${e.message}`);
-      }
-    }
-  }
-};
+import { SdkAutoContext } from '../automation/entrypoint';
 
 export const gitGetDiffFileList = async (diff: string, context?: SdkAutoContext, description?: string) => {
   const patches = gitDiffResultToStringArray(diff);

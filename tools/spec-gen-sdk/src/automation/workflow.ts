@@ -1,7 +1,6 @@
 import * as path from 'path';
 import * as _ from 'lodash';
 import * as fs from 'fs';
-import { mkdirpSync } from 'fs-extra';
 import { default as Transport } from 'winston-transport';
 import { findSDKToGenerateFromTypeSpecProject } from '../utils/typespecUtils';
 import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
@@ -97,7 +96,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
   const sdkContext = workflowInitSdkRepo(context);
 
   const tmpFolder = path.join(context.config.workingFolder, `${context.sdkRepoConfig.mainRepository.name}_tmp`);
-  mkdirpSync(tmpFolder);
+  fs.mkdirSync(tmpFolder, { recursive: true });
 
   return {
     ...context,
@@ -692,4 +691,5 @@ const workflowDetectChangedPackages = (context: WorkflowContext) => {
   if (context.pendingPackages.length === 0) {
       context.logger.warn(`Warning: No package detected after generation. Please refer to the above logs to understand why the package hasn't been generated. `);
   }
+  context.logger.log('endsection', 'Detect changed packages');
 };

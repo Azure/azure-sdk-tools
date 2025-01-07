@@ -1,6 +1,6 @@
 # Release
 
-## 2025-01-07 - 0.14.4
+## 2025-01-07 - 0.15.0
 
 - Support specifying an entrypoint file in tsp-location.yaml.
 - Ensure client.tsp selection over main.tsp in the entrypoint file search.

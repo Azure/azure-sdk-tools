@@ -11,7 +11,7 @@ export async function migratePackage(packageDirectory: string): Promise<void> {
     await ensureDir(posix.join(packageDirectory, 'review'));
     await runCommand(
         "npm",
-        `exec dev-tool admin migrate-package --package-name=${info.name}`.split(
+        `exec dev-tool admin migrate-package --package-name="${info.name}"`.split(
             " "
         ),
         {

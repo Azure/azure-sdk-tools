@@ -124,7 +124,7 @@ function processItem(item: Item, indent: string = '') {
 
 function main() {
     // Read the JSON file
-    const data = fs.readFileSync('inputs/docs.api.json', 'utf8');
+    const data = fs.readFileSync('../clean-rust-doc-output/outputs/docs.api.json', 'utf8');
 
     // Parse the JSON data
     apiJson = JSON.parse(data);

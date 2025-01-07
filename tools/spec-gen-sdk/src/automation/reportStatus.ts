@@ -361,13 +361,13 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
     packageName = pkg.packageName ?? "";
     if (context.config.pullNumber) {    
         prBody = `Create to sync ${context.config.specRepoHttpsUrl}/pull/${context.config.pullNumber}`;
+        prBranch = getGenerationBranchName(context, packageName);
       }
     prBody = `${prBody}\n\n${pkg.installInstructions ?? ''}`;
   }
   
   prBody = `${prBody}\n This pull request has been automatically generated for preview purposes.`;
   prTitle = `[AutoPR ${packageName}]`;
-  prBranch = getGenerationBranchName(context, packageName);
   sendPipelineVariable("BreakingChangeLabel", breakingChangeLabel);
   sendPipelineVariable("PrBranch", prBranch);
   sendPipelineVariable("PrTitle", prTitle);

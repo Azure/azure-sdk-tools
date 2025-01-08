@@ -4,7 +4,17 @@ import { loadTspConfig } from "../common/utils";
 import { RunningEnvironment } from "./runningEnvironment";
 import { exists } from "fs-extra";
 
-async function isManagementPlaneModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {
+function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {    
+    if (isMgmtWithHLC) {
+        return SDKType.HighLevelClient;
+    }
+    if (isMgmtWithModular) {
+        return SDKType.ModularClient;
+    }
+    return SDKType.RestLevelClient;
+}
+
+export async function isManagementPlaneModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {
     if (!typespecProjectFolder) {
         return false;
     }
@@ -15,27 +25,26 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
 
     const resolvedRelativeTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
     const tspFolderFromSpecRoot = path.join(specFolder, resolvedRelativeTspFolder);
+    
     const tspConfigPath = path.join(tspFolderFromSpecRoot, 'tspconfig.yaml');
     if (!(await exists(tspConfigPath))) {
         return false;
     }
 
     const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
-    if (tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary'] !== true) {
-        return false;
-    }
-    return true;
-}
+    const isModularLibrary = tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary'];
+    
+    // respect customer's choice
+    if (isModularLibrary === true) return true;
+    if (isModularLibrary === false) return false;
 
-// TODO: consider add stricter rules for RLC in when update SDK automation for RLC
-function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {    
-    if (isMgmtWithHLC) {
-        return SDKType.HighLevelClient;
-    }
-    if (isMgmtWithModular) {
-        return SDKType.ModularClient;
-    }
-    return SDKType.RestLevelClient;
+    const isAzureSDK = tspConfig?.options?.['@azure-tools/typespec-ts']?.['flavor'] === 'azure';
+    // unbranded sdk will generate modular client bt default
+    if (!isAzureSDK) return true;
+
+    const isManagementPlane = new RegExp(/\.Management[\/\\]?$/).test(tspFolderFromSpecRoot);
+    // management plane will generate modular client by default
+    return isManagementPlane;
 }
 
 // TODO: generate interface for inputJson

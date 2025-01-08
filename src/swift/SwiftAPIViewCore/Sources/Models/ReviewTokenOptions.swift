@@ -49,7 +49,7 @@ public struct ReviewTokenOptions {
     /// Set this to true if a suffix space required before next token. For e.g, punctuation right after method name
     var hasSuffixSpace: Bool?
 
-    /// Set isDocumentation to true if current token is part of documentation */
+    /// Set isDocumentation to true if current token is part of documentation
     var isDocumentation: Bool?
 
     /// Language specific style css class names

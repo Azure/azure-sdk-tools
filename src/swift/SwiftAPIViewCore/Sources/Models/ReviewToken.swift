@@ -106,11 +106,21 @@ class ReviewToken: Codable {
         try container.encode(kind.rawValue, forKey: .kind)
         try container.encodeIfPresent(navigationDisplayName, forKey: .navigationDisplayName)
         try container.encodeIfPresent(navigateToId, forKey: .navigateToId)
-        try container.encodeIfPresent(skipDiff, forKey: .skipDiff)
-        try container.encodeIfPresent(isDeprecated, forKey: .isDeprecated)
-        try container.encodeIfPresent(hasSuffixSpace, forKey: .hasSuffixSpace)
-        try container.encodeIfPresent(hasPrefixSpace, forKey: .hasPrefixSpace)
-        try container.encodeIfPresent(isDocumentation, forKey: .isDocumentation)
+        if skipDiff == true {
+            try container.encode(skipDiff, forKey: .skipDiff)
+        }
+        if isDeprecated == true {
+            try container.encode(isDeprecated, forKey: .isDeprecated)
+        }
+        if hasSuffixSpace == false {
+            try container.encode(hasSuffixSpace, forKey: .hasSuffixSpace)
+        }
+        if hasPrefixSpace == true {
+            try container.encode(hasPrefixSpace, forKey: .hasPrefixSpace)
+        }
+        if isDocumentation == true {
+            try container.encode(isDocumentation, forKey: .isDocumentation)
+        }
         try container.encodeIfPresent(renderClasses, forKey: .renderClasses)
     }
 

@@ -32,7 +32,7 @@ enum CodeDiagnosticLevel: Int {
     case Warning = 2
     case Error = 3
     /// Fatal level diagnostic will block API review approval and it will show an error message to the user. Approver will have to
-    /// override fatal level system comments before approving a review.*/
+    /// override fatal level system comments before approving a review.
     case Fatal = 4
 }
 

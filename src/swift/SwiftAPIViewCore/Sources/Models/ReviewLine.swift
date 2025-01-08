@@ -90,11 +90,15 @@ class ReviewLine: Tokenizable, Encodable {
         try container.encode(tokens, forKey: .tokens)
         try container.encodeIfPresent(lineId, forKey: .lineId)
         try container.encodeIfPresent(crossLanguageId, forKey: .crossLanguageId)
-        try container.encodeIfPresent(isHidden, forKey: .isHidden)
-        try container.encodeIfPresent(isContextEndLine, forKey: .isContextEndLine)
         try container.encodeIfPresent(relatedToLine, forKey: .relatedToLine)
         if (!children.isEmpty) {
             try container.encode(children, forKey: .children)
+        }
+        if isHidden == true {
+            try container.encode(isHidden, forKey: .isHidden)
+        }
+        if isContextEndLine == true {
+            try container.encode(isContextEndLine, forKey: .isContextEndLine)
         }
     }
 

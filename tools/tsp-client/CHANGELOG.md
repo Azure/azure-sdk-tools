@@ -1,5 +1,9 @@
 # Release
 
+## 2025-01-09 - 0.15.1
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.6`.
+
 ## 2025-01-07 - 0.15.0
 
 - Support specifying an entrypoint file in tsp-location.yaml.

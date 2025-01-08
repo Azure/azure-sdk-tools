@@ -67,7 +67,7 @@
     </ul>
 </app-page-options-section>
 
-<app-page-options-section *ngIf="showCommentsSwitch || (isDiffView && contentHasDiff)" sectionName="Find on Page">
+<app-page-options-section *ngIf="showCommentsSwitch || (isDiffView && contentHasDiff)" sectionName="Page Utils">
     <ul class="list-group">
         <li class="list-group-item" *ngIf="showCommentsSwitch">                
             <label class="small mx-1 fw-semibold">Comment:</label>
@@ -86,9 +86,17 @@
                 <div class="btn-group btn-group-sm" role="group" aria-label="Diff Navigation">
                     <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
                         <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)">
+                    <button type="button" class="btn btn-lg btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)">
                         <i class="bi bi-arrow-down"></i>Next</button>
                 </div>
+            </div>
+        </li>
+        <li class="list-group-item" *ngIf="!isDiffView">
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-outline-primary" tooltipPosition="top" (click)="copyReviewText($event)">
+                    <i class="bi bi-clipboard"></i>
+                    {{ copyReviewTextButtonText }}
+                </button>
             </div>
         </li>
     </ul>

@@ -1,0 +1,178 @@
+<div style="display: flex; justify-content: space-between;">
+    <span *ngIf="activeApiRevisionsMenu.length > 0" class="border-start ps-2">
+        <p-dropdown 
+            [options]="activeApiRevisionsMenu"
+            [(ngModel)]="selectedActiveAPIRevision"
+            optionLabel="label"
+            inputId="active-api-revision-select"
+            [panelStyle]="{'width':'40dvw'}"
+            [filter]="true"
+            [resetFilterOnHide]="true"
+            (onHide)="resetDropDownFilter(ACTIVE_API_REVISION_SELECT)"
+            (onChange)="activeApiRevisionChange($event)"
+            scrollHeight="400px"
+            class="me-2">
+            <ng-template pTemplate="filter" let-options="options">
+                <div class="flex gap-1">
+                    <div class="input-group" (click)="$event.stopPropagation()">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" aria-label="Active APIRevision Filter" placeholder="Filter"
+                        [(ngModel)]="activeApiRevisionsSearchValue" (keyup)="activeApiRevisionSearchFunction($event)">
+                    </div>
+                    <p-selectButton
+                    class="api-revision-filter-button"
+                    [options]="filterOptions" 
+                    [(ngModel)]="activeApiRevisionsFilterValue" 
+                    (onChange)="activeApiRevisionFilterFunction($event)"
+                    [style]="{'margin-top':'8px'}">
+                        <ng-template let-item pTemplate>
+                            <span class="p-button-label">
+                                <i *ngIf="item.icon" [class]="item.icon"></i>
+                                {{ item.label }}
+                            </span>
+                        </ng-template>
+                    </p-selectButton>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem">
+                <div class="flex align-items-center selected-item-content" *ngIf="selectedActiveAPIRevision">
+                    <i class="{{ selectedActiveAPIRevision.typeClass }}"></i>
+                    <span *ngIf="selectedActiveAPIRevision.prNo"> {{ selectedActiveAPIRevision.prNo }}</span>
+                    <span class="emphasis-badge info ms-2">version: {{ selectedActiveAPIRevision.version }}</span>
+                    <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedActiveAPIRevision.isApproved"></i>
+                    <span *ngIf="selectedActiveAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedActiveAPIRevision.createdBy }}</span>
+                    <span *ngIf="selectedActiveAPIRevision.isReleased" class="emphasis-badge success ms-2">released: {{ selectedActiveAPIRevision.releasedOn | timeago }}</span>
+                </div>
+            </ng-template>
+            <ng-template let-apiRevision pTemplate="item">
+                <div class="flex align-items-center gap-2">
+                    <i class="{{ apiRevision.typeClass }}"></i>
+                    <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
+                    <span class="emphasis-badge info ms-2">version: {{ apiRevision.version }}</span>
+                    <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
+                    <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
+                    <span *ngIf="apiRevision.isLatestGA" class="emphasis-badge warn small ms-2">Latest GA</span>
+                    <span *ngIf="apiRevision.isLatestApproved" class="emphasis-badge warn small ms-2">Latest Approved</span>
+                    <span *ngIf="apiRevision.isLatestMain" class="emphasis-badge warn small ms-2">Latest Main</span>
+                    <span *ngIf="apiRevision.isLatestReleased" class="emphasis-badge warn small ms-2">Latest Released</span>
+                    <div class="small">
+                        <span class="emphasis-badge secondary">created: {{ apiRevision.createdOn | timeago }}</span>
+                        <span class="emphasis-badge secondary ms-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+                        <span *ngIf="apiRevision.isReleased" class="emphasis-badge success ms-2">released: {{ apiRevision.releasedOn | timeago }}</span>
+                    </div>
+                    <div *ngIf="apiRevision.apiRevisionType === 'Manual' && apiRevision.label">{{ apiRevision.label }}</div>
+                </div>
+            </ng-template>
+        </p-dropdown>
+    </span>
+    
+    <span *ngIf="diffApiRevisionsMenu.length > 0" class="border-start ps-3">
+        <label class="small fw-semibold" for="diff-api-revision-select">Diff :</label>
+        <p-dropdown 
+            [options]="diffApiRevisionsMenu"
+            [(ngModel)]="selectedDiffAPIRevision"
+            optionLabel="label"
+            inputId="diff-api-revision-select"
+            [panelStyle]="{'width':'40dvw'}"
+            [filter]="true"
+            [resetFilterOnHide]="true"
+            (onHide)="resetDropDownFilter(DIFF_API_REVISION_SELECT)"
+            (onChange)="diffApiRevisionChange($event)"
+            [showClear]="true"
+            (onClear)="diffApiRevisionClear($event)"
+            placeholder="-"
+            scrollHeight="400px">
+            <ng-template pTemplate="filter" let-options="options">
+                <div class="flex gap-1">
+                    <div class="input-group" (click)="$event.stopPropagation()">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" aria-label="Diff APIRevision Filter" placeholder="Filter"
+                        [(ngModel)]="diffApiRevisionsSearchValue" (keyup)="diffApiRevisionSearchFunction($event)">
+                    </div>
+                    <p-selectButton
+                    class="api-revision-filter-button"
+                    [options]="filterOptions" 
+                    [(ngModel)]="diffApiRevisionsFilterValue" 
+                    (onChange)="diffApiRevisionFilterFunction($event)"
+                    [style]="{'margin-top':'8px'}">
+                        <ng-template let-item pTemplate>
+                            <span class="p-button-label">
+                                <i *ngIf="item.icon" [class]="item.icon"></i>
+                                {{ item.label }}
+                            </span>
+                        </ng-template>
+                    </p-selectButton>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem">
+                <div class="flex align-items-center selected-item-content" *ngIf="selectedDiffAPIRevision">
+                    <i class="{{ selectedDiffAPIRevision.typeClass }}"></i>
+                    <span *ngIf="selectedDiffAPIRevision.prNo"> {{ selectedDiffAPIRevision.prNo }}</span>
+                    <span class="emphasis-badge info ms-2">version: {{ selectedDiffAPIRevision.version }}</span>
+                    <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedDiffAPIRevision.isApproved"></i>
+                    <span *ngIf="selectedDiffAPIRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ selectedDiffAPIRevision.createdBy }}</span>
+                    <span *ngIf="selectedDiffAPIRevision.isReleased" class="emphasis-badge success ms-2">released: {{ selectedDiffAPIRevision.releasedOn | timeago }}</span>
+                </div>
+            </ng-template>
+            <ng-template let-apiRevision pTemplate="item">
+                <div class="flex align-items-center gap-2">
+                    <i class="{{ apiRevision.typeClass }}"></i>
+                    <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
+                    <span class="emphasis-badge info ms-2">version: {{ apiRevision.version }}</span>
+                    <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
+                    <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
+                    <span *ngIf="apiRevision.isLatestGA" class="emphasis-badge warn small ms-2">Latest GA</span>
+                    <span *ngIf="apiRevision.isLatestApproved" class="emphasis-badge warn small ms-2">Latest Approved</span>
+                    <span *ngIf="apiRevision.isLatestMain" class="emphasis-badge warn small ms-2">Latest Main</span>
+                    <span *ngIf="apiRevision.isLatestReleased" class="emphasis-badge warn small ms-2">Latest Released</span>
+                    <div class="small"><span class="emphasis-badge secondary">created: {{ apiRevision.createdOn | timeago }}</span>
+                        <span class="emphasis-badge secondary ms-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+                        <span *ngIf="apiRevision.isReleased" class="emphasis-badge success ms-2">released: {{ apiRevision.releasedOn | timeago }}</span></div>
+                    <div *ngIf="apiRevision.apiRevisionType === 'Manual' && apiRevision.label">{{ apiRevision.label }}</div>
+                </div>
+            </ng-template>
+        </p-dropdown>
+    </span>
+
+    <span *ngIf="samplesRevisions.length > 0" class="border-start ps-2">
+        <p-dropdown 
+            [options]="samplesRevisions"
+            [(ngModel)]="selectedActiveSamplesRevision"
+            optionLabel="label"
+            inputId="active-samples-revision-select"
+            [panelStyle]="{'width':'40dvw'}"
+            [filter]="true"
+            [resetFilterOnHide]="true"
+            (onHide)="resetDropDownFilter(ACTIVE_SAMPLES_REVISION_SELECT)"
+            (onChange)="activeSamplesRevisionChange($event)"
+            scrollHeight="400px"
+            class="me-2">
+            <ng-template pTemplate="filter" let-options="options">
+                <div class="flex gap-1">
+                    <div class="input-group" (click)="$event.stopPropagation()">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" aria-label="Active APIRevision Filter" placeholder="Filter"
+                        [(ngModel)]="activeSamplesRevisionsSearchValue" (keyup)="activeSamplesRevisionSearchFunction($event)">
+                    </div>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem">
+                <div class="flex align-items-center selected-item-content" *ngIf="selectedActiveSamplesRevision">
+                    <div class="small">
+                        <span class="me-2" *ngIf="selectedActiveSamplesRevision.title">{{ selectedActiveSamplesRevision.title }}</span>
+                        <span class="emphasis-badge secondary me-2" *ngIf="selectedActiveSamplesRevision.createdBy">{{ selectedActiveSamplesRevision.createdBy }}</span>
+                    </div>
+                </div>
+            </ng-template>
+            <ng-template let-apiRevision pTemplate="item">
+                <div class="flex align-items-center selected-item-content">
+                    <span *ngIf="apiRevision.title">{{ apiRevision.title }}</span>
+                    <div class="small">
+                        <span class="emphasis-badge secondary me-2" *ngIf="apiRevision.createdOn">created: {{ apiRevision.createdOn | timeago }}</span>
+                        <span class="emphasis-badge secondary me-2" *ngIf="apiRevision.createdBy">author: {{ apiRevision.createdBy }}</span>
+                    </div>
+                </div>
+            </ng-template>
+        </p-dropdown>
+    </span>
+</div>

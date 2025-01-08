@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PipelineGenerator.Conventions;
 using PipelineGenerator.CommandParserOptions;
+using Microsoft.TeamFoundation.Build.WebApi;
+using System.Text.Json.Nodes;
 
 namespace PipelineGenerator
 {
@@ -49,6 +51,7 @@ namespace PipelineGenerator
                         g.Agentpool,
                         g.Convention,
                         g.VariableGroups.ToArray(),
+                        g.ServiceConnections,
                         g.DevOpsPath,
                         g.WhatIf,
                         g.Open,
@@ -132,6 +135,7 @@ namespace PipelineGenerator
             string agentPool,
             string convention,
             int[] variableGroups,
+            IEnumerable<string> serviceConnections,
             string devOpsPath,
             bool whatIf,
             bool open,
@@ -181,6 +185,7 @@ namespace PipelineGenerator
                     return ExitCondition.DuplicateComponentsFound;
                 }
 
+                var definitions = new List<BuildDefinition>();
                 foreach (var component in components)
                 {
                     logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
@@ -196,6 +201,48 @@ namespace PipelineGenerator
                         {
                             OpenBrowser(definition.GetWebUrl());
                         }
+
+                        definitions.Add(definition);
+                    }
+                }
+
+                var serviceConnectionObjects = await context.GetServiceConnectionsAsync(serviceConnections, cancellationToken);
+
+                foreach (var serviceConnection in serviceConnectionObjects)
+                {
+                    // Get set of permissions for the service connection
+                    JsonNode pipelinePermissions = await context.GetPipelinePermissionsAsync(serviceConnection.Id, cancellationToken);
+
+                    var pipelines = pipelinePermissions["pipelines"].AsArray();
+                    var pipelineIdsWithPermissions = new HashSet<int>(pipelines.Select(p => p["id"].GetValue<int>()));
+
+                    int definitionsToAdd = 0;
+                    foreach (var definition in definitions)
+                    {
+                        // Check this pipeline has permissions
+                        if (!pipelineIdsWithPermissions.Contains(definition.Id))
+                        {
+                            pipelines.Add(
+                                new JsonObject
+                                {
+                                    ["id"] = definition.Id,
+                                    ["authorized"] = true,
+                                    ["authorizedBy"] = null,
+                                    ["authorizedOn"] = null
+                                }
+                            );
+
+                            definitionsToAdd++;
+                        }
+                    }
+
+                    logger.LogInformation("'{0}' pipelines already have permissions to service connection '{1}'. Need to grant permission to '{2}' more.", pipelineIdsWithPermissions.Count, serviceConnection.Id, definitionsToAdd);
+
+                    if (definitionsToAdd > 0)
+                    {
+                        logger.LogInformation("Granting permissions for '{0}' definitions to service connection '{1}'.", definitionsToAdd, serviceConnection.Id);
+                        // Update the permissions if we added anything
+                        await context.UpdatePipelinePermissionsAsync(serviceConnection.Id, pipelinePermissions, cancellationToken);
                     }
                 }
 

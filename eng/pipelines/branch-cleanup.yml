@@ -15,6 +15,7 @@ parameters:
     - Azure/azure-sdk-for-js
     - Azure/azure-sdk-for-net
     - Azure/azure-sdk-for-python
+    - Azure/azure-sdk-for-rust
 
 - name: ForkAutomationBranches
   type: object
@@ -174,12 +175,9 @@ jobs:
             pwsh: true
             workingDirectory: $(System.DefaultWorkingDirectory)
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-            # TODO: 00a0dc86-3419-4dd5-b119-e83edaf17e7e needs to be skipped because it's the default
-            # branch for the repository. This will be removed once the default branch has been changed
-            # to main
             arguments: >
               -RepoId "${{ repo }}"
-              -BranchRegex "^(result_)?(?!00a0dc86-3419-4dd5-b119-e83edaf17e7e)([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
+              -BranchRegex "^(result_)?([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
               -LastCommitOlderThan ((Get-Date).AddDays(-14))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

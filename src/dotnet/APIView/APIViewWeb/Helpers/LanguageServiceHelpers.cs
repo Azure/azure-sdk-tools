@@ -88,6 +88,7 @@ namespace APIViewWeb.Helpers
             switch (language)
             {
                 case "C#":
+                case "JavaScript":
                     return true;
                 default:
                     return false;

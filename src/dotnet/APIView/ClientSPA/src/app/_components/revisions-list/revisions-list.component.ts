@@ -10,7 +10,7 @@ import { APIRevision } from 'src/app/_models/revision';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
-import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 
@@ -75,7 +75,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
-  constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService,
+  constructor(private apiRevisionsService: APIRevisionsService, private userProfileService: UserProfileService,
     private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
     private route: ActivatedRoute, private messageService: MessageService) { }
 
@@ -526,7 +526,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         this.createRevisionInstruction = [
           `Run a <code>mvn package</code> build on your project, which will generate a number of build artifacts in the <code>/target</code> directory. In there, find the file ending <code>sources.jar</code>, and select it.`,
         ];
-        this.acceptedFilesForReviewUpload = ".sources.jar";
+        this.acceptedFilesForReviewUpload = ".jar";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;
@@ -544,7 +544,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
           `Use <code>api-extractor</code> to generate a <a href="https://api-extractor.com/pages/setup/generating_docs/">docModel file</a>`,
           `Upload generated api.json file`
         ];
-        this.acceptedFilesForReviewUpload = ".api.json";
+        this.acceptedFilesForReviewUpload = ".json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;

@@ -34,7 +34,9 @@ $repos = @(
   "azure-sdk-for-java",
   "azure-sdk-for-js",
   "azure-sdk-for-net",
-  "azure-sdk-for-python"
+  "azure-sdk-for-python",
+  "azure-sdk-for-rust",
+  "azure-rest-api-specs"
 )
 
 foreach ($repo in $repos)
@@ -57,6 +59,6 @@ foreach ($repo in $repos)
   }
 
   if ($prstate.mergeStateStatus -ne "CLEAN") {
-    Write-Host "****PR is not mergeable [$($prstate.mergeStateStatus)] and may need to be manually merged"
+    Write-Host "****PR $($prstate.url) is not mergeable [state: $($prstate.mergeStateStatus)] and may need to be manually merged"
   }
 }

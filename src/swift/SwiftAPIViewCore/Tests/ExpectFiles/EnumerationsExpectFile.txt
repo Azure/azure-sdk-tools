@@ -1,0 +1,32 @@
+Package parsed using Swift APIView (version 0.2.2)
+
+
+package EnumerationsTestFile.swifttxt {
+    public enum ASCIIControlCharacter: Character {
+        case tab = "\t"
+        case lineFeed = "\n"
+        case carriageReturn = "\r"
+    }
+
+    public enum ArithmeticExpression {
+        case number(Int)
+        indirect case addition(ArithmeticExpression, ArithmeticExpression)
+        indirect case multiplication(ArithmeticExpression, ArithmeticExpression)
+    }
+
+    public enum Barcode {
+        case upc(Int, Int, Int, Int)
+        case qrCode(String)
+    }
+
+    public enum CompassPoint {
+        case north
+        case south
+        case east
+        case west
+    }
+
+    public enum Planet: Int {
+        case mercury = 1, venus, earth, mars, jupiter, saturn, uranus, neptune
+    }
+}

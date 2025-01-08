@@ -1,4 +1,4 @@
-import { describe, it } from "node:test";
+import { describe, it } from "vitest";
 import { doesFileExist, isValidUrl } from "../src/network.js";
 import { assert } from "chai";
 

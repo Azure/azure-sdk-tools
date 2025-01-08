@@ -6,17 +6,6 @@ param (
     # If provisioning an existing cluster and updating nodes, it must be done exclusively
     [switch]$UpdateNodes = $false,
 
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    [string] $TenantId,
-
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-    [string] $ProvisionerApplicationId,
-
-    [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-    [string] $ProvisionerApplicationSecret,
-
     [ValidateScript({
         if (!(Test-Path $_)) {
             throw "LocalAddonsPath $LocalAddonsPath does not exist"
@@ -32,7 +21,7 @@ param (
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot "../../../eng/common/scripts/Helpers" PSModule-Helpers.ps1)
-Install-ModuleIfNotInstalled -WhatIf:$false "powershell-yaml" "0.4.1" | Import-Module
+Install-ModuleIfNotInstalled -WhatIf:$false "powershell-yaml" "0.4.7" | Import-Module
 
 $STATIC_TEST_DOTENV_NAME="public"
 $VALUES_FILE = "$PSScriptRoot/kubernetes/stress-test-addons/values.yaml"
@@ -235,18 +224,12 @@ function main()
         throw "When using a custom environment you must set -LocalAddonsPath to provide the stress-infrastructure release with environment values"
     }
 
-    if ($PSCmdlet.ParameterSetName -eq 'Provisioner') {
-        az login `
-            --service-principal `
-            --username $ProvisionerApplicationId `
-            --password $ProvisionerApplicationSecret`
-            --tenant $TenantId
-        if ($LASTEXITCODE) { exit $LASTEXITCODE }
-    }
-
     if (!$Development) {
         $params = LoadEnvParams
         $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
+
+        RunOrExitOnFailure az account set -s $params.subscriptionId
+
         DeployClusterResources $params
         RegisterAKSFeatures $STRESS_CLUSTER_RESOURCE_GROUP $params.clusterName
     }

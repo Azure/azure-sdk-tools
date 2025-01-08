@@ -26,19 +26,19 @@ func CreateAPIView(pkgDir, outputDir string) error {
 	return nil
 }
 
-func createReview(pkgDir string) (PackageReview, error) {
+func createReview(pkgDir string) (CodeFile, error) {
 	r, err := NewReview(pkgDir)
 	if err != nil {
-		return PackageReview{}, err
+		return CodeFile{}, err
 	}
 	return r.Review()
 }
 
-func recursiveSortNavigation(n Navigation) {
+func recursiveSortNavigation(n NavigationItem) {
 	for _, nn := range n.ChildItems {
 		recursiveSortNavigation(nn)
 	}
-	slices.SortFunc(n.ChildItems, func(a Navigation, b Navigation) int {
+	slices.SortFunc(n.ChildItems, func(a NavigationItem, b NavigationItem) int {
 		aa, err := json.Marshal(a)
 		if err != nil {
 			panic(err)

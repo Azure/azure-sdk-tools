@@ -2,10 +2,10 @@ import "@typespec/json-schema";
 
 using TypeSpec.JsonSchema;
 
-@jsonSchema
 namespace Schemas;
 
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */
+@jsonSchema
 model CodeFile {
   PackageName: string;
   PackageVersion: string;
@@ -18,6 +18,10 @@ model CodeFile {
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
   Diagnostics?: Array<CodeDiagnostic>;
+  /** Navigation items are used to create a tree view in the navigation panel. Each navigation item is linked to a review line ID. This is optional.
+  * If navigation items are not provided then navigation panel will be automatically generated using the review lines. Navigation items should be provided only if you want to customize the navigation panel.
+  */
+  Navigation?: Array<NavigationItem>;
 }
 
 
@@ -63,6 +67,8 @@ model ReviewToken {
   IsDeprecated?: boolean = false;
   /** Set this to false if there is no suffix space required before next token. For e.g, punctuation right after method name */
   HasSuffixSpace?: boolean = true;
+  /** Set this to true if there is a prefix space required before current token. For e.g, space before token for = */
+  HasPrefixSpace?: boolean = false;
   /** Set isDocumentation to true if current token is part of documentation */
   IsDocumentation?: boolean = false;
   /** Language specific style css class names */
@@ -74,7 +80,7 @@ model ReviewToken {
 model CodeDiagnostic {
   /** Diagnostic ID is auto generated ID by CSharp analyzer. */
   DiagnosticId?: string;
-    /** Id of ReviewLine object where this diagnostic needs to be displayed */
+  /** Id of ReviewLine object where this diagnostic needs to be displayed */
   TargetId: string;
   /** Auto generated system comment to be displayed under targeted line. */
   Text: string;
@@ -83,13 +89,22 @@ model CodeDiagnostic {
 }
 
 enum TokenKind {
+  /** Text: Token kind should be set as Text for any plan text token. for e.g documentation, namespace value, or attribute or decorator tokens **/
   Text: 0,
+  /** Punctuation **/
   Punctuation: 1,
+  /** Keyword **/
   Keyword: 2,
+  /** TypeName: Kind should be set as TypeName for class definitions, base class token, parameter types etc **/
   TypeName: 3,
+  /** MemberName: Kind should be set as MemberName for method name tokens, member variable tokens **/
   MemberName: 4,
+  /** StringLiteral: Token kind for any metadata or string literals to show in API view **/
   StringLiteral: 5,
+  /** Literal: Token kind for any literals, for e.g. enum value or numerical constant literal or default value **/
   Literal: 6,
+  /** Comment: Comment text within the code that's really a documentation. 
+   *  Few languages wants to show comments within API review that's not tagged as documentation **/
   Comment: 7
 }
 
@@ -100,4 +115,11 @@ enum CodeDiagnosticLevel {
   /** Fatal level diagnostic will block API review approval and it will show an error message to the user. Approver will have to 
   * override fatal level system comments before approving a review.*/
  Fatal:	4
+}
+
+model NavigationItem {
+  Text: string;
+  NavigationId: string;
+  ChildItems: Array<NavigationItem>;
+  Tags: Record<string>;
 }

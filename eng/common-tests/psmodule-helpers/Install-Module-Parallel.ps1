@@ -4,8 +4,8 @@
 
 $command = {
     . $PWD/../../common/scripts/Helpers/PSModule-Helpers.ps1
-    Write-Host 'Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module'
-    Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
+    Write-Host 'Install-ModuleIfNotInstalled "powershell-yaml" "0.4.7" | Import-Module'
+    Install-ModuleIfNotInstalled "powershell-yaml" "0.4.7" | Import-Module
     Write-Host
 }
 

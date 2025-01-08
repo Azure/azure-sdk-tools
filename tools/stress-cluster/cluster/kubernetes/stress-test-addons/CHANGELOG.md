@@ -1,5 +1,11 @@
 # Release History
 
+## 0.3.4 (2024-11-01)
+
+### Breaking Changes
+
+Changed prod cluster config values (cluster subscription/tenant migration)
+
 ## 0.3.3 (2024-07-10)
 
 ### Features Added

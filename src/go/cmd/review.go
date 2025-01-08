@@ -58,14 +58,14 @@ func (r *Review) AddModule(m *Module) error {
 	return nil
 }
 
-func (r *Review) Review() (PackageReview, error) {
+func (r *Review) Review() (CodeFile, error) {
 	if err := r.resolveAliases(); err != nil {
-		return PackageReview{}, err
+		return CodeFile{}, err
 	}
 
-	tokenList := &[]Token{}
-	nav := []Navigation{}
-	diagnostics := []Diagnostic{}
+	lines := []ReviewLine{}
+	nav := []NavigationItem{}
+	diagnostics := []CodeDiagnostic{}
 	packageNames := []string{}
 	for name, p := range r.reviewed.Packages {
 		// we use a prefixed path separator so that we can handle the "internal" module.
@@ -80,32 +80,43 @@ func (r *Review) Review() (PackageReview, error) {
 		packageNames = append(packageNames, name)
 	}
 	sort.Strings(packageNames)
-	for _, name := range packageNames {
+	for i, name := range packageNames {
 		p := r.reviewed.Packages[name]
 		n := p.relName
-		makeToken(nil, nil, "package", TokenTypeMemberName, tokenList)
-		makeToken(nil, nil, " ", TokenTypeWhitespace, tokenList)
-		makeToken(&n, nil, n, TokenTypeTypeName, tokenList)
-		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
-		makeToken(nil, nil, "", TokenTypeNewline, tokenList)
+		line := ReviewLine{
+			Children: []ReviewLine{},
+			LineID:   n,
+			Tokens: []ReviewToken{
+				{
+					HasSuffixSpace: true,
+					Kind:           TokenKindKeyword,
+					Value:          "package",
+				},
+				{
+					Kind:                  TokenKindText,
+					NavigationDisplayName: n,
+					Value:                 n,
+				},
+			},
+		}
 		// TODO: reordering these calls reorders APIView output and can omit content
-		p.c.parseInterface(tokenList)
-		p.c.parseStruct(tokenList)
-		p.c.parseSimpleType(tokenList)
-		p.c.parseVar(tokenList)
-		p.c.parseConst(tokenList)
-		p.c.parseFunc(tokenList)
+		line.Children = append(line.Children, p.c.parseInterface()...)
+		line.Children = append(line.Children, p.c.parseStructs()...)
+		line.Children = append(line.Children, p.c.parseSimpleType()...)
+		line.Children = append(line.Children, p.c.parseVar()...)
+		line.Children = append(line.Children, p.c.parseConst()...)
+		line.Children = append(line.Children, p.c.parseFunc()...)
 		navItems := p.c.generateNavChildItems()
-		nav = append(nav, Navigation{
+		nav = append(nav, NavigationItem{
 			Text:         n,
-			NavigationId: n,
+			NavigationID: n,
 			ChildItems:   navItems,
 			Tags: &map[string]string{
 				"TypeKind": "namespace",
 			},
 		})
 		diagnostics = append(diagnostics, p.diagnostics...)
-		slices.SortFunc(diagnostics, func(a Diagnostic, b Diagnostic) int {
+		slices.SortFunc(diagnostics, func(a CodeDiagnostic, b CodeDiagnostic) int {
 			targetCmp := strings.Compare(a.TargetID, b.TargetID)
 			if targetCmp != 0 {
 				return targetCmp
@@ -118,14 +129,44 @@ func (r *Review) Review() (PackageReview, error) {
 		for _, n := range nav {
 			recursiveSortNavigation(n)
 		}
+		lines = append(lines, line)
+		var tks []ReviewToken
+		if i < len(packageNames)-1 {
+			tks = append(tks, ReviewToken{
+				Kind:     TokenKindText,
+				SkipDiff: true,
+				Value:    strings.Repeat("━", 160),
+			})
+		}
+		lines = append(lines, ReviewLine{IsContextEndLine: true, Tokens: tks})
 	}
-	return PackageReview{
+
+	// Any ReviewToken having a nonempty NavigateToID that doesn't match some ReviewLine's
+	// LineID will be clickable in API View but won't navigate to anything when clicked. It
+	// would be best simply not to assign such values, but parseAndMakeTypeTokens() does so
+	// in some uncommon cases and preventing that is difficult in the current implementation.
+	// So, we instead remove invalid NavigateToID values here.
+	lineIDs := map[string]bool{}
+	forAll(lines, func(ln ReviewLine) {
+		lineIDs[ln.LineID] = true
+	})
+	forAll(lines, func(ln ReviewLine) {
+		for i, tk := range ln.Tokens {
+			if !lineIDs[tk.NavigateToID] {
+				ln.Tokens[i].NavigateToID = ""
+			}
+		}
+	})
+
+	return CodeFile{
 		Diagnostics: diagnostics,
 		Language:    "Go",
 		Name:        r.reviewed.Name,
 		Navigation:  nav,
-		Tokens:      *tokenList,
-		PackageName: r.name,
+		// this must match the value in src/dotnet/APIView/APIViewWeb/Languages/GoLanguageService.cs
+		ParserVersion: "0.1",
+		ReviewLines:   lines,
+		PackageName:   r.name,
 	}, nil
 }
 
@@ -211,4 +252,12 @@ func (r *Review) resolveAliases() error {
 		}
 	}
 	return nil
+}
+
+// forAll recursively applies a function to all lines and their children
+func forAll(lines []ReviewLine, fn func(ReviewLine)) {
+	for _, ln := range lines {
+		fn(ln)
+		forAll(ln.Children, fn)
+	}
 }

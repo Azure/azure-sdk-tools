@@ -120,6 +120,7 @@ Devtestlab,,e99695
 Digital Twins,,e99695
 Do Not Merge,,b60205
 Docs,,e99695
+Durable Task Scheduler,,e99695
 EngSys,This issue is impacting the engineering system.,e99695
 Epic,,3E4B9E
 Event Grid,,e99695
@@ -169,6 +170,7 @@ Network - Bastion,,e99695
 Network - CDN,,e99695
 Network - DDoS Protection,,e99695
 Network - DNS,,e99695
+Network - DNS Private Resolver,,e99695
 Network - ExpressRoute,,e99695
 Network - Firewall,,e99695
 Network - Front Door,Service: Azure Front Door,e99695

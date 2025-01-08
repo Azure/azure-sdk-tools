@@ -1,4 +1,4 @@
-import * as jsYaml from "js-yaml";
+import YAML from "yaml";
 
 /**
  * The parsed version of the swagger-to-sdk YAML block within an AutoRest readme.md file.
@@ -59,7 +59,7 @@ export function findSwaggerToSDKConfiguration(readmeMdFileContents: string | und
       const yamlBlockContents: string | null = swaggerToSDKYamlBlock.content;
       if (yamlBlockContents) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const yaml: any = jsYaml.safeLoad(yamlBlockContents);
+        const yaml: any = YAML.parse(yamlBlockContents);
         if (yaml) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const swaggerToSDK: any = yaml["swagger-to-sdk"];

@@ -142,7 +142,7 @@ export const getLanguageByRepoName = (repoName: string) => {
 };
 
 export const loadConfigContent = (fileName: string, logger: winston.Logger) => {
-  logger.info(`Load config file: ${specConfigPath}`);
+  logger.info(`Load config file: ${fileName}`);
   try {
     const fileContent = fs.readFileSync(fileName).toString();
     const result = JSON.parse(fileContent);

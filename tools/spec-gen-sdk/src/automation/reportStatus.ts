@@ -1,4 +1,4 @@
-import { MessageRecord, sendSuccess, sendFailure } from '../types/Message';
+import { MessageRecord, sendSuccess, sendFailure, sendPipelineVariable } from '../types/Message';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as prettier from 'prettier';
@@ -12,6 +12,7 @@ import { removeAnsiEscapeCodes } from '../utils/utils';
 import { CommentCaptureTransport } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
+import { getGenerationBranchName } from '../types/PackageData';
 
 const commentLimit = 60;
 
@@ -76,6 +77,11 @@ export const generateReport = (context: WorkflowContext) => {
 
   writeTmpJsonFile(context, 'executionReport.json', executionReport);
   context.logger.info(`Main status [${context.status}]`);
+  if (context.config.runEnv === 'azureDevOps') {
+    context.logger.info("Set pipeline variables.");
+    setPipelineVariables(context, executionReport);
+  }
+
   if (context.status === 'failed') {
     console.log(`##vso[task.complete result=Failed;]`);
     sendFailure();
@@ -338,4 +344,33 @@ const renderHandlebarTemplate = (
 
 function unifiedRenderingMessages(message: string[], title?: string): string {
   return `<pre>${title ? `<strong>${title}</strong><BR>` : ''}${message.map(trimNewLine).join('<BR>')}</pre>`;
+}
+
+const setPipelineVariables = async (context: WorkflowContext, executionReport: ExecutionReport) => {
+  let breakingChangeLabel = "";
+  let packageName = "";
+  let prBranch = "";
+  let prTitle = "";
+  let prBody = "";
+
+  if (executionReport && executionReport.packages && executionReport.packages.length > 0) {
+    const pkg = executionReport.packages[0];
+    if (pkg.shouldLabelBreakingChange) {
+        breakingChangeLabel = pkg.breakingChangeLabel ?? "";
+    }
+    packageName = pkg.packageName ?? "";
+    if (context.config.pullNumber) {    
+        prBody = `Create to sync ${context.config.specRepoHttpsUrl}/pull/${context.config.pullNumber}`;
+        prBranch = getGenerationBranchName(context, packageName);
+      }
+    prBody = `${prBody}\n\n${pkg.installInstructions ?? ''}`;
+  }
+  
+  prBody = `${prBody}\n This pull request has been automatically generated for preview purposes.`;
+  prTitle = `[AutoPR ${packageName}]`;
+  sendPipelineVariable("BreakingChangeLabel", breakingChangeLabel);
+  sendPipelineVariable("PrBranch", prBranch);
+  sendPipelineVariable("PrTitle", prTitle);
+  sendPipelineVariable("PrBody", prBody);
+  context.logger.info(`BreakingChangeLabel: ${breakingChangeLabel}, PrBranch: ${prBranch}, PrTitle: ${prTitle}, PrBody: ${prBody}`);
 }

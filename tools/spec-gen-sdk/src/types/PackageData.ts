@@ -127,7 +127,8 @@ export type PackageData = SDKRepositoryPackageData & {
 };
 
 export const getGenerationBranchName = (context: WorkflowContext, packageName: string) => {
-  return `${context.config.branchPrefix}/${context.config.pullNumber}/${packageName.replace('/', '_')}`;
+  return context.config.pullNumber ? `${context.config.branchPrefix}/${context.config.pullNumber}/${packageName.replace('/', '_')}` : 
+  `${context.config.branchPrefix}/${packageName.replace('/', '_')}`;
 };
 export const getIntegrationBranchName = (context: WorkflowContext, packageName: string) => {
   return `${context.config.branchPrefix}/${packageName.replace('/', '_')}`;

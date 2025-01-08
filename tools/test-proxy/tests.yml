@@ -5,7 +5,6 @@ variables:
 
 stages:
   - stage: IntegrationTests
-    condition: false
     displayName: "Asset Sync Integration Tests"
     jobs:
     - job: Solution_Integration_Test
@@ -85,7 +84,6 @@ stages:
     jobs:
     - job: Test_JS_Utils
 
-      condition: false
       displayName: Invoke JS Utils CI Tests
 
       strategy:
@@ -206,7 +204,6 @@ stages:
       displayName: Run Python Tables CI Tests
 
 
-      condition: false
       strategy:
         matrix:
           Windows:

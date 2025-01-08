@@ -353,7 +353,7 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
   let prTitle = "";
   let prBody = "";
 
-  if (executionReport && executionReport.packages) {
+  if (executionReport && executionReport.packages && executionReport.packages.length > 0) {
     const pkg = executionReport.packages[0];
     if (pkg.shouldLabelBreakingChange) {
         breakingChangeLabel = pkg.breakingChangeLabel ?? "";

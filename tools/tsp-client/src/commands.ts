@@ -27,6 +27,7 @@ import { config as dotenvConfig } from "dotenv";
 import { resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
+import { execSync } from "child_process";
 
 export async function initCommand(argv: any) {
   let outputDir = argv["output-dir"];
@@ -311,13 +312,19 @@ export async function generateCommand(argv: any) {
 
 export async function compareCommand(argv: any, args: string[]) {
   let outputDir = argv["output-dir"];
-  const openApiDiffPath = await getPathToDependency("@azure-tools/rest-api-diff");
-  const command = [openApiDiffPath, ...args];
-  try {
-    await nodeCommand(outputDir, command);
-  } catch (err) {
-    Logger.error(`Error occurred while attempting to compare: ${err}`);
-    process.exit(1);
+  if (argv["update"]) {
+    execSync(`npm install @azure-tools/rest-api-diff@latest`, { stdio: "inherit" });
+    Logger.info("Updated @azure-tools/rest-api-diff to the latest version");
+  } else {
+    const openApiDiffPath = await getPathToDependency("@azure-tools/rest-api-diff");
+    const command = [openApiDiffPath, ...args];
+    try {
+      await nodeCommand(outputDir, command);
+      Logger.info("Use `tsp-client compare --update` to update @azure-tools/rest-api-diff to the latest version");
+    } catch (err) {
+      Logger.error(`Error occurred while attempting to compare: ${err}`);
+      process.exit(1);
+    }  
   }
 }
 

@@ -237,7 +237,13 @@ const parser = yargs(hideBin(process.argv))
     "compare",
     "Compare two Swaggers for functional equivalency. This is typically used to compare a source Swagger with a TypeSpec project or TypeSpec generated Swagger to ensure that the TypeSpec project is functionally equivalent to the source Swagger.",
     (yargs: any) => {
-      return yargs.help(false);
+      return yargs
+        .option("update", {
+            type: "boolean",
+            description: "Update `@azure-tools/rest-api-diff` to the latest version.",
+            default: false,
+        })
+        .help(false);
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);

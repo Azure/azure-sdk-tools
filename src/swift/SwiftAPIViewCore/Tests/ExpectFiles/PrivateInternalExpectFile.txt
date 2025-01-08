@@ -1,4 +1,4 @@
-Package parsed using Swift APIView (version 0.2.2)
+Package parsed using Swift APIView (version 0.3.0)
 
 
 package PrivateInternalTestFile.swifttxt {}

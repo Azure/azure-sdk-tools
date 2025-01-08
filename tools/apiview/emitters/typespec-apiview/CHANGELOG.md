@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.5.0 (TBD)
+## Version 0.5.0 (01-08-2025)
 Support new internal APIView tree-structure.
 
 ## Version 0.4.9 (07-09-2024)

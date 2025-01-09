@@ -409,6 +409,7 @@ export async function generateConfigFilesCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repoRoot = await getRepoRoot(outputDir);
   const packageJsonPath = normalizePath(resolve(argv["package-json"]));
+  const overridePath = argv["overrides"] ?? undefined;
 
   if (packageJsonPath === undefined || !(await doesFileExist(packageJsonPath))) {
     throw new Error(`package.json not found in: ${packageJsonPath ?? "[Not Specified]"}`);
@@ -421,9 +422,16 @@ export async function generateConfigFilesCommand(argv: any) {
     dependencies: {},
   };
 
-  // Add emitter as dependency
-  emitterPackageJson["dependencies"][packageJson["name"]] = packageJson["version"];
+  let overrideJson: Record<string, any> = {};
+  if (overridePath) {
+    overrideJson = JSON.parse((await readFile(overridePath)).toString()) ?? {};
+  }
 
+  // Add emitter as dependency
+  emitterPackageJson["dependencies"][packageJson["name"]] =
+    overrideJson[packageJson["name"]] ?? packageJson["version"];
+
+  delete overrideJson[packageJson["name"]];
   const devDependencies: Record<string, any> = {};
 
   const possiblyPinnedPackages =
@@ -431,16 +439,18 @@ export async function generateConfigFilesCommand(argv: any) {
 
   for (const pinnedPackage in possiblyPinnedPackages) {
     const pinnedVersion = packageJson["devDependencies"][pinnedPackage];
-    if (pinnedVersion) {
+    if (pinnedVersion && !overrideJson[pinnedPackage]) {
       Logger.info(`Pinning ${pinnedPackage} to ${pinnedVersion}`);
       devDependencies[pinnedPackage] = pinnedVersion;
-    } else {
-      devDependencies[pinnedPackage] = possiblyPinnedPackages[pinnedPackage];
     }
   }
 
-  emitterPackageJson["devDependencies"] = devDependencies;
-
+  if (Object.keys(devDependencies).length > 0) {
+    emitterPackageJson["devDependencies"] = devDependencies;
+  }
+  if (Object.keys(overrideJson).length > 0) {
+    emitterPackageJson["overrides"] = overrideJson;
+  }
   await writeFile(
     joinPaths(repoRoot, "eng", "emitter-package.json"),
     JSON.stringify(emitterPackageJson, null, 2),

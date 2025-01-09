@@ -1,61 +1,52 @@
 using Octokit;
 using Azure.Storage.Blobs;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Azure.Identity;
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
-
 using Newtonsoft.Json;
 
-namespace IssueManager
+namespace SearchIndexCreator
 {
     public class DocumentRetrieval
     {
         private readonly GitHubClient _client;
         private readonly string _token;
-        //private readonly ILogger<GitHubCrawler> _logger;
 
-        public DocumentRetrieval(string token)//, ILogger<GitHubCrawler> logger)
+        public DocumentRetrieval(string token)
         {
             _client = new GitHubClient(new Octokit.ProductHeaderValue("Microsoft-ML-IssueBot-test"));
             var tokenAuth = new Credentials(token);
             _client.Credentials = tokenAuth;
             _token = token;
-            //_logger = logger;
         }
 
-        public async Task<List<(string FilePath, string Url, string Content)>> GetReadmeFiles(string owner, string repo)
+        public async Task<List<(string FilePath, string Url, string Content)>> GetDocuments(string owner, string repo)
         {
-            var readmePaths = new List<string>();
-            await DirectoryTree(_token, readmePaths);
-            var readmeFiles = new List<(string FilePath, string Url, string Content)>();
-            await GetReadmeContents(owner, repo, readmeFiles, readmePaths);
-            return readmeFiles;
+            var documentPaths = new List<string>();
+            await DirectoryTree(_token, documentPaths, owner, repo);
+            var documentFiles = new List<(string FilePath, string Url, string Content)>();
+            await GetDocumentContents(owner, repo, documentFiles, documentPaths);
+            return documentFiles;
         }
 
-        private async Task GetReadmeContents(string owner, string repo, List<(string FilePath, string Url, string Content)> readmeFiles, List<string> readmePaths)
+        private async Task GetDocumentContents(string owner, string repo, List<(string FilePath, string Url, string Content)> readmeFiles, List<string> documentPaths)
         {
-            try
+            foreach (var path in documentPaths)
             {
-                foreach (var path in readmePaths)
+                try
                 {
                     var fileContent = await _client.Repository.Content.GetAllContents(owner, repo, path);
-                    Console.WriteLine(fileContent[0].HtmlUrl);
-                    readmeFiles.Add((fileContent[0].Path, fileContent[0].HtmlUrl, fileContent[0].Content));   
+                    if (fileContent[0].Content != "")
+                    {
+                        readmeFiles.Add((fileContent[0].Path, fileContent[0].HtmlUrl, fileContent[0].Content));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Error getting repository contents for path: {path}", ex);
                 }
             }
-            catch (Exception ex)
-            {
-                //_logger.LogError(ex, $"Error getting repository contents for path: {path}");
-                Console.WriteLine(ex.Message, $"Error getting repository contents for path readmes");
-            }
         }
+
 
         public async Task UploadFiles(List<(string FilePath, string Url, string Content)> files, string accountName, string containerName)
         {
@@ -70,16 +61,24 @@ namespace IssueManager
                 try
                 {
                     var jsonContent = System.Text.Json.JsonSerializer.Serialize(new { file.Url, file.Content });
+                    var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
+                    {
+                        ContentType = "application/json" // Specify the content type
+                    };
+
                     using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(jsonContent)))
                     {
-                        await blobClient.UploadAsync(stream, true);
+                        await blobClient.UploadAsync(stream, new Azure.Storage.Blobs.Models.BlobUploadOptions
+                        {
+                            HttpHeaders = blobHttpHeaders
+                        });
                     }
 
                     Console.WriteLine($"Uploaded {file.FilePath} to {containerClient.Name} container.");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error uploading file: {file.FilePath}\n" + ex);
+                    throw new Exception($"Error uploading file: {file.FilePath}", ex);
                 }
             }
         }
@@ -93,7 +92,8 @@ namespace IssueManager
             return client;
         }
 
-        public async Task DirectoryTree(string githubToken, List<string> readmePaths)
+
+        public async Task DirectoryTree(string githubToken, List<string> documentPaths, string repoOwner, string repoName)
         {
             using (var client = new HttpClient())
             {
@@ -107,7 +107,7 @@ namespace IssueManager
                 try
                 {
                     // Make the GET request
-                    var response = await client.GetAsync("repos/Azure/azure-sdk-for-net/git/trees/main?recursive=1");
+                    var response = await client.GetAsync($"repos/{repoOwner}/{repoName}/git/trees/main?recursive=1");
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -119,28 +119,33 @@ namespace IssueManager
                         {
                             if (item.Path.ToLower().EndsWith("readme.md"))
                             {
-                                readmePaths.Add(item.Path);
+                                documentPaths.Add(item.Path);
+                            }
+                            // Filter for samples. Typically samples are in a folder named "sample" and have a .md extension excluding readme files. 
+                            else if (System.Text.RegularExpressions.Regex.IsMatch(item.Path.ToLower(), @"^.*sample\/*[^\/]+\.md$") && !item.Path.ToLower().EndsWith("readme.md"))
+                            {
+                                documentPaths.Add(item.Path);
                             }
                         }
 
                         // Print the list of readme.md paths
-                        foreach (var readmePath in readmePaths)
+                        foreach (var readmePath in documentPaths)
                         {
                             Console.WriteLine(readmePath);
                         }
                     }
                     else
                     {
-                        Console.WriteLine($"Error: {response.StatusCode}");
+                        throw new Exception($"GitHub API request failed with status code: {response.StatusCode}");
                     }
                 }
                 catch (HttpRequestException e)
                 {
-                    Console.WriteLine($"Request error: {e.Message}");
+                    throw new Exception("Request error while retrieving directory tree.", e);
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Unexpected error: {e.Message}");
+                    throw new Exception("Unexpected error occurred while retrieving directory tree.", e);
                 }
             }
         }

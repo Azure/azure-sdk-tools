@@ -86,14 +86,16 @@ namespace IssueLabelerService
                 string content = await _issueLabeler.FilterAndCombine(relevantIssues, relevantDocuments, scoreThreshold, tokenThreshold);
 
                 string json_format = "{\n\"service\": \"\",\n\"category\": \"\",\n\"suggestions\": \"\"\n}";
-                string message = "You are an AI Assistant that helps users learn from the information found in the material. Answer the query using only the sources provided below." +
-                    "The query represents a github issue. Your job is to provide a service label, category label, and offer the user suggestions on how to solve there issue." +
-                    "service and category must come from the labels provided in the sources, the sources are a JSON array of previous issues that include service and category labels. " +
-                    //"If there isn't enough information below do not answer. " +
-                    "Do not generate answers that don't use the sources below. " +
-                    $"Return ONLY in the following format and nothing else: {json_format} " +
-                    $"Query: {query} " +
-                    $"Sources: {content}";
+                //string message = "You are an AI Assistant that helps users learn from the information found in the material. Answer the query using only the sources provided below." +
+                //    "The query represents a github issue. Your job is to provide a service label, category label, and offer the user suggestions on how to solve there issue." +
+                //    "service and category must come from the labels provided in the sources, the sources are a JSON array of previous issues that include service and category labels. " +
+                //    //"If there isn't enough information below do not answer. " +
+                //    "Do not generate answers that don't use the sources below. " +
+                //    $"Return ONLY in the following format and nothing else: {json_format} " +
+                //    $"Query: {query} " +
+                //    $"Sources: {content}";
+
+                string message = $"You are an AI assistant that helps users with issues based on the provided material. Below is a query and relevant sources (GitHub issues and documentation). Your role is to:\n\nIdentify the most appropriate service and category labels from the sources provided.\nProvide actionable suggestions based on the sources to help with the query.\nReference URLs from the sources for each suggestion to back up your recommendations.\nGuidelines:\nUse only the information from the sources below to construct your response.\nInclude URLs to specific sources where the information or suggestions originate.\nIf you cannot determine a solution due to insufficient information, state that explicitly.\nEnsure your response is structured strictly in the format defined below:\n{json_format}\nQuery: {query}\nSources: {content}\nNotes:\nDo not speculate or provide information that is not explicitly supported by the sources.";
 
                 result = _issueLabeler.SendMessageQna(openAIEndpoint, credential, modelName, message);
             }

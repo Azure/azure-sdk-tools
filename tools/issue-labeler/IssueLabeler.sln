@@ -12,6 +12,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IssueLabelerService", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IssueManager", "src\IssueManager\IssueManager.csproj", "{305F00F7-A6E2-4A52-B745-7B661893E2F5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SearchIndexCreator", "src\SearchIndexCreator\SearchIndexCreator.csproj", "{0AEAF8DD-C370-4090-B439-9CF364D29869}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{305F00F7-A6E2-4A52-B745-7B661893E2F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{305F00F7-A6E2-4A52-B745-7B661893E2F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{305F00F7-A6E2-4A52-B745-7B661893E2F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AEAF8DD-C370-4090-B439-9CF364D29869}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AEAF8DD-C370-4090-B439-9CF364D29869}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AEAF8DD-C370-4090-B439-9CF364D29869}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AEAF8DD-C370-4090-B439-9CF364D29869}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

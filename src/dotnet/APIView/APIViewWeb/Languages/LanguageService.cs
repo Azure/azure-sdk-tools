@@ -31,5 +31,6 @@ namespace APIViewWeb
         public static string[] SupportedLanguages = LanguageServiceHelpers.SupportedLanguages;
 
         public virtual bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => true;
+        public virtual bool CanConvert(string versionString) => false;
     }
 }

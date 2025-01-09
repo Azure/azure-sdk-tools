@@ -4,47 +4,49 @@ import { loadTspConfig } from "../common/utils";
 import { RunningEnvironment } from "./runningEnvironment";
 import { exists } from "fs-extra";
 
-function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {    
-    if (isMgmtWithHLC) {
-        return SDKType.HighLevelClient;
+export async function getSDKType(
+    specFolder: string,
+    readme: string | undefined,
+    typespecProjectFolder: string | undefined
+): Promise<SDKType> {
+    if (readme) {
+        // Update?
+        if (readme.includes("resource-manager")) return SDKType.HighLevelClient;
+        return SDKType.RestLevelClient;
     }
-    if (isMgmtWithModular) {
-        return SDKType.ModularClient;
-    }
-    return SDKType.RestLevelClient;
-}
 
-export async function isManagementPlaneModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {
     if (!typespecProjectFolder) {
-        return false;
-    }
-    
-    if (Array.isArray(typespecProjectFolder) && (typespecProjectFolder as string[]).length !== 1) {
-        throw new Error(`Unexpected typespecProjectFolder length: ${(typespecProjectFolder as string[]).length} (expect 1)`);
+        const rootCause = `Failed to get SDK Type due to neither README or typespecProjectFolder is undefined.`;
+        throw new Error(rootCause);
     }
 
-    const resolvedRelativeTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
-    const tspFolderFromSpecRoot = path.join(specFolder, resolvedRelativeTspFolder);
-    
-    const tspConfigPath = path.join(tspFolderFromSpecRoot, 'tspconfig.yaml');
+    const tspFolderFromSpecRoot = path.join(specFolder, typespecProjectFolder);
+
+    const tspConfigPath = path.join(tspFolderFromSpecRoot, "tspconfig.yaml");
     if (!(await exists(tspConfigPath))) {
-        return false;
+        const rootCause = `Failed to get SDK Type due to tspconfig.yaml doesn't exist in ${tspFolderFromSpecRoot}.`;
+        throw new Error(rootCause);
     }
 
     const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
-    const isModularLibrary = tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary'];
-    
-    // respect customer's choice
-    if (isModularLibrary === true) return true;
-    if (isModularLibrary === false) return false;
+    const isModularLibrary =
+        tspConfig?.options?.["@azure-tools/typespec-ts"]?.["isModularLibrary"];
 
-    const isAzureSDK = tspConfig?.options?.['@azure-tools/typespec-ts']?.['flavor'] === 'azure';
-    // unbranded sdk will generate modular client bt default
-    if (!isAzureSDK) return true;
+    // NOTE: respect customer's choice
+    if (isModularLibrary === true) return SDKType.ModularClient;
+    if (isModularLibrary === false) return SDKType.RestLevelClient;
 
-    const isManagementPlane = new RegExp(/\.Management[\/\\]?$/).test(tspFolderFromSpecRoot);
-    // management plane will generate modular client by default
-    return isManagementPlane;
+    const isAzureSDK =
+        tspConfig?.options?.["@azure-tools/typespec-ts"]?.["flavor"] ===
+        "azure";
+    // NOTE: unbranded sdk will generate modular client bt default
+    if (!isAzureSDK) return SDKType.ModularClient;
+
+    const isManagementPlane = new RegExp(/\.Management[\/\\]?$/).test(
+        tspFolderFromSpecRoot
+    );
+    // NOTE: management plane will generate modular client by default
+    return isManagementPlane ? SDKType.ModularClient : SDKType.RestLevelClient;
 }
 
 // TODO: generate interface for inputJson
@@ -80,9 +82,7 @@ export async function parseInputJson(inputJson: any) {
     const typespecProject = isTypeSpecProject ? typeof typespecProjectFolder === 'string' ? typespecProjectFolder : typespecProjectFolder![0] : undefined;
     const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
     
-    const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
-    const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
-    const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
+    const sdkType = await getSDKType(specFolder, readmeMd, typespecProject);
     return {
         sdkType,
         specFolder,

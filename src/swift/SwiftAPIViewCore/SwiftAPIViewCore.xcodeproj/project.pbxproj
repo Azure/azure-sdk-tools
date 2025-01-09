@@ -7,15 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0A61B5222D0B764600FC6B19 /* ReviewToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A61B5212D0B764600FC6B19 /* ReviewToken.swift */; };
+		0A61B5232D0B764600FC6B19 /* CodeDiagnostic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A61B51F2D0B764600FC6B19 /* CodeDiagnostic.swift */; };
+		0A61B5242D0B764600FC6B19 /* ReviewLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A61B5202D0B764600FC6B19 /* ReviewLine.swift */; };
+		0A61B5272D0B76C400FC6B19 /* NamespaceStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A61B5252D0B76C400FC6B19 /* NamespaceStack.swift */; };
+		0A61B5282D0B76C400FC6B19 /* ReviewTokenOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A61B5262D0B76C400FC6B19 /* ReviewTokenOptions.swift */; };
+		0A61B52A2D0CADF300FC6B19 /* TestUtilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A61B5292D0CADE300FC6B19 /* TestUtilityTests.swift */; };
 		0A6C658A292D9EA00075C56F /* APIViewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A1927879D0400C967A8 /* APIViewManager.swift */; };
 		0A6C658B292D9ED60075C56F /* CommandLineArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A0827879D0400C967A8 /* CommandLineArguments.swift */; };
 		0A6C658C292D9ED60075C56F /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A0C27879D0400C967A8 /* Errors.swift */; };
 		0A6C658D292D9ED60075C56F /* Identifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84079827F3B34B00801E60 /* Identifiers.swift */; };
 		0A6C658E292D9ED60075C56F /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A0A27879D0400C967A8 /* Logger.swift */; };
-		0A6C658F292D9F8B0075C56F /* APIViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84076527EE3DCE00801E60 /* APIViewModel.swift */; };
+		0A6C658F292D9F8B0075C56F /* CodeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84076527EE3DCE00801E60 /* CodeModel.swift */; };
 		0A6C6590292D9F8B0075C56F /* PackageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84076327ED2CA400801E60 /* PackageModel.swift */; };
 		0A6C6591292D9FE60075C56F /* Tokenizable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84076127ED2A2500801E60 /* Tokenizable.swift */; };
-		0A6C6592292DA0090075C56F /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A1227879D0400C967A8 /* Token.swift */; };
 		0A6C6593292DA0140075C56F /* Linkable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A84076927EE4E2C00801E60 /* Linkable.swift */; };
 		0A6C6598292E98890075C56F /* SourceKittenFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 0A6C6597292E98890075C56F /* SourceKittenFramework */; };
 		0A6C659F292EC8490075C56F /* NavigationTags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A846A1127879D0400C967A8 /* NavigationTags.swift */; };
@@ -77,6 +82,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0A61B51F2D0B764600FC6B19 /* CodeDiagnostic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeDiagnostic.swift; sourceTree = "<group>"; };
+		0A61B5202D0B764600FC6B19 /* ReviewLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewLine.swift; sourceTree = "<group>"; };
+		0A61B5212D0B764600FC6B19 /* ReviewToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewToken.swift; sourceTree = "<group>"; };
+		0A61B5252D0B76C400FC6B19 /* NamespaceStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NamespaceStack.swift; sourceTree = "<group>"; };
+		0A61B5262D0B76C400FC6B19 /* ReviewTokenOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewTokenOptions.swift; sourceTree = "<group>"; };
+		0A61B5292D0CADE300FC6B19 /* TestUtilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestUtilityTests.swift; sourceTree = "<group>"; };
 		0A76BF8A294A9A11007C776E /* TokenKind+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TokenKind+Extensions.swift"; sourceTree = "<group>"; };
 		0A76BF8E294B8BCD007C776E /* SyntaxProtocol+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SyntaxProtocol+Extensions.swift"; sourceTree = "<group>"; };
 		0A76BF90294B940A007C776E /* DeclarationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationModel.swift; sourceTree = "<group>"; };
@@ -85,7 +96,7 @@
 		0A76BF96294BA4E3007C776E /* ModifierListSyntax+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ModifierListSyntax+Extensions.swift"; sourceTree = "<group>"; };
 		0A84076127ED2A2500801E60 /* Tokenizable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tokenizable.swift; sourceTree = "<group>"; };
 		0A84076327ED2CA400801E60 /* PackageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PackageModel.swift; sourceTree = "<group>"; };
-		0A84076527EE3DCE00801E60 /* APIViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIViewModel.swift; sourceTree = "<group>"; };
+		0A84076527EE3DCE00801E60 /* CodeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeModel.swift; sourceTree = "<group>"; };
 		0A84076927EE4E2C00801E60 /* Linkable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Linkable.swift; sourceTree = "<group>"; };
 		0A84079827F3B34B00801E60 /* Identifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Identifiers.swift; sourceTree = "<group>"; };
 		0A8469E127879AE200C967A8 /* SwiftAPIViewCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftAPIViewCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -95,7 +106,6 @@
 		0A846A0A27879D0400C967A8 /* Logger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		0A846A0C27879D0400C967A8 /* Errors.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
 		0A846A1127879D0400C967A8 /* NavigationTags.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NavigationTags.swift; sourceTree = "<group>"; };
-		0A846A1227879D0400C967A8 /* Token.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
 		0A846A1327879D0400C967A8 /* NavigationToken.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NavigationToken.swift; sourceTree = "<group>"; };
 		0A846A1927879D0400C967A8 /* APIViewManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIViewManager.swift; sourceTree = "<group>"; };
 		0A846A342787A88E00C967A8 /* CoreInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = CoreInfo.plist; sourceTree = "<group>"; };
@@ -199,9 +209,10 @@
 		0A846A0227879D0400C967A8 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				B2DA7DFF2D0A0A6A0059E51F /* ExpectFiles */,
 				B2DA7E212D0A0A6F0059E51F /* TestFiles */,
+				B2DA7DFF2D0A0A6A0059E51F /* ExpectFiles */,
 				0A846A0327879D0400C967A8 /* SwiftAPIViewCoreTests.swift */,
+				0A61B5292D0CADE300FC6B19 /* TestUtilityTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -209,11 +220,11 @@
 		0A846A0627879D0400C967A8 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				0A76BF89294A99FB007C776E /* SwiftSyntax+Extensions */,
-				0A846A1927879D0400C967A8 /* APIViewManager.swift */,
-				0A84077A27EE659100801E60 /* Protocols */,
 				0A846A0F27879D0400C967A8 /* Models */,
+				0A84077A27EE659100801E60 /* Protocols */,
+				0A76BF89294A99FB007C776E /* SwiftSyntax+Extensions */,
 				0A846A0927879D0400C967A8 /* Util */,
+				0A846A1927879D0400C967A8 /* APIViewManager.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -233,13 +244,17 @@
 			isa = PBXGroup;
 			children = (
 				0A76BF94294BA10A007C776E /* AccessLevel.swift */,
-				0A84076527EE3DCE00801E60 /* APIViewModel.swift */,
+				0A61B51F2D0B764600FC6B19 /* CodeDiagnostic.swift */,
+				0A84076527EE3DCE00801E60 /* CodeModel.swift */,
 				0A76BF90294B940A007C776E /* DeclarationModel.swift */,
 				0AA1BFBD2953839E00AE8C11 /* ExtensionModel.swift */,
+				0A61B5252D0B76C400FC6B19 /* NamespaceStack.swift */,
 				0A84076327ED2CA400801E60 /* PackageModel.swift */,
+				0A61B5202D0B764600FC6B19 /* ReviewLine.swift */,
+				0A61B5212D0B764600FC6B19 /* ReviewToken.swift */,
+				0A61B5262D0B76C400FC6B19 /* ReviewTokenOptions.swift */,
 				0A846A1127879D0400C967A8 /* NavigationTags.swift */,
 				0A846A1327879D0400C967A8 /* NavigationToken.swift */,
-				0A846A1227879D0400C967A8 /* Token.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -423,14 +438,18 @@
 			files = (
 				0A76BF8B294A9A11007C776E /* TokenKind+Extensions.swift in Sources */,
 				0A6C659F292EC8490075C56F /* NavigationTags.swift in Sources */,
+				0A61B5222D0B764600FC6B19 /* ReviewToken.swift in Sources */,
+				0A61B5232D0B764600FC6B19 /* CodeDiagnostic.swift in Sources */,
+				0A61B5272D0B76C400FC6B19 /* NamespaceStack.swift in Sources */,
+				0A61B5282D0B76C400FC6B19 /* ReviewTokenOptions.swift in Sources */,
+				0A61B5242D0B764600FC6B19 /* ReviewLine.swift in Sources */,
 				0A6C65A0292EC8490075C56F /* NavigationToken.swift in Sources */,
 				0A76BF97294BA4E3007C776E /* ModifierListSyntax+Extensions.swift in Sources */,
 				0A6C6593292DA0140075C56F /* Linkable.swift in Sources */,
 				0AA1BFBE2953839E00AE8C11 /* ExtensionModel.swift in Sources */,
-				0A6C6592292DA0090075C56F /* Token.swift in Sources */,
 				0A6C6591292D9FE60075C56F /* Tokenizable.swift in Sources */,
 				0A76BF93294B987C007C776E /* DeclSyntaxProtocol+Extensions.swift in Sources */,
-				0A6C658F292D9F8B0075C56F /* APIViewModel.swift in Sources */,
+				0A6C658F292D9F8B0075C56F /* CodeModel.swift in Sources */,
 				0A76BF91294B940A007C776E /* DeclarationModel.swift in Sources */,
 				0A6C6590292D9F8B0075C56F /* PackageModel.swift in Sources */,
 				0A6C658B292D9ED60075C56F /* CommandLineArguments.swift in Sources */,
@@ -458,6 +477,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0A846A2F27879E7800C967A8 /* SwiftAPIViewCoreTests.swift in Sources */,
+				0A61B52A2D0CADF300FC6B19 /* TestUtilityTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -616,7 +636,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.2;
+				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.SwiftAPIViewCore;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -646,7 +666,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.2;
+				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.SwiftAPIViewCore;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

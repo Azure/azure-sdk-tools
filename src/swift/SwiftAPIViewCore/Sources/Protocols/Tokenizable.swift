@@ -28,5 +28,5 @@ import Foundation
 
 /// Conforming objects can be serialized into APIView tokens.
 protocol Tokenizable {
-    func tokenize(apiview: APIViewModel, parent: Linkable?)
+    func tokenize(apiview: CodeModel, parent: Linkable?)
 }

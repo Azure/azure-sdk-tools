@@ -63,5 +63,12 @@ setup(
     ],
     zip_safe=False,
     packages=find_packages(),
+    extras_require={
+        ":python_version<'3.7'": ["qsharp>=1.0.33,<2.0"],
+        "cirq": [
+            "cirq-core>=1.3.0,<=1.4.1",
+            "cirq-ionq>=1.3.0,<=1.4.1",
+        ]
+    },
     python_requires=">=3.8"
 )

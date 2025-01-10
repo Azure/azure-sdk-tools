@@ -123,12 +123,8 @@ class StubGenerator:
         return value
 
     def get_extras_require_from_wheel(self):
-        # Unzip the wheel or zip to a temporary directory
-        with zipfile.ZipFile(self.pkg_path, 'r') as zip_ref:
-            temp_dir = Path("temp_extracted_wheel")
-            zip_ref.extractall(temp_dir)
-
         # Locate the .dist-info directory
+        temp_dir = Path(self.wheel_path)
         dist_info_dirs = list(temp_dir.glob("*.dist-info"))
         if not dist_info_dirs:
             raise ValueError("No .dist-info directory found in the wheel.")
@@ -146,6 +142,9 @@ class StubGenerator:
 
     def install_extra_dependencies(self, extras_require):
         for extra in extras_require:
+            if ':' in extra:
+                logging.info(f"Skipping conditional extra dependency: {extra}")
+                continue
             logging.info(f"Installing extra dependency: {extra}")
             try:
                 check_call([sys.executable, "-m", "pip", "install", f"{self.pkg_path}[{extra}]", "-q"])

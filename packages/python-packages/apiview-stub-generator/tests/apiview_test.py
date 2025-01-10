@@ -9,6 +9,7 @@ from apistub.nodes import PylintParser
 import os
 from pytest import fail
 import tempfile
+from importlib.util import find_spec
 
 
 class TestApiView:
@@ -43,6 +44,14 @@ class TestApiView:
         if failures:
             fail(f"Some lines have more than one definition ID. {failures}")
         
+    def test_optional_dependencies(self):
+        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
+        apiview = stub_gen.generate_tokens()
+        assert find_spec("cirq") is not None
+        assert find_spec("cirq_ionq") is not None
+        assert find_spec("qsharp") is None
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()

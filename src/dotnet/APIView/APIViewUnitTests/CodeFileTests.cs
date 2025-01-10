@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.SignalR;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
+using APIViewWeb.Helpers;
 
 namespace APIViewUnitTests
 {
@@ -99,6 +100,27 @@ namespace APIViewUnitTests
 
             //Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public async Task TestCodeFileConversion()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "Azure.Template.cpp.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+
+            codeFileB = new CodeFile();
+            filePath = Path.Combine("SampleTestFiles", "Azure.Template.cpp_new.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+
+            codeFileA.ConvertToTreeTokenModel();
+            bool result = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.True(result);
         }
     }
 }

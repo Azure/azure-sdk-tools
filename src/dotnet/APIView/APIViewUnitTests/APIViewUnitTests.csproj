@@ -57,6 +57,12 @@
     <None Update="SampleTestFiles\azure.data.tables.12.9.1.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="SampleTestFiles\Azure.Template.cpp.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleTestFiles\Azure.Template.cpp_new.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleTestFiles\TokenFileWithSectionsRevision3.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -1012,6 +1012,22 @@ namespace APIViewWeb.Managers
                 await UpdateAPIRevisionAsync(revisionModel, languageService, false);
                 revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
             }
+            else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString))
+            {
+                var codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionModel.Id, codeFileDetails.FileId);
+                if (codeFile != null && codeFile.ReviewLines.Count == 0)
+                {
+                    codeFile.ConvertToTreeTokenModel();
+                    await _codeFileRepository.UpsertCodeFileAsync(revisionModel.Id, codeFileDetails.FileId, codeFile);
+                    // update only version string
+                    codeFileDetails.VersionString = codeFile.VersionString;
+                    if (codeFile.ReviewLines.Count > 0)
+                    {
+                        codeFileDetails.ParserStyle = ParserStyle.Tree;
+                    }
+                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
+                }
+            }
             return revisionModel;
         }
     }

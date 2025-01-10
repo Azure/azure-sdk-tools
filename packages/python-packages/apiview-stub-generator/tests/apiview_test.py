@@ -51,6 +51,7 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         assert find_spec("cirq") is not None
         assert find_spec("cirq_ionq") is not None
+        # skip conditional optional dependencies
         assert find_spec("qsharp") is None
 
     def test_multiple_newline_only_add_one(self):

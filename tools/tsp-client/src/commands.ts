@@ -457,7 +457,7 @@ export async function generateConfigFilesCommand(argv: any) {
   );
   Logger.info(`emitter-package.json file generated in '${joinPaths(repoRoot, "eng")}' directory`);
 
-  generateLockFileCommand(argv);
+  await generateLockFileCommand(argv);
 }
 
 export async function generateLockFileCommand(argv: any) {

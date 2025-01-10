@@ -1,5 +1,5 @@
 import _ from "lodash";
-import * as YAML from "js-yaml";
+import YAML from "yaml";
 import { getTypeSpecOutputFolder } from "./typespecUtils";
 import { WorkflowContext } from "../automation/workflow";
 
@@ -124,7 +124,7 @@ export function parseYamlContent(
     let content: any = undefined;
     // if yaml file is not a valid yaml, catch error and return undefined
     try {
-        content = YAML.safeLoad(yamlContent);
+        content = YAML.parse(yamlContent);
     } catch (error) {
         console.error(
             `The file parsing failed in the ${path}. Details: ${error}`

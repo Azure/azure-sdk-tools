@@ -172,7 +172,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
             target: NoTarget,
             format: {
               version: versionString,
-              serviceTitle: serviceTitle,
+              serviceName: serviceTitle,
               allowed: allowedVersions.join(" | "),
             }, 
           })
@@ -182,7 +182,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
       const resolvedProgram = resolveProgramForVersion(program, service.type, versionString);
       
       const apiview = new ApiView(serviceTitle, namespaceString, versionString, options.includeGlobalNamespace);
-      apiview.emit(resolvedProgram);
+      apiview.compile(resolvedProgram);
       apiview.resolveMissingTypeReferences();
 
       if (!program.compilerOptions.noEmit && !program.hasError()) {
@@ -192,7 +192,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         const outputPath = resolvePath(outputFolder, outputFile);
         await emitFile(program, {
           path: outputPath,
-          content: JSON.stringify(apiview.asApiViewDocument()) + "\n"
+          content: JSON.stringify(apiview.asCodeFile()) + "\n"
         });  
       }    
     }

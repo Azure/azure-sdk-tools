@@ -1,8 +1,12 @@
 # Release
 
-## Unreleased - 0.15.1
+## 2025-01-10 - 0.15.2
 
-- Float `@autorest/openapi-to-typespec` version between `>=0.10.5 <1.0.0`.
+- Float `@autorest/openapi-to-typespec` version between `>=0.10.6 <1.0.0`.
+
+## 2025-01-09 - 0.15.1
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.6`.
 
 ## 2025-01-07 - 0.15.0
 

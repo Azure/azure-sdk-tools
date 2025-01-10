@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.0 (Unreleased)
+- Convert Swift APIView to use the new tree-token syntax.
+
 ## Version 0.2.2 (Unreleased)
 - Fix issue where extension members were duplicated.
 

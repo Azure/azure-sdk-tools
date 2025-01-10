@@ -13,7 +13,6 @@ Usage: spec-gen-sdk [OPTIONS]
 This tool will generate the SDK code using the local specification repository and local SDK repository. Ensure they have been cloned locally and the corresponding paths have been passed in.`;
 
 export type SpecGenSdkCliConfig = {
-  env: string;
   workingFolder: string;
   isTriggeredByPipeline: boolean;
   localSpecRepoPath: string;
@@ -32,7 +31,6 @@ export type SpecGenSdkCliConfig = {
 
 const initCliConfig = (argv) : SpecGenSdkCliConfig => {
   return {
-    env: argv.env,
     workingFolder: argv.workingFolder,
     isTriggeredByPipeline: argv.isTriggeredByPipeline,
     localSpecRepoPath: argv.localSpecRepoPath,
@@ -125,21 +123,19 @@ yargs(hideBin(process.argv))
           description: "The working folder to run this tool",
           default: path.join(homedir(), '.sdkauto')
         },
-        'env': {
-          type: 'string',
-          description: 'The environment to use',
-          default: 'development',
-        },
         'is-triggered-by-pipeline': {
+          alias: "t",
           type: 'boolean',
           description: 'Flag to indicate if triggered by pipeline',
           default: false,
         },
         'tsp-config-relative-path': {
+          alias: "tcrp",
           type: "string",
           description: "Path to the tsp config file from the root folder of specification repository. Example: specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml",
         },
         'readme-relative-path': {
+          alias: "rrp",
           type: "string",
           description: "Path to the readme file from the root folder of specification repository. Example: specification/contosowidgetmanager/resource-manager/readme.md",
         },
@@ -150,6 +146,7 @@ yargs(hideBin(process.argv))
           demandOption: true,
         },
         'pr-number': {
+          alias: "n",
           type: "string",
           description: "The spec pull request number",
         },

@@ -28,7 +28,8 @@ import Foundation
 import SwiftSyntax
 
 extension SyntaxProtocol {
-    func tokenize(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenize(apiview a: CodeModel, parent: Linkable?) {
+        var options = ReviewTokenOptions()
         let syntaxKind = self.kind
         switch syntaxKind {
         case .associatedtypeDecl:
@@ -42,14 +43,22 @@ extension SyntaxProtocol {
                 if child.childNameInParent == "name" {
                     let attrName = child.withoutTrivia().description
                     // don't add space if the attribute has parameters
-                    a.keyword(attrName, spacing: children.count == 2 ? .Trailing : .Neither)
+                    if children.count == 2 {
+                        options.applySpacing(.Trailing)
+                        a.keyword(attrName, options: options)
+                    } else {
+                        options.applySpacing(.Neither)
+                        a.keyword(attrName, options: options)
+                    }
+
                 } else {
                     child.tokenize(apiview: a, parent: parent)
                 }
             }
         case .classRestrictionType:
             // in this simple context, class should not have a trailing space
-            a.keyword("class", spacing: .Neither)
+            options.applySpacing(.Neither)
+            a.keyword("class", options: options)
         case .codeBlock:
             // Don't render code blocks. APIView is unconcerned with implementation
             break
@@ -60,7 +69,7 @@ extension SyntaxProtocol {
             for child in children {
                 child.tokenize(apiview: a, parent: parent)
                 if (child.kind == .token) {
-                    a.whitespace()
+                    a.currentLine.tokens.last?.hasSuffixSpace = true
                 }
             }
         case .enumCaseElement:
@@ -70,8 +79,9 @@ extension SyntaxProtocol {
                 if childIndex == 1 {
                     let token = TokenSyntax(child)!
                     if case let SwiftSyntax.TokenKind.identifier(label) = token.tokenKind {
-                        let defId = identifier(forName: label, withPrefix: parent?.definitionId)
-                        a.member(name: label, definitionId: defId)
+                        let lineId = identifier(forName: label, withPrefix: parent?.definitionId)
+                        a.lineMarker(lineId)
+                        a.member(name: label)
                     } else {
                         SharedLogger.warn("Unhandled enum label kind '\(token.tokenKind)'. APIView may not display correctly.")
                     }
@@ -94,7 +104,8 @@ extension SyntaxProtocol {
                     // index 5 is the external name, which we always render as text
                     let token = TokenSyntax(child)!
                     if case let SwiftSyntax.TokenKind.identifier(val) = token.tokenKind {
-                        a.text(val)
+                        options.hasSuffixSpace = false
+                        a.text(val, options: options)
                     } else if case SwiftSyntax.TokenKind.wildcardKeyword = token.tokenKind {
                         a.text("_")
                     } else {
@@ -107,7 +118,7 @@ extension SyntaxProtocol {
                         let attrIndex = attrs.indexInParent
                         attr.tokenize(apiview: a, parent: parent)
                         if attrIndex != lastAttrs {
-                            a.whitespace()
+                            a.currentLine.tokens.last?.hasSuffixSpace = true
                         }
                     }
                 } else {
@@ -117,21 +128,17 @@ extension SyntaxProtocol {
         case .identifierPattern:
             let name = IdentifierPatternSyntax(self)!.identifier.withoutTrivia().text
             let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
-            a.member(name: name, definitionId: lineId)
+            a.lineMarker(lineId)
+            a.member(name: name)
         case .initializerDecl:
             DeclarationModel(from: InitializerDeclSyntax(self)!, parent: parent).tokenize(apiview: a, parent: parent)
         case .memberDeclList:
             a.indent {
-                let beforeCount = a.tokens.count
-                tokenizeChildren(apiview: a, parent: parent)
-                // only render newline if tokens were actually added
-                if a.tokens.count > beforeCount {
-                    a.newline()
-                }
+                tokenizeMembers(apiview: a, parent: parent)
             }
         case .memberDeclListItem:
             let decl = MemberDeclListItemSyntax(self)!.decl
-            let publicModifiers = APIViewModel.publicModifiers
+            let publicModifiers = CodeModel.publicModifiers
             var showDecl = publicModifiers.contains(decl.modifiers?.accessLevel ?? .unspecified)
             switch decl.kind {
             case .associatedtypeDecl:
@@ -151,7 +158,7 @@ extension SyntaxProtocol {
             case .variableDecl:
                 // Public protocols should expose all members even if they have no access level modifier
                 if let parentDecl = (parent as? DeclarationModel), parentDecl.kind == .protocol {
-                    showDecl = showDecl || APIViewModel.publicModifiers.contains(parentDecl.accessLevel)
+                    showDecl = showDecl || CodeModel.publicModifiers.contains(parentDecl.accessLevel)
                 }
             default:
                 // show the unrecognized member by default
@@ -159,26 +166,20 @@ extension SyntaxProtocol {
                 showDecl = true
             }
             if showDecl {
-                a.newline()
                 tokenizeChildren(apiview: a, parent: parent)
-            }
-        case .precedenceGroupAttributeList:
-            a.indent {
-                tokenizeChildren(apiview: a, parent: parent)
-                a.newline()
             }
         case .precedenceGroupRelation:
-            a.newline()
+            a.blankLines(set: 0)
             if let name = PrecedenceGroupRelationSyntax(self)!.keyword {
                 let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
-                a.lineIdMarker(definitionId: lineId)
+                a.lineMarker(lineId)
             }
             tokenizeChildren(apiview: a, parent: parent)
         case .precedenceGroupAssociativity:
-            a.newline()
+            a.blankLines(set: 0)
             if let name = PrecedenceGroupAssociativitySyntax(self)!.keyword {
                 let lineId = identifier(forName: name, withPrefix: parent?.definitionId)
-                a.lineIdMarker(definitionId: lineId)
+                a.lineMarker(lineId)
             }
             tokenizeChildren(apiview: a, parent: parent)
         case .subscriptDecl:
@@ -196,7 +197,8 @@ extension SyntaxProtocol {
                     let tokenKind = token.tokenKind
                     let tokenText = token.withoutTrivia().description
                     if tokenKind == .leftBrace || tokenKind == .rightBrace {
-                        a.punctuation(tokenText, spacing: .Both)
+                        options.applySpacing(tokenKind.spacing)
+                        a.punctuation(tokenText, options: options)
                     } else {
                         child.tokenize(token: token, apiview: a, parent: nil)
                     }
@@ -210,21 +212,35 @@ extension SyntaxProtocol {
         }
     }
 
-    func tokenizeChildren(apiview a: APIViewModel, parent: Linkable?) {
+    func tokenizeMembers(apiview a: CodeModel, parent: Linkable?) {
+        let children = self.children(viewMode: .sourceAccurate)
+        let lastIdx = children.count - 1
+        for (idx, child) in children.enumerated() {
+            let beforeCount = a.currentLine.tokens.count
+            child.tokenize(apiview: a, parent: parent)
+            // skip if no tokens were actually added
+            guard (a.currentLine.tokens.count > beforeCount) else { continue }
+            a.blankLines(set: 0)
+        }
+    }
+
+    func tokenizeChildren(apiview a: CodeModel, parent: Linkable?) {
         for child in self.children(viewMode: .sourceAccurate) {
             child.tokenize(apiview: a, parent: parent)
         }
     }
 
-    func tokenize(token: TokenSyntax, apiview a: APIViewModel, parent: DeclarationModel?) {
+    func tokenize(token: TokenSyntax, apiview a: CodeModel, parent: DeclarationModel?) {
         let tokenKind = token.tokenKind
         let tokenText = token.withoutTrivia().description
+        var options = ReviewTokenOptions()
+        options.applySpacing(tokenKind.spacing)
 
         if tokenKind.isKeyword {
-            a.keyword(tokenText, spacing: tokenKind.spacing)
+            a.keyword(tokenText, options: options)
             return
         } else if tokenKind.isPunctuation {
-            a.punctuation(tokenText, spacing: tokenKind.spacing)
+            a.punctuation(tokenText, options: options)
             return
         }
         if case let SwiftSyntax.TokenKind.identifier(val) = tokenKind {
@@ -232,23 +248,28 @@ extension SyntaxProtocol {
             // used in @availabililty annotations
             if nameInParent == "platform" {
                 a.text(tokenText)
-                a.whitespace()
+                a.currentLine.tokens.last?.hasSuffixSpace = true
             } else {
-                a.typeReference(name: val, parent: parent)
+                a.typeReference(name: val, options: options)
             }
         } else if case let SwiftSyntax.TokenKind.spacedBinaryOperator(val) = tokenKind {
             // in APIView, * is never used for multiplication
             if val == "*" {
-                a.punctuation(val, spacing: .Neither)
+                options.applySpacing(.Neither)
+                a.punctuation(val, options: options)
             } else {
-                a.punctuation(val, spacing: .Both)
+                options.applySpacing(.Both)
+                a.punctuation(val, options: options)
             }
         } else if case let SwiftSyntax.TokenKind.unspacedBinaryOperator(val) = tokenKind {
-            a.punctuation(val, spacing: .Neither)
+            options.applySpacing(.Neither)
+            a.punctuation(val, options: options)
         } else if case let SwiftSyntax.TokenKind.prefixOperator(val) = tokenKind {
-            a.punctuation(val, spacing: .Leading)
+            options.applySpacing(.Leading)
+            a.punctuation(val, options: options)
         } else if case let SwiftSyntax.TokenKind.postfixOperator(val) = tokenKind {
-            a.punctuation(val, spacing: .Trailing)
+            options.applySpacing(.Trailing)
+            a.punctuation(val, options: options)
         } else if case let SwiftSyntax.TokenKind.floatingLiteral(val) = tokenKind {
             a.literal(val)
         } else if case let SwiftSyntax.TokenKind.regexLiteral(val) = tokenKind {
@@ -258,7 +279,8 @@ extension SyntaxProtocol {
         } else if case let SwiftSyntax.TokenKind.integerLiteral(val) = tokenKind {
             a.literal(val)
         } else if case let SwiftSyntax.TokenKind.contextualKeyword(val) = tokenKind {
-            a.keyword(val, spacing: tokenKind.spacing)
+            options.applySpacing(tokenKind.spacing)
+            a.keyword(val, options: options)
         } else if case let SwiftSyntax.TokenKind.stringSegment(val) = tokenKind {
             a.text(val)
         } else {

@@ -1,4 +1,4 @@
-Package parsed using Swift APIView (version 0.2.2)
+Package parsed using Swift APIView (version 0.3.0)
 
 
 package ProtocolTestFile.swifttxt {
@@ -38,8 +38,7 @@ package ProtocolTestFile.swifttxt {
         public var textualDescription: String
     }
 
-    extension Hamster: TextRepresentable {
-    }
+    extension Hamster: TextRepresentable {}
 
     public protocol Named {
         var name: String { get }
@@ -110,6 +109,7 @@ package ProtocolTestFile.swifttxt {
     public func wishHappyBirthday(to: Named & Aged)
 
     \\ Non-package extensions
+
     extension Array: TextRepresentable where Element: TextRepresentable {
         public var textualDescription: String
     }

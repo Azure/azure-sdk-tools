@@ -9,7 +9,6 @@ import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/
 import {
   WorkflowContext
 } from './workflow';
-import { mkdirpSync } from 'fs-extra';
 import { getLanguageByRepoName } from './entrypoint';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
@@ -129,7 +128,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   
   const destination = path.join(context.config.workingFolder, 'generatedSdkArtifacts');
   if (!existsSync(destination)) {
-    mkdirpSync(destination);
+    fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasSDKArtifact]true`);
@@ -155,7 +154,7 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
   const destination = path.join(context.config.workingFolder, 'sdkApiViewArtifacts');
   if (!existsSync(destination)) {
-    mkdirpSync(destination);
+    fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkApiViewArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasApiViewArtifact]true`);

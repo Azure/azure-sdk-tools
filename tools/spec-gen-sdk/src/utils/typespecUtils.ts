@@ -1,4 +1,4 @@
-import { load } from 'js-yaml';
+import YAML from "yaml";
 import { SpecConfig } from '../types/SpecConfig';
 import { join } from "path";
 import { readFileSync } from 'fs';
@@ -15,7 +15,7 @@ export const findSDKToGenerateFromTypeSpecProject = (content: string | undefined
   }
   let yamlContent: YamlContent;
   try {
-    yamlContent = load(content) as YamlContent;
+    yamlContent = YAML.parse(content) as YamlContent;
   } catch (error) {
     throw new Error(`The parsing of the file was unsuccessful. Please make the necessary corrections to the 'tspconfig.yaml' file! Error Details: ${error.stack}`);
   }

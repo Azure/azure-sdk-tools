@@ -4,7 +4,7 @@ import { ConfigService } from '../config/config.service';
 import { SamplesRevision } from 'src/app/_models/samples';
 
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, of, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +15,17 @@ export class SamplesRevisionService {
 
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
-  getLatestSampleRevision(reviewId: string): Observable<SamplesRevision> {
-    return this.http.get<SamplesRevision>(this.baseUrl + `/${reviewId}/latest`, { withCredentials: true });
+  getLatestSampleRevision(reviewId: string): Observable<SamplesRevision | undefined> {
+    return this.http.get<SamplesRevision>(this.baseUrl + `/${reviewId}/latest`, { withCredentials: true }).pipe(
+      catchError((error) => {
+        if (error.status === 404) {
+          return of(undefined);
+        }
+        else {
+          throw error;
+        }
+      })
+    );
   }
 
   getSamplesRevisions(noOfItemsRead: number, pageSize: number,

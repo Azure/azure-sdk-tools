@@ -160,8 +160,8 @@ class StubGenerator:
         logging.debug("Generating tokens")
         try:
             apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, version, source_url=self.source_url)
-        except ImportError:
-            logging.info("{import_exc}\nInstalling extra dependencies. {self.extras_require}")
+        except ImportError as import_exc:
+            logging.info(f"{import_exc}\nInstalling extra dependencies. {self.extras_require}")
             self.install_extra_dependencies()
             # Retry generating tokens
             apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, version, source_url=self.source_url)

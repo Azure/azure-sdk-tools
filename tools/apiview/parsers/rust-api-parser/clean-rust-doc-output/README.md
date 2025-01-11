@@ -11,7 +11,7 @@ This Rust project reads a Rustdoc JSON file and generates a new JSON file captur
 
 ## Prerequisites
 
--   Rust programming language installed. You can install Rust from rust-lang.org.
+-   Rust toolchain installed. You can install Rust from <https://rust-lang.org>.
 
 ## Usage
 

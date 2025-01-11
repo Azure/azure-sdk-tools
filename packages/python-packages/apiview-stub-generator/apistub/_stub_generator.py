@@ -106,9 +106,10 @@ class StubGenerator:
 
         # Extract package to temp directory if it is wheel or sdist
         if self.pkg_path.endswith(".whl") or self.pkg_path.endswith(".zip"):
-            self.wheel_path = self._extract_wheel()
+            self.wheel_path, self.extras_require = self._extract_wheel()
         else:
-            self.wheel_path = None
+            # get extras_require from setup.py
+            self.wheel_path, self.extras_require = None, None
 
         if not skip_pylint:
             PylintParser.parse(self.wheel_path or self.pkg_path)
@@ -122,26 +123,8 @@ class StubGenerator:
                 value = None
         return value
 
-    def get_extras_require_from_wheel(self):
-        # Locate the .dist-info directory
-        temp_dir = Path(self.wheel_path)
-        dist_info_dirs = list(temp_dir.glob("*.dist-info"))
-        if not dist_info_dirs:
-            raise ValueError("No .dist-info directory found in the wheel.")
-
-        dist_info_dir = dist_info_dirs[0]
-
-        # Use PathDistribution to load metadata
-        dist = PathDistribution(dist_info_dir)
-        extras_require = dist.metadata.get_all("Provides-Extra")
-
-        # Clean up the temporary directory
-        shutil.rmtree(temp_dir)
-
-        return extras_require or []
-
-    def install_extra_dependencies(self, extras_require):
-        for extra in extras_require:
+    def install_extra_dependencies(self):
+        for extra in self.extras_require:
             if ':' in extra:
                 logging.info(f"Skipping conditional extra dependency: {extra}")
                 continue
@@ -159,15 +142,10 @@ class StubGenerator:
             pkg_root_path = self.wheel_path
             pkg_name, version = self._parse_pkg_name()
             namespace = self.get_module_root_name(pkg_root_path)
-            try:
-                extras_require = self.get_extras_require_from_wheel()
-            except:
-                logging.info(f"Failed to get extras_require from wheel.")
-                extras_require = []
         else:
             # package root is passed as arg to parse
             pkg_root_path = self.pkg_path
-            pkg_name, version, namespace, extras_require = parse_setup_py(pkg_root_path)
+            pkg_name, version, namespace, self.extras_require = parse_setup_py(pkg_root_path)
 
         logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
 
@@ -183,8 +161,8 @@ class StubGenerator:
         try:
             apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, version, source_url=self.source_url)
         except ImportError:
-            logging.info("{import_exc}\nInstalling extra dependencies. {extras_require}")
-            self.install_extra_dependencies(extras_require)
+            logging.info("{import_exc}\nInstalling extra dependencies. {self.extras_require}")
+            self.install_extra_dependencies()
             # Retry generating tokens
             apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, version, source_url=self.source_url)
 
@@ -304,7 +282,20 @@ class StubGenerator:
         zip_file = zipfile.ZipFile(self.pkg_path)
         zip_file.extractall(temp_pkg_dir)
         logging.debug("Extracted package files into temp path")
-        return temp_pkg_dir
+
+        # Locate the .dist-info directory
+        temp_dir = Path(temp_pkg_dir)
+        dist_info_dirs = list(temp_dir.glob("*.dist-info"))
+        if not dist_info_dirs:
+            raise ValueError("No .dist-info directory found in the wheel.")
+
+        dist_info_dir = dist_info_dirs[0]
+
+        # Use PathDistribution to load metadata and get extras_require
+        dist = PathDistribution(dist_info_dir)
+        extras_require = dist.metadata.get_all("Provides-Extra")
+
+        return temp_pkg_dir, extras_require
 
 
     def get_module_root_name(self, wheel_extract_path):
@@ -379,7 +370,6 @@ def parse_setup_py(setup_path):
         if packages:
             name_space = packages[0]
             logging.info("Namespaces found for package {0}: {1}".format(package_name, packages))
-
-    extras_require = kwargs.get("extras_require", [])
-
+    
+    extras_require = kwargs.get("extras_require", {}).keys()
     return package_name, kwargs["version"], name_space, extras_require

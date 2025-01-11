@@ -7,12 +7,6 @@ from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 from azure.core import PipelineClient
 from typing import Optional, Union
 
-try:
-    import cirq
-    import cirq_ionq
-except ImportError:
-    raise ImportError("Missing optional 'cirq' dependencies.")
-
 
 # pylint:disable=docstring-missing-return,docstring-missing-rtype
 class DefaultValuesClient:

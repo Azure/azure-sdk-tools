@@ -1,157 +1,315 @@
+import { ReviewLine, TokenKind } from "./apiview-models/models";
 import { ApiJson, Item } from "./interfaces";
 
-let document = '';
 const processedItems = new Set<string>();
 
 /**
- * Processes an item from the API JSON and appends its documentation to the document.
- * 
+ * Processes an item from the API JSON and returns a ReviewLine object.
+ *
  * @param {ApiJson} apiJson - The API JSON object containing all items.
  * @param {Item} item - The item to process.
  * @param {string} [indent=''] - The indentation to use for the item's documentation.
+ * @returns {ReviewLine | null} The ReviewLine object or null if the item is not processed.
  */
-export function processItem(apiJson: ApiJson, item: Item, indent: string = '') {
+export function processItem(apiJson: ApiJson, item: Item, indent: string = ''): ReviewLine | null {
     // Check if the item has already been processed
     if (item.name && processedItems.has(item.name)) {
-        return;
+        return null;
     }
     item.name && processedItems.add(item.name);
 
-    // Append the item's documentation to the document
-    if (item.docs) {
-        document += `${indent}/// ${item.docs}\n`;
+    // Create the ReviewLine object
+    const reviewLine: ReviewLine = {
+        LineId: item.id.toString(),
+        Tokens: [],
+        Children: []
+    };
+
+    // Add documentation token if available
+    // if (item.docs) {
+    // TODO: Push to children and add link with "related to line"
+    // reviewLine.Tokens.push({
+    //     Kind: TokenKind.Comment,
+    //     Value: `/// ${item.docs}`,
+    //     IsDocumentation: true
+    // });
+    // }
+
+    if (item.inner.module) {
+        processModule(apiJson, item, reviewLine);
+    } else if (item.inner.function) {
+        processFunction(item, reviewLine);
+    } else if (item.inner.struct) {
+        processStruct(apiJson, item, reviewLine);
+    } else if (item.inner.trait) {
+        processTrait(apiJson, item, reviewLine);
     }
 
-    // Process the item based on its visibility and type
-    if (item.visibility === 'public') {
-        if (item.inner.module) {
-            processModule(apiJson, item, indent);
-        } else if (item.inner.function) {
-            processFunction(item, indent);
-        } else if (item.inner.struct) {
-            processStruct(apiJson, item, indent);
-        } else if (item.inner.trait) {
-            processTrait(apiJson, item, indent);
-        }
-    }
+    return reviewLine;
 }
 
 /**
- * Processes a module item and appends its documentation to the document.
- * 
+ * Processes a module item and adds its documentation to the ReviewLine.
+ *
  * @param {ApiJson} apiJson - The API JSON object containing all items.
  * @param {Item} item - The module item to process.
- * @param {string} indent - The indentation to use for the module's documentation.
+ * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
-function processModule(apiJson: ApiJson, item: Item, indent: string) {
-    document += `${indent}pub mod ${item.name} {\n`;
+function processModule(apiJson: ApiJson, item: Item, reviewLine: ReviewLine) {
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Keyword,
+        Value: 'pub mod'
+    });
+    reviewLine.Tokens.push({
+        Kind: TokenKind.TypeName,
+        Value: item.name || "null"
+    });
+
     if (item.inner.module.items) {
         item.inner.module.items.forEach((childId: string) => {
             const childItem = apiJson.index[childId];
-            processItem(apiJson, childItem, indent + '    ');
+            const childReviewLine = processItem(apiJson, childItem);
+            if (childReviewLine) {
+                if (!reviewLine.Children) {
+                    reviewLine.Children = [];
+                }
+                reviewLine.Children.push(childReviewLine);
+            }
         });
     }
-    document += `${indent}}\n`;
 }
-
 /**
- * Processes a function item and appends its documentation to the document.
- * 
+ * Processes a function item and adds its documentation to the ReviewLine.
+ *
  * @param {Item} item - The function item to process.
- * @param {string} indent - The indentation to use for the function's documentation.
+ * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
-function processFunction(item: Item, indent: string) {
-    document += `${indent}pub fn ${item.name}`;
+function processFunction(item: Item, reviewLine: ReviewLine) {
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Keyword,
+        Value: 'pub fn'
+    });
+    reviewLine.Tokens.push({
+        Kind: TokenKind.MemberName,
+        Value: item.name || "null"
+    });
+
+    // Add generics if present
     if (item.inner.function.generics.params.length > 0) {
-        document += `<${item.inner.function.generics.params.map((param: any) => param.name).join(', ')}>`;
+        reviewLine.Tokens.push({
+            Kind: TokenKind.Punctuation,
+            Value: '<'
+        });
+        reviewLine.Tokens.push({
+            Kind: TokenKind.TypeName,
+            Value: item.inner.function.generics.params.map((param: any) => param.name).join(', ')
+        });
+        reviewLine.Tokens.push({
+            Kind: TokenKind.Punctuation,
+            Value: '>'
+        });
     }
-    document += `(${item.inner.function.sig.inputs.map((input: any) => {
-        if (input[1].primitive) {
-            return `${input[0]}: ${input[1].primitive}`;
-        } else if (input[1].resolved_path) {
-            return `${input[0]}: ${input[1].resolved_path.name}`;
-        } else if (input[1].borrowed_ref) {
-            return `${input[0]}: &${input[1].borrowed_ref.type.generic}`;
-        } else {
-            return `${input[0]}: unknown`;
-        }
-    }).join(', ')})`;
+
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: '('
+    });
+
+    // Add function parameters
+    if (item.inner.function.sig.inputs.length > 0) {
+        reviewLine.Tokens.push({
+            Kind: TokenKind.TypeName,
+            Value: item.inner.function.sig.inputs.map((input: any) => {
+                if (input[1].primitive) {
+                    return `${input[0]}: ${input[1].primitive}`;
+                } else if (input[1].resolved_path) {
+                    return `${input[0]}: ${input[1].resolved_path.name}`;
+                } else if (input[1].borrowed_ref) {
+                    return `${input[0]}: &${input[1].borrowed_ref.type.generic}`;
+                } else {
+                    return `${input[0]}: unknown`;
+                }
+            }).join(', ')
+        });
+    }
+
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: ')'
+    });
+
+    // Add return type if present
     if (item.inner.function.sig.output) {
-        if (item.inner.function.sig.output.primitive) {
-            document += ` -> ${item.inner.function.sig.output.primitive}`;
-        } else if (item.inner.function.sig.output.resolved_path) {
-            document += ` -> ${item.inner.function.sig.output.resolved_path.name}`;
-        }
+        reviewLine.Tokens.push({
+            Kind: TokenKind.Punctuation,
+            Value: '->'
+        });
+        reviewLine.Tokens.push({
+            Kind: TokenKind.TypeName,
+            Value: item.inner.function.sig.output.primitive || item.inner.function.sig.output.resolved_path.name
+        });
     }
-    document += `\n`;
 }
 
 /**
- * Processes a struct item and appends its documentation to the document.
- * 
+ * Processes a struct item and adds its documentation to the ReviewLine.
+ *
  * @param {ApiJson} apiJson - The API JSON object containing all items.
  * @param {Item} item - The struct item to process.
- * @param {string} indent - The indentation to use for the struct's documentation.
+ * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
-function processStruct(apiJson: ApiJson, item: Item, indent: string) {
-    document += `${indent}pub struct ${item.name} {\n`;
+function processStruct(apiJson: ApiJson, item: Item, reviewLine: ReviewLine) {
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Keyword,
+        Value: 'pub struct'
+    });
+    reviewLine.Tokens.push({
+        Kind: TokenKind.TypeName,
+        Value: item.name || "null"
+    });
+
     if (item.inner.struct.kind.plain.fields) {
         item.inner.struct.kind.plain.fields.forEach((fieldId: string) => {
             const fieldItem = apiJson.index[fieldId];
             if (fieldItem && fieldItem.inner.struct_field) {
-                if (fieldItem.inner.struct_field.primitive) {
-                    document += `${indent}    pub ${fieldItem.name}: ${fieldItem.inner.struct_field.primitive},\n`;
-                } else if (fieldItem.inner.struct_field.resolved_path) {
-                    document += `${indent}    pub ${fieldItem.name}: ${fieldItem.inner.struct_field.resolved_path.name},\n`;
+                if (!reviewLine.Children) {
+                    reviewLine.Children = [];
                 }
+                reviewLine.Children.push({
+                    LineId: fieldItem.id.toString(),
+                    Tokens: [
+                        {
+                            Kind: TokenKind.Keyword,
+                            Value: 'pub'
+                        },
+                        {
+                            Kind: TokenKind.MemberName,
+                            Value: fieldItem.name || "null"
+                        },
+                        {
+                            Kind: TokenKind.Punctuation,
+                            Value: ':'
+                        },
+                        {
+                            Kind: TokenKind.TypeName,
+                            Value: fieldItem.inner.struct_field.primitive || fieldItem.inner.struct_field.resolved_path.name
+                        }
+                    ]
+                });
             }
         });
     }
-    document += `${indent}}\n`;
 }
 
 /**
- * Processes a trait item and appends its documentation to the document.
- * 
+ * Processes a trait item and adds its documentation to the ReviewLine.
+ *
  * @param {ApiJson} apiJson - The API JSON object containing all items.
  * @param {Item} item - The trait item to process.
- * @param {string} indent - The indentation to use for the trait's documentation.
+ * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
-function processTrait(apiJson: ApiJson, item: Item, indent: string) {
-    document += `${indent}pub trait ${item.name} {\n`;
+function processTrait(apiJson: ApiJson, item: Item, reviewLine: ReviewLine) {
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Keyword,
+        Value: 'pub trait'
+    });
+    reviewLine.Tokens.push({
+        Kind: TokenKind.TypeName,
+        Value: item.name || "null"
+    });
+
     if (item.inner.trait.items) {
         item.inner.trait.items.forEach((methodId: string) => {
             const methodItem = apiJson.index[methodId];
             if (methodItem.inner.function) {
-                document += `${indent}    fn ${methodItem.name}`;
+                const methodReviewLine: ReviewLine = {
+                    LineId: methodItem.id.toString(),
+                    Tokens: [
+                        {
+                            Kind: TokenKind.Keyword,
+                            Value: 'fn'
+                        },
+                        {
+                            Kind: TokenKind.MemberName,
+                            Value: methodItem.name || "null"
+                        },
+                        {
+                            Kind: TokenKind.Punctuation,
+                            Value: '('
+                        },
+                        {
+                            Kind: TokenKind.Punctuation,
+                            Value: ')'
+                        }
+                    ],
+                    Children: []
+                };
+
+                // Add function signature tokens
                 if (methodItem.inner.function.generics.params.length > 0) {
-                    document += `<${methodItem.inner.function.generics.params.map((param: any) => param.name).join(', ')}>`;
+                    methodReviewLine.Tokens.push({
+                        Kind: TokenKind.Punctuation,
+                        Value: '<'
+                    });
+                    methodReviewLine.Tokens.push({
+                        Kind: TokenKind.TypeName,
+                        Value: methodItem.inner.function.generics.params.map((param: any) => param.name).join(', ')
+                    });
+                    methodReviewLine.Tokens.push({
+                        Kind: TokenKind.Punctuation,
+                        Value: '>'
+                    });
                 }
-                document += `(${methodItem.inner.function.sig.inputs.map((input: any) => {
-                    if (input[1].primitive) {
-                        return `${input[0]}: ${input[1].primitive}`;
-                    } else if (input[1].resolved_path) {
-                        return `${input[0]}: ${input[1].resolved_path.name}`;
-                    } else if (input[1].borrowed_ref) {
-                        return `${input[0]}: &${input[1].borrowed_ref.type.generic}`;
-                    } else {
-                        return `${input[0]}: unknown`;
-                    }
-                }).join(', ')})`;
+
+                if (methodItem.inner.function.sig.inputs.length > 0) {
+                    methodReviewLine.Tokens.push({
+                        Kind: TokenKind.Punctuation,
+                        Value: '('
+                    });
+                    methodReviewLine.Tokens.push({
+                        Kind: TokenKind.TypeName,
+                        Value: methodItem.inner.function.sig.inputs.map((input: any) => {
+                            if (input[1].primitive) {
+                                return `${input[0]}: ${input[1].primitive}`;
+                            } else if (input[1].resolved_path) {
+                                return `${input[0]}: ${input[1].resolved_path.name}`;
+                            } else if (input[1].borrowed_ref) {
+                                return `${input[0]}: &${input[1].borrowed_ref.type.generic}`;
+                            } else {
+                                return `${input[0]}: unknown`;
+                            }
+                        }).join(', ')
+                    });
+                    methodReviewLine.Tokens.push({
+                        Kind: TokenKind.Punctuation,
+                        Value: ')'
+                    });
+                }
+
                 if (methodItem.inner.function.sig.output) {
-                    if (methodItem.inner.function.sig.output.primitive) {
-                        document += ` -> ${methodItem.inner.function.sig.output.primitive}`;
-                    } else if (methodItem.inner.function.sig.output.resolved_path) {
-                        document += ` -> ${methodItem.inner.function.sig.output.resolved_path.name}`;
-                    }
+                    methodReviewLine.Tokens.push({
+                        Kind: TokenKind.Punctuation,
+                        Value: '->'
+                    });
+                    methodReviewLine.Tokens.push({
+                        Kind: TokenKind.TypeName,
+                        Value: methodItem.inner.function.sig.output.primitive || methodItem.inner.function.sig.output.resolved_path.name
+                    });
                 }
-                document += `;\n`;
+
+                if (!reviewLine.Children) {
+                    reviewLine.Children = [];
+                }
+                reviewLine.Children.push(methodReviewLine);
             }
         });
     }
-    document += `${indent}}\n`;
-}
-
-export function getDocument() {
-    return document;
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: '{'
+    });
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: '}'
+    });
 }

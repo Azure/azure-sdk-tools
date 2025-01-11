@@ -10,7 +10,6 @@ import { ApiJson, Item } from "./interfaces";
 export function getRootModules(apiJson: ApiJson): Item[] {
     // Set to store IDs of all child modules
     const childModuleIds = new Set<string>();
-
     // Iterate over all items in the API index
     Object.values(apiJson.index).forEach(item => {
         // Check if the item is a module and has child items
@@ -21,7 +20,6 @@ export function getRootModules(apiJson: ApiJson): Item[] {
             });
         }
     });
-
     // Filter out items that are root modules (not present in childModuleIds)
     return Object.values(apiJson.index).filter(item =>
         item.inner.module &&

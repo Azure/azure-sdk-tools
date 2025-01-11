@@ -224,7 +224,13 @@
         color: var(--primary-btn-color);
         padding: 0px;
         margin: 0px;
+
+        &.active {
+            background-color: red;
+        }
     }
+
+
 
     .java {
         .javadoc {

@@ -283,17 +283,21 @@ class StubGenerator:
         zip_file.extractall(temp_pkg_dir)
         logging.debug("Extracted package files into temp path")
 
-        # Locate the .dist-info directory
-        temp_dir = Path(temp_pkg_dir)
-        dist_info_dirs = list(temp_dir.glob("*.dist-info"))
-        if not dist_info_dirs:
-            raise ValueError("No .dist-info directory found in the wheel.")
+        try:
+            # Locate the .dist-info directory
+            temp_dir = Path(temp_pkg_dir)
+            dist_info_dirs = list(temp_dir.glob("*.dist-info"))
+            if not dist_info_dirs:
+                raise ValueError("No .dist-info directory found in the wheel.")
 
-        dist_info_dir = dist_info_dirs[0]
+            dist_info_dir = dist_info_dirs[0]
 
-        # Use PathDistribution to load metadata and get extras_require
-        dist = PathDistribution(dist_info_dir)
-        extras_require = dist.metadata.get_all("Provides-Extra")
+            # Use PathDistribution to load metadata and get extras_require
+            dist = PathDistribution(dist_info_dir)
+            extras_require = dist.metadata.get_all("Provides-Extra")
+        except:
+            logging.warning("Failed to extract extras_require from wheel.")
+            extras_require = []
 
         return temp_pkg_dir, extras_require
 

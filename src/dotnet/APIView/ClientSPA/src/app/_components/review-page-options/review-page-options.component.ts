@@ -137,6 +137,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     if (changes['review'] && changes['review'].currentValue != undefined) { 
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
+      this.updateDiffStyle();
     }
 
     if (changes['hasHiddenAPIThatIsDiff']) {
@@ -252,6 +253,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
 
   formatSelectedApprovers(approvers: string[]): string {
     return approvers.join(', ');
+  }
+
+  updateDiffStyle() {
+    if (this.review?.language === 'TypeSpec') {
+      this.diffStyleOptions = [
+        { label: 'Full Diff', value: FULL_DIFF_STYLE },
+      ]
+      this.selectedDiffStyle = this.diffStyleOptions[0];
+    }
   }
 
   setSelectedDiffStyle() {

@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.13 (Unreleased)
+Fix bug with missing optional dependencies.
+
 ## Version 0.3.12 (2024-02-27)
 Add support for Cross Language Package ID.
 

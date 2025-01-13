@@ -1,4 +1,4 @@
 cleanup: false
-commit: 44227ca1a932eab433689ce0960028bb1c7b1a2e
+commit: 3bf86815ca8bc4d2ea5b843cb9fe15120e9b770e
 directory: tools/apiview/parsers/apiview-treestyle-parser-schema
 repo: Azure/azure-sdk-tools

@@ -87,12 +87,12 @@ class TestClassParsing:
         _check_all(actuals, expected, obj)
 
         # last blank line is context end for class
-        assert len(tokens[-1]['Children'][-1]['Tokens']) == 0
-        assert tokens[-1]['Children'][-1]['IsContextEndLine'] == True
+        assert len(tokens[-1]["Children"][-1]["Tokens"]) == 0
+        assert tokens[-1]["Children"][-1]["IsContextEndLine"] == True
 
         # second to last blank line is context end for multi-line function
-        assert len(tokens[-1]['Children'][-2]['Tokens']) == 0
-        assert tokens[-1]['Children'][-2]['IsContextEndLine'] == True
+        assert len(tokens[-1]["Children"][-2]["Tokens"]) == 0
+        assert tokens[-1]["Children"][-2]["IsContextEndLine"] == True
 
     def test_typed_dict_class(self):
         obj = FakeTypedDict
@@ -159,12 +159,12 @@ class TestClassParsing:
         assert actuals[7].lstrip() == "def public_func(self, **kwargs) -> str"
 
         # last blank line is context end for class
-        assert len(tokens[-1]['Children'][-1]['Tokens']) == 0
-        assert tokens[-1]['Children'][-1]['IsContextEndLine'] == True
+        assert len(tokens[-1]["Children"][-1]["Tokens"]) == 0
+        assert tokens[-1]["Children"][-1]["IsContextEndLine"] == True
 
         # single line methods should not have a context end line
-        assert tokens[-1]['Children'][-2]['IsContextEndLine'] == False
-        assert len(tokens[-1]['Children'][-2]['Tokens']) == 0
+        assert tokens[-1]["Children"][-2]["IsContextEndLine"] == False
+        assert len(tokens[-1]["Children"][-2]["Tokens"]) == 0
 
     def test_required_kwargs(self):
         obj = RequiredKwargObject

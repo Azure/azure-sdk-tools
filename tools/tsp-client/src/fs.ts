@@ -59,7 +59,11 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
   if (!obj || !obj.dependencies) {
     throw new Error("Invalid emitter-package.json");
   }
-  const languages: string[] = ["@azure-tools/typespec-", "@typespec/openapi3"];
+  const languages: string[] = [
+    "@azure-tools/typespec-",
+    "@typespec/http-client-",
+    "@typespec/openapi3",
+  ];
   for (const lang of languages) {
     const emitter = Object.keys(obj.dependencies).find((dep: string) => dep.startsWith(lang));
     if (emitter) {

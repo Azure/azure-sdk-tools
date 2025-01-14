@@ -1,2 +1,9 @@
 emit:
   - "@typespec/openapi3"
+
+options:
+  "@azure-tools/typespec-rust":
+    crate-name: "azure_core_test"
+    crate-version: "0.1.0"
+    emitter-output-dir: "{project-root}/generated"
+    service-dir: "sdk/core"

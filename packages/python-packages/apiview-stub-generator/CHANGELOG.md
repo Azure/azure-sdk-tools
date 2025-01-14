@@ -1,7 +1,10 @@
 # Release History
 
-## Version 0.3.13 (Unreleased)
+## Version 0.3.14 (Unreleased)
 Update for tree token style parser.
+
+## Version 0.3.13 (2025-01-13)
+Fix bug with missing optional dependencies.
 
 ## Version 0.3.12 (2024-02-27)
 Add support for Cross Language Package ID.

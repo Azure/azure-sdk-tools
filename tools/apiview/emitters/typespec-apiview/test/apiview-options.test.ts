@@ -1,5 +1,6 @@
 import { expectDiagnostics } from "@typespec/compiler/testing";
 import { apiViewFor, apiViewText, compare, diagnosticsFor } from "./test-host.js";
+import { describe, it } from "vitest";
 
 describe("apiview-options: tests", () => {
 

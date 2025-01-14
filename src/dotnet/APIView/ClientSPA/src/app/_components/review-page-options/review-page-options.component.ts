@@ -11,6 +11,7 @@ import { take } from 'rxjs';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { PullRequestsService } from 'src/app/_services/pull-requests/pull-requests.service';
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
+import { MenuItemCommandEvent } from 'primeng/api';
 
 @Component({
   selector: 'app-review-page-options',
@@ -45,7 +46,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-
+  @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>(); 
 
   webAppUrl : string = this.configService.webAppUrl
   
@@ -72,6 +73,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
+  copyReviewTextButtonText : string = 'Copy review text';
 
   associatedPullRequests  : PullRequestModel[] = [];
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
@@ -135,6 +137,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     if (changes['review'] && changes['review'].currentValue != undefined) { 
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
+      this.updateDiffStyle();
     }
 
     if (changes['hasHiddenAPIThatIsDiff']) {
@@ -252,6 +255,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     return approvers.join(', ');
   }
 
+  updateDiffStyle() {
+    if (this.review?.language === 'TypeSpec') {
+      this.diffStyleOptions = [
+        { label: 'Full Diff', value: FULL_DIFF_STYLE },
+      ]
+      this.selectedDiffStyle = this.diffStyleOptions[0];
+    }
+  }
+
   setSelectedDiffStyle() {
     const inputDiffStyle = this.diffStyleOptions.find(option => option.value === this.diffStyleInput);
     this.selectedDiffStyle = (inputDiffStyle) ? inputDiffStyle : this.diffStyleOptions[0];
@@ -316,6 +328,22 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
 
   setMarkedAsViewSwitch() {
     this.markedAsViewSwitch = (this.activeAPIRevision && this.userProfile)? this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!): this.markedAsViewSwitch;
+  }
+
+  copyReviewText(event: Event) {
+    const icon = (event?.target as Element).firstChild as HTMLElement;
+
+    icon.classList.remove('bi-clipboard');
+    icon.classList.add('bi-clipboard-check');
+    this.copyReviewTextButtonText = 'Review text copied!';
+
+    setTimeout(() => {
+      this.copyReviewTextButtonText = 'Copy review text';
+      icon.classList.remove('bi-clipboard-check');
+      icon.classList.add('bi-clipboard');
+    }, 1500);
+
+    this.copyReviewTextEmitter.emit(true);
   }
 
   handleAPIRevisionApprovalAction() {

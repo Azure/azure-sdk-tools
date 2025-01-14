@@ -20,32 +20,32 @@
                 </ng-template>
             </ng-container>
             <span *ngIf="activeAPIRevision && activeAPIRevision!.approvers.length > 0; else noAPIRevisionApprovers" class="small text-muted mt-1">
-                Approved By: <a *ngFor="let approver of activeAPIRevision!.approvers" href="{{webAppUrl}}Assemblies/Profile/{{approver}}">{{approver}},&nbsp;</a>
+                Approved by: <a *ngFor="let approver of activeAPIRevision!.approvers" href="{{webAppUrl}}Assemblies/Profile/{{approver}}">{{approver}},&nbsp;</a>
             </span>
             <ng-template #noAPIRevisionApprovers>
-                <span class="small text-muted mt-1">Current Revision Approval Pending</span>
+                <span class="small text-muted mt-1">Current Revision approval pending</span>
             </ng-template>
         </li>
         <li class="list-group-item text-center">
             <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
-                <span class="small text-muted mt-1" id="first-release-approval-message">Approved for First Release By: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
+                <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
             <ng-template #reviewIsNotApproved>
                 <div *ngIf="preferredApprovers.includes(userProfile?.userName!); else userIsNotAPreferedApprover">
-                    <span class="small text-muted">Approves First Release of the package</span>
+                    <span class="small text-muted">Approves first release of the package</span>
                     <div class="d-grid gap-2">
                         <button class="btn btn-success" type="button" id="first-release-approval-button"
                             (click)="handleReviewApprovalAction()"
                             pTooltip="Package name must be approved before first preview release of a new package." 
                             tooltipPosition="bottom">
-                            Approve First Release
+                            Approve first release
                         </button>
                     </div>
-                    <span class="small mt-2 text-muted" id="first-release-approval-message">First Release Approval Pending</span>
+                    <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
                 </div>
             </ng-template>
             <ng-template #userIsNotAPreferedApprover>
-                <span class="small mt-2 text-muted" id="first-release-approval-message">First Release Approval Pending</span>
+                <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
         </li>
     </ul>
@@ -67,7 +67,7 @@
     </ul>
 </app-page-options-section>
 
-<app-page-options-section *ngIf="showCommentsSwitch || (isDiffView && contentHasDiff)" sectionName="Find on Page">
+<app-page-options-section *ngIf="showCommentsSwitch || (isDiffView && contentHasDiff)" sectionName="Page Utils">
     <ul class="list-group">
         <li class="list-group-item" *ngIf="showCommentsSwitch">                
             <label class="small mx-1 fw-semibold">Comment:</label>
@@ -86,9 +86,17 @@
                 <div class="btn-group btn-group-sm" role="group" aria-label="Diff Navigation">
                     <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.prev)">
                         <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)">
+                    <button type="button" class="btn btn-lg btn-outline-secondary" pTooltip="Next Diff" tooltipPosition="top" (click)="diffNavaigationEmitter.emit(CodeLineRowNavigationDirection.next)">
                         <i class="bi bi-arrow-down"></i>Next</button>
                 </div>
+            </div>
+        </li>
+        <li class="list-group-item" *ngIf="!isDiffView">
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-outline-primary" tooltipPosition="top" (click)="copyReviewText($event)">
+                    <i class="bi bi-clipboard"></i>
+                    {{ copyReviewTextButtonText }}
+                </button>
             </div>
         </li>
     </ul>
@@ -104,7 +112,7 @@
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showSystemCommentsSwitch"
             (onChange)="onShowSystemCommentsSwitchChange($event)" />
-            <label class="ms-2">System Comments</label>
+            <label class="ms-2">System comments</label>
         </li>
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showDocumentationSwitch"
@@ -119,20 +127,20 @@
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showLineNumbersSwitch" 
             (onChange)="onShowLineNumbersSwitchChange($event)" />
-            <label class="ms-2">Line Numbers</label>
+            <label class="ms-2">Line numbers</label>
         </li>
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch"
             (onChange)="onShowLeftNavigationSwitchChange($event)" />
-            <label class="ms-2">Left Navigation</label>
+            <label class="ms-2">Left navigation</label>
         </li>
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="disableCodeLinesLazyLoading"
             (onChange)="onDisableLazyLoadingSwitchChange($event)" />
-            <label class="ms-2">Disable Lazy Loading</label>
+            <label class="ms-2">Disable lazy loading</label>
         </li>
         <li *ngIf="isDiffView" class="list-group-item">
-            <label class="small mx-1 fw-semibold" for="diff-style-select">Diff Style :</label>
+            <label class="small mx-1 fw-semibold" for="diff-style-select">Diff style :</label>
             <p-dropdown 
                 (onChange)="onDiffStyleChange($event)"
                 [options]="diffStyleOptions" 
@@ -150,7 +158,7 @@
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="markedAsViewSwitch"
             (onChange)="onMarkedAsViewedSwitchChange($event)" />
-            <label class="ms-2">Mark As Viewed</label>
+            <label class="ms-2">Mark as viewed</label>
         </li>
         <li class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>

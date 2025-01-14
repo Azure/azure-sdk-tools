@@ -266,7 +266,7 @@ export class ReviewPageComponent implements OnInit {
   loadLatestSampleRevision(reviewId: string) {
     this.samplesRevisionService.getLatestSampleRevision(reviewId)
       .pipe(takeUntil(this.destroy$)).subscribe({
-        next: (sampleRevision: SamplesRevision) => {
+        next: (sampleRevision: SamplesRevision | undefined) => {
           this.latestSampleRevision = sampleRevision;
         }
     });
@@ -476,6 +476,10 @@ export class ReviewPageComponent implements OnInit {
 
   handleDiffNavaigationEmitter(direction: CodeLineRowNavigationDirection) {
     this.codePanelComponent.navigateToDiffNode(direction);
+  }
+
+  handleCopyReviewTextEmitter(event: boolean) {
+    this.codePanelComponent.copyReviewTextToClipBoard();
   }
 
   handleHasActiveConversationEmitter(value: boolean) {

@@ -1,7 +1,6 @@
 import * as path from 'path';
 import * as _ from 'lodash';
 import * as fs from 'fs';
-import { mkdirpSync } from 'fs-extra';
 import { default as Transport } from 'winston-transport';
 import { findSDKToGenerateFromTypeSpecProject } from '../utils/typespecUtils';
 import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
@@ -9,7 +8,7 @@ import {
   gitGetDiffFileList
 } from '../utils/gitUtils';
 import { specConfigPath } from '../types/SpecConfig';
-import { repoKeyToString } from '../utils/githubUtils';
+import { repoKeyToString } from '../utils/repo';
 import { runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
 import {
   deleteTmpJsonFile,
@@ -97,7 +96,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
   const sdkContext = workflowInitSdkRepo(context);
 
   const tmpFolder = path.join(context.config.workingFolder, `${context.sdkRepoConfig.mainRepository.name}_tmp`);
-  mkdirpSync(tmpFolder);
+  fs.mkdirSync(tmpFolder, { recursive: true });
 
   return {
     ...context,
@@ -122,7 +121,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 };
 
 export const workflowMain = async (context: WorkflowContext) => {
-  if (context.specPrInfo) {
+  if (context.config.pullNumber) {
     await workflowValidateSdkConfigForSpecPr(context);
     await workflowCallInitScript(context);
     await workflowGenerateSdkForSpecPr(context);
@@ -230,7 +229,7 @@ export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
     context.logger.info(`SDK to generate:${context.config.sdkName}`);
   }
   else {
-    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
+    throw new Error(`No SDKs are enabled for generation. Please check the configuration in the related tspconfig.yaml or readme.md`);
   }
   context.logger.log('endsection', 'Validate SDK configuration');
 };
@@ -613,20 +612,16 @@ const workflowCallGenerateScript = async (
 ) => {
   const statusContext = { status: 'succeeded' as SDKAutomationState };
   let generateOutput: GenerateOutput | undefined = undefined;
-
   const generateInput: GenerateInput = {
-    dryRun: false,
-    specFolder: path.relative(context.config.workingFolder, context.specFolder),
-    headSha: context.config.specCommitSha ?? "",
-    headRef: "",
+    specFolder: path.relative(context.sdkFolder, context.specFolder),
+    headSha: context.config.specCommitSha,
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
-    trigger: "pullRequest",
     changedFiles,
+    apiVersion: context.config.apiVersion,
     installInstructionInput: {
-      isPublic: false,
+      isPublic: !context.isPrivateSpecRepo,
       downloadUrlPrefix: "https://artprodcus3.artifacts.visualstudio.com",
       downloadCommandTemplate: "downloadCommand",
-      trigger: "pullRequest"
     }
   };
 
@@ -696,4 +691,5 @@ const workflowDetectChangedPackages = (context: WorkflowContext) => {
   if (context.pendingPackages.length === 0) {
       context.logger.warn(`Warning: No package detected after generation. Please refer to the above logs to understand why the package hasn't been generated. `);
   }
+  context.logger.log('endsection', 'Detect changed packages');
 };

@@ -6,20 +6,12 @@ import { getInstallInstructionScriptOutput } from '../types/InstallInstructionSc
 import { PackageData } from '../types/PackageData';
 import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
-import { CommentCaptureTransport } from './logging';
 import {
   WorkflowContext
 } from './workflow';
-import { mkdirpSync } from 'fs-extra';
 import { getLanguageByRepoName } from './entrypoint';
 
 export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData) => {
-  const captureTransport = new CommentCaptureTransport({
-    extraLevelFilter: ['error', 'warn'],
-    level: 'debug',
-    output: pkg.messages
-  });
-  context.logger.add(captureTransport);
   context.logger.log('section', `Handle package ${pkg.name}`);
   context.logger.info(`Package log to a new logFile`);
 
@@ -31,8 +23,6 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
   await workflowPkgCallInstallInstructionScript(context, pkg);
 
   setSdkAutoStatus(pkg, 'succeeded');
-
-  context.logger.remove(captureTransport);
   context.logger.log('endsection', `Handle package ${pkg.name}`);
 };
 
@@ -66,19 +56,12 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
     }
   } else {
     context.logger.log('section', 'Call ChangelogScript');
-
-    const captureTransport = new CommentCaptureTransport({
-      extraLevelFilter: ['cmdout', 'cmderr'],
-      output: pkg.changelogs
-    });
-    context.logger.add(captureTransport);
     const result = await runSdkAutoCustomScript(context, runOptions, {
       cwd: context.sdkFolder,
       fallbackName: 'Changelog',
       argList: [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths],
       statusContext: pkg
     });
-    context.logger.remove(captureTransport);
 
     setSdkAutoStatus(pkg, result);
     if (result !== 'failed') {
@@ -145,7 +128,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   
   const destination = path.join(context.config.workingFolder, 'generatedSdkArtifacts');
   if (!existsSync(destination)) {
-    mkdirpSync(destination);
+    fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasSDKArtifact]true`);
@@ -171,7 +154,7 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
   const destination = path.join(context.config.workingFolder, 'sdkApiViewArtifacts');
   if (!existsSync(destination)) {
-    mkdirpSync(destination);
+    fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkApiViewArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasApiViewArtifact]true`);
@@ -209,8 +192,7 @@ const workflowPkgCallInstallInstructionScript = async (
     downloadUrlPrefix: "",
     downloadCommandTemplate: "",
     packageName: pkg.name,
-    artifacts: pkg.artifactPaths.map((p) => path.basename(p)),
-    trigger: "pullRequest"
+    artifacts: pkg.artifactPaths.map((p) => path.basename(p))
   };
   writeTmpJsonFile(context, fileInstallInstructionInput, input);
   deleteTmpJsonFile(context, fileInstallInstructionOutput);

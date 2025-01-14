@@ -27,9 +27,6 @@
     "downloadCommandTemplate": {
       // Download command template. Replace {URL} and {FILENAME} to get the real command.
       "type": "string"
-    },
-    "trigger": {
-      "$ref": "TriggerType#"
     }
   }
 }

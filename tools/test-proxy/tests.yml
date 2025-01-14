@@ -174,6 +174,12 @@ stages:
           inputs:
             version: "7.x"
 
+        - task: UseDotNet@2
+          displayName: "Install .NET 6"
+          retryCountOnTaskFailure: 3
+          inputs:
+            version: "6.x"
+
         - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
         - pwsh: |

@@ -36,8 +36,6 @@ enum SpacingKind {
     case Both
     /// No spacing
     case Neither
-    /// chomps any leading whitespace to the left
-    case TrimLeft
 }
 
 extension SwiftSyntax.TokenKind {
@@ -51,17 +49,15 @@ extension SwiftSyntax.TokenKind {
         case .semicolon: return .Trailing
         case .equal: return .Both
         case .arrow: return .Both
-        case .postfixQuestionMark: return .TrimLeft
         case .leftBrace: return .Leading
         case .initKeyword: return .Leading
         case .wildcardKeyword: return .Neither
         case let .contextualKeyword(val):
             switch val {
-            case "objc": return .TrimLeft
             case "lowerThan", "higherThan", "associativity": return .Neither
             case "available", "unavailable", "introduced", "deprecated", "obsoleted", "message", "renamed": return .Neither
             case "willSet", "didSet", "get", "set":
-                return .Leading
+                return .Both
             default: return .Both
             }
         default:

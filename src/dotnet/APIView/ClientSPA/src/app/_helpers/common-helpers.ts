@@ -1,4 +1,5 @@
 import { CodePanelRowData, CodePanelRowDatatype } from "../_models/codePanelModels";
+import { StructuredToken } from "../_models/structuredToken";
 
 export const FULL_DIFF_STYLE = "full";
 export const TREE_DIFF_STYLE = "trees";
@@ -56,4 +57,8 @@ export function getTypeClass(type: string): string {
 
 export function isDiffRow(row: CodePanelRowData) {
   return row.type === CodePanelRowDatatype.CodeLine && (row.diffKind === DIFF_REMOVED || row.diffKind === DIFF_ADDED);
+}
+
+export function convertRowOfTokensToString(rowOfTokens: StructuredToken[]): string {
+  return rowOfTokens.map(token => token.value).join('');
 }

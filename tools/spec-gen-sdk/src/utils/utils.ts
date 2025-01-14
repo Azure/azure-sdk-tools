@@ -1,40 +1,26 @@
-import { SequenceMatcher } from "difflib";
 import _ from "lodash";
-import * as YAML from "js-yaml";
+import YAML from "yaml";
 import { getTypeSpecOutputFolder } from "./typespecUtils";
 import { WorkflowContext } from "../automation/workflow";
 
-export function diffStringArrays(
-    left: string[],
-    right: string[]
-): {
-    diffResult: string[];
-    hasDiff: boolean;
-} {
-    left.sort();
-    right.sort();
-    // tslint:disable-next-line: no-null-keyword
-    const matcher = new SequenceMatcher(null, left, right);
-    const diffResult: string[] = [];
-    let hasDiff = false;
-    for (const [op, i0, i1, j0, j1] of matcher.getOpcodes()) {
-        if (op === "equal") {
-            for (let x = i0; x < i1; ++x) {
-                diffResult.push(`\t${left[x]}`);
-            }
-        } else {
-            if (op === "replace" || op === "insert") {
-                hasDiff = true;
-                for (let x = j0; x < j1; ++x) {
-                    diffResult.push(`+\t${right[x]}`);
-                }
-            }
-        }
-    }
-    return {
-        diffResult,
-        hasDiff,
-    };
+export function diffStringArrays(left: string[], right: string[]): { diffResult: string[], hasDiff: boolean} {
+  const unchanged = right.filter(item => left.includes(item));
+  const added = right.filter(item => !left.includes(item));
+  const diffResult: string[] = [];
+
+  unchanged.forEach(item => {
+    diffResult.push(`\t${item}`);
+  });
+
+  added.forEach(item => {
+    diffResult.push(`+\t${item}`);
+  });
+
+  return {
+    diffResult,
+    hasDiff: added.length > 0
+  };
+  
 }
 
 export function getValueByKey<T>(
@@ -138,7 +124,7 @@ export function parseYamlContent(
     let content: any = undefined;
     // if yaml file is not a valid yaml, catch error and return undefined
     try {
-        content = YAML.safeLoad(yamlContent);
+        content = YAML.parse(yamlContent);
     } catch (error) {
         console.error(
             `The file parsing failed in the ${path}. Details: ${error}`

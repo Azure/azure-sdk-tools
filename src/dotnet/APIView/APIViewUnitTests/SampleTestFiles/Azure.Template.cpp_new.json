@@ -1,0 +1,398 @@
+{
+    "Name": "Azure Template API Review",
+    "Language": "C\u002B\u002B",
+    "PackageName": "azure-template",
+    "ParserVersion": "0",
+    "ReviewLines": [
+        {
+            "LineId": "Azure",
+            "Tokens": [
+                {
+                    "Kind": 2,
+                    "Value": "namespace",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 4,
+                    "Value": "Azure",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": "{",
+                    "HasSuffixSpace": false,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": [
+                {
+                    "LineId": "Template",
+                    "Tokens": [
+                        {
+                            "Kind": 2,
+                            "Value": "namespace",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 4,
+                            "Value": "Template",
+                            "HasSuffixSpace": true,
+                            "RenderClasses": []
+                        },
+                        {
+                            "Kind": 1,
+                            "Value": "{",
+                            "HasSuffixSpace": false,
+                            "RenderClasses": []
+                        }
+                    ],
+                    "Children": [
+                        {
+                            "Tokens": [],
+                            "Children": []
+                        },
+                        {
+                            "LineId": "Azure::Core::_internal::ClientOptions",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "struct",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClientOptions",
+                                    "NavigationDisplayName": "TemplateClientOptions",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ":",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 4,
+                                    "Value": "Azure::Core::_internal::ClientOptions",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": []
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": []
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [
+                                {
+                                    "Tokens": [],
+                                    "Children": []
+                                }
+                            ]
+                        },
+                        {
+                            "LineId": "Azure::Template::TemplateClient",
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "class",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 3,
+                                    "Value": "TemplateClient",
+                                    "NavigationDisplayName": "TemplateClient",
+                                    "HasSuffixSpace": true,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 2,
+                                    "Value": "final",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": []
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 1,
+                                    "Value": "{",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": []
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 2,
+                                    "Value": "public",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ":",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": [
+                                {
+                                    "LineId": "Azure::Template::TemplateClientOptions",
+                                    "Tokens": [
+                                        {
+                                            "Kind": 3,
+                                            "Value": "TemplateClient",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": "(",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 6,
+                                            "Value": "const Azure::Template::TemplateClientOptions \u0026",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 4,
+                                            "Value": "options",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": "=",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 4,
+                                            "Value": "Azure::Template::TemplateClientOptions",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": "(",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": ")",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": ")",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": ";",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        }
+                                    ],
+                                    "Children": []
+                                },
+                                {
+                                    "LineId": "Azure::Core::Context",
+                                    "Tokens": [
+                                        {
+                                            "Kind": 4,
+                                            "Value": "int",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 3,
+                                            "Value": "GetValue",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": "(",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 6,
+                                            "Value": "int",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 4,
+                                            "Value": "key",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": ",",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 6,
+                                            "Value": "const Azure::Core::Context \u0026",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 4,
+                                            "Value": "context",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": "=",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 4,
+                                            "Value": "Azure::Core::Context",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": "(",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": ")",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": ")",
+                                            "HasSuffixSpace": true,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 2,
+                                            "Value": "const",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        },
+                                        {
+                                            "Kind": 1,
+                                            "Value": ";",
+                                            "HasSuffixSpace": false,
+                                            "RenderClasses": []
+                                        }
+                                    ],
+                                    "Children": []
+                                }
+                            ]
+                        },
+                        {
+                            "Tokens": [
+                                {
+                                    "Kind": 1,
+                                    "Value": "}",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                },
+                                {
+                                    "Kind": 1,
+                                    "Value": ";",
+                                    "HasSuffixSpace": false,
+                                    "RenderClasses": []
+                                }
+                            ],
+                            "Children": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Tokens": [
+                {
+                    "Kind": 1,
+                    "Value": "}",
+                    "HasSuffixSpace": false,
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 1,
+                    "Value": "}",
+                    "HasSuffixSpace": true,
+                    "RenderClasses": []
+                },
+                {
+                    "Kind": 7,
+                    "Value": "// namespace Azure::Template",
+                    "HasSuffixSpace": false,
+                    "RenderClasses": []
+                }
+            ],
+            "Children": [
+                {
+                    "Tokens": [],
+                    "Children": [],
+                    "RelatedToLine": "Azure"
+                }
+            ]
+        },
+        {
+            "Tokens": [],
+            "Children": []
+        }
+    ]
+}

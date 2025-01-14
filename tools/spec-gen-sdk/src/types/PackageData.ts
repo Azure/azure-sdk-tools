@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { PackageResult } from './GenerateOutput';
 import { WorkflowContext } from '../automation/workflow';
-import { repoKeyToString } from '../utils/githubUtils';
+import { repoKeyToString } from '../utils/repo';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { parseSemverVersionString } from '../utils/parseSemverVersionString';
 import { getSuppressionLines, SDKSuppressionContentList } from '../utils/handleSuppressionLines';
@@ -34,14 +34,6 @@ export interface SDKRepositoryPackageData {
    * Does this package has breaking change.
    */
   hasBreakingChange?: boolean;
-  /**
-   * The URL of the blob where this SDK repository package's logs will be written to.
-   */
-  logsBlobUrl: string;
-  /**
-   * The URLs of the blobs where this SDK repository package's artifacts will be written to.
-   */
-  artifactBlobUrls?: string[];
   /**
    * The URLs of the generated apiView.
    */
@@ -135,7 +127,8 @@ export type PackageData = SDKRepositoryPackageData & {
 };
 
 export const getGenerationBranchName = (context: WorkflowContext, packageName: string) => {
-  return `${context.config.branchPrefix}/${context.config.pullNumber}/${packageName.replace('/', '_')}`;
+  return context.config.pullNumber ? `${context.config.branchPrefix}/${context.config.pullNumber}/${packageName.replace('/', '_')}` : 
+  `${context.config.branchPrefix}/${packageName.replace('/', '_')}`;
 };
 export const getIntegrationBranchName = (context: WorkflowContext, packageName: string) => {
   return `${context.config.branchPrefix}/${packageName.replace('/', '_')}`;
@@ -193,8 +186,9 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
     sdkSuppressionFilePath = suppressionContent.sdkSuppressionFilePath;
   }
 
-  if(context.specPrInfo) {
-    sdkSuppressionFilePath = `https://github.com/${context.specPrInfo.head.owner}/${context.specPrInfo.head.repo}/blob/${context.specPrHeadBranch}/${sdkSuppressionFilePath}`;
+  if(context.config.pullNumber && context.config.headRepoHttpsUrl && context.config.headBranch) {
+    const headRepoUrl = context.config.headRepoHttpsUrl.replace(/\/$/, '');
+    sdkSuppressionFilePath = `${headRepoUrl}/blob/${context.config.headBranch}/${sdkSuppressionFilePath}`;
   }
   return {
     name,
@@ -208,8 +202,7 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
     parseSuppressionLinesErrors,
     sdkSuppressionFilePath: sdkSuppressionFilePath,
     isBetaMgmtSdk,
-    logsBlobUrl: '',
-    isPrivatePackage: false,
+    isPrivatePackage: context.isPrivateSpecRepo,
     changedFilePaths: [],
     generationBranch: getGenerationBranchName(context, name),
     generationRepository: integrationRepository,
@@ -223,7 +216,6 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
     hasBreakingChange,
     artifactPaths: result.artifacts ?? [],
     apiViewArtifactPath: result.apiViewArtifact ?? undefined,
-    artifactBlobUrls: [],
     changelogs: result.changelog?.content.split('\n') ?? [],
     breakingChangeItems,
     version: result.version,

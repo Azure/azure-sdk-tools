@@ -86,18 +86,18 @@ For a more detailed explanation of how the test proxy works, along with links to
 
 ### Via Local Compile or .NET
 
-1. [Install .NET 5.0 or 6.0](https://dotnet.microsoft.com/download)
-2. Install test-proxy
+1. [Install .NET 8.0 (LTS) or 9.0](https://dotnet.microsoft.com/download)
+2. Install or update test-proxy
 
 ```powershell
-dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --version "1.0.0-dev*" --ignore-failed-sources
+dotnet tool update azure.sdk.tools.testproxy --global --prerelease --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --ignore-failed-sources
 ```
 
 The test-proxy is also available from the [azure-sdk-for-net public feed](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-net)
 
 _Note: if you're not authorized to access these feeds, make sure you have [Azure Artifacts Credential Provider](https://github.com/microsoft/artifacts-credprovider) installed. You can also [download executable](#via-standalone-executable)._
 
-To uninstall an existing test-proxy
+To uninstall an existing test-proxy:
 
 ```powershell
 dotnet tool uninstall --global azure.sdk.tools.testproxy
@@ -264,8 +264,8 @@ The test-proxy is integrated with the following environment variables.
 | Variable                       | Usage                                                                                                                                                                              |
 |--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `TEST_PROXY_FOLDER`            | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
-| `Logging__LogLevel__Default` | Defaults to `Information`. Possible valid values are <br/><br/>`Debug`, `Information`, `Warning`, `Error`, `Critical`.<br><br>Do not set for .NET test runs as it would cause the tests *themselves* to start emitting logs.|
-| `Logging__LogLevel__Azure.Sdk.Tools.TestProxy`| Set to `Debug` to see request level logs emitted by the Test Proxy.|
+| `Logging__LogLevel__Default` | Sets the global log level for .NET tools including the test-proxy. Defaults to `Information`. Possible valid values are <br/><br/>`Debug`, `Information`, `Warning`, `Error`, `Critical`. <br><br> Users are recommended to use this variable, unless globally setting .NET log level negatively affects their test experience. |
+| `Logging__LogLevel__Azure.Sdk.Tools.TestProxy`| Same possible values as `Default`, but sets the log level for **only** the test-proxy. Other .NET tool log levels will remain unaffected.|
 
 
 ## How do I use the test-proxy to get a recording?

@@ -9,6 +9,7 @@ from apistub.nodes import PylintParser
 import os
 from pytest import fail
 import tempfile
+from importlib.util import find_spec
 
 
 class TestApiView:
@@ -39,6 +40,16 @@ class TestApiView:
                     collect_line_ids(line.children, index)
 
         collect_line_ids(apiview.review_lines)
+
+    def test_optional_dependencies(self):
+        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
+        apiview = stub_gen.generate_tokens()
+        assert find_spec("httpx") is not None
+        assert find_spec("pandas") is not None
+        # skip conditional optional dependencies
+        assert find_spec("qsharp") is None
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()
@@ -71,7 +82,7 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
-        assert len(apiview.diagnostics) == 14
+        assert len(apiview.diagnostics) == 22
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
         assert len(unclaimed) == 1

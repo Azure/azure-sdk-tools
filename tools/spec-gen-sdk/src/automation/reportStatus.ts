@@ -356,14 +356,14 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
   if (executionReport && executionReport.packages && executionReport.packages.length > 0) {
     const pkg = executionReport.packages[0];
     if (pkg.shouldLabelBreakingChange) {
-        breakingChangeLabel = pkg.breakingChangeLabel ?? "";
+      breakingChangeLabel = pkg.breakingChangeLabel ?? "";
     }
     packageName = pkg.packageName ?? "";
     if (context.config.pullNumber) {    
-        prBody = `Create to sync ${context.config.specRepoHttpsUrl}/pull/${context.config.pullNumber}`;
-        prBranch = getGenerationBranchName(context, packageName);
-      }
-    prBody = `${prBody}\n\n${pkg.installInstructions ?? ''}`;
+      prBody = `Create to sync ${context.config.specRepoHttpsUrl}/pull/${context.config.pullNumber}\n\n`;
+    }
+    prBranch = getGenerationBranchName(context, packageName);
+    prBody = `${prBody}${pkg.installInstructions ?? ''}`;
   }
   
   prBody = `${prBody}\n This pull request has been automatically generated for preview purposes.`;

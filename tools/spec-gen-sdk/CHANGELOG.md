@@ -1,5 +1,9 @@
 # Release
 
+## 2025-01-14 - 0.1.3
+
+- Ensure the PrBranch variable is consistently set in all scenarios
+
 ## 2025-01-07 - 0.1.2
 
 - Cleaned up dependencies

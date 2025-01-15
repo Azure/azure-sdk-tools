@@ -87,8 +87,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
-  codeLineSearchNavigationPosition : number = 0;
-
   //Approvers Options
   selectedApprovers: string[] = [];
 
@@ -375,9 +373,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * Use positive number to navigate to the next search result and negative number to navigate to the previous search result
    * @param number 
    */
-  navigateSearch(number: number) {
-    this.codeLineSearchNavigationPosition += number;
-    this.codeLineSearchNaviationEmmiter.emit(this.codeLineSearchNavigationPosition);
+  navigateSearch(number: 1 | -1) {
+    const navigationPosition = this.codeLineSearchInfo.currentMatch! + number;
+    console.log("navigationpos", navigationPosition);
+    if (navigationPosition >= 1 && navigationPosition <= this.codeLineSearchInfo.totalMatchCount!) {
+      this.codeLineSearchNaviationEmmiter.emit(navigationPosition!);
+    }
   }
 
   handleAPIRevisionApprovalAction() {

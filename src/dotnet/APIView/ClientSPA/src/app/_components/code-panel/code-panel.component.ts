@@ -55,8 +55,9 @@ export class CodePanelComponent implements OnChanges{
   CodePanelRowDatatype = CodePanelRowDatatype;
 
   searchMatchedRowInfo: Map<string, RegExpMatchArray[]> = new Map<string, RegExpMatchArray[]>();
-  codeLineSearchInfo : DoublyLinkedList<CodeLineSearchMatch> | null = null;
+  codeLineSearchMatchInfo : DoublyLinkedList<CodeLineSearchMatch> | null = null;
   currentCodeLineSearchMatch: DoublyLinkedListNode<CodeLineSearchMatch> | null = null;
+  codeLineSearchInfo: CodeLineSearchInfo | null = null;
 
   destroy$ = new Subject<void>();
 
@@ -709,9 +710,9 @@ export class CodePanelComponent implements OnChanges{
 
     let totalMatches = 0;
     let hasMatch = false;
-    this.codeLineSearchInfo = new DoublyLinkedList<CodeLineSearchMatch>();
+    this.codeLineSearchMatchInfo = new DoublyLinkedList<CodeLineSearchMatch>();
     
-    this.codePanelRowData.forEach((row) => {
+    this.codePanelRowData.forEach((row, idx) => {
       if (row.rowOfTokens && row.rowOfTokens.length > 0) {
         let codeLineInfo = convertRowOfTokensToString(row.rowOfTokens);
         const regex = new RegExp(searchText, "gi");
@@ -721,8 +722,8 @@ export class CodePanelComponent implements OnChanges{
           totalMatches += matches.length;
           this.searchMatchedRowInfo.set(row.nodeIdHashed!, matches);
           matches.forEach((match, index) => {
-            const searchMatch = new CodeLineSearchMatch(row.nodeIdHashed!, index);
-            this.codeLineSearchInfo!.append(searchMatch);
+            const searchMatch = new CodeLineSearchMatch(idx, row.nodeIdHashed!, index);
+            this.codeLineSearchMatchInfo!.append(searchMatch);
           });
         }
       }
@@ -732,21 +733,22 @@ export class CodePanelComponent implements OnChanges{
     let totalMatchCount = 0;
     
     if (hasMatch) {
-      this.currentCodeLineSearchMatch = this.codeLineSearchInfo.head;
+      this.currentCodeLineSearchMatch = this.codeLineSearchMatchInfo.head;
       currentMatch = this.currentCodeLineSearchMatch!.index + 1;
-      totalMatchCount = this.codeLineSearchInfo.length + 1;
+      totalMatchCount = this.codeLineSearchMatchInfo.length + 1;
       this.highlightSearchMatches();
       this.highlightActiveSearchMatch();
     } else {
       this.clearSearchMatchHighlights();
-      this.codeLineSearchInfo = null;
+      this.codeLineSearchMatchInfo = null;
       this.currentCodeLineSearchMatch = null;
     }
 
-    this.codeLineSearchInfoEmitter.emit({ 
+    this.codeLineSearchInfo = { 
       currentMatch: currentMatch,
       totalMatchCount: totalMatchCount
-    });
+    };
+    this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
   }
 
   private highlightSearchMatches() {
@@ -796,7 +798,6 @@ export class CodePanelComponent implements OnChanges{
 
       const activeMatch = this.elementRef.nativeElement.querySelector('.codeline-search-match-highlight.active');
       if (activeMatch) {
-        console.log('activeMatch', activeMatch);
         activeMatch.classList.remove('active');
       }
       const codeLine = this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"]`);
@@ -814,17 +815,39 @@ export class CodePanelComponent implements OnChanges{
    * Navigates to the next or previous code line that contains a search match but is outside the viewport
    */
   private navigateToCodeLineWithSearchMatch(previousPosition: number, newPosition: number) {
-    if (!previousPosition || newPosition > previousPosition) {
-      if (this.currentCodeLineSearchMatch) {
-        this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.next;
-        this.highlightActiveSearchMatch();
-      }
-    } else if (newPosition < previousPosition) {
-      if (this.currentCodeLineSearchMatch) {
-        this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.prev;
-        this.highlightActiveSearchMatch();
+    if (this.currentCodeLineSearchMatch) {
+      const firstVisibleIndex = this.codePanelRowSource?.adapter?.firstVisible.$index!;
+      const lastVisibleIndex = this.codePanelRowSource?.adapter?.lastVisible.$index!;
+      
+      if (this.currentCodeLineSearchMatch.value.rowIndex <= firstVisibleIndex || this.currentCodeLineSearchMatch.value.rowIndex >= lastVisibleIndex) {
+        this.scrollToNode(this.currentCodeLineSearchMatch.value.nodeIdHashed);
+        setTimeout(() => {
+          this.navigateAndHighlightSearchMatch(previousPosition, newPosition);
+        }, 1550);
+      } else {
+        this.navigateAndHighlightSearchMatch(previousPosition, newPosition);
       }
     }
+  }
+
+  private navigateAndHighlightSearchMatch(previousPosition: number, newPosition: number) {
+    let currentMatch = this.codeLineSearchInfo?.currentMatch!;
+
+    if (!previousPosition || newPosition > previousPosition) {
+      this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.next!;
+      this.highlightActiveSearchMatch();
+      currentMatch++;
+    } else if (newPosition < previousPosition) {
+      this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.prev!;
+      this.highlightActiveSearchMatch();
+      currentMatch--;
+    }
+
+    this.codeLineSearchInfo = { 
+      currentMatch: currentMatch,
+      totalMatchCount: this.codeLineSearchInfo?.totalMatchCount
+    };
+    this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
   }
 
   private clearSearchMatchHighlights() {

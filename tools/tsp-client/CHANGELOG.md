@@ -1,5 +1,9 @@
 # Release
 
+## Unreleased - 0.15.3
+
+- Support generating with unbranded emitters, unbranded emitter name must start with `@typespec/http-`.
+
 ## 2025-01-10 - 0.15.2
 
 - Float `@autorest/openapi-to-typespec` version between `>=0.10.6 <1.0.0`.

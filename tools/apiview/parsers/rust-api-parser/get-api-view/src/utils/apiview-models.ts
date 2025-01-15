@@ -18,9 +18,9 @@ export interface CodeFile {
     | "JavaScript"
     | "Kotlin"
     | "Python"
+    | "Rust"
     | "Swagger"
     | "Swift"
-    | "Rust"
     | "TypeSpec";
     /** Language variant is applicable only for java variants */
     LanguageVariant?: "None" | "Spring" | "Android";

@@ -13,7 +13,12 @@
         },
         {
           "Kind": 3,
-          "Value": "docs"
+          "Value": "docs",
+          "RenderClasses": [
+            "module"
+          ],
+          "NavigateToId": "69",
+          "NavigationDisplayName": "docs"
         }
       ],
       "Children": [
@@ -26,7 +31,12 @@
             },
             {
               "Kind": 3,
-              "Value": "module_example"
+              "Value": "module_example",
+              "RenderClasses": [
+                "module"
+              ],
+              "NavigateToId": "47",
+              "NavigationDisplayName": "module_example"
             }
           ],
           "Children": [
@@ -39,7 +49,12 @@
                 },
                 {
                   "Kind": 3,
-                  "Value": "lease"
+                  "Value": "lease",
+                  "RenderClasses": [
+                    "module"
+                  ],
+                  "NavigateToId": "46",
+                  "NavigationDisplayName": "lease"
                 }
               ],
               "Children": [
@@ -52,7 +67,12 @@
                     },
                     {
                       "Kind": 3,
-                      "Value": "sample_module2"
+                      "Value": "sample_module2",
+                      "RenderClasses": [
+                        "module"
+                      ],
+                      "NavigateToId": "44",
+                      "NavigationDisplayName": "sample_module2"
                     }
                   ],
                   "Children": [
@@ -65,15 +85,24 @@
                         },
                         {
                           "Kind": 4,
-                          "Value": "sample_function2"
+                          "Value": "sample_function2",
+                          "HasSuffixSpace": false,
+                          "RenderClasses": [
+                            "method"
+                          ],
+                          "NavigateToId": "0",
+                          "NavigationDisplayName": "sample_function2"
                         },
                         {
                           "Kind": 1,
-                          "Value": "("
+                          "Value": "(",
+                          "HasSuffixSpace": false,
+                          "HasPrefixSpace": false
                         },
                         {
                           "Kind": 1,
-                          "Value": ")"
+                          "Value": ")",
+                          "HasPrefixSpace": false
                         }
                       ],
                       "Children": []
@@ -87,7 +116,12 @@
                         },
                         {
                           "Kind": 3,
-                          "Value": "SampleStruct2"
+                          "Value": "SampleStruct2",
+                          "RenderClasses": [
+                            "struct"
+                          ],
+                          "NavigateToId": "4",
+                          "NavigationDisplayName": "SampleStruct2"
                         }
                       ],
                       "Children": [
@@ -108,7 +142,7 @@
                             },
                             {
                               "Kind": 3,
-                              "Value": "String"
+                              "Value": "unknown"
                             }
                           ]
                         },
@@ -129,7 +163,7 @@
                             },
                             {
                               "Kind": 3,
-                              "Value": "i32"
+                              "Value": "unknown"
                             }
                           ]
                         }
@@ -146,15 +180,24 @@
                     },
                     {
                       "Kind": 4,
-                      "Value": "use_sample_struct2"
+                      "Value": "use_sample_struct2",
+                      "HasSuffixSpace": false,
+                      "RenderClasses": [
+                        "method"
+                      ],
+                      "NavigateToId": "45",
+                      "NavigationDisplayName": "use_sample_struct2"
                     },
                     {
                       "Kind": 1,
-                      "Value": "("
+                      "Value": "(",
+                      "HasSuffixSpace": false,
+                      "HasPrefixSpace": false
                     },
                     {
                       "Kind": 1,
-                      "Value": ")"
+                      "Value": ")",
+                      "HasPrefixSpace": false
                     }
                   ],
                   "Children": []
@@ -172,7 +215,12 @@
             },
             {
               "Kind": 3,
-              "Value": "sample_module"
+              "Value": "sample_module",
+              "RenderClasses": [
+                "module"
+              ],
+              "NavigateToId": "64",
+              "NavigationDisplayName": "sample_module"
             }
           ],
           "Children": [
@@ -185,15 +233,24 @@
                 },
                 {
                   "Kind": 4,
-                  "Value": "sample_function"
+                  "Value": "sample_function",
+                  "HasSuffixSpace": false,
+                  "RenderClasses": [
+                    "method"
+                  ],
+                  "NavigateToId": "48",
+                  "NavigationDisplayName": "sample_function"
                 },
                 {
                   "Kind": 1,
-                  "Value": "("
+                  "Value": "(",
+                  "HasSuffixSpace": false,
+                  "HasPrefixSpace": false
                 },
                 {
                   "Kind": 1,
-                  "Value": ")"
+                  "Value": ")",
+                  "HasPrefixSpace": false
                 }
               ],
               "Children": []
@@ -207,7 +264,12 @@
                 },
                 {
                   "Kind": 3,
-                  "Value": "SampleStruct"
+                  "Value": "SampleStruct",
+                  "RenderClasses": [
+                    "struct"
+                  ],
+                  "NavigateToId": "50",
+                  "NavigationDisplayName": "SampleStruct"
                 }
               ],
               "Children": [
@@ -228,7 +290,7 @@
                     },
                     {
                       "Kind": 3,
-                      "Value": "i32"
+                      "Value": "unknown"
                     }
                   ]
                 }
@@ -245,15 +307,16 @@
             },
             {
               "Kind": 3,
-              "Value": "MyTrait"
+              "Value": "MyTrait",
+              "RenderClasses": [
+                "trait"
+              ],
+              "NavigateToId": "66",
+              "NavigationDisplayName": "MyTrait"
             },
             {
               "Kind": 1,
               "Value": "{"
-            },
-            {
-              "Kind": 1,
-              "Value": "}"
             }
           ],
           "Children": [
@@ -262,36 +325,52 @@
               "Tokens": [
                 {
                   "Kind": 2,
-                  "Value": "fn"
+                  "Value": "pub fn"
                 },
                 {
                   "Kind": 4,
-                  "Value": "example_method"
+                  "Value": "example_method",
+                  "HasSuffixSpace": false,
+                  "RenderClasses": [
+                    "method"
+                  ],
+                  "NavigateToId": "65",
+                  "NavigationDisplayName": "example_method"
                 },
                 {
                   "Kind": 1,
-                  "Value": "("
-                },
-                {
-                  "Kind": 1,
-                  "Value": ")"
-                },
-                {
-                  "Kind": 1,
-                  "Value": "("
+                  "Value": "(",
+                  "HasSuffixSpace": false,
+                  "HasPrefixSpace": false
                 },
                 {
                   "Kind": 3,
-                  "Value": "self: &Self"
+                  "Value": "self: &Self",
+                  "HasSuffixSpace": false
                 },
                 {
                   "Kind": 1,
-                  "Value": ")"
+                  "Value": ")",
+                  "HasPrefixSpace": false
                 }
               ],
               "Children": []
             }
           ]
+        },
+        {
+          "RelatedToLine": "66",
+          "Tokens": [
+            {
+              "Kind": 1,
+              "Value": "}"
+            }
+          ],
+          "IsContextEndLine": true
+        },
+        {
+          "RelatedToLine": "66",
+          "Tokens": []
         },
         {
           "LineId": "67",
@@ -302,31 +381,76 @@
             },
             {
               "Kind": 4,
-              "Value": "foo"
+              "Value": "foo",
+              "HasSuffixSpace": false,
+              "RenderClasses": [
+                "method"
+              ],
+              "NavigateToId": "67",
+              "NavigationDisplayName": "foo"
             },
             {
-              "Kind": 1,
-              "Value": "<"
-            },
-            {
-              "Kind": 3,
-              "Value": "T, V"
-            },
-            {
-              "Kind": 1,
-              "Value": ">"
-            },
-            {
-              "Kind": 1,
-              "Value": "("
+              "Kind": 0,
+              "Value": "<",
+              "HasSuffixSpace": false
             },
             {
               "Kind": 3,
-              "Value": "v: &T"
+              "Value": "T",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ": ",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "MyTrait",
+              "NavigateToId": "66",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ", ",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "V",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ": ",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "MyTrait",
+              "NavigateToId": "66",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ">",
+              "HasSuffixSpace": false
             },
             {
               "Kind": 1,
-              "Value": ")"
+              "Value": "(",
+              "HasSuffixSpace": false,
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "v: &T",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
             }
           ],
           "Children": []
@@ -340,31 +464,96 @@
             },
             {
               "Kind": 4,
-              "Value": "bar"
+              "Value": "bar",
+              "HasSuffixSpace": false,
+              "RenderClasses": [
+                "method"
+              ],
+              "NavigateToId": "68",
+              "NavigationDisplayName": "bar"
             },
             {
-              "Kind": 1,
-              "Value": "<"
-            },
-            {
-              "Kind": 3,
-              "Value": "T, V"
-            },
-            {
-              "Kind": 1,
-              "Value": ">"
-            },
-            {
-              "Kind": 1,
-              "Value": "("
+              "Kind": 0,
+              "Value": "<",
+              "HasSuffixSpace": false
             },
             {
               "Kind": 3,
-              "Value": "v: &T"
+              "Value": "T",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ", ",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "V",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ">",
+              "HasSuffixSpace": false
             },
             {
               "Kind": 1,
-              "Value": ")"
+              "Value": "(",
+              "HasSuffixSpace": false,
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "v: &T",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 1,
+              "Value": ")",
+              "HasPrefixSpace": false
+            },
+            {
+              "Kind": 2,
+              "Value": "where",
+              "HasSuffixSpace": true
+            },
+            {
+              "Kind": 3,
+              "Value": "T",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ": ",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "MyTrait",
+              "NavigateToId": "66",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ", ",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "V",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 0,
+              "Value": ": ",
+              "HasSuffixSpace": false
+            },
+            {
+              "Kind": 3,
+              "Value": "MyTrait",
+              "NavigateToId": "66",
+              "HasSuffixSpace": false
             }
           ],
           "Children": []

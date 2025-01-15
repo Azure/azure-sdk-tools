@@ -20,7 +20,7 @@ Install `apiview-stub-generator` package on a supported Python version. If not r
 
 From the root of the apiview-stub-generator package, run:
 ```
-(venv310) apiview-stub-generator> pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
 ```
 
 If `--extra-index-url` is not specified, the apiview-stub-generator may not run or you may see the following error:
@@ -52,8 +52,6 @@ Token file will be created with a naming convention `<package-name>_python.json'
 
 The following options are available when running `apistubgen`:
 ```
-> apistubgen --help
-Running apiview-stub-generator version 0.3.13
 usage: apistubgen [-h] --pkg-path PKG_PATH [--temp-path TEMP_PATH]
                   [--out-path OUT_PATH] [--mapping-path MAPPING_PATH]
                   [--verbose] [--filter-namespace FILTER_NAMESPACE]
@@ -82,9 +80,10 @@ usage: apistubgen [-h] --pkg-path PKG_PATH [--temp-path TEMP_PATH]
 ### Running tests
 
 ```
-apiview-stub-generator> pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
-apiview-stub-generator> pip install -r dev_requirements.txt
-apiview-stub-generator/tests> pytest .
+cd packages/python-packages/apiview-stub-generator
+pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+pip install -r dev_requirements.txt
+pytest tests/
 ```
 
 #### apistubgentest

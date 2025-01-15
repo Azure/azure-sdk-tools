@@ -13,13 +13,7 @@ from apistubgentest.models import (
     DataClassWithPostInit,
 )
 
-from ._test_util import _check, _tokenize, _merge_lines, _render_lines, _render_string, MockApiView
-
-
-def _check_all(actual, expect, obj):
-    for idx, exp in enumerate(expect):
-        act = actual[idx]
-        _check(act.lstrip(), exp, obj)
+from ._test_util import _check, _tokenize, _merge_lines, _render_lines, MockApiView
 
 
 class TestDataClassParsing:
@@ -40,7 +34,7 @@ class TestDataClassParsing:
         assert lines[0].startswith("@dataclass")
 
         ivars = lines[2:5]
-        _check_all(
+        _check(
             ivars,
             [
                 "ivar name: str",
@@ -50,10 +44,17 @@ class TestDataClassParsing:
             obj,
         )
 
-        init_string = _merge_lines(lines[8:13])
+        actual = lines[8:13]
+        expected = [
+            "def __init__(",
+            "    name: str, ",
+            "    unit_price: float, ",
+            "    quantity_on_hand: int",
+            ")",
+        ]
         # TODO: quantity_on_hand actually has a default value that should be displayed
         # assert init_string == "def __init__(name: str, unit_price: float, quantity_on_hand: int = 0)"
-        assert init_string == "def __init__(name: str, unit_price: float, quantity_on_hand: int)"
+        _check(actual, expected, obj)
 
     def test_dataclass_fields(self):
         obj = DataClassWithFields
@@ -70,7 +71,7 @@ class TestDataClassParsing:
 
         ivars = lines[2:6]
         # TODO: Display missing field assignments
-        _check_all(
+        _check(
             ivars,
             [
                 # "ivar myint_field: int = field(repr = False)",
@@ -83,13 +84,18 @@ class TestDataClassParsing:
             obj,
         )
 
-        init_string = _merge_lines(lines[9:15])
+        actual = lines[9:15]
         # TODO: init should display defaults
         # assert init_string == "def __init__(myint_plain: int, myint_field: int, myint_field_default: int = 10, mylist: list[int] = list)"
-        assert (
-            init_string
-            == "def __init__(myint_plain: int, myint_field: int, myint_field_default: int, mylist: list[int])"
-        )
+        expected = [
+            "def __init__(",
+            "    myint_plain: int, ",
+            "    myint_field: int, ",
+            "    myint_field_default: int, ",
+            "    mylist: list[int]",
+            ")"
+        ]
+        _check(actual, expected, obj)
 
     def test_dataclass_dynamic(self):
         obj = DataClassDynamic
@@ -122,12 +128,19 @@ class TestDataClassParsing:
         lines = _render_lines(_tokenize(class_node))
         assert lines[0].startswith("@dataclass")
         ivars = lines[2:5]
-        _check_all(ivars, ["ivar x: float", "ivar y: float", "ivar z: float"], obj)
+        _check(ivars, ["ivar x: float", "ivar y: float", "ivar z: float"], obj)
 
-        init_string = _merge_lines(lines[8:13])
+        actual = lines[8:13]
+        expected = [
+            "def __init__(",
+            "    x: float, ",
+            "    y: float, ",
+            "    z: float",
+            ")",
+        ]
         # TODO: init should display keyword only marker '*'
         # assert init_string == "def __init__(x: float, *, y: float, z: float)"
-        assert init_string == "def __init__(x: float, y: float, z: float)"
+        _check(actual, expected, obj)
 
     def test_dataclass_with_post_init(self):
         obj = DataClassWithPostInit
@@ -143,7 +156,7 @@ class TestDataClassParsing:
         assert lines[0].startswith("@dataclass")
         ivars = lines[2:5]
         # TODO: should display field assignment
-        _check_all(
+        _check(
             ivars,
             [
                 "ivar a: float",

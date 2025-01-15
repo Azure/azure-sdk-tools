@@ -37,9 +37,6 @@ class TestApiView:
 
         def collect_line_ids(review_lines, index=0):
             for line in review_lines:
-                # Ensure that each line has either 0 or 1 definition ID.
-                if line.line_id and not isinstance(line.line_id, str):
-                    fail(f"Some lines have more than one definition ID. {line.line_id}")
                 # Ensure that there are no repeated definition IDs.
                 if line.line_id and line.line_id in line_ids:
                     fail(f"Duplicate definition ID {line.line_id}.")

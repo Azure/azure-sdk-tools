@@ -133,8 +133,16 @@ class TestClassParsing:
             "ivar union: Union[bool, PetEnumPy3MetaclassAlt]",
         ]
         _check_all(actuals, expected, obj)
-        init_string = _merge_lines(actuals[6:])
-        assert init_string == "def __init__(self, name: str, age: int, union: Union[bool, PetEnumPy3MetaclassAlt])"
+        expected = [
+            "def __init__(",
+            "    self, ",
+            "    name: str, ",
+            "    age: int, ",
+            "    union: Union[bool, PetEnumPy3MetaclassAlt]",
+            ")",
+        ]
+        for idx, exp in enumerate(expected):
+            assert actuals[idx + 6] == exp
 
     def test_public_private(self):
         obj = PublicPrivateClass
@@ -177,8 +185,19 @@ class TestClassParsing:
             apiview=MockApiView,
         )
         actuals = _render_lines(_tokenize(class_node))
-        init_string = _merge_lines(actuals[2:])
-        assert init_string == "def __init__(self, id: str, *, age: int, name: str, other: str = ..., **kwargs: Any)"
+        expected = [
+            "def __init__(",
+            "    self, ",
+            "    id: str, ",
+            "    *, ",
+            "    age: int, ",
+            "    name: str, ",
+            "    other: str = ..., ",
+            "    **kwargs: Any",
+            ")"
+        ]
+        for idx, exp in enumerate(expected):
+            assert actuals[idx + 2] == exp
 
     def test_model_aliases(self):
         obj = SomeAwesomelyNamedObject
@@ -220,31 +239,78 @@ class TestClassParsing:
         tokens = _tokenize(class_node)
         lines = _render_lines(tokens)
         assert lines[2].lstrip() == "@overload"
-        actual1 = _merge_lines(lines[3:10])
-        expected1 = "def double(self, input: int = 1, *, test: bool = False, **kwargs) -> int"
+        actual1 = lines[3:10]
+        expected1 = [
+            "def double(",
+            "    self, ",
+            "    input: int = 1, ",
+            "    *, ",
+            "    test: bool = False, ",
+            "    **kwargs",
+            ") -> int"
+        ]
         _check(actual1, expected1, SomethingWithOverloads)
 
         assert lines[11].lstrip() == "@overload"
-        actual2 = _merge_lines(lines[12:19])
-        expected2 = "def double(self, input: Sequence[int] = [1], *, test: bool = False, **kwargs) -> list[int]"
+        actual2 = lines[12:19]
+        expected2 = [
+            "def double(",
+            "    self, ",
+            "    input: Sequence[int] = [1], ",
+            "    *, ",
+            "    test: bool = False, ",
+            "    **kwargs",
+            ") -> list[int]"
+        ]
         _check(actual2, expected2, SomethingWithOverloads)
 
-        actual3 = _merge_lines(lines[20:27])
-        expected3 = "def double(self, input: int | Sequence[int], *, test: bool = False, **kwargs) -> int | list[int]"
+        actual3 = lines[20:27]
+        expected3 = [
+            "def double(",
+            "    self, ",
+            "    input: int | Sequence[int], ",
+            "    *, ",
+            "    test: bool = False, ",
+            "    **kwargs",
+            ") -> int | list[int]"
+        ]
         _check(actual3, expected3, SomethingWithOverloads)
 
-        assert lines[28].lstrip() == "@overload"
-        actual4 = _merge_lines(lines[29:35])
-        expected4 = "def something(self, id: str, *args, **kwargs) -> str"
+        assert lines[28] == "@overload"
+        actual4 = lines[29:35]
+        expected4 = [
+            "def something(",
+            "    self, ",
+            "    id: str, ",
+            "    *args, ",
+            "    **kwargs",
+            ") -> str"
+        ]
         _check(actual4, expected4, SomethingWithOverloads)
 
-        assert lines[36].lstrip() == "@overload"
-        actual5 = _merge_lines(lines[37:43])
-        expected5 = "def something(self, id: int, *args, **kwargs) -> str"
+        assert lines[36] == "@overload"
+        actual5 = lines[37:43]
+        expected5 = [
+            "def something(",
+            "    self, ",
+            "    id: int, ",
+            "    *args, ",
+            "    **kwargs",
+            ") -> str"
+        ]
         _check(actual5, expected5, SomethingWithOverloads)
 
-        actual6 = _merge_lines(lines[44:])
-        expected6 = "def something(self, id: int | str, *args, **kwargs) -> str"
+        actual6 = lines[44:]
+        expected6 = [
+            "def something(",
+            "    self, ",
+            "    id: int | str, ",
+            "    *args, ",
+            "    **kwargs",
+            ") -> str",
+            "", # Blank line at the end of the function
+            "", # Blank line at the end of the class
+        ]
         _check(actual6, expected6, SomethingWithOverloads)
 
         # If the token is an overload decorator, it should have the correct RelatedToLine.

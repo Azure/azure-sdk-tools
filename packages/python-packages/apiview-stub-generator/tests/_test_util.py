@@ -19,7 +19,7 @@ def _tokenize(node):
 
 def _render_lines(review_lines) -> List[str]:
     lines = review_lines.render()
-    return [x.lstrip() for x in lines]
+    return [x for x in lines]
 
 
 """ Returns the review line tokens as a single concatenated string. """
@@ -38,9 +38,10 @@ def _merge_lines(lines) -> str:
 
 
 def _check(actual, expected, client):
-    assert (
-        actual.lstrip() == expected
-    ), f"\n*******\nClient: {client.__name__}\nActual:   {actual}\nExpected: {expected}\n*******"
-
+    assert len(actual) == len(expected), f"\n*******\nClient: {client.__name__}\nActual:   {actual}\nExpected: {expected}\n*******"
+    for i in range(len(expected)):
+        assert (
+            actual[i] == expected[i]
+        ), f"\n*******\nClient: {client.__name__}\nActual:   {actual[i]}\nExpected: {expected[i]}\n*******"
 
 MockApiView = ApiView(pkg_name="test", namespace="test")

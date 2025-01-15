@@ -256,7 +256,11 @@ class FunctionNode(NodeEntityBase):
         )
         # add postional-only marker if any posargs
         if self.posargs:
-            review_line.add_text("/", has_suffix_space=False)
+            # add extra indent manually for multi-line args
+            indent = ""
+            if use_multi_line:
+                indent = " " * 4
+            review_line.add_text(f"{indent}/", has_suffix_space=False)
             review_line.add_punctuation(",")
             current_count += 1  # account for /
 
@@ -291,7 +295,7 @@ class FunctionNode(NodeEntityBase):
             # TODO: https://github.com/Azure/azure-sdk-tools/issues/8574
             indent = ""
             if use_multi_line:
-                indent = "    "
+                indent = " " * 4
             review_line.add_text(f"{indent}*", has_suffix_space=False)
             review_line.add_punctuation(",")
             review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)

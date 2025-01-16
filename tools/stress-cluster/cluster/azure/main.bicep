@@ -8,7 +8,8 @@ param clusterLocation string = 'westus3'
 param monitoringLocation string = 'centralus'
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
-param defaultAgentPoolSku string = 'Standard_D8a_v4'
+param defaultAgentPoolSku string = 'Standard_D8ads_v6'
+param systemAgentPoolSku string = 'Standard_D4ads_v6'
 param skipAcrRoleAssignment bool = false
 param maintenanceWindowDay string = 'Monday'
 param tags object
@@ -84,6 +85,7 @@ module cluster 'cluster/cluster.bicep' = {
         defaultAgentPoolMinNodes: defaultAgentPoolMinNodes
         defaultAgentPoolMaxNodes: defaultAgentPoolMaxNodes
         defaultAgentPoolSku: defaultAgentPoolSku 
+        systemAgentPoolSku: systemAgentPoolSku 
         maintenanceWindowDay: maintenanceWindowDay 
         tags: tags
         groupSuffix: groupSuffix

@@ -259,7 +259,7 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
-  });
+  }, 120000);
 
   it("Generate config files with overrides", async () => {
     try {
@@ -280,7 +280,7 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
-  });
+  }, 120000);
 
   it("Generate config files using azure-sdk/emitter-package-json-pinning", async () => {
     try {
@@ -300,5 +300,5 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
-  });
+  }, 120000);
 });

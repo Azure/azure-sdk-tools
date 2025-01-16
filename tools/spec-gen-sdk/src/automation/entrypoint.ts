@@ -46,6 +46,7 @@ export type SdkAutoContext = {
   logger: winston.Logger;
   fullLogFileName: string;
   filteredLogFileName: string;
+  logHtml: string;
   specRepoConfig: SpecConfig;
   sdkRepoConfig: SdkRepoConfig;
   swaggerToSdkConfig: SwaggerToSdkConfig
@@ -68,6 +69,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
 
   const fullLogFileName = path.join(options.workingFolder, 'full.log');
   const filteredLogFileName = path.join(options.workingFolder, 'filtered.log');
+  const logHtml = path.join(options.workingFolder, 'logIndex.html');
   if (fs.existsSync(fullLogFileName)) {
     fs.rmSync(fullLogFileName);
   }
@@ -86,6 +88,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   const swaggerToSdkConfig = getSwaggerToSdkConfig(swaggerToSdkConfigContent);
 
   return {
+    logHtml,
     config: options,
     logger,
     fullLogFileName,

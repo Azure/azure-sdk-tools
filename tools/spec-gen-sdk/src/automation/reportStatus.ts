@@ -13,6 +13,7 @@ import { CommentCaptureTransport } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
+import { marked } from "marked";
 
 const commentLimit = 60;
 
@@ -145,6 +146,133 @@ export const saveFilteredLog = async (context: WorkflowContext) => {
   fs.writeFileSync(context.filteredLogFileName, content);
   context.logger.log('endsection', 'Save filtered log status');
 };
+
+export const renderFilterLog2HTML = async (context: WorkflowContext) => {
+    context.logger.log('section', 'Save filtered log HTML');
+    const RegexMarkdownSplit = /^(.*?)(<ul>.*)$/s;
+    const RegexNoteBlock = /> \[!NOTE\]\s*>\s*(.*)/;
+    const messageRecord = fs.readFileSync(context.filteredLogFileName).toString();
+    const parseMssageRecord = JSON.parse(messageRecord) as MessageRecord[];
+
+    let totalBody = '';
+    for(let commentBody of parseMssageRecord) {
+        const markdown = commentBody.message || '';
+        let blockString = '';
+        let bodyString = '';
+        
+        const match = markdown.match(RegexMarkdownSplit);
+        if (match !== null) { 
+            bodyString = match[2].trim(); 
+            const noteBlock = match[1].trim();
+            const noteMatch = noteBlock.match(RegexNoteBlock);
+            if (noteMatch !== null) {
+                blockString = noteMatch[1].trim();
+            }
+        } else {
+            bodyString = marked(markdown) as string;
+        }
+        const renderNoteBlock = blockString && htmlBlockTemp(blockString);
+        totalBody += (renderNoteBlock + bodyString);
+    }
+    
+
+    const htmlString: string = htmlTemp(totalBody);
+    
+    context.logger.info(`Writing html to ${context.logHtml}`);
+    fs.writeFileSync(context.logHtml, htmlString, "utf-8");
+    context.logger.log('endsection', 'Save filtered log HTML');
+}
+
+function htmlTemp(bodyString:string):string {
+    const githubStylesheet = "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css";
+    return `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 转 HTML</title>
+    <link rel="stylesheet" href="${githubStylesheet}">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            line-height: 1.6;
+            padding: 40px;
+        }
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+        a {
+            text-decoration: underline!important;
+            text-underline-offset: .2rem!important;
+        }
+         /* GitHub Special prompt block */
+        .markdown-alert.markdown-alert-note {
+            border-left-color: #0969da;
+        }
+        .markdown-alert.markdown-alert-note .markdown-alert-title {
+            color: #0969da;
+        }
+        .markdown-body>*:first-child {
+            margin-top: 0 !important;
+        }
+        .markdown-alert {
+           padding: 0.5rem 1rem;
+           margin-bottom: 1rem;
+           color: inherit;
+           border-left: .25em solid #d1d9e0;
+        }
+        .markdown-alert .markdown-alert-title {
+            display: flex;
+            font-weight: 500;
+            align-items: center;
+            line-height: 1;
+        }
+        .markdown-alert>:first-child {
+            margin-top: 0;
+        }
+        .markdown-body p, .markdown-body blockquote, .markdown-body ul, .markdown-body ol, .markdown-body dl, .markdown-body table, .markdown-body pre, .markdown-body details {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        .mr-2 {
+            margin-right: 0.5rem !important;
+        }
+        .octicon {
+            display: inline-block;
+            overflow: visible !important;
+            vertical-align: text-bottom;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <article class="markdown-body">
+        ${bodyString}
+    </article>
+</body>
+</html>
+`;
+}
+
+function htmlBlockTemp(blockString: string):string {
+return `
+<div class="markdown-alert markdown-alert-note" dir="auto">
+    <p class="markdown-alert-title" dir="auto">
+    <svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>
+        Note
+    </p>
+    <p dir="auto">${blockString}</p>
+</div>
+`
+}
 
 export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   context.logger.log('section', 'Report status');

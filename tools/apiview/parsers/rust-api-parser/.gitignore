@@ -1,0 +1,2 @@
+clean-rust-doc-output/inputs/*.json
+clean-rust-doc-output/inputs/docs/Cargo.toml

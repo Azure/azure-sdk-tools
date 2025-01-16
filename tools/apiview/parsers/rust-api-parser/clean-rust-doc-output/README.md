@@ -18,7 +18,7 @@ This Rust project reads a Rustdoc JSON file and generates a new JSON file captur
 1. **Get the rustdoc output for the temp project**:
 
     ```sh
-        cargo +nightly rustdoc -Z unstable-options --output-format json --package docs --no-default-features
+        cargo +nightly rustdoc -Z unstable-options --output-format json --package docs --all-features
     ```
 
 2. Put the generted `docs.json` file in the `inputs` folder of this project.

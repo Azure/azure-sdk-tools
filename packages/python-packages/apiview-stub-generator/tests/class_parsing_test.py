@@ -51,7 +51,8 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = [
             "class ClassWithIvarsAndCvars:",
             'ivar captain: str = "Picard"',
@@ -59,6 +60,10 @@ class TestClassParsing:
             "cvar stats: ClassVar[Dict[str, int]] = {}",
         ]
         _check_all(actuals, expected, obj)
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_class_with_decorators(self):
         obj = ClassWithDecorators
@@ -100,7 +105,8 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = [
             "class FakeTypedDict(dict):",
             'key "age": int',
@@ -108,6 +114,10 @@ class TestClassParsing:
             'key "union": Union[bool, FakeObject, PetEnumPy3MetaclassAlt]',
         ]
         _check_all(actuals, expected, obj)
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_object(self):
         obj = FakeObject
@@ -139,6 +149,11 @@ class TestClassParsing:
         ]
         for idx, exp in enumerate(expected):
             assert actuals[idx + 6] == exp
+
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 2
 
     def test_public_private(self):
         obj = PublicPrivateClass
@@ -179,7 +194,8 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = [
             "def __init__(",
             "    self, ",
@@ -194,6 +210,11 @@ class TestClassParsing:
         for idx, exp in enumerate(expected):
             assert actuals[idx + 2] == exp
 
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 2
+
     def test_model_aliases(self):
         obj = SomeAwesomelyNamedObject
         class_node = ClassNode(
@@ -204,8 +225,14 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        lines = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        lines = _render_lines(tokens)
         assert lines[0].lstrip() == "class SomeAwesomelyNamedObject(SomePoorlyNamedObject):"
+
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_enum(self):
         obj = PetEnumPy3MetaclassAlt
@@ -217,9 +244,15 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = ["class PetEnumPy3MetaclassAlt(str, Enum):", 'CAT = "cat"', 'DEFAULT = "cat"', 'DOG = "dog"']
         _check_all(actuals, expected, obj)
+
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_overloads(self):
         obj = SomethingWithOverloads
@@ -390,6 +423,11 @@ class TestClassParsing:
         for def_id in line_ids:
             assert ":async" in def_id
 
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 4
+        assert metadata["IsContextEndLine"] == 7
+
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
     def _validate_line_ids(self, review_lines):
         line_ids = set()
@@ -419,12 +457,19 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
 
         assert actuals[2].lstrip() == "@another_decorator('Test')"
         assert actuals[5].lstrip() == "@another_decorator('Test')"
         assert actuals[8].lstrip() == "@my_decorator"
         assert actuals[11].lstrip() == "@my_decorator"
+
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 4
+        # all single-line methods so no context end lines
+        assert metadata["IsContextEndLine"] == 1
 
     def test_protocol_decorator_related_to_line(self):
         obj = SomeProtocolDecorator
@@ -461,7 +506,8 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = [
             "class SomethingWithProperties:",
             "property docstring_property: Optional[str]    # Read-only",
@@ -469,6 +515,10 @@ class TestClassParsing:
             "property py3_property: Optional[str]    # Read-only",
         ]
         _check_all(actuals, expected, obj)
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_abstract_class(self):
         obj = SomeImplementationClass
@@ -480,11 +530,17 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = ["class SomeImplementationClass(_SomeAbstractBase):", "", "def say_hello(self) -> str", "", ""]
         for idx, actual in enumerate(actuals):
             expect = expected[idx]
             _check(actual, expect, SomethingWithProperties)
+
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_generic_class(self):
         obj = GenericStack
@@ -496,9 +552,15 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = ["class GenericStack(Generic[T]):"]
         _check_all(actuals, expected, obj)
+
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_new_type_alias(self):
         obj = AliasNewType
@@ -510,9 +572,16 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = ["class AliasNewType(Dict[str, str]):"]
         _check_all(actuals, expected, obj)
+
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        # class type with no defined body
+        assert metadata["IsContextEndLine"] == 0
 
     def test_union_alias(self):
         obj = AliasUnion
@@ -524,6 +593,13 @@ class TestClassParsing:
             pkg_root_namespace=self.pkg_namespace,
             apiview=MockApiView,
         )
-        actuals = _render_lines(_tokenize(class_node))
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
         expected = ["class AliasUnion(Union[str, int, bool]):"]
         _check_all(actuals, expected, obj)
+
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        # class type with no defined body
+        assert metadata["IsContextEndLine"] == 0

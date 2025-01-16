@@ -281,4 +281,24 @@ describe.sequential("Verify commands", () => {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
   });
+
+  it("Generate config files using azure-sdk/emitter-package-json-pinning", async () => {
+    try {
+      const args = {
+        "package-json": joinPaths(cwd(), "test", "examples", "package-sdk-pinning.json"),
+      };
+      repoRoot = await getRepoRoot(cwd());
+      await generateConfigFilesCommand(args);
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package.json")));
+      const emitterJson = JSON.parse(
+        await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
+      );
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-python"], "0.37.3");
+      assert.equal(Object.keys(emitterJson["devDependencies"]).length, 1);
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.64.0");
+      assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
+    } catch (error: any) {
+      assert.fail("Failed to generate tsp-client config files. Error: " + error);
+    }
+  });
 });

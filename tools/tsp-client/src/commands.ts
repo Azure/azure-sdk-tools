@@ -434,10 +434,10 @@ export async function generateConfigFilesCommand(argv: any) {
   delete overrideJson[packageJson["name"]];
   const devDependencies: Record<string, any> = {};
   const peerDependencies = packageJson["peerDependencies"] ?? {};
-  const possiblyPinnedPackages =
+  const possiblyPinnedPackages: Array<string> =
     packageJson["azure-sdk/emitter-package-json-pinning"] ?? Object.keys(peerDependencies);
 
-  for (const pinnedPackage of possiblyPinnedPackages) {
+  for (const pinnedPackage in possiblyPinnedPackages) {
     const pinnedVersion = packageJson["devDependencies"][pinnedPackage];
     if (pinnedVersion && !overrideJson[pinnedPackage]) {
       Logger.info(`Pinning ${pinnedPackage} to ${pinnedVersion}`);

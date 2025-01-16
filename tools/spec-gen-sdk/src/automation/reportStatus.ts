@@ -191,7 +191,7 @@ function htmlTemp(bodyString:string):string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown 转 HTML</title>
+    <title>Script Log Html</title>
     <link rel="stylesheet" href="${githubStylesheet}">
     <style>
         body {

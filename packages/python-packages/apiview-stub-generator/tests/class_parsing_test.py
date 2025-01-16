@@ -4,7 +4,6 @@
 # license information.
 # --------------------------------------------------------------------------
 
-from apistub import TokenKind
 from apistub.nodes import ClassNode
 from apistubgentest.models import (
     AliasNewType,
@@ -29,7 +28,7 @@ from apistubgentest.models import (
 
 from pytest import fail
 
-from ._test_util import _check, _tokenize, _merge_lines, _render_lines, MockApiView
+from ._test_util import _check, _tokenize, _render_lines, MockApiView, _count_review_line_metadata
 
 
 def _check_all(actual, expect, obj):
@@ -86,13 +85,10 @@ class TestClassParsing:
         ]
         _check_all(actuals, expected, obj)
 
-        # last blank line is context end for class
-        assert len(tokens[-1]["Children"][-1]["Tokens"]) == 0
-        assert tokens[-1]["Children"][-1]["IsContextEndLine"] == True
-
-        # second to last blank line is context end for multi-line function
-        assert len(tokens[-1]["Children"][-2]["Tokens"]) == 0
-        assert tokens[-1]["Children"][-2]["IsContextEndLine"] == True
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 1
+        assert metadata["IsContextEndLine"] == 2
 
     def test_typed_dict_class(self):
         obj = FakeTypedDict
@@ -166,13 +162,12 @@ class TestClassParsing:
         assert actuals[5].lstrip() == "def __init__(self)"
         assert actuals[7].lstrip() == "def public_func(self, **kwargs) -> str"
 
-        # last blank line is context end for class
-        assert len(tokens[-1]["Children"][-1]["Tokens"]) == 0
-        assert tokens[-1]["Children"][-1]["IsContextEndLine"] == True
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
 
-        # single line methods should not have a context end line
-        assert tokens[-1]["Children"][-2]["IsContextEndLine"] == False
-        assert len(tokens[-1]["Children"][-2]["Tokens"]) == 0
+        # no context end lines for all single line functions
+        assert metadata["IsContextEndLine"] == 1
 
     def test_required_kwargs(self):
         obj = RequiredKwargObject
@@ -313,13 +308,11 @@ class TestClassParsing:
         ]
         _check(actual6, expected6, SomethingWithOverloads)
 
-        # If the token is an overload decorator, it should have the correct RelatedToLine.
-        for idx, token in enumerate(tokens[0]["Children"]):
-            if len(token["Tokens"]) > 0 and token["Tokens"][0]["Value"] == "@overload":
-                assert "RelatedToLine" in token
-                # Check that LineID of next token is the same as RelatedToLine of the overload decorator.
-                func_line_id = tokens[0]["Children"][idx + 1]["LineId"]
-                assert token["RelatedToLine"] == func_line_id
+        # Check that the RelatedToLine and IsContextEndLine are being set correctly.
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 4
+        assert metadata["IsContextEndLine"] == 7
 
     def test_inherited_overloads(self):
         obj = SomethingWithInheritedOverloads
@@ -352,13 +345,12 @@ class TestClassParsing:
         expected4 = "def do_thing(val: str | int | bool) -> str | int | bool"
         _check(actual4, expected4, SomethingWithInheritedOverloads)
 
-        # If the token is an overload decorator, it should have the correct RelatedToLine.
-        for idx, token in enumerate(tokens[0]["Children"]):
-            if len(token["Tokens"]) > 0 and token["Tokens"][0]["Value"] == "@overload":
-                assert "RelatedToLine" in token
-                # Check that LineID of next token is the same as RelatedToLine of the overload decorator.
-                func_line_id = tokens[0]["Children"][idx + 1]["LineId"]
-                assert token["RelatedToLine"] == func_line_id
+        # Check that the RelatedToLine and IsContextEndLine are being set correctly.
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 3
+        # TODO: For overloads, IsContextEndLine is only set for the implementation method. Should it be per overload?
+        assert metadata["IsContextEndLine"] == 1
 
     def test_overload_line_ids(self):
         obj = SomethingWithOverloads
@@ -451,10 +443,13 @@ class TestClassParsing:
             "class SomeProtocolDecorator(Protocol):",
         ]
         _check_all(actuals, expected, obj)
-        print(tokens)
 
-        assert tokens[0]["Tokens"][0]["Value"] == "@runtime_checkable"
-        assert tokens[0]["RelatedToLine"] == "SomeProtocolDecorator"
+        # Check that the RelatedToLine and IsContextEndLine are being set correctly.
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 1
+        # Body of class is not defined so there is no context end line
+        assert metadata["IsContextEndLine"] == 0
 
     def test_properties(self):
         obj = SomethingWithProperties

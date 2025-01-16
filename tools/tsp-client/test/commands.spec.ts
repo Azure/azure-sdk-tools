@@ -244,7 +244,7 @@ describe.sequential("Verify commands", () => {
   it("Generate config files", async () => {
     try {
       const args = {
-        "package-json": joinPaths(cwd(), "./test/package.json"),
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
       };
       repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);
@@ -253,6 +253,7 @@ describe.sequential("Verify commands", () => {
         await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
       );
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-python"], "0.37.3");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.63.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
     } catch (error: any) {
@@ -263,8 +264,8 @@ describe.sequential("Verify commands", () => {
   it("Generate config files with overrides", async () => {
     try {
       const args = {
-        "package-json": joinPaths(cwd(), "test", "package.json"),
-        overrides: joinPaths(cwd(), "test", "overrides.json"),
+        "package-json": joinPaths(cwd(), "test", "examples", "package.json"),
+        overrides: joinPaths(cwd(), "test", "examples", "overrides.json"),
       };
       repoRoot = await getRepoRoot(cwd());
       await generateConfigFilesCommand(args);

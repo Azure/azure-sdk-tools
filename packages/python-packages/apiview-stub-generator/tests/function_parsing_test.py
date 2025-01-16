@@ -13,7 +13,7 @@ from apistubgentest import (
     SpecialArgsClient,
 )
 
-from ._test_util import _render_lines, _check, _tokenize, MockApiView
+from ._test_util import _render_lines, _check, _tokenize, MockApiView, _count_review_line_metadata
 
 
 def _test_arg(node, key, name, _type, default):
@@ -78,9 +78,11 @@ class TestTypeHints:
                 ""
             ]
             _check(actual, expected, client)
-            # Ensure that the last token/blank line is a context end line
-            assert len(tokens[-1]["Tokens"]) == 0
-            assert tokens[-1]["IsContextEndLine"]
+
+            metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+            metadata = _count_review_line_metadata(tokens, metadata)
+            assert metadata["RelatedToLine"] == 0
+            assert metadata["IsContextEndLine"] == 1
 
     """ Ensure list type return typehint renders correctly. """
 
@@ -143,9 +145,10 @@ class TestDefaultValues:
             ""
         ]
         _check(actual, expected, DefaultValuesClient)
-        # Ensure that the last token/blank line is a context end line
-        assert len(tokens[-1]["Tokens"]) == 0
-        assert tokens[-1]["IsContextEndLine"]
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     """ Ensure that optional types with defaults display correctly. """
 

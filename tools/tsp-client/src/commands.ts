@@ -437,7 +437,7 @@ export async function generateConfigFilesCommand(argv: any) {
   const possiblyPinnedPackages: Array<string> =
     packageJson["azure-sdk/emitter-package-json-pinning"] ?? Object.keys(peerDependencies);
 
-  for (const pinnedPackage in possiblyPinnedPackages) {
+  for (const pinnedPackage of possiblyPinnedPackages) {
     const pinnedVersion = packageJson["devDependencies"][pinnedPackage];
     if (pinnedVersion && !overrideJson[pinnedPackage]) {
       Logger.info(`Pinning ${pinnedPackage} to ${pinnedVersion}`);

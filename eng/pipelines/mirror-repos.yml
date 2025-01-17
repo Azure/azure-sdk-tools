@@ -41,7 +41,7 @@ jobs:
                 AcceptTheirsForFinalMerge: true
               RPSaaSDev:
                 Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
+                Ours: '@("specification")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
               ARMCoreRPDev:

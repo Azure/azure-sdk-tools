@@ -10,7 +10,7 @@ using TypeSpec.Http;
 namespace TestProxy;
 
 model StartPayload {
-    "x-recording-file"?: string;
+    "x-recording-file": string;
     "x-recording-assets-file"?: string;
 }
 

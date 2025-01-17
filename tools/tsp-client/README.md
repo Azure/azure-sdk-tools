@@ -65,7 +65,7 @@ Sort an existing swagger specification to be the same content order with TypeSpe
 
 ### generate-config-files
 
-Generate the `emitter-package.json` and `emitter-package-lock.json` used for tsp-client commands under the eng/ directory of your current repository.
+Generate the `emitter-package.json` and `emitter-package-lock.json` used for tsp-client commands under the eng/ directory of your current repository. Run this command from the target repository and pass in the path to the package.json file of the emitter you want to use generate the configuration files.
 
 ### generate-lock-file
 

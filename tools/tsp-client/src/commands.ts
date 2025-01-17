@@ -405,6 +405,61 @@ export async function convertCommand(argv: any): Promise<void> {
   }
 }
 
+export async function generateConfigFilesCommand(argv: any) {
+  const outputDir = argv["output-dir"];
+  const repoRoot = await getRepoRoot(outputDir);
+  const packageJsonPath = normalizePath(resolve(argv["package-json"]));
+  const overridePath = argv["overrides"] ?? undefined;
+
+  if (packageJsonPath === undefined || !(await doesFileExist(packageJsonPath))) {
+    throw new Error(`package.json not found in: ${packageJsonPath ?? "[Not Specified]"}`);
+  }
+  Logger.info("Generating emitter-package.json file...");
+  const content = await readFile(packageJsonPath);
+  const packageJson: Record<string, any> = JSON.parse(content.toString());
+  const emitterPackageJson: Record<string, any> = {
+    name: "dist/src/index.js",
+    dependencies: {},
+  };
+
+  let overrideJson: Record<string, any> = {};
+  if (overridePath) {
+    overrideJson = JSON.parse((await readFile(overridePath)).toString()) ?? {};
+  }
+
+  // Add emitter as dependency
+  emitterPackageJson["dependencies"][packageJson["name"]] =
+    overrideJson[packageJson["name"]] ?? packageJson["version"];
+
+  delete overrideJson[packageJson["name"]];
+  const devDependencies: Record<string, any> = {};
+  const peerDependencies = packageJson["peerDependencies"] ?? {};
+  const possiblyPinnedPackages: Array<string> =
+    packageJson["azure-sdk/emitter-package-json-pinning"] ?? Object.keys(peerDependencies);
+
+  for (const pinnedPackage of possiblyPinnedPackages) {
+    const pinnedVersion = packageJson["devDependencies"][pinnedPackage];
+    if (pinnedVersion && !overrideJson[pinnedPackage]) {
+      Logger.info(`Pinning ${pinnedPackage} to ${pinnedVersion}`);
+      devDependencies[pinnedPackage] = pinnedVersion;
+    }
+  }
+
+  if (Object.keys(devDependencies).length > 0) {
+    emitterPackageJson["devDependencies"] = devDependencies;
+  }
+  if (Object.keys(overrideJson).length > 0) {
+    emitterPackageJson["overrides"] = overrideJson;
+  }
+  await writeFile(
+    joinPaths(repoRoot, "eng", "emitter-package.json"),
+    JSON.stringify(emitterPackageJson, null, 2),
+  );
+  Logger.info(`emitter-package.json file generated in '${joinPaths(repoRoot, "eng")}' directory`);
+
+  await generateLockFileCommand(argv);
+}
+
 export async function generateLockFileCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repoRoot = await getRepoRoot(outputDir);

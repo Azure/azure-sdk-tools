@@ -17,7 +17,7 @@ import {
   sdkAutoLogLevels
 } from './logging';
 import path from 'path';
-import { generateReport, saveFilteredLog } from './reportStatus';
+import { generateReport, renderFilterLog2HTML, saveFilteredLog } from './reportStatus';
 import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 
@@ -121,6 +121,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
   if (workflowContext) {
     generateReport(workflowContext);
     saveFilteredLog(workflowContext);
+    renderFilterLog2HTML(workflowContext);
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;

@@ -5,7 +5,7 @@ A simple command line tool to facilitate generating client libraries from TypeSp
 ## Installation
 
 ```
-npm install @azure-tools/typespec-client-generator-cli
+npm install -g @azure-tools/typespec-client-generator-cli
 ```
 
 ## Prerequisites
@@ -62,6 +62,10 @@ correspond to differences in the service, allowing you to focus only on differen
 ### sort-swagger
 
 Sort an existing swagger specification to be the same content order with TypeSpec generated swagger. This will allow you to easily compare and identify differences between the existing swagger and TypeSpec generated one. You should run this command on existing swagger files and check them in prior to creating converted TypeSpec PRs.
+
+### generate-config-files
+
+Generate the `emitter-package.json` and `emitter-package-lock.json` used for tsp-client commands under the eng/ directory of your current repository. Run this command from the target repository and pass in the path to the package.json file of the emitter you want to use generate the configuration files.
 
 ### generate-lock-file
 

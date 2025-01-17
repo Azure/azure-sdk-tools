@@ -1,0 +1,4 @@
+{
+    "@azure-tools/typespec-python": "0.36.0",
+    "@typespec/compiler": "0.61.0"
+}

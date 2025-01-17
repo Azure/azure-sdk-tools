@@ -74,11 +74,11 @@ steps:
         Write-Host "git push origin $mergeBranch -f"
         git push origin $mergeBranch -f
 
-        Write-Host "gh pr create --base ${{ target.key }} --head  --reviewer weshaggard --repo ${{ repo.key }} --body $commitMessage --title $commitMessage"
-        gh pr create --base ${{ target.key }} --head $mergeBranch --reviewer weshaggard --repo ${{ repo.key }} --body $commitMessage --title $commitMessage
+        Write-Host "gh pr create --draft --base ${{ target.key }} --head  --reviewer danieljurek --repo ${{ repo.key }} --body $commitMessage --title $commitMessage"
+        gh pr create --draft --base ${{ target.key }} --head $mergeBranch --reviewer danieljurek --repo ${{ repo.key }} --body $commitMessage --title $commitMessage
 
-        Write-Host "gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}"
-        gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}
+        # Write-Host "gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}"
+        # gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}
       displayName: Create Pull Request for merge
       continueOnError: true
       workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}

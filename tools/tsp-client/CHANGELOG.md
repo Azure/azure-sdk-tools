@@ -1,7 +1,8 @@
 # Release
 
-## Unreleased - 0.15.3
+## 2025-01-17 - 0.15.3
 
+- Add `generate-config-files` command to create `emitter-package.json` and `emitter-package-lock.json` files under the `<repo root>/eng` directory.
 - Support generating with unbranded emitters, unbranded emitter name must start with `@typespec/http-`.
 
 ## 2025-01-10 - 0.15.2

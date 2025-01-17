@@ -271,10 +271,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             request.Request.TryGetContentType(out var contentType);
             CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, contentType, descriptionBuilder: builder);
 
-            builder.AppendLine("Remaining Entries:");
-
-            if (entries != null)
+            if (entries != null && entries.Count >= 1)
             {
+                builder.AppendLine("Remaining Entries:");
                 for (int i = 0; i < entries.Count; i++)
                 {
                     var entry = entries[i];

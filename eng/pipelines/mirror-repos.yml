@@ -12,19 +12,19 @@ jobs:
     displayName: Sync public repos
 
     steps:
-    # - template: ./templates/steps/sync-repo-branch.yml
-    #   parameters:
-    #     GH_TOKEN: $(azuresdk-github-pat)
-    #     Repos:
+    - template: ./templates/steps/sync-repo-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
 
-    #       Azure/azure-rest-api-specs:
-    #         TargetRepos:
-    #           Azure/azure-rest-api-specs-pr:
-    #           azure-sdk/azure-rest-api-specs:
+          Azure/azure-rest-api-specs:
+            TargetRepos:
+              Azure/azure-rest-api-specs-pr:
+              azure-sdk/azure-rest-api-specs:
 
-    #       Azure/typespec-azure:
-    #         TargetRepos:
-    #           Azure/typespec-azure-pr:
+          Azure/typespec-azure:
+            TargetRepos:
+              Azure/typespec-azure-pr:
 
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
@@ -34,115 +34,115 @@ jobs:
           Azure/azure-rest-api-specs-pr:
             Branch: main
             TargetBranches:
-              # RPSaaSMaster:
-              #   Theirs: '@("**")'
-              #   Ours: '@("specification", "custom-words.txt", "cSpell.json")'
-              #   Merge: '@("specification/common-types")'
-              #   AcceptTheirsForFinalMerge: true
-              djurek/test-sync-branch:
+              RPSaaSMaster:
                 Theirs: '@("**")'
                 Ours: '@("specification")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
-              # ARMCoreRPDev:
-              #   Theirs: '@("**")'
-              #   Ours: '@("specification", "custom-words.txt", "cSpell.json")'
-              #   Merge: '@("specification/common-types")'
-              #   AcceptTheirsForFinalMerge: true
-              # InternalARMContracts:
-              #   Theirs: '@("**")'
-              #   Ours: '@("specification", "custom-words.txt", "cSpell.json")'
-              #   Merge: '@("specification/common-types")'
-              #   AcceptTheirsForFinalMerge: true
+              RPSaaSDev:
+                Theirs: '@("**")'
+                Ours: '@("specification")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              ARMCoreRPDev:
+                Theirs: '@("**")'
+                Ours: '@("specification")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              InternalARMContracts:
+                Theirs: '@("**")'
+                Ours: '@("specification")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
 
-    # - template: ./templates/steps/sync-repo-branch.yml
-    #   parameters:
-    #     GH_TOKEN: $(azuresdk-github-pat)
-    #     Repos:
+    - template: ./templates/steps/sync-repo-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
 
-    #       Azure/azure-sdk-for-cpp:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-cpp-pr:
+          Azure/azure-sdk-for-cpp:
+            TargetRepos:
+              Azure/azure-sdk-for-cpp-pr:
 
-    #       Azure/azure-sdk-for-go:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-go-pr:
-    #           azure-sdk/azure-sdk-for-go:
-    #           azure-sdk/azure-sdk-for-go-pr:
+          Azure/azure-sdk-for-go:
+            TargetRepos:
+              Azure/azure-sdk-for-go-pr:
+              azure-sdk/azure-sdk-for-go:
+              azure-sdk/azure-sdk-for-go-pr:
 
-    #       Azure/azure-sdk-for-java:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-java-pr:
-    #           azure-sdk/azure-sdk-for-java:
-    #           azure-sdk/azure-sdk-for-java-pr:
+          Azure/azure-sdk-for-java:
+            TargetRepos:
+              Azure/azure-sdk-for-java-pr:
+              azure-sdk/azure-sdk-for-java:
+              azure-sdk/azure-sdk-for-java-pr:
 
-    #       Azure/azure-sdk-for-js:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-js-pr:
-    #           azure-sdk/azure-sdk-for-js:
-    #           azure-sdk/azure-sdk-for-js-pr:
+          Azure/azure-sdk-for-js:
+            TargetRepos:
+              Azure/azure-sdk-for-js-pr:
+              azure-sdk/azure-sdk-for-js:
+              azure-sdk/azure-sdk-for-js-pr:
 
-    #       Azure/azure-sdk-for-net:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-net-pr:
-    #           azure-sdk/azure-sdk-for-net:
-    #           azure-sdk/azure-sdk-for-net-pr:
+          Azure/azure-sdk-for-net:
+            TargetRepos:
+              Azure/azure-sdk-for-net-pr:
+              azure-sdk/azure-sdk-for-net:
+              azure-sdk/azure-sdk-for-net-pr:
 
-    #       Azure/azure-sdk-for-python:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-python-pr:
-    #           azure-sdk/azure-sdk-for-python:
-    #           azure-sdk/azure-sdk-for-python-pr:
+          Azure/azure-sdk-for-python:
+            TargetRepos:
+              Azure/azure-sdk-for-python-pr:
+              azure-sdk/azure-sdk-for-python:
+              azure-sdk/azure-sdk-for-python-pr:
 
-    #       Azure/azure-sdk-for-ios:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-ios-pr:
-    #           azure-sdk/azure-sdk-for-ios:
+          Azure/azure-sdk-for-ios:
+            TargetRepos:
+              Azure/azure-sdk-for-ios-pr:
+              azure-sdk/azure-sdk-for-ios:
 
-    #       Azure/azure-sdk-for-android:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-android-pr:
-    #           azure-sdk/azure-sdk-for-android:
+          Azure/azure-sdk-for-android:
+            TargetRepos:
+              Azure/azure-sdk-for-android-pr:
+              azure-sdk/azure-sdk-for-android:
 
-    #       Azure/azure-sdk-for-c:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-c-pr:
-    #           azure-sdk/azure-sdk-for-c:
+          Azure/azure-sdk-for-c:
+            TargetRepos:
+              Azure/azure-sdk-for-c-pr:
+              azure-sdk/azure-sdk-for-c:
 
-    #       Azure/azure-sdk-for-rust:
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-rust-pr:
-    #           azure-sdk/azure-sdk-for-rust:
-    #           azure-sdk/azure-sdk-for-rust-pr:
+          Azure/azure-sdk-for-rust:
+            TargetRepos:
+              Azure/azure-sdk-for-rust-pr:
+              azure-sdk/azure-sdk-for-rust:
+              azure-sdk/azure-sdk-for-rust-pr:
 
-    #       Microsoft/vcpkg:
-    #         TargetRepos:
-    #           azure-sdk/vcpkg:
+          Microsoft/vcpkg:
+            TargetRepos:
+              azure-sdk/vcpkg:
 
-    #       Azure/azure-docs-sdk-java:
-    #         TargetRepos:
-    #           azure-sdk/azure-docs-sdk-java:
+          Azure/azure-docs-sdk-java:
+            TargetRepos:
+              azure-sdk/azure-docs-sdk-java:
 
-    #       Azure/azure-resource-manager-schemas:
-    #         TargetRepos:
-    #           azure-sdk/azure-resource-manager-schemas:
+          Azure/azure-resource-manager-schemas:
+            TargetRepos:
+              azure-sdk/azure-resource-manager-schemas:
 
-    #       Azure/azure-dev:
-    #         TargetRepos:
-    #           Azure/azure-dev-pr:
+          Azure/azure-dev:
+            TargetRepos:
+              Azure/azure-dev-pr:
 
-    #       MicrosoftDocs/azure-dev-docs-pr:
-    #         TargetRepos:
-    #           azure-sdk/azure-dev-docs-pr:
+          MicrosoftDocs/azure-dev-docs-pr:
+            TargetRepos:
+              azure-sdk/azure-dev-docs-pr:
 
-    # - template: ./templates/steps/sync-repo-branch.yml
-    #   parameters:
-    #     GH_TOKEN: $(azuresdk-github-pat)
-    #     Repos:
+    - template: ./templates/steps/sync-repo-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
 
-    #       Azure/azure-sdk-for-python:
-    #         Branch: release/v3
-    #         TargetRepos:
-    #           Azure/azure-sdk-for-python-pr:
-    #           azure-sdk/azure-sdk-for-python:
-    #           azure-sdk/azure-sdk-for-python-pr:
+          Azure/azure-sdk-for-python:
+            Branch: release/v3
+            TargetRepos:
+              Azure/azure-sdk-for-python-pr:
+              azure-sdk/azure-sdk-for-python:
+              azure-sdk/azure-sdk-for-python-pr:

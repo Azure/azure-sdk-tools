@@ -1,5 +1,10 @@
 # Release
 
+## 2025-01-17 - 0.15.3
+
+- Add `generate-config-files` command to create `emitter-package.json` and `emitter-package-lock.json` files under the `<repo root>/eng` directory.
+- Support emitters with names starting with `@typespec/http-` to generate client libraries.
+
 ## 2025-01-10 - 0.15.2
 
 - Float `@autorest/openapi-to-typespec` version between `>=0.10.6 <1.0.0`.

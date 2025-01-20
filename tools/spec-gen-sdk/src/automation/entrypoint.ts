@@ -17,7 +17,7 @@ import {
   sdkAutoLogLevels
 } from './logging';
 import path from 'path';
-import { generateReport, renderFilterLog2HTML, saveFilteredLog } from './reportStatus';
+import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog } from './reportStatus';
 import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 
@@ -46,7 +46,7 @@ export type SdkAutoContext = {
   logger: winston.Logger;
   fullLogFileName: string;
   filteredLogFileName: string;
-  logHtml: string;
+  htmlLogFileName: string;
   specRepoConfig: SpecConfig;
   sdkRepoConfig: SdkRepoConfig;
   swaggerToSdkConfig: SwaggerToSdkConfig
@@ -69,7 +69,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
 
   const fullLogFileName = path.join(options.workingFolder, 'full.log');
   const filteredLogFileName = path.join(options.workingFolder, 'filtered.log');
-  const logHtml = path.join(options.workingFolder, 'logIndex.html');
+  const htmlLogFileName = path.join(options.workingFolder, `${options.sdkName}-result.html`);
   if (fs.existsSync(fullLogFileName)) {
     fs.rmSync(fullLogFileName);
   }
@@ -88,7 +88,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   const swaggerToSdkConfig = getSwaggerToSdkConfig(swaggerToSdkConfigContent);
 
   return {
-    logHtml,
+    htmlLogFileName,
     config: options,
     logger,
     fullLogFileName,
@@ -121,7 +121,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
   if (workflowContext) {
     generateReport(workflowContext);
     saveFilteredLog(workflowContext);
-    renderFilterLog2HTML(workflowContext);
+    generateHtmlFromFilteredLog(workflowContext);
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;

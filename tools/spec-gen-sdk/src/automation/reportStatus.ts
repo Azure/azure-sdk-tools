@@ -147,16 +147,24 @@ export const saveFilteredLog = async (context: WorkflowContext) => {
   context.logger.log('endsection', 'Save filtered log status');
 };
 
-export const renderFilterLog2HTML = async (context: WorkflowContext) => {
+export const generateHtmlFromFilteredLog = async (context: WorkflowContext) => {
     context.logger.log('section', 'Save filtered log HTML');
     const RegexMarkdownSplit = /^(.*?)(<ul>.*)$/s;
     const RegexNoteBlock = /> \[!NOTE\]\s*>\s*(.*)/;
-    const messageRecord = fs.readFileSync(context.filteredLogFileName).toString();
-    const parseMssageRecord = JSON.parse(messageRecord) as MessageRecord[];
+    let messageRecord: string | undefined = undefined;
+    try {
+        messageRecord = fs.readFileSync(context.filteredLogFileName).toString();
+    } catch (error) {
+        context.logger.error(`IOError: Fails to read log in'${context.filteredLogFileName}', Details: ${error}`)
+        return;
+    }
+
+    const parseMessageRecord = JSON.parse(messageRecord) as MessageRecord[];
 
     let totalBody = '';
-    for(let commentBody of parseMssageRecord) {
+    for(let commentBody of parseMessageRecord) {
         const markdown = commentBody.message || '';
+        if (!markdown) continue;
         let blockString = '';
         let bodyString = '';
         
@@ -174,24 +182,24 @@ export const renderFilterLog2HTML = async (context: WorkflowContext) => {
         const renderNoteBlock = blockString && htmlBlockTemp(blockString);
         totalBody += (renderNoteBlock + bodyString);
     }
-    
 
-    const htmlString: string = htmlTemp(totalBody);
+
+    const htmlString: string = htmlTemp(totalBody, `spec-gen-sdk ${context.config.sdkName}`);
     
-    context.logger.info(`Writing html to ${context.logHtml}`);
-    fs.writeFileSync(context.logHtml, htmlString, "utf-8");
+    context.logger.info(`Writing html to ${context.htmlLogFileName}`);
+    fs.writeFileSync(context.htmlLogFileName, htmlString, "utf-8");
     context.logger.log('endsection', 'Save filtered log HTML');
 }
 
-function htmlTemp(bodyString:string):string {
+function htmlTemp(bodyString:string, title:string):string {
     const githubStylesheet = "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css";
     return `
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Script Log Html</title>
+    <title>${title}</title>
     <link rel="stylesheet" href="${githubStylesheet}">
     <style>
         body {

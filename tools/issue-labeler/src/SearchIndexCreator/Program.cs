@@ -1,10 +1,9 @@
-using Azure.Search.Documents;
-using Azure;
 using Microsoft.Extensions.Configuration;
 using Octokit;
 using Azure.Identity;
 using Azure.AI.OpenAI;
 using Azure.Search.Documents.Indexes;
+using System.Net.Http.Json;
 
 namespace SearchIndexCreator
 {
@@ -18,9 +17,10 @@ namespace SearchIndexCreator
                 .Build();
             var config = configuration.GetSection("Values");
 
-            bool issuesBool = true; //Retrieve all issues from a repository + Azure CosmosDB + Azure Search Index
+            bool issuesBool = false; //Retrieve all issues from a repository + Azure CosmosDB + Azure Search Index
             bool docsBool = false; //Retrieve all documents from a repository + Azure Blob Storage + Azure Search Index
             bool issueExamples = false; // Issue Examples for testing
+            bool demo = true;  //Demo for testing
 
             if (issuesBool)
             {
@@ -87,6 +87,63 @@ namespace SearchIndexCreator
                     Console.WriteLine($"Error: {ex.Message}");
                 }
             }
+            //Get recent issues and put them into my own private repository to see it in "action"
+            else if(demo)
+            {
+                // Retrieve examples of issues for testing from a repository
+                var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
+                var issues = await issueRetrieval.RetrieveIssueExamples("Azure", "azure-sdk-for-net", 7);
+
+                var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"));
+                client.Credentials = new Credentials(config["GithubKeyPrivate"]);
+
+                List<(int, string)> comments = new List<(int, string)>();
+                // Upload recent issues into private repository
+                foreach (var issue in issues)
+                {
+                    var createIssue = new NewIssue(issue.Title)
+                    {
+                        Body = issue.Body
+                    };
+
+                    var newIssue = await client.Issue.Create("jeo02", "issue-examples", createIssue);
+
+                    string requestUrl = config["AzureFunctionLink"];
+
+                    var payload = new
+                    {
+                        IssueNumber = newIssue.Number,
+                        newIssue.Title,
+                        newIssue.Body,
+                        IssueUserLogin = newIssue.User.Login,
+                        RepositoryName = "azure-sdk-for-net",
+                        RepositoryOwnerName = "Azure"
+                    };
+
+                    using var httpClient = new HttpClient();
+
+                    var response = await httpClient.PostAsJsonAsync(requestUrl, payload).ConfigureAwait(false);
+
+                    var suggestions = await response.Content.ReadFromJsonAsync<IssueOutput>().ConfigureAwait(false);
+                    comments.Add((newIssue.Number, suggestions.Suggestions));
+                }
+
+                foreach((int num, string comment) in comments)
+                {
+                    if(comment != "")
+                    {
+                        await client.Issue.Comment.Create("jeo02", "issue-examples", num, comment);
+                    }
+                }
+            }
+        }
+
+        private class IssueOutput
+        {
+            public string Category { get; set; }
+            public string Service { get; set; }
+            public string Suggestions { get; set; }
+            public bool Solution { get; set; }
         }
     }
 }

@@ -13,12 +13,13 @@ using Newtonsoft.Json;
 using IssueManager;
 using Azure.Identity;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IssueLabelerService
 {
     public class AzureSdkIssueLabelerService
     {
-        private static readonly ActionResult EmptyResult = new JsonResult(Array.Empty<string>());
+        private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Category = "", Service = "", Suggestions = "", Solution = false});
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private IConfiguration Config { get; }
         private IIssueLabelerAzureSearch _issueLabeler { get; }
@@ -51,7 +52,7 @@ namespace IssueLabelerService
             string result;
             try
             {
-                // Configurations for correct access in search and open ai
+                // Configurations for correct access in search and OpenAI
                 DefaultAzureCredential credential = new();
                 Uri searchEndpoint = new Uri(Config["SearchEndpoint"]);
                 Uri openAIEndpoint = new Uri(Config["OpenAIEndpoint"]);
@@ -61,48 +62,78 @@ namespace IssueLabelerService
                 string issueIndexName = Config["IssueIndexName"];
                 string issueSemanticName = Config["IssueSemanticName"];
                 string issueFieldName = "text_vector";
-                
+
                 // Configuration for Document specific
                 string documentIndexName = Config["DocumentIndexName"];
                 string documentSemanticName = Config["DocumentSemanticName"];
                 string documentFieldName = "text_vector";
 
                 string query = JsonConvert.SerializeObject(issue);
+                string docQuery = issue.Title + "\n" + issue.Body;
 
-                //Top x documents/issues
+                // Top X documents/issues
                 int top = 5;
 
                 // Semantic score from 0 - 4, 4 being very relevant
                 double scoreThreshold = 2.0;
 
-                // OpenAI token threshold around 130k for input (as of writing this)
-                // limit to around 100k to give space for prompt + query
-                double tokenThreshold = 100000;
+                IEnumerable<(Issue, double)> relevantIssues = _issueLabeler.AzureSearchQuery<Issue>(
+                    searchEndpoint, issueIndexName, issueSemanticName, issueFieldName, credential, query, top
+                );
 
-                IEnumerable<(Issue, double)> relevantIssues = _issueLabeler.AzureSearchQuery<Issue>(searchEndpoint, issueIndexName, issueSemanticName, issueFieldName, credential, query, top);
+                IEnumerable<(Document, double)> relevantDocuments = _issueLabeler.AzureSearchQuery<Document>(
+                    searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, docQuery, top
+                );
 
-                IEnumerable<(Document, double)> relevantDocuments = _issueLabeler.AzureSearchQuery<Document>(searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, query, top);
+                var docs = relevantDocuments.ToList().Select(rd => new
+                {
+                    Content = rd.Item1.ToString(),
+                    Score = rd.Item2
+                }).Where(r => r.Score >= scoreThreshold);
 
-                string content = await _issueLabeler.FilterAndCombine(relevantIssues, relevantDocuments, scoreThreshold, tokenThreshold);
+                var issues = relevantIssues.ToList().Select(ri => new
+                {
+                    Content = ri.Item1.ToString(),
+                    Score = ri.Item2
+                }).Where(r => r.Score >= scoreThreshold);
 
-                string json_format = "{\n\"service\": \"\",\n\"category\": \"\",\n\"suggestions\": \"\"\n}";
-                //string message = "You are an AI Assistant that helps users learn from the information found in the material. Answer the query using only the sources provided below." +
-                //    "The query represents a github issue. Your job is to provide a service label, category label, and offer the user suggestions on how to solve there issue." +
-                //    "service and category must come from the labels provided in the sources, the sources are a JSON array of previous issues that include service and category labels. " +
-                //    //"If there isn't enough information below do not answer. " +
-                //    "Do not generate answers that don't use the sources below. " +
-                //    $"Return ONLY in the following format and nothing else: {json_format} " +
-                //    $"Query: {query} " +
-                //    $"Sources: {content}";
+                string docContent = JsonConvert.SerializeObject(docs);
+                string issueContent = JsonConvert.SerializeObject(issues);
 
-                string message = $"You are an AI assistant that helps users with issues based on the provided material. Below is a query and relevant sources (GitHub issues and documentation). Your role is to:\n\nIdentify the most appropriate service and category labels from the sources provided.\nProvide actionable suggestions based on the sources to help with the query.\nReference URLs from the sources for each suggestion to back up your recommendations.\nGuidelines:\nUse only the information from the sources below to construct your response.\nInclude URLs to specific sources where the information or suggestions originate.\nIf you cannot determine a solution due to insufficient information, state that explicitly.\nEnsure your response is structured strictly in the format defined below:\n{json_format}\nQuery: {query}\nSources: {content}\nNotes:\nDo not speculate or provide information that is not explicitly supported by the sources.";
+                var highestScore = docs.Concat(issues).Max(r => r.Score);
+
+                // o1 models do not have structured output (as of writing this) so I attempt to provide it one through instructions
+                string jsonFormat = "{\n\"Service\": \"\",\n\"Category\": \"\",\n\"Solution\": \"boolean\",\n\"Suggestions\": \"\"\n}";
+
+                string message;
+
+                _logger.LogInformation($"Highest score: {highestScore}");
+
+                if (highestScore >= 3.0)
+                {
+                    // Prompt to offer a solution
+                    //message = $"You are an AI assistant that provides solutions based on the provided material. Below is a query and relevant sources (GitHub issues and documentation). Each source has a Score indicating it's relevance. Your role is to:\n\nProvide a solution to the issue described in the query based on the sources provided.\nInclude URLs from the sources to back up your solution.\nGuidelines:\nUse only the information from the sources below to construct your response.\nIf a solution cannot be determined from the sources, state that explicitly.\nEnsure your response is structured strictly in the format defined below, where solution is a boolean (true) and suggestion is the solution:\n{jsonFormat}\nQuery: {query}\nSources: Documents: {docContent} Issues: {issueContent}";
+                    message = $"You are an assistant that provides solutions and labels based on the GitHub Issues and the Documentation provided below.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nStructured strictly in the format defined below:\n{jsonFormat}\n'Solution' will be true\n'Suggestions' will be the Solution.\n'Suggestions' must prioritize information from the Documentation and will be a string containing valid Markdown.\nNever include '''json heading.\nUse numbered lists or bullet points for organizational purposes.Guidelines:\nUse only the sources provided below.\nProvide the user with the url from sources used.\nBase Service and Category labels from the labels in relevant issues\nStart the solution with the following message: Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\nSources: Documentation: {docContent}\nGitHub Issues: {issueContent}\nThe user needs assistance solving their GitHub Issue:\n {query}";
+                }
+                else
+                {
+                    // Prompt to offer suggestions
+                    //message = $"You are an AI assistant that provides actionable suggestions based on the provided material. Below is a query and relevant sources (GitHub issues and documentation). Each source has a Score indicating it's relevance. Your role is to:\n\nProvide actionable suggestions based on the sources to help with the query.\nInclude URLs from the sources for each suggestion to back up your recommendations.\nGuidelines:\nUse only the information from the sources below to construct your response.\nIf suggestions cannot be determined due to insufficient information, state that explicitly.\nEnsure your response is structured strictly in the format defined below, where solution is false:\n{jsonFormat}\nQuery: {query}\nSources: Documents: {docContent} Issues: {issueContent}";
+
+                    message = $"You are an assistant that provides suggestions and labels based on the GitHub Issues and the Documentation provided below.\nThe goal is to facilitate the teams job when responding to the issue.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nStructured strictly in the format defined below:\n{jsonFormat}\n'Solution' will be false\n'Suggestions' will prioritize information from the Documentation and will be a string containing valid Markdown.\nNever include '''json heading.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide the user with the url from sources used.\nAssign Service and Category labels from the Service and Category labels in relevant issues\nStart the suggestions with the following message: Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\nSources:\nDocumentation:\n{docContent}\nGitHub Issues: {issueContent}\nThe user needs suggestions for their GitHub Issue:\n{query}";
+                }
 
                 result = _issueLabeler.SendMessageQna(openAIEndpoint, credential, modelName, message);
+
+                // Model always provides escaped newlines instead of normal ones even though I tell it not too :(
+                result = result.Replace("\\n", "\n");
+
+                _logger.LogInformation($"Open AI Response : \n{result}");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Unable to label issue:{ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                return new BadRequestResult();
+                return EmptyResult;
             }
 
             try
@@ -112,9 +143,8 @@ namespace IssueLabelerService
             catch (Exception ex)
             {
                 _logger.LogError($"Unable to deserialize output:{ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                return new BadRequestResult();
+                return EmptyResult;
             }
-
         }
 
         // Private type used for deserializing the request payload of issue data.
@@ -132,6 +162,7 @@ namespace IssueLabelerService
             public string Category { get; set; }
             public string Service { get; set; }
             public string Suggestions { get; set; }
+            public bool Solution { get; set; }
         }
 
     }

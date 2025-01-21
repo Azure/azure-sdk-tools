@@ -112,7 +112,7 @@ namespace SearchIndexCreator
 
             var issueReq = new RepositoryIssueRequest
             {
-                State = ItemStateFilter.All,
+                State = ItemStateFilter.Open,
                 Filter = IssueFilter.All,
                 Since = DateTimeOffset.Now.Subtract(TimeSpan.FromDays(days))
             };
@@ -155,7 +155,7 @@ namespace SearchIndexCreator
 
                 try
                 {
-                    var jsonContent = System.Text.Json.JsonSerializer.Serialize(issue);
+                    var jsonContent = JsonSerializer.Serialize(issue);
 
                     var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
                     {
@@ -205,11 +205,11 @@ namespace SearchIndexCreator
         // Used to get examples for the function
         public class IssuePayload
         {
-            public int IssueNumber;
-            public string Title;
-            public string Body;
-            public string IssueUserLogin;
-            public string RepositoryName;
+            public int IssueNumber { get; set; }
+            public string Title { get; set; }
+            public string Body { get; set; }
+            public string IssueUserLogin { get; set; }
+            public string RepositoryName { get; set; }
         }
     }
 }

@@ -50,7 +50,7 @@ namespace IssueManager
                 {
                     new VectorizableTextQuery(text: query)
                     {
-                        KNearestNeighborsCount = count,
+                        KNearestNeighborsCount = 50,
                         Fields = { field }
                     }
                 }
@@ -91,7 +91,34 @@ namespace IssueManager
                     new UserChatMessage(message),
                     ]);
 
-            _logger.LogInformation($"Open AI Response : \n {answers.Content[0].Text}");
+            //ChatClient chatClientStructure = openAIClient.GetChatClient("gpt-4o");
+
+            //ChatCompletionOptions options = new ChatCompletionOptions()
+            //{
+            //    ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
+            //        jsonSchemaFormatName: "IssueOutput",
+            //        jsonSchema: BinaryData.FromBytes("""
+            //            {
+            //                "Type": "object", 
+            //                "Properties": 
+            //                { 
+            //                    "Category": {"Type": "string"}, 
+            //                    "Service": {"Type": "string"}, 
+            //                    "Suggestions": {"Type": "string"}, 
+            //                    "Solution": {"Type": "boolean"} 
+            //                } 
+            //            }
+            //            """u8.ToArray())
+            //        )
+            //};
+            //ChatCompletion structuredAnswer = chatClientStructure.CompleteChat(
+            //    [
+            //        new UserChatMessage($"Given the following data, format it with the given response format: {answers.Content[0].Text}")
+            //    ],
+            //    options
+            // );
+
+            //_logger.LogInformation($"Open AI Response : \n {answers.Content[0].Text}");
 
             return answers.Content[0].Text;
         }
@@ -172,8 +199,13 @@ namespace IssueManager
 
             return resultBuilder.ToString();
         }
-
-
+        private class IssueOutput
+        {
+            public string Category { get; set; }
+            public string Service { get; set; }
+            public string Suggestions { get; set; }
+            public bool Solution { get; set; }
+        }
     }
     public class Issue
     {

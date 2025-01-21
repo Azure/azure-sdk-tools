@@ -9,9 +9,6 @@
     "fileLoggingMode": "always",
     "logLevel": {
       "default": "Information",
-      "IssueLabeler.Shared.ModelHolder": "Information",
-      "IssueLabeler.Shared.GitHubClientWrapper": "Information",
-      "Hubbup.MikLabelModel.LabelerLite": "Information",
       "console": "Information",
       "applicationInsights": "Information",
       "Azure": "Warning"

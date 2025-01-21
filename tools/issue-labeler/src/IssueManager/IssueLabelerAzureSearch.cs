@@ -80,7 +80,7 @@ namespace IssueManager
             AzureOpenAIClient openAIClient = new(openAIEndpoint, credential);
             ChatClient chatClient = openAIClient.GetChatClient(modelName);
 
-            _logger.LogInformation($"\n\nWaiting for an Open AI response....\n\n");
+            _logger.LogInformation($"\n\nWaiting for an Open AI response...");
 
 
             ChatCompletion answers =
@@ -91,36 +91,38 @@ namespace IssueManager
                     new UserChatMessage(message),
                     ]);
 
-            //ChatClient chatClientStructure = openAIClient.GetChatClient("gpt-4o");
+            _logger.LogInformation($"\n\nStructuring OpenAI Response...");
+            ChatClient chatClientStructure = openAIClient.GetChatClient("gpt-4o");
 
-            //ChatCompletionOptions options = new ChatCompletionOptions()
-            //{
-            //    ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
-            //        jsonSchemaFormatName: "IssueOutput",
-            //        jsonSchema: BinaryData.FromBytes("""
-            //            {
-            //                "Type": "object", 
-            //                "Properties": 
-            //                { 
-            //                    "Category": {"Type": "string"}, 
-            //                    "Service": {"Type": "string"}, 
-            //                    "Suggestions": {"Type": "string"}, 
-            //                    "Solution": {"Type": "boolean"} 
-            //                } 
-            //            }
-            //            """u8.ToArray())
-            //        )
-            //};
-            //ChatCompletion structuredAnswer = chatClientStructure.CompleteChat(
-            //    [
-            //        new UserChatMessage($"Given the following data, format it with the given response format: {answers.Content[0].Text}")
-            //    ],
-            //    options
-            // );
+            ChatCompletionOptions options = new ChatCompletionOptions()
+            {
+                ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
+                    jsonSchemaFormatName: "IssueOutput",
+                    jsonSchema: BinaryData.FromBytes("""
+                        {
+                          "type": "object",
+                          "properties": {
+                            "Category": { "type": "string" },
+                            "Service": { "type": "string" },
+                            "Suggestions": { "type": "string" },
+                            "Solution": { "type": "boolean" }
+                          },
+                          "required": [ "Category", "Service", "Suggestions", "Solution" ],
+                          "additionalProperties": false
+                        }
+                        """u8.ToArray())
+                    )
+            };
+            ChatCompletion structuredAnswer = chatClientStructure.CompleteChat(
+                [
+                    new UserChatMessage($"Given the following data, format it with the given response format: {answers.Content[0].Text}")
+                ],
+                options
+             );
 
             //_logger.LogInformation($"Open AI Response : \n {answers.Content[0].Text}");
 
-            return answers.Content[0].Text;
+            return structuredAnswer.Content[0].Text;
         }
 
         private ReadOnlyMemory<float> Vectorize(Uri openAIEndpoint, DefaultAzureCredential credential, string input, string embeddingModel)
@@ -198,13 +200,6 @@ namespace IssueManager
             }
 
             return resultBuilder.ToString();
-        }
-        private class IssueOutput
-        {
-            public string Category { get; set; }
-            public string Service { get; set; }
-            public string Suggestions { get; set; }
-            public bool Solution { get; set; }
         }
     }
     public class Issue

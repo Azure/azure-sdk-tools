@@ -3107,12 +3107,8 @@ class DoNotDedentDocstring(BaseChecker):
         try:
             # not every class/method will have a docstring so don't crash here, just return
             if (
-                node.doc_node.value.find("dedent") != -1
+                node.doc_node.value.find(":dedent") != -1
             ):
-                dedent_value = node.doc_node.value.split("dedent")[1]
-                dedent_value = dedent_value.split("\n")[0]
-
-
                 self.add_message(
                         "do-not-hardcode-dedent",
                         node=node,

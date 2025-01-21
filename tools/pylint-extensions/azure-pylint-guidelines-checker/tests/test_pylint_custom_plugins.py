@@ -3902,7 +3902,7 @@ class TestDoNotHardcodeConnectionVerify(pylint.testutils.CheckerTestCase):
             self.checker.visit_annassign(annotated_self_assignment)
 
 
-class TestDeDent(pylint.testutils.CheckerTestCase):
+class TestDedent(pylint.testutils.CheckerTestCase):
     """Test that we are checking the dedent is not set in the docstring"""
 
     CHECKER_CLASS = checker.DoNotDedentDocstring

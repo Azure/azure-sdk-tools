@@ -148,7 +148,7 @@ export const saveFilteredLog = async (context: WorkflowContext) => {
 };
 
 export const generateHtmlFromFilteredLog = async (context: WorkflowContext) => {
-    context.logger.log('section', 'Save filtered log HTML');
+    context.logger.log('section', 'Generate HTML from filtered log');
     const RegexMarkdownSplit = /^(.*?)(<ul>.*)$/s;
     const RegexNoteBlock = /> \[!NOTE\]\s*>\s*(.*)/;
     let messageRecord: string | undefined = undefined;
@@ -161,37 +161,38 @@ export const generateHtmlFromFilteredLog = async (context: WorkflowContext) => {
 
     const parseMessageRecord = JSON.parse(messageRecord) as MessageRecord[];
 
-    let totalBody = '';
+    let pageBody = '';
     for(let commentBody of parseMessageRecord) {
         const markdown = commentBody.message || '';
-        if (!markdown) continue;
-        let blockString = '';
-        let bodyString = '';
+        if (markdown.trim().length === 0) continue;
+        let noteBlockInfo = '';
+        let mainContent = '';
         
         const match = markdown.match(RegexMarkdownSplit);
         if (match !== null) { 
-            bodyString = match[2].trim(); 
+            mainContent = match[2].trim(); 
             const noteBlock = match[1].trim();
-            const noteMatch = noteBlock.match(RegexNoteBlock);
-            if (noteMatch !== null) {
-                blockString = noteMatch[1].trim();
+            const noteBlockMatch = noteBlock.match(RegexNoteBlock);
+            if (noteBlockMatch !== null) {
+                noteBlockInfo = noteBlockMatch[1].trim();
             }
         } else {
-            bodyString = marked(markdown) as string;
+            mainContent = marked(markdown) as string;
         }
-        const renderNoteBlock = blockString && htmlBlockTemp(blockString);
-        totalBody += (renderNoteBlock + bodyString);
+        const noteBlockHtml = noteBlockInfo && generateNoteBlockTemplate(noteBlockInfo);
+        pageBody += (noteBlockHtml  + mainContent);
     }
 
-
-    const htmlString: string = htmlTemp(totalBody, `spec-gen-sdk ${context.config.sdkName}`);
+    // eg: spec-gen-sdk-net result
+    const pageTitle = `spec-gen-sdk-${context.config.sdkName.substring("azure-sdk-for-".length)} result`;
+    const generatedHtml: string = generateHtmlTemplate(pageBody, pageTitle );
     
     context.logger.info(`Writing html to ${context.htmlLogFileName}`);
-    fs.writeFileSync(context.htmlLogFileName, htmlString, "utf-8");
-    context.logger.log('endsection', 'Save filtered log HTML');
+    fs.writeFileSync(context.htmlLogFileName, generatedHtml , "utf-8");
+    context.logger.log('endsection', 'Generate HTML from filtered log');
 }
 
-function htmlTemp(bodyString:string, title:string):string {
+function generateHtmlTemplate(pageBody:string, pageTitle:string):string {
     const githubStylesheet = "https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css";
     return `
 <!DOCTYPE html>
@@ -199,7 +200,7 @@ function htmlTemp(bodyString:string, title:string):string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
+    <title>${pageTitle}</title>
     <link rel="stylesheet" href="${githubStylesheet}">
     <style>
         body {
@@ -263,21 +264,21 @@ function htmlTemp(bodyString:string, title:string):string {
 </head>
 <body>
     <article class="markdown-body">
-        ${bodyString}
+        ${pageBody}
     </article>
 </body>
 </html>
 `;
 }
 
-function htmlBlockTemp(blockString: string):string {
+function generateNoteBlockTemplate(noteBlockInfo: string):string {
 return `
 <div class="markdown-alert markdown-alert-note" dir="auto">
     <p class="markdown-alert-title" dir="auto">
     <svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>
         Note
     </p>
-    <p dir="auto">${blockString}</p>
+    <p dir="auto">${noteBlockInfo}</p>
 </div>
 `
 }

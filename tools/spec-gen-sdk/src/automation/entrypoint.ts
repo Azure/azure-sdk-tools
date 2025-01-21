@@ -69,7 +69,8 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
 
   const fullLogFileName = path.join(options.workingFolder, 'full.log');
   const filteredLogFileName = path.join(options.workingFolder, 'filtered.log');
-  const htmlLogFileName = path.join(options.workingFolder, `${options.sdkName}-result.html`);
+  // eg: spec-gen-sdk-java-result.html
+  const htmlLogFileName = path.join(options.workingFolder, `spec-gen-sdk-${options.sdkName.substring("azure-sdk-for-".length)}-result.html`);
   if (fs.existsSync(fullLogFileName)) {
     fs.rmSync(fullLogFileName);
   }
@@ -120,8 +121,8 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
   }
   if (workflowContext) {
     generateReport(workflowContext);
-    saveFilteredLog(workflowContext);
-    generateHtmlFromFilteredLog(workflowContext);
+    await saveFilteredLog(workflowContext);
+    await generateHtmlFromFilteredLog(workflowContext);
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;

@@ -19,11 +19,7 @@ export class HttpErrorInterceptorService implements HttpInterceptor{
             ...error,
             message: errorMessage
           };
-
-          if (!environment.production) {
-            return throwError(() => customError);
-          }
-          return of();
+          return throwError(() => customError);
         })
       );
   }

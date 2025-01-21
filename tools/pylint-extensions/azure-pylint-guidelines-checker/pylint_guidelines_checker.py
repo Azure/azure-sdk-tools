@@ -3079,6 +3079,78 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
             except:
                 pass
 
+class DoNotDedentDocstring(BaseChecker):
+
+    """Rule to check that developers do not hardcode `dedent` in their docstring. Sphinx will handle this automatically."""
+
+    name = "do-not-hardcode-dedent"
+    priority = -1
+    msgs = {
+        "C4768": (
+            "Do not hardcode dedent value in docstring",
+            "do-not-hardcode-dedent",
+            "Do not hardcode dedent value in docstring. It's up to sphinx to handle this automatically",
+        ),
+    }
+
+    def __init__(self, linter=None):
+        super(DoNotDedentDocstring, self).__init__(linter)
+
+    def check_for_dedent(self, node):
+        """Parse the docstring for an dedent.
+        If found, checks that the dedent does not have a value set.
+
+        :param node: ast.ClassDef or ast.FunctionDef
+        :return: None
+        """
+
+        try:
+            # not every class/method will have a docstring so don't crash here, just return
+            if (
+                node.doc_node.value.find("dedent") != -1
+            ):
+                dedent_value = node.doc_node.value.split("dedent")[1]
+                dedent_value = dedent_value.split("\n")[0]
+
+
+                self.add_message(
+                        "do-not-hardcode-dedent",
+                        node=node,
+                        confidence=None,
+                    )
+        except Exception:
+            return
+
+    def visit_classdef(self, node):
+        """Visits every class docstring.
+
+        :param node: ast.ClassDef
+        :return: None
+        """
+        try:
+            for func in node.body:
+                if isinstance(func, astroid.FunctionDef) and func.name == "__init__":
+                    self.check_for_dedent(node)
+        except Exception:
+            logger.debug("Pylint custom checker failed to check docstrings.")
+            pass
+
+    def visit_functiondef(self, node):
+        """Visits every method docstring.
+
+        :param node: ast.FunctionDef
+        :return: None
+        """
+        try:
+            if node.name == "__init__":
+                return
+            self.check_for_dedent(node)
+        except Exception:
+            logger.debug("Pylint custom checker failed to check docstrings.")
+            pass
+
+    # this line makes it work for async functions
+    visit_asyncfunctiondef = visit_functiondef
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):

@@ -47,7 +47,7 @@
   {
     "id": "python_design.html#python-client-constructor-transport-argument",
     "category": "Client configuration",
-    "text": "DO allow users to pass in a transport keyword-only argument that allows the caller to specify a specific transport instance. The default value should be the RequestsTransport (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.1.1/azure.core.pipeline.transport.html?highlight=transport#azure.core.pipeline.transport.RequestsTransport) for synchronous clients and the AioHttpTransport (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.1.1/azure.core.pipeline.transport.html?highlight=transport#azure.core.pipeline.transport.AioHttpTransport) for async clients."
+    "text": "DO allow users to pass in a transport keyword-only argument that allows the caller to specify a specific transport instance. The default value should be the RequestsTransport (https://azuresdkdocs.z19.web.core.windows.net/python/azure-core/1.1.1/azure.core.pipeline.transport.html?highlight=transport#azure.core.pipeline.transport.RequestsTransport) for synchronous clients and the AioHttpTransport (https://azuresdkdocs.z19.web.core.windows.net/python/azure-core/1.1.1/azure.core.pipeline.transport.html?highlight=transport#azure.core.pipeline.transport.AioHttpTransport) for async clients."
   },
   {
     "id": "python_design.html#python-client-connection-string",
@@ -282,7 +282,7 @@
   {
     "id": "python_design.html#python-errors-azure-exceptions",
     "category": "Exceptions",
-    "text": "YOU SHOULD prefer raising existing exception types from the azure-core (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.9.0/index.html#azure-core-library-exceptions) package over creating new exception types."
+    "text": "YOU SHOULD prefer raising existing exception types from the azure-core (https://azuresdkdocs.z19.web.core.windows.net/python/azure-core/1.9.0/index.html#azure-core-library-exceptions) package over creating new exception types."
   },
   {
     "id": "python_design.html#python-errors-use-standard-exceptions",
@@ -292,7 +292,7 @@
   {
     "id": "python_design.html#python-errors-new-exceptions",
     "category": "Exceptions",
-    "text": "YOU SHOULD NOT create a new exception type unless the developer can handle the error programmatically.  Specialized exception types related to service operation failures should be based on existing exception types from the azure-core (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.9.0/index.html#azure-core-library-exceptions) package.\n\nFor higher-level methods that use multiple HTTP requests, either the last exception or an aggregate exception of all failures should be produced."
+    "text": "YOU SHOULD NOT create a new exception type unless the developer can handle the error programmatically.  Specialized exception types related to service operation failures should be based on existing exception types from the azure-core (https://azuresdkdocs.z19.web.core.windows.net/python/azure-core/1.9.0/index.html#azure-core-library-exceptions) package.\n\nFor higher-level methods that use multiple HTTP requests, either the last exception or an aggregate exception of all failures should be produced."
   },
   {
     "id": "python_design.html#python-errors-rich-info",

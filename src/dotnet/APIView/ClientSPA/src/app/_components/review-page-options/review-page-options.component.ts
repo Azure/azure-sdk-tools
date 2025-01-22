@@ -375,7 +375,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    */
   navigateSearch(number: 1 | -1) {
     const navigationPosition = this.codeLineSearchInfo.currentMatch! + number;
-    console.log("navigationpos", navigationPosition);
     if (navigationPosition >= 1 && navigationPosition <= this.codeLineSearchInfo.totalMatchCount!) {
       this.codeLineSearchNaviationEmmiter.emit(navigationPosition!);
     }

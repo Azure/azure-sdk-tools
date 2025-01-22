@@ -80,7 +80,7 @@ export class CodePanelComponent implements OnChanges{
       ];
   }
 
-  ngOnChanges(changes: SimpleChanges) {
+  async ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
       if (changes['codePanelRowData'].currentValue.length > 0) {
         this.loadCodePanelViewPort();
@@ -100,7 +100,7 @@ export class CodePanelComponent implements OnChanges{
     }
 
     if (changes['codeLineSearchText']) {
-      this.searchCodePanelRowData(this.codeLineSearchText!);
+      await this.searchCodePanelRowData(this.codeLineSearchText!);
     }
 
     if (changes['codeLineNavigationDirection']) {
@@ -441,9 +441,9 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
-  scrollToNode(
+  async scrollToNode( 
     nodeIdHashed: string | undefined = undefined, nodeId: string | undefined = undefined,
-    highlightRow: boolean = true, updateQueryParams: boolean = true) {
+    highlightRow: boolean = true, updateQueryParams: boolean = true): Promise<void> {
     let index = 0;
     let scrollIndex : number | undefined = undefined;
     let indexesHighlighted : number[] = [];
@@ -472,19 +472,21 @@ export class CodePanelComponent implements OnChanges{
       if (scrollIndex < this.codePanelRowSource?.adapter?.bufferInfo.firstIndex! ||
         scrollIndex > this.codePanelRowSource?.adapter?.bufferInfo.lastIndex!
       ) {
-        this.codePanelRowSource?.adapter?.reload(scrollIndex);
+        await this.codePanelRowSource?.adapter?.reload(scrollIndex);
       } else {
-        this.codePanelRowSource?.adapter?.fix({
+        await this.codePanelRowSource?.adapter?.fix({
           scrollToItem: (item) => item.data.nodeIdHashed === nodeIdHashed,
           scrollToItemOpt: { behavior: 'smooth', block: 'center' }
         });
       }
 
+      let newQueryParams = getQueryParams(this.route);
       if (updateQueryParams) {
-        let newQueryParams = getQueryParams(this.route);
         newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
-        this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+      } else {
+        newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = null;
       }
+      this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
 
       if (highlightRow) {
         setTimeout(() => {
@@ -721,25 +723,26 @@ export class CodePanelComponent implements OnChanges{
     navigator.clipboard.writeText(codeLineText);
   }
   
-  private searchCodePanelRowData(searchText: string) {
+  private async searchCodePanelRowData(searchText: string) {
     this.searchMatchedRowInfo.clear();
     if (!searchText || searchText.length === 0) {
       this.clearSearchMatchHighlights();
+      this.codeLineSearchMatchInfo = null;
+      this.currentCodeLineSearchMatch = null;
+      this.codeLineSearchInfo = null;
       return;
     }
 
-    let totalMatches = 0;
     let hasMatch = false;
     this.codeLineSearchMatchInfo = new DoublyLinkedList<CodeLineSearchMatch>();
     
     this.codePanelRowData.forEach((row, idx) => {
       if (row.rowOfTokens && row.rowOfTokens.length > 0) {
-        let codeLineInfo = convertRowOfTokensToString(row.rowOfTokens);
+        let codeLineAsString = convertRowOfTokensToString(row.rowOfTokens);
         const regex = new RegExp(searchText, "gi");
-        const matches = [...codeLineInfo.matchAll(regex)];
+        const matches = [...codeLineAsString.matchAll(regex)];
         if (matches.length > 0) {
           hasMatch = true;
-          totalMatches += matches.length;
           this.searchMatchedRowInfo.set(row.nodeIdHashed!, matches);
           matches.forEach((match, index) => {
             const searchMatch = new CodeLineSearchMatch(idx, row.nodeIdHashed!, index);
@@ -754,8 +757,16 @@ export class CodePanelComponent implements OnChanges{
     
     if (hasMatch) {
       this.currentCodeLineSearchMatch = this.codeLineSearchMatchInfo.head;
+
+      if (this.currentCodeLineSearchMatch?.value.rowIndex! < this.codePanelRowSource?.adapter?.firstVisible.$index! ||
+        this.currentCodeLineSearchMatch?.value.rowIndex! > this.codePanelRowSource?.adapter?.lastVisible.$index!) {
+          // Scroll first match into view
+        await this.scrollToNode(this.currentCodeLineSearchMatch!.value.nodeIdHashed, undefined, false, false);
+        await this.codePanelRowSource?.adapter?.relax();
+      }
+
       currentMatch = this.currentCodeLineSearchMatch!.index + 1;
-      totalMatchCount = this.codeLineSearchMatchInfo.length + 1;
+      totalMatchCount = this.codeLineSearchMatchInfo.length;
       this.highlightSearchMatches();
       this.highlightActiveSearchMatch();
     } else {
@@ -821,11 +832,12 @@ export class CodePanelComponent implements OnChanges{
         activeMatch.classList.remove('active');
       }
       const codeLine = this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"]`);
-    
       if (codeLine) {
         const match = codeLine.querySelector(`.search-match-${matchId}`);
         if (match) {
-          match.classList.add('active');
+          setTimeout(() => {
+            this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"] .codeline-search-match-highlight.search-match-${matchId}`)!.classList.add('active');
+          }, 0);
         }
       }
     }
@@ -838,37 +850,30 @@ export class CodePanelComponent implements OnChanges{
     if (this.currentCodeLineSearchMatch) {
       const firstVisibleIndex = this.codePanelRowSource?.adapter?.firstVisible.$index!;
       const lastVisibleIndex = this.codePanelRowSource?.adapter?.lastVisible.$index!;
+      let currentMatch = this.codeLineSearchInfo?.currentMatch!;
       
-      if (this.currentCodeLineSearchMatch.value.rowIndex <= firstVisibleIndex || this.currentCodeLineSearchMatch.value.rowIndex >= lastVisibleIndex) {
-        this.scrollToNode(this.currentCodeLineSearchMatch.value.nodeIdHashed);
-        setTimeout(() => {
-          this.navigateAndHighlightSearchMatch(previousPosition, newPosition);
-        }, 1550);
-      } else {
-        this.navigateAndHighlightSearchMatch(previousPosition, newPosition);
+      if (!previousPosition || newPosition > previousPosition) {
+        this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.next!;
+        currentMatch++;
+      } else if (newPosition < previousPosition) {
+        this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.prev!;
+        currentMatch--;
       }
+
+      if (this.currentCodeLineSearchMatch.value.rowIndex < firstVisibleIndex || this.currentCodeLineSearchMatch.value.rowIndex > lastVisibleIndex) {
+        this.scrollToNode(this.currentCodeLineSearchMatch.value.nodeIdHashed, undefined, false, false);
+        this.codePanelRowSource?.adapter?.relax();
+      }
+      
+      this.highlightActiveSearchMatch();
+      this.codeLineSearchInfo = { 
+        currentMatch: currentMatch,
+        totalMatchCount: this.codeLineSearchInfo?.totalMatchCount
+      };
+      this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
     }
   }
 
-  private navigateAndHighlightSearchMatch(previousPosition: number, newPosition: number) {
-    let currentMatch = this.codeLineSearchInfo?.currentMatch!;
-
-    if (!previousPosition || newPosition > previousPosition) {
-      this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.next!;
-      this.highlightActiveSearchMatch();
-      currentMatch++;
-    } else if (newPosition < previousPosition) {
-      this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.prev!;
-      this.highlightActiveSearchMatch();
-      currentMatch--;
-    }
-
-    this.codeLineSearchInfo = { 
-      currentMatch: currentMatch,
-      totalMatchCount: this.codeLineSearchInfo?.totalMatchCount
-    };
-    this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
-  }
 
   private clearSearchMatchHighlights() {
     this.elementRef.nativeElement.querySelectorAll('.codeline-search-match-highlight').forEach((element) => {
@@ -954,8 +959,9 @@ export class CodePanelComponent implements OnChanges{
           const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
           if (viewport) {
             viewport.addEventListener('scroll', (event) => {
-              if (this.codeLineSearchText && this.codeLineSearchText.length > 0) {
+              if (this.currentCodeLineSearchMatch) {
                 this.highlightSearchMatches();
+                this.highlightActiveSearchMatch();
               }
             });
           }

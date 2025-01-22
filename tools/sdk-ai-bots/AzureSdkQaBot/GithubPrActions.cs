@@ -1,12 +1,14 @@
 ﻿using Microsoft.Bot.Builder;
 using Microsoft.Bot.Schema;
-using Microsoft.TeamsAI;
-using Microsoft.TeamsAI.AI.Action;
+using Microsoft.Teams.AI;
+using Microsoft.Teams.AI.AI.Action;
 using System.Text.RegularExpressions;
 using Octokit;
 using Microsoft.Bot.Builder.TraceExtensions;
 using Microsoft.SemanticKernel;
 using AzureSdkQaBot.Model;
+using Microsoft.Teams.AI.AI.Clients;
+using Microsoft.Teams.AI.AI.Prompts;
 
 namespace AzureSdkQaBot
 {
@@ -26,15 +28,15 @@ namespace AzureSdkQaBot
         private IReadOnlyList<Label>? _labels;
         // private IOrderedEnumerable<CheckRun>? _checkRun;
 
-        public GitHubPrActions(Application<AppState, AppStateManager> application, IKernel kernel, IGitHubClient client, ILogger logger)
+        public GitHubPrActions(LLMClient<string> llmClient, PromptManager promptManager, IKernel kernel, IGitHubClient client, ILogger logger)
         {
             _gitHubClient = client;
             _logger = logger;
-            _questionAnsweringActions = new QuestionAnsweringActions(application, kernel, _logger);
+            _questionAnsweringActions = new QuestionAnsweringActions(llmClient, promptManager, kernel, _logger);
         }
 
         [Action("NonGitHubPRHandler")]
-        public async Task<bool> NonGitHubPRHandler([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionEntities] Dictionary<string, object> entities)
+        public async Task<string> NonGitHubPRHandler([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionParameters] Dictionary<string, object> entities)
         {
             if (turnContext == null)
             {
@@ -52,7 +54,7 @@ namespace AzureSdkQaBot
             if (string.IsNullOrEmpty(prLink) || !prLink.Contains("https://"))
             {
                 await _questionAnsweringActions.QuestionAnswering(turnContext, turnState);
-                return false;
+                return "Do not find PR link from the user input.";
             }
             // redact query to less than 60 characters
             string query = turnContext.Activity.Text;
@@ -97,11 +99,11 @@ namespace AzureSdkQaBot
             }
 
             // End the current chain
-            return false;
+            return "This is a Non-GitHub PR handler";
         }
 
         [Action("PullRequestReviewNextStep")]
-        public async Task<bool> PullRequestReviewNextStep([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionEntities] Dictionary<string, object> entities)
+        public async Task<string> PullRequestReviewNextStep([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionParameters] Dictionary<string, object> entities)
         {
             if (turnContext == null)
             {
@@ -117,7 +119,7 @@ namespace AzureSdkQaBot
             if (string.IsNullOrEmpty(prLink) || !prLink.Contains("https://"))
             {
                 await _questionAnsweringActions.QuestionAnswering(turnContext, turnState);
-                return false;
+                return "Do not find PR link from the user input.";
             }
 
             // redact query to less than 60 characters
@@ -174,11 +176,11 @@ namespace AzureSdkQaBot
             }
 
             // End the current chain
-            return false;
+            return "Done PR review next step.";
         }
 
         [Action("MergePullRequest")]
-        public async Task<bool> MergePullRequest([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionEntities] Dictionary<string, object> entities)
+        public async Task<string> MergePullRequest([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionParameters] Dictionary<string, object> entities)
         {
             if (turnContext == null)
             {
@@ -198,7 +200,7 @@ namespace AzureSdkQaBot
             if (entities == null || string.IsNullOrEmpty(prLink) || !prLink.Contains("https://"))
             {
                 await _questionAnsweringActions.QuestionAnswering(turnContext, turnState);
-                return false;
+                return "Do not find PR link from the user input.";
             }
             // redact query to less than 60 characters
             string query = turnContext.Activity.Text;
@@ -241,11 +243,11 @@ namespace AzureSdkQaBot
             }
 
             // End the current chain
-            return false;
+            return "Done merge pull request.";
         }
 
         [Action("PrBreakingChangeReview")]
-        public async Task<bool> PullRequestBreakingChangeReview([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionEntities] Dictionary<string, object> entities)
+        public async Task<string> PullRequestBreakingChangeReview([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionParameters] Dictionary<string, object> entities)
         {
             if (turnContext == null)
             {
@@ -261,7 +263,7 @@ namespace AzureSdkQaBot
             if (string.IsNullOrEmpty(prLink) || !prLink.Contains("https://"))
             {
                 await _questionAnsweringActions.QuestionAnswering(turnContext, turnState);
-                return false;
+                return "Do not find PR link from the user input.";
             }
 
             // redact query to less than 60 characters
@@ -368,11 +370,11 @@ namespace AzureSdkQaBot
             }
 
             // End the current chain
-            return false;
+            return "Done REST API breaking change review.";
         }
 
         [Action("PrBreakingChangeReview-Go")]
-        public async Task<bool> PullRequestGoSdkBreakingChangeReview([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionEntities] Dictionary<string, object> entities)
+        public async Task<string> PullRequestGoSdkBreakingChangeReview([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionParameters] Dictionary<string, object> entities)
         {
             if (turnContext == null)
             {
@@ -388,7 +390,7 @@ namespace AzureSdkQaBot
             if (string.IsNullOrEmpty(prLink) || !prLink.Contains("https://"))
             {
                 await _questionAnsweringActions.QuestionAnswering(turnContext, turnState);
-                return false;
+                return "Do not find PR link from the user input.";
             }
 
             // redact query to less than 60 characters
@@ -474,11 +476,11 @@ namespace AzureSdkQaBot
             }
 
             // End the current chain
-            return false;
+            return "Done Go SDK breaking change review.";
         }
 
         [Action("PrBreakingChangeReview-Python")]
-        public async Task<bool> PullRequestPythonSdkBreakingChangeReview([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionEntities] Dictionary<string, object> entities)
+        public async Task<string> PullRequestPythonSdkBreakingChangeReview([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionParameters] Dictionary<string, object> entities)
         {
             if (turnContext == null)
             {
@@ -494,7 +496,7 @@ namespace AzureSdkQaBot
             if (string.IsNullOrEmpty(prLink) || !prLink.Contains("https://"))
             {
                 await _questionAnsweringActions.QuestionAnswering(turnContext, turnState);
-                return false;
+                return "Do not find PR link from the user input.";
             }
 
             // redact query to less than 60 characters
@@ -581,11 +583,11 @@ namespace AzureSdkQaBot
             }
 
             // End the current chain
-            return false;
+            return "Done Python SDK breaking change review.";
         }
 
         [Action("PrBreakingChangeReview-JS")]
-        public async Task<bool> PullRequestJSSdkBreakingChangeReview([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionEntities] Dictionary<string, object> entities)
+        public async Task<string> PullRequestJSSdkBreakingChangeReview([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState turnState, [ActionParameters] Dictionary<string, object> entities)
         {
             if (turnContext == null)
             {
@@ -601,7 +603,7 @@ namespace AzureSdkQaBot
             if (string.IsNullOrEmpty(prLink) || !prLink.Contains("https://"))
             {
                 await _questionAnsweringActions.QuestionAnswering(turnContext, turnState);
-                return false;
+                return "Do not find PR link from the user input.";
             }
 
             // redact query to less than 60 characters
@@ -688,7 +690,7 @@ namespace AzureSdkQaBot
             }
 
             // End the current chain
-            return false;
+            return "Done JS SDK breaking change review.";
         }
 
         private static (string org, string repo, int prNum) GetPrInfoFromQuery(string query)

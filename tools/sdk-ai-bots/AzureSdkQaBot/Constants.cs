@@ -69,5 +69,8 @@
 
 
         public const string CheckName_MergeRequirement = "Automated merging requirements met";
+
+        // Used by app state
+        public const string AppState_Conversation_CitationKey = "_citationsKey";
     }
 }

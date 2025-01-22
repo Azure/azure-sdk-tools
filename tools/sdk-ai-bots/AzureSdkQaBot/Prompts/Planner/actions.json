@@ -1,0 +1,34 @@
+[
+  {
+    "name": "QuestionAnswering",
+    "description": "Question Answering API"
+  },
+  {
+    "name": "PullRequestReviewNextStep",
+    "description": "It suggests the follow ups for a github pull request prLink=\"<pull request link>\".",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "prLink": {
+          "type": "string",
+          "description": "The link of the pull request"
+        }
+      },
+      "required": ["prLink"]
+    }
+  },
+  {
+    "name": "NonGitHubPRHandler",
+    "description": "Handle the query including non-GitHub pull request",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "prLink": {
+          "type": "string",
+          "description": "The link of the pull request"
+        }
+      },
+      "required": ["prLink"]
+    }
+  }  
+]

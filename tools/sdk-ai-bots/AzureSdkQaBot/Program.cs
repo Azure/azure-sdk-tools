@@ -3,26 +3,30 @@ using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector.Authentication;
-using Microsoft.TeamsAI;
-using Microsoft.TeamsAI.AI.Planner;
-using Microsoft.TeamsAI.AI.Prompt;
-using Microsoft.TeamsAI.AI;
-using Microsoft.TeamsAI.AI.Moderator;
+using Microsoft.Teams.AI;
+using Microsoft.Teams.AI.AI;
+using Microsoft.Teams.AI.AI.Clients;
+using Microsoft.Teams.AI.AI.Models;
+using Microsoft.Teams.AI.AI.Planners;
+using Microsoft.Teams.AI.AI.Prompts;
+using Microsoft.Teams.AI.State;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch;
 using AzureSdkQaBot.Model;
 using Octokit;
 using Azure.Identity;
 using Azure.Security.KeyVault.Certificates;
+using Microsoft.Bot.Builder.Dialogs.Choices;
+using Microsoft.Identity.Client;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient("WebClient", client => client.Timeout = TimeSpan.FromSeconds(600));
 builder.Services.AddHttpContextAccessor();
 
 // Prepare Configuration for ConfigurationBotFrameworkAuthentication
-var config = builder.Configuration.Get<ConfigOptions>()!;
+ConfigOptions config = builder.Configuration.Get<ConfigOptions>()!;
 
 
 // Access key vault
@@ -58,9 +62,19 @@ catch (Exception ex)
 {
     throw new Exception($"Failed to get certificate {config.CertificateName} from KeyVault {config.KeyVaultUrl}", ex);
 }
+//builder.Configuration["MicrosoftAppType"] = "MultiTenant";
+//builder.Configuration["MicrosoftAppId"] = config.BOT_ID;
+// MSAL certificate auth.
+//builder.Services.AddSingleton(
+  //  serviceProvider => ConfidentialClientApplicationBuilder.Create(config.BOT_ID)
+    //    .WithCertificate(certificate, true)
+      //  .Build()); 
+
+// MSAL credential factory: regardless of secret, cert or custom auth, need to add the line below to enable MSAL.
+//builder.Services.AddSingleton<ServiceClientCredentialsFactory, CertificateServiceClientCredentialsFactory>();
 
 // Create the ClientCredentialsFactory to user certificate authentication
-builder.Services.AddSingleton<ServiceClientCredentialsFactory>((e) => new CertificateServiceClientCredentialsFactory(certificate, config.BOT_ID, "72f988bf-86f1-41af-91ab-2d7cd011db47"));
+builder.Services.AddSingleton<ServiceClientCredentialsFactory>((e) => new CertificateServiceClientCredentialsFactory(certificate, config.BOT_ID, null, null, null, true));
 
 // Create the Bot Framework Authentication to be used with the Bot Adapter.
 builder.Services.AddSingleton<BotFrameworkAuthentication, ConfigurationBotFrameworkAuthentication>();
@@ -68,9 +82,9 @@ builder.Services.AddSingleton<BotFrameworkAuthentication, ConfigurationBotFramew
 // Create the Cloud Adapter with error handling enabled.
 // Note: some classes expect a BotAdapter and some expect a BotFrameworkHttpAdapter, so
 // register the same adapter instance for all types.
-builder.Services.AddSingleton<CloudAdapter, AdapterWithErrorHandler>();
-builder.Services.AddSingleton<IBotFrameworkHttpAdapter>(sp => sp.GetService<CloudAdapter>()!);
-builder.Services.AddSingleton<BotAdapter>(sp => sp.GetService<CloudAdapter>()!);
+builder.Services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
+//builder.Services.AddSingleton<IBotFrameworkHttpAdapter>(sp => sp.GetService<TeamsAdapter>()!);
+//builder.Services.AddSingleton<BotAdapter>(sp => sp.GetService<TeamsAdapter>()!);
 
 builder.Services.AddSingleton<IStorage, MemoryStorage>();
 
@@ -95,8 +109,18 @@ if (config.Search == null
     throw new Exception("Missing Cognitive Search configuration.");
 }
 
-builder.Services.AddSingleton(_ => new AzureOpenAIPlannerOptions(config.Azure.OpenAIApiKey, "text-davinci-003", config.Azure.OpenAIEndpoint));
-//builder.Services.AddSingleton(_ => new AzureContentSafetyModeratorOptions(config.Azure.ContentSafetyApiKey, config.Azure.ContentSafetyEndpoint, ModerationType.Both));
+// Create AI model
+builder.Services.AddSingleton<OpenAIModel>(sp => new(
+    new AzureOpenAIModelOptions(
+        config.Azure.OpenAIApiKey,
+        "gpt-35-turbo",
+        config.Azure.OpenAIEndpoint
+    )
+    {
+        LogRequests = true
+    },
+    sp.GetService<ILoggerFactory>()
+));
 
 // build semantic kernel
 var kernelBuilder = new KernelBuilder();
@@ -118,28 +142,54 @@ builder.Services.AddTransient<IBot, AzureSdkQaBotApplication>(sp =>
 {
     ILoggerFactory loggerFactory = sp.GetService<ILoggerFactory>()!;
 
-    IPromptManager<AppState> promptManager = new PromptManager<AppState>("./Prompts");
-
-    IPlanner<AppState> planner = new AzureOpenAIPlanner<AppState>(sp.GetService<AzureOpenAIPlannerOptions>(), loggerFactory.CreateLogger<AzureOpenAIPlanner<AppState>>());
-    //IModerator<AppState> moderator = new AzureContentSafetyModerator<AppState>(sp.GetService<AzureContentSafetyModeratorOptions>(), loggerFactory.CreateLogger<AzureContentSafetyModerator<AppState>>());
-
-    ApplicationOptions<AppState, AppStateManager> applicationOptions = new()
+    // Create Prompt Manager
+    PromptManager promptManager = new(new()
     {
-        AI = new AIOptions<AppState>(planner, promptManager)
+        PromptFolder = "./Prompts"
+    });
+
+    // Adds functions to be referenced in the prompt template
+    promptManager.AddFunction("getCitations", (context, memory, functions, tokenizer, args) =>
+    {
+        IEnumerable<string> citations = ((IList<DocumentCitation>)memory.GetValue("conversation." + Constants.AppState_Conversation_CitationKey)!).Select((citation, index) =>
         {
-            //Moderator = moderator,
-            Prompt = "Planner",
-            History = new AIHistoryOptions()
+            return $"<Citation {index + 1}>{Environment.NewLine}Source:{Environment.NewLine}{citation.Source}{Environment.NewLine}Content:{Environment.NewLine}{citation.Content}";
+        });
+        string citationStrings = string.Join(Environment.NewLine + Environment.NewLine, citations);
+        return Task.FromResult<dynamic>(citationStrings);
+    });
+    promptManager.AddFunction("getInput", (context, memory, functions, tokenizer, args) =>
+    {
+        string input = GitHubPrActions.GetUserQueryFromContext(context);
+        return Task.FromResult<dynamic>(input);
+    });
+
+    LLMClient<string> llmClient = new(
+        new(sp.GetService<OpenAIModel>()!, promptManager.GetPrompt("QA")),
+        loggerFactory
+    );
+
+    // Create OpenAIPlanner
+    ActionPlanner<AppState> planner = new(
+        new(
+            sp.GetService<OpenAIModel>()!,
+            promptManager,
+            async (context, state, planner) =>
             {
-                TrackHistory = true,
-                AssistantHistoryType = AssistantHistoryType.Text,
-            },
-        },
+                return await Task.FromResult(promptManager.GetPrompt("Planner"));
+            }
+        ),
+        loggerFactory
+    );
+
+    ApplicationOptions<AppState> applicationOptions = new()
+    {
+        AI = new AIOptions<AppState>(planner),
         Storage = sp.GetService<IStorage>(),
         StartTypingTimer = true
     };
 
-    return new AzureSdkQaBotApplication(applicationOptions, semanticKernel, githubClient, loggerFactory.CreateLogger("SdkQaBot"));
+    return new AzureSdkQaBotApplication(applicationOptions, llmClient, promptManager, semanticKernel, githubClient, loggerFactory.CreateLogger("SdkQaBot"));
 });
 
 #endregion

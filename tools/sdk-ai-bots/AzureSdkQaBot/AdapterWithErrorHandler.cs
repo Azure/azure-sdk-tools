@@ -6,7 +6,7 @@ namespace AzureSdkQaBot
 {
     public class AdapterWithErrorHandler : CloudAdapter
     {
-        public AdapterWithErrorHandler(BotFrameworkAuthentication auth, ILogger<CloudAdapter> logger)
+        public AdapterWithErrorHandler(BotFrameworkAuthentication auth, ILogger<IBotFrameworkHttpAdapter> logger)
             : base(auth, logger)
         {
             OnTurnError = async (turnContext, exception) =>
@@ -15,7 +15,7 @@ namespace AzureSdkQaBot
                 // NOTE: In production environment, you should consider logging this to
                 // Azure Application Insights. Visit https://aka.ms/bottelemetry to see how
                 // to add telemetry capture to your bot.
-                logger.LogError(exception, $"[OnTurnError] unhandled error : {exception}");
+                logger.LogError(exception, $"[OnTurnError] unhandled error : {exception.Message}");
                 // Send a message to the user
                 string errorMsg = exception.Message;
                 if (exception.InnerException != null)
@@ -30,7 +30,7 @@ namespace AzureSdkQaBot
                 }
                 await turnContext.SendActivityAsync($"The bot encountered an error: {errorMsg}");
                 // Send a trace activity    
-                await turnContext.TraceActivityAsync("OnTurnError Trace", exception, "TurnError");
+                await turnContext.TraceActivityAsync("OnTurnError Trace", exception.Message, "TurnError");
             };
         }
     }

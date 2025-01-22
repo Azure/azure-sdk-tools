@@ -1,30 +1,35 @@
 ﻿using Microsoft.Bot.Builder;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel;
-using Microsoft.TeamsAI.AI.Action;
-using Microsoft.TeamsAI;
+using Microsoft.Teams.AI;
+using Microsoft.Teams.AI.AI;
+using Microsoft.Teams.AI.AI.Action;
 using Newtonsoft.Json;
 using AzureSdkQaBot.Model;
 using Microsoft.Bot.Builder.TraceExtensions;
 using Microsoft.Bot.Schema;
+using Microsoft.Teams.AI.AI.Clients;
+using Microsoft.Teams.AI.AI.Prompts;
 
 namespace AzureSdkQaBot
 {
     public class QuestionAnsweringActions
     {
         private IKernel _kernel;
-        private readonly Application<AppState, AppStateManager> _application;
         private readonly ILogger _logger;
+        private readonly LLMClient<string> _llmClient;
+        private readonly PromptManager _promptManager;
 
-        public QuestionAnsweringActions(Application<AppState, AppStateManager> application, IKernel kernel, ILogger logger)
+        public QuestionAnsweringActions(LLMClient<string> llmClient, PromptManager promptManager, IKernel kernel, ILogger logger)
         {
-            _application = application;
+            _llmClient = llmClient;
+            _promptManager = promptManager;
             _kernel = kernel;
             _logger = logger;
         }
 
         [Action("QuestionAnswering")]
-        public async Task<bool> QuestionAnswering([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState appState)
+        public async Task<string> QuestionAnswering([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState appState)
         {
             string query = turnContext.Activity.Text;
 
@@ -59,13 +64,13 @@ namespace AzureSdkQaBot
                 }
             }
 
-            return false;
+            return "false";
         }
         public async Task<Tuple<string, List<string>>> QuestionAnsweringHandler([ActionTurnContext] ITurnContext turnContext, [ActionTurnState] AppState appState)
         {
             var memories = _kernel.Memory.SearchAsync("azuresdk-knowledge-rag", turnContext.Activity.Text, limit: 3, minRelevanceScore: 0.77, withEmbeddings: false, CancellationToken.None);
 
-            List<Citation> citations = new();
+            List<DocumentCitation> citations = new();
             Dictionary<string, string> documentLinkToSource = new();
 
             await foreach (MemoryQueryResult memory in memories)
@@ -74,7 +79,7 @@ namespace AzureSdkQaBot
                 string source = chunk.HeadingTitle == null
                     ? $"[{chunk.DocumentTitle}]({chunk.DocumentLink})"
                     : $"[{chunk.HeadingTitle}]({chunk.headingLink})";
-                Citation citation = new(source, chunk.RagText);
+                DocumentCitation citation = new(source, chunk.RagText);
                 if (!citations.Contains(citation))
                 {
                     citations.Add(citation);
@@ -89,11 +94,18 @@ namespace AzureSdkQaBot
 
             appState.Conversation!.Citations = citations;
             appState.Temp!.Input = turnContext.Activity.Text;
+            PromptResponse response;
             string result;
             try
             {
-                result = await _application.AI.CompletePromptAsync(turnContext, appState, "QA", _application.AI.Options, CancellationToken.None);
-                result = result.Trim();
+                response = await _llmClient.CompletePromptAsync(turnContext, appState, _promptManager, appState.Temp!.Input, CancellationToken.None);
+                if (response.Status != PromptResponseStatus.Success)
+                {
+                    Console.WriteLine($"CompletePromptAsync error: {response.Error.Message}");
+                    this._logger.LogError($"QuestionAnsweringHandler-CompletePromptAsync error: {response.Error.Message}");
+                    return Tuple.Create(response.Error.Message, new List<string>());
+                }
+                result = response.Message.Content.Trim();
             }
             catch (Exception ex)
             {
@@ -129,19 +141,19 @@ namespace AzureSdkQaBot
             return Tuple.Create(answer, relevancies);
         }
 
-        [Action(DefaultActionTypes.FlaggedInputActionName)]
-        public async Task<bool> FlaggedInputAction([ActionTurnContext] ITurnContext turnContext, [ActionEntities] Dictionary<string, object> entities)
+        [Action(AIConstants.FlaggedInputActionName)]
+        public async Task<string> FlaggedInputAction([ActionTurnContext] ITurnContext turnContext, [ActionParameters] Dictionary<string, object> entities)
         {
             string entitiesJsonString = JsonConvert.SerializeObject(entities);
             await turnContext.SendActivityAsync($"I'm sorry your message was flagged: {entitiesJsonString}");
-            return false;
+            return "";
         }
 
-        [Action(DefaultActionTypes.FlaggedOutputActionName)]
-        public async Task<bool> FlaggedOutputAction([ActionTurnContext] ITurnContext turnContext)
+        [Action(AIConstants.FlaggedOutputActionName)]
+        public async Task<string> FlaggedOutputAction([ActionTurnContext] ITurnContext turnContext)
         {
             await turnContext.SendActivityAsync("I'm not allowed to talk about such things.");
-            return false;
+            return "";
         }
     }
 }

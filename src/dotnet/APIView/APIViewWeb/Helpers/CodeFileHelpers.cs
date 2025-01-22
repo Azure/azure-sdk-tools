@@ -387,8 +387,8 @@ namespace APIViewWeb.Helpers
 
         private static bool AreReviewLinesSame(List<ReviewLine> reviewLinesA, List<ReviewLine> reviewLinesB)
         {
-            var filteredLinesA = reviewLinesA.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation).ToList();
-            var filteredLinesB = reviewLinesB.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation).ToList();
+            var filteredLinesA = reviewLinesA.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation && !x.IsSkippedFromDiff()).ToList();
+            var filteredLinesB = reviewLinesB.Where(x => x.Tokens.Count > 0 && !x.IsDocumentation && !x.IsSkippedFromDiff()).ToList();
 
             if (filteredLinesA.Count() != filteredLinesB.Count())
                 return false;
@@ -418,7 +418,7 @@ namespace APIViewWeb.Helpers
 
             foreach (var line in interleavedLines)
             {
-                if (line.IsDocumentation || line.Processed)
+                if (line.IsDocumentation || line.Processed || (!line.IsActiveRevisionLine && line.IsSkippedFromDiff()))
                     continue;
 
 
@@ -426,8 +426,11 @@ namespace APIViewWeb.Helpers
                 // If a node is diff then no need to check it's children as they will be marked as diff as well.
                 if (!intersectLines.Contains(line))
                 {
-                    //Recursively mark line as added or removed
-                    MarkTreeNodeAsModified(line, line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                    //Recursively mark line as added or removed if line is not skipped from diff
+                    if (!line.IsSkippedFromDiff())
+                    {
+                        MarkTreeNodeAsModified(line, line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                    }
 
                     //Check if diff revision has a line at same level with same Line Id. This is to handle where a API was removed and added back in different order.
                     // This will also ensure added and modified lines are visible next to each other in the review.
@@ -436,9 +439,12 @@ namespace APIViewWeb.Helpers
                     if (relatedLine != null)
                     {
                         relatedLine.Processed = true;
-                        MarkTreeNodeAsModified(relatedLine, relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
-                        //Identify the tokens within modified lines and highlight them in the UI
-                        FindModifiedTokens(line, relatedLine);
+                        if (!relatedLine.IsSkippedFromDiff())
+                        {
+                            MarkTreeNodeAsModified(relatedLine, relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                            //Identify the tokens within modified lines and highlight them in the UI
+                            FindModifiedTokens(line, relatedLine);
+                        }                        
                     }
 
                     if (relatedLine != null)

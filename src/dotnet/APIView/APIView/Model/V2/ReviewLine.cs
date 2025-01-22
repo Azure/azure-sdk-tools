@@ -153,5 +153,11 @@ namespace APIView.Model.V2
             int hash = inputString.GetHashCode();
             return "nId" + hash.ToString();
         }
+
+        public bool IsSkippedFromDiff()
+        {
+            return Tokens.All(t => t.SkipDiff == true);
+        }
+
     }
 }

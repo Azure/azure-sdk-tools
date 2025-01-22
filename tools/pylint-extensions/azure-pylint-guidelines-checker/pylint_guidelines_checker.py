@@ -3106,6 +3106,7 @@ class DoNotDedentDocstring(BaseChecker):
 
         try:
             # not every class/method will have a docstring so don't crash here, just return
+            # don't fail if there is no dedent in the docstring, be lenient
             if (
                 node.doc_node.value.find(":dedent") != -1
             ):
@@ -3190,8 +3191,8 @@ def register(linter):
     linter.register_checker(DoNotLogErrorsEndUpRaising(linter))
     linter.register_checker(InvalidUseOfOverload(linter))
     linter.register_checker(DoNotLogExceptions(linter))
-
     linter.register_checker(DoNotHardcodeConnectionVerify(linter))
+    linter.register_checker(DoNotDedentDocstring(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

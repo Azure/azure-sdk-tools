@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.SymbolDisplay;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using ApiView;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -540,6 +541,8 @@ namespace CSharpAPIParser.TreeToken
                 case "EditorBrowsableAttribute":
                 case "NullableAttribute":
                 case "NullableContextAttribute":
+                case "RequiresUnreferencedCodeAttribute":
+                case "RequiresDynamicCodeAttribute":
                     return true;
                 default:
                     return false;

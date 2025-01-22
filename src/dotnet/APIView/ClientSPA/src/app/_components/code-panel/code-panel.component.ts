@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
-import { take, takeUntil } from 'rxjs/operators';
+import { max, take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -441,7 +441,9 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
-  scrollToNode(nodeIdHashed: string | undefined = undefined, nodeId: string | undefined = undefined) {
+  scrollToNode(
+    nodeIdHashed: string | undefined = undefined, nodeId: string | undefined = undefined,
+    highlightRow: boolean = true, updateQueryParams: boolean = true) {
     let index = 0;
     let scrollIndex : number | undefined = undefined;
     let indexesHighlighted : number[] = [];
@@ -452,7 +454,11 @@ export class CodePanelComponent implements OnChanges{
       if ((nodeIdHashed && this.codePanelRowData[index].nodeIdHashed === nodeIdHashed) || (nodeId && this.codePanelRowData[index].nodeId === nodeId)) {
         nodeIdHashed = this.codePanelRowData[index].nodeIdHashed;
         this.codePanelRowData[index].rowClasses = this.codePanelRowData[index].rowClasses || new Set<string>();
-        this.codePanelRowData[index].rowClasses.add('active');
+
+        if (highlightRow) {
+          this.codePanelRowData[index].rowClasses.add('active');
+        }
+
         indexesHighlighted.push(index);
         if (!scrollIndex) {
           scrollIndex = index;
@@ -461,18 +467,32 @@ export class CodePanelComponent implements OnChanges{
       index++;
     }
     if (scrollIndex) {
-      let scrollPadding = 0;
-      scrollPadding = (this.showNoDiffInContentMessage()) ? scrollPadding + 2 : scrollPadding;
+      scrollIndex = Math.max(scrollIndex - 4, 0);
 
-      this.codePanelRowSource?.adapter?.reload(scrollIndex - scrollPadding);
-      let newQueryParams = getQueryParams(this.route);
-      newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
-      this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
-      setTimeout(() => {
-        indexesHighlighted.forEach((index) => {
-          this.codePanelRowData[index].rowClasses?.delete('active');
+      if (scrollIndex < this.codePanelRowSource?.adapter?.bufferInfo.firstIndex! ||
+        scrollIndex > this.codePanelRowSource?.adapter?.bufferInfo.lastIndex!
+      ) {
+        this.codePanelRowSource?.adapter?.reload(scrollIndex);
+      } else {
+        this.codePanelRowSource?.adapter?.fix({
+          scrollToItem: (item) => item.data.nodeIdHashed === nodeIdHashed,
+          scrollToItemOpt: { behavior: 'smooth', block: 'center' }
         });
-      }, 1550);
+      }
+
+      if (updateQueryParams) {
+        let newQueryParams = getQueryParams(this.route);
+        newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
+        this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+      }
+
+      if (highlightRow) {
+        setTimeout(() => {
+          indexesHighlighted.forEach((index) => {
+            this.codePanelRowData[index].rowClasses?.delete('active');
+          });
+        }, 1550);
+      }
     }
   }
 

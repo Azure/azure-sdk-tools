@@ -7,6 +7,7 @@ def function_foo(x, y, z):
                  :start-after: [START auth_from_connection_string] 
                  :end-before: [END auth_from_connection_string] 
                  :language: python 
+                 :dedent:
                  :caption: Authenticate with a connection string
     """
     pass
@@ -36,6 +37,7 @@ class SomeClient(object):
                  :start-after: [START auth_from_connection_string] 
                  :end-before: [END auth_from_connection_string] 
                  :language: python 
+                 :dedent:
                  :caption: Authenticate with a connection string
     """
 

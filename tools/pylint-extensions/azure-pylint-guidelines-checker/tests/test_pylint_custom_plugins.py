@@ -3926,10 +3926,10 @@ class TestDedent(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-hardcode-dedent",
-                line=16,
+                line=17,
                 node=function_node,
                 col_offset=0,
-                end_line=16,
+                end_line=17,
                 end_col_offset=17,
             )
         ):
@@ -3945,10 +3945,10 @@ class TestDedent(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="do-not-hardcode-dedent",
-                line=47,
+                line=49,
                 node=function_node,
                 col_offset=0,
-                end_line=47,
+                end_line=49,
                 end_col_offset=17,
             )
         ):

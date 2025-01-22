@@ -3097,7 +3097,7 @@ class DoNotDedentDocstring(BaseChecker):
         super(DoNotDedentDocstring, self).__init__(linter)
 
     def check_for_dedent(self, node):
-        """Parse the docstring for an dedent.
+        """Parse the docstring for a dedent.
         If found, checks that the dedent does not have a value set.
 
         :param node: ast.ClassDef or ast.FunctionDef
@@ -3109,11 +3109,16 @@ class DoNotDedentDocstring(BaseChecker):
             if (
                 node.doc_node.value.find(":dedent") != -1
             ):
-                self.add_message(
+                dedent_value = node.doc_node.value.split(":dedent:")[1].split("\n")[0].strip()
+                try:
+                    int(dedent_value)
+                    self.add_message(
                         "do-not-hardcode-dedent",
                         node=node,
                         confidence=None,
                     )
+                except:
+                    pass  
         except Exception:
             return
 

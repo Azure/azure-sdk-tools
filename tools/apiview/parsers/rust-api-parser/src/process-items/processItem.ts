@@ -3,6 +3,7 @@ import { Crate, Item, } from "../utils/rustdoc-json-types/jsonTypes";
 import { processFunction } from "./processFunction";
 import { processModule } from "./processModule";
 import { processStruct } from "./processStruct";
+import { processStructField } from "./processStructField";
 import { processTrait } from "./processTrait";
 
 const processedItems = new Set<string>();

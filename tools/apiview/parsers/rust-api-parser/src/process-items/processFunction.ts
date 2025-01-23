@@ -1,5 +1,5 @@
 import { ReviewLine, ReviewToken, TokenKind } from "../utils/apiview-models";
-import { Item, GenericParamDef, WherePredicate, GenericBound } from "../utils/rustdoc-json-types/jsonTypes";
+import { Item, GenericParamDef, WherePredicate, GenericBound, Type } from "../utils/rustdoc-json-types/jsonTypes";
 
 /**
  * Processes a function item and adds its documentation to the ReviewLine.
@@ -47,20 +47,64 @@ export function processFunction(item: Item, reviewLines: ReviewLine[]) {
 
     // Add function parameters
     if (item.inner.function.sig.inputs.length > 0) {
-        reviewLine.Tokens.push({
-            Kind: TokenKind.TypeName,
-            Value: item.inner.function.sig.inputs.map((input: any) => {
-                if (input[1].primitive) {
-                    return `${input[0]}: ${input[1].primitive}`;
-                } else if (input[1].resolved_path) {
-                    return `${input[0]}: ${input[1].resolved_path.name}`;
-                } else if (input[1].borrowed_ref) {
-                    return `${input[0]}: &${input[1].borrowed_ref.type.generic}`;
-                } else {
-                    return `${input[0]}: unknown`;
-                }
-            }).join(', '),
-            HasSuffixSpace: false
+        item.inner.function.sig.inputs.forEach((input: [string, Type], index: number) => {
+            if (index > 0) {
+                reviewLine.Tokens.push({
+                    Kind: TokenKind.Punctuation,
+                    Value: ', ',
+                    HasSuffixSpace: false
+                });
+            }
+
+            reviewLine.Tokens.push({
+                Kind: TokenKind.StringLiteral,
+                Value: input[0],
+                HasSuffixSpace: false
+            });
+
+            reviewLine.Tokens.push({
+                Kind: TokenKind.Punctuation,
+                Value: ': ',
+                HasSuffixSpace: false
+            });
+
+            if (typeof input[1] === 'string' && input[1] === 'infer') {
+                reviewLine.Tokens.push({
+                    Kind: TokenKind.TypeName,
+                    Value: 'infer',
+                    HasSuffixSpace: false
+                });
+            } else if ('primitive' in input[1]) {
+                reviewLine.Tokens.push({
+                    Kind: TokenKind.TypeName,
+                    Value: input[1].primitive,
+                    HasSuffixSpace: false
+                });
+            } else if ('resolved_path' in input[1]) {
+                reviewLine.Tokens.push({
+                    Kind: TokenKind.TypeName,
+                    Value: input[1].resolved_path.name,
+                    NavigateToId: input[1].resolved_path.id.toString(),
+                    HasSuffixSpace: false
+                });
+            } else if ('borrowed_ref' in input[1]) {
+                reviewLine.Tokens.push({
+                    Kind: TokenKind.Punctuation,
+                    Value: '&',
+                    HasSuffixSpace: false
+                });
+                reviewLine.Tokens.push({
+                    Kind: TokenKind.TypeName,
+                    Value: "unknown", // Recursive - handle this to present better value
+                    HasSuffixSpace: false
+                });
+            } else {
+                reviewLine.Tokens.push({
+                    Kind: TokenKind.TypeName,
+                    Value: 'unknown',
+                    HasSuffixSpace: false
+                });
+            }
         });
     }
 

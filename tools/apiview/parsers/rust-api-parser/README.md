@@ -16,8 +16,9 @@ This TypeScript project reads a cleaned Rustdoc JSON file from the azure-sdk-for
 - `npm i -g typescript ts-node`
 
 ### Run the project:
-- Ensure the docs_compact.json file generated is placed in the inputs directory.
-- `ts-node src/main.ts`
+- Ensure the {package_name}_compact.json file generated is placed in the inputs directory.
+- `ts-node src/main.ts --package={package_name}`
+    - Example: `ts-node src/main.ts --package=azure_core`
 - Output: The exported API surface will be saved to `outputs/docs.api.json` in the outputs directory.
 
 ### License

@@ -1,5 +1,6 @@
 import { ReviewLine, TokenKind } from "../utils/apiview-models";
 import { Crate, Item } from "../utils/rustdoc-json-types/jsonTypes";
+import { processStructField } from "./processStructField";
 
 /**
  * Processes a struct item and adds its documentation to the ReviewLine.
@@ -37,6 +38,7 @@ export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLin
                 if (!reviewLine.Children) {
                     reviewLine.Children = [];
                 }
+
                 reviewLine.Children.push({
                     LineId: fieldItem.id.toString(),
                     Tokens: [
@@ -52,10 +54,7 @@ export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLin
                             Kind: TokenKind.Punctuation,
                             Value: ':'
                         },
-                        {
-                            Kind: TokenKind.TypeName,
-                            Value: "unknown"
-                        }
+                        processStructField(fieldItem)
                     ]
                 });
             }

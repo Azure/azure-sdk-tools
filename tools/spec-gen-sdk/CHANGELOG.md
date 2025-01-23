@@ -1,5 +1,10 @@
 # Release
 
+## 2025-01-22 - 0.1.4
+
+- Deprecated 'azure-sdk-for-net-track2' and repurposed 'azure-sdk-for-net' for the .NET track2 SDK
+- Added functionality to generate an HTML file for the filtered log
+
 ## 2025-01-14 - 0.1.3
 
 - Ensure the PrBranch variable is consistently set in all scenarios

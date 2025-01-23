@@ -12,7 +12,6 @@ export type SdkName =
   | "azure-sdk-for-java"
   | "azure-sdk-for-js"
   | "azure-sdk-for-net"
-  | "azure-sdk-for-net-track2"
   | "azure-sdk-for-python";
 
 export const sdkLabels: {
@@ -50,12 +49,6 @@ export const sdkLabels: {
     breakingChangeSuppression: undefined,
     breakingChangeSuppressionApproved: undefined,
   },
-  "azure-sdk-for-net-track2": {
-    breakingChange: undefined,
-    breakingChangeApproved: undefined,
-    breakingChangeSuppression: undefined,
-    breakingChangeSuppressionApproved: undefined
-  },  
   "azure-sdk-for-python": {
     breakingChange: "BreakingChange-Python-Sdk",
     breakingChangeApproved: "BreakingChange-Python-Sdk-Approved",

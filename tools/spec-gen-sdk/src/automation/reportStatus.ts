@@ -93,7 +93,7 @@ export const generateReport = (context: WorkflowContext) => {
   context.logger.log('endsection', 'Generate report');
 }
 
-export const saveFilteredLog = async (context: WorkflowContext) => {
+export const saveFilteredLog = (context: WorkflowContext) => {
   context.logger.log('section', 'Save filtered log');
   let hasBreakingChange = false;
   let isBetaMgmtSdk = true;
@@ -147,7 +147,7 @@ export const saveFilteredLog = async (context: WorkflowContext) => {
   context.logger.log('endsection', 'Save filtered log status');
 };
 
-export const generateHtmlFromFilteredLog = async (context: WorkflowContext) => {
+export const generateHtmlFromFilteredLog = (context: WorkflowContext) => {
     context.logger.log('section', 'Generate HTML from filtered log');
     const RegexMarkdownSplit = /^(.*?)(<ul>.*)$/s;
     const RegexNoteBlock = /> \[!NOTE\]\s*>\s*(.*)/;

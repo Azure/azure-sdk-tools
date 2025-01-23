@@ -16,9 +16,9 @@ function main() {
     let apiJson: Crate = JSON.parse(data);
     // Create the CodeFile object
     const codeFile: CodeFile = {
-        PackageName: "your-package-name",
-        PackageVersion: "your-package-version",
-        ParserVersion: "your-parser-version",
+        PackageName: packageName,
+        PackageVersion: apiJson["crate_version"] || "unknown",
+        ParserVersion: "1.0.0",
         Language: "Rust",
         ReviewLines: []
     };

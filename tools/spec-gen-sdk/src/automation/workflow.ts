@@ -122,9 +122,10 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 
 export const workflowMain = async (context: WorkflowContext) => {
   if (context.config.pullNumber) {
-    await workflowValidateSdkConfigForSpecPr(context);
+    const changedSpecs = await workflowDetectChangedSpec({ ...context });
+    await workflowValidateSdkConfigForSpecPr(context, changedSpecs);
     await workflowCallInitScript(context);
-    await workflowGenerateSdkForSpecPr(context);
+    await workflowGenerateSdkForSpecPr(context, changedSpecs);
   } else {
     await workflowValidateSdkConfig(context);
     await workflowCallInitScript(context);
@@ -133,18 +134,16 @@ export const workflowMain = async (context: WorkflowContext) => {
   setSdkAutoStatus(context, 'succeeded');
 };
 
-export const workflowValidateSdkConfigForSpecPr = async (context: SdkAutoContext) => {
-  const specContext = workflowInitSpecRepo(context);
-  const changedSpecs = await workflowDetectChangedSpec({ ...context, ...specContext });
+export const workflowValidateSdkConfigForSpecPr = async (context: WorkflowContext, changedSpecs: ChangedSpecs[]) => {
 
   context.logger.log('section', 'Validate SDK configuration');
   const sdkToGenerate = new Set<string>();
 
-  const commit = await specContext.specRepo.revparse(branchMain);
+  const commit = await context.specRepo.revparse(context.config.specCommitSha);
   for (const ch of changedSpecs) {
     if (ch.typespecProject) {
-      const entry = await specContext.specRepo.revparse(`${commit}:${ch.typespecProject}`);
-      const blob = await specContext.specRepo.catFile(['-p', entry]);
+      const entry = await context.specRepo.revparse(`${commit}:${ch.typespecProject}`);
+      const blob = await context.specRepo.catFile(['-p', entry]);
       const content = blob.toString();
       const config = findSDKToGenerateFromTypeSpecProject(content, context.specRepoConfig);
       // todo map the sdkName by the sdk language
@@ -154,8 +153,8 @@ export const workflowValidateSdkConfigForSpecPr = async (context: SdkAutoContext
       }
       sdkToGenerate.add(context.config.sdkName);
     } else if (ch.readmeMd) {
-      const entry = await specContext.specRepo.revparse(`${commit}:${ch.readmeMd}`);
-      const blob = await specContext.specRepo.catFile(['-p', entry]);
+      const entry = await context.specRepo.revparse(`${commit}:${ch.readmeMd}`);
+      const blob = await context.specRepo.catFile(['-p', entry]);
       const content = blob.toString();
       const config = findSwaggerToSDKConfiguration(content);
       if (!config || config.repositories.length === 0) {
@@ -170,6 +169,9 @@ export const workflowValidateSdkConfigForSpecPr = async (context: SdkAutoContext
     }
   }
 
+  if (changedSpecs.length === 0) {
+    throw new Error(`No changed specs are detected and SDK generation is skipped.`);
+  }
   if (sdkToGenerate.size === 0) {
     throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
   }
@@ -329,8 +331,7 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   context.pendingPackages = [];
 };
 
-const workflowGenerateSdkForSpecPr = async (context: WorkflowContext) => {
-  const changedSpecs = await workflowDetectChangedSpec(context);
+const workflowGenerateSdkForSpecPr = async (context: WorkflowContext, changedSpecs: ChangedSpecs[]) => {
   context.logger.remove(context.messageCaptureTransport);
   const callMode =
     context.swaggerToSdkConfig.advancedOptions.generationCallMode ??

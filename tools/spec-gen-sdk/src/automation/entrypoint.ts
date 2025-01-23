@@ -77,6 +77,9 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   if (fs.existsSync(filteredLogFileName)) {
     fs.rmSync(filteredLogFileName);
   }
+  if (fs.existsSync(htmlLogFileName)) {
+    fs.rmSync(htmlLogFileName);
+  }
   logger.add(loggerFileTransport(fullLogFileName));
   logger.info(`Log to ${fullLogFileName}`);
   const localSpecConfigPath = path.join(options.localSpecRepoPath, specConfigPath);
@@ -121,8 +124,8 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
   }
   if (workflowContext) {
     generateReport(workflowContext);
-    await saveFilteredLog(workflowContext);
-    await generateHtmlFromFilteredLog(workflowContext);
+    saveFilteredLog(workflowContext);
+    generateHtmlFromFilteredLog(workflowContext);
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;

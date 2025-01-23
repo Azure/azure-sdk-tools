@@ -3106,7 +3106,7 @@ class DoNotDedentDocstring(BaseChecker):
     priority = -1
     msgs = {
         "C4768": (
-            "Do not hardcode dedent value in docstring",
+            "Do not hardcode dedent value in docstring. Leave the dedent entry in your docstring empty, do not assign a numerical value to it.",
             "do-not-hardcode-dedent",
             "Do not hardcode dedent value in docstring. It's up to sphinx to handle this automatically",
         ),

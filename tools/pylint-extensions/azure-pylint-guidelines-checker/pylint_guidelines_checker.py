@@ -2835,12 +2835,15 @@ class DoNotUseLegacyTyping(BaseChecker):
 
     def visit_functiondef(self, node):
         """Check that we aren't using legacy typing."""
-        if node.type_comment_args or node.type_comment_returns:
-            self.add_message(
-                msgid=f"do-not-use-legacy-typing",
-                node=node,
-                confidence=None,
-            )
+        try:
+            if node.type_comment_args or node.type_comment_returns:
+                self.add_message(
+                    msgid=f"do-not-use-legacy-typing",
+                    node=node,
+                    confidence=None,
+                )
+        except:
+            pass
 
 
 class DoNotImportAsyncio(BaseChecker):
@@ -2860,23 +2863,28 @@ class DoNotImportAsyncio(BaseChecker):
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from asyncio directly."""
-        if node.modname == "asyncio":
-            self.add_message(
-                msgid=f"do-not-import-asyncio",
-                node=node,
-                confidence=None,
-            )
-
-    def visit_import(self, node):
-        """Check that we aren't importing asyncio."""
-        for name, _ in node.names:
-            if name == "asyncio":
+        try:
+            if node.modname == "asyncio":
                 self.add_message(
                     msgid=f"do-not-import-asyncio",
                     node=node,
                     confidence=None,
                 )
+        except:
+            pass
 
+    def visit_import(self, node):
+        """Check that we aren't importing asyncio."""
+        try:
+            for name, _ in node.names:
+                if name == "asyncio":
+                    self.add_message(
+                        msgid=f"do-not-import-asyncio",
+                        node=node,
+                        confidence=None,
+                    )
+        except:
+            pass
 
 
 class InvalidUseOfOverload(BaseChecker):
@@ -2895,39 +2903,41 @@ class InvalidUseOfOverload(BaseChecker):
 
     def visit_classdef(self, node):
         """Check that use of the @overload decorator matches the async/sync nature of the underlying function"""
+        try:
+            # Obtain a list of all functions and function names
+            functions = []
+            node.body
+            for item in node.body:
+                if hasattr(item, 'name'):
+                    functions.append(item)
 
-        # Obtain a list of all functions and function names
-        functions = []
-        node.body
-        for item in node.body:
-            if hasattr(item, 'name'):
-                functions.append(item)
-
-        # Dictionary of lists of all functions by name
-        overloadedfunctions = {}
-        for item in functions:
-            if item.name in overloadedfunctions:
-                overloadedfunctions[item.name].append(item)
-            else:
-                overloadedfunctions[item.name] = [item]
+            # Dictionary of lists of all functions by name
+            overloadedfunctions = {}
+            for item in functions:
+                if item.name in overloadedfunctions:
+                    overloadedfunctions[item.name].append(item)
+                else:
+                    overloadedfunctions[item.name] = [item]
 
 
-        # Loop through the overloaded functions and check they are the same type
-        for funct in overloadedfunctions.values():
-            if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
-                function_is_async = None
+            # Loop through the overloaded functions and check they are the same type
+            for funct in overloadedfunctions.values():
+                if len(funct) > 1:  # only need to check if there is more than 1 function with the same name
+                    function_is_async = None
 
-                for item in funct:
-                    if function_is_async is None:
-                        function_is_async = self.is_function_async(item)
+                    for item in funct:
+                        if function_is_async is None:
+                            function_is_async = self.is_function_async(item)
 
-                    else:
-                        if function_is_async != self.is_function_async(item):
-                            self.add_message(
-                                msgid=f"invalid-use-of-overload",
-                                node=item,
-                                confidence=None,
-                            )
+                        else:
+                            if function_is_async != self.is_function_async(item):
+                                self.add_message(
+                                    msgid=f"invalid-use-of-overload",
+                                    node=item,
+                                    confidence=None,
+                                )
+        except:
+            pass
 
 
     def is_function_async(self, node):
@@ -2956,57 +2966,63 @@ class DoNotLogExceptions(BaseChecker):
         """Check that exceptions aren't logged in exception blocks.
            Go through exception block and branches and ensure error hasn't been logged.
         """
-        # Return a list of exception blocks
-        except_block = node.handlers
-        # Iterate through each exception block
-        for nod in except_block:
-            # Get exception blocks with an exception name
-            if nod.name is not None:
-                exception_name = nod.name.name
-                self.check_for_logging(nod.body, exception_name)
+        try:
+            # Return a list of exception blocks
+            except_block = node.handlers
+            # Iterate through each exception block
+            for nod in except_block:
+                # Get exception blocks with an exception name
+                if nod.name is not None:
+                    exception_name = nod.name.name
+                    self.check_for_logging(nod.body, exception_name)
+        except:
+            pass
 
     def check_for_logging(self, node, exception_name):
         """ Helper function - checks nodes to see if logging has occurred at all
             levels.
         """
-        levels_matches = [".warning", ".error", ".info", ".debug"]
-        for j in node:
-            if isinstance(j, astroid.Expr):
-                expression = j.as_string().lower()
-                if any(x in expression for x in levels_matches) and "logger" in expression:
-                    # Check for variables after strings
-                    end_finder = expression.rfind("'")
-                    delimiters = ["(", "{", "}", ")", "\"", ",", "'"]
-                    if end_finder != -1:
-                        expression_a = expression[end_finder + 1:]
-                        # If there are variables after a string
-                        if len(expression_a) > 1:
-                            expression = expression_a
-                    for delimiter in delimiters:
-                        expression = " ".join(expression.split(delimiter))
-                    expression1 = expression.split()
-                    # Check for presence of exception name
-                    for i in range(len(expression1)):
-                        if exception_name == expression1[i]:
-                            if i+1 < len(expression1):
-                                # TODO: Investigate whether there are any other cases we don't want to raise a Pylint
-                                #  error
-                                if ".__name__" not in expression1[i+1]:
+        try:
+            levels_matches = [".warning", ".error", ".info", ".debug"]
+            for j in node:
+                if isinstance(j, astroid.Expr):
+                    expression = j.as_string().lower()
+                    if any(x in expression for x in levels_matches) and "logger" in expression:
+                        # Check for variables after strings
+                        end_finder = expression.rfind("'")
+                        delimiters = ["(", "{", "}", ")", "\"", ",", "'"]
+                        if end_finder != -1:
+                            expression_a = expression[end_finder + 1:]
+                            # If there are variables after a string
+                            if len(expression_a) > 1:
+                                expression = expression_a
+                        for delimiter in delimiters:
+                            expression = " ".join(expression.split(delimiter))
+                        expression1 = expression.split()
+                        # Check for presence of exception name
+                        for i in range(len(expression1)):
+                            if exception_name == expression1[i]:
+                                if i+1 < len(expression1):
+                                    # TODO: Investigate whether there are any other cases we don't want to raise a Pylint
+                                    #  error
+                                    if ".__name__" not in expression1[i+1]:
+                                        self.add_message(
+                                            msgid=f"do-not-log-exceptions",
+                                            node=j,
+                                            confidence=None,
+                                        )
+                                else:
                                     self.add_message(
                                         msgid=f"do-not-log-exceptions",
                                         node=j,
                                         confidence=None,
                                     )
-                            else:
-                                self.add_message(
-                                    msgid=f"do-not-log-exceptions",
-                                    node=j,
-                                    confidence=None,
-                                )
-            if isinstance(j, astroid.If):
-                self.check_for_logging(j.body, exception_name)
-                # Check any 'elif' or 'else' branches
-                self.check_for_logging(j.orelse, exception_name)
+                if isinstance(j, astroid.If):
+                    self.check_for_logging(j.body, exception_name)
+                    # Check any 'elif' or 'else' branches
+                    self.check_for_logging(j.orelse, exception_name)
+        except:
+            pass
 
 
 class DoNotHardcodeConnectionVerify(BaseChecker):
@@ -3025,15 +3041,18 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
 
     def visit_call(self, node):
         """Visit function calls to ensure it isn't used as a keyword parameter"""
-        if len(node.keywords) > 0:
-            for keyword in node.keywords:
-                if keyword.arg == "connection_verify":
-                    if type(keyword.value.value) == bool:
-                        self.add_message(
-                            msgid=f"do-not-hardcode-connection-verify",
-                            node=keyword,
-                            confidence=None,
-                        )
+        try:
+            if len(node.keywords) > 0:
+                for keyword in node.keywords:
+                    if keyword.arg == "connection_verify":
+                        if type(keyword.value.value) == bool:
+                            self.add_message(
+                                msgid=f"do-not-hardcode-connection-verify",
+                                node=keyword,
+                                confidence=None,
+                            )
+        except:
+            pass
 
     def visit_assign(self, node):
         """Visiting variable Assignments"""

@@ -1,5 +1,9 @@
 # Release History
 
+## 0.5.1 (2025-01-23)
+
+- Bug Fix for connection_verify rule
+
 ## 0.5.0 (2025-01-06)
 
 - Added `httpx` as an import flagged by C4749(networking-import-outside-azure-core-transport)

@@ -170,7 +170,7 @@ export const workflowValidateSdkConfigForSpecPr = async (context: WorkflowContex
   }
 
   if (changedSpecs.length === 0) {
-    throw new Error(`No changed specs are detected and SDK generation is skipped.`);
+    throw new Error(`No changes detected in the API specs; SDK generation skipped.`);
   }
   if (sdkToGenerate.size === 0) {
     throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);

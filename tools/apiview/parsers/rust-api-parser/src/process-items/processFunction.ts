@@ -1,5 +1,6 @@
 import { ReviewLine, ReviewToken, TokenKind } from "../utils/apiview-models";
 import { Item, GenericParamDef, WherePredicate, GenericBound, Type } from "../utils/rustdoc-json-types/jsonTypes";
+import { processStructField } from "./processStructField";
 
 /**
  * Processes a function item and adds its documentation to the ReviewLine.
@@ -67,44 +68,8 @@ export function processFunction(item: Item, reviewLines: ReviewLine[]) {
                 Value: ': ',
                 HasSuffixSpace: false
             });
-
-            if (typeof input[1] === 'string' && input[1] === 'infer') {
-                reviewLine.Tokens.push({
-                    Kind: TokenKind.TypeName,
-                    Value: 'infer',
-                    HasSuffixSpace: false
-                });
-            } else if ('primitive' in input[1]) {
-                reviewLine.Tokens.push({
-                    Kind: TokenKind.TypeName,
-                    Value: input[1].primitive,
-                    HasSuffixSpace: false
-                });
-            } else if ('resolved_path' in input[1]) {
-                reviewLine.Tokens.push({
-                    Kind: TokenKind.TypeName,
-                    Value: input[1].resolved_path.name,
-                    NavigateToId: input[1].resolved_path.id.toString(),
-                    HasSuffixSpace: false
-                });
-            } else if ('borrowed_ref' in input[1]) {
-                reviewLine.Tokens.push({
-                    Kind: TokenKind.Punctuation,
-                    Value: '&',
-                    HasSuffixSpace: false
-                });
-                reviewLine.Tokens.push({
-                    Kind: TokenKind.TypeName,
-                    Value: "unknown", // Recursive - handle this to present better value
-                    HasSuffixSpace: false
-                });
-            } else {
-                reviewLine.Tokens.push({
-                    Kind: TokenKind.TypeName,
-                    Value: 'unknown',
-                    HasSuffixSpace: false
-                });
-            }
+            const token = processStructField(input[1])
+            reviewLine.Tokens.push(token);
         });
     }
 

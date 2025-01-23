@@ -48,13 +48,14 @@ export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLin
                         },
                         {
                             Kind: TokenKind.MemberName,
-                            Value: fieldItem.name || "null"
+                            Value: fieldItem.name || "null",
+                            HasSuffixSpace: false
                         },
                         {
                             Kind: TokenKind.Punctuation,
                             Value: ':'
                         },
-                        processStructField(fieldItem)
+                        processStructField(fieldItem.inner.struct_field)
                     ]
                 });
             }

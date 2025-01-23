@@ -215,7 +215,7 @@ export interface PolyTrait {
     /**
      * The path to the trait.
      */
-    trait_: Path;
+    trait: Path;
     /**
      * Used for Higher-Rank Trait Bounds (HRTBs)
      */
@@ -386,8 +386,8 @@ export type ItemEnum =
     }
     | {
         constant: {
-            type_: Type;
-            const_: Constant;
+            type: Type;
+            const: Constant;
         }
     }
     | {
@@ -405,7 +405,7 @@ export type ItemEnum =
     }
     | {
         assoc_const: {
-            type_: Type;
+            type: Type;
             value: string | null;
         }
     }
@@ -413,7 +413,7 @@ export type ItemEnum =
         assoc_type: {
             generics: Generics;
             bounds: GenericBound[];
-            type_: Type | null;
+            type: Type | null;
         }
     };
 
@@ -702,7 +702,7 @@ export type GenericParamDefKind =
     }
     | {
         const: {
-            type_: Type;
+            type: Type;
             default: string | null;
         };
     };
@@ -794,18 +794,18 @@ export type Type =
     }
     | {
         slice: {
-            type_: Type;
+            type: Type;
         };
     }
     | {
         array: {
-            type_: Type;
+            type: Type;
             len: string;
         };
     }
     | {
         pat: {
-            type_: Type;
+            type: Type;
             __pat_unstable_do_not_use: string;
         };
     }
@@ -818,14 +818,14 @@ export type Type =
     | {
         raw_pointer: {
             is_mutable: boolean;
-            type_: Type;
+            type: Type;
         };
     }
     | {
         borrowed_ref: {
             lifetime: string | null;
             is_mutable: boolean;
-            type_: Type;
+            type: Type;
         };
     }
     | {
@@ -833,7 +833,7 @@ export type Type =
             name: string;
             args: GenericArgs;
             self_type: Type;
-            trait_: Path | null;
+            trait: Path | null;
         };
     };
 
@@ -959,11 +959,11 @@ export interface Impl {
     /**
      * The trait being implemented or None if the impl is inherent.
      */
-    trait_: Path | null;
+    trait: Path | null;
     /**
      * The type that the impl block is for.
      */
-    for_: Type;
+    for: Type;
     /**
      * The list of associated items contained in this impl block.
      */
@@ -1030,7 +1030,7 @@ export interface TypeAlias {
     /**
      * The type referred to by this alias.
      */
-    type_: Type;
+    type: Type;
     /**
      * Information about the type parameters and where clauses of the alias.
      */
@@ -1044,7 +1044,7 @@ export interface StaticItem {
     /**
      * The type of the static.
      */
-    type_: Type;
+    type: Type;
     /**
      * This is true for mutable statics, declared as static mut X: T = f();
      */

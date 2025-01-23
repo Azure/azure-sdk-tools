@@ -1,5 +1,5 @@
-import { ReviewLine, } from "../apiview-models";
-import { Crate, Item, } from "../rustdoc-json-types/jsonTypes";
+import { ReviewLine, } from "../utils/apiview-models";
+import { Crate, Item, } from "../utils/rustdoc-json-types/jsonTypes";
 import { processFunction } from "./processFunction";
 import { processModule } from "./processModule";
 import { processStruct } from "./processStruct";
@@ -36,13 +36,13 @@ export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine
     // }
     if (typeof item.inner === 'object') {
         if ('module' in item.inner) {
-            processModule(apiJson, item,  reviewLines);
+            processModule(apiJson, item, reviewLines);
         } else if ('function' in item.inner) {
-            processFunction(item,  reviewLines);
+            processFunction(item, reviewLines);
         } else if ('struct' in item.inner) {
-            processStruct(apiJson, item,  reviewLines);
+            processStruct(apiJson, item, reviewLines);
         } else if ('trait' in item.inner) {
-            processTrait(apiJson, item,  reviewLines);
+            processTrait(apiJson, item, reviewLines);
         }
     }
 

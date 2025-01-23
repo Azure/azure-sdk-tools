@@ -1,5 +1,5 @@
-import { ReviewLine, ReviewToken, TokenKind } from "../apiview-models";
-import { Item, GenericParamDef, WherePredicate, GenericBound } from "../rustdoc-json-types/jsonTypes";
+import { ReviewLine, ReviewToken, TokenKind } from "../utils/apiview-models";
+import { Item, GenericParamDef, WherePredicate, GenericBound } from "../utils/rustdoc-json-types/jsonTypes";
 
 /**
  * Processes a function item and adds its documentation to the ReviewLine.

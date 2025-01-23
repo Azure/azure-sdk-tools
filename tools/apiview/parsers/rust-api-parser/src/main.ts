@@ -1,16 +1,13 @@
 import * as fs from 'fs';
-import { processItem } from './utils/process-items/processItem';
-import { getRootModules } from './utils/rootModules';
+import { processItem } from './process-items/processItem';
 import { CodeFile } from './utils/apiview-models';
 import { Crate } from './utils/rustdoc-json-types/jsonTypes';
 
 function main() {
     // Read the JSON file
-    const data = fs.readFileSync('../clean-rust-doc-output/outputs/docs.api.json', 'utf8');
+    const data = fs.readFileSync('./inputs/docs_compact.json', 'utf8');
     // Parse the JSON data
     let apiJson: Crate = JSON.parse(data);
-    const rootModules = getRootModules(apiJson);
-
     // Create the CodeFile object
     const codeFile: CodeFile = {
         PackageName: "your-package-name",
@@ -20,13 +17,10 @@ function main() {
         ReviewLines: []
     };
 
-    // Process each root module and add to ReviewLines
-    rootModules.forEach(rootModule => {
-        const reviewLines = processItem(apiJson, rootModule);
-        if (reviewLines) {
-            codeFile.ReviewLines.push(...reviewLines);
-        }
-    });
+    const reviewLines = processItem(apiJson, apiJson.index[apiJson.root]);
+    if (reviewLines) {
+        codeFile.ReviewLines.push(...reviewLines);
+    }
 
     // Write the JSON output to a file
     const outputFilePath = 'outputs/docs.api.json';

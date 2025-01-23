@@ -1,2 +1,4 @@
-clean-rust-doc-output/inputs/*.json
-clean-rust-doc-output/inputs/docs/Cargo.toml
+inputs
+node_modules
+outputs
+expected-outputs

@@ -72,7 +72,7 @@ This command generates the default configuration files used by tsp-client. Run t
 Example:
 
 ```
-azure-sdk-for-python> tsp-client generate-config-files --package-json ..\<path to @azure-tools/typespec-python emitter clone>\package.json
+azure-sdk-for-python> tsp-client generate-config-files --package-json <path to @azure-tools/typespec-python emitter clone>\package.json
 ```
 
 ### generate-lock-file

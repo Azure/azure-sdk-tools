@@ -124,7 +124,7 @@ Example using the `azure-sdk-for-js` and the `@azure-tools/typespec-ts` emitter:
 azure-sdk-for-js> tsp-client generate-config-files --package-json <relative or absolute path to repo clone of @azure-tools/typespec-ts package>/package.json
 ```
 
-If you need to override certain devDependencies for your emitter-package.json you can create a json file to explicitly list the package and corresponding version you want to override. This will add an `overrides` section in your emitter-package.json that will be used during `npm install` or `npm ci`. [See npm overrides doc.](https://docs.npmjs.com/cli/v10/configuring-npm/package-json?v=true#overrides)
+If you need to override dependencies for your emitter-package.json you can create a json file to explicitly list the package and corresponding version you want to override. This will add an `overrides` section in your emitter-package.json that will be used during `npm install` or `npm ci`. [See npm overrides doc.](https://docs.npmjs.com/cli/v10/configuring-npm/package-json?v=true#overrides)
 
 Example json file with package overrides:
 

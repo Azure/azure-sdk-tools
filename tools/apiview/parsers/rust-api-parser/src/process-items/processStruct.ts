@@ -30,6 +30,10 @@ export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLin
         NavigationDisplayName: item.name || undefined
     });
 
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: '{'
+    });
     // fields
     if (typeof item.inner === 'object' && 'struct' in item.inner && item.inner.struct && typeof item.inner.struct.kind === 'object' && 'plain' in item.inner.struct.kind && item.inner.struct.kind.plain.fields) {
         item.inner.struct.kind.plain.fields.forEach((fieldId: number) => {
@@ -63,4 +67,11 @@ export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLin
     }
 
     reviewLines.push(reviewLine);
+    reviewLines.push({
+        RelatedToLine: item.id.toString(),
+        Tokens: [{
+            Kind: TokenKind.Punctuation,
+            Value: '}'
+        }],
+    });
 }

@@ -2,6 +2,7 @@ import { ReviewLine, } from "../utils/apiview-models";
 import { Crate, Item, } from "../utils/rustdoc-json-types/jsonTypes";
 import { processFunction } from "./processFunction";
 import { processModule } from "./processModule";
+import { processStatic } from "./processStatic";
 import { processStruct } from "./processStruct";
 import { processStructField } from "./processStructField";
 import { processTrait } from "./processTrait";
@@ -44,6 +45,8 @@ export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine
             processStruct(apiJson, item, reviewLines);
         } else if ('trait' in item.inner) {
             processTrait(apiJson, item, reviewLines);
+        } else if ('static' in item.inner) {
+            processStatic(item, reviewLines);
         }
     }
 

@@ -31,6 +31,10 @@ export function processModule(apiJson: Crate, item: Item, reviewLines: ReviewLin
         NavigationDisplayName: item.name || undefined
     });
 
+    reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: '{'
+    });
     if (typeof item.inner === 'object' && 'module' in item.inner && item.inner.module.items) {
         item.inner.module.items.forEach((childId: number) => {
             const childItem = apiJson.index[childId];
@@ -45,4 +49,11 @@ export function processModule(apiJson: Crate, item: Item, reviewLines: ReviewLin
     }
 
     reviewLines.push(reviewLine);
+    reviewLines.push({
+        RelatedToLine: item.id.toString(),
+        Tokens: [{
+            Kind: TokenKind.Punctuation,
+            Value: '}'
+        }],
+    });
 }

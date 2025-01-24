@@ -1,4 +1,4 @@
-import { Item, Type } from "../utils/rustdoc-json-types/jsonTypes";
+import { Type } from "../utils/rustdoc-json-types/jsonTypes";
 import { ReviewToken, TokenKind } from "../utils/apiview-models";
 
 function typeToString(type: Type): string {
@@ -11,7 +11,7 @@ function typeToString(type: Type): string {
     } else if ("resolved_path" in type) {
         return type.resolved_path.name;
     } else if ("dyn_trait" in type) {
-        return `dyn ${type.dyn_trait.traits.map(t => t.trait.name).join(" + ")}`;
+        return `(dyn ${type.dyn_trait.traits.map(t => t.trait.name).join(" + ")})`; // TODO: Can extend this to include navigation info; example: &(dyn MyTrait + Sync)
     } else if ("generic" in type) {
         return type.generic;
     } else if ("primitive" in type) {

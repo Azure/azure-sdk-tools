@@ -52,9 +52,4 @@ export function processTrait(apiJson: Crate, item: Item, reviewLines: ReviewLine
         }],
         IsContextEndLine: true,
     });
-    reviewLines.push({
-        "RelatedToLine": item.id.toString(),
-        "Tokens": []
-    })
-
 }

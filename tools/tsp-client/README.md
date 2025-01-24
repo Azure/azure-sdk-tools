@@ -65,7 +65,15 @@ Sort an existing swagger specification to be the same content order with TypeSpe
 
 ### generate-config-files
 
-Generate the `emitter-package.json` and `emitter-package-lock.json` used for tsp-client commands under the eng/ directory of your current repository. Run this command from the target repository and pass in the path to the package.json file of the emitter you want to use generate the configuration files.
+This command generates the default configuration files used by tsp-client. Run this command to generate the `emitter-package.json` and `emitter-package-lock.json` under the **eng/** directory of your current repository.
+
+**Required: Use the `--package-json` flag to specify the path to the package.json file of the emitter you will use to generate client libraries.**
+
+Example:
+
+```
+azure-sdk-for-python> tsp-client generate-config-files --package-json ..\<path to @azure-tools/typespec-python emitter clone>\package.json
+```
 
 ### generate-lock-file
 

@@ -16,8 +16,6 @@ import io
 import importlib
 import logging
 import shutil
-import ast
-import textwrap
 import tempfile
 from subprocess import check_call
 import zipfile
@@ -165,7 +163,7 @@ class StubGenerator:
         # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
         pkg_root_path, pkg_name, version, namespace = self._get_pkg_metadata()
-        self._install_package(pkg_name)
+        self._install_package()
 
         logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
         
@@ -319,6 +317,6 @@ class StubGenerator:
             logging.info("Root module found in {0}: '{1}'".format(TOP_LEVEL_WHEEL_FILE, root_module_name))
             return root_module_name
 
-    def _install_package(self, pkg_name):
-        commands = [sys.executable, "-m", "pip", "install", pkg_name, "-q"]
+    def _install_package(self):
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
         check_call(commands, timeout = 60)

@@ -6,17 +6,18 @@ import { Crate } from './utils/rustdoc-json-types/jsonTypes';
 function main() {
     // Read the JSON file
     const args = process.argv.slice(2);
-    const packageArg = args.find(arg => arg.startsWith('--package='));
-    if (!packageArg) {
-        throw new Error("Please provide a --package argument");
+    if (args.length < 2) {
+        throw new Error("Please provide input and output file paths as arguments");
     }
-    const packageName = packageArg.split('=')[1];
-    const data = fs.readFileSync(`./inputs/${packageName}_compact.json`, 'utf8');
+    const inputFilePath = args[0];
+    const outputFilePath = args[1];
+
+    const data = fs.readFileSync(inputFilePath, 'utf8');
     // Parse the JSON data
     let apiJson: Crate = JSON.parse(data);
     // Create the CodeFile object
     const codeFile: CodeFile = {
-        PackageName: packageName,
+        PackageName: apiJson.index[apiJson.root].name || "unknown",
         PackageVersion: apiJson["crate_version"] || "unknown",
         ParserVersion: "1.0.0",
         Language: "Rust",
@@ -29,7 +30,6 @@ function main() {
     }
 
     // Write the JSON output to a file
-    const outputFilePath = `outputs/${packageName}.api.json`;
     fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
     console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);
 }

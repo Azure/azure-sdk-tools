@@ -23,11 +23,29 @@ tsp-client <command> [options]
 
 ## Commands
 
-To get help with a command use the `--help` flag on the commandline to see required parameters and supported options.
+Use one of the supported commands to get started generating clients from a TypeSpec project.
 
 This tool will default to using your current working directory to generate clients in and will
 use it to look for relevant configuration files. To specify a different output directory, use
 the `-o` or `--output-dir` option.
+
+To see supported commands, run:
+
+```
+tsp-client --help
+```
+
+To see supported parameters and options for a specific command, run:
+
+```
+tsp-client <command> --help
+```
+
+Example using the `init` command:
+
+```
+tsp-client init --help
+```
 
 ### init
 

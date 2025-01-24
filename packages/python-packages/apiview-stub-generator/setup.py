@@ -34,7 +34,8 @@ setup(
     install_requires=[
         "charset-normalizer",
         "pylint",
-        "azure-pylint-guidelines-checker"
+        "azure-pylint-guidelines-checker",
+        "pkginfo"
     ],
     python_requires=">=3.8.0",
     entry_points={"console_scripts": ["apistubgen=apistub:console_entry_point",]},

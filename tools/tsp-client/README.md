@@ -97,6 +97,12 @@ tsp-client generate
 
 Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag. By default, the converted TypeSpec project will leverage TypeSpec built-in libraries with standard patterns and templates (highly recommended), which will cause discrepancies between the generated TypeSpec and original swagger. If you really don't want this intended discrepancy, add `--fully-compatible` flag to generate a TypeSpec project that is fully compatible with the swagger.
 
+Example:
+
+```
+tsp-client convert --swagger-readme <path to swagger README file>/readme.md
+```
+
 ### compare
 
 Compares two Swagger definitions to identify the relevant differences between them. This command is useful when comparing an existing Swagger definition with a TypeSpec generated one. The `compare` command requires two parameters: `--lhs` which will typically be the original hand-authored Swagger and `--rhs` which will usually be the folder containing your TypeSpec. The command will generate the Swagger and compare the two definitions. The command will ignore differences in the Swagger that don't

@@ -123,6 +123,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, JavaLanguageService>();
             services.AddSingleton<LanguageService, PythonLanguageService>();
             services.AddSingleton<LanguageService, JavaScriptLanguageService>();
+            services.AddSingleton<LanguageService, RustLanguageService>();
             services.AddSingleton<LanguageService, CppLanguageService>();
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();

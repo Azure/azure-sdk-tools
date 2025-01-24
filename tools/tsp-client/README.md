@@ -100,6 +100,23 @@ Example:
 azure-sdk-for-python> tsp-client generate-config-files --package-json <path to @azure-tools/typespec-python emitter clone>\package.json
 ```
 
+If you need to override certain devDependencies for your emitter-package.json you can create a json file to explicitly list the package and corresponding version you want to override. This will add an `overrides` section in your emitter-package.json that will be used during `npm install` or `npm ci`. [See npm overrides doc.](https://docs.npmjs.com/cli/v10/configuring-npm/package-json?v=true#overrides)
+
+Example json file with package overrides:
+
+```
+{
+    "@azure-tools/typespec-python": "0.36.0",
+    "@typespec/compiler": "0.61.0"
+}
+```
+
+Example command specifying overrides:
+
+```
+azure-sdk-for-python> tsp-client generate-config-files --package-json <path to @azure-tools/typespec-python emitter clone>\package.json --overrides <path to overrides file>.json
+```
+
 ### generate-lock-file
 
 Generate an emitter-package-lock.json under the eng/ directory based on existing `<repo-root>/eng/emitter-package.json`.

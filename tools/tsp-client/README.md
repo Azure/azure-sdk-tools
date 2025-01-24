@@ -23,7 +23,8 @@ tsp-client <command> [options]
 
 ## Commands
 
-Use one of the supported commands to get started generating clients from a TypeSpec project.
+To get help with a command use the `--help` flag on the commandline to see required parameters and supported options.
+
 This tool will default to using your current working directory to generate clients in and will
 use it to look for relevant configuration files. To specify a different output directory, use
 the `-o` or `--output-dir` option.
@@ -36,9 +37,21 @@ The `init` command generates a directory structure following the standard patter
 
 > IMPORTANT: This command should be run from the root of the repository.
 
+Example:
+
+```
+tsp-client init -c https://github.com/Azure/azure-rest-api-specs/blob/3bae4e510063fbd777b88ea5eee03c41644bc9da/specification/cognitiveservices/ContentSafety/tspconfig.yaml
+```
+
 ### update
 
 Sync and generate client libraries from a TypeSpec project. The `update` command will look for a [tsp-location.yaml](#tsp-locationyaml) file in your current directory to sync a TypeSpec project and generate a client library.
+
+Example:
+
+```
+tsp-client update
+```
 
 ### sync
 
@@ -46,9 +59,21 @@ Sync a TypeSpec project with the parameters specified in tsp-location.yaml.
 
 By default the `sync` command will look for a tsp-location.yaml to get the project details and sync them to a temporary directory called `TempTypeSpecFiles`. Alternately, you can pass in the `--local-spec-repo` flag with the path to your local TypeSpec project to pull those files into your temporary directory.
 
+Example:
+
+```
+tsp-client sync
+```
+
 ### generate
 
 Generate a client library from a TypeSpec project. The `generate` command should be run after the `sync` command. `generate` relies on the existence of the `TempTypeSpecFiles` directory created by the `sync` command and on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json`. The `emitter-package.json` file is used to install project dependencies and get the appropriate emitter package.
+
+Example:
+
+```
+tsp-client generate
+```
 
 ### convert
 
@@ -78,43 +103,6 @@ azure-sdk-for-python> tsp-client generate-config-files --package-json <path to @
 ### generate-lock-file
 
 Generate an emitter-package-lock.json under the eng/ directory based on existing `<repo-root>/eng/emitter-package.json`.
-
-## Options
-
-```
-  --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
-  -c, --tsp-config          The tspconfig.yaml file to use                      [string]
-  --commit                  Commit to be used for project init or update        [string]
-  -d, --debug               Enable debug logging                                [boolean]
-  --emitter-options         The options to pass to the emitter                  [string]
-  -h, --help                Show help                                           [boolean]
-  --local-spec-repo         Path to local repository with the TypeSpec project  [string]
-  --no-prompt               Skip prompting for output directory confirmation    [boolean]
-  --save-inputs             Don't clean up the temp directory after generation  [boolean]
-  --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
-  --swagger-readme          Path or url to swagger readme file                  [string]
-  -o, --output-dir          Specify an alternate output directory for the
-                            generated files. Default is your current directory  [string]
-  --repo                    Repository where the project is defined for init
-                            or update                                           [string]
-  -v, --version             Show version number                                 [boolean]
-```
-
-## Examples
-
-Initializing and generating a new client from a `tspconfig.yaml`:
-
-> NOTE: The `init` command must be run from the root of the repository.
-
-```
-tsp-client init -c https://github.com/Azure/azure-rest-api-specs/blob/3bae4e510063fbd777b88ea5eee03c41644bc9da/specification/cognitiveservices/ContentSafety/tspconfig.yaml
-```
-
-Generating in a directory that contains a `tsp-location.yaml`:
-
-```
-tsp-client update
-```
 
 ## Important concepts
 

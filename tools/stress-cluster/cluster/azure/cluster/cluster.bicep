@@ -6,7 +6,8 @@ param clusterName string
 param location string = resourceGroup().location
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
-param defaultAgentPoolSku string = 'Standard_D8a_v4'
+param defaultAgentPoolSku string
+param systemAgentPoolSku string
 param maintenanceWindowDay string = 'Monday'
 // AKS does not allow agentPool updates via existing managed cluster resources
 param updateNodes bool = false
@@ -23,7 +24,7 @@ var systemAgentPool = {
   minCount: 1
   maxCount: 4
   mode: 'System'
-  vmSize: 'Standard_D4ds_v4'
+  vmSize: systemAgentPoolSku
   type: 'VirtualMachineScaleSets'
   osType: 'Linux'
   enableAutoScaling: true

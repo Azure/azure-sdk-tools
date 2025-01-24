@@ -8,6 +8,7 @@ namespace APIViewWeb
     public class SwiftLanguageService : JsonLanguageService
     {
         public override string Name { get; } = "Swift";
+        public override string VersionString { get; } = "0.3.0";
 
         //Swift doesn't have any parser for now
         //It will upload a json file with name Swift so Swift reviews are listed under that filter type
@@ -21,6 +22,16 @@ namespace APIViewWeb
             // Skip initial processing so this service won't be selected for LLC when json is uploaded
             // This is only a temporary solution for POC and will be remvoed once autorest yaml is uploaded instead of json for LLC
             return false;
+        }
+
+        public override bool CanUpdate(string versionString)
+        {
+            return false;
+        }
+
+        public override bool CanConvert(string versionString)
+        {
+            return versionString != VersionString;
         }
     }
 }

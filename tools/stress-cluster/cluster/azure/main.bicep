@@ -99,8 +99,9 @@ module containerRegistry 'cluster/acr.bicep' = {
     params: {
         registryName: '${replace(clusterName, '-', '')}${resourceSuffix}'
         location: clusterLocation
-        objectIds: concat(accessGroups, array(cluster.outputs.kubeletIdentityObjectId))
-        // Cluster may be in a tenant that does not include the ACR access groups
+        objectIds: accessGroups
+        kubeletIdentityObjectId: cluster.outputs.kubeletIdentityObjectId
+        // Cluster may be in a tenant that does not include the corp access groups
         skipAcrRoleAssignment: skipAcrRoleAssignment
     }
 }

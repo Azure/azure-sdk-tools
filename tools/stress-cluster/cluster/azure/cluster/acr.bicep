@@ -1,6 +1,7 @@
 param registryName string
 param location string = resourceGroup().location
 param objectIds array
+param kubeletIdentityObjectId string
 // Cluster may be in a tenant that does not include the ACR access groups
 param skipAcrRoleAssignment bool
 
@@ -37,5 +38,14 @@ resource acrPullRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview
     principalId: objectId
   }
 }]
+
+resource acrKubeletPullRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid('azureContainerRegistryPullRole', kubeletIdentityObjectId, resourceGroup().id)
+  scope: registry
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+    principalId: kubeletIdentityObjectId
+  }
+}
 
 output containerRegistryName string = registry.name

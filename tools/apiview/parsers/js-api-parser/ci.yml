@@ -81,7 +81,8 @@ extends:
             - name: ArtifactName
               value: 'apiview'
             - name: FeedRegistry
-              value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
+              value: '//pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
+
           jobs:
           - job: PublishPackage
             displayName: 'Publish ts-genapi package to devops feed'
@@ -91,23 +92,25 @@ extends:
               os: linux
             steps:
             - checkout: none
+
             - download: current
 
             - pwsh: |
-                $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
+                $detectedPackageName = Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
                 Write-Host "Detected package name: $detectedPackageName"
-                $registry="$(FeedRegistry)"
-                $regAuth=$registry.replace("https:","")
-                $npmReg = $regAuth.replace("registry/","");
-                $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
-                Write-Host "Publishing to $($regAuth)"
-                npm config set $regAuth`:username=azure-sdk
-                npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
-                npm config set $regAuth`:email=not_set
-                npm config set $npmReg`:username=azure-sdk
-                npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
-                npm config set $npmReg`:email=not_set
-                Write-Host "Publishing package"
-                Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true"
-                npm publish $detectedPackageName --registry=$registry --always-auth=true
-              displayName: Publish package
+                Write-Host "##vso[task.setvariable variable=DetectedPackageName]$detectedPackageName"
+              displayName: 'Prepare package for publishing'
+
+            - task: AzureCLI@2
+              inputs:
+                azureSubscription: 'Azure SDK Engineering System'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az login --identity --allow-no-subscriptions
+                  token=$(az account get-access-token --resource https://pkgs.dev.azure.com --query accessToken --output tsv)
+                  echo "$(FeedRegistry):_authToken=$token" > ~/.npmrc
+                  registry="https:$(FeedRegistry)"
+                  npm config set registry $registry
+                  npm publish $(DetectedPackageName) --registry=$registry --always-auth=true
+              displayName: 'Publish package using Managed Identity'

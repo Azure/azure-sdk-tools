@@ -80,6 +80,8 @@ extends:
             - template: /eng/pipelines/templates/variables/image.yml
             - name: ArtifactName
               value: 'apiview'
+            - name: TypeScriptGeneratorDirectory
+              value: 'tools/apiview/parsers/js-api-parser'
 
           jobs:
           - job: PublishPackage

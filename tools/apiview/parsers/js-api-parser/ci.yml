@@ -89,7 +89,6 @@ extends:
               image: $(LINUXNEXTVMIMAGE)
               os: linux
             steps:
-            - checkout: none
             - download: current
 
             - pwsh: |

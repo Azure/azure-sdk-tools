@@ -109,5 +109,3 @@ extends:
                 customCommand: 'publish $(PackageArtifactFullPath)'
                 publishRegistry: useFeed
                 publishFeed: "public/azure-sdk-for-js"
-              env:
-                SYSTEM_ACCESSTOKEN: $(System.AccessToken)

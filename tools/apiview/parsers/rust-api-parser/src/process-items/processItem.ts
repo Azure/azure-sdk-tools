@@ -18,7 +18,7 @@ const processedItems = new Set<string>();
  */
 export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine[]): ReviewLine[] | null {
     // Check if the item has already been processed
-    if (item.name && processedItems.has(item.name)) {
+    if (!item || (item.name && processedItems.has(item.name))) {
         return null;
     }
     item.name && processedItems.add(item.name);

@@ -1,5 +1,6 @@
 import { ReviewLine, TokenKind } from "../utils/apiview-models";
 import { Crate, Item } from "../utils/rustdoc-json-types/jsonTypes";
+import { processImpl } from "./processImpl";
 import { processStructField } from "./processStructField";
 
 /**
@@ -16,6 +17,12 @@ export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLin
         Tokens: [],
         Children: []
     };
+
+    // Process derives
+    if (typeof item.inner === 'object' && 'struct' in item.inner && item.inner.struct && item.inner.struct.impls) {
+        processImpl({ ...item, inner: { struct: item.inner.struct } }, apiJson, reviewLine);
+    }
+
     reviewLine.Tokens.push({
         Kind: TokenKind.Keyword,
         Value: 'pub struct'

@@ -2,7 +2,7 @@
 This TypeScript project reads a cleaned Rustdoc JSON file from the azure-sdk-for-rust repository and generates a new Rust API view capturing the exported API surface. This project organizes the API elements into modules, functions, and other Rust constructs. and preserves the parent-child hierarchy.
 
 ### Features
-- Reads a Rustdoc JSON file (docs_compact.json).
+- Reads a Rustdoc JSON file (docs.rust.json).
 - Extracts the exported API surface.
 - Filters items to include only those with public visibility.
 - Preserves the parent-child hierarchy.
@@ -17,7 +17,7 @@ This TypeScript project reads a cleaned Rustdoc JSON file from the azure-sdk-for
 
 ### Run the project:
 - `node ./dist/main.js {input_file_path} {output_file_path}`
-    - Example: `node ./dist/main.js /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/azure_core_compact.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/azure_core.api.json`
+    - Example: `node ./dist/main.js /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/inputs/azure_core.rust.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/outputs/azure_core.api.json`
     - Or if you have the package installed, you can run `rust-genapi <input_file_path> <output_file_path>`.
 
 ### License

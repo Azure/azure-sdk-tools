@@ -104,6 +104,7 @@ extends:
                 workingFile: $(TypeScriptGeneratorDirectory)/.npmrc
 
             - script: |
+                //pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/:_authToken=${SYSTEM_ACCESSTOKEN}
                 npm adduser --registry=https://pkgs.dev.azure.com/<organization>/_packaging/<feed>/npm/registry/
               displayName: 'Authenticate using npm adduser'
               workingDirectory: $(TypeScriptGeneratorDirectory)

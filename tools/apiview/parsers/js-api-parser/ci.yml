@@ -100,8 +100,10 @@ extends:
               displayName: "Find package artifact"
 
             - script: |
-                //pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/:_authToken=${SYSTEM_ACCESSTOKEN}
-                npm adduser --registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
+                npm config set registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
+                npm config set always-auth true
+                npm config set //pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/:_authToken=${SYSTEM_ACCESSTOKEN}
+                npm adduser --registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/                
               displayName: 'Authenticate using npm adduser'
               workingDirectory: $(TypeScriptGeneratorDirectory)
 

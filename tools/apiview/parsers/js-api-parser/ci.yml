@@ -103,6 +103,11 @@ extends:
               inputs:
                 workingFile: $(TypeScriptGeneratorDirectory)/.npmrc
 
+            - script: |
+                npm adduser --registry=https://pkgs.dev.azure.com/<organization>/_packaging/<feed>/npm/registry/
+              displayName: 'Authenticate using npm adduser'
+              workingDirectory: $(TypeScriptGeneratorDirectory)
+
             - task: Npm@1
               inputs:
                 command: 'custom'

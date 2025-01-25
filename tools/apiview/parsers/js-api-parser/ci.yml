@@ -101,6 +101,7 @@ extends:
             - task: npmAuthenticate@0
               inputs:
                 workingFile: $(TypeScriptGeneratorDirectory)/.npmrc
+                customEndpoint: 'https://management.azure.com/'
 
             - task: Npm@1
               inputs:

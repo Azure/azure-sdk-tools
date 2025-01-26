@@ -1,6 +1,7 @@
 import { ReviewLine, TokenKind } from "../utils/apiview-models";
 import { Crate, Item } from "../utils/rustdoc-json-types/jsonTypes";
 import { processStructField } from "./processStructField";
+import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 
 /**
  * Processes a static item and adds its documentation to the ReviewLine.
@@ -11,6 +12,8 @@ import { processStructField } from "./processStructField";
  */
 export function processStatic(item: Item, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && 'static' in item.inner)) return;
+
+    reviewLines.push(createDocsReviewLine(item));
 
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {

@@ -28,15 +28,6 @@ export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine
         reviewLines = [];
     }
 
-    // Add documentation token if available
-    // if (item.docs) {
-    // TODO: Push to children and add link with "related to line"
-    // reviewLine.Tokens.push({
-    //     Kind: TokenKind.Comment,
-    //     Value: `/// ${item.docs}`,
-    //     IsDocumentation: true
-    // });
-    // }
     if (typeof item.inner === 'object') {
         if ('module' in item.inner) {
             processModule(apiJson, item, reviewLines);

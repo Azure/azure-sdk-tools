@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../utils/apiview-models";
 import { Crate, Item } from "../utils/rustdoc-json-types/jsonTypes";
 import { processImpl } from "./processImpl";
 import { processStructField } from "./processStructField";
+import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 
 /**
  * Processes a struct item and adds its documentation to the ReviewLine.
@@ -12,6 +13,9 @@ import { processStructField } from "./processStructField";
  */
 export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && 'struct' in item.inner)) return;
+
+    reviewLines.push(createDocsReviewLine(item));
+
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {
         LineId: item.id.toString(),

@@ -1,9 +1,12 @@
 import { ReviewLine, TokenKind } from "../utils/apiview-models";
 import { Crate, Item } from "../utils/rustdoc-json-types/jsonTypes";
 import { processImpl, processTraitImpls } from "./processImpl";
+import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 
 export function processEnum(item: Item, apiJson: Crate, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && "enum" in item.inner)) return;
+
+    reviewLines.push(createDocsReviewLine(item));
 
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {

@@ -99,13 +99,9 @@ extends:
                 Write-Host "##vso[task.setvariable variable=PackageArtifactFullPath]$detectedPackageName"
               displayName: "Find package artifact"
 
-            - script: |
-                npm config set registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
-              displayName: 'Set npm config'
-
             - task: NpmAuthenticate@0
               inputs:
-                workingFile: .npmrc
+                workingFile: $(TypeScriptGeneratorDirectory)/.npmrc
 
             - task: Npm@1
               inputs:

@@ -11,6 +11,7 @@ import { processStructField } from "./processStructField";
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLine[]) {
+    if (!(typeof item.inner === 'object' && 'struct' in item.inner)) return;
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {
         LineId: item.id.toString(),
@@ -19,7 +20,7 @@ export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLin
     };
 
     // Process derives
-    if (typeof item.inner === 'object' && 'struct' in item.inner && item.inner.struct && item.inner.struct.impls) {
+    if (item.inner.struct && item.inner.struct.impls) {
         processImpl({ ...item, inner: { struct: item.inner.struct } }, apiJson, reviewLine);
     }
 
@@ -42,7 +43,7 @@ export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLin
         Value: '{'
     });
     // fields
-    if (typeof item.inner === 'object' && 'struct' in item.inner && item.inner.struct && typeof item.inner.struct.kind === 'object' && 'plain' in item.inner.struct.kind && item.inner.struct.kind.plain.fields) {
+    if (item.inner.struct && typeof item.inner.struct.kind === 'object' && 'plain' in item.inner.struct.kind && item.inner.struct.kind.plain.fields) {
         item.inner.struct.kind.plain.fields.forEach((fieldId: number) => {
             const fieldItem = apiJson.index[fieldId];
             if (fieldItem && typeof fieldItem.inner === 'object' && 'struct_field' in fieldItem.inner) {

@@ -10,6 +10,8 @@ import { processStructField } from "./processStructField";
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processStatic(item: Item, reviewLines: ReviewLine[]) {
+    if (!(typeof item.inner === 'object' && 'static' in item.inner)) return;
+
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {
         LineId: item.id.toString(),
@@ -32,7 +34,7 @@ export function processStatic(item: Item, reviewLines: ReviewLine[]) {
     });
 
     // Add type and value if available
-    if (typeof item.inner === 'object' && 'static' in item.inner && item.inner.static) {
+    if (item.inner.static) {
         reviewLine.Tokens.push({
             Kind: TokenKind.Punctuation,
             Value: ':'

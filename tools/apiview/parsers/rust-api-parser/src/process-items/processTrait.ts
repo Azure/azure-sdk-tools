@@ -10,6 +10,7 @@ import { processItem } from "./processItem";
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processTrait(apiJson: Crate, item: Item, reviewLines: ReviewLine[]) {
+    if (!(typeof item.inner === 'object' && 'trait' in item.inner)) return;
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {
         LineId: item.id.toString(),
@@ -35,7 +36,7 @@ export function processTrait(apiJson: Crate, item: Item, reviewLines: ReviewLine
         Kind: TokenKind.Punctuation,
         Value: '{'
     });
-    if (typeof item.inner === 'object' && 'trait' in item.inner && item.inner.trait.items) {
+    if (item.inner.trait.items) {
         item.inner.trait.items.forEach((associatedItem: number) => {
             if (!reviewLine.Children) reviewLine.Children = [];
             const childReviewLines = processItem(apiJson, apiJson.index[associatedItem])

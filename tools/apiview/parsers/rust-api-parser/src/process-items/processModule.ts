@@ -10,6 +10,7 @@ import { processItem } from "./processItem";
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processModule(apiJson: Crate, item: Item, reviewLines: ReviewLine[]) {
+    if (!(typeof item.inner === 'object' && 'module' in item.inner)) return;
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {
         LineId: item.id.toString(),
@@ -35,7 +36,7 @@ export function processModule(apiJson: Crate, item: Item, reviewLines: ReviewLin
         Kind: TokenKind.Punctuation,
         Value: '{'
     });
-    if (typeof item.inner === 'object' && 'module' in item.inner && item.inner.module.items) {
+    if (item.inner.module.items) {
         item.inner.module.items.forEach((childId: number) => {
             const childItem = apiJson.index[childId];
             const childReviewLines = processItem(apiJson, childItem);

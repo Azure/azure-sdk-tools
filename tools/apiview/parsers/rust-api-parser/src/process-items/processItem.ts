@@ -1,10 +1,10 @@
 import { ReviewLine, } from "../utils/apiview-models";
 import { Crate, Item, } from "../utils/rustdoc-json-types/jsonTypes";
+import { processConstant } from "./processConstant";
 import { processFunction } from "./processFunction";
 import { processModule } from "./processModule";
 import { processStatic } from "./processStatic";
 import { processStruct } from "./processStruct";
-import { processStructField } from "./processStructField";
 import { processTrait } from "./processTrait";
 
 const processedItems = new Set<string>();
@@ -47,6 +47,8 @@ export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine
             processTrait(apiJson, item, reviewLines);
         } else if ('static' in item.inner) {
             processStatic(item, reviewLines);
+        } else if ('constant' in item.inner) {
+            processConstant(item, reviewLines);
         }
     }
 

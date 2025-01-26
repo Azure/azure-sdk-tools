@@ -9,14 +9,14 @@ import { processStructField } from "./processStructField";
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processFunction(item: Item, reviewLines: ReviewLine[]) {
+    if (!(typeof item.inner === 'object' && 'function' in item.inner)) return;
+
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {
         LineId: item.id.toString(),
         Tokens: [],
         Children: []
     };
-
-    if (!(typeof item.inner === 'object' && 'function' in item.inner)) return;
 
     reviewLine.Tokens.push({
         Kind: TokenKind.Keyword,

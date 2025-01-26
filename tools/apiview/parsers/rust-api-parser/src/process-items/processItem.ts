@@ -1,6 +1,7 @@
 import { ReviewLine, } from "../utils/apiview-models";
 import { Crate, Item, } from "../utils/rustdoc-json-types/jsonTypes";
 import { processConstant } from "./processConstant";
+import { processEnum } from "./processEnum";
 import { processFunction } from "./processFunction";
 import { processModule } from "./processModule";
 import { processStatic } from "./processStatic";
@@ -49,6 +50,8 @@ export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine
             processStatic(item, reviewLines);
         } else if ('constant' in item.inner) {
             processConstant(item, reviewLines);
+        } else if ('enum' in item.inner) {
+            processEnum(item, apiJson, reviewLines);
         }
     }
 

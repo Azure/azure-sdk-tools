@@ -6,7 +6,7 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 export function processEnum(item: Item, apiJson: Crate, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && "enum" in item.inner)) return;
 
-    reviewLines.push(createDocsReviewLine(item));
+    if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {

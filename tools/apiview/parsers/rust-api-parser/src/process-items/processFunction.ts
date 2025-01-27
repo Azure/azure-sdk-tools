@@ -12,7 +12,7 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 export function processFunction(item: Item, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && 'function' in item.inner)) return;
 
-    reviewLines.push(createDocsReviewLine(item));
+    if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {

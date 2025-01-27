@@ -14,7 +14,7 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 export function processStruct(apiJson: Crate, item: Item, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && 'struct' in item.inner)) return;
 
-    reviewLines.push(createDocsReviewLine(item));
+    if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {

@@ -11,7 +11,7 @@ export function createDocsReviewLine(item: Item): ReviewLine {
     return {
         Tokens: [{
             Kind: TokenKind.Comment,
-            Value: item.docs,
+            Value: `/// ${item.docs}`,
             IsDocumentation: true,
         }],
         RelatedToLine: item.id.toString(),

@@ -13,7 +13,7 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 export function processStatic(item: Item, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && 'static' in item.inner)) return;
 
-    reviewLines.push(createDocsReviewLine(item));
+    if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {

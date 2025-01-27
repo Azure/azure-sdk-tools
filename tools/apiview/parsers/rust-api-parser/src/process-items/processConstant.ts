@@ -6,7 +6,7 @@ import { typeToString } from "./utils/typeToString";
 export function processConstant(item: Item, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && "constant" in item.inner)) return;
 
-    reviewLines.push(createDocsReviewLine(item));
+    if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
     // Create the ReviewLine object
     const reviewLine: ReviewLine = {

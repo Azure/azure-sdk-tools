@@ -21,7 +21,7 @@ openai.api_type = "azure"
 openai.api_base = os.getenv("OPENAI_API_BASE")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-OPENAI_API_VERSION = "2023-05-15"
+OPENAI_API_VERSION = "2024-10-01-preview"
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
@@ -30,7 +30,7 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 class GptReviewer:
 
     def __init__(self, log_prompts: bool = False):
-        self.llm = AzureChatOpenAI(client=openai.ChatCompletion, deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION, temperature=0)
+        self.llm = AzureChatOpenAI(client=openai.ChatCompletion, deployment_name="gpt-4o-0806", openai_api_version=OPENAI_API_VERSION, temperature=0)
         self.output_parser = PydanticOutputParser(pydantic_object=GuidelinesResult)
         if log_prompts:
             # remove the folder if it exists
@@ -43,15 +43,13 @@ class GptReviewer:
             os.environ["APIVIEW_PROMPT_INDEX"] = "0"
 
         system_prompt = SystemMessagePromptTemplate.from_template("""
-You are trying to analyze an API for {language} to determine whether it meets the SDK guidelines.
-We only provide one class at a time right now, but if you need it, here's a list of all the classes in this API:
-{class_list}
+You will analyze an entire client library surface for {language} to determine whether it meets the SDK guidelines. ONLY mention if the library is clearly violating a guideline.
 """)
         human_prompt = HumanMessagePromptTemplate.from_template("""
 Given the following guidelines:
 {guidelines}
 
-Evaluate the following class for any violations:
+Evaluate the API for any violations:
 ```
 {apiview}
 ```
@@ -70,56 +68,17 @@ Evaluate the following class for any violations:
 
         all_guidelines = self.retrieve_guidelines(language)
 
-        chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=True)
+        chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=False)
 
         final_results = GuidelinesResult(status="Success", violations=[])
+
+        extra_comments = {}
+
+        guidelines = all_guidelines
+        # append the extra comments to the list of guidelines to treat them equally.
+        guidelines.extend(list(extra_comments.values()))
         for chunk in chunked_apiview.sections:
             if self.should_evaluate(chunk):
-                # retrieve the most similar comments to identify guidelines to check
-                semantic_matches = VectorDB().search_documents(language, chunk)
-                
-                guidelines_to_check = []
-                extra_comments = {}
-
-                # extract the unique guidelines to include in the prompt grounding.
-                # documents not included in the prompt grounding will be treated as extra comments.
-                for match in semantic_matches:
-
-                    comment_model = match["aiCommentModel"]
-                    if comment_model["isDeleted"] == True:
-                        continue
-
-                    guideline_ids = comment_model["guidelineIds"]
-                    goodCode = comment_model["goodCode"]
-                    comment = comment_model["comment"]
-
-                    if guideline_ids:
-                        guidelines_to_check.extend(guideline_ids)
-
-                    # remove unnecessary or empty fields to conserve tokens and not confuse the AI
-                    del comment_model["language"]
-                    del comment_model["embedding"]
-                    del comment_model["guidelineIds"]
-                    del comment_model["changeHistory"]
-                    del comment_model["isDeleted"]
-                    if not comment_model["goodCode"]:
-                        del comment_model["goodCode"]
-                    if not comment_model["comment"]:
-                        del comment_model["comment"]
-
-                    if goodCode or comment:
-                        extra_comments[self._hash(comment_model)] = comment_model
-                    if not goodCode and not comment and not guideline_ids:
-                        comment_model["comment"] = "Please have an architect look at this."
-                        extra_comments[self._hash(comment_model)] = comment_model
-                guidelines_to_check = list(set(guidelines_to_check))
-                if not guidelines_to_check:
-                    continue
-                guidelines = self.select_guidelines(all_guidelines, guidelines_to_check)
-
-                # append the extra comments to the list of guidelines to treat them equally.
-                guidelines.extend(list(extra_comments.values()))
-
                 params = {
                     "apiview": str(chunk),
                     "guidelines": guidelines,
@@ -130,9 +89,9 @@ Evaluate the following class for any violations:
                 results = self.chain.run(**params)
                 output = self.output_parser.parse(results)
                 final_results.violations.extend(self.process_violations(output.violations, chunk))
-                # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6571
-                if len(output.violations) > 0:
-                    final_results.status = "Error"
+        # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6571
+        if len(output.violations) > 0:
+            final_results.status = "Error"
         self.process_rule_ids(final_results, all_guidelines)
         return final_results
 

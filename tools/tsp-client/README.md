@@ -10,10 +10,9 @@ npm install -g @azure-tools/typespec-client-generator-cli
 
 ## Prerequisites
 
-Please note that these prerequisites apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these prerequisites. Users working with a repository that already accepts this tool can continue to see the [Usage](#usage) section.
+Users working with a repository that already accepts this tool can continue to the [Usage](#usage) section.
 
-- Add an emitter-package.json to the repo following this [configuration](#emitter-packagejson).
-- Add the [TempTypeSpecFiles](#TempTypeSpecFiles) directory to the .gitignore file for your repository.
+Repo owners should follow the steps in the [Per repository set up](#per-repository-set-up) section.
 
 ## Usage
 
@@ -49,7 +48,7 @@ tsp-client init --help
 
 ### init
 
-Initialize the client library directory using a tspconfig.yaml. When running this command pass in a path to a local or remote tspconfig.yaml with the `-c` or `--tsp-config` flag.
+Initialize the client library directory using a tspconfig.yaml. When running this command pass in a path to a local or the URL of a remote tspconfig.yaml with the `-c` or `--tsp-config` flag. If remote, the tspconfig.yaml must include the specific commit in the path. (See example below)
 
 The `init` command generates a directory structure following the standard pattern used across Azure SDK language repositories, creates a [tsp-location.yaml](#tsp-locationyaml) file to control generation, and performs an initial generation of the client library. If you want to skip client library generation, then pass the `--skip-sync-and-generate` flag.
 
@@ -63,7 +62,7 @@ tsp-client init -c https://github.com/Azure/azure-rest-api-specs/blob/dee71463cb
 
 ### update
 
-Sync and generate client libraries from a TypeSpec project. The `update` command will look for a [tsp-location.yaml](#tsp-locationyaml) file in your current directory to sync a TypeSpec project and generate a client library.
+The `update` command will look for a [tsp-location.yaml](#tsp-locationyaml) file in your current directory to sync a TypeSpec project and generate a client library. The update flow calls the `sync` and `generate` commands internally, so if you need to separate these steps, use the `sync` and `generate` commands separately instead.
 
 Example:
 
@@ -246,25 +245,16 @@ The file has the following properties:
 | <a id="additionalDirectories-anchor"></a> additionalDirectories | Sometimes a typespec file will use a relative import that might not be under the main directory. In this case a single `directory` will not be enough to pull down all necessary files. To support this you can specify additional directories as a list to sync so that all needed files are synced. | false: default = null |
 | <a id="commit-anchor"></a> commit                               | The commit sha for the version of the typespec files you want to generate off of. This allows us to have idempotence on generation until we opt into pointing at a later version.                                                                                                                     | true                  |
 | <a id="repo-anchor"></a> repo                                   | The repo this spec lives in. This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`. Note that pr will work locally but not in CI until we add another change to handle token based auth.                                                                              | true                  |
-| <a id="repo-anchor"></a> entrypointFile                         | A specific entrypoint file used to compile the TypeSpec project. NOTE: This option should only be used with a non-standard entrypoint file name. DO NOT use this option with standard entrypoints: `client.tsp` or `main.tsp`.                                                                        | false                 |
+| <a id="entrypointFile-anchor"></a> entrypointFile               | A specific entrypoint file used to compile the TypeSpec project. NOTE: This option should only be used with a non-standard entrypoint file name. DO NOT use this option with standard entrypoints: `client.tsp` or `main.tsp`.                                                                        | false                 |
 
 Example:
 
-```yml
-directory: specification/cognitiveservices/OpenAI.Inference
-additionalDirectories:
-  - specification/cognitiveservices/OpenAI.Authoring
-commit: 14f11cab735354c3e253045f7fbd2f1b9f90f7ca
+```yml title=tsp-location.yaml
+directory: specification/contosowidgetmanager/Contoso.WidgetManager
+commit: 431eb865a581da2cd7b9e953ae52cb146f31c2a6
 repo: Azure/azure-rest-api-specs
-```
-
-### TempTypeSpecFiles
-
-This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec project to your local repository. This temporary folder will contain a copy of the TypeSpec project specified by the parameters set in the tsp-location.yaml file. If you pass the `--save-inputs` flag to the commandline tool, this directory will not be deleted. You should add a new entry in the .gitignore of your repo so that none of these files are accidentally checked in if `--save-inputs` flag is passed in.
-
-```text
-# .gitignore file
-TempTypeSpecFiles/
+additionalDirectories:
+  - specification/contosowidgetmanager/Contoso.WidgetManager.Shared/
 ```
 
 ## Per repository set up
@@ -274,6 +264,21 @@ Each repository that intends to support `tsp-client` for generating and updating
 See the following example of a valid tspconfig.yaml file: https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml
 
 Using the tspconfig.yaml linked above, by default, the client libraries will be generated in the following directory for C#: `<repo>/sdk/contosowidgetmanager/Azure.Template.Contoso/`.
+
+### Required set up
+
+Please note that these requirements apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these requirements. Users working within a repository that already accepts this tool can refer to the [Usage](#usage) section.
+
+- Add an emitter-package.json to the repo following this [configuration](#emitter-packagejson-required).
+- Add the [TempTypeSpecFiles](#temptypespecfiles) directory to the .gitignore file for your repository.
+
+### TempTypeSpecFiles
+
+This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec project to your local repository. This temporary folder will contain a copy of the TypeSpec project specified by the parameters set in the tsp-location.yaml file. If you pass the `--save-inputs` flag to the commandline tool, this directory will not be deleted. You should add a new entry in the .gitignore of your repo so that none of these files are accidentally checked in if `--save-inputs` flag is passed in.
+
+```diff title=".gitignore" lang="sh"
++ TempTypeSpecFiles/
+```
 
 ### emitter-package.json (Required)
 
@@ -286,7 +291,7 @@ Example:
 {
   "main": "dist/src/index.js",
   "dependencies": {
-    "@azure-tools/typespec-csharp": "0.1.11-beta.20230123.1"
+    "@azure-tools/typespec-python": "0.21.0"
   }
 }
 ```

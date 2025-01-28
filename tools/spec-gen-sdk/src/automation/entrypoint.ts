@@ -67,7 +67,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     logger.add(loggerTestTransport());
   }
 
-  const logFolder = path.join(options.workingFolder, 'logs');
+  const logFolder = path.join(options.workingFolder, 'out/logs');
   if (!existsSync(logFolder)) {
     mkdirSync(logFolder, { recursive: true });
   }
@@ -96,11 +96,11 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   const swaggerToSdkConfig = getSwaggerToSdkConfig(swaggerToSdkConfigContent);
 
   return {
-    htmlLogFileName,
     config: options,
     logger,
     fullLogFileName,
     filteredLogFileName,
+    htmlLogFileName,
     specRepoConfig,
     sdkRepoConfig,
     swaggerToSdkConfig,

@@ -114,7 +114,7 @@ const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: Package
  * @param context 
  * @param pkg 
  * 
- * Copy sdk artifact path to {work_dir}/generatedSdkArtifacts
+ * Copy sdk artifact path to {work_dir}/out/generatedSdkArtifacts
  */
 const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: PackageData) => {
   context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
@@ -126,7 +126,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
     return; 
   }
   
-  const destination = path.join(context.config.workingFolder, 'generatedSdkArtifacts');
+  const destination = path.join(context.config.workingFolder, 'out/generatedSdkArtifacts');
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }
@@ -152,7 +152,7 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   }
 
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
-  const destination = path.join(context.config.workingFolder, 'sdkApiViewArtifacts');
+  const destination = path.join(context.config.workingFolder, 'out/sdkApiViewArtifacts');
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }

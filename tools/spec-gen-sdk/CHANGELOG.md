@@ -2,7 +2,7 @@
 
 ## 2025-01-27 - 0.1.5
 
-- Saved all the logs in a separarted folder
+- Introduced a root folder to save all the logs and artifacts
 
 ## 2025-01-22 - 0.1.4
 

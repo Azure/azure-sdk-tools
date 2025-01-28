@@ -74,7 +74,7 @@
                 <p-inputIcon styleClass="pi pi-search" />
                 <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search Review" style="width: 100%; box-sizing: border-box;"/>
             </p-iconField>
-            <div *ngIf="codeLineSearchText.value.length > 0" class="d-flex justify-content-between">
+            <div *ngIf="codeLineSearchInfo" class="d-flex justify-content-between">
                 <small class="review-search-info">{{ codeLineSearchInfo.currentMatch }} of {{ codeLineSearchInfo.totalMatchCount }}</small>
                 <span class="mt-2">
                     <i class="bi bi-arrow-up-short border rounded-start review-search-icon" (click)="navigateSearch(-1)"></i>

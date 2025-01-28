@@ -53,7 +53,7 @@ export class ReviewPageComponent implements OnInit {
   preferredApprovers : string[] = [];
   hasFatalDiagnostics : boolean = false;
   hasActiveConversation : boolean = false;
-  codeLineSearchInfo : CodeLineSearchInfo = new CodeLineSearchInfo();
+  codeLineSearchInfo : CodeLineSearchInfo | undefined = new CodeLineSearchInfo();
   numberOfActiveConversation : number = 0;
   hasHiddenAPIs : boolean = false;
   hasHiddenAPIThatIsDiff : boolean = false;

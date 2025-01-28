@@ -1,6 +1,6 @@
 export class DoublyLinkedList<T> {
-  head: DoublyLinkedListNode<T> | null = null;
-  tail: DoublyLinkedListNode<T> | null = null;
+  head: DoublyLinkedListNode<T> | undefined = undefined;
+  tail: DoublyLinkedListNode<T> | undefined = undefined;
   length: number = 0;
 
   append(value: T): void {
@@ -21,8 +21,8 @@ export class DoublyLinkedList<T> {
 
 export class DoublyLinkedListNode<T> {
   value: T;
-  next: DoublyLinkedListNode<T> | null = null;
-  prev: DoublyLinkedListNode<T> | null = null;
+  next: DoublyLinkedListNode<T> | undefined = undefined;
+  prev: DoublyLinkedListNode<T> | undefined = undefined;
   index: number;
   
   constructor(value: T, index: number) {

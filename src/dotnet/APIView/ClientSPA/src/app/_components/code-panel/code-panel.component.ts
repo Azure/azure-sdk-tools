@@ -55,9 +55,9 @@ export class CodePanelComponent implements OnChanges{
   CodePanelRowDatatype = CodePanelRowDatatype;
 
   searchMatchedRowInfo: Map<string, RegExpMatchArray[]> = new Map<string, RegExpMatchArray[]>();
-  codeLineSearchMatchInfo : DoublyLinkedList<CodeLineSearchMatch> | null = null;
-  currentCodeLineSearchMatch: DoublyLinkedListNode<CodeLineSearchMatch> | null = null;
-  codeLineSearchInfo: CodeLineSearchInfo | null = null;
+  codeLineSearchMatchInfo : DoublyLinkedList<CodeLineSearchMatch> | undefined = undefined;
+  currentCodeLineSearchMatch: DoublyLinkedListNode<CodeLineSearchMatch> | undefined = undefined;
+  codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
 
   destroy$ = new Subject<void>();
 
@@ -727,9 +727,10 @@ export class CodePanelComponent implements OnChanges{
     this.searchMatchedRowInfo.clear();
     if (!searchText || searchText.length === 0) {
       this.clearSearchMatchHighlights();
-      this.codeLineSearchMatchInfo = null;
-      this.currentCodeLineSearchMatch = null;
-      this.codeLineSearchInfo = null;
+      this.codeLineSearchMatchInfo = undefined;
+      this.currentCodeLineSearchMatch = undefined;
+      this.codeLineSearchInfo = undefined;
+      this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
       return;
     }
 
@@ -771,8 +772,8 @@ export class CodePanelComponent implements OnChanges{
       this.highlightActiveSearchMatch();
     } else {
       this.clearSearchMatchHighlights();
-      this.codeLineSearchMatchInfo = null;
-      this.currentCodeLineSearchMatch = null;
+      this.codeLineSearchMatchInfo = undefined;
+      this.currentCodeLineSearchMatch = undefined;
     }
 
     this.codeLineSearchInfo = { 
@@ -822,7 +823,7 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
-  private highlightActiveSearchMatch() {
+  private highlightActiveSearchMatch(scrollIntoView: boolean = true) {
     if (this.currentCodeLineSearchMatch) {
       const nodeIdHashed = this.currentCodeLineSearchMatch.value.nodeIdHashed;
       const matchId = this.currentCodeLineSearchMatch.value.matchId;
@@ -833,10 +834,14 @@ export class CodePanelComponent implements OnChanges{
       }
       const codeLine = this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"]`);
       if (codeLine) {
-        const match = codeLine.querySelector(`.search-match-${matchId}`);
+        const match = codeLine.querySelector(`.search-match-${matchId}`) as HTMLElement;
         if (match) {
           setTimeout(() => {
-            this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"] .codeline-search-match-highlight.search-match-${matchId}`)!.classList.add('active');
+            //this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"] .codeline-search-match-highlight.search-match-${matchId}`)!.classList.add('active');
+            match.classList.add('active');
+            if (scrollIntoView) {
+              match.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }
           }, 0);
         }
       }
@@ -860,7 +865,7 @@ export class CodePanelComponent implements OnChanges{
         currentMatch--;
       }
 
-      if (this.currentCodeLineSearchMatch.value.rowIndex < firstVisibleIndex || this.currentCodeLineSearchMatch.value.rowIndex > lastVisibleIndex) {
+      if (this.currentCodeLineSearchMatch && (this.currentCodeLineSearchMatch.value.rowIndex < firstVisibleIndex || this.currentCodeLineSearchMatch.value.rowIndex > lastVisibleIndex)) {
         this.scrollToNode(this.currentCodeLineSearchMatch.value.nodeIdHashed, undefined, false, false);
         this.codePanelRowSource?.adapter?.relax();
       }
@@ -961,7 +966,7 @@ export class CodePanelComponent implements OnChanges{
             viewport.addEventListener('scroll', (event) => {
               if (this.currentCodeLineSearchMatch) {
                 this.highlightSearchMatches();
-                this.highlightActiveSearchMatch();
+                this.highlightActiveSearchMatch(false);
               }
             });
           }

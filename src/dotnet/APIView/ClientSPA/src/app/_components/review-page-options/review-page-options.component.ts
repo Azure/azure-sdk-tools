@@ -32,7 +32,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
   @Input() hasHiddenAPIThatIsDiff : boolean = false;
-  @Input() codeLineSearchInfo : CodeLineSearchInfo = new CodeLineSearchInfo();
+  @Input() codeLineSearchInfo : CodeLineSearchInfo | undefined = undefined;
   
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -374,8 +374,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * @param number 
    */
   navigateSearch(number: 1 | -1) {
-    const navigationPosition = this.codeLineSearchInfo.currentMatch! + number;
-    if (navigationPosition >= 1 && navigationPosition <= this.codeLineSearchInfo.totalMatchCount!) {
+    const navigationPosition = this.codeLineSearchInfo?.currentMatch! + number;
+    if (navigationPosition >= 1 && navigationPosition <= this.codeLineSearchInfo?.totalMatchCount!) {
       this.codeLineSearchNaviationEmmiter.emit(navigationPosition!);
     }
   }

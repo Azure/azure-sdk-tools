@@ -1,10 +1,10 @@
 # tsp-client
 
-A simple command line tool to facilitate generating client libraries from TypeSpec.
+`tsp-client` is a simple command line tool to facilitate generating client libraries from TypeSpec.
 
 ## Installation
 
-```
+```bash
 npm install -g @azure-tools/typespec-client-generator-cli
 ```
 
@@ -17,7 +17,7 @@ Please note that these prerequisites apply on the repository where the client li
 
 ## Usage
 
-```
+```bash
 tsp-client <command> [options]
 ```
 
@@ -31,19 +31,19 @@ the `-o` or `--output-dir` option.
 
 To see supported commands, run:
 
-```
+```bash
 tsp-client --help
 ```
 
 To see supported parameters and options for a specific command, run:
 
-```
+```bash
 tsp-client <command> --help
 ```
 
 Example using the `init` command:
 
-```
+```bash
 tsp-client init --help
 ```
 
@@ -57,7 +57,7 @@ The `init` command generates a directory structure following the standard patter
 
 Example:
 
-```
+```bash
 tsp-client init -c https://github.com/Azure/azure-rest-api-specs/blob/dee71463cbde1d416c47cf544e34f7966a94ddcb/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml
 ```
 
@@ -67,7 +67,7 @@ Sync and generate client libraries from a TypeSpec project. The `update` command
 
 Example:
 
-```
+```bash
 tsp-client update
 ```
 
@@ -79,7 +79,7 @@ By default the `sync` command will look for a tsp-location.yaml to get the proje
 
 Example:
 
-```
+```bash
 tsp-client sync
 ```
 
@@ -89,7 +89,7 @@ Generate a client library from a TypeSpec project. The `generate` command should
 
 Example:
 
-```
+```bash
 tsp-client generate
 ```
 
@@ -99,7 +99,7 @@ Convert an existing swagger specification to a TypeSpec project. This command sh
 
 Example:
 
-```
+```bash
 tsp-client convert --swagger-readme <path to swagger README file>/readme.md
 ```
 
@@ -120,13 +120,13 @@ This command generates the default configuration files used by tsp-client. Run t
 
 Example:
 
-```
+```bash
 tsp-client generate-config-files --package-json <path to emitter repo clone>/package.json
 ```
 
 Example using the `azure-sdk-for-js` and the `@azure-tools/typespec-ts` emitter:
 
-```
+```bash
 azure-sdk-for-js> tsp-client generate-config-files --package-json <relative or absolute path to repo clone of @azure-tools/typespec-ts package>/package.json
 ```
 
@@ -134,7 +134,7 @@ To be explicit about specifying dependencies you'd like pinned, add a new field 
 
 Example package.json using `"azure-sdk/emitter-package-json-pinning"`:
 
-```
+```json
 {
   "name": "@azure-tools/typespec-foo",
   "version": "0.3.0",
@@ -163,54 +163,51 @@ Example package.json using `"azure-sdk/emitter-package-json-pinning"`:
     "@azure-tools/typespec-autorest": "~0.49.0",
     "@azure-tools/typespec-client-generator-core": "~0.49.1"
   },
-  "azure-sdk/emitter-package-json-pinning": [
-    "@typespec/compiler"
-  ]
+  "azure-sdk/emitter-package-json-pinning": ["@typespec/compiler"]
 }
 ```
 
 Example `emitter-package.json` generated from the package.json shown above:
 
-```
+```json
 {
   "main": "dist/src/index.js",
   "dependencies": {
     "@azure-tools/typespec-foo": "0.3.0"
   },
   "devDependencies": {
-    "@typespec/compiler": "~0.64.0",
+    "@typespec/compiler": "~0.64.0"
   }
 }
-
 ```
 
 If you need to override dependencies for your emitter-package.json you can create a json file to explicitly list the package and corresponding version you want to override. This will add an `overrides` section in your emitter-package.json that will be used during `npm install` or `npm ci`. [See npm overrides doc.](https://docs.npmjs.com/cli/v10/configuring-npm/package-json?v=true#overrides)
 
 Example json file with package overrides:
 
-```
+```json
 {
-    "@azure-tools/typespec-foo": "0.2.0",
-    "@typespec/compiler": "0.61.0"
+  "@azure-tools/typespec-foo": "0.2.0",
+  "@typespec/compiler": "0.61.0"
 }
 ```
 
 Example command specifying overrides:
 
-```
+```bash
 tsp-client generate-config-files --package-json <path to emitter repo clone>/package.json --overrides <path to overrides file>.json
 ```
 
 Example `emitter-package.json` generated using overrides:
 
-```
+```json
 {
   "main": "dist/src/index.js",
   "dependencies": {
     "@azure-tools/typespec-foo": "0.3.0"
   },
   "devDependencies": {
-    "@typespec/compiler": "~0.64.0",
+    "@typespec/compiler": "~0.64.0"
   },
   "overrides": {
     "@azure-tools/typespec-foo": "0.2.0",
@@ -225,7 +222,7 @@ Generate an emitter-package-lock.json under the eng/ directory based on existing
 
 Example:
 
-```
+```bash
 tsp-client generate-lock-file
 ```
 

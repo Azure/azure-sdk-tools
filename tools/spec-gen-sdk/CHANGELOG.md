@@ -1,5 +1,9 @@
 # Release
 
+## 2025-01-27 - 0.1.5
+
+- Introduced a root folder to save all the logs and artifacts
+
 ## 2025-01-22 - 0.1.4
 
 - Deprecated 'azure-sdk-for-net-track2' and repurposed 'azure-sdk-for-net' for the .NET track2 SDK

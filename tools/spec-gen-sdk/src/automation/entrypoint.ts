@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import {existsSync, mkdirSync, readFileSync, rmSync} from 'fs';
 import * as winston from 'winston';
 import { getRepoKey, RepoKey } from '../utils/repo';
 import {
@@ -67,18 +67,22 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     logger.add(loggerTestTransport());
   }
 
-  const fullLogFileName = path.join(options.workingFolder, 'full.log');
-  const filteredLogFileName = path.join(options.workingFolder, 'filtered.log');
+  const logFolder = path.join(options.workingFolder, 'out/logs');
+  if (!existsSync(logFolder)) {
+    mkdirSync(logFolder, { recursive: true });
+  }
+  const fullLogFileName = path.join(logFolder, 'full.log');
+  const filteredLogFileName = path.join(logFolder, 'filtered.log');
   // eg: spec-gen-sdk-java-result.html
-  const htmlLogFileName = path.join(options.workingFolder, `spec-gen-sdk-${options.sdkName.substring("azure-sdk-for-".length)}-result.html`);
-  if (fs.existsSync(fullLogFileName)) {
-    fs.rmSync(fullLogFileName);
+  const htmlLogFileName = path.join(logFolder, `spec-gen-sdk-${options.sdkName.substring("azure-sdk-for-".length)}-result.html`);
+  if (existsSync(fullLogFileName)) {
+    rmSync(fullLogFileName);
   }
-  if (fs.existsSync(filteredLogFileName)) {
-    fs.rmSync(filteredLogFileName);
+  if (existsSync(filteredLogFileName)) {
+    rmSync(filteredLogFileName);
   }
-  if (fs.existsSync(htmlLogFileName)) {
-    fs.rmSync(htmlLogFileName);
+  if (existsSync(htmlLogFileName)) {
+    rmSync(htmlLogFileName);
   }
   logger.add(loggerFileTransport(fullLogFileName));
   logger.info(`Log to ${fullLogFileName}`);
@@ -92,11 +96,11 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   const swaggerToSdkConfig = getSwaggerToSdkConfig(swaggerToSdkConfigContent);
 
   return {
-    htmlLogFileName,
     config: options,
     logger,
     fullLogFileName,
     filteredLogFileName,
+    htmlLogFileName,
     specRepoConfig,
     sdkRepoConfig,
     swaggerToSdkConfig,
@@ -152,7 +156,7 @@ export const getLanguageByRepoName = (repoName: string) => {
 export const loadConfigContent = (fileName: string, logger: winston.Logger) => {
   logger.info(`Load config file: ${fileName}`);
   try {
-    const fileContent = fs.readFileSync(fileName).toString();
+    const fileContent = readFileSync(fileName).toString();
     const result = JSON.parse(fileContent);
     return result;
   }

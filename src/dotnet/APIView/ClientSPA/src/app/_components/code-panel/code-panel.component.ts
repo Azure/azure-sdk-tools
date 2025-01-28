@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
-import { take, takeUntil } from 'rxjs/operators';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { max, take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -16,6 +16,8 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Menu } from 'primeng/menu';
+import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLineSearchInfo';
+import { DoublyLinkedList, DoublyLinkedListNode } from 'src/app/_helpers/doubly-linkedlist';
 
 @Component({
   selector: 'app-code-panel',
@@ -35,8 +37,12 @@ export class CodePanelComponent implements OnChanges{
   @Input() userProfile : UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
   @Input() loadFailed : boolean = false;
+  @Input() codeLineSearchText: string | undefined;
+  @Input() codeLineNavigationDirection: number | undefined;
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
+  
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   
   noDiffInContentMessage : Message[] = [{ severity: 'info', icon:'bi bi-info-circle', detail: 'There is no difference between the two API revisions.' }];
@@ -48,6 +54,11 @@ export class CodePanelComponent implements OnChanges{
   codePanelRowSource: IDatasource<CodePanelRowData> | undefined;
   CodePanelRowDatatype = CodePanelRowDatatype;
 
+  searchMatchedRowInfo: Map<string, RegExpMatchArray[]> = new Map<string, RegExpMatchArray[]>();
+  codeLineSearchMatchInfo : DoublyLinkedList<CodeLineSearchMatch> | undefined = undefined;
+  currentCodeLineSearchMatch: DoublyLinkedListNode<CodeLineSearchMatch> | undefined = undefined;
+  codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
+
   destroy$ = new Subject<void>();
 
   commentThreadNavaigationPointer: number | undefined = undefined;
@@ -56,7 +67,8 @@ export class CodePanelComponent implements OnChanges{
   menuItemsLineActions: MenuItem[] = [];
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
-    private signalRService: SignalRService, private route: ActivatedRoute, private router: Router, private messageService: MessageService) { }
+    private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
+    private messageService: MessageService, private elementRef: ElementRef<HTMLElement>) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
@@ -68,7 +80,7 @@ export class CodePanelComponent implements OnChanges{
       ];
   }
 
-  ngOnChanges(changes: SimpleChanges) {
+  async ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
       if (changes['codePanelRowData'].currentValue.length > 0) {
         this.loadCodePanelViewPort();
@@ -85,6 +97,17 @@ export class CodePanelComponent implements OnChanges{
 
     if (changes['loadFailed'] && changes['loadFailed'].currentValue) {
       this.isLoading = false;
+    }
+
+    if (changes['codeLineSearchText']) {
+      await this.searchCodePanelRowData(this.codeLineSearchText!);
+    }
+
+    if (changes['codeLineNavigationDirection']) {
+      this.navigateToCodeLineWithSearchMatch(
+        changes['codeLineNavigationDirection'].previousValue,
+        changes['codeLineNavigationDirection'].currentValue
+      );
     }
   }
 
@@ -418,7 +441,9 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
-  scrollToNode(nodeIdHashed: string | undefined = undefined, nodeId: string | undefined = undefined) {
+  async scrollToNode( 
+    nodeIdHashed: string | undefined = undefined, nodeId: string | undefined = undefined,
+    highlightRow: boolean = true, updateQueryParams: boolean = true): Promise<void> {
     let index = 0;
     let scrollIndex : number | undefined = undefined;
     let indexesHighlighted : number[] = [];
@@ -429,7 +454,11 @@ export class CodePanelComponent implements OnChanges{
       if ((nodeIdHashed && this.codePanelRowData[index].nodeIdHashed === nodeIdHashed) || (nodeId && this.codePanelRowData[index].nodeId === nodeId)) {
         nodeIdHashed = this.codePanelRowData[index].nodeIdHashed;
         this.codePanelRowData[index].rowClasses = this.codePanelRowData[index].rowClasses || new Set<string>();
-        this.codePanelRowData[index].rowClasses.add('active');
+
+        if (highlightRow) {
+          this.codePanelRowData[index].rowClasses.add('active');
+        }
+
         indexesHighlighted.push(index);
         if (!scrollIndex) {
           scrollIndex = index;
@@ -438,18 +467,34 @@ export class CodePanelComponent implements OnChanges{
       index++;
     }
     if (scrollIndex) {
-      let scrollPadding = 0;
-      scrollPadding = (this.showNoDiffInContentMessage()) ? scrollPadding + 2 : scrollPadding;
+      scrollIndex = Math.max(scrollIndex - 4, 0);
 
-      this.codePanelRowSource?.adapter?.reload(scrollIndex - scrollPadding);
-      let newQueryParams = getQueryParams(this.route);
-      newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
-      this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
-      setTimeout(() => {
-        indexesHighlighted.forEach((index) => {
-          this.codePanelRowData[index].rowClasses?.delete('active');
+      if (scrollIndex < this.codePanelRowSource?.adapter?.bufferInfo.firstIndex! ||
+        scrollIndex > this.codePanelRowSource?.adapter?.bufferInfo.lastIndex!
+      ) {
+        await this.codePanelRowSource?.adapter?.reload(scrollIndex);
+      } else {
+        await this.codePanelRowSource?.adapter?.fix({
+          scrollToItem: (item) => item.data.nodeIdHashed === nodeIdHashed,
+          scrollToItemOpt: { behavior: 'smooth', block: 'center' }
         });
-      }, 1550);
+      }
+
+      let newQueryParams = getQueryParams(this.route);
+      if (updateQueryParams) {
+        newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
+      } else {
+        newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = null;
+      }
+      this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+
+      if (highlightRow) {
+        setTimeout(() => {
+          indexesHighlighted.forEach((index) => {
+            this.codePanelRowData[index].rowClasses?.delete('active');
+          });
+        }, 1550);
+      }
     }
   }
 
@@ -652,6 +697,115 @@ export class CodePanelComponent implements OnChanges{
     return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
   }
 
+  async searchCodePanelRowData(searchText: string) {
+    this.searchMatchedRowInfo.clear();
+    if (!searchText || searchText.length === 0) {
+      this.clearSearchMatchHighlights();
+      this.codeLineSearchMatchInfo = undefined;
+      this.currentCodeLineSearchMatch = undefined;
+      this.codeLineSearchInfo = undefined;
+      this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
+      return;
+    }
+
+    let hasMatch = false;
+    this.codeLineSearchMatchInfo = new DoublyLinkedList<CodeLineSearchMatch>();
+    
+    this.codePanelRowData.forEach((row, idx) => {
+      if (row.rowOfTokens && row.rowOfTokens.length > 0) {
+        let codeLineAsString = convertRowOfTokensToString(row.rowOfTokens);
+        const regex = new RegExp(searchText, "gi");
+        const matches = [...codeLineAsString.matchAll(regex)];
+        if (matches.length > 0) {
+          hasMatch = true;
+          this.searchMatchedRowInfo.set(row.nodeIdHashed!, matches);
+          matches.forEach((match, index) => {
+            const searchMatch = new CodeLineSearchMatch(idx, row.nodeIdHashed!, index);
+            this.codeLineSearchMatchInfo!.append(searchMatch);
+          });
+        }
+      }
+    });
+
+    let currentMatch = 0;
+    let totalMatchCount = 0;
+    
+    if (hasMatch) {
+      this.currentCodeLineSearchMatch = this.codeLineSearchMatchInfo.head;
+
+      if (this.currentCodeLineSearchMatch?.value.rowIndex! < this.codePanelRowSource?.adapter?.firstVisible.$index! ||
+        this.currentCodeLineSearchMatch?.value.rowIndex! > this.codePanelRowSource?.adapter?.lastVisible.$index!) {
+          // Scroll first match into view
+        await this.scrollToNode(this.currentCodeLineSearchMatch!.value.nodeIdHashed, undefined, false, false);
+        await this.codePanelRowSource?.adapter?.relax();
+      }
+
+      currentMatch = this.currentCodeLineSearchMatch!.index + 1;
+      totalMatchCount = this.codeLineSearchMatchInfo.length;
+      this.highlightSearchMatches();
+      this.highlightActiveSearchMatch();
+    } else {
+      this.clearSearchMatchHighlights();
+      this.codeLineSearchMatchInfo = undefined;
+      this.currentCodeLineSearchMatch = undefined;
+    }
+
+    this.codeLineSearchInfo = { 
+      currentMatch: currentMatch,
+      totalMatchCount: totalMatchCount
+    };
+    this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
+  }
+
+  async highlightSearchMatches() {
+    this.clearSearchMatchHighlights();
+    const codeLines = this.elementRef.nativeElement.querySelectorAll('.code-line');
+    
+    codeLines.forEach((codeLine) => {
+      const nodeIdhashed = codeLine.getAttribute('data-node-id');
+      if (nodeIdhashed && this.searchMatchedRowInfo.has(nodeIdhashed)) {
+        const tokens = codeLine.querySelectorAll('.code-line-content > span');
+        const matches = this.searchMatchedRowInfo.get(nodeIdhashed)!;
+  
+        matches.forEach((match, index) => {
+          const matchStartIndex = match.index!;
+          const matchEndIndex = matchStartIndex + match[0].length;
+  
+          let currentOffset = 0;
+          tokens.forEach((token) => {
+            const tokenText = token.textContent || '';
+            const tokenLength = tokenText.length;
+
+            const tokenStart = currentOffset;
+            const tokenEnd = currentOffset + tokenLength;
+  
+            if (matchStartIndex < tokenEnd && matchEndIndex > tokenStart) {
+              const highlightStart = Math.max(0, matchStartIndex - tokenStart);
+              const highlightEnd = Math.min(tokenLength, matchEndIndex - tokenStart);
+
+              const beforeMatch = tokenText.slice(0, highlightStart);
+              const matchText = tokenText.slice(highlightStart, highlightEnd);
+              const afterMatch = tokenText.slice(highlightEnd);
+
+              token.innerHTML = `${beforeMatch}<mark class="codeline-search-match-highlight search-match-${index}">${matchText}</mark>${afterMatch}`;
+            }
+  
+            currentOffset += tokenLength;
+          });
+        });
+      }
+    });
+  }
+
+  async clearSearchMatchHighlights() {
+    this.elementRef.nativeElement.querySelectorAll('.codeline-search-match-highlight').forEach((element) => {
+      const parent = element.parentNode as HTMLElement;
+      if (parent) {
+        parent.innerHTML = parent.textContent || '';
+      }
+    });
+  }
+
   private getCodeLineIndex(event: MenuItemCommandEvent) {
     const target = (event.originalEvent?.target as Element).closest("span") as Element;
     return target.getAttribute('data-item-id');
@@ -676,6 +830,62 @@ export class CodePanelComponent implements OnChanges{
     const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
     const codeLineText = convertRowOfTokensToString(codeLine.rowOfTokens);
     navigator.clipboard.writeText(codeLineText);
+  }
+
+  private highlightActiveSearchMatch(scrollIntoView: boolean = true) {
+    if (this.currentCodeLineSearchMatch) {
+      const nodeIdHashed = this.currentCodeLineSearchMatch.value.nodeIdHashed;
+      const matchId = this.currentCodeLineSearchMatch.value.matchId;
+
+      const activeMatch = this.elementRef.nativeElement.querySelector('.codeline-search-match-highlight.active');
+      if (activeMatch) {
+        activeMatch.classList.remove('active');
+      }
+      const codeLine = this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"]`);
+      if (codeLine) {
+        const match = codeLine.querySelector(`.search-match-${matchId}`) as HTMLElement;
+        if (match) {
+          setTimeout(() => {
+            //this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"] .codeline-search-match-highlight.search-match-${matchId}`)!.classList.add('active');
+            match.classList.add('active');
+            if (scrollIntoView) {
+              match.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }
+          }, 0);
+        }
+      }
+    }
+  }
+
+  /**
+   * Navigates to the next or previous code line that contains a search match but is outside the viewport
+   */
+  private navigateToCodeLineWithSearchMatch(previousPosition: number, newPosition: number) {
+    if (this.currentCodeLineSearchMatch) {
+      const firstVisibleIndex = this.codePanelRowSource?.adapter?.firstVisible.$index!;
+      const lastVisibleIndex = this.codePanelRowSource?.adapter?.lastVisible.$index!;
+      let currentMatch = this.codeLineSearchInfo?.currentMatch!;
+      
+      if (!previousPosition || newPosition > previousPosition) {
+        this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.next!;
+        currentMatch++;
+      } else if (newPosition < previousPosition) {
+        this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.prev!;
+        currentMatch--;
+      }
+
+      if (this.currentCodeLineSearchMatch && (this.currentCodeLineSearchMatch.value.rowIndex < firstVisibleIndex || this.currentCodeLineSearchMatch.value.rowIndex > lastVisibleIndex)) {
+        this.scrollToNode(this.currentCodeLineSearchMatch.value.nodeIdHashed, undefined, false, false);
+        this.codePanelRowSource?.adapter?.relax();
+      }
+      
+      this.highlightActiveSearchMatch();
+      this.codeLineSearchInfo = { 
+        currentMatch: currentMatch,
+        totalMatchCount: this.codeLineSearchInfo?.totalMatchCount
+      };
+      this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
+    }
   }
 
   private findNextCommentThread (index: number) : CodePanelRowData | undefined {
@@ -743,15 +953,23 @@ export class CodePanelComponent implements OnChanges{
     this.hasActiveConversationEmitter.emit(hasActiveConversation);
   }
 
-  private loadCodePanelViewPort() {
+  private loadCodePanelViewPort() { 
     this.setMaxLineNumberWidth();
     this.initializeDataSource().then(() => {
       this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
         this.isLoading = false;
         setTimeout(() => {
           this.scrollToNode(undefined, this.scrollToNodeId);
+          const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
+          if (viewport) {
+            viewport.addEventListener('scroll', (event) => {
+              if (this.currentCodeLineSearchMatch) {
+                this.highlightSearchMatches();
+                this.highlightActiveSearchMatch(false);
+              }
+            });
+          }
         }, 500);
-        
       });
     }).catch((error) => {
       console.error(error);

@@ -5,7 +5,6 @@ import { CommentThreadComponent } from 'src/app/_components/shared/comment-threa
 import { ReviewPageLayoutComponent } from 'src/app/_components/shared/review-page-layout/review-page-layout.component';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
-import { EditorModule } from 'primeng/editor';
 import { PanelModule } from 'primeng/panel';
 import { MenuModule } from 'primeng/menu';
 import { TimelineModule } from 'primeng/timeline';

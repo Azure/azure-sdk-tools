@@ -130,13 +130,67 @@ Example using the `azure-sdk-for-js` and the `@azure-tools/typespec-ts` emitter:
 azure-sdk-for-js> tsp-client generate-config-files --package-json <relative or absolute path to repo clone of @azure-tools/typespec-ts package>/package.json
 ```
 
+To be explicit about specifying dependencies you'd like pinned, add a new field in the package.json file of your emitter called `"azure-sdk/emitter-package-json-pinning"` with a list of the dependencies you want to be forwarded to the emitter-package.json. These dependencies must be specified in your package.json's devDependencies in order for the tool to assign the correct version.
+
+Example package.json using `"azure-sdk/emitter-package-json-pinning"`:
+
+```
+{
+  "name": "@azure-tools/typespec-foo",
+  "version": "0.3.0",
+  "author": "Microsoft Corporation",
+  "description": "Example package.json for tsp-client",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./testing": "./dist/src/testing/index.js"
+  },
+  "dependencies": {
+    "semver": "~7.6.2",
+    "tsx": "~4.19.1"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "~0.64.0",
+    "@typespec/http": "~0.63.0",
+    "@typespec/rest": "~0.63.0",
+    "@typespec/versioning": "~0.63.0",
+    "@typespec/openapi": "~0.63.0",
+    "@azure-tools/typespec-azure-resource-manager": "~0.49.0",
+    "@azure-tools/typespec-azure-core": "~0.49.0",
+    "@azure-tools/typespec-azure-rulesets": "~0.49.0",
+    "@azure-tools/typespec-autorest": "~0.49.0",
+    "@azure-tools/typespec-client-generator-core": "~0.49.1"
+  },
+  "azure-sdk/emitter-package-json-pinning": [
+    "@typespec/compiler"
+  ]
+}
+```
+
+Example `emitter-package.json` generated from the package.json shown above:
+
+```
+{
+  "main": "dist/src/index.js",
+  "dependencies": {
+    "@azure-tools/typespec-foo": "0.3.0"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "~0.64.0",
+  }
+}
+
+```
+
 If you need to override dependencies for your emitter-package.json you can create a json file to explicitly list the package and corresponding version you want to override. This will add an `overrides` section in your emitter-package.json that will be used during `npm install` or `npm ci`. [See npm overrides doc.](https://docs.npmjs.com/cli/v10/configuring-npm/package-json?v=true#overrides)
 
 Example json file with package overrides:
 
 ```
 {
-    "@azure-tools/typespec-python": "0.36.0",
+    "@azure-tools/typespec-foo": "0.2.0",
     "@typespec/compiler": "0.61.0"
 }
 ```
@@ -145,6 +199,24 @@ Example command specifying overrides:
 
 ```
 tsp-client generate-config-files --package-json <path to emitter repo clone>/package.json --overrides <path to overrides file>.json
+```
+
+Example `emitter-package.json` generated using overrides:
+
+```
+{
+  "main": "dist/src/index.js",
+  "dependencies": {
+    "@azure-tools/typespec-foo": "0.3.0"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "~0.64.0",
+  },
+  "overrides": {
+    "@azure-tools/typespec-foo": "0.2.0",
+    "@typespec/compiler": "0.61.0"
+  }
+}
 ```
 
 ### generate-lock-file

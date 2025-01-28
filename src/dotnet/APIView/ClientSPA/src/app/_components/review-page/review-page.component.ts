@@ -491,7 +491,7 @@ export class ReviewPageComponent implements OnInit {
     this.codeLineSearchText = searchText;
   }
 
-  handleCodeLineSearchNaviationEmmiter(direction: number) {
+  handleCodeLineSearchNavigationEmitter(direction: number) {
     this.codeLineNavigationDirection = direction;
   }
 

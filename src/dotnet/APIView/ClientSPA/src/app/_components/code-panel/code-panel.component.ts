@@ -697,33 +697,7 @@ export class CodePanelComponent implements OnChanges{
     return this.codePanelData && !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff
   }
 
-  private getCodeLineIndex(event: MenuItemCommandEvent) {
-    const target = (event.originalEvent?.target as Element).closest("span") as Element;
-    return target.getAttribute('data-item-id');
-  }
-
-  private copyCodeLinePermaLinkToClipBoard(event: MenuItemCommandEvent) {
-    const codeLineIndex = this.getCodeLineIndex(event);
-    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
-    const queryParams = { ...this.route.snapshot.queryParams };
-    queryParams[SCROLL_TO_NODE_QUERY_PARAM] = codeLine.nodeId;
-    const updatedUrl = this.router.createUrlTree([], {
-      relativeTo: this.route,
-      queryParams: queryParams,
-      queryParamsHandling: 'merge'
-    }).toString();
-    const fullExternalUrl = window.location.origin + updatedUrl;
-    navigator.clipboard.writeText(fullExternalUrl);
-  }
-
-  private copyCodeLineToClipBoard(event: MenuItemCommandEvent) {
-    const codeLineIndex = this.getCodeLineIndex(event);
-    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
-    const codeLineText = convertRowOfTokensToString(codeLine.rowOfTokens);
-    navigator.clipboard.writeText(codeLineText);
-  }
-  
-  private async searchCodePanelRowData(searchText: string) {
+  async searchCodePanelRowData(searchText: string) {
     this.searchMatchedRowInfo.clear();
     if (!searchText || searchText.length === 0) {
       this.clearSearchMatchHighlights();
@@ -783,7 +757,7 @@ export class CodePanelComponent implements OnChanges{
     this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
   }
 
-  private highlightSearchMatches() {
+  async highlightSearchMatches() {
     this.clearSearchMatchHighlights();
     const codeLines = this.elementRef.nativeElement.querySelectorAll('.code-line');
     
@@ -821,6 +795,41 @@ export class CodePanelComponent implements OnChanges{
         });
       }
     });
+  }
+
+  async clearSearchMatchHighlights() {
+    this.elementRef.nativeElement.querySelectorAll('.codeline-search-match-highlight').forEach((element) => {
+      const parent = element.parentNode as HTMLElement;
+      if (parent) {
+        parent.innerHTML = parent.textContent || '';
+      }
+    });
+  }
+
+  private getCodeLineIndex(event: MenuItemCommandEvent) {
+    const target = (event.originalEvent?.target as Element).closest("span") as Element;
+    return target.getAttribute('data-item-id');
+  }
+
+  private copyCodeLinePermaLinkToClipBoard(event: MenuItemCommandEvent) {
+    const codeLineIndex = this.getCodeLineIndex(event);
+    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
+    const queryParams = { ...this.route.snapshot.queryParams };
+    queryParams[SCROLL_TO_NODE_QUERY_PARAM] = codeLine.nodeId;
+    const updatedUrl = this.router.createUrlTree([], {
+      relativeTo: this.route,
+      queryParams: queryParams,
+      queryParamsHandling: 'merge'
+    }).toString();
+    const fullExternalUrl = window.location.origin + updatedUrl;
+    navigator.clipboard.writeText(fullExternalUrl);
+  }
+
+  private copyCodeLineToClipBoard(event: MenuItemCommandEvent) {
+    const codeLineIndex = this.getCodeLineIndex(event);
+    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
+    const codeLineText = convertRowOfTokensToString(codeLine.rowOfTokens);
+    navigator.clipboard.writeText(codeLineText);
   }
 
   private highlightActiveSearchMatch(scrollIntoView: boolean = true) {
@@ -877,16 +886,6 @@ export class CodePanelComponent implements OnChanges{
       };
       this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
     }
-  }
-
-
-  private clearSearchMatchHighlights() {
-    this.elementRef.nativeElement.querySelectorAll('.codeline-search-match-highlight').forEach((element) => {
-      const parent = element.parentNode as HTMLElement;
-      if (parent) {
-        parent.innerHTML = parent.textContent || '';
-      }
-    });
   }
 
   private findNextCommentThread (index: number) : CodePanelRowData | undefined {

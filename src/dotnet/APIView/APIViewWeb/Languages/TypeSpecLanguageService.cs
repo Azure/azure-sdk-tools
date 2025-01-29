@@ -46,7 +46,7 @@ namespace APIViewWeb
 
         public override bool CanConvert(string versionString)
         {
-            return versionString != VersionString;
+            return false;
         }
 
         public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param)

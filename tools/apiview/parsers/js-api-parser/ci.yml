@@ -110,6 +110,13 @@ extends:
               inputs:
                 workingFile: $(TypeScriptGeneratorDirectory)/.npmrc
 
+            - pwsh: |
+                npm whoami
+                npm conflig list
+                cat $(TypeScriptGeneratorDirectory)/.npmrc
+                cat ~/.npmrc
+              displayName: Interrogate machine
+
             - task: Npm@1
               inputs:
                 command: 'custom'

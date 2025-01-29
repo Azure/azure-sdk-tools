@@ -112,7 +112,7 @@ extends:
 
             - pwsh: |
                 npm whoami
-                npm conflig list
+                npm config list
                 cat $(TypeScriptGeneratorDirectory)/.npmrc
                 cat ~/.npmrc
               displayName: Interrogate machine

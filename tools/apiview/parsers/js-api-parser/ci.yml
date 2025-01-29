@@ -108,7 +108,7 @@ extends:
 
             - task: NpmAuthenticate@0
               inputs:
-                workingFile: $(TypeScriptGeneratorDirectory)/.npmrc
+                workingFile: ~/.npmrc
 
             - pwsh: |
                 cat ~/.npmrc

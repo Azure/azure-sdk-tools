@@ -99,6 +99,13 @@ extends:
                 Write-Host "##vso[task.setvariable variable=PackageArtifactFullPath]$detectedPackageName"
               displayName: "Find package artifact"
 
+            - pwsh: |
+                @"
+                registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
+                always-auth=true
+                "@ | Set-Content -Path $(TypeScriptGeneratorDirectory)/.npmrc -NoNewline
+              displayName: Generate .npmrc
+
             - task: NpmAuthenticate@0
               inputs:
                 workingFile: $(TypeScriptGeneratorDirectory)/.npmrc

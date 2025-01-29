@@ -103,27 +103,16 @@ extends:
                 @"
                 registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
                 always-auth=true
-                "@ | Set-Content -Path $(TypeScriptGeneratorDirectory)/.npmrc -NoNewline
+                "@ | Set-Content -Path ~/.npmrc -NoNewline
               displayName: Generate .npmrc
 
             - task: NpmAuthenticate@0
               inputs:
                 workingFile: $(TypeScriptGeneratorDirectory)/.npmrc
 
-            - pwsh: |
-                npm whoami
-                npm config list
-                cat $(TypeScriptGeneratorDirectory)/.npmrc
-              displayName: Interrogate machine
-              continueOnError: true
-
-            - pwsh: |
-                npm publish $(PackageArtifactFullPath) --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
-              workingDirectory: $(TypeScriptGeneratorDirectory)
-
-            # - task: Npm@1
-            #   inputs:
-            #     command: 'custom'
-            #     customCommand: 'publish $(PackageArtifactFullPath)'
-            #     publishRegistry: useFeed
-            #     publishFeed: "public/azure-sdk-for-js"
+            - task: Npm@1
+              inputs:
+                command: 'custom'
+                customCommand: 'publish $(PackageArtifactFullPath)'
+                publishRegistry: useFeed
+                publishFeed: "public/azure-sdk-for-js"

@@ -104,14 +104,18 @@ extends:
                 registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
                 always-auth=true
                 "@ | Set-Content -Path ~/.npmrc -NoNewline
+
+                $path_to_user_npmrc = Resolve-Path ~/.npmrc
+
+                Write-Host "##vso[task.setvariable variable=PYPIRCFILE;]$path_to_user_npmrc"
               displayName: Generate .npmrc
 
             - task: NpmAuthenticate@0
               inputs:
-                workingFile: ~/.npmrc
+                workingFile: $(PYPIRCFILE)
 
             - pwsh: |
-                cat ~/.npmrc
+                cat $(PYPIRCFILE)
               displayName: Interrogate machine
               continueOnError: true
 

@@ -1,6 +1,13 @@
+import { DoublyLinkedListNode } from "../_helpers/doubly-linkedlist";
+
 export class CodeLineSearchInfo {
-  currentMatch?: number;
-  totalMatchCount?: number
+  currentMatch?: DoublyLinkedListNode<CodeLineSearchMatch> | undefined;
+  totalMatchCount?: number;
+
+  constructor(currentMatch: DoublyLinkedListNode<CodeLineSearchMatch> | undefined, totalMatchCount: number | undefined) {
+    this.currentMatch = currentMatch;
+    this.totalMatchCount = totalMatchCount;
+  }
 }
 
 export class CodeLineSearchMatch {

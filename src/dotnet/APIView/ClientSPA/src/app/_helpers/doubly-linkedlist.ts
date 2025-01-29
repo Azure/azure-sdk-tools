@@ -29,4 +29,12 @@ export class DoublyLinkedListNode<T> {
     this.value = value;
     this.index = index;
   }
+
+  isHead(): boolean {
+    return this.prev === undefined;
+  }
+
+  isTail(): boolean {
+    return this.next === undefined;
+  }
 }

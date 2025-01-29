@@ -53,7 +53,7 @@ export class ReviewPageComponent implements OnInit {
   preferredApprovers : string[] = [];
   hasFatalDiagnostics : boolean = false;
   hasActiveConversation : boolean = false;
-  codeLineSearchInfo : CodeLineSearchInfo | undefined = new CodeLineSearchInfo();
+  codeLineSearchInfo : CodeLineSearchInfo | undefined;
   numberOfActiveConversation : number = 0;
   hasHiddenAPIs : boolean = false;
   hasHiddenAPIThatIsDiff : boolean = false;
@@ -72,7 +72,6 @@ export class ReviewPageComponent implements OnInit {
   lastNodeIdUnhashedDiscarded = '';
 
   codeLineSearchText: string | undefined = undefined;
-  codeLineNavigationDirection: number | undefined = undefined;
 
   private destroy$ = new Subject<void>();
   private destroyLoadAPIRevision$ : Subject<void>  | null = null;
@@ -491,16 +490,14 @@ export class ReviewPageComponent implements OnInit {
     this.codeLineSearchText = searchText;
   }
 
-  handleCodeLineSearchNavigationEmitter(direction: number) {
-    this.codeLineNavigationDirection = direction;
-  }
-
   handleHasActiveConversationEmitter(value: boolean) {
     this.hasActiveConversation = value;
   }
 
   handleCodeLineSearchInfoEmitter(value: CodeLineSearchInfo) {
-    this.codeLineSearchInfo = value;
+    setTimeout(() => {
+      this.codeLineSearchInfo = (value) ? new CodeLineSearchInfo(value.currentMatch, value.totalMatchCount) : undefined;
+    }, 0);
   }
 
   handleNumberOfActiveThreadsEmitter(value: number) {

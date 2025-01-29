@@ -38,7 +38,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() showLineNumbers: boolean = true;
   @Input() loadFailed : boolean = false;
   @Input() codeLineSearchText: string | undefined;
-  @Input() codeLineNavigationDirection: number | undefined;
+  @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
@@ -56,8 +56,6 @@ export class CodePanelComponent implements OnChanges{
 
   searchMatchedRowInfo: Map<string, RegExpMatchArray[]> = new Map<string, RegExpMatchArray[]>();
   codeLineSearchMatchInfo : DoublyLinkedList<CodeLineSearchMatch> | undefined = undefined;
-  currentCodeLineSearchMatch: DoublyLinkedListNode<CodeLineSearchMatch> | undefined = undefined;
-  codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
 
   destroy$ = new Subject<void>();
 
@@ -103,11 +101,8 @@ export class CodePanelComponent implements OnChanges{
       await this.searchCodePanelRowData(this.codeLineSearchText!);
     }
 
-    if (changes['codeLineNavigationDirection']) {
-      this.navigateToCodeLineWithSearchMatch(
-        changes['codeLineNavigationDirection'].previousValue,
-        changes['codeLineNavigationDirection'].currentValue
-      );
+    if (changes['codeLineSearchInfo'] && changes['codeLineSearchInfo'].currentValue != changes['codeLineSearchInfo'].previousValue) {
+      this.navigateToCodeLineWithSearchMatch();
     }
   }
 
@@ -702,7 +697,6 @@ export class CodePanelComponent implements OnChanges{
     if (!searchText || searchText.length === 0) {
       this.clearSearchMatchHighlights();
       this.codeLineSearchMatchInfo = undefined;
-      this.currentCodeLineSearchMatch = undefined;
       this.codeLineSearchInfo = undefined;
       this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
       return;
@@ -726,34 +720,24 @@ export class CodePanelComponent implements OnChanges{
         }
       }
     });
-
-    let currentMatch = 0;
-    let totalMatchCount = 0;
     
     if (hasMatch) {
-      this.currentCodeLineSearchMatch = this.codeLineSearchMatchInfo.head;
+      this.codeLineSearchInfo = new CodeLineSearchInfo(this.codeLineSearchMatchInfo.head, this.codeLineSearchMatchInfo.length);
 
-      if (this.currentCodeLineSearchMatch?.value.rowIndex! < this.codePanelRowSource?.adapter?.firstVisible.$index! ||
-        this.currentCodeLineSearchMatch?.value.rowIndex! > this.codePanelRowSource?.adapter?.lastVisible.$index!) {
+      if (this.codeLineSearchInfo.currentMatch?.value.rowIndex! < this.codePanelRowSource?.adapter?.firstVisible.$index! ||
+        this.codeLineSearchInfo.currentMatch?.value.rowIndex! > this.codePanelRowSource?.adapter?.lastVisible.$index!) {
           // Scroll first match into view
-        await this.scrollToNode(this.currentCodeLineSearchMatch!.value.nodeIdHashed, undefined, false, false);
+        await this.scrollToNode(this.codeLineSearchInfo.currentMatch!.value.nodeIdHashed, undefined, false, false);
         await this.codePanelRowSource?.adapter?.relax();
       }
 
-      currentMatch = this.currentCodeLineSearchMatch!.index + 1;
-      totalMatchCount = this.codeLineSearchMatchInfo.length;
       this.highlightSearchMatches();
       this.highlightActiveSearchMatch();
     } else {
       this.clearSearchMatchHighlights();
       this.codeLineSearchMatchInfo = undefined;
-      this.currentCodeLineSearchMatch = undefined;
+      this.codeLineSearchInfo = undefined;
     }
-
-    this.codeLineSearchInfo = { 
-      currentMatch: currentMatch,
-      totalMatchCount: totalMatchCount
-    };
     this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
   }
 
@@ -833,9 +817,9 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private highlightActiveSearchMatch(scrollIntoView: boolean = true) {
-    if (this.currentCodeLineSearchMatch) {
-      const nodeIdHashed = this.currentCodeLineSearchMatch.value.nodeIdHashed;
-      const matchId = this.currentCodeLineSearchMatch.value.matchId;
+    if (this.codeLineSearchInfo?.currentMatch) {
+      const nodeIdHashed = this.codeLineSearchInfo?.currentMatch.value.nodeIdHashed;
+      const matchId = this.codeLineSearchInfo?.currentMatch.value.matchId;
 
       const activeMatch = this.elementRef.nativeElement.querySelector('.codeline-search-match-highlight.active');
       if (activeMatch) {
@@ -860,31 +844,16 @@ export class CodePanelComponent implements OnChanges{
   /**
    * Navigates to the next or previous code line that contains a search match but is outside the viewport
    */
-  private navigateToCodeLineWithSearchMatch(previousPosition: number, newPosition: number) {
-    if (this.currentCodeLineSearchMatch) {
+  private navigateToCodeLineWithSearchMatch() {
+    if (this.codeLineSearchInfo?.currentMatch) {
       const firstVisibleIndex = this.codePanelRowSource?.adapter?.firstVisible.$index!;
       const lastVisibleIndex = this.codePanelRowSource?.adapter?.lastVisible.$index!;
-      let currentMatch = this.codeLineSearchInfo?.currentMatch!;
-      
-      if (!previousPosition || newPosition > previousPosition) {
-        this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.next!;
-        currentMatch++;
-      } else if (newPosition < previousPosition) {
-        this.currentCodeLineSearchMatch = this.currentCodeLineSearchMatch?.prev!;
-        currentMatch--;
-      }
 
-      if (this.currentCodeLineSearchMatch && (this.currentCodeLineSearchMatch.value.rowIndex < firstVisibleIndex || this.currentCodeLineSearchMatch.value.rowIndex > lastVisibleIndex)) {
-        this.scrollToNode(this.currentCodeLineSearchMatch.value.nodeIdHashed, undefined, false, false);
+      if (this.codeLineSearchInfo?.currentMatch && (this.codeLineSearchInfo?.currentMatch.value.rowIndex < firstVisibleIndex || this.codeLineSearchInfo?.currentMatch.value.rowIndex > lastVisibleIndex)) {
+        this.scrollToNode(this.codeLineSearchInfo?.currentMatch.value.nodeIdHashed, undefined, false, false);
         this.codePanelRowSource?.adapter?.relax();
       }
-      
       this.highlightActiveSearchMatch();
-      this.codeLineSearchInfo = { 
-        currentMatch: currentMatch,
-        totalMatchCount: this.codeLineSearchInfo?.totalMatchCount
-      };
-      this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo);
     }
   }
 
@@ -963,7 +932,7 @@ export class CodePanelComponent implements OnChanges{
           const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
           if (viewport) {
             viewport.addEventListener('scroll', (event) => {
-              if (this.currentCodeLineSearchMatch) {
+              if (this.codeLineSearchInfo?.currentMatch) {
                 this.highlightSearchMatches();
                 this.highlightActiveSearchMatch(false);
               }

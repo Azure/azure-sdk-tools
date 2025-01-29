@@ -50,7 +50,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>(); 
   @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
-  @Output() codeLineSearchNaviationEmmiter : EventEmitter<number> = new EventEmitter<number>();
+  @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
   private destroy$ = new Subject<void>();
   
@@ -374,9 +374,17 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * @param number 
    */
   navigateSearch(number: 1 | -1) {
-    const navigationPosition = this.codeLineSearchInfo?.currentMatch! + number;
-    if (navigationPosition >= 1 && navigationPosition <= this.codeLineSearchInfo?.totalMatchCount!) {
-      this.codeLineSearchNaviationEmmiter.emit(navigationPosition!);
+    if (number == 1) {
+      if (!this.codeLineSearchInfo?.currentMatch?.isTail()) {
+        this.codeLineSearchInfo!.currentMatch = this.codeLineSearchInfo?.currentMatch?.next;
+        this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo!);
+      }
+    }
+    else {
+      if (!this.codeLineSearchInfo?.currentMatch?.isHead()) {
+        this.codeLineSearchInfo!.currentMatch = this.codeLineSearchInfo?.currentMatch?.prev;
+        this.codeLineSearchInfoEmitter.emit(this.codeLineSearchInfo!);
+      }
     }
   }
 

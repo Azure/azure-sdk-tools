@@ -102,8 +102,9 @@ class DocstringParser:
 
     def _process_arg_triple(self, tag, default):
         # When three items are found, all necessary info is found
-        # and there can only be one simple type
+        # and there can be a simple or complex type
         # Example: :param str name: The name of the thing.
+        # OR :param dict[str, str] or None properties: The properties of the thing.
         (keyword, typename, name) = tag
         arg = ArgType(name=name, argtype=typename, default=default, keyword=keyword)
         self._update_arg(arg, keyword)
@@ -126,7 +127,8 @@ class DocstringParser:
             # keyword aguments.
             arg.default = "..."
             if arg.argtype and not arg.argtype.startswith("Optional["):
-                arg.argtype = f"Optional[{arg.argtype}]"
+                strip_none = arg.argtype.replace(" or None", "").replace("None or ", "")
+                arg.argtype = f"Optional[{strip_none}]"
             self.kwargs[arg.argname] = arg
         else:
             logging.error(f"Unexpected keyword: {keyword}")
@@ -162,6 +164,11 @@ class DocstringParser:
 
             (tag, line1) = tag_match.groups()
             split_tag = tag.split()
+            if len(split_tag) > 3:
+                # argtype may include spaces or commas
+                argtype = " ".join(split_tag[1:-1])
+                self._process_arg_triple((split_tag[0], argtype, split_tag[-1]), default)
+                continue
             if len(split_tag) == 3:
                 self._process_arg_triple(split_tag, default)
                 continue
@@ -177,12 +184,20 @@ class DocstringParser:
             elif len(split_tag) == 1 and split_tag[0] == "rtype":
                 self.ret_type = self._process_return_type(line1.strip(), line2)
 
-    def type_for(self, name):
-        arg = (
-            self.ivars.get(name, None) or
-            self.pos_args.get(name, None) or
-            self.kwargs.get(name, None)
-        )
+    def type_for(self, name, keyword=None):
+        if not keyword:
+            arg = (
+                self.ivars.get(name, None) or
+                self.pos_args.get(name, None) or
+                self.kwargs.get(name, None)
+            )
+        else:
+            if keyword == "param":
+                arg = self.pos_args.get(name, None)
+            elif keyword == "ivar":
+                arg = self.ivars.get(name, None)
+            elif keyword == "keyword":
+                arg = self.kwargs.get(name, None)
         return arg.argtype if arg else arg
 
     def default_for(self, name):

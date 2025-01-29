@@ -173,8 +173,19 @@ class ApiView:
         # Encode multiple types with or separator into Union
         if TYPE_OR_SEPARATOR in type_name:
             types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
-            # Make a Union of types if multiple types are present
-            type_name = "Union[{}]".format(", ".join(types))
+            # Check if one of the types is None
+            has_none = False
+            if "None" in types:
+                has_none = True
+                types.remove("None")
+            # Make a Union of types if multiple non-None types are present, otherwise use the single type
+            if len(types) > 1:
+                type_name = "Union[{}]".format(", ".join(types))
+            else:
+                type_name = types[0]
+            # If one of the types is None, wrap the Union type in Optional
+            if has_none:
+                type_name = "Optional[{}]".format(type_name)
 
         cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
         self._add_type_token(type_name, line_id, cross_language_id)

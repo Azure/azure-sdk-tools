@@ -5,7 +5,10 @@
 # --------------------------------------------------------------------------
 
 from pydoc import Doc
-from apistub.nodes import DocstringParser
+from apistub.nodes import DocstringParser, ClassNode
+from apistubgentest.models import DocstringClass 
+
+from ._test_util import _tokenize, _render_lines, _check_all
 
 
 docstring_default_legacy = """
@@ -132,6 +135,8 @@ docstring_type_with_quotes = """
 
 class TestDocstringParser:
 
+    pkg_namespace = "apistubgentest.models"
+
     def _test_variable_type(self, docstring, expected):
         parser = DocstringParser(docstring)
         for varname, expect_val in expected.items():
@@ -217,3 +222,33 @@ class TestDocstringParser:
         assert parser.default_for("value") == "cat"
         assert parser.default_for("another") == "dog"
         assert parser.default_for("some_class") == ":py:class:`apistubgen.test.models.FakeObject`"
+
+    def test_docstring_complex_argtype_ivar(self):
+        obj = DocstringClass
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        actuals = _render_lines(_tokenize(class_node))
+        expected = [
+            "class DocstringClass:",
+            "ivar name: str",
+            "ivar values: Optional[dict[str, str]]", # TODO: Should Dict vs. dict be mixed in like this?
+        ]
+        _check_all(actuals, expected, obj)
+
+        expected_init = [
+            "def __init__(",
+            "self, ",
+            "name: Optional[str], ",
+            "*args: Any, ",
+            "*, ", # TODO: Second asterisk should be removed
+            "values: Optional[Dict[str, str]] = ...",
+            ") -> None"
+        ]
+        _check_all(actuals[4:11], expected_init, obj)
+        # check that type_for returns the correct type for the given ivar
+        complex_ivar_docstring = obj.__doc__
+        parser = DocstringParser(complex_ivar_docstring)
+        assert parser.type_for("name", keyword="param") == "str or None"
+        # docstring parser wraps kwargs in Optional by default, so None should be stripped
+        assert parser.type_for("values", keyword="keyword") == "Optional[dict[str, str]]"
+        assert parser.type_for("name", keyword="ivar") == "str"
+        assert parser.type_for("values", keyword="ivar") == "dict[str, str] or None"

@@ -163,3 +163,27 @@ export function parseYamlContent(
 export function replaceAll(value: string | undefined, searchValue: string, replaceValue: string): string | undefined {
   return !value || !searchValue ? value : value.split(searchValue).join(replaceValue || "");
 }
+
+/**
+ * Extract and format the prefix from tspConfigPath or readmePath.
+ * @param {string | undefined} tspConfigPath The tspConfigPath to extract the prefix from.
+ * @param {string | undefined} readmePath The readmePath to extract the prefix from.
+ * @returns {string} The formatted prefix.
+ */
+export function extractPathFromSpecConfig(tspConfigPath: string | undefined, readmePath: string | undefined): string {
+  let prefix = '';
+  if (tspConfigPath) {
+    const match = tspConfigPath.match(/specification\/(.+)\/tspconfig\.yaml$/);
+    if (match) {
+      const segments = match[1].split('/');
+      prefix = segments.join('-').toLowerCase().replace(/\./g, '-');
+    }
+  } else if (readmePath) {
+    const match = readmePath.match(/specification\/(.+)\/(?:resource-manager|data-plane)\/readme\.md$/i);
+    if (match) {
+      const segments = match[1].split('/');
+      prefix = segments.join('-').toLowerCase().replace(/\./g, '-');
+    }
+  }
+  return prefix;
+}

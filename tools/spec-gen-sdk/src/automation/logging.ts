@@ -143,3 +143,50 @@ export const loggerWaitToFinish = async (logger: winston.Logger) => {
     }
   }
 };
+
+/**
+ * Logs the beginning of a group in Azure DevOps pipeline.
+ * @param message The message to log at the beginning of the group.
+ */
+export const devOpsLogGroupStart = (message: string) => {
+  console.log(`##[group]${message}`);
+};
+
+/**
+ * Logs an error message in Azure DevOps pipeline.
+ * @param message The error message to log.
+ */
+export const devOpsLogError = (message: string) => {
+  console.log(`##[error]${message}`);
+};
+
+/**
+ * Logs the start of a section in Azure DevOps pipeline.
+ * @param message The message to log at the start of the section.
+ */
+export const devOpsLogSectionStart = (message: string) => {
+  console.log(`##[section]${message}`);
+};
+
+/**
+ * Logs a command being run in Azure DevOps pipeline.
+ * @param command The command-line being run.
+ */
+export const devOpsLogCommand = (command: string) => {
+  console.log(`##[command]${command}`);
+};
+
+/**
+ * Logs the end of a group in Azure DevOps pipeline.
+ */
+export const devOpsLogGroupEnd = () => {
+  console.log(`##[endgroup]`);
+};
+
+/**
+ * Logs a general message in Azure DevOps pipeline.
+ * @param message The message to log.
+ */
+export const devOpsLogMessage = (message: string) => {
+  console.log(message);
+};

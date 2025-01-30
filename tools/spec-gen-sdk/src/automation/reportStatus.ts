@@ -9,7 +9,7 @@ import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
 import { formatSuppressionLine } from '../utils/reportFormat';
 import { removeAnsiEscapeCodes } from '../utils/utils';
-import { CommentCaptureTransport } from './logging';
+import { CommentCaptureTransport, devOpsLogError, devOpsLogGroupEnd, devOpsLogGroupStart } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
@@ -26,17 +26,12 @@ export const generateReport = (context: WorkflowContext) => {
   let hasAbsentSuppressions = false;
   let areBreakingChangeSuppressed = false;
   let shouldLabelBreakingChange = false;
-  if (context.pendingPackages.length > 0) {
-    setSdkAutoStatus(context, 'failed');
-    setFailureType(context, FailureType.PipelineFrameworkFailed);
-    context.logger.error(`GenerationError: The following packages are still pending.`);
-    for (const pkg of context.pendingPackages) {
-      context.logger.error(`\t${pkg.name}`);
-      context.handledPackages.push(pkg);
-    }
-  }
-
   for (const pkg of context.handledPackages) {
+    if(pkg.status === 'failed') {
+      devOpsLogGroupStart(pkg.name);
+      devOpsLogError('The generation process failed. Please check the logs for details.');
+      devOpsLogGroupEnd();
+    }
     setSdkAutoStatus(context, pkg.status);
     hasSuppressions = Boolean(pkg.presentSuppressionLines.length > 0);
     hasAbsentSuppressions = Boolean(pkg.absentSuppressionLines.length > 0);
@@ -47,21 +42,21 @@ export const generateReport = (context: WorkflowContext) => {
       shouldLabelBreakingChange = true;
     }
     const packageReport: PackageReport = {
-        packageName: pkg.name,
-        result: pkg.status,
-        artifactPaths: pkg.artifactPaths,
-        readmeMd: pkg.readmeMd,
-        typespecProject: pkg.typespecProject,
-        version: pkg.version,
-        apiViewArtifact: pkg.apiViewArtifactPath,
-        language: pkg.language,
-        hasBreakingChange: pkg.hasBreakingChange,
-        breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
-        shouldLabelBreakingChange,
-        areBreakingChangeSuppressed,
-        presentBreakingChangeSuppressions: pkg.presentSuppressionLines,
-        absentBreakingChangeSuppressions: pkg.absentSuppressionLines,
-        installInstructions: pkg.installationInstructions
+      packageName: pkg.name,
+      result: pkg.status,
+      artifactPaths: pkg.artifactPaths,
+      readmeMd: pkg.readmeMd,
+      typespecProject: pkg.typespecProject,
+      version: pkg.version,
+      apiViewArtifact: pkg.apiViewArtifactPath,
+      language: pkg.language,
+      hasBreakingChange: pkg.hasBreakingChange,
+      breakingChangeLabel: context.swaggerToSdkConfig.packageOptions.breakingChangesLabel,
+      shouldLabelBreakingChange,
+      areBreakingChangeSuppressed,
+      presentBreakingChangeSuppressions: pkg.presentSuppressionLines,
+      absentBreakingChangeSuppressions: pkg.absentSuppressionLines,
+      installInstructions: pkg.installationInstructions
     }
     packageReports.push(packageReport);
     context.logger.info(`package [${pkg.name}] hasBreakingChange [${pkg.hasBreakingChange}] isBetaMgmtSdk [${pkg.isBetaMgmtSdk}] hasSuppressions [${hasSuppressions}] hasAbsentSuppressions [${hasAbsentSuppressions}]`);

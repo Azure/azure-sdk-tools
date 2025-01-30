@@ -20,6 +20,7 @@ import path from 'path';
 import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog } from './reportStatus';
 import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
+import { extractPathFromSpecConfig } from '../utils/utils';
 
 interface SdkAutoOptions {
   specRepo: RepoKey;
@@ -67,14 +68,15 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     logger.add(loggerTestTransport());
   }
 
+  // Extract relevant parts from tspConfigPath or readmePath
+  const fileNamePrefix = extractPathFromSpecConfig(options.tspConfigPath, options.readmePath)
   const logFolder = path.join(options.workingFolder, 'out/logs');
   if (!existsSync(logFolder)) {
     mkdirSync(logFolder, { recursive: true });
   }
-  const fullLogFileName = path.join(logFolder, 'full.log');
-  const filteredLogFileName = path.join(logFolder, 'filtered.log');
-  // eg: spec-gen-sdk-java-result.html
-  const htmlLogFileName = path.join(logFolder, `spec-gen-sdk-${options.sdkName.substring("azure-sdk-for-".length)}-result.html`);
+  const fullLogFileName = path.join(logFolder, `${fileNamePrefix}-full.log`);
+  const filteredLogFileName = path.join(logFolder, `${fileNamePrefix}-filtered.log`);
+  const htmlLogFileName = path.join(logFolder, `${fileNamePrefix}-${options.sdkName.substring("azure-sdk-for-".length)}-gen-result.html`);
   if (existsSync(fullLogFileName)) {
     rmSync(fullLogFileName);
   }
@@ -127,9 +129,9 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     }
   }
   if (workflowContext) {
-    generateReport(workflowContext);
     saveFilteredLog(workflowContext);
     generateHtmlFromFilteredLog(workflowContext);
+    generateReport(workflowContext);
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;

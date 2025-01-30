@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IssueLabelerService", "src\IssueLabelerService\IssueLabelerService.csproj", "{4C9E75AF-468F-4DF7-BACD-EC0C2C66A96F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IssueManager", "src\IssueManager\IssueManager.csproj", "{305F00F7-A6E2-4A52-B745-7B661893E2F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureRAGService", "src\IssueManager\AzureRAGService.csproj", "{305F00F7-A6E2-4A52-B745-7B661893E2F5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SearchIndexCreator", "src\SearchIndexCreator\SearchIndexCreator.csproj", "{0AEAF8DD-C370-4090-B439-9CF364D29869}"
 EndProject

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.AI.OpenAI;
 using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Indexes;
@@ -14,7 +17,12 @@ namespace SearchIndexCreator
             _config = config;
         }
 
-
+        /// <summary>
+        /// Sets up and runs the indexer.
+        /// </summary>
+        /// <param name="indexClient">The client to manage the Azure Search index.</param>
+        /// <param name="indexerClient">The client to manage the Azure Search indexer.</param>
+        /// <param name="openAIClient">The client to interact with Azure OpenAI.</param>
         public async Task SetupAndRunIndexer(SearchIndexClient indexClient, SearchIndexerClient indexerClient, AzureOpenAIClient openAIClient)
         {
             // Create an Index  
@@ -26,7 +34,7 @@ namespace SearchIndexCreator
             // Create a Data Source Connection  
             Console.WriteLine("Creating/Updating the data source connection...");
             var dataSource = new SearchIndexerDataSourceConnection(
-                $"{_config["IssueIndexName"]}-cosmodb",
+                $"{_config["IssueIndexName"]}-blob",
                 SearchIndexerDataSourceType.AzureBlob,
                 connectionString: _config["BlobConnectionString"],
                 container: new SearchIndexerDataContainer(_config["IssueBlobContainerName"]));
@@ -115,6 +123,7 @@ namespace SearchIndexCreator
                         {
                             Source = "/document/Url"
                         },
+                        // Metadata is needed for updating the document (or atleast last modified not sure of the rest)
                         new InputFieldMappingEntry("metadata_storage_content_type")
                         {
                             Source = "/document/metadata_storage_content_type"
@@ -170,6 +179,10 @@ namespace SearchIndexCreator
             Console.WriteLine("Indexer Created/Updated!");
         }
 
+        /// <summary>
+        /// Gets a sample search index with HNSW alorithm, built in vectorizer, semantic search turned on, compression set up, and all needed fields for issues.
+        /// </summary>
+        /// <returns>The sample search index.</returns>
         private SearchIndex GetSampleIndex()
         {
             const string vectorSearchHnswProfile = "issue-vector-profile";
@@ -223,6 +236,11 @@ namespace SearchIndexCreator
                             {
                                 new SemanticField(fieldName: "chunk")
                             },
+                            KeywordsFields =
+                            {
+                                new SemanticField(fieldName: "Service"),
+                                new SemanticField(fieldName: "Category")
+                            },
                         })
                     },
                 },
@@ -249,14 +267,29 @@ namespace SearchIndexCreator
                         VectorSearchDimensions = modelDimensions,
                         VectorSearchProfileName = vectorSearchHnswProfile
                     },
-                    new SearchableField("Id"),
+                    new SearchField("Id", SearchFieldDataType.String)
+                    {
+                        IsSearchable = false
+                    },
                     new SearchableField("Title"),
                     new SearchableField("Service"),
                     new SearchableField("Category"),
-                    new SearchableField("Author"),
-                    new SearchableField("Repository"),
-                    new SearchField("CreatedAt", SearchFieldDataType.DateTimeOffset),
-                    new SearchableField("Url"),
+                    new SearchField("Author", SearchFieldDataType.String)
+                    {
+                        IsSearchable = false
+                    },
+                    new SearchField("Repository", SearchFieldDataType.String)
+                    {
+                        IsSearchable = false
+                    },
+                    new SearchField("CreatedAt", SearchFieldDataType.DateTimeOffset)
+                    {
+                        IsSearchable = false
+                    },
+                    new SearchField("Url", SearchFieldDataType.String)
+                    {
+                        IsSearchable = false
+                    },
                     new SearchField("metadata_storage_content_type", SearchFieldDataType.String)
                     {
                         IsHidden = true,
@@ -264,31 +297,35 @@ namespace SearchIndexCreator
                     new SearchField("metadata_storage_size", SearchFieldDataType.Int64)
                     {
                         IsHidden = true,
+                        IsSearchable = false
                     },
                     new SearchField("metadata_storage_last_modified", SearchFieldDataType.DateTimeOffset)
                     {
                         IsHidden = true,
+                        IsSearchable = false
                     },
                     new SearchField("metadata_storage_content_md5", SearchFieldDataType.String)
                     {
                         IsHidden = true,
+                        IsSearchable = false
                     },
                     new SearchField("metadata_storage_name", SearchFieldDataType.String)
                     {
                         IsHidden = true,
+                        IsSearchable = false
                     },
                     new SearchField("metadata_storage_path", SearchFieldDataType.String)
                     {
                         IsHidden = true,
+                        IsSearchable = false
                     },
                     new SearchField("metadata_storage_file_extension", SearchFieldDataType.String)
                     {
                         IsHidden = true,
+                        IsSearchable = false
                     }
                 }
             };
-
-
 
             return searchIndex;
         }

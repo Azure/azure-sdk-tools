@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Octokit;
 using System.Text.Json;
 using Azure.Storage.Blobs;
@@ -18,7 +21,12 @@ namespace SearchIndexCreator
         }
 
 
-        //Expect this method to take a while
+        /// <summary>
+        /// Retrieves all issues from the specified repository. Will take a while to run.
+        /// </summary>
+        /// <param name="repoOwner">The owner of the repository.</param>
+        /// <param name="repo">The name of the repository.</param>
+        /// <returns>A list of issues.</returns>
         public async Task<List<Issue>> RetrieveAllIssues(string repoOwner, string repo)
         {
             var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"));
@@ -104,7 +112,13 @@ namespace SearchIndexCreator
             File.WriteAllText("issues.json", jsonString);
         }
 
-
+        /// <summary>
+        /// Retrieves issue examples from the specified repository within the given number of days.
+        /// </summary>
+        /// <param name="repoOwner">The owner of the repository.</param>
+        /// <param name="repo">The name of the repository.</param>
+        /// <param name="days">The number of days to look back for issues.</param>
+        /// <returns>A list of issues formatted as they would be given to the azure function.</returns>
         public async Task<List<IssuePayload>> RetrieveIssueExamples(string repoOwner, string repo, int days)
         {
             var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"));
@@ -143,6 +157,12 @@ namespace SearchIndexCreator
             return results;
         }
 
+        /// <summary>
+        /// Uploads the issues to an Azure Blob Storage container.
+        /// </summary>
+        /// <param name="issues">The list of issues to upload.</param>
+        /// <param name="accountName">The name of the Azure Storage account.</param>
+        /// <param name="containerName">The name of the container to upload to.</param>
         public async Task UploadIssues(List<Issue> issues, string accountName, string containerName)
         {
             var blobServiceClient = GetBlobServiceClient(accountName);
@@ -179,6 +199,11 @@ namespace SearchIndexCreator
             }
         }
 
+        /// <summary>
+        /// Gets the BlobServiceClient for the specified account name.
+        /// </summary>
+        /// <param name="accountName">The name of the Azure Storage account.</param>
+        /// <returns>The BlobServiceClient instance.</returns>
         public BlobServiceClient GetBlobServiceClient(string accountName)
         {
             BlobServiceClient client = new(

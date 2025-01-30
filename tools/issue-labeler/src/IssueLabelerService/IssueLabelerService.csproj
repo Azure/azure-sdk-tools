@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IssueManager\IssueManager.csproj" />
+    <ProjectReference Include="..\IssueManager\AzureRAGService.csproj" />
   </ItemGroup>
 
   <ItemGroup>

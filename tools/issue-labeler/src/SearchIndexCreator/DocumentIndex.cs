@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +18,12 @@ namespace SearchIndexCreator
         }
 
 
+        /// <summary>
+        /// Sets up and runs the indexer.
+        /// </summary>
+        /// <param name="indexClient">The client to manage the search index.</param>
+        /// <param name="indexerClient">The client to manage the search indexer.</param>
+        /// <param name="openAIClient">The client to interact with Azure OpenAI.</param>
         public async Task SetupAndRunIndexer(SearchIndexClient indexClient, SearchIndexerClient indexerClient, AzureOpenAIClient openAIClient)
         {
             // Create an Index  
@@ -147,6 +156,10 @@ namespace SearchIndexCreator
             Console.WriteLine("Indexer Created/Updated!");
         }
 
+        /// <summary>
+        /// Gets a sample search index with HNSW alorithm, built in vectorizer, semantic search turned on, compression set up, and all needed fields for documents.
+        /// </summary>
+        /// <returns>The sample search index.</returns>
         private SearchIndex GetSampleIndex()
         {
             const string vectorSearchHnswProfile = "document-vector-profile";

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Octokit;
 using Azure.Storage.Blobs;
 using Azure.Identity;
@@ -19,6 +22,13 @@ namespace SearchIndexCreator
             _token = token;
         }
 
+
+        /// <summary>
+        /// Retrieves documents from the specified repository.
+        /// </summary>
+        /// <param name="owner">The owner of the repository.</param>
+        /// <param name="repo">The name of the repository.</param>
+        /// <returns>A list of tuples containing file path, URL, and content of the documents.</returns>
         public async Task<List<(string FilePath, string Url, string Content)>> GetDocuments(string owner, string repo)
         {
             var documentPaths = new List<string>();
@@ -28,6 +38,13 @@ namespace SearchIndexCreator
             return documentFiles;
         }
 
+
+        /// <summary>
+        /// Uploads files to an Azure Blob Storage container.
+        /// </summary>
+        /// <param name="files">The list of files to upload.</param>
+        /// <param name="accountName">The name of the Azure Storage account.</param>
+        /// <param name="containerName">The name of the container to upload to.</param>
         private async Task GetDocumentContents(string owner, string repo, List<(string FilePath, string Url, string Content)> readmeFiles, List<string> documentPaths)
         {
             foreach (var path in documentPaths)
@@ -47,7 +64,12 @@ namespace SearchIndexCreator
             }
         }
 
-
+        /// <summary>
+        /// Uploads files to an Azure Blob Storage container.
+        /// </summary>
+        /// <param name="files">The list of files to upload.</param>
+        /// <param name="accountName">The name of the Azure Storage account.</param>
+        /// <param name="containerName">The name of the container to upload to.</param>
         public async Task UploadFiles(List<(string FilePath, string Url, string Content)> files, string accountName, string containerName)
         {
             var blobServiceClient = GetBlobServiceClient(accountName);
@@ -83,6 +105,12 @@ namespace SearchIndexCreator
             }
         }
 
+
+        /// <summary>
+        /// Gets the BlobServiceClient for the specified account name.
+        /// </summary>
+        /// <param name="accountName">The name of the Azure Storage account.</param>
+        /// <returns>The BlobServiceClient instance.</returns>
         public BlobServiceClient GetBlobServiceClient(string accountName)
         {
             BlobServiceClient client = new(
@@ -93,6 +121,13 @@ namespace SearchIndexCreator
         }
 
 
+        /// <summary>
+        /// Retrieves all file paths in the directory tree that have to do with documentation.
+        /// </summary>
+        /// <param name="githubToken">The GitHub token for authentication.</param>
+        /// <param name="documentPaths">The list to store the document paths.</param>
+        /// <param name="repoOwner">The owner of the repository.</param>
+        /// <param name="repoName">The name of the repository.</param>
         public async Task DirectoryTree(string githubToken, List<string> documentPaths, string repoOwner, string repoName)
         {
             using (var client = new HttpClient())

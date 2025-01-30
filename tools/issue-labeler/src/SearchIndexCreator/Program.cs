@@ -1,9 +1,14 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using Microsoft.Extensions.Configuration;
 using Octokit;
 using Azure.Identity;
 using Azure.AI.OpenAI;
 using Azure.Search.Documents.Indexes;
-using System.Net.Http.Json;
+using AzureRAGService;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace SearchIndexCreator
 {
@@ -17,125 +22,182 @@ namespace SearchIndexCreator
                 .Build();
             var config = configuration.GetSection("Values");
 
-            bool issuesBool = false; //Retrieve all issues from a repository + Azure CosmosDB + Azure Search Index
-            bool docsBool = false; //Retrieve all documents from a repository + Azure Blob Storage + Azure Search Index
-            bool issueExamples = false; // Issue Examples for testing
-            bool demo = true;  //Demo for testing
+            bool issuesBool = false;
+            bool docsBool = false;
+            bool issueExamples = false;
+            bool demo = false;
+            bool testRAG = true;
 
-            if (issuesBool)
+            try
             {
-                try
+                if (issuesBool)
                 {
-                    // 1. Retrieve all issues from a repository
-                    var tokenAuth = new Credentials(config["GithubKey"]);
-                    var issueRetrieval = new IssueRetrieval(tokenAuth, config);
-                    var issues = await issueRetrieval.RetrieveAllIssues("Azure", "azure-sdk-for-net");
-                    
-                    // 2. Upload the issues to Azure CosmosDB
-                    var defaultCredential = new DefaultAzureCredential();
-                    await issueRetrieval.UploadIssues(issues, config["IssueStorageName"], config["IssueBlobContainerName"]);
-
-                    // 3. Create an Azure Search Index
-                    var index = new IssueIndex(config);
-                    var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), defaultCredential);
-                    var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
-                    var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), defaultCredential);
-
-                    await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
+                    await ProcessIssues(config);
                 }
-                catch (Exception ex)
+                else if (docsBool)
                 {
-                    Console.WriteLine($"Error: {ex.Message}");
+                    await ProcessDocs(config);
+                }
+                else if (issueExamples)
+                {
+                    await ProcessIssueExamples(config);
+                }
+                else if (demo)
+                {
+                    await ProcessDemo(config);
+                }
+                else if (testRAG)
+                {
+                    await TestRAG(config);
                 }
             }
-            else if (docsBool)
+            catch (Exception ex)
             {
-                try
-                {
-                    // 1. Retrieve all documents from a repository
-                    var docs = new DocumentRetrieval(config["GithubKey"]);
-                    var readmeFiles = await docs.GetDocuments("Azure", "azure-sdk-for-net");
-
-                    // 2. Upload the documents to Azure Blob Storage
-                    await docs.UploadFiles(readmeFiles, config["DocumentStorageName"], config["DocumentBlobContainerName"]);
-
-                    // 3. Create an Azure Search Index
-                    var defaultCredential = new DefaultAzureCredential();
-                    var index = new DocumentIndex(config);
-                    var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), defaultCredential);
-                    var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
-                    var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), defaultCredential);
-
-                    await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error: {ex.Message}");
-                }
+                Console.WriteLine($"Error: {ex.Message}");
             }
-            else if (issueExamples)
+        }
+
+
+        // Retrieve issues from GitHub, upload to Azure Blob Storage, and create an Azure Search Index
+        private static async Task ProcessIssues(IConfigurationSection config)
+        {
+            // 1. Retrieve all issues from a repository
+            var tokenAuth = new Credentials(config["GithubKey"]);
+            var issueRetrieval = new IssueRetrieval(tokenAuth, config);
+            var issues = await issueRetrieval.RetrieveAllIssues("Azure", "azure-sdk-for-net");
+
+            // 2. Upload the issues to Azure CosmosDB
+            var defaultCredential = new DefaultAzureCredential();
+            await issueRetrieval.UploadIssues(issues, config["IssueStorageName"], config["IssueBlobContainerName"]);
+
+            // 3. Create an Azure Search Index
+            var index = new IssueIndex(config);
+            var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), defaultCredential);
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+
+            await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
+        }
+
+
+        //Retrieve documents from GitHub, upload to Azure Blob Storage, and create an Azure Search Index
+        private static async Task ProcessDocs(IConfigurationSection config)
+        {
+            // 1. Retrieve all documents from a repository
+            var docsRetrieval = new DocumentRetrieval(config["GithubKey"]);
+            var readmeFiles = await docsRetrieval.GetDocuments("Azure", "azure-sdk-for-net");
+
+            // 2. Upload the documents to Azure Blob Storage
+            await docsRetrieval.UploadFiles(readmeFiles, config["DocumentStorageName"], config["DocumentBlobContainerName"]);
+
+            // 3. Create an Azure Search Index
+            var defaultCredential = new DefaultAzureCredential();
+            var index = new DocumentIndex(config);
+            var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), defaultCredential);
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+
+            await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
+        }
+
+
+        private static async Task ProcessIssueExamples(IConfigurationSection config)
+        {
+            // Retrieve examples of issues for testing from a repository
+            var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
+            var issues = await issueRetrieval.RetrieveIssueExamples("Azure", "azure-sdk-for-net", 7);
+            issueRetrieval.DownloadIssue(issues);
+        }
+
+
+        //Uploads recent issues to my private repo for demo purposes.
+        private static async Task ProcessDemo(IConfigurationSection config)
+        {
+            int days = 14;
+
+            // Retrieve examples of issues for testing from a repository
+            var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
+            var issues = await issueRetrieval.RetrieveIssueExamples("Azure", "azure-sdk-for-net", days);
+
+            var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"))
             {
-                try
-                {
-                    // Retrieve examples of issues for testing from a repository
-                    var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
-                    var issues = await issueRetrieval.RetrieveIssueExamples("Azure", "azure-sdk-for-net", 7);
-                    issueRetrieval.DownloadIssue(issues);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error: {ex.Message}");
-                }
-            }
-            //Get recent issues and put them into my own private repository to see it in "action"
-            else if(demo)
+                Credentials = new Credentials(config["GithubKeyPrivate"])
+            };
+
+            // Upload recent issues into private repository
+            foreach (var issue in issues)
             {
-                // Retrieve examples of issues for testing from a repository
-                var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
-                var issues = await issueRetrieval.RetrieveIssueExamples("Azure", "azure-sdk-for-net", 7);
-
-                var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"));
-                client.Credentials = new Credentials(config["GithubKeyPrivate"]);
-
-                List<(int, string)> comments = new List<(int, string)>();
-                // Upload recent issues into private repository
-                foreach (var issue in issues)
+                var newIssue = new NewIssue(issue.Title)
                 {
-                    var createIssue = new NewIssue(issue.Title)
-                    {
-                        Body = issue.Body
-                    };
+                    Body = issue.Body
+                };
 
-                    var newIssue = await client.Issue.Create("jeo02", "issue-examples", createIssue);
-
-                    string requestUrl = config["AzureFunctionLink"];
-
-                    var payload = new
-                    {
-                        IssueNumber = newIssue.Number,
-                        newIssue.Title,
-                        newIssue.Body,
-                        IssueUserLogin = newIssue.User.Login,
-                        RepositoryName = "azure-sdk-for-net",
-                        RepositoryOwnerName = "Azure"
-                    };
-
-                    using var httpClient = new HttpClient();
-
-                    var response = await httpClient.PostAsJsonAsync(requestUrl, payload).ConfigureAwait(false);
-
-                    var suggestions = await response.Content.ReadFromJsonAsync<IssueOutput>().ConfigureAwait(false);
-                    comments.Add((newIssue.Number, suggestions.Suggestions));
-                }
-
-                foreach((int num, string comment) in comments)
-                {
-                    if(comment != "")
-                    {
-                        await client.Issue.Comment.Create("jeo02", "issue-examples", num, comment);
-                    }
-                }
+                await client.Issue.Create("jeo02", "issue-examples", newIssue);
             }
+        }
+
+
+        //Just to mess with my RAG methods in different ways
+        private static async Task TestRAG(IConfigurationSection config)
+        {
+            // Configurations for correct access in search and OpenAI
+            var credential = new DefaultAzureCredential();
+            var searchEndpoint = new Uri(config["SearchEndpoint"]);
+            var openAIEndpoint = new Uri(config["OpenAIEndpoint"]);
+            string modelName = config["OpenAIModelName"];
+
+            // Configuration for Issue specifics
+            string issueIndexName = config["IssueIndexName"];
+            string issueSemanticName = config["IssueSemanticName"];
+            string issueFieldName = "text_vector";
+
+            // Configuration for Document specifics
+            string documentIndexName = config["DocumentIndexName"];
+            string documentSemanticName = config["DocumentSemanticName"];
+            string documentFieldName = "text_vector";
+
+            // Search prompt
+            string searchPrompt = "Azure.AI.OpenAI";
+
+            // Initialize the RAG service
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var logger = loggerFactory.CreateLogger<TriageRAG>();
+            var ragService = new TriageRAG(logger);
+
+            // Top X documents/issues
+            int top = 5;
+
+            var relevantIssues = ragService.AzureSearchQuery<AzureRAGService.Issue>(
+                searchEndpoint, issueIndexName, issueSemanticName, issueFieldName, credential, searchPrompt, top
+            );
+
+            var relevantDocuments = ragService.AzureSearchQuery<Document>(
+                searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, searchPrompt, top
+            );
+
+            var docs = relevantDocuments.Select(rd => new
+            {
+                Content = rd.Item1.ToString(),
+                Score = rd.Item2
+            });
+
+            var issues = relevantIssues.Select(ri => new
+            {
+                Content = ri.Item1.ToString(),
+                Score = ri.Item2
+            });
+
+            string docContent = JsonConvert.SerializeObject(docs);
+            string issueContent = JsonConvert.SerializeObject(issues);
+
+            string message = $"You are an AI assistant designed to generate realistic GitHub issues relevant to the documentation.\nDocumentation: {docContent}\nExample Issues: {issueContent}\nPlease generate potential questions that could be asked about the documentation as GitHub issue queries. Do not provide a response to the questions, only provide a list of detailed questions. Use the example issues on guidance on how to make an issue.";
+
+            string result = ragService.SendMessageQna(openAIEndpoint, credential, modelName, message);
+
+            // Replace escaped newlines
+            result = result.Replace("\\n", "\n");
+
+            Console.WriteLine($"Open AI Response:\n{result}");
         }
 
         private class IssueOutput

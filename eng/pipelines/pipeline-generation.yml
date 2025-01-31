@@ -23,6 +23,7 @@ parameters:
   - Azure/azure-sdk-for-cpp
   - Azure/azure-sdk-for-ios
   - Azure/azure-sdk-for-go
+  - Azure/azure-sdk-for-rust
 
 jobs:
 - ${{ each repo in parameters.Repositories }}:

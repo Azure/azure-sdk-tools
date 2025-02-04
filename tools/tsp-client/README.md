@@ -136,33 +136,19 @@ Example package.json using `"azure-sdk/emitter-package-json-pinning"`:
 ```json
 {
   "name": "@azure-tools/typespec-foo",
-  "version": "0.3.0",
-  "author": "Microsoft Corporation",
-  "description": "Example package.json for tsp-client",
-  "license": "MIT",
-  "type": "module",
-  "main": "dist/src/index.js",
-  "exports": {
-    ".": "./dist/src/index.js",
-    "./testing": "./dist/src/testing/index.js"
-  },
+  "version": "0.4.0-alpha.20250110.1",
+  ...
   "dependencies": {
-    "semver": "~7.6.2",
-    "tsx": "~4.19.1"
+    "@azure-tools/generator-foo": "0.3.0",
+    "@typespec/http-client-foo": "1.2.0"
   },
   "devDependencies": {
-    "@typespec/compiler": "~0.64.0",
-    "@typespec/http": "~0.63.0",
-    "@typespec/rest": "~0.63.0",
-    "@typespec/versioning": "~0.63.0",
-    "@typespec/openapi": "~0.63.0",
-    "@azure-tools/typespec-azure-resource-manager": "~0.49.0",
-    "@azure-tools/typespec-azure-core": "~0.49.0",
-    "@azure-tools/typespec-azure-rulesets": "~0.49.0",
-    "@azure-tools/typespec-autorest": "~0.49.0",
-    "@azure-tools/typespec-client-generator-core": "~0.49.1"
+    "@typespec/compiler": "0.64.0",
+    "rimraf": "^6.0",
   },
-  "azure-sdk/emitter-package-json-pinning": ["@typespec/compiler"]
+  "azure-sdk/emitter-package-json-pinning": [
+    "@typespec/compiler"
+  ]
 }
 ```
 
@@ -172,10 +158,10 @@ Example `emitter-package.json` generated from the package.json shown above:
 {
   "main": "dist/src/index.js",
   "dependencies": {
-    "@azure-tools/typespec-foo": "0.3.0"
+    "@azure-tools/typespec-foo": "0.4.0-alpha.20250110.1"
   },
   "devDependencies": {
-    "@typespec/compiler": "~0.64.0"
+    "@typespec/compiler": "0.64.0"
   }
 }
 ```
@@ -186,8 +172,8 @@ Example json file with package overrides:
 
 ```json
 {
-  "@azure-tools/typespec-foo": "0.2.0",
-  "@typespec/compiler": "0.61.0"
+  "@azure-tools/typespec-foo": "https://<dev-feed-url>/typespec-foo-0.4.0-alpha.20250110.1.tgz",
+  "@azure-tools/generator-foo": "https://<dev-feed-url>/generator-foo-1.3.0-alpha.20250110.1.tgz"
 }
 ```
 
@@ -203,14 +189,13 @@ Example `emitter-package.json` generated using overrides:
 {
   "main": "dist/src/index.js",
   "dependencies": {
-    "@azure-tools/typespec-foo": "0.3.0"
+    "@azure-tools/typespec-foo": "https://<dev-feed-url>/typespec-foo-0.4.0-alpha.20250110.1.tgz"
   },
   "devDependencies": {
     "@typespec/compiler": "~0.64.0"
   },
   "overrides": {
-    "@azure-tools/typespec-foo": "0.2.0",
-    "@typespec/compiler": "0.61.0"
+    "@azure-tools/generator-foo": "https://<dev-feed-url>/generator-foo-1.3.0-alpha.20250110.1.tgz"
   }
 }
 ```

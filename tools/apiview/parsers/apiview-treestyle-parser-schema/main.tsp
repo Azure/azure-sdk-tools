@@ -89,13 +89,9 @@ model CodeDiagnostic {
 }
 
 enum TokenKind {
-<<<<<<< HEAD
   /** Text: Token kind should be set as Text for any plan text token. for e.g documentation, namespace value, or attribute or decorator tokens **/
   Text: 0,
   /** Punctuation **/
-=======
-  Text: 0, // is newline just a text token kind, \n?
->>>>>>> 08ac0177 (add global review line token)
   Punctuation: 1,
   /** Keyword **/
   Keyword: 2,

@@ -1,4 +1,5 @@
 import { Type } from "../../models/rustdoc-json-types";
+import { shouldElideLifetime } from "./shouldElideLifeTime";
 
 export function typeToString(type: Type): string {
     if (!type) {
@@ -40,9 +41,9 @@ export function typeToString(type: Type): string {
             if ('trait_bound' in b) {
                 return b.trait_bound.trait.name;
             } else if ('outlives' in b) {
-                return b.outlives.lifetime;
+                return b.outlives;
             } else if ('use' in b) {
-                return b.use.lifetimes.join(", ");
+                return b.use.join(", ");
             } else {
                 return "unknown";
             }
@@ -50,7 +51,9 @@ export function typeToString(type: Type): string {
     } else if ("raw_pointer" in type) {
         return `*${type.raw_pointer.is_mutable ? "mut" : "const"} ${typeToString(type.raw_pointer.type)}`;
     } else if ("borrowed_ref" in type) {
-        return `&${type.borrowed_ref.is_mutable ? "mut " : ""}${type.borrowed_ref.lifetime ? `'${type.borrowed_ref.lifetime} ` : ""}${typeToString(type.borrowed_ref.type)}`;
+        const lifetime = type.borrowed_ref.lifetime;
+        const elidedLifetime = lifetime && !shouldElideLifetime(lifetime) ? `'${lifetime} ` : "";
+        return `&${type.borrowed_ref.is_mutable ? "mut " : ""}${elidedLifetime}${typeToString(type.borrowed_ref.type)}`;
     } else if ("qualified_path" in type) {
         return `${typeToString(type.qualified_path.self_type)} as ${type.qualified_path.trait ? type.qualified_path.trait.name + "::" : ""}${type.qualified_path.name}`;
     } else {

@@ -30,7 +30,7 @@ export function processConstant(item: Item, reviewLines: ReviewLine[]) {
     });
     reviewLine.Tokens.push({
         Kind: TokenKind.TypeName,
-        Value: `${typeToString(item.inner.constant.type)}`,
+        Value: typeToString(item.inner.constant.type),
         NavigateToId: item.id.toString(),
         NavigationDisplayName: item.name || undefined,
         HasSuffixSpace: false,

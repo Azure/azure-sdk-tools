@@ -2,6 +2,7 @@ import { ReviewLine, ReviewToken, TokenKind } from "../models/apiview-models";
 import { Item, GenericParamDef, WherePredicate, GenericBound, Type } from "../models/rustdoc-json-types";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { shouldElideLifetime } from "./utils/shouldElideLifeTime";
 import { typeToString } from "./utils/typeToString";
 
 /**
@@ -98,22 +99,42 @@ export function processFunction(item: Item, reviewLines: ReviewLine[]) {
     const wherePredicates = item.inner.function.generics.where_predicates;
     const wherePredicateTokens = wherePredicates.flatMap((predicate: WherePredicate, index: number) => {
         const tokens: ReviewToken[] = [];
-        if (index > 0) {
-            tokens.push({ Kind: TokenKind.Text, Value: ", ", HasSuffixSpace: false });
-        }
 
+        if (index > 0 && tokens.length > 0 && index < wherePredicates.length - 1) {
+            tokens.push({ Kind: TokenKind.Text, Value: "," });
+        }
         if ('bound_predicate' in predicate) {
-            const type = predicate.bound_predicate.type
-            const typeName = typeof type === 'object' && 'generic' in type ? type.generic : 'unknown';
             tokens.push({
                 Kind: TokenKind.TypeName,
-                Value: typeName,
+                Value: typeToString(predicate.bound_predicate.type),
                 HasSuffixSpace: false
             });
-            tokens.push({ Kind: TokenKind.Text, Value: ": ", HasSuffixSpace: false });
-            tokens.push(...createGenericBoundTokens(predicate.bound_predicate.bounds))
+            tokens.push({ Kind: TokenKind.Text, Value: ":" });
+            tokens.push(...createGenericBoundTokens(predicate.bound_predicate.bounds));
+        } else if ('lifetime_predicate' in predicate && !shouldElideLifetime(predicate.lifetime_predicate.lifetime)) {
+            tokens.push({
+                Kind: TokenKind.TypeName,
+                Value: predicate.lifetime_predicate.lifetime,
+                HasSuffixSpace: false
+            });
+            tokens.push({ Kind: TokenKind.Text, Value: ":" });
+            tokens.push({
+                Kind: TokenKind.TypeName,
+                Value: predicate.lifetime_predicate.outlives.toString(),
+                HasSuffixSpace: false
+            })
+        } else if ('eq_predicate' in predicate) {
+            tokens.push({
+                Kind: TokenKind.TypeName,
+                Value: typeToString(predicate.eq_predicate.lhs),
+            });
+            tokens.push({ Kind: TokenKind.Text, Value: "=" });
+            tokens.push({
+                Kind: TokenKind.TypeName,
+                Value: "type" in predicate.eq_predicate.rhs ? typeToString(predicate.eq_predicate.rhs.type) : "unknown", // Unknown is a placeholder for Const
+                HasSuffixSpace: false
+            });
         }
-
         return tokens;
     });
 
@@ -145,26 +166,26 @@ function createGenericsParamsTokens(
 
         if (index === 0) {
             tokens.push({ Kind: TokenKind.Text, Value: "<", HasSuffixSpace: false });
-        } else {
-            tokens.push({ Kind: TokenKind.Text, Value: ", ", HasSuffixSpace: false });
         }
-
-        // Param name
-        tokens.push({
-            Kind: TokenKind.TypeName,
-            Value: param.name,
-            HasSuffixSpace: false
-        });
+        if (!("lifetime" in param.kind && shouldElideLifetime(param.name))) {
+            tokens.push({
+                Kind: TokenKind.TypeName,
+                Value: param.name,
+                HasSuffixSpace: false
+            });
+        }
 
         // Param bounds
         if ("type" in param.kind && param.kind.type.bounds && param.kind.type.bounds.length > 0) {
-            tokens.push({ Kind: TokenKind.Text, Value: ": ", HasSuffixSpace: false });
+            tokens.push({ Kind: TokenKind.Text, Value: ":" });
             tokens.push(...createGenericBoundTokens(param.kind.type.bounds));
         }
 
         // Close generics if it's the last parameter
         if (index === params.length - 1) {
             tokens.push({ Kind: TokenKind.Text, Value: ">", HasSuffixSpace: false });
+        } else {
+            if (index != 0 && tokens.length > 0) { tokens.push({ Kind: TokenKind.Text, Value: "," }); }
         }
 
         return tokens;
@@ -174,7 +195,7 @@ function createGenericsParamsTokens(
 function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
     return bounds.flatMap((bound, index) => {
         const tokens: ReviewToken[] = [];
-        if (index > 0) {
+        if (tokens.length > 0) {
             tokens.push({ Kind: TokenKind.Text, Value: " + ", HasSuffixSpace: false });
         }
         if ("trait_bound" in bound && bound.trait_bound?.trait) {
@@ -182,6 +203,19 @@ function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
                 Kind: TokenKind.TypeName,
                 Value: bound.trait_bound.trait.name,
                 NavigateToId: bound.trait_bound.trait.id.toString(),
+                HasSuffixSpace: false
+            });
+        }
+        else if ("outlives" in bound) {
+            tokens.push({
+                Kind: TokenKind.TypeName,
+                Value: bound.outlives,
+                HasSuffixSpace: false
+            });
+        } else if ("use" in bound) {
+            tokens.push({
+                Kind: TokenKind.TypeName,
+                Value: bound.use.toString(),
                 HasSuffixSpace: false
             });
         }

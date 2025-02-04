@@ -742,14 +742,10 @@ export type GenericBound =
         };
     }
     | {
-        outlives: {
-            lifetime: string;
-        };
+        outlives: string;
     }
     | {
-        use: {
-            lifetimes: string[];
-        };
+        use: string[];
     };
 
 /**

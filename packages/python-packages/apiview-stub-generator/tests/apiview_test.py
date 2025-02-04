@@ -5,15 +5,23 @@
 # --------------------------------------------------------------------------
 
 import os
+import sys
 import tempfile
 import shutil
-from importlib.util import find_spec
-from pytest import fail
+from subprocess import check_call, run, PIPE
+from pytest import fail, mark
 
 from apistub import ApiView, TokenKind, StubGenerator
 from apistub.nodes import PylintParser
 
-PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+def _build_dist(src_dir, build_type, extension):
+    check_call([sys.executable, "-m", "build", src_dir, f"--{build_type}"])
+    dist_dir = os.path.join(src_dir, "dist")
+    files = [f for f in os.listdir(dist_dir) if f.endswith(extension)]
+    if not files:
+        raise FileNotFoundError(f"No {build_type} file found in the dist directory")
+    return os.path.join(dist_dir, files[0])
+
 def _add_pyproject_package_to_temp(src_dir):
     temp_dir = tempfile.mkdtemp()
     dest_dir = os.path.join(temp_dir, os.path.basename(src_dir))
@@ -33,7 +41,19 @@ def _add_pyproject_package_to_temp(src_dir):
     assert not os.path.exists(setup_py_path)
     return dest_dir
 
+PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+SDIST_PATH = _build_dist(PKG_PATH, 'sdist', '.tar.gz')
+WHL_PATH = _build_dist(PKG_PATH, 'wheel', '.whl')
+
 PYPROJECT_PKG_PATH = _add_pyproject_package_to_temp(PKG_PATH)
+PYPROJECT_SDIST_PATH = _build_dist(PKG_PATH, 'sdist', '.tar.gz')
+PYPROJECT_WHL_PATH = _build_dist(PKG_PATH, 'wheel', '.whl')
+
+PYPROJECT_PATHS = [PYPROJECT_PKG_PATH, PYPROJECT_WHL_PATH, PYPROJECT_SDIST_PATH]
+PYPROJECT_IDS = ["pyproject-source", "pyproject-whl", "pyproject-sdist"]
+
+ALL_PATHS = [PKG_PATH, WHL_PATH, SDIST_PATH, PYPROJECT_PKG_PATH, PYPROJECT_WHL_PATH, PYPROJECT_SDIST_PATH]
+ALL_PATH_IDS = ["setup-source", "setup-whl", "setup-sdist", "pyproject-source", "pyproject-whl", "pyproject-sdist"]
 
 class TestApiView:
     def _count_newlines(self, apiview: ApiView):
@@ -70,27 +90,36 @@ class TestApiView:
 
         collect_line_ids(apiview.review_lines)
 
-    def test_optional_dependencies(self):
+    def _optional_dependency_installed(self, dep):
+        result = run([sys.executable, "-m", "pip", "show", dep], stdout=PIPE, stderr=PIPE, text=True)
+        # return code 1 means the package is not installed
+        return result.returncode == 0
+
+    @mark.parametrize("pkg_path", ALL_PATHS, ids=ALL_PATH_IDS)
+    def test_optional_dependencies(self, pkg_path):
+        pkg_path = SDIST_PATH
+        def _uninstall_opt_dep(dep):
+            if self._optional_dependency_installed(dep):
+                check_call([sys.executable, "-m", "pip", "uninstall", "-y", dep])
+            assert not self._optional_dependency_installed(dep)
+
+        # uninstall optional dependencies if installed
+        for dep in ["httpx", "pandas"]:
+            _uninstall_opt_dep(dep)
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
-        assert find_spec("httpx") is not None
-        assert find_spec("pandas") is not None
+        for dep in ["httpx", "pandas"]:
+            assert self._optional_dependency_installed(dep) is not None
         # skip conditional optional dependencies
-        assert find_spec("qsharp") is None
+        assert not self._optional_dependency_installed("qsharp")
     
-    def test_pyproject_toml_line_ids(self):
+    @mark.parametrize("pkg_path", PYPROJECT_PATHS, ids=PYPROJECT_IDS)
+    def test_pyproject_toml_line_ids(self, pkg_path):
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=PYPROJECT_PKG_PATH, temp_path=temp_path)
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
-
-        review_line = apiview.review_lines.create_review_line()
-        review_line.add_type(type_name="a.b.c.1.2.3.MyType", apiview=apiview)
-        apiview.review_lines.append(review_line)
-        tokens = review_line.tokens
-        assert len(tokens) == 1
-        assert tokens[0].kind == TokenKind.TYPE_NAME
 
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()

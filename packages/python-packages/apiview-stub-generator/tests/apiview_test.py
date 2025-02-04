@@ -65,6 +65,23 @@ class TestApiView:
                 break
         return newline_count
 
+
+    # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
+    def _validate_line_ids(self, apiview: ApiView):
+        line_ids = set()
+
+        def collect_line_ids(review_lines, index=0):
+            for line in review_lines:
+                # Ensure that there are no repeated definition IDs.
+                if line.line_id and line.line_id in line_ids:
+                    fail(f"Duplicate definition ID {line.line_id}.")
+                    line_ids.add(line.line_id)
+                # Recursively collect definition IDs from child lines
+                if line.children:
+                    collect_line_ids(line.children, index)
+
+        collect_line_ids(apiview.review_lines)
+
     def test_optional_dependencies(self):
         pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
         temp_path = tempfile.gettempdir()

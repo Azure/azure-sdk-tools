@@ -155,7 +155,7 @@ class StubGenerator:
         self._install_package()
 
         logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, self.namespace))
-        
+
         if self.filter_namespace:
             logging.info(
                 "Namespace filter is passed. Filtering modules within namespace :{}".format(self.filter_namespace)
@@ -253,7 +253,6 @@ class StubGenerator:
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
-
             self.module_dict[m] = ModuleNode(m, module_obj, self.namespace, apiview=apiview)
 
         ## Generate any global diagnostics

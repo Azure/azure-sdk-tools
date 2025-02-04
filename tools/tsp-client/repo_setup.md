@@ -8,10 +8,10 @@ Using the tspconfig.yaml linked above, by default, the client libraries will be 
 
 ### Required set up
 
-Please note that these requirements apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these requirements. Users working within a repository that already accepts this tool can refer to the [Usage](./README.md#usage) section.
+Please note that these requirements apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these requirements. Users working within a repository that already accepts this tool can refer to the [Usage](https://aka.ms/azsdk/tsp-client) doc.
 
-- Add an emitter-package.json to the repo following this [configuration](./README.md#emitter-packagejson-required).
-- Add the [TempTypeSpecFiles](./README.md#temptypespecfiles) directory to the .gitignore file for your repository.
+- Add an emitter-package.json to the repo following this [configuration](#emitter-packagejson-required).
+- Add the [TempTypeSpecFiles](#temptypespecfiles) directory to the .gitignore file for your repository.
 
 ### TempTypeSpecFiles
 
@@ -39,7 +39,7 @@ Example:
 
 > NOTE: tsp compile currently requires the "main" line to be there.
 
-> NOTE: This file replaces the package.json checked into the `azure-rest-api-spec` repository.
+This file replaces the package.json checked into the `azure-rest-api-spec` repository.
 
 ### emitter-package-lock.json (Optional)
 

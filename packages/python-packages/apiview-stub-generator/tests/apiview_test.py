@@ -4,13 +4,36 @@
 # license information.
 # --------------------------------------------------------------------------
 
+import os
+import tempfile
+import shutil
+from importlib.util import find_spec
+from pytest import fail
+
 from apistub import ApiView, TokenKind, StubGenerator
 from apistub.nodes import PylintParser
-import os
-from pytest import fail
-import tempfile
-from importlib.util import find_spec
 
+PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+def _add_pyproject_package_to_temp(src_dir):
+    temp_dir = tempfile.mkdtemp()
+    dest_dir = os.path.join(temp_dir, os.path.basename(src_dir))
+    shutil.copytree(src_dir, dest_dir)
+
+    # Remove setup.py and add pyproject.toml
+    setup_py_path = os.path.join(dest_dir, 'setup.py')
+    assert os.path.exists(setup_py_path)
+
+    # Copy _pyproject.toml from tests folder to the package copy folder
+    tests_dir_pyproject = os.path.join(os.path.dirname(__file__), '_pyproject.toml')
+    pyproject_path = os.path.join(dest_dir, 'pyproject.toml')
+    shutil.copy(tests_dir_pyproject, pyproject_path)
+
+    assert os.path.exists(pyproject_path)
+    os.remove(setup_py_path)
+    assert not os.path.exists(setup_py_path)
+    return dest_dir
+
+PYPROJECT_PKG_PATH = _add_pyproject_package_to_temp(PKG_PATH)
 
 class TestApiView:
     def _count_newlines(self, apiview: ApiView):
@@ -47,6 +70,28 @@ class TestApiView:
 
         collect_line_ids(apiview.review_lines)
 
+    def test_optional_dependencies(self):
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
+        apiview = stub_gen.generate_tokens()
+        assert find_spec("httpx") is not None
+        assert find_spec("pandas") is not None
+        # skip conditional optional dependencies
+        assert find_spec("qsharp") is None
+    
+    def test_pyproject_toml_line_ids(self):
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(pkg_path=PYPROJECT_PKG_PATH, temp_path=temp_path)
+        apiview = stub_gen.generate_tokens()
+        self._validate_line_ids(apiview)
+
+        review_line = apiview.review_lines.create_review_line()
+        review_line.add_type(type_name="a.b.c.1.2.3.MyType", apiview=apiview)
+        apiview.review_lines.append(review_line)
+        tokens = review_line.tokens
+        assert len(tokens) == 1
+        assert tokens[0].kind == TokenKind.TYPE_NAME
+
     def test_multiple_newline_only_add_one(self):
         apiview = ApiView()
         review_line = apiview.review_lines.create_review_line()
@@ -72,9 +117,8 @@ class TestApiView:
         assert self._count_newlines(apiview) == 2
 
     def test_api_view_diagnostic_warnings(self):
-        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
+        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
@@ -93,19 +137,17 @@ class TestApiView:
         assert tokens[0].kind == TokenKind.TYPE_NAME
 
     def test_line_ids(self):
-        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
+        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
 
     def test_mapping_file(self):
-        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
         mapping_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest", "apiview_mapping_python.json")
         )
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, mapping_path=mapping_path)
+        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path, mapping_path=mapping_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
         cross_language_lines = []
@@ -124,9 +166,8 @@ class TestApiView:
         assert apiview.cross_language_package_id == "ApiStubGenTest"
 
     def test_source_url(self):
-        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, source_url="https://www.bing.com/")
+        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path, source_url="https://www.bing.com/")
         apiview = stub_gen.generate_tokens()
         # Check that TokenKind is EXTERNAL_URL
         assert apiview.review_lines[2]["Tokens"][1]["Kind"] == 8

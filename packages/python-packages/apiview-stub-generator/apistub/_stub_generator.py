@@ -19,7 +19,6 @@ import shutil
 import tempfile
 from subprocess import check_call
 import zipfile
-from importlib.metadata import PathDistribution
 import tarfile
 
 from apistub._metadata_map import MetadataMap
@@ -29,6 +28,7 @@ from apistub._generated.treestyle.parser._model_base import SdkJSONEncoder as AP
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"
+INIT_EXTENSION_SUBSTRING = ".extend_path(__path__, __name__)"
 
 logging.getLogger().setLevel(logging.ERROR)
 
@@ -110,8 +110,10 @@ class StubGenerator:
         # Extract package to temp directory if it is wheel or sdist
         if self.pkg_path.endswith((".whl", ".zip", ".tar.gz")):
             self.wheel_path = self._extract_wheel()
+            self.namespace = self._get_whl_root_namespace(self.wheel_path)
         else:
             self.wheel_path = None
+            self.namespace = ""
 
         if not skip_pylint:
             PylintParser.parse(self.wheel_path or self.pkg_path)
@@ -144,42 +146,30 @@ class StubGenerator:
         version = metadata.version
         pkg_root_path = self.wheel_path or self.pkg_path
         self.extras_require = metadata.provides_extras
-        if self.wheel_path:
-            namespace = self._get_whl_root_namespace(pkg_root_path)
-        else:
-            namespace = self._get_package_root_namespace(pkg_root_path)
-        return pkg_root_path, pkg_name, version, namespace
-
-    def _get_package_root_namespace(self, pkg_root_path):
-        for root, dirs, files in os.walk(pkg_root_path):
-            # skip tests
-            if '__init__.py' in files and not root.lstrip('.').lstrip('/').startswith('tests'):
-                # remove any leading dots from path
-                return root.replace('/', '.').replace('\\', '.').lstrip('.')
-        return ""
+        return pkg_root_path, pkg_name, version
 
     def generate_tokens(self):
         # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
-        pkg_root_path, pkg_name, version, namespace = self._get_pkg_metadata()
+        pkg_root_path, pkg_name, version = self._get_pkg_metadata()
         self._install_package()
 
-        logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, namespace))
+        logging.debug("package name: {0}, version:{1}, namespace:{2}".format(pkg_name, version, self.namespace))
         
         if self.filter_namespace:
             logging.info(
                 "Namespace filter is passed. Filtering modules within namespace :{}".format(self.filter_namespace)
             )
-            namespace = self.filter_namespace
+            self.namespace = self.filter_namespace
 
         logging.debug("Generating tokens")
         try:
-            apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, version, source_url=self.source_url)
+            apiview = self._generate_tokens(pkg_root_path, pkg_name, version, source_url=self.source_url)
         except ImportError as import_exc:
             logging.info(f"{import_exc}\nInstalling extra dependencies.")
             self.install_extra_dependencies()
             # Retry generating tokens
-            apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, version, source_url=self.source_url)
+            apiview = self._generate_tokens(pkg_root_path, pkg_name, version, source_url=self.source_url)
 
         if apiview.diagnostics:
             logging.info("*************** Completed parsing package with errors ***************")
@@ -210,6 +200,12 @@ class StubGenerator:
             # Add current path as module name if _init.py is present
             if INIT_PY_FILE in files:
                 module_name = os.path.relpath(root, pkg_root_path).replace(os.path.sep, ".")
+                # If namespace has not been set yet, try to find the first __init__.py that's not purely for extension or tests.
+                # Ignore build, which is created when installing a package from source.
+                # Ignore tests, which may have an __init__.py but is not part of the package.
+                if not self.namespace and not module_name.startswith(("tests", "build")):
+                    self._set_root_namespace(os.path.join(root, INIT_PY_FILE), module_name)
+
                 modules.append(module_name)
                 # Add any public py file names as modules
                 sub_modules = [
@@ -222,7 +218,13 @@ class StubGenerator:
         logging.debug("Modules in package: {}".format(modules))
         return sorted(modules)
 
-    def _generate_tokens(self, pkg_root_path, package_name, namespace, package_version, *, source_url):
+    def _set_root_namespace(self, init_file_path, module_name):
+        with open(init_file_path, 'r') as f:
+                content = f.readlines()
+                if len(content) > 1 or (len(content) == 1 and not INIT_EXTENSION_SUBSTRING in content[0]):
+                    self.namespace = module_name
+
+    def _generate_tokens(self, pkg_root_path, package_name, package_version, *, source_url):
         """This method returns a dictionary of namespace and all public classes in each namespace"""
         # Import ModuleNode.
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
@@ -231,28 +233,28 @@ class StubGenerator:
 
         self.module_dict = {}
         mapping = MetadataMap(pkg_root_path, mapping_path=self.mapping_path)
+        modules = self._find_modules(pkg_root_path)
+        logging.debug("Modules to generate tokens: {}".format(modules))
+
         apiview = ApiView(
             pkg_name=package_name,
-            namespace=namespace,
             metadata_map=mapping,
+            namespace=self.namespace,
             source_url=source_url,
             pkg_version=package_version,
         )
         apiview.generate_tokens()
 
-        modules = self._find_modules(pkg_root_path)
-        logging.debug("Modules to generate tokens: {}".format(modules))
-
         # load all modules and parse them recursively
         for m in modules:
-            if not m.startswith(namespace):
-                logging.debug("Skipping module {0}. Module should start with {1}".format(m, namespace))
+            if not m.startswith(self.namespace):
+                logging.debug("Skipping module {0}. Module should start with {1}".format(m, self.namespace))
                 continue
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
 
-            self.module_dict[m] = ModuleNode(m, module_obj, namespace, apiview=apiview)
+            self.module_dict[m] = ModuleNode(m, module_obj, self.namespace, apiview=apiview)
 
         ## Generate any global diagnostics
         global_errors = PylintParser.get_items("GLOBAL")
@@ -302,8 +304,9 @@ class StubGenerator:
     def _get_whl_root_namespace(self, wheel_extract_path):
         # APiStubgen finds namespace from setup.py when running against code repo
         # But we don't have setup.py to parse when wheel is uploaded into APIView tool
-        # Parse top_level.txt file in dist-info to find root module name
-        files = glob.glob(os.path.join(wheel_extract_path, "*", TOP_LEVEL_WHEEL_FILE))
+        # Parse top_level.txt file in dist-info/egg-info to find root module name
+        # recursive should be True to account for cases where egg-info is nested inside another directory (e.g. requests)
+        files = glob.glob(os.path.join(wheel_extract_path, "**", TOP_LEVEL_WHEEL_FILE), recursive=True)
         if not files:
             logging.warning(
                 "File {0} is not found in {1} to identify root module name. All modules in package will be parsed".format(

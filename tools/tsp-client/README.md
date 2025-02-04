@@ -17,7 +17,7 @@ Repo owners should follow the steps in the [tsp-client repo setup](./repo_setup.
 ## Usage
 
 ```bash
-tsp-client <command> [options]
+tsp-client < command > [options]
 ```
 
 ## Commands
@@ -37,7 +37,7 @@ tsp-client --help
 To see supported parameters and options for a specific command, run:
 
 ```bash
-tsp-client <command> --help
+tsp-client < command > --help
 ```
 
 Example using the `init` command:
@@ -52,7 +52,7 @@ Initialize the client library directory using a tspconfig.yaml. When running thi
 
 The `init` command generates a directory structure following the standard pattern used across Azure SDK language repositories, creates a [tsp-location.yaml](#tsp-locationyaml) file to control generation, and performs an initial generation of the client library. If you want to skip client library generation, then pass the `--skip-sync-and-generate` flag.
 
-> IMPORTANT: This command should be run from the root of the repository.
+> IMPORTANT: This command should be run from the root of the repository. Example repository root: `azure-sdk-for-python/`
 
 Example:
 
@@ -99,7 +99,7 @@ Convert an existing swagger specification to a TypeSpec project. This command sh
 Example:
 
 ```bash
-tsp-client convert --swagger-readme <path to swagger README file>/readme.md
+tsp-client convert -o ./Contoso.WidgetManager --swagger-readme < path-to > /readme.md
 ```
 
 ### compare
@@ -120,13 +120,15 @@ This command generates the default configuration files used by tsp-client. Run t
 Example:
 
 ```bash
-tsp-client generate-config-files --package-json <path to emitter repo clone>/package.json
+tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /package.json
 ```
 
 Example using the `azure-sdk-for-js` and the `@azure-tools/typespec-ts` emitter:
 
+The `--package-json` flag should be the relative or absolute path to repo clone of the @azure-tools/typespec-ts package.
+
 ```bash
-azure-sdk-for-js> tsp-client generate-config-files --package-json <relative or absolute path to repo clone of @azure-tools/typespec-ts package>/package.json
+azure-sdk-for-js > tsp-client generate-config-files --package-json < path-to-emitter-repo-clone > /package.json
 ```
 
 To be explicit about specifying dependencies you'd like pinned, add a new field in the package.json file of your emitter called `"azure-sdk/emitter-package-json-pinning"` with a list of the dependencies you want to be forwarded to the emitter-package.json. These dependencies must be specified in your package.json's devDependencies in order for the tool to assign the correct version.
@@ -180,7 +182,7 @@ Example json file with package overrides:
 Example command specifying overrides:
 
 ```bash
-tsp-client generate-config-files --package-json <path to emitter repo clone>/package.json --overrides <path to overrides file>.json
+tsp-client generate-config-files --overrides my_overrides.json --package-json < path-to-emitter-repo-clone > /package.json
 ```
 
 Example `emitter-package.json` generated using overrides:

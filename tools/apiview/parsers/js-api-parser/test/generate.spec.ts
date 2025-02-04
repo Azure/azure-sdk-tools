@@ -24,7 +24,7 @@ describe("generate", () => {
         (c) => c.LineId === "@azure/test-package!KnownFoo:enum",
       );
       expect(enumReviewLine).toBeDefined();
-      expect(enumReviewLine!.Tokens.map((t) => t.Value).join(" ")).toEqual(
+      expect(enumReviewLine?.Tokens.map((t) => t.Value).join(" ")).toEqual(
         "export enum KnownFoo { }",
       );
     });

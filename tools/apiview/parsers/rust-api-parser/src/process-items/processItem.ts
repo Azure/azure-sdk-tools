@@ -1,5 +1,5 @@
-import { ReviewLine, } from "../utils/apiview-models";
-import { Crate, Item, } from "../utils/rustdoc-json-types/jsonTypes";
+import { ReviewLine, } from "../models/apiview-models";
+import { Crate, Item, } from "../models/rustdoc-json-types";
 import { processConstant } from "./processConstant";
 import { processEnum } from "./processEnum";
 import { processFunction } from "./processFunction";

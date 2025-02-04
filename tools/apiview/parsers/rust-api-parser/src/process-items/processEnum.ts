@@ -1,5 +1,5 @@
-import { ReviewLine, TokenKind } from "../utils/apiview-models";
-import { Crate, Item } from "../utils/rustdoc-json-types/jsonTypes";
+import { ReviewLine, TokenKind } from "../models/apiview-models";
+import { Crate, Item } from "../models/rustdoc-json-types";
 import { processTraitImpls } from "./processImpl";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 

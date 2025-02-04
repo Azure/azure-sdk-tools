@@ -1,4 +1,4 @@
-import { Type } from "../../utils/rustdoc-json-types/jsonTypes";
+import { Type } from "../../models/rustdoc-json-types";
 
 export function typeToString(type: Type): string {
     if (!type) {

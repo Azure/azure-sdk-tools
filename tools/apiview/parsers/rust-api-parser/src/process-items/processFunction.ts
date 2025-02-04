@@ -1,5 +1,5 @@
-import { ReviewLine, ReviewToken, TokenKind } from "../utils/apiview-models";
-import { Item, GenericParamDef, WherePredicate, GenericBound, Type } from "../utils/rustdoc-json-types/jsonTypes";
+import { ReviewLine, ReviewToken, TokenKind } from "../models/apiview-models";
+import { Item, GenericParamDef, WherePredicate, GenericBound, Type } from "../models/rustdoc-json-types";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { typeToString } from "./utils/typeToString";

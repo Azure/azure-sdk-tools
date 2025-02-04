@@ -1,5 +1,5 @@
-import { ReviewLine, TokenKind, ReviewToken } from "../utils/apiview-models";
-import { Item, Crate, Impl, Struct } from "../utils/rustdoc-json-types/jsonTypes";
+import { ReviewLine, TokenKind, ReviewToken } from "../models/apiview-models";
+import { Item, Crate, Impl, Struct } from "../models/rustdoc-json-types";
 import { processItem } from "./processItem";
 
 type ImplItem = Omit<Item, "inner"> & { inner: { impl: Impl } };

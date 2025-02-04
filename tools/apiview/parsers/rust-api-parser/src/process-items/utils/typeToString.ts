@@ -8,7 +8,17 @@ export function typeToString(type: Type): string {
     if (typeof type === "string") {
         return type;
     } else if ("resolved_path" in type) {
-        return type.resolved_path.name;
+        let result = type.resolved_path.name;
+        if (type.resolved_path.args && "angle_bracketed" in type.resolved_path.args) {
+            const args = type.resolved_path.args.angle_bracketed.args
+                .filter(arg => typeof arg === "object" && "type" in arg)
+                .map(arg => typeToString(arg.type))
+                .join(", ");
+            if (args) {
+                result += `<${args}>`;
+            }
+        }
+        return result;
     } else if ("dyn_trait" in type) {
         return `(dyn ${type.dyn_trait.traits.map(t => t.trait.name).join(" + ")})`; // TODO: Can extend this to include navigation info; example: &(dyn MyTrait + Sync)
     } else if ("generic" in type) {

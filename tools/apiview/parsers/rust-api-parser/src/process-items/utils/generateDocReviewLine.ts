@@ -15,6 +15,6 @@ export function createDocsReviewLine(item: Item): ReviewLine {
             IsDocumentation: true,
         }],
         RelatedToLine: item.id.toString(),
-        LineId: item.id.toString() + "_docs"
+        LineId: item.id.toString() + "_docs" // Add _docs to the id to make it unique
     };
 }

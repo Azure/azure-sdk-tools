@@ -2,6 +2,7 @@ import { ReviewLine, ReviewToken, TokenKind } from "../utils/apiview-models";
 import { Item, GenericParamDef, WherePredicate, GenericBound, Type } from "../utils/rustdoc-json-types/jsonTypes";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { typeToString } from "./utils/typeToString";
 
 /**
  * Processes a function item and adds its documentation to the ReviewLine.
@@ -90,7 +91,7 @@ export function processFunction(item: Item, reviewLines: ReviewLine[]) {
         });
         reviewLine.Tokens.push({
             Kind: TokenKind.TypeName,
-            Value: "unknown" // Fix this to present better value
+            Value: typeToString(item.inner.function.sig.output),
         });
     }
 
@@ -120,6 +121,19 @@ export function processFunction(item: Item, reviewLines: ReviewLine[]) {
         reviewLine.Tokens.push({ Kind: TokenKind.Keyword, Value: "where", HasSuffixSpace: true }, ...wherePredicateTokens);
     }
 
+    if (item.inner.function.has_body) {
+        reviewLine.Tokens.push({
+            Kind: TokenKind.Punctuation,
+            Value: '{}',
+            HasSuffixSpace: false
+        })
+    } else {
+        reviewLine.Tokens.push({
+            Kind: TokenKind.Punctuation,
+            Value: ';',
+            HasSuffixSpace: false
+        })
+    }
     reviewLines.push(reviewLine);
 }
 

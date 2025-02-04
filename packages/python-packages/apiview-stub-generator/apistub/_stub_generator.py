@@ -139,7 +139,6 @@ class StubGenerator:
         pkg_name = metadata.name
         version = metadata.version
         pkg_root_path = self.wheel_path or self.pkg_path
-        # TODO: pyproject.toml + whl/sdist: metadata.extras_require doesn't pick up optional dependencies
         self.extras_require = metadata.provides_extras
         if self.wheel_path:
             namespace = self._get_whl_root_namespace(pkg_root_path)

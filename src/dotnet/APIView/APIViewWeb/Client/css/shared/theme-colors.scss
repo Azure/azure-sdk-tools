@@ -30,6 +30,7 @@
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary, 80%)};
     --shadow-color: rgba(#{$black}, .15);
+    --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary, 0.5)};
     --box-shadow: 0 .5rem 1rem #{rgba($black, .15)};
     --box-shadow-sm: 0 .125rem .25rem #{rgba($black, .075)};
     --box-shadow-lg: 0 1rem 3rem #{rgba($black, .175)};
@@ -120,6 +121,7 @@
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$white}, .15);
+    --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary-color, 0.5)};
     --box-shadow: 0 .5rem 1rem #{rgba($white, .15)};
     --box-shadow-sm: 0 .125rem .25rem #{rgba($white, .075)};
     --box-shadow-lg: 0 1rem 3rem #{rgba($white, .175)};

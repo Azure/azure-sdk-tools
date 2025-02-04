@@ -408,7 +408,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             TestRecordingMismatchException exception = Assert.Throws<TestRecordingMismatchException>(() => matcher.FindMatch(requestEntry, entries));
             Assert.Equal(
                 "Unable to find a record for the request HEAD http://localhost/" + Environment.NewLine +
-                "Remaining entry: http://remote-host" + Environment.NewLine +
                 "Method doesn't match, request <HEAD> record <PUT>" + Environment.NewLine +
                 "Uri doesn't match:" + Environment.NewLine +
                 "    request <http://localhost/>" + Environment.NewLine +
@@ -420,7 +419,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "Body differences:" + Environment.NewLine +
                 "Request and record bodies do not match at index 40:" + Environment.NewLine +
                 "     request: \"e and long.\"" + Environment.NewLine +
-                "     record:  \"e and long but it also doesn't\"" + Environment.NewLine,
+                "     record:  \"e and long but it also doesn't\"" + Environment.NewLine +
+                "Remaining Entries:" + Environment.NewLine +
+                "0: http://remote-host" + Environment.NewLine,
                 exception.Message);
         }
 

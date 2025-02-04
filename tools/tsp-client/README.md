@@ -5,7 +5,7 @@ A simple command line tool to facilitate generating client libraries from TypeSp
 ## Installation
 
 ```
-npm install @azure-tools/typespec-client-generator-cli
+npm install -g @azure-tools/typespec-client-generator-cli
 ```
 
 ## Prerequisites
@@ -24,9 +24,28 @@ tsp-client <command> [options]
 ## Commands
 
 Use one of the supported commands to get started generating clients from a TypeSpec project.
+
 This tool will default to using your current working directory to generate clients in and will
 use it to look for relevant configuration files. To specify a different output directory, use
 the `-o` or `--output-dir` option.
+
+To see supported commands, run:
+
+```
+tsp-client --help
+```
+
+To see supported parameters and options for a specific command, run:
+
+```
+tsp-client <command> --help
+```
+
+Example using the `init` command:
+
+```
+tsp-client init --help
+```
 
 ### init
 
@@ -36,9 +55,21 @@ The `init` command generates a directory structure following the standard patter
 
 > IMPORTANT: This command should be run from the root of the repository.
 
+Example:
+
+```
+tsp-client init -c https://github.com/Azure/azure-rest-api-specs/blob/dee71463cbde1d416c47cf544e34f7966a94ddcb/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml
+```
+
 ### update
 
 Sync and generate client libraries from a TypeSpec project. The `update` command will look for a [tsp-location.yaml](#tsp-locationyaml) file in your current directory to sync a TypeSpec project and generate a client library.
+
+Example:
+
+```
+tsp-client update
+```
 
 ### sync
 
@@ -46,13 +77,31 @@ Sync a TypeSpec project with the parameters specified in tsp-location.yaml.
 
 By default the `sync` command will look for a tsp-location.yaml to get the project details and sync them to a temporary directory called `TempTypeSpecFiles`. Alternately, you can pass in the `--local-spec-repo` flag with the path to your local TypeSpec project to pull those files into your temporary directory.
 
+Example:
+
+```
+tsp-client sync
+```
+
 ### generate
 
 Generate a client library from a TypeSpec project. The `generate` command should be run after the `sync` command. `generate` relies on the existence of the `TempTypeSpecFiles` directory created by the `sync` command and on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json`. The `emitter-package.json` file is used to install project dependencies and get the appropriate emitter package.
 
+Example:
+
+```
+tsp-client generate
+```
+
 ### convert
 
 Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag. By default, the converted TypeSpec project will leverage TypeSpec built-in libraries with standard patterns and templates (highly recommended), which will cause discrepancies between the generated TypeSpec and original swagger. If you really don't want this intended discrepancy, add `--fully-compatible` flag to generate a TypeSpec project that is fully compatible with the swagger.
+
+Example:
+
+```
+tsp-client convert --swagger-readme <path to swagger README file>/readme.md
+```
 
 ### compare
 
@@ -63,45 +112,49 @@ correspond to differences in the service, allowing you to focus only on differen
 
 Sort an existing swagger specification to be the same content order with TypeSpec generated swagger. This will allow you to easily compare and identify differences between the existing swagger and TypeSpec generated one. You should run this command on existing swagger files and check them in prior to creating converted TypeSpec PRs.
 
+### generate-config-files
+
+This command generates the default configuration files used by tsp-client. Run this command to generate the `emitter-package.json` and `emitter-package-lock.json` under the **eng/** directory of your current repository.
+
+**Required: Use the `--package-json` flag to specify the path to the package.json file of the emitter you will use to generate client libraries.**
+
+Example:
+
+```
+tsp-client generate-config-files --package-json <path to emitter repo clone>/package.json
+```
+
+Example using the `azure-sdk-for-js` and the `@azure-tools/typespec-ts` emitter:
+
+```
+azure-sdk-for-js> tsp-client generate-config-files --package-json <relative or absolute path to repo clone of @azure-tools/typespec-ts package>/package.json
+```
+
+If you need to override dependencies for your emitter-package.json you can create a json file to explicitly list the package and corresponding version you want to override. This will add an `overrides` section in your emitter-package.json that will be used during `npm install` or `npm ci`. [See npm overrides doc.](https://docs.npmjs.com/cli/v10/configuring-npm/package-json?v=true#overrides)
+
+Example json file with package overrides:
+
+```
+{
+    "@azure-tools/typespec-python": "0.36.0",
+    "@typespec/compiler": "0.61.0"
+}
+```
+
+Example command specifying overrides:
+
+```
+tsp-client generate-config-files --package-json <path to emitter repo clone>/package.json --overrides <path to overrides file>.json
+```
+
 ### generate-lock-file
 
 Generate an emitter-package-lock.json under the eng/ directory based on existing `<repo-root>/eng/emitter-package.json`.
 
-## Options
+Example:
 
 ```
-  --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
-  -c, --tsp-config          The tspconfig.yaml file to use                      [string]
-  --commit                  Commit to be used for project init or update        [string]
-  -d, --debug               Enable debug logging                                [boolean]
-  --emitter-options         The options to pass to the emitter                  [string]
-  -h, --help                Show help                                           [boolean]
-  --local-spec-repo         Path to local repository with the TypeSpec project  [string]
-  --no-prompt               Skip prompting for output directory confirmation    [boolean]
-  --save-inputs             Don't clean up the temp directory after generation  [boolean]
-  --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
-  --swagger-readme          Path or url to swagger readme file                  [string]
-  -o, --output-dir          Specify an alternate output directory for the
-                            generated files. Default is your current directory  [string]
-  --repo                    Repository where the project is defined for init
-                            or update                                           [string]
-  -v, --version             Show version number                                 [boolean]
-```
-
-## Examples
-
-Initializing and generating a new client from a `tspconfig.yaml`:
-
-> NOTE: The `init` command must be run from the root of the repository.
-
-```
-tsp-client init -c https://github.com/Azure/azure-rest-api-specs/blob/3bae4e510063fbd777b88ea5eee03c41644bc9da/specification/cognitiveservices/ContentSafety/tspconfig.yaml
-```
-
-Generating in a directory that contains a `tsp-location.yaml`:
-
-```
-tsp-client update
+tsp-client generate-lock-file
 ```
 
 ## Important concepts

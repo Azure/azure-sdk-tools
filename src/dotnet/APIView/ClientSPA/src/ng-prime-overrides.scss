@@ -529,6 +529,14 @@ p-contextmenusub {
     color: var(--base-text-color);
 }
 
+.p-inputgroup-addon {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    border-top: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
 .p-inputswitch {
     width: 2.5rem;
     height: 1.5rem;

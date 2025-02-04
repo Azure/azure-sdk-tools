@@ -31,6 +31,7 @@ function Get-Repo-Name($language)
         "Go" { return "azure-sdk-for-go" }
         "C" { return "azure-sdk-for-c" }
         "C++" { return "azure-sdk-for-cpp" }
+        "Rust" { return "azure-sdk-for-rust" }
     }
     Write-Host "Unknown language to map it to repo name. Language: [$language]"
     return ""

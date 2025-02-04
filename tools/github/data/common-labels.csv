@@ -1,6 +1,7 @@
 AAD,,e99695
 ACS,,e99695
 AI Model Inference,,e99695
+AI Projects,,e99695
 AKS,,e99695
 API Management,,e99695
 APIChange,This PR contains an addition or change to the API signature and must be reviewed by an architect.,d8f74c
@@ -111,6 +112,7 @@ Data Migration,,e99695
 Data Share,,e99695
 DataBox,,e99695
 DataBox Edge,,e99695
+Database Watcher,,e99695
 Defender ESAM,,e99695
 Dev Spaces,,e99695
 Device Update,,e99695

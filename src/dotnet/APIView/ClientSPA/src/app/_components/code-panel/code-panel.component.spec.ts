@@ -115,5 +115,47 @@ describe('CodePanelComponent', () => {
       expect(clipboardSpy).toHaveBeenCalledWith('\ttoken1\ntoken2');
     });
   });
+
+  describe('searchCodePanelRowData', () => {
+    it('should be defined', () => {
+      expect(component.searchCodePanelRowData).toBeDefined();
+    });
+
+    it('should handle no matches gracefully', () => {
+      const token1 = new StructuredToken();
+      token1.value = 'token1';
+      const token2 = new StructuredToken();
+      token2.value = 'token2';
+      const codePanelRowData1 = new CodePanelRowData();
+      codePanelRowData1.rowOfTokens = [token1, token2];
+      component.codePanelRowData = [codePanelRowData1];
+      component.searchCodePanelRowData('nonexistent');
+      expect(component.codeLineSearchMatchInfo?.length).toBeUndefined();
+    });
+
+    it('should handle an empty search term', () => {
+      const token1 = new StructuredToken();
+      token1.value = 'token1';
+      const token2 = new StructuredToken();
+      token2.value = 'token2';
+      const codePanelRowData1 = new CodePanelRowData();
+      codePanelRowData1.rowOfTokens = [token1, token2];
+      component.codePanelRowData = [codePanelRowData1];
+      component.searchCodePanelRowData('');
+      expect(component.codeLineSearchMatchInfo?.length).toBeUndefined();
+    });
+  });
+
+  describe('highlightSearchMatches', () => {
+    it('should be defined', () => {
+      expect(component.highlightSearchMatches).toBeDefined();
+    });
+
+    it('should clear previous highlights', () => {
+      spyOn(component, 'clearSearchMatchHighlights');
+      component.highlightSearchMatches();
+      expect(component.clearSearchMatchHighlights).toHaveBeenCalled();
+    });
+  });
   
 });

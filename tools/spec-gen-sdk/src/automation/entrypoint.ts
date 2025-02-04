@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import {existsSync, mkdirSync, readFileSync, rmSync} from 'fs';
 import * as winston from 'winston';
 import { getRepoKey, RepoKey } from '../utils/repo';
 import {
@@ -17,7 +17,7 @@ import {
   sdkAutoLogLevels
 } from './logging';
 import path from 'path';
-import { generateReport, saveFilteredLog } from './reportStatus';
+import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog } from './reportStatus';
 import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 
@@ -46,6 +46,7 @@ export type SdkAutoContext = {
   logger: winston.Logger;
   fullLogFileName: string;
   filteredLogFileName: string;
+  htmlLogFileName: string;
   specRepoConfig: SpecConfig;
   sdkRepoConfig: SdkRepoConfig;
   swaggerToSdkConfig: SwaggerToSdkConfig
@@ -66,13 +67,22 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     logger.add(loggerTestTransport());
   }
 
-  const fullLogFileName = path.join(options.workingFolder, 'full.log');
-  const filteredLogFileName = path.join(options.workingFolder, 'filtered.log');
-  if (fs.existsSync(fullLogFileName)) {
-    fs.rmSync(fullLogFileName);
+  const logFolder = path.join(options.workingFolder, 'out/logs');
+  if (!existsSync(logFolder)) {
+    mkdirSync(logFolder, { recursive: true });
   }
-  if (fs.existsSync(filteredLogFileName)) {
-    fs.rmSync(filteredLogFileName);
+  const fullLogFileName = path.join(logFolder, 'full.log');
+  const filteredLogFileName = path.join(logFolder, 'filtered.log');
+  // eg: spec-gen-sdk-java-result.html
+  const htmlLogFileName = path.join(logFolder, `spec-gen-sdk-${options.sdkName.substring("azure-sdk-for-".length)}-result.html`);
+  if (existsSync(fullLogFileName)) {
+    rmSync(fullLogFileName);
+  }
+  if (existsSync(filteredLogFileName)) {
+    rmSync(filteredLogFileName);
+  }
+  if (existsSync(htmlLogFileName)) {
+    rmSync(htmlLogFileName);
   }
   logger.add(loggerFileTransport(fullLogFileName));
   logger.info(`Log to ${fullLogFileName}`);
@@ -90,6 +100,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     logger,
     fullLogFileName,
     filteredLogFileName,
+    htmlLogFileName,
     specRepoConfig,
     sdkRepoConfig,
     swaggerToSdkConfig,
@@ -118,6 +129,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
   if (workflowContext) {
     generateReport(workflowContext);
     saveFilteredLog(workflowContext);
+    generateHtmlFromFilteredLog(workflowContext);
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;
@@ -144,7 +156,7 @@ export const getLanguageByRepoName = (repoName: string) => {
 export const loadConfigContent = (fileName: string, logger: winston.Logger) => {
   logger.info(`Load config file: ${fileName}`);
   try {
-    const fileContent = fs.readFileSync(fileName).toString();
+    const fileContent = readFileSync(fileName).toString();
     const result = JSON.parse(fileContent);
     return result;
   }

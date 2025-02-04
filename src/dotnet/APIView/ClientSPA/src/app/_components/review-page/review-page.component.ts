@@ -20,6 +20,7 @@ import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel'
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
 import { SamplesRevision } from 'src/app/_models/samples';
+import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 
 @Component({
   selector: 'app-review-page',
@@ -52,6 +53,7 @@ export class ReviewPageComponent implements OnInit {
   preferredApprovers : string[] = [];
   hasFatalDiagnostics : boolean = false;
   hasActiveConversation : boolean = false;
+  codeLineSearchInfo : CodeLineSearchInfo | undefined;
   numberOfActiveConversation : number = 0;
   hasHiddenAPIs : boolean = false;
   hasHiddenAPIThatIsDiff : boolean = false;
@@ -68,6 +70,8 @@ export class ReviewPageComponent implements OnInit {
   codePanelRowData: CodePanelRowData[] = [];
   apiRevisionPageSize = 50;
   lastNodeIdUnhashedDiscarded = '';
+
+  codeLineSearchText: string | undefined = undefined;
 
   private destroy$ = new Subject<void>();
   private destroyLoadAPIRevision$ : Subject<void>  | null = null;
@@ -481,9 +485,19 @@ export class ReviewPageComponent implements OnInit {
   handleCopyReviewTextEmitter(event: boolean) {
     this.codePanelComponent.copyReviewTextToClipBoard();
   }
+  
+  handleCodeLineSearchTextEmitter(searchText: string) {
+    this.codeLineSearchText = searchText;
+  }
 
   handleHasActiveConversationEmitter(value: boolean) {
     this.hasActiveConversation = value;
+  }
+
+  handleCodeLineSearchInfoEmitter(value: CodeLineSearchInfo) {
+    setTimeout(() => {
+      this.codeLineSearchInfo = (value) ? new CodeLineSearchInfo(value.currentMatch, value.totalMatchCount) : undefined;
+    }, 0);
   }
 
   handleNumberOfActiveThreadsEmitter(value: number) {

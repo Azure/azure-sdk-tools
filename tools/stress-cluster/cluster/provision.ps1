@@ -220,7 +220,7 @@ function main()
         helm -h > $null
     }
 
-    if ($Environment -NotIn "prod", "pg" -and !$LocalAddonsPath) {
+    if ($Environment -NotIn "prod", "pg", "storage" -and !$LocalAddonsPath) {
         throw "When using a custom environment you must set -LocalAddonsPath to provide the stress-infrastructure release with environment values"
     }
 

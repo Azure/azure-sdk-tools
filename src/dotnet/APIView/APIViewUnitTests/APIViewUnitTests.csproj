@@ -39,6 +39,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="SampleTestFiles\app-conf-change-in-skipped-diff.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleTestFiles\app-conf.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleTestFiles\app-conf_without_skip_diff.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleTestFiles\azure-core-1.47.0-sources4.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

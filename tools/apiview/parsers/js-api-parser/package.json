@@ -25,14 +25,16 @@
     "rimraf": "^6.0.1",
     "ts-node": "^10.0.0",
     "typescript": "~5.6.2",
-    "typescript-eslint": "^8.11.0"
+    "typescript-eslint": "^8.11.0",
+    "vitest": "3.0.5"
   },
   "scripts": {
     "build": "npm run clean && tsc -p .",
     "watch": "tsc -p . -watch",
     "clean": "rimraf dist/",
     "format": "prettier --write ./src ./*.{js,mjs,json}",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "azure-sdk",

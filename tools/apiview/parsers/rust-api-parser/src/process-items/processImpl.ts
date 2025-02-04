@@ -7,8 +7,14 @@ type StructItem = Omit<Item, "inner"> & { inner: { struct: Struct } };
 
 export function processTraitImpls(impls: number[], apiJson: Crate, reviewLine: ReviewLine) {
     const traitImpls = (impls: number[], apiJson: Crate) =>
-        impls.map(implId => apiJson.index[implId] as ImplItem)
-            .filter((implItem) => typeof implItem?.inner == "object" && "impl" in implItem?.inner && implItem.inner.impl.blanket_impl === null && implItem.inner.impl.trait)
+        impls.map(implId =>
+            apiJson.index[implId] as ImplItem
+        )
+            .filter((implItem) => typeof implItem?.inner == "object"
+                && "impl" in implItem?.inner
+                && implItem.inner.impl.blanket_impl === null
+                && implItem.inner.impl.trait
+                && implItem.attrs.includes("#[automatically_derived]"))
             .map<ReviewToken>(implItem => ({
                 Kind: TokenKind.TypeName,
                 Value: implItem.inner.impl.trait.name,
@@ -16,7 +22,8 @@ export function processTraitImpls(impls: number[], apiJson: Crate, reviewLine: R
                     "trait"
                 ],
                 HasSuffixSpace: false
-            }));
+            })
+            );
 
     const addTokens = (tokens: ReviewToken[]) => {
         reviewLine.Tokens.push({ Kind: TokenKind.Punctuation, Value: '#[', HasSuffixSpace: false });
@@ -39,7 +46,10 @@ export function processTraitImpls(impls: number[], apiJson: Crate, reviewLine: R
 function processNonTraitImpls(impls: number[], apiJson: Crate, reviewLine: ReviewLine) {
     const nonTraitImpls = (impls: number[], apiJson: Crate): void =>
         impls.map(implId => apiJson.index[implId] as ImplItem)
-            .filter(implItem => implItem?.inner && "impl" in implItem.inner && implItem.inner.impl.blanket_impl === null && implItem.inner.impl.trait === null)
+            .filter(implItem => implItem?.inner
+                && "impl" in implItem.inner
+                && implItem.inner.impl.blanket_impl === null
+                && implItem.inner.impl.trait === null)
             .forEach(implItem => {
                 const items = implItem.inner.impl.items;
                 if (!reviewLine.Children.length) reviewLine.Children = [];

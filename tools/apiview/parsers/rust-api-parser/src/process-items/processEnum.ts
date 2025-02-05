@@ -3,7 +3,7 @@ import { Crate, Item } from "../models/rustdoc-json-types";
 import { processTraitImpls } from "./processImpl";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 
-export function processEnum(item: Item, apiJson: Crate, reviewLines: ReviewLine[]) {
+export function processEnum(apiJson: Crate, item: Item, reviewLines: ReviewLine[]) {
     if (!(typeof item.inner === 'object' && "enum" in item.inner)) return;
 
     if (item.docs) reviewLines.push(createDocsReviewLine(item));

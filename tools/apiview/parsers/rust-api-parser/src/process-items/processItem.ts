@@ -7,6 +7,7 @@ import { processModule } from "./processModule";
 import { processStatic } from "./processStatic";
 import { processStruct } from "./processStruct";
 import { processTrait } from "./processTrait";
+import { processUse } from "./processUse";
 
 const processedItems = new Set<string>();
 
@@ -31,6 +32,8 @@ export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine
     if (typeof item.inner === 'object') {
         if ('module' in item.inner) {
             processModule(apiJson, item, reviewLines);
+        } else if ('use' in item.inner) {
+            processUse(item, reviewLines);
         } else if ('function' in item.inner) {
             processFunction(item, reviewLines);
         } else if ('struct' in item.inner) {
@@ -42,7 +45,7 @@ export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine
         } else if ('constant' in item.inner) {
             processConstant(item, reviewLines);
         } else if ('enum' in item.inner) {
-            processEnum(item, apiJson, reviewLines);
+            processEnum(apiJson, item, reviewLines);
         }
     }
 

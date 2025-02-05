@@ -29,3 +29,10 @@ pipelines:
           lastModifiedDate: 2025-02-04
         spotbugs:
           lastModifiedDate: 2025-02-04
+  958:
+    retail:
+      binary:
+        credscan:
+          lastModifiedDate: 2025-02-05
+        binskim:
+          lastModifiedDate: 2025-02-05

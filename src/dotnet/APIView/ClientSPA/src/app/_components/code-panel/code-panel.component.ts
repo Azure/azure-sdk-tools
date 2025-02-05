@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
-import { max, take, takeUntil } from 'rxjs/operators';
+import { filter, max, take, takeUntil } from 'rxjs/operators';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -13,7 +13,7 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { Message } from 'primeng/api/message';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
-import { Subject } from 'rxjs';
+import { fromEvent, Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Menu } from 'primeng/menu';
 import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLineSearchInfo';
@@ -73,9 +73,15 @@ export class CodePanelComponent implements OnChanges{
     this.handleRealTimeCommentUpdates();
 
     this.menuItemsLineActions = [
-        { label: 'Copy line', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLineToClipBoard(event) },
-        { label: 'Copy permalink', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLinePermaLinkToClipBoard(event) }
-      ];
+      { label: 'Copy line', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLineToClipBoard(event) },
+      { label: 'Copy permalink', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLinePermaLinkToClipBoard(event) }
+    ];
+
+    fromEvent<KeyboardEvent>(document, 'keydown')
+      .pipe(
+        filter(event => event.ctrlKey && event.key === 'Enter'),
+        takeUntil(this.destroy$)
+      ).subscribe(event => this.handleKeyboardEvents(event));
   }
 
   async ngOnChanges(changes: SimpleChanges) {
@@ -1022,6 +1028,19 @@ export class CodePanelComponent implements OnChanges{
       }
     }
     return undefined
+  }
+
+  private handleKeyboardEvents(event: KeyboardEvent): void {
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement?.tagName.toLowerCase() === "textarea") {
+      const editorContainer = activeElement.closest('.edit-editor-container, .reply-editor-container');
+      if (editorContainer) {
+        const submitButton = editorContainer.querySelector('.editor-action-btn.submit') as HTMLButtonElement;
+        if (submitButton && !submitButton.disabled) {
+          submitButton.click();
+        }
+      }
+    }
   }
 
   ngOnDestroy() {

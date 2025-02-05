@@ -62,10 +62,10 @@ export function processFunction(item: Item, reviewLines: ReviewLine[]) {
                 });
             }
 
-            if (input[0] === "self" && typeof input[1] === 'object' && "borrowed_ref" in input[1] && typeToString(input[1].borrowed_ref.type)==="Self") {
+            if (input[0] === "self") {
                 reviewLine.Tokens.push({
                     Kind: TokenKind.StringLiteral,
-                    Value: `&${input[0]}`,
+                    Value: input[0],
                     HasSuffixSpace: false
                 });
             } else {

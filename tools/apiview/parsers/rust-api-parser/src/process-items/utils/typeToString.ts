@@ -29,9 +29,9 @@ export function typeToString(type: Type): string {
     } else if ("function_pointer" in type) {
         return `unknown`; // TODO: fix this later
     } else if ("tuple" in type) {
-        return `(${type.tuple.types.map(typeToString).join(", ")})`;
+        return `(${type.tuple.map(typeToString).join(", ")})`;
     } else if ("slice" in type) {
-        return `[${typeToString(type.slice.type)}]`;
+        return `[${typeToString(type.slice)}]`;
     } else if ("array" in type) {
         return `[${typeToString(type.array.type)}; ${type.array.len}]`;
     } else if ("pat" in type) {

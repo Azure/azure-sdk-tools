@@ -784,14 +784,10 @@ export type Type =
         function_pointer: FunctionPointer;
     }
     | {
-        tuple: {
-            types: Type[];
-        };
+        tuple: Type[];
     }
     | {
-        slice: {
-            type: Type;
-        };
+        slice: Type;
     }
     | {
         array: {

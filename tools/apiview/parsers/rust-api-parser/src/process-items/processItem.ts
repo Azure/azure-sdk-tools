@@ -9,8 +9,6 @@ import { processStruct } from "./processStruct";
 import { processTrait } from "./processTrait";
 import { processUse } from "./processUse";
 
-const processedItems = new Set<string>();
-
 /**
  * Processes an item from the API JSON and returns a ReviewLine object.
  *
@@ -19,12 +17,6 @@ const processedItems = new Set<string>();
  * @returns {ReviewLine | null} The ReviewLine object or null if the item is not processed.
  */
 export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine[]): ReviewLine[] | null {
-    // Check if the item has already been processed
-    if (!item || (item.name && processedItems.has(item.name))) {
-        return null;
-    }
-    item.name && processedItems.add(item.name);
-
     if (!reviewLines) {
         reviewLines = [];
     }

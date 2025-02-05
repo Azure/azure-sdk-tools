@@ -501,7 +501,7 @@ export class CodePanelComponent implements OnChanges{
 
   setMaxLineNumberWidth() {
     if (this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber) {
-      document.documentElement.style.setProperty('--max-line-number-width', `${this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber!.toString().length}ch`);
+      document.documentElement.style.setProperty('--max-line-number-width', `${this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber!.toString().length + 1}ch`);
     }
   }
 

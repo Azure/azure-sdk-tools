@@ -7,7 +7,7 @@ namespace APIViewWeb.Helpers
 {
     public class LanguageServiceHelpers
     {
-        public static string[] SupportedLanguages = new string[] { "C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Swagger", "Swift", "TypeSpec", "Xml" };
+        public static string[] SupportedLanguages = new string[] { "C", "C#", "C++", "Go", "Java", "JavaScript", "Json", "Kotlin", "Python", "Rust", "Swagger", "Swift", "TypeSpec", "Xml" };
 
         public static IEnumerable<string> MapLanguageAliases(IEnumerable<string> languages)
         {
@@ -63,6 +63,8 @@ namespace APIViewWeb.Helpers
                 result = "Python";
             if (repoName.EndsWith("-ios"))
                 result = "Swift";
+            if(repoName.EndsWith("-rust"))
+                result = "Rust";
 
             return result;
         }

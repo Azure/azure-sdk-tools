@@ -8,6 +8,9 @@ parameters:
   - name: JavaScriptAPIParser
     type: string
     default: '@azure-tools/ts-genapi@2.0.3'
+  - name: RustAPIParser
+    type: string
+    default: '@azure-tools/rust-genapi@1.0.0-beta.1'
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
@@ -356,7 +359,7 @@ extends:
                     echo Installing .NET tool
                     call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                     echo Installing JavaScript parser
-                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}  
+                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
@@ -410,7 +413,7 @@ extends:
                           echo Installing .NET tool
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           echo Installing JavaScript parser
-                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
+                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
@@ -468,6 +471,6 @@ extends:
                           echo Installing .NET tool
                           call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
                           echo Installing JavaScript parser
-                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }} 
+                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy

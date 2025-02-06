@@ -325,9 +325,11 @@ final path = C:/repo/sdk-for-net/sdk/anomalydetector/Azure.AI.AnomalyDetector/te
 
 When the user POSTS to `/Record/Stop` the recording will be written to the file as described directly above.
 
+> ⚠️ **Note!** If passing the body key `x-recording-assets-file`, DO NOT pass a fully qualified absolute path. The test-proxy must be able to combine your assets repo location with the file path.
+
 During a `playback` start, the value for `x-recording-file` is used to _load an existing recording into memory_ and serve requests from it!
 
-Please note that if a **absolute** path is presented in header `x-recording-file`. The test-proxy will write directly to that file, wherever it is. If the parent folders do not exist, they will be created at run-time during the write operation.
+Please note that if an **absolute** path is presented in the `x-recording-file` key. The test-proxy will write directly to that file, wherever it is. If the parent folders do not exist, they will be created at run-time during the write operation.
 
 ### Start the test run
 

@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
 import { normalizeDirectory } from "./fs.js";
+import { createRequire } from "module";
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
   let additionalDirOutput = "\n";
@@ -61,7 +62,8 @@ export function getServiceDir(configYaml: any, emitter: string): string {
  */
 export async function getPathToDependency(dependency: string): Promise<string> {
   // Example: /home/user/foo/node_modules/@autorest/bar/dist/index.js
-  const entrypoint = fileURLToPath(import.meta.resolve(dependency));
+  const require = createRequire(import.meta.url);
+  const entrypoint = require.resolve(dependency);
 
   // Walk up directory tree to first folder containing "package.json"
   let currentDir = dirname(entrypoint);

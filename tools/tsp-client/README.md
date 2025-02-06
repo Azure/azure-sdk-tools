@@ -133,6 +133,8 @@ azure-sdk-for-js > tsp-client generate-config-files --package-json < path-to-emi
 
 To be explicit about specifying dependencies you'd like pinned, add a new field in the package.json file of your emitter called `"azure-sdk/emitter-package-json-pinning"` with a list of the dependencies you want to be forwarded to the emitter-package.json. These dependencies must be specified in your package.json's devDependencies in order for the tool to assign the correct version.
 
+> NOTE: If the `azure-sdk/emitter-package-json-pinning` field is missing from the package.json file, the tool will default to pinning the packages listed under `peerDependencies`.
+
 Example package.json using `"azure-sdk/emitter-package-json-pinning"`:
 
 ```json

@@ -52,7 +52,7 @@ export function typeToString(type: Type): string {
         return `*${type.raw_pointer.is_mutable ? "mut" : "const"} ${typeToString(type.raw_pointer.type)}`;
     } else if ("borrowed_ref" in type) {
         const lifetime = type.borrowed_ref.lifetime;
-        const elidedLifetime = lifetime && !shouldElideLifetime(lifetime) ? `'${lifetime} ` : "";
+        const elidedLifetime = lifetime && !shouldElideLifetime(lifetime) ? `${lifetime} ` : "";
         return `&${type.borrowed_ref.is_mutable ? "mut " : ""}${elidedLifetime}${typeToString(type.borrowed_ref.type)}`;
     } else if ("qualified_path" in type) {
         return `${typeToString(type.qualified_path.self_type)} as ${type.qualified_path.trait ? type.qualified_path.trait.name + "::" : ""}${type.qualified_path.name}`;

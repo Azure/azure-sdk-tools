@@ -25,9 +25,15 @@ export function processUse(item: Item, reviewLines: ReviewLine[]) {
         Kind: TokenKind.Keyword,
         Value: 'pub use'
     });
+
+    let useValue = item.inner.use.source || "null";
+    if (item.inner.use.is_glob) {
+        useValue += "::*";
+    }
+
     reviewLine.Tokens.push({
         Kind: TokenKind.TypeName,
-        Value: item.inner.use.source || "null",
+        Value: useValue,
         RenderClasses: [
             "use"
         ],

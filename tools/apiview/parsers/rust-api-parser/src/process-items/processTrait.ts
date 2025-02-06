@@ -41,7 +41,7 @@ export function processTrait(item: Item, apiJson: Crate) {
   if (item.inner.trait.items) {
     item.inner.trait.items.forEach((associatedItem: number) => {
       if (!reviewLine.Children) reviewLine.Children = [];
-      const childReviewLines = processItem(apiJson, apiJson.index[associatedItem]);
+      const childReviewLines = processItem(apiJson.index[associatedItem], apiJson);
       if (childReviewLines) reviewLine.Children.push(...childReviewLines);
     });
   }

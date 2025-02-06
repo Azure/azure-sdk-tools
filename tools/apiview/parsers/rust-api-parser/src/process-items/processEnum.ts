@@ -1,6 +1,6 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../models/rustdoc-json-types";
-import { processTraitImpls } from "./processImpl";
+import { processAutoTraitImpls } from "./processImpl";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 
 export function processEnum(item: Item, apiJson: Crate) {
@@ -15,7 +15,7 @@ export function processEnum(item: Item, apiJson: Crate) {
     Children: [],
   };
 
-  processTraitImpls(item.inner.enum.impls, apiJson, reviewLine);
+  processAutoTraitImpls(item.inner.enum.impls, apiJson, reviewLine);
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Keyword,

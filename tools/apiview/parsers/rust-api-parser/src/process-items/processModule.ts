@@ -41,7 +41,7 @@ export function processModule(apiJson: Crate, item: Item) {
   if (item.inner.module.items) {
     item.inner.module.items.forEach((childId: number) => {
       const childItem = apiJson.index[childId];
-      const childReviewLines = processItem(apiJson, childItem);
+      const childReviewLines = processItem(childItem, apiJson);
       if (childReviewLines) {
         if (!reviewLine.Children) {
           reviewLine.Children = [];

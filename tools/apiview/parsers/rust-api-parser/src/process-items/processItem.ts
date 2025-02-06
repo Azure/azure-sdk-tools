@@ -16,7 +16,7 @@ import { processUse } from "./processUse";
  * @param {Item} item - The item to process.
  * @returns {ReviewLine | null} The ReviewLine object or null if the item is not processed.
  */
-export function processItem(apiJson: Crate, item: Item): ReviewLine[] | null {
+export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
   if (typeof item.inner === "object") {
     if ("module" in item.inner) {
       return processModule(apiJson, item);

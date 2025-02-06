@@ -24,7 +24,7 @@ function main() {
     ReviewLines: [],
   };
 
-  const reviewLines = processItem(apiJson, apiJson.index[apiJson.root]);
+  const reviewLines = processItem(apiJson.index[apiJson.root], apiJson);
   if (reviewLines) {
     codeFile.ReviewLines.push(...reviewLines);
   }

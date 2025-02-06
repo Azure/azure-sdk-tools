@@ -2,7 +2,6 @@ import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
 import { access, constants, mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
 import { normalizeDirectory } from "./fs.js";

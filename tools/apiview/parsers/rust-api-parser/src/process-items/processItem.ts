@@ -1,5 +1,5 @@
-import { ReviewLine, } from "../models/apiview-models";
-import { Crate, Item, } from "../models/rustdoc-json-types";
+import { ReviewLine } from "../models/apiview-models";
+import { Crate, Item } from "../models/rustdoc-json-types";
 import { processConstant } from "./processConstant";
 import { processEnum } from "./processEnum";
 import { processFunction } from "./processFunction";
@@ -16,30 +16,24 @@ import { processUse } from "./processUse";
  * @param {Item} item - The item to process.
  * @returns {ReviewLine | null} The ReviewLine object or null if the item is not processed.
  */
-export function processItem(apiJson: Crate, item: Item, reviewLines?: ReviewLine[]): ReviewLine[] | null {
-    if (!reviewLines) {
-        reviewLines = [];
+export function processItem(apiJson: Crate, item: Item): ReviewLine[] | null {
+  if (typeof item.inner === "object") {
+    if ("module" in item.inner) {
+      return processModule(apiJson, item);
+    } else if ("use" in item.inner) {
+      return processUse(item);
+    } else if ("function" in item.inner) {
+      return processFunction(item);
+    } else if ("struct" in item.inner) {
+      return processStruct(item, apiJson);
+    } else if ("trait" in item.inner) {
+      return processTrait(item, apiJson);
+    } else if ("static" in item.inner) {
+      return processStatic(item);
+    } else if ("constant" in item.inner) {
+      return processConstant(item);
+    } else if ("enum" in item.inner) {
+      return processEnum(item, apiJson);
     }
-
-    if (typeof item.inner === 'object') {
-        if ('module' in item.inner) {
-            processModule(apiJson, item, reviewLines);
-        } else if ('use' in item.inner) {
-            processUse(item, reviewLines);
-        } else if ('function' in item.inner) {
-            processFunction(item, reviewLines);
-        } else if ('struct' in item.inner) {
-            processStruct(apiJson, item, reviewLines);
-        } else if ('trait' in item.inner) {
-            processTrait(apiJson, item, reviewLines);
-        } else if ('static' in item.inner) {
-            processStatic(item, reviewLines);
-        } else if ('constant' in item.inner) {
-            processConstant(item, reviewLines);
-        } else if ('enum' in item.inner) {
-            processEnum(apiJson, item, reviewLines);
-        }
-    }
-
-    return reviewLines;
+  }
 }

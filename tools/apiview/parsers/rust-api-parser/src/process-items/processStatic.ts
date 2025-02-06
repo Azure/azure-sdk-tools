@@ -10,40 +10,39 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
  * @param {Item} item - The static item to process.
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
-export function processStatic(item: Item, reviewLines: ReviewLine[]) {
-    if (!(typeof item.inner === 'object' && 'static' in item.inner)) return;
+export function processStatic(item: Item) {
+  if (!(typeof item.inner === "object" && "static" in item.inner)) return;
+  const reviewLines: ReviewLine[] = [];
+  if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
-    if (item.docs) reviewLines.push(createDocsReviewLine(item));
+  // Create the ReviewLine object
+  const reviewLine: ReviewLine = {
+    LineId: item.id.toString(),
+    Tokens: [],
+    Children: [],
+  };
+  reviewLine.Tokens.push({
+    Kind: TokenKind.Keyword,
+    Value: "pub static",
+  });
+  reviewLine.Tokens.push({
+    Kind: TokenKind.MemberName,
+    Value: item.name || "null",
+    RenderClasses: ["static"],
+    NavigateToId: item.id.toString(),
+    NavigationDisplayName: item.name || undefined,
+    HasSuffixSpace: false,
+  });
 
-    // Create the ReviewLine object
-    const reviewLine: ReviewLine = {
-        LineId: item.id.toString(),
-        Tokens: [],
-        Children: []
-    };
+  // Add type and value if available
+  if (item.inner.static) {
     reviewLine.Tokens.push({
-        Kind: TokenKind.Keyword,
-        Value: 'pub static'
+      Kind: TokenKind.Punctuation,
+      Value: ":",
     });
-    reviewLine.Tokens.push({
-        Kind: TokenKind.MemberName,
-        Value: item.name || "null",
-        RenderClasses: [
-            "static"
-        ],
-        NavigateToId: item.id.toString(),
-        NavigationDisplayName: item.name || undefined,
-        HasSuffixSpace: false
-    });
+    reviewLine.Tokens.push(processStructField(item.inner.static.type)); // TODO: make sure to encode other attributes too
+  }
 
-    // Add type and value if available
-    if (item.inner.static) {
-        reviewLine.Tokens.push({
-            Kind: TokenKind.Punctuation,
-            Value: ':'
-        });
-        reviewLine.Tokens.push(processStructField(item.inner.static.type)); // TODO: make sure to encode other attributes too
-    }
-
-    reviewLines.push(reviewLine);
+  reviewLines.push(reviewLine);
+  return reviewLines;
 }

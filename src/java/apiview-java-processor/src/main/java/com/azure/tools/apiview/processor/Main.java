@@ -24,14 +24,25 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.LINE_ID_MARKER;
 
 public class Main {
+
+    private static final String ARTIFACT_ID = "artifactId";
+    private static final String PACKAGE_VERSION = "version";
+
+    // Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar
+    private static final Pattern SOURCES_JAR_PATTERN = Pattern.compile("(.+)-(\\d+\\.\\d+.\\d+(-beta\\.\\d+)?)-sources\\.jar");
+
     // expected argument order:
     // [inputFiles] <outputDirectory>
     public static void main(String[] args) {
@@ -78,13 +89,7 @@ public class Main {
     private static ReviewProperties getReviewProperties(File inputFile) {
         final ReviewProperties reviewProperties = new ReviewProperties();
         final String filename = inputFile.getName();
-        int i = 0;
-        while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
-            i++;
-        }
-
-        String artifactId = filename.substring(0, i - 1);
-        String packageVersion = filename.substring(i, filename.indexOf("-sources.jar"));
+        Map<String, String> filenameParts = parseFilename(filename);
 
         // we will firstly try to get the artifact ID from the maven file inside the jar file...if it exists
         try (final JarFile jarFile = new JarFile(inputFile)) {
@@ -95,7 +100,7 @@ public class Main {
 
                 // use the pom.xml of this artifact only
                 // shaded jars can contain a pom.xml file each for every shaded dependencies
-                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(artifactId + "/pom.xml")) {
+                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(filenameParts.get(ARTIFACT_ID) + "/pom.xml")) {
                     reviewProperties.setMavenPom(new Pom(jarFile.getInputStream(entry)));
                 }
             }
@@ -106,10 +111,24 @@ public class Main {
         // if we can't get the maven details out of the Jar file, we will just use the filename itself...
         if (reviewProperties.getMavenPom() == null) {
             // we failed to read it from the maven pom file, we will just take the file name without any extension
-            reviewProperties.setMavenPom(new Pom("", artifactId, packageVersion, false));
+            reviewProperties.setMavenPom(new Pom("", filenameParts.get(ARTIFACT_ID), filenameParts.get(PACKAGE_VERSION), false));
         }
 
         return reviewProperties;
+    }
+
+    static Map<String, String> parseFilename(String filename) {
+        Matcher matcher = SOURCES_JAR_PATTERN.matcher(filename);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Filename does not match the expected package naming pattern " + filename
+                    + ". Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar");
+        }
+        Map<String, String> filenameParts = new HashMap<>();
+        String artifactId = matcher.group(1);
+        String packageVersion = matcher.group(2);
+        filenameParts.put(ARTIFACT_ID, artifactId);
+        filenameParts.put(PACKAGE_VERSION, packageVersion);
+        return filenameParts;
     }
 
     private static void processFile(final File inputFile, final File outputFile) {
@@ -127,11 +146,11 @@ public class Main {
         } else {
             apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
             apiListing.addDiagnostic(new Diagnostic(
-                DiagnosticKind.ERROR,
-                "error",
-                "Uploaded files should end with '-sources.jar' or '.xml', " +
-                    "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
-                    "that was submitted to APIView was named " + inputFile.getName()));
+                    DiagnosticKind.ERROR,
+                    "error",
+                    "Uploaded files should end with '-sources.jar' or '.xml', " +
+                            "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
+                            "that was submitted to APIView was named " + inputFile.getName()));
         }
 
         try {
@@ -169,9 +188,9 @@ public class Main {
         apiListing.setLanguage("Java");
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
-        if(groupId.contains("spring")) {
+        if (groupId.contains("spring")) {
             apiListing.setLanguageVariant(LanguageVariant.SPRING);
-        } else if(groupId.contains("android")) {
+        } else if (groupId.contains("android")) {
             apiListing.setLanguageVariant(LanguageVariant.ANDROID);
         } else {
             apiListing.setLanguageVariant(LanguageVariant.DEFAULT);
@@ -206,7 +225,7 @@ public class Main {
      * If the file was found and successfully parsed as {@link ApiViewProperties}, it is set on the {@link APIListing}
      * object.
      *
-     * @param fs the {@link FileSystem} representing the jar file
+     * @param fs         the {@link FileSystem} representing the jar file
      * @param apiListing the {@link APIListing} object to set the {@link ApiViewProperties} on
      * @param artifactId the artifact ID of the jar file
      */
@@ -228,7 +247,7 @@ public class Main {
                 apiListing.setApiViewProperties(properties);
                 System.out.println("  Found apiview_properties.json file in jar file");
                 System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size()
-                    + " cross-language definition IDs");
+                        + " cross-language definition IDs");
             }
         } catch (IOException e) {
             System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file - continuing...");

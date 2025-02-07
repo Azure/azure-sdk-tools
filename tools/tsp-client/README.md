@@ -2,6 +2,10 @@
 
 `tsp-client` is a simple command line tool to facilitate generating client libraries from TypeSpec.
 
+## Prerequisites
+
+- [Node.js 18.19 LTS](https://nodejs.org/en/download/) or later is required
+
 ## Installation
 
 ```bash

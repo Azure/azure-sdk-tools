@@ -28,7 +28,7 @@ variables:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
-    BuildStageName: Test
+    BuildStageName: InstallAndTest
     ArtifactName: drop
     PackageJsonPath: $(Build.SourcesDirectory)/tools/oav-traffic-converter
     BuildStages:

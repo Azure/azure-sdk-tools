@@ -4,7 +4,6 @@ Import-Module Pester
 
 Describe "Matrix-Collation" {
     BeforeAll {
-        . $PSScriptRoot/../../../common/scripts/job-matrix/job-matrix-functions.ps1
         . $PSScriptRoot/../../../common/scripts/Helpers/Package-Helpers.ps1
 
         $ClientCoreMatrixConfig = @{

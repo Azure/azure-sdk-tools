@@ -204,6 +204,10 @@ const parser = yargs(hideBin(process.argv))
         .option("fully-compatible", {
           type: "boolean",
           description: "Convert swagger to fully compatible TypeSpec",
+        })
+        .option("debug", {
+          type: "boolean",
+          description: "Enable debug logging",
         });
     },
     async (argv: any) => {

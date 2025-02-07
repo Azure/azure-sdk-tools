@@ -1,5 +1,9 @@
 # Release
 
+## 2025-02-08 - 0.15.4
+
+- Expose `debug` flag for the `convert` command
+
 ## 2025-01-17 - 0.15.3
 
 - Add `generate-config-files` command to create `emitter-package.json` and `emitter-package-lock.json` files under the `<repo root>/eng` directory.

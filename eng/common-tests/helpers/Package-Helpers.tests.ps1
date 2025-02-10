@@ -1,5 +1,65 @@
 Import-Module Pester
 
+
+Describe "ObjectKey Discovery" {
+    BeforeAll {
+        . $PSScriptRoot/../../common/scripts/Helpers/Package-Helpers.ps1
+
+        $ClientCoreMatrixConfig = @{
+            Name = "clientcore_ci_test_base"
+            Path = "sdk/clientcore/platform-matrix.json"
+            Selection = "sparse"
+            NonSparseParameters = "Agent"
+            GenerateVMJobs = $true
+        }
+
+        $CoreMatrixConfig = @{
+            Name = "Java_ci_test_base"
+            Path = "eng/pipelines/templates/stages/platform-matrix.json"
+            Selection = "sparse"
+            NonSparseParameters = "Agent"
+            GenerateVMJobs = $true
+        }
+
+        $CoreMatrixConfigWithWeirdBoolean = @{
+            Name = "Java_ci_test_base"
+            Path = "eng/pipelines/templates/stages/platform-matrix.json"
+            Selection = "sparse"
+            NonSparseParameters = "Agent"
+            GenerateVMJobs = "True"
+        }
+    }
+
+    It "Should evaluate the same object to the same hashcode" {
+        $value1 = Get-ObjectKey -Object $CoreMatrixConfig
+        $value2 = Get-ObjectKey -Object $CoreMatrixConfig
+
+        $value1 | Should -BeLikeExactly $value2
+    }
+
+    It "Should evaluate different objects with the same value to the same hashcode" {
+        $CopiedCoreMatrixConfig = @{
+            Name = "Java_ci_test_base"
+            Path = "eng/pipelines/templates/stages/platform-matrix.json"
+            Selection = "sparse"
+            NonSparseParameters = "Agent"
+            GenerateVMJobs = $true
+        }
+
+        $value1 = Get-ObjectKey -Object $CoreMatrixConfig
+        $value2 = Get-ObjectKey -Object $CopiedCoreMatrixConfig
+
+        $value1 | Should -BeLikeExactly $value2
+    }
+
+    It "Should properly evaluate different objects with similar values, but convert booleans" {
+        $value1 = Get-ObjectKey -Object $CoreMatrixConfig
+        $value2 = Get-ObjectKey -Object $CoreMatrixConfigWithWeirdBoolean
+
+        $value1 | Should -BeLikeExactly $value2
+    }
+}
+
 Describe "Matrix-Collation" {
     BeforeAll {
         . $PSScriptRoot/../../common/scripts/Helpers/Package-Helpers.ps1

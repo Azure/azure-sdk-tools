@@ -49,7 +49,7 @@ namespace IssueLabelerService
                 return new BadRequestResult();
             }
 
-            string result;
+            IssueOutput result;
             try
             {
                 // Configurations for correct access in search and OpenAI
@@ -68,6 +68,7 @@ namespace IssueLabelerService
                 string documentSemanticName = Config["DocumentSemanticName"];
                 string documentFieldName = "text_vector";
 
+                // Found that it performsbetter when given the title and body as a single string rather than a JSON.
                 string query = issue.Title + " " + issue.Body;
 
                 // Top X documents/issues
@@ -85,6 +86,7 @@ namespace IssueLabelerService
                     searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, query, top
                 );
 
+                // Filter out documents/issues that don't meet the score threshold
                 var docs = relevantDocuments.ToList().Select(rd => new
                 {
                     Content = rd.Item1.ToString(),
@@ -112,15 +114,16 @@ namespace IssueLabelerService
 
                 _logger.LogInformation($"Highest score: {highestScore}");
 
-                if (highestScore >= solutionThreshold)
+                bool solution = highestScore >= solutionThreshold;
+                if (solution)
                 {
                     // Prompt to offer a solution
-                    message = $"You are an assistant that provides solutions and labels based on the GitHub Issues and the Documentation provided below.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Suggestions, and Solution fields.\n'Solution' will be true.\nThe'Suggestions' field will be the Solution.\n'Suggestions' must prioritize information from the Documentation and will be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.Guidelines:\nUse only the sources provided below.\nProvide the user with the url from sources used.\nProvide the user with the url from sources used.\nUse ONLY the 'Category' and 'Service' fields from the provided GitHub Issues to populate the Category and Service fields in your response.\nStart the solution with the following message: Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\nEnd it with: This should solve your problem, if it does not feel free to reopen the issue!\nSources: Documentation: {docContent}\nGitHub Issues: {issueContent}\nProvide the user with a solution to their GitHub Issue:\n {query}";
+                    message = $"You are an Expierenced Developer in the Azure SDK Team that provides solutions and labels for Github Issues.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Response fields.\n'Response' must prioritize information from the Documentation and will be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide the user with the url from sources used.\nGitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer.\nNo need for introductions or outros because they are added later on.\nSources: Documentation: {docContent}\nGitHub Issues: {issueContent}\nProvide the user with a solution to their GitHub Issue:\n {query}";
                 }
                 else
                 {
                     // Prompt to offer suggestions
-                    message = $"You are an assistant that provides suggestions and labels based on the GitHub Issues and the Documentation provided below.\nThe goal is to facilitate the teams job when responding to the issue.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Suggestions, and Solution fields.\n'Solution' will be false.\n'Suggestions' will prioritize information from the Documentation and will be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide the user with the url from sources used.\nUse ONLY the 'Category' and 'Service' fields from the provided GitHub Issues to populate the Category and Service fields in your response.\nStart the suggestions with the following message: Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\nEnd it with: The team will get back to you shortly, hopefully this helps in the meantime!\nSources:\nDocumentation:\n{docContent}\nGitHub Issues: {issueContent}\nThe user needs suggestions for their GitHub Issue:\n{query}";
+                    message = $"You are an Expierenced Developer in the Azure SDK Team that provides suggestions and labels for Github Issues.\nThe goal is to facilitate the teams job when responding to the issue.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Response fields.\n'Response' will prioritize information from the Documentation and will be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide a URL for all suggestions given to the user.\nGitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer.\nNo need for introductions or outros because they are added later on.\nSources:\nDocumentation:\n{docContent}\nGitHub Issues: {issueContent}\nThe user needs suggestions for their GitHub Issue:\n{query}";
                 }
 
                 BinaryData structure = BinaryData.FromBytes("""
@@ -129,22 +132,50 @@ namespace IssueLabelerService
                           "properties": {
                             "Category": { "type": "string" },
                             "Service": { "type": "string" },
-                            "Suggestions": { "type": "string" },
-                            "Solution": { "type": "boolean" }
+                            "Response": { "type": "string" }
                           },
-                          "required": [ "Category", "Service", "Suggestions", "Solution" ],
+                          "required": [ "Category", "Service", "Response" ],
                           "additionalProperties": false
                         }
                         """u8.ToArray());
 
-                result = _issueLabeler.SendMessageQna(openAIEndpoint, credential, modelName, message);
+                var response = _issueLabeler.SendMessageQna(openAIEndpoint, credential, modelName, message);
 
-                _logger.LogInformation($"Open AI Response : \n{result}");
+                _logger.LogInformation($"Open AI Response : \n{response}");
 
-                result = _issueLabeler.StructureMessage(openAIEndpoint, credential, modelName, result, structure);
+                response = _issueLabeler.StructureMessage(openAIEndpoint, credential, modelName, response, structure);
 
-                // Model always provides escaped newlines instead of normal ones even though I tell it not too :(
-                result = result.Replace("\\n", "\n");
+                // Removing complexity from the prompt by dealing with intro, outro, and solution outside of the prompt. Avoids hallucinations.
+                if (solution)
+                {
+                    var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
+
+                    string intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\n";
+                    string outro = "This should solve your problem, if it does not feel free to reopen the issue!";
+
+                    result = new IssueOutput
+                    {
+                        Category = resultObj.Category,
+                        Service = resultObj.Service,
+                        Suggestions = intro + resultObj.Response + outro,
+                        Solution = solution
+                    };
+                }
+                else
+                {
+                    var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
+
+                    string intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\n";
+                    string outro = "The team will get back to you shortly, hopefully this helps in the meantime!";
+                    result = new IssueOutput
+                    {
+                        Category = resultObj.Category,
+                        Service = resultObj.Service,
+                        Suggestions = intro + resultObj.Response + outro,
+                        Solution = solution
+                    };
+                }
+
 
                 _logger.LogInformation($"Open AI Structured Response : \n{result}");
             }
@@ -156,7 +187,7 @@ namespace IssueLabelerService
 
             try
             {
-                return new JsonResult(JsonConvert.DeserializeObject<IssueOutput>(result));
+                return new JsonResult(result);
             }
             catch (Exception ex)
             {
@@ -181,6 +212,13 @@ namespace IssueLabelerService
             public string Service { get; set; }
             public string Suggestions { get; set; }
             public bool Solution { get; set; }
+        }
+
+        private class AIOutput
+        {
+            public string Category { get; set; }
+            public string Service { get; set; }
+            public string Response { get; set; }
         }
     }
 }

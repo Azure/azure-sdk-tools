@@ -41,7 +41,8 @@ namespace SearchIndexCreator
             indexerClient.CreateOrUpdateDataSourceConnection(dataSource);
             Console.WriteLine("Data Source Created/Updated!");
 
-            // Create a Skillset  
+            // Create a Skillset specifically for chunking
+            // Each issue has its associated comments attached to it. Not sure if this will change in the future making chunking potentially unnecessary.
             Console.WriteLine("Creating/Updating the skillset...");
             var skillset = new SearchIndexerSkillset($"{_config["IssueIndexName"]}-skillset", new List<SearchIndexerSkill>
             {  
@@ -58,6 +59,7 @@ namespace SearchIndexCreator
                 {
                     Context = "/document",
                     TextSplitMode = TextSplitMode.Pages,
+                    // 10k because token limits are so high but want to experiment with lower chunking.
                     MaximumPageLength = 10000,
                     PageOverlapLength = 500,
                 },
@@ -190,7 +192,7 @@ namespace SearchIndexCreator
             const string vectorSearchVectorizer = "issueOpenAIVectorizer";
             const string semanticSearchConfig = "issue-semantic-config";
             const string binaryCompression = "issue-binary-compression";
-            const int modelDimensions = 1536;
+            const int modelDimensions = 1536;// "Default" value
 
             SearchIndex searchIndex = new SearchIndex(_config["IssueIndexName"])
             {

@@ -81,7 +81,7 @@ Describe "Matrix-Collation" {
         }
     }
 
-    It -Skip "Should properly group identical matrix inputs" {
+    It "Should properly group identical matrix inputs" {
         $Pkgs = @(
             @{
                 Name = "package1"
@@ -113,7 +113,7 @@ Describe "Matrix-Collation" {
         $groupingResults[$group2][1].Name | Should -Be "package3"
     }
 
-    It -Skip "Should properly group items with no setting" {
+    It "Should properly group items with no setting" {
         $Pkgs = @(
             @{
                 Name = "package1"

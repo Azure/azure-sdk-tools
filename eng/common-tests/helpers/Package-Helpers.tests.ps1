@@ -159,7 +159,7 @@ Describe "Matrix-Collation" {
             },
             @{
                 ArtifactName = "azure-identity"
-                CIMatrixConfigs = @({
+                CIMatrixConfigs = @(@{
                     Name = "Java_ci_test_base"
                     Path = "eng/pipelines/templates/stages/platform-matrix.json"
                     Selection = "sparse"

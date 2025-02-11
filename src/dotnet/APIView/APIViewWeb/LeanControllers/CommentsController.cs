@@ -105,8 +105,12 @@ namespace APIViewWeb.LeanControllers
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]
         public async Task<ActionResult> CreateCommentAsync(
-            string reviewId, string elementId, string commentText,
-            CommentType commentType, string apiRevisionId = null, string sampleRevisionId = null,
+            [FromForm] string reviewId,
+            [FromForm] string elementId,
+            [FromForm] string commentText,
+            [FromForm] CommentType commentType,
+            [FromForm] string apiRevisionId = null,
+            [FromForm] string sampleRevisionId = null,
             bool resolutionLocked = false)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))

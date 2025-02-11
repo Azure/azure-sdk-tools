@@ -30,12 +30,12 @@ interface SdkAutoOptions {
   localSdkRepoPath: string;
   tspConfigPath?: string;
   readmePath?: string;  
-  pullNumber?: number;
+  pullNumber?: string;
   apiVersion?: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   workingFolder: string;
-  isTriggeredByPipeline: boolean;
+  isTriggeredByPipeline: string;
   headRepoHttpsUrl?: string;
   headBranch?: string;
   runEnv: 'local' | 'azureDevOps' | 'test';

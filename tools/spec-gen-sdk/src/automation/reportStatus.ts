@@ -8,8 +8,8 @@ import { getSDKAutomationStateString, SDKAutomationState } from './sdkAutomation
 import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
 import { formatSuppressionLine } from '../utils/reportFormat';
-import { removeAnsiEscapeCodes } from '../utils/utils';
-import { CommentCaptureTransport } from './logging';
+import { extractPathFromSpecConfig, removeAnsiEscapeCodes } from '../utils/utils';
+import { CommentCaptureTransport, vsoAddAttachment } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
@@ -26,7 +26,7 @@ export const generateReport = (context: WorkflowContext) => {
   let hasAbsentSuppressions = false;
   let areBreakingChangeSuppressed = false;
   let shouldLabelBreakingChange = false;
-  let markdownContent = '# Generation Report\n';
+  let markdownContent = '';
   for (const pkg of context.handledPackages) {
     setSdkAutoStatus(context, pkg.status);
     hasSuppressions = Boolean(pkg.presentSuppressionLines.length > 0);
@@ -66,12 +66,21 @@ export const generateReport = (context: WorkflowContext) => {
     context.logger.info(`package [${pkg.name}] hasBreakingChange [${pkg.hasBreakingChange}] isBetaMgmtSdk [${pkg.isBetaMgmtSdk}] hasSuppressions [${hasSuppressions}] hasAbsentSuppressions [${hasAbsentSuppressions}]`);
   }
 
-  // Write a markdown file to be rendered by the Azure DevOps pipeline
-  const markdownFilePath = path.join(context.config.workingFolder, `out/logs/package-report.md`);
-  if (existsSync(markdownFilePath)) {
-    rmSync(markdownFilePath);
+  if (context.config.pullNumber) {
+    try {
+      // Write a markdown file to be rendered by the Azure DevOps pipeline
+      const fileNamePrefix = extractPathFromSpecConfig(context.config.tspConfigPath, context.config.readmePath);
+      const markdownFilePath = path.join(context.config.workingFolder, `out/logs/${fileNamePrefix}-package-report.md`);
+      context.logger.info(`Writing markdown to ${markdownFilePath}`);
+      if (existsSync(markdownFilePath)) {
+        rmSync(markdownFilePath);
+      }
+      writeFileSync(markdownFilePath, markdownContent);
+      vsoAddAttachment(`Generation Summary for ${context.config.tspConfigPath ?? context.config.readmePath}`, markdownFilePath);
+      } catch (e) {
+        context.logger.error(`IOError: Fails to write markdown file. Details: ${e}`);
+      }
   }
-  writeFileSync(markdownFilePath, markdownContent);
 
   executionReport = {
     packages: packageReports,
@@ -515,5 +524,4 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
   sendPipelineVariable("PrBranch", prBranch);
   sendPipelineVariable("PrTitle", prTitle);
   sendPipelineVariable("PrBody", prBody);
-  context.logger.info(`BreakingChangeLabel: ${breakingChangeLabel}, PrBranch: ${prBranch}, PrTitle: ${prTitle}, PrBody: ${prBody}`);
 }

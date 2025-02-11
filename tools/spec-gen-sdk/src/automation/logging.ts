@@ -78,19 +78,20 @@ export const loggerDevOpsTransport = () => {
       winston.format.printf((info: WinstonInfo) => {
         const { level } = info;
         const msg = formatLog(info);
+
+        // Log issue if it's 'ERROR'
+        if (msg.includes('ERROR')) {
+          return `##vso[task.logissue type=error]${msg}`;
+        }
         switch (level) {
-          case 'error':
           case 'debug':
           case 'command':
             return `##[${level}] ${msg}`;
-
           case 'warn':
             return `##[warning] ${msg}`;
           case 'section':
-            return `##[group] ${info.message}`;
           case 'endsection':
-            return `##[endgroup] ${info.message}`;
-
+            return `##[section] ${info.message}`;
           default:
             return msg;
         }
@@ -144,3 +145,10 @@ export const loggerWaitToFinish = async (logger: winston.Logger) => {
   }
 };
 
+export function vsoAddAttachment(name: string, path: string): void {
+  console.log(`##vso[task.addattachment type=Distributedtask.Core.Summary;name=${name};]${path}`);
+}
+
+export function vsoLogIssue(message: string, type = "error"): void {
+  console.log(`##vso[task.logissue type=${type}]${message}`);
+}

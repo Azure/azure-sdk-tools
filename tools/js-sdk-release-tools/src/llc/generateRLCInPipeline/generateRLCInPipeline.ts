@@ -239,8 +239,7 @@ export async function generateRLCInPipeline(options: {
         logger.info(`Start to update rush.`);
         execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
         
-        // DEBUG
-        //await migratePackage(packagePath);
+        await migratePackage(packagePath);
         
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
         // To build generated codes except test and sample, we need to change tsconfig.json.

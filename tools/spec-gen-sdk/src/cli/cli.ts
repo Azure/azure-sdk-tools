@@ -14,14 +14,14 @@ This tool will generate the SDK code using the local specification repository an
 
 export type SpecGenSdkCliConfig = {
   workingFolder: string;
-  isTriggeredByPipeline: boolean;
+  isTriggeredByPipeline: string;
   localSpecRepoPath: string;
   localSdkRepoPath: string;
   tspConfigPath?: string;
   readmePath?: string;
   sdkRepoName: string;
   apiVersion?: string;
-  prNumber?: number;
+  prNumber?: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   headRepoHttpsUrl?: string;
@@ -72,7 +72,7 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       headRepoHttpsUrl: config.headRepoHttpsUrl,
       headBranch: config.headBranch,
       isTriggeredByPipeline: config.isTriggeredByPipeline,
-      runEnv: config.isTriggeredByPipeline ? 'azureDevOps' : 'local',
+      runEnv: config.isTriggeredByPipeline.toLocaleLowerCase() === "true" ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto',
       version: config.version
     });
@@ -125,9 +125,9 @@ yargs(hideBin(process.argv))
         },
         'is-triggered-by-pipeline': {
           alias: "t",
-          type: 'boolean',
+          type: 'string',
           description: 'Flag to indicate if triggered by pipeline',
-          default: false,
+          default: "false",
         },
         'tsp-config-relative-path': {
           alias: "tcrp",

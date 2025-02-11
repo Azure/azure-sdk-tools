@@ -4,6 +4,7 @@ import { FailureType, setFailureType, WorkflowContext } from '../automation/work
 import { RunLogFilterOptions, RunLogOptions, RunOptions } from '../types/SwaggerToSdkConfig';
 import { Readable } from 'stream';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
+import { vsoLogIssue } from '../automation/logging';
 
 export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending'>;
 export type StatusContainer = { status: SDKAutomationState };
@@ -145,7 +146,11 @@ const listenOnStream = (
       }
     }
     setSdkAutoStatus(result, lineResult);
-    context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
+    if (context.config.runEnv === 'azureDevOps' && line.toLowerCase().includes("error")) {
+      vsoLogIssue(line);
+    } else {
+      context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
+    }
   };
 
   let cacheLine = '';

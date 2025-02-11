@@ -1,5 +1,11 @@
 # Release
 
+## 2025-02-11 - 0.1.6
+
+- Enabled error messages to be displayed in the Azure pipeline result
+- Generate a markdown file with the package results and publish it to the Extensions tab in the Azure pipeline result
+- Updated the 'is-triggered-by-pipeline' parameter type to string
+
 ## 2025-01-27 - 0.1.5
 
 - Introduced a root folder to save all the logs and artifacts

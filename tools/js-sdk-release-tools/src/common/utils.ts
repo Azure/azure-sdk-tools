@@ -66,7 +66,7 @@ function printErrorDetails(
     }
 }
 
-function getNpmClassicClientParametersPath(packageRoot: string): string {
+function getDistClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'dist/esm/models/parameters.js');
 }
 
@@ -76,20 +76,22 @@ export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
 }
 
-// NOTE: due to migration tool, the folder structure is changed, and src folder is removed
+// NOTE: due to migration tool, the folder structure is changed,
+//       and src folder is removed in new packages, 
+//       so we need to check both src and dist folders
 export function getSDKType(packageRoot: string): SDKType {
     const packageName = getNpmPackageName(packageRoot);
     if (packageName.startsWith('@azure-rest/')) {
         return SDKType.RestLevelClient;
     }
     
-    const paraPath = getClassicClientParametersPath(packageRoot);
-    const npmParaPath = getNpmClassicClientParametersPath(packageRoot);
+    const srcParaPath = getClassicClientParametersPath(packageRoot);
+    const distParaPath = getDistClassicClientParametersPath(packageRoot);
 
-    const parameterExist = shell.test('-e', paraPath);
-    const npmParameterExist = shell.test('-e', npmParaPath);
+    const srcParameterExist = shell.test('-e', srcParaPath);
+    const distParameterExist = shell.test('-e', distParaPath);
     
-    const type = parameterExist || npmParameterExist ? SDKType.HighLevelClient : SDKType.ModularClient;
+    const type = srcParameterExist || distParameterExist ? SDKType.HighLevelClient : SDKType.ModularClient;
     logger.info(`SDK type '${type}' is detected in '${packageRoot}'.`);
     return type;
 }

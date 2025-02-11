@@ -64,9 +64,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async Task RemoveSanitizers([FromBody]RemoveSanitizerList sanitizerList)
+        public async Task RemoveSanitizers()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+
+            var sanitizerList = await HttpRequestInteractions.GetBody<RemoveSanitizerList>(Request);
+
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             var removedSanitizers = new List<string>();
@@ -197,10 +200,10 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        [AllowEmptyBody]
-        public void SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
+        public async Task SetRecordingOptions()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var options = await HttpRequestInteractions.GetBody<Dictionary<string, object>>(Request);
 
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 

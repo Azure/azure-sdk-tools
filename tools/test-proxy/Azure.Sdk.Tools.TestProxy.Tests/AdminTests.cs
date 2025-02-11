@@ -19,12 +19,12 @@ using Xunit;
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     /// <summary>
-    /// The tests contained here-in are intended to exercise the actual admin functionality of the controller. 
-    /// Specifically, handling add/remove/update of various sanitizers, transforms, and matchers. 
-    /// 
+    /// The tests contained here-in are intended to exercise the actual admin functionality of the controller.
+    /// Specifically, handling add/remove/update of various sanitizers, transforms, and matchers.
+    ///
     /// The admin controller uses Activator.CreateInstance to create these dynamically, so we need to ensure we actually
     /// catch edges cases with this creation logic. ESPECIALLY when we're dealing with parametrized ones.
-    /// 
+    ///
     /// The testing of the actual functionality of each of these concepts should take place in SanitizerTests, TransformTests, etc.
     /// </summary>
     public class AdminTests
@@ -34,9 +34,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async void TestAddSanitizersThrowsOnEmptyArray()
         {
+            Assert.Fail("Testing AI auto-diagnosis");
+        }
+
+        [Fact]
+        public async void TestAddSanitizersThrowsOnEmptyArray()
+        {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            
+
             string requestBody = @"[]";
 
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
@@ -69,7 +75,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             string requestBody = @"[
     {
         ""Name"": ""GeneralRegexSanitizer"",
-        ""Body"": { 
+        ""Body"": {
             ""regex"": ""[a-zA-Z]?"",
             ""value"": ""hello_there"",
             ""condition"": {
@@ -79,7 +85,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     },
     {
         ""Name"": ""HeaderRegexSanitizer"",
-        ""Body"": { 
+        ""Body"": {
             ""key"": ""Location"",
             ""value"": ""https://fakeazsdktestaccount.table.core.windows.net/Tables""
         }
@@ -121,11 +127,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            
+
             string requestBody = @"[
     {
         ""Name"": ""GeneralRegexSanitizer"",
-        ""Body"": { 
+        ""Body"": {
             ""regex"": ""[a-zA-Z]?"",
             ""value"": ""hello_there"",
             ""condition"": {
@@ -135,7 +141,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     },
     {
         ""Name"": ""BadRegexIdentifier"",
-        ""Body"": { 
+        ""Body"": {
             ""key"": ""Location"",
             ""value"": ""https://fakeazsdktestaccount.table.core.windows.net/Tables""
         }
@@ -316,7 +322,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "CustomDefaultMatcher";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"excludedHeaders\": \"Content-Type,Content-Length\", \"ignoredHeaders\": \"Connection\", \"compareBodies\": false, \"ignoredQueryParameters\": \"api-version,location\" }");
-            
+
             // content length must be set for the body to be parsed in SetMatcher
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
@@ -330,7 +336,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.SetMatcher();
             var matcher = testRecordingHandler.Matcher;
             Assert.True(matcher is CustomDefaultMatcher);
-            
+
             var compareBodies = (bool) typeof(RecordMatcher).GetField("_compareBodies", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(matcher);
             Assert.False(compareBodies);
 
@@ -488,7 +494,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
             await testRecordingHandler.SanitizerRegistry.Clear();
-            
+
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
             );
@@ -542,7 +548,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.AddSanitizer();
 
             var result = (await testRecordingHandler.SanitizerRegistry.GetSanitizers(testRecordingHandler.PlaybackSessions[recordingId])).Last();
-            
+
             Assert.True(result is HeaderRegexSanitizer);
         }
 
@@ -589,7 +595,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
 
             await testRecordingHandler.SanitizerRegistry.Clear();
-            
+
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
             );
@@ -1021,7 +1027,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
-            
+
             // use returned recordingId to register new sanitizers
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Response.Body = new MemoryStream();

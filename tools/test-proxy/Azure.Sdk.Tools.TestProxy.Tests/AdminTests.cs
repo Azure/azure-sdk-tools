@@ -1020,9 +1020,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(expectedSanitizerCount - 1, (await testRecordingHandler.SanitizerRegistry.GetSanitizers()).Count);
         }
 
-        // test for SetRecordingOptions
-        // test for empty dictionary in Record/stop
-
         [Fact]
         public async Task RemoveSanitizerSucceedsForAddedRecordingSanitizer()
         {

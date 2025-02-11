@@ -9,7 +9,7 @@ import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
 import { formatSuppressionLine } from '../utils/reportFormat';
 import { extractPathFromSpecConfig, removeAnsiEscapeCodes } from '../utils/utils';
-import { CommentCaptureTransport, vsoAddAttachment } from './logging';
+import { CommentCaptureTransport, vsoAddAttachment, vsoLogIssue } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
@@ -21,6 +21,7 @@ export const generateReport = (context: WorkflowContext) => {
   context.logger.log('section', 'Generate report');
   let executionReport: ExecutionReport;
   const packageReports: PackageReport[] = [];
+  const specConfigPath = context.config.tspConfigPath ?? context.config.readmePath;
 
   let hasSuppressions = false
   let hasAbsentSuppressions = false;
@@ -76,7 +77,7 @@ export const generateReport = (context: WorkflowContext) => {
         rmSync(markdownFilePath);
       }
       writeFileSync(markdownFilePath, markdownContent);
-      vsoAddAttachment(`Generation Summary for ${context.config.tspConfigPath ?? context.config.readmePath}`, markdownFilePath);
+      vsoAddAttachment(`Generation Summary for ${specConfigPath}`, markdownFilePath);
       } catch (e) {
         context.logger.error(`IOError: Fails to write markdown file. Details: ${e}`);
       }
@@ -92,7 +93,11 @@ export const generateReport = (context: WorkflowContext) => {
   };
 
   writeTmpJsonFile(context, 'execution-report.json', executionReport);
-  context.logger.info(`Main status [${context.status}]`);
+  if (context.status === 'failed') {
+    vsoLogIssue(`The generation process failed for ${specConfigPath}. Refer to the full log for details.`);
+  } else {
+    context.logger.info(`Main status [${context.status}]`);
+  }
   if (context.config.runEnv === 'azureDevOps') {
     context.logger.info("Set pipeline variables.");
     setPipelineVariables(context, executionReport);

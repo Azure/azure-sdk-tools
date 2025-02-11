@@ -79,11 +79,12 @@ export const loggerDevOpsTransport = () => {
         const { level } = info;
         const msg = formatLog(info);
 
-        // Log issue if it's 'ERROR'
-        if (msg.includes('ERROR')) {
+        // Log issue if it's an error'
+        if (level === "error" && msg.includes("Error")) {
           return `##vso[task.logissue type=error]${msg}`;
         }
         switch (level) {
+          case 'error':
           case 'debug':
           case 'command':
             return `##[${level}] ${msg}`;

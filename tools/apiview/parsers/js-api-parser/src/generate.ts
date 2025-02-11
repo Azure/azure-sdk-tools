@@ -300,6 +300,8 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
               Value: excerpt.text,
             });
             line.Tokens.push(token);
+          } else if (item.kind === ApiItemKind.Enum) {
+            splitAndBuild(line.Tokens, `export enum ${item.displayName}`, item);
           } else {
             splitAndBuild(line.Tokens, excerpt.text, item);
           }

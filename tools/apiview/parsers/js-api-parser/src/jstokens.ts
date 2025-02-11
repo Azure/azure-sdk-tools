@@ -212,10 +212,7 @@ function getRenderClass(kind: ApiItemKind) {
 export function splitAndBuild(reviewTokens: ReviewToken[], s: string, item: ApiItem) {
   // Not sure why api.json uses "export declare function", while api.md uses "export function".
   // Use the latter because that's how we normally define it in the TypeScript source code.
-  const lines = s
-    .replace(/export declare function/g, "export function")
-    .replace(/export declare enum/g, "export enum")
-    .split("\n");
+  const lines = s.replace(/export declare function/g, "export function").split("\n");
   const { kind: memberKind, displayName: currentTypeName } = item;
   const currentTypeid = item.canonicalReference.toString();
   for (const l of lines) {

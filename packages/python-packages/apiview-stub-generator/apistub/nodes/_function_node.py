@@ -3,12 +3,14 @@ import inspect
 from collections import OrderedDict
 import astroid
 import re
+from typing import Dict
 
 from ._annotation_parser import FunctionAnnotationParser
 from ._astroid_parser import AstroidFunctionParser
 from ._docstring_parser import DocstringParser
 from ._base_node import NodeEntityBase, get_qualified_name
 from ._argtype import ArgType
+from .._generated.treestyle.parser.models import ReviewLines
 
 
 # Find types like ~azure.core.paging.ItemPaged and group returns ItemPaged.
@@ -27,12 +29,16 @@ class FunctionNode(NodeEntityBase):
     :param bool: is_module_level
     """
 
-    def __init__(self, namespace, parent_node, *, obj=None, node: astroid.FunctionDef=None, is_module_level=False):
+    def __init__(
+        self, namespace, parent_node, *, apiview, obj=None, node: astroid.FunctionDef = None, is_module_level=False
+    ):
         super().__init__(namespace, parent_node, obj)
         if not obj and node:
             self.name = node.name
             self.display_name = node.name
         self.annotations = []
+        self.children = ReviewLines()
+        self.apiview = apiview
 
         # Track **kwargs and *args separately, the way astroid does
         self.special_kwarg = None
@@ -41,6 +47,7 @@ class FunctionNode(NodeEntityBase):
         self.args = OrderedDict()
         self.kwargs = OrderedDict()
         self.posargs = OrderedDict()
+        self.arg_count = 0
 
         self.return_type = None
         self.namespace_id = self.generate_id()
@@ -69,7 +76,7 @@ class FunctionNode(NodeEntityBase):
         if self.is_async:
             self.namespace_id += ":async"
             self.full_name = self.namespace_id
-        
+
         # Turn any decorators into annotation
         if self.node and self.node.decorators:
             self.annotations = [f"@{x.as_string(preserve_quotes=True)}" for x in self.node.decorators.nodes]
@@ -78,15 +85,22 @@ class FunctionNode(NodeEntityBase):
         self._parse_function()
 
     def _parse_function(self):
-        """ Find positional and keyword arguments, type and default value and return type of method."""
+        """Find positional and keyword arguments, type and default value and return type of method."""
         # Add cls as first arg for class methods in API review tool
         if "@classmethod" in self.annotations:
-            self.args["cls"] = ArgType(name="cls", argtype=None, default=inspect.Parameter.empty, keyword=None)
+            self.args["cls"] = ArgType(
+                name="cls",
+                argtype=None,
+                default=inspect.Parameter.empty,
+                keyword=None,
+                apiview=self.apiview,
+                func_node=self,
+            )
 
         if self.node:
-            parser = AstroidFunctionParser(self.node, self.namespace, self)
+            parser = AstroidFunctionParser(self.node, self.namespace, apiview=self.apiview, func_node=self)
         else:
-            parser = FunctionAnnotationParser(self.obj, self.namespace, self)
+            parser = FunctionAnnotationParser(self.obj, self.namespace, apiview=self.apiview, func_node=self)
         if parser:
             self.args = parser.args
             self.posargs = parser.posargs
@@ -103,29 +117,29 @@ class FunctionNode(NodeEntityBase):
         if hasattr(self.obj, "__doc__"):
             docstring = getattr(self.obj, "__doc__")
         # Refer docstring at class if this is constructor and docstring is missing for __init__
-        if (
-            not docstring
-            and self.name == "__init__"
-            and hasattr(self.parent_node.obj, "__doc__")
-        ):
+        if not docstring and self.name == "__init__" and hasattr(self.parent_node.obj, "__doc__"):
             docstring = getattr(self.parent_node.obj, "__doc__")
 
         if docstring:
             #  Parse doc string to find missing types, kwargs and return type
-            parsed_docstring = DocstringParser(docstring)
+            parsed_docstring = DocstringParser(docstring, apiview=self.apiview)
 
             # Set return type if not already set
             if not self.return_type and parsed_docstring.ret_type:
-                logging.debug(
-                    "Setting return type from docstring for method {}".format(self.name)
-                )
+                logging.debug("Setting return type from docstring for method {}".format(self.name))
                 self.return_type = parsed_docstring.ret_type
 
             # if something is missing from the signature parsing, update it from the
             # docstring, if available
             for argname, signature_arg in {**self.args, **self.posargs}.items():
-                signature_arg.argtype = signature_arg.argtype if signature_arg.argtype is not None else parsed_docstring.type_for(argname)
-                signature_arg.default = signature_arg.default if signature_arg.default is not None else  parsed_docstring.default_for(argname)
+                signature_arg.argtype = (
+                    signature_arg.argtype if signature_arg.argtype is not None else parsed_docstring.type_for(argname)
+                )
+                signature_arg.default = (
+                    signature_arg.default
+                    if signature_arg.default is not None
+                    else parsed_docstring.default_for(argname)
+                )
 
             # if something is missing from the signature parsing, update it from the
             # docstring, if available
@@ -136,9 +150,13 @@ class FunctionNode(NodeEntityBase):
                     continue
                 remaining_docstring_kwargs.remove(argname)
                 if not kw_arg.is_required:
-                    kw_arg.argtype = kw_arg.argtype if kw_arg.argtype is not None else parsed_docstring.type_for(argname)
-                    kw_arg.default = kw_arg.default if kw_arg.default is not None else parsed_docstring.default_for(argname)
-            
+                    kw_arg.argtype = (
+                        kw_arg.argtype if kw_arg.argtype is not None else parsed_docstring.type_for(argname)
+                    )
+                    kw_arg.default = (
+                        kw_arg.default if kw_arg.default is not None else parsed_docstring.default_for(argname)
+                    )
+
             # ensure any kwargs described only in the docstrings are added
             for argname in remaining_docstring_kwargs:
                 self.kwargs[argname] = parsed_docstring.kwargs[argname]
@@ -155,10 +173,20 @@ class FunctionNode(NodeEntityBase):
                 if match:
                     self.special_vararg.argtype = match.argtype
 
-    def _newline_if_needed(self, apiview, use_multi_line):
+    def _reviewline_if_needed(
+        self,
+        review_lines,
+        review_line,
+        use_multi_line,
+        *,
+        children=None,
+    ):
         if use_multi_line:
-            apiview.add_newline()
-            apiview.add_whitespace()
+            review_line.add_children(children)
+            review_lines.append(review_line)
+            # new token list for next line if multi-line
+            review_line = review_lines.create_review_line()
+        return review_line
 
     def _argument_count(self) -> int:
         count = len(self.posargs) + len(self.args) + len(self.kwargs)
@@ -181,97 +209,169 @@ class FunctionNode(NodeEntityBase):
             short_type = short_type.replace(g[0], g[1])
         return short_type
 
-    def _generate_args_for_collection(self, items, apiview, use_multi_line):
-        for item in items.values():
-            self._newline_if_needed(apiview, use_multi_line)
-            item.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line)
-            apiview.add_punctuation(",", False, True)
+    def _generate_args_for_collection(
+        self, items: Dict[str, ArgType], review_lines, review_line, use_multi_line, *, final_item=True
+    ):
+        for idx, item in enumerate(list(items.values())):
+            item.generate_tokens(
+                self.namespace_id,
+                namespace=self.namespace,
+                review_line=review_line,
+                add_line_marker=use_multi_line,
+            )
+            # if final_item is False, then items should not have commas
+            if not final_item or idx < len(items) - 1:
+                review_line.add_punctuation(",")
+            # multi-line will create new list of tokens for next line
+            review_line = self._reviewline_if_needed(review_lines, review_line, use_multi_line)
+        return review_line
 
-    def _generate_signature_token(self, apiview, use_multi_line):
-        apiview.add_punctuation("(")
+    def _generate_signature_token(self, review_lines, review_line, use_multi_line):
+        review_line.add_punctuation("(", has_suffix_space=False)
+        # if multi-line, then def tokens are parent tokens
+        # to be used later when adding children
+        def_line = review_line
 
+        # If multi-line, then each param line will be a child.
         if use_multi_line:
             # render errors directly below definition line
             for err in self.pylint_errors:
-                err.generate_tokens(apiview, self.namespace_id)
-            apiview.begin_group()
-            apiview.begin_group()
+                err.generate_tokens(self.apiview, self.namespace_id)
+            param_lines = self.children
+            review_line = review_lines.create_review_line(line_id=self.namespace_id)
+        else:
+            param_lines = review_lines
 
-        self._generate_args_for_collection(self.posargs, apiview, use_multi_line)
+        # If length of positional args is less than total args, then all items should end with commas
+        # as end of args list hasn't been reached. Else, last item reached, so no comma.
+        current_count = len(self.posargs)
+        final_item = current_count >= self.arg_count
+
+        review_line = self._generate_args_for_collection(
+            self.posargs,
+            review_lines=param_lines,
+            review_line=review_line,
+            use_multi_line=use_multi_line,
+            final_item=final_item,
+        )
         # add postional-only marker if any posargs
         if self.posargs:
-            self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text("/")
-            apiview.add_punctuation(",", False, True)
+            # add extra indent manually for multi-line args
+            indent = ""
+            if use_multi_line:
+                indent = " " * 4
+            review_line.add_text(f"{indent}/", has_suffix_space=False)
+            review_line.add_punctuation(",")
+            current_count += 1  # account for /
 
-        self._generate_args_for_collection(self.args, apiview, use_multi_line)
+            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
+
+        current_count += len(self.args)
+        final_item = current_count >= self.arg_count
+
+        review_line = self._generate_args_for_collection(
+            self.args,
+            review_lines=param_lines,
+            review_line=review_line,
+            use_multi_line=use_multi_line,
+            final_item=final_item,
+        )
+        current_count += 1
+        final_item = current_count >= self.arg_count
         if self.special_vararg:
-            self._newline_if_needed(apiview, use_multi_line)
-            self.special_vararg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="*")
-            apiview.add_punctuation(",", False, True)
+            self.special_vararg.generate_tokens(
+                self.namespace_id,
+                namespace=self.namespace,
+                review_line=review_line,
+                add_line_marker=use_multi_line,
+                prefix="*",
+            )
+            if not final_item:
+                review_line.add_punctuation(",")
+            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
-        # add keyword argument marker        
+        # add keyword argument marker
         if self.kwargs:
-            self._newline_if_needed(apiview, use_multi_line)
-            apiview.add_text("*")
-            apiview.add_punctuation(",", False, True)
+            # TODO: https://github.com/Azure/azure-sdk-tools/issues/8574
+            indent = ""
+            if use_multi_line:
+                indent = " " * 4
+            review_line.add_text(f"{indent}*", has_suffix_space=False)
+            review_line.add_punctuation(",")
+            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
-        self._generate_args_for_collection(self.kwargs, apiview, use_multi_line)
+        current_count += len(self.kwargs)
+        final_item = current_count >= self.arg_count
+        review_line = self._generate_args_for_collection(
+            self.kwargs,
+            review_lines=param_lines,
+            review_line=review_line,
+            use_multi_line=use_multi_line,
+            final_item=final_item,
+        )
         if self.special_kwarg:
-            self._newline_if_needed(apiview, use_multi_line)
-            self.special_kwarg.generate_tokens(apiview, self.namespace_id, add_line_marker=use_multi_line, prefix="**")
-            apiview.add_punctuation(",", False, True)
+            # if **kwargs is present, then no comma needed
+            self.special_kwarg.generate_tokens(
+                self.namespace_id,
+                self.namespace,
+                review_line,
+                add_line_marker=use_multi_line,
+                prefix="**",
+            )
+            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
 
-        # pop the final ", " tokens
-        if self._argument_count():
-            apiview.tokens.pop()
-            apiview.tokens.pop()
+        review_line.add_punctuation(")", has_suffix_space=False)
 
-        if use_multi_line:
-            apiview.add_newline()
-            apiview.end_group()
-            apiview.add_whitespace()
-            apiview.add_punctuation(")")
-            apiview.end_group()
-        else:
-            apiview.add_punctuation(")")
+        if self.return_type:
+            review_line.add_punctuation("->", has_prefix_space=True)
+            # Add line marker id if signature is displayed in multi lines
+            if use_multi_line:
+                line_id = f"{self.namespace_id}.returntype"
+                review_line.add_line_marker(line_id)
+            review_line.add_type(self.return_type, apiview=self.apiview, has_suffix_space=False)
 
-    def generate_tokens(self, apiview):
+        review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
+
+        # after children are added, add the review line
+        def_line.add_children(self.children)
+        def_line.line_id = self.namespace_id
+        review_lines.append(def_line)
+
+    def generate_tokens(self, review_lines):
         """Generates token for function signature
         :param ApiView: apiview
         """
-        # Show args in individual line if method has more than 4 args and use two tabs to properly aign them
-        use_multi_line = self._argument_count() > 2
+        # Show args in individual line if method has more than 4 args and use two tabs to properly align them
+        self.arg_count = self._argument_count()
+        use_multi_line = self.arg_count > 2
 
         parent_id = self.parent_node.namespace_id if self.parent_node else "???"
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
-            apiview.add_whitespace()
-            apiview.add_keyword(annot)
-            apiview.add_newline()
-
-        apiview.add_whitespace()
-        apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
+            review_line = review_lines.create_review_line(related_to_line=self.namespace_id)
+            review_line.add_keyword(annot, has_suffix_space=False)
+            review_lines.append(review_line)
+        review_line = review_lines.create_review_line()
+        review_line.add_line_marker(self.namespace_id, add_cross_language_id=True, apiview=self.apiview)
         if self.is_async:
-            apiview.add_keyword("async", False, True)
+            review_line.add_keyword("async")
 
-        apiview.add_keyword("def", False, True)
+        review_line.add_keyword("def")
         # Show fully qualified name for module level function and short name for instance functions
-        apiview.add_text(
-            self.full_name if self.is_module_level else self.name,
-            definition_id=self.namespace_id
+        value = self.full_name if self.is_module_level else self.name
+        # Add to navigation if module level function
+        navigation_display_name = None
+        if self.is_module_level:
+            navigation_display_name = self.name
+        review_line.add_text(
+            value, has_suffix_space=False, navigation_display_name=navigation_display_name, render_classes=["method"]
         )
         # Add parameters
-        self._generate_signature_token(apiview, use_multi_line)
-        if self.return_type:
-            apiview.add_punctuation("->", True, True)
-            # Add line marker id if signature is displayed in multi lines
-            if use_multi_line:
-                line_id = f"{self.namespace_id}.returntype"
-                apiview.add_line_marker(line_id)
-            apiview.add_type(self.return_type)
-        apiview.add_newline()
+        review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
+        # If multi-line function, mark blank line as context end.
+        review_lines.set_blank_lines(last_is_context_end_line=use_multi_line)
+
         if not use_multi_line:
             for err in self.pylint_errors:
-                err.generate_tokens(apiview, self.namespace_id)            
+                err.generate_tokens(self.apiview, target_id=self.namespace_id)

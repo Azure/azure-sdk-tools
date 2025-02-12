@@ -21,9 +21,10 @@ from subprocess import check_call
 import zipfile
 from pathlib import Path
 from importlib.metadata import PathDistribution
-
-from apistub._apiview import ApiView, APIViewEncoder, Navigation, Kind, NavigationTag
 from apistub._metadata_map import MetadataMap
+
+from apistub._generated.treestyle.parser.models import ApiView
+from apistub._generated.treestyle.parser._model_base import SdkJSONEncoder as APIViewEncoder
 
 INIT_PY_FILE = "__init__.py"
 TOP_LEVEL_WHEEL_FILE = "top_level.txt"
@@ -34,16 +35,19 @@ logging.getLogger().setLevel(logging.ERROR)
 class StubGenerator:
     def __init__(self, **kwargs):
         from .nodes import PylintParser
+
         self._kwargs = kwargs
         if not kwargs:
             parser = argparse.ArgumentParser(
                 description="Parses a Python package and generates a JSON token file for consumption by the APIView tool."
             )
             parser.add_argument(
-                "--pkg-path", required=True, help=("Path to the package source root, WHL or ZIP file."),
+                "--pkg-path",
+                required=True,
+                help=("Path to the package source root, WHL or ZIP file."),
             )
             parser.add_argument(
-                "--temp-path", 
+                "--temp-path",
                 help=("Extract the package to the specified temporary path. Defaults to a random temp dir."),
                 default=tempfile.gettempdir(),
             )
@@ -55,7 +59,7 @@ class StubGenerator:
             parser.add_argument(
                 "--mapping-path",
                 default=None,
-                help=("Path to an 'apiview_mapping_python.json' file that supplies cross-language definition IDs.")
+                help=("Path to an 'apiview_mapping_python.json' file that supplies cross-language definition IDs."),
             )
             parser.add_argument(
                 "--verbose",
@@ -69,13 +73,13 @@ class StubGenerator:
             )
             parser.add_argument(
                 "--source-url",
-                help=("URL to the pull request URL that contains the source used to generate this APIView.")
+                help=("URL to the pull request URL that contains the source used to generate this APIView."),
             )
             parser.add_argument(
                 "--skip-pylint",
                 help=("Skips running pylint on the package to obtain diagnostics."),
                 default=False,
-                action="store_true"
+                action="store_true",
             )
             self._args = parser.parse_args()
 
@@ -100,7 +104,7 @@ class StubGenerator:
         self.out_path = out_path
         self.source_url = source_url
         self.mapping_path = mapping_path
-        self.filter_namespace = filter_namespace or ''
+        self.filter_namespace = filter_namespace or ""
         if verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
@@ -152,9 +156,11 @@ class StubGenerator:
         # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
         self._install_package(pkg_name)
-        
+
         if self.filter_namespace:
-            logging.info("Namespace filter is passed. Filtering modules within namespace :{}".format(self.filter_namespace))
+            logging.info(
+                "Namespace filter is passed. Filtering modules within namespace :{}".format(self.filter_namespace)
+            )
             namespace = self.filter_namespace
 
         logging.debug("Generating tokens")
@@ -178,7 +184,6 @@ class StubGenerator:
         json_apiview = encoder().encode(apiview)
         return json_apiview
 
-
     def _find_modules(self, pkg_root_path):
         """Find modules within the package to import and parse
         :param str: pkg_root_path
@@ -195,9 +200,7 @@ class StubGenerator:
 
             # Add current path as module name if _init.py is present
             if INIT_PY_FILE in files:
-                module_name = os.path.relpath(root, pkg_root_path).replace(
-                    os.path.sep, "."
-                )
+                module_name = os.path.relpath(root, pkg_root_path).replace(os.path.sep, ".")
                 modules.append(module_name)
                 # Add any public py file names as modules
                 sub_modules = [
@@ -210,10 +213,8 @@ class StubGenerator:
         logging.debug("Modules in package: {}".format(modules))
         return sorted(modules)
 
-
     def _generate_tokens(self, pkg_root_path, package_name, namespace, package_version, *, source_url):
-        """This method returns a dictionary of namespace and all public classes in each namespace
-        """
+        """This method returns a dictionary of namespace and all public classes in each namespace"""
         # Import ModuleNode.
         # Importing it globally can cause circular dependency since it needs NodeIndex that is defined in this file
         from apistub.nodes._module_node import ModuleNode
@@ -226,8 +227,10 @@ class StubGenerator:
             namespace=namespace,
             metadata_map=mapping,
             source_url=source_url,
-            pkg_version=package_version
+            pkg_version=package_version,
         )
+        apiview.generate_tokens()
+
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))
 
@@ -239,14 +242,10 @@ class StubGenerator:
 
             logging.debug("Importing module {}".format(m))
             module_obj = importlib.import_module(m)
-            self.module_dict[m] = ModuleNode(m, module_obj, apiview.node_index, namespace)
 
-        # Create navigation info to navigate within APIreview tool
-        navigation = Navigation(package_name, None)
-        navigation.tags = NavigationTag(Kind.type_package)
-        apiview.add_navigation(navigation)
+            self.module_dict[m] = ModuleNode(m, module_obj, namespace, apiview=apiview)
 
-        # Generate any global diagnostics
+        ## Generate any global diagnostics
         global_errors = PylintParser.get_items("GLOBAL")
         for g in global_errors or []:
             g.generate_tokens(apiview, "GLOBAL")
@@ -257,28 +256,19 @@ class StubGenerator:
             self.module_dict[m].generate_diagnostics()
             # Generate and add token to APIView
             logging.debug("Generating tokens for module {}".format(m))
-            self.module_dict[m].generate_tokens(apiview)
-            # Add navigation info for this modules. navigation info is used to build tree panel in API tool
-            module_nav = self.module_dict[m].get_navigation()
-            if module_nav:
-                navigation.add_child(module_nav)
+            self.module_dict[m].generate_tokens(apiview.review_lines)
         return apiview
 
     def _extract_wheel(self):
-        """Extract the wheel into out dir and return root path to azure root directory in package
-        """
+        """Extract the wheel into out dir and return root path to azure root directory in package"""
         file_name, _ = os.path.splitext(os.path.basename(self.pkg_path))
         temp_pkg_dir = os.path.join(self.temp_path, file_name)
         if os.path.exists(temp_pkg_dir):
-            logging.debug(
-                "Cleaning up existing temp directory: {}".format(temp_pkg_dir)
-            )
+            logging.debug("Cleaning up existing temp directory: {}".format(temp_pkg_dir))
             shutil.rmtree(temp_pkg_dir)
         os.mkdir(temp_pkg_dir)
 
-        logging.debug(
-            "Extracting {0} to directory {1}".format(self.pkg_path, temp_pkg_dir)
-        )
+        logging.debug("Extracting {0} to directory {1}".format(self.pkg_path, temp_pkg_dir))
         zip_file = zipfile.ZipFile(self.pkg_path)
         zip_file.extractall(temp_pkg_dir)
         logging.debug("Extracted package files into temp path")
@@ -301,28 +291,28 @@ class StubGenerator:
 
         return temp_pkg_dir, extras_require
 
-
     def get_module_root_name(self, wheel_extract_path):
         # APiStubgen finds namespace from setup.py when running against code repo
         # But we don't have setup.py to parse when wheel is uploaded into APIView tool
         # Parse top_level.txt file in dist-info to find root module name
         files = glob.glob(os.path.join(wheel_extract_path, "*", TOP_LEVEL_WHEEL_FILE))
         if not files:
-            logging.warning("File {0} is not found in {1} to identify root module name. All modules in package will be parsed".format(TOP_LEVEL_WHEEL_FILE, wheel_extract_path))
+            logging.warning(
+                "File {0} is not found in {1} to identify root module name. All modules in package will be parsed".format(
+                    TOP_LEVEL_WHEEL_FILE, wheel_extract_path
+                )
+            )
             return ""
         with io.open(files[0], "r") as top_lvl_file:
             root_module_name = top_lvl_file.readline().strip()
             logging.info("Root module found in {0}: '{1}'".format(TOP_LEVEL_WHEEL_FILE, root_module_name))
             return root_module_name
 
-
     def _parse_pkg_name(self):
         file_name = os.path.basename(self.pkg_path)
         whl_name, extension = os.path.splitext(file_name)
         if extension[1:] not in ["whl", "zip"]:
-            raise ValueError(
-                "Invalid type of package. API view parser expects wheel or sdist package"
-            )
+            raise ValueError("Invalid type of package. API view parser expects wheel or sdist package")
 
         filename_parts = whl_name.split("-")
         pkg_name = filename_parts[0].replace("_", "-")
@@ -330,8 +320,8 @@ class StubGenerator:
         return pkg_name, version
 
     def _install_package(self, pkg_name):
-        commands = [sys.executable, "-m", "pip", "install", self.pkg_path , "-q"]
-        check_call(commands, timeout = 60)
+        commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
+        check_call(commands, timeout=60)
 
 
 def parse_setup_py(setup_path):
@@ -368,7 +358,7 @@ def parse_setup_py(setup_path):
     os.chdir(current_dir)
     _, kwargs = global_vars["__setup_calls__"][0]
     package_name = kwargs["name"]
-    name_space = package_name.replace('-', '.')
+    name_space = package_name.replace("-", ".")
     if "packages" in kwargs.keys():
         packages = kwargs["packages"]
         if packages:

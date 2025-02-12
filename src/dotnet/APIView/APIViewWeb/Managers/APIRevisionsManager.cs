@@ -36,6 +36,7 @@ namespace APIViewWeb.Managers
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
         private readonly TelemetryClient _telemetryClient;
+        private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
             IAuthorizationService authorizationService,
@@ -48,7 +49,8 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
             INotificationManager notificationManager,
-            TelemetryClient telemetryClient)
+            TelemetryClient telemetryClient,
+            IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -61,6 +63,11 @@ namespace APIViewWeb.Managers
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
             _telemetryClient = telemetryClient;
+            var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
+            if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
+            {
+                _upgradeDisabledLangs.UnionWith(backgroundTaskDisabledLangs.Split(','));
+            }
         }
 
         /// <summary>
@@ -1007,12 +1014,12 @@ namespace APIViewWeb.Managers
             }
             var codeFileDetails = revisionModel.Files[0];
             var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
-            if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
+            if (languageService != null && !_upgradeDisabledLangs.contains(languageService) && languageService.CanUpdate(codeFileDetails.VersionString))
             {
                 await UpdateAPIRevisionAsync(revisionModel, languageService, false);
                 revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
             }
-            else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString))
+            else if (languageService != null && !_upgradeDisabledLangs.contains(languageService) && languageService.CanConvert(codeFileDetails.VersionString))
             {
                 var codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionModel.Id, codeFileDetails.FileId);
                 if (codeFile != null && codeFile.ReviewLines.Count == 0)

@@ -13,8 +13,21 @@ pipelines:
           lastModifiedDate: 2024-09-13
       binary:
         credscan:
-          lastModifiedDate: 2025-02-05
+          lastModifiedDate: 2025-02-06
         binskim:
-          lastModifiedDate: 2025-02-05
+          lastModifiedDate: 2025-02-06
         spotbugs:
-          lastModifiedDate: 2025-02-05
+          lastModifiedDate: 2025-02-06
+  2892:
+    usedNonDefaultBranch: true
+    retail:
+      binary:
+        credscan:
+          lastModifiedDate: 2025-02-06
+        binskim:
+          lastModifiedDate: 2025-02-06
+      source:
+        credscan:
+          lastModifiedDate: 2025-02-11
+        armory:
+          lastModifiedDate: 2025-02-11

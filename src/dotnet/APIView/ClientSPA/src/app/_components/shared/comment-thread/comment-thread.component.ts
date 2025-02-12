@@ -21,6 +21,7 @@ export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
   @Input() associatedCodeLine: CodePanelRowData | undefined;
   @Input() instanceLocation: "code-panel" | "conversations" | "samples" = "code-panel";
+  @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -31,7 +32,6 @@ export class CommentThreadComponent {
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
   
-  userProfile : UserProfile | undefined;
   assetsPath : string = environment.assetsPath;
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
@@ -52,11 +52,6 @@ export class CommentThreadComponent {
   constructor(private userProfileService: UserProfileService, private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
 
   ngOnInit(): void {
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile : any) => {
-        this.userProfile = userProfile;
-      });
-
     this.menuItemsLoggedInUsers.push({
       label: '',
       items: [
@@ -105,8 +100,6 @@ export class CommentThreadComponent {
         },
       ]
     });
-
-    this.setCommentResolutionState();
   }
 
   ngOnChanges(changes: SimpleChanges) {

@@ -1,5 +1,9 @@
 # Release
 
+## 2025-02-11 - 0.1.7
+
+- Excluded general messages containing 'error' from being displayed in the Azure pipeline results
+
 ## 2025-02-11 - 0.1.6
 
 - Enabled error messages to be displayed in the Azure pipeline result

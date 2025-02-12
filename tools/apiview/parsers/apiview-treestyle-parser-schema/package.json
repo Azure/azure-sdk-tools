@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@azure-tools/typespec-python": "latest",
     "@typespec/compiler": "latest",
     "@typespec/json-schema": "latest"
   },
   "devDependencies": {
+    "@azure-tools/typespec-client-generator-core": "latest",
     "@typespec/compiler": "latest",
     "@typespec/json-schema": "latest"
   },

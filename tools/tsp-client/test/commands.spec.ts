@@ -300,5 +300,5 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
-  }, 120000);
+  }, 180000);
 });

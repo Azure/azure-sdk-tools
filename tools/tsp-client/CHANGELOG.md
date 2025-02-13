@@ -1,6 +1,6 @@
 # Release
 
-## 2025-02-12 - 0.15.4
+## 2025-02-13 - 0.15.4
 
 - Enable `debug` logs for the `convert` command
 

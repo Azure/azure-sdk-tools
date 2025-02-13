@@ -258,9 +258,7 @@ namespace SearchIndexCreator
                     }
                 },
             };
-
-           
-
+            
             return searchIndex;
         }
     }

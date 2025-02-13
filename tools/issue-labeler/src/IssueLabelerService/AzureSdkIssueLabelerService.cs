@@ -34,8 +34,8 @@ namespace IssueLabelerService
         [Function("AzureSdkIssueLabelerService")]
         public async Task<ActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "POST", Route = null)] HttpRequest request)
         {
+            // Deserialize the Issue that's coming in.
             IssuePayload issue;
-
             try
             {
                 using var bodyReader = new StreamReader(request.Body);
@@ -68,15 +68,21 @@ namespace IssueLabelerService
                 string documentSemanticName = Config["DocumentSemanticName"];
                 string documentFieldName = "text_vector";
 
-                // Found that it performsbetter when given the title and body as a single string rather than a JSON.
+                // Found that Search performs better when given the title and body as a single string rather than a full JSON.
+                // Nothing to back that up except just trying it a bunch of times :)
                 string query = issue.Title + " " + issue.Body;
 
                 // Top X documents/issues
+                // This becomes very dependent on Chunk size -> smaller chunks means more documents/issues and vice versa.
                 int top = 5;
 
                 // Semantic score from 0 - 4, 4 being very relevant
+                // Anything under 2 is not relevant enough to be used.
                 double scoreThreshold = 2.0;
-                double solutionThreshold = 2.8;
+
+                // Arbituary Number I chose to indicate that one of the retrieved documents/issues is relevant 
+                // enough to formulate a solution from.
+                double solutionThreshold = 3.0;
 
                 IEnumerable<(Issue, double)> relevantIssues = _issueLabeler.AzureSearchQuery<Issue>(
                     searchEndpoint, issueIndexName, issueSemanticName, issueFieldName, credential, query, top
@@ -86,7 +92,7 @@ namespace IssueLabelerService
                     searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, query, top
                 );
 
-                // Filter out documents/issues that don't meet the score threshold
+                // Filter out documents/issues that don't meet the minimum score threshold
                 var docs = relevantDocuments.ToList().Select(rd => new
                 {
                     Content = rd.Item1.ToString(),
@@ -102,30 +108,33 @@ namespace IssueLabelerService
                 string docContent = JsonConvert.SerializeObject(docs);
                 string issueContent = JsonConvert.SerializeObject(issues);
 
+                // If no relevant documents/issues are found, return an empty result
                 if(docs.Count() == 0 || issues.Count() == 0)
                 {
                     _logger.LogInformation("No relevant documents/issues found.");
                     return EmptyResult;
                 }
 
+                // If theres a document with a score higher than the solution threshold, we can assume that a solution can be provided.
+                // Debatable wether or not we should consider Issue relevance since it can be less reliable to provide a solution overall.
                 var highestScore = docs.Concat(issues).Max(r => r.Score);
-
-                string message;
+                bool solution = highestScore >= solutionThreshold;
 
                 _logger.LogInformation($"Highest score: {highestScore}");
 
-                bool solution = highestScore >= solutionThreshold;
+                string message;
                 if (solution)
                 {
                     // Prompt to offer a solution
-                    message = $"You are an Expierenced Developer in the Azure SDK Team that provides solutions and labels for Github Issues.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Response fields.\n'Response' must prioritize information from the Documentation and will be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide the user with the url from sources used.\nGitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer.\nNo need for introductions or outros because they are added later on.\nSources: Documentation: {docContent}\nGitHub Issues: {issueContent}\nProvide the user with a solution to their GitHub Issue:\n {query}";
+                    message = $"You are an Expierenced Developer in the Azure SDK Team that provides solutions and labels for Github Issues.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Response fields.\n'Response' must prioritize Documentation over Issues and will be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide the user with the url from sources used.\nGitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer.\nNo need for introductions or outros because they are added later on.\nSources: Documentation: {docContent}\nGitHub Issues: {issueContent}\nProvide the user with a solution to their GitHub Issue:\n {query}";
                 }
                 else
                 {
                     // Prompt to offer suggestions
-                    message = $"You are an Expierenced Developer in the Azure SDK Team that provides suggestions and labels for Github Issues.\nThe goal is to facilitate the teams job when responding to the issue.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Response fields.\n'Response' will prioritize information from the Documentation and will be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide a URL for all suggestions given to the user.\nGitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer.\nNo need for introductions or outros because they are added later on.\nSources:\nDocumentation:\n{docContent}\nGitHub Issues: {issueContent}\nThe user needs suggestions for their GitHub Issue:\n{query}";
+                    message = $"You are an Expierenced Developer in the Azure SDK Team that provides suggestions and labels for Github Issues.\nThe goal is to facilitate the teams job when responding to the issue.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Response fields.\n'Response' must prioritize information from Documentation over Issues and be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide a URL for all suggestions given to the user.\nGitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer.\nNo need for introductions or outros because they are added later on.\nSources:\nDocumentation:\n{docContent}\nGitHub Issues: {issueContent}\nThe user needs suggestions for their GitHub Issue:\n{query}";
                 }
 
+                // Structure of the response passed to the StructureMessage method.
                 BinaryData structure = BinaryData.FromBytes("""
                         {
                           "type": "object",

@@ -1014,7 +1014,7 @@ namespace APIViewWeb.Managers
             }
             else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString) &&  codeFileDetails.ParserStyle == ParserStyle.Flat)
             {
-                // Convert to tree model only iof current token file is in flat token model
+                // Convert to tree model only if current token file is in flat token model
                 var codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionModel.Id, codeFileDetails.FileId);
                 if (codeFile != null && codeFile.ReviewLines.Count == 0)
                 {

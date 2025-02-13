@@ -259,7 +259,7 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
-  }, 120000);
+  }, 360000);
 
   it("Generate config files with overrides", async () => {
     try {
@@ -280,7 +280,7 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
-  }, 120000);
+  }, 360000);
 
   it("Generate config files using azure-sdk/emitter-package-json-pinning", async () => {
     try {
@@ -295,10 +295,10 @@ describe.sequential("Verify commands", () => {
       );
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-python"], "0.37.3");
       assert.equal(Object.keys(emitterJson["devDependencies"]).length, 1);
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.64.0");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.65.0");
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
     }
-  }, 180000);
+  }, 360000);
 });

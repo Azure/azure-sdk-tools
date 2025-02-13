@@ -10,6 +10,7 @@
     <InformationalVersion>$(OfficialBuildId)</InformationalVersion>
     <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <ItemGroup>

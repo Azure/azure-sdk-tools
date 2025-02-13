@@ -18,7 +18,6 @@ namespace APIViewWeb
         }
 
         public abstract string ProcessName { get; }
-        public abstract string VersionString { get; }
         public abstract string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath);
 
         public override bool CanUpdate(string versionString)

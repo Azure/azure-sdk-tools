@@ -8,7 +8,7 @@ namespace APIViewWeb
     public class SwiftLanguageService : JsonLanguageService
     {
         public override string Name { get; } = "Swift";
-        public string VersionString { get; } = "0.3.0";
+        public override string VersionString { get; } = "0.3.0";
 
         //Swift doesn't have any parser for now
         //It will upload a json file with name Swift so Swift reviews are listed under that filter type

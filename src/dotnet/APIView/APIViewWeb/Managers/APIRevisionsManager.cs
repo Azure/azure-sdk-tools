@@ -67,7 +67,7 @@ namespace APIViewWeb.Managers
         /// Retrieve Revisions from the Revisions container in CosmosDb after applying filter to the query.
         /// </summary>
         /// <param name="user"></param>
-        /// <param name="pageParams"></param> Contains paginationinfo
+        /// <param name="pageParams"></param> Contains pagination info
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
         public async Task<PagedList<APIRevisionListItemModel>> GetAPIRevisionsAsync(ClaimsPrincipal user, PageParams pageParams, FilterAndSortParams filterAndSortParams)
@@ -1012,20 +1012,21 @@ namespace APIViewWeb.Managers
                 await UpdateAPIRevisionAsync(revisionModel, languageService, false);
                 revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
             }
-            else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString))
+            else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString) &&  codeFileDetails.ParserStyle == ParserStyle.Flat)
             {
+                // Convert to tree model only if current token file is in flat token model
                 var codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionModel.Id, codeFileDetails.FileId);
                 if (codeFile != null && codeFile.ReviewLines.Count == 0)
                 {
-                    codeFile.ConvertToTreeTokenModel();
-                    await _codeFileRepository.UpsertCodeFileAsync(revisionModel.Id, codeFileDetails.FileId, codeFile);
-                    // update only version string
-                    codeFileDetails.VersionString = codeFile.VersionString;
+                    codeFile.ConvertToTreeTokenModel();                    
                     if (codeFile.ReviewLines.Count > 0)
                     {
+                        await _codeFileRepository.UpsertCodeFileAsync(revisionModel.Id, codeFileDetails.FileId, codeFile);
+                        codeFileDetails.VersionString = languageService.VersionString;
                         codeFileDetails.ParserStyle = ParserStyle.Tree;
-                    }
-                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
+                        codeFileDetails.IsConvertedTokenModel = true;
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
+                    }                    
                 }
             }
             return revisionModel;

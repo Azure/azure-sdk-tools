@@ -1015,7 +1015,7 @@ namespace APIViewWeb.Managers
             }
             var codeFileDetails = revisionModel.Files[0];
             var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
-            if (languageService != null && !_upgradeDisabledLangs.contains(languageService) && languageService.CanUpdate(codeFileDetails.VersionString))
+            if (languageService != null && !_upgradeDisabledLangs.Contains(languageService) && languageService.CanUpdate(codeFileDetails.VersionString))
             {
                 await UpdateAPIRevisionAsync(revisionModel, languageService, false);
                 revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);

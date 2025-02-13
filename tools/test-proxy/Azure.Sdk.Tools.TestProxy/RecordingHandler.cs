@@ -20,7 +20,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Azure.Sdk.Tools.TestProxy
 {

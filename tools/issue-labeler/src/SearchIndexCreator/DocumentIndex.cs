@@ -59,8 +59,8 @@ namespace SearchIndexCreator
                 {
                     Context = "/document",
                     TextSplitMode = TextSplitMode.Pages,
-                    MaximumPageLength = 10000,
-                    PageOverlapLength = 500,
+                    MaximumPageLength = 1000,
+                    PageOverlapLength = 100,
                 },
                 new AzureOpenAIEmbeddingSkill(
                     new List<InputFieldMappingEntry>

@@ -22,33 +22,37 @@ namespace SearchIndexCreator
                 .Build();
             var config = configuration.GetSection("Values");
 
-            bool issuesBool = false;
-            bool docsBool = false;
-            bool issueExamples = false;
-            bool demo = false;
-            bool testRAG = true;
+            Console.WriteLine("Select an option:");
+            Console.WriteLine("1. Process Issues");
+            Console.WriteLine("2. Process Docs");
+            Console.WriteLine("3. Process Issue Examples");
+            Console.WriteLine("4. Process Demo");
+            Console.WriteLine("5. Test RAG");
+
+            var input = Console.ReadLine();
 
             try
             {
-                if (issuesBool)
+                switch (input)
                 {
-                    await ProcessIssues(config);
-                }
-                else if (docsBool)
-                {
-                    await ProcessDocs(config);
-                }
-                else if (issueExamples)
-                {
-                    await ProcessIssueExamples(config);
-                }
-                else if (demo)
-                {
-                    await ProcessDemo(config);
-                }
-                else if (testRAG)
-                {
-                    await TestRAG(config);
+                    case "1":
+                        await ProcessIssues(config);
+                        break;
+                    case "2":
+                        await ProcessDocs(config);
+                        break;
+                    case "3":
+                        await ProcessIssueExamples(config);
+                        break;
+                    case "4":
+                        await ProcessDemo(config);
+                        break;
+                    case "5":
+                        await TestRAG(config);
+                        break;
+                    default:
+                        Console.WriteLine("Invalid option selected.");
+                        break;
                 }
             }
             catch (Exception ex)

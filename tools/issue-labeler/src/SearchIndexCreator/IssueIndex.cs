@@ -60,8 +60,8 @@ namespace SearchIndexCreator
                     Context = "/document",
                     TextSplitMode = TextSplitMode.Pages,
                     // 10k because token limits are so high but want to experiment with lower chunking.
-                    MaximumPageLength = 10000,
-                    PageOverlapLength = 500,
+                    MaximumPageLength = 1000,
+                    PageOverlapLength = 100,
                 },
                 new AzureOpenAIEmbeddingSkill(
                     new List<InputFieldMappingEntry>

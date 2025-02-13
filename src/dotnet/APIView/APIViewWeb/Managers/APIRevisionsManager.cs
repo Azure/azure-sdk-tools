@@ -1014,13 +1014,17 @@ namespace APIViewWeb.Managers
                 return revisionModel;
             }
             var codeFileDetails = revisionModel.Files[0];
+            if (!_upgradeDisabledLangs.Contains(codeFileDetails.Language))
+            {
+                return revisionModel;
+            }
             var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
-            if (languageService != null && !_upgradeDisabledLangs.Contains(languageService) && languageService.CanUpdate(codeFileDetails.VersionString))
+            if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
             {
                 await UpdateAPIRevisionAsync(revisionModel, languageService, false);
                 revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionModel.Id);
             }
-            else if (languageService != null && !_upgradeDisabledLangs.contains(languageService) && languageService.CanConvert(codeFileDetails.VersionString))
+            else if (languageService != null && languageService.CanConvert(codeFileDetails.VersionString))
             {
                 var codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionModel.Id, codeFileDetails.FileId);
                 if (codeFile != null && codeFile.ReviewLines.Count == 0)

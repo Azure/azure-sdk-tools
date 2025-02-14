@@ -1014,7 +1014,7 @@ namespace APIViewWeb.Managers
                 return revisionModel;
             }
             var codeFileDetails = revisionModel.Files[0];
-            if (!_upgradeDisabledLangs.Contains(codeFileDetails.Language))
+            if (_upgradeDisabledLangs.Contains(codeFileDetails.Language))
             {
                 return revisionModel;
             }

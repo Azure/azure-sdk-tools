@@ -125,6 +125,10 @@ namespace SearchIndexCreator
                         {
                             Source = "/document/Url"
                         },
+                        new InputFieldMappingEntry("CodeOwner")
+                        {
+                            Source = "/document/CodeOwner"
+                        },
                         // Metadata is needed for updating the document (or atleast last modified not sure of the rest)
                         new InputFieldMappingEntry("metadata_storage_content_type")
                         {
@@ -292,6 +296,14 @@ namespace SearchIndexCreator
                     {
                         IsSearchable = false
                     },
+                    // 0 = false, 1 = true
+                    // Used numbers to use the magnitude boosting function
+                    new SearchField("CodeOwner", SearchFieldDataType.Int32)
+                    {
+                        IsSearchable = false,
+                        IsSortable = false,
+                        IsFilterable = true
+                    },
                     new SearchField("metadata_storage_content_type", SearchFieldDataType.String)
                     {
                         IsHidden = true,
@@ -328,6 +340,24 @@ namespace SearchIndexCreator
                     }
                 }
             };
+
+            // Scoring Boost for "Issue" objects that are comments made by the codeowner.
+            searchIndex.ScoringProfiles.Add(new ScoringProfile("CodeOwnerBoost")
+            {
+                Functions = 
+                {
+                    new MagnitudeScoringFunction(
+                        fieldName: "CodeOwner",
+                        boost: 5.0, // Adjust the boost factor as needed
+                        parameters: new MagnitudeScoringParameters(1, 1)
+                        {
+                            ShouldBoostBeyondRangeByConstant = false,
+                        })
+                    {
+                        Interpolation = ScoringFunctionInterpolation.Constant
+                    }
+                }
+            });
 
             return searchIndex;
         }

@@ -6,6 +6,7 @@ using System.Text.Json;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using Azure.Identity;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 
 namespace SearchIndexCreator
 {
@@ -31,6 +32,10 @@ namespace SearchIndexCreator
         {
             var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"));
             client.Credentials = _tokenAuth;
+
+            // Get the CODEOWNERS file from the repository and override default file with URL path from octokit.
+            var codeownersContents = await client.Repository.Content.GetAllContents(repoOwner, repo, ".github/CODEOWNERS");
+            CodeOwnerUtils.codeOwnersFilePathOverride = codeownersContents[0].DownloadUrl;
 
             var issueReq = new RepositoryIssueRequest
             {
@@ -72,26 +77,65 @@ namespace SearchIndexCreator
                 {
                     continue;
                 }
-
-                // You have to get the comments for the issue separately, only other way is using GraphQL
-                var issue_comments = await client.Issue.Comment.GetAllForIssue(repoOwner, repo, issue.Number);
                 
-                
-                string comments = string.Join(",", issue_comments.Select(x => x.Body));
+                // Seperation of comments and issue body. We will create a "Issue" Object per comment and issue. 
+                // Benefits of seperation:
+                // New CodeOwner field that can be used to boost if the current comment is from a Code Owner 
+                // meaning we can boost said comments score. 
+                // Chunks with better impact, if we place it all in one big text it will chunk at random.
                 Issue newIssue = new Issue
                 {
-                    Id = $"{repoOwner}/{repo}:{issue.Number.ToString()}",
+                    Id = $"{repoOwner}/{repo}/{issue.Number.ToString()}/Issue",
                     Title = issue.Title,
-                    Body = $"Issue Body:\n{issue.Body}\nComments:\n{comments}",
+                    Body = $"{issue.Body}",
                     Service = service.Name,
                     Category = category.Name,
                     Author = issue.User.Login,
                     Repository = repoOwner + "/" + repo,
                     CreatedAt = issue.CreatedAt,
-                    Url = issue.HtmlUrl
+                    Url = issue.HtmlUrl,
+                    // Codeowner meaning the service owner is the author of this "comment"
+                    // 0 -> false 1 -> true. Used numeric representation for magnitude scoring boost function. 
+                    // Issue itself is false since it is not a comment
+                    CodeOwner = 0
                 };
 
+                List<string> labels = new List<string>
+                {
+                    service.Name,
+                    category.Name
+                };
+
+                // Method to get associated codeowners used by the current issue labeling bot. 
+                var codeowners = CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).AzureSdkOwners;
+
                 results.Add(newIssue);
+
+                // You have to get the comments for the issue separately, only other way is using GraphQL
+                var issue_comments = await client.Issue.Comment.GetAllForIssue(repoOwner, repo, issue.Number);
+
+                // Filter out github bot comments
+                issue_comments = issue_comments.Where(c => !c.User.Login.Contains("github-actions[bot]")).ToList();
+
+                // Add comments in as there own "Issue" object
+                foreach (var comment in issue_comments)
+                {
+                    Issue newComment = new Issue
+                    {
+                        Id = $"{repoOwner}/{repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
+                        Title = issue.Title,
+                        Body = $"{comment.Body}",
+                        Service = service.Name,
+                        Category = category.Name,
+                        Author = comment.User.Login,
+                        Repository = repoOwner + "/" + repo,
+                        CreatedAt = comment.CreatedAt,
+                        Url = comment.HtmlUrl,
+                        // If the author is in the codeowners list 1 (true) else 0 (false)
+                        CodeOwner = codeowners.Contains(comment.User.Login) ? 1 : 0
+                    };
+                    results.Add(newComment);
+                }
             }
 
             Console.WriteLine("Done loading all issue comments");
@@ -225,6 +269,7 @@ namespace SearchIndexCreator
             public string Repository { get; set; }
             public DateTimeOffset CreatedAt { get; set; }
             public string Url { get; set; }
+            public int CodeOwner { get; set; }
         }
 
         // Used to get examples for the function

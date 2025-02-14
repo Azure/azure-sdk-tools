@@ -85,7 +85,7 @@ function GenerateDocsMsMetadata(
     "title"= $langTitle
     "description"= $langDescription
     "ms.date"= $date
-    "ms.topic"= "reference"
+    "ms.topic"= "overview"
     "ms.devlang"= $language
     "ms.service"= $msService
   }

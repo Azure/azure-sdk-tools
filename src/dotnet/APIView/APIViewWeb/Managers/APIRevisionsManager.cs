@@ -12,6 +12,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,6 +37,7 @@ namespace APIViewWeb.Managers
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
         private readonly TelemetryClient _telemetryClient;
+        private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
             IAuthorizationService authorizationService,
@@ -48,7 +50,8 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
             INotificationManager notificationManager,
-            TelemetryClient telemetryClient)
+            TelemetryClient telemetryClient,
+            IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -61,6 +64,11 @@ namespace APIViewWeb.Managers
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
             _telemetryClient = telemetryClient;
+            var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
+            if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
+            {
+                _upgradeDisabledLangs.UnionWith(backgroundTaskDisabledLangs.Split(','));
+            }
         }
 
         /// <summary>
@@ -994,6 +1002,10 @@ namespace APIViewWeb.Managers
                 return revisionModel;
             }
             var codeFileDetails = revisionModel.Files[0];
+            if (_upgradeDisabledLangs.Contains(codeFileDetails.Language))
+            {
+                return revisionModel;
+            }
             var languageService = LanguageServiceHelpers.GetLanguageService(codeFileDetails.Language, _languageServices);
             if (languageService != null && languageService.CanUpdate(codeFileDetails.VersionString))
             {

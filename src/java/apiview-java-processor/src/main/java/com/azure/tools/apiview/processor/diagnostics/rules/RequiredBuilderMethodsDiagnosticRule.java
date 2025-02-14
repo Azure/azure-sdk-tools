@@ -42,7 +42,7 @@ public class RequiredBuilderMethodsDiagnosticRule implements DiagnosticRule {
         this.builderProtocol = builderProtocol;
     }
 
-    public RequiredBuilderMethodsDiagnosticRule add(String methodName, Function<MethodDeclaration, Optional<Diagnostic>> func) {
+    public RequiredBuilderMethodsDiagnosticRule addMethod(String methodName, Function<MethodDeclaration, Optional<Diagnostic>> func) {
         builderMethods.put(methodName, func);
         missingMethods.add(methodName);
         return this;

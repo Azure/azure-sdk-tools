@@ -72,8 +72,9 @@
     </p-splitter>
 </app-review-page-layout>
 <p-sidebar [(visible)]="revisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="revisions-sidebar">
-    <app-revisions-list 
+    <app-revisions-list *ngIf="review"
         [review]="review"
+        [userProfile]="userProfile"
         [revisionSidePanel]="revisionSidePanel!">
     </app-revisions-list>
 </p-sidebar>

@@ -36,6 +36,7 @@
       <app-comment-thread
         [codePanelRowData]="item"
         [associatedCodeLine]="getAssociatedCodeLine(item)"
+        [userProfile]="userProfile"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
         (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
         (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"

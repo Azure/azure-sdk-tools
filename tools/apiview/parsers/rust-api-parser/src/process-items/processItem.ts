@@ -1,0 +1,39 @@
+import { ReviewLine } from "../models/apiview-models";
+import { Crate, Item } from "../models/rustdoc-json-types";
+import { processConstant } from "./processConstant";
+import { processEnum } from "./processEnum";
+import { processFunction } from "./processFunction";
+import { processModule } from "./processModule";
+import { processStatic } from "./processStatic";
+import { processStruct } from "./processStruct";
+import { processTrait } from "./processTrait";
+import { processUse } from "./processUse";
+
+/**
+ * Processes an item from the API JSON and returns a ReviewLine object.
+ *
+ * @param {ApiJson} apiJson - The API JSON object containing all items.
+ * @param {Item} item - The item to process.
+ * @returns {ReviewLine | null} The ReviewLine object or null if the item is not processed.
+ */
+export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
+  if (typeof item.inner === "object") {
+    if ("module" in item.inner) {
+      return processModule(apiJson, item);
+    } else if ("use" in item.inner) {
+      return processUse(item);
+    } else if ("function" in item.inner) {
+      return processFunction(item);
+    } else if ("struct" in item.inner) {
+      return processStruct(item, apiJson);
+    } else if ("trait" in item.inner) {
+      return processTrait(item, apiJson);
+    } else if ("static" in item.inner) {
+      return processStatic(item);
+    } else if ("constant" in item.inner) {
+      return processConstant(item);
+    } else if ("enum" in item.inner) {
+      return processEnum(item, apiJson);
+    }
+  }
+}

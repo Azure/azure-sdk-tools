@@ -1,5 +1,9 @@
 # Release
 
+## 2025-02-11 - 0.1.9
+
+- The writeTmpJsonFile function now clears the file content using fs.truncateSync before writing new content to ensure no residual data remains.
+
 ## 2025-02-11 - 0.1.7
 
 - Excluded general messages containing 'error' from being displayed in the Azure pipeline results

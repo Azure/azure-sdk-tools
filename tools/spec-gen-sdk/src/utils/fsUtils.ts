@@ -146,6 +146,13 @@ const getFilesInFolder = async (searchPath: string, opts: FsSearchOptions): Prom
 export const writeTmpJsonFile = (context: WorkflowContext, fileName: string, content: unknown) => {
   const filePath = path.join(context.tmpFolder, fileName);
   const contentString = JSON.stringify(content, undefined, 2);
+
+  try {
+    fs.truncateSync(filePath, 0);
+  } catch (err) {
+    context.logger.error(`Failed to truncate file ${filePath}: ${err.message}`);
+  }
+
   context.logger.info(`Write temp file ${filePath} with content:`);
   context.logger.info(JSON.stringify(content, undefined, 2));
   fs.writeFileSync(filePath, contentString);

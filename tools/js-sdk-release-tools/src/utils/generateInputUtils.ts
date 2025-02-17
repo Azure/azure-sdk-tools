@@ -4,38 +4,49 @@ import { loadTspConfig } from "../common/utils";
 import { RunningEnvironment } from "./runningEnvironment";
 import { exists } from "fs-extra";
 
-async function isManagementPlaneModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {
-    if (!typespecProjectFolder) {
-        return false;
-    }
-    
-    if (Array.isArray(typespecProjectFolder) && (typespecProjectFolder as string[]).length !== 1) {
-        throw new Error(`Unexpected typespecProjectFolder length: ${(typespecProjectFolder as string[]).length} (expect 1)`);
+export async function getSDKType(
+    specFolder: string,
+    readme: string | undefined,
+    typespecProjectFolder: string | undefined
+): Promise<SDKType> {
+    if (readme) {
+        // Update?
+        if (readme.includes("resource-manager")) return SDKType.HighLevelClient;
+        return SDKType.RestLevelClient;
     }
 
-    const resolvedRelativeTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
-    const tspFolderFromSpecRoot = path.join(specFolder, resolvedRelativeTspFolder);
-    const tspConfigPath = path.join(tspFolderFromSpecRoot, 'tspconfig.yaml');
+    if (!typespecProjectFolder) {
+        const rootCause = `Failed to get SDK Type due to neither README or typespecProjectFolder is undefined.`;
+        throw new Error(rootCause);
+    }
+
+    const tspFolderFromSpecRoot = path.join(specFolder, typespecProjectFolder);
+
+    const tspConfigPath = path.join(tspFolderFromSpecRoot, "tspconfig.yaml");
     if (!(await exists(tspConfigPath))) {
-        return false;
+        const rootCause = `Failed to get SDK Type due to tspconfig.yaml doesn't exist in ${tspFolderFromSpecRoot}.`;
+        throw new Error(rootCause);
     }
 
     const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
-    if (tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary'] !== true) {
-        return false;
-    }
-    return true;
-}
+    const isModularLibrary =
+        tspConfig?.options?.["@azure-tools/typespec-ts"]?.["isModularLibrary"];
 
-// TODO: consider add stricter rules for RLC in when update SDK automation for RLC
-function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {    
-    if (isMgmtWithHLC) {
-        return SDKType.HighLevelClient;
-    }
-    if (isMgmtWithModular) {
-        return SDKType.ModularClient;
-    }
-    return SDKType.RestLevelClient;
+    // NOTE: respect customer's choice
+    if (isModularLibrary === true) return SDKType.ModularClient;
+    if (isModularLibrary === false) return SDKType.RestLevelClient;
+
+    const isAzureSDK =
+        tspConfig?.options?.["@azure-tools/typespec-ts"]?.["flavor"] ===
+        "azure";
+    // NOTE: unbranded sdk will generate modular client bt default
+    if (!isAzureSDK) return SDKType.ModularClient;
+
+    const isManagementPlane = new RegExp(/\.Management[\/\\]?$/).test(
+        tspFolderFromSpecRoot
+    );
+    // NOTE: management plane will generate modular client by default
+    return isManagementPlane ? SDKType.ModularClient : SDKType.RestLevelClient;
 }
 
 // TODO: generate interface for inputJson
@@ -71,9 +82,7 @@ export async function parseInputJson(inputJson: any) {
     const typespecProject = isTypeSpecProject ? typeof typespecProjectFolder === 'string' ? typespecProjectFolder : typespecProjectFolder![0] : undefined;
     const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
     
-    const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
-    const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
-    const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
+    const sdkType = await getSDKType(specFolder, readmeMd, typespecProject);
     return {
         sdkType,
         specFolder,

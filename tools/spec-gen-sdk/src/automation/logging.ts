@@ -2,6 +2,7 @@ import * as winston from 'winston';
 import { default as Transport } from 'winston-transport';
 import { SDKAutomationState } from './sdkAutomationState';
 import { setTimeout } from 'timers/promises';
+import { removeAnsiEscapeCodes } from '../utils/utils';
 
 export const sdkAutoLogLevels = {
   levels: {
@@ -151,5 +152,5 @@ export function vsoAddAttachment(name: string, path: string): void {
 }
 
 export function vsoLogIssue(message: string, type = "error"): void {
-  console.log(`##vso[task.logissue type=${type}]${message}`);
+  console.log(`##vso[task.logissue type=${type}]${removeAnsiEscapeCodes(message)}`);
 }

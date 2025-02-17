@@ -1,5 +1,9 @@
 # Release
 
+## 2025-02-18 - 0.1.8
+
+- Format error log which has ANSI code that garbled characters are displayed on github checks
+- 
 ## 2025-02-11 - 0.1.7
 
 - Excluded general messages containing 'error' from being displayed in the Azure pipeline results

@@ -1,2 +1,2 @@
-lib-typeshare.rs
 output/*
+!output/rustdoc-types.ts

@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
 import { CodeFile } from "./models/apiview-models";
-import { Crate , FORMAT_VERSION } from "./models/rustdoc-json-types";
+import { Crate , FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
 
 function main() {
   // Read the JSON file

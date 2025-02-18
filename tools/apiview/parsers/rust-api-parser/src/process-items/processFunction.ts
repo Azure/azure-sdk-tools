@@ -5,7 +5,7 @@ import {
   WherePredicate,
   GenericBound,
   Type,
-} from "../models/rustdoc-json-types";
+} from "../../rustdoc-types/output/rustdoc-types";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { shouldElideLifetime } from "./utils/shouldElideLifeTime";
@@ -224,7 +224,7 @@ function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
     if ("trait_bound" in bound && bound.trait_bound?.trait) {
       tokens.push({
         Kind: TokenKind.TypeName,
-        Value: bound.trait_bound.trait.name,
+        Value: bound.trait_bound.trait.path,
         NavigateToId: bound.trait_bound.trait.id.toString(),
         HasSuffixSpace: false,
       });

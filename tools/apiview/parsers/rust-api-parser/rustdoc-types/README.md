@@ -32,9 +32,14 @@ This project provides tools to convert Rust models into TypeScript types using `
     ```
     This will generate `output/typeshare-result.ts` with TypeScript types.
 
-4. **Post Processing**:
-    1. Handle `inputs` field (a tuple) that is skipped, because typeshare cannot handle tuples.
-    2. Handle `#[serde(tag = "type", content = "content")]` attributes which were added for Enums because typeshare forced us to.
+    Shortcomings:
+    1. Does not copy forward the const `FORMAT_VERSION`
+    2. `FunctionSignature#inputs` field (a tuple) is skipped, because typeshare cannot handle tuples.
+    3. Generates `{type: "TypeName", content: {property: "value"}}` as opposed to `{TypeName: {property: "value"}}` for enums.
+        - `#[serde(tag = "type", content = "content")]` attributes were added for Enums because typeshare forced us to.
+
+4. **Post Processing**: 
+    Handle the typeshare shortcomings with a post-processing script.
     ```sh
     ts-node post-processing.ts
     ```

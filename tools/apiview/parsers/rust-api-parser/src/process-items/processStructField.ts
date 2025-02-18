@@ -1,4 +1,4 @@
-import { Type } from "../models/rustdoc-json-types";
+import { Type } from "../../rustdoc-types/output/rustdoc-types";
 import { ReviewToken, TokenKind } from "../models/apiview-models";
 import { typeToString } from "./utils/typeToString";
 

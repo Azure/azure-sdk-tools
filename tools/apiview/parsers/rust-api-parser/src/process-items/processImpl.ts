@@ -1,5 +1,5 @@
 import { ReviewLine, TokenKind, ReviewToken } from "../models/apiview-models";
-import { Item, Crate, Impl, Struct } from "../models/rustdoc-json-types";
+import { Item, Crate, Impl, Struct } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { typeToString } from "./utils/typeToString";
 
@@ -20,7 +20,7 @@ export function processAutoTraitImpls(impls: number[], apiJson: Crate, reviewLin
       )
       .map<ReviewToken>((implItem) => ({
         Kind: TokenKind.TypeName,
-        Value: implItem.inner.impl.trait.name,
+        Value: implItem.inner.impl.trait.path,
         RenderClasses: ["trait"],
         HasSuffixSpace: false,
       }));
@@ -59,7 +59,7 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate, reviewLine: Rev
         LineId: implItem.id.toString() + "_impl",
         Tokens: [
           { Kind: TokenKind.Keyword, Value: "impl" },
-          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait.name },
+          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait.path },
           { Kind: TokenKind.Punctuation, Value: "for" },
           {
             Kind: TokenKind.TypeName,

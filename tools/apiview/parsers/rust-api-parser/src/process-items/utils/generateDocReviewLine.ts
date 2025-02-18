@@ -1,5 +1,5 @@
 import { ReviewLine, TokenKind } from "../../models/apiview-models";
-import { Item } from "../../models/rustdoc-json-types";
+import { Item } from "../../../rustdoc-types/output/rustdoc-types";
 
 /**
  * Creates a ReviewLine object for the documentation of the given item.

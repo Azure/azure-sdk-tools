@@ -7,7 +7,7 @@ import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml";
 import { changeConfigOfTestAndSample, ChangeModel, SdkType } from "../../utils/changeConfigOfTestAndSample";
 import { changeRushJson } from "../../utils/changeRushJson";
 import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo";
-import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git";
+import { getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory } from "../../utils/git";
 import { logger } from "../../utils/logger";
 import { RunningEnvironment } from "../../utils/runningEnvironment";
 import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject';
@@ -194,6 +194,19 @@ export async function generateRLCInPipeline(options: {
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
 
     try {
+        // TODO: need to refactor
+        // too tricky here, when relativePackagePath === undefined,
+        // the project should be typespec,
+        // and the changedPackageDirectories should be join(service-dir, package-dir)
+        if (!packagePath || !relativePackagePath) {
+            const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
+            if (changedPackageDirectories.size !== 1) {
+                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories.size}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
+            }
+            for (const d of changedPackageDirectories) relativePackagePath = d;
+            packagePath = path.join(options.sdkRepo, relativePackagePath!);
+        }
+
         if (!packagePath || !relativePackagePath) {
             throw new Error(`Failed to get package path`);
         }

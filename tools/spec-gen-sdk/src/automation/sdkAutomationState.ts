@@ -22,7 +22,11 @@ const SDKAutomationStateStrings = {
   /**
    * The generation process has warnings.
    */
-  warning: `Warning`
+  warning: `Warning`,
+  /**
+   * The generation process exited due to missing language configuration in tspconfig.yaml or reamd.md .
+   */
+  notEnabled: `NotEnabled`
 };
 
 /**

@@ -173,6 +173,7 @@ export const workflowValidateSdkConfigForSpecPr = async (context: WorkflowContex
     throw new Error(`No changes detected in the API specs; SDK generation skipped.`);
   }
   if (sdkToGenerate.size === 0) {
+    context.status = 'notEnabled';
     throw new Error(`No SDKs are enabled for generation. Please check the configuration in the realted tspconfig.yaml or readme.md`);
   }
   context.logger.info(`SDK to generate:`);
@@ -188,7 +189,7 @@ export const workflowValidateSdkConfigForSpecPr = async (context: WorkflowContex
   context.logger.log('endsection', 'Validate SDK config for spec PR scenario');
 };
 
-export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
+export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
   context.logger.log('section', 'Validate SDK configuration');
   let sdkToGenerate = "";
 
@@ -231,6 +232,7 @@ export const workflowValidateSdkConfig = async (context: SdkAutoContext) => {
     context.logger.info(`SDK to generate:${context.config.sdkName}`);
   }
   else {
+    context.status = 'notEnabled';
     throw new Error(`No SDKs are enabled for generation. Please check the configuration in the related tspconfig.yaml or readme.md`);
   }
   context.logger.log('endsection', 'Validate SDK configuration');
@@ -291,6 +293,7 @@ const workflowHandleReadmeMdOrTypeSpecProject = async (context: WorkflowContext,
   }
 
   if (typespecProjectList.length === 0 && readmeMdList.length === 0) {
+    context.status = 'notEnabled';
     context.logger.remove(context.messageCaptureTransport);
     return;
   }

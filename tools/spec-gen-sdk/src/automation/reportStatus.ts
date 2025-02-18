@@ -95,6 +95,9 @@ export const generateReport = (context: WorkflowContext) => {
   writeTmpJsonFile(context, 'execution-report.json', executionReport);
   if (context.status === 'failed') {
     vsoLogIssue(`The generation process failed for ${specConfigPath}. Refer to the full log for details.`);
+  } 
+  else if (context.status === 'notEnabled') {
+    vsoLogIssue(`The generation process failed for missing language configuration in ${specConfigPath}. Refer to the full log for details.`);
   } else {
     context.logger.info(`Main status [${context.status}]`);
   }
@@ -103,7 +106,7 @@ export const generateReport = (context: WorkflowContext) => {
     setPipelineVariables(context, executionReport);
   }
 
-  if (context.status === 'failed') {
+  if (['notEnabled', 'failed'].includes(context.status)) {
     console.log(`##vso[task.complete result=Failed;]`);
     sendFailure();
   } else {
@@ -148,7 +151,8 @@ export const saveFilteredLog = (context: WorkflowContext) => {
     inProgress: 'Error',
     failed: 'Error',
     warning: 'Warning',
-    succeeded: 'Info'
+    succeeded: 'Info',
+    notEnabled: 'Warning'
   } as const;
   const type = statusMap[context.status];
   const filteredResultData = [
@@ -340,7 +344,7 @@ export const sdkAutoReportStatus = async (context: WorkflowContext) => {
   }
 
   context.logger.info(`Main status [${context.status}] hasBreakingChange [${hasBreakingChange}] isBetaMgmtSdk [${isBetaMgmtSdk}] hasSuppressions [${hasSuppressions}] hasAbsentSuppressions [${hasAbsentSuppressions}]`);
-  if (context.status === 'failed') {
+  if (['failed','notEnabled'].includes(context.status)) {
     console.log(`##vso[task.complete result=Failed;]`);
     sendFailure();
   } else {
@@ -366,7 +370,8 @@ export const sdkAutoReportStatus = async (context: WorkflowContext) => {
     inProgress: 'Error',
     failed: 'Error',
     warning: 'Warning',
-    succeeded: 'Info'
+    succeeded: 'Info',
+    notEnabled: 'Warning'
   } as const;
   const type = statusMap[context.status];
   const pipelineResultData = [
@@ -408,7 +413,8 @@ const githubStateEmoji: { [key in SDKAutomationState]: string } = {
   failed: '❌',
   inProgress: '🔄',
   succeeded: '️✔️',
-  warning: '⚠️'
+  warning: '⚠️',
+  notEnabled: '🚫'
 };
 const trimNewLine = (line: string) => htmlEscape(line.trimEnd());
 const handleBarHelpers = {

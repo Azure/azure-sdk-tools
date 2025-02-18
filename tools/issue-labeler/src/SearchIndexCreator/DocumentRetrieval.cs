@@ -73,6 +73,10 @@ namespace SearchIndexCreator
         public async Task UploadFiles(List<(string FilePath, string Url, string Content)> files, string accountName, string containerName)
         {
             var blobServiceClient = GetBlobServiceClient(accountName);
+
+            // Enable Soft delete on the Storage Blob
+            await EnsureBlobSoftDeleteEnabled(blobServiceClient);
+
             var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
             await containerClient.CreateIfNotExistsAsync();
 
@@ -102,6 +106,30 @@ namespace SearchIndexCreator
                 {
                     throw new Exception($"Error uploading file: {file.FilePath}", ex);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Ensures that native blob soft delete is enabled on the storage account.
+        /// </summary>
+        /// <param name="blobServiceClient">The BlobServiceClient instance.</param>
+        private async Task EnsureBlobSoftDeleteEnabled(BlobServiceClient blobServiceClient)
+        {
+            var properties = await blobServiceClient.GetPropertiesAsync();
+
+            if (!properties.Value.DeleteRetentionPolicy.Enabled)
+            {
+                properties.Value.DeleteRetentionPolicy = new Azure.Storage.Blobs.Models.BlobRetentionPolicy
+                {
+                    Enabled = true,
+                    Days = 7 // Set the desired retention period
+                };
+                await blobServiceClient.SetPropertiesAsync(properties.Value);
+                Console.WriteLine("Enabled native blob soft delete on the storage account.");
+            }
+            else
+            {
+                Console.WriteLine("Blob soft delete is already enabled on the storage account.");
             }
         }
 

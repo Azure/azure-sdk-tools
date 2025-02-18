@@ -38,7 +38,11 @@ namespace SearchIndexCreator
                 $"{_config["DocumentIndexName"]}-blob",
                 SearchIndexerDataSourceType.AzureBlob,
                 connectionString: _config["BlobConnectionString"],
-                container: new SearchIndexerDataContainer(_config["DocumentBlobContainerName"]));
+                container: new SearchIndexerDataContainer($"{_config["DocumentIndexName"]}-blob"))
+            {
+                DataChangeDetectionPolicy = new HighWaterMarkChangeDetectionPolicy("metadata_storage_last_modified"),
+                DataDeletionDetectionPolicy = new NativeBlobSoftDeleteDeletionDetectionPolicy()
+            };
             indexerClient.CreateOrUpdateDataSourceConnection(dataSource);
             Console.WriteLine("Data Source Created/Updated!");
 
@@ -100,29 +104,9 @@ namespace SearchIndexCreator
                         {
                             Source = "/document/Url"
                         },
-                        new InputFieldMappingEntry("metadata_storage_content_type")
-                        {
-                            Source = "/document/metadata_storage_content_type"
-                        },
-                        new InputFieldMappingEntry("metadata_storage_size")
-                        {
-                            Source = "/document/metadata_storage_size"
-                        },
                         new InputFieldMappingEntry("metadata_storage_last_modified")
                         {
                             Source = "/document/metadata_storage_last_modified"
-                        },
-                        new InputFieldMappingEntry("metadata_storage_content_md5")
-                        {
-                            Source = "/document/metadata_storage_content_md5"
-                        },
-                        new InputFieldMappingEntry("metadata_storage_path")
-                        {
-                            Source = "/document/metadata_storage_path"
-                        },
-                        new InputFieldMappingEntry("metadata_storage_file_extension")
-                        {
-                            Source = "/document/metadata_storage_file_extension"
                         }
                     })
                 })
@@ -232,27 +216,7 @@ namespace SearchIndexCreator
                         VectorSearchDimensions = modelDimensions,
                         VectorSearchProfileName = vectorSearchHnswProfile
                     },
-                    new SearchField("metadata_storage_content_type", SearchFieldDataType.String)
-                    {
-                        IsHidden = true,
-                    },
-                    new SearchField("metadata_storage_size", SearchFieldDataType.Int64)
-                    {
-                        IsHidden = true,
-                    },
                     new SearchField("metadata_storage_last_modified", SearchFieldDataType.DateTimeOffset)
-                    {
-                        IsHidden = true,
-                    },
-                    new SearchField("metadata_storage_content_md5", SearchFieldDataType.String)
-                    {
-                        IsHidden = true,
-                    },
-                    new SearchField("metadata_storage_path", SearchFieldDataType.String)
-                    {
-                        IsHidden = true,
-                    },
-                    new SearchField("metadata_storage_file_extension", SearchFieldDataType.String)
                     {
                         IsHidden = true,
                     }

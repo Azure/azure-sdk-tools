@@ -36,8 +36,12 @@ namespace SearchIndexCreator
             var dataSource = new SearchIndexerDataSourceConnection(
                 $"{_config["IssueIndexName"]}-blob",
                 SearchIndexerDataSourceType.AzureBlob,
-                connectionString: _config["BlobConnectionString"],
-                container: new SearchIndexerDataContainer(_config["IssueBlobContainerName"]));
+                connectionString: _config["BlobConnectionString"], // "Connection string" indicating to use managed identity
+                container: new SearchIndexerDataContainer($"{_config["IssueIndexName"]}-blob"))
+            {
+                DataChangeDetectionPolicy = new HighWaterMarkChangeDetectionPolicy("metadata_storage_last_modified"),
+                DataDeletionDetectionPolicy = new NativeBlobSoftDeleteDeletionDetectionPolicy()
+            };
             indexerClient.CreateOrUpdateDataSourceConnection(dataSource);
             Console.WriteLine("Data Source Created/Updated!");
 
@@ -130,29 +134,9 @@ namespace SearchIndexCreator
                             Source = "/document/CodeOwner"
                         },
                         // Metadata is needed for updating the document (or atleast last modified not sure of the rest)
-                        new InputFieldMappingEntry("metadata_storage_content_type")
-                        {
-                            Source = "/document/metadata_storage_content_type"
-                        },
-                        new InputFieldMappingEntry("metadata_storage_size")
-                        {
-                            Source = "/document/metadata_storage_size"
-                        },
                         new InputFieldMappingEntry("metadata_storage_last_modified")
                         {
                             Source = "/document/metadata_storage_last_modified"
-                        },
-                        new InputFieldMappingEntry("metadata_storage_content_md5")
-                        {
-                            Source = "/document/metadata_storage_content_md5"
-                        },
-                        new InputFieldMappingEntry("metadata_storage_path")
-                        {
-                            Source = "/document/metadata_storage_path"
-                        },
-                        new InputFieldMappingEntry("metadata_storage_file_extension")
-                        {
-                            Source = "/document/metadata_storage_file_extension"
                         }
                     })
                 })
@@ -304,36 +288,7 @@ namespace SearchIndexCreator
                         IsSortable = false,
                         IsFilterable = true
                     },
-                    new SearchField("metadata_storage_content_type", SearchFieldDataType.String)
-                    {
-                        IsHidden = true,
-                    },
-                    new SearchField("metadata_storage_size", SearchFieldDataType.Int64)
-                    {
-                        IsHidden = true,
-                        IsSearchable = false
-                    },
                     new SearchField("metadata_storage_last_modified", SearchFieldDataType.DateTimeOffset)
-                    {
-                        IsHidden = true,
-                        IsSearchable = false
-                    },
-                    new SearchField("metadata_storage_content_md5", SearchFieldDataType.String)
-                    {
-                        IsHidden = true,
-                        IsSearchable = false
-                    },
-                    new SearchField("metadata_storage_name", SearchFieldDataType.String)
-                    {
-                        IsHidden = true,
-                        IsSearchable = false
-                    },
-                    new SearchField("metadata_storage_path", SearchFieldDataType.String)
-                    {
-                        IsHidden = true,
-                        IsSearchable = false
-                    },
-                    new SearchField("metadata_storage_file_extension", SearchFieldDataType.String)
                     {
                         IsHidden = true,
                         IsSearchable = false

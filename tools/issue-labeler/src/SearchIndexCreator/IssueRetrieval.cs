@@ -114,8 +114,13 @@ namespace SearchIndexCreator
                 // You have to get the comments for the issue separately, only other way is using GraphQL
                 var issue_comments = await client.Issue.Comment.GetAllForIssue(repoOwner, repo, issue.Number);
 
-                // Filter out github bot comments
-                issue_comments = issue_comments.Where(c => !c.User.Login.Contains("github-actions[bot]")).ToList();
+                // Filter out comments from bots or that are short. Filtering out short comments because they
+                // don't add much value, may just be a question or sayings thanks for reaching out etc.
+                // Testing out 150 could increase to 200 or 250.
+                issue_comments = issue_comments
+                    .Where(c => !c.User.Login.Contains("github-actions[bot]")) // Filter out bot comments
+                    .Where(c => c.Body.Length > 200) // Filter out short comments.
+                    .ToList();
 
                 // Add comments in as there own "Issue" object
                 foreach (var comment in issue_comments)
@@ -210,6 +215,10 @@ namespace SearchIndexCreator
         public async Task UploadIssues(List<Issue> issues, string accountName, string containerName)
         {
             var blobServiceClient = GetBlobServiceClient(accountName);
+
+            // Enable Soft delete on the Storage Blob
+            await EnsureBlobSoftDeleteEnabled(blobServiceClient);
+
             var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
             await containerClient.CreateIfNotExistsAsync();
 
@@ -240,6 +249,30 @@ namespace SearchIndexCreator
                 {
                     throw new Exception($"Error uploading file: {issue.Id}", ex);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Ensures that native blob soft delete is enabled on the storage account.
+        /// </summary>
+        /// <param name="blobServiceClient">The BlobServiceClient instance.</param>
+        private async Task EnsureBlobSoftDeleteEnabled(BlobServiceClient blobServiceClient)
+        {
+            var properties = await blobServiceClient.GetPropertiesAsync();
+
+            if (!properties.Value.DeleteRetentionPolicy.Enabled)
+            {
+                properties.Value.DeleteRetentionPolicy = new Azure.Storage.Blobs.Models.BlobRetentionPolicy
+                {
+                    Enabled = true,
+                    Days = 7 // Set the desired retention period
+                };
+                await blobServiceClient.SetPropertiesAsync(properties.Value);
+                Console.WriteLine("Enabled native blob soft delete on the storage account.");
+            }
+            else
+            {
+                Console.WriteLine("Blob soft delete is already enabled on the storage account.");
             }
         }
 

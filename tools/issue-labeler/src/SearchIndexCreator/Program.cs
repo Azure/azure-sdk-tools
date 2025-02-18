@@ -72,7 +72,7 @@ namespace SearchIndexCreator
 
             // 2. Upload the issues to Azure CosmosDB
             var defaultCredential = new DefaultAzureCredential();
-            await issueRetrieval.UploadIssues(issues, config["IssueStorageName"], config["IssueBlobContainerName"]);
+            await issueRetrieval.UploadIssues(issues, config["IssueStorageName"], $"{config["IssueIndexName"]}-blob");
 
             // 3. Create an Azure Search Index
             var index = new IssueIndex(config);
@@ -92,7 +92,7 @@ namespace SearchIndexCreator
             var readmeFiles = await docsRetrieval.GetDocuments("Azure", "azure-sdk-for-net");
 
             // 2. Upload the documents to Azure Blob Storage
-            await docsRetrieval.UploadFiles(readmeFiles, config["DocumentStorageName"], config["DocumentBlobContainerName"]);
+            await docsRetrieval.UploadFiles(readmeFiles, config["DocumentStorageName"], $"{config["DocumentIndexName"]}-blob");
 
             // 3. Create an Azure Search Index
             var defaultCredential = new DefaultAzureCredential();

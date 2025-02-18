@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
 import { CodeFile } from "./models/apiview-models";
-import { Crate } from "./models/rustdoc-json-types";
+import { Crate , FORMAT_VERSION } from "./models/rustdoc-json-types";
 
 function main() {
   // Read the JSON file
@@ -15,6 +15,11 @@ function main() {
   const data = fs.readFileSync(inputFilePath, "utf8");
   // Parse the JSON data
   let apiJson: Crate = JSON.parse(data);
+
+  if(apiJson.format_version !== FORMAT_VERSION) {
+    throw new Error(`Unsupported format version: ${apiJson.format_version}, parser supports ${FORMAT_VERSION} at the moment, contact API View owners to get the support for this version.`);
+  }
+
   // Create the CodeFile object
   const codeFile: CodeFile = {
     PackageName: apiJson.index[apiJson.root].name || "unknown",

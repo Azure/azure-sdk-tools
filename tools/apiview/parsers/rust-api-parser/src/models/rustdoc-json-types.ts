@@ -482,9 +482,7 @@ export interface Struct {
 export type StructKind =
   | "unit"
   | {
-      tuple: {
-        fields: Array<number | null>;
-      };
+      tuple: Array<number | null>;
     }
   | {
       plain: {
@@ -535,9 +533,7 @@ export interface Variant {
 export type VariantKind =
   | "plain"
   | {
-      tuple: {
-        fields: Array<number | null>;
-      };
+      tuple: (number | null)[];
     }
   | {
       struct: {

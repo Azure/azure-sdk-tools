@@ -39,8 +39,8 @@ export async function generateRLCInPipeline(options: {
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
 }) {
-    let packagePath: string | undefined = undefined;
-    let relativePackagePath: string | undefined = undefined;
+    let packagePath: string | undefined;
+    let relativePackagePath: string | undefined;
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
@@ -77,7 +77,9 @@ export async function generateRLCInPipeline(options: {
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");
-            } 
+            }
+            packagePath = generatedPackageDir;
+            relativePackagePath = path.relative(options.sdkRepo, packagePath);
         }
     } else {
         logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
@@ -194,23 +196,9 @@ export async function generateRLCInPipeline(options: {
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
 
     try {
-        // TODO: need to refactor
-        // too tricky here, when relativePackagePath === undefined,
-        // the project should be typespec,
-        // and the changedPackageDirectories should be join(service-dir, package-dir)
         if (!packagePath || !relativePackagePath) {
-            const changedPackageDirectories: Set<string> = await getChangedPackageDirectory(!options.skipGeneration);
-            if (changedPackageDirectories.size !== 1) {
-                throw new Error(`Find unexpected changed package directory. Length: ${changedPackageDirectories.size}. Value: ${[...changedPackageDirectories].join(', ')}. Please only change files in one directory`)
-            }
-            for (const d of changedPackageDirectories) relativePackagePath = d;
-            packagePath = path.join(options.sdkRepo, relativePackagePath!);
+            throw new Error(`Failed to get package path.`);
         }
-
-        if (!packagePath || !relativePackagePath) {
-            throw new Error(`Failed to get package path`);
-        }
-
         const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
         const packageName = packageJson.name;
         logger.info(`Start to generate some other files for '${packageName}' in '${packagePath}'.`);

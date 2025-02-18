@@ -11,7 +11,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
@@ -953,8 +952,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
 
             var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK00-1" } };
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(JsonSerializer.Serialize(testSet));
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            await controller.RemoveSanitizers(testSet);
+            await controller.RemoveSanitizers();
 
             Assert.Equal(200, httpContext.Response.StatusCode);
         }
@@ -974,9 +975,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
 
             var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() {} };
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(JsonSerializer.Serialize(testSet));
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
             var assertion = await Assert.ThrowsAsync<HttpException>(
-                async () => await controller.RemoveSanitizers(testSet)
+                async () => await controller.RemoveSanitizers()
             );
 
             Assert.Equal(HttpStatusCode.BadRequest, assertion.StatusCode);
@@ -998,7 +1001,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
 
             var expectedSanitizerCount = (await testRecordingHandler.SanitizerRegistry.GetSanitizers()).Count;
-            await controller.RemoveSanitizers(new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK0000" } });
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(JsonSerializer.Serialize(new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK0000" } }));
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            await controller.RemoveSanitizers();
 
             httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
             var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
@@ -1036,7 +1043,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var forRemoval = await testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Content-Type"), recordingId);
             await testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Connection"), recordingId);
-            await controller.RemoveSanitizers(new RemoveSanitizerList() { Sanitizers = new List<string>() { forRemoval } });
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(JsonSerializer.Serialize(new RemoveSanitizerList() { Sanitizers = new List<string>() { forRemoval } }));
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            await controller.RemoveSanitizers();
 
             var activeRecordingSanitizers = await testRecordingHandler.SanitizerRegistry.GetSanitizers(session);
 

@@ -66,9 +66,10 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async Task Reset([FromBody()] IDictionary<string, object> options = null)
+        public async Task Reset()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var options = await HttpRequestInteractions.GetBody<Dictionary<string, object>>(Request);
 
             var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
 
@@ -76,9 +77,10 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async Task Restore([FromBody()] IDictionary<string, object> options = null)
+        public async Task Restore()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var options = await HttpRequestInteractions.GetBody<Dictionary<string, object>>(Request);
 
             var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
 

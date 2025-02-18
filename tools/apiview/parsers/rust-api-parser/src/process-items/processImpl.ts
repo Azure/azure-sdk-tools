@@ -20,7 +20,7 @@ export function processAutoTraitImpls(impls: number[], apiJson: Crate, reviewLin
       )
       .map<ReviewToken>((implItem) => ({
         Kind: TokenKind.TypeName,
-        Value: implItem.inner.impl.trait.path,
+        Value: implItem.inner.impl.trait.name,
         RenderClasses: ["trait"],
         HasSuffixSpace: false,
       }));
@@ -59,7 +59,7 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate, reviewLine: Rev
         LineId: implItem.id.toString() + "_impl",
         Tokens: [
           { Kind: TokenKind.Keyword, Value: "impl" },
-          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait.path },
+          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait.name },
           { Kind: TokenKind.Punctuation, Value: "for" },
           {
             Kind: TokenKind.TypeName,

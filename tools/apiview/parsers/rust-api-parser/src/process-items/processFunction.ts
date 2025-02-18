@@ -224,7 +224,7 @@ function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
     if ("trait_bound" in bound && bound.trait_bound?.trait) {
       tokens.push({
         Kind: TokenKind.TypeName,
-        Value: bound.trait_bound.trait.path,
+        Value: bound.trait_bound.trait.name,
         NavigateToId: bound.trait_bound.trait.id.toString(),
         HasSuffixSpace: false,
       });

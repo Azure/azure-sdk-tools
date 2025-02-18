@@ -1,4 +1,4 @@
-export const FORMAT_VERSION = 39;
+export const FORMAT_VERSION = 37;
 
 export type Id = number;
 export type GenericArgs = {
@@ -571,16 +571,7 @@ export interface ItemSummary {
     kind: ItemKind;
 }
 export interface ExternalCrate {
-    /**
-     * The name of the crate.
-     * 
-     * Note: This is the [*crate* name][crate-name], which may not be the same as the
-     * [*package* name][package-name]. For example, for <https://crates.io/crates/regex-syntax>,
-     * this field will be `regex_syntax` (which uses an `_`, not a `-`).
-     * 
-     * [crate-name]: https://doc.rust-lang.org/stable/cargo/reference/cargo-targets.html#the-name-field
-     * [package-name]: https://doc.rust-lang.org/stable/cargo/reference/manifest.html#the-name-field
-     */
+    /** The name of the crate. */
     name: string;
     /** The root URL at which the crate's documentation lives. */
     html_root_url?: string;
@@ -628,19 +619,17 @@ export interface Discriminant {
 }
 export interface Path {
     /**
-     * The path of the type.
-     * 
-     * This will be the path that is *used* (not where it is defined), so
-     * multiple `Path`s may have different values for this field even if
-     * they all refer to the same item. e.g.
+     * The name of the type as declared, e.g. in
      * 
      * ```rust
-     * pub type Vec1 = std::vec::Vec<i32>; // path: "std::vec::Vec"
-     * pub type Vec2 = Vec<i32>; // path: "Vec"
-     * pub type Vec3 = std::prelude::v1::Vec<i32>; // path: "std::prelude::v1::Vec"
+     * mod foo {
+     * struct Bar;
+     * }
      * ```
+     * 
+     * for `foo::Bar`, this field will be `Bar`.
      */
-    path: string;
+    name: string;
     /** The ID of the type. */
     id: Id;
     /**
@@ -891,7 +880,7 @@ export interface Trait {
     /** Whether the trait is marked as `unsafe`. */
     is_unsafe: boolean;
     /**
-     * Whether the trait is [dyn compatible](https://doc.rust-lang.org/reference/items/traits.html#dyn-compatibility)[^1].
+     * Whether the trait is [dyn compatible](https://doc.rust-lang.org/reference/items/traits.html#object-safety)[^1].
      * 
      * [^1]: Formerly known as "object safe".
      */

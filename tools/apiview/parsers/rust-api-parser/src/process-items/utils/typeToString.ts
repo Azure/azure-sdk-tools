@@ -9,7 +9,7 @@ export function typeToString(type: Type): string {
   if (typeof type === "string") {
     return type;
   } else if ("resolved_path" in type) {
-    let result = type.resolved_path.path;
+    let result = type.resolved_path.name;
     if (type.resolved_path.args && "angle_bracketed" in type.resolved_path.args) {
       const args = type.resolved_path.args.angle_bracketed.args
         .filter((arg) => typeof arg === "object" && "type" in arg)
@@ -21,7 +21,7 @@ export function typeToString(type: Type): string {
     }
     return result;
   } else if ("dyn_trait" in type) {
-    return `(dyn ${type.dyn_trait.traits.map((t) => t.trait.path).join(" + ")})`; // TODO: Can extend this to include navigation info; example: &(dyn MyTrait + Sync)
+    return `(dyn ${type.dyn_trait.traits.map((t) => t.trait.name).join(" + ")})`; // TODO: Can extend this to include navigation info; example: &(dyn MyTrait + Sync)
   } else if ("generic" in type) {
     return type.generic;
   } else if ("primitive" in type) {
@@ -40,7 +40,7 @@ export function typeToString(type: Type): string {
     return `impl ${type.impl_trait
       .map((b) => {
         if ("trait_bound" in b) {
-          return b.trait_bound.trait.path;
+          return b.trait_bound.trait.name;
         } else if ("outlives" in b) {
           return b.outlives;
         } else if ("use" in b) {
@@ -57,7 +57,7 @@ export function typeToString(type: Type): string {
     const elidedLifetime = lifetime && !shouldElideLifetime(lifetime) ? `${lifetime} ` : "";
     return `&${type.borrowed_ref.is_mutable ? "mut " : ""}${elidedLifetime}${typeToString(type.borrowed_ref.type)}`;
   } else if ("qualified_path" in type) {
-    return `${typeToString(type.qualified_path.self_type)} as ${type.qualified_path.trait ? type.qualified_path.trait.path + "::" : ""}${type.qualified_path.name}`;
+    return `${typeToString(type.qualified_path.self_type)} as ${type.qualified_path.trait ? type.qualified_path.trait.name + "::" : ""}${type.qualified_path.name}`;
   } else {
     return "unknown";
   }

@@ -36,11 +36,11 @@ This Rust project reads a cleaned Rustdoc JSON file from the azure-sdk-for-rust 
 
 4. Run the project:
     ```sh
-    node ./dist/main.js {input_file_path} {output_file_path}
+    node ./dist/src/main.js {input_file_path} {output_file_path}
     ```
     - Example: 
       ```sh
-      node ./dist/main.js /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/inputs/azure_core.rust.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/outputs/azure_core.json
+      node ./dist/src/main.js /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/inputs/azure_core.rust.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/outputs/azure_core.json
       ```
     - Or if you have the package installed, you can run:
       ```sh

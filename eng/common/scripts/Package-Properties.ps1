@@ -245,6 +245,10 @@ function Get-PrPkgProperties([string]$InputDiffJson) {
         $packagesWithChanges += &$AdditionalValidationPackagesFromPackageSetFn $packagesWithChanges $diff $allPackageProperties
     }
 
+    if ($packagesWithChanges.Count -eq 0) {
+        $packagesWithChanges += ($allPackageProperties | Where-Object { $_.ServiceDirectory -eq "template" })
+    }
+
     return $packagesWithChanges
 }
 

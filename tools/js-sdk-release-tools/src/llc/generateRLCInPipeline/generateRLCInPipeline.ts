@@ -7,7 +7,7 @@ import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml";
 import { changeConfigOfTestAndSample, ChangeModel, SdkType } from "../../utils/changeConfigOfTestAndSample";
 import { changeRushJson } from "../../utils/changeRushJson";
 import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo";
-import { getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory } from "../../utils/git";
+import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git";
 import { logger } from "../../utils/logger";
 import { RunningEnvironment } from "../../utils/runningEnvironment";
 import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject';
@@ -197,7 +197,7 @@ export async function generateRLCInPipeline(options: {
 
     try {
         if (!packagePath || !relativePackagePath) {
-            throw new Error(`Failed to get package path.`);
+            throw new Error(`Failed to get package path`);
         }
         const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
         const packageName = packageJson.name;

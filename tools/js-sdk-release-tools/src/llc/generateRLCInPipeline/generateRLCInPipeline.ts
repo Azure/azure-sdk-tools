@@ -164,6 +164,11 @@ export async function generateRLCInPipeline(options: {
                             const InputFilePattern = new RegExp(`input-file:.*${specPath}.*`);
                             const containsInputFile = InputFilePattern.test(autoRestConfigContent);
                             
+                            // DEBUG:
+                            logger.info(`specPath: ${specPath}`);
+                            logger.info(`options.swaggerRepo: ${options.swaggerRepo}`);
+                            logger.info(`path.dirname(options.readmeMd!): ${path.dirname(options.readmeMd!)}`);
+
                             if (containsInputFile || requireFoundOnlyOne) {
                                 // NOTE: it can be overrided from other RPs
                                 if (requireFoundOnlyOne) replaceRequireInAutorestConfigurationFile(currentAutorestConfigFilePath, regexExecResult![1], path.join(options.swaggerRepo, options.readmeMd!));

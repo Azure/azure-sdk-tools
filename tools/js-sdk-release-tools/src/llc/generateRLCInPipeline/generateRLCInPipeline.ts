@@ -132,6 +132,7 @@ export async function generateRLCInPipeline(options: {
                 logger.info(`Autorest configuration is not found in spec PR comment, and start to find it in sdk repository.`);
                 const sdkFolderPath = path.join(options.sdkRepo, 'sdk');
                 for (const rp of fs.readdirSync(sdkFolderPath)) {
+                    logger.info(`Start to find autorest configuration in '${rp}'.`);
                     if (!!autorestConfigFilePath) break;
                     const rpFolderPath = path.join(sdkFolderPath, rp);
                     if (fs.lstatSync(rpFolderPath).isDirectory()) {
@@ -139,20 +140,24 @@ export async function generateRLCInPipeline(options: {
                             if (!!autorestConfigFilePath) break;
                             if (!packageFolder.endsWith('-rest')) continue;
                             const packageFolderPath = path.join(rpFolderPath, packageFolder);
+                            logger.info(`Start to find autorest configuration in '${packageFolderPath}'.`);
                             if (!fs.lstatSync(packageFolderPath).isDirectory()) {
+                                logger.warn(`${packageFolderPath} is not a directory.`);
                                 continue;
                             }
                             const currentAutorestConfigFilePath = path.join(packageFolderPath, 'swagger', 'README.md');
                             if (!fs.existsSync(currentAutorestConfigFilePath)) {
+                                logger.warn(`Failed to find ${currentAutorestConfigFilePath}`);
                                 continue;
                             }
                             const autorestConfigFilterRegex = new RegExp(`require:[\\s]*-?[\\s]*(.*${options.readmeMd!.replace(/\//g, '\\/').replace(/\./, '\\.')})`);
                             const regexExecResult = autorestConfigFilterRegex.exec(fs.readFileSync(currentAutorestConfigFilePath, 'utf-8'));
                             if (!regexExecResult || regexExecResult.length < 2) {
+                                logger.warn(`Failed to find AutoRest config in ${currentAutorestConfigFilePath}.`);
                                 continue;
                             }
                             if (regexExecResult.length !== 2) {
-                                logger.error(`Found ${regexExecResult.length} matches in '${currentAutorestConfigFilePath}'. The autorest configuration file should only contain one require with one readme.md file`);
+                                logger.warn(`Found ${regexExecResult.length} matches in '${currentAutorestConfigFilePath}'. The autorest configuration file should only contain one require with one readme.md file`);
                                 continue;
                             }
                             replaceRequireInAutorestConfigurationFile(currentAutorestConfigFilePath, regexExecResult[1], path.join(options.swaggerRepo, options.readmeMd!));

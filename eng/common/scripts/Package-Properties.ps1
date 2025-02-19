@@ -126,6 +126,14 @@ class PackageProps {
 
             if ($ciArtifactResult) {
                 $this.ArtifactDetails = [Hashtable]$ciArtifactResult.ArtifactConfig
+                $this.CIParameters["CITriggerPaths"] = @()
+                $this.CIParameters["CIMatrixConfigs"] = @()
+
+                $triggers = GetValueSafelyFrom-Yaml $ciArtifactResult.ParsedYml @("trigger", "paths", "include")
+
+                if ($triggers) {
+                    $this.CIParameters["CITriggerPaths"] += $triggers
+                }
 
                 # if we know this is the matrix for our file, we should now see if there is a custom matrix config for the package
                 $matrixConfigList = GetValueSafelyFrom-Yaml $ciArtifactResult.ParsedYml @("extends", "parameters", "MatrixConfigs")
@@ -196,10 +204,18 @@ function Get-PrPkgProperties([string]$InputDiffJson) {
     $additionalValidationPackages = @()
     $lookup = @{}
 
+    # this is the primary loop that identifies the packages that have changes
     foreach ($pkg in $allPackageProperties) {
         $pkgDirectory = Resolve-Path "$($pkg.DirectoryPath)"
         $lookupKey = ($pkg.DirectoryPath).Replace($RepoRoot, "").TrimStart('\/')
         $lookup[$lookupKey] = $pkg
+
+        # resolve the trigger paths for the package, either from individual artifact config OR by falling back to associated ci.yml file trigger paths
+        $triggerPaths = $pkg.CIParameters["CITriggerPaths"]
+        if ($pkg.ArtifactDetails -and $pkg.ArtifactDetails["TriggerPaths"]) {
+            $triggerPaths = $pkg.ArtifactDetails["TriggerPaths"]
+        }
+        $triggerPaths = $triggerPaths | ForEach-Object { $_.TrimEnd("/") + "/" }
 
         foreach ($file in $targetedFiles) {
             $shouldExclude = $false
@@ -213,6 +229,16 @@ function Get-PrPkgProperties([string]$InputDiffJson) {
                 continue
             }
             $filePath = (Join-Path $RepoRoot $file)
+
+            # but I believe that we have to include the exclude paths as well
+            # otherwise we will not handle when the trigger path has exclude. like for java/core/ci.yml
+            # in that instance, the trigger path is sdk/core but we want to exclude sdk/core/azure-core-v2
+            # so we need to ensure that we are including the exclude paths when we evaluate the additional trigger paths
+            # this is still todo though, a follow-up commit will add this
+            foreach($triggerPath in $triggerPaths) {
+                # utilize the various trigger paths against the targeted file here
+            }
+
             $shouldInclude = $filePath -like (Join-Path "$pkgDirectory" "*")
             if ($shouldInclude) {
                 $packagesWithChanges += $pkg
@@ -227,6 +253,9 @@ function Get-PrPkgProperties([string]$InputDiffJson) {
         }
     }
 
+    # add all of the packages that were added purely for validation purposes
+    # this is executed separately because we need to identify packages added this way as only included for validation
+    # we don't actually need to build or analyze them. only test them.
     $existingPackageNames = @($packagesWithChanges | ForEach-Object { $_.Name })
     foreach ($addition in $additionalValidationPackages) {
         $key = $addition.Replace($RepoRoot, "").TrimStart('\/')
@@ -241,8 +270,16 @@ function Get-PrPkgProperties([string]$InputDiffJson) {
         }
     }
 
+    # now pass along the set of packages we've identified, the diff itself, and the full set of package properties
+    # to locate any additional packages that should be included for validation
     if ($AdditionalValidationPackagesFromPackageSetFn -and (Test-Path "Function:$AdditionalValidationPackagesFromPackageSetFn")) {
         $packagesWithChanges += &$AdditionalValidationPackagesFromPackageSetFn $packagesWithChanges $diff $allPackageProperties
+    }
+
+    # finally, if we have gotten all the way here and we still don't have any packages, we should include the template service
+    # packages. We should never return NO validation.
+    if ($packagesWithChanges.Count -eq 0) {
+        $packagesWithChanges += ($allPackageProperties | Where-Object { $_.ServiceDirectory -eq "template" })
     }
 
     return $packagesWithChanges

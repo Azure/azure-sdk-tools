@@ -140,7 +140,7 @@ export async function generateRLCInPipeline(options: {
                             if (!!autorestConfigFilePath) break;
                             if (!packageFolder.endsWith('-rest')) 
                             {
-                                logger.info(`Skip due to the folder name '${packageFolder}' does not end with '-rest'.`);
+                                logger.warn(`Skip due to the folder name '${packageFolder}' does not end with '-rest'.`);
                                 continue;
                             }
                             const packageFolderPath = path.join(rpFolderPath, packageFolder);

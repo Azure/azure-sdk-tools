@@ -138,7 +138,11 @@ export async function generateRLCInPipeline(options: {
                     if (fs.lstatSync(rpFolderPath).isDirectory()) {
                         for (const packageFolder of fs.readdirSync(rpFolderPath)) {
                             if (!!autorestConfigFilePath) break;
-                            if (!packageFolder.endsWith('-rest')) continue;
+                            if (!packageFolder.endsWith('-rest')) 
+                            {
+                                logger.info(`Skip due to the folder name '${packageFolder}' does not end with '-rest'.`);
+                                continue;
+                            }
                             const packageFolderPath = path.join(rpFolderPath, packageFolder);
                             logger.info(`Start to find autorest configuration in '${packageFolderPath}'.`);
                             if (!fs.lstatSync(packageFolderPath).isDirectory()) {
@@ -153,7 +157,8 @@ export async function generateRLCInPipeline(options: {
                             const autorestConfigFilterRegex = new RegExp(`require:[\\s]*-?[\\s]*(.*${options.readmeMd!.replace(/\//g, '\\/').replace(/\./, '\\.')})`);
                             const regexExecResult = autorestConfigFilterRegex.exec(fs.readFileSync(currentAutorestConfigFilePath, 'utf-8'));
                             if (!regexExecResult || regexExecResult.length < 2) {
-                                logger.warn(`Failed to find AutoRest config in ${currentAutorestConfigFilePath}.`);
+                                const pattern = `require:[\\s]*-?[\\s]*(.*${options.readmeMd!.replace(/\//g, '\\/').replace(/\./, '\\.')})`;
+                                logger.warn(`Failed to find AutoRest config in ${currentAutorestConfigFilePath} due to the content unmatches to pattern: ${pattern}`);
                                 continue;
                             }
                             if (regexExecResult.length !== 2) {

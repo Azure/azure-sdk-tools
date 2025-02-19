@@ -68,7 +68,6 @@ Describe "Yaml Parsing" {
 
     It "It should handle early escapes due to no data" {
         $yaml = @"
-# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
 trigger: none
 pr: none
 

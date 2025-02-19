@@ -120,7 +120,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
   } catch (e) {
     if (workflowContext) {
       sdkContext.logger.error(`FatalError: ${e.message}. Please refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
-      workflowContext.status = 'failed';
+      workflowContext.status = workflowContext.status === 'notEnabled' ? workflowContext.status : 'failed';
       setFailureType(workflowContext, FailureType.PipelineFrameworkFailed);
       workflowContext.messages.push(e.message);
     }

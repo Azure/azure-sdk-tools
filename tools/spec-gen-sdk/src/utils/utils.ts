@@ -31,15 +31,13 @@ export function getValueByKey<T>(
     return foundObject ? foundObject[targetKey] : undefined;
 }
 
-export function removeAnsiEscapeCodes(
-    messages: string[] | string
-): string[] | string {
+export function removeAnsiEscapeCodes<T extends string | string[]>(messages: T): T {
     // eslint-disable-next-line no-control-regex
     const ansiEscapeCodeRegex = /\x1b\[(\d{1,2}(;\d{0,2})*)?[A-HJKSTfimnsu]/g;
     if (typeof messages === "string") {
-        return messages.replace(ansiEscapeCodeRegex, "");
+        return messages.replace(ansiEscapeCodeRegex, "") as T;
     }
-    return messages.map((item) => item.replace(ansiEscapeCodeRegex, ""));
+    return messages.map((item) => item.replace(ansiEscapeCodeRegex, "")) as T;
 }
 
 export function extractServiceName(path: string): string {

@@ -154,21 +154,34 @@ export async function generateRLCInPipeline(options: {
                                 logger.warn(`Failed to find ${currentAutorestConfigFilePath}`);
                                 continue;
                             }
+                            
                             const autorestConfigFilterRegex = new RegExp(`require:[\\s]*-?[\\s]*(.*${options.readmeMd!.replace(/\//g, '\\/').replace(/\./, '\\.')})`);
-                            const regexExecResult = autorestConfigFilterRegex.exec(fs.readFileSync(currentAutorestConfigFilePath, 'utf-8'));
-                            if (!regexExecResult || regexExecResult.length < 2) {
+                            const autoRestConfigContent = fs.readFileSync(currentAutorestConfigFilePath, 'utf-8');
+                            const regexExecResult = autorestConfigFilterRegex.exec(autoRestConfigContent);
+                            const requireFoundOnlyOne = regexExecResult && regexExecResult.length === 2;
+
+                            const specPath = path.relative(options.swaggerRepo, path.dirname(options.readmeMd!));
+                            const InputFilePattern = new RegExp(`input-file:.*${specPath}.*`);
+                            const containsInputFile = InputFilePattern.test(autoRestConfigContent);
+                            
+                            if (containsInputFile || requireFoundOnlyOne) {
+                                // NOTE: it can be overrided from other RPs
+                                if (requireFoundOnlyOne) replaceRequireInAutorestConfigurationFile(currentAutorestConfigFilePath, regexExecResult![1], path.join(options.swaggerRepo, options.readmeMd!));
+                                autorestConfigFilePath = currentAutorestConfigFilePath;
+                                isMultiClient = fs.readFileSync(currentAutorestConfigFilePath, 'utf-8').includes('multi-client');
+                                break;
+                            }
+
+                            if ((!regexExecResult || regexExecResult.length < 2)) {
                                 const pattern = `require:[\\s]*-?[\\s]*(.*${options.readmeMd!.replace(/\//g, '\\/').replace(/\./, '\\.')})`;
                                 logger.warn(`Failed to find AutoRest config in ${currentAutorestConfigFilePath} due to the content unmatches to pattern: ${pattern}`);
-                                continue;
                             }
-                            if (regexExecResult.length !== 2) {
+                            if (regexExecResult && regexExecResult.length !== 2) {
                                 logger.warn(`Found ${regexExecResult.length} matches in '${currentAutorestConfigFilePath}'. The autorest configuration file should only contain one require with one readme.md file`);
-                                continue;
                             }
-                            replaceRequireInAutorestConfigurationFile(currentAutorestConfigFilePath, regexExecResult[1], path.join(options.swaggerRepo, options.readmeMd!));
-                            autorestConfigFilePath = currentAutorestConfigFilePath;
-                            isMultiClient = fs.readFileSync(currentAutorestConfigFilePath, 'utf-8').includes('multi-client');
-                            break;
+                            if (!containsInputFile) {
+                                logger.warn(`The autorest configuration file content does not contain the pattern ${InputFilePattern}`);
+                            }
                         }
                     }
                 }

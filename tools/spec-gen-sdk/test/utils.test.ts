@@ -142,6 +142,11 @@ describe('Remove AnsiEscape Codes', () => {
 
     expect(removeAnsiEscapeCodes(ansiArr)).toEqual(expect.arrayContaining(resArr));
   })
+  
+  it('test ansi code error in net generate script', () => {
+    const ansiError = '\x1b[31;1mWrite-Error: \x1b[31;1m[ERROR] The service service is not onboarded yet. We will not support onboard a new service from swagger. Please contact the DotNet language support channel at https://aka.ms/azsdk/donet-teams-channel and include this spec pull request.\x1b[0m';
+    expect(removeAnsiEscapeCodes(ansiError)).toEqual('Write-Error: [ERROR] The service service is not onboarded yet. We will not support onboard a new service from swagger. Please contact the DotNet language support channel at https://aka.ms/azsdk/donet-teams-channel and include this spec pull request.');
+  })
 })
 
 describe('getTypeSpecProjectServiceName', () => {

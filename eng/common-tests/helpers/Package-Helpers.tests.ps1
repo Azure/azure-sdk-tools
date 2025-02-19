@@ -60,6 +60,89 @@ Describe "ObjectKey Discovery" {
     }
 }
 
+Describe "Yaml Parsing" {
+    BeforeAll {
+        . $PSScriptRoot/../../common/scripts/Helpers/Package-Helpers.ps1
+    }
+
+
+    It "It should handle early escapes due to no data" {
+        $yaml = @"
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger: none
+pr: none
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: graphrbac
+    ArtifactName: packages
+    Artifacts: []
+"@
+        $Parsed = CompatibleConvertFrom-Yaml -Content $yaml
+        $Parsed | Should -Not -BeNullOrEmpty
+
+        GetValueSafelyFrom-Yaml $Parsed @("trigger", "paths", "include") | Should -BeNullOrEmpty
+        GetValueSafelyFrom-Yaml $Parsed @("extends", "parameters", "ArtifactName") | Should -Not -BeNullOrEmpty
+    }
+
+    It "It should properly retrieve a list of artifacts from a ci.yml" {
+        $yaml = @"
+extends:
+    template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+    parameters:
+        SDKType: client
+        ServiceDirectory: eventhub
+        ArtifactName: packages
+        Artifacts:
+        - name: Azure.Messaging.EventHubs
+          safeName: AzureMessagingEventHubs
+        - name: Azure.Messaging.EventHubs.Processor
+          safeName: AzureMessagingEventHubsProcessor
+        CheckAotCompat: true
+        AOTTestInputs:
+        - ArtifactName: Azure.Messaging.EventHubs
+          ExpectedWarningsFilepath: None
+        - ArtifactName: Azure.Messaging.EventHubs.Processor
+          ExpectedWarningsFilepath: None
+"@
+        $Parsed = CompatibleConvertFrom-Yaml -Content $yaml
+        $Parsed | Should -Not -BeNullOrEmpty
+
+        $artifacts = GetValueSafelyFrom-Yaml $Parsed @("extends", "parameters", "Artifacts")
+        $artifacts | Should -Not -BeNullOrEmpty
+        $artifacts | Should -HaveCount 2
+    }
+
+    It "It should properly retrieve a single native-type result from a ci.yml" {
+        $yaml = @"
+extends:
+    template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+    parameters:
+        SDKType: client
+        ServiceDirectory: eventhub
+        ArtifactName: packages
+        Artifacts:
+        - name: Azure.Messaging.EventHubs
+          safeName: AzureMessagingEventHubs
+        - name: Azure.Messaging.EventHubs.Processor
+          safeName: AzureMessagingEventHubsProcessor
+        CheckAotCompat: true
+        AOTTestInputs:
+        - ArtifactName: Azure.Messaging.EventHubs
+          ExpectedWarningsFilepath: None
+        - ArtifactName: Azure.Messaging.EventHubs.Processor
+          ExpectedWarningsFilepath: None
+"@
+        $Parsed = CompatibleConvertFrom-Yaml -Content $yaml
+        $Parsed | Should -Not -BeNullOrEmpty
+
+        $artifacts = GetValueSafelyFrom-Yaml $Parsed @("extends", "parameters", "CheckAotCompat")
+        $artifacts | Should -Not -BeNullOrEmpty
+        $artifacts | Should -BeOfType [bool]
+    }
+}
+
 Describe "Matrix-Collation" {
     BeforeAll {
         . $PSScriptRoot/../../common/scripts/Helpers/Package-Helpers.ps1

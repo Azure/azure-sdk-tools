@@ -9,7 +9,7 @@ import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
 import { formatSuppressionLine } from '../utils/reportFormat';
 import { extractPathFromSpecConfig, removeAnsiEscapeCodes } from '../utils/utils';
-import { CommentCaptureTransport, vsoAddAttachment, vsoLogIssue } from './logging';
+import { vsoAddAttachment, vsoLogIssue } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
@@ -97,7 +97,7 @@ export const generateReport = (context: WorkflowContext) => {
     vsoLogIssue(`The generation process failed for ${specConfigPath}. Refer to the full log for details.`);
   } 
   else if (context.status === 'notEnabled') {
-    vsoLogIssue(`The generation process failed for missing language configuration in ${specConfigPath}. Refer to the full log for details.`);
+    vsoLogIssue(`SDK configuration is not enabled for ${specConfigPath}. Refer to the full log for details.`, "warning");
   } else {
     context.logger.info(`Main status [${context.status}]`);
   }
@@ -106,7 +106,7 @@ export const generateReport = (context: WorkflowContext) => {
     setPipelineVariables(context, executionReport);
   }
 
-  if (['notEnabled', 'failed'].includes(context.status)) {
+  if (context.status === 'failed') {
     console.log(`##vso[task.complete result=Failed;]`);
     sendFailure();
   } else {
@@ -307,104 +307,12 @@ return `
 `
 }
 
-export const sdkAutoReportStatus = async (context: WorkflowContext) => {
-  context.logger.log('section', 'Report status');
-
-  const captureTransport = new CommentCaptureTransport({
-    extraLevelFilter: ['error', 'warn'],
-    level: 'debug',
-    output: context.messages
-  });
-  context.logger.add(captureTransport);
-
-  let hasBreakingChange = false;
-  let isBetaMgmtSdk = true;
-  let isDataPlane = true;
-  let showLiteInstallInstruction = false;
-  let hasSuppressions = false
-  let hasAbsentSuppressions = false;
-  if (context.pendingPackages.length > 0) {
-    setSdkAutoStatus(context, 'failed');
-    setFailureType(context, FailureType.PipelineFrameworkFailed);
-    context.logger.error(`GenerationError: The following packages are still pending.`);
-    for (const pkg of context.pendingPackages) {
-      context.logger.error(`\t${pkg.name}`);
-      context.handledPackages.push(pkg);
-    }
-  }
-  
-  for (const pkg of context.handledPackages) {
-    setSdkAutoStatus(context, pkg.status);
-    hasBreakingChange = hasBreakingChange || Boolean(pkg.hasBreakingChange);
-    isBetaMgmtSdk = isBetaMgmtSdk && Boolean(pkg.isBetaMgmtSdk);
-    isDataPlane = isDataPlane && Boolean(pkg.isDataPlane);
-    hasSuppressions = hasSuppressions || Boolean(pkg.presentSuppressionLines.length > 0);
-    hasAbsentSuppressions = hasAbsentSuppressions || Boolean(pkg.absentSuppressionLines.length > 0);
-    showLiteInstallInstruction = showLiteInstallInstruction || !!pkg.liteInstallationInstruction;
-  }
-
-  context.logger.info(`Main status [${context.status}] hasBreakingChange [${hasBreakingChange}] isBetaMgmtSdk [${isBetaMgmtSdk}] hasSuppressions [${hasSuppressions}] hasAbsentSuppressions [${hasAbsentSuppressions}]`);
-  if (['failed','notEnabled'].includes(context.status)) {
-    console.log(`##vso[task.complete result=Failed;]`);
-    sendFailure();
-  } else {
-    sendSuccess();
-  }
-
-  const extra = { hasBreakingChange, showLiteInstallInstruction };
-  let subTitle = renderHandlebarTemplate(commentSubTitleView, context, extra);
-  let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
-
-  try {
-    context.logger.info(`Rendered commentSubTitle: ${prettyFormatHtml(subTitle)}`);
-    context.logger.info(`Rendered commentBody: ${prettyFormatHtml(commentBody)}`);
-  } catch (e) {
-    context.logger.error(`RenderingError: exception is thrown while rendering the title and the body. Error details: ${e.message} ${e.stack}. This doesn't impact the SDK generation, and please click over the details link to view the full pipeine log.`);
-    // To add log to PR comment
-    subTitle = renderHandlebarTemplate(commentSubTitleView, context, extra);
-    commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
-  }
-
-  const statusMap = {
-    pending: 'Error',
-    inProgress: 'Error',
-    failed: 'Error',
-    warning: 'Warning',
-    succeeded: 'Info',
-    notEnabled: 'Warning'
-  } as const;
-  const type = statusMap[context.status];
-  const pipelineResultData = [
-    {
-      type: 'Markdown',
-      mode: 'replace',
-      level: type,
-      message: commentBody,
-      time: new Date()
-    } as MessageRecord
-  ].concat(context.extraResultRecords);
-
-  const encode = (str: string): string => Buffer.from(str, 'binary').toString('base64');
-  console.log(`##vso[task.setVariable variable=SubTitle]${encode(subTitle)}`);
-
-  const outputPath = path.join(context.config.workingFolder, 'pipe.log');
-  context.logger.info(`Writing unified pipeline message to ${outputPath}`);
-  const content = JSON.stringify(pipelineResultData);
-
-  writeFileSync(outputPath, content);
-
-  context.logger.log('endsection', 'Report status');
-  context.logger.remove(captureTransport);
-};
-
 export const prettyFormatHtml = (s: string) => {
   return prettier.format(s, { parser: 'html' }).replace(/<br>/gi, '<br>\n');
 };
 
 const commentDetailTemplate = readFileSync(`${__dirname}/../templates/commentDetailNew.handlebars`).toString();
 const commentDetailView = Handlebars.compile(commentDetailTemplate, { noEscape: true });
-const commentSubTitleTemplate = readFileSync(`${__dirname}/../templates/commentSubtitleNew.handlebars`).toString();
-const commentSubTitleView = Handlebars.compile(commentSubTitleTemplate, { noEscape: true });
 
 const htmlEscape = (s: string) => Handlebars.escapeExpression(s);
 

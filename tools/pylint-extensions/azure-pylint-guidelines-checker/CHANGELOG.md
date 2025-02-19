@@ -1,5 +1,9 @@
 # Release History
 
+## 0.5.2 (2025-02-19)
+
+- Bug fix for `do-not-log-exceptions` checker, was incorrectly flagging debug logs.
+
 ## 0.5.1 (2025-01-23)
 
 - Bug Fix for connection_verify rule

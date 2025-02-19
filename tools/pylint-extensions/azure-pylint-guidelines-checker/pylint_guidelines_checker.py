@@ -2983,7 +2983,7 @@ class DoNotLogExceptions(BaseChecker):
             levels.
         """
         try:
-            levels_matches = [".warning", ".error", ".info", ".debug"]
+            levels_matches = [".warning", ".error", ".info"]
             for j in node:
                 if isinstance(j, astroid.Expr):
                     expression = j.as_string().lower()

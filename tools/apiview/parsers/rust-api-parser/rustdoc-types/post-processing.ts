@@ -11,6 +11,7 @@ const sourceFile = project.getSourceFileOrThrow("output/typeshare-result.ts");
 // Create a new source file for the output
 const newSourceFile = project.createSourceFile("output/rustdoc-types.ts", "", { overwrite: true });
 
+// 1. Get the FORMAT_VERSION
 // Read the lib.rs file
 const libRsPath = path.join(__dirname, 'lib.rs');
 const libRsContent = fs.readFileSync(libRsPath, 'utf8');
@@ -24,6 +25,7 @@ if (formatVersionMatch) {
     newSourceFile.addStatements(formatVersionLine);
 }
 
+// 2. Handle enums with `#[serde(tag = "type", content = "content")]` attributes
 // Process all type aliases in the source file
 sourceFile.getTypeAliases().forEach(typeAlias => {
     // Get the type node from the type alias
@@ -78,6 +80,7 @@ sourceFile.getTypeAliases().forEach(typeAlias => {
     }
 });
 
+// 3. Add "FunctionSignature#inputs" property that has tuples
 // Add the property `inputs: Array<[string, Type]>;` to the interface `FunctionSignature`
 const functionSignatureInterface = sourceFile.getInterfaceOrThrow("FunctionSignature");
 functionSignatureInterface.addProperty({

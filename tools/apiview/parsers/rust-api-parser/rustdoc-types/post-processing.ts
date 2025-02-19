@@ -48,7 +48,7 @@ sourceFile.getTypeAliases().forEach(typeAlias => {
                     const typeValue = typeProperty.getTypeNodeOrThrow().getText();
                     // Check if the content property is undefined
                     if (contentProperty.getType().isUndefined()) {
-                        return `${typeValue}`;
+                        return typeValue;
                     } else {
                         const contentType = contentProperty.getTypeNodeOrThrow().getText();
                         return `{${typeValue}: ${contentType}}`;

@@ -1,3 +1,7 @@
+param(
+    [switch]$Force
+)
+
 function Run()
 {
     Write-Host "`n==> $args`n" -ForegroundColor Green
@@ -15,23 +19,25 @@ function RunOrExitOnFailure()
     }
 }
 $ErrorActionPreference = 'Stop'
-$subscriptionId = "2cd617ea-1866-46b1-90e3-fffb087ebf9b"
-$env:AZURE_STORAGE_ACCOUNT="stresstestcharts"
-$env:AZURE_STORAGE_KEY=$(RunOrExitOnFailure az storage account keys list --subscription $subscriptionId --account-name $env:AZURE_STORAGE_ACCOUNT -o tsv --query '[0].value')
+$subscriptionId = "a18897a6-7e44-457d-9260-f2854c0aca42"
+$env:AZURE_STORAGE_ACCOUNT="azuresdkartifacts"
 
-Remove-Item -Force ./*.tgz
+Remove-Item -Force $PSScriptRoot/*.tgz
 
-RunOrExitOnFailure helm package  .
-RunOrExitOnFailure helm repo index --url https://stresstestcharts.blob.core.windows.net/helm/ --merge index.yaml .
+RunOrExitOnFailure helm package $PSScriptRoot
+RunOrExitOnFailure helm repo index --url https://azuresdkartifacts.blob.core.windows.net/helm/ --merge index.yaml $PSScriptRoot
 
 # The index.yaml in git should be synced with the index.yaml already in blob storage
 # az storage blob download -c helm -n index.yaml -f index.yaml
 
 $files = (Get-Item *.tgz).Name
-$confirmation = Read-Host "Do you want to update the helm repository to add ${files}? [y/n]"
-if ( $confirmation -match "[yY]" ) { 
-    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name helm --file index.yaml --name index.yaml --overwrite
-    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name helm --file $files --name $files
+$confirmation = "y"
+if (!$Force) {
+  $confirmation = Read-Host "Do you want to update the helm repository to add ${files}? [y/n]"
+}
+if ($confirmation -match "[yY]") { 
+    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file index.yaml --name stress/index.yaml --auth-mode login --overwrite
+    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file $files --name stress/$files --auth-mode login
 
     # index.yaml must be kept up to date, otherwise when helm generates the file, it will not
     # merge it with previous entries, and those packages will become inaccessible as they are no

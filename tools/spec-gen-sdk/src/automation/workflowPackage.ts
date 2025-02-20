@@ -159,7 +159,7 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   context.sdkApiViewArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=HasApiViewArtifact]true`);
   const artifactName = `sdkApiViewArtifact_${language}`; // it's the artifact in pipeline artifacts
-  console.log(`##vso[task.setVariable variable=ArtifactName]${artifactName}`);
+  console.log(`##vso[task.setVariable variable=apiViewArtifactName]${artifactName}`);
   const fileName = path.basename(pkg.apiViewArtifactPath);
   context.logger.info(`Copy apiView artifact from ${path.join(context.sdkFolder, pkg.apiViewArtifactPath)} to ${path.join(destination, fileName)}`);
   copyFileSync(path.join(context.sdkFolder, pkg.apiViewArtifactPath), path.join(destination, fileName));

@@ -134,7 +134,7 @@ namespace Azure.ClientSdk.Analyzers
         public static readonly DiagnosticDescriptor AZC0030 = new DiagnosticDescriptor(
             nameof(AZC0030),
             "Improper model name suffix",
-            "Model name '{0}' ends with '{1}'. Suggest to rename it to {2} or any other appropriate name.",
+            "Model name '{0}' ends with '{1}'. {2}",
             DiagnosticCategory.Naming,
             DiagnosticSeverity.Warning,
             true,

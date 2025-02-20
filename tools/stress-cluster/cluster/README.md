@@ -122,11 +122,10 @@ Steps for deploying the stress test addons helm chart:
 
 **Pipeline**
 
-1. Increment the version number in stress test addons' [Chart.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/Chart.yaml) (e.g. 0.1.0 -> 0.1.1).
-1. Push to a branch or pull request
-1. Run the [addons publish pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7476&_a=summary)
+1. Increment the version number in stress test addons' [Chart.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/Chart.yaml) (e.g. 0.1.0 -> 0.1.1) along with any changes.
+1. Run the [addons publish pipeline](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7476&_a=summary) after merge to main.
 1. Merge the PR auto-created by the pipeline which updates `index.yaml` and `examples/**/Chart.yaml` with the new version.
-1. Update all the stress tests' Chart.yaml file version references across the other repos if there is a minor version bump.
+1. Update all the stress test Chart.yaml file version references across the language repos if there is a minor version bump.
 
 **Locally** (requires corp net access)
 

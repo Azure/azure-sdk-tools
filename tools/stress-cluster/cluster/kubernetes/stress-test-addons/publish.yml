@@ -24,6 +24,13 @@ extends:
                   scriptType: pscore
                   arguments: '-Force'
 
+              - task: PowerShell@2
+                displayName: Update example stress dependencies
+                condition: succeeded()
+                inputs:
+                  pwsh: true
+                  filePath: tools/stress-cluster/cluster/kubernetes/stress-test-addons/update-charts.ps1
+
               - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
                 parameters:
                   PRBranchName: "stress/addons-helm-update"

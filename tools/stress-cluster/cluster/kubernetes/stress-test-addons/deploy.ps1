@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 param(
     [switch]$Force
 )
@@ -25,7 +27,7 @@ $env:AZURE_STORAGE_ACCOUNT="azuresdkartifacts"
 Remove-Item -Force $PSScriptRoot/*.tgz
 
 RunOrExitOnFailure helm package $PSScriptRoot
-RunOrExitOnFailure helm repo index --url https://azuresdkartifacts.blob.core.windows.net/helm/ --merge index.yaml $PSScriptRoot
+RunOrExitOnFailure helm repo index --url https://azuresdkartifacts.z5.web.core.windows.net/stress/ --merge index.yaml $PSScriptRoot
 
 # The index.yaml in git should be synced with the index.yaml already in blob storage
 # az storage blob download -c helm -n index.yaml -f index.yaml

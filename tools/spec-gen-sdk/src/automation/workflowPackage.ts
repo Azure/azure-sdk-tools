@@ -114,26 +114,30 @@ const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: Package
  * @param context 
  * @param pkg 
  * 
- * Copy sdk artifact path to {work_dir}/out/generatedSdkArtifacts
+ * Copy sdk artifact path to {work_dir}/out/stagedArtifacts
  */
 const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: PackageData) => {
+  const relativeFolderPathParts = pkg.relativeFolderPath.split('/');
+  const serviceName = relativeFolderPathParts[relativeFolderPathParts.indexOf('sdk') + 1];
+  console.log(`##vso[task.setVariable variable=GeneratedSDK.ServiceName]${serviceName}`);
+
   context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
-  console.log(`##vso[task.setVariable variable=sdkLanguage]${language}`);
 
   // if no artifact generated or language is Go, skip
   if (pkg.artifactPaths.length === 0 || language.toLocaleLowerCase() === 'go') { 
     return; 
   }
+
+  const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
+  console.log(`##vso[task.setVariable variable=GeneratedSDK.StagedArtifactsFolder]${stagedArtifactsFolder}`);
   
-  const destination = path.join(context.config.workingFolder, 'out/generatedSdkArtifacts');
+  const destination = path.join(stagedArtifactsFolder, pkg.name);
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkArtifactFolder = destination;
-  console.log(`##vso[task.setVariable variable=HasSDKArtifact]true`);
-  const artifactName = `SDK_Artifact_${language}`; // it's the artifact in pipeline artifacts
-  console.log(`##vso[task.setVariable variable=sdkArtifactName]${artifactName}`);
+  console.log(`##vso[task.setVariable variable=GeneratedSDK.HasSDKArtifact]true`);
   for (const artifactPath of pkg.artifactPaths) {
     const fileName = path.basename(artifactPath);
     if (context.config.runEnv !== 'test') {
@@ -144,33 +148,22 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
 };
 
 /*
-* Copy apiView artifact and generate meta file in {work_dir}/sdkApiViewArtifacts/{language}/
+* Copy apiView artifact and generate meta file in {work_dir}/out/stagedArtifacts
 * */
 const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: PackageData) => {
   if (!pkg.apiViewArtifactPath) {
     return;
   }
 
-  const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
-  const destination = path.join(context.config.workingFolder, 'out/sdkApiViewArtifacts');
+  const destination = path.join(context.config.workingFolder, 'out', 'stagedArtifacts', pkg.name);
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }
   context.sdkApiViewArtifactFolder = destination;
-  console.log(`##vso[task.setVariable variable=HasApiViewArtifact]true`);
-  const artifactName = `sdkApiViewArtifact_${language}`; // it's the artifact in pipeline artifacts
-  console.log(`##vso[task.setVariable variable=apiViewArtifactName]${artifactName}`);
+  console.log(`##vso[task.setVariable variable=GeneratedSDK.HasApiViewArtifact]true`);
   const fileName = path.basename(pkg.apiViewArtifactPath);
   context.logger.info(`Copy apiView artifact from ${path.join(context.sdkFolder, pkg.apiViewArtifactPath)} to ${path.join(destination, fileName)}`);
   copyFileSync(path.join(context.sdkFolder, pkg.apiViewArtifactPath), path.join(destination, fileName));
-  const apiViewArtifactMeta = {
-    packageName: pkg.name,
-    apiViewArtifact: fileName,
-    specCommitSha: context.config.specCommitSha,
-    language,
-    artifactName
-  };
-  fs.writeFileSync(path.join(destination, `_meta_${fileName}.json`), JSON.stringify(apiViewArtifactMeta, undefined, 2));
 };
 
 const fileInstallInstructionInput = 'installInstructionInput.json';

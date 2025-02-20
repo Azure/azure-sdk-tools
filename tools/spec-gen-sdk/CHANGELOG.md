@@ -2,8 +2,9 @@
 
 ## 2025-02-18 - 0.1.8
 
-- Format error log which has ANSI code that garbled characters are displayed on github checks
-- Add new state `NotEnabled` when missing language config in readme.md or tspconfig.yaml
+- Formated error log which has ANSI codes to prevent garbled characters are displayed
+- Added a new state `NotEnabled` for cases where the language configuration is missing in readme.md or tspconfig.yaml
+- Unified the SDK generation process for both the spec PR and release scenarios
 
 ## 2025-02-11 - 0.1.7
 

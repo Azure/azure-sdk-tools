@@ -26,23 +26,24 @@ $env:AZURE_STORAGE_ACCOUNT="azuresdkartifacts"
 
 Remove-Item -Force $PSScriptRoot/*.tgz
 
-RunOrExitOnFailure helm package $PSScriptRoot
-RunOrExitOnFailure helm repo index --url https://azuresdkartifacts.z5.web.core.windows.net/stress/ --merge index.yaml $PSScriptRoot
-
-Write-Host "BBP INDEX"
-cat index.yaml
+RunOrExitOnFailure helm package $PSScriptRoot -d $PSScriptRoot
+RunOrExitOnFailure helm repo index --url https://azuresdkartifacts.z5.web.core.windows.net/stress/ --merge $PSScriptRoot/index.yaml $PSScriptRoot
 
 # The index.yaml in git should be synced with the index.yaml already in blob storage
 # az storage blob download -c helm -n index.yaml -f index.yaml
 
-$files = (Get-Item *.tgz).Name
+$pkg = @(Get-Item $PSScriptRoot/*.tgz)
+Write-Host "$PSScriptRoot/*.tgz"
+if ($pkg.Length -ne 1) {
+    throw "Only one helm package can be uploaded. Packages found: $($pkg.Length)"
+}
 $confirmation = "y"
 if (!$Force) {
-  $confirmation = Read-Host "Do you want to update the helm repository to add ${files}? [y/n]"
+  $confirmation = Read-Host "Do you want to update the helm repository to add $($pkg.Name)? [y/n]"
 }
 if ($confirmation -match "[yY]") { 
-    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file index.yaml --name stress/index.yaml --auth-mode login --overwrite
-    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file $files --name stress/$files --auth-mode login
+    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file $PSScriptRoot/index.yaml --name stress/index.yaml --auth-mode login --overwrite
+    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file $pkg.FullName --name stress/$($pkg.Name) --auth-mode login
 
     # index.yaml must be kept up to date, otherwise when helm generates the file, it will not
     # merge it with previous entries, and those packages will become inaccessible as they are no

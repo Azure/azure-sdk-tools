@@ -29,6 +29,9 @@ Remove-Item -Force $PSScriptRoot/*.tgz
 RunOrExitOnFailure helm package $PSScriptRoot
 RunOrExitOnFailure helm repo index --url https://azuresdkartifacts.z5.web.core.windows.net/stress/ --merge index.yaml $PSScriptRoot
 
+Write-Host "BBP INDEX"
+cat index.yaml
+
 # The index.yaml in git should be synced with the index.yaml already in blob storage
 # az storage blob download -c helm -n index.yaml -f index.yaml
 

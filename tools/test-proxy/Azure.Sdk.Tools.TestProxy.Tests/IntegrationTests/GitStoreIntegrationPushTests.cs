@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // Create a new file, update an existing file and delete an existing file.
-                TestHelpers.CreateFileWithInitialVersion(localFilePath, "file4.txt");
+                TestHelpers.CreateFileWithInitialVersion(localFilePath, "file1.txt");
 
                 // Push the update, it should be a clean push
                 await _defaultStore.Push(jsonFileLocation);

@@ -112,6 +112,71 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         }
 
         /// <summary>
+        /// 1. Restore an assets.json with empty Tag
+        /// 2. Add/Delete/Update files
+        /// 3. Push
+        /// 5. Verify assets.json was updated with the new commit Tag
+        /// </summary>
+        /// <param name="inputJson"></param>
+        /// <returns></returns>
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""TagPrefix"": ""language/tables""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task PushNonExistentTag(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            Assets updatedAssets = null;
+            string originalTagPrefix = assets.TagPrefix;
+            string originalTag = assets.Tag;
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
+            try
+            {
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.TagPrefix);
+
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
+                // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
+                // will be a forward one as expected by git but on Windows this won't result in a usable path.
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
+
+                // Create a new file, update an existing file and delete an existing file.
+                TestHelpers.CreateFileWithInitialVersion(localFilePath, "file4.txt");
+
+                // Push the update, it should be a clean push
+                await _defaultStore.Push(jsonFileLocation);
+
+                // Ensure that the config was updated with a new Tag as part of the push
+                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
+                Assert.NotEqual(originalTag, updatedAssets.Tag);
+
+                // Ensure that the targeted tag is present on the repo
+                TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
+                TestHelpers.CleanupIntegrationTestTag(updatedAssets);
+            }
+        }
+
+        /// <summary>
         /// 1. Restore from the second tag in pull/scenarios
         /// 2. Add/Delete/Update files
         /// 3. Push to new branch

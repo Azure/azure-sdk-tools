@@ -8,6 +8,7 @@ import { processStatic } from "./processStatic";
 import { processStruct } from "./processStruct";
 import { processTrait } from "./processTrait";
 import { processUse } from "./processUse";
+import { processUnion } from "./processUnion";
 
 /**
  * Processes an item from the API JSON and returns a ReviewLine object.
@@ -34,6 +35,8 @@ export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
       return processConstant(item);
     } else if ("enum" in item.inner) {
       return processEnum(item, apiJson);
+    } else if ("union" in item.inner) {
+      return processUnion(item, apiJson);
     }
   }
 }

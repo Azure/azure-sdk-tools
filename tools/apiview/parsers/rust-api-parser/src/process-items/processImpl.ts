@@ -1,10 +1,11 @@
 import { ReviewLine, TokenKind, ReviewToken } from "../models/apiview-models";
-import { Item, Crate, Impl, Struct } from "../../rustdoc-types/output/rustdoc-types";
+import { Item, Crate, Impl, Struct, Union } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { typeToString } from "./utils/typeToString";
 
 type ImplItem = Omit<Item, "inner"> & { inner: { impl: Impl } };
 type StructItem = Omit<Item, "inner"> & { inner: { struct: Struct } };
+type UnionItem = Omit<Item, "inner"> & { inner: { union: Union } };
 
 export function processAutoTraitImpls(impls: number[], apiJson: Crate, reviewLine: ReviewLine) {
   const traitImpls = (impls: number[], apiJson: Crate) =>
@@ -97,8 +98,12 @@ function processImpls(impls: number[], apiJson: Crate, reviewLine: ReviewLine) {
     });
 }
 
-export function processImpl(item: StructItem, apiJson: Crate, reviewLine: ReviewLine) {
-  processAutoTraitImpls(item.inner.struct.impls, apiJson, reviewLine);
+export function processImpl(item: StructItem |UnionItem, apiJson: Crate, reviewLine: ReviewLine) {
+  if ('struct' in item.inner) {
+    processAutoTraitImpls(item.inner.struct.impls, apiJson, reviewLine);
+  } else if ('union' in item.inner) {
+    processAutoTraitImpls(item.inner.union.impls, apiJson, reviewLine);
+  }
   // Create the ReviewLine object
   if (!reviewLine.Children.length) reviewLine.Children = [];
   const reviewLineForImpl: ReviewLine = {
@@ -124,7 +129,11 @@ export function processImpl(item: StructItem, apiJson: Crate, reviewLine: Review
   };
   reviewLine.Children.push(reviewLineForImpl);
 
-  processImpls(item.inner.struct.impls, apiJson, reviewLineForImpl);
+  if ('struct' in item.inner) {
+    processImpls(item.inner.struct.impls, apiJson, reviewLineForImpl);
+  } else if ('union' in item.inner) {
+    processImpls(item.inner.union.impls, apiJson, reviewLineForImpl);
+  }
 
   reviewLine.Children.push({
     RelatedToLine: item.id.toString() + "_impl",

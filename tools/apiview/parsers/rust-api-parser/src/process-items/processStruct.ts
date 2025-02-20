@@ -46,7 +46,6 @@ export function processStruct(item: Item, apiJson: Crate) {
   });
   // fields
   if (
-    item.inner.struct &&
     typeof item.inner.struct.kind === "object" &&
     "plain" in item.inner.struct.kind &&
     item.inner.struct.kind.plain.fields

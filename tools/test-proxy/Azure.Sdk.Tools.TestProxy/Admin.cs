@@ -78,7 +78,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var removedSanitizers = new List<string>();
 
-            if (sanitizerList.Sanitizers != null && sanitizerList.Sanitizers.Count == 0)
+            // - body may be empty
+            // - body may actually pass an empty list. handle both.
+            if ((sanitizerList?.Sanitizers ?? new List<string>()).Count == 0)
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "At least one sanitizerId for removal must be provided.");
             }

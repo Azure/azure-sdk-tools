@@ -77,7 +77,9 @@ export async function generateRLCInPipeline(options: {
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
                 logger.info("Generated code by tsp-client successfully.");
-            } 
+            }
+            packagePath = generatedPackageDir;
+            relativePackagePath = path.relative(options.sdkRepo, packagePath);
         }
     } else {
         logger.info(`Start to generate SDK from '${options.readmeMd}'.`);

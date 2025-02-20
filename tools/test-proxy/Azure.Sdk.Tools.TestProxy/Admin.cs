@@ -68,13 +68,17 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
 
-            var sanitizerList = await HttpRequestInteractions.GetBody<RemoveSanitizerList>(Request);
+            // Originally, this list was parsed using [FromBody], which was implicitly case insensitive. Need to maintain for compat.
+            var sanitizerList = await HttpRequestInteractions.GetBody<RemoveSanitizerList>(Request, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
 
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             var removedSanitizers = new List<string>();
 
-            if (sanitizerList != null && sanitizerList.Sanitizers.Count == 0)
+            if (sanitizerList.Sanitizers != null && sanitizerList.Sanitizers.Count == 0)
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "At least one sanitizerId for removal must be provided.");
             }

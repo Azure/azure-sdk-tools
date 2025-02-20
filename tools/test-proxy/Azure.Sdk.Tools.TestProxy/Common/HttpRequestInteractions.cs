@@ -58,19 +58,21 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return value;
         }
 
-        public async static Task<T> GetBody<T>(HttpRequest req)
+        public async static Task<T> GetBody<T>(HttpRequest req, JsonSerializerOptions serializerOptions = null)
         {
             string bodyContent = string.Empty;
+
             if (req.ContentLength > 0)
             {
+                var options = serializerOptions ?? new JsonSerializerOptions();
                 try
                 {
                     using (var jsonDocument = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true }))
                     {
                         bodyContent = jsonDocument.RootElement.GetRawText();
-                        return JsonSerializer.Deserialize<T>(bodyContent, new JsonSerializerOptions() { });
-                    }
 
+                        return JsonSerializer.Deserialize<T>(bodyContent, options);
+                    }
                 }
                 catch (Exception e)
                 {

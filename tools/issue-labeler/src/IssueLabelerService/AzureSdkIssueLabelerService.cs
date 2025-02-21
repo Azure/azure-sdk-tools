@@ -160,7 +160,7 @@ namespace IssueLabelerService
                     var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
 
                     string intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\n";
-                    string outro = "This should solve your problem, if it does not feel free to reopen the issue!";
+                    string outro = "\nThis should solve your problem, if it does not feel free to reopen the issue!";
 
                     result = new IssueOutput
                     {
@@ -175,7 +175,7 @@ namespace IssueLabelerService
                     var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
 
                     string intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\n";
-                    string outro = "The team will get back to you shortly, hopefully this helps in the meantime!";
+                    string outro = "\nThe team will get back to you shortly, hopefully this helps in the meantime!";
                     result = new IssueOutput
                     {
                         Category = resultObj.Category,

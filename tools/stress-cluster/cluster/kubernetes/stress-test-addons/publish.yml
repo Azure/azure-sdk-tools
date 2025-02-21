@@ -7,12 +7,14 @@ extends:
     stages:
       - stage:
         displayName: Publish addons helm chart
+        variables:
+          - template: /eng/pipelines/templates/variables/image.yml
         jobs:
           - job:
             displayName: Publish addons helm chart
             pool:
-              name: azsdk-pool-mms-ubuntu-2204-general
-              vmImage: ubuntu-22.04
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
               os: linux
 
             steps:

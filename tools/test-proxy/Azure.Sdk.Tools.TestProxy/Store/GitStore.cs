@@ -622,7 +622,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
                         // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
                         GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
+                        GitHandler.Run("config --local core.safecrlf false", config);
                         GitHandler.Run($"sparse-checkout init", config);
+
                     }
                     catch (GitProcessException e)
                     {

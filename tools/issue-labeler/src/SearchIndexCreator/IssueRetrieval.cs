@@ -59,6 +59,7 @@ namespace SearchIndexCreator
 
             foreach (var issue in issues)
             {
+                // Extract the service and category labels from this issue.
                 Label service = null, category = null;
 
                 foreach (var label in issue.Labels)
@@ -73,6 +74,7 @@ namespace SearchIndexCreator
                     }
                 }
 
+                // Ignore issues that don't have a service or category label.
                 if (service is null || category is null )
                 {
                     continue;
@@ -114,12 +116,15 @@ namespace SearchIndexCreator
                 // You have to get the comments for the issue separately, only other way is using GraphQL
                 var issue_comments = await client.Issue.Comment.GetAllForIssue(repoOwner, repo, issue.Number);
 
-                // Filter out comments from bots or that are short. Filtering out short comments because they
+                // Filter out comments from bots. Filtering out short comments because they
                 // don't add much value, may just be a question or sayings thanks for reaching out etc.
-                // Testing out 150 could increase to 200 or 250.
+                // Testing out 200 could change from 150 - 250.
                 issue_comments = issue_comments
-                    .Where(c => !c.User.Login.Contains("github-actions[bot]")) // Filter out bot comments
-                    .Where(c => c.Body.Length > 200) // Filter out short comments.
+                    .Where(c => 
+                        //!c.User.Login.Contains("github-actions[bot]") && // Filter out bot comments but if we filter out non members not needed
+                        c.Body.Length > 250 && // Filter out short comments
+                        //!c.User.Login.Contains("ghost") && // Filter out comments from deleted users (mostly because the older bot was deleted) but if we filter out non members not needed
+                        !c.AuthorAssociation.StringValue.Equals("NONE")) // Filter out non member comments
                     .ToList();
 
                 // Add comments in as there own "Issue" object

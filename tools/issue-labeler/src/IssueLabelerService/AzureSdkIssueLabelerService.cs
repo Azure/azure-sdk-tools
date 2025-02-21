@@ -74,7 +74,7 @@ namespace IssueLabelerService
 
                 // Top X documents/issues
                 // This becomes very dependent on Chunk size -> smaller chunks means more documents/issues and vice versa.
-                int top = 5;
+                int top = 50;
 
                 // Semantic score from 0 - 4, 4 being very relevant
                 // Anything under 2 is not relevant enough to be used.

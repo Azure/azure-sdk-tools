@@ -86,6 +86,7 @@ namespace SearchIndexCreator
             {
                 IndexProjection = new SearchIndexerIndexProjection(new[]
                 {
+                    // Base the parent key on the title as it will be the metadata_storage_name which is unique.
                     new SearchIndexerIndexProjectionSelector(_config["DocumentIndexName"], parentKeyFieldName: "parent_id", sourceContext: "/document/pages/*", mappings: new[]
                     {
                         new InputFieldMappingEntry("chunk")
@@ -135,6 +136,7 @@ namespace SearchIndexCreator
                     }
                 },
                 SkillsetName = skillset.Name,
+                Schedule = new IndexingSchedule(TimeSpan.FromDays(1)) // Schedule to run every day
             };
             await indexerClient.CreateOrUpdateIndexerAsync(indexer).ConfigureAwait(false);
             Console.WriteLine("Indexer Created/Updated!");
@@ -205,8 +207,19 @@ namespace SearchIndexCreator
                 },
                 Fields =
                 {
-                    new SearchableField("parent_id") { IsFilterable = true, IsSortable = true, IsFacetable = true },
-                    new SearchableField("chunk_id") { IsKey = true, IsFilterable = true, IsSortable = true, IsFacetable = true, AnalyzerName = LexicalAnalyzerName.Keyword },
+                    new SearchableField("parent_id")
+                    {
+                        IsFilterable = true,
+                        IsSortable = false,
+                        IsFacetable = false
+                    },
+                    new SearchableField("chunk_id") 
+                    { 
+                        IsKey = true, 
+                        IsFilterable = true, 
+                        IsSortable = true, IsFacetable = true, 
+                        AnalyzerName = LexicalAnalyzerName.Keyword 
+                    },
                     new SearchableField("Url"),
                     new SearchableField("chunk"),
                     new SearchableField("Title"),

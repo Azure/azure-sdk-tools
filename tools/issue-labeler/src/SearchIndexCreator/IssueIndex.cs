@@ -164,6 +164,7 @@ namespace SearchIndexCreator
                     }
                 },
                 SkillsetName = skillset.Name,
+                Schedule = new IndexingSchedule(TimeSpan.FromDays(1)) // Schedule to run every day
             };
             await indexerClient.CreateOrUpdateIndexerAsync(indexer).ConfigureAwait(false);
             Console.WriteLine("Indexer Created/Updated!");

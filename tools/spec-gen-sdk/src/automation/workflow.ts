@@ -108,6 +108,9 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
 
 export const workflowMain = async (context: WorkflowContext) => {
   await workflowValidateSdkConfig(context);
+  if (context.status === 'notEnabled') {
+    return;
+  }
   await workflowCallInitScript(context);
   await workflowGenerateSdk(context);
   setSdkAutoStatus(context, 'succeeded');
@@ -140,7 +143,8 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
     if (!config || config.length === 0 || !config.includes(context.config.sdkName)) {
       if (!twoConfigProvided) {
         context.status = 'notEnabled';
-        throw new Error(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://aka.ms/azsdk/sample-arm-tsproject-tspconfig`);
+        context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. This typespec project will be skipped from SDK generation. Please add the right emitter config in the 'tspconfig.yaml' file. The example project can be found at https://aka.ms/azsdk/sample-arm-tsproject-tspconfig`);
+        return;
       }
     } else {
       enabledSdkForTspConfig = true;
@@ -152,7 +156,8 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
     if (!config || config.repositories.length === 0 || !config.repositories.some(r => r.repo === context.config.sdkName)) {
       if (!twoConfigProvided) {
         context.status = 'notEnabled';
-        throw new Error(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath} or ${context.config.sdkName} cannot be found in 'swagger-to-sdk' section. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
+        context.logger.warn(`Warning: 'swagger-to-sdk' section cannot be found in ${readmeMdPath} or ${context.config.sdkName} cannot be found in 'swagger-to-sdk' section. Please add the section to the readme file according to this guidance https://aka.ms/azsdk/sample-readme-sdk-config`);
+        return;
       }
     } else {
       enabledSdkForReadme = true;
@@ -164,7 +169,7 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
     throw new Error(`SDK generation configuration is enabled for both ${context.config.tspConfigPath} and ${context.config.readmePath}. You should enable only one of them.`);
   } else if (!enabledSdkForTspConfig && !enabledSdkForReadme) {
     context.status = 'notEnabled';
-    throw new Error(`No SDKs are enabled for generation. Please enable them in either the corresponding tspconfig.yaml or readme.md file.`);
+    context.logger.warn(`No SDKs are enabled for generation. Please enable them in either the corresponding tspconfig.yaml or readme.md file.`);
   } else {
     context.logger.info(`SDK to generate:${context.config.sdkName}`);
   }
@@ -342,7 +347,7 @@ const workflowCallGenerateScript = async (
     apiVersion: context.config.apiVersion,
     installInstructionInput: {
       isPublic: !context.isPrivateSpecRepo,
-      downloadUrlPrefix: "https://artprodcus3.artifacts.visualstudio.com",
+      downloadUrlPrefix: "",
       downloadCommandTemplate: "downloadCommand",
     }
   };

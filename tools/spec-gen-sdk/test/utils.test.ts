@@ -309,14 +309,14 @@ describe('extract and format the prefix from spec config path', () => {
       const tspConfigPath = undefined;
       const readmePath = 'specification/myService/resource-manager/readme.md';
       const result = extractPathFromSpecConfig(tspConfigPath, readmePath);
-      expect(result).toEqual('myservice');
+      expect(result).toEqual('myservice-resource-manager');
     });
 
     it('should extract and format the prefix from readmePath', () => {
       const tspConfigPath = undefined;
       const readmePath = 'specification/myService/subservice/data-plane/readme.md';
       const result = extractPathFromSpecConfig(tspConfigPath, readmePath);
-      expect(result).toEqual('myservice-subservice');
+      expect(result).toEqual('myservice-subservice-data-plane');
     });
 
     it('should return an empty string if paths are not provided', () => {

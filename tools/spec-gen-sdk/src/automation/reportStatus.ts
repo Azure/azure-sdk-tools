@@ -67,7 +67,7 @@ export const generateReport = (context: WorkflowContext) => {
     context.logger.info(`package [${pkg.name}] hasBreakingChange [${pkg.hasBreakingChange}] isBetaMgmtSdk [${pkg.isBetaMgmtSdk}] hasSuppressions [${hasSuppressions}] hasAbsentSuppressions [${hasAbsentSuppressions}]`);
   }
 
-  if (context.config.pullNumber) {
+  if (context.config.pullNumber && markdownContent) {
     try {
       // Write a markdown file to be rendered by the Azure DevOps pipeline
       const fileNamePrefix = extractPathFromSpecConfig(context.config.tspConfigPath, context.config.readmePath);
@@ -78,9 +78,9 @@ export const generateReport = (context: WorkflowContext) => {
       }
       writeFileSync(markdownFilePath, markdownContent);
       vsoAddAttachment(`Generation Summary for ${specConfigPath}`, markdownFilePath);
-      } catch (e) {
-        context.logger.error(`IOError: Fails to write markdown file. Details: ${e}`);
-      }
+    } catch (e) {
+      context.logger.error(`IOError: Fails to write markdown file. Details: ${e}`);
+    }
   }
 
   executionReport = {

@@ -1,5 +1,9 @@
 # Release
 
+## 2025-02-21 - 0.1.9
+
+- Fixed some warnings output
+
 ## 2025-02-18 - 0.1.8
 
 - Formated error log which has ANSI codes to prevent garbled characters are displayed

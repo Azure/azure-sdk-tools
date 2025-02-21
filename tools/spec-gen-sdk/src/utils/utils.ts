@@ -177,7 +177,7 @@ export function extractPathFromSpecConfig(tspConfigPath: string | undefined, rea
       prefix = segments.join('-').toLowerCase().replace(/\./g, '-');
     }
   } else if (readmePath) {
-    const match = readmePath.match(/specification\/(.+)\/(?:resource-manager|data-plane)\/readme\.md$/i);
+    const match = readmePath.match(/specification\/(.+?)\/readme\.md$/i);
     if (match) {
       const segments = match[1].split('/');
       prefix = segments.join('-').toLowerCase().replace(/\./g, '-');

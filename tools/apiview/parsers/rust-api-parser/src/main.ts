@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
 import { CodeFile } from "./models/apiview-models";
-import { Crate , FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
+import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
 
 function main() {
   // Read the JSON file
@@ -16,8 +16,12 @@ function main() {
   // Parse the JSON data
   let apiJson: Crate = JSON.parse(data);
 
-  if(apiJson.format_version !== FORMAT_VERSION) {
-    throw new Error(`Unsupported format version: ${apiJson.format_version}, parser supports ${FORMAT_VERSION} at the moment, contact API View owners to get the support for this version.`);
+  let hasFormatMismatch = false;
+  if (apiJson.format_version !== FORMAT_VERSION) {
+    hasFormatMismatch = true;
+    console.warn(
+      `Warning: Different format version detected: ${apiJson.format_version}, parser supports ${FORMAT_VERSION}. This may cause errors or unexpected results.`
+    );
   }
 
   // Create the CodeFile object
@@ -28,15 +32,21 @@ function main() {
     Language: "Rust",
     ReviewLines: [],
   };
+  try {
+    const reviewLines = processItem(apiJson.index[apiJson.root], apiJson);
+    if (reviewLines) {
+      codeFile.ReviewLines.push(...reviewLines);
+    }
 
-  const reviewLines = processItem(apiJson.index[apiJson.root], apiJson);
-  if (reviewLines) {
-    codeFile.ReviewLines.push(...reviewLines);
+    // Write the JSON output to a file
+    fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
+    console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);
+  } catch (error) {
+    const errorMessage = hasFormatMismatch 
+      ? `Failed to generate API surface (possibly due to format version mismatch): ${error.message}`
+      : `Failed to generate API surface: ${error.message}`;
+    throw new Error(errorMessage);
   }
-
-  // Write the JSON output to a file
-  fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
-  console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);
 }
 
 main();

@@ -1,42 +1,55 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
-import { processAutoTraitImpls } from "./processImpl";
+import { ImplProcessResult, processAutoTraitImpls, processImpl } from "./processImpl";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 
-export function processEnum(item: Item, apiJson: Crate) {
-  if (!(typeof item.inner === "object" && "enum" in item.inner)) return;
+export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
+  if (!(typeof item.inner === "object" && "enum" in item.inner)) return [];
   const reviewLines: ReviewLine[] = [];
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
-  // Create the ReviewLine object
-  const reviewLine: ReviewLine = {
+  if (item.docs) {
+    reviewLines.push(createDocsReviewLine(item));
+  }
+
+  const enumLine: ReviewLine = {
     LineId: item.id.toString(),
     Tokens: [],
     Children: [],
   };
 
-  processAutoTraitImpls(item.inner.enum.impls, apiJson, reviewLine);
+  // Process derives and impls
+  let implResult: ImplProcessResult = {
+    deriveTokens: [],
+    implBlock: null,
+    closingBrace: null,
+    traitImpls: [],
+  };
+  if (item.inner.enum && item.inner.enum.impls) {
+    implResult = processImpl({ ...item, inner: { enum: item.inner.enum } }, apiJson);
+    enumLine.Tokens.push(...implResult.deriveTokens);
+  }
 
-  reviewLine.Tokens.push({
+  enumLine.Tokens.push({
     Kind: TokenKind.Keyword,
     Value: "pub enum",
   });
-  reviewLine.Tokens.push({
+
+  enumLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: item.name || "null",
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });
-  reviewLine.Tokens.push({
+  enumLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
   });
 
   // Process enum variants
   if (item.inner.enum.variants) {
-    item.inner.enum.variants.forEach((variant: number) => {
+    enumLine.Children = item.inner.enum.variants.map((variant: number) => {
       const variantItem = apiJson.index[variant];
-      const variantLine: ReviewLine = {
+      return {
         LineId: variantItem.id.toString(),
         Tokens: [
           {
@@ -52,21 +65,20 @@ export function processEnum(item: Item, apiJson: Crate) {
             HasSuffixSpace: false,
           },
         ],
-        Children: [],
       };
-      reviewLine.Children.push(variantLine);
     });
   }
 
-  reviewLines.push(reviewLine);
+  reviewLines.push(enumLine);
   reviewLines.push({
     RelatedToLine: item.id.toString(),
-    Tokens: [
-      {
-        Kind: TokenKind.Punctuation,
-        Value: "}",
-      },
-    ],
+    Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
   });
+
+  if (implResult.implBlock) {
+    reviewLines.push(implResult.implBlock);
+    reviewLines.push(implResult.closingBrace);
+  }
+  if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
   return reviewLines;
 }

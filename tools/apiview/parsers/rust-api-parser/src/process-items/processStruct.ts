@@ -1,6 +1,6 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
-import { processImpl } from "./processImpl";
+import { ImplProcessResult, processImpl } from "./processImpl";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 
@@ -11,28 +11,37 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
  * @param {Item} item - The struct item to process.
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
-export function processStruct(item: Item, apiJson: Crate) {
-  if (!(typeof item.inner === "object" && "struct" in item.inner)) return;
+export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
+  if (!(typeof item.inner === "object" && "struct" in item.inner)) return [];
   const reviewLines: ReviewLine[] = [];
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
-  // Create the ReviewLine object
-  const reviewLine: ReviewLine = {
+  if (item.docs) {
+    reviewLines.push(createDocsReviewLine(item));
+  }
+
+  const structLine: ReviewLine = {
     LineId: item.id.toString(),
     Tokens: [],
     Children: [],
   };
 
-  // Process derives
+  // Process derives and impls
+  let implResult: ImplProcessResult = {
+    deriveTokens: [],
+    implBlock: null,
+    closingBrace: null,
+    traitImpls: [],
+  };
   if (item.inner.struct && item.inner.struct.impls) {
-    processImpl({ ...item, inner: { struct: item.inner.struct } }, apiJson, reviewLine);
+    implResult = processImpl({ ...item, inner: { struct: item.inner.struct } }, apiJson);
+    structLine.Tokens.push(...implResult.deriveTokens);
   }
 
-  reviewLine.Tokens.push({
+  structLine.Tokens.push({
     Kind: TokenKind.Keyword,
     Value: "pub struct",
   });
-  reviewLine.Tokens.push({
+  structLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: item.name || "null",
     RenderClasses: ["struct"],
@@ -40,7 +49,7 @@ export function processStruct(item: Item, apiJson: Crate) {
     NavigationDisplayName: item.name || undefined,
   });
 
-  reviewLine.Tokens.push({
+  structLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
   });
@@ -53,11 +62,11 @@ export function processStruct(item: Item, apiJson: Crate) {
     item.inner.struct.kind.plain.fields.forEach((fieldId: number) => {
       const fieldItem = apiJson.index[fieldId];
       if (fieldItem && typeof fieldItem.inner === "object" && "struct_field" in fieldItem.inner) {
-        if (!reviewLine.Children) {
-          reviewLine.Children = [];
+        if (!structLine.Children) {
+          structLine.Children = [];
         }
 
-        reviewLine.Children.push({
+        structLine.Children.push({
           LineId: fieldItem.id.toString(),
           Tokens: [
             {
@@ -80,7 +89,7 @@ export function processStruct(item: Item, apiJson: Crate) {
     });
   }
 
-  reviewLines.push(reviewLine);
+  reviewLines.push(structLine);
   reviewLines.push({
     RelatedToLine: item.id.toString(),
     Tokens: [
@@ -90,5 +99,11 @@ export function processStruct(item: Item, apiJson: Crate) {
       },
     ],
   });
+
+  if (implResult.implBlock) {
+    reviewLines.push(implResult.implBlock);
+    reviewLines.push(implResult.closingBrace);
+  }
+  if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
   return reviewLines;
 }

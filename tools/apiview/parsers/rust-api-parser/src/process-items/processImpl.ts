@@ -1,13 +1,14 @@
 import { ReviewLine, TokenKind, ReviewToken } from "../models/apiview-models";
-import { Item, Crate, Impl, Struct, Union } from "../../rustdoc-types/output/rustdoc-types";
+import { Item, Crate, Impl, Struct, Union, Enum } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { typeToString } from "./utils/typeToString";
 
 type ImplItem = Omit<Item, "inner"> & { inner: { impl: Impl } };
 type StructItem = Omit<Item, "inner"> & { inner: { struct: Struct } };
 type UnionItem = Omit<Item, "inner"> & { inner: { union: Union } };
+type EnumItem = Omit<Item, "inner"> & { inner: { enum: Enum } };
 
-export function processAutoTraitImpls(impls: number[], apiJson: Crate, reviewLine: ReviewLine) {
+export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewToken[] {
   const traitImpls = (impls: number[], apiJson: Crate) =>
     impls
       .map((implId) => apiJson.index[implId] as ImplItem)
@@ -26,26 +27,24 @@ export function processAutoTraitImpls(impls: number[], apiJson: Crate, reviewLin
         HasSuffixSpace: false,
       }));
 
-  const addTokens = (tokens: ReviewToken[]) => {
-    reviewLine.Tokens.push({ Kind: TokenKind.Punctuation, Value: "#[", HasSuffixSpace: false });
-    reviewLine.Tokens.push({ Kind: TokenKind.Keyword, Value: "derive", HasSuffixSpace: false });
-    reviewLine.Tokens.push({ Kind: TokenKind.Punctuation, Value: "(", HasSuffixSpace: false });
-    tokens.forEach((token, index) => {
-      reviewLine.Tokens.push(token);
-      if (index < tokens.length - 1) {
-        reviewLine.Tokens.push({ Kind: TokenKind.Punctuation, Value: "," });
-      }
-    });
-    reviewLine.Tokens.push({ Kind: TokenKind.Punctuation, Value: ")]" });
-    reviewLine.Tokens.push({ Kind: TokenKind.Punctuation, Value: "\n", HasSuffixSpace: false });
-  };
-
   const traits = traitImpls(impls, apiJson);
-  if (traits.length) addTokens(traits);
+  if (!traits.length) return [];
+
+  return [
+    { Kind: TokenKind.Punctuation, Value: "#[", HasSuffixSpace: false },
+    { Kind: TokenKind.Keyword, Value: "derive", HasSuffixSpace: false },
+    { Kind: TokenKind.Punctuation, Value: "(", HasSuffixSpace: false },
+    ...traits.flatMap((token, index) => [
+      token,
+      ...(index < traits.length - 1 ? [{ Kind: TokenKind.Punctuation, Value: "," }] : []),
+    ]),
+    { Kind: TokenKind.Punctuation, Value: ")]" },
+    { Kind: TokenKind.Punctuation, Value: "\n", HasSuffixSpace: false },
+  ];
 }
 
-function processOtherTraitImpls(impls: number[], apiJson: Crate, reviewLine: ReviewLine) {
-  impls
+function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
+  return impls
     .map((implId) => apiJson.index[implId] as ImplItem)
     .filter(
       (implItem) =>
@@ -55,7 +54,7 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate, reviewLine: Rev
         implItem.inner.impl.trait &&
         !implItem.attrs.includes("#[automatically_derived]"),
     )
-    .map((implItem) => {
+    .flatMap((implItem) => {
       const reviewLineForImpl: ReviewLine = {
         LineId: implItem.id.toString() + "_impl",
         Tokens: [
@@ -72,16 +71,18 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate, reviewLine: Rev
           .map((item) => processItem(apiJson.index[item], apiJson))
           .flat(),
       };
-      reviewLine.Children.push(reviewLineForImpl);
-      reviewLine.Children.push({
+
+      const closingLine: ReviewLine = {
         RelatedToLine: implItem.id.toString() + "_impl",
         Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
-      });
+      };
+
+      return [reviewLineForImpl, closingLine];
     });
 }
 
-function processImpls(impls: number[], apiJson: Crate, reviewLine: ReviewLine) {
-  impls
+function processImpls(impls: number[], apiJson: Crate): ReviewLine[] {
+  return impls
     .map((implId) => apiJson.index[implId] as ImplItem)
     .filter(
       (implItem) =>
@@ -90,29 +91,35 @@ function processImpls(impls: number[], apiJson: Crate, reviewLine: ReviewLine) {
         implItem.inner.impl.blanket_impl === null &&
         implItem.inner.impl.trait === null,
     )
-    .forEach((implItem) => {
-      if (!reviewLine.Children.length) reviewLine.Children = [];
-      implItem.inner.impl.items.forEach((item) => {
-        reviewLine.Children.push(...processItem(apiJson.index[item], apiJson));
-      });
-    });
+    .flatMap((implItem) =>
+      implItem.inner.impl.items.map((item) => processItem(apiJson.index[item], apiJson)).flat(),
+    );
 }
 
-export function processImpl(item: StructItem |UnionItem, apiJson: Crate, reviewLine: ReviewLine) {
-  if ('struct' in item.inner) {
-    processAutoTraitImpls(item.inner.struct.impls, apiJson, reviewLine);
-  } else if ('union' in item.inner) {
-    processAutoTraitImpls(item.inner.union.impls, apiJson, reviewLine);
-  }
-  // Create the ReviewLine object
-  if (!reviewLine.Children.length) reviewLine.Children = [];
-  const reviewLineForImpl: ReviewLine = {
+export interface ImplProcessResult {
+  deriveTokens: ReviewToken[];
+  implBlock: ReviewLine;
+  closingBrace: ReviewLine;
+  traitImpls: ReviewLine[];
+}
+
+export function processImpl(
+  item: StructItem | UnionItem | EnumItem,
+  apiJson: Crate,
+): ImplProcessResult {
+  const impls =
+    "struct" in item.inner
+      ? item.inner.struct.impls
+      : "union" in item.inner
+        ? item.inner.union.impls
+        : item.inner.enum.impls;
+
+  const deriveTokens = processAutoTraitImpls(impls, apiJson);
+
+  const implBlock: ReviewLine = {
     LineId: item.id.toString() + "_impl",
     Tokens: [
-      {
-        Kind: TokenKind.Keyword,
-        Value: "impl",
-      },
+      { Kind: TokenKind.Keyword, Value: "impl" },
       {
         Kind: TokenKind.TypeName,
         Value: item.name || "null",
@@ -120,31 +127,17 @@ export function processImpl(item: StructItem |UnionItem, apiJson: Crate, reviewL
         NavigateToId: item.id.toString(),
         NavigationDisplayName: item.name || undefined,
       },
-      {
-        Kind: TokenKind.Punctuation,
-        Value: "{",
-      },
+      { Kind: TokenKind.Punctuation, Value: "{" },
     ],
-    Children: [],
+    Children: processImpls(impls, apiJson),
   };
-  reviewLine.Children.push(reviewLineForImpl);
 
-  if ('struct' in item.inner) {
-    processImpls(item.inner.struct.impls, apiJson, reviewLineForImpl);
-  } else if ('union' in item.inner) {
-    processImpls(item.inner.union.impls, apiJson, reviewLineForImpl);
-  }
-
-  reviewLine.Children.push({
+  const closingBrace: ReviewLine = {
     RelatedToLine: item.id.toString() + "_impl",
-    Tokens: [
-      {
-        Kind: TokenKind.Punctuation,
-        Value: "}",
-      },
-    ],
-  });
+    Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+  };
 
-  // TODO: Decide if we want to process other trait impls
-  // processOtherTraitImpls(item.inner.struct.impls, apiJson, reviewLine);
+  const traitImpls = processOtherTraitImpls(impls, apiJson);
+
+  return { deriveTokens, implBlock, closingBrace, traitImpls };
 }

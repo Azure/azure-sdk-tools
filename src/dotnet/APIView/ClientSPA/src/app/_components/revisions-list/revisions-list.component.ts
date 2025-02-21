@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
-import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
+import { Table, TableContextMenuSelectEvent, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { Pagination } from 'src/app/_models/pagination';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
@@ -81,7 +81,6 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.createRevisionFilters();
     this.createLanguageFilters();
-    this.createContextMenuItems();
     this.setDetailsIcons();
     if (!this.review) {
       this.loadAPIRevisions(0, this.pageSize * 2, true);
@@ -169,18 +168,19 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.createRevisionForm.get('filePath')?.disable();
   }
 
-  createContextMenuItems() {
+  createContextMenuItems(apiRevision: APIRevision) {
+    const disableDeleteOrRestore  = (apiRevision.apiRevisionType == "manual" && apiRevision.createdBy == this.userProfile?.userName) ? false : true;
     if (this.showDeletedAPIRevisions)
     {
       this.contextMenuItems = [
-        { label: 'Restore', icon: 'pi pi-folder-open', command: () => this.viewRevision(this.selectedRevision) }
+        { label: 'Restore', icon: 'pi pi-folder-open', disabled: disableDeleteOrRestore, command: () => this.viewRevision(this.selectedRevision) }
       ];
     }
     else 
     {
       this.contextMenuItems = [
         { label: 'View', icon: 'pi pi-folder-open', command: () => this.viewRevision(this.selectedRevision) },
-        { label: 'Delete', icon: 'pi pi-fw pi-times', command: () => this.deleteRevision(this.selectedRevision) }
+        { label: 'Delete', icon: 'pi pi-fw pi-times', disabled: disableDeleteOrRestore, command: () => this.deleteRevision(this.selectedRevision) }
       ];
     }
   }
@@ -370,7 +370,6 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   set showDeletedAPIRevisions(value: boolean) {
     this._showDeletedAPIRevisions = value;
     this.updateAPIRevisoinsListDetails();
-    this.createContextMenuItems();
   }
 
   get showAPIRevisionsAssignedToMe(): boolean {
@@ -449,6 +448,10 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   onFileSelect(event: FileSelectEvent) {
     const uploadFile = event.currentFiles[0];
     this.createRevisionForm.get('selectedFile')?.setValue(uploadFile);
+  }
+
+  onContextMenuSelect(event : TableContextMenuSelectEvent) {
+    this.createContextMenuItems(event.data);
   }
 
   // Fire API request to create the review

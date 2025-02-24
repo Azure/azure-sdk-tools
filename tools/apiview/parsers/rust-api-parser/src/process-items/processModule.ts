@@ -46,7 +46,7 @@ export function processModule(apiJson: Crate, item: Item) {
         if (!reviewLine.Children) {
           reviewLine.Children = [];
         }
-        reviewLine.Children.push(...childReviewLines);
+        reviewLine.Children.push(...childReviewLines.filter(item => item != null));
       }
     });
   }

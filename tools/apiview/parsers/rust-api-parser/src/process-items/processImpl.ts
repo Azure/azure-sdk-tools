@@ -68,7 +68,7 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
           { Kind: TokenKind.Punctuation, Value: "{" },
         ],
         Children: implItem.inner.impl.items
-          .map((item) => processItem(apiJson.index[item], apiJson))
+          .map((item) => processItem(apiJson.index[item], apiJson)).filter(item => item != null)
           .flat(),
       };
 

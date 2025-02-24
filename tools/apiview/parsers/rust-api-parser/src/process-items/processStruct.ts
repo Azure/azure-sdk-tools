@@ -52,6 +52,7 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
   structLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
+    HasSuffixSpace: false,
   });
   // fields
   if (
@@ -87,18 +88,24 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
         });
       }
     });
+    
+    reviewLines.push(structLine);
+    reviewLines.push({
+      RelatedToLine: item.id.toString(),
+      Tokens: [
+        {
+          Kind: TokenKind.Punctuation,
+          Value: "}",
+        },
+      ],
+    });
+  } else {
+    structLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "}",
+    });
+    reviewLines.push(structLine);
   }
-
-  reviewLines.push(structLine);
-  reviewLines.push({
-    RelatedToLine: item.id.toString(),
-    Tokens: [
-      {
-        Kind: TokenKind.Punctuation,
-        Value: "}",
-      },
-    ],
-  });
 
   if (implResult.implBlock) {
     reviewLines.push(implResult.implBlock);

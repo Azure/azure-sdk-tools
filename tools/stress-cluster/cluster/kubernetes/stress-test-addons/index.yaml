@@ -3,11 +3,11 @@ entries:
   stress-test-addons:
   - apiVersion: v2
     appVersion: v0.1
-    created: "2025-02-20T18:58:47.691456272-05:00"
+    created: "2025-02-21T15:31:20.141576563-05:00"
     description: Baseline resources and templates for stress testing clusters
-    digest: e3de94eecae9d5ca3b1698cc2a7af71b36b08370bd23313b7d7586fa26f29229
+    digest: fbabbb9002950f7b0b428d1303a3034bb5e4240b125670226e804b6e71ec02c3
     name: stress-test-addons
     urls:
     - https://azuresdkartifacts.z5.web.core.windows.net/stress/stress-test-addons-0.3.5.tgz
     version: 0.3.5
-generated: "2025-02-20T18:58:47.680849818-05:00"
+generated: "2025-02-21T15:31:20.131665494-05:00"

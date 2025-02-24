@@ -15,10 +15,35 @@ This project provides tools to convert Rust models into TypeScript types using `
     cargo install typeshare-cli
     ```
 
+3. **Install Dependencies**:
+    ```sh
+    cargo vendor
+    ```
+    This will create the `vendor` directory with all required dependencies.
+
+## Dependencies
+
+This project uses vendored dependencies to ensure consistent rustdoc-types. The `rustdoc-types` dependency is vendored in the `vendor` directory and is configured through `.cargo/config.toml`.
+
+### Updating rustdoc-types Version
+
+1. Update the version in `Cargo.toml`:
+    ```toml
+    [dependencies]
+    rustdoc-types = "0.33.0"  # Replace with desired version
+    ```
+
+2. **Vendor Dependencies**:
+    ```sh
+    cargo vendor
+    ```
+    This will update the vendored copy in `vendor/rustdoc-types/`.
+
+3. Verify that the `FORMAT_VERSION` in `vendor/rustdoc-types/src/lib.rs` matches with the desired version in your rustdoc output from the azure-sdk-for-rust repository.
+
 ## Usage
 
-1. Get the latest version of `lib.rs` from [rust-lang/rust](https://github.com/rust-lang/rust/blob/fb65a3ee576feab95a632eb062f466d7a0342310/src/rustdoc-json-types/lib.rs).
-    - Make sure the `FORMAT_VERSION` matches with the desired version in your rustdoc output from the azure-sdk-for-rust repository.
+1. The source `lib.rs` is located at `vendor/rustdoc-types/src/lib.rs`. This file contains the definitions that will be converted to TypeScript.
 
 2. **Generate `output/lib-typeshare.rs` from `lib.rs`**:
     ```sh
@@ -44,7 +69,12 @@ This project provides tools to convert Rust models into TypeScript types using `
     ts-node post-processing.ts
     ```
 
-## Files
+## Version Compatibility
 
-- `lib.rs`: Copied from [rust-lang/rust](https://github.com/rust-lang/rust/blob/fb65a3ee576feab95a632eb062f466d7a0342310/src/rustdoc-json-types/lib.rs).
-- `add-typeshare.rs`: Script to append `#[typeshare]` attributes in `lib.rs`.
+The `FORMAT_VERSION` in `vendor/rustdoc-types/src/lib.rs` is critical for compatibility with rustdoc JSON output. When updating the vendored `rustdoc-types`:
+
+1. Check the `FORMAT_VERSION` value in the new version
+2. Verify it's compatible with your rustdoc JSON output version
+3. If they don't match, you may need to use a different version of `rustdoc-types`
+
+Current `FORMAT_VERSION`: 37 (as of rustdoc-types 0.33.0)

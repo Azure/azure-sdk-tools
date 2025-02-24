@@ -17,7 +17,7 @@ This project provides tools to convert Rust models into TypeScript types using `
 
 ## Usage
 
-1. Get the latest version of `lib.rs` from [rust-lang/rust](https://github.com/rust-lang/rust/blob/fb65a3ee576feab95a632eb062f466d7a0342310/src/rustdoc-json-types/lib.rs). 
+1. Get the latest version of `lib.rs` from [rust-lang/rust](https://github.com/rust-lang/rust/blob/fb65a3ee576feab95a632eb062f466d7a0342310/src/rustdoc-json-types/lib.rs).
     - Make sure the `FORMAT_VERSION` matches with the desired version in your rustdoc output from the azure-sdk-for-rust repository.
 
 2. **Generate `output/lib-typeshare.rs` from `lib.rs`**:

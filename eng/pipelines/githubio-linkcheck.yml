@@ -11,7 +11,7 @@ variables:
 jobs:
 - job: CheckLinks
   displayName: Check and Cache Links
-  timeoutInMinutes: 360
+  timeoutInMinutes: 720
   steps:
   - task: PowerShell@2
     displayName: 'azure-sdk link check'
@@ -113,6 +113,7 @@ jobs:
 
   - task: AzurePowerShell@5
     displayName: 'Upload cache file to blob container'
+    condition: succeededOrFailed()
     inputs:
       azureSubscription: 'Azure SDK Artifacts'
       ScriptType: 'InlineScript'

@@ -12,7 +12,7 @@ BeforeAll {
         "operatingSystem": [
           "windows-2022",
           "ubuntu-20.04",
-          "macos-11"
+          "macos-latest"
         ],
         "framework": [
           "net461",
@@ -36,11 +36,11 @@ BeforeAll {
             "framework": "net461"
         },
         {
-            "operatingSystem": "macos-11",
+            "operatingSystem": "macos-latest",
             "framework": "netcoreapp2.1"
         },
         {
-            "operatingSystem": ["macos-11", "ubuntu-20.04"],
+            "operatingSystem": ["macos-latest", "ubuntu-20.04"],
             "additionalArguments": "--enableFoo"
         }
     ]
@@ -275,7 +275,7 @@ Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
         "operatingSystem": [
           "windows-2022",
           "ubuntu-20.04",
-          "macos-11"
+          "macos-latest"
         ],
         "framework": [
           "net461",
@@ -321,7 +321,7 @@ Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
         $element.name | Should -Be "ubuntu2004_netcoreapp21_withFoo"
 
         $element = GetNdMatrixElement @(2, 1, 1) $matrix $dimensions
-        $element.name | Should -Be "macOS11_netcoreapp21_withFoo"
+        $element.name | Should -Be "macOSlatest_netcoreapp21_withFoo"
     }
 
     It "Should initialize an N-dimensional matrix from all parameter permutations" {
@@ -340,7 +340,7 @@ Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
         $element.parameters.additionalArguments | Should -Be "--enableFoo"
 
         $element = GetNdMatrixElement @(2, 1, 1) $matrix $dimensions
-        $element.parameters.operatingSystem | Should -Be "macos-11"
+        $element.parameters.operatingSystem | Should -Be "macos-latest"
         $element.parameters.framework | Should -Be "netcoreapp2.1"
         $element.parameters.additionalArguments | Should -Be "--enableFoo"
     }
@@ -348,7 +348,7 @@ Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
     It "Should initialize a sparse matrix from an N-dimensional matrix" -TestCases @(
         @{ i = 0; name = "windows2022_net461"; operatingSystem = "windows-2022"; framework = "net461"; additionalArguments = ""; }
         @{ i = 1; name = "ubuntu2004_netcoreapp21_withfoo"; operatingSystem = "ubuntu-20.04"; framework = "netcoreapp2.1"; additionalArguments = "--enableFoo"; }
-        @{ i = 2; name = "macOS11_net461"; operatingSystem = "macos-11"; framework = "net461"; additionalArguments = ""; }
+        @{ i = 2; name = "macOSlatest_net461"; operatingSystem = "macos-latest"; framework = "net461"; additionalArguments = ""; }
     ) {
         $sparseMatrix = GenerateSparseMatrix $generateConfig.matrixParameters $generateConfig.displayNamesLookup
         $dimensions = GetMatrixDimensions $generateConfig.matrixParameters
@@ -440,9 +440,9 @@ Describe "Platform Matrix Post Transformation" -Tag "UnitTest", "transform" {
         $matrix[2].parameters.operatingSystem | Should -Be "ubuntu-20.04"
         $matrix[2].parameters.additionalArguments | Should -Be ""
 
-        $matrix[4].name | Should -Be "macOS11_net461"
+        $matrix[4].name | Should -Be "macOSlatest_net461"
         $matrix[4].parameters.framework | Should -Be "net461"
-        $matrix[4].parameters.operatingSystem | Should -Be "macos-11"
+        $matrix[4].parameters.operatingSystem | Should -Be "macos-latest"
         $matrix[4].parameters.additionalArguments | Should -Be ""
 
         $matrix[7].name | Should -Be "windows2022_net50_enableWindowsFoo"

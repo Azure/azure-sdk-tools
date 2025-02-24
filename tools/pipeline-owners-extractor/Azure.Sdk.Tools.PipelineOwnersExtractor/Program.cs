@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Azure.Sdk.Tools.PipelineOwnersExtractor
@@ -28,13 +28,8 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
                 .UseContentRoot(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddSingleton<TokenCredential, ChainedTokenCredential>(
-                        DefaultAzureCredentialWithoutManagedIdentity);
-                    services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
+                    services.AddSingleton<TokenCredential>(BuildAzureCredential);
                     services.Configure<PipelineOwnerSettings>(context.Configuration);
-                    services
-                        .AddSingleton<IPostConfigureOptions<PipelineOwnerSettings>,
-                            PostConfigureKeyVaultSettings<PipelineOwnerSettings>>();
                     services.AddSingleton<GitHubService>();
                     services.AddSingleton(CreateGithubAadConverter);
                     services.AddSingleton(CreateAzureDevOpsService);
@@ -48,45 +43,21 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
         }
 
         /// <summary>
-        /// Instead of using DefaultAzureCredential [1] we use ChainedTokenCredential [2] which works
-        /// as DefaultAzureCredential, but most importantly, it excludes ManagedIdentityCredential.
-        /// We do so because there is an undesired managed identity available when we run this
-        /// code in CI/CD pipelines, which takes priority over the desired AzureCliCredential coming
-        /// from the calling AzureCLI@2 task.
-        ///
-        /// Besides, the returned ChainedTokenCredential also excludes following credentials:
-        ///
-        /// - SharedTokenCredential, as it appears to fail on linux with following error:
-        ///   SharedTokenCacheCredential authentication failed: Persistence check failed. Data was written but it could not be read. Possible cause: on Linux, LibSecret is installed but D-Bus isn't running because it cannot be started over SSH.
-        ///
-        /// - VisualStudioCodeCredential, as it doesn't work, as explained here:
-        ///   https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet#defaultazurecredential
-        ///
-        /// The remaining credentials are in the same order as in DefaultAzureCredential.
-        ///
-        /// For debugging aids helping determine which credential is used and how,
-        /// please see the following tags in azure-sdk-tools repo:
-        /// - kojamroz_debug_aid_default_azure_credentials
-        ///   Code from @hallipr showing how to get credential data using Microsoft Graph and JwtSecurityToken
-        /// - kojamroz_debug_aid_diag_log_on_creds
-        ///   Code from kojamroz showing how to use Azure.Identity diagnostic output to get information on which
-        ///   credential ends up being in use (additional flags must be set to see the full info [3])
-        /// 
+        /// Build a TokenCredential supporting <see cref="AzurePowerShellCredential"/> and <see cref="AzureCliCredential"/>
+        /// </summary>
+        /// <remarks>
         /// Full context provided here, on internal Azure SDK Engineering System Teams channel:
         /// https://teams.microsoft.com/l/message/19:59dbfadafb5e41c4890e2cd3d74cc7ba@thread.skype/1675713800408?tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47&groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&parentMessageId=1675713800408&teamName=Azure%20SDK&channelName=Engineering%20System%20%F0%9F%9B%A0%EF%B8%8F&createdTime=1675713800408
         ///
-        /// [1] https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet#defaultazurecredential
-        /// [2] https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet#define-a-custom-authentication-flow-with-chainedtokencredential
-        /// [3] https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/README.md#logging
-        /// </summary>
-        private static Func<IServiceProvider, ChainedTokenCredential> DefaultAzureCredentialWithoutManagedIdentity
-            => _
-                => new ChainedTokenCredential(
-                    new EnvironmentCredential(),
-                    new VisualStudioCredential(),
-                    new AzureCliCredential(),
-                    new AzurePowerShellCredential(),
-                    new InteractiveBrowserCredential());
+        /// [1] https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet#define-a-custom-authentication-flow-with-chainedtokencredential
+        /// [2] https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/README.md#logging
+        /// </remarks>
+        private static TokenCredential BuildAzureCredential(IServiceProvider provider) {
+            return new ChainedTokenCredential(
+                new AzureCliCredential(),
+                new AzurePowerShellCredential()
+            );
+        }
 
         private static AzureDevOpsService CreateAzureDevOpsService(IServiceProvider provider)
         {
@@ -94,8 +65,10 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
             var settings = provider.GetRequiredService<IOptions<PipelineOwnerSettings>>().Value;
 
             var uri = new Uri($"https://dev.azure.com/{settings.Account}");
-            var credentials = new VssBasicCredential("pat", settings.AzureDevOpsPat);
-            var connection = new VssConnection(uri, credentials);
+            
+            var azureCredential = provider.GetRequiredService<TokenCredential>();
+            var devopsCredential = new VssAzureIdentityCredential(azureCredential);
+            var connection = new VssConnection(uri, devopsCredential);
 
             return new AzureDevOpsService(connection, logger);
         }
@@ -103,14 +76,9 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
         private static GitHubToAADConverter CreateGithubAadConverter(IServiceProvider provider)
         {
             var logger = provider.GetRequiredService<ILogger<GitHubToAADConverter>>();
-            var settings = provider.GetRequiredService<IOptions<PipelineOwnerSettings>>().Value;
+            var azureCredential = provider.GetRequiredService<TokenCredential>();
 
-            var credential = new ClientSecretCredential(
-                settings.OpenSourceAadTenantId, 
-                settings.OpenSourceAadAppId,
-                settings.OpenSourceAadSecret);
-
-            return new GitHubToAADConverter(credential, logger);
+            return new GitHubToAADConverter(azureCredential, logger);
         }
     }
 }

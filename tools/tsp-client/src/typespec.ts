@@ -1,15 +1,19 @@
 import { resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
-import { ModuleResolutionResult, resolveModule, ResolveModuleHost } from "@typespec/compiler/module-resolver";
+import {
+  ModuleResolutionResult,
+  resolveModule,
+  ResolveModuleHost,
+} from "@typespec/compiler/module-resolver";
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
-
 
 export interface TspLocation {
   directory: string;
   commit: string;
   repo: string;
   additionalDirectories?: string[];
+  entrypointFile?: string;
 }
 
 export function resolveTspConfigUrl(configUrl: string): {
@@ -20,7 +24,9 @@ export function resolveTspConfigUrl(configUrl: string): {
 } {
   let resolvedConfigUrl = configUrl;
 
-  const res = configUrl.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')
+  const res = configUrl.match(
+    "^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$",
+  );
   if (res && res.groups) {
     if (res.groups["urlRoot"]! === "github") {
       resolvedConfigUrl = configUrl.replace("github.com", "raw.githubusercontent.com");
@@ -31,25 +37,38 @@ export function resolveTspConfigUrl(configUrl: string): {
       commit: res.groups!["commit"]!,
       repo: res.groups!["repo"]!,
       path: res.groups!["path"]!,
-    }
+    };
   } else {
     throw new Error(`Invalid tspconfig.yaml url: ${configUrl}`);
   }
 }
 
+export async function discoverEntrypointFile(
+  srcDir: string,
+  specifiedEntrypointFile?: string,
+): Promise<string> {
+  Logger.debug(`Discovering entry file in ${srcDir}`);
+  let entryTsp: string | undefined = undefined;
+  const files = await readdir(srcDir, { recursive: true });
 
-export async function discoverMainFile(srcDir: string): Promise<string> {
-  Logger.debug(`Discovering entry file in ${srcDir}`)
-  let entryTsp = "";
-  const files = await readdir(srcDir, {recursive: true });
-  for (const file of files) {
-    if (file.includes("client.tsp") || file.includes("main.tsp")) {
-      entryTsp = file;
-      Logger.debug(`Found entry file: ${entryTsp}`);
-      return entryTsp;
+  function findEntrypoint(name: string): string | undefined {
+    return files.find((file) => file.endsWith(name)) ?? undefined;
+  }
+  if (specifiedEntrypointFile) {
+    entryTsp = findEntrypoint(specifiedEntrypointFile);
+    if (!entryTsp) {
+      throw new Error(
+        `Couldn't find the entrypoint file specified in tsp-location.yaml: "${specifiedEntrypointFile}". Please verify that the entrypoint file name is correct.`,
+      );
     }
-  };
-  throw new Error(`No main.tsp or client.tsp found`);
+  } else {
+    entryTsp = findEntrypoint("client.tsp") ?? findEntrypoint("main.tsp");
+    if (!entryTsp) {
+      throw new Error(`No main.tsp or client.tsp found`);
+    }
+  }
+  Logger.debug(`Found entry file: ${entryTsp}`);
+  return entryTsp;
 }
 
 export async function compileTsp({
@@ -64,9 +83,10 @@ export async function compileTsp({
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
-}) {
+}): Promise<[boolean, string]> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
-  const { compile, NodeHost, getSourceLocation, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
+  const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
+    await importTsp(parsedEntrypoint);
 
   const outputDir = resolvePath(outputPath);
   const overrideOptions: Record<string, Record<string, string>> = {
@@ -74,7 +94,7 @@ export async function compileTsp({
       "emitter-output-dir": outputDir,
     },
   };
-  const emitterOverrideOptions = overrideOptions[emitterPackage] ?? {[emitterPackage]: {}};
+  const emitterOverrideOptions = overrideOptions[emitterPackage] ?? { [emitterPackage]: {} };
   if (saveInputs) {
     emitterOverrideOptions["save-inputs"] = "true";
   }
@@ -98,24 +118,58 @@ export async function compileTsp({
     overrides,
   });
   Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
+
+  const cliOptions = Object.entries(options.options?.[emitterPackage] ?? {})
+    .map(([key, value]) => {
+      if (typeof value === "object") {
+        value = JSON.stringify(value);
+      }
+      return `--option ${key}=${value}`;
+    })
+    .join(" ");
+
+  const exampleCmd = `npx tsp compile ${resolvedMainFilePath} --emit ${emitterPackage} ${cliOptions}`;
+
   if (diagnostics.length > 0) {
+    let errorDiagnostic = false;
     // This should not happen, but if it does, we should log it.
-    Logger.debug(`Compiler options diagnostic information: ${JSON.stringify(diagnostics)}`);
+    Logger.warn(
+      "Diagnostics were reported while resolving compiler options. Use the `--debug` flag to see if there is warning diagnostic output.",
+    );
+    for (const diagnostic of diagnostics) {
+      if (diagnostic.severity === "error") {
+        Logger.error(formatDiagnostic(diagnostic));
+        errorDiagnostic = true;
+      } else {
+        Logger.debug(formatDiagnostic(diagnostic));
+      }
+    }
+    if (errorDiagnostic) {
+      return [false, exampleCmd];
+    }
   }
 
   const program = await compile(NodeHost, resolvedMainFilePath, options);
 
   if (program.diagnostics.length > 0) {
+    let errorDiagnostic = false;
+    Logger.warn(
+      "Diagnostics were reported during compilation. Use the `--debug` flag to see if there is warning diagnostic output.",
+    );
     for (const diagnostic of program.diagnostics) {
-      const location = getSourceLocation(diagnostic.target);
-      const source = location ? location.file.path : "unknown";
-      console.error(
-        `${diagnostic.severity}: ${diagnostic.code} - ${diagnostic.message} @ ${source}`,
-      );
+      if (diagnostic.severity === "error") {
+        Logger.error(formatDiagnostic(diagnostic));
+        errorDiagnostic = true;
+      } else {
+        Logger.debug(formatDiagnostic(diagnostic));
+      }
     }
-  } else {
-    Logger.success("generation complete");
+    if (errorDiagnostic) {
+      return [false, exampleCmd];
+    }
   }
+  Logger.success("generation complete");
+  return [true, exampleCmd];
 }
 
 export async function importTsp(baseDir: string): Promise<typeof import("@typespec/compiler")> {

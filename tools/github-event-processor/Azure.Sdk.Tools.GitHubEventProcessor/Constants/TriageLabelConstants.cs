@@ -21,5 +21,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public const string NoRecentActivity = "no-recent-activity";
         public const string Question = "question";
         public const string ServiceAttention = "Service Attention";
+        public const string AutoCloseExempt = "auto-close-exempt";
     }
 }

@@ -1,0 +1,52 @@
+:host ::ng-deep {
+    .p-timeline-event-opposite {
+        display: none;
+    }
+
+    .p-timeline-event-separator {
+        margin-left: 3%;
+    }
+
+    .p-timeline .p-timeline-event-connector {
+        background-color: var(--border-color) !important;
+    }
+
+    .p-timeline.p-timeline-vertical .p-timeline-event-connector {
+        width: 2px;
+    }
+
+    .emphasis-badge {
+        border-radius: 5px;
+        padding: 0px 5px 2px 5px;
+        font-size: smaller;
+        font-weight: bold;
+
+        &.info {
+            background-color: var(--alert-info-bg);
+            color: var(--alert-info-color);
+            border: 1px solid var(--alert-info-border-color);
+        }
+
+        &.warn {
+            background-color: var(--alert-warn-bg);
+            color: var(--alert-warn-color);
+            border: 1px solid var(--alert-warn-border-color);
+        }
+        
+        &.success {
+            background-color: var(--alert-success-bg);
+            color: var(--alert-success-color);
+            border: 1px solid var(--alert-success-border-color);
+        }
+
+        &.secondary {
+            background-color: var(--alert-secondary-bg);
+            color: var(--alert-secondary-color);
+            border: 1px solid var(--alert-secondary-border-color);
+        }
+    }
+
+    .conversation-group-element-id {
+        cursor: pointer;
+    }
+}

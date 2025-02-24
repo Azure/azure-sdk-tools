@@ -4,10 +4,11 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.CodeAnalysis.Host;
 
 namespace APIViewWeb.Managers
 {
@@ -78,18 +79,22 @@ namespace APIViewWeb.Managers
                     foreach (var entry in archive.Entries)
                     {
                         var fileName = Path.GetFileName(entry.Name);
-                        if (fileName == originalFileName)
+                        if (!string.IsNullOrEmpty(fileName))
                         {
-                            await entry.Open().CopyToAsync(originalFileStream);
-                        }
+                            if (fileName == originalFileName)
+                            {
+                                await entry.Open().CopyToAsync(originalFileStream);
+                            }
 
-                        if (fileName == codeFileName)
-                        {
-                            codeFile = await CodeFile.DeserializeAsync(entry.Open());
-                        }
-                        else if (fileName == baselineCodeFileName)
-                        {
-                            await entry.Open().CopyToAsync(baselineStream);
+                            if (fileName == codeFileName)
+                            {
+                                var language = LanguageServiceHelpers.GetLanguageFromRepoName(repoName);
+                                codeFile = await CodeFile.DeserializeAsync(entry.Open(), doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
+                            }
+                            else if (fileName == baselineCodeFileName)
+                            {
+                                await entry.Open().CopyToAsync(baselineStream);
+                            }
                         }
                     }
                 }
@@ -195,12 +200,24 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="codeFileA"></param>
         /// <param name="codeFileB"></param>
-        /// <returns></returns>
+        /// <returns>bool</returns>
         public bool AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
         {
-            var codeFileATextLines = codeFileA.RenderText(false, skipDiff: true);
-            var codeFileBTextLines = codeFileB.RenderText(false, skipDiff: true);
-            return codeFileATextLines.SequenceEqual(codeFileBTextLines);
+            if (codeFileA.CodeFile.VersionString != codeFileA.CodeFile.VersionString)
+            {
+                return false;
+            }
+
+            if (LanguageServiceHelpers.UseTreeStyleParser(codeFileA.CodeFile.Language))
+            {
+                return CodeFileHelpers.AreCodeFilesSame(codeFileA.CodeFile, codeFileB.CodeFile);
+            }
+            else
+            {
+                var codeFileATextLines = codeFileA.RenderText(false, skipDiff: true);
+                var codeFileBTextLines = codeFileB.RenderText(false, skipDiff: true);
+                return codeFileATextLines.SequenceEqual(codeFileBTextLines);
+            }
         }
 
         public bool AreCodeFilesTheSame(CodeFile codeFileA, CodeFile codeFileB)
@@ -219,7 +236,7 @@ namespace APIViewWeb.Managers
             return result;
         }
 
-        private void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)
+        private static void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)
         {
             file.Language = codeFile.Language;
             file.LanguageVariant = codeFile.LanguageVariant;
@@ -228,6 +245,7 @@ namespace APIViewWeb.Managers
             file.PackageName = codeFile.PackageName;
             file.PackageVersion = codeFile.PackageVersion;
             file.CrossLanguagePackageId = codeFile.CrossLanguagePackageId;
+            file.ParserStyle = (codeFile.ReviewLines.Count > 0) ? ParserStyle.Tree : ParserStyle.Flat;
         }
     }
 }

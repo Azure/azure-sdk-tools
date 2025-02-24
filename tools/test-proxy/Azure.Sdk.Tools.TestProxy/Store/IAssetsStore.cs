@@ -11,7 +11,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Given a configuration, push the changes made by the test-proxy into the remote store.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
-        public abstract Task Push(string pathToAssetsJson);
+        /// <param name="ignoreSecretProtection"></param>
+        /// <returns>An integer representing the status of the push command.</returns>
+        public abstract Task<int> Push(string pathToAssetsJson, bool ignoreSecretProtection = false);
 
         /// <summary>
         /// Given a configuration, pull any remote resources down into the provided contextPath.
@@ -31,5 +33,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
         public abstract Task<NormalizedString> GetPath(string pathToAssetsJson);
+
+        /// <summary>
+        /// Set the mode of the store to throw exceptions or to simply early exit for CLI mode.
+        /// </summary>
+        /// <param name="throwOnException"></param>
+        /// <returns></returns>
+        public abstract void SetStoreExceptionMode(bool throwOnException);
     }
 }

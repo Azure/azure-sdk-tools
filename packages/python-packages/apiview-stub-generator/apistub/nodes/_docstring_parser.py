@@ -23,16 +23,17 @@ docstring_return_keywords = ["rtype"]
 
 class DocstringParser:
     """This represents a parsed doc string which contain positional, instance, and keyword arguments
-       and return type. Arguments are represented as key-value pairs where the key is the argument
-       name and the value is the argument itself.
+    and return type. Arguments are represented as key-value pairs where the key is the argument
+    name and the value is the argument itself.
     """
 
-    def __init__(self, docstring):
+    def __init__(self, docstring, apiview):
         self.pos_args = OrderedDict()
         self.kwargs = OrderedDict()
         self.ivars = OrderedDict()
         self.ret_type = None
         self.docstring = docstring
+        self.apiview = apiview
         self._parse()
 
     def _extract_type(self, line1, line2):
@@ -43,7 +44,7 @@ class DocstringParser:
             # must be on the second
             ret_val = line2
         elif line1.endswith(",") or line1.endswith(" or"):
-            # if the first line ends with these values, the 
+            # if the first line ends with these values, the
             # type info wraps to the next line
             ret_val = " ".join([line1, line2])
         else:
@@ -81,7 +82,7 @@ class DocstringParser:
         # can only span one extra line, not more than one.
         (keyword, label) = tag
         if keyword in docstring_param_keywords:
-            arg = ArgType(name=label, argtype=None, default=default, keyword=keyword)
+            arg = ArgType(name=label, argtype=None, default=default, keyword=keyword, apiview=self.apiview)
             self._update_arg(arg, keyword)
             return (arg, True)
         elif keyword in docstring_type_keywords:
@@ -105,7 +106,7 @@ class DocstringParser:
         # and there can only be one simple type
         # Example: :param str name: The name of the thing.
         (keyword, typename, name) = tag
-        arg = ArgType(name=name, argtype=typename, default=default, keyword=keyword)
+        arg = ArgType(name=name, argtype=typename, default=default, keyword=keyword, apiview=self.apiview)
         self._update_arg(arg, keyword)
 
     def _process_return_type(self, line1, line2):
@@ -134,12 +135,13 @@ class DocstringParser:
     """ From a given starting line number, find where the docstring
         description logically ends.
     """
+
     def _find_end_line(self, lines, start_at):
         # special case where the line being examined is the last line
         if start_at + 1 == len(lines):
             return start_at
-        remaining = lines[start_at + 1:]
-        for (idx, line) in enumerate(remaining):
+        remaining = lines[start_at + 1 :]
+        for idx, line in enumerate(remaining):
             if line_tag_regex.match(line):
                 return start_at + idx + 1
         return start_at + len(remaining)
@@ -158,7 +160,7 @@ class DocstringParser:
                 continue
 
             end_line = self._find_end_line(lines, line_no)
-            default = self._extract_default(" ".join(lines[line_no: end_line]))
+            default = self._extract_default(" ".join(lines[line_no:end_line]))
 
             (tag, line1) = tag_match.groups()
             split_tag = tag.split()
@@ -178,19 +180,11 @@ class DocstringParser:
                 self.ret_type = self._process_return_type(line1.strip(), line2)
 
     def type_for(self, name):
-        arg = (
-            self.ivars.get(name, None) or
-            self.pos_args.get(name, None) or
-            self.kwargs.get(name, None)
-        )
+        arg = self.ivars.get(name, None) or self.pos_args.get(name, None) or self.kwargs.get(name, None)
         return arg.argtype if arg else arg
 
     def default_for(self, name):
-        arg = (
-            self.ivars.get(name, None) or
-            self.pos_args.get(name, None) or
-            self.kwargs.get(name, None)
-        )
+        arg = self.ivars.get(name, None) or self.pos_args.get(name, None) or self.kwargs.get(name, None)
         if not arg:
             return None
         argtype = arg.argtype or self.type_for(name)

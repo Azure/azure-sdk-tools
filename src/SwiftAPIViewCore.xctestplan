@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "48782905-B2E9-45DE-B537-392AF13BD2AC",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:SwiftAPIViewCore.xcodeproj",
+        "identifier" : "0A8469E827879AE200C967A8",
+        "name" : "SwiftAPIViewCoreTests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -36,11 +36,5 @@ namespace Azure.Sdk.Tools.TestProxy.Common.Exceptions
         {
             StatusCode = statusCode;
         }
-
-        protected HttpException(HttpStatusCode statusCode, SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-            StatusCode = statusCode;
-        }
-
     }
 }

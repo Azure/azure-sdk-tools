@@ -83,13 +83,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers.Remove("x-recording-file");
+            httpContext.Request.ContentLength = 0;
+            httpContext.Request.Body = null;
 
             if (!string.IsNullOrEmpty(additionalEntryModeHeader))
             {
                 httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
             }
 
-            controller.Stop();
+            await controller.Stop();
 
             if (string.IsNullOrEmpty(additionalEntryModeHeader))
             {
@@ -127,10 +129,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers.Remove("x-recording-file");
 
             httpContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
+            httpContext.Request.ContentLength = 0;
+            httpContext.Request.Body = null;
 
 
-            var resultingException = Assert.Throws<HttpException>(
-               () => controller.Stop()
+            var resultingException = await Assert.ThrowsAsync<HttpException>(
+               async () => await controller.Stop()
             );
 
             Assert.Equal("When stopping a recording and providing a \"x-recording-skip\" value, only value \"request-response\" is accepted.", resultingException.Message);
@@ -162,7 +166,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 recordContext.Request.Headers["x-recording-skip"] = additionalEntryModeHeader;
             }
 
-            recordController.Stop();
+            await recordController.Stop();
 
             if (string.IsNullOrEmpty(additionalEntryModeHeader))
             {
@@ -212,7 +216,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             foreach (var kvp in requestHeaders)
             {
-                playbackContext.Request.Headers.Add(kvp.Key, kvp.Value);
+                playbackContext.Request.Headers.Append(kvp.Key, kvp.Value);
             }
             playbackContext.Request.Method = "POST";
 

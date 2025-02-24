@@ -2,40 +2,99 @@ parameters:
   - name: DryRun
     type: boolean
     default: false
+  - name: GroupFilter
+    type: string
+    default: '*'
   - name: DisplayName
+    type: string
+  - name: ServiceConnection
     type: string
   - name: SubscriptionConfigurations
     type: object
-    default:
-      - $(sub-config-azure-cloud-test-resources)
+    default: []
+  - name: SubscriptionConfigurationFilePaths
+    type: object
+    default: []
   - name: GithubAliasCachePath
     type: string
   - name: AdditionalParameters
     type: string
     default: ""
+  - name: Pool
+    type: string
 
 steps:
+  - pwsh: Write-Host "##vso[task.setvariable variable=Pool;]${{ parameters.Pool }}"
+
   - template: /eng/common/TestResources/build-test-resource-config.yml
     parameters:
       SubscriptionConfigurations: ${{ parameters.SubscriptionConfigurations }}
+      SubscriptionConfigurationFilePaths: ${{ parameters.SubscriptionConfigurationFilePaths }}
+      EnvVars:
+        Pool: $(Pool)
 
-  - pwsh: |
-      eng/common/scripts/Import-AzModules.ps1
-      Import-Module Az.Accounts
+  - ${{ if ne(parameters.ServiceConnection, '') }}:
+    - task: AzurePowerShell@5
+      inputs:
+        azureSubscription: ${{ parameters.ServiceConnection }}
+        azurePowerShellVersion: LatestVersion
+        pwsh: true
+        ScriptType: InlineScript
+        Inline: |
+          eng/common/scripts/Import-AzModules.ps1
+          Import-Module Az.Accounts
 
-      $subscriptionConfiguration = @'
-        $(SubscriptionConfiguration)
-      '@ | ConvertFrom-Json -AsHashtable
+          $subscriptionConfiguration = @'
+            $(SubscriptionConfiguration)
+          '@ | ConvertFrom-Json -AsHashtable
 
-      ./eng/scripts/live-test-resource-cleanup.ps1 `
-        -OpensourceApiApplicationId $(opensource-aad-app-id) `
-        -OpensourceApiApplicationSecret $(opensource-aad-secret) `
-        -OpensourceApiApplicationTenant $(opensource-aad-tenant-id) `
-        -GithubAliasCachePath ${{ parameters.GithubAliasCachePath }} `
-        @subscriptionConfiguration `
-        -Verbose `
-        ${{ parameters.AdditionalParameters }} `
-        -WhatIf:$${{ parameters.DryRun }}
-    displayName: ${{ parameters.DisplayName }}
-    continueOnError: true
+          $context = Get-AzContext
+          $subscriptionConfiguration["Environment"] = $context.Environment.Name
+          $subscriptionConfiguration["SubscriptionId"] = $context.Subscription.Id
+          $subscriptionConfiguration["TenantId"] = $context.Subscription.TenantId
+          $subscriptionConfiguration["TestApplicationId"] = $context.Account.Id
+          $subscriptionConfiguration["ProvisionerApplicationId"] = $context.Account.Id
+
+          $principal = Get-AzADServicePrincipal -ApplicationId $context.Account.Id
+          $subscriptionConfiguration["TestApplicationOid"] = $principal.Id
+          $subscriptionConfiguration["ProvisionerApplicationOid"] = $principal.Id
+
+          Write-Host ($subscriptionConfiguration | ConvertTo-Json)
+
+          ./eng/scripts/live-test-resource-cleanup.ps1 `
+            -OpensourceApiApplicationToken $(opensource-api-token) `
+            -GithubAliasCachePath ${{ parameters.GithubAliasCachePath }} `
+            @subscriptionConfiguration `
+            -Verbose `
+            ${{ parameters.AdditionalParameters }} `
+            -UseExistingAzContext `
+            -GroupFilter '${{ parameters.GroupFilter }}' `
+            -WhatIf:$${{ parameters.DryRun }}
+
+      displayName: ${{ parameters.DisplayName }}
+      continueOnError: true
+      env:
+        PoolSubnet: $(PoolSubnet)
+
+  - ${{ else }}:
+    - pwsh: |
+        eng/common/scripts/Import-AzModules.ps1
+        Import-Module Az.Accounts
+
+        $subscriptionConfiguration = @'
+          $(SubscriptionConfiguration)
+        '@ | ConvertFrom-Json -AsHashtable
+
+        ./eng/scripts/live-test-resource-cleanup.ps1 `
+          -OpensourceApiApplicationToken $(opensource-api-token) `
+          -GithubAliasCachePath ${{ parameters.GithubAliasCachePath }} `
+          @subscriptionConfiguration `
+          -Verbose `
+          ${{ parameters.AdditionalParameters }} `
+          -GroupFilter '${{ parameters.GroupFilter }}' `
+          -WhatIf:$${{ parameters.DryRun }}
+      displayName: ${{ parameters.DisplayName }}
+      continueOnError: true
+      env:
+        PoolSubnet: $(PoolSubnet)
 

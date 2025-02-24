@@ -1,0 +1,35 @@
+.create-merge table GitHubActionsStep (
+    Repository: string,
+    WorkflowId: long,
+    WorkflowName: string,
+    RunId: long,
+    RunName: string,
+    RunAttempt: long,
+    JobId: long,
+    JobName: string,
+    StepNumber: int,
+    StepName: string,
+    Status: string,
+    Conclusion: string,
+    StartedAt: datetime,
+    CompletedAt: datetime,
+    EtlIngestDate: datetime
+) with (folder='', docstring='')
+
+.create-or-alter table GitHubActionsStep ingestion json mapping 'GitHubActionsStep_mapping' ```[
+    { "column": "Repository", "path": "$['repository']" },
+    { "column": "WorkflowId", "path": "$['workflowId']" },
+    { "column": "WorkflowName", "path": "$['workflowName']" },
+    { "column": "RunId", "path": "$['runId']" },
+    { "column": "RunName", "path": "$['runName']" },
+    { "column": "RunAttempt", "path": "$['runAttempt']" },
+    { "column": "JobId", "path": "$['jobId']" },
+    { "column": "JobName", "path": "$['jobName']" },
+    { "column": "StepNumber", "path": "$['stepNumber']" },
+    { "column": "StepName", "path": "$['stepName']" },
+    { "column": "Status", "path": "$['status']" },
+    { "column": "Conclusion", "path": "$['conclusion']" },
+    { "column": "StartedAt", "path": "$['startedAt']" },
+    { "column": "CompletedAt", "path": "$['completedAt']" },
+    { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
+]```

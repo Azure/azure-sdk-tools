@@ -3,16 +3,15 @@ using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
-using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -41,7 +40,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.ResetSessionSanitizers();
 
             var controller = new Admin(testRecordingHandler, _nullLogger)
             {
@@ -63,7 +62,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            
+
+            var defaultSessionSanitizers = await testRecordingHandler.SanitizerRegistry.GetSanitizers();
+
             string requestBody = @"[
     {
         ""Name"": ""GeneralRegexSanitizer"",
@@ -86,7 +87,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.ResetSessionSanitizers();
+            httpContext.Response.Body = new MemoryStream();
 
             var controller = new Admin(testRecordingHandler, _nullLogger)
             {
@@ -97,11 +99,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             await controller.AddSanitizers();
 
+            var amendedSessionSanitizers = await testRecordingHandler.SanitizerRegistry.GetSanitizers();
 
-            Assert.Equal(2, testRecordingHandler.Sanitizers.Count);
+            Assert.Equal(defaultSessionSanitizers.Count + 2, amendedSessionSanitizers.Count);
+            Assert.True(amendedSessionSanitizers[defaultSessionSanitizers.Count] is GeneralRegexSanitizer);
+            Assert.True(amendedSessionSanitizers[defaultSessionSanitizers.Count + 1] is HeaderRegexSanitizer);
 
-            Assert.True(testRecordingHandler.Sanitizers[0] is GeneralRegexSanitizer);
-            Assert.True(testRecordingHandler.Sanitizers[1] is HeaderRegexSanitizer);
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+
+            var prop = response.RootElement.GetProperty("Sanitizers");
+            var returnedSanitizerIds = TestHelpers.EnumerateArray<string>(prop);
+
+            Assert.Equal(2, returnedSanitizerIds.Count);
         }
 
         [Fact]
@@ -132,7 +143,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
 
             var controller = new Admin(testRecordingHandler, _nullLogger)
             {
@@ -162,7 +173,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
 
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
@@ -183,7 +194,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
 
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
@@ -290,7 +301,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             await controller.SetMatcher();
 
             var result = testRecordingHandler.Matcher;
@@ -412,6 +423,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
             httpContext.Request.ContentLength = 92;
+            httpContext.Response.Body = new MemoryStream();
 
             var controller = new Admin(testRecordingHandler, _nullLogger)
             {
@@ -420,17 +432,22 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             await controller.AddSanitizer();
 
-            var result = testRecordingHandler.Sanitizers.First();
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+            Assert.True(!string.IsNullOrWhiteSpace(response.RootElement.GetProperty("Sanitizer").GetString()));
+
+            var result = (await testRecordingHandler.SanitizerRegistry.GetSanitizers()).First();
             Assert.True(result is HeaderRegexSanitizer);
         }
 
         [Fact]
         public async void TestAddSanitizerWithOddDefaults()
         {
-            // arrange
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
@@ -446,10 +463,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             await controller.AddSanitizer();
 
-            var result = testRecordingHandler.Sanitizers.First();
+            var result = (await testRecordingHandler.SanitizerRegistry.GetSanitizers()).First();
             Assert.True(result is BodyKeySanitizer);
         }
 
@@ -469,7 +486,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
@@ -493,10 +510,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             await controller.AddSanitizer();
 
-            var result = testRecordingHandler.Sanitizers.First();
+            var result = (await testRecordingHandler.SanitizerRegistry.GetSanitizers()).First();
             Assert.True(result is HeaderRegexSanitizer);
         }
 
@@ -507,6 +524,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
+
+            httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
@@ -519,9 +538,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     HttpContext = httpContext
                 }
             };
-            await controller .AddSanitizer();
+            await controller.AddSanitizer();
 
-            var result = testRecordingHandler.PlaybackSessions[recordingId].AdditionalSanitizers.First();
+            var result = (await testRecordingHandler.SanitizerRegistry.GetSanitizers(testRecordingHandler.PlaybackSessions[recordingId])).Last();
+            
             Assert.True(result is HeaderRegexSanitizer);
         }
 
@@ -567,7 +587,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
@@ -594,7 +614,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
 
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
@@ -757,12 +777,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
             );
             Assert.Equal(HttpStatusCode.BadRequest, assertion.StatusCode);
-            Assert.Empty(testRecordingHandler.Sanitizers);
+            Assert.Empty(await testRecordingHandler.SanitizerRegistry.GetSanitizers());
             Assert.Contains(errorText, assertion.Message);
         }
 
@@ -786,16 +806,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             await controller.AddSanitizer();
 
-            var createdSanitizer = testRecordingHandler.Sanitizers.First();
+            var appliedSanitizers = await testRecordingHandler.SanitizerRegistry.GetSanitizers();
 
-            Assert.Single(testRecordingHandler.Sanitizers);
-            Assert.True(createdSanitizer is GeneralRegexSanitizer);
-            Assert.True(createdSanitizer.Condition != null);
-            Assert.True(createdSanitizer.Condition is ApplyCondition);
-            Assert.Equal(conditionRegex, createdSanitizer.Condition.UriRegex);
+            Assert.Single(appliedSanitizers);
+            Assert.True(appliedSanitizers.First() is GeneralRegexSanitizer);
+            Assert.True(appliedSanitizers.First().Condition != null);
+            Assert.True(appliedSanitizers.First().Condition is ApplyCondition);
+            Assert.Equal(conditionRegex, appliedSanitizers.First().Condition.UriRegex);
         }
 
         [Theory]
@@ -875,7 +895,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
 
             var assertion = await Assert.ThrowsAsync<HttpException>(
                async () => await controller.AddSanitizer()
@@ -905,10 +925,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 }
             };
 
-            testRecordingHandler.Sanitizers.Clear();
+            await testRecordingHandler.SanitizerRegistry.Clear();
             await controller.AddSanitizer();
 
-            var addedSanitizer = testRecordingHandler.Sanitizers.First();
+            var addedSanitizer = (await testRecordingHandler.SanitizerRegistry.GetSanitizers()).First();
             Assert.True(addedSanitizer is HeaderStringSanitizer);
 
             var actualTargetString = (string)typeof(HeaderStringSanitizer).GetField("_targetValue", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(addedSanitizer);
@@ -916,5 +936,195 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(targetKey, actualTargetKey);
             Assert.Equal(targetString, actualTargetString);
         }
+
+        [Fact]
+        public async Task RemoveSanitizersSilentlyAcceptsInvalidSanitizer()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK00-1" } };
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(JsonSerializer.Serialize(testSet));
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            await controller.RemoveSanitizers();
+
+            Assert.Equal(200, httpContext.Response.StatusCode);
+        }
+
+        [Fact]
+        public async Task RemoveSanitizerErrorsForMissingId()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() {} };
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(JsonSerializer.Serialize(testSet));
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await controller.RemoveSanitizers()
+            );
+
+            Assert.Equal(HttpStatusCode.BadRequest, assertion.StatusCode);
+            Assert.Equal("At least one sanitizerId for removal must be provided.", assertion.Message);
+        }
+
+        [Fact]
+        public async Task RemoveSanitizerSucceedsForExistingSessionSanitizer()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var expectedSanitizerCount = (await testRecordingHandler.SanitizerRegistry.GetSanitizers()).Count;
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(JsonSerializer.Serialize(new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK0000" } }));
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            await controller.RemoveSanitizers();
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+
+            var prop = response.RootElement.GetProperty("Removed");
+            var returnedSanitizerIds = TestHelpers.EnumerateArray<string>(prop);
+
+            Assert.Single(returnedSanitizerIds);
+            Assert.Equal("AZSDK0000", returnedSanitizerIds.First());
+
+            Assert.Equal(expectedSanitizerCount - 1, (await testRecordingHandler.SanitizerRegistry.GetSanitizers()).Count);
+        }
+
+        [Fact]
+        public async Task RemoveSanitizerSucceedsForAddedRecordingSanitizer()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            await testRecordingHandler.SanitizerRegistry.Clear();
+            var httpContext = new DefaultHttpContext();
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"];
+            
+            // use returned recordingId to register new sanitizers
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            var session = testRecordingHandler.GetActiveSession(recordingId);
+
+            var forRemoval = await testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Content-Type"), recordingId);
+            await testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Connection"), recordingId);
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(JsonSerializer.Serialize(new RemoveSanitizerList() { Sanitizers = new List<string>() { forRemoval } }));
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+
+            await controller.RemoveSanitizers();
+
+            var activeRecordingSanitizers = await testRecordingHandler.SanitizerRegistry.GetSanitizers(session);
+
+            Assert.Single(activeRecordingSanitizers);
+            var privateSetting = (string)typeof(HeaderRegexSanitizer).GetField("_targetKey", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(activeRecordingSanitizers.First());
+            Assert.Equal("Connection", privateSetting);
+        }
+
+        [Fact]
+        public async void GetSanitizersReturnsSessionSanitizers()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            await testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Connection"));
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.Response.Body = new MemoryStream();
+
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            await controller.GetSanitizers();
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+
+            var prop = response.RootElement.GetProperty("Sanitizers");
+            List<string> foundIds = new List<string>();
+
+            foreach(var i in prop.EnumerateArray())
+            {
+                foundIds.Add(i.GetProperty("Id").GetRawText());
+            }
+
+            Assert.Equal(testRecordingHandler.SanitizerRegistry.DefaultSanitizerList.Count + 1, foundIds.Count);
+        }
+
+        [Fact]
+        public async Task GetSanitizersReturnsRecordingSanitizers()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            await testRecordingHandler.SanitizerRegistry.Clear();
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"];
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            await testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Connection"), recordingId);
+            await controller.GetSanitizers();
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+
+            var prop = response.RootElement.GetProperty("Sanitizers");
+            List<string> foundIds = new List<string>();
+
+            foreach(var i in prop.EnumerateArray())
+            {
+                foundIds.Add(i.GetProperty("Id").GetRawText());
+            }
+
+            Assert.Single(foundIds);
+        }
+
     }
 }

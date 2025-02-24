@@ -160,7 +160,15 @@ namespace APIViewWeb.Managers
 
         private async Task<IssueComment> GetExistingCommentForPackage(string repoOwner, string repoName, int pr)
         {
-            var comments = await _githubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pr);
+            IReadOnlyList<IssueComment> comments = null;
+            try
+            {
+                comments = await _githubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pr);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
             if (comments != null)
             {
                 // Check for comment created for current package.

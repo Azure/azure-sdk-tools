@@ -36,6 +36,8 @@ param location string = resourceGroup().location
 
 param azureEmbeddingModelDeploymentName string
 param azureChatModelDeploymentName string
+param keyVaultUrl string
+param certificateName string
 
 @secure()
 param searchServiceUrl string
@@ -75,6 +77,10 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         }
         {
           name: 'RUNNING_ON_AZURE'
+          value: '1'
+        }
+        {
+          name: 'WEBSITE_LOAD_USER_PROFILE'
           value: '1'
         }
         {
@@ -128,6 +134,14 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: appInsightConnectionString
+        }
+        {
+          name: 'KeyVaultUrl'
+          value: keyVaultUrl
+        }
+        {
+          name: 'CertificateName'
+          value: certificateName
         }
       ]
       ftpsState: 'FtpsOnly'

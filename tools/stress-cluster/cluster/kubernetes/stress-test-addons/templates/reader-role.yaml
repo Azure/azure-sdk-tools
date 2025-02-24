@@ -24,6 +24,9 @@ subjects:
 - namespace: {{ .Release.Namespace }}
   kind: ServiceAccount
   name: default
+- namespace: {{ .Release.Namespace }}
+  kind: ServiceAccount
+  name: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role

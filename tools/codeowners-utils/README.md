@@ -39,7 +39,7 @@ This tool will analyze an azure-sdk* CODEOWNERS file, including our specific bra
 
 - **Owners**
   - Users and Teams are verified to have write permissions.
-  - Users are also verified to be Public members of Azure. This documented in the [azure-sdk onboarding docs for acess](https://eng.ms/docs/products/azure-developer-experience/onboard/access). This is necessary for tooling in order to be able to determine Azure org membership for a given user. This cannot be done if the user's Azure membership is private and the tooling will process them as if they weren't a member of Azure.
+  - Users are also verified to be Public members of Azure. This documented in the [azure-sdk onboarding docs for access](https://eng.ms/docs/products/azure-developer-experience/onboard/access). This is necessary for tooling in order to be able to determine Azure org membership for a given user. This cannot be done if the user's Azure membership is private and the tooling will process them as if they weren't a member of Azure.
   - Malformed team entries, entries missing the prepended org `@Azure/` can be detected but only if they're child teams of azure-sdk-write.
 - **Labels**
   - Whether or not the label exists in a particular repository.
@@ -120,7 +120,7 @@ Block formatting errors should be pretty self explanatory and the error output s
 
 ### Single line errors and how to fix them
 
-As per the name, these errors are problems with a single CODEOWNERS line. The error will print the line and each issue wrong with the line. Anything that requires changes outside of the CODEOWNERS file, like changing a user's Azure org visibility to public, or adding a user to an azure-sdk-write team or adding a new team under azure-sdk-write, adding a repository label, etc. requires the [pipeline-owners-extraction](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112) pipeline to run in order to update blob storage. This pipeline runs at 4am every morning and due to the number of GitHub API calls required to fetch/verify this data. If the pipeline needs to be run, please do not manually kick it off, post in the [Engineering Systems Teams channel](https://teams.microsoft.com/l/channel/19%3a59dbfadafb5e41c4890e2cd3d74cc7ba%40thread.skype/Engineering%2520System%2520%25F0%259F%259B%25A0%25EF%25B8%258F?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) channel asking for someone from EngSys to manually kick off the pipeline.
+As per the name, these errors are problems with a single CODEOWNERS line. The error will print the line and each issue wrong with the line. Anything that requires changes outside of the CODEOWNERS file, like changing a user's Azure org visibility to public, or adding a user to an azure-sdk-write team or adding a new team under azure-sdk-write like azure-sdk-partners, adding a repository label, etc. requires the [pipeline-owners-extraction](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112) pipeline to run in order to update blob storage. This pipeline runs at 4am every morning and due to the number of GitHub API calls required to fetch/verify this data. If the pipeline needs to be run, please do not manually kick it off, post in the [Engineering Systems Teams channel](https://teams.microsoft.com/l/channel/19%3a59dbfadafb5e41c4890e2cd3d74cc7ba%40thread.skype/Engineering%2520System%2520%25F0%259F%259B%25A0%25EF%25B8%258F?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) channel asking for someone from EngSys to manually kick off the pipeline.
 
 #### &lt;team&gt; is a malformed team entry and should start with '@Azure/'
 
@@ -130,7 +130,7 @@ As part of the linting validation, when an invalid non-team owner is encountered
 
 #### Azure/&lt;team&gt; is an invalid team. Ensure the team exists and has write permissions
 
-**How to fix this:** This requires intervention of someone with GitHub permissions. The team needs to be a write team, a child of azure-sdk-write. If one already exists, that's what should be used otherwise create a post in the public [Engineering Systems Teams channel](https://teams.microsoft.com/l/channel/19%3a59dbfadafb5e41c4890e2cd3d74cc7ba%40thread.skype/Engineering%2520System%2520%25F0%259F%259B%25A0%25EF%25B8%258F?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47). Paste the quoted error, say what repository(ies) the error is occurring in and @ mention Scott Kurtzeborn.
+**How to fix this:** This requires intervention of someone with GitHub permissions. The team needs to be a write team, a child of azure-sdk-write, usually the azure-sdk-partners. See https://aka.ms/azsdk/access for information on requesting access. If one already exists, that's what should be used otherwise create a post in the public [Engineering Systems Teams channel](https://teams.microsoft.com/l/channel/19%3a59dbfadafb5e41c4890e2cd3d74cc7ba%40thread.skype/Engineering%2520System%2520%25F0%259F%259B%25A0%25EF%25B8%258F?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47). Paste the quoted error, say what repository(ies) the error is occurring in and @ mention Scott Kurtzeborn.
 
 #### &lt;user&gt; is not a public member of Azure
 
@@ -140,7 +140,7 @@ The [onboarding docs](https://eng.ms/docs/products/azure-developer-experience/on
 
 #### &lt;user&gt; is an invalid user. Ensure the user exists, is public member of Azure and has write permissions
 
-This error effectively means that the person is not under the [azure-sdk-write](https://github.com/orgs/Azure/teams/azure-sdk-write/teams), either directly or in one of the teams under it. There are several reasons this can happen. With the most likely reasons being that the user is no longer in the Azure org or at Microsoft, least likely being that someone didn't onboard correctly and doesn't have write permission.
+This error effectively means that the person is not under the [azure-sdk-write](https://github.com/orgs/Azure/teams/azure-sdk-write/teams), either directly or in one of the teams under it, like azure-sdk-partners. There are several reasons this can happen. With the most likely reasons being that the user is no longer in the Azure org or at Microsoft, least likely being that someone didn't onboard correctly and doesn't have write permission. See https://aka.ms/azsdk/access for information on requesting access.
 
 **How to fix this:** There are several fixes for this
 

@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
+using ApiView;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -90,6 +91,12 @@ namespace APIViewWeb.Pages.Assemblies
                 signalRHubContext: _signalRHubContext, user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId,
                 showDocumentation: (ShowDocumentation ?? false), showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
+
+            if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
+            {
+                var uri = $"https://spa.{Request.Host}/review/{id}?activeApiRevisionId={ReviewContent.ActiveAPIRevision.Id}";
+                return Redirect(uri);
+            }
 
             if (ReviewContent.Directive == ReviewContentModelDirective.TryGetlegacyReview)
             {
@@ -191,6 +198,71 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         /// <summary>
+        /// Get Revisions Partial
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <param name="showDoc"></param>
+        /// <param name="showDiffOnly"></param>
+        /// <returns></returns>
+        public async Task<PartialViewResult> OnGetAPIRevisionsPartialAsync(string reviewId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
+        {
+            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType).OrderByDescending(c => c.CreatedOn).ToList();
+            (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
+                revisions: revisions,
+                activeRevision: default(APIRevisionListItemModel),
+                diffRevision: default(APIRevisionListItemModel),
+                forDiff: false,
+                showDocumentation: showDoc,
+                showDiffOnly: showDiffOnly
+            );
+            return Partial("_RevisionSelectPickerPartial", revisionSelectModel);
+        }
+
+        /// <summary>
+        /// Get Diff Revisions Partial
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <param name="showDoc"></param>
+        /// <param name="showDiffOnly"></param>
+        /// <returns></returns>
+        public async Task<PartialViewResult> OnGetAPIDiffRevisionsPartialAsync(string reviewId, string apiRevisionId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
+        {
+            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            if (apiRevisions.IsNullOrEmpty())
+            {
+                var notifcation = new NotificationModel() { Message = $"This review has no valid apiRevisons", Level = NotificatonLevel.Warning };
+                await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
+            }
+
+            APIRevisionListItemModel activeRevision = default(APIRevisionListItemModel);
+
+            if (!Guid.TryParse(apiRevisionId, out _))
+            {
+                activeRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions);
+            }
+            else
+            {
+                activeRevision = apiRevisions.FirstOrDefault(r => r.Id == apiRevisionId);
+            }
+
+            var revisionsForDiff = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType && r.Id != activeRevision.Id).OrderByDescending(c => c.CreatedOn).ToList();
+
+            (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
+                revisions: revisionsForDiff,
+                activeRevision: activeRevision,
+                diffRevision: default(APIRevisionListItemModel),
+                forDiff: true,
+                showDocumentation: showDoc,
+                showDiffOnly: showDiffOnly
+            );
+            return Partial("_RevisionSelectPickerPartial", revisionSelectModel);
+        }
+
+        /// <summary>
         /// Toggle Review State
         /// </summary>
         /// <param name="id"></param>
@@ -256,7 +328,7 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<IActionResult> OnPostToggleAPIRevisionApprovalAsync(string id, string revisionId)
         {
-            var updateReview = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
+            (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
             if (updateReview)
             {
                 await OnPostToggleReviewApprovalAsync(id, revisionId);
@@ -364,6 +436,35 @@ namespace APIViewWeb.Pages.Assemblies
                 ShowDocumentation = UserPreference.ShowDocumentation;
             }
 
+        }
+
+        /// <summary>
+        /// Get Data for BS Target
+        /// </summary>
+        /// <param name="hasActiveConversations"></param>
+        /// <param name="hasFatalDiagnostics"></param>
+        /// <param name="userInApprovers"></param>
+        /// <param name="isActiveRevisionAhead"></param>
+        /// <returns></returns>
+
+        public string GetDataBSTarget(bool hasActiveConversations, bool hasFatalDiagnostics, bool userInApprovers, bool isActiveRevisionAhead)
+        {
+            if (hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            {
+                return "#convoFatalModel";
+            }
+            else if (hasActiveConversations && !hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            {
+                return "#openConversationModel";
+            }
+            else if (!hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            {
+                return "#fatalErrorModel";
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
     }
 }

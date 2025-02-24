@@ -10,6 +10,11 @@ export function isValidUrl(url: string) {
 }
 
 // Checks if a file exists locally
-export function doesFileExist(path: string): Promise<boolean> {
-  return stat(path).then(() => true).catch(() => false);
+export async function doesFileExist(path: string): Promise<boolean> {
+  try {
+    await stat(path);
+    return true;
+  } catch {
+    return false;
+  }
 }

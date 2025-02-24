@@ -39,7 +39,7 @@ class Embedding:
                 type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
                 searchable=True,
                 vector_search_dimensions=len(embedding_function("Text")),
-                vector_search_configuration="default"
+                vector_search_profile_name="myHnswProfile"
             ),
             SearchField(
                 name="Text",
@@ -79,8 +79,13 @@ class Embedding:
                 "metric": "cosine",
                 }
         )
+        search_profile = {
+            "name": "myHnswProfile",
+            "algorithm_configuration_name": "searchAlgorithm",
+        }
         vector_search: VectorSearch = VectorSearch(
-            algorithms=[algorithm_configuration]
+            algorithms=[algorithm_configuration],
+            profiles=[search_profile]
         )
         azure_search: AzureSearch = AzureSearch(
             azure_search_endpoint=AZURE_SEARCH_ENDPOINT,

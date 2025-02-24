@@ -1,0 +1,11 @@
+Package parsed using Swift APIView (version 0.3.0)
+
+
+package SwiftUITestFile.swifttxt {
+    public class ViewBuilderExample {
+        public func testViewBuilder(@ViewBuilder content: () -> Content)
+
+        @ViewBuilder
+        public func createView() -> some View
+    }
+}

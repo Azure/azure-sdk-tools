@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -132,14 +132,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public async Task CanApplyHeaderTransformWithCondition()
         {
             var headerTransform = new HeaderTransform(
-                "Location",
-                "http://localhost",
+                "X-Content-Type-Options",
+                "replaced",
                 condition: new ApplyCondition
                 {
                     ResponseHeader = new HeaderCondition
                     {
-                        Key = "Location",
-                        ValueRegex = @".*/Tables\(.*"
+                        Key = "X-Content-Type-Options",
+                        ValueRegex = ".*nosniff.*"
                     }
                 });
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
@@ -170,7 +170,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             HttpRequest request = TestHelpers.CreateRequestFromEntry(transformedEntry);
             HttpResponse response = new DefaultHttpContext().Response;
             await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
-            Assert.Equal("http://localhost", response.Headers["Location"]);
+            Assert.Equal("replaced", response.Headers["X-Content-Type-Options"]);
 
             // this one should keep the original Location value
             request = TestHelpers.CreateRequestFromEntry(untransformedEntry);
@@ -178,7 +178,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
             var originalLocation = untransformedEntry.Response.Headers["Location"];
 
-            Assert.Equal(originalLocation, response.Headers["Location"]);
+            Assert.NotEqual(originalLocation, response.Headers["Location"]);
         }
     }
 }

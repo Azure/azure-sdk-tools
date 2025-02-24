@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 #nullable disable
@@ -10,6 +10,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     internal static class ContentTypeUtilities
     {
+
+        public static bool IsManifestContentType(string contentType)
+        {
+            const string dockerManifest = "application/vnd.docker.distribution.manifest.v";
+            const string dockerIndex = "application/vnd.oci.image.index.v";
+
+            return contentType.Contains(dockerManifest) || contentType.Contains(dockerIndex);
+        }
+
         public static bool TryGetTextEncoding(string contentType, out Encoding encoding)
         {
             const string charsetMarker = "; charset=";
@@ -40,16 +49,21 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
 
-            if (contentType.StartsWith(textContentTypePrefix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.EndsWith(jsonSuffix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.EndsWith(xmlSuffix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.EndsWith(urlEncodedSuffix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.StartsWith(appJsonPrefix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase))
+            if (
+                    (
+                        contentType.StartsWith(textContentTypePrefix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.EndsWith(jsonSuffix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.EndsWith(xmlSuffix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.EndsWith(urlEncodedSuffix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.StartsWith(appJsonPrefix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase)
+                    ) && !ContentTypeUtilities.IsManifestContentType(contentType)
+                )
             {
                 encoding = Encoding.UTF8;
                 return true;
             }
+
 
             encoding = null;
             return false;

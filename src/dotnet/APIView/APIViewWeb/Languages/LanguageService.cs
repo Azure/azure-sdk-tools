@@ -13,6 +13,7 @@ namespace APIViewWeb
     {
         public abstract string Name { get; }
         public abstract string [] Extensions { get; }
+        public abstract string VersionString { get; }
         public virtual bool IsSupportedFile(string name) => Extensions.Any(x => name.EndsWith(x, StringComparison.OrdinalIgnoreCase));
         public abstract bool CanUpdate(string versionString);
         public abstract Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis);
@@ -31,5 +32,6 @@ namespace APIViewWeb
         public static string[] SupportedLanguages = LanguageServiceHelpers.SupportedLanguages;
 
         public virtual bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => true;
+        public virtual bool CanConvert(string versionString) => false;
     }
 }

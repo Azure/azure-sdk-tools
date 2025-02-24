@@ -1,14 +1,9 @@
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Xml;
-using System.IO;
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Concurrent;
-using Microsoft.CodeAnalysis.Operations;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
@@ -21,20 +16,19 @@ namespace Azure.Sdk.Tools.TestProxy.Models
 
         public ActiveMetadataModel(RecordingHandler pageRecordingHandler)
         {
-            Descriptions = _populateFromHandler(pageRecordingHandler, "");
+            Descriptions = _populateFromHandler(pageRecordingHandler, "").Result;
         }
 
         public ActiveMetadataModel(RecordingHandler pageRecordingHandler, string recordingId)
         {
             RecordingId = recordingId;
-            Descriptions = _populateFromHandler(pageRecordingHandler, recordingId);
+            Descriptions = _populateFromHandler(pageRecordingHandler, recordingId).Result;
         }
 
         public string RecordingId { get; set; }
 
-        private List<ActionDescription> _populateFromHandler(RecordingHandler handler, string recordingId)
+        private async Task<List<ActionDescription>> _populateFromHandler(RecordingHandler handler, string recordingId)
         {
-            var sanitizers = (IEnumerable<RecordedTestSanitizer>) handler.Sanitizers;
             var transforms = (IEnumerable<ResponseTransform>) handler.Transforms;
             var matcher = handler.Matcher;
 
@@ -45,13 +39,14 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                 handler.InMemorySessions
             };
 
+            var sanitizers = await handler.SanitizerRegistry.GetRegisteredSanitizers();
             var recordingFound = false;
             if (!string.IsNullOrWhiteSpace(recordingId)){
                 foreach (var sessionDict in searchCollections)
                 { 
                     if (sessionDict.TryGetValue(recordingId, out var session))
                     {
-                        sanitizers = sanitizers.Concat(session.AdditionalSanitizers);
+                        sanitizers = await handler.SanitizerRegistry.GetRegisteredSanitizers(session);
                         transforms = transforms.Concat(session.AdditionalTransforms);
 
                         if (session.CustomMatcher != null)
@@ -76,9 +71,10 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             descriptions.AddRange(sanitizers.Select(x => new ActionDescription()
             {
                 ActionType = MetaDataType.Sanitizer,
-                Name = x.GetType().Name,
-                ConstructorDetails = GetInstanceDetails(x),
-                Description = GetClassDocComment(x.GetType(), docXML)
+                Name = x.Sanitizer.GetType().Name,
+                SanitizerId = x.Id,
+                ConstructorDetails = GetInstanceDetails(x.Sanitizer),
+                Description = GetClassDocComment(x.Sanitizer.GetType(), docXML)
             }));
 
             descriptions.AddRange(handler.Transforms.Select(x => new ActionDescription()

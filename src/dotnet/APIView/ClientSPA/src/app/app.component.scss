@@ -1,0 +1,96 @@
+
+@import "../../../APIViewWeb/Client/css/shared/mixins.scss";
+
+:host ::ng-deep {
+
+    body {
+        background-color: var(--base-bg-color);
+        color: var(--base-text-color);
+    }
+    
+    p {
+        color: var(--base-text-color);
+    }
+    
+    a, a:link {
+        color: var(--link-color);
+        text-decoration: none;
+    }
+    
+    a:active {
+        color: var(--link-active);
+    }
+    
+    a:hover {
+        color: var(--link-active);
+        text-decoration: underline;
+    }
+    
+    a:visited {
+        color: var(--link-visited);
+    }
+    
+    html {
+        font-size: 14px;
+    }
+
+    .p-small-size {
+        height: 1.9rem;
+    }
+    
+    .virtual-body {
+        background-color: var(--base-bg-color);
+        color: var(--base-text-color);
+    }
+
+    .main-container {
+        height: calc(100vh - 60px);
+    }
+
+    .invisible {
+        visibility: hidden;
+    }
+
+    .side-menu {
+        .p-menuitem-link {
+            font-size: x-large;
+        }
+        
+        p-badge {
+            position: relative;
+            left: -1.2rem;
+            top: -1.4rem;
+        }
+    }
+    
+    .p-menu {
+        background: var(--base-fg-color);
+        color: var(--base-text-color);
+        padding: 0.5rem 0;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        width: 3.5rem;
+    }
+
+    .p-menu ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link {
+        color: var(--base-text-color);
+        padding: 0.75rem 1rem;
+    }
+
+    .p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
+        color: var(--base-text-color);;
+        font-size: x-large;
+        &:hover, &:active {
+            color: var(--primary-color);
+        }
+    }
+
+    @include base-tags;
+    @include webkit-scrollbar;
+}

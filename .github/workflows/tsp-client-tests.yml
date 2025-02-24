@@ -1,0 +1,60 @@
+name: tsp-client - Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tsp-client-tests.yml
+      - tools/tsp-client/**
+  pull_request:
+    paths:
+      - .github/workflows/tsp-client-tests.yml
+      - tools/tsp-client/**
+
+jobs:
+  tsp-client:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [18, 20]
+        exclude:
+          - os: ubuntu-latest
+            node-version: 20
+          - os: windows-latest
+            node-version: 18
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - if: runner.os == 'Windows'
+        run: git config --global core.longpaths true
+        shell: pwsh
+
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/workflows
+            tools/tsp-client
+
+      - name: Use Node ${{ matrix.node-version }}.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}.x
+
+      - run: npm ci
+        shell: pwsh
+        working-directory: tools/tsp-client
+
+      - run: npm ls -a
+        shell: pwsh
+        continue-on-error: true
+        working-directory: tools/tsp-client
+
+      - run: npm run build
+        shell: pwsh
+        working-directory: tools/tsp-client
+
+      - run: npm run test
+        shell: pwsh
+        working-directory: tools/tsp-client

@@ -8,31 +8,31 @@ using APIViewWeb.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using Azure.Identity;
 
 namespace APIViewIntegrationTests.RepositoryTests
 {
     public class CosmosReviewRepositoryTestsBaseFixture : IDisposable
     {
-        private IConfigurationRoot _config;
         private readonly CosmosClient _cosmosClient;
         private readonly string _cosmosDBname;
         public CosmosReviewRepository ReviewRepository { get; private set; }
 
         public CosmosReviewRepositoryTestsBaseFixture()
         {
-            var _config = new ConfigurationBuilder()
+            var config = new ConfigurationBuilder()
                .AddEnvironmentVariables(prefix: "APIVIEW_")
                .AddUserSecrets(typeof(TestsBaseFixture).Assembly)
                .Build();
 
             _cosmosDBname = "CosmosReviewRepositoryTestsDB";
-            _config["CosmosDBName"] = _cosmosDBname;
+            config["CosmosDBName"] = _cosmosDBname;
 
-            _cosmosClient = new CosmosClient(_config["Cosmos:ConnectionString"]);
-            var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(_config["CosmosDBName"]).Result;
+            _cosmosClient = new CosmosClient(config["CosmosEndpoint"], new DefaultAzureCredential());
+            var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
 
-            ReviewRepository = new CosmosReviewRepository(_config, _cosmosClient);
+            ReviewRepository = new CosmosReviewRepository(config, _cosmosClient);
             PopulateDBWithDummyReviewData().Wait();
         }
 

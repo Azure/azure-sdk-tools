@@ -1,0 +1,22 @@
+
+:host ::ng-deep {
+    .p-panel.p-panel-toggleable .p-panel-header {
+        padding: 0;
+    }
+
+    .p-panel .p-panel-content {
+        padding: 0;
+    }
+
+    .p-panel {
+        border: none;
+    }
+
+    .p-panel .p-panel-header .p-panel-title {
+        color: var(--link-color);
+    }
+
+    .p-icon-wrapper {
+        color: var(--link-color);
+    }
+}

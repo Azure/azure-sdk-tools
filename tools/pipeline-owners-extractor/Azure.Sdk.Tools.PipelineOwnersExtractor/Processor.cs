@@ -14,7 +14,6 @@ using Azure.Sdk.Tools.PipelineOwnersExtractor.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Models.OpenSourcePortal;
 using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.PipelineOwnersExtractor
@@ -76,17 +75,9 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
             IEnumerable<BuildDefinition> pipelines,
             Dictionary<string, List<CodeownersEntry>> codeownersEntriesByRepository)
         {
-            UserLink[] linkedGithubUsers = await githubToAadResolver.GetPeopleLinksAsync();
-
-            Dictionary<string, string> microsoftAliasMap = linkedGithubUsers.ToDictionary(
-                x => x.GitHub.Login,
-                x => x.Aad.UserPrincipalName,
-                StringComparer.OrdinalIgnoreCase);
-
-            List<(BuildDefinition Pipeline, List<string> Owners)> microsoftPipelineOwners =
-                new List<(BuildDefinition Pipeline, List<string> Owners)>();
+            List<(BuildDefinition Pipeline, List<string> Owners)> microsoftPipelineOwners = new ();
             
-            HashSet<string> unrecognizedGitHubAliases = new HashSet<string>();
+            HashSet<string> unrecognizedGitHubAliases = new ();
 
             foreach (BuildDefinition pipeline in pipelines)
             {
@@ -135,7 +126,8 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
 
                 foreach (string githubOwner in githubOwners)
                 {
-                    if (microsoftAliasMap.TryGetValue(githubOwner, out string microsoftOwner))
+                    string microsoftOwner = await this.githubToAadResolver.GetUserPrincipalNameFromGithubAsync(githubOwner);
+                    if (!string.IsNullOrEmpty(microsoftOwner))
                     {
                         microsoftOwners.Add(microsoftOwner);
                     }

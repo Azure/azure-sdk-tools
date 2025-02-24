@@ -1,0 +1,10 @@
+Package parsed using Swift APIView (version 0.3.0)
+
+
+package PropertiesTestFile.swifttxt {
+    public class PropertiesTestClass {
+        public var totalSteps: Int = 0 { willSet(newTotalSteps) didSet }
+        public var someReadOnly: String
+        public var someReadWrite: String { get set }
+    }
+}

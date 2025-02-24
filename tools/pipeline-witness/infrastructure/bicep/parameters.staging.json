@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westus2"
+    },
+    "appResourceGroupName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "cosmosAccountName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "webAppName": {
+      "value": "pipelinewitnessstaging-app"
+    },
+    "keyVaultName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "appServicePlanName": {
+      "value": "ASP-pipelinewitnessstaging-a2b5"
+    },
+    "appStorageAccountName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "aspEnvironment": {
+      "value": "staging"
+    },
+    "logsResourceGroupName": {
+      "value": "pipelinelogs"
+    },
+    "logsStorageAccountName": {
+      "value": "pipelinelogsstaging"
+    },
+    "devOpsEventHubNamespaceName": {
+      "value": "pipelinelogsstaging"
+    },
+    "gitHubEventHubNamespaceName": {
+      "value": "githublogsstaging"
+    },
+    "kustoClusterName": {
+      "value": "azsdkengsys"
+    },
+    "kustoDatabaseName": {
+      "value": "Staging"
+    },
+    "networkSecurityGroupName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "vnetName": {
+      "value": "pipelinewitnessstaging"
+    },
+    "vnetPrefix": {
+      "value": "10.8.0.0/16"
+    },
+    "subnetPrefix": {
+      "value": "10.8.0.0/24"
+    },
+    "useVnet": {
+      "value": true
+    }
+  }
+}

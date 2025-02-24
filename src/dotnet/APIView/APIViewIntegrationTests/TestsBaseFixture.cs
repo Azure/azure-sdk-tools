@@ -20,6 +20,7 @@ using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.ApplicationInsights;
+using Azure.Identity;
 
 namespace APIViewIntegrationTests
 {
@@ -62,6 +63,7 @@ namespace APIViewIntegrationTests
             services.AddSingleton<LanguageService, JavaLanguageService>();
             services.AddSingleton<LanguageService, PythonLanguageService>();
             services.AddSingleton<LanguageService, JavaScriptLanguageService>();
+            services.AddSingleton<LanguageService, RustLanguageService>();
             services.AddSingleton<LanguageService, CppLanguageService>();
             services.AddSingleton<LanguageService, GoLanguageService>();
             services.AddSingleton<LanguageService, ProtocolLanguageService>();
@@ -74,7 +76,7 @@ namespace APIViewIntegrationTests
             PackageNameManager = serviceProvider.GetService<PackageNameManager>();
             User = TestUser.GetTestuser();
 
-            _cosmosClient = new CosmosClient(_config["Cosmos:ConnectionString"]);
+            _cosmosClient = new CosmosClient(_config["CosmosEndpoint"], new DefaultAzureCredential());
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(_config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("APIRevisions", "/ReviewId").Wait();
@@ -86,8 +88,9 @@ namespace APIViewIntegrationTests
             CommentRepository = new CosmosCommentsRepository(_config, _cosmosClient);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(_config, _cosmosClient);
 
-            _blobCodeFileContainerClient = new BlobContainerClient(_config["Blob:ConnectionString"], "codefiles");
-            _blobOriginalContainerClient = new BlobContainerClient(_config["Blob:ConnectionString"], "originals");
+            var blobServiceClient = new BlobServiceClient(new Uri(_config["StorageAccountUrl"]), new DefaultAzureCredential());
+            _blobCodeFileContainerClient = blobServiceClient.GetBlobContainerClient("codefiles");
+            _blobOriginalContainerClient = blobServiceClient.GetBlobContainerClient("originals");
             _ = _blobCodeFileContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobOriginalContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
 
@@ -132,7 +135,7 @@ namespace APIViewIntegrationTests
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
                 commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object);
+                telemetryClient: telemetryClient.Object, codeFileManager: CodeFileManager);
 
             TestDataPath = _config["TestPkgPath"];
         }

@@ -1,9 +1,9 @@
-FROM mcr.microsoft.com/oss/go/microsoft/golang:1.21 as build
+FROM mcr.microsoft.com/oss/go/microsoft/golang:1.22 as build
 RUN apt update -y && apt upgrade -y && apt install -y build-essential git
 
 # this lets us build a custom otel-collector image, with a minimal set of 
 # adapters, etc...
-RUN go install go.opentelemetry.io/collector/cmd/builder@latest
+RUN go install go.opentelemetry.io/collector/cmd/builder@v0.110.0
 COPY ./otel-builder.yml /otel-builder.yml
 # builds to /tmp/dist
 RUN builder --config=/otel-builder.yml

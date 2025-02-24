@@ -52,7 +52,7 @@ namespace Stress.Watcher.Tests
         [Fact]
         public void TestShouldDeleteResourcesWithInitContainer()
         {
-            var handler = new JobEventHandler(null, null, null);
+            var handler = new JobEventHandler(null, null, null, null);
             var job = CreateJob("testns");
 
             handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
@@ -118,7 +118,7 @@ namespace Stress.Watcher.Tests
         [Fact]
         public void TestShouldDeleteResourcesWithCondition()
         {
-            var handler = new JobEventHandler(null, null, null);
+            var handler = new JobEventHandler(null, null, null, null);
             var job = CreateJob("testns");
 
             handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
@@ -143,7 +143,7 @@ namespace Stress.Watcher.Tests
         [Fact]
         public void TestShouldDeleteResourcesWithLabel()
         {
-            var handler = new JobEventHandler(null, null, null);
+            var handler = new JobEventHandler(null, null, null, null);
             var job = CreateJob("testns");
 
             handler.ShouldDeleteResources(job, WatchEventType.Modified).Should().BeFalse();
@@ -160,7 +160,7 @@ namespace Stress.Watcher.Tests
         [Fact]
         public void TestGetResourceGroupName()
         {
-            var handler = new JobEventHandler(null, null, null);
+            var handler = new JobEventHandler(null, null, null, null);
             var job = CreateJob("testns");
 
             job.Spec.Template.Spec.InitContainers = new List<V1Container>()

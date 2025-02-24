@@ -1,0 +1,79 @@
+parameters:
+- name: BuildStages
+  type: object
+  default: []
+- name: BuildStageName
+  type: string
+  default: ''
+- name: ArtifactName
+  type: string
+  default: ''
+- name: PackageJsonPath
+  type: string
+  default: ''
+
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    GenerateBaselines: true
+    stages:
+      - ${{ parameters.BuildStages }}
+
+      # only include if running on `internal` build with manual queue, otherwise never include
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal'))}}:
+        - stage: Publish
+          displayName: Publish
+          dependsOn: ${{ parameters.BuildStageName }}
+
+          jobs:
+            - deployment: Publish
+              environment: 'package-publish'
+              pool:
+                name: azsdk-pool-mms-ubuntu-2004-general
+                image: azsdk-pool-mms-ubuntu-2004-1espt
+                os: linux
+
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+                    - checkout: self
+
+                    - download: current
+                      artifact: ${{ parameters.ArtifactName }}
+                      timeoutInMinutes: 5
+
+                    - task: PowerShell@2
+                      inputs:
+                        filePath: '$(Build.SourcesDirectory)/eng/scripts/determine-js-release-tag.ps1'
+                        failOnStderr: true
+                        pwsh: true
+                        arguments: '-PackageJsonPath ${{ parameters.PackageJsonPath }}'
+
+                    - pwsh: |
+                        Write-Host "Will deploy with tag of $(Tag)"
+                        Get-ChildItem "$(Pipeline.Workspace)/${{ parameters.ArtifactName }}" -Recurse -Force `
+                          | Where-Object { $_.Name -like "*.tgz" } `
+                          | Copy-Item -Destination "$(Build.ArtifactStagingDirectory)"
+
+                        Get-ChildItem "$(Build.ArtifactStagingDirectory)" -Recurse -Force | % { Write-Host $_.FullName }
+                      displayName: Move artifact to $(Build.ArtifactStagingDirectory)
+
+                    - task: EsrpRelease@7
+                      inputs:
+                        displayName: 'Publish oav to ESRP'
+                        ConnectedServiceName: 'Azure SDK Engineering System'
+                        ClientId: '5f81938c-2544-4f1f-9251-dd9de5b8a81b'
+                        KeyVaultName: 'AzureSDKEngKeyVault'
+                        AuthCertName: 'azure-sdk-esrp-release-auth-certificate'
+                        SignCertName: 'azure-sdk-esrp-release-sign-certificate'
+                        Intent: 'PackageDistribution'
+                        ContentType: 'npm'
+                        FolderLocation: $(Build.ArtifactStagingDirectory)
+                        Owners: ${{ coalesce(variables['Build.RequestedForEmail'], 'azuresdk@microsoft.com') }}
+                        Approvers: 'azuresdk@microsoft.com'
+                        ServiceEndpointUrl: 'https://api.esrp.microsoft.com'
+                        MainPublisher: 'ESRPRELPACMANTEST'
+                        DomainTenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+                        productstate: $(Tag)

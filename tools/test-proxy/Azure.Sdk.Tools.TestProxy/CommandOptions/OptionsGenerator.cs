@@ -50,11 +50,20 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             dumpOption.AddAlias("-d");
 
             var universalOption = new Option<bool>(
-                name: "--universalOutput",
+                name: "--universal",
                 description: "Flag; Redirect all logs to stdout, including what would normally be showing up on stderr.",
                 getDefaultValue: () => false);
             universalOption.AddAlias("-u");
 
+            var autoShutdownOption = new Option<int>(
+                name: "--auto-shutdown-in-seconds",
+                description: "Integer argument; When provided, the proxy will auto-shutdown after not being contacted over any HTTP route for this number of seconds.",
+                getDefaultValue: () => -1);
+
+            var breakGlassOption = new Option<bool>(
+                name: "--break-glass",
+                description: "Flag; Ignore secret push protection results when pushing.",
+                getDefaultValue: () => false);
 
             var collectedArgs = new Argument<string[]>("args")
             {
@@ -83,17 +92,20 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             var startCommand = new Command("start", "Start the TestProxy.");
             startCommand.AddOption(insecureOption);
             startCommand.AddOption(dumpOption);
+            startCommand.AddOption(universalOption);
+            startCommand.AddOption(autoShutdownOption);
             startCommand.AddArgument(collectedArgs);
 
             startCommand.SetHandler(async (startOpts) => await callback(startOpts),
-                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, universalOption, collectedArgs)
+                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, universalOption, autoShutdownOption, collectedArgs)
             );
             root.Add(startCommand);
 
             var pushCommand = new Command("push", "Push the assets, referenced by assets.json, into git.");
+            pushCommand.AddOption(breakGlassOption);
             pushCommand.AddOption(assetsJsonPathOption);
             pushCommand.SetHandler(async (pushOpts) => await callback(pushOpts),
-                new PushOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption)
+                new PushOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption, breakGlassOption)
             );
             root.Add(pushCommand);
 

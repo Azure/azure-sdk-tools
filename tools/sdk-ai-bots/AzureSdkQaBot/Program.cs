@@ -12,6 +12,8 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch;
 using AzureSdkQaBot.Model;
 using Octokit;
+using Azure.Identity;
+using Azure.Security.KeyVault.Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +23,44 @@ builder.Services.AddHttpContextAccessor();
 
 // Prepare Configuration for ConfigurationBotFrameworkAuthentication
 var config = builder.Configuration.Get<ConfigOptions>()!;
-builder.Configuration["MicrosoftAppType"] = "MultiTenant";
-builder.Configuration["MicrosoftAppId"] = config.BOT_ID;
-builder.Configuration["MicrosoftAppPassword"] = config.BOT_PASSWORD;
+
+
+// Access key vault
+if (string.IsNullOrEmpty(config.KeyVaultUrl))
+{
+    throw new Exception("KeyVaultUrl is not set in the configuration.");
+}
+
+System.Security.Cryptography.X509Certificates.X509Certificate2? certificate = null;
+try
+{
+    CertificateClient client = new(vaultUri: new Uri(config.KeyVaultUrl), credential: new DefaultAzureCredential());
+    if (client == null)
+    {
+        throw new Exception($"Failed to create KeyVault client for {config.KeyVaultUrl}");
+    }
+
+
+    //Get certificate in X509Certificate format
+    if (string.IsNullOrEmpty(config.CertificateName))
+    {
+        throw new Exception("CertificateName is not set in the configuration.");
+    }
+    string certificateName = config.CertificateName;
+    certificate = client.DownloadCertificate(certificateName).Value;
+
+    if (certificate == null)
+    {
+        throw new Exception($"Certificate {certificateName} not found in KeyVault {config.KeyVaultUrl}");
+    }
+}
+catch (Exception ex)
+{
+    throw new Exception($"Failed to get certificate {config.CertificateName} from KeyVault {config.KeyVaultUrl}", ex);
+}
+
+// Create the ClientCredentialsFactory to user certificate authentication
+builder.Services.AddSingleton<ServiceClientCredentialsFactory>((e) => new CertificateServiceClientCredentialsFactory(certificate, config.BOT_ID, "72f988bf-86f1-41af-91ab-2d7cd011db47"));
 
 // Create the Bot Framework Authentication to be used with the Bot Adapter.
 builder.Services.AddSingleton<BotFrameworkAuthentication, ConfigurationBotFrameworkAuthentication>();
@@ -86,7 +123,7 @@ builder.Services.AddTransient<IBot, AzureSdkQaBotApplication>(sp =>
     IPlanner<AppState> planner = new AzureOpenAIPlanner<AppState>(sp.GetService<AzureOpenAIPlannerOptions>(), loggerFactory.CreateLogger<AzureOpenAIPlanner<AppState>>());
     //IModerator<AppState> moderator = new AzureContentSafetyModerator<AppState>(sp.GetService<AzureContentSafetyModeratorOptions>(), loggerFactory.CreateLogger<AzureContentSafetyModerator<AppState>>());
 
-    ApplicationOptions<AppState, AppStateManager> applicationOptions = new ApplicationOptions<AppState, AppStateManager>()
+    ApplicationOptions<AppState, AppStateManager> applicationOptions = new()
     {
         AI = new AIOptions<AppState>(planner, promptManager)
         {

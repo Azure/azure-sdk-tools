@@ -1,5 +1,26 @@
 # Release History
 
+## 0.5.2 (2025-02-19)
+
+- Bug fix for `do-not-log-exceptions` checker, was incorrectly flagging debug logs.
+
+## 0.5.1 (2025-01-23)
+
+- Bug Fix for connection_verify rule
+
+## 0.5.0 (2025-01-06)
+
+- Added `httpx` as an import flagged by C4749(networking-import-outside-azure-core-transport)
+- Checker to warn against legacy typing (do-not-use-legacy-typing)
+- Checker to warn against errors being raised and logged (do-not-log-raised-errors)
+- Refactored test suite
+- Checker to warn against importing `asyncio` directly. (do-not-import-asyncio)
+- Checker to warn against logging bare `Exception`. (do-not-log-exceptions)
+- Refactored and enabled checker to warn if client does not have approved name prefix. (unapproved-client-method-name-prefix)
+- Checker to warn if `connection_verify` is hardcoded to a boolean value. (do-not-hardcode-connection-verify)
+- Checker to warn if sync and async overloads are mixed together. (invalid-use-of-overload).
+
+
 ## 0.4.1 (2024-04-17)
 
 - Bug fix for typing under TYPE_CHECKING block.

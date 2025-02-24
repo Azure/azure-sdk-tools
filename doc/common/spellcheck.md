@@ -1,5 +1,9 @@
-
 # Spell Checking the Azure SDK
+
+> [!NOTE]  
+> If you are working on an Azure REST API spec see SpellCheck instructions here: 
+> [https://aka.ms/ci-fix#spell-check](https://aka.ms/ci-fix#spell-check)
+
 
 To keep code quality high we use a code scanner (cspell) to check for spelling errors in source and other files. To keep code quality high we check spelling in CI. These tools can be run locally as well.
 

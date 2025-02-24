@@ -8,6 +8,12 @@ parameters:
 - name: Staging
   type: object
   default: {}
+- name: ProductionArmSteps
+  type: stepList
+  default: []
+- name: StagingArmSteps
+  type: stepList
+  default: []
 
 stages:
     - stage: Build
@@ -38,8 +44,22 @@ stages:
       - stage: Staging
         dependsOn: Build
         jobs:
-        - deployment: PublishFunction
+        - ${{ if ne(length(parameters.StagingArmSteps), 0) }}:
+          - deployment: PublishArm
+            displayName: Publish ARM
+            environment: ${{ parameters.Staging.EnvironmentName }}
+            pool:
+              name: azsdk-pool-mms-ubuntu-2204-general
+            strategy:
+              runOnce:
+                deploy:
+                  steps: ${{ parameters.StagingArmSteps }}
+                
+        - deployment: PublishApp
+          displayName: Publish App
           environment: ${{ parameters.Staging.EnvironmentName }}
+          ${{ if ne(length(parameters.StagingArmSteps), 0) }}:
+            dependsOn: PublishArm
           pool:
             name: azsdk-pool-mms-ubuntu-2204-general
             vmImage: ubuntu-22.04
@@ -65,8 +85,22 @@ stages:
       - stage: Production
         dependsOn: Staging
         jobs:
-        - deployment: PublishFunction
+        - ${{ if ne(length(parameters.ProductionArmSteps), 0) }}:
+          - deployment: PublishArm
+            displayName: Publish ARM
+            environment: ${{ parameters.Production.EnvironmentName }}
+            pool:
+              name: azsdk-pool-mms-ubuntu-2204-general
+            strategy:
+              runOnce:
+                deploy:
+                  steps: ${{ parameters.ProductionArmSteps }}
+        
+        - deployment: PublishApp
+          displayName: Publish App
           environment: ${{ parameters.Production.EnvironmentName }}
+          ${{ if ne(length(parameters.ProductionArmSteps), 0) }}:
+            dependsOn: PublishArm
           pool:
             name: azsdk-pool-mms-ubuntu-2204-general
             vmImage: ubuntu-22.04

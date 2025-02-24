@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Core;
@@ -17,10 +17,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     public class RecordedTestSanitizer
     {
         public const string SanitizeValue = "Sanitized";
+
+        public string SanitizerId { get; set; }
+
         public List<string> JsonPathSanitizers { get; } = new List<string>();
 
         public ApplyCondition Condition { get; protected set; } = null;
-
 
         /// This is just a temporary workaround to avoid breaking tests that need to be re-recorded
         //  when updating the JsonPathSanitizer logic to avoid changing date formats when deserializing requests.

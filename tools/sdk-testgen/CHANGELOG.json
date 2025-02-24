@@ -1,0 +1,324 @@
+{
+  "name": "@autorest/testmodeler",
+  "entries": [
+    {
+      "version": "2.6.2",
+      "tag": "@autorest/testmodeler_v2.6.2",
+      "date": "Thu, 14 May 2024 08:36:29 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Update dependencies"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.6.1",
+      "tag": "@autorest/testmodeler_v2.6.1",
+      "date": "Fri, 21 Jul 2023 08:36:29 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Support DataFactoryKeyVaultSecretReference of DataFactoryElement"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.6.0",
+      "tag": "@autorest/testmodeler_v2.6.0",
+      "date": "Mon, 19 Jun 2023 08:50:04 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Support DataFactoryElement"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.2",
+      "tag": "@autorest/testmodeler_v2.5.2",
+      "date": "Wed, 14 Jun 2023 08:54:31 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Upgrade m4 core version."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.1",
+      "tag": "@autorest/testmodeler_v2.5.1",
+      "date": "Mon, 13 Mar 2023 02:20:40 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "fix a bug of parsing body parameter and add eslint"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.0",
+      "tag": "@autorest/testmodeler_v2.5.0",
+      "date": "Thu, 02 Feb 2023 09:40:48 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Use webpack and remove npm-shrinkwrap.json"
+          },
+          {
+            "comment": "Update dependency semver ranges"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.4.0",
+      "tag": "@autorest/testmodeler_v2.4.0",
+      "date": "Mon, 12 Dec 2022 06:18:04 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Upgrade @autorest/codemodel to 4.19.2, and use modelerfour@4.25.0"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.3.2",
+      "tag": "@autorest/testmodeler_v2.3.2",
+      "date": "Mon, 22 Aug 2022 03:25:13 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "add option --explicit-types to allow customize tagged types in exported code model."
+          },
+          {
+            "comment": "fix bugs in loading remote api scenario"
+          },
+          {
+            "comment": "fix bug in outputVariableModel generation when there is no response in scenario step"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.3.1",
+      "tag": "@autorest/testmodeler_v2.3.1",
+      "date": "Fri, 05 Aug 2022 09:25:55 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Consolidate operation groups for examples with m4."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.3.0",
+      "tag": "@autorest/testmodeler_v2.3.0",
+      "date": "Thu, 21 Jul 2022 06:46:35 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Use modelerfour@4.23.7 and add securityParameters in ExampleModel for ApiKey securityDefinitions."
+          },
+          {
+            "comment": "use apiscenario 1.2 via oav@3.0.3"
+          },
+          {
+            "comment": "add --testmodeler.api-scenario-loader-option to make api scenario loader configurable"
+          },
+          {
+            "comment": "Add --testmodeler.export-explicit-type to support explicit types in exported codemodel."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.5",
+      "tag": "@autorest/testmodeler_v2.2.5",
+      "date": "Sun, 24 Apr 2022 09:41:30 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Use oav@2.12.1"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.4",
+      "tag": "@autorest/testmodeler_v2.2.4",
+      "date": "Tue, 29 Mar 2022 01:56:58 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Oav loader cache problem."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.3",
+      "tag": "@autorest/testmodeler_v2.2.3",
+      "date": "Wed, 23 Mar 2022 06:19:34 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "upgrade @autorest/codemodel from 4.17.2 to 4.18.2"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.2",
+      "tag": "@autorest/testmodeler_v2.2.2",
+      "date": "Mon, 14 Mar 2022 09:19:34 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "add option --testmodeler.add-armtemplate-payload-string (default as False) to enable/disable StepArmTemplateModel.armTemplatePayloadString"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.1",
+      "tag": "@autorest/testmodeler_v2.2.1",
+      "date": "Thu, 03 Mar 2022 02:23:21 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Use autorest session to log warning."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.2.0",
+      "tag": "@autorest/testmodeler_v2.2.0",
+      "date": "Tue, 22 Feb 2022 10:58:11 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Add support for json pointer modeler for output variable of scenario test."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.1.0",
+      "tag": "@autorest/testmodeler_v2.1.0",
+      "date": "Fri, 11 Feb 2022 09:47:39 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Refine scenario test modeler."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Fix newline platform compatibility problem."
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.0.0",
+      "tag": "@autorest/testmodeler_v2.0.0",
+      "date": "Wed, 12 Jan 2022 09:10:46 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "load api scenario with oav@2.11.3"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.1.0",
+      "tag": "@autorest/testmodeler_v1.1.0",
+      "date": "Wed, 12 Jan 2022 02:19:25 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Remove decode for query param in example model to be align with swagger example rule."
+          },
+          {
+            "comment": "Refactor config get set method."
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Upgrade to latest autorest/core."
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.4",
+      "tag": "@autorest/testmodeler_v1.0.4",
+      "date": "Fri, 12 Dec 2021 07:35:05 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Match body parameter case insensivly."
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.3",
+      "tag": "@autorest/testmodeler_v1.0.3",
+      "date": "Mon, 29 Nov 2021 06:10:09 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "1. uncapitalize example parameter names. 2. skip non-json examples"
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.2",
+      "tag": "@autorest/testmodeler_v1.0.2",
+      "date": "Mon, 15 Nov 2021 09:39:03 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix `additionalProperties` problem."
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.1",
+      "tag": "@autorest/testmodeler_v1.0.1",
+      "date": "Tue, 09 Nov 2021 09:17:24 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix `AdditionalProperties` model problem and duplicate operation id problem."
+          }
+        ]
+      }
+    },
+    {
+      "version": "1.0.0",
+      "tag": "@autorest/testmodeler_v1.0.0",
+      "date": "Fri, 29 Oct 2021 05:53:50 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "Init public version of autorest extension for test modeler"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 parameters:
   - name: Reviews
     type: string
-    default: ''  
+    default: ''
   - name: APIViewURL
     type: string
     default: ''
@@ -16,19 +16,23 @@ parameters:
     default: ''
 
 steps:
-- task: Powershell@2
+- task: AzurePowerShell@5
   displayName: 'Generate APIView Token files'
   inputs:
-    pwsh: true
-    filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-Files.ps1
-    arguments: >
+    azureSubscription: 'Azure SDK Engineering System'
+    ScriptType: 'FilePath'
+    ScriptPath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-Files.ps1
+    ScriptArguments: >
       -ReviewDetailsJson "${{ parameters.Reviews }}"
       -StagingPath "$(Build.ArtifactStagingDirectory)"
       -WorkingDir "$(Pipeline.Workspace)"
       -StorageBaseUrl "${{ parameters.StorageContainerUrl }}"
       -ApiviewGenScript "${{ parameters.ApiviewGenScript }}"
-      -ContainerSas "$(apiview-originals-sas)"
       -ParserPath "${{ parameters.ParserPath }}"
+    azurePowerShellVersion: latestVersion
+    pwsh: true
+  env:
+    AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
 
 - task: PublishBuildArtifacts@1
   inputs:

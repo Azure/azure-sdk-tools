@@ -42,7 +42,7 @@
                             </div>
                         }
                         <p class="card-subtitle mb-1 text-body-secondary"><b>Created: </b><span date="@apiRevision.CreatedOn"></span> , <b>By: </b>@apiRevision.CreatedBy , <b>Updated: </b><span date="@apiRevision.LastUpdatedOn"></span></p>
-                        <p class="card-subtitle mb-1 text-body-secondary"><b>Type: </b>@apiRevision.APIRevisionType , <b>Version: </b>@apiRevision.Files[0].PackageVersion , @if (apiRevision.IsReleased) { <b>Released: </b><span date="@apiRevision.ReleasedOn"></span> } </p>
+                        <p class="card-subtitle mb-1 text-body-secondary"><b>Type: </b>@apiRevision.APIRevisionType , <b>Version: </b>@apiRevision.Files[0].PackageVersion @if (apiRevision.IsReleased) { <span class="badge text-bg-success shipped-badge">Shipped</span> } </p>
                     </div>
                     <div class="revision-actions">
                         <div class="btn-group animate__animated animate__fadeIn" role="group" aria-label="apiRevision action buttons">

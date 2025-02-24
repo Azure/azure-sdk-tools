@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "subscriptionId": {
-      "value": "2cd617ea-1866-46b1-90e3-fffb087ebf9b"
+      "value": "4d042dc6-fe17-4698-a23f-ec6a8d1e98f4"
     },
     "groupSuffix": {
       "value": "prod"
@@ -17,17 +17,17 @@
     "monitoringLocation": {
       "value": "centralus"
     },
-    "staticTestKeyvaultName": {
-      "value": "stress-secrets-prod"
-    },
-    "staticTestKeyvaultGroup": {
-      "value": "rg-stress-secrets-prod"
-    },
     "defaultAgentPoolMinNodes": {
       "value": 2
     },
     "defaultAgentPoolMaxNodes": {
       "value": 10
+    },
+    "defaultAgentPoolSku": {
+      "value": "Standard_D8ds_v4"  // Standard_D8a_v4 does not have quota in TME tenant subscription
+    },
+    "skipAcrRoleAssignment": {
+      "value": true
     },
     "maintenanceWindowDay": {
       "value": "Friday"

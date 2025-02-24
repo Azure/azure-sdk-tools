@@ -22,8 +22,8 @@ namespace GitHubTeamUserStore
         /// teams is less than 1/10th of that. The team/user data is serialized into json and stored in azure blob storage.
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
-        /// <param name="teamUserBlobStorageUri">The URI, including SAS, of the team/user blob storage URI</param>
-        /// <param name="userOrgVisibilityBlobStorageUri">The URI, including SAS, of the user/org visibility blob</param>
+        /// <param name="teamUserBlobStorageUri">The URI of the team/user blob storage URI</param>
+        /// <param name="userOrgVisibilityBlobStorageUri">The URI of the user/org visibility blob</param>
         /// <returns>true if everything stored successfully, false otherwise</returns>
         public static async Task<bool> GenerateAndStoreTeamUserAndOrgData(GitHubEventClient gitHubEventClient,
                                                                           string teamUserBlobStorageUri,
@@ -160,7 +160,7 @@ namespace GitHubTeamUserStore
         /// to generate the org visibility data.
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
-        /// <param name="userOrgVisibilityBlobStorageUri">The URI, including SAS, of the user/org visibility blob</param>
+        /// <param name="userOrgVisibilityBlobStorageUri">The URI of the user/org visibility blob</param>
         /// <returns></returns>
         public static async Task<bool> GenerateAndStoreUserOrgData(GitHubEventClient gitHubEventClient,
                                                                    string userOrgVisibilityBlobStorageUri,

@@ -12,17 +12,18 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "apiview <packageDir> <outputDir>",
-	Short: "apiview will generate the JSON token output for APIView",
-	Long: `The apiview command can be used to generate the tokenized 
-output needed by the APIView tool to show a view of publicly 
-exposed portions of an SDK. The generated file will use the 
-following naming format: <module name>.json
-NOTE: This command will overwrite any file with the same name 
-in the output directory.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
+	Use: "apiviewgo <moduleDir> <outputDir>",
+	Long: `apiviewgo outputs a file representing the public API of an Azure SDK for Go
+module in APIView format. It writes this file to <outputDir>/<module name>.json,
+overwriting any file of the same name.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 2 {
+			err := cmd.Help()
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
 		err := CreateAPIView(args[0], args[1])
 		if err != nil {
 			fmt.Println(err)

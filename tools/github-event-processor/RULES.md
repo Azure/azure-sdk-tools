@@ -426,12 +426,13 @@ OR
 - Determine if this is a community contribution:
 
     ```text
-    IF the user is NOT a member of the Azure Org
-      IF the user does not have Admin or Write Collaborator permission
-        - Add "customer-reported" label
-        - Add "Community Contribution" label
-        - Create the following comment
-          - "Thank you for your contribution @{issueAuthor}! We will review the pull request and get back to you soon."
+    If the user is NOT a known bot
+      IF the user is NOT a member of the Azure Org
+        IF the user does not have Admin or Write Collaborator permission
+          - Add "customer-reported" label
+          - Add "Community Contribution" label
+          - Create the following comment
+            - "Thank you for your contribution @{issueAuthor}! We will review the pull request and get back to you soon."
     ```
 
 ## Reset pull request activity
@@ -629,6 +630,7 @@ OR
 - Issue is open
 - Issue was opened > 2 years ago
 - Issue was last updated more than 30 days ago
+- Issue does NOT have the auto-close-exempt label
 
 ### Actions
 

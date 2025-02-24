@@ -2,10 +2,12 @@ use std::fs::{File, self};
 use std::io::{self, Read, Write};
 use std::path::Path;
 
+const INPUT_PATH: &str = "vendor/rustdoc-types/src/lib.rs";
+const OUTPUT_PATH: &str = "output/lib-typeshare.rs";
+
 fn main() -> io::Result<()> {
-    // Define the input and output file paths
-    let input_path = Path::new("lib.rs");
-    let output_path = Path::new("output/lib-typeshare.rs");
+    let input_path = Path::new(INPUT_PATH);
+    let output_path = Path::new(OUTPUT_PATH);
 
     // Open the input file and read its content into a string
     let mut input_file = File::open(&input_path)?;

@@ -175,9 +175,19 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "rustc-hash",
+ "rustdoc-types 0.33.0",
  "serde",
  "serde_json",
  "typeshare",
+]
+
+[[package]]
+name = "rustdoc-types"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e33060dbec9e1d13d285c4cddc150a431569be97f33bf0b6c1ec6eea934c31ca"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

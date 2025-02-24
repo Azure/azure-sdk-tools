@@ -2,19 +2,24 @@ import { Project, SyntaxKind } from "ts-morph";
 import * as fs from 'fs';
 import * as path from 'path';
 
+const PATHS = {
+    INPUT_TS: path.join(__dirname, 'output/typeshare-result.ts'),
+    OUTPUT_TS: path.join(__dirname, 'output/rustdoc-types.ts'),
+    RUSTDOC_LIB: path.join(__dirname, 'vendor/rustdoc-types/src/lib.rs')
+};
+
 // Initialize the project with the specified tsconfig file
 const project = new Project({ tsConfigFilePath: "../tsconfig.json" });
 
 // Get the source file from the project
-const sourceFile = project.getSourceFileOrThrow("output/typeshare-result.ts");
+const sourceFile = project.getSourceFileOrThrow(PATHS.INPUT_TS);
 
 // Create a new source file for the output
-const newSourceFile = project.createSourceFile("output/rustdoc-types.ts", "", { overwrite: true });
+const newSourceFile = project.createSourceFile(PATHS.OUTPUT_TS, "", { overwrite: true });
 
 // 1. Get the FORMAT_VERSION
 // Read the lib.rs file
-const libRsPath = path.join(__dirname, 'lib.rs');
-const libRsContent = fs.readFileSync(libRsPath, 'utf8');
+const libRsContent = fs.readFileSync(PATHS.RUSTDOC_LIB, 'utf8');
 
 // Extract the FORMAT_VERSION line
 const formatVersionMatch = libRsContent.match(/pub const FORMAT_VERSION: u32 = (\d+);/);

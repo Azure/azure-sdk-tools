@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using APIViewWeb.Repositories;
 using Azure.Identity;
 using Azure.Storage.Blobs;
-using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
@@ -17,10 +16,9 @@ namespace APIViewWeb
 
         public string GetContainerUrl() => _container.Uri.ToString();
 
-        public BlobOriginalsRepository(IConfiguration configuration)
+        public BlobOriginalsRepository(BlobServiceClient blobServiceClient)
         {
-            var serviceClient = new BlobServiceClient(new Uri(configuration["StorageAccountUrl"]), new DefaultAzureCredential());
-            _container = serviceClient.GetBlobContainerClient("originals");
+            _container = blobServiceClient.GetBlobContainerClient("originals");
         }
 
         public async Task<Stream> GetOriginalAsync(string codeFileId)

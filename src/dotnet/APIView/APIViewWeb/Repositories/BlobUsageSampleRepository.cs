@@ -4,10 +4,8 @@
 using System.IO;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
-using Microsoft.Extensions.Configuration;
 using System.Text;
 using System;
-using Azure.Identity;
 
 namespace APIViewWeb.Repositories
 {
@@ -15,9 +13,9 @@ namespace APIViewWeb.Repositories
     {
         private BlobServiceClient _serviceClient;
 
-        public BlobUsageSampleRepository(IConfiguration configuration)
+        public BlobUsageSampleRepository(BlobServiceClient blobServiceClient)
         {
-            _serviceClient = new BlobServiceClient(new Uri(configuration["StorageAccountUrl"]), new DefaultAzureCredential());
+            _serviceClient = blobServiceClient;
         }
 
         public async Task<Stream> GetUsageSampleAsync(string sampleFileId)

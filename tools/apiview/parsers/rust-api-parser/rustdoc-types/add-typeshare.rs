@@ -65,7 +65,7 @@ fn add_typeshare_annotations(content: &str) -> String {
                 && enum_name != "TraitBoundModifier"
                 && enum_name != "MacroKind"
             {
-                result.push_str("#[serde(tag = \"type\", content = \"content\")]\n");
+                result.push_str("#[serde(tag = \"type_typeshare\", content = \"content_typeshare\")]\n");
                 // Need to handle this in post-processing to eventually get "type": { content }
             }
         }

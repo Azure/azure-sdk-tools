@@ -25,7 +25,7 @@ if (formatVersionMatch) {
     newSourceFile.addStatements(formatVersionLine);
 }
 
-// 2. Handle enums with `#[serde(tag = "type", content = "content")]` attributes
+// 2. Handle enums with `#[serde(tag = "type_typeshare", content = "content_typeshare")]` attributes
 // Process all type aliases in the source file
 sourceFile.getTypeAliases().forEach(typeAlias => {
     // Get the type node from the type alias
@@ -42,8 +42,8 @@ sourceFile.getTypeAliases().forEach(typeAlias => {
             if (typeLiteral) {
                 // Get the properties of the type literal
                 const properties = typeLiteral.getProperties();
-                const typeProperty = properties.find(prop => prop.getName() === "type");
-                const contentProperty = properties.find(prop => prop.getName() === "content");
+                const typeProperty = properties.find(prop => prop.getName() === "type_typeshare");
+                const contentProperty = properties.find(prop => prop.getName() === "content_typeshare");
 
                 // If both type and content properties are found
                 if (typeProperty && contentProperty) {

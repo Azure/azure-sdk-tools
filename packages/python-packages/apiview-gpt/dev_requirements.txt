@@ -1,6 +1,5 @@
 flask
 knack
-langchain
-openai
-pydantic
+openai==1.64.0
+pydantic==2.10.6
 python-dotenv

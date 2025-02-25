@@ -3,49 +3,66 @@
     "violations": [
         {
             "rule_ids": [
-                "python_design.html#python-client-naming",
-                "python_design.html#python-namespaces-async",
-                "python_design.html#python-client-separate-sync-async"
+                "python_design.html#python-client-naming"
             ],
             "line_no": 30,
             "bad_code": "class azure.contoso.NoodleAsyncManager:",
-            "suggestion": "class azure.contoso.aio.NoodleAsyncClient:",
-            "comment": "The class name should end with 'Client' and be in a namespace with '.aio' suffix. The class should be in a namespace with '.aio' suffix. There should be two separate classes for sync and async operations."
+            "suggestion": "Rename service client types to use a 'Client' suffix (e.g. 'NoodleClient') rather than 'Manager'. Ensure both sync and async clients follow this naming convention.",
+            "comment": "Service client types should be named with a Client suffix."
         },
         {
             "rule_ids": [
-                "python_design.html#python-client-constructor-policy-arguments"
-            ],
-            "line_no": 31,
-            "bad_code": "async def __init__(self, endpoint, credential, options: dict)",
-            "suggestion": "async def __init__(self, endpoint, credential, **kwargs)",
-            "comment": "The constructor should accept optional default request options as keyword arguments."
-        },
-        {
-            "rule_ids": [
-                "python_design.html#python-client-naming",
-                "python_design.html#python-client-separate-sync-async"
+                "python_design.html#python-client-naming"
             ],
             "line_no": 43,
             "bad_code": "class azure.contoso.NoodleManager:",
-            "suggestion": "Provide two separate client classes for synchronous and asynchronous operations.",
-            "comment": "The class name should end with 'Client'. The class should not combine async and sync operations."
+            "suggestion": "Rename the service client to use a 'Client' suffix (e.g. 'NoodleClient').",
+            "comment": "Service client types should be named with a Client suffix."
         },
         {
             "rule_ids": [
                 "python_design.html#python-client-connection-string"
             ],
-            "line_no": 49,
-            "bad_code": "connection_string: Optional[str]",
-            "suggestion": "Implement a separate factory classmethod from_connection_string to create a client from a connection string.",
-            "comment": "The constructor should not accept a connection string directly."
+            "line_no": 1,
+            "bad_code": "def __init__(\n            self, \n            endpoint, \n            credential,\n            connection_string: Optional[str],\n            options: dict\n        )",
+            "suggestion": "Remove connection_string from the __init__ parameters and implement a separate factory classmethod 'from_connection_string' that accepts the connection string.",
+            "comment": "The constructor must not take a connection string; a separate factory is required."
         },
         {
-            "rule_ids": [],
-            "line_no": 53,
-            "bad_code": "def create_noodle(self, body: NoodleCreateRequest, **kwargs) -> NoodleResponse",
-            "suggestion": "def create_noodle(self, body: Noodle, **kwargs) -> Noodle",
-            "comment": "Avoid using terms like 'Request' and 'Response' in models. These are HTTP-specific."
+            "rule_ids": [
+                "python_design.html#python-client-options-naming"
+            ],
+            "line_no": 36,
+            "bad_code": "options: dict",
+            "suggestion": "Replace the use of an 'options bag' with separate keyword-only arguments for individual settings.",
+            "comment": "Do not use an 'options bag' object to group optional parameters."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 57,
+            "bad_code": "def get_noodles(self, options: dict) -> List[NoodleResponse]",
+            "suggestion": "Rename the method to 'list_noodles' to clearly indicate that it enumerates a collection.",
+            "comment": "Methods returning collections should be prefixed with 'list_'."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-paged-prefix"
+            ],
+            "line_no": 41,
+            "bad_code": "async def get_noodles_async(self, options: dict) -> List[NoodleResponse]",
+            "suggestion": "Rename the method to 'list_noodles_async' to clearly indicate that it enumerates a collection.",
+            "comment": "Methods returning collections should be prefixed with 'list_'."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-enum-name-uppercase"
+            ],
+            "line_no": 15,
+            "bad_code": "blue = \"blue\"",
+            "suggestion": "Rename enum members to UPPERCASE, for example, 'BLUE = \"blue\"', 'GREEN = \"green\"', and 'RED = \"red\"'.",
+            "comment": "Enum member names should be in UPPERCASE."
         }
     ]
 }

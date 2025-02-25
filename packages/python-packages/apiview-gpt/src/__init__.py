@@ -2,7 +2,7 @@ import os
 import json
 
 from ._version import VERSION
-from ._gpt_reviewer import GptReviewer
+from ._gpt_reviewer_openai import GptReviewer
 from ._python_api import review_python
 from ._java_api import review_java
 from ._typescript_api import review_typescript

@@ -2,8 +2,9 @@ import os
 import json
 import openai
 import dotenv
-
 from typing import List, Union
+
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
@@ -17,7 +18,11 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 class GptReviewer:
 
     def __init__(self, log_prompts: bool = False):
-        self.client = openai.AzureOpenAI()
+        self.client = openai.AzureOpenAI(
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+            azure_ad_token_provider=get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),
+            api_version="2025-01-01-preview"
+        )
         self.output_parser = GuidelinesResult
         if log_prompts:
             # remove the folder if it exists

@@ -60,7 +60,7 @@ extends:
                         Get-ChildItem "$(Build.ArtifactStagingDirectory)" -Recurse -Force | % { Write-Host $_.FullName }
                       displayName: Move artifact to $(Build.ArtifactStagingDirectory)
 
-                    - task: EsrpRelease@7
+                    - task: EsrpRelease@9
                       inputs:
                         displayName: 'Publish oav to ESRP'
                         ConnectedServiceName: 'Azure SDK PME Managed Identity'

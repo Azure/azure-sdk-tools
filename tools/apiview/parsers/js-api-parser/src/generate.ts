@@ -50,7 +50,7 @@ function shouldSkipDependency(dependency: string): boolean {
  * @param dependencies dependencies of name and version pairs
  * @returns
  */
-function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<string, string>) {
+export function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<string, string>) {
   if (!dependencies) {
     return;
   }

@@ -16,16 +16,22 @@ import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This represents an entire Maven POM file, consisting of the GAV, parent GAV, dependencies, and other metadata.
  */
 public class Pom {
+    private static final String ARTIFACT_ID = "artifactId";
+    private static final String PACKAGE_VERSION = "version";
+
+    // Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar
+    private static final Pattern SOURCES_JAR_PATTERN = Pattern.compile("(.+)-(\\d+\\.\\d+.\\d+(-beta\\.\\d+)?)-sources\\.jar");
+
     private final Gav gav;
     private final Gav parent;
 
@@ -47,13 +53,7 @@ public class Pom {
     public static Pom fromSourcesJarFile(File sourcesJarFile) {
         Pom pom = null;
         final String filename = sourcesJarFile.getName();
-        int i = 0;
-        while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
-            i++;
-        }
-
-        String artifactId = filename.substring(0, i - 1);
-        String packageVersion = filename.substring(i, filename.indexOf("-sources.jar"));
+        Map<String, String> filenameParts = parseFilename(filename);
 
         // we will firstly try to get the artifact ID from the maven file inside the jar file...if it exists
         try (final JarFile jarFile = new JarFile(sourcesJarFile)) {
@@ -64,7 +64,7 @@ public class Pom {
 
                 // use the pom.xml of this artifact only
                 // shaded jars can contain a pom.xml file each for every shaded dependencies
-                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(artifactId + "/pom.xml")) {
+                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(filenameParts.get(ARTIFACT_ID) + "/pom.xml")) {
                     pom = new Pom(jarFile.getInputStream(entry));
                 }
             }
@@ -75,10 +75,24 @@ public class Pom {
         // if we can't get the maven details out of the Jar file, we will just use the filename itself...
         if (pom == null) {
             // we failed to read it from the maven pom file, we will just take the file name without any extension
-            pom = new Pom("", artifactId, packageVersion, false);
+            pom = new Pom("", filenameParts.get(ARTIFACT_ID), filenameParts.get(PACKAGE_VERSION), false);
         }
 
         return pom;
+    }
+
+    static Map<String, String> parseFilename(String filename) {
+        Matcher matcher = SOURCES_JAR_PATTERN.matcher(filename);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Filename does not match the expected package naming pattern " + filename
+                    + ". Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar");
+        }
+        Map<String, String> filenameParts = new HashMap<>();
+        String artifactId = matcher.group(1);
+        String packageVersion = matcher.group(2);
+        filenameParts.put(ARTIFACT_ID, artifactId);
+        filenameParts.put(PACKAGE_VERSION, packageVersion);
+        return filenameParts;
     }
 
     private Pom(final String groupId, final String artifactId, final String version, boolean fileExists) {

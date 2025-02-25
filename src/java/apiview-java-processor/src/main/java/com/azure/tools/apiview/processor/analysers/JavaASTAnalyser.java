@@ -1258,7 +1258,7 @@ public class JavaASTAnalyser implements Analyser {
         final NodeList<ClassOrInterfaceType> typeBounds = typeParameter.getTypeBound();
         final int size = typeBounds.size();
         if (size != 0) {
-            Spacing nextSpacing = spacingState == SpacingState.SKIP_NEXT_SUFFIX ? Spacing.SPACE_BEFORE : Spacing.NO_SPACE;
+            Spacing nextSpacing = spacingState == SpacingState.SKIP_NEXT_SUFFIX ? Spacing.SPACE_BEFORE_AND_AFTER : Spacing.NO_SPACE;
             reviewLine.addToken(KEYWORD, "extends", nextSpacing);
             for (ClassOrInterfaceType typeBound : typeBounds) {
                 visitType(typeBound, reviewLine, TYPE_NAME);
@@ -1425,11 +1425,11 @@ public class JavaASTAnalyser implements Analyser {
                 spacingState = SpacingState.SKIP_NEXT_SUFFIX;
                 visitTypeDFS(childNodes.get(i), reviewLine, kind);
 
-                if (i == childNodes.size() - 1) {
+                spacingState = before;
+
+                if (spacingState != SpacingState.SKIP_NEXT_SUFFIX && i == childNodes.size() - 1) {
                     reviewLine.addSpace();
                 }
-
-                spacingState = before;
             }
         }
     }

@@ -41,7 +41,7 @@ public class Main {
     private static final String PACKAGE_VERSION = "version";
 
     // Expected format <artifact-id>-<majorversion>.<minorversion>.<patchversion>(-beta.<betaversion>)-sources.jar
-    private static final Pattern SOURCES_JAR_PATTERN = Pattern.compile("(.+)-(\\d+\\.\\d+.\\d+(-beta\\.\\d+)?)-sources\\.jar");
+    private static final Pattern SOURCES_JAR_PATTERN = Pattern.compile("(.+)-(\\d+\\.\\d+.\\d+(-.+)?)-sources\\.jar");
 
     // expected argument order:
     // [inputFiles] <outputDirectory>

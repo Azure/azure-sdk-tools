@@ -20,13 +20,15 @@ namespace APIViewWeb
 
         public override string ProcessName => throw new NotImplementedException();
 
+        public override bool UsesTreeStyleParser { get; } = false;
+
         public SwaggerLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
         {
             IsReviewGenByPipeline = true;
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
-            return await CodeFile.DeserializeAsync(stream, hasSections: true, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
+            return await CodeFile.DeserializeAsync(stream, hasSections: true, doTreeStyleParserDeserialization: this.UsesTreeStyleParser);
         }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)

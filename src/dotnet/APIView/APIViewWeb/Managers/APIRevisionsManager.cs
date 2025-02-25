@@ -679,7 +679,8 @@ namespace APIViewWeb.Managers
                 var apiRevisionId = reviewDetails[2];
                 var review = await _reviewsRepository.GetReviewAsync(reviewId);
 
-                var codeFile = await CodeFile.DeserializeAsync(entry.Open(), LanguageServiceHelpers.UseTreeStyleParser(review.Language));
+                var languageService = LanguageServiceHelpers.GetLanguageService(review.Language, _languageServices);
+                var codeFile = await CodeFile.DeserializeAsync(entry.Open(), languageService.UsesTreeStyleParser);
 
                 // Update code file with one downloaded from pipeline
                 if (review != null)

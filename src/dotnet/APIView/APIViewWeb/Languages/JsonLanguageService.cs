@@ -13,6 +13,7 @@ namespace APIViewWeb
         public override string Name { get; } = "Json";
         public override string[] Extensions { get; } = { ".json" };
         public override string VersionString { get; } = "1.0";
+        public override bool UsesTreeStyleParser { get; } = false;
 
         public override bool CanUpdate(string versionString) => false;
 

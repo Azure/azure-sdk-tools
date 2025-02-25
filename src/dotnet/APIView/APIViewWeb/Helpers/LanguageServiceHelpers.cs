@@ -72,16 +72,5 @@ namespace APIViewWeb.Helpers
         {
             return languageServices.FirstOrDefault(service => service.Name == language);
         }
-
-        public static bool UseTreeStyleParser(string language)
-        {
-            var languagesWithTreeStyleParser = new string[] { "C#","Go", "Java", "JavaScript", "Python", "Swift", "TypeSpec" };
-            if (languagesWithTreeStyleParser.Contains(language))
-            {
-                return true;
-            }
-
-            return false;
-        }
     }
 }

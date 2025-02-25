@@ -17,6 +17,7 @@ using ApiView;
 using APIViewWeb.Models;
 using APIViewWeb.LeanModels;
 using System;
+using Microsoft.CodeAnalysis.Host;
 
 namespace APIViewWeb.Controllers
 {
@@ -27,6 +28,7 @@ namespace APIViewWeb.Controllers
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IConfiguration _configuration;
+        private readonly IEnumerable<LanguageService> _languageServices;
         private readonly TelemetryClient _telemetryClient;
         private HashSet<string> _allowedListBotAccounts = new HashSet<string>();
 
@@ -34,13 +36,14 @@ namespace APIViewWeb.Controllers
         
         public PullRequestController(ICodeFileManager codeFileManager, IPullRequestManager pullRequestManager,
             IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager,
-            IConfiguration configuration, TelemetryClient telemetryClient)
+            IConfiguration configuration, IEnumerable<LanguageService> languageService, TelemetryClient telemetryClient)
         {
             _codeFileManager = codeFileManager;
             _pullRequestManager = pullRequestManager;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
             _configuration = configuration;
+            _languageServices = languageService;
             _telemetryClient = telemetryClient;
 
             var botAllowedList = _configuration["allowedList-bot-github-accounts"];
@@ -145,7 +148,8 @@ namespace APIViewWeb.Controllers
                 if (baselineStream.Length > 0)
                 {
                     baselineStream.Position = 0;
-                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
+                    LanguageService languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices);
+                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream, doTreeStyleParserDeserialization: languageService.UsesTreeStyleParser);
                 }
                 if (codeFile != null)
                 {

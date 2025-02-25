@@ -69,7 +69,7 @@ namespace APIViewWeb
 
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
+                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream, doTreeStyleParserDeserialization: this.UsesTreeStyleParser);
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;

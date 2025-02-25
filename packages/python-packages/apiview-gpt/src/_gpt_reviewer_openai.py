@@ -33,6 +33,7 @@ class GptReviewer:
         self.system_prompt = """
 You are an expert code reviewer for SDKs. You will analyze an entire client library apiview surface for {language} to determine whether it meets the SDK guidelines. ONLY mention if the library is clearly and visibly violating a guideline. Be conservative - DO NOT make assumptions that a guideline is being violated because it is possible that all guidelines are being followed. Evaluate each
 piece of code against all guidelines. Code may violate multiple guidelines. Some additional notes: each class will contain its namespace, like class azure.contoso.ClassName where 'azure.contoso' is the namespace and ClassName is the name of the class. The apiview will not contain runnable code, it is meant to be a high-level {language} pseudocode summary of a client library surface.
+Format instructions: 'rule_ids' should contain the unique rule ID or IDs that were violated. 'line_no' should contain the line number of the violation, if known. 'bad_code' should contain the original code that was bad, cited verbatim. It should contain a single line of code. 'suggestion' should contain the suggested {language} code which fixes the bad code. If code is not feasible, a description is fine. 'comment' should contain a comment about the violation.
 """
         self.human_prompt = """
 Given the following guidelines:
@@ -150,7 +151,7 @@ Evaluate the apiview for any violations:
                         existing.comment = existing.comment + " " + violation.comment
             else:
                 combined_violations[line_no] = violation
-        return [x for x in combined_violations.values()]
+        return [x for x in combined_violations.values() if x.line_no != 1]
 
     def find_line_number(self, chunk: Section, bad_code: str) -> Union[int, None]:
         offset = chunk.start_line_no

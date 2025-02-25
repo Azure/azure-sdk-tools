@@ -87,7 +87,7 @@ def generate_review(language: str, path: str, log_prompts: bool = False):
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     with open(os.path.join(output_path, f'{filename}.json'), 'w') as f:
-        f.write(review.json(indent=4))
+        f.write(review.model_dump_json(indent=4))
     pprint(review)
 
 def parse_guidelines(language: str, path: str):

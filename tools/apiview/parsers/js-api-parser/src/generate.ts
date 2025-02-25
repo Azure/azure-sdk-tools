@@ -35,12 +35,22 @@ function emptyLine(relatedToLine?: string): ReviewLine {
 }
 
 /**
+ * Whether to skip diffing a dependency or not
+ * @param dependency
+ * @returns
+ */
+function shouldSkipDependency(dependency: string): boolean {
+  const knownPackagesToSkip: string[] = ["tslib"];
+  return dependency.startsWith("@azure") || knownPackagesToSkip.includes(dependency);
+}
+
+/**
  * Builds review for the package's direct dependencies
  * @param reviewLines The result array to push {@link ReviewLine}s to
  * @param dependencies dependencies of name and version pairs
  * @returns
  */
-function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<string, string>) {
+export function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<string, string>) {
   if (!dependencies) {
     return;
   }
@@ -67,7 +77,7 @@ function buildDependencies(reviewLines: ReviewLine[], dependencies: Record<strin
     const nameToken: ReviewToken = buildToken({
       Kind: TokenKind.StringLiteral,
       Value: dependency,
-      SkipDiff: true,
+      SkipDiff: shouldSkipDependency(dependency),
     });
     const versionToken: ReviewToken = buildToken({
       Kind: TokenKind.StringLiteral,

@@ -40,7 +40,6 @@
 - Formated error log which has ANSI codes to prevent garbled characters are displayed
 - Added a new state `NotEnabled` for cases where the language configuration is missing in readme.md or tspconfig.yaml
 - Unified the SDK generation process for both the spec PR and release scenarios
-- Fix for the missing file log bug
 
 ## 2025-02-11 - 0.1.7
 

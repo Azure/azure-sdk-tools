@@ -2,11 +2,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Managers;
 using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.ApplicationInsights.DataContracts;
 using APIViewWeb.Helpers;
 using System.Collections.Generic;
@@ -17,7 +15,6 @@ using ApiView;
 using APIViewWeb.Models;
 using APIViewWeb.LeanModels;
 using System;
-using Microsoft.CodeAnalysis.Host;
 
 namespace APIViewWeb.Controllers
 {

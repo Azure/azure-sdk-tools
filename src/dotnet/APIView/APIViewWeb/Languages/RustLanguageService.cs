@@ -14,7 +14,6 @@ namespace APIViewWeb
         public override string[] Extensions { get; } = { ".rust.json" };
         public override string ProcessName { get; } = "node";
         public override string VersionString { get; } = "1.0.0-beta.1";
-
         private readonly string _rustParserToolPath;
 
         public RustLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)

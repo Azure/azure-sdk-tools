@@ -1,5 +1,9 @@
 # Release
 
+## 2025-02-21 - 0.1.10
+- Fix for the missing file log bug
+
+
 ## 2025-02-21 - 0.1.9
 
 - Fixed some warnings output

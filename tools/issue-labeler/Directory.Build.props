@@ -1,0 +1,14 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- Libs -->
+    <OctokitVersion>13.0.1</OctokitVersion>
+    <MicrosoftAutoMLVersion>0.21.1</MicrosoftAutoMLVersion>
+    <MicrosoftMLVersion>3.0.1</MicrosoftMLVersion>
+    <PollyVersion>8.4.2</PollyVersion>
+    <MicrosoftExtensionsLoggingAbstractionsVersion>8.0.2</MicrosoftExtensionsLoggingAbstractionsVersion>
+  </PropertyGroup>
+  
+  <Import Project="../../Directory.Build.props" />
+</Project>

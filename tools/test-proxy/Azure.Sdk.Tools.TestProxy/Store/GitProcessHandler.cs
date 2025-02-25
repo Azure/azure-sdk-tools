@@ -27,6 +27,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     public class GitProcessHandler
     {
         public const int RETRY_INTERMITTENT_FAILURE_COUNT = 3;
+
+        public bool ThrowOnException = true;
         /// <summary>
         /// Internal class to hold the minimum supported version of git. If that
         /// version changes we only need to change it here.
@@ -195,16 +197,25 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         }
                     }
                 }
-                // exceptions caught here will be to do with inability to start the git process
-                // otherwise all "error" states should be handled by the output to stdErr and non-zero exitcode.
-                catch (Exception e)
+                // exceptions caught here will be to do with inability to recover from a failed git process
+                // rather than endlessly retrying and concealing the git error from the user, immediately report and exit the process with an error code
+                catch (GitProcessException e)
                 {
-                    DebugLogger.LogDebug(e.Message);
+                    // we rethrow here in contexts where we can expect the ASP.NET middleware to handle the thrown exception
+                    if (ThrowOnException)
+                    {
+                        DebugLogger.LogError(e.Result.StdErr);
 
-                    result.ExitCode = -1;
-                    result.CommandException = e;
+                        throw new GitProcessException(e.Result);
+                    }
+                    // otherwise, we log the error, then early exit from the proces (in CLI contexts)
+                    else
+                    {
+                        DebugLogger.LogError("Git ran into an unrecoverable error. Test-Proxy is exiting. The error output from git is: ");
+                        DebugLogger.LogError(e.Result.StdErr);
 
-                    throw new GitProcessException(result);
+                        Environment.Exit(1);
+                    }
                 }
             });
 

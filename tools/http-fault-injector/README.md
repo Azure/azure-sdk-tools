@@ -41,10 +41,11 @@ Tool 'azure.sdk.tools.httpfaultinjector' was successfully updated from version '
 
 After these steps, .NET clients should automatically trust the certificate.  Other client languages may need additional steps.
 
-### Java Windows
+### Java
 1. Run `dotnet dev-certs https --export-path dotnet-dev-cert.pfx` to export the cert to a file
-2. Run `keytool -importcert -cacerts -file dotnet-dev-cert.pfx` to import the cert to the Java default cacerts keystore
-   1. Requires admin command prompt.
+2. Run `keytool -importcert -cacerts -file dotnet-dev-cert.pfx` (requires sudo/admin)
+   1. If prompted to `enter keystore password`, the default after installing Java is `changeit`
+   2. If `-cacerts` doesn't work, you can try replacing it with `-keystore /path/to/your/keystore`.  May be required depending how Java was installed, or especially if you have multiple versions installed side-by-side.
 
 ## Walkthrough
 1. Run `http-fault-injector`

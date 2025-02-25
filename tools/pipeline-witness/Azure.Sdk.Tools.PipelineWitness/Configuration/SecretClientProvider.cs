@@ -1,5 +1,4 @@
-﻿using System;
-
+using System;
 using Azure.Core;
 using Azure.Security.KeyVault.Secrets;
 

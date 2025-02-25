@@ -72,6 +72,7 @@ namespace APIViewWeb
         public override string Name { get; } = "C";
 
         public override string [] Extensions { get; } = { ".zip" };
+        public override string VersionString => CurrentVersion;
 
         public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 

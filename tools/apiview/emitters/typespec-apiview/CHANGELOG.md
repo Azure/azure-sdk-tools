@@ -1,5 +1,17 @@
 # Release History
 
+## Version 0.5.0 (01-08-2025)
+Support new internal APIView tree-structure.
+
+## Version 0.4.9 (07-09-2024)
+Fix issue where "unknown" was rendered as "any".
+Support value syntax for objects and arrays.
+Support const statements in namespaces.
+
+## Version 0.4.8 (04-18-2024)
+Display suppressions in APIView.
+Resolve visual anomalies.
+
 ## Version 0.4.7 (03-22-2024)
 Support TypeSpec string templates.
 Fix display issue with templated aliases.

@@ -76,7 +76,7 @@ stages:
   jobs:
   - job: Build
     steps:
-    - template: ../steps/emit-pipeline-repositories.yml
+    - template: /eng/pipelines/templates/steps/emit-pipeline-repositories.yml
       parameters:
         name: repositories
         displayName: 'Get repository details'
@@ -130,15 +130,32 @@ stages:
             -OutputDirectory '$(Build.ArtifactStagingDirectory)'
           workingDirectory: $(autorestRepositoryPath)
 
-    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+    - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
       parameters:
         artifactName: build_artifacts
         artifactPath: $(Build.ArtifactStagingDirectory)
 
     - pwsh: |
-        $branchName = 'autorest-failed-build-$(Build.BuildId)'
-        $repositoryName = '$(repositories.self.name)'
+        $sourceBranch = '$(Build.SourceBranch)'
+        $buildReason = '$(Build.Reason)'
+        $buildNumber = '$(Build.BuildNumber)'
 
+        if ($buildReason -eq 'Schedule') {
+          $branchName = 'auto-update-autorest-scheduled'
+        } elseif ($sourceBranch -match "^refs/pull/(\d+)/(head|merge)$") {
+          $branchName = "auto-update-autorest-pr-$($Matches[1])"
+        } else {
+          $branchName = "auto-update-autorest-$buildNumber"
+        }
+
+        Write-Host "Setting variable 'branchName' to '$branchName'"
+        Write-Host "##vso[task.setvariable variable=branchName;isOutput=true]$branchName"
+      displayName: Set branch name
+      name: set_branch_name
+
+    - pwsh: |
+        $repositoryName = '$(repositories.self.name)'
+        $branchName = '$(set_branch_name.branchName)'
         . $(toolsRepositoryPath)/eng/common/scripts/git-branch-push.ps1 `
           -PRBranchName $branchName `
           -CommitMsg 'Update repo on failing build`n`nBuild url: $(System.CollectionUri)_build/results?buildId=$(Build.BuildId)' `
@@ -187,7 +204,7 @@ stages:
 
     # Create authenticated .npmrc file for publishing
     - ${{ if eq(parameters.PublishInternal, 'true') }}:
-      - template: ../steps/create-authenticated-npmrc.yml
+      - template: /eng/common/pipelines/templates/steps/create-authenticated-npmrc.yml
         parameters:
           npmrcPath: $(buildArtifactsPath)/packages/.npmrc
           registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js-test-autorest/npm/registry/
@@ -226,7 +243,7 @@ stages:
             -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
             -OutputDirectory "$(Build.ArtifactStagingDirectory)"
 
-    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+    - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
       parameters:
         artifactName: publish_artifacts
         artifactPath: $(Build.ArtifactStagingDirectory)
@@ -275,7 +292,7 @@ stages:
           arguments: $(TestArguments)
           workingDirectory: $(autorestRepositoryPath)
 
-      - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+      - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
         parameters:
           artifactName: test_artifacts_$(System.JobName)
           artifactPath: $(Build.ArtifactStagingDirectory)
@@ -293,14 +310,11 @@ stages:
     sdkRepositoryCommitSha: $[stageDependencies.Build.Build.outputs['repositories.sdk-repository.version']]
     buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
     publishArtifactsPath: $(Pipeline.Workspace)/publish_artifacts
-    ${{ if eq(variables['Build.Reason'], 'Schedule') }}:
-      branchName: auto-update-autorest-scheduled
-    ${{ else }}:
-      branchName: auto-update-autorest-$(Build.BuildNumber)
+    branchName: $[stageDependencies.Build.Build.outputs['set_branch_name.branchName']]
   jobs:
   - job: Initialize
     steps:
-    - template: ../../../common/pipelines/templates/steps/sparse-checkout.yml
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Paths:
         - "/*"
@@ -358,7 +372,7 @@ stages:
           -MinimumPerJob ${{ parameters.MinimumPerJob }}
           -OnlyTypespec ${{ parameters.OnlyGenerateTypespec }}
 
-    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+    - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
       parameters:
         artifactName: matrix_artifacts
         artifactPath: $(Build.ArtifactStagingDirectory)
@@ -372,7 +386,7 @@ stages:
     steps:
     - checkout: self
     - checkout: azure-sdk-tools
-    - template: ../../../common/pipelines/templates/steps/sparse-checkout.yml
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
         Paths:
         - "/*"
@@ -421,21 +435,26 @@ stages:
     - pwsh: |
         $generateJobResult = '$(generateJobResult)'
         $generatorVersion = '$(generatorVersion)'
+        $collectionUri = '$(System.CollectionUri)'
+        $project = '$(System.TeamProject)'
+        $definitionName = '$(Build.DefinitionName)'
         $repoUrl = '$(Build.Repository.Uri)'
         $sourceBranch = '$(Build.SourceBranch)'
-        $buildNumber = '$(Build.SourceBranch)'
-        $queuedBy = '$(Build.SourceBranch)'
         $reason = '$(Build.Reason)'
+        $buildId = '$(Build.BuildId)'
+        $buildNumber = '$(Build.BuildNumber)'
         $preRelease = '${{ parameters.BuildPrereleaseVersion }}' -eq 'true'
+        
+        $prBody = "Generated by $definitionName build [$buildNumber]($collectionUri/$project/_build/results?buildId=$buildId)<br/>"
 
         if ($sourceBranch -match "^refs/heads/(.+)$") {
-          $prBody = "Triggered from branch: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
+          $prBody += "Triggered from branch: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
         } elseif ($sourceBranch -match "^refs/tags/(.+)$") {
-          $prBody = "Triggered from tag: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
+          $prBody += "Triggered from tag: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
         } elseif ($sourceBranch -match "^refs/pull/(\d+)/(head|merge)$") {
-          $prBody = "Triggered from pull request: $repoUrl/pull/$($Matches[1])"
+          $prBody += "Triggered from pull request: $repoUrl/pull/$($Matches[1])"
         } else {
-          $prBody = "Triggered from [$sourceBranch]($repoUrl/tree/$sourceBranch)"
+          $prBody += "Triggered from [$sourceBranch]($repoUrl/tree/$sourceBranch)"
         }
 
         if ($reason -eq 'Schedule') {

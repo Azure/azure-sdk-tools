@@ -17,7 +17,13 @@ $(() => {
   rvM.hideCheckboxesIfNotApplicable();
 
   // Run when document is ready
-  $(function() {
+  $(function () {
+    // Enable SumoSelect
+    (<any>$("#revision-select")).SumoSelect({ search: true, searchText: 'Search Revisions...' });
+    (<any>$("#diff-select")).SumoSelect({ search: true, searchText: 'Search Revisons for Diff...' });
+    (<any>$("#revision-type-select")).SumoSelect();
+    (<any>$("#diff-revision-type-select")).SumoSelect();
+
     // Update codeLine Section state after page refresh
     const shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers");
 
@@ -139,6 +145,43 @@ $(() => {
 
     // scroll button to center of screen, so that the line is visible after toggling folding
     $(this).get(0).scrollIntoView({ block: "center"});
+  });
+
+  /* DROPDOWN FILTER FOR REVIEW, REVISIONS AND DIFF (UPDATES REVIEW PAGE ON CHANGE)
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  rvM.addSelectEventToAPIRevisionSelect();
+
+  $('#revision-type-select, #diff-revision-type-select').each(function (index, value) {
+    $(this).on('change', function () {
+      const pageIds = hp.getReviewAndRevisionIdFromUrl(window.location.href);
+      const reviewId = pageIds["reviewId"];
+      const apiRevisionId = pageIds["revisionId"];
+
+      const select = (index == 0) ? $('#revision-select') : $('#diff-select');
+      const text = (index == 0) ? 'Revisions' : 'Revisions for Diff';
+
+      let uri = (index == 0) ? '?handler=APIRevisionsPartial' : '?handler=APIDiffRevisionsPartial';
+      uri = uri + `&reviewId=${reviewId}`;
+      uri = uri + `&apiRevisionId=${apiRevisionId}`;
+      uri = uri + '&apiRevisionType=' + $(this).find(":selected").val();
+
+      $.ajax({
+        url: uri
+      }).done(function (partialViewResult) {
+        const id = select.attr('id');
+        const selectUpdate = $(`<select placeholder="Select ${text}..." id="${id}" aria-label="${text} Select"></select>`);
+        selectUpdate.html(partialViewResult);
+        select.parent().replaceWith(selectUpdate);
+        (<any>$(`#${id}`)).SumoSelect({ placeholder: `Select ${text}...`, search: true, searchText: `Search ${text}...` })
+
+        // Disable Diff Revision Select until a revision is selected
+        if (index == 0) {
+          (<any>$('#diff-revision-type-select')[0]).sumo.disable();
+          (<any>$('#diff-select')[0]).sumo.disable();
+        }
+        rvM.addSelectEventToAPIRevisionSelect();
+      });
+    });
   });
 
   
@@ -325,5 +368,19 @@ $(() => {
         rvM.addCrossLaguageCloseBtnHandler();
       }
     }
+  });
+
+  /* MODAL WINDOW BUTTON AVAILABILITY
+--------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  $("#overrideDiag, #overrideConvo").on('change', function () {
+    var allChecked = true;
+    if ($("#overrideDiag").length && $("#overrideConvo").length) {
+      allChecked = $("#overrideDiag").is(":checked") && $("#overrideConvo").is(":checked");
+    } else if ($("#overrideDiag").length) {
+      allChecked = $("#overrideDiag").is(":checked");
+    } else if ($("#overrideConvo").length) {
+      allChecked = $("#overrideConvo").is(":checked");
+    }
+    $("#confirmButton").prop("disabled", !allChecked);
   });
 });

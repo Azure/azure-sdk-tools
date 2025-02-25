@@ -11,6 +11,7 @@ to documentation in your specific language repository in order to configure reco
 - [Python](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md)
 - [C++](https://github.com/Azure/azure-sdk-for-cpp/blob/main/doc/TestProxy.md)
 - [Go](https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/developer_setup.md)
+- [Rust](https://github.com/Azure/azure-sdk-for-rust/blob/main/sdk/core/azure_core_test/README.md)
 
 ## Table of contents
 
@@ -25,6 +26,7 @@ to documentation in your specific language repository in order to configure reco
     - [Port Assignation](#port-assignation)
       - [Environment Variable](#environment-variable)
       - [Input arguments](#input-arguments)
+      - [Auto port binding](#auto-port-binding)
   - [Environment Variables](#environment-variables)
   - [How do I use the test-proxy to get a recording?](#how-do-i-use-the-test-proxy-to-get-a-recording)
     - [Installation and initial run](#installation-and-initial-run)
@@ -85,18 +87,18 @@ For a more detailed explanation of how the test proxy works, along with links to
 
 ### Via Local Compile or .NET
 
-1. [Install .NET 5.0 or 6.0](https://dotnet.microsoft.com/download)
-2. Install test-proxy
+1. [Install .NET 8.0 (LTS) or 9.0](https://dotnet.microsoft.com/download)
+2. Install or update test-proxy
 
 ```powershell
-dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --version "1.0.0-dev*" --ignore-failed-sources
+dotnet tool update azure.sdk.tools.testproxy --global --prerelease --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --ignore-failed-sources
 ```
 
 The test-proxy is also available from the [azure-sdk-for-net public feed](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-net)
 
 _Note: if you're not authorized to access these feeds, make sure you have [Azure Artifacts Credential Provider](https://github.com/microsoft/artifacts-credprovider) installed. You can also [download executable](#via-standalone-executable)._
 
-To uninstall an existing test-proxy
+To uninstall an existing test-proxy:
 
 ```powershell
 dotnet tool uninstall --global azure.sdk.tools.testproxy
@@ -213,7 +215,7 @@ By default, the server will listen on the following port mappings:
 | http | 5000 |
 | https | 5001 |
 
-> [!WARNING]  
+> [!WARNING]
 > **MacOS** users should be aware that `airplay` by default utilizes port 5000. Ensure the port is free or use a non-default port as described below.
 
 #### Environment Variable
@@ -235,6 +237,27 @@ For example, you can use command line argument `--urls` to bind to a non-default
 test-proxy -- --urls "http://localhost:9000;https://localhost:9001"
 ```
 
+#### Auto port binding
+
+Because the test-proxy honors the ASP.NET server configuration environment variable and CLI arguments, users can allow the test-proxy to automatically choose what port it binds to.
+
+The trick is to provide override the default ASP.NET url to `http://0.0.0.0:0;https://0.0.0.0:0` via `ASPNETCORE_URLS` env variable or `-- --urls` CLI argument.
+
+Then, the user must listen to the stdout from the `test-proxy` process and parse out the following:
+
+```
+|>test-proxy start -- --urls "http://0.0.0.0:0;https://0.0.0.0:0"
+Running proxy version is Azure.Sdk.Tools.TestProxy 20241209.1
+...
+[11:40:31] info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://0.0.0.0:55552
+[11:40:31] info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: https://0.0.0.0:55553
+...
+```
+
+To discover the mapped ports.
+
 ## Environment Variables
 
 The test-proxy is integrated with the following environment variables.
@@ -242,8 +265,8 @@ The test-proxy is integrated with the following environment variables.
 | Variable                       | Usage                                                                                                                                                                              |
 |--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `TEST_PROXY_FOLDER`            | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
-| `Logging__LogLevel__Default` | Defaults to `Information`. Possible valid values are <br/><br/>`Debug`, `Information`, `Warning`, `Error`, `Critical`.<br><br>Do not set for .NET test runs as it would cause the tests *themselves* to start emitting logs.|
-| `Logging__LogLevel__Azure.Sdk.Tools.TestProxy`| Set to `Debug` to see request level logs emitted by the Test Proxy.|
+| `Logging__LogLevel__Default` | Sets the global log level for .NET tools including the test-proxy. Defaults to `Information`. Possible valid values are <br/><br/>`Debug`, `Information`, `Warning`, `Error`, `Critical`. <br><br> Users are recommended to use this variable, unless globally setting .NET log level negatively affects their test experience. |
+| `Logging__LogLevel__Azure.Sdk.Tools.TestProxy`| Same possible values as `Default`, but sets the log level for **only** the test-proxy. Other .NET tool log levels will remain unaffected.|
 
 
 ## How do I use the test-proxy to get a recording?
@@ -283,6 +306,8 @@ test-proxy --storage-location "C:/repo/sdk-for-net/"
 
 We start a test run by POST-ing to either `/Record/Start` or `/Playback/Start`. Within the body of the post request we provide a file location within JSON body key `x-recording-file`.
 
+**Note:** The test-proxy supports external storage of recordings. In this context there is an additional body key `x-recording-assets-file` that must be provided. Read more about this in the `asset-sync` [documentation.](../documentation/asset-sync/README.md).
+
 This key is used in combination with the `context` directory to either **store** or **load** an existing recording.
 
 For example, lets say that:
@@ -301,9 +326,11 @@ final path = C:/repo/sdk-for-net/sdk/anomalydetector/Azure.AI.AnomalyDetector/te
 
 When the user POSTS to `/Record/Stop` the recording will be written to the file as described directly above.
 
+> ⚠️ **Note!** If passing the body key `x-recording-assets-file`, DO NOT pass a fully qualified absolute path. The test-proxy must be able to combine your assets repo location with the file path.
+
 During a `playback` start, the value for `x-recording-file` is used to _load an existing recording into memory_ and serve requests from it!
 
-Please note that if a **absolute** path is presented in header `x-recording-file`. The test-proxy will write directly to that file, wherever it is. If the parent folders do not exist, they will be created at run-time during the write operation.
+Please note that if an **absolute** path is presented in the `x-recording-file` key. The test-proxy will write directly to that file, wherever it is. If the parent folders do not exist, they will be created at run-time during the write operation.
 
 ### Start the test run
 
@@ -463,7 +490,10 @@ Of course, feel free to check any of the [examples](https://github.com/Azure/azu
 
 The test-proxy is a record/playback solution. As a result, there a few concepts that devs will likely recognize from other record/playback solutions:
 
-- A `Sanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, `sanitizers` are applied to the request prior to matching to a recording.
+- A `Sanitizer` is used to remove sensitive information prior to storage. Sanitizers are applied...
+  - To the request matching against the recording entries during `playback` mode.
+  - To the recording entries loaded from disk when starting a `playback` session.
+  - To the recording entries _before_ they are saved to disk when stopping a `record` session.
 - `Matchers` are used to retrieve a request/response pair from a previous recording. By default, it functions by comparing `URI`, `Headers`, and `Body`. As of now, only a single matcher can be used when retrieving an entry during playback.
 - A `Transform` is used when a user needs to "transform" a matched recording response with some value from the incoming request. This action is specific to `playback` mode. For instance, the test-proxy has two default `transforms`:
   - `x-ms-client-id` is copied from request and applied to response prior to return.
@@ -531,7 +561,7 @@ In some cases, users need to register a lot (10+) of sanitizers. In this case, g
 [
     {
         "Name": "GeneralRegexSanitizer",
-        "Body": { 
+        "Body": {
             "regex": "[a-zA-Z]?",
             "value": "hello_there",
             "condition": {
@@ -550,6 +580,78 @@ In some cases, users need to register a lot (10+) of sanitizers. In this case, g
     }
 ]
 ```
+
+#### Knowing what was added
+
+When `AddSanitizer` or `AddSanitizers` is called, check the response `body` for an array containing the ids of sanitizers that have been registered.
+
+Example response body:
+
+```jsonc
+// POSTS to Admin/AddSanitizer has individual result
+{
+  "Sanitizer": "3"
+}
+```
+
+```jsonc
+// POSTS to Admin/AddSanitizers has multiple results
+{
+  "Sanitizers": ["3", "4", "9"]
+}
+```
+
+#### Removing a sanitizer
+
+Following #8120, sanitizers were given identifiers so that they can be removed.
+
+- The default `session` sanitizers list can be found in code here.
+- Visiting `http://localhost:5000/Info/Active` on your browser when the proxy is running on your machine will present you with an easy summary of these available sanitizers as well.
+
+When a recording or playback session is begun (`Playback/Start` or `Record/Start`), all the **current** session sanitizers are applied to the recording. Session sanitizers added **after** record or playback has begun do not apply to the prior-started session.
+
+To remove a session-level sanitizer, one only must...
+
+```jsonc
+// request method = `POST`
+// request URI = <proxyUrl>/Admin/RemoveSanitizers
+// request headers =
+{
+  "Content-Type": "application/json",
+  "Content-Length": 36
+}
+// request body =
+{
+  Sanitizers: ["AZSDK002", "AZSDK003"]
+}
+```
+
+On successful request, users will receive a list of the removed identifiers.
+
+```jsonc
+// response body
+{
+  Removed: ["ID1"]
+}
+```
+
+To remove a sanitizer from a specific recording...
+
+```jsonc
+// request method = `POST`
+// request URI = <proxyUrl>/Admin/RemoveSanitizers
+// request headers =
+{
+  "Content-Type": "application/json",
+  "Content-Length": 36,
+  "x-recording-id": "your-recording-id-here"
+}
+// request body =
+{
+  Sanitizers: ["AZSDK002", "AZSDK003"]
+}
+```
+
 
 ### Set a Matcher
 
@@ -582,7 +684,7 @@ If a dev must only change a _couple_ elements of the default matcher, the `Custo
     // Should the body value be compared during lookup operations?
     "compareBodies": true,
     // A comma separated list of additional headers that should be excluded during matching. "Excluded" headers are entirely ignored.
-    "excludedHeaders": "traceparent", 
+    "excludedHeaders": "traceparent",
     // A comma separated list of additional headers that should be ignored during matching. Any headers that are "ignored" will not do value comparison when matching.
     // The "presence" of the headers will still be checked however.
     "ignoredHeaders": "User-Agent, Origin, Content-Length",

@@ -72,11 +72,6 @@ Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"
 . (Join-Path $scriptsRoot Common.ps1)
 
-# Install Az.Storage module
-if (-not (Get-Module -ListAvailable -Name Az.Storage)) {
-  Install-Module -Name Az.Storage -Force -AllowClobber -Scope CurrentUser
-}
-
 # Create embeddingSource folder on current location
 $embeddingSourceFolder = Join-Path -Path $workingDirectory -ChildPath "embeddingSource"
 if (-not (Test-Path -Path $embeddingSourceFolder)) {
@@ -108,6 +103,9 @@ else {
 }
 
 # Download previous saved embeddings(last_rag_chunks_customized_docs.json) from Azure Blob Storage
+# Using Azure PowerShell login type for AzCopy.
+# When running this script locally, first using 'Connect-AzAccount' then 'Set-AzContext' to switch to the correct subscription
+$env:AZCOPY_AUTO_LOGIN_TYPE="PSCRED"
 $blobName = "last_rag_chunks_customized_docs.json"
 $destinationPath = $embeddingSourceFolder
 $ragChunkPath = Join-Path -Path $embeddingSourceFolder -ChildPath $blobName

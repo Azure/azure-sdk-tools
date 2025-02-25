@@ -8,9 +8,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.PipelineWitness.Tests", "Azure.Sdk.Tools.PipelineWitness.Tests\Azure.Sdk.Tools.PipelineWitness.Tests.csproj", "{AE649A76-2DDA-4B45-A426-21425A0B988A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FD213B4A-A8B5-400D-ABD3-1D5B1551CE3C}"
-ProjectSection(SolutionItems) = preProject
-	.editorconfig = .editorconfig
-EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

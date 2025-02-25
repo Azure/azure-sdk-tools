@@ -1,0 +1,38 @@
+:host ::ng-deep {
+    .CodeMirror-scroll {
+        min-height: 100px;
+    }
+
+    .CodeMirror {
+        min-height: 100px;
+        border: 1px solid var(--border-color);
+        background-color: var(--editor-bg-color);
+        color: var(--base-text-color);
+    }
+
+    .CodeMirror-guttermarker {
+        color: var(--base-text-color);
+    }
+      
+    .CodeMirror-cursor {
+        border-left: 1px solid var(--base-text-color);
+    }
+
+    .editor-toolbar {
+        border: 1px solid var(--border-color);
+    }
+
+    .editor-toolbar a {
+        color: var(--base-text-color) !important;
+    }
+
+    .editor-toolbar a.active, .editor-toolbar a:hover {
+        background: var(--base-bg-color);
+        border-color: var(--border-color);
+    }
+
+    .editor-toolbar i.separator {
+        border-left: 1px solid #d9d9d9;
+        border-right: 1px solid var(--border-color);
+    }
+}

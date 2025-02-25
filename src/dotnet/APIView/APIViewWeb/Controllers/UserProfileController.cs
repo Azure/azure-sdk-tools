@@ -37,12 +37,13 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme")
+        public async Task<ActionResult> Update(string email, string[] languages, string theme="light-theme", bool useBetaIndexPage=false)
         {
             UserProfileModel profile = await _userProfileManager.TryGetUserProfileAsync(User);
             UserPreferenceModel preference = await _userPreferenceCache.GetUserPreferences(User);
 
             preference.Theme = theme;
+            preference.UseBetaIndexPage = useBetaIndexPage;
 
             HashSet<string> Languages = new HashSet<string>(languages);
             preference.ApprovedLanguages = Languages;

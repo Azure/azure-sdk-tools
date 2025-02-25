@@ -28,21 +28,34 @@ extends:
     ReleaseBinaries: true
     StandaloneExeMatrix:
     - rid: osx-x64
-      framework: net6.0
+      framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: osx-arm64
-      framework: net6.0
+      framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: win-x64
-      framework: net6.0
+      framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: linux-x64
-      framework: net6.0
+      framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: linux-arm64
-      framework: net6.0
+      framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
     TestPreSteps:
       - pwsh: |
           #vso[task.setvariable variable=COMPlus_Pkcs12UnspecifiedPasswordIterationLimit]-1
         displayName: Override Acceptable Password Iteration Count
+    TestPostSteps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: 20.x
+        displayName: "Use Node 20"
+      - pwsh: |
+          npm install -g @typespec/compiler
+        displayName: Install typespec and tooling
+      - pwsh: |
+          npm ci
+          tsp compile .
+        displayName: TSP Compile
+        workingDirectory: tools/test-proxy/typespec

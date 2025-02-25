@@ -22,9 +22,5 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public TestRecordingMismatchException(string message, Exception innerException) : base(HttpStatusCode.NotFound, message, innerException)
         {
         }
-
-        protected TestRecordingMismatchException(SerializationInfo info, StreamingContext context) : base(HttpStatusCode.NotFound, info, context)
-        {
-        }
     }
 }

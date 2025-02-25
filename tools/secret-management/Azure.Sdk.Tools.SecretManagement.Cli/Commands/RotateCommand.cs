@@ -1,7 +1,8 @@
-﻿using System.CommandLine;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.SecretManagement.Cli.Commands;
 
@@ -22,13 +23,27 @@ public class RotateCommand : RotationCommandBase
         bool onlyRotateExpiring = invocationContext.ParseResult.GetValueForOption(this.expiringOption);
         bool whatIf = invocationContext.ParseResult.GetValueForOption(this.whatIfOption);
 
-        var timeProvider = new TimeProvider();
+        var timeProvider = TimeProvider.System;
 
         IEnumerable<RotationPlan> plans = rotationConfiguration.GetAllRotationPlans(logger, timeProvider);
+        bool success = true;
 
         foreach (RotationPlan plan in plans)
         {
-            await plan.ExecuteAsync(onlyRotateExpiring, whatIf);
+            try
+            {
+                await plan.ExecuteAsync(onlyRotateExpiring, whatIf);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Exception thrown while executing plan {PlanName}", plan.Name);
+                success = false;
+            }
+        }
+
+        if(!success)
+        {
+            throw new RotationException("Errors occurred while rotating secrets.");
         }
     }
 }

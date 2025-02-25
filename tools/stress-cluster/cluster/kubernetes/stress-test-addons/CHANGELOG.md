@@ -1,5 +1,33 @@
 # Release History
 
+## 0.3.5 (2025-01-23)
+
+### Breaking Changes
+
+Changed storage cluster config values (cluster subscription/tenant migration)
+
+## 0.3.4 (2024-11-01)
+
+### Breaking Changes
+
+Changed prod cluster config values (cluster subscription/tenant migration)
+
+## 0.3.3 (2024-07-10)
+
+### Features Added
+
+Added new cluster 'storage' to addons environment config
+
+## 0.3.2 (2024-05-15)
+
+### Features Added
+
+Add support for AKS workload identity auth mechanism
+
+### Breaking Changes
+
+Tests must use WorkloadIdentityCredential or DefaultAzureCredential. Any tests leveraging EnvironmentCredential and/or service principal password auth will no longer work.
+
 ## 0.3.1 (2024-01-17)
 
 ### Features Added

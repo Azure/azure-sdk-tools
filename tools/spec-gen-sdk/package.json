@@ -1,0 +1,98 @@
+{
+  "name": "@azure-tools/spec-gen-sdk",
+  "author": {
+    "name": "Microsoft Corporation",
+    "email": "azsdkteam@microsoft.com",
+    "url": "https://github.com/Azure/azure-sdk-tools"
+  },
+  "version": "0.1.9",
+  "description": "A TypeScript implementation of the API specification to SDK tool",
+  "tags": [
+    "spec-gen-sdk"
+  ],
+  "keywords": [
+    "spec-gen-sdk"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.json",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "dist/**/*.handlebars",
+    "images/**/*",
+    "src/**/*.ts",
+    "README.md",
+    "cmd/spec-gen-sdk.js"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "dependencies": {
+    "ajv": "^6.12.6",
+    "filehound": "^1.17.5",
+    "handlebars": "~4.7.7",
+    "jsonc-parser": "^2.3.1",
+    "lodash": "^4.17.20",
+    "marked": "^15.0.6",
+    "prettier": "2.1.2",
+    "simple-git": "^3.16.0",
+    "winston": "^3.3.3",
+    "winston-transport": "^4.4.0",
+    "yaml": "^2.7.0",
+    "yargs": "^17.7.2"
+  },
+  "overrides": {
+    "glob": "^9.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "@types/jest": "^29.5.11",
+    "@types/lodash": "^4.14.161",
+    "@types/marked": "^5.0.2",
+    "@types/node": "^18.19.64",
+    "@types/prettier": "^2.1.5",
+    "@types/rimraf": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.12.2",
+    "@typescript-eslint/parser": "^8.12.2",
+    "eslint": "^9.14.0",
+    "globals": "^15.12.0",
+    "jest": "~29.7.0",
+    "rimraf": "^5.0.10",
+    "source-map-support": "^0.5.19",
+    "ts-jest": "~29.1.1",
+    "ts-node": "9.0.0",
+    "tslint": "^5.20.1",
+    "typescript": "~5.3.3",
+    "typescript-eslint": "^8.14.0"
+  },
+  "homepage": "https://github.com/Azure/azure-sdk-tools",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Azure/azure-sdk-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Azure/azure-sdk-tools/issues"
+  },
+  "scripts": {
+    "build": "npm run clean && npm run lint && tsc && npm run copy",
+    "clean": "rimraf -rf dist",
+    "purge": "rimraf -rf node_modules package-lock.json",
+    "copy": "cd src && find . \\( -name '*.handlebars' -o -name '*.json' \\) -exec cp --parents {} ../dist \\; && cd ..",
+    "watch": "tsc --watch",
+    "test": "jest -c jest.config.js --verbose",
+    "start": "node dist/cli/cli.js",
+    "build-test": "npm run build && npm test",
+    "lint": "eslint src/**/*.ts",
+    "lint-fix": "eslint src/**/*.ts --fix",
+    "test-reportFormat": "jest -c jest.config.js --verbose ./test/reportFormat.test.ts",
+    "test-utils": "jest -c jest.config.js --verbose ./test/utils.test.ts",
+    "spec-gen-sdk": "node cmd/spec-gen-sdk.js"
+  },
+  "bin": {
+    "spec-gen-sdk": "cmd/spec-gen-sdk.js"
+  }
+}

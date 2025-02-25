@@ -18,6 +18,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class InfoTests
     {
+        private async Task<int> GetDefaultExtensionCount(){
+            var handler = new RecordingHandler(null);
+            return (await handler.SanitizerRegistry.GetSanitizers()).Count;
+        }
+        
         [Fact]
         public void TestReflectionModelBuild()
         {
@@ -43,12 +48,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void TestReflectionModelWithAdvancedType()
+        public async void TestReflectionModelWithAdvancedType()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            testRecordingHandler.Sanitizers.Clear();
-            testRecordingHandler.Sanitizers.Add(new GeneralRegexSanitizer(value: "A new value", condition: new ApplyCondition() { UriRegex= ".+/Tables" }));
+            await testRecordingHandler.SanitizerRegistry.Clear();
+            await testRecordingHandler.SanitizerRegistry.Register(new GeneralRegexSanitizer(value: "A new value", condition: new ApplyCondition() { UriRegex= ".+/Tables" }));
             
             var controller = new Info(testRecordingHandler)
             {
@@ -72,24 +77,26 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            testRecordingHandler.AddSanitizerToRecording(recordingId, new UriRegexSanitizer(regex: "ABC123"));
-            testRecordingHandler.AddSanitizerToRecording(recordingId, new BodyRegexSanitizer(regex: ".+?"));
+            await testRecordingHandler.RegisterSanitizer(new UriRegexSanitizer(regex: "ABC123"), recordingId);
+            await testRecordingHandler.RegisterSanitizer(new BodyRegexSanitizer(regex: ".+?"), recordingId);
             testRecordingHandler.SetMatcherForRecording(recordingId, new CustomDefaultMatcher(compareBodies: false, excludedHeaders: "an-excluded-header"));
 
             var model = new ActiveMetadataModel(testRecordingHandler, recordingId);
             var descriptions = model.Descriptions.ToList();
 
-            // we should have exactly 6 if we're counting all the customizations appropriately
-            Assert.True(descriptions.Count == 6);
+            int defaultExtensionCount = await GetDefaultExtensionCount();
+
+            // we should have exactly DefaultExtensionCount + 2 if we're counting all the customizations appropriately
+            Assert.True(descriptions.Count == defaultExtensionCount + 3);
             Assert.True(model.Matchers.Count() == 1);
-            Assert.True(model.Sanitizers.Count() == 5);
+            Assert.True(model.Sanitizers.Count() == defaultExtensionCount + 2);
 
             // confirm that the overridden matcher is showing up
-            Assert.True(descriptions[3].ConstructorDetails.Arguments[1].Item2 == "\"ABC123\"");
-            Assert.True(descriptions[4].ConstructorDetails.Arguments[1].Item2 == "\".+?\"");
+            Assert.True(descriptions[defaultExtensionCount].ConstructorDetails.Arguments[1].Item2 == "\"ABC123\"");
+            Assert.True(descriptions[defaultExtensionCount + 1].ConstructorDetails.Arguments[1].Item2 == "\".+?\"");
 
             // and finally confirm our sanitizers are what we expect
-            Assert.True(descriptions[5].Name == "CustomDefaultMatcher");
+            Assert.True(descriptions[defaultExtensionCount + 2].Name == "CustomDefaultMatcher");
         }
     }
 }

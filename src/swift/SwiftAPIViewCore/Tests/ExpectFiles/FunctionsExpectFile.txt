@@ -1,0 +1,23 @@
+Package parsed using Swift APIView (version 0.3.0)
+
+
+package FunctionsTestFile.swifttxt {
+    public struct FunctionTestClass {
+        public func funcWithoutParams() -> String
+        public func funcWithMultipleParams(person: String, alreadyGreeted: Bool) -> String
+        public func funcWithoutReturnValue(person: String)
+        public func funcWithReturnValue(string: String) -> Int
+        public func funcWithMultipleReturnValues(array: [Int]) -> (min: Int, max: Int)?
+        public func funcWithArgumentLabels(argumentLabel: Int)
+        public func funcWithoutArgumentLabels(_: Int, _: Int)
+        public func funcWithDefaultValue(parameterWithoutDefault: Int, parameterWithDefault: Int = 12)
+        public func funcWithVariadicParam(_: Double...) -> Double
+        public func funcWithInOutParams(_: inout Int, _: inout Int)
+        public func addTwoInts(_: Int, _: Int) -> Int
+        public var mathFunction: (Int, Int) -> Int
+        public func funcWithFuncTypeParam(_: (Int, Int) -> Int, _: Int, _: Int)
+        public func funcWithFuncReturnType(backward: Bool) -> (Int) -> Int
+        public func funcWithEscapingClosure(completionHandler: @escaping () -> Void)
+        public func funcWithAutoclosureEscapingClosure(_: @autoclosure @escaping () -> String)
+    }
+}

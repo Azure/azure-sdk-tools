@@ -11,7 +11,7 @@ jobs:
       Pool: Azure Pipelines
       OsVmImage: ubuntu-20.04
       CloudConfig:
-        SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)
+        ServiceConnection: azure-sdk-tests-public
         Location: eastus2
         Cloud: Public
       MatrixFilters:

@@ -1,9 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
-import {NPMScope} from "@ts-common/azure-js-dev-tools";
-import {logger} from "../../utils/logger";
-import {getLatestStableVersion} from "../../utils/version";
-import {extractExportAndGenerateChangelog} from "../../changelog/extractMetaData";
+import { logger } from "../../utils/logger";
+import { getLatestStableVersion } from "../../utils/version";
+import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
+import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils";
+import { tryGetNpmView } from "../../common/npmUtils";
 
 const shell = require('shelljs');
 const todayDate = new Date();
@@ -21,7 +22,9 @@ function generateChangelogForFirstRelease(packagePath, version) {
 }
 
 function appendChangelog(packagePath, version, changelog) {
-    const originalChangeLogContent = fs.readFileSync(path.join(packagePath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+    let originalChangeLogContent: string = tryReadNpmPackageChangelog(packagePath);
+    originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
+
     const modifiedChangelogContent = `## ${version} (${date})
     
 ${changelog.displayChangeLog()}
@@ -35,20 +38,19 @@ export async function generateChangelog(packagePath) {
     const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
     const packageName = packageJson.name;
     const version = packageJson.version;
-    const npm = new NPMScope({executionFolderPath: packagePath});
-    const npmViewResult = await npm.view({packageName});
-    if (npmViewResult.exitCode !== 0) {
-        logger.logGreen(`${packageName} is first release, generating changelog`);
+    const npmViewResult = await tryGetNpmView(packageName);
+    if (!npmViewResult) {
+        logger.info(`'${packageName}' is first release, start to generate changelog.`);
         generateChangelogForFirstRelease(packagePath, version);
-        logger.logGreen(`Generate changelog successfully`);
+        logger.info(`Generated changelog successfully.`);
     } else {
         const stableVersion = getLatestStableVersion(npmViewResult);
         if (!stableVersion) {
-            logger.logError(`Invalid latest version ${stableVersion}`);
+            logger.error(`Invalid latest version ${stableVersion}`);
             process.exit(1);
         }
-        logger.log(`Package ${packageName} released is released before`);
-        logger.log('Generating changelog by comparing api.md...');
+        logger.info(`Package '${packageName}' released is released before.`);
+        logger.info('Start to generate changelog by comparing api.md.');
         try {
             await shell.mkdir(path.join(packagePath, 'changelog-temp'));
             await shell.cd(path.join(packagePath, 'changelog-temp'));
@@ -57,22 +59,27 @@ export async function generateChangelog(packagePath) {
             await shell.cd(packagePath);
             const tempReviewFolder = path.join(packagePath, 'changelog-temp', 'package', 'review');
             if (!fs.existsSync(tempReviewFolder)) {
-                logger.logWarn("The latest package released in NPM doesn't contain review folder, so generate changelog same as first release");
+                logger.warn("The latest package released in NPM doesn't contain review folder, so generate changelog same as first release.");
                 generateChangelogForFirstRelease(packagePath, version);
             } else {
-                let apiMdFileNPM = path.join(tempReviewFolder, fs.readdirSync(tempReviewFolder)[0]);
-                let apiMdFileLocal = path.join(packagePath, 'review', fs.readdirSync(path.join(packagePath, 'review'))[0]);
-                const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
+                const npmPackageRoot = path.join(packagePath, 'changelog-temp', 'package');
+                // TODO: error out if it's comparing between RLC and HLC or Modular api layer and HLC
+                const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
+                const apiMdFileLocal = getApiReviewPath(packagePath);
+                const oldSDKType = getSDKType(npmPackageRoot);
+                const newSDKType = getSDKType(packagePath);
+                const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
-                    logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
+                    logger.error('Failed to generate changelog because the codes of local and npm may be the same.');
                 } else {
                     appendChangelog(packagePath, version, changelog);
-                    logger.log('Generate changelog successfully');
+                    logger.info('Generated changelog successfully.');
                 }
             }
 
-        } catch (e) {
-          logger.logError(`Generate changelog failed: ${e.message}`);
+        } catch (e: any) {
+          logger.error(`Failed to generate changelog: ${e.message}.`);
+          throw e;
         } finally {
             fs.rmSync(path.join(packagePath, 'changelog-temp'), { recursive: true, force: true });
             await shell.cd(jsSdkRepoPath);

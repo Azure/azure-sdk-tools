@@ -1,16 +1,3 @@
-$secrets = @{}
-$secretsDir = "/mnt/secrets/static/*"
-Get-ChildItem -Path $secretsDir | ForEach-Object {
-    foreach($line in Get-Content $_) {
-        $idx = $line.IndexOf("=")
-        if ($idx -gt 0) {
-            $key = $line.Substring(0, $idx)
-            $val = $line.Substring($idx + 1)
-            $secrets.Add($key, $val)
-        }
-    }
-}
-
 mkdir /azure
 Copy-Item "/scripts/stress-test/test-resources-post.ps1" -Destination "/azure/"
 Copy-Item "/mnt/testresources/*" -Destination "/azure/"
@@ -33,17 +20,28 @@ if ($env:JOB_COMPLETION_INDEX -and ($env:JOB_COMPLETION_INDEX -ne "0")) {
     }
 }
 
+Write-Host "Logging in with federated token"
+# Token file, Tenant and Client IDs are set by AKS when workload identity is enabled
+$token = Get-Content -Raw $env:AZURE_FEDERATED_TOKEN_FILE
+Connect-AzAccount -ServicePrincipal -Tenant $env:AZURE_TENANT_ID -ApplicationId $env:AZURE_CLIENT_ID -FederatedToken $token
+
+Write-Host "Finding provisioner object id"
+$identity = Get-AzUserAssignedIdentity -ResourceGroupName $env:STRESS_CLUSTER_RESOURCE_GROUP | Where-Object { $_.ClientId -eq $env:AZURE_CLIENT_ID }
+if (!$identity) {
+    throw "User Assigned Identity $($env:AZURE_CLIENT_ID) not found in resource group $($env:STRESS_CLUSTER_RESOURCE_GROUP)"
+}
+
 # Capture output so we don't print environment variable secrets
 $env = & /common/TestResources/New-TestResources.ps1 `
     -BaseName $env:BASE_NAME `
     -ResourceGroupName $env:RESOURCE_GROUP_NAME `
-    -SubscriptionId $secrets.AZURE_SUBSCRIPTION_ID `
-    -TenantId $secrets.AZURE_TENANT_ID `
-    -ProvisionerApplicationId $secrets.AZURE_CLIENT_ID `
-    -ProvisionerApplicationSecret $secrets.AZURE_CLIENT_SECRET `
-    -TestApplicationId $secrets.AZURE_CLIENT_ID `
-    -TestApplicationSecret $secrets.AZURE_CLIENT_SECRET `
-    -TestApplicationOid $secrets.AZURE_CLIENT_OID `
+    -SubscriptionId $env:AZURE_SUBSCRIPTION_ID `
+    -TenantId $env:AZURE_TENANT_ID `
+    -ProvisionerApplicationId $env:AZURE_CLIENT_ID `
+    -ProvisionerApplicationSecret $identity.PrincipalId `
+    -TestApplicationId $env:AZURE_CLIENT_ID `
+    -TestApplicationSecret "" `
+    -TestApplicationOid $identity.PrincipalId `
     -Location 'westus3' `
     -DeleteAfterHours 168 `
     -ServiceDirectory '/azure/' `

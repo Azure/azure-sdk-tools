@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Tests
 {
     public class TestLogger : ILogger
     {
-        internal List<object> Logs { get; } = new List<object>();
+        internal List<object> Logs { get; } = [];
 
         public IDisposable BeginScope<TState>(TState state)
         {
@@ -25,31 +22,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
             Func<TState, Exception, string> formatter)
         {
             Logs.Add(state);
-        }
-    }
-
-    public class TestLoggingFactory : ILoggerFactory
-    {
-        private readonly TestLogger _logger;
-
-        public TestLoggingFactory(TestLogger logger)
-        {
-            _logger = logger;
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddProvider(ILoggerProvider provider)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ILogger CreateLogger(string categoryName)
-        {
-            return _logger;
         }
     }
 }

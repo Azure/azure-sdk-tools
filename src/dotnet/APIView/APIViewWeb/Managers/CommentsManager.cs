@@ -13,10 +13,8 @@ using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Options;
-using Microsoft.TeamFoundation.Common;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Helpers;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace APIViewWeb.Managers
 {
@@ -74,9 +72,9 @@ namespace APIViewWeb.Managers
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
 
-        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId)
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
         {
-            return await _commentsRepository.GetCommentsAsync(reviewId);
+            return await _commentsRepository.GetCommentsAsync(reviewId, isDeleted, commentType);
         }
 
         public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)

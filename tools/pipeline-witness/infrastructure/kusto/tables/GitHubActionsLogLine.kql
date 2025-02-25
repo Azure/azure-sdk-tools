@@ -1,0 +1,29 @@
+.create-merge table GitHubActionsLogLine (
+    Repository: string,
+    WorkflowId: long,
+    WorkflowName: string,
+    RunId: long,
+    RunAttempt: long,
+    JobId: long,
+    StepNumber: int,
+    LineNumber: int,
+    Length: int,
+    Timestamp: datetime,
+    Message: string,
+    EtlIngestDate: datetime
+) with (folder='', docstring='')
+
+.create-or-alter table GitHubActionsLogLine ingestion json mapping 'GitHubActionsLogLine_mapping' ```[
+    { "column": "Repository", "path": "$['repository']" },
+    { "column": "WorkflowId", "path": "$['workflowId']" },
+    { "column": "WorkflowName", "path": "$['workflowName']" },
+    { "column": "RunId", "path": "$['runId']" },
+    { "column": "RunAttempt", "path": "$['runAttempt']" },
+    { "column": "JobId", "path": "$['jobId']" },
+    { "column": "StepNumber", "path": "$['stepNumber']" },
+    { "column": "LineNumber", "path": "$['lineNumber']" },
+    { "column": "Length", "path": "$['length']" },
+    { "column": "Timestamp", "path": "$['timestamp']" },
+    { "column": "Message", "path": "$['message']" },
+    { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
+]```

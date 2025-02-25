@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
         /// <param name="line">The CODEOWNERS line being parsed</param>
         /// <param name="expectOwners">Whether or not owners are expected. Some monikers may or may not have owners if their block ends in a source path/owner line.</param>
         /// <param name="errorStrings">List of errors belonging to the current line. New errors are added to the list.</param>
-        public static void VerifyOwners(OwnerDataUtils ownerData, string line, bool expectOwners, List<string> errorStrings)
+        public static void VerifyOwners(OwnerDataUtils ownerData, string line, bool isSourcePathOwnerLine, bool expectOwners, List<string> errorStrings)
         {
             List<string> ownerList = ParsingUtils.ParseOwnersFromLine(ownerData, line, false /* teams aren't expanded for linting */);
             // Some CODEOWNERS lines require owners to be on the line, like source path/owners lines. Some CODEOWNERS
@@ -32,7 +32,14 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
             {
                 if (expectOwners)
                 {
-                    errorStrings.Add(ErrorMessageConstants.NoOwnersDefined);
+                    if (isSourcePathOwnerLine)
+                    {
+                        errorStrings.Add(string.Format(ErrorMessageConstants.PathEntryMissingOwners, line.Trim()));
+                    }
+                    else
+                    {
+                        errorStrings.Add(ErrorMessageConstants.NoOwnersDefined);
+                    }
                 }
                 return;
             }

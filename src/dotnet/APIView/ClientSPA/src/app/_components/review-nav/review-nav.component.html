@@ -1,0 +1,9 @@
+<div *ngIf="isLoading" class="spinner-border m-3" role="status">
+    <span class="visually-hidden">Loading...</span>
+</div>
+<p-tree *ngIf="!isLoading && reviewPageNavigation.length > 0" [value]="reviewPageNavigation">
+    <ng-template let-node pTemplate="default">
+        <img class="me-2" src="{{assetsPath}}/images/{{ node.data.icon }}.png" width="14" height="14">
+        <a (click)="handleNavNodeClick(node)">{{ node.label }}</a>
+    </ng-template>
+</p-tree>

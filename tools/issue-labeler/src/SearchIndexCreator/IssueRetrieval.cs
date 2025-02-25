@@ -121,9 +121,9 @@ namespace SearchIndexCreator
                 // Testing out 200 could change from 150 - 250.
                 issue_comments = issue_comments
                     .Where(c => 
-                        //!c.User.Login.Contains("github-actions[bot]") && // Filter out bot comments but if we filter out non members not needed
+                        !c.User.Login.Equals("github-actions[bot]") && // Filter out bot comments
                         c.Body.Length > 250 && // Filter out short comments
-                        //!c.User.Login.Contains("ghost") && // Filter out comments from deleted users (mostly because the older bot was deleted) but if we filter out non members not needed
+                        !c.User.Login.Equals("ghost") && // Filter out comments from deleted users (mostly because the older bot seems to have been deleted)
                         !c.AuthorAssociation.StringValue.Equals("NONE")) // Filter out non member comments
                     .ToList();
 

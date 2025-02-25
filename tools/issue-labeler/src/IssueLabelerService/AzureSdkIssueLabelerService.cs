@@ -93,45 +93,59 @@ namespace IssueLabelerService
                 );
 
                 // Filter out documents/issues that don't meet the minimum score threshold
-                var docs = relevantDocuments.ToList().Select(rd => new
+                var docs = relevantDocuments.Where(r => r.Item2 >= scoreThreshold).Select(rd => new
                 {
-                    Content = rd.Item1.ToString(),
+                    rd.Item1.chunk,
+                    rd.Item1.Url,
                     Score = rd.Item2
-                }).Where(r => r.Score >= scoreThreshold);
+                }).ToList();
 
-                var issues = relevantIssues.ToList().Select(ri => new
+                var issues = relevantIssues.Where(r => r.Item2 >= scoreThreshold).Select(rd => new
                 {
-                    Content = ri.Item1.ToString(),
-                    Score = ri.Item2
-                }).Where(r => r.Score >= scoreThreshold);
-
-                string docContent = JsonConvert.SerializeObject(docs);
-                string issueContent = JsonConvert.SerializeObject(issues);
+                    rd.Item1.Title,
+                    rd.Item1.chunk,
+                    rd.Item1.Service,
+                    rd.Item1.Category,
+                    rd.Item1.Url,
+                    Score = rd.Item2
+                }).ToList();
 
                 // If no relevant documents/issues are found, return an empty result
-                if(docs.Count() == 0 || issues.Count() == 0)
+                if(docs.Count == 0 || issues.Count == 0)
                 {
-                    _logger.LogInformation("No relevant documents/issues found.");
+                    _logger.LogInformation("Not enough relevant documents/issues found.");
                     return EmptyResult;
                 }
 
                 // If theres a document with a score higher than the solution threshold, we can assume that a solution can be provided.
                 // Debatable wether or not we should consider Issue relevance since it can be less reliable to provide a solution overall.
-                var highestScore = docs.Concat(issues).Max(r => r.Score);
+                var docsMax = docs.Max(d => d.Score);
+                var issuesMax = issues.Max(d => d.Score);
+                var highestScore = docsMax >= issuesMax ? docsMax : issuesMax;
+
                 bool solution = highestScore >= solutionThreshold;
 
                 _logger.LogInformation($"Highest score: {highestScore}");
+                
+                // Improves readability when giving to the model.
+                var printableIssues = issues.Select(r => JsonConvert.SerializeObject(r)).ToList();
+                var printableDocs = docs.Select(r => JsonConvert.SerializeObject(r)).ToList();
 
+
+                // Splitting the message into instructions to take advantage of developer instructions in o3-mini
+                string instructions;
                 string message;
                 if (solution)
                 {
                     // Prompt to offer a solution
-                    message = $"You are an Expierenced Developer in the Azure SDK Team that provides solutions and labels for Github Issues.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Response fields.\n'Response' must prioritize Documentation over Issues and will be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide the user with the url from sources used.\nGitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer.\nNo need for introductions or outros because they are added later on.\nSources: Documentation: {docContent}\nGitHub Issues: {issueContent}\nProvide the user with a solution to their GitHub Issue:\n {query}";
+                    instructions = $"You are an Expierenced Developer in the Azure SDK Team that provides solutions and labels for Github Issues. The response field must prioritize Documentation over Issues and will be valid Markdown with organized content using bullet points and numeric lists. Use only the sources provided and cite your sources with the given URL's. GitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer. No need for introductions or outros because they are added later on. Each source has an associated score indicating it's relevance to the users query.";
+                    message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nProvide the user with a solution to their GitHub Issue:\n{query}";
                 }
                 else
                 {
                     // Prompt to offer suggestions
-                    message = $"You are an Expierenced Developer in the Azure SDK Team that provides suggestions and labels for Github Issues.\nThe goal is to facilitate the teams job when responding to the issue.\nEach source has an associated score indicating it's relevance to the users query.\nResponse Formatting:\nReturn a JSON with Category, Service, Response fields.\n'Response' must prioritize information from Documentation over Issues and be valid Markdown.\nUse numbered lists or bullet points for organizational purposes.\nGuidelines:\nUse only the sources provided below.\nProvide a URL for all suggestions given to the user.\nGitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer.\nNo need for introductions or outros because they are added later on.\nSources:\nDocumentation:\n{docContent}\nGitHub Issues: {issueContent}\nThe user needs suggestions for their GitHub Issue:\n{query}";
+                    instructions = $"You are an Expierenced Developer in the Azure SDK Team that provides suggestions and labels for Github Issues. The response field must prioritize Documentation over Issues and will be valid Markdown with organized content using bullet points and numeric lists. Use only the sources provided and cite your sources with the given URL's. GitHub Issues provided are in JSON format and have 'Category' and 'Service' fields. Use ONLY those fields to populate the Category and Service fields in your answer. No need for introductions or outros because they are added later on. Each source has an associated score indicating it's relevance to the users query.";
+                    message = $"\nSources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nThe user needs suggestions for their GitHub Issue:\n{query}";
                 }
 
                 // Structure of the response passed to the StructureMessage method.
@@ -148,7 +162,7 @@ namespace IssueLabelerService
                         }
                         """u8.ToArray());
 
-                var response = _issueLabeler.SendMessageQna(openAIEndpoint, credential, modelName, message);
+                var response = _issueLabeler.SendMessageQna(openAIEndpoint, credential, modelName, instructions, message, structure);
 
                 _logger.LogInformation($"Open AI Response : \n{response}");
 
@@ -174,8 +188,8 @@ namespace IssueLabelerService
                 {
                     var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
 
-                    string intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\n";
-                    string outro = "\nThe team will get back to you shortly, hopefully this helps in the meantime!";
+                    string intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\n\n";
+                    string outro = "\n\nThe team will get back to you shortly, hopefully this helps in the meantime!";
                     result = new IssueOutput
                     {
                         Category = resultObj.Category,
@@ -223,6 +237,7 @@ namespace IssueLabelerService
             public bool Solution { get; set; }
         }
 
+        // Output given by the models.
         private class AIOutput
         {
             public string Category { get; set; }

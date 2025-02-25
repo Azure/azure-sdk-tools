@@ -194,9 +194,24 @@ namespace SearchIndexCreator
             string docContent = JsonConvert.SerializeObject(docs);
             string issueContent = JsonConvert.SerializeObject(issues);
 
-            string message = $"You are an AI assistant designed to generate realistic GitHub issues relevant to the documentation.\nDocumentation: {docContent}\nExample Issues: {issueContent}\nPlease generate potential questions that could be asked about the documentation as GitHub issue queries. Do not provide a response to the questions, only provide a list of detailed questions. Use the example issues on guidance on how to make an issue.";
+            string instructions = "You are an AI assistant designed to generate realistic GitHub issues relevant to the documentation.";
+            string message = $"Documentation: {docContent}\nExample Issues: {issueContent}\nPlease generate potential questions that could be asked about the documentation as GitHub issue queries. Do not provide a response to the questions, only provide a list of detailed questions. Use the example issues on guidance on how to make an issue.";
 
-            string result = ragService.SendMessageQna(openAIEndpoint, credential, modelName, message);
+            // Structure of the response passed to the StructureMessage method.
+            BinaryData structure = BinaryData.FromBytes("""
+                        {
+                          "type": "object",
+                          "properties": {
+                            "Category": { "type": "string" },
+                            "Service": { "type": "string" },
+                            "Response": { "type": "string" }
+                          },
+                          "required": [ "Category", "Service", "Response" ],
+                          "additionalProperties": false
+                        }
+                        """u8.ToArray());
+
+            string result = ragService.SendMessageQna(openAIEndpoint, credential, modelName, instructions, message, structure);
 
             // Replace escaped newlines
             result = result.Replace("\\n", "\n");

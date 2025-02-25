@@ -14,7 +14,7 @@ namespace AzureRAGService
     public interface ITriageRAG
     {
         IEnumerable<(T, double)> AzureSearchQuery<T>(Uri searchEndpoint, string indexName, string semanticConfigName, string field, DefaultAzureCredential credential, string query, int count);
-        string SendMessageQna(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string message);
+        string SendMessageQna(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string instructions, string message, BinaryData structure);
         string StructureMessage(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string message, BinaryData structure);
     }
 
@@ -96,21 +96,29 @@ namespace AzureRAGService
         /// <param name="modelName">The name of the OpenAI model.</param>
         /// <param name="message">The message to send.</param>
         /// <returns>The response from the OpenAI model.</returns>
-        public string SendMessageQna(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string message)
+        public string SendMessageQna(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string instructions, string message, BinaryData structure)
         {
             AzureOpenAIClient openAIClient = new(openAIEndpoint, credential);
             ChatClient chatClient = openAIClient.GetChatClient(modelName);
 
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
 
+            ChatCompletionOptions options = new ChatCompletionOptions()
+            {
+                ReasoningEffortLevel = ChatReasoningEffortLevel.High,
+                ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
+                    jsonSchemaFormatName: "IssueOutput",
+                    jsonSchema: structure
+                )
+            };
 
-            ChatCompletion answers =
-                chatClient.CompleteChat(
-                    [
-                    //Apparently not supported on o1 models
-                    //new SystemChatMessage(prompt),
-                    new UserChatMessage(message),
-                    ]);
+            ChatCompletion answers = chatClient.CompleteChat(
+                [
+                    new DeveloperChatMessage(instructions),
+                    new UserChatMessage(message)
+                ],
+                options
+            );
 
             _logger.LogInformation($"\n\nFinished loading Open AI response.");
 

@@ -1,6 +1,9 @@
 # Release History
 
-## Version 0.3.14 (Unreleased)
+## Version 0.3.15 (Unreleased)
+Fixed issue where module-level overloads were not being parsed.
+
+## Version 0.3.14 (2025-02-22)
 Update for tree token style parser.
 
 ## Version 0.3.13 (2025-01-13)

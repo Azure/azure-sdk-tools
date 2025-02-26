@@ -90,22 +90,3 @@ class TestModuleParsing:
         _check(actual6, expected6, obj)
 
         self._validate_line_ids(tokens)
-
-    #def test_review_line_metadata(self):
-    #    # TODO: empty lines should have RelatedToLine set
-    #    obj = importlib.import_module(TestModuleParsing.pkg_namespace)
-    #    module_node = ModuleNode(
-    #        namespace=obj.__name__,
-    #        module=obj,
-    #        pkg_root_namespace=self.pkg_namespace,
-    #        apiview=MockApiView,
-    #    )
-    #    tokens = _tokenize(module_node)
-    #    metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
-    #    metadata = _count_review_line_metadata(tokens[:31], metadata)
-
-    #    # methods empty line after related to method
-    #    # module level objects empty line before and after inside "stuff"
-    #    # namespace empty line at beginning and end
-    #    assert metadata["RelatedToLine"] == 4
-    #    assert metadata["IsContextEndLine"] == 1

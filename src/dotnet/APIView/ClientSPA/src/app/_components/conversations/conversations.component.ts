@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';

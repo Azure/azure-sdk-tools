@@ -543,6 +543,7 @@ export class SamplesPageComponent {
     });
 
     componentRef.instance.instanceLocation = 'samples';
+    componentRef.instance.userProfile = this.userProfile;
     this.renderer.appendChild(commentThreadContainer, componentRef.location.nativeElement);
     return commentThreadContainer;
   }

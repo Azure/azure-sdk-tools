@@ -62,7 +62,6 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
       const filtersAsStrings = this.cookieService.get("reviewFilters");
       this.filters = JSON.parse(filtersAsStrings);
     }
-
     this.loadReviews(0, this.pageSize * 2, true, this.filters); // Initial load of 2 pages
     this.createLanguageFilters();
     this.createContextMenuItems();

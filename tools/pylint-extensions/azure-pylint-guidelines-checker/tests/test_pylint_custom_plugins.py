@@ -3626,14 +3626,6 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 col_offset=8,
                 end_line=11,
                 end_col_offset=28,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
-                line=12,
-                node=debug_node,
-                col_offset=8,
-                end_line=12,
-                end_col_offset=29,
             )
         ):
             self.checker.visit_try(try_node)
@@ -3669,14 +3661,6 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 col_offset=8,
                 end_line=22,
                 end_col_offset=29,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
-                line=23,
-                node=debug_node,
-                col_offset=8,
-                end_line=23,
-                end_col_offset=30,
             )
         ):
             self.checker.visit_try(try_node)

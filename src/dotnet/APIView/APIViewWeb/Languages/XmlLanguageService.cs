@@ -14,6 +14,8 @@ namespace APIViewWeb
         public override string ProcessName { get; } = "java";
         public override string VersionString { get; } = "apiview-java-processor-1.31.0.jar";
 
+        public override bool UsesTreeStyleParser { get; } = false;
+
         public XmlLanguageService(TelemetryClient telemetryClient) : base(telemetryClient)
         {
         }

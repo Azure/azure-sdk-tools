@@ -6,7 +6,6 @@ using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -58,9 +57,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
 
         [HttpPost]
-        public async Task Push([FromBody()] IDictionary<string, object> options = null)
+        public async Task Push()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var options = await HttpRequestInteractions.GetBody<Dictionary<string, object>>(Request);
 
             var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
 
@@ -68,10 +68,12 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        [AllowEmptyBody]
-        public async Task Stop([FromBody()] IDictionary<string, string> variables = null)
+        public async Task Stop()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+
+            var variables = await HttpRequestInteractions.GetBody<Dictionary<string, string>>(Request);
+
             bool save = true;
             EntryRecordMode mode = RecordingHandler.GetRecordMode(Request);
 
@@ -89,7 +91,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
             await _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
         }
-
         public async Task HandleRequest()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");

@@ -66,20 +66,32 @@ function printErrorDetails(
     }
 }
 
+function getDistClassicClientParametersPath(packageRoot: string): string {
+    return path.join(packageRoot, 'dist/esm/models/parameters.js');
+}
+
 export const runCommandOptions: SpawnOptions = { shell: true, stdio: ['pipe', 'pipe', 'pipe'] };
 
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
 }
 
+// NOTE: due to migration tool, the folder structure is changed,
+//       and src folder is removed in new packages, 
+//       so we need to check both src and dist folders
 export function getSDKType(packageRoot: string): SDKType {
-    const paraPath = getClassicClientParametersPath(packageRoot);
     const packageName = getNpmPackageName(packageRoot);
     if (packageName.startsWith('@azure-rest/')) {
         return SDKType.RestLevelClient;
     }
-    const exist = shell.test('-e', paraPath);
-    const type = exist ? SDKType.HighLevelClient : SDKType.ModularClient;
+    
+    const srcParaPath = getClassicClientParametersPath(packageRoot);
+    const distParaPath = getDistClassicClientParametersPath(packageRoot);
+
+    const srcParameterExist = shell.test('-e', srcParaPath);
+    const distParameterExist = shell.test('-e', distParaPath);
+    
+    const type = srcParameterExist || distParameterExist ? SDKType.HighLevelClient : SDKType.ModularClient;
     logger.info(`SDK type '${type}' is detected in '${packageRoot}'.`);
     return type;
 }

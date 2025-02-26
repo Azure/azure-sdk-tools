@@ -73,7 +73,7 @@ public static class Program
 
     private static async Task GenerateReviewTextFromJson(Stream stream, string outputFilePath)
     {
-        var codeFile = await CodeFile.DeserializeAsync(stream, false, true);
+        var codeFile = await CodeFile.DeserializeAsync(stream, false);
         string apiOutput = codeFile.GetApiText(false);
         await File.WriteAllTextAsync(outputFilePath, apiOutput);
     }
@@ -82,7 +82,7 @@ public static class Program
     {
         try
         {
-            var codeFile = await CodeFile.DeserializeAsync(stream, false, false);
+            var codeFile = await CodeFile.DeserializeAsync(stream, false);
             if (codeFile != null)
             {
                 codeFile.ConvertToTreeTokenModel();

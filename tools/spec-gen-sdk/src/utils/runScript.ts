@@ -4,15 +4,18 @@ import { FailureType, setFailureType, WorkflowContext } from '../automation/work
 import { RunLogFilterOptions, RunLogOptions, RunOptions } from '../types/SwaggerToSdkConfig';
 import { Readable } from 'stream';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
+import { vsoLogIssue } from '../automation/logging';
+import { removeAnsiEscapeCodes } from './utils';
 
-export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending'>;
+export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending' | 'notEnabled'>;
 export type StatusContainer = { status: SDKAutomationState };
 const resultLevelMap: { [result in SDKAutomationState]: number } = {
   pending: -2,
   inProgress: -1,
   succeeded: 0,
   warning: 1,
-  failed: 2
+  notEnabled: 2,
+  failed: 3
 };
 const resultLogLevelMap: { [result in RunResult]: string } = {
   succeeded: 'info',
@@ -145,7 +148,11 @@ const listenOnStream = (
       }
     }
     setSdkAutoStatus(result, lineResult);
-    context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
+    if (context.config.runEnv === 'azureDevOps' && line.toLowerCase().includes("[error]")) {
+      vsoLogIssue(removeAnsiEscapeCodes(line));
+    } else {
+      context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
+    }
   };
 
   let cacheLine = '';

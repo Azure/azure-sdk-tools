@@ -1,5 +1,25 @@
 # Release
 
+## 2025-02-21 - 0.1.9
+
+- Fixed some warnings output
+
+## 2025-02-18 - 0.1.8
+
+- Formated error log which has ANSI codes to prevent garbled characters are displayed
+- Added a new state `NotEnabled` for cases where the language configuration is missing in readme.md or tspconfig.yaml
+- Unified the SDK generation process for both the spec PR and release scenarios
+
+## 2025-02-11 - 0.1.7
+
+- Excluded general messages containing 'error' from being displayed in the Azure pipeline results
+
+## 2025-02-11 - 0.1.6
+
+- Enabled error messages to be displayed in the Azure pipeline result
+- Generate a markdown file with the package results and publish it to the Extensions tab in the Azure pipeline result
+- Updated the 'is-triggered-by-pipeline' parameter type to string
+
 ## 2025-01-27 - 0.1.5
 
 - Introduced a root folder to save all the logs and artifacts

@@ -11,7 +11,6 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
-import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -22,13 +21,13 @@ import { environment } from 'src/environments/environment';
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
   @Input() revisionSidePanel : boolean = false;
+  @Input() userProfile: UserProfile | undefined;
 
   @Output() apiRevisionsEmitter : EventEmitter<APIRevision[]> = new EventEmitter<APIRevision[]>();
 
   @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
 
   assetsPath : string = environment.assetsPath;
-  userProfile : UserProfile | undefined;
   reviewPageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Review/";
   profilePageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Profile/";
   revisions : APIRevision[] = [];
@@ -75,7 +74,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
-  constructor(private apiRevisionsService: APIRevisionsService, private userProfileService: UserProfileService,
+  constructor(private apiRevisionsService: APIRevisionsService,
     private configService: ConfigService, private fb: FormBuilder, private reviewsService: ReviewsService,
     private route: ActivatedRoute, private messageService: MessageService) { }
 
@@ -84,12 +83,10 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.createLanguageFilters();
     this.createContextMenuItems();
     this.setDetailsIcons();
-    this.loadAPIRevisions(0, this.pageSize * 2, true);
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile : any) => {
-        this.userProfile = userProfile;
-      });
-    this.createRevisionFormGroup();
+    if (!this.review) {
+      this.loadAPIRevisions(0, this.pageSize * 2, true);
+      this.createRevisionFormGroup();
+    }
   }
 
   ngAfterOnit() {
@@ -106,8 +103,8 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       }
       else {
         this.loadAPIRevisions(0, this.pageSize * 2, true);
-        this.createRevisionFormGroup();
       }
+      this.createRevisionFormGroup();
       this.showSelectionActions = false;
       this.showDiffButton = false;
     }
@@ -435,7 +432,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    * @param event the Filter event
    */
   onSort(event: SortEvent) {
-      this.loadAPIRevisions(0, this.pageSize, true, null, event.field, event.order);
+    this.loadAPIRevisions(0, this.pageSize, true, null, event.field, event.order);
   }
 
   // Show or hide the sidebar for creating a review

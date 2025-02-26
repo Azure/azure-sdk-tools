@@ -13,7 +13,7 @@ from ._property_node import PropertyNode
 from ._docstring_parser import DocstringParser
 from ._variable_node import VariableNode
 from .._generated.treestyle.parser.models import ReviewLines
-from ._pylint_parser import PylintError, PylintParser
+from .._parsing_helpers import parse_overloads, add_overload_nodes
 
 find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
@@ -151,31 +151,6 @@ class ClassNode(NodeEntityBase):
         except:
             return []
 
-    """ Uses AST parsing to look for @overload decorated functions
-        because inspect cannot see these. Note that this will not
-        find overloads for module-level functions.
-    """
-
-    def _parse_overloads(self) -> List[FunctionNode]:
-        overload_nodes = []
-        functions = self._parse_functions_from_class(self.obj)
-        try:
-            for base_class in inspect.getmro(self.obj)[1:-1]:
-                functions += self._parse_functions_from_class(base_class)
-        except AttributeError:
-            pass
-        for func in functions:
-            if not func.decorators:
-                continue
-            for node in func.decorators.nodes:
-                try:
-                    if node.name == "overload":
-                        overload_node = FunctionNode(self.namespace, self, node=func, apiview=self.apiview)
-                        overload_nodes.append(overload_node)
-                except AttributeError:
-                    continue
-        return overload_nodes
-
     def _inspect(self):
         # Inspect current class and it's members recursively
         logging.debug("Inspecting class {}".format(self.full_name))
@@ -202,7 +177,13 @@ class ClassNode(NodeEntityBase):
         else:
             members = inspect.getmembers(self.obj)
 
-        overloads = self._parse_overloads()
+        functions = self._parse_functions_from_class(self.obj)
+        try:
+            for base_class in inspect.getmro(self.obj)[1:-1]:
+                functions += self._parse_functions_from_class(base_class)
+        except AttributeError:
+            pass
+        overloads = parse_overloads(self, functions, is_module_level=False)
         for name, child_obj in members:
             if inspect.isbuiltin(child_obj):
                 continue
@@ -210,14 +191,7 @@ class ClassNode(NodeEntityBase):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
                     func_node = FunctionNode(self.namespace, self, obj=child_obj, apiview=self.apiview)
-                    func_overloads = [x for x in overloads if x.name == func_node.name]
-
-                    # Append a numeric tag to overloads to distinguish them from one another.
-                    # This will break down if overloads are moved around in the source file.
-                    for x, overload in enumerate(func_overloads):
-                        overload.namespace_id = overload.namespace_id + f"_{x+1}"
-                        self.child_nodes.append(overload)
-                    self.child_nodes.append(func_node)
+                    add_overload_nodes(self, func_node, overloads)
             elif name == "__annotations__":
                 for item_name, item_type in child_obj.items():
                     if item_name.startswith("_"):

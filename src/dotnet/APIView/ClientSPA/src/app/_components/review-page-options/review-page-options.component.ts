@@ -112,12 +112,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     private apiRevisionsService: APIRevisionsService, private pullRequestService: PullRequestsService) { }
 
   ngOnInit() {
-    this.setSelectedDiffStyle();
-    this.setPageOptionValues();
-
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
-    this.setAPIRevisionApprovalStates();
-    this.setReviewApprovalStatus();
 
     this.codeLineSearchText.valueChanges.pipe(
       debounceTime(500),

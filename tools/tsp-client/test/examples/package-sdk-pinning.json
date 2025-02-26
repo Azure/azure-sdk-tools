@@ -26,12 +26,7 @@
     "regenerate": "tsx ./scripts/eng/regenerate.ts",
     "test": "tsx ./scripts/eng/run-tests.ts"
   },
-  "files": [
-    "dist/**",
-    "!dist/test/**",
-    "scripts/**",
-    "generator/**"
-  ],
+  "files": ["dist/**", "!dist/test/**", "scripts/**", "generator/**"],
   "peerDependencies": {
     "@typespec/compiler": ">=0.63.0 <1.0.0",
     "@typespec/http": ">=0.63.0 <1.0.0",
@@ -52,7 +47,7 @@
     "fs-extra": "~11.2.0"
   },
   "devDependencies": {
-    "@typespec/compiler": "~0.64.0",
+    "@typespec/compiler": "~0.65.0",
     "@typespec/http": "~0.63.0",
     "@typespec/rest": "~0.63.0",
     "@typespec/versioning": "~0.63.0",
@@ -77,7 +72,5 @@
     "chalk": "5.3.0",
     "@types/fs-extra": "11.0.4"
   },
-  "azure-sdk/emitter-package-json-pinning": [
-    "@typespec/compiler"
-  ]
+  "azure-sdk/emitter-package-json-pinning": ["@typespec/compiler"]
 }

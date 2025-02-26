@@ -114,7 +114,11 @@ namespace APIViewWeb
 
         public override string Name { get; } = "C++";
 
+        public override string VersionString => CurrentVersion;
+
         public override string [] Extensions { get; } = { ".cppast" };
+
+        public override bool UsesTreeStyleParser { get; } = false;
 
         public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 

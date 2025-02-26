@@ -12,6 +12,8 @@ namespace APIViewWeb
     {
         public override string Name { get; } = "Json";
         public override string[] Extensions { get; } = { ".json" };
+        public override string VersionString { get; } = "1.0";
+        public override bool UsesTreeStyleParser { get; } = false;
 
         public override bool CanUpdate(string versionString) => false;
 
@@ -23,11 +25,7 @@ namespace APIViewWeb
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
-            if (originalName.EndsWith(".tgz", StringComparison.OrdinalIgnoreCase))
-            {
-                return await CodeFile.DeserializeAsync(stream, doTreeStyleParserDeserialization: true);
-            }
-            return await CodeFile.DeserializeAsync(stream, true);
+            return await CodeFile.DeserializeAsync(stream);
         }
     }
 }

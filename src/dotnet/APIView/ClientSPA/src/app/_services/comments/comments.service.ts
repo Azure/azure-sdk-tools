@@ -22,41 +22,33 @@ export class CommentsService {
   }
 
   createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false) : Observable<CommentItemModel> {
-    let params = new HttpParams();
-    params = params.append('reviewId', reviewId);
+    const formData = new FormData();
+    formData.append('reviewId', reviewId);
     if (commentType == CommentType.APIRevision) {
-      params = params.append('apiRevisionId', revisionId);
+      formData.append('apiRevisionId', revisionId);
     }
     else if (commentType == CommentType.SampleRevision) {
-      params = params.append('sampleRevisionId', revisionId);
+      formData.append('sampleRevisionId', revisionId);
     }
-    params = params.append('elementId', elementId);
-    params = params.append('commentText', commentText);
-    params = params.append('commentType', commentType);
-    params = params.append('resolutionLocked', resolutionLocked);
+    formData.append('elementId', elementId);
+    formData.append('commentText', commentText);
+    formData.append('commentType', commentType.toString());
+    formData.append('resolutionLocked', resolutionLocked.toString());
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    })
-
-    return this.http.post<CommentItemModel>(this.baseUrl, {}, { 
-      headers: headers,
-      params: params,
-      withCredentials: true });
+    return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
   }
 
   updateComment(reviewId: string, commentId: string, commentText: string) {
-    let params = new HttpParams();
-    params = params.append('commentText', commentText);
+    const formData = new FormData();
+    formData.append('commentText', commentText);
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     })
 
-    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/updateCommentText`, {}, { 
+    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/updateCommentText`, formData, { 
       headers: headers,
       observe: 'response',
-      params: params,
       withCredentials: true });
   }
 

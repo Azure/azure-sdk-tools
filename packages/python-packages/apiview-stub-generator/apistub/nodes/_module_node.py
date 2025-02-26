@@ -8,6 +8,7 @@ from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub._generated.treestyle.parser.models import ReviewLines
+from .._parsing_helpers import parse_overloads, add_overload_nodes
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ApiView, ReviewLine
@@ -33,31 +34,12 @@ class ModuleNode(NodeEntityBase):
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
 
-    def _parse_functions_from_module(self, module_node) -> List[astroid.Module]:
+    def _parse_functions_from_module(self, module_obj) -> List[astroid.FunctionDef]:
         try:
-            # Get all overloads from module
+            module_node = astroid.parse(inspect.getsource(module_obj))
             return [x for x in module_node.body if isinstance(x, astroid.FunctionDef)]
         except:
             return []
-
-    """ Uses AST parsing to look for @overload decorated functions
-        because inspect cannot see these.
-    """
-
-    def _parse_overloads(self, module_node) -> List[FunctionNode]:
-        overload_nodes = []
-        functions = self._parse_functions_from_module(module_node)
-        for func in functions:
-            if not func.decorators:
-                continue
-            for node in func.decorators.nodes:
-                try:
-                    if node.name == "overload":
-                        overload_node = FunctionNode(self.namespace, self, node=func, is_module_level=True, apiview=self.apiview)
-                        overload_nodes.append(overload_node)
-                except AttributeError:
-                    continue
-        return overload_nodes
 
     def _inspect(self):
         """Imports module, identify public entities in module and inspect them recursively"""
@@ -101,20 +83,13 @@ class ModuleNode(NodeEntityBase):
 
                 # Parse function module for overloads and store
                 if member_obj.__module__ not in module_overloads:
-                    module_node = astroid.parse(inspect.getsource(inspect.getmodule(member_obj)))
-                    module_overloads[member_obj.__module__] = self._parse_overloads(module_node)
+                    functions = self._parse_functions_from_module(inspect.getmodule(member_obj))
+                    module_overloads[member_obj.__module__] = parse_overloads(self, functions, is_module_level=True)
 
                 overloads = module_overloads[member_obj.__module__]
-                func_overloads = [x for x in overloads if x.name == func_node.name]
-
-                # Append a numeric tag to overloads to distinguish them from one another.
-                # This will break down if overloads are moved around in the source file.
-                for x, overload in enumerate(func_overloads):
-                    overload.namespace_id = overload.namespace_id + f"_{x+1}"
-                    self.child_nodes.append(overload)
+                add_overload_nodes(self, func_node, overloads)
 
                 self.node_index.add(key, func_node)
-                self.child_nodes.append(func_node)
             else:
                 logging.debug("Skipping unknown type member in module: {}".format(name))
 

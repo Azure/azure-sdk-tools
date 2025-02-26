@@ -9,7 +9,6 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
  *
  * @param {Crate} apiJson - The API JSON object containing all items.
  * @param {Item} item - The struct item to process.
- * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
   if (!(typeof item.inner === "object" && "struct" in item.inner)) return [];
@@ -113,4 +112,6 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
   }
   if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
   return reviewLines;
+  // TODO: generics is not handled
+  // TODO: StructKind.tuple is not handled
 }

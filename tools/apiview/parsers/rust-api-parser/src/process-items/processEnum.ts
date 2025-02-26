@@ -17,6 +17,7 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
     Children: [],
   };
 
+  // TODO: generics, has_stripped_variants, 
   // Process derives and impls
   let implResult: ImplProcessResult = {
     deriveTokens: [],

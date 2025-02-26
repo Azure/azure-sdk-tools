@@ -23,20 +23,34 @@ export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
       return processModule(apiJson, item);
     } else if ("use" in item.inner) {
       return processUse(item);
-    } else if ("function" in item.inner) {
-      return processFunction(item);
-    } else if ("struct" in item.inner) {
-      return processStruct(item, apiJson);
-    } else if ("trait" in item.inner) {
-      return processTrait(item, apiJson);
-    } else if ("static" in item.inner) {
-      return processStatic(item);
-    } else if ("constant" in item.inner) {
-      return processConstant(item);
-    } else if ("enum" in item.inner) {
-      return processEnum(item, apiJson);
     } else if ("union" in item.inner) {
       return processUnion(item, apiJson);
+    } else if ("struct" in item.inner) {
+      return processStruct(item, apiJson);
+    } else if ("enum" in item.inner) {
+      return processEnum(item, apiJson);
+    } else if ("function" in item.inner) {
+      return processFunction(item);
+    } else if ("trait" in item.inner) {
+      return processTrait(item, apiJson);
+    } else if ("trait_alias" in item.inner) {
+      return null;
+    } else if ("type_alias" in item.inner) {
+      return null;
+    } else if ("constant" in item.inner) {
+      return processConstant(item);
+    } else if ("static" in item.inner) {
+      return processStatic(item);
+    } else if ("extern_type" in item.inner) {
+      return null;
+    } else if ("macro" in item.inner) {
+      return null;
+    } else if ("proc_macro" in item.inner) {
+      return null;
+    } else if ("assoc_const" in item.inner) {
+      return null;
+    } else if ("assoc_type" in item.inner) {
+      return null;
     }
   }
 }

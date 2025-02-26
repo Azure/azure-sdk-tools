@@ -58,4 +58,5 @@ export function processTrait(item: Item, apiJson: Crate) {
     IsContextEndLine: true,
   });
   return reviewLines;
+  // TODO: is_auto, is_unsafe, is_dyn_compatible, generics, bounds, implementations
 }

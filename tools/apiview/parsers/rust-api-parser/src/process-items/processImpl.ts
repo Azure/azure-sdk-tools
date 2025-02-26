@@ -140,4 +140,10 @@ export function processImpl(
   const traitImpls = processOtherTraitImpls(impls, apiJson);
 
   return { deriveTokens, implBlock, closingBrace, traitImpls };
+  // TODO: is_unsafe unused
+  // TODO: generics unused
+  // TODO: provided_trait_methods unused
+  // TODO: trait
+  // TODO: is_negative
+  // 
 }

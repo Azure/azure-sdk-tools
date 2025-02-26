@@ -31,6 +31,7 @@ export function processConstant(item: Item) {
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: typeToString(item.inner.constant.type),
+    // TODO: const is unused
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,

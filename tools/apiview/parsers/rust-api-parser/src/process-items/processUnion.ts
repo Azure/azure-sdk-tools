@@ -91,4 +91,6 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
   reviewLines.push(implResult.closingBrace);
   reviewLines.push(...implResult.traitImpls);
   return reviewLines;
+  // TODO: generics for unions is not being consumed
+  // TODO: check if has_stripped_fields needs to be considered for rendering
 }

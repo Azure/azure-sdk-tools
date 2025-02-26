@@ -43,7 +43,7 @@ if (!$Force) {
 }
 if ($confirmation -match "[yY]") { 
     RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file $PSScriptRoot/index.yaml --name stress/index.yaml --auth-mode login --overwrite
-    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file $pkg.FullName --name stress/$($pkg.Name) --auth-mode login
+    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name '$web' --file $pkg.FullName --name stress/$($pkg.Name) --auth-mode login --overwrite
 
     # index.yaml must be kept up to date, otherwise when helm generates the file, it will not
     # merge it with previous entries, and those packages will become inaccessible as they are no

@@ -1,9 +1,48 @@
-import { GitHub, getRepositoryFullName, first, GitHubPullRequest } from '@ts-common/azure-js-dev-tools';
-import { Logger } from '@azure/logger-js';
 import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
 import * as winston from 'winston';
 import { SdkAutoContext } from '../automation/entrypoint';
+
+
+/**
+ * The name and optional organization that the repository belongs to.
+ */
+export interface Repository {
+  /**
+   * The entity that owns the repository.
+   */
+  owner: string;
+  /**
+   * The name of the repository.
+   */
+  name: string;
+}
+
+/**
+ * Get a GitHubRepository object from the provided string or GitHubRepository object.
+ * @param repository The repository name or object.
+ */
+export function getRepository(repository: string | Repository): Repository {
+  let result: Repository;
+  if (!repository) {
+    result = {
+      name: repository,
+      owner: ""
+    };
+  } else if (typeof repository === "string") {
+    let slashIndex: number = repository.indexOf("/");
+    if (slashIndex === -1) {
+      slashIndex = repository.indexOf("\\");
+    }
+    result = {
+      name: repository.substr(slashIndex + 1),
+      owner: slashIndex === -1 ? "" : repository.substr(0, slashIndex)
+    };
+  } else {
+    result = repository;
+  }
+  return result;
+}
 
 /**
  * Label that can be added to a pull request
@@ -40,113 +79,6 @@ export const pullRequestLabelsInfo = {
 };
 
 export type PullRequestLabel = keyof typeof pullRequestLabelsInfo;
-
-/**
- * Ensure that the labels that can be added to an SDK repository's generation pull request exist in
- * the provided SDK repository.
- * @param github The GitHub client to use.
- * @param sdkRepository The SDK repository to create labels in.
- */
-export async function ensurePullRequestLabelsExist(
-  github: GitHub,
-  sdkRepository: string | RepoKey,
-  pRLabelsInfo: object,
-  logger: Logger
-): Promise<void> {
-  sdkRepository = getRepositoryFullName(sdkRepository);
-  await logger.logVerbose(`Getting labels from "${sdkRepository}"...`);
-  const sdkRepositoryLabels = await github.getLabels(sdkRepository);
-
-  await Promise.all(
-    (Object.keys(pRLabelsInfo) as PullRequestLabel[]).map((labelName) =>
-      (async () => {
-        const labelInfo: PullRequestLabelInfo = pRLabelsInfo[labelName];
-
-        await logger.logVerbose(`Looking for label named "${labelName}"...`);
-        const existingLabel = first(sdkRepositoryLabels, (l) => l.name === labelName);
-
-        if (!existingLabel) {
-          await logger.logInfo(`Didn't find label ${labelName} in ${sdkRepository}. Creating it...`);
-          await github.createLabel(sdkRepository, labelName, labelInfo.color);
-        } else if (existingLabel.color !== labelInfo.color) {
-          await logger.logInfo(`Found label ${labelName}, but the color wasn't correct. Updating...`);
-          await github.updateLabelColor(sdkRepository, existingLabel.name, labelInfo.color);
-        } else {
-          await logger.logVerbose(`Found label ${labelName} and it had the correct color.`);
-        }
-      })()
-    )
-  );
-}
-
-export async function updatePullRequestLabels(
-  github: GitHub,
-  sdkRepository: string | RepoKey,
-  pullRequest: GitHubPullRequest,
-  targetLabelNames: PullRequestLabel[],
-  logger: Logger
-): Promise<void> {
-  sdkRepository = getRepositoryFullName(sdkRepository);
-
-  const currentLabelNames = pullRequest.labels
-    .filter((label) => pullRequestLabelsInfo[label.name as PullRequestLabel] !== undefined)
-    .map((label) => label.name as PullRequestLabel);
-
-  const labelsToRemove = currentLabelNames.filter((labelName) => targetLabelNames.indexOf(labelName) === -1);
-  const labelsToAdd = targetLabelNames.filter((labelName) => currentLabelNames.indexOf(labelName) === -1);
-
-  const labelStrs = labelsToAdd.map((label) => `+${label}`).concat(labelsToRemove.map((label) => `-${label}`));
-  if (labelStrs.length === 0) {
-    await logger.logVerbose(`No label change for PR ${pullRequest.number} in ${sdkRepository}`);
-    return;
-  }
-
-  await logger.logInfo(`Label changes for PR ${pullRequest.number} in ${sdkRepository}: ${labelStrs.join(', ')}`);
-  try {
-    await github.addPullRequestLabels(sdkRepository, pullRequest, labelsToAdd);
-  } catch (e) {
-    // Retry because maybe the label doesn't exist.
-    logger.logInfo(`Retry to add labels ${labelsToAdd} for PR ${pullRequest.number} in ${sdkRepository}. Error: ${e.message}`);
-    await ensurePullRequestLabelsExist(github, sdkRepository, pullRequestLabelsInfo, logger);
-    await github.addPullRequestLabels(sdkRepository, pullRequest, labelsToAdd);    
-  }
-  await github.removePullRequestLabels(sdkRepository, pullRequest, labelsToRemove);
-}
-
-export async function addPullRequestLabel(
-  github: GitHub,
-  sdkRepository: string | RepoKey,
-  pullRequest: GitHubPullRequest,
-  githubLabel: GithubLabel,
-  logger: Logger
-): Promise<void> {
-  sdkRepository = getRepositoryFullName(sdkRepository);
-  const labelExist = first(pullRequest.labels, (l) => l.name === githubLabel.name);
-
-  if (!labelExist) {
-    const pullRequestLabelInfo = {};
-    pullRequestLabelInfo[githubLabel.name] = { color: githubLabel.color };
-    await ensurePullRequestLabelsExist(github, sdkRepository, pullRequestLabelInfo, logger);
-    await logger.logInfo(`Add Label ${githubLabel.name} for PR ${pullRequest.number} in ${sdkRepository}`);
-    await github.addPullRequestLabels(sdkRepository, pullRequest, githubLabel.name);
-  }
-}
-
-/**
- * @deprecated If possible, favor using `removePullRequestLabelOctokit` instead. 
- * Reason: this deprecated function uses GitHub from \@ts-common/azure-js-dev-tools 
- * instead of the newer Octokit.
- */
-export async function removePullRequestLabel(
-  github: GitHub,
-  sdkRepository: string | RepoKey,
-  pullRequest: GitHubPullRequest,
-  githubLabel: GithubLabel,
-  logger: Logger
-): Promise<void> {
-  await logger.logInfo(`Try to remove Label ${githubLabel.name} for PR ${pullRequest.number} in ${sdkRepository}`);
-  await github.removePullRequestLabels(sdkRepository, pullRequest, githubLabel.name);
-}
 
 export interface RepoKey {
   /**

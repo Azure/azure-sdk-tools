@@ -8,7 +8,6 @@ import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/f
 import { RepoKey, repoKeyToString } from '../utils/githubUtils';
 import { gitCheckoutBranch, gitGetCommitter } from '../utils/gitUtils';
 import { isLineMatch, runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
-import { legacyArtifactSearchOption, legacyBuildPackage, legacyInstallInstruction } from './legacy';
 import { CommentCaptureTransport, getBlobName, loggerStorageAccountTransport } from './logging';
 import {
   branchMain,
@@ -50,7 +49,7 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
   await workflowPkgDetectArtifacts(context, pkg);
   await workflowPkgSaveSDKArtifact(context, pkg);
   await workflowPkgSaveApiViewArtifact(context, pkg);
-  await workflowPkgCallInstallInstructionScript(context, pkg, syncConfig);
+  await workflowPkgCallInstallInstructionScript(context, pkg);
   await pushBranchPromise;
   await workflowPkgUpdatePR(context, pkg, syncConfig);
 
@@ -64,7 +63,7 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
 const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: PackageData) => {
   const runOptions = context.swaggerToSdkConfig.packageOptions.buildScript;
   if (!runOptions) {
-    await legacyBuildPackage(context, pkg);
+    context.logger.info('buildScript of packageOptions is not configured in swagger_to_sdk_config.json.');
     return;
   }
 
@@ -119,14 +118,7 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
 };
 
 const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: PackageData) => {
-  let searchOption = context.swaggerToSdkConfig.artifactOptions.artifactPathFromFileSearch;
-  if (searchOption === undefined) {
-    searchOption = legacyArtifactSearchOption(context, pkg);
-    if (searchOption) {
-      context.logger.info(`Use legacy artifact search option`);
-    }
-  }
-
+  const searchOption = context.swaggerToSdkConfig.artifactOptions.artifactPathFromFileSearch;
   if (!searchOption) {
     context.logger.info(`Skip artifact search`);
     return;
@@ -224,19 +216,11 @@ const fileInstallInstructionInput = 'installInstructionInput.json';
 const fileInstallInstructionOutput = 'installInstructionOutput.json';
 const workflowPkgCallInstallInstructionScript = async (
   context: WorkflowContext,
-  pkg: PackageData,
-  syncConfig: SyncConfig
+  pkg: PackageData
 ) => {
   const runOptions = context.swaggerToSdkConfig.artifactOptions.installInstructionScript;
   if (!runOptions) {
-    const legacyResult = await legacyInstallInstruction(context, pkg, syncConfig);
-    if (legacyResult === undefined) {
-      context.logger.info('Skip installInstructionScript');
-    } else {
-      context.logger.info(`Legacy InstallInstruction`);
-      pkg.installationInstructions = legacyResult.full;
-      pkg.liteInstallationInstruction = legacyResult.lite;
-    }
+    context.logger.info('Skip installInstructionScript');
     return;
   }
 

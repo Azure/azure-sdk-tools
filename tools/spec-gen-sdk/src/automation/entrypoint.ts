@@ -15,16 +15,6 @@ import {
   workflowMain
 } from './workflow';
 import { TriggerType } from '../types/TriggerType';
-import { azureresourceschema } from '../langSpecs/langs/azureresourceschema';
-import { cli } from '../langSpecs/langs/cli';
-import { dotnet } from '../langSpecs/langs/dotnet';
-import { go } from '../langSpecs/langs/go';
-import { java } from '../langSpecs/langs/java';
-import { javascript } from '../langSpecs/langs/javascript';
-import { python } from '../langSpecs/langs/python';
-import { pythonTrack2 } from '../langSpecs/langs/pythonTrack2';
-import { trenton } from '../langSpecs/langs/trenton';
-import { LanguageConfiguration } from '../langSpecs/languageConfiguration';
 import {
   getBlobName,
   loggerConsoleTransport,
@@ -35,7 +25,7 @@ import {
   sdkAutoLogLevels
 } from './logging';
 import { sdkAutoReportStatus } from './reportStatus';
-import { SDKAutomationState } from '../sdkAutomationState';
+import { SDKAutomationState } from './sdkAutomationState';
 import { DefaultAzureCredential } from '@azure/identity';
 import * as pkginfo from 'pkginfo';
 
@@ -81,35 +71,10 @@ export type SdkAutoContext = {
   specPrTitle: string;
   specPrHtmlUrl: string;
   workingFolder: string;
-  legacyLangConfig?: LanguageConfiguration;
   blobContainerClient: ContainerClient;
   logsBlobUrl?: string;
   version: string;
   autorestConfig?: string;
-};
-
-const getLegacyLanguageConfig = (sdkName: string) => {
-  switch (sdkName) {
-    case 'azure-resource-manager-schemas':
-      return azureresourceschema;
-    case 'azure-cli-extensions':
-      return cli;
-    case 'azure-sdk-for-net':
-      return dotnet;
-    case 'azure-sdk-for-go':
-      return go;
-    case 'azure-sdk-for-java':
-      return java;
-    case 'azure-sdk-for-js':
-      return javascript;
-    case 'azure-sdk-for-python':
-      return python;
-    case 'azure-sdk-for-python-track2':
-      return pythonTrack2;
-    case 'azure-sdk-for-trenton':
-      return trenton;
-  }
-  return undefined;
 };
 
 const getAutorestConfigFromPRComment = async (
@@ -207,8 +172,6 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
 
   const workingFolder = '.';
 
-  const legacyLangConfig = getLegacyLanguageConfig(options.sdkName);
-
   const logsBlobUrl = `${logsBlobName}`;
 
   return {
@@ -237,7 +200,6 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     specPrTitle: specPR.title,
     specPrHtmlUrl: specPR.html_url,
     specHeadRef: useMergedRoutine ? specPR.base.ref : `refs/pull/${specPR.number}/merge`,
-    legacyLangConfig,
     blobContainerClient,
     logsBlobUrl,
     version,
@@ -319,16 +281,15 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
       console.log(`##vso[task.setVariable variable=SkippedJobs]azure-sdk-for-go`);
       console.log(`##vso[task.complete result=Failed;]`);
     }
-  } finally {
-    if (workflowContext) {
-      await sdkAutoReportStatus(workflowContext);
-    }
-    await loggerWaitToFinish(sdkContext.logger);
-    if (runSdkFilter) {
-      return workflowFilterSdkMainStatus;
-    } else {
-      return workflowContext?.status;
-    }
+  }
+  if (workflowContext) {
+    await sdkAutoReportStatus(workflowContext);
+  }
+  await loggerWaitToFinish(sdkContext.logger);
+  if (runSdkFilter) {
+    return workflowFilterSdkMainStatus;
+  } else {
+    return workflowContext?.status;
   }
 };
 

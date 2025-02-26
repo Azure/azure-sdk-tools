@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     response.Headers.Append("x-request-known-exception", "true");
                     response.Headers.Append("x-request-known-exception-error", encodedException);
                 }
-                
+
                 var bodyObj = new
                 {
                     Message = e.Message,

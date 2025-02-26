@@ -27,18 +27,16 @@ import {
   writeTmpJsonFile
 } from '../utils/fsUtils';
 import { GenerateInput } from '../types/GenerateInput';
-import { legacyGenerate, legacyInit } from './legacy';
 import { GenerateOutput, getGenerateOutput } from '../types/GenerateOutput';
 import { getPackageData, PackageData } from '../types/PackageData';
 import { workflowPkgMain } from './workflowPackage';
-import { SDKAutomationState } from '../sdkAutomationState';
+import { SDKAutomationState } from './sdkAutomationState';
 import { CommentCaptureTransport, getBlobName } from './logging';
-import { findSwaggerToSDKConfiguration } from '@ts-common/azure-js-dev-tools';
-import { SwaggerToSDKConfiguration as LegacySwaggerToSdkConfig } from '../swaggerToSDKConfiguration';
-import { ReadmeMdFileProcessMod } from '../langSpecs/languageConfiguration';
+import { findSwaggerToSDKConfiguration } from '../utils/readme';
 import { getInitOutput } from '../types/InitOutput';
-import { MessageRecord, sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, parseYamlContent, validateSdkSuppressionsFile } from '@azure/swagger-validation-common';
-import { removeDuplicatesFromRelatedFiles } from '../utils/utils';
+import { MessageRecord } from '../types/Message';
+import { sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, validateSdkSuppressionsFile } from '../types/sdkSuppressions';
+import { parseYamlContent, removeDuplicatesFromRelatedFiles } from '../utils/utils';
 import { SDKSuppressionContentList } from '../utils/handleSuppressionLines';
 
 export const remoteIntegration = 'integration';
@@ -147,9 +145,8 @@ export const workflowMain = async (context: WorkflowContext) => {
 
   const callMode =
     context.swaggerToSdkConfig.advancedOptions.generationCallMode ??
-    context.legacyLangConfig?.readmeMdFileProcessMod ??
     'one-for-all-configs';
-  if (callMode === 'one-for-all-configs' || callMode === ReadmeMdFileProcessMod.Batch) {
+  if (callMode === 'one-for-all-configs') {
     await workflowHandleReadmeMdOrTypeSpecProject(context, changedSpecs);
   } else {
     for (const changedSpec of changedSpecs) {
@@ -506,8 +503,7 @@ const workflowInitSdkRepo = async (
   swaggerToSdkConfig: SwaggerToSdkConfig
 ) => {
   const cloneDir =
-    swaggerToSdkConfig.advancedOptions.cloneDir ??
-    (swaggerToSdkConfig as LegacySwaggerToSdkConfig).meta?.advanced_options?.clone_dir;
+    swaggerToSdkConfig.advancedOptions.cloneDir;
   const sdkFolderName = cloneDir
     ? path.join(sdkRepoConfig.mainRepository.name, cloneDir)
     : sdkRepoConfig.mainRepository.name;
@@ -564,9 +560,9 @@ const fileInitOutput = 'initOutput.json';
 const workflowCallInitScript = async (context: WorkflowContext) => {
   const initScriptConfig = context.swaggerToSdkConfig.initOptions?.initScript;
   if (initScriptConfig === undefined) {
-    context.logger.log('warn', `Skip initScript due to not configured`);
-    await legacyInit(context);
-    return;
+    context.logger.error('ConfigError: initScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    throw new Error('The initScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
   }
 
   writeTmpJsonFile(context, fileInitInput, {});
@@ -724,15 +720,9 @@ const workflowCallGenerateScript = async (
   };
 
   if (context.swaggerToSdkConfig.generateOptions.generateScript === undefined) {
-    // Fallback to legacy autorest
-    try {
-      await legacyGenerate(context, relatedReadmeMdFiles, statusContext);
-    } catch (e) {
-      setFailureType(context, FailureType.CodegenFailed);
-      throw e;
-    }
-    setSdkAutoStatus(context, statusContext.status);
-    return { ...statusContext, generateInput, generateOutput };
+    context.logger.error('ConfigError: generateScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
+    setFailureType(context, FailureType.PipelineFrameworkFailed);
+    throw new Error('The generateScript is not configured in the swagger-to-sdk config. Please refer to the schema.');
   }
 
   context.logger.log('section', 'Call generateScript');
@@ -805,46 +795,13 @@ const workflowSaveGenerateResult = async (context: WorkflowContext) => {
 const workflowDetectChangedPackages = async (context: WorkflowContext, fileList: string[], readmeMdList: string[]) => {
   context.logger.log('section', 'Detect changed packages');
   if (context.pendingPackages.length === 0) {
-    let searchConfig = context.swaggerToSdkConfig.packageOptions.packageFolderFromFileSearch;
-    if (searchConfig === false) {
-      context.logger.warn(`Warning: Skip detecting changed packages based on the config in readme.md. Please refer to the schema https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/SwaggerToSdkConfigSchema.json for 'packageOptions' configuration.`);
+    const searchConfig = context.swaggerToSdkConfig.packageOptions.packageFolderFromFileSearch;
+    if (!searchConfig) {
+      context.logger.warn(`Warning: Skip detecting changed packages based on the config in swagger_to_sdk.config. Please refer to the schema https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/SwaggerToSdkConfigSchema.json for 'packageOptions' configuration.`);
       return;
     }
-    if (searchConfig === undefined) {
-      const legacyFilenameConfig = context.legacyLangConfig?.packageRootFileName;
-      if (!legacyFilenameConfig) {
-        throw new Error('N/A (this code has been deprecated)');
-      }
-      searchConfig = {
-        packageNamePrefix: context.legacyLangConfig?.packageNameAltPrefix,
-        searchRegex:
-          typeof legacyFilenameConfig === 'string'
-            ? new RegExp(`^${legacyFilenameConfig.replace('.', '\\.')}$`)
-            : legacyFilenameConfig
-      };
-    }
-    context.logger.info(`Package from changed file search: ${searchConfig.searchRegex}`);
-    const packageFolderList = await searchRelatedParentFolders(fileList, {
-      rootFolder: context.sdkFolder,
-      searchFileRegex: searchConfig.searchRegex
-    });
-    for (const packageFolderPath of Object.keys(packageFolderList)) {
-      let packageName = await context.legacyLangConfig?.packageNameCreator?.(
-        context.sdkFolder,
-        packageFolderPath,
-        readmeMdList[0]
-      );
-      if (packageName && context.legacyLangConfig?.packageNameAltPrefix) {
-        packageName = context.legacyLangConfig.packageNameAltPrefix + packageName;
-      }
-      context.pendingPackages.push(
-        getPackageData(context, {
-          packageName,
-          path: [packageFolderPath],
-          result: 'succeeded'
-        })
-      );
-    }
+    //TODO can we delete this?
+    context.logger.info(`TODO ${fileList.length * readmeMdList.length}`);
   }
 
   context.logger.info(`${context.pendingPackages.length} packages found after generation:`);

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using ApiView;
 using System.Text;
+using APIView.Model.V2;
 
 namespace APIViewWeb.LeanModels
 {
@@ -129,7 +130,12 @@ namespace APIViewWeb.LeanModels
             var relatedNodeHashId = GetNodeIdHashFromLineId(relatedLine);
             if (!string.IsNullOrEmpty(relatedNodeHashId) && NodeMetaDataObj.ContainsKey(nodeIdHashed))
             {
-                NodeMetaDataObj[nodeIdHashed].RelatedNodeIdHash = relatedNodeHashId;
+                var node = NodeMetaDataObj[nodeIdHashed];
+                node.RelatedNodeIdHash = relatedNodeHashId;
+                if (node.IsNodeWithDiff)
+                {
+                    NodeMetaDataObj[relatedNodeHashId].IsNodeWithDiffInDescendants = true;
+                }
             }
         }
 

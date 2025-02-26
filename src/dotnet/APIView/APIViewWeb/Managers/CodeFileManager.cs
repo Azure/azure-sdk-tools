@@ -79,19 +79,22 @@ namespace APIViewWeb.Managers
                     foreach (var entry in archive.Entries)
                     {
                         var fileName = Path.GetFileName(entry.Name);
-                        if (fileName == originalFileName)
+                        if (!string.IsNullOrEmpty(fileName))
                         {
-                            await entry.Open().CopyToAsync(originalFileStream);
-                        }
+                            if (fileName == originalFileName)
+                            {
+                                await entry.Open().CopyToAsync(originalFileStream);
+                            }
 
-                        if (fileName == codeFileName)
-                        {
-                            var language = LanguageServiceHelpers.GetLanguageFromRepoName(repoName);
-                            codeFile = await CodeFile.DeserializeAsync(entry.Open(), doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
-                        }
-                        else if (fileName == baselineCodeFileName)
-                        {
-                            await entry.Open().CopyToAsync(baselineStream);
+                            if (fileName == codeFileName)
+                            {
+                                var language = LanguageServiceHelpers.GetLanguageFromRepoName(repoName);
+                                codeFile = await CodeFile.DeserializeAsync(entry.Open(), doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
+                            }
+                            else if (fileName == baselineCodeFileName)
+                            {
+                                await entry.Open().CopyToAsync(baselineStream);
+                            }
                         }
                     }
                 }

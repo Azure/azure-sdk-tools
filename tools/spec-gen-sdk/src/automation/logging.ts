@@ -3,7 +3,7 @@ import { default as Transport } from 'winston-transport';
 import { AppendBlobClient } from '@azure/storage-blob';
 import { SdkAutoContext } from './entrypoint';
 import { PackageData } from '../types/PackageData';
-import { SDKAutomationState } from '../sdkAutomationState';
+import { SDKAutomationState } from './sdkAutomationState';
 
 export const sdkAutoLogLevels = {
   levels: {

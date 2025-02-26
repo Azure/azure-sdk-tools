@@ -2,8 +2,12 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Hubbup.MikLabelModel;
+using IssueLabeler.Shared.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.AspNetCore.Mvc;
@@ -22,17 +26,37 @@ namespace IssueLabelerService
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private readonly IConfiguration _config;
         private readonly ITriageRAG _issueLabeler;
+        private static readonly ConcurrentDictionary<string, byte> CommonModelRepositories = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, byte> InitializedRepositories = new(StringComparer.OrdinalIgnoreCase);
+        private IModelHolderFactoryLite ModelHolderFactory { get; }
+        private ILabelerLite Labeler { get; }
+        private string CommonModelRepositoryName { get; }
 
-        public AzureSdkIssueLabelerService(IConfiguration config, ILogger<AzureSdkIssueLabelerService> logger, ITriageRAG issueLabeler)
+        public AzureSdkIssueLabelerService(ILabelerLite labeler, IModelHolderFactoryLite modelHolderFactory, IConfiguration config, ILogger<AzureSdkIssueLabelerService> logger, ITriageRAG issueLabeler)
         {
             _config = config;
             _logger = logger;
             _issueLabeler = issueLabeler;
+            ModelHolderFactory = modelHolderFactory;
+            Labeler = labeler;
+
+            CommonModelRepositoryName = config["CommonModelRepositoryName"];
+
+            // Initialize the set of repositories that use the common model.
+            var commonModelRepos = config["ReposUsingCommonModel"];
+
+            if (!string.IsNullOrEmpty(commonModelRepos))
+            {
+                foreach (var repo in commonModelRepos.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    CommonModelRepositories.TryAdd(repo, 1);
+                }
+            }
         }
 
         [Function("AzureSdkIssueLabelerService")]
         public async Task<ActionResult> Run([HttpTrigger(AuthorizationLevel.Function, "POST", Route = null)] HttpRequest request)
-        {
+        {         
             IssuePayload issue;
             try
             {
@@ -40,19 +64,26 @@ namespace IssueLabelerService
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Unable to deserialize payload: {ex.Message}\n\t{ex}");
+                _logger.LogError($"Unable to deserialize payload:{ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
                 return new BadRequestResult();
             }
 
             IssueOutput result;
             try
             {
-                // TODO :  If in dotnet repo run complete issue triage (includes comments) else run the regular triage that we currently do.
-                result = CompleteIssueTriage(issue);
+                // If in dotnet repo run complete issue triage (includes comments) otherwise run the regular triage that we currently do.
+                if(issue.RepositoryName == "dotnet")
+                {
+                    result = CompleteIssueTriage(issue);
+                }
+                else
+                {
+                    result = OnlyLabelIssue(issue);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Unable to provide labeling and comment for issue: {ex.Message}\n\t{ex}");
+                _logger.LogError($"Error querying predictions for {issue.RepositoryName} on issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
                 return EmptyResult;
             }
 
@@ -92,11 +123,12 @@ namespace IssueLabelerService
             var documentSemanticName = _config["DocumentSemanticName"];
             const string documentFieldName = "text_vector";
 
+            // Query + Filtering configurations
             string query = $"{issue.Title} {issue.Body}";
             int top = int.Parse(_config["SourceCount"]);
             double scoreThreshold = double.Parse(_config["ScoreThreshold"]);
             double solutionThreshold = double.Parse(_config["SolutionThreshold"]);
-
+            
             var relevantIssues = _issueLabeler.AzureSearchQuery<Issue>(searchEndpoint, issueIndexName, issueSemanticName, issueFieldName, credential, query, top);
             var relevantDocuments = _issueLabeler.AzureSearchQuery<Document>(searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, query, top);
 
@@ -127,14 +159,14 @@ namespace IssueLabelerService
             // Filtered out all sources for either one then not enough information to answer the issue. 
             if (docs.Count == 0 || issues.Count == 0)
             {
-                _logger.LogInformation("Not enough relevant documents/issues found.");
-                throw new Exception("Not enough relevant documents/issues found.");
+                _logger.LogInformation($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
+                throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
             }
 
             double highestScore = Math.Max(docs.Max(d => d.Score), issues.Max(d => d.Score));
             bool solution = highestScore >= solutionThreshold;
 
-            _logger.LogInformation($"Highest score: {highestScore}");
+            _logger.LogInformation($"Highest relevance score among the sources: {highestScore}");
 
             // Makes it nicer for the model to read (Can probably be made more readable but oh well)
             var printableIssues = issues.Select(r => JsonConvert.SerializeObject(r)).ToList();
@@ -167,7 +199,7 @@ namespace IssueLabelerService
             """u8.ToArray());
 
             var response = _issueLabeler.SendMessageQna(openAIEndpoint, credential, modelName, instructions, message, structure);
-            _logger.LogInformation($"Open AI Response : \n{response}");
+            _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{response}");
 
             var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
             string intro, outro;
@@ -191,6 +223,78 @@ namespace IssueLabelerService
                 Solution = solution
             };
         }
+
+        private IssueOutput OnlyLabelIssue(IssuePayload issue)
+        {
+            var predictionRepositoryName = TranslateRepoName(issue.RepositoryName);
+
+            // If the model needed for this request hasn't been initialized, do so now.
+            if (!InitializedRepositories.ContainsKey(predictionRepositoryName))
+            {
+                _logger.LogInformation($"Models for {predictionRepositoryName} have not yet been initialized; loading prediction models.");
+
+                try
+                {
+                    var allBlobConfigNames = Config[$"IssueModel.{predictionRepositoryName.Replace("-", "_")}.BlobConfigNames"].Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+                    // The model factory is thread-safe and will manage its own concurrency.
+                    await ModelHolderFactory.CreateModelHolders(issue.RepositoryOwnerName, predictionRepositoryName, allBlobConfigNames).ConfigureAwait(false);
+                    InitializedRepositories.TryAdd(predictionRepositoryName, 1);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error initializing the label prediction models for {predictionRepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                    throw;
+                }
+                finally
+                {
+                    _logger.LogInformation($"Model initialization is complete for {predictionRepositoryName}.");
+                }
+            }
+
+            // Predict labels.
+            _logger.LogInformation($"Predicting labels for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.");
+
+            try
+            {
+                // In order for labels to be valid for Azure SDK use, there must
+                // be at least two of them, which corresponds to a Service (pink)
+                // and Category (yellow).  If that is not met, then no predictions
+                // should be returned.
+                var predictions = await Labeler.QueryLabelPrediction(
+                    issue.IssueNumber,
+                    issue.Title,
+                    issue.Body,
+                    issue.IssueUserLogin,
+                    predictionRepositoryName,
+                    issue.RepositoryOwnerName);
+
+                if (predictions.Count < 2)
+                {
+                    _logger.LogInformation($"No labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.");
+                    throw new Exception($"No labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.");
+                }
+
+                _logger.LogInformation($"Labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.  Using: [{predictions[0]}, {predictions[1]}].");
+                return new IssueOutput
+                {
+                    Category = predictions[0],
+                    Service = predictions[1],
+                    Suggestions = "",
+                    Solution = false
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error querying predictions for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                throw;
+            }
+        }
+
+        private string TranslateRepoName(string repoName) =>
+            CommonModelRepositories.ContainsKey(repoName)
+            ? CommonModelRepositoryName
+            : repoName;
 
         private class IssuePayload
         {

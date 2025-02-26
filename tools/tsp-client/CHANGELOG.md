@@ -1,5 +1,9 @@
 # Release
 
+## 2024-12-03 - 0.14.2
+
+- Bumped `@autorest/openapi-to-typespec` version to `0.10.4`.
+
 ## 2024-11-08 - 0.14.1
 
 - Print an example `tsp compile` call when the `--debug` flag is passed to a `tsp-client` command.

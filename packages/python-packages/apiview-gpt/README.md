@@ -8,8 +8,7 @@ The simplest way to get started with the project would be to follow these steps:
 1. Install this package with `pip install .` or `pip install -e .` for an editable install.
 2. Create a `.env` file with the following contents:
 ```
-OPENAI_API_BASE="" # The OpenAI endpoint URL
-OPENAI_API_KEY="" # The OpenAI API key
+AZURE_OPENAI_ENDPOINT="" # The OpenAI endpoint URL
 APIVIEW_GPT_SERVICE_URL=https://apiview-gpt.azurewebsites.net
 APIVIEW_API_KEY="" # The APIView API key
 ```
@@ -24,8 +23,7 @@ To generate a review in JSON format:
 1. Install this package with `pip install .` or `pip install -e .` for an editable install.
 2. Create a `.env` file with the following contents:
 ```
-OPENAI_API_BASE="" # The OpenAI endpoint URL
-OPENAI_API_KEY="" # The OpenAI API key
+AZURE_OPENAI_ENDPOINT="" # The OpenAI endpoint URL
 APIVIEW_GPT_SERVICE_URL=https://apiview-gpt.azurewebsites.net
 ```
 3. Run `python cli.py review generate --language <LANG> --path <PATH>`

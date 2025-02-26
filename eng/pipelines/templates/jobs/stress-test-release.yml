@@ -67,10 +67,7 @@ jobs:
     - task: AzureCLI@2
       displayName: Build and Deploy Stress Tests
       inputs:
-        ${{ if eq(parameters.Environment, 'pg') }}:
-          azureSubscription: Azure SDK Playground
-        ${{ else }}:
-          azureSubscription: azure-sdk-tests-public
+        azureSubscription: azure-sdk-tests-public
         scriptType: pscore
         scriptPath: $(System.DefaultWorkingDirectory)/$(Repository)/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
         arguments:

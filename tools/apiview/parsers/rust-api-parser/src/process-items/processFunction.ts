@@ -4,6 +4,7 @@ import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { typeToString } from "./utils/typeToString";
+import { isFunctionItem } from "./utils/typeGuards";
 
 /**
  * Processes a function item and adds its documentation to the ReviewLine.
@@ -11,7 +12,7 @@ import { typeToString } from "./utils/typeToString";
  * @param {Item} item - The function item to process.
  */
 export function processFunction(item: Item) {
-  if (!(typeof item.inner === "object" && "function" in item.inner)) return;
+  if (!isFunctionItem(item)) return;
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 

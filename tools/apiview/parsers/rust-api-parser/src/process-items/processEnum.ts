@@ -1,11 +1,12 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
-import { ImplProcessResult, processAutoTraitImpls, processImpl } from "./processImpl";
+import { ImplProcessResult, processImpl } from "./processImpl";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
+import { isEnumItem } from "./utils/typeGuards";
 
 export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
-  if (!(typeof item.inner === "object" && "enum" in item.inner)) return [];
+  if (!isEnumItem(item)) return [];
   const reviewLines: ReviewLine[] = [];
 
   if (item.docs) {

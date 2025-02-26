@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { isTraitItem } from "./utils/typeGuards";
 
 /**
  * Processes a trait item and adds its documentation to the ReviewLine.
@@ -11,7 +12,7 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processTrait(item: Item, apiJson: Crate) {
-  if (!(typeof item.inner === "object" && "trait" in item.inner)) return;
+  if (!isTraitItem(item)) return;
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 

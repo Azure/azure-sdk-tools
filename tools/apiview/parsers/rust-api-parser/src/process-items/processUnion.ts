@@ -4,6 +4,7 @@ import { ImplProcessResult, processImpl } from "./processImpl";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
+import { isUnionItem } from "./utils/typeGuards";
 
 /**
  * Processes a union item and adds its documentation to the ReviewLine.
@@ -13,7 +14,7 @@ import { processGenerics } from "./utils/processGenerics";
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
-  if (!(typeof item.inner === "object" && "union" in item.inner)) return [];
+  if (!isUnionItem(item)) return [];
   const reviewLines: ReviewLine[] = [];
 
   if (item.docs) {

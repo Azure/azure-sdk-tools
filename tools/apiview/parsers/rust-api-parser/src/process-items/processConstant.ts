@@ -2,9 +2,10 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { typeToString } from "./utils/typeToString";
+import { isConstantItem } from "./utils/typeGuards";
 
 export function processConstant(item: Item) {
-  if (!(typeof item.inner === "object" && "constant" in item.inner)) return;
+  if (!isConstantItem(item)) return;
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 

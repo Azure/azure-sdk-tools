@@ -1,28 +1,22 @@
 import { ReviewLine, TokenKind, ReviewToken } from "../models/apiview-models";
-import { Item, Crate, Impl, Struct, Union, Enum } from "../../rustdoc-types/output/rustdoc-types";
+import {  Crate } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { typeToString } from "./utils/typeToString";
+import { isImplItem, TypedItem, StructInner, UnionInner, EnumInner } from "./utils/typeGuards";
+import { isAutoDerivedImpl, isManualTraitImpl, isInherentImpl, getImplsFromItem, ImplItem } from "./utils/implTypeGuards";
 
-type ImplItem = Omit<Item, "inner"> & { inner: { impl: Impl } };
-type StructItem = Omit<Item, "inner"> & { inner: { struct: Struct } };
-type UnionItem = Omit<Item, "inner"> & { inner: { union: Union } };
-type EnumItem = Omit<Item, "inner"> & { inner: { enum: Enum } };
+type StructItem = TypedItem<StructInner>;
+type UnionItem = TypedItem<UnionInner>;
+type EnumItem = TypedItem<EnumInner>;
 
 export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewToken[] {
   const traitImpls = (impls: number[], apiJson: Crate) =>
     impls
       .map((implId) => apiJson.index[implId] as ImplItem)
-      .filter(
-        (implItem) =>
-          typeof implItem?.inner == "object" &&
-          "impl" in implItem?.inner &&
-          implItem.inner.impl.blanket_impl === null &&
-          implItem.inner.impl.trait &&
-          implItem.attrs.includes("#[automatically_derived]"),
-      )
+      .filter((implItem) => isImplItem(implItem) && isAutoDerivedImpl(implItem))
       .map<ReviewToken>((implItem) => ({
         Kind: TokenKind.TypeName,
-        Value: implItem.inner.impl.trait.name,
+        Value: implItem.inner.impl.trait!.name,
         RenderClasses: ["trait"],
         HasSuffixSpace: false,
       }));
@@ -46,20 +40,13 @@ export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewTo
 function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
   return impls
     .map((implId) => apiJson.index[implId] as ImplItem)
-    .filter(
-      (implItem) =>
-        typeof implItem?.inner == "object" &&
-        "impl" in implItem?.inner &&
-        implItem.inner.impl.blanket_impl === null &&
-        implItem.inner.impl.trait &&
-        !implItem.attrs.includes("#[automatically_derived]"),
-    )
+    .filter((implItem) => isImplItem(implItem) && isManualTraitImpl(implItem))
     .flatMap((implItem) => {
       const reviewLineForImpl: ReviewLine = {
         LineId: implItem.id.toString() + "_impl",
         Tokens: [
           { Kind: TokenKind.Keyword, Value: "impl" },
-          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait.name },
+          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait!.name },
           { Kind: TokenKind.Punctuation, Value: "for" },
           {
             Kind: TokenKind.TypeName,
@@ -68,7 +55,8 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
           { Kind: TokenKind.Punctuation, Value: "{" },
         ],
         Children: implItem.inner.impl.items
-          .map((item) => processItem(apiJson.index[item], apiJson)).filter(item => item != null)
+          .map((item) => processItem(apiJson.index[item], apiJson))
+          .filter(item => item != null)
           .flat(),
       };
 
@@ -84,15 +72,11 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
 function processImpls(impls: number[], apiJson: Crate): ReviewLine[] {
   return impls
     .map((implId) => apiJson.index[implId] as ImplItem)
-    .filter(
-      (implItem) =>
-        implItem?.inner &&
-        "impl" in implItem.inner &&
-        implItem.inner.impl.blanket_impl === null &&
-        implItem.inner.impl.trait === null,
-    )
+    .filter((implItem) => isImplItem(implItem) && isInherentImpl(implItem))
     .flatMap((implItem) =>
-      implItem.inner.impl.items.map((item) => processItem(apiJson.index[item], apiJson)).flat(),
+      implItem.inner.impl.items
+        .map((item) => processItem(apiJson.index[item], apiJson))
+        .flat(),
     );
 }
 
@@ -107,13 +91,7 @@ export function processImpl(
   item: StructItem | UnionItem | EnumItem,
   apiJson: Crate,
 ): ImplProcessResult {
-  const impls =
-    "struct" in item.inner
-      ? item.inner.struct.impls
-      : "union" in item.inner
-        ? item.inner.union.impls
-        : item.inner.enum.impls;
-
+  const impls = getImplsFromItem(item);
   const deriveTokens = processAutoTraitImpls(impls, apiJson);
 
   const implBlock: ReviewLine = {
@@ -145,5 +123,4 @@ export function processImpl(
   // TODO: provided_trait_methods unused
   // TODO: trait
   // TODO: is_negative
-  // 
 }

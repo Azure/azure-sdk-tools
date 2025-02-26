@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { isModuleItem } from "./utils/typeGuards";
 
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
@@ -10,7 +11,7 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
  * @param {Item} item - The module item to process.
  */
 export function processModule(apiJson: Crate, item: Item, parentModuleName?: string) {
-  if (!(typeof item.inner === "object" && "module" in item.inner)) return;
+  if (!isModuleItem(item)) return;
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 

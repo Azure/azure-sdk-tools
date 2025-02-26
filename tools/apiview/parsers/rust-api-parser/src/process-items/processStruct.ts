@@ -4,6 +4,7 @@ import { ImplProcessResult, processImpl } from "./processImpl";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
+import { isStructItem } from "./utils/typeGuards";
 
 /**
  * Processes a struct item and adds its documentation to the ReviewLine.
@@ -12,7 +13,7 @@ import { processGenerics } from "./utils/processGenerics";
  * @param {Item} item - The struct item to process.
  */
 export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
-  if (!(typeof item.inner === "object" && "struct" in item.inner)) return [];
+  if (!isStructItem(item)) return [];
   const reviewLines: ReviewLine[] = [];
 
   if (item.docs) {

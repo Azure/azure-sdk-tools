@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { isStaticItem } from "./utils/typeGuards";
 
 /**
  * Processes a static item and adds its documentation to the ReviewLine.
@@ -11,7 +12,8 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processStatic(item: Item) {
-  if (!(typeof item.inner === "object" && "static" in item.inner)) return;
+  if (!isStaticItem(item)) return;
+  
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 

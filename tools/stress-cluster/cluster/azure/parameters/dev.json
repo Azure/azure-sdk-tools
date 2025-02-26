@@ -5,6 +5,9 @@
     "subscriptionId": {
       "value": // add me
     },
+    "tenantId": {
+      "value": // add me
+    },
     "groupSuffix": {
       "value": // add me, e.g. <your alias>
     },

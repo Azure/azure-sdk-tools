@@ -184,17 +184,17 @@ function RegisterAKSFeatures([string]$group, [string]$cluster) {
     }
     RunOrExitOnFailure az extension add --name aks-preview
     RunOrExitOnFailure az extension update --name aks-preview
-    RunOrExitOnFailure az feature register --namespace Microsoft.ContainerService --name EnableImageCleanerPreview
+    RunOrExitOnFailure az feature register --subscription $params.subscriptionId --namespace Microsoft.ContainerService --name EnableImageCleanerPreview
     $i = 0
     do {
         sleep $i
-        $feature = RunOrExitOnFailure az feature show --namespace Microsoft.ContainerService --name EnableImageCleanerPreview -o json
+        $feature = RunOrExitOnFailure az feature show --subscription $params.subscriptionId --namespace Microsoft.ContainerService --name EnableImageCleanerPreview -o json
         $feature = $feature | ConvertFrom-Json
         Write-Host "Waiting for 'EnableImageCleanerPreview' feature to register. This may take several minutes."
         $i = 30
     } while ($feature.properties.state -eq "Registering")
-    RunOrExitOnFailure az provider register --namespace Microsoft.ContainerService
-    RunOrExitOnFailure az aks update -g $group -n $cluster --enable-image-cleaner --image-cleaner-interval-hours 24
+    RunOrExitOnFailure az provider register --subscription $params.subscriptionId --namespace Microsoft.ContainerService
+    RunOrExitOnFailure az aks update --subscription $params.subscriptionId -g $group -n $cluster --enable-image-cleaner --image-cleaner-interval-hours 24
 }
 
 function LoadEnvParams()
@@ -230,7 +230,12 @@ function main()
         $params = LoadEnvParams
         $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
 
-        RunOrExitOnFailure az account set -s $params.subscriptionId
+        az account show -s "$($params.subscriptionId)" *> $null
+        if ($LASTEXITCODE) {
+            RunOrExitOnFailure az login --allow-no-subscriptions --tenant $params.tenantId
+        } else {
+            RunOrExitOnFailure az account set -s $params.subscriptionId
+        }
 
         DeployClusterResources $params
         RegisterAKSFeatures $STRESS_CLUSTER_RESOURCE_GROUP $params.clusterName

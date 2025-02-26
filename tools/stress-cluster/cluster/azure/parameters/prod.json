@@ -5,6 +5,9 @@
     "subscriptionId": {
       "value": "4d042dc6-fe17-4698-a23f-ec6a8d1e98f4"
     },
+    "tenantId": {
+      "value": "70a036f6-8e4d-4615-bad6-149c02e7720d"
+    },
     "groupSuffix": {
       "value": "prod"
     },

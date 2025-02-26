@@ -87,9 +87,7 @@ namespace APIViewWeb.Managers
 
                             if (fileName == codeFileName)
                             {
-                                var language = LanguageServiceHelpers.GetLanguageFromRepoName(repoName);
-                                var languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices);
-                                codeFile = await CodeFile.DeserializeAsync(entry.Open(), doTreeStyleParserDeserialization: languageService.UsesTreeStyleParser);
+                                codeFile = await CodeFile.DeserializeAsync(entry.Open());
                             }
                             else if (fileName == baselineCodeFileName)
                             {

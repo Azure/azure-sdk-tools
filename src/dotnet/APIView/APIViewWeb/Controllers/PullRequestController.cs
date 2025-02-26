@@ -25,7 +25,6 @@ namespace APIViewWeb.Controllers
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IConfiguration _configuration;
-        private readonly IEnumerable<LanguageService> _languageServices;
         private readonly TelemetryClient _telemetryClient;
         private HashSet<string> _allowedListBotAccounts = new HashSet<string>();
 
@@ -33,14 +32,13 @@ namespace APIViewWeb.Controllers
         
         public PullRequestController(ICodeFileManager codeFileManager, IPullRequestManager pullRequestManager,
             IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager,
-            IConfiguration configuration, IEnumerable<LanguageService> languageService, TelemetryClient telemetryClient)
+            IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _codeFileManager = codeFileManager;
             _pullRequestManager = pullRequestManager;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
             _configuration = configuration;
-            _languageServices = languageService;
             _telemetryClient = telemetryClient;
 
             var botAllowedList = _configuration["allowedList-bot-github-accounts"];
@@ -145,8 +143,7 @@ namespace APIViewWeb.Controllers
                 if (baselineStream.Length > 0)
                 {
                     baselineStream.Position = 0;
-                    LanguageService languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices);
-                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream, doTreeStyleParserDeserialization: languageService.UsesTreeStyleParser);
+                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream);
                 }
                 if (codeFile != null)
                 {

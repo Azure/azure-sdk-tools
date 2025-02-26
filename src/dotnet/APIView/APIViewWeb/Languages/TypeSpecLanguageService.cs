@@ -32,7 +32,7 @@ namespace APIViewWeb
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
-            return await CodeFile.DeserializeAsync(stream, true, doTreeStyleParserDeserialization: this.UsesTreeStyleParser);
+            return await CodeFile.DeserializeAsync(stream);
         }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)

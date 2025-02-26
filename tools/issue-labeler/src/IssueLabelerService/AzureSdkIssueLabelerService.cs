@@ -21,7 +21,7 @@ namespace IssueLabelerService
 {
     public class AzureSdkIssueLabelerService
     {
-        private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Category = "", Service = "", Suggestions = "", Solution = false });
+        private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Category = "", Service = "", Comment = "", ResponseType = ResponseType.Empty });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private readonly IConfiguration _config;
         private readonly ITriageRAG _issueLabeler;
@@ -327,7 +327,8 @@ namespace IssueLabelerService
         {
             Solution,
             Suggestion,
-            Labeler
+            Labeler,
+            Empty
         }
     }
 }

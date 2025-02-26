@@ -230,11 +230,9 @@ function main()
         $params = LoadEnvParams
         $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
 
-        az account show -s "$($params.subscriptionId)" *> $null
+        az account set -s $params.subscriptionId
         if ($LASTEXITCODE) {
-            RunOrExitOnFailure az login --allow-no-subscriptions --tenant $params.tenantId
-        } else {
-            RunOrExitOnFailure az account set -s $params.subscriptionId
+            exit $LASTEXITCODE
         }
 
         DeployClusterResources $params

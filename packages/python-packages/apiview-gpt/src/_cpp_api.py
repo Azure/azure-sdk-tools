@@ -1,4 +1,4 @@
-from ._gpt_reviewer import GptReviewer
+from ._gpt_reviewer_openai import GptReviewer
 
 def review_cpp(code):
   reviewer = GptReviewer()

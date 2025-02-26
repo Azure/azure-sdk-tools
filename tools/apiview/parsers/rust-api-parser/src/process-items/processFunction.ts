@@ -9,7 +9,6 @@ import { typeToString } from "./utils/typeToString";
  * Processes a function item and adds its documentation to the ReviewLine.
  *
  * @param {Item} item - The function item to process.
- * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processFunction(item: Item) {
   if (!(typeof item.inner === "object" && "function" in item.inner)) return;

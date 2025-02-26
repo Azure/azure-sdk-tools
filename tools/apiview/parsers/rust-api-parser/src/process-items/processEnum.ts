@@ -2,6 +2,7 @@ import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { ImplProcessResult, processAutoTraitImpls, processImpl } from "./processImpl";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { processGenerics } from "./utils/processGenerics";
 
 export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
   if (!(typeof item.inner === "object" && "enum" in item.inner)) return [];
@@ -11,13 +12,6 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
     reviewLines.push(createDocsReviewLine(item));
   }
 
-  const enumLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
-
-  // TODO: generics, has_stripped_variants, 
   // Process derives and impls
   let implResult: ImplProcessResult = {
     deriveTokens: [],
@@ -27,8 +21,16 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
   };
   if (item.inner.enum && item.inner.enum.impls) {
     implResult = processImpl({ ...item, inner: { enum: item.inner.enum } }, apiJson);
-    enumLine.Tokens.push(...implResult.deriveTokens);
   }
+
+  const enumLine: ReviewLine = {
+    LineId: item.id.toString(),
+    Tokens: [],
+    Children: [],
+  };
+
+  // Add derive tokens if present
+  enumLine.Tokens.push(...implResult.deriveTokens);
 
   enumLine.Tokens.push({
     Kind: TokenKind.Keyword,
@@ -41,6 +43,13 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });
+
+  // Add generics if present
+  if (item.inner.enum.generics) {
+    const genericsTokens = processGenerics(item.inner.enum.generics);
+    enumLine.Tokens.push(...genericsTokens);
+  }
+
   enumLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
@@ -82,4 +91,5 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
   }
   if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
   return reviewLines;
+  // TODO: has_stripped_variants
 }

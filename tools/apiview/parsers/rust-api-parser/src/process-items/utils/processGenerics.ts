@@ -22,7 +22,7 @@ export function processGenerics(generics: Generics): ReviewToken[] {
   return tokens;
 }
 
-export function createGenericsParamsTokens(params: GenericParamDef[]): ReviewToken[] {
+function createGenericsParamsTokens(params: GenericParamDef[]): ReviewToken[] {
   return params.flatMap((param: GenericParamDef, index: number) => {
     const tokens: ReviewToken[] = [];
 
@@ -56,7 +56,7 @@ export function createGenericsParamsTokens(params: GenericParamDef[]): ReviewTok
   });
 }
 
-export function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewToken[] {
+function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewToken[] {
   return wherePredicates.flatMap((predicate: WherePredicate, index: number) => {
     const tokens: ReviewToken[] = [];
 
@@ -106,7 +106,7 @@ export function createWherePredicatesTokens(wherePredicates: WherePredicate[]): 
   });
 }
 
-export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
+function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
   return bounds.flatMap((bound, index) => {
     const tokens: ReviewToken[] = [];
     if (tokens.length > 0) {

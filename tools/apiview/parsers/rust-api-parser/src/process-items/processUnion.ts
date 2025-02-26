@@ -3,6 +3,7 @@ import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { ImplProcessResult, processImpl } from "./processImpl";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { processGenerics } from "./utils/processGenerics";
 
 /**
  * Processes a union item and adds its documentation to the ReviewLine.
@@ -19,12 +20,6 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
     reviewLines.push(createDocsReviewLine(item));
   }
 
-  const unionLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
-
   // Process derives and impls
   let implResult: ImplProcessResult = {
     deriveTokens: [],
@@ -33,14 +28,23 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
     traitImpls: [],
   };
   if (item.inner.union && item.inner.union.impls) {
-    const implResult = processImpl({ ...item, inner: { union: item.inner.union } }, apiJson);
-    unionLine.Tokens.push(...implResult.deriveTokens);
+    implResult = processImpl({ ...item, inner: { union: item.inner.union } }, apiJson);
   }
+
+  const unionLine: ReviewLine = {
+    LineId: item.id.toString(),
+    Tokens: [],
+    Children: [],
+  };
+
+  // Add derive tokens if present
+  unionLine.Tokens.push(...implResult.deriveTokens);
 
   unionLine.Tokens.push({
     Kind: TokenKind.Keyword,
     Value: "pub union",
   });
+
   unionLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: item.name || "null",
@@ -48,6 +52,13 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });
+
+  // Add generics if present
+  if (item.inner.union.generics) {
+    const genericsTokens = processGenerics(item.inner.union.generics);
+    unionLine.Tokens.push(...genericsTokens);
+  }
+
   unionLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
@@ -87,10 +98,11 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
     Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
   });
 
-  reviewLines.push(implResult.implBlock);
-  reviewLines.push(implResult.closingBrace);
-  reviewLines.push(...implResult.traitImpls);
+  if (implResult.implBlock) {
+    reviewLines.push(implResult.implBlock);
+    reviewLines.push(implResult.closingBrace);
+  }
+  if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
   return reviewLines;
-  // TODO: generics for unions is not being consumed
   // TODO: check if has_stripped_fields needs to be considered for rendering
 }

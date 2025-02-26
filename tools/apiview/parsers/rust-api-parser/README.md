@@ -41,6 +41,8 @@ This Rust project reads a cleaned Rustdoc JSON file from the azure-sdk-for-rust 
     - Example: 
       ```sh
       node ./dist/src/main.js /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/inputs/azure_core.rust.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/outputs/azure_core.json
+
+      node ./dist/src/main.js /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/inputs/azure_template.rust.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/outputs/azure_template.json
       ```
     - Or if you have the package installed, you can run:
       ```sh

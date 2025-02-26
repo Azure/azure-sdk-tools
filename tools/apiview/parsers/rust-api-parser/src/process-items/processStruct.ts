@@ -3,6 +3,7 @@ import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { ImplProcessResult, processImpl } from "./processImpl";
 import { processStructField } from "./processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { processGenerics } from "./utils/processGenerics";
 
 /**
  * Processes a struct item and adds its documentation to the ReviewLine.
@@ -18,12 +19,6 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
     reviewLines.push(createDocsReviewLine(item));
   }
 
-  const structLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
-
   // Process derives and impls
   let implResult: ImplProcessResult = {
     deriveTokens: [],
@@ -33,13 +28,22 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
   };
   if (item.inner.struct && item.inner.struct.impls) {
     implResult = processImpl({ ...item, inner: { struct: item.inner.struct } }, apiJson);
-    structLine.Tokens.push(...implResult.deriveTokens);
   }
+
+  const structLine: ReviewLine = {
+    LineId: item.id.toString(),
+    Tokens: [],
+    Children: [],
+  };
+
+  // Add derive tokens if present
+  structLine.Tokens.push(...implResult.deriveTokens);
 
   structLine.Tokens.push({
     Kind: TokenKind.Keyword,
     Value: "pub struct",
   });
+
   structLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: item.name || "null",
@@ -48,12 +52,19 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
     NavigationDisplayName: item.name || undefined,
   });
 
+  // Add generics if present
+  if (item.inner.struct.generics) {
+    const genericsTokens = processGenerics(item.inner.struct.generics);
+    structLine.Tokens.push(...genericsTokens);
+  }
+
   structLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
     HasSuffixSpace: false,
   });
-  // fields
+
+  // Process struct fields
   if (
     typeof item.inner.struct.kind === "object" &&
     "plain" in item.inner.struct.kind &&
@@ -112,6 +123,5 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
   }
   if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
   return reviewLines;
-  // TODO: generics is not handled
   // TODO: StructKind.tuple is not handled
 }

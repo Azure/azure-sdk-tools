@@ -114,7 +114,6 @@ class TestApiView:
 
     @mark.parametrize("pkg_path", ALL_PATHS, ids=ALL_PATH_IDS)
     def test_optional_dependencies(self, pkg_path):
-        pkg_path = SDIST_PATH
         def _uninstall_opt_dep(dep):
             if self._optional_dependency_installed(dep):
                 check_call([sys.executable, "-m", "pip", "uninstall", "-y", dep])

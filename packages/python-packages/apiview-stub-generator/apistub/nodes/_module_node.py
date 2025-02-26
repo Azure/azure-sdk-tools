@@ -33,18 +33,43 @@ class ModuleNode(NodeEntityBase):
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
 
+    def _parse_functions_from_module(self, module_node) -> List[astroid.Module]:
+        try:
+            # Get all overloads from module
+            return [x for x in module_node.body if isinstance(x, astroid.FunctionDef)]
+        except:
+            return []
+
+    """ Uses AST parsing to look for @overload decorated functions
+        because inspect cannot see these.
+    """
+
+    def _parse_overloads(self, module_node) -> List[FunctionNode]:
+        overload_nodes = []
+        functions = self._parse_functions_from_module(module_node)
+        for func in functions:
+            if not func.decorators:
+                continue
+            for node in func.decorators.nodes:
+                try:
+                    if node.name == "overload":
+                        overload_node = FunctionNode(self.namespace, self, node=func, is_module_level=True, apiview=self.apiview)
+                        overload_nodes.append(overload_node)
+                except AttributeError:
+                    continue
+        return overload_nodes
+
     def _inspect(self):
         """Imports module, identify public entities in module and inspect them recursively"""
         # Parse public entities only if __all is present. Otherwise all Classes and Functions not starting with "_" can be included.
         public_entities = []
         if hasattr(self.obj, "__all__"):
             public_entities = getattr(self.obj, "__all__")
-
+        module_overloads = {}
         # find class and function nodes in module
         for name, member_obj in inspect.getmembers(self.obj):
             if self._should_skip_parsing(name, member_obj, public_entities):
                 continue
-
             if inspect.isclass(member_obj):
                 class_type = ClassNode
                 try:
@@ -73,6 +98,21 @@ class ModuleNode(NodeEntityBase):
                     self.namespace, self, obj=member_obj, is_module_level=True, apiview=self.apiview
                 )
                 key = "{0}.{1}".format(self.namespace, func_node.name)
+
+                # Parse function module for overloads and store
+                if member_obj.__module__ not in module_overloads:
+                    module_node = astroid.parse(inspect.getsource(inspect.getmodule(member_obj)))
+                    module_overloads[member_obj.__module__] = self._parse_overloads(module_node)
+
+                overloads = module_overloads[member_obj.__module__]
+                func_overloads = [x for x in overloads if x.name == func_node.name]
+
+                # Append a numeric tag to overloads to distinguish them from one another.
+                # This will break down if overloads are moved around in the source file.
+                for x, overload in enumerate(func_overloads):
+                    overload.namespace_id = overload.namespace_id + f"_{x+1}"
+                    self.child_nodes.append(overload)
+
                 self.node_index.add(key, func_node)
                 self.child_nodes.append(func_node)
             else:
@@ -122,20 +162,3 @@ class ModuleNode(NodeEntityBase):
 
             line.add_children(self.children)
             review_lines.append(line)
-
-    def get_navigation(self):
-        """Generate navigation tree recursively by generating Navigation object for classes and functions in name space"""
-        if self.child_nodes:
-            navigation = Navigation(self.namespace_id, self.namespace_id)
-            navigation.tags = NavigationTag(Kind.type_module)
-            # Generate child navigation for each child nodes
-            for c in filter(filter_function, self.child_nodes):
-                child_nav = Navigation(c.name, c.namespace_id)
-                child_nav.tags = NavigationTag(Kind.type_method)
-                navigation.add_child(child_nav)
-
-            for c in filter(filter_class, self.child_nodes):
-                child_nav = Navigation(c.name, c.namespace_id)
-                child_nav.tags = NavigationTag(Kind.type_enum if c.is_enum else Kind.type_class)
-                navigation.add_child(child_nav)
-            return navigation

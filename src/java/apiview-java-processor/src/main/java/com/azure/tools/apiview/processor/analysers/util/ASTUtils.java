@@ -1,30 +1,31 @@
 package com.azure.tools.apiview.processor.analysers.util;
 
+import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ReviewLine;
+import com.azure.tools.apiview.processor.model.traits.Parent;
 import com.github.javaparser.Range;
 import com.github.javaparser.ast.AccessSpecifier;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
-import com.github.javaparser.ast.body.BodyDeclaration;
-import com.github.javaparser.ast.body.CallableDeclaration;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
-import com.github.javaparser.ast.body.EnumConstantDeclaration;
-import com.github.javaparser.ast.body.EnumDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
+import com.github.javaparser.ast.type.ArrayType;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.PrimitiveType;
+import com.github.javaparser.ast.type.WildcardType;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -192,8 +193,29 @@ public final class ASTUtils {
         return makeId(cu.getPrimaryType().get());
     }
 
+    public static String makeId(Node node) {
+        // switch based on known subtypes
+        if (node instanceof TypeDeclaration<?>) {
+            return makeId((TypeDeclaration<?>) node);
+        } else if (node instanceof AnnotationMemberDeclaration) {
+            return makeId((AnnotationMemberDeclaration) node);
+        } else if (node instanceof CallableDeclaration<?>) {
+            return makeId((CallableDeclaration<?>) node);
+        } else if (node instanceof FieldDeclaration) {
+            return makeId((FieldDeclaration) node);
+        } else if (node instanceof EnumConstantDeclaration) {
+            return makeId((EnumConstantDeclaration) node);
+        } else {
+            return makeId(node.toString());
+        }
+    }
+
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
         return makeId(typeDeclaration.getFullyQualifiedName().get());
+    }
+
+    public static String makeId(AnnotationMemberDeclaration annotationMemberDeclaration) {
+        return makeId(getNodeFullyQualifiedName(annotationMemberDeclaration.getParentNode()) + "." + annotationMemberDeclaration.getName());
     }
 
     public static String makeId(VariableDeclarator variableDeclarator) {
@@ -256,23 +278,16 @@ public final class ASTUtils {
     public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {
         String annotationContext = getAnnotationContext(nodeWithAnnotations);
 
-        String idSuffix;
-
-        if (annotationContext == null || annotationContext.isEmpty()) {
-            idSuffix = "-L" + annotation.getBegin().orElseThrow(RuntimeException::new).line;
-        } else {
+        String idSuffix = "";
+        if (annotationContext != null && !annotationContext.isEmpty()) {
             idSuffix = "-" + annotationContext;
         }
         return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);
     }
 
     private static String getAnnotationContext(NodeWithAnnotations<?> nodeWithAnnotations) {
-        if (nodeWithAnnotations == null) {
-            return "";
-        }
         if (nodeWithAnnotations instanceof MethodDeclaration) {
             MethodDeclaration methodDeclaration = (MethodDeclaration) nodeWithAnnotations;
-            // use the method declaration string instead of method name as there can be overloads
             return methodDeclaration.getDeclarationAsString(true, true, true);
         } else if (nodeWithAnnotations instanceof ClassOrInterfaceDeclaration) {
             ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) nodeWithAnnotations;
@@ -281,11 +296,10 @@ public final class ASTUtils {
             EnumDeclaration enumDeclaration = (EnumDeclaration) nodeWithAnnotations;
             return enumDeclaration.getNameAsString();
         } else if (nodeWithAnnotations instanceof EnumConstantDeclaration) {
-            EnumConstantDeclaration enumValueDeclaration = (EnumConstantDeclaration) nodeWithAnnotations;
-            return enumValueDeclaration.getNameAsString();
+            EnumConstantDeclaration enumConstantDeclaration = (EnumConstantDeclaration) nodeWithAnnotations;
+            return enumConstantDeclaration.getNameAsString();
         } else if (nodeWithAnnotations instanceof ConstructorDeclaration) {
             ConstructorDeclaration constructorDeclaration = (ConstructorDeclaration) nodeWithAnnotations;
-            // use the constructor declaration string instead of the name as there can be overloads
             return constructorDeclaration.getDeclarationAsString(true, true, true);
         } else {
             return "";
@@ -311,7 +325,6 @@ public final class ASTUtils {
 
         // otherwise there are more rules we want to consider...
         final boolean isInterfaceType = isInterfaceType(type);
-//        final boolean isNestedType = type.isNestedType();
 
         if (parentNode instanceof ClassOrInterfaceDeclaration) {
             ClassOrInterfaceDeclaration parentClass = (ClassOrInterfaceDeclaration) parentNode;
@@ -381,24 +394,62 @@ public final class ASTUtils {
 
     public static String getNodeFullyQualifiedName(Node node) {
         if (node == null) {
-            return "";
+            throw new NullPointerException("node cannot be null");
+        }
+
+        if (node instanceof CompilationUnit) {
+            CompilationUnit cu = (CompilationUnit) node;
+            String packageName = cu.getPackageDeclaration()
+                    .map(PackageDeclaration::getNameAsString)
+                    .orElse("");
+            String typeName = cu.getPrimaryType()
+                    .map(NodeWithSimpleName::getNameAsString)
+                    .orElse("");
+            return packageName.isEmpty() ? typeName : packageName + "." + typeName;
         }
 
         if (node instanceof TypeDeclaration<?>) {
-            TypeDeclaration<?> type = (TypeDeclaration<?>) node;
-            return type.getFullyQualifiedName().get();
-        } else if (node instanceof CallableDeclaration) {
-            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
-            String fqn = getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
-
-            if (callableDeclaration.isConstructorDeclaration()) {
-                fqn += ".ctor";
-            }
-
-            return fqn;
-        } else {
-            return "";
+            return ((TypeDeclaration<?>)node).getFullyQualifiedName().orElse("");
         }
+
+        if (node instanceof CallableDeclaration<?>) {
+            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
+            return getNodeFullyQualifiedName(callableDeclaration.getParentNode().orElse(null)) + "." + callableDeclaration.getSignature();
+        }
+
+        if (node instanceof FieldDeclaration) {
+            FieldDeclaration fieldDeclaration = (FieldDeclaration) node;
+            return getNodeFullyQualifiedName(fieldDeclaration.getParentNode().orElse(null)) + "." + fieldDeclaration.getVariables().get(0).getNameAsString();
+        }
+
+        if (node instanceof EnumConstantDeclaration) {
+            EnumConstantDeclaration enumConstantDeclaration = (EnumConstantDeclaration) node;
+            return getNodeFullyQualifiedName(enumConstantDeclaration.getParentNode().orElse(null)) + "." + enumConstantDeclaration.getNameAsString();
+        }
+
+        if (node instanceof ClassOrInterfaceType) {
+            ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) node;
+            if (classOrInterfaceType.getScope().isPresent()) {
+                return getNodeFullyQualifiedName(classOrInterfaceType.getScope().get()) + "." + classOrInterfaceType.getNameAsString();
+            } else {
+                return classOrInterfaceType.getNameAsString();
+            }
+        }
+
+        if (node instanceof NodeWithSimpleName<?>) {
+            NodeWithSimpleName<?> nodeWithSimpleName = (NodeWithSimpleName<?>) node;
+            return getNodeFullyQualifiedName(node.getParentNode().orElse(null)) + "." + nodeWithSimpleName.getNameAsString();
+        }
+
+        if (node instanceof SimpleName) {
+            return ((SimpleName)node).getIdentifier();
+        }
+
+        if (node instanceof PrimitiveType) {
+            return ((PrimitiveType)node).toString();
+        }
+
+        throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
     }
 
     private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
@@ -426,7 +477,6 @@ public final class ASTUtils {
         if (!(bodyDeclaration instanceof NodeWithJavadoc<?>)) {
             return Optional.empty();
         }
-
         NodeWithJavadoc<?> nodeWithJavadoc = (NodeWithJavadoc<?>) bodyDeclaration;
 
         // BodyDeclaration has a Javadoc.
@@ -460,6 +510,28 @@ public final class ASTUtils {
             .map(c -> (JavadocComment) c)
             .filter(c -> c.getRange().map(range -> range.overlapsWith(expectedJavadocRangeOverlap)).orElse(false))
             .findFirst();
+    }
+
+    public static Optional<ReviewLine> findReviewLine(APIListing listing, Function<ReviewLine, Boolean> f) {
+        return findReviewLine((Parent)listing, f);
+    }
+
+    private static Optional<ReviewLine> findReviewLine(Parent parent, Function<ReviewLine, Boolean> f) {
+        for (ReviewLine line : parent.getChildren()) {
+            if (f.apply(line)) {
+                return Optional.of(line);
+            }
+        }
+
+        // check each child
+        for (ReviewLine line : parent.getChildren()) {
+            Optional<ReviewLine> result = findReviewLine(line, f);
+            if (result.isPresent()) {
+                return result;
+            }
+        }
+
+        return Optional.empty();
     }
 
     private ASTUtils() {

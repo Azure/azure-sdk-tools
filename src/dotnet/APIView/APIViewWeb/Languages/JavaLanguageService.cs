@@ -11,7 +11,7 @@ namespace APIViewWeb
         public override string Name { get; } = "Java";
         public override string[] Extensions { get; } = { ".jar" };
         public override string ProcessName { get; } = "java";
-        public override string VersionString { get; } = "apiview-java-processor-1.31.0.jar";
+        public override string VersionString { get; } = "apiview-java-processor-1.32.0.jar";
 
         public override bool UsesTreeStyleParser { get; } = false;
 

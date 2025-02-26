@@ -9,7 +9,10 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
 
-dotenv.load_dotenv()
+if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
+    # running on dev machine, loadenv
+    import dotenv
+    dotenv.load_dotenv()
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")

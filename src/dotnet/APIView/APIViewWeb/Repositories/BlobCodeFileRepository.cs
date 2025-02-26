@@ -6,28 +6,28 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
+using Azure;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
     public class BlobCodeFileRepository : IBlobCodeFileRepository
     {
         private readonly IMemoryCache _cache;
-        private BlobServiceClient _serviceClient;
+        private readonly BlobServiceClient _serviceClient;
+        private readonly ILogger<BlobCodeFileRepository> _logger;
 
-        public BlobCodeFileRepository(IConfiguration configuration, IMemoryCache cache)
+        public BlobCodeFileRepository(BlobServiceClient blobServiceClient, IMemoryCache cache, ILogger<BlobCodeFileRepository> logger)
         {
-            _serviceClient = new BlobServiceClient(new Uri(configuration["StorageAccountUrl"]), new DefaultAzureCredential());
+            _serviceClient = blobServiceClient;
             _cache = cache;
+            _logger = logger;
         }
-
 
         public Task<RenderedCodeFile> GetCodeFileAsync(APIRevisionListItemModel revision, bool updateCache = true)
         {
@@ -42,8 +42,16 @@ namespace APIViewWeb
                 return codeFile;
             }
 
-            var info = await client.DownloadAsync();
-            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content));
+            try
+            {
+                var info = await client.DownloadAsync();
+                codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content));
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error retrieving code file with revision ID {RevisionId} and file ID {FileId}", revisionId, apiCodeFile.FileId);
+                throw;
+            }
 
             if (updateCache)
             {
@@ -57,9 +65,17 @@ namespace APIViewWeb
         public async Task<CodeFile> GetCodeFileFromStorageAsync(string revisionId, string codeFileId)
         {
             var client = GetBlobClient(revisionId, codeFileId, out var key);
-            var info = await client.DownloadAsync();
-            var codeFile = await CodeFile.DeserializeAsync(info.Value.Content);
-            return codeFile;
+            try
+            {
+                var info = await client.DownloadAsync();
+                var codeFile = await CodeFile.DeserializeAsync(info.Value.Content);
+                return codeFile;
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error retrieving code file from storage with revision ID {RevisionId} and file ID {FileId}", revisionId, codeFileId);
+                throw;
+            }
         }
 
         public async Task UpsertCodeFileAsync(string revisionId, string codeFileId, CodeFile codeFile)
@@ -67,19 +83,35 @@ namespace APIViewWeb
             var memoryStream = new MemoryStream();
             await codeFile.SerializeAsync(memoryStream);
             memoryStream.Position = 0;
-            await GetBlobClient(revisionId, codeFileId, out var key).UploadAsync(memoryStream, overwrite: true);
-            _cache.Remove(key);
+            try
+            {
+                await GetBlobClient(revisionId, codeFileId, out var key).UploadAsync(memoryStream, overwrite: true);
+                _cache.Remove(key);
 
-            var renderedCodeFile = new RenderedCodeFile(codeFile);
-            _cache.CreateEntry(key)
-            .SetSlidingExpiration(TimeSpan.FromMinutes(10))
-            .SetValue(renderedCodeFile);
+                var renderedCodeFile = new RenderedCodeFile(codeFile);
+                _cache.CreateEntry(key)
+                .SetSlidingExpiration(TimeSpan.FromMinutes(10))
+                .SetValue(renderedCodeFile);
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error upserting code file with revision ID {RevisionId} and file ID {FileId}", revisionId, codeFileId);
+                throw;
+            }
         }
 
         public async Task DeleteCodeFileAsync(string revisionId, string codeFileId)
         {
-            await GetBlobClient(revisionId, codeFileId, out var key).DeleteAsync();
-            _cache.Remove(key);
+            try
+            {
+                await GetBlobClient(revisionId, codeFileId, out var key).DeleteAsync();
+                _cache.Remove(key);
+            }
+            catch (RequestFailedException e)
+            {
+                _logger.LogError(e, "Error deleting code file with revision ID {RevisionId} and file ID {FileId}", revisionId, codeFileId);
+                throw;
+            }
         }
 
         private BlobClient GetBlobClient(string revisionId, string codeFileId, out string key)

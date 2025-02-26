@@ -20,6 +20,7 @@ namespace APIViewWeb
         public override string[] Extensions { get; } = { ".whl" };
         public override string VersionString { get; } = "0.3.12";
         public override string ProcessName => _pythonExecutablePath;
+        public override bool UsesTreeStyleParser { get; } = false;
 
         public PythonLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
@@ -66,7 +67,7 @@ namespace APIViewWeb
                 _telemetryClient.TrackEvent("Completed Python process run to parse " + originalName);
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
+                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;

@@ -43,8 +43,7 @@ namespace APIViewWeb
             }
 
             var info = await client.DownloadAsync();
-
-            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content, false));
+            codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content));
 
             if (updateCache)
             {
@@ -55,11 +54,11 @@ namespace APIViewWeb
             return codeFile;
         }
 
-        public async Task<CodeFile> GetCodeFileFromStorageAsync(string revisionId, string codeFileId, bool doTreeStyleParserDeserialization = true)
+        public async Task<CodeFile> GetCodeFileFromStorageAsync(string revisionId, string codeFileId)
         {
             var client = GetBlobClient(revisionId, codeFileId, out var key);
             var info = await client.DownloadAsync();
-            var codeFile = await CodeFile.DeserializeAsync(info.Value.Content, doTreeStyleParserDeserialization);
+            var codeFile = await CodeFile.DeserializeAsync(info.Value.Content);
             return codeFile;
         }
 

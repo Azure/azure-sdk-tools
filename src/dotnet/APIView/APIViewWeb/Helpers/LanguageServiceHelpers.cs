@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb.Helpers
 {
@@ -72,29 +71,6 @@ namespace APIViewWeb.Helpers
         public static LanguageService GetLanguageService(string language, IEnumerable<LanguageService> languageServices)
         {
             return languageServices.FirstOrDefault(service => service.Name == language);
-        }
-
-        public static bool UseLineBreakForParameterSeparator(string language)
-        { 
-            switch(language)
-            {
-                case "Python":
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public static bool UseTreeStyleParser(string language)
-        {
-            switch (language)
-            {
-                case "C#":
-                case "JavaScript":
-                    return true;
-                default:
-                    return false;
-            }
         }
     }
 }

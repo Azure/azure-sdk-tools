@@ -15,6 +15,8 @@ namespace APIViewWeb
         private readonly string _protocolProcessor;
         public override string ProcessName => _protocolProcessor;
 
+        public override bool UsesTreeStyleParser { get; } = false;
+
         public ProtocolLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {
             // protocolGen is located in python's scripts path e.g. <Pythonhome>/Scripts/protocolGen

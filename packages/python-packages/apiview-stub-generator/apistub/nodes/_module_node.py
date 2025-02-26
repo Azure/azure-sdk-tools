@@ -8,6 +8,7 @@ from ._data_class_node import DataClassNode
 from ._class_node import ClassNode
 from ._function_node import FunctionNode
 from apistub._generated.treestyle.parser.models import ReviewLines
+from .._parsing_helpers import parse_overloads, add_overload_nodes
 
 if TYPE_CHECKING:
     from .._generated.treestyle.parser.models import ApiView, ReviewLine
@@ -33,18 +34,24 @@ class ModuleNode(NodeEntityBase):
         self.pkg_root_namespace = pkg_root_namespace
         self._inspect()
 
+    def _parse_functions_from_module(self, module_obj) -> List[astroid.FunctionDef]:
+        try:
+            module_node = astroid.parse(inspect.getsource(module_obj))
+            return [x for x in module_node.body if isinstance(x, astroid.FunctionDef)]
+        except:
+            return []
+
     def _inspect(self):
         """Imports module, identify public entities in module and inspect them recursively"""
         # Parse public entities only if __all is present. Otherwise all Classes and Functions not starting with "_" can be included.
         public_entities = []
         if hasattr(self.obj, "__all__"):
             public_entities = getattr(self.obj, "__all__")
-
+        module_overloads = {}
         # find class and function nodes in module
         for name, member_obj in inspect.getmembers(self.obj):
             if self._should_skip_parsing(name, member_obj, public_entities):
                 continue
-
             if inspect.isclass(member_obj):
                 class_type = ClassNode
                 try:
@@ -73,8 +80,16 @@ class ModuleNode(NodeEntityBase):
                     self.namespace, self, obj=member_obj, is_module_level=True, apiview=self.apiview
                 )
                 key = "{0}.{1}".format(self.namespace, func_node.name)
+
+                # Parse function module for overloads and store
+                if member_obj.__module__ not in module_overloads:
+                    functions = self._parse_functions_from_module(inspect.getmodule(member_obj))
+                    module_overloads[member_obj.__module__] = parse_overloads(self, functions, is_module_level=True)
+
+                overloads = module_overloads[member_obj.__module__]
+                add_overload_nodes(self, func_node, overloads)
+
                 self.node_index.add(key, func_node)
-                self.child_nodes.append(func_node)
             else:
                 logging.debug("Skipping unknown type member in module: {}".format(name))
 
@@ -122,20 +137,3 @@ class ModuleNode(NodeEntityBase):
 
             line.add_children(self.children)
             review_lines.append(line)
-
-    def get_navigation(self):
-        """Generate navigation tree recursively by generating Navigation object for classes and functions in name space"""
-        if self.child_nodes:
-            navigation = Navigation(self.namespace_id, self.namespace_id)
-            navigation.tags = NavigationTag(Kind.type_module)
-            # Generate child navigation for each child nodes
-            for c in filter(filter_function, self.child_nodes):
-                child_nav = Navigation(c.name, c.namespace_id)
-                child_nav.tags = NavigationTag(Kind.type_method)
-                navigation.add_child(child_nav)
-
-            for c in filter(filter_class, self.child_nodes):
-                child_nav = Navigation(c.name, c.namespace_id)
-                child_nav.tags = NavigationTag(Kind.type_enum if c.is_enum else Kind.type_class)
-                navigation.add_child(child_nav)
-            return navigation

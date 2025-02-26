@@ -15,7 +15,6 @@ namespace AzureRAGService
     {
         IEnumerable<(T, double)> AzureSearchQuery<T>(Uri searchEndpoint, string indexName, string semanticConfigName, string field, DefaultAzureCredential credential, string query, int count);
         string SendMessageQna(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string instructions, string message, BinaryData structure);
-        string StructureMessage(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string message, BinaryData structure);
     }
 
     public class TriageRAG : ITriageRAG
@@ -105,7 +104,7 @@ namespace AzureRAGService
 
             ChatCompletionOptions options = new ChatCompletionOptions()
             {
-                ReasoningEffortLevel = ChatReasoningEffortLevel.High,
+                ReasoningEffortLevel = ChatReasoningEffortLevel.Medium,
                 ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
                     jsonSchemaFormatName: "IssueOutput",
                     jsonSchema: structure
@@ -124,41 +123,8 @@ namespace AzureRAGService
 
             return answers.Content[0].Text;
         }
-
-        /// <summary>
-        /// Structures a message into the given JSON using the gpt4o model.
-        /// </summary>
-        /// <param name="openAIEndpoint">The OpenAI endpoint URI.</param>
-        /// <param name="credential">The Azure credential.</param>
-        /// <param name="modelName">The name of the OpenAI model.</param>
-        /// <param name="message">The message to structure.</param>
-        /// <param name="structure">The structure to apply to the message.</param>
-        /// <returns>The structured message.</returns>
-        public string StructureMessage(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string message, BinaryData structure)
-        {
-            AzureOpenAIClient openAIClient = new(openAIEndpoint, credential);
-            ChatClient chatClient = openAIClient.GetChatClient(modelName);
-
-            _logger.LogInformation($"\n\nStructuring OpenAI Response...");
-            ChatClient chatClientStructure = openAIClient.GetChatClient("gpt-4o");
-
-            ChatCompletionOptions options = new ChatCompletionOptions()
-            {
-                ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
-                    jsonSchemaFormatName: "IssueOutput",
-                    jsonSchema: structure
-                    )
-            };
-            ChatCompletion structuredAnswer = chatClientStructure.CompleteChat(
-                [
-                    new UserChatMessage($"Given the following data: {message}\nFormat it accordingly without removing or changing the information in any way.")
-                ],
-                options
-             );
-
-            return structuredAnswer.Content[0].Text;
-        }
     }
+
     public class Issue
     {
         public string Id { get; set; }

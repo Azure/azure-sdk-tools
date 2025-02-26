@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+#!/bin/env pwsh
 
 Set-Location $PSScriptRoot/../../../chaos/examples
 

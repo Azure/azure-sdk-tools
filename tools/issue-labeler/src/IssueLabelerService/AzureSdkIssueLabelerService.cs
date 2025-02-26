@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Hubbup.MikLabelModel;
@@ -72,13 +71,13 @@ namespace IssueLabelerService
             try
             {
                 // If in dotnet repo run complete issue triage (includes comments) otherwise run the regular triage that we currently do.
-                if(issue.RepositoryName == "dotnet")
+                if(issue.RepositoryName == "azure-sdk-for-net")
                 {
                     result = CompleteIssueTriage(issue);
                 }
                 else
                 {
-                    result = OnlyLabelIssue(issue);
+                    result = await OnlyLabelIssue(issue);
                 }
             }
             catch (Exception ex)
@@ -224,7 +223,7 @@ namespace IssueLabelerService
             };
         }
 
-        private IssueOutput OnlyLabelIssue(IssuePayload issue)
+        private async Task<IssueOutput> OnlyLabelIssue(IssuePayload issue)
         {
             var predictionRepositoryName = TranslateRepoName(issue.RepositoryName);
 
@@ -235,7 +234,7 @@ namespace IssueLabelerService
 
                 try
                 {
-                    var allBlobConfigNames = Config[$"IssueModel.{predictionRepositoryName.Replace("-", "_")}.BlobConfigNames"].Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    var allBlobConfigNames = _config[$"IssueModel.{predictionRepositoryName.Replace("-", "_")}.BlobConfigNames"].Split(';', StringSplitOptions.RemoveEmptyEntries);
 
                     // The model factory is thread-safe and will manage its own concurrency.
                     await ModelHolderFactory.CreateModelHolders(issue.RepositoryOwnerName, predictionRepositoryName, allBlobConfigNames).ConfigureAwait(false);
@@ -303,6 +302,7 @@ namespace IssueLabelerService
             public string Body { get; set; }
             public string IssueUserLogin { get; set; }
             public string RepositoryName { get; set; }
+            public string RepositoryOwnerName { get; set; }
         }
 
         private class IssueOutput

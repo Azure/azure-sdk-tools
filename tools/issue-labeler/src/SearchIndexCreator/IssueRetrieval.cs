@@ -202,7 +202,8 @@ namespace SearchIndexCreator
                     Title = issue.Title,
                     Body = issue.Body,
                     IssueUserLogin = issue.User.Login,
-                    RepositoryName = repoOwner + "/" + repo,
+                    RepositoryName = repo,
+                    RepositoryOwnerName = repoOwner
                 };
 
                 results.Add(newIssue);
@@ -318,6 +319,7 @@ namespace SearchIndexCreator
             public string Body { get; set; }
             public string IssueUserLogin { get; set; }
             public string RepositoryName { get; set; }
+            public string RepositoryOwnerName { get; set; }
         }
     }
 }

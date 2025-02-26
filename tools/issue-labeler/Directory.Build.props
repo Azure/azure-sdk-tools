@@ -1,4 +1,11 @@
+
 <Project>
+
+    <PropertyGroup>
+        <!-- Override output paths to use the default behavior -->
+        <BaseOutputPath Condition="'$(BaseOutputPath)' == ''">$(MSBuildProjectDirectory)\bin\</BaseOutputPath>
+        <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)' == ''">$(MSBuildProjectDirectory)\obj\</BaseIntermediateOutputPath>
+    </PropertyGroup>
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -11,4 +18,5 @@
   </PropertyGroup>
   
   <Import Project="../../Directory.Build.props" />
+
 </Project>

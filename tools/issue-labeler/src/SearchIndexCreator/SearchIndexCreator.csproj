@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\github-event-processor\Azure.Sdk.Tools.GitHubEventProcessor\Azure.Sdk.Tools.GitHubEventProcessor.csproj" />
-    <ProjectReference Include="..\IssueManager\AzureRAGService.csproj" />
+    <ProjectReference Include="..\AzureRAGService\AzureRAGService.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IssueManager\AzureRAGService.csproj" />
+    <ProjectReference Include="..\AzureRAGService\AzureRAGService.csproj" />
     <ProjectReference Include="..\Hubbup.MikLabelModel\Hubbup.MikLabelModel.csproj" />
     <ProjectReference Include="..\IssueLabeler.Shared\IssueLabeler.Shared.csproj" />
   </ItemGroup>

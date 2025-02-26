@@ -359,11 +359,16 @@ class ClassNode(NodeEntityBase):
         for e in [p for p in self.child_nodes if not isinstance(p, FunctionNode)]:
             e.generate_tokens(self.children)
 
-        self.children.set_blank_lines()
+        self.children.set_blank_lines(related_to_line=self.namespace_id)
         for func in [x for x in self.child_nodes if isinstance(x, FunctionNode) and x.hidden == False]:
             func.generate_tokens(self.children)
         # Last blank line should end class context.
-        self.children.set_blank_lines(2, last_is_context_end_line=True)
+        # Final related_to_lines should be the last function namespace ID and class namespace ID
+        self.children.set_blank_lines(
+            2,
+            last_is_context_end_line=True,
+            related_to_line=[self.children[-1].related_to_line, self.namespace_id],
+        )
 
     def _generate_tokens_for_collection(self, values, line, *, has_suffix_space=True):
         # Helper method to concatenate list of values and generate tokens

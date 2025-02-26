@@ -213,18 +213,7 @@ namespace SearchIndexCreator
 
             string result = ragService.SendMessageQna(openAIEndpoint, credential, modelName, instructions, message, structure);
 
-            // Replace escaped newlines
-            result = result.Replace("\\n", "\n");
-
             Console.WriteLine($"Open AI Response:\n{result}");
-        }
-
-        private class IssueOutput
-        {
-            public string Category { get; set; }
-            public string Service { get; set; }
-            public string Suggestions { get; set; }
-            public bool Solution { get; set; }
         }
     }
 }

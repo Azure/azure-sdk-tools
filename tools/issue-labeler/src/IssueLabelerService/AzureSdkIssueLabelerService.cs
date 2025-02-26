@@ -202,24 +202,27 @@ namespace IssueLabelerService
 
             var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
             string intro, outro;
+            ResponseType responseType;
 
             if (solution)
             {
                 intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\n";
                 outro = "\nThis should solve your problem, if it does not feel free to reopen the issue!";
+                responseType = ResponseType.Solution;
             }
             else
             {
                 intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\n\n";
                 outro = "\n\nThe team will get back to you shortly, hopefully this helps in the meantime!";
+                responseType = ResponseType.Suggestion;
             }
 
             return new IssueOutput
             {
                 Category = resultObj.Category,
                 Service = resultObj.Service,
-                Suggestions = intro + resultObj.Response + outro,
-                Solution = solution
+                Comment = intro + resultObj.Response + outro,
+                ResponseType = responseType
             };
         }
 
@@ -279,8 +282,8 @@ namespace IssueLabelerService
                 {
                     Category = predictions[0],
                     Service = predictions[1],
-                    Suggestions = "",
-                    Solution = false
+                    Comment = "",
+                    ResponseType = ResponseType.Labeler
                 };
             }
             catch (Exception ex)
@@ -309,8 +312,8 @@ namespace IssueLabelerService
         {
             public string Category { get; set; }
             public string Service { get; set; }
-            public string Suggestions { get; set; }
-            public bool Solution { get; set; }
+            public string Comment { get; set; }
+            public ResponseType ResponseType { get; set; }
         }
 
         private class AIOutput
@@ -318,6 +321,13 @@ namespace IssueLabelerService
             public string Category { get; set; }
             public string Service { get; set; }
             public string Response { get; set; }
+        }
+
+        private enum ResponseType
+        {
+            Solution,
+            Suggestion,
+            Labeler
         }
     }
 }

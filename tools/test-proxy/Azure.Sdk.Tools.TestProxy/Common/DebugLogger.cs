@@ -207,8 +207,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 sb.AppendLine("URI: [ " + req.GetDisplayUrl() + "]");
                 sb.AppendLine("Headers: [" + headers + "]");
                 loggerInstance.LogDebug(sb.ToString());
-                // Also write to file if we have the file writer
-                s_logFileWriter?.WriteLine($"[ADMINREQUESTDETAILS] {DateTime.UtcNow}: {sb.ToString()}");
             }
         }
 

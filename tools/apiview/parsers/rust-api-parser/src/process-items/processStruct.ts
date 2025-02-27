@@ -120,20 +120,20 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
       HasSuffixSpace: false,
     });
     const tuple = item.inner.struct.kind.tuple;
-    tuple.forEach((fieldId: number) => {
+    tuple.forEach((fieldId: number, index: number) => {
       const fieldItem = apiJson.index[fieldId];
       if (fieldItem && typeof fieldItem.inner === "object" && "struct_field" in fieldItem.inner) {
-        structLine.Tokens.push({
-          Kind: TokenKind.Keyword,
-          Value: "pub",
-        });
-        structLine.Tokens.push(processStructField(fieldItem.inner.struct_field));
-        if (tuple[tuple.length - 1]) {
+        if (index > 0) {
           structLine.Tokens.push({
             Kind: TokenKind.Punctuation,
             Value: ",",
           });
         }
+        structLine.Tokens.push({
+          Kind: TokenKind.Keyword,
+          Value: "pub",
+        });
+        structLine.Tokens.push(processStructField(fieldItem.inner.struct_field));
       }
     });
 

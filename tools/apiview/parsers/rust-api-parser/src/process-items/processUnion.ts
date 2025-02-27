@@ -11,7 +11,6 @@ import { isUnionItem } from "./utils/typeGuards";
  *
  * @param {Crate} apiJson - The API JSON object containing all items.
  * @param {Item} item - The union item to process.
- * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
   if (!isUnionItem(item)) return [];

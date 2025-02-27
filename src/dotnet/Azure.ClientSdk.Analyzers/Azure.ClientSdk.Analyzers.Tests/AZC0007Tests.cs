@@ -97,8 +97,6 @@ namespace RandomNamespace.Foo
         public RoomsClient(Uri endpoint, AzureKeyCredential credential, RoomsClientOptions options = null) {}
         public RoomsClient(Uri endpoint, TokenCredential credential, RoomsClientOptions options = null) {}
     }
-
-
 }";
             await Verifier.VerifyAnalyzerAsync(code);
         }

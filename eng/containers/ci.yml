@@ -1,3 +1,6 @@
+# ACR has image auto-update functionality but it doesn't support intermediate build images
+# so we do this ourselves via a scheduled pipeline instead.
+
 parameters:
 - name: DockerDeployments
   type: object

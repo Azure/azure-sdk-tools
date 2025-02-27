@@ -90,7 +90,9 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
     reviewLines.push(implResult.implBlock);
     reviewLines.push(implResult.closingBrace);
   }
-  if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
+  if (implResult.traitImpls.length > 0) {
+    reviewLines.push(...implResult.traitImpls);
+  }
   return reviewLines;
   // TODO: has_stripped_variants
 }

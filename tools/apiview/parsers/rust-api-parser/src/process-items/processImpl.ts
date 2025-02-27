@@ -1,9 +1,15 @@
 import { ReviewLine, TokenKind, ReviewToken } from "../models/apiview-models";
-import {  Crate, Enum, Item, Struct, Union } from "../../rustdoc-types/output/rustdoc-types";
+import { Crate, Enum, Item, Struct, Union } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { typeToString } from "./utils/typeToString";
 import { isImplItem } from "./utils/typeGuards";
-import { isAutoDerivedImpl, isManualTraitImpl, isInherentImpl, getImplsFromItem, ImplItem } from "./utils/implTypeGuards";
+import {
+  isAutoDerivedImpl,
+  isManualTraitImpl,
+  isInherentImpl,
+  getImplsFromItem,
+  ImplItem,
+} from "./utils/implTypeGuards";
 
 export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewToken[] {
   const traitImpls = (impls: number[], apiJson: Crate) =>
@@ -52,7 +58,7 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
         ],
         Children: implItem.inner.impl.items
           .map((item) => processItem(apiJson.index[item], apiJson))
-          .filter(item => item != null)
+          .filter((item) => item != null)
           .flat(),
       };
 
@@ -70,9 +76,7 @@ function processImpls(impls: number[], apiJson: Crate): ReviewLine[] {
     .map((implId) => apiJson.index[implId] as ImplItem)
     .filter((implItem) => isImplItem(implItem) && isInherentImpl(implItem))
     .flatMap((implItem) =>
-      implItem.inner.impl.items
-        .map((item) => processItem(apiJson.index[item], apiJson))
-        .flat(),
+      implItem.inner.impl.items.map((item) => processItem(apiJson.index[item], apiJson)).flat(),
     );
 }
 
@@ -84,7 +88,10 @@ export interface ImplProcessResult {
 }
 
 export function processImpl(
-  item: Item & { inner: { struct: Struct } }|Item & { inner: { enum: Enum } }|Item & { inner: { union: Union } },
+  item:
+    | (Item & { inner: { struct: Struct } })
+    | (Item & { inner: { enum: Enum } })
+    | (Item & { inner: { union: Union } }),
   apiJson: Crate,
 ): ImplProcessResult {
   const impls = getImplsFromItem(item);

@@ -12,7 +12,7 @@ import { isStaticItem } from "./utils/typeGuards";
  */
 export function processStatic(item: Item) {
   if (!isStaticItem(item)) return;
-  
+
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 

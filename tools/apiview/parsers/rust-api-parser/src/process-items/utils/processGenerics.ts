@@ -1,11 +1,16 @@
 import { ReviewToken, TokenKind } from "../../models/apiview-models";
-import { Generics, GenericParamDef, GenericBound, WherePredicate } from "../../../rustdoc-types/output/rustdoc-types";
+import {
+  Generics,
+  GenericParamDef,
+  GenericBound,
+  WherePredicate,
+} from "../../../rustdoc-types/output/rustdoc-types";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
 import { typeToString } from "./typeToString";
 
 export function processGenerics(generics: Generics): ReviewToken[] {
   const tokens: ReviewToken[] = [];
-  
+
   // Process generic parameters
   const paramsTokens = createGenericsParamsTokens(generics.params);
   tokens.push(...paramsTokens);
@@ -15,7 +20,7 @@ export function processGenerics(generics: Generics): ReviewToken[] {
   if (wherePredicates.length > 0) {
     tokens.push(
       { Kind: TokenKind.Keyword, Value: "where", HasSuffixSpace: true },
-      ...createWherePredicatesTokens(wherePredicates)
+      ...createWherePredicatesTokens(wherePredicates),
     );
   }
 

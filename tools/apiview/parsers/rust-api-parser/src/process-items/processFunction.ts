@@ -27,7 +27,7 @@ export function processFunction(item: Item) {
     Kind: TokenKind.Keyword,
     Value: "pub fn",
   });
-  
+
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
     Value: item.name || "null",
@@ -39,8 +39,8 @@ export function processFunction(item: Item) {
 
   // Add generics and where clauses if present
   if (item.inner.function.generics) {
-  const genericsTokens = processGenerics(item.inner.function.generics);
-  reviewLine.Tokens.push(...genericsTokens);
+    const genericsTokens = processGenerics(item.inner.function.generics);
+    reviewLine.Tokens.push(...genericsTokens);
   }
 
   // Process function parameters

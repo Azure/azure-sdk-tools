@@ -23,7 +23,7 @@ export function typeToString(type: Type): string {
     // TODO: use type.resolved_path.id for navigation if applicable
     return result;
   } else if ("dyn_trait" in type) {
-    return `(dyn ${type.dyn_trait.traits.map((t) => t.trait.name).join(" + ")})`; 
+    return `(dyn ${type.dyn_trait.traits.map((t) => t.trait.name).join(" + ")})`;
     // TODO: lifetime param is not being used
     // TODO: Can extend this to include navigation info; example: &(dyn MyTrait + Sync)
   } else if ("generic" in type) {
@@ -31,7 +31,7 @@ export function typeToString(type: Type): string {
   } else if ("primitive" in type) {
     return type.primitive;
   } else if ("function_pointer" in type) {
-    return `unknown`; 
+    return `unknown`;
     // TODO: fix this later
   } else if ("tuple" in type) {
     return `(${type.tuple.map(typeToString).join(", ")})`;

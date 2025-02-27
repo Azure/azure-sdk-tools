@@ -31,7 +31,9 @@ export function processModule(apiJson: Crate, item: Item, parentModuleName?: str
     Value: parentModuleName ? `${parentModuleName}::${item.name}` : item.name || "null",
     RenderClasses: ["module"],
     NavigateToId: item.id.toString(),
-    NavigationDisplayName: parentModuleName ? `${parentModuleName}::${item.name}` : item.name || undefined,
+    NavigationDisplayName: parentModuleName
+      ? `${parentModuleName}::${item.name}`
+      : item.name || undefined,
   });
 
   reviewLine.Tokens.push({
@@ -41,14 +43,14 @@ export function processModule(apiJson: Crate, item: Item, parentModuleName?: str
   if (item.inner.module.items) {
     // First process non-module children
     item.inner.module.items.forEach((childId: number) => {
-      const childItem = apiJson.index[childId];      
+      const childItem = apiJson.index[childId];
       if (!isModuleItem(childItem)) {
         const childReviewLines = processItem(childItem, apiJson);
         if (childReviewLines) {
           if (!reviewLine.Children) {
             reviewLine.Children = [];
           }
-          reviewLine.Children.push(...childReviewLines.filter(item => item != null));
+          reviewLine.Children.push(...childReviewLines.filter((item) => item != null));
         }
       }
     });

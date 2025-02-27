@@ -20,7 +20,7 @@ function main() {
   if (apiJson.format_version !== FORMAT_VERSION) {
     hasFormatMismatch = true;
     console.warn(
-      `Warning: Different format version detected: ${apiJson.format_version}, parser supports ${FORMAT_VERSION}. This may cause errors or unexpected results.`
+      `Warning: Different format version detected: ${apiJson.format_version}, parser supports ${FORMAT_VERSION}. This may cause errors or unexpected results.`,
     );
   }
 
@@ -42,7 +42,7 @@ function main() {
     fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
     console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);
   } catch (error) {
-    const errorMessage = hasFormatMismatch 
+    const errorMessage = hasFormatMismatch
       ? `Failed to generate API surface (possibly due to format version mismatch): ${error.message}`
       : `Failed to generate API surface: ${error.message}`;
     throw new Error(errorMessage);

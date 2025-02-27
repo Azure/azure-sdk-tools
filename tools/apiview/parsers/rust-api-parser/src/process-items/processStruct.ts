@@ -59,18 +59,17 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
     structLine.Tokens.push(...genericsTokens);
   }
 
-  structLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: "{",
-    HasSuffixSpace: false,
-  });
-
   // Process struct fields
   if (
     typeof item.inner.struct.kind === "object" &&
     "plain" in item.inner.struct.kind &&
     item.inner.struct.kind.plain.fields
   ) {
+    structLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "{",
+      HasSuffixSpace: false,
+    });
     item.inner.struct.kind.plain.fields.forEach((fieldId: number) => {
       const fieldItem = apiJson.index[fieldId];
       if (fieldItem && typeof fieldItem.inner === "object" && "struct_field" in fieldItem.inner) {
@@ -99,7 +98,7 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
         });
       }
     });
-    
+
     reviewLines.push(structLine);
     reviewLines.push({
       RelatedToLine: item.id.toString(),
@@ -110,7 +109,46 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
         },
       ],
     });
+  } else if (
+    typeof item.inner.struct.kind === "object" &&
+    "tuple" in item.inner.struct.kind &&
+    item.inner.struct.kind.tuple
+  ) {
+    structLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "(",
+      HasSuffixSpace: false,
+    });
+    const tuple = item.inner.struct.kind.tuple;
+    tuple.forEach((fieldId: number) => {
+      const fieldItem = apiJson.index[fieldId];
+      if (fieldItem && typeof fieldItem.inner === "object" && "struct_field" in fieldItem.inner) {
+        structLine.Tokens.push({
+          Kind: TokenKind.Keyword,
+          Value: "pub",
+        });
+        structLine.Tokens.push(processStructField(fieldItem.inner.struct_field));
+        if (tuple[tuple.length - 1]) {
+          structLine.Tokens.push({
+            Kind: TokenKind.Punctuation,
+            Value: ",",
+          });
+        }
+      }
+    });
+
+    structLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: ")",
+    });
+    reviewLines.push(structLine);
   } else {
+    // "unit" struct kind
+    structLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "{",
+      HasSuffixSpace: false,
+    });
     structLine.Tokens.push({
       Kind: TokenKind.Punctuation,
       Value: "}",
@@ -122,7 +160,8 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
     reviewLines.push(implResult.implBlock);
     reviewLines.push(implResult.closingBrace);
   }
-  if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
+  if (implResult.traitImpls.length > 0) {
+    reviewLines.push(...implResult.traitImpls);
+  }
   return reviewLines;
-  // TODO: StructKind.tuple is not handled
 }

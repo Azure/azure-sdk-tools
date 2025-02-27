@@ -24,7 +24,6 @@ export function processTrait(item: Item, apiJson: Crate) {
     Children: [],
   };
 
-
   reviewLine.Tokens.push({
     Kind: TokenKind.Keyword,
     Value: "pub trait",
@@ -42,7 +41,7 @@ export function processTrait(item: Item, apiJson: Crate) {
     const genericsTokens = processGenerics(item.inner.trait.generics);
     reviewLine.Tokens.push(...genericsTokens);
   }
-  
+
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",

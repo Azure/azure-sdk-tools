@@ -7,6 +7,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
 using System.Collections.Concurrent;
 using System.IO;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.Blazor;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -155,6 +156,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             if (Logger != null)
             {
                 Logger.LogDebug(details);
+
+                // Also write to file if we have the file writer
+                s_logFileWriter?.WriteLine($"[LOGDEBUG] {DateTime.UtcNow}: {details}");
             }
             else
             {
@@ -203,6 +207,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 sb.AppendLine("URI: [ " + req.GetDisplayUrl() + "]");
                 sb.AppendLine("Headers: [" + headers + "]");
                 loggerInstance.LogDebug(sb.ToString());
+                // Also write to file if we have the file writer
+                s_logFileWriter?.WriteLine($"[ADMINREQUESTDETAILS] {DateTime.UtcNow}: {sb.ToString()}");
             }
         }
 
@@ -217,7 +223,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             if (CheckLogLevel(LogLevel.Debug))
             {
-                Logger.LogDebug(_generateLogLine(req, sanitizers));
+                var line = _generateLogLine(req, sanitizers);
+                Logger.LogDebug(line);
+
+                s_logFileWriter?.WriteLine($"[LOGGERDEBUG] {DateTime.UtcNow}: {line}");
             }
         }
 

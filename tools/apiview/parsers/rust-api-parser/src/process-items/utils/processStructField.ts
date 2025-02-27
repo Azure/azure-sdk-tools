@@ -1,6 +1,6 @@
-import { Type } from "../../rustdoc-types/output/rustdoc-types";
-import { ReviewToken, TokenKind } from "../models/apiview-models";
-import { typeToString } from "./utils/typeToString";
+import { Type } from "../../../rustdoc-types/output/rustdoc-types";
+import { ReviewToken, TokenKind } from "../../models/apiview-models";
+import { typeToString } from "./typeToString";
 
 export function processStructField(struct_field: Type): ReviewToken {
   // Add the struct field type

@@ -1,7 +1,7 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { ImplProcessResult, processImpl } from "./processImpl";
-import { processStructField } from "./processStructField";
+import { processStructField } from "./utils/processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isStructItem } from "./utils/typeGuards";

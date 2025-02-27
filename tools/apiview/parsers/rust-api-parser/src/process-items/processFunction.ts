@@ -1,6 +1,6 @@
 import { ReviewLine, ReviewToken, TokenKind } from "../models/apiview-models";
 import { Item, Type } from "../../rustdoc-types/output/rustdoc-types";
-import { processStructField } from "./processStructField";
+import { processStructField } from "./utils/processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { typeToString } from "./utils/typeToString";

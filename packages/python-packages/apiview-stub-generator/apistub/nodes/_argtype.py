@@ -70,11 +70,15 @@ class ArgType:
             self.id = f"{function_id}.param({self.argname})"
             review_line.add_line_marker(self.id)
             indent = " " * 4
-        review_line.add_text(text=f"{indent}{prefix}{self.argname}", has_suffix_space=False)
+        review_line.add_text(
+            text=f"{indent}{prefix}{self.argname}", has_suffix_space=False
+        )
         # add arg type
         if self.argtype:
             review_line.add_punctuation(":")
-            review_line.add_type(self.argtype, apiview=self.apiview, has_suffix_space=False)
+            review_line.add_type(
+                self.argtype, apiview=self.apiview, has_suffix_space=False
+            )
 
         # add arg default value
         default = self.default

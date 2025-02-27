@@ -30,7 +30,14 @@ class FunctionNode(NodeEntityBase):
     """
 
     def __init__(
-        self, namespace, parent_node, *, apiview, obj=None, node: astroid.FunctionDef = None, is_module_level=False
+        self,
+        namespace,
+        parent_node,
+        *,
+        apiview,
+        obj=None,
+        node: astroid.FunctionDef = None,
+        is_module_level=False,
     ):
         super().__init__(namespace, parent_node, obj)
         if not obj and node:
@@ -79,7 +86,10 @@ class FunctionNode(NodeEntityBase):
 
         # Turn any decorators into annotation
         if self.node and self.node.decorators:
-            self.annotations = [f"@{x.as_string(preserve_quotes=True)}" for x in self.node.decorators.nodes]
+            self.annotations = [
+                f"@{x.as_string(preserve_quotes=True)}"
+                for x in self.node.decorators.nodes
+            ]
 
         self.is_class_method = "@classmethod" in self.annotations
         self._parse_function()
@@ -98,9 +108,13 @@ class FunctionNode(NodeEntityBase):
             )
 
         if self.node:
-            parser = AstroidFunctionParser(self.node, self.namespace, apiview=self.apiview, func_node=self)
+            parser = AstroidFunctionParser(
+                self.node, self.namespace, apiview=self.apiview, func_node=self
+            )
         else:
-            parser = FunctionAnnotationParser(self.obj, self.namespace, apiview=self.apiview, func_node=self)
+            parser = FunctionAnnotationParser(
+                self.obj, self.namespace, apiview=self.apiview, func_node=self
+            )
         if parser:
             self.args = parser.args
             self.posargs = parser.posargs
@@ -117,7 +131,11 @@ class FunctionNode(NodeEntityBase):
         if hasattr(self.obj, "__doc__"):
             docstring = getattr(self.obj, "__doc__")
         # Refer docstring at class if this is constructor and docstring is missing for __init__
-        if not docstring and self.name == "__init__" and hasattr(self.parent_node.obj, "__doc__"):
+        if (
+            not docstring
+            and self.name == "__init__"
+            and hasattr(self.parent_node.obj, "__doc__")
+        ):
             docstring = getattr(self.parent_node.obj, "__doc__")
 
         if docstring:
@@ -126,14 +144,18 @@ class FunctionNode(NodeEntityBase):
 
             # Set return type if not already set
             if not self.return_type and parsed_docstring.ret_type:
-                logging.debug("Setting return type from docstring for method {}".format(self.name))
+                logging.debug(
+                    "Setting return type from docstring for method {}".format(self.name)
+                )
                 self.return_type = parsed_docstring.ret_type
 
             # if something is missing from the signature parsing, update it from the
             # docstring, if available
             for argname, signature_arg in {**self.args, **self.posargs}.items():
                 signature_arg.argtype = (
-                    signature_arg.argtype if signature_arg.argtype is not None else parsed_docstring.type_for(argname)
+                    signature_arg.argtype
+                    if signature_arg.argtype is not None
+                    else parsed_docstring.type_for(argname)
                 )
                 signature_arg.default = (
                     signature_arg.default
@@ -151,10 +173,14 @@ class FunctionNode(NodeEntityBase):
                 remaining_docstring_kwargs.remove(argname)
                 if not kw_arg.is_required:
                     kw_arg.argtype = (
-                        kw_arg.argtype if kw_arg.argtype is not None else parsed_docstring.type_for(argname)
+                        kw_arg.argtype
+                        if kw_arg.argtype is not None
+                        else parsed_docstring.type_for(argname)
                     )
                     kw_arg.default = (
-                        kw_arg.default if kw_arg.default is not None else parsed_docstring.default_for(argname)
+                        kw_arg.default
+                        if kw_arg.default is not None
+                        else parsed_docstring.default_for(argname)
                     )
 
             # ensure any kwargs described only in the docstrings are added
@@ -210,7 +236,13 @@ class FunctionNode(NodeEntityBase):
         return short_type
 
     def _generate_args_for_collection(
-        self, items: Dict[str, ArgType], review_lines, review_line, use_multi_line, *, final_item=True
+        self,
+        items: Dict[str, ArgType],
+        review_lines,
+        review_line,
+        use_multi_line,
+        *,
+        final_item=True,
     ):
         for idx, item in enumerate(list(items.values())):
             item.generate_tokens(
@@ -223,7 +255,9 @@ class FunctionNode(NodeEntityBase):
             if not final_item or idx < len(items) - 1:
                 review_line.add_punctuation(",")
             # multi-line will create new list of tokens for next line
-            review_line = self._reviewline_if_needed(review_lines, review_line, use_multi_line)
+            review_line = self._reviewline_if_needed(
+                review_lines, review_line, use_multi_line
+            )
         return review_line
 
     def _generate_signature_token(self, review_lines, review_line, use_multi_line):
@@ -264,7 +298,9 @@ class FunctionNode(NodeEntityBase):
             review_line.add_punctuation(",")
             current_count += 1  # account for /
 
-            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
+            review_line = self._reviewline_if_needed(
+                param_lines, review_line, use_multi_line
+            )
 
         current_count += len(self.args)
         final_item = current_count >= self.arg_count
@@ -288,7 +324,9 @@ class FunctionNode(NodeEntityBase):
             )
             if not final_item:
                 review_line.add_punctuation(",")
-            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
+            review_line = self._reviewline_if_needed(
+                param_lines, review_line, use_multi_line
+            )
 
         # add keyword argument marker
         if self.kwargs:
@@ -298,7 +336,9 @@ class FunctionNode(NodeEntityBase):
                 indent = " " * 4
             review_line.add_text(f"{indent}*", has_suffix_space=False)
             review_line.add_punctuation(",")
-            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
+            review_line = self._reviewline_if_needed(
+                param_lines, review_line, use_multi_line
+            )
 
         current_count += len(self.kwargs)
         final_item = current_count >= self.arg_count
@@ -318,7 +358,9 @@ class FunctionNode(NodeEntityBase):
                 add_line_marker=use_multi_line,
                 prefix="**",
             )
-            review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
+            review_line = self._reviewline_if_needed(
+                param_lines, review_line, use_multi_line
+            )
 
         review_line.add_punctuation(")", has_suffix_space=False)
 
@@ -328,9 +370,13 @@ class FunctionNode(NodeEntityBase):
             if use_multi_line:
                 line_id = f"{self.namespace_id}.returntype"
                 review_line.add_line_marker(line_id)
-            review_line.add_type(self.return_type, apiview=self.apiview, has_suffix_space=False)
+            review_line.add_type(
+                self.return_type, apiview=self.apiview, has_suffix_space=False
+            )
 
-        review_line = self._reviewline_if_needed(param_lines, review_line, use_multi_line)
+        review_line = self._reviewline_if_needed(
+            param_lines, review_line, use_multi_line
+        )
 
         # after children are added, add the review line
         def_line.add_children(self.children)
@@ -349,11 +395,15 @@ class FunctionNode(NodeEntityBase):
         logging.info(f"Processing method {self.name} in class {parent_id}")
         # Add tokens for annotations
         for annot in self.annotations:
-            review_line = review_lines.create_review_line(related_to_line=self.namespace_id)
+            review_line = review_lines.create_review_line(
+                related_to_line=self.namespace_id
+            )
             review_line.add_keyword(annot, has_suffix_space=False)
             review_lines.append(review_line)
         review_line = review_lines.create_review_line()
-        review_line.add_line_marker(self.namespace_id, add_cross_language_id=True, apiview=self.apiview)
+        review_line.add_line_marker(
+            self.namespace_id, add_cross_language_id=True, apiview=self.apiview
+        )
         if self.is_async:
             review_line.add_keyword("async")
 
@@ -365,10 +415,15 @@ class FunctionNode(NodeEntityBase):
         if self.is_module_level:
             navigation_display_name = self.name
         review_line.add_text(
-            value, has_suffix_space=False, navigation_display_name=navigation_display_name, render_classes=["method"]
+            value,
+            has_suffix_space=False,
+            navigation_display_name=navigation_display_name,
+            render_classes=["method"],
         )
         # Add parameters
-        review_line = self._generate_signature_token(review_lines, review_line, use_multi_line)
+        review_line = self._generate_signature_token(
+            review_lines, review_line, use_multi_line
+        )
         # If multi-line function, mark blank line as context end.
         review_lines.set_blank_lines(last_is_context_end_line=use_multi_line)
 

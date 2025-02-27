@@ -82,7 +82,13 @@ class DocstringParser:
         # can only span one extra line, not more than one.
         (keyword, label) = tag
         if keyword in docstring_param_keywords:
-            arg = ArgType(name=label, argtype=None, default=default, keyword=keyword, apiview=self.apiview)
+            arg = ArgType(
+                name=label,
+                argtype=None,
+                default=default,
+                keyword=keyword,
+                apiview=self.apiview,
+            )
             self._update_arg(arg, keyword)
             return (arg, True)
         elif keyword in docstring_type_keywords:
@@ -106,7 +112,13 @@ class DocstringParser:
         # and there can only be one simple type
         # Example: :param str name: The name of the thing.
         (keyword, typename, name) = tag
-        arg = ArgType(name=name, argtype=typename, default=default, keyword=keyword, apiview=self.apiview)
+        arg = ArgType(
+            name=name,
+            argtype=typename,
+            default=default,
+            keyword=keyword,
+            apiview=self.apiview,
+        )
         self._update_arg(arg, keyword)
 
     def _process_return_type(self, line1, line2):
@@ -180,11 +192,19 @@ class DocstringParser:
                 self.ret_type = self._process_return_type(line1.strip(), line2)
 
     def type_for(self, name):
-        arg = self.ivars.get(name, None) or self.pos_args.get(name, None) or self.kwargs.get(name, None)
+        arg = (
+            self.ivars.get(name, None)
+            or self.pos_args.get(name, None)
+            or self.kwargs.get(name, None)
+        )
         return arg.argtype if arg else arg
 
     def default_for(self, name):
-        arg = self.ivars.get(name, None) or self.pos_args.get(name, None) or self.kwargs.get(name, None)
+        arg = (
+            self.ivars.get(name, None)
+            or self.pos_args.get(name, None)
+            or self.kwargs.get(name, None)
+        )
         if not arg:
             return None
         argtype = arg.argtype or self.type_for(name)

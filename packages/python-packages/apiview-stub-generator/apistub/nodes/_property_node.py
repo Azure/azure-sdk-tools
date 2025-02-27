@@ -28,14 +28,18 @@ class PropertyNode(NodeEntityBase):
         if hasattr(self.obj, "fget"):
             # Get property type if type hint
             node = astroid.extract_node(inspect.getsource(self.obj.fget))
-            parser = AstroidFunctionParser(node, self.namespace, apiview=self.apiview, func_node=None)
+            parser = AstroidFunctionParser(
+                node, self.namespace, apiview=self.apiview, func_node=None
+            )
             self.type = get_qualified_name(parser.return_type, self.namespace)
 
         # get type from docstring
         if hasattr(self.obj, "__doc__") and not self.type:
             docstring = getattr(self.obj, "__doc__")
             if docstring:
-                docstring_parser = DocstringParser(getattr(self.obj, "__doc__"), apiview=self.apiview)
+                docstring_parser = DocstringParser(
+                    getattr(self.obj, "__doc__"), apiview=self.apiview
+                )
                 try:
                     self.type = docstring_parser.type_for(self.name)
                     # Check for rtype docstring

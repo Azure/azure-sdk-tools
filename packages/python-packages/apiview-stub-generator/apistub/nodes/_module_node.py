@@ -77,14 +77,22 @@ class ModuleNode(NodeEntityBase):
                 self.child_nodes.append(class_node)
             elif inspect.isroutine(member_obj):
                 func_node = FunctionNode(
-                    self.namespace, self, obj=member_obj, is_module_level=True, apiview=self.apiview
+                    self.namespace,
+                    self,
+                    obj=member_obj,
+                    is_module_level=True,
+                    apiview=self.apiview,
                 )
                 key = "{0}.{1}".format(self.namespace, func_node.name)
 
                 # Parse function module for overloads and store
                 if member_obj.__module__ not in module_overloads:
-                    functions = self._parse_functions_from_module(inspect.getmodule(member_obj))
-                    module_overloads[member_obj.__module__] = parse_overloads(self, functions, is_module_level=True)
+                    functions = self._parse_functions_from_module(
+                        inspect.getmodule(member_obj)
+                    )
+                    module_overloads[member_obj.__module__] = parse_overloads(
+                        self, functions, is_module_level=True
+                    )
 
                 overloads = module_overloads[member_obj.__module__]
                 add_overload_nodes(self, func_node, overloads)
@@ -96,7 +104,9 @@ class ModuleNode(NodeEntityBase):
     def _should_skip_parsing(self, name, member_obj, public_entities):
         # If module has list of published entities ( __all__) then include only those members
         if public_entities and name not in public_entities:
-            logging.debug("Object is not listed in __all__. Skipping object {}".format(name))
+            logging.debug(
+                "Object is not listed in __all__. Skipping object {}".format(name)
+            )
             return True
 
         # Skip any private members
@@ -106,7 +116,9 @@ class ModuleNode(NodeEntityBase):
 
         # Skip any member in module level that is defined in external or built in package
         if hasattr(member_obj, "__module__"):
-            return not getattr(member_obj, "__module__").startswith(self.pkg_root_namespace)
+            return not getattr(member_obj, "__module__").startswith(
+                self.pkg_root_namespace
+            )
         # Don't skip member if module name is not available. This is just to be on safer side
         return False
 

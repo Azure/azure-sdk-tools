@@ -51,6 +51,12 @@
     <None Update="SampleTestFiles\azure-core-1.47.0-sources4.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="SampleTestFiles\azure-schemaregistry_python-with-overload_relatedto-NEW.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleTestFiles\azure-schemaregistry_python-with-overload_relatedto-OLD.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleTestFiles\azure-schemaregistry_python.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

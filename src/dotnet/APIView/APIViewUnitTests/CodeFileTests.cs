@@ -215,5 +215,44 @@ namespace APIViewUnitTests
             Assert.True(namespaceLine.Children.Last().Tokens.Count == 0);
 
         }
+
+        [Fact]
+        public async Task VerifyPythonGroupedDiff()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "azure-schemaregistry_python-with-overload_relatedto-NEW.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+            filePath = Path.Combine("SampleTestFiles", "azure-schemaregistry_python-with-overload_relatedto-OLD.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+            bool isSame = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.False(isSame);
+
+            var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            Assert.True(FindAnyDiffLine(diff));
+
+            //Verify first line in diff view is the global text
+            Assert.True(diff.First().LineId == "GLOBAL");
+
+            //Verify that last line of namespace line's children is empty line
+            var namespaceLine = diff.First(l => l.LineId == "azure.schemaregistry");
+            Assert.Equal("namespace azure.schemaregistry", namespaceLine.ToString());
+
+            // Make sure first 3 lines under schema registry with LineID are  "{def azure.schemaregistry.foo(}"
+            int i = 0, line = 0;
+            while (line < namespaceLine.Children.Count && i < 3)
+            {
+                if (!string.IsNullOrEmpty(namespaceLine.Children[line].LineId))
+                {
+                    Assert.True(namespaceLine.Children[line].ToString() == "def azure.schemaregistry.foo(");
+                    i++;
+                }
+                line++;
+            }
+        }
     }
 }

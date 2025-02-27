@@ -3,6 +3,7 @@ import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { isTraitItem } from "./utils/typeGuards";
+import { processGenerics } from "./utils/processGenerics";
 
 /**
  * Processes a trait item and adds its documentation to the ReviewLine.
@@ -23,6 +24,7 @@ export function processTrait(item: Item, apiJson: Crate) {
     Children: [],
   };
 
+
   reviewLine.Tokens.push({
     Kind: TokenKind.Keyword,
     Value: "pub trait",
@@ -35,10 +37,17 @@ export function processTrait(item: Item, apiJson: Crate) {
     NavigationDisplayName: item.name || undefined,
   });
 
+  // Add generics if present
+  if (item.inner.trait.generics) {
+    const genericsTokens = processGenerics(item.inner.trait.generics);
+    reviewLine.Tokens.push(...genericsTokens);
+  }
+  
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
   });
+
   if (item.inner.trait.items) {
     item.inner.trait.items.forEach((associatedItem: number) => {
       if (!reviewLine.Children) reviewLine.Children = [];
@@ -59,5 +68,5 @@ export function processTrait(item: Item, apiJson: Crate) {
     IsContextEndLine: true,
   });
   return reviewLines;
-  // TODO: is_auto, is_unsafe, is_dyn_compatible, generics, bounds, implementations
+  // TODO: is_dyn_compatible, bounds, implementations
 }

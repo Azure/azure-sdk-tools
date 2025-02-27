@@ -38,8 +38,10 @@ export function processFunction(item: Item) {
   });
 
   // Add generics and where clauses if present
+  if (item.inner.function.generics) {
   const genericsTokens = processGenerics(item.inner.function.generics);
   reviewLine.Tokens.push(...genericsTokens);
+  }
 
   // Process function parameters
   reviewLine.Tokens.push({

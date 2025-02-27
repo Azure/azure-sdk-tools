@@ -105,5 +105,4 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
   }
   if(implResult.traitImpls.length>0) {reviewLines.push(...implResult.traitImpls);}
   return reviewLines;
-  // TODO: check if has_stripped_fields needs to be considered for rendering
 }

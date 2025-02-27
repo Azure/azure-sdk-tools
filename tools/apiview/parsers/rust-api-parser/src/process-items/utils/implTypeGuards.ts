@@ -1,6 +1,5 @@
-import { ImplInner, TypedItem } from "./typeGuards";
-
-export type ImplItem = TypedItem<ImplInner>;
+import { Enum, Impl, Item, Struct, Union } from "../../../rustdoc-types/output/rustdoc-types";
+export type ImplItem = Item & { inner: { impl: Impl } };
 
 export function isAutoDerivedImpl(implItem: ImplItem): boolean {
   return (
@@ -25,7 +24,7 @@ export function isInherentImpl(implItem: ImplItem): boolean {
   );
 }
 
-export function getImplsFromItem(item: { inner: { [key: string]: { impls: number[] } } }): number[] {
+export function getImplsFromItem(item:Item & { inner: { struct: Struct } }|Item & { inner: { enum: Enum } }|Item & { inner: { union: Union } }): number[] {
   if ("struct" in item.inner) return item.inner.struct.impls;
   if ("union" in item.inner) return item.inner.union.impls;
   return item.inner.enum.impls;

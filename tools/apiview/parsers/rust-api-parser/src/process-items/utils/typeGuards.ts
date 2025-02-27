@@ -1,41 +1,40 @@
-import { Item, Impl, Struct, Union, Enum, Trait, Static, Module, Function, Constant, Type } from "../../../rustdoc-types/output/rustdoc-types";
+import { Item, Impl, Struct, Union, Enum, Trait, Static, Module, Function, Constant, Type, Use, ItemEnum } from "../../../rustdoc-types/output/rustdoc-types";
 
-export interface TypedItem<T> extends Omit<Item, 'inner'> {
-  inner: { [K in keyof T]: T[K] } & Item['inner']
+export function isUseItem(item: Item): item is Item & { inner: { use: Use } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'use' in item.inner;
 }
 
-interface ItemInner<T> {
-  [key: string]: T;
+export function isImplItem(item: Item): item is Item & { inner: { impl: Impl } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'impl' in item.inner;
 }
-
-export interface UseInner extends ItemInner<{
-  source?: string;
-  is_glob: boolean;
-}> { }
-
-export interface ImplInner extends ItemInner<Impl> { }
-export interface StructInner extends ItemInner<Struct> { }
-export interface UnionInner extends ItemInner<Union> { }
-export interface EnumInner extends ItemInner<Enum> { }
-export interface TraitInner extends ItemInner<Trait> { }
-export interface StaticInner extends ItemInner<Static> { }
-export interface ModuleInner extends ItemInner<Module> { }
-export interface FunctionInner extends ItemInner<Function> { }
-export interface ConstantInner extends ItemInner<{ type: Type; const: Constant }> { }
-
-export function isItemType<T>(key: keyof T) {
-  return (item: Item): item is TypedItem<T> => {
-    return typeof item.inner === "object" && item.inner !== null && key in item.inner;
-  };
+export function isStructItem(item: Item): item is Item & { inner: { struct: Struct } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'struct' in item.inner;
 }
-
-export const isUseItem = isItemType<UseInner>('use');
-export const isImplItem = isItemType<ImplInner>('impl');
-export const isStructItem = isItemType<StructInner>('struct');
-export const isUnionItem = isItemType<UnionInner>('union');
-export const isEnumItem = isItemType<EnumInner>('enum');
-export const isTraitItem = isItemType<TraitInner>('trait');
-export const isStaticItem = isItemType<StaticInner>('static');
-export const isModuleItem = isItemType<ModuleInner>('module');
-export const isFunctionItem = isItemType<FunctionInner>('function');
-export const isConstantItem = isItemType<ConstantInner>('constant');
+export function isUnionItem(item: Item): item is Item & { inner: { union: Union } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'union' in item.inner;
+}
+export function isEnumItem(item: Item): item is Item & { inner: { enum: Enum } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'enum' in item.inner;
+}
+export function isTraitItem(item: Item): item is Item & { inner: { trait: Trait } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'trait' in item.inner;
+}
+export function isStaticItem(item: Item): item is Item & { inner: { static: Static } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'static' in item.inner;
+}
+export function isModuleItem(item: Item): item is Item & { inner: { module: Module } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'module' in item.inner;
+}
+export function isFunctionItem(item: Item): item is Item & { inner: { function: Function } } {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'function' in item.inner;
+}
+export function isConstantItem(item: Item): item is Item & {
+  inner: {
+    "constant": {
+      type: Type;
+      const: Constant;
+    }
+  }
+} {
+  return item && typeof item === 'object' && item.inner && typeof item.inner === 'object' && 'constant' in item.inner;
+}

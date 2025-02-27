@@ -90,7 +90,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     StackTrace = e.StackTrace,
                 };
 
+
                 var body = JsonSerializer.Serialize(bodyObj);
+                DebugLogger.LogError(body);
                 await context.Response.WriteAsync(body);
             }
         }

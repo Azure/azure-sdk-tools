@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
 using System.Collections.Concurrent;
+using System.IO;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -32,11 +33,31 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         // internal for testing
         internal static ILogger Logger { get; set; }
 
-        public static void ConfigureLogger(ILoggerFactory factory)
+        // We will store the log file path and StreamWriter in static fields
+        private static string s_logFilePath;
+        private static StreamWriter s_logFileWriter;
+
+        public static void ConfigureLogger(ILoggerFactory factory, string workingDirectory = null)
         {
             if (Logger == null && factory != null)
             {
                 Logger = factory.CreateLogger("Azure.Sdk.Tools.TestProxy");
+
+                // Set up a file for append-only logging relative to the current working directory.
+                s_logFilePath = Path.Combine(workingDirectory ?? Directory.GetCurrentDirectory(), "testproxyreroute.log");
+
+                // If the file does not exist, create it.
+                if (!File.Exists(s_logFilePath))
+                {
+                    // Create the file and immediately dispose the FileStream so we can reopen in append mode
+                    File.Create(s_logFilePath).Dispose();
+                }
+
+                // Open the file in append mode and store the handle
+                s_logFileWriter = new StreamWriter(s_logFilePath, append: true)
+                {
+                    AutoFlush = true
+                };
             }
         }
 
@@ -66,9 +87,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="details">The content which should be logged.</param>
         public static void LogInformation(string details)
         {
-            if (null != Logger)
+            if (Logger != null)
             {
                 Logger.LogInformation(details);
+
+                // Also write to file if we have the file writer
+                s_logFileWriter?.WriteLine($"[INFO] {DateTime.UtcNow}: {details}");
             }
             else
             {
@@ -78,9 +102,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void LogError(string details)
         {
-            if (null != Logger)
+            if (Logger != null)
             {
                 Logger.LogError(details);
+
+                // Also write to file if we have the file writer
+                s_logFileWriter?.WriteLine($"[ERROR] {DateTime.UtcNow}: {details}");
             }
             else
             {
@@ -91,9 +118,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public static void LogError(int statusCode, Exception e)
         {
             var details = statusCode.ToString() + Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace;
-            if (null != Logger)
+            if (Logger != null)
             {
                 Logger.LogError(details);
+
+                // Also write to file if we have the file writer
+                s_logFileWriter?.WriteLine($"[ERROR] {DateTime.UtcNow}: {details}");
             }
             else
             {
@@ -103,9 +133,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void LogTrace(string details)
         {
-            if (null != Logger)
+            if (Logger != null)
             {
                 Logger.LogTrace(details);
+
+                // Also write to file if we have the file writer
+                s_logFileWriter?.WriteLine($"[TRACE] {DateTime.UtcNow}: {details}");
             }
             else
             {
@@ -163,7 +196,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns></returns>
         public static void LogAdminRequestDetails(ILogger loggerInstance, HttpRequest req)
         {
-            if(CheckLogLevel(LogLevel.Debug))
+            if (CheckLogLevel(LogLevel.Debug))
             {
                 var headers = Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(req.Headers));
                 StringBuilder sb = new StringBuilder();

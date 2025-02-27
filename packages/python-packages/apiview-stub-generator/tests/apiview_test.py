@@ -46,8 +46,8 @@ SDIST_PATH = _build_dist(PKG_PATH, 'sdist', '.tar.gz')
 WHL_PATH = _build_dist(PKG_PATH, 'wheel', '.whl')
 
 PYPROJECT_PKG_PATH = _add_pyproject_package_to_temp(PKG_PATH)
-PYPROJECT_SDIST_PATH = _build_dist(PKG_PATH, 'sdist', '.tar.gz')
-PYPROJECT_WHL_PATH = _build_dist(PKG_PATH, 'wheel', '.whl')
+PYPROJECT_SDIST_PATH = _build_dist(PYPROJECT_PKG_PATH, 'sdist', '.tar.gz')
+PYPROJECT_WHL_PATH = _build_dist(PYPROJECT_PKG_PATH, 'wheel', '.whl')
 
 PYPROJECT_PATHS = [PYPROJECT_PKG_PATH, PYPROJECT_WHL_PATH, PYPROJECT_SDIST_PATH]
 PYPROJECT_IDS = ["pyproject-source", "pyproject-whl", "pyproject-sdist"]
@@ -65,7 +65,6 @@ class TestApiView:
                 break
         return newline_count
 
-
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
     def _validate_line_ids(self, apiview: ApiView):
         line_ids = set()
@@ -82,58 +81,43 @@ class TestApiView:
 
         collect_line_ids(apiview.review_lines)
 
-    def test_optional_dependencies(self):
-        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
-        temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
-        apiview = stub_gen.generate_tokens()
-        assert find_spec("httpx") is not None
-        assert find_spec("pandas") is not None
-        # skip conditional optional dependencies
-        assert find_spec("qsharp") is None
-
-    def _validate_line_ids(self, apiview: ApiView):
-        line_ids = set()
-
-        def collect_line_ids(review_lines, index=0):
-            for line in review_lines:
-                # Ensure that there are no repeated definition IDs.
-                if line.line_id and line.line_id in line_ids:
-                    fail(f"Duplicate definition ID {line.line_id}.")
-                    line_ids.add(line.line_id)
-                # Recursively collect definition IDs from child lines
-                if line.children:
-                    collect_line_ids(line.children, index)
-
-        collect_line_ids(apiview.review_lines)
-
-    def _optional_dependency_installed(self, dep):
+    def _dependency_installed(self, dep):
         result = run([sys.executable, "-m", "pip", "show", dep], stdout=PIPE, stderr=PIPE, text=True)
         # return code 1 means the package is not installed
         return result.returncode == 0
 
+    def _uninstall_dep(self, dep):
+        if self._dependency_installed(dep):
+            check_call([sys.executable, "-m", "pip", "uninstall", "-y", dep])
+            try:
+                for module in list(sys.modules):
+                    if module.startswith(dep):
+                        del sys.modules[module]
+            except KeyError:
+                pass
+        assert not self._dependency_installed(dep)
+
     @mark.parametrize("pkg_path", ALL_PATHS, ids=ALL_PATH_IDS)
     def test_optional_dependencies(self, pkg_path):
-        def _uninstall_opt_dep(dep):
-            if self._optional_dependency_installed(dep):
-                check_call([sys.executable, "-m", "pip", "uninstall", "-y", dep])
-            assert not self._optional_dependency_installed(dep)
-
         # uninstall optional dependencies if installed
         for dep in ["httpx", "pandas"]:
-            _uninstall_opt_dep(dep)
+            self._uninstall_dep(dep)
+        # uninstall apistubgentest if installed, so new install will be from pkg_path
+        self._uninstall_dep("apistubgentest")
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         for dep in ["httpx", "pandas"]:
-            assert self._optional_dependency_installed(dep) is not None
+            assert self._dependency_installed(dep)
         # skip conditional optional dependencies
-        assert not self._optional_dependency_installed("qsharp")
+        assert not self._dependency_installed("qsharp")
     
     @mark.parametrize("pkg_path", PYPROJECT_PATHS, ids=PYPROJECT_IDS)
     def test_pyproject_toml_line_ids(self, pkg_path):
+        # uninstall apistubgentest if installed, so new install will be from pkg_path
+        self._uninstall_dep("apistubgentest")
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, verbose=True)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
 

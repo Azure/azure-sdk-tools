@@ -237,7 +237,11 @@
             color: var(--java-doc-color);
             font-style: italic !important;
         }
-        
+
+        .enum {
+            color: var(--class-color);
+        }
+    
         .comment {
             color: var(--java-comment-color);
             font-style: italic !important;

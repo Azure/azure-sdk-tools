@@ -321,7 +321,7 @@ class StubGenerator:
 
     def _install_package(self, pkg_name):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
-        check_call(commands, timeout=60)
+        check_call(commands, timeout=120)
 
 
 def parse_setup_py(setup_path):

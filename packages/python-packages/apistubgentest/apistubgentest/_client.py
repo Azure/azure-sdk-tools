@@ -5,8 +5,31 @@ from typing import Optional, Union, List, Any, overload
 from .models import FakeObject, FakeError, PetEnumPy3Metaclass
 
 from azure.core import PipelineClient
-from typing import Optional, Union
+from typing import Optional, Union, overload
 
+
+
+@overload
+def module_func(a: int, *, b: str, **kwargs) -> bool:
+    ...
+
+@overload
+def module_func(a: int, *, b: int, **kwargs) -> bool:
+    ...
+
+def module_func(*args, **kwargs) -> bool:
+    pass
+
+@overload
+def another_func(*, b: str) -> bool:
+    ...
+
+@overload
+def another_func(*, b: int) -> bool:
+    ...
+
+def another_func(*, b: Union[int, str]) -> bool:
+    pass
 
 # pylint:disable=docstring-missing-return,docstring-missing-rtype
 class DefaultValuesClient:

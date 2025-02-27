@@ -36,6 +36,7 @@ using Microsoft.Azure.Cosmos;
 using APIViewWeb.Managers.Interfaces;
 using Azure.Identity;
 using APIViewWeb.Helpers;
+using Azure.Storage.Blobs;
 
 namespace APIViewWeb
 {
@@ -245,9 +246,13 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoAPIRevisionModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
-            services.AddSingleton<CosmosClient>(x =>
+            services.AddSingleton(x =>
             {
                 return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential());
+            });
+            services.AddSingleton(x =>
+            {
+                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), new DefaultAzureCredential());
             });
 
             services.AddHostedService<ReviewBackgroundHostedService>();

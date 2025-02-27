@@ -414,7 +414,7 @@ namespace APIViewWeb.Helpers
             }
 
             var intersectLines = diffLines.Intersect(activeLines);
-            var interleavedLines = diffLines.InterleavedUnion(activeLines);
+            var interleavedLines = activeLines.InterleavedUnion(diffLines);
 
             foreach (var line in interleavedLines)
             {

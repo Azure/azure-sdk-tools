@@ -56,7 +56,7 @@ var agentPools = [
     defaultAgentPool
 ]
 
-resource newCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' = if (!updateNodes) {
+resource newCluster 'Microsoft.ContainerService/managedClusters@2024-10-01' = if (!updateNodes) {
   name: clusterName
   location: location
   tags: tags
@@ -120,7 +120,7 @@ resource maintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenan
 }
 
 
-resource existingCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' existing = if (updateNodes) {
+resource existingCluster 'Microsoft.ContainerService/managedClusters@2024-10-01' existing = if (updateNodes) {
   name: clusterName
 }
 

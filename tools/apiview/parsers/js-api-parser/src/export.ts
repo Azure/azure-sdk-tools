@@ -41,7 +41,7 @@ async function main() {
         Name,
         PackageName,
         PackageVersion,
-        ParserVersion: "2.0.0",
+        ParserVersion: "2.0.5",
         Language: "JavaScript",
       },
       dependencies,

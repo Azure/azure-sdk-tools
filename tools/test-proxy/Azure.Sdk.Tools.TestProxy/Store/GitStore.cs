@@ -838,13 +838,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 // we deliberately do an extremely stripped down version parse and update here. We do this primarily to maintain
                 // any comments left in the assets.json though maintaining attribute ordering is also nice. To do this, we read all the file content, then
                 // simply replace the existing Tag value with the new one, then write the content back to the json file.
-
                 var currentSHA = (await ParseConfigurationFile(config.AssetsJsonLocation.ToString())).Tag;
                 var content = await File.ReadAllTextAsync(config.AssetsJsonLocation.ToString());
                 if (String.IsNullOrWhiteSpace(currentSHA))
                 {
-                    string pattern = @"""Tag"":\s*""\s*""";
-                    content = Regex.Replace(content, pattern, $"\"Tag\": \"{newSha}\"", RegexOptions.IgnoreCase);
+                    // we can only do the tag replacement if we HAVE a Tag property in the json
+                    if (content.Contains("\"Tag\""))
+                    {
+                        string pattern = @"""Tag"":\s*""\s*""";
+                        content = Regex.Replace(content, pattern, $"\"Tag\": \"{newSha}\"", RegexOptions.IgnoreCase);
+                    }
+                    // if not we just have to reserialize the entire thing. This edge case is not worth the amount of extra code
+                    // necessary to maintain the cohesion of the tag file.
+                    else
+                    {
+                        content = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+                    }
                 }
                 else
                 {

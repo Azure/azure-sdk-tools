@@ -1,0 +1,40 @@
+trigger: none
+pr: none
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage:
+        displayName: Publish addons helm chart
+        variables:
+          - template: /eng/pipelines/templates/variables/image.yml
+        jobs:
+          - job:
+            displayName: Publish addons helm chart
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+
+            steps:
+              - task: AzureCLI@2
+                displayName: Publish addons helm chart
+                inputs:
+                  azureSubscription: 'Azure SDK Artifacts'
+                  scriptPath: tools/stress-cluster/cluster/kubernetes/stress-test-addons/deploy.ps1
+                  scriptType: pscore
+                  arguments: '-Force'
+
+              - task: PowerShell@2
+                displayName: Update example stress dependencies
+                condition: succeeded()
+                inputs:
+                  pwsh: true
+                  filePath: tools/stress-cluster/cluster/kubernetes/stress-test-addons/update-charts.ps1
+
+              - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+                parameters:
+                  PRBranchName: "stress/addons-helm-update"
+                  CommitMsg: "[stress] Updating helm chart index.yaml file for new stress-test-addons release"
+                  PRTitle: "[stress] Updating helm chart index.yaml file for new stress-test-addons release"

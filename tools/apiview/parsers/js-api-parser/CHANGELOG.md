@@ -1,3 +1,8 @@
+# 2.0.5
+
+- skip diff for @azure\* and tslib dependencies
+- Support re-exported enums
+
 # 2.0.4
 
 - update models from latest CodeFile schemas

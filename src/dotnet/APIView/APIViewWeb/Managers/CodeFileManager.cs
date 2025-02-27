@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
-using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -88,8 +87,7 @@ namespace APIViewWeb.Managers
 
                             if (fileName == codeFileName)
                             {
-                                var language = LanguageServiceHelpers.GetLanguageFromRepoName(repoName);
-                                codeFile = await CodeFile.DeserializeAsync(entry.Open(), doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
+                                codeFile = await CodeFile.DeserializeAsync(entry.Open());
                             }
                             else if (fileName == baselineCodeFileName)
                             {
@@ -208,7 +206,8 @@ namespace APIViewWeb.Managers
                 return false;
             }
 
-            if (LanguageServiceHelpers.UseTreeStyleParser(codeFileA.CodeFile.Language))
+            var languageService = LanguageServiceHelpers.GetLanguageService(codeFileA.CodeFile.Language, _languageServices);
+            if (languageService.UsesTreeStyleParser)
             {
                 return CodeFileHelpers.AreCodeFilesSame(codeFileA.CodeFile, codeFileB.CodeFile);
             }

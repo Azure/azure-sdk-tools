@@ -2,10 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
-using ApiView;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 

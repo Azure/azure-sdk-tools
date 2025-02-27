@@ -6,4 +6,4 @@ dependencies:
   repository: https://stresstestcharts.blob.core.windows.net/helm/
   version: 0.3.5
 digest: sha256:711fbb59de71875ef437a50c222f7c17cf5c132033a63b05294f342c9ba183ee
-generated: "2025-01-23T14:00:25.858193662-05:00"
+generated: "2025-02-26T15:38:45.661122298-05:00"

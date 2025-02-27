@@ -185,5 +185,35 @@ namespace APIViewUnitTests
             var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
             Assert.False(FindAnyDiffLine(diff));
         }
+
+        [Fact]
+        public async Task VerifyPythonDiff()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "azure-schemaregistry_python.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+            filePath = Path.Combine("SampleTestFiles", "azure-schemaregistry_python_diff.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+            bool isSame = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.False(isSame);
+
+            var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            Assert.True(FindAnyDiffLine(diff));
+
+            //Verify first line in diff view is the global text
+            Assert.True(diff.First().LineId == "GLOBAL");
+
+            //Verify that last line of namespace line's children is empty line
+            var namespaceLine = diff.First(l=>l.LineId == "azure.schemaregistry");
+            Assert.Equal("namespace azure.schemaregistry", namespaceLine.ToString());
+
+            Assert.True(namespaceLine.Children.Last().Tokens.Count == 0);
+
+        }
     }
 }

@@ -110,7 +110,7 @@ export function processImpl(
       },
       { Kind: TokenKind.Punctuation, Value: "{" },
     ],
-    Children: processImpls(impls, apiJson),
+    Children: processImpls(impls, apiJson).filter((item) => item != null),
   };
 
   const closingBrace: ReviewLine = {

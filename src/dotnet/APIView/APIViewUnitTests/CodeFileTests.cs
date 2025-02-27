@@ -211,8 +211,8 @@ namespace APIViewUnitTests
             //Verify that last line of namespace line's children is empty line
             var namespaceLine = diff.First(l=>l.LineId == "azure.schemaregistry");
             Assert.Equal("namespace azure.schemaregistry", namespaceLine.ToString());
-
-            Assert.True(namespaceLine.Children.Last().Tokens.Count == 0);
+            var lastClass = namespaceLine.Children.Last();
+            Assert.True(lastClass.Children.Last().Tokens.Count == 0);
 
         }
 

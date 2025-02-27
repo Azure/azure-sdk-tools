@@ -41,10 +41,8 @@ export function processModule(apiJson: Crate, item: Item, parentModuleName?: str
   if (item.inner.module.items) {
     // First process non-module children
     item.inner.module.items.forEach((childId: number) => {
-      const childItem = apiJson.index[childId];
-      const isChildModule = childItem.inner && typeof childItem.inner === "object" && "module" in childItem.inner;
-
-      if (!isChildModule) {
+      const childItem = apiJson.index[childId];      
+      if (!isModuleItem(childItem)) {
         const childReviewLines = processItem(childItem, apiJson);
         if (childReviewLines) {
           if (!reviewLine.Children) {
@@ -70,9 +68,7 @@ export function processModule(apiJson: Crate, item: Item, parentModuleName?: str
     // Then process module children
     item.inner.module.items.forEach((childId: number) => {
       const childItem = apiJson.index[childId];
-      const isChildModule = childItem.inner && typeof childItem.inner === "object" && "module" in childItem.inner;
-
-      if (isChildModule) {
+      if (isModuleItem(childItem)) {
         const modulePrefix = parentModuleName ? `${parentModuleName}::${item.name}` : item.name;
         const siblingModuleLines = processModule(apiJson, childItem, modulePrefix);
         if (siblingModuleLines) {

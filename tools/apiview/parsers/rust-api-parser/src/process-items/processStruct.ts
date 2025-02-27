@@ -27,7 +27,7 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
     closingBrace: null,
     traitImpls: [],
   };
-  if (item.inner.struct && item.inner.struct.impls) {
+  if (item.inner.struct.impls) {
     implResult = processImpl({ ...item, inner: { struct: item.inner.struct } }, apiJson);
   }
 

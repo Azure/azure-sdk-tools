@@ -9,7 +9,6 @@ import { isStaticItem } from "./utils/typeGuards";
  *
  * @param {Crate} apiJson - The API JSON object containing all items.
  * @param {Item} item - The static item to process.
- * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
 export function processStatic(item: Item) {
   if (!isStaticItem(item)) return;

@@ -20,7 +20,7 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
     closingBrace: null,
     traitImpls: [],
   };
-  if (item.inner.enum && item.inner.enum.impls) {
+  if (item.inner.enum.impls) {
     implResult = processImpl({ ...item, inner: { enum: item.inner.enum } }, apiJson);
   }
 

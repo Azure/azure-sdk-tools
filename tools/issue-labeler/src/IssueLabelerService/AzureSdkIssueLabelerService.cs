@@ -175,7 +175,7 @@ namespace IssueLabelerService
             string message;
             if (solution)
             {
-                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nAs a reminder use ONLY the Category and Service fields from the issues above in your answer.\nThe user needs an actionable solution to their GitHub Issue:\n{query}";
+                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nAs a reminder use ONLY the Category and Service fields from the issues above in your answer.\nThe user needs a solution to their GitHub Issue:\n{query}";
             }
             else
             {
@@ -205,8 +205,8 @@ namespace IssueLabelerService
 
             if (solution)
             {
-                intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\n";
-                outro = "\nThis should solve your problem, if it does not feel free to reopen the issue!";
+                intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\n\n";
+                outro = "\n\nThis should solve your problem, if it does not feel free to reopen the issue!";
                 responseType = ResponseType.Solution;
             }
             else

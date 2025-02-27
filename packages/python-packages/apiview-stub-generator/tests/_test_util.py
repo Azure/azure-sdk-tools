@@ -47,10 +47,17 @@ def _check(actual, expected, client):
 MockApiView = ApiView(pkg_name="test", namespace="test")
 
 def _count_review_line_metadata(tokens, metadata):
+    lastRelatedTo = None
     for token in tokens:
+        if lastRelatedTo:
+            assert token["LineId"] == lastRelatedTo
+            lastRelatedTo = None
         # count the number of relatedToLines
         if "RelatedToLine" in token:
             metadata["RelatedToLine"] += 1
+            # Only check the next token LineId if current line is not an empty line.
+            if len(token["Tokens"]) > 0:
+                lastRelatedTo = token["RelatedToLine"]
         if "IsContextEndLine" in token and token["IsContextEndLine"]:
             metadata["IsContextEndLine"] += 1
         if "Children" in token:

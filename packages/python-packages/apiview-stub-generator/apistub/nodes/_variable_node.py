@@ -20,7 +20,9 @@ class VariableNode(NodeEntityBase):
         self.name = name
         self.type = type_name
         self.is_ivar = is_ivar
-        self.namespace_id = "{0}.{1}({2})".format(self.parent_node.namespace_id, self.name, self.type)
+        self.namespace_id = "{0}.{1}({2})".format(
+            self.parent_node.namespace_id, self.name, self.type
+        )
         self.value = value
         self.dataclass_properties = dataclass_properties
         self.apiview = parent_node.apiview
@@ -38,7 +40,9 @@ class VariableNode(NodeEntityBase):
         # Add type
         if self.type:
             review_line.add_punctuation(":")
-            review_line.add_type(self.type, apiview=self.apiview, has_suffix_space=False)
+            review_line.add_type(
+                self.type, apiview=self.apiview, has_suffix_space=False
+            )
 
         if not self.value:
             review_lines.append(review_line)
@@ -56,7 +60,9 @@ class VariableNode(NodeEntityBase):
             properties = self.dataclass_properties
             for i, property in enumerate(properties):
                 func_id = f"{self.namespace_id}.field("
-                property.generate_tokens(func_id, self.namespace, review_line, add_line_marker=False)
+                property.generate_tokens(
+                    func_id, self.namespace, review_line, add_line_marker=False
+                )
                 if i < len(properties) - 1:
                     review_line.add_punctuation(",")
             review_line.add_punctuation(")", has_suffix_space=False)

@@ -11,7 +11,9 @@ from ._variable_node import VariableNode
 class DataClassNode(ClassNode):
     """Class node to represent parsed data classes"""
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview):
+    def __init__(
+        self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview
+    ):
         super().__init__(
             name=name,
             namespace=namespace,
@@ -25,15 +27,23 @@ class DataClassNode(ClassNode):
         for child in self.child_nodes:
             if child.display_name == "__init__":
                 child.return_type = None
-        self.dataclass_params = self._extract_properties(getattr(obj, "__dataclass_params__", None))
-        self._allow_list = [f"__{x.argname}__" for x in self.dataclass_params if x.default == True]
+        self.dataclass_params = self._extract_properties(
+            getattr(obj, "__dataclass_params__", None)
+        )
+        self._allow_list = [
+            f"__{x.argname}__" for x in self.dataclass_params if x.default == True
+        ]
 
         # while dataclass properties looks like class variables, they are
         # actually instance variables
         dataclass_fields = getattr(obj, "__dataclass_fields__", None) or {}
         for name, properties in dataclass_fields.items():
             # convert the cvar to ivar
-            var_match = [v for v in self.child_nodes if isinstance(v, VariableNode) and v.name == name]
+            var_match = [
+                v
+                for v in self.child_nodes
+                if isinstance(v, VariableNode) and v.name == name
+            ]
             if var_match:
                 match = var_match[0]
                 match.is_ivar = True
@@ -55,7 +65,11 @@ class DataClassNode(ClassNode):
         ]
         if filter:
             allow_list = allow_list or []
-            filtered = [x for x in all_props if not x.argname.startswith("_") and x.argname not in allow_list]
+            filtered = [
+                x
+                for x in all_props
+                if not x.argname.startswith("_") and x.argname not in allow_list
+            ]
             filtered = [x for x in filtered if x.default != dataclasses.MISSING]
             return filtered
         else:
@@ -66,7 +80,9 @@ class DataClassNode(ClassNode):
             review_line.add_punctuation("(", has_suffix_space=False)
             for i, param in enumerate(self.dataclass_params):
                 function_id = f"{self.namespace_id}.field[{param.argname}]("
-                param.generate_tokens(function_id, namespace, review_line, add_line_marker=False)
+                param.generate_tokens(
+                    function_id, namespace, review_line, add_line_marker=False
+                )
                 if i != len(self.dataclass_params) - 1:
                     review_line.add_punctuation(",")
             review_line.add_punctuation(")", has_suffix_space=False)

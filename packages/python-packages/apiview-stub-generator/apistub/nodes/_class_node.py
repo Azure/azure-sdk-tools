@@ -17,7 +17,11 @@ from .._parsing_helpers import parse_overloads, add_overload_nodes
 
 find_keys = lambda x: isinstance(x, KeyNode)
 find_props = lambda x: isinstance(x, PropertyNode)
-find_instancefunc = lambda x: isinstance(x, FunctionNode) and not x.is_class_method and not x.name.startswith("__")
+find_instancefunc = (
+    lambda x: isinstance(x, FunctionNode)
+    and not x.is_class_method
+    and not x.name.startswith("__")
+)
 find_enum = lambda x: isinstance(x, EnumNode)
 find_var = lambda x: isinstance(x, VariableNode)
 find_classfunc = lambda x: isinstance(x, FunctionNode) and x.is_class_method
@@ -52,7 +56,17 @@ ABSTRACT_CLASS_METHODS = {
 class ClassNode(NodeEntityBase):
     """Class node to represent parsed class node and children"""
 
-    def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace, apiview, allow_list=None):
+    def __init__(
+        self,
+        *,
+        name,
+        namespace,
+        parent_node,
+        obj,
+        pkg_root_namespace,
+        apiview,
+        allow_list=None,
+    ):
         super().__init__(namespace, parent_node, obj)
         self.base_class_names = []
         # This is the name obtained by NodeEntityBase from __name__.
@@ -74,7 +88,9 @@ class ClassNode(NodeEntityBase):
         # If class has implementation for all required abstract methods then tag this class
         # as implementing that abstract class. For e.g. if class has both __iter__ and __next__
         # then this class implements Iterator
-        instance_functions = [x for x in self.child_nodes if isinstance(x, FunctionNode)]
+        instance_functions = [
+            x for x in self.child_nodes if isinstance(x, FunctionNode)
+        ]
         instance_function_names = [x.name for x in instance_functions]
 
         is_implemented = lambda func: func in instance_function_names
@@ -115,7 +131,11 @@ class ClassNode(NodeEntityBase):
             return
 
         # if variable is already present in parsed list then just update the value
-        var_match = [v for v in self.child_nodes if isinstance(v, VariableNode) and v.name == name]
+        var_match = [
+            v
+            for v in self.child_nodes
+            if isinstance(v, VariableNode) and v.name == name
+        ]
         if var_match:
             if value:
                 var_match[0].value = value
@@ -140,7 +160,9 @@ class ClassNode(NodeEntityBase):
         try:
             class_node = astroid.parse(inspect.getsource(class_obj)).body[0]
             class_decorators = class_node.decorators.nodes
-            self.decorators = [f"@{x.as_string(preserve_quotes=True)}" for x in class_decorators]
+            self.decorators = [
+                f"@{x.as_string(preserve_quotes=True)}" for x in class_decorators
+            ]
         except:
             self.decorators = []
 
@@ -162,7 +184,9 @@ class ClassNode(NodeEntityBase):
         # Find any ivar from docstring
         self._parse_ivars()
 
-        is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
+        is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(
+            self.obj, "__optional_keys__"
+        )
 
         self._parse_decorators_from_class(self.obj)
 
@@ -190,19 +214,26 @@ class ClassNode(NodeEntityBase):
             elif self._should_include_function(child_obj):
                 # Include dunder and public methods
                 if not name.startswith("_") or name.startswith("__"):
-                    func_node = FunctionNode(self.namespace, self, obj=child_obj, apiview=self.apiview)
+                    func_node = FunctionNode(
+                        self.namespace, self, obj=child_obj, apiview=self.apiview
+                    )
                     add_overload_nodes(self, func_node, overloads)
             elif name == "__annotations__":
                 for item_name, item_type in child_obj.items():
                     if item_name.startswith("_"):
                         continue
                     if is_typeddict and (
-                        inspect.isclass(item_type) or getattr(item_type, "__module__", None) == "typing"
+                        inspect.isclass(item_type)
+                        or getattr(item_type, "__module__", None) == "typing"
                     ):
-                        self.child_nodes.append(KeyNode(self.namespace, self, item_name, item_type))
+                        self.child_nodes.append(
+                            KeyNode(self.namespace, self, item_name, item_type)
+                        )
                     else:
                         type_string = get_qualified_name(item_type, self.namespace)
-                        self._handle_variable(child_obj, item_name, type_string=type_string)
+                        self._handle_variable(
+                            child_obj, item_name, type_string=type_string
+                        )
 
             # now that we've looked at the specific dunder properties we are
             # willing to include, anything with a leading underscore should be ignored.
@@ -232,7 +263,9 @@ class ClassNode(NodeEntityBase):
             elif isinstance(child_obj, property):
                 if not name.startswith("_"):
                     # Add instance properties
-                    self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
+                    self.child_nodes.append(
+                        PropertyNode(self.namespace, self, name, child_obj)
+                    )
             else:
                 self._handle_variable(child_obj, name, value=str(child_obj))
 
@@ -293,7 +326,9 @@ class ClassNode(NodeEntityBase):
             review_lines.append(line)
 
         line = review_lines.create_review_line()
-        line.add_line_marker(self.namespace_id, add_cross_language_id=True, apiview=self.apiview)
+        line.add_line_marker(
+            self.namespace_id, add_cross_language_id=True, apiview=self.apiview
+        )
         # Generate class name line
         line.add_keyword("class")
         if self.is_enum:
@@ -302,7 +337,10 @@ class ClassNode(NodeEntityBase):
             render_classes = ["class"]
         # TODO: #9454 - Change below to self.name once sticky parent node context window feature is added
         line.add_text(
-            self.full_name, has_suffix_space=False, navigation_display_name=self.name, render_classes=render_classes
+            self.full_name,
+            has_suffix_space=False,
+            navigation_display_name=self.name,
+            render_classes=render_classes,
         )
 
         for err in self.pylint_errors:
@@ -311,7 +349,9 @@ class ClassNode(NodeEntityBase):
         # Add inherited base classes
         if self.base_class_names:
             line.add_punctuation("(", has_suffix_space=False)
-            self._generate_tokens_for_collection(self.base_class_names, line, has_suffix_space=False)
+            self._generate_tokens_for_collection(
+                self.base_class_names, line, has_suffix_space=False
+            )
             line.add_punctuation(")", has_suffix_space=False)
         line.add_punctuation(":", has_suffix_space=False)
 
@@ -334,7 +374,11 @@ class ClassNode(NodeEntityBase):
             e.generate_tokens(self.children)
 
         self.children.set_blank_lines(related_to_line=self.namespace_id)
-        for func in [x for x in self.child_nodes if isinstance(x, FunctionNode) and x.hidden == False]:
+        for func in [
+            x
+            for x in self.child_nodes
+            if isinstance(x, FunctionNode) and x.hidden == False
+        ]:
             func.generate_tokens(self.children)
         # Last blank line should end class context.
         # Final related_to_lines should be the last function namespace ID and class namespace ID
@@ -348,7 +392,9 @@ class ClassNode(NodeEntityBase):
         # Helper method to concatenate list of values and generate tokens
         list_len = len(values)
         for idx, value in enumerate(values):
-            line.add_type(value, apiview=self.apiview, has_suffix_space=has_suffix_space)
+            line.add_type(
+                value, apiview=self.apiview, has_suffix_space=has_suffix_space
+            )
             # Add punctuation between types
             if idx < list_len - 1:
                 line.add_punctuation(",")

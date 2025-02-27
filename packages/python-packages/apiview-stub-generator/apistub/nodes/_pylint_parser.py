@@ -65,8 +65,14 @@ class PylintParser:
         messages = Run(params, exit=False).linter.reporter.messages
         plugin_failed = any([x.symbol == "bad-plugin-value" for x in messages])
         if plugin_failed:
-            logging.error(f"Unable to load pylint_guidelines_checker. Check that it is installed.")
-        cls.items = [PylintError(pkg_name, x) for x in messages if x.msg_id[1:3] == PylintParser.AZURE_CHECKER_CODE]
+            logging.error(
+                f"Unable to load pylint_guidelines_checker. Check that it is installed."
+            )
+        cls.items = [
+            PylintError(pkg_name, x)
+            for x in messages
+            if x.msg_id[1:3] == PylintParser.AZURE_CHECKER_CODE
+        ]
 
     @classmethod
     def match_items(cls, obj) -> None:

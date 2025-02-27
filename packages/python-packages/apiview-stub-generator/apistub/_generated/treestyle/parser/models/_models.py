@@ -6,7 +6,17 @@
 # Changes may cause incorrect behavior and will be lost if the code is regenerated.
 # --------------------------------------------------------------------------
 
-from typing import Any, Dict, List, Literal, Mapping, Optional, TYPE_CHECKING, Union, overload
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    TYPE_CHECKING,
+    Union,
+    overload,
+)
 
 from .. import _model_base
 from .._model_base import rest_field
@@ -60,7 +70,9 @@ class CodeDiagnostic(_model_base.Model):
         :type mapping: Mapping[str, Any]
         """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pylint: disable=useless-super-delegation
+    def __init__(
+        self, *args: Any, **kwargs: Any
+    ) -> None:  # pylint: disable=useless-super-delegation
         super().__init__(*args, **kwargs)
 
 
@@ -103,18 +115,32 @@ class CodeFile(_model_base.Model):
     parser_version: str = rest_field(name="ParserVersion")
     """version of the APIview language parser used to create token file. Required."""
     language: Literal[
-        "C", "C++", "C#", "Go", "Java", "JavaScript", "Kotlin", "Python", "Swagger", "Swift", "TypeSpec"
+        "C",
+        "C++",
+        "C#",
+        "Go",
+        "Java",
+        "JavaScript",
+        "Kotlin",
+        "Python",
+        "Swagger",
+        "Swift",
+        "TypeSpec",
     ] = rest_field(name="Language")
     """Required. Is one of the following types: Literal[\"C\"], Literal[\"C++\"], Literal[\"C#\"],
      Literal[\"Go\"], Literal[\"Java\"], Literal[\"JavaScript\"], Literal[\"Kotlin\"],
      Literal[\"Python\"], Literal[\"Swagger\"], Literal[\"Swift\"], Literal[\"TypeSpec\"]"""
-    language_variant: Optional[Literal["None", "Spring", "Android"]] = rest_field(name="LanguageVariant")
+    language_variant: Optional[Literal["None", "Spring", "Android"]] = rest_field(
+        name="LanguageVariant"
+    )
     """Language variant is applicable only for java variants. Is one of the following types:
      Literal[\"None\"], Literal[\"Spring\"], Literal[\"Android\"]"""
     cross_language_package_id: Optional[str] = rest_field(name="CrossLanguagePackageId")
     review_lines: List["_models.ReviewLine"] = rest_field(name="ReviewLines")
     """Required."""
-    diagnostics: Optional[List["_models.CodeDiagnostic"]] = rest_field(name="Diagnostics")
+    diagnostics: Optional[List["_models.CodeDiagnostic"]] = rest_field(
+        name="Diagnostics"
+    )
     """Add any system generated comments. Each comment is linked to review line ID."""
     navigation: Optional[List["_models.NavigationItem"]] = rest_field(name="Navigation")
     """Navigation items are used to create a tree view in the navigation panel. Each navigation item
@@ -131,7 +157,17 @@ class CodeFile(_model_base.Model):
         package_version: str,
         parser_version: str,
         language: Literal[
-            "C", "C++", "C#", "Go", "Java", "JavaScript", "Kotlin", "Python", "Swagger", "Swift", "TypeSpec"
+            "C",
+            "C++",
+            "C#",
+            "Go",
+            "Java",
+            "JavaScript",
+            "Kotlin",
+            "Python",
+            "Swagger",
+            "Swift",
+            "TypeSpec",
         ],
         review_lines: List["_models.ReviewLine"],
         language_variant: Optional[Literal["None", "Spring", "Android"]] = None,
@@ -147,7 +183,9 @@ class CodeFile(_model_base.Model):
         :type mapping: Mapping[str, Any]
         """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pylint: disable=useless-super-delegation
+    def __init__(
+        self, *args: Any, **kwargs: Any
+    ) -> None:  # pylint: disable=useless-super-delegation
         super().__init__(*args, **kwargs)
 
 
@@ -191,7 +229,9 @@ class NavigationItem(_model_base.Model):
         :type mapping: Mapping[str, Any]
         """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pylint: disable=useless-super-delegation
+    def __init__(
+        self, *args: Any, **kwargs: Any
+    ) -> None:  # pylint: disable=useless-super-delegation
         super().__init__(*args, **kwargs)
 
 
@@ -276,7 +316,9 @@ class ReviewLine(_model_base.Model):
         :type mapping: Mapping[str, Any]
         """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pylint: disable=useless-super-delegation
+    def __init__(
+        self, *args: Any, **kwargs: Any
+    ) -> None:  # pylint: disable=useless-super-delegation
         super().__init__(*args, **kwargs)
 
 
@@ -372,5 +414,7 @@ class ReviewToken(_model_base.Model):
         :type mapping: Mapping[str, Any]
         """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pylint: disable=useless-super-delegation
+    def __init__(
+        self, *args: Any, **kwargs: Any
+    ) -> None:  # pylint: disable=useless-super-delegation
         super().__init__(*args, **kwargs)

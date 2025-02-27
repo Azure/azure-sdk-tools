@@ -2,7 +2,8 @@
 
 ## Version 0.3.15 (Unreleased)
 Fixed issue where module-level overloads were not being parsed.
-Update RelatedToLine for empty lines to show in the diff.
+Added support for parsing pyproject.toml-managed packages.
+Updated RelatedToLine for empty lines to show in the diff.
 
 ## Version 0.3.14 (2025-02-22)
 Update for tree token style parser.

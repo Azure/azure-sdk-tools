@@ -425,7 +425,7 @@ class FunctionNode(NodeEntityBase):
             review_lines, review_line, use_multi_line
         )
         # If multi-line function, mark blank line as context end.
-        review_lines.set_blank_lines(last_is_context_end_line=use_multi_line)
+        review_lines.set_blank_lines(last_is_context_end_line=use_multi_line, related_to_line=self.namespace_id)
 
         if not use_multi_line:
             for err in self.pylint_errors:

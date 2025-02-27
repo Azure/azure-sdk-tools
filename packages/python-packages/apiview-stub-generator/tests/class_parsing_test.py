@@ -62,7 +62,7 @@ class TestClassParsing:
         _check_all(actuals, expected, obj)
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 2
         assert metadata["IsContextEndLine"] == 1
 
     def test_class_with_decorators(self):
@@ -92,7 +92,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 1
+        assert metadata["RelatedToLine"] == 4
         assert metadata["IsContextEndLine"] == 2
 
     def test_typed_dict_class(self):
@@ -116,7 +116,7 @@ class TestClassParsing:
         _check_all(actuals, expected, obj)
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 2
         assert metadata["IsContextEndLine"] == 1
 
     def test_object(self):
@@ -152,7 +152,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 3
         assert metadata["IsContextEndLine"] == 2
 
     def test_public_private(self):
@@ -179,7 +179,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 4
 
         # no context end lines for all single line functions
         assert metadata["IsContextEndLine"] == 1
@@ -212,7 +212,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 3
         assert metadata["IsContextEndLine"] == 2
 
     def test_model_aliases(self):
@@ -231,7 +231,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 3
         assert metadata["IsContextEndLine"] == 1
 
     def test_enum(self):
@@ -251,7 +251,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 2
         assert metadata["IsContextEndLine"] == 1
 
     def test_overloads(self):
@@ -344,7 +344,8 @@ class TestClassParsing:
         # Check that the RelatedToLine and IsContextEndLine are being set correctly.
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 4
+        # 8 empty lines, 4 overloads
+        assert metadata["RelatedToLine"] == 12
         assert metadata["IsContextEndLine"] == 7
 
     def test_inherited_overloads(self):
@@ -381,7 +382,8 @@ class TestClassParsing:
         # Check that the RelatedToLine and IsContextEndLine are being set correctly.
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 3
+        # 6 empty lines, 3 overloads
+        assert metadata["RelatedToLine"] == 9
         # TODO: For overloads, IsContextEndLine is only set for the implementation method. Should it be per overload?
         assert metadata["IsContextEndLine"] == 1
 
@@ -425,7 +427,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 4
+        assert metadata["RelatedToLine"] == 12
         assert metadata["IsContextEndLine"] == 7
 
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
@@ -467,7 +469,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 4
+        assert metadata["RelatedToLine"] == 10
         # all single-line methods so no context end lines
         assert metadata["IsContextEndLine"] == 1
 
@@ -517,7 +519,7 @@ class TestClassParsing:
         _check_all(actuals, expected, obj)
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 2
         assert metadata["IsContextEndLine"] == 1
 
     def test_abstract_class(self):
@@ -539,7 +541,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 3
         assert metadata["IsContextEndLine"] == 1
 
     def test_generic_class(self):
@@ -559,7 +561,7 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 6
         assert metadata["IsContextEndLine"] == 1
 
     def test_new_type_alias(self):

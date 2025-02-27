@@ -137,11 +137,11 @@ class ModuleNode(NodeEntityBase):
                 render_classes=["namespace"],
             )
 
-            self.children.set_blank_lines(1)
+            self.children.set_blank_lines(1, related_to_line=self.namespace_id)
             # Add name space level functions first
             for c in filter(filter_function, self.child_nodes):
                 c.generate_tokens(self.children)
-                self.children.set_blank_lines(2)
+                self.children.set_blank_lines(2, related_to_line=c.namespace_id)
 
             # Add classes
             for c in filter(filter_class, self.child_nodes):

@@ -81,7 +81,7 @@ class TestTypeHints:
 
             metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
             metadata = _count_review_line_metadata(tokens, metadata)
-            assert metadata["RelatedToLine"] == 0
+            assert metadata["RelatedToLine"] == 1
             assert metadata["IsContextEndLine"] == 1
 
     """ Ensure list type return typehint renders correctly. """
@@ -147,7 +147,7 @@ class TestDefaultValues:
         _check(actual, expected, DefaultValuesClient)
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 1
         assert metadata["IsContextEndLine"] == 1
 
     """ Ensure that optional types with defaults display correctly. """

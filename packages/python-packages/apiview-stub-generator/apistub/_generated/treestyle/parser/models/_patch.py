@@ -10,7 +10,7 @@ import os
 import re
 import logging
 import platform
-from typing import List, Optional
+from typing import List, Optional, Union
 from apistub._version import VERSION
 from apistub._node_index import NodeIndex
 from apistub._metadata_map import MetadataMap
@@ -166,10 +166,23 @@ class ReviewLines(list):
             related_to_line=related_to_line,
         )
 
-    def set_blank_lines(self, count=1, last_is_context_end_line=False):
+    def set_blank_lines(
+        self,
+        count: int = 1,
+        *,
+        last_is_context_end_line: bool = False,
+        related_to_line: Union[str, List[str]] = None
+    ):
+
         """Ensures a specific number of blank lines.
         Will add or remove newline tokens as needed
         to ensure the exact number of blank lines.
+
+        :param int count: The number of blank lines to ensure after the last non-blank review line.
+        :param bool last_is_context_end_line: If True, the last blank line will be marked as a context end line.
+        :param str related_to_line: If provided, the blank lines will be related to this line ID. If a string is
+         provided, all blank lines will be related to this line ID. If a list is provided, it must be the length of
+         the count, and each blank line will be related to the corresponding line ID in the list.
         """
         # count the number of trailing newlines
         newline_count = 0
@@ -195,6 +208,13 @@ class ReviewLines(list):
                 self.pop()
             if last_is_context_end_line:
                 self[-1].is_context_end_line = True
+
+        # if related_to_line is provided, set it for the blank lines
+        if related_to_line:
+            if isinstance(related_to_line, str):
+                related_to_line = [related_to_line] * count
+            for i, line in enumerate(self[-count:]):
+                line.related_to_line = related_to_line[i]
 
     def render(self):
         lines = []

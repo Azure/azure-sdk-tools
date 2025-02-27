@@ -204,6 +204,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             {
                 var headers = Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(req.Headers));
                 StringBuilder sb = new StringBuilder();
+
+                loggerInstance.LogDebug($"Length of headers is {headers.Length}");
+
                 sb.AppendLine("URI: [ " + req.GetDisplayUrl() + "]");
                 sb.AppendLine("Headers: [" + headers + "]");
                 loggerInstance.LogDebug(sb.ToString());

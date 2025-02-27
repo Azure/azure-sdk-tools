@@ -47,10 +47,7 @@ namespace Azure.ClientSdk.Analyzers
             while (baseType != null) 
             {
                 // validate if the base type is Azure.Core.ClientOptions
-                var fullName = baseType.ContainingNamespace.GetFullNamespaceName()
-                    .Append(".")
-                    .Append(baseType.Name);
-
+                var fullName = $"{baseType.ContainingNamespace.GetFullNamespaceName()}.{baseType.Name}";
                 if ($"{fullName}".Equals(AzureCoreClientOptions))
                 {
                     return typeSymbol.Name.EndsWith(ClientOptionsSuffix) || typeSymbol.Name.EndsWith(ClientsOptionsSuffix);

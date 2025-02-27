@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Helpers;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 
@@ -20,7 +19,6 @@ namespace APIViewWeb
         public override string[] Extensions { get; } = { ".whl" };
         public override string VersionString { get; } = "0.3.12";
         public override string ProcessName => _pythonExecutablePath;
-        public override bool UsesTreeStyleParser { get; } = false;
 
         public PythonLanguageService(IConfiguration configuration, TelemetryClient telemetryClient) : base(telemetryClient)
         {

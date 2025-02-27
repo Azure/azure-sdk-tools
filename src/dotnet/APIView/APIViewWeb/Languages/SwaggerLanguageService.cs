@@ -5,7 +5,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Helpers;
 using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb

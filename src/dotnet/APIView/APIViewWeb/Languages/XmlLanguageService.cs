@@ -3,7 +3,6 @@
 
 using System.IO;
 using Microsoft.ApplicationInsights;
-using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {

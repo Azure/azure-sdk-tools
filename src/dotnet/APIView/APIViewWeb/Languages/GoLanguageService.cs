@@ -7,9 +7,7 @@ using System.IO.Compression;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Helpers;
 using Microsoft.ApplicationInsights;
-using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {

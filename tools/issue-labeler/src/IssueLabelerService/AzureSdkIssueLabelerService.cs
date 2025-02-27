@@ -171,15 +171,14 @@ namespace IssueLabelerService
             var printableIssues = issues.Select(r => JsonConvert.SerializeObject(r)).ToList();
             var printableDocs = docs.Select(r => JsonConvert.SerializeObject(r)).ToList();
 
-            string instructions, message;
+            string instructions = _config["Instructions"];
+            string message;
             if (solution)
             {
-                instructions = _config["SolutionInstructions"];
-                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nAs a reminder use ONLY the Category and Service fields from the issues above in your answer.\nProvide the user with a solution to their GitHub Issue:\n{query}";
+                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nAs a reminder use ONLY the Category and Service fields from the issues above in your answer.\nThe user needs an actionable solution to their GitHub Issue:\n{query}";
             }
             else
             {
-                instructions = _config["SuggestionInstructions"];
                 message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nAs a reminder use ONLY the Category and Service fields from the issues above in your answer.\nThe user needs suggestions for their GitHub Issue:\n{query}";
             }
 

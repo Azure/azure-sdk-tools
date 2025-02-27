@@ -73,5 +73,35 @@ namespace RandomNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code);
         }
+
+        // This test validates that the analyzer does not produce a diagnostic for clients with multiple constructors
+        // which end with a ClientOptions parameter.
+        [Fact]
+        public async Task AZC0007NotProducedForClientWithMultipleCtors()
+        {
+            const string code = @"
+using System;
+using Azure;
+using Azure.Core;
+
+namespace RandomNamespace.Foo
+{
+
+    public partial class RoomsClientOptions : ClientOptions {} 
+
+    public partial class RoomsClient
+    {
+        protected RoomsClient() {}
+        public RoomsClient(string connectionString) {}
+        public RoomsClient(string connectionString, RoomsClientOptions options) {}
+        public RoomsClient(Uri endpoint, AzureKeyCredential credential, RoomsClientOptions options = null) {}
+        public RoomsClient(Uri endpoint, TokenCredential credential, RoomsClientOptions options = null) {}
+    }
+
+
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
     }
 }
+

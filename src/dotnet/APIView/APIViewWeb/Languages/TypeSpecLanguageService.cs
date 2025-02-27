@@ -3,10 +3,8 @@
 
 using System;
 using System.IO;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.Helpers;
 using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;

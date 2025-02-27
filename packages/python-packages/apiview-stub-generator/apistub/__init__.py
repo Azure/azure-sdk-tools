@@ -33,6 +33,8 @@ def console_entry_point():
     out_file_path = stub_generator.out_path
     # Generate JSON file name if outpath doesn't have json file name
     if not out_file_path.endswith(".json"):
-        out_file_path = os.path.join(stub_generator.out_path, "{0}_python.json".format(apiview.package_name))
+        out_file_path = os.path.join(
+            stub_generator.out_path, "{0}_python.json".format(apiview.package_name)
+        )
     with open(out_file_path, "w") as json_file:
         json_file.write(json_tokens)

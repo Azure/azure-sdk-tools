@@ -8,7 +8,9 @@ class AstroidFunctionParser:
 
     def __init__(self, node: astroid.FunctionDef, namespace: str, apiview, func_node):
         if not isinstance(node, astroid.FunctionDef):
-            raise TypeError(f"Can only pass in an astroid FunctionDef node, not {func_node}")
+            raise TypeError(
+                f"Can only pass in an astroid FunctionDef node, not {func_node}"
+            )
         self._namespace = namespace
         self._node = node
         self._args = node.args
@@ -19,7 +21,9 @@ class AstroidFunctionParser:
         self.kwargs = {}
         self.posargs = {}
         self.varargs = None
-        self.return_type = node.returns or node.type_comment_returns or inspect.Parameter.empty
+        self.return_type = (
+            node.returns or node.type_comment_returns or inspect.Parameter.empty
+        )
         self.apiview = apiview
         self._parse_args()
         self._parse_kwargs()
@@ -45,28 +49,55 @@ class AstroidFunctionParser:
     def _parse_args(self):
         for idx, arg in enumerate(self._args.args):
             name = arg.name
-            argtype = self._argtype(name, idx, self._args.annotations, self._args.type_comment_args)
+            argtype = self._argtype(
+                name, idx, self._args.annotations, self._args.type_comment_args
+            )
             default = self._default_value(name)
             self.args[name] = ArgType(
-                name, argtype=argtype, default=default, keyword=None, apiview=self.apiview, func_node=self._parent
+                name,
+                argtype=argtype,
+                default=default,
+                keyword=None,
+                apiview=self.apiview,
+                func_node=self._parent,
             )
 
     def _parse_kwargs(self):
         for idx, arg in enumerate(self._args.kwonlyargs):
             name = arg.name
-            argtype = self._argtype(name, idx, self._args.kwonlyargs_annotations, self._args.type_comment_kwonlyargs)
+            argtype = self._argtype(
+                name,
+                idx,
+                self._args.kwonlyargs_annotations,
+                self._args.type_comment_kwonlyargs,
+            )
             default = self._default_value(name)
             self.kwargs[name] = ArgType(
-                name, argtype=argtype, default=default, keyword="keyword", apiview=self.apiview, func_node=self._parent
+                name,
+                argtype=argtype,
+                default=default,
+                keyword="keyword",
+                apiview=self.apiview,
+                func_node=self._parent,
             )
 
     def _parse_posonly_args(self):
         for idx, arg in enumerate(self._args.posonlyargs):
             name = arg.name
-            argtype = self._argtype(name, idx, self._args.posonlyargs_annotations, self._args.type_comment_posonlyargs)
+            argtype = self._argtype(
+                name,
+                idx,
+                self._args.posonlyargs_annotations,
+                self._args.type_comment_posonlyargs,
+            )
             default = self._default_value(name)
             self.posargs[name] = ArgType(
-                name, argtype=argtype, default=default, keyword=None, apiview=self.apiview, func_node=self._parent
+                name,
+                argtype=argtype,
+                default=default,
+                keyword=None,
+                apiview=self.apiview,
+                func_node=self._parent,
             )
 
     def _parse_kwarg_and_vararg(self):

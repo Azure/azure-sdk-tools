@@ -2,6 +2,7 @@
 
 ## Version 0.3.15 (Unreleased)
 Fixed issue where module-level overloads were not being parsed.
+Added support for parsing pyproject.toml-managed packages.
 
 ## Version 0.3.14 (2025-02-22)
 Update for tree token style parser.

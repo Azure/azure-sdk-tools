@@ -37,8 +37,14 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
     Children: [],
   };
 
-  // Add derive tokens if present
-  structLine.Tokens.push(...implResult.deriveTokens);
+  if (implResult.deriveTokens.length > 0) {
+    const deriveTokensLine: ReviewLine = {
+      LineId: item.id.toString() + "_derive",
+      Tokens: implResult.deriveTokens,
+      RelatedToLine: item.id.toString(),
+    };
+    reviewLines.push(deriveTokensLine);
+  }
 
   structLine.Tokens.push({
     Kind: TokenKind.Keyword,

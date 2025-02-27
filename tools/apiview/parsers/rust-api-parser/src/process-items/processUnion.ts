@@ -37,8 +37,14 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
     Children: [],
   };
 
-  // Add derive tokens if present
-  unionLine.Tokens.push(...implResult.deriveTokens);
+  if (implResult.deriveTokens.length > 0) {
+    const deriveTokensLine: ReviewLine = {
+      LineId: item.id.toString() + "_derive",
+      Tokens: implResult.deriveTokens,
+      RelatedToLine: item.id.toString(),
+    };
+    reviewLines.push(deriveTokensLine);
+  }
 
   unionLine.Tokens.push({
     Kind: TokenKind.Keyword,

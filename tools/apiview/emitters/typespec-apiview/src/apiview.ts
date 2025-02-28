@@ -5,6 +5,7 @@ import {
   AugmentDecoratorStatementNode,
   BaseNode,
   BooleanLiteralNode,
+  CallExpressionNode,
   ConstStatementNode,
   DecoratorExpressionNode,
   DirectiveExpressionNode,
@@ -714,13 +715,16 @@ export class ApiView {
       case SyntaxKind.ObjectLiteral:
         obj = node as ObjectLiteralNode;
         this.punctuation("#{");
+        this.indent();
         last = obj.properties.length - 1;
         obj.properties.forEach((prop, i) => {
           this.tokenize(prop);
           if (i !== last) {
-            this.punctuation(",", {HasSuffixSpace: true});
+            this.punctuation(",", {HasSuffixSpace: false});
           }
+          this.newline();
         });
+        this.deindent();
         this.punctuation("}");
         break;
       case SyntaxKind.ObjectLiteralProperty:
@@ -852,6 +856,19 @@ export class ApiView {
       case SyntaxKind.StringTemplateTail:
         obj = node as StringTemplateHeadNode;
         this.literal(obj.value);
+        break;
+      case SyntaxKind.CallExpression:
+        obj = node as CallExpressionNode;
+        this.tokenize(obj.target);
+        this.punctuation("(", {HasSuffixSpace: false});
+        for (let x = 0; x < obj.arguments.length; x++) {
+          const arg = obj.arguments[x];
+          this.tokenize(arg);
+          if (x !== obj.arguments.length - 1) {
+            this.punctuation(",", {HasSuffixSpace: true, snapTo: "}"});
+          }
+        }
+        this.punctuation(")");
         break;
       default:
         // All Projection* cases should fail here...

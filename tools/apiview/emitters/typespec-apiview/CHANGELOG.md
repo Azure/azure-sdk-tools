@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.5.1 (02-27-2025)
+Support new TypeSpec syntax.
+
 ## Version 0.5.0 (01-08-2025)
 Support new internal APIView tree-structure.
 

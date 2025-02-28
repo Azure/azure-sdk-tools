@@ -52,7 +52,14 @@ extends:
               - script: |
                   npm ci
                 workingDirectory: $(TypeSpecEmitterDirectory)
-                displayName: "Install npm packages for TypeSpec emiter"
+                displayName: "Install npm packages for TypeSpec emitter"
+
+              - script: |
+                  npm ls -a
+                workingDirectory: $(TypeSpecEmitterDirectory)
+                displayName: "List npm packages for TypeSpec emiter"
+                condition: succeededOrFailed()
+                continueOnError: true
 
               - script: |
                   npm run-script build

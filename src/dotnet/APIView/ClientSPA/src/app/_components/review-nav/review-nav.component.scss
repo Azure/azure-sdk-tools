@@ -21,13 +21,18 @@
     }
 
     .p-tree .p-tree-container .p-treenode .p-treenode-content {
-        padding: 0.05rem;
+        padding: 0rem;
         border: 0px;
         cursor: pointer;
 
         .p-tree-toggler {
             height: 1rem;
         }
+    }
+
+    .p-tree .p-tree-container .p-treenode {
+        padding: 0rem;
+        outline: 0 none;
     }
 
     p-treenode ul {

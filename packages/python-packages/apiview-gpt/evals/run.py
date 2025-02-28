@@ -2,7 +2,8 @@ import os
 import pathlib
 
 import dotenv
-from azure.ai.evaluation import evaluate, RelevanceEvaluator, CoherenceEvaluator, SimilarityEvaluator
+from azure.ai.evaluation import evaluate, SimilarityEvaluator
+
 from custom_eval import CustomAPIViewEvaluator, review_apiview
 
 dotenv.load_dotenv()
@@ -20,7 +21,7 @@ similarity_eval = SimilarityEvaluator(model_config=model_config)
 
 
 if __name__ == "__main__":
-    path = pathlib.Path(__file__).parent / "python.jsonl"
+    path = pathlib.Path(__file__).parent / "tests" / "python.jsonl"
     result = evaluate(
         data=str(path),
         evaluators={

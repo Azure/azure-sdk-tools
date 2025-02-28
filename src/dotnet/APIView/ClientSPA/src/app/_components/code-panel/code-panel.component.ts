@@ -13,7 +13,7 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { Message } from 'primeng/api/message';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
-import { fromEvent, Subject } from 'rxjs';
+import { fromEvent, Observable, Subject } from 'rxjs';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Menu } from 'primeng/menu';
 import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLineSearchInfo';
@@ -30,7 +30,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() isDiffView: boolean = false;
   @Input() language: string | undefined;
   @Input() languageSafeName: string | undefined;
-  @Input() scrollToNodeIdHashed: string | undefined;
+  @Input() scrollToNodeIdHashed: Observable<string> | undefined;
   @Input() scrollToNodeId : string | undefined;
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
@@ -82,6 +82,10 @@ export class CodePanelComponent implements OnChanges{
         filter(event => event.ctrlKey && event.key === 'Enter'),
         takeUntil(this.destroy$)
       ).subscribe(event => this.handleKeyboardEvents(event));
+
+    this.scrollToNodeIdHashed?.pipe(takeUntil(this.destroy$)).subscribe((nodeIdHashed) => {
+      this.scrollToNode(nodeIdHashed);
+    });
   }
 
   async ngOnChanges(changes: SimpleChanges) {
@@ -93,10 +97,6 @@ export class CodePanelComponent implements OnChanges{
         this.isLoading = true;
         this.codePanelRowSource = undefined;
       }
-    }
-
-    if (changes['scrollToNodeIdHashed'] && changes['scrollToNodeIdHashed'].currentValue) {
-      this.scrollToNode(this.scrollToNodeIdHashed!);
     }
 
     if (changes['loadFailed'] && changes['loadFailed'].currentValue) {

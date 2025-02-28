@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Subject, take, takeUntil } from 'rxjs';
+import { Observable, Subject, take, takeUntil } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
@@ -47,7 +47,7 @@ export class ReviewPageComponent implements OnInit {
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
   languageSafeName: string | undefined;
-  scrollToNodeIdHashed : string | undefined;
+  scrollToNodeIdHashed : Subject<string> = new Subject<string>();
   scrollToNodeId : string | undefined = undefined;
   showLineNumbers : boolean = true;
   preferredApprovers : string[] = [];
@@ -413,7 +413,7 @@ export class ReviewPageComponent implements OnInit {
   }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {
-    this.scrollToNodeIdHashed = nodeIdHashed;
+    this.scrollToNodeIdHashed.next(nodeIdHashed);
   }
 
   handleMarkAsViewedEmitter(state: boolean) {

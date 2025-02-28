@@ -34,7 +34,7 @@ clusterTestSecretsKeyvaultName:
   dev: ""
   storage: stress-kv-e27xlxyuvk34k
 secretProviderIdentity:
-  pg: 015ece37-331d-4e17-9a27-58df7c5348f5
+  pg: 7e95466b-59cb-400e-b178-5b10ac90425b
   prod: d9a57c7a-5f79-4aff-90e7-4ebdb24b81e6
   dev: ""
   storage: 991949b1-6b69-4c93-aeb1-ab6fa4c545a0
@@ -48,12 +48,12 @@ infraWorkloadAppServiceAccountName:
   dev: ""
   storage: workload-svc
 infraWorkloadAppClientId:
-  pg: 55f81f93-084f-42c8-9420-72bbdbdafc2e
+  pg: 85e72b5e-8c1e-46f9-b3f5-347d74638041
   prod: 1b388c2c-1dc4-4456-a2a5-d5a4a5c7c4df
   dev: ""
   storage: 99fa1a45-b7b0-40ed-bb97-69cea4326003
 infraWorkloadAppObjectId:
-  pg: 1716d5f5-8673-4894-bd4b-ab57f6bb47dd
+  pg: 2159eeae-eaef-48fa-bb9e-2f6bd903c9b6
   prod: 0dea7f23-e8fe-4dbc-9980-400480ca9966
   dev: ""
   storage: 2a78a33d-851a-4d6f-a4c5-7b9e10248474
@@ -63,7 +63,7 @@ workloadAppClientNamePool:
   dev: 
   storage: stress-app-workload-storage-0,stress-app-workload-storage-1,stress-app-workload-storage-2,stress-app-workload-storage-3,stress-app-workload-storage-4
 workloadAppIssuer:
-  pg: https://westus3.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/ef750e3e-c467-43a9-8105-58e6adbccdf2/
+  pg: https://westus3.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/d927d4e7-13f0-414a-8e67-a03c67e0caf9/
   prod: https://westus2.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/3a180dd0-9ec9-490e-a0b1-03fdbbca5198/
   dev: 
   storage: https://southcentralus.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/b5e7dc96-dee7-4765-bccc-c18a50ecfa13/

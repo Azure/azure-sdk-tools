@@ -396,7 +396,7 @@ namespace APIViewWeb.Helpers
             //Verify if child lines matches
             for (int i = 0; i < filteredLinesA.Count(); i++)
             {
-                if (!filteredLinesA[i].Equals(filteredLinesB[i]) || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
+                if (!filteredLinesA[i].ToString().Equals(filteredLinesB[i].ToString()) || !AreReviewLinesSame(filteredLinesA[i].Children, filteredLinesB[i].Children))
                     return false;
             }
             return true;

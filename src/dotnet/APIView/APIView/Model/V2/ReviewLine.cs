@@ -125,14 +125,14 @@ namespace APIView.Model.V2
         {
             if(obj is ReviewLine other)
             {
-                return ToString() == other.ToString();
+                return ToString() == other.ToString() && LineId == other.LineId && RelatedToLine == other.RelatedToLine;
             }
             return false;
         }
 
         public override int GetHashCode()
         {
-            return ToString().GetHashCode();
+            return $"{ToString()}-{LineId}-{RelatedToLine}".GetHashCode();
         }
 
         public string GetTokenNodeIdHash(string parentNodeIdHash, int lineIndex)

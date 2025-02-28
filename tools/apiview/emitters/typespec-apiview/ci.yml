@@ -55,11 +55,10 @@ extends:
                 displayName: "Install npm packages for TypeSpec emitter"
 
               - script: |
-                  npm ls -a
+                  npm ls -a || true
                 workingDirectory: $(TypeSpecEmitterDirectory)
                 displayName: "List npm packages for TypeSpec emiter"
                 condition: succeededOrFailed()
-                continueOnError: true
 
               - script: |
                   npm run-script build

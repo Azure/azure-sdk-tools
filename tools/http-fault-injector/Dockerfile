@@ -1,5 +1,6 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0
-# fault injector requires .NET 8
+FROM mcr.microsoft.com/dotnet/sdk:8.0-cbl-mariner2.0
+
+RUN yum update -y
 
 ARG FAULT_INJECTOR_VERSION=""
 ARG NUGET_SOURCE="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"

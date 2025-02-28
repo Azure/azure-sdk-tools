@@ -31,4 +31,16 @@ export function funcReturnType(a: string): string
 export function funcParameterCount(a: string, b: string): string
 export function funcParameterType(a: string): string
 export function funcRemove(a: string): string
+
+export class classPropertyChange {a: string;}
+export class classPropertyType {a: string;}
+export class classRemove {a: string;}
+export class classExpand {a: string;}
+export class classNarrow {a: string;b: string;}
+export class classConstructorParameterCount { constructor(a: string, b: string){} }
+export class classConstructorParameterType { constructor(a: string, b: string){} }
+export class classConstructorParameterOptional { constructor(a: string, b: string){} }
+export class classConstructorRemove { constructor(a: number, b: number); constructor(a?: number, b?: number, c?: number){} }
+export class classConstructorAdd { }
+export class classMethodOptionalToRequired {private func(a: string){};}
 ```

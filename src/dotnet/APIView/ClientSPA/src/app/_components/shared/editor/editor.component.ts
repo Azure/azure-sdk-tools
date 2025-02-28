@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, Input, QueryList, ViewChildren } from '@angular/core';
 import { SimplemdeOptions } from 'ngx-simplemde';
 
 @Component({
@@ -9,7 +9,6 @@ import { SimplemdeOptions } from 'ngx-simplemde';
 export class EditorComponent {
   @Input() content: string = '';
   @Input() editorId: string = '';
-
   editorOptions : SimplemdeOptions = {
     autosave: { enabled: false },
     status: false,
@@ -23,9 +22,11 @@ export class EditorComponent {
     ]
   };
 
+  constructor(private elementRef: ElementRef) {}
+
   ngAfterViewInit() {
     setTimeout(() => {
-      document.querySelectorAll('.editor-toolbar a').forEach((button: any) => {
+      this.elementRef.nativeElement.querySelectorAll('.editor-toolbar a').forEach((button: any) => {
         if (button.classList.contains('smdi-bold')) {
           button.setAttribute('title', 'Bold (Ctrl-B)');
         } else if (button.classList.contains('smdi-italic')) {
@@ -50,6 +51,8 @@ export class EditorComponent {
           button.setAttribute('title', 'Ordered List (Ctrl-Alt-L)');
         }
       });
+
+      (this.elementRef.nativeElement.querySelectorAll('.CodeMirror textarea')[0] as HTMLElement).focus();
     }, 0);
   }
 

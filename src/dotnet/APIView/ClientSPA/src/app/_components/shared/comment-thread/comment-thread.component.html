@@ -62,7 +62,11 @@
                 data-bs-toggle="button" 
                 [attr.aria-pressed]="allowAnyOneToResolve" 
                 (click)="toggleAllowAnyOneToResolve()">
-                Allow Anyone To Resolve
+                <i *ngIf="allowAnyOneToResolve; else resolutionLocked" class="bi bi-check-square"></i>
+                <ng-template #resolutionLocked>
+                    <i class="bi bi-square"></i>
+                </ng-template>
+                Allow anyone to resolve
             </button>
         </div>
     </div>

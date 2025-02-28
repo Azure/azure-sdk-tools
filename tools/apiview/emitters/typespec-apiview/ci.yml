@@ -50,7 +50,7 @@ extends:
                 displayName: 'Use NodeJS $(NodeVersion)'
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(TypeSpecEmitterDirectory)
                 displayName: "Install npm packages for TypeSpec emiter"
 

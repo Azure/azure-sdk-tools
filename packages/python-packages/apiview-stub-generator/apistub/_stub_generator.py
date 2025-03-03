@@ -174,13 +174,14 @@ class StubGenerator:
     def generate_tokens(self):
         # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
+        pkg_root_path, pkg_name, version = self._get_pkg_metadata()
         self._install_package()
-        if self.pkg_path.endswith((".whl", ".zip", ".tar.gz")):
-            pkg_root_path, pkg_name, version = self._get_pkg_metadata()
-        else:
+        # pkginfo does not get package metadata in 3.10 when running against package root path
+        if not self.pkg_path.endswith((".whl", ".zip", ".tar.gz")):
             pkg_name = os.path.split(self.pkg_path)[-1]
             version = importlib.metadata.version(pkg_name)
-            pkg_root_path = self.pkg_path
+            dist = importlib.metadata.distribution(pkg_name)
+            self.extras_require = self.extras_require or dist.metadata.get_all('Provides-Extra')
 
         logging.info(
             "package name: {0}, version:{1}, namespace:{2}".format(

@@ -104,6 +104,12 @@ class TestApiView:
             self._uninstall_dep(dep)
         # uninstall apistubgentest if installed, so new install will be from pkg_path
         self._uninstall_dep("apistubgentest")
+        # if pkg is src, rm *.egg-info from path to check that pkg metadata parsing works
+        if os.path.isdir(pkg_path):
+            for f in os.listdir(pkg_path):
+                if f == "apistubgentest.egg-info":
+                    shutil.rmtree(os.path.join(pkg_path, f))
+                    break
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
@@ -111,6 +117,8 @@ class TestApiView:
             assert self._dependency_installed(dep)
         # skip conditional optional dependencies
         assert not self._dependency_installed("qsharp")
+        # assert package name is correct
+        assert apiview.package_name == "apistubgentest"
     
     @mark.parametrize("pkg_path", PYPROJECT_PATHS, ids=PYPROJECT_IDS)
     def test_pyproject_toml_line_ids(self, pkg_path):

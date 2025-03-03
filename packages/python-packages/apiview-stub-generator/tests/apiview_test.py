@@ -119,7 +119,6 @@ class TestApiView:
         assert not self._dependency_installed("qsharp")
         # assert package name is correct
         assert apiview.package_name == "apistubgentest"
-        assert False
     
     @mark.parametrize("pkg_path", PYPROJECT_PATHS, ids=PYPROJECT_IDS)
     def test_pyproject_toml_line_ids(self, pkg_path):

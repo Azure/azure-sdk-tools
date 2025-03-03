@@ -88,7 +88,7 @@ namespace AzureRAGService
         }
 
         /// <summary>
-        /// Sends a message to the OpenAI QnA model. Message must include both the prompt and the query
+        /// "Question and Answer" using Open AI models. Message must include both the prompt and the query
         /// </summary>
         /// <param name="openAIEndpoint">The OpenAI endpoint URI.</param>
         /// <param name="credential">The Azure credential.</param>

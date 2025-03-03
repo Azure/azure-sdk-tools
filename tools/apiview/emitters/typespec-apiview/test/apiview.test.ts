@@ -260,7 +260,10 @@ describe("apiview: tests", () => {
           model Foo {
             name: string = "foo";
             array: string[] = #["a", "b"];
-            obj: Record<unknown> = #{val: 1, name: "foo"};
+            obj: Record<unknown> = #{
+              val: 1,
+              name: "foo"
+            };
           }
         }
         `;
@@ -1333,7 +1336,9 @@ describe("apiview: tests", () => {
       const expect = `
         namespace Azure.Test {
           const a = 123;
-          const b = #{name: "abc"};
+          const b = #{
+            name: "abc"
+          };
           const c = a;
         }
         `;
@@ -1346,5 +1351,46 @@ describe("apiview: tests", () => {
         ["Azure.Test", { relatedToCount: 3, isContextEndCount: 1 }],
       ]));
     });
+  });
+
+  it("renders examples with call expression constants", async () => {
+    const input = `
+    #suppress "deprecated"
+    @TypeSpec.service( { title: "Test", version: "1" } )
+    namespace Azure.Test {
+      const SomeExample: SomeData = #{
+        timestamp: utcDateTime.fromISO("2020-12-09T13:50:19.9995668-08:00"),
+        name: "test"
+      };
+      
+      @example(SomeExample)
+      model SomeData {
+        timestamp: utcDateTime;
+        name: string;
+      }     
+    }
+    `;
+    const expect = `
+      namespace Azure.Test {
+        @example(SomeExample)
+        model SomeData {
+          timestamp: utcDateTime;
+          name: string;
+        }
+
+        const SomeExample = #{
+          timestamp: utcDateTime.fromISO("2020-12-09T13:50:19.9995668-08:00"),
+          name: "test"
+        };
+      }
+      `;
+    const apiview = await apiViewFor(input, {});
+    const actual = apiViewText(apiview);
+    compare(expect, actual, 10);
+    validateLineIds(apiview);
+    const counts = getRelatedLineMetadata(apiview);
+    compareCounts(counts, new Map([
+      ["Azure.Test", { relatedToCount: 1, isContextEndCount: 1 }],
+    ]));
   });
 });

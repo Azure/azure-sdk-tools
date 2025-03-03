@@ -181,7 +181,6 @@ class StubGenerator:
             pkg_name = os.path.split(self.pkg_path)[-1]
             version = importlib.metadata.version(pkg_name)
             pkg_root_path = self.pkg_path
-            self.namespace = self.namespace or pkg_name.replace("-", ".")
 
         logging.info(
             "package name: {0}, version:{1}, namespace:{2}".format(

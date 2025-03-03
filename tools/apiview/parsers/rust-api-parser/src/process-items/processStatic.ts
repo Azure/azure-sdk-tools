@@ -41,7 +41,8 @@ export function processStatic(item: Item) {
       Kind: TokenKind.Punctuation,
       Value: ":",
     });
-    reviewLine.Tokens.push(...typeToReviewTokens(item.inner.static.type)); // TODO: make sure to encode other attributes too
+    reviewLine.Tokens.push(...typeToReviewTokens(item.inner.static.type));
+    // TODO: make sure to encode other attributes too
   }
 
   reviewLines.push(reviewLine);

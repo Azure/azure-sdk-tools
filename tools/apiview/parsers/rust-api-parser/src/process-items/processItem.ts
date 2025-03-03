@@ -10,6 +10,13 @@ import { processStructField } from "./processStructField";
 import { processTrait } from "./processTrait";
 import { processUse } from "./processUse";
 import { processUnion } from "./processUnion";
+import { processTypeAlias } from "./processTypeAlias";
+import { processTraitAlias } from "./processTraitAlias";
+import { processExternType } from "./processExternType";
+import { processMacro } from "./processMacro";
+import { processProcMacro } from "./processProcMacro";
+import { processAssocConst } from "./processAssocConst";
+import { processAssocType } from "./processAssocType";
 
 /**
  * Processes an item from the API JSON and returns a ReviewLine object.
@@ -35,9 +42,9 @@ export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
     } else if ("trait" in item.inner) {
       return processTrait(item, apiJson);
     } else if ("trait_alias" in item.inner) {
-      return null;
+      return processTraitAlias(item, apiJson);
     } else if ("type_alias" in item.inner) {
-      return null;
+      return processTypeAlias(item, apiJson);
     } else if ("constant" in item.inner) {
       return processConstant(item);
     } else if ("static" in item.inner) {
@@ -45,15 +52,15 @@ export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
     } else if ("struct_field" in item.inner) {
       return [processStructField(item)];
     } else if ("extern_type" in item.inner) {
-      return null;
+      return processExternType(item);
     } else if ("macro" in item.inner) {
-      return null;
+      return processMacro(item);
     } else if ("proc_macro" in item.inner) {
-      return null;
+      return processProcMacro(item);
     } else if ("assoc_const" in item.inner) {
-      return null;
+      return processAssocConst(item);
     } else if ("assoc_type" in item.inner) {
-      return null;
+      return processAssocType(item);
     }
   }
 }

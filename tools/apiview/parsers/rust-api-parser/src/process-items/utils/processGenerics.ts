@@ -101,7 +101,7 @@ function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewT
   });
 }
 
-function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
+export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
   return bounds.flatMap((bound, index) => {
     const tokens: ReviewToken[] = [];
     if (tokens.length > 0) {

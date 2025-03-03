@@ -9,25 +9,26 @@ import { typeToReviewTokens } from "./utils/typeToReviewTokens";
  * @returns {ReviewLine} The ReviewLine object for the struct field.
  */
 export function processStructField(fieldItem: Item): ReviewLine {
-    if (!(fieldItem && typeof fieldItem.inner === "object" && "struct_field" in fieldItem.inner)) return null;
+  if (!(fieldItem && typeof fieldItem.inner === "object" && "struct_field" in fieldItem.inner))
+    return null;
 
-    return {
-        LineId: fieldItem.id.toString(),
-        Tokens: [
-            {
-                Kind: TokenKind.Keyword,
-                Value: "pub",
-            },
-            {
-                Kind: TokenKind.MemberName,
-                Value: fieldItem.name || "null",
-                HasSuffixSpace: false,
-            },
-            {
-                Kind: TokenKind.Punctuation,
-                Value: ":",
-            },
-            ...typeToReviewTokens(fieldItem.inner.struct_field),
-        ],
-    };
+  return {
+    LineId: fieldItem.id.toString(),
+    Tokens: [
+      {
+        Kind: TokenKind.Keyword,
+        Value: "pub",
+      },
+      {
+        Kind: TokenKind.MemberName,
+        Value: fieldItem.name || "null",
+        HasSuffixSpace: false,
+      },
+      {
+        Kind: TokenKind.Punctuation,
+        Value: ":",
+      },
+      ...typeToReviewTokens(fieldItem.inner.struct_field),
+    ],
+  };
 }

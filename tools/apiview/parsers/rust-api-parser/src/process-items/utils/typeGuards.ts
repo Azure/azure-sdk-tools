@@ -11,19 +11,37 @@ import {
   Constant,
   Type,
   Use,
+  TraitAlias,
+  Generics,
+  GenericBound,
+  Variant,
+  TypeAlias,
+  ProcMacro,
+  Primitive,
 } from "../../../rustdoc-types/output/rustdoc-types";
 
 type ItemTypes = {
-  use: Use;
-  impl: Impl;
-  struct: Struct;
-  union: Union;
-  enum: Enum;
-  trait: Trait;
-  static: Static;
   module: Module;
+  extern_crate: { name: string; rename?: string };
+  use: Use;
+  union: Union;
+  struct: Struct;
+  struct_field: Type;
+  enum: Enum;
+  variant: Variant;
   function: Function;
+  trait: Trait;
+  trait_alias: TraitAlias;
+  impl: Impl;
+  type_alias: TypeAlias;
   constant: { type: Type; const: Constant };
+  static: Static;
+  extern_type: "extern_type";
+  macro: string;
+  proc_macro: ProcMacro;
+  primitive: Primitive;
+  assoc_const: { type: Type; value?: string };
+  assoc_type: { generics: Generics; bounds: GenericBound[]; type?: Type };
 };
 
 type ItemTypeGuard<K extends keyof ItemTypes> = (
@@ -45,7 +63,18 @@ export const isStructItem = createTypeGuard("struct");
 export const isUnionItem = createTypeGuard("union");
 export const isEnumItem = createTypeGuard("enum");
 export const isTraitItem = createTypeGuard("trait");
+export const isTraitAliasItem = createTypeGuard("trait_alias");
 export const isStaticItem = createTypeGuard("static");
 export const isModuleItem = createTypeGuard("module");
 export const isFunctionItem = createTypeGuard("function");
 export const isConstantItem = createTypeGuard("constant");
+export const isAssocTypeItem = createTypeGuard("assoc_type");
+export const isTypeAliasItem = createTypeGuard("type_alias");
+export const isVariantItem = createTypeGuard("variant");
+export const isStructFieldItem = createTypeGuard("struct_field");
+export const isPrimitiveItem = createTypeGuard("primitive");
+export const isExternCrateItem = createTypeGuard("extern_crate");
+export const isAssocConstItem = createTypeGuard("assoc_const");
+export const isProcMacroItem = createTypeGuard("proc_macro");
+export const isMacroItem = createTypeGuard("macro");
+export const isExternTypeItem = createTypeGuard("extern_type");

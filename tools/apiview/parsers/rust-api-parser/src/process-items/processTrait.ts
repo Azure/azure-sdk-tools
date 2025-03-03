@@ -36,10 +36,15 @@ export function processTrait(item: Item, apiJson: Crate) {
     NavigationDisplayName: item.name || undefined,
   });
 
-  // Add generics if present
+  const genericsTokens = processGenerics(item.inner.trait.generics);
+  // Add generics params if present
   if (item.inner.trait.generics) {
-    const genericsTokens = processGenerics(item.inner.trait.generics);
-    reviewLine.Tokens.push(...genericsTokens);
+    reviewLine.Tokens.push(...genericsTokens.params);
+  }
+
+  // Add generics where clauses if present
+  if (item.inner.trait.generics) {
+    reviewLine.Tokens.push(...genericsTokens.wherePredicates);
   }
 
   reviewLine.Tokens.push({

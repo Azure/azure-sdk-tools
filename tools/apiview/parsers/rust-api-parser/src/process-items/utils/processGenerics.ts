@@ -9,23 +9,24 @@ import {
 import { shouldElideLifetime } from "./shouldElideLifeTime";
 import { typeToReviewTokens } from "./typeToReviewTokens";
 
-export function processGenerics(generics: Generics): ReviewToken[] {
-  const tokens: ReviewToken[] = [];
-
+export function processGenerics(generics: Generics): {
+  params: ReviewToken[];
+  wherePredicates: ReviewToken[];
+} {
   // Process generic parameters
   const paramsTokens = createGenericsParamsTokens(generics.params);
-  tokens.push(...paramsTokens);
 
   // Process where predicates if present
   const wherePredicates = generics.where_predicates;
+  const whereTokens: ReviewToken[] = [];
   if (wherePredicates.length > 0) {
-    tokens.push(
-      { Kind: TokenKind.Keyword, Value: "where", HasSuffixSpace: true },
+    whereTokens.push(
+      { Kind: TokenKind.Keyword, Value: "where", HasSuffixSpace: true, HasPrefixSpace: true },
       ...createWherePredicatesTokens(wherePredicates),
     );
   }
 
-  return tokens;
+  return { params: paramsTokens, wherePredicates: whereTokens };
 }
 
 function createGenericsParamsTokens(params: GenericParamDef[]): ReviewToken[] {

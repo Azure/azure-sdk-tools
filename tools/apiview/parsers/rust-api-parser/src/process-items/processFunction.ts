@@ -36,10 +36,10 @@ export function processFunction(item: Item) {
     NavigationDisplayName: item.name || undefined,
   });
 
-  // Add generics and where clauses if present
+  const genericsTokens = processGenerics(item.inner.function.generics);
+  // Add generics params if present
   if (item.inner.function.generics) {
-    const genericsTokens = processGenerics(item.inner.function.generics);
-    reviewLine.Tokens.push(...genericsTokens);
+    reviewLine.Tokens.push(...genericsTokens.params);
   }
 
   // Process function parameters
@@ -100,11 +100,17 @@ export function processFunction(item: Item) {
     reviewLine.Tokens.push(...typeToReviewTokens(item.inner.function.sig.output));
   }
 
+  // Add generics where clauses if present
+  if (item.inner.function.generics) {
+    reviewLine.Tokens.push(...genericsTokens.wherePredicates);
+  }
+
   if (item.inner.function.has_body) {
     reviewLine.Tokens.push({
       Kind: TokenKind.Punctuation,
       Value: "{}",
       HasSuffixSpace: false,
+      HasPrefixSpace: true,
     });
   } else {
     reviewLine.Tokens.push({

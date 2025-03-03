@@ -60,10 +60,15 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
     NavigationDisplayName: item.name || undefined,
   });
 
-  // Add generics if present
+  const genericsTokens = processGenerics(item.inner.struct.generics);
+  // Add generics params if present
   if (item.inner.struct.generics) {
-    const genericsTokens = processGenerics(item.inner.struct.generics);
-    structLine.Tokens.push(...genericsTokens);
+    structLine.Tokens.push(...genericsTokens.params);
+  }
+
+  // Add generics where clauses if present
+  if (item.inner.struct.generics) {
+    structLine.Tokens.push(...genericsTokens.wherePredicates);
   }
 
   // Process struct fields

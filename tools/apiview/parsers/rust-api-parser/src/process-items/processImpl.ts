@@ -50,11 +50,15 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
         LineId: implItem.id.toString() + "_impl",
         Tokens: [
           { Kind: TokenKind.Keyword, Value: "impl" },
-          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait.name },
+          {
+            Kind: TokenKind.TypeName,
+            Value: implItem.inner.impl.trait.name,
+            HasSuffixSpace: false,
+          },
           ...processGenericArgs(implItem.inner.impl.trait.args),
-          { Kind: TokenKind.Punctuation, Value: "for" },
+          { Kind: TokenKind.Punctuation, Value: "for", HasPrefixSpace: true },
           ...typeToReviewTokens(implItem.inner.impl.for),
-          { Kind: TokenKind.Punctuation, Value: "{" },
+          { Kind: TokenKind.Punctuation, Value: "{", HasPrefixSpace: true },
         ],
         Children: implItem.inner.impl.items
           .map((item) => processItem(apiJson.index[item], apiJson))

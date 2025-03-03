@@ -59,10 +59,15 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
     NavigationDisplayName: item.name || undefined,
   });
 
-  // Add generics if present
+  const genericsTokens = processGenerics(item.inner.union.generics);
+  // Add generics params if present
   if (item.inner.union.generics) {
-    const genericsTokens = processGenerics(item.inner.union.generics);
-    unionLine.Tokens.push(...genericsTokens);
+    unionLine.Tokens.push(...genericsTokens.params);
+  }
+
+  // Add generics where clauses if present
+  if (item.inner.union.generics) {
+    unionLine.Tokens.push(...genericsTokens.wherePredicates);
   }
 
   unionLine.Tokens.push({

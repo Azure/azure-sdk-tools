@@ -47,7 +47,17 @@ export function processTypeAlias(item: Item, apiJson: Crate): ReviewLine[] {
 
   // Add the type
   reviewLine.Tokens.push(...typeToReviewTokens(item.inner.type_alias.type));
-  reviewLine.Tokens.push(...processGenerics(item.inner.type_alias.generics));
+  const genericsTokens = processGenerics(item.inner.type_alias.generics);
+  // Add generics params if present
+  if (item.inner.type_alias.generics) {
+    reviewLine.Tokens.push(...genericsTokens.params);
+  }
+
+  // Add generics where clauses if present
+  if (item.inner.type_alias.generics) {
+    reviewLine.Tokens.push(...genericsTokens.wherePredicates);
+  }
+
   // TODO: Add example for type alias with generics
 
   reviewLine.Tokens.push({

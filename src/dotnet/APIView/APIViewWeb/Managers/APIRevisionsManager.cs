@@ -691,7 +691,10 @@ namespace APIViewWeb.Managers
                         var file = apiRevision.Files.FirstOrDefault();
                         file.VersionString = codeFile.VersionString;
                         file.PackageName = codeFile.PackageName;
+                        file.PackageVersion = codeFile.PackageVersion;
+                        file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
                         await _reviewsRepository.UpsertReviewAsync(review);
+                        await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
                         if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
                         {

@@ -1,6 +1,9 @@
 # Release History
 
-## Version 0.3.15 (Unreleased)
+## Version 0.3.16 (2025-03-03)
+Fixed emty package name issue when running parser against pacakge source path instead of wheel. PKG_INFO is not available in this case.
+
+## Version 0.3.15 (2025-02-28)
 Fixed issue where module-level overloads were not being parsed.
 Added support for parsing pyproject.toml-managed packages.
 Updated RelatedToLine for empty lines to show in the diff.

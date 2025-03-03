@@ -110,6 +110,8 @@ class StubGenerator:
             logging.error("Temp path [{0}] is invalid".format(temp_path))
             exit(1)
 
+        if pkg_path == ".":
+            pkg_path = os.path.abspath(".")
         self.pkg_path = pkg_path
         self.temp_path = temp_path
         self.out_path = out_path
@@ -172,10 +174,16 @@ class StubGenerator:
     def generate_tokens(self):
         # TODO: We should install to a virtualenv
         logging.debug("Installing package from {}".format(self.pkg_path))
-        pkg_root_path, pkg_name, version = self._get_pkg_metadata()
         self._install_package()
+        if self.pkg_path.endswith((".whl", ".zip", ".tar.gz")):
+            pkg_root_path, pkg_name, version = self._get_pkg_metadata()
+        else:
+            pkg_name = os.path.split(self.pkg_path)[-1]
+            version = importlib.metadata.version(pkg_name)
+            pkg_root_path = self.pkg_path
+            self.namespace = self.namespace or pkg_name.replace("-", ".")
 
-        logging.debug(
+        logging.info(
             "package name: {0}, version:{1}, namespace:{2}".format(
                 pkg_name, version, self.namespace
             )
@@ -229,7 +237,7 @@ class StubGenerator:
             # Ignore any modules with name starts with "_"
             # For e.g. _generated, _shared etc
             dirs_to_skip = [
-                x for x in subdirs if x.startswith("_") or x.startswith(".")
+                x for x in subdirs if x.startswith("_") or x.startswith(".") or x == "tests" or x == "build"
             ]
             for d in dirs_to_skip:
                 subdirs.remove(d)
@@ -240,11 +248,7 @@ class StubGenerator:
                     os.path.sep, "."
                 )
                 # If namespace has not been set yet, try to find the first __init__.py that's not purely for extension or tests.
-                # Ignore build, which is created when installing a package from source.
-                # Ignore tests, which may have an __init__.py but is not part of the package.
-                if not self.namespace and not module_name.startswith(
-                    ("tests", "build")
-                ):
+                if not self.namespace:
                     self._set_root_namespace(
                         os.path.join(root, INIT_PY_FILE), module_name
                     )
@@ -383,4 +387,4 @@ class StubGenerator:
 
     def _install_package(self):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]
-        check_call(commands, timeout=60)
+        check_call(commands, timeout=120)

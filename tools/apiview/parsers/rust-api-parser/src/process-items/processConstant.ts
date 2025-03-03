@@ -1,8 +1,8 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
-import { typeToString } from "./utils/typeToString";
 import { isConstantItem } from "./utils/typeGuards";
+import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 
 export function processConstant(item: Item) {
   if (!isConstantItem(item)) return;
@@ -29,19 +29,30 @@ export function processConstant(item: Item) {
     Kind: TokenKind.Punctuation,
     Value: ":",
   });
+  reviewLine.Tokens.push(...typeToReviewTokens(item.inner.constant.type));
   reviewLine.Tokens.push({
-    Kind: TokenKind.TypeName,
-    Value: typeToString(item.inner.constant.type),
-    // TODO: const is unused
-    NavigateToId: item.id.toString(),
-    NavigationDisplayName: item.name || undefined,
+    Kind: TokenKind.Punctuation,
+    Value: "=",
+  });
+  reviewLine.Tokens.push({
+    Kind: TokenKind.Text,
+    Value: item.inner.constant.const.expr || "null",
     HasSuffixSpace: false,
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: ";",
   });
-
+  if (item.inner.constant.const.value) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "//",
+    });
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Text,
+      Value: item.inner.constant.const.value,
+    });
+  }
   reviewLines.push(reviewLine);
   return reviewLines;
 }

@@ -6,7 +6,7 @@ import {
   WherePredicate,
 } from "../../../rustdoc-types/output/rustdoc-types";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
-import { typeToString } from "./typeToString";
+import { typeToReviewTokens } from "./typeToReviewTokens";
 
 export function processGenerics(generics: Generics): ReviewToken[] {
   const tokens: ReviewToken[] = [];
@@ -70,11 +70,7 @@ function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewT
     }
 
     if ("bound_predicate" in predicate) {
-      tokens.push({
-        Kind: TokenKind.TypeName,
-        Value: typeToString(predicate.bound_predicate.type),
-        HasSuffixSpace: false,
-      });
+      tokens.push(...typeToReviewTokens(predicate.bound_predicate.type));
       tokens.push({ Kind: TokenKind.Text, Value: ":" });
       tokens.push(...createGenericBoundTokens(predicate.bound_predicate.bounds));
     } else if (
@@ -93,19 +89,13 @@ function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewT
         HasSuffixSpace: false,
       });
     } else if ("eq_predicate" in predicate) {
-      tokens.push({
-        Kind: TokenKind.TypeName,
-        Value: typeToString(predicate.eq_predicate.lhs),
-      });
+      tokens.push(...typeToReviewTokens(predicate.eq_predicate.lhs));
       tokens.push({ Kind: TokenKind.Text, Value: "=" });
-      tokens.push({
-        Kind: TokenKind.TypeName,
-        Value:
-          "type" in predicate.eq_predicate.rhs
-            ? typeToString(predicate.eq_predicate.rhs.type)
-            : "unknown", // Unknown is a placeholder for Const
-        HasSuffixSpace: false,
-      });
+      if ("type" in predicate.eq_predicate.rhs) {
+        tokens.push(...typeToReviewTokens(predicate.eq_predicate.rhs.type));
+      } else {
+        tokens.push({ Kind: TokenKind.Text, Value: "unknown" }); // Unknown is a placeholder for Const
+      }
     }
     return tokens;
   });

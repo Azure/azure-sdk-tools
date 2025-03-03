@@ -1,8 +1,8 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
-import { processStructField } from "./utils/processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { isStaticItem } from "./utils/typeGuards";
+import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 
 /**
  * Processes a static item and adds its documentation to the ReviewLine.
@@ -41,7 +41,7 @@ export function processStatic(item: Item) {
       Kind: TokenKind.Punctuation,
       Value: ":",
     });
-    reviewLine.Tokens.push(processStructField(item.inner.static.type)); // TODO: make sure to encode other attributes too
+    reviewLine.Tokens.push(...typeToReviewTokens(item.inner.static.type)); // TODO: make sure to encode other attributes too
   }
 
   reviewLines.push(reviewLine);

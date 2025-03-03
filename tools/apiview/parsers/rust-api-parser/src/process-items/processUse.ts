@@ -28,6 +28,7 @@ export function processUse(item: Item): ReviewLine[] | undefined {
     Kind: TokenKind.TypeName,
     Value: useValue,
     RenderClasses: ["use"],
+    NavigateToId: item.inner.use.id.toString(),
   });
 
   reviewLines.push(reviewLine);

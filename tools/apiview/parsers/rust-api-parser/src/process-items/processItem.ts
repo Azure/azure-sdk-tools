@@ -6,6 +6,7 @@ import { processFunction } from "./processFunction";
 import { processModule } from "./processModule";
 import { processStatic } from "./processStatic";
 import { processStruct } from "./processStruct";
+import { processStructField } from "./processStructField";
 import { processTrait } from "./processTrait";
 import { processUse } from "./processUse";
 import { processUnion } from "./processUnion";
@@ -41,6 +42,8 @@ export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
       return processConstant(item);
     } else if ("static" in item.inner) {
       return processStatic(item);
+    } else if ("struct_field" in item.inner) {
+      return [processStructField(item)];
     } else if ("extern_type" in item.inner) {
       return null;
     } else if ("macro" in item.inner) {

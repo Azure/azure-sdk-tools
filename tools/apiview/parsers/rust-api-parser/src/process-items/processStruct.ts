@@ -1,10 +1,11 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { ImplProcessResult, processImpl } from "./processImpl";
-import { processStructField } from "./utils/processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isStructItem } from "./utils/typeGuards";
+import { processStructField } from "./processStructField";
+import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 
 /**
  * Processes a struct item and adds its documentation to the ReviewLine.
@@ -83,25 +84,7 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
           structLine.Children = [];
         }
 
-        structLine.Children.push({
-          LineId: fieldItem.id.toString(),
-          Tokens: [
-            {
-              Kind: TokenKind.Keyword,
-              Value: "pub",
-            },
-            {
-              Kind: TokenKind.MemberName,
-              Value: fieldItem.name || "null",
-              HasSuffixSpace: false,
-            },
-            {
-              Kind: TokenKind.Punctuation,
-              Value: ":",
-            },
-            processStructField(fieldItem.inner.struct_field),
-          ],
-        });
+        structLine.Children.push(processStructField(fieldItem));
       }
     });
 
@@ -139,7 +122,7 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
           Kind: TokenKind.Keyword,
           Value: "pub",
         });
-        structLine.Tokens.push(processStructField(fieldItem.inner.struct_field));
+        structLine.Tokens.push(...typeToReviewTokens(fieldItem.inner.struct_field));
       }
     });
 

@@ -1,7 +1,6 @@
 import { ReviewLine, TokenKind, ReviewToken } from "../models/apiview-models";
 import { Crate, Enum, Item, Struct, Union } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
-import { typeToString } from "./utils/typeToString";
 import { isImplItem } from "./utils/typeGuards";
 import {
   isAutoDerivedImpl,
@@ -10,6 +9,7 @@ import {
   getImplsFromItem,
   ImplItem,
 } from "./utils/implTypeGuards";
+import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 
 export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewToken[] {
   const traitImpls = (impls: number[], apiJson: Crate) =>
@@ -50,10 +50,7 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
           { Kind: TokenKind.Keyword, Value: "impl" },
           { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait!.name },
           { Kind: TokenKind.Punctuation, Value: "for" },
-          {
-            Kind: TokenKind.TypeName,
-            Value: typeToString(implItem.inner.impl.for),
-          },
+          ...typeToReviewTokens(implItem.inner.impl.for),
           { Kind: TokenKind.Punctuation, Value: "{" },
         ],
         Children: implItem.inner.impl.items

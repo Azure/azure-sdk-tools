@@ -1,10 +1,9 @@
-import { ReviewLine, ReviewToken, TokenKind } from "../models/apiview-models";
+import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item, Type } from "../../rustdoc-types/output/rustdoc-types";
-import { processStructField } from "./utils/processStructField";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
-import { typeToString } from "./utils/typeToString";
 import { isFunctionItem } from "./utils/typeGuards";
+import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 
 /**
  * Processes a function item and adds its documentation to the ReviewLine.
@@ -81,8 +80,7 @@ export function processFunction(item: Item) {
           Value: ": ",
           HasSuffixSpace: false,
         });
-        const token = processStructField(input[1]);
-        reviewLine.Tokens.push(token);
+        reviewLine.Tokens.push(...typeToReviewTokens(input[1]));
       }
     });
   }
@@ -99,10 +97,7 @@ export function processFunction(item: Item) {
       Kind: TokenKind.Punctuation,
       Value: "->",
     });
-    reviewLine.Tokens.push({
-      Kind: TokenKind.TypeName,
-      Value: typeToString(item.inner.function.sig.output),
-    });
+    reviewLine.Tokens.push(...typeToReviewTokens(item.inner.function.sig.output));
   }
 
   if (item.inner.function.has_body) {

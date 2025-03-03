@@ -67,5 +67,5 @@ export function processTrait(item: Item, apiJson: Crate) {
     IsContextEndLine: true,
   });
   return reviewLines;
-  // TODO: is_dyn_compatible, bounds, implementations
+  // TODO: bounds, implementations
 }

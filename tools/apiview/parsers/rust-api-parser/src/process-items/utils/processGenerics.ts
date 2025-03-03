@@ -4,6 +4,7 @@ import {
   GenericParamDef,
   GenericBound,
   WherePredicate,
+  GenericArgs,
 } from "../../../rustdoc-types/output/rustdoc-types";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
 import { typeToReviewTokens } from "./typeToReviewTokens";
@@ -102,7 +103,7 @@ function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewT
 }
 
 export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
-  return bounds.flatMap((bound, index) => {
+  return bounds.flatMap((bound) => {
     const tokens: ReviewToken[] = [];
     if (tokens.length > 0) {
       tokens.push({ Kind: TokenKind.Text, Value: " + ", HasSuffixSpace: false });
@@ -129,4 +130,41 @@ export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] 
     }
     return tokens;
   });
+}
+
+export function processGenericArgs(args: GenericArgs): ReviewToken[] {
+  let result: ReviewToken[] = [];
+  // Process generic arguments based on their type
+  if ("angle_bracketed" in args) {
+    const processedArgs = args.angle_bracketed.args
+      .filter((arg) => typeof arg === "object" && "type" in arg)
+      .map((arg) => typeToReviewTokens(arg.type))
+      .flatMap((a) => a);
+
+    if (processedArgs.length > 0) {
+      result.push({ Kind: TokenKind.Punctuation, Value: "<", HasSuffixSpace: false });
+      result.push(...processedArgs);
+      result.push({ Kind: TokenKind.Punctuation, Value: ">", HasSuffixSpace: false });
+    }
+  } else if ("parenthesized" in args) {
+    // Add opening parenthesis
+    result.push({ Kind: TokenKind.Punctuation, Value: "(", HasSuffixSpace: false });
+
+    // Process input types
+    args.parenthesized.inputs.forEach((input, index) => {
+      result.push(...typeToReviewTokens(input));
+      if (index < args.parenthesized.inputs.length - 1) {
+        result.push({ Kind: TokenKind.Punctuation, Value: ",", HasSuffixSpace: true });
+      }
+    });
+
+    result.push({ Kind: TokenKind.Punctuation, Value: ")", HasSuffixSpace: false });
+
+    // Process output type if present
+    if (args.parenthesized.output) {
+      result.push({ Kind: TokenKind.Punctuation, Value: " -> ", HasSuffixSpace: false });
+      result.push(...typeToReviewTokens(args.parenthesized.output));
+    }
+  }
+  return result;
 }

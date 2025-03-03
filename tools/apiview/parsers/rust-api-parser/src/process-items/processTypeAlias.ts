@@ -37,7 +37,6 @@ export function processTypeAlias(item: Item, apiJson: Crate): ReviewLine[] {
   reviewLine.Tokens.push({
     Kind: TokenKind.Text,
     Value: item.name || "unknown",
-    HasSuffixSpace: false,
   });
 
   // Add equals sign

@@ -48,7 +48,7 @@ export function processAssocConst(item: Item): ReviewLine[] | null {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
-    Value: "=",
+    Value: " =",
   });
 
   reviewLine.Tokens.push({

@@ -10,6 +10,7 @@ import {
   ImplItem,
 } from "./utils/implTypeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
+import { processGenericArgs } from "./utils/processGenerics";
 
 export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewToken[] {
   const traitImpls = (impls: number[], apiJson: Crate) =>
@@ -44,11 +45,13 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
     .map((implId) => apiJson.index[implId] as ImplItem)
     .filter((implItem) => isImplItem(implItem) && isManualTraitImpl(implItem))
     .flatMap((implItem) => {
+      if (!implItem.inner.impl.trait) return [];
       const reviewLineForImpl: ReviewLine = {
         LineId: implItem.id.toString() + "_impl",
         Tokens: [
           { Kind: TokenKind.Keyword, Value: "impl" },
-          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait!.name },
+          { Kind: TokenKind.TypeName, Value: implItem.inner.impl.trait.name },
+          ...processGenericArgs(implItem.inner.impl.trait.args),
           { Kind: TokenKind.Punctuation, Value: "for" },
           ...typeToReviewTokens(implItem.inner.impl.for),
           { Kind: TokenKind.Punctuation, Value: "{" },

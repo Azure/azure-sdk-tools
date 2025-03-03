@@ -1,5 +1,6 @@
 import { Type } from "../../../rustdoc-types/output/rustdoc-types";
 import { ReviewToken, TokenKind } from "../../models/apiview-models";
+import { processGenericArgs } from "./processGenerics";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
 
 export function typeToReviewTokens(type: Type): ReviewToken[] {
@@ -10,6 +11,18 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
   if (typeof type === "string") {
     return [{ Kind: TokenKind.TypeName, Value: type, HasSuffixSpace: false }];
   } else if ("resolved_path" in type) {
+    if (!type.resolved_path.args) {
+      return [
+        {
+          Kind: TokenKind.TypeName,
+          Value: type.resolved_path.name,
+          HasSuffixSpace: false,
+          NavigateToId: type.resolved_path.id.toString(),
+        },
+      ];
+    }
+
+    // Create base token for the path name
     let result: ReviewToken[] = [
       {
         Kind: TokenKind.TypeName,
@@ -18,43 +31,137 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
         NavigateToId: type.resolved_path.id.toString(),
       },
     ];
-    if (type.resolved_path.args && "angle_bracketed" in type.resolved_path.args) {
-      const args = type.resolved_path.args.angle_bracketed.args
-        .filter((arg) => typeof arg === "object" && "type" in arg)
-        .map((arg) => typeToReviewTokens(arg.type))
-        .flatMap((a) => a);
-      if (args.length > 0) {
-        result.push({ Kind: TokenKind.Punctuation, Value: "<", HasSuffixSpace: false });
-        result = result.concat(args.flatMap((a) => a));
-        result.push({ Kind: TokenKind.Punctuation, Value: ">", HasSuffixSpace: false });
-      }
-    }
-    // TODO: angle_bracketed branch is covered, but parenthesized branch is not
-    // TODO: use type.resolved_path.id for navigation if applicable
+
+    result.push(...processGenericArgs(type.resolved_path.args));
     return result;
   } else if ("dyn_trait" in type) {
-    return [
+    const tokens = [
       { Kind: TokenKind.Punctuation, Value: "(", HasSuffixSpace: false },
       { Kind: TokenKind.Keyword, Value: "dyn" },
       ...type.dyn_trait.traits.flatMap((t, i) => [
-        { Kind: TokenKind.TypeName, Value: t.trait.name },
+        {
+          Kind: TokenKind.TypeName,
+          Value: t.trait.name,
+          HasSuffixSpace: false,
+          NavigateToId: t.trait.id.toString(),
+        },
         i < type.dyn_trait.traits.length - 1
-          ? { Kind: TokenKind.Punctuation, Value: "+ " }
-          : { Kind: TokenKind.Text, Value: "" },
+          ? { Kind: TokenKind.Punctuation, Value: "+ ", HasSuffixSpace: false }
+          : { Kind: TokenKind.Text, Value: "", HasSuffixSpace: false },
       ]),
-      { Kind: TokenKind.Punctuation, Value: ")", HasSuffixSpace: false },
     ];
 
-    // TODO: lifetime param is not being used
-    // TODO: Can extend this to include navigation info; example: &(dyn MyTrait + Sync)
+    // Add lifetime if present
+    if (type.dyn_trait.lifetime && !shouldElideLifetime(type.dyn_trait.lifetime)) {
+      tokens.push({ Kind: TokenKind.Punctuation, Value: "+ ", HasSuffixSpace: false });
+      tokens.push({ Kind: TokenKind.Text, Value: type.dyn_trait.lifetime, HasSuffixSpace: false });
+    }
+
+    tokens.push({ Kind: TokenKind.Punctuation, Value: ")", HasSuffixSpace: false });
+
+    return tokens;
   } else if ("generic" in type) {
     return [{ Kind: TokenKind.TypeName, Value: type.generic, HasSuffixSpace: false }];
   } else if ("primitive" in type) {
     return [{ Kind: TokenKind.TypeName, Value: type.primitive, HasSuffixSpace: false }];
   } else if ("function_pointer" in type) {
-    return [{ Kind: TokenKind.Text, Value: "unknown", HasSuffixSpace: false }];
-    // return `unknown`;
-    // TODO: fix this later
+    const tokens: ReviewToken[] = [];
+
+    // Add generic parameters (for<'a> etc)
+    if (type.function_pointer.generic_params.length > 0) {
+      tokens.push({ Kind: TokenKind.Keyword, Value: "for", HasSuffixSpace: false });
+      tokens.push({ Kind: TokenKind.Punctuation, Value: "<", HasSuffixSpace: false });
+
+      type.function_pointer.generic_params.forEach((param, index) => {
+        tokens.push({ Kind: TokenKind.Text, Value: param.name, HasSuffixSpace: false });
+
+        if (index < type.function_pointer.generic_params.length - 1) {
+          tokens.push({ Kind: TokenKind.Punctuation, Value: ", ", HasSuffixSpace: false });
+        }
+      });
+
+      tokens.push({ Kind: TokenKind.Punctuation, Value: "> ", HasSuffixSpace: false });
+    }
+
+    // Add function modifiers
+    const header = type.function_pointer.header;
+
+    // Handle unsafe
+    if (header.is_unsafe) {
+      tokens.push({ Kind: TokenKind.Keyword, Value: "unsafe", HasSuffixSpace: true });
+    }
+
+    // Handle extern ABI
+    if (header.abi !== "Rust") {
+      tokens.push({ Kind: TokenKind.Keyword, Value: "extern", HasSuffixSpace: true });
+
+      let abiString = "";
+      if (typeof header.abi === "string") {
+        // For simple ABI strings
+        abiString = header.abi;
+      } else {
+        // For complex ABI objects
+        const abiKey = Object.keys(header.abi)[0];
+        if (abiKey) {
+          abiString = abiKey;
+        }
+      }
+
+      if (abiString && abiString !== "Rust") {
+        tokens.push({ Kind: TokenKind.Text, Value: `"${abiString}"`, HasSuffixSpace: true });
+      }
+    }
+
+    // Handle const
+    if (header.is_const) {
+      tokens.push({ Kind: TokenKind.Keyword, Value: "const", HasSuffixSpace: true });
+    }
+
+    // Handle async
+    if (header.is_async) {
+      tokens.push({ Kind: TokenKind.Keyword, Value: "async", HasSuffixSpace: true });
+    }
+
+    // Add fn keyword
+    tokens.push({ Kind: TokenKind.Keyword, Value: "fn", HasSuffixSpace: false });
+
+    // Add parameters
+    tokens.push({ Kind: TokenKind.Punctuation, Value: "(", HasSuffixSpace: false });
+
+    const signature = type.function_pointer.sig;
+    signature.inputs.forEach(([paramName, paramType], index) => {
+      // Add parameter name if present
+      if (paramName) {
+        tokens.push({ Kind: TokenKind.Text, Value: paramName, HasSuffixSpace: false });
+        tokens.push({ Kind: TokenKind.Punctuation, Value: ": ", HasSuffixSpace: false });
+      }
+
+      // Add parameter type
+      tokens.push(...typeToReviewTokens(paramType));
+
+      // Add comma if not the last parameter
+      if (index < signature.inputs.length - 1) {
+        tokens.push({ Kind: TokenKind.Punctuation, Value: ", ", HasSuffixSpace: false });
+      }
+    });
+
+    // Add C-variadic "..." if needed
+    if (signature.is_c_variadic) {
+      if (signature.inputs.length > 0) {
+        tokens.push({ Kind: TokenKind.Punctuation, Value: ", ", HasSuffixSpace: false });
+      }
+      tokens.push({ Kind: TokenKind.Punctuation, Value: "...", HasSuffixSpace: false });
+    }
+
+    tokens.push({ Kind: TokenKind.Punctuation, Value: ")", HasSuffixSpace: false });
+
+    // Add return type if present
+    if (signature.output) {
+      tokens.push({ Kind: TokenKind.Punctuation, Value: " -> ", HasSuffixSpace: false });
+      tokens.push(...typeToReviewTokens(signature.output));
+    }
+
+    return tokens;
   } else if ("tuple" in type) {
     return [
       { Kind: TokenKind.Punctuation, Value: "(", HasSuffixSpace: false },

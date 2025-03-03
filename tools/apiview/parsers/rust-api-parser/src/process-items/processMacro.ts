@@ -24,19 +24,6 @@ export function processMacro(item: Item): ReviewLine[] | null {
     Children: [],
   };
 
-  // Add macro keyword
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Keyword,
-    Value: "macro_rules!",
-  });
-
-  // Add name
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Text,
-    Value: item.name || "unknown",
-    HasSuffixSpace: false,
-  });
-
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: item.inner.macro,

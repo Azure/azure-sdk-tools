@@ -32,7 +32,7 @@ export function processConstant(item: Item) {
   reviewLine.Tokens.push(...typeToReviewTokens(item.inner.constant.type));
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
-    Value: "=",
+    Value: " =",
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.Text,

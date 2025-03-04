@@ -18,14 +18,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Azure/cadl-ranch.git"
+    "url": "git+https://github.com/Azure/azure-sdk-tools.git"
   },
   "author": "Microsoft",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Azure/cadl-ranch/issues"
+    "url": "https://github.com/Azure/azure-sdk-tools/issues"
   },
-  "homepage": "https://github.com/Azure/cadl-ranch#readme",
+  "homepage": "https://github.com/Azure/azure-sdk-tools#readme",
   "dependencies": {
     "pacote": "~21.0.0",
     "semver": "^7.7.1"

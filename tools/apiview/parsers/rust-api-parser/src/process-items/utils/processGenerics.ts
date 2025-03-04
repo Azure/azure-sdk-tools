@@ -104,9 +104,9 @@ function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewT
 }
 
 export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {
-  return bounds.flatMap((bound) => {
+  return bounds.flatMap((bound, i) => {
     const tokens: ReviewToken[] = [];
-    if (tokens.length > 0) {
+    if (i > 0) {
       tokens.push({ Kind: TokenKind.Text, Value: " + ", HasSuffixSpace: false });
     }
     if ("trait_bound" in bound && bound.trait_bound?.trait) {

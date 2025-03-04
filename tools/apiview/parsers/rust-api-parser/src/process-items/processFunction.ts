@@ -65,7 +65,7 @@ export function processFunction(item: Item) {
       if (input[0] === "self") {
         reviewLine.Tokens.push({
           Kind: TokenKind.StringLiteral,
-          Value: input[0],
+          Value: `&${input[0]}`,
           HasSuffixSpace: false,
         });
       } else {

@@ -54,6 +54,7 @@ export const runSdkAutoCustomScript = async (
   context.logger.log('command', `${scriptPath} ${args.join(' ')}`);
   context.logger.log('info', `Config: ${JSON.stringify({ ...runOptions, path: undefined })}`);
   const result: StatusContainer = { status: 'succeeded' };
+  const logIssues: string[] = [];
 
   const env = {
     PWD: path.resolve(options.cwd),
@@ -82,8 +83,8 @@ export const runSdkAutoCustomScript = async (
     });
 
     const prefix = `[${runOptions.logPrefix ?? options.fallbackName ?? path.basename(scriptPath)}]`;
-    listenOnStream(context, result, prefix, child.stdout, runOptions.stdout, 'cmdout');
-    listenOnStream(context, result, prefix, child.stderr, runOptions.stderr, 'cmderr');
+    listenOnStream(context, result, prefix, logIssues, child.stdout, runOptions.stdout, 'cmdout');
+    listenOnStream(context, result, prefix, logIssues, child.stderr, runOptions.stderr, 'cmderr');
 
     cmdRet = await new Promise((resolve) => {
       // tslint:disable-next-line: no-shadowed-variable
@@ -120,6 +121,10 @@ export const runSdkAutoCustomScript = async (
     setSdkAutoStatus(options.statusContext, result.status);
   }
 
+  if(logIssues.length > 0) {
+    vsoLogIssue(removeAnsiEscapeCodes(logIssues.join('\n')));
+  }
+
   return result.status;
 };
 
@@ -127,6 +132,7 @@ const listenOnStream = (
   context: WorkflowContext,
   result: StatusContainer,
   prefix: string,
+  logIssues: string[],
   stream: Readable,
   opts: RunLogOptions | undefined,
   logType: 'cmdout' | 'cmderr'
@@ -149,7 +155,7 @@ const listenOnStream = (
     }
     setSdkAutoStatus(result, lineResult);
     if (context.config.runEnv === 'azureDevOps' && line.toLowerCase().includes("[error]")) {
-      vsoLogIssue(removeAnsiEscapeCodes(line));
+      logIssues.push(line);
     } else {
       context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
     }

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { describe, it } from "mocha";
+import { describe, it } from "vitest";
 import { updatePackageJson, getVersionRange } from "../src/cli/typespec-bump-deps.js";
 
 describe("typespec-bump-deps cli", () => {

@@ -11,10 +11,10 @@
     "watch": "tsc -p ./tsconfig.build.json --watch",
     "build": "tsc -p ./tsconfig.build.json",
     "clean": "rimraf dist/ temp/",
-    "test": "mocha"
+    "test": "vitest run"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
@@ -27,18 +27,17 @@
   },
   "homepage": "https://github.com/Azure/cadl-ranch#readme",
   "dependencies": {
-    "pacote": "~18.0.6",
-    "semver": "^7.6.3"
+    "pacote": "~21.0.0",
+    "semver": "^7.7.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.3.17",
-    "@types/mocha": "^10.0.7",
-    "@types/node": "^22.1.0",
+    "@types/chai": "^5.0.1",
+    "@types/node": "^22.13.9",
     "@types/pacote": "11.1.8",
-    "@types/semver": "^7.5.0",
-    "chai": "^5.1.1",
-    "mocha": "^10.7.0",
-    "ts-node": "^10.9.1",
-    "typescript": "~5.5.4"
+    "@types/semver": "^7.5.8",
+    "chai": "^5.2.0",
+    "vitest": "^3.0.7",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.8.2"
   }
 }

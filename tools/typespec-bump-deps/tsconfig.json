@@ -19,9 +19,8 @@
     "types": ["node"],
     "lib": ["es2019"],
     "experimentalDecorators": true,
-    "skipLibCheck": true, // Issue with Node16 module resolution for now.
     "newLine": "LF",
-    "outDir": "dist",
+    "outDir": "dist"
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }

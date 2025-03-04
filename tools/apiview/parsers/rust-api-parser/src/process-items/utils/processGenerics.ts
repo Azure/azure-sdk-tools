@@ -13,9 +13,6 @@ export function processGenerics(generics: Generics): {
   params: ReviewToken[];
   wherePredicates: ReviewToken[];
 } {
-  // Process generic parameters
-  const paramsTokens = createGenericsParamsTokens(generics.params);
-
   // Process where predicates if present
   const wherePredicates = generics.where_predicates;
   const whereTokens: ReviewToken[] = [];
@@ -26,7 +23,7 @@ export function processGenerics(generics: Generics): {
     );
   }
 
-  return { params: paramsTokens, wherePredicates: whereTokens };
+  return { params: createGenericsParamsTokens(generics.params), wherePredicates: whereTokens };
 }
 
 function createGenericsParamsTokens(params: GenericParamDef[]): ReviewToken[] {

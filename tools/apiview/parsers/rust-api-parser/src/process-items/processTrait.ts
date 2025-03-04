@@ -34,6 +34,7 @@ export function processTrait(item: Item, apiJson: Crate) {
     RenderClasses: ["trait"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
+    HasSuffixSpace: false
   });
 
   const genericsTokens = processGenerics(item.inner.trait.generics);
@@ -43,7 +44,7 @@ export function processTrait(item: Item, apiJson: Crate) {
   }
 
   if (item.inner.trait.bounds) {
-    reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":" });
+    reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":", HasPrefixSpace: false });
     reviewLine.Tokens.push(...createGenericBoundTokens(item.inner.trait.bounds));
   }
 
@@ -55,6 +56,7 @@ export function processTrait(item: Item, apiJson: Crate) {
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
+    HasPrefixSpace: true,
   });
 
   if (item.inner.trait.items) {

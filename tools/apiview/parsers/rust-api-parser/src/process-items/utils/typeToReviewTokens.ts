@@ -55,7 +55,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
 
     // Add lifetime if present
     if (type.dyn_trait.lifetime && !shouldElideLifetime(type.dyn_trait.lifetime)) {
-      tokens.push({ Kind: TokenKind.Punctuation, Value: " +" });
+      tokens.push({ Kind: TokenKind.Punctuation, Value: " +", });
       tokens.push({ Kind: TokenKind.Text, Value: type.dyn_trait.lifetime, HasSuffixSpace: false });
     }
 
@@ -146,7 +146,8 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       { Kind: TokenKind.Punctuation, Value: "&", HasSuffixSpace: false },
       {
         Kind: TokenKind.Keyword,
-        Value: type.borrowed_ref.is_mutable ? "mut" : "",
+        Value: type.borrowed_ref.is_mutable ? "mut " : "",
+        HasSuffixSpace: false
       },
       { Kind: TokenKind.Text, Value: elidedLifetime, HasSuffixSpace: false },
       ...typeToReviewTokens(type.borrowed_ref.type),

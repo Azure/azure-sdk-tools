@@ -70,10 +70,12 @@ _**Predictions made**_
 
 ```json
 {
-  "labels": [
+  "labels" : [
     "Storage",
     "Client"
-  ]
+  ],  
+  "suggestion" : string | null,  
+  "solution" : string | null  
 }
 ```
 
@@ -118,8 +120,9 @@ IF labels were predicted:
             - Create the following comment, mentioning all AzureSdkOwners from the set
                  "@{person1} @{person2}...${personX}"
 
-        - Create the following comment
-             "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
+        IF solution and suggestion are not populated
+          - Create the following comment
+              "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
 
     # Note: No valid AzureSdkOwners means there were no CODEOWNERS entries for the service label OR no
     # CODEOWNERS entries for the service label with AzureSdkOwners OR there is a CODEOWNERS entry with
@@ -132,6 +135,12 @@ IF labels were predicted:
 
     IF "needs-team-triage" is not being added to the issue
          - Add "needs-team-attention" label to the issue
+
+    IF suggestions is populated
+         - Comment with suggestion
+    ELSE IF solution is populated
+         - Comment with solution
+         - Add "issue-addressed" label to issue
 
 ELSE
     - Add "needs-triage" label to the issue

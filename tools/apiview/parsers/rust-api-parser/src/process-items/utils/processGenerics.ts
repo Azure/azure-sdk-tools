@@ -110,12 +110,15 @@ export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] 
       tokens.push({ Kind: TokenKind.Text, Value: " + ", HasSuffixSpace: false });
     }
     if ("trait_bound" in bound && bound.trait_bound?.trait) {
-      tokens.push({
-        Kind: TokenKind.TypeName,
-        Value: bound.trait_bound.trait.name,
-        NavigateToId: bound.trait_bound.trait.id.toString(),
-        HasSuffixSpace: false,
-      });
+      tokens.push(
+        {
+          Kind: TokenKind.TypeName,
+          Value: bound.trait_bound.trait.name,
+          NavigateToId: bound.trait_bound.trait.id.toString(),
+          HasSuffixSpace: false,
+        },
+        ...processGenericArgs(bound.trait_bound.trait.args),
+      );
     } else if ("outlives" in bound) {
       tokens.push({
         Kind: TokenKind.TypeName,
@@ -145,6 +148,42 @@ export function processGenericArgs(args: GenericArgs): ReviewToken[] {
     if (processedArgs.length > 0) {
       result.push({ Kind: TokenKind.Punctuation, Value: "<", HasSuffixSpace: false });
       result.push(...processedArgs);
+      result.push({ Kind: TokenKind.Punctuation, Value: ">", HasSuffixSpace: false });
+    }
+
+    if (args.angle_bracketed.constraints.length > 0) {
+      result.push({ Kind: TokenKind.Punctuation, Value: "<", HasSuffixSpace: false });
+      result.push(
+        ...args.angle_bracketed.constraints.flatMap((c) => {
+          // Process constraint name
+          const tokens: ReviewToken[] = [{ Kind: TokenKind.TypeName, Value: c.name }];
+
+          // Process constraint binding
+          if (c.binding) {
+            if ("equality" in c.binding) {
+              tokens.push({ Kind: TokenKind.Punctuation, Value: "=", HasSuffixSpace: true });
+              // Handle the term on the right side of the equality
+              if ("type" in c.binding.equality) {
+                tokens.push(...typeToReviewTokens(c.binding.equality.type));
+              } else if ("constant" in c.binding.equality) {
+                tokens.push({ Kind: TokenKind.Text, Value: c.binding.equality.constant.expr });
+              }
+            } else if ("constraint" in c.binding) {
+              tokens.push({ Kind: TokenKind.Punctuation, Value: ":", HasSuffixSpace: true });
+              tokens.push(...createGenericBoundTokens(c.binding.constraint));
+            }
+          }
+
+          // Process constraint arguments if present
+          if (c.args) {
+            tokens.push(...processGenericArgs(c.args));
+          }
+
+          tokens.push({ Kind: TokenKind.Punctuation, Value: ",", HasSuffixSpace: true });
+          return tokens;
+        }),
+      );
+      result.pop(); // Remove the last comma
       result.push({ Kind: TokenKind.Punctuation, Value: ">", HasSuffixSpace: false });
     }
   } else if ("parenthesized" in args) {

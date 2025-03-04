@@ -3,7 +3,7 @@ import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { isTraitItem } from "./utils/typeGuards";
-import { processGenerics } from "./utils/processGenerics";
+import { createGenericBoundTokens, processGenerics } from "./utils/processGenerics";
 
 /**
  * Processes a trait item and adds its documentation to the ReviewLine.
@@ -40,6 +40,11 @@ export function processTrait(item: Item, apiJson: Crate) {
   // Add generics params if present
   if (item.inner.trait.generics) {
     reviewLine.Tokens.push(...genericsTokens.params);
+  }
+
+  if (item.inner.trait.bounds) {
+    reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":" });
+    reviewLine.Tokens.push(...createGenericBoundTokens(item.inner.trait.bounds));
   }
 
   // Add generics where clauses if present

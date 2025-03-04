@@ -46,15 +46,16 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
           HasSuffixSpace: false,
           NavigateToId: t.trait.id.toString(),
         },
+        ...processGenericArgs(t.trait.args),
         i < type.dyn_trait.traits.length - 1
-          ? { Kind: TokenKind.Punctuation, Value: "+ ", HasSuffixSpace: false }
+          ? { Kind: TokenKind.Punctuation, Value: " +" }
           : { Kind: TokenKind.Text, Value: "", HasSuffixSpace: false },
       ]),
     ];
 
     // Add lifetime if present
     if (type.dyn_trait.lifetime && !shouldElideLifetime(type.dyn_trait.lifetime)) {
-      tokens.push({ Kind: TokenKind.Punctuation, Value: "+ ", HasSuffixSpace: false });
+      tokens.push({ Kind: TokenKind.Punctuation, Value: " +" });
       tokens.push({ Kind: TokenKind.Text, Value: type.dyn_trait.lifetime, HasSuffixSpace: false });
     }
 

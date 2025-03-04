@@ -14,12 +14,7 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
   }
 
   // Process derives and impls
-  let implResult: ImplProcessResult = {
-    deriveTokens: [],
-    implBlock: null,
-    closingBrace: null,
-    traitImpls: [],
-  };
+  let implResult: ImplProcessResult;
   if (item.inner.enum.impls) {
     implResult = processImpl({ ...item, inner: { enum: item.inner.enum } }, apiJson);
   }
@@ -98,8 +93,7 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
   });
 
   if (implResult.implBlock) {
-    reviewLines.push(implResult.implBlock);
-    reviewLines.push(implResult.closingBrace);
+    reviewLines.push(...implResult.implBlock);
   }
   if (implResult.traitImpls.length > 0) {
     reviewLines.push(...implResult.traitImpls);

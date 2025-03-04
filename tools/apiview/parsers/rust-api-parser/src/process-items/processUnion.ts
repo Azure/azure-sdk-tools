@@ -21,12 +21,7 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
   }
 
   // Process derives and impls
-  let implResult: ImplProcessResult = {
-    deriveTokens: [],
-    implBlock: null,
-    closingBrace: null,
-    traitImpls: [],
-  };
+  let implResult: ImplProcessResult;
   if (item.inner.union && item.inner.union.impls) {
     implResult = processImpl({ ...item, inner: { union: item.inner.union } }, apiJson);
   }
@@ -92,8 +87,7 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
   });
 
   if (implResult.implBlock) {
-    reviewLines.push(implResult.implBlock);
-    reviewLines.push(implResult.closingBrace);
+    reviewLines.push(...implResult.implBlock);
   }
   if (implResult.traitImpls.length > 0) {
     reviewLines.push(...implResult.traitImpls);

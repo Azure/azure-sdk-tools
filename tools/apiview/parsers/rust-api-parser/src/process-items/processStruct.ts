@@ -22,12 +22,7 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
   }
 
   // Process derives and impls
-  let implResult: ImplProcessResult = {
-    deriveTokens: [],
-    implBlock: null,
-    closingBrace: null,
-    traitImpls: [],
-  };
+  let implResult: ImplProcessResult;
   if (item.inner.struct.impls) {
     implResult = processImpl({ ...item, inner: { struct: item.inner.struct } }, apiJson);
   }
@@ -151,8 +146,7 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
   }
 
   if (implResult.implBlock) {
-    reviewLines.push(implResult.implBlock);
-    reviewLines.push(implResult.closingBrace);
+    reviewLines.push(...implResult.implBlock);
   }
   if (implResult.traitImpls.length > 0) {
     reviewLines.push(...implResult.traitImpls);

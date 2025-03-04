@@ -34,7 +34,7 @@ export function processTrait(item: Item, apiJson: Crate) {
     RenderClasses: ["trait"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
-    HasSuffixSpace: false
+    HasSuffixSpace: false,
   });
 
   const genericsTokens = processGenerics(item.inner.trait.generics);

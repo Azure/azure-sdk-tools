@@ -86,8 +86,7 @@ function processImpls(impls: number[], apiJson: Crate): ReviewLine[] {
 
 export interface ImplProcessResult {
   deriveTokens: ReviewToken[];
-  implBlock: ReviewLine;
-  closingBrace: ReviewLine;
+  implBlock: ReviewLine[];
   traitImpls: ReviewLine[];
 }
 
@@ -101,30 +100,38 @@ export function processImpl(
   const impls = getImplsFromItem(item);
   const deriveTokens = processAutoTraitImpls(impls, apiJson);
 
-  const implBlock: ReviewLine = {
-    LineId: item.id.toString() + "_impl",
-    Tokens: [
-      { Kind: TokenKind.Keyword, Value: "impl" },
-      {
-        Kind: TokenKind.TypeName,
-        Value: item.name || "null",
-        RenderClasses: ["impl"],
-        NavigateToId: item.id.toString(),
-        NavigationDisplayName: item.name || undefined,
-      },
-      { Kind: TokenKind.Punctuation, Value: "{" },
-    ],
-    Children: processImpls(impls, apiJson).filter((item) => item != null),
-  };
+  // Process children first to check if they're empty
+  const children = processImpls(impls, apiJson).filter((item) => item != null);
 
-  const closingBrace: ReviewLine = {
-    RelatedToLine: item.id.toString() + "_impl",
-    Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
-  };
+  // Only create an implBlock if there are children
+  const implBlock: ReviewLine[] =
+    children.length === 0
+      ? [] // Empty implBlock if no children
+      : [
+          {
+            LineId: item.id.toString() + "_impl",
+            Tokens: [
+              { Kind: TokenKind.Keyword, Value: "impl" },
+              {
+                Kind: TokenKind.TypeName,
+                Value: item.name || "null",
+                RenderClasses: ["impl"],
+                NavigateToId: item.id.toString(),
+                NavigationDisplayName: item.name || undefined,
+              },
+              { Kind: TokenKind.Punctuation, Value: "{" },
+            ],
+            Children: children,
+          },
+          {
+            RelatedToLine: item.id.toString() + "_impl",
+            Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+          },
+        ];
 
   const traitImpls = processOtherTraitImpls(impls, apiJson);
 
-  return { deriveTokens, implBlock, closingBrace, traitImpls };
+  return { deriveTokens, implBlock, traitImpls };
   // TODO: generics unused
   // TODO: provided_trait_methods unused
   // TODO: trait

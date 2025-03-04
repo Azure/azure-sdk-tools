@@ -28,6 +28,17 @@ spec:
         {{- include "stress-test-addons.init-env" $ctx | nindent 8 }}
       containers:
       - name: stresswatcher
+        # Restart the pod every ~24 hours at night to pick up any automatic image updates from our pipeline.
+        # This way we get fewer security/compliance flags from out of date dependencies in the base image.
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - exit $(test $(date +%H) -eq 9 && echo 1 || echo 0)
+          failureThreshold: 1
+          initialDelaySeconds: 3600
+          periodSeconds: 3600
         imagePullPolicy: Always
         image: azsdkengsys.azurecr.io/stress/watcher:{{ .Values.tag }}
         command: ["sh", "-c"]

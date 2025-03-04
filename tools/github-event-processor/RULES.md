@@ -107,23 +107,21 @@ This is a stand-alone service providing a REST API which requires a service key 
 - Query AI label service for suggestions:
 
 ```text
-IF labels were predicted:
-    - Assign returned labels to the issue
+IF ResponseType is not 'Empty':
+  - Assign returned labels to the issue
 
-    IF service and category labels have AzureSdkOwners (in CODEOWNERS):
-        IF a single AzureSdkOwner:
-            - Assign the AzureSdkOwner issue
-        ELSE
-            - Assign a random AzureSdkOwner from the set to the issue
-            - Create the following comment, mentioning all AzureSdkOwners from the set
-                 "@{person1} @{person2}...${personX}"
-
-        - Create the following comment
-             "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
-
-    # Note: No valid AzureSdkOwners means there were no CODEOWNERS entries for the service label OR no
-    # CODEOWNERS entries for the service label with AzureSdkOwners OR there is a CODEOWNERS entry with
-    # AzureSdkOwners but none of them have permissions to be assigned to an issue for the repository.
+  IF service and category labels have AzureSdkOwners (in CODEOWNERS):
+      IF a single AzureSdkOwner:
+          - Assign the AzureSdkOwner issue
+      ELSE
+          - Assign a random AzureSdkOwner from the set to the issue
+          - Create the following comment, mentioning all AzureSdkOwners from the set
+                "@{person1} @{person2}...${personX}"
+                                  
+  # Note: No valid AzureSdkOwners means there were no CODEOWNERS entries for the service label OR no
+  # CODEOWNERS entries for the service label with AzureSdkOwners OR there is a CODEOWNERS entry with
+  # AzureSdkOwners but none of them have permissions to be assigned to an issue for the repository.
+  IF ResponseType is not Solution
     IF there are no valid AzureSdkOwners, but there are ServiceOwners, and the ServiceAttention rule is enabled
     for the repository
         - Add "Service Attention" label to the issue and apply the logic from the "Service Attention" rule
@@ -131,10 +129,25 @@ IF labels were predicted:
         - Add "needs-team-triage" (at this point it owners cannot be determined for this issue)
 
     IF "needs-team-triage" is not being added to the issue
-         - Add "needs-team-attention" label to the issue
+          - Add "needs-team-attention" label to the issue
+
+  - Comment on Issue
+
+  IF ResponseType is 'Labeler'     
+      - Create the following comment
+            "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
+  ELSE IF ResponseType is 'Solution' or 'Suggestion'
+      - Create comment with Responses Comment.
+
+  - Close solved Issue
+
+  IF ResponseType is 'Solution'
+      - Close Issue
+      - Add "issue-addressed"        
+        
 
 ELSE
-    - Add "needs-triage" label to the issue
+  - Add "needs-triage" label to the issue
 
 ```
 

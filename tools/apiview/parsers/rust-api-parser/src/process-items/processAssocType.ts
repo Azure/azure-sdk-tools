@@ -53,7 +53,7 @@ export function processAssocType(item: Item): ReviewLine[] | null {
   if (assocType.type) {
     reviewLine.Tokens.push({
       Kind: TokenKind.Punctuation,
-      Value: "=",
+      Value: " =",
     });
     reviewLine.Tokens.push(...typeToReviewTokens(assocType.type));
   }

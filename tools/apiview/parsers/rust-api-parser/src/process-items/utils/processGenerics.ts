@@ -137,14 +137,25 @@ export function processGenericArgs(args: GenericArgs): ReviewToken[] {
   let result: ReviewToken[] = [];
   // Process generic arguments based on their type
   if ("angle_bracketed" in args) {
-    const processedArgs = args.angle_bracketed.args
-      .filter((arg) => typeof arg === "object" && "type" in arg)
-      .map((arg) => typeToReviewTokens(arg.type))
-      .flatMap((a) => a);
+    // Filter valid args that have a type property
+    const validArgs = args.angle_bracketed.args.filter(
+      (arg) => typeof arg === "object" && "type" in arg,
+    );
 
-    if (processedArgs.length > 0) {
+    if (validArgs.length > 0) {
       result.push({ Kind: TokenKind.Punctuation, Value: "<", HasSuffixSpace: false });
-      result.push(...processedArgs);
+
+      // Process each argument and add comma between them
+      validArgs.forEach((arg, index) => {
+        // Add the argument tokens
+        result.push(...typeToReviewTokens(arg.type));
+
+        // Add comma after each argument except the last one
+        if (index < validArgs.length - 1) {
+          result.push({ Kind: TokenKind.Punctuation, Value: ",", HasSuffixSpace: true });
+        }
+      });
+
       result.push({ Kind: TokenKind.Punctuation, Value: ">", HasSuffixSpace: false });
     }
 

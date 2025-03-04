@@ -12,29 +12,21 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
   if (typeof type === "string") {
     return [{ Kind: TokenKind.TypeName, Value: type, HasSuffixSpace: false }];
   } else if ("resolved_path" in type) {
+    // Create the base token for the type name
+    const baseToken: ReviewToken = {
+      Kind: TokenKind.TypeName,
+      Value: type.resolved_path.name || "unnamed",
+      HasSuffixSpace: false,
+      NavigateToId: type.resolved_path.id.toString(),
+    };
+
+    // If there are no generic arguments, just return the base token
     if (!type.resolved_path.args) {
-      return [
-        {
-          Kind: TokenKind.TypeName,
-          Value: type.resolved_path.name,
-          HasSuffixSpace: false,
-          NavigateToId: type.resolved_path.id.toString(),
-        },
-      ];
+      return [baseToken];
     }
 
-    // Create base token for the path name
-    let result: ReviewToken[] = [
-      {
-        Kind: TokenKind.TypeName,
-        Value: type.resolved_path.name,
-        HasSuffixSpace: false,
-        NavigateToId: type.resolved_path.id.toString(),
-      },
-    ];
-
-    result.push(...processGenericArgs(type.resolved_path.args));
-    return result;
+    // Otherwise combine the base token with its generic arguments
+    return [baseToken, ...processGenericArgs(type.resolved_path.args)];
   } else if ("dyn_trait" in type) {
     const tokens = [
       { Kind: TokenKind.Punctuation, Value: "(", HasSuffixSpace: false },
@@ -156,7 +148,6 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
   } else if ("qualified_path" in type) {
     return [
       ...typeToReviewTokens(type.qualified_path.self_type),
-      { Kind: TokenKind.Text, Value: " as ", HasSuffixSpace: false },
       {
         Kind: TokenKind.TypeName,
         Value: type.qualified_path.trait ? type.qualified_path.trait.name + "::" : "",

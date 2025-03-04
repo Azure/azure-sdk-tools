@@ -1,5 +1,9 @@
 # Release
 
+## 2025-02-21 - 0.1.10
+
+- Combine all log issues to one entry for devops
+
 ## 2025-02-21 - 0.1.9
 
 - Fixed some warnings output

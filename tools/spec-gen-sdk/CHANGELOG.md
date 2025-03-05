@@ -1,8 +1,9 @@
 # Release
 
-## 2025-02-21 - 0.1.10
+## 2025-03-04 - 0.2.0
 
-- Combine all log issues to one entry for devops
+- Combined all logging errors from custom scripts into a single entry for devops
+- Removed the dependency on the simple-git library and eliminated unused functions
 
 ## 2025-02-21 - 0.1.9
 

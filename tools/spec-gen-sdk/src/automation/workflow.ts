@@ -3,7 +3,6 @@ import * as _ from 'lodash';
 import * as fs from 'fs';
 import { default as Transport } from 'winston-transport';
 import { findSDKToGenerateFromTypeSpecProject } from '../utils/typespecUtils';
-import simpleGit, { SimpleGit, SimpleGitOptions } from 'simple-git';
 import { repoKeyToString } from '../utils/repo';
 import { runSdkAutoCustomScript, setSdkAutoStatus } from '../utils/runScript';
 import {
@@ -21,7 +20,7 @@ import { findSwaggerToSDKConfiguration } from '../utils/readme';
 import { getInitOutput } from '../types/InitOutput';
 import { MessageRecord } from '../types/Message';
 import { sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, validateSdkSuppressionsFile } from '../types/sdkSuppressions';
-import { parseYamlContent, removeDuplicatesFromRelatedFiles } from '../utils/utils';
+import { parseYamlContent } from '../utils/utils';
 import { SDKSuppressionContentList } from '../utils/handleSuppressionLines';
 import { SdkAutoContext } from './entrypoint';
 
@@ -34,22 +33,12 @@ export const branchMain = 'main';
 export const branchSecondary = 'secondary';
 export const branchBase = 'base';
 
-export const simpleGitOptions: SimpleGitOptions = {
-  baseDir: process.cwd(),
-  binary: 'git',
-  maxConcurrentProcesses: 4
-} as SimpleGitOptions;
-
 export enum FailureType {
   CodegenFailed = 'Code Generator Failed',
   PipelineFrameworkFailed = 'Pipeline Framework Failed'
 }
 
 export type WorkflowContext = SdkAutoContext & {
-  specRepo: SimpleGit;
-  specFolder: string;
-  sdkRepo: SimpleGit;
-  sdkFolder: string;
   sdkArtifactFolder?: string;
   sdkApiViewArtifactFolder?: string;
   pendingPackages: PackageData[];
@@ -78,16 +67,11 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
   });
   context.logger.add(captureTransport);
 
-  const specContext = workflowInitSpecRepo(context);
-  const sdkContext = workflowInitSdkRepo(context);
-
   const tmpFolder = path.join(context.config.workingFolder, `${context.sdkRepoConfig.mainRepository.name}_tmp`);
   fs.mkdirSync(tmpFolder, { recursive: true });
 
   return {
     ...context,
-    ...specContext,
-    ...sdkContext,
     pendingPackages: [],
     handledPackages: [],
     extraResultRecords: [],
@@ -166,7 +150,7 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
   // only needs to check the two config provided case when both config enable the sdk generation or both config disable the sdk generation
   // the last case is the normal case, only one config enabled the sdk generation
   if (enabledSdkForTspConfig && enabledSdkForReadme) {
-    throw new Error(`SDK generation configuration is enabled for both ${context.config.tspConfigPath} and ${context.config.readmePath}. You should enable only one of them.`);
+    throw new Error(`SDK generation configuration is enabled for both ${context.config.tspConfigPath} and ${context.config.readmePath}. Refer to https://aka.ms/azsdk/spec-gen-sdk-config to disable sdk configuration from one of them.`);
   } else if (!enabledSdkForTspConfig && !enabledSdkForReadme) {
     context.status = 'notEnabled';
     context.logger.warn(`No SDKs are enabled for generation. Please enable them in either the corresponding tspconfig.yaml or readme.md file.`);
@@ -250,7 +234,7 @@ export const workflowInitGetSdkSuppressionsYml = async (
     // Use file parsing to obtain yaml content and check if the suppression file has any grammar errors
     const sdkSuppressionFilesParseErrorTotal: string[] = [];
     let suppressionFileData: string = '';
-    const filePath = path.join(context.specFolder, sdkSuppressionFilePath);
+    const filePath = path.join(context.config.localSpecRepoPath, sdkSuppressionFilePath);
     try {
       suppressionFileData = fs.readFileSync(filePath).toString();
     } catch (error) {
@@ -283,22 +267,6 @@ export const workflowInitGetSdkSuppressionsYml = async (
   return suppressionFileMap;
 };
 
-const workflowInitSpecRepo = (
-  context: SdkAutoContext,
-) => {
-  const specFolder = context.config.localSpecRepoPath;
-  const specRepo = simpleGit({ ...simpleGitOptions, baseDir: specFolder });
-  return { specFolder, specRepo };
-}
-
-const workflowInitSdkRepo = (
-  context: SdkAutoContext,
-) => {
-  const sdkFolder = context.config.localSdkRepoPath;
-  const sdkRepo = simpleGit({ ...simpleGitOptions, baseDir: sdkFolder });
-  return { sdkFolder, sdkRepo };
-};
-
 const fileInitInput = 'initInput.json';
 const fileInitOutput = 'initOutput.json';
 const workflowCallInitScript = async (context: WorkflowContext) => {
@@ -314,7 +282,7 @@ const workflowCallInitScript = async (context: WorkflowContext) => {
 
   context.logger.log('section', `Call initScript`);
   await runSdkAutoCustomScript(context, initScriptConfig, {
-    cwd: context.sdkFolder,
+    cwd: context.config.localSdkRepoPath,
     statusContext: context,
     argTmpFileList: [fileInitInput, fileInitOutput]
   });
@@ -340,7 +308,7 @@ const workflowCallGenerateScript = async (
   const statusContext = { status: 'succeeded' as SDKAutomationState };
   let generateOutput: GenerateOutput | undefined = undefined;
   const generateInput: GenerateInput = {
-    specFolder: path.relative(context.sdkFolder, context.specFolder),
+    specFolder: path.relative(context.config.localSdkRepoPath, context.config.localSpecRepoPath),
     headSha: context.config.specCommitSha,
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
     changedFiles,
@@ -361,24 +329,18 @@ const workflowCallGenerateScript = async (
   context.logger.log('section', 'Call generateScript');
 
 
+  // One of relatedTypeSpecProjectFolder and relatedReadmeMdFiles must be non-empty
   if (relatedTypeSpecProjectFolder?.length > 0) {
     generateInput.relatedTypeSpecProjectFolder = relatedTypeSpecProjectFolder;
-  }
-
-  // Duplicate relatedTypeSpecProjectFolder and relatedReadmeMdFiles paths files to avoid generate twice
-  // If path is both in relatedTypeSpecProjectFolder and relatedReadmeMdFiles, it will be keep relatedTypeSpecProjectFolder and removed from relatedReadmeMdFiles
-  if (relatedReadmeMdFiles?.length > 0) {
-    const filteredReadmeMdFiles = removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder, relatedReadmeMdFiles, context);
-    if (filteredReadmeMdFiles && filteredReadmeMdFiles?.length > 0) {
-      generateInput.relatedReadmeMdFiles = filteredReadmeMdFiles;
-    }
+  } else {
+    generateInput.relatedReadmeMdFiles = relatedReadmeMdFiles;
   }
 
   writeTmpJsonFile(context, fileGenerateInput, generateInput);
   deleteTmpJsonFile(context, fileGenerateOutput);
 
   await runSdkAutoCustomScript(context, context.swaggerToSdkConfig.generateOptions.generateScript, {
-    cwd: context.sdkFolder,
+    cwd: context.config.localSdkRepoPath,
     argTmpFileList: [fileGenerateInput, fileGenerateOutput],
     statusContext
   });

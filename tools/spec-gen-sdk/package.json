@@ -5,7 +5,7 @@
     "email": "azsdkteam@microsoft.com",
     "url": "https://github.com/Azure/azure-sdk-tools"
   },
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "A TypeScript implementation of the API specification to SDK tool",
   "tags": [
     "spec-gen-sdk"
@@ -39,7 +39,6 @@
     "lodash": "^4.17.20",
     "marked": "^15.0.6",
     "prettier": "2.1.2",
-    "simple-git": "^3.16.0",
     "winston": "^3.3.3",
     "winston-transport": "^4.4.0",
     "yaml": "^2.7.0",

@@ -36,7 +36,7 @@ const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: Package
   context.logger.log('section', 'Call BuildScript');
 
   await runSdkAutoCustomScript(context, runOptions, {
-    cwd: context.sdkFolder,
+    cwd: context.config.localSdkRepoPath,
     fallbackName: 'Build',
     argList: [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths],
     statusContext: pkg
@@ -57,7 +57,7 @@ const workflowPkgCallChangelogScript = async (context: WorkflowContext, pkg: Pac
   } else {
     context.logger.log('section', 'Call ChangelogScript');
     const result = await runSdkAutoCustomScript(context, runOptions, {
-      cwd: context.sdkFolder,
+      cwd: context.config.localSdkRepoPath,
       fallbackName: 'Changelog',
       argList: [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths],
       statusContext: pkg
@@ -87,7 +87,7 @@ const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: Package
   context.logger.info(`Search artifact with: ${searchRegex}`);
   const folders = [pkg.relativeFolderPath, ...pkg.extraRelativeFolderPaths];
   if (searchOption.searchFolder) {
-    if (fs.existsSync(path.join(context.sdkFolder, searchOption.searchFolder))) {
+    if (fs.existsSync(path.join(context.config.localSdkRepoPath, searchOption.searchFolder))) {
       folders.push(searchOption.searchFolder);
     } else {
       context.logger.warn(`Skip artifact folder because it doesn't exist: ${searchOption.searchFolder}`);
@@ -95,12 +95,12 @@ const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: Package
   }
 
   let files = await FileHound.create()
-    .paths(...folders.map((packageFolder) => path.join(context.sdkFolder, packageFolder)))
+    .paths(...folders.map((packageFolder) => path.join(context.config.localSdkRepoPath, packageFolder)))
     .addFilter((file) => {
       return searchRegex.test(file.getName());
     })
     .find();
-  files = files.map((filePath) => path.relative(context.sdkFolder, filePath));
+  files = files.map((filePath) => path.relative(context.config.localSdkRepoPath, filePath));
 
   context.logger.info(`${files.length} artifact found:`);
   for (const artifactPath of files) {
@@ -141,8 +141,8 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   for (const artifactPath of pkg.artifactPaths) {
     const fileName = path.basename(artifactPath);
     if (context.config.runEnv !== 'test') {
-      context.logger.info(`Copy SDK artifact ${fileName} from ${path.join(context.sdkFolder, artifactPath)} to ${path.join(destination, fileName)}`);
-      copyFileSync(path.join(context.sdkFolder, artifactPath), path.join(destination, fileName));
+      context.logger.info(`Copy SDK artifact ${fileName} from ${path.join(context.config.localSdkRepoPath, artifactPath)} to ${path.join(destination, fileName)}`);
+      copyFileSync(path.join(context.config.localSdkRepoPath, artifactPath), path.join(destination, fileName));
     }
   }
 };
@@ -162,8 +162,8 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
   context.sdkApiViewArtifactFolder = destination;
   console.log(`##vso[task.setVariable variable=GeneratedSDK.HasApiViewArtifact]true`);
   const fileName = path.basename(pkg.apiViewArtifactPath);
-  context.logger.info(`Copy apiView artifact from ${path.join(context.sdkFolder, pkg.apiViewArtifactPath)} to ${path.join(destination, fileName)}`);
-  copyFileSync(path.join(context.sdkFolder, pkg.apiViewArtifactPath), path.join(destination, fileName));
+  context.logger.info(`Copy apiView artifact from ${path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath)} to ${path.join(destination, fileName)}`);
+  copyFileSync(path.join(context.config.localSdkRepoPath, pkg.apiViewArtifactPath), path.join(destination, fileName));
 };
 
 const fileInstallInstructionInput = 'installInstructionInput.json';
@@ -191,7 +191,7 @@ const workflowPkgCallInstallInstructionScript = async (
   deleteTmpJsonFile(context, fileInstallInstructionOutput);
 
   const result = await runSdkAutoCustomScript(context, runOptions, {
-    cwd: context.sdkFolder,
+    cwd: context.config.localSdkRepoPath,
     fallbackName: 'Inst',
     argTmpFileList: [fileInstallInstructionInput, fileInstallInstructionOutput],
     statusContext: context

@@ -1,6 +1,5 @@
 import { parseSemverVersionString } from '../src/utils/parseSemverVersionString';
-import { removeAnsiEscapeCodes, removeDuplicatesFromRelatedFiles, diffStringArrays, extractPathFromSpecConfig } from '../src/utils/utils';
-import { WorkflowContext } from '../src/automation/workflow';
+import { removeAnsiEscapeCodes, diffStringArrays, extractPathFromSpecConfig } from '../src/utils/utils';
 import * as typespecUtils from '../src/utils/typespecUtils';
 import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
 import path from 'path';
@@ -173,53 +172,6 @@ describe('getTypeSpecProjectResourceProvider', () => {
     const typespecProject = 'specification/cognitiveservices/ContentSafety/a/b/c';
     const res = typespecUtils.getTypeSpecProjectResourceProvider(typespecProject);
     expect(res).toEqual('ContentSafety/a/b/c');
-  })
-})
-
-describe('remove relatedTypeSpecProjectFolder & relatedReadmeMdFiles duplicates', () => {
-  const context = {
-    specFolder: 'path/to/specs',
-    logger: {
-      info: jest.fn() as unknown,
-    }
-  } as WorkflowContext;
-
-  it('test dup only resource-manage', () => {
-    const relatedTypeSpecProjectFolder = [
-      "specification/azurefleet/AzureFleet.Management",
-    ];
-    const relatedReadmeMdFiles = [
-      "specification/appcomplianceautomation/resource-manager/readme.md",
-      "specification/azurefleet/resource-manager/readme.md",
-    ]
-    const res = removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder, relatedReadmeMdFiles, context);
-    expect(res).toEqual([
-      'specification/appcomplianceautomation/resource-manager/readme.md'
-    ])
-  })
-
-  it('test dup only data-plane', () => {
-    const relatedTypeSpecProjectFolder = [
-      "specification/cognitiveservices/ContentSafety",
-    ];
-    const relatedReadmeMdFiles = [
-      "specification/cognitiveservices/data-plane/ContentSafety/readme.md",
-    ];
-    jest.spyOn(typespecUtils, 'getTypeSpecOutputFolder').mockReturnValue('data-plane/ContentSafety');
-    const res = removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder, relatedReadmeMdFiles, context);
-    expect(res).toEqual([]);
-  })
-
-  it('test dup only data-plane', () => {
-    const relatedTypeSpecProjectFolder = [
-      "specification/cognitiveservices/ContentSafety",
-    ];
-    const relatedReadmeMdFiles = [
-      "specification/cognitiveservices/data-plane/ContentSafety/readme.md",
-    ];
-    jest.spyOn(typespecUtils, 'getTypeSpecOutputFolder').mockReturnValue('data-plane/ContentSafety1');
-    const res = removeDuplicatesFromRelatedFiles(relatedTypeSpecProjectFolder, relatedReadmeMdFiles, context);
-    expect(res).toEqual(["specification/cognitiveservices/data-plane/ContentSafety/readme.md"]);
   })
 })
 

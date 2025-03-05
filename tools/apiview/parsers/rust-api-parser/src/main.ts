@@ -2,6 +2,7 @@ import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
 import { CodeFile } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
+import { reexportLines } from "./process-items/processUse";
 
 function main() {
   // Read the JSON file
@@ -14,7 +15,7 @@ function main() {
 
   const data = fs.readFileSync(inputFilePath, "utf8");
   // Parse the JSON data
-  let apiJson: Crate = JSON.parse(data);
+  const apiJson: Crate = JSON.parse(data);
 
   let hasFormatMismatch = false;
   if (apiJson.format_version !== FORMAT_VERSION) {
@@ -36,6 +37,14 @@ function main() {
     const reviewLines = processItem(apiJson.index[apiJson.root], apiJson);
     if (reviewLines) {
       codeFile.ReviewLines.push(...reviewLines);
+    }
+
+    if (reexportLines.internal.length > 0) {
+      codeFile.ReviewLines.push(...reexportLines.internal);
+    }
+
+    if (reexportLines.external.length > 0) {
+      codeFile.ReviewLines.push(...reexportLines.external);
     }
 
     // Write the JSON output to a file

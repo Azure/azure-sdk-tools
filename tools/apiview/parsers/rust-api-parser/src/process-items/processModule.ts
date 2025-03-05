@@ -11,8 +11,8 @@ import { isModuleItem } from "./utils/typeGuards";
  * @param {Item} item - The module item to process.
  */
 export function processModule(
-  apiJson: Crate,
   item: Item,
+  apiJson: Crate,
   parentModule?: { prefix: string; id: number },
 ): ReviewLine[] {
   if (!isModuleItem(item)) return;
@@ -107,7 +107,7 @@ export function processModule(
             ? `${parentModule.prefix}::${item.name}`
             : item.name
           : item.name;
-        const siblingModuleLines = processModule(apiJson, childItem, {
+        const siblingModuleLines = processModule(childItem, apiJson, {
           id: item.id,
           prefix: modulePrefix,
         });

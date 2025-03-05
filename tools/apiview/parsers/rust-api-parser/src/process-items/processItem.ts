@@ -28,9 +28,9 @@ import { processAssocType } from "./processAssocType";
 export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
   if (typeof item.inner === "object") {
     if ("module" in item.inner) {
-      return processModule(apiJson, item);
+      return processModule(item, apiJson);
     } else if ("use" in item.inner) {
-      return processUse(item);
+      return processUse(item, apiJson);
     } else if ("union" in item.inner) {
       return processUnion(item, apiJson);
     } else if ("struct" in item.inner) {

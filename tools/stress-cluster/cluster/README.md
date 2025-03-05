@@ -161,7 +161,6 @@ First, update the `dependencies section of the example's `Chart.yaml` file to po
 dependencies:
 - name: stress-test-addons
   version: <latest version on disk in stress-test-addons Chart.yaml>
-  repository: https://stresstestcharts.blob.core.windows.net/helm/
   repository: file:///<path to azure-sdk-tools repo>/tools/stress-cluster/cluster/kubernetes/stress-test-addons
 ```
 

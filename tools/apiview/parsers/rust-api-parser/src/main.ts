@@ -38,17 +38,6 @@ function main() {
       codeFile.ReviewLines.push(...reviewLines);
     }
 
-    // Collect all items where "id"s apiJson.index[id].visibility == "crate", call processItem on each of them and add them to the reviewLines
-    for (const id in apiJson.index) {
-      const item = apiJson.index[id];
-      if (item.visibility === "crate") {
-        const crateVisibleReviewLines = processItem(item, apiJson);
-        if (crateVisibleReviewLines) {
-          codeFile.ReviewLines.push(...crateVisibleReviewLines);
-        }
-      }
-    }
-
     // Write the JSON output to a file
     fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
     console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);

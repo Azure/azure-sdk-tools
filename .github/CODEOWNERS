@@ -47,6 +47,7 @@
 /tools/spec-gen-sdk/                   @raych1 @chidozieononiwu
 /tools/test-proxy/                     @scbedd @mikeharder @benbp
 /tools/tsp-client/                     @catalinaperalta
+/tools/typespec-bump-deps/             @weidongxu-microsoft
 
 ###########
 # Stress

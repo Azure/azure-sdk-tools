@@ -60,9 +60,11 @@ export function processModule(
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
+    HasSuffixSpace: false,
   });
   if (item.inner.module.items) {
     // First process non-module children
+    let nonModuleChildrenExist = false;
     item.inner.module.items.forEach((childId: number) => {
       const childItem = apiJson.index[childId];
       if (!isModuleItem(childItem)) {
@@ -73,20 +75,28 @@ export function processModule(
           }
           reviewLine.Children.push(...childReviewLines.filter((item) => item != null));
         }
+        nonModuleChildrenExist = true;
       }
     });
 
     // Add the current module's review line after processing non-module children
     reviewLines.push(reviewLine);
-    reviewLines.push({
-      RelatedToLine: item.id.toString(),
-      Tokens: [
-        {
-          Kind: TokenKind.Punctuation,
-          Value: "}",
-        },
-      ],
-    });
+    if (!nonModuleChildrenExist) {
+      reviewLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: "}",
+      });
+    } else {
+      reviewLines.push({
+        RelatedToLine: item.id.toString(),
+        Tokens: [
+          {
+            Kind: TokenKind.Punctuation,
+            Value: "}",
+          },
+        ],
+      });
+    }
 
     // Then process module children
     item.inner.module.items.forEach((childId: number) => {

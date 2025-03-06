@@ -156,12 +156,6 @@ function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
 
     // Check if this is a child path (starts with the current path and is not the same path)
     if (childPath !== currentPath && childPath.startsWith(currentPath + "::")) {
-      // Skip if the child is a module - we'll handle modules separately
-      // TODO: Handle re-exports of modules under modules
-      if (childItemSummary.kind === "module") {
-        continue;
-      }
-
       // Add as a child
       children.push(createItemLine(Number(childId), childItemSummary));
     }

@@ -24,10 +24,20 @@ public final class MiscUtils {
      * @return A token representing the key-value pair.
      */
     public static ReviewLine tokeniseMavenKeyValue(ReviewLine parentLine, String key, Object value) {
+        return tokeniseMavenKeyValue(parentLine, key, value, false);
+    }
+
+    public static ReviewLine tokeniseMavenKeyValue(ReviewLine parentLine, String key, Object value, boolean skipDiff) {
+        ReviewToken valueToken = new ReviewToken(MAVEN_VALUE, value == null ? "<default value>" : value.toString());
+
+        if (skipDiff) {
+            valueToken.setSkipDiff();
+        }
+
         return parentLine.addChildLine("maven-lineid-" + key + "-" + value)
                 .addToken(new ReviewToken(TokenKind.MAVEN_KEY, key))
                 .addToken(new ReviewToken(PUNCTUATION, ":"))
-                .addToken(new ReviewToken(MAVEN_VALUE, value == null ? "<default value>" : value.toString()));
+                .addToken(valueToken);
     }
 
     /**

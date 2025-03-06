@@ -81,3 +81,7 @@ export function getSupportedLanguages(): any {
     { label: "Xml", data: "Xml" }
   ];
 }
+
+export function getTreeStyleLanguages() {
+  return ["C#", "Go", "Java", "JavaScript", "Python", "Rust", "Swift"];
+}

@@ -42,12 +42,7 @@ export class CommentsService {
     const formData = new FormData();
     formData.append('commentText', commentText);
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    })
-
     return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/updateCommentText`, formData, { 
-      headers: headers,
       observe: 'response',
       withCredentials: true });
   }

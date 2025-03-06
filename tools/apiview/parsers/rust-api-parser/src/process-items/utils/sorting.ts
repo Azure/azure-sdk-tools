@@ -1,6 +1,7 @@
 import { Id, Item, ItemKind } from "../../../rustdoc-types/output/rustdoc-types";
 import { getAPIJson } from "../../main";
-import { isModuleItem, isUseItem } from "./typeGuards";
+import { isUseItem } from "./typeGuards";
+import { ReviewLine } from "../../models/apiview-models";
 
 export type ChildItem = { id: Id; name: string };
 export type ChildItems = Record<ItemKind, ChildItem[]>;
@@ -121,4 +122,31 @@ export function getSortedChildIds(childItems: number[]): { nonModule: number[]; 
   }
 
   return result;
+}
+
+/**
+ * Sorts external items by item kind according to itemKindOrder and then by name within each kind
+ * @param items Array of external ReviewLine items to sort
+ * @returns The same array, sorted in place by kind and name
+ */
+export function sortExternalItems(items: ReviewLine[]): ReviewLine[] {
+  return items.sort((a, b) => {
+    const aTokens = a.Tokens.map((token) => token.Value)
+      .join(" ")
+      .split(" ");
+    const bTokens = b.Tokens.map((token) => token.Value)
+      .join(" ")
+      .split(" ");
+
+    // The second token represents the kind
+    const aKind = aTokens[1] as ItemKind;
+    const bKind = bTokens[1] as ItemKind;
+
+    if (aKind !== bKind) {
+      return itemKindOrder.indexOf(aKind) - itemKindOrder.indexOf(bKind);
+    }
+
+    // For items of the same kind, sort by name (the third token)
+    return aTokens[2].localeCompare(bTokens[2]);
+  });
 }

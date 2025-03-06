@@ -125,7 +125,7 @@ function createModuleHeaderLine(itemId: Id, itemSummary: ItemSummary): ReviewLin
       {
         Kind: TokenKind.TypeName,
         Value: itemSummary.path.concat().join("::"),
-        RenderClasses: ["mname", ""],
+        RenderClasses: ["mname", "module", "reexport"],
         NavigateToId: itemId.toString(),
       },
       {
@@ -160,6 +160,15 @@ function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
       children.push(createItemLine(Number(childId), childItemSummary));
     }
   }
+
+  // Sort children by kind and then by path
+  children.sort((a, b) => {
+    const kindComparison = a.Tokens[1].Value.localeCompare(b.Tokens[1].Value);
+    if (kindComparison !== 0) {
+      return kindComparison;
+    }
+    return a.Tokens[2].Value.localeCompare(b.Tokens[2].Value);
+  });
 
   return children;
 }

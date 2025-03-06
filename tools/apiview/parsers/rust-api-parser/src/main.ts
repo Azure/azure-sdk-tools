@@ -1,8 +1,9 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
 import { CodeFile, ReviewLine, TokenKind } from "./models/apiview-models";
-import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
+import { Crate, FORMAT_VERSION, ItemKind } from "../rustdoc-types/output/rustdoc-types";
 import { reexportLines } from "./process-items/processUse";
+import { itemKindOrder, sortExternalItems } from "./process-items/utils/sorting";
 
 let apiJson: Crate;
 export function getAPIJson(): Crate {
@@ -26,6 +27,7 @@ function processRootItem(codeFile: CodeFile): void {
  */
 function processInternalReexports(codeFile: CodeFile): void {
   if (reexportLines.internal.length > 0) {
+    addSectionHeader(codeFile, "Internal module re-exports");
     codeFile.ReviewLines.push(...reexportLines.internal);
   }
 }
@@ -56,7 +58,29 @@ function addSectionHeader(codeFile: CodeFile, headerText: string): void {
 function processExternalModuleReexports(codeFile: CodeFile): void {
   if (reexportLines.external.items.length > 0) {
     addSectionHeader(codeFile, "External module re-exports");
-    codeFile.ReviewLines.push(...reexportLines.external.modules);
+
+    // Separate modules with and without RelatedToLine
+    const modulesWithRelatedToLine: { [LinedId: string]: ReviewLine } = {};
+    const modulesWithoutRelatedToLine = [];
+
+    for (const module of reexportLines.external.modules) {
+      if (!module.RelatedToLine) {
+        modulesWithoutRelatedToLine.push(module);
+      } else {
+        modulesWithRelatedToLine[module.RelatedToLine] = module;
+      }
+    }
+
+    // Sort only the modules without RelatedToLine
+    sortExternalItems(modulesWithoutRelatedToLine);
+
+    // Add to the code file
+    for (const module of modulesWithoutRelatedToLine) {
+      codeFile.ReviewLines.push(module);
+      if (module.LineId in modulesWithRelatedToLine) {
+        codeFile.ReviewLines.push(modulesWithRelatedToLine[module.LineId]);
+      }
+    }
   }
 }
 
@@ -89,11 +113,14 @@ function processExternalItemReexports(codeFile: CodeFile): void {
   if (reexportLines.external.items.length > 0) {
     addSectionHeader(codeFile, "External items");
 
+    // Sort the external items by kind (using itemKindOrder) and then by name
+    sortExternalItems(reexportLines.external.items);
+
     // Process external item re-exports that aren't already included in modules
     for (let i = 0; i < reexportLines.external.items.length; i++) {
       const reexportItem = reexportLines.external.items[i];
 
-      // Only add the item if it's not already included in a module
+      // Only add the item if it's not already included in external module reexports
       if (!isItemAlreadyIncludedInModules(reexportItem)) {
         codeFile.ReviewLines.push(reexportItem);
       }

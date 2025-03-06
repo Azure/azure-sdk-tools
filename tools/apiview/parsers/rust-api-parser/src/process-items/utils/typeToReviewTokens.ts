@@ -126,7 +126,6 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
         }
       }),
     ];
-
   } else if ("raw_pointer" in type) {
     return [
       { Kind: TokenKind.Punctuation, Value: "*", HasSuffixSpace: false },

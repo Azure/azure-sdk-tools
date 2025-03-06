@@ -59,7 +59,6 @@ export function processTypeAlias(item: Item): ReviewLine[] {
     reviewLine.Tokens.push(...genericsTokens.wherePredicates);
   }
 
-
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: ";",

@@ -254,5 +254,68 @@ namespace APIViewUnitTests
                 line++;
             }
         }
+
+        [Fact]
+        public async Task VerifyJavaDiffInContextEnd()
+        {
+            var codeFileA = new CodeFile();
+            var codeFileB = new CodeFile();
+            var filePath = Path.Combine("SampleTestFiles", "azure-storage-file-share_active.json");
+            var fileInfo = new FileInfo(filePath);
+            var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileA = await CodeFile.DeserializeAsync(fileStream);
+            filePath = Path.Combine("SampleTestFiles", "azure-storage-file-share_baseline.json");
+            fileInfo = new FileInfo(filePath);
+            fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read);
+            codeFileB = await CodeFile.DeserializeAsync(fileStream);
+            bool isSame = CodeFileHelpers.AreCodeFilesSame(codeFileA, codeFileB);
+            Assert.False(isSame);
+
+            var diff = CodeFileHelpers.FindDiff(codeFileA.ReviewLines, codeFileB.ReviewLines);
+            Assert.True(FindAnyDiffLine(diff));
+
+            //Verify that all added or removed class or start of context has a corresponding end of context marked as added or removed.
+            foreach (var namespaceLine in diff.Where(l => l.Tokens.Any(t=>t.Value == "package")))
+            {
+                bool foundAddedContext = false;
+                bool foundRemovedContext = false;
+                string previousLineId = "";
+                foreach(var objectDefLine in namespaceLine.Children)
+                {
+                    //If previous line is start of context and added line then current line should also be marked as added
+                    if (foundAddedContext)
+                    {
+                        Assert.True(objectDefLine.DiffKind == DiffKind.Added && objectDefLine.RelatedToLine == previousLineId);
+                        foundAddedContext = false;
+                        foundRemovedContext = false;
+                        previousLineId = "";
+                        continue;
+                    }
+
+                    if (foundRemovedContext)
+                    {
+                        Assert.True(objectDefLine.DiffKind == DiffKind.Removed);
+                        foundAddedContext = false;
+                        foundRemovedContext = false;
+                        previousLineId = "";
+                        continue;
+                    }
+
+                    if (objectDefLine.DiffKind == DiffKind.Added && objectDefLine.IsContextEndLine != true)
+                    {
+                        foundAddedContext = true;
+                        foundRemovedContext = false;
+                        previousLineId = objectDefLine.LineId;
+                    }
+
+                    if (objectDefLine.DiffKind == DiffKind.Removed && objectDefLine.IsContextEndLine != true)
+                    {
+                        foundAddedContext = false;
+                        foundRemovedContext = true;
+                        previousLineId = objectDefLine.LineId;
+                    }
+                }
+            }
+        }
     }
 }

@@ -10,6 +10,8 @@ using APIViewWeb.Managers;
 using System.Collections.Generic;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.ApplicationInsights.DataContracts;
+using System;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -138,7 +140,6 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionId"></param>
-        /// <param name="reviewers"></param>
         /// <returns></returns>
 
         [HttpPost("{reviewId}/{apiRevisionId}/reviewers", Name = "AddReviewers")]
@@ -148,6 +149,19 @@ namespace APIViewWeb.LeanControllers
             await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
 
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
+        }
+
+        [HttpPost("{reviewId}/{apiRevisionId}/generateReview", Name = "GenerateAIReview")]
+        public async Task GenerateAIReview(string reviewId, string apiRevisionId = null)
+        {
+            try
+            {
+                await _reviewManager.GenerateAIReview(reviewId, apiRevisionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error generating AI review" + ex.Message);
+            }
         }
     }
 }

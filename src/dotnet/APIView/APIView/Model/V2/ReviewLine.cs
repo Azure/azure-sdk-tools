@@ -65,7 +65,7 @@ namespace APIView.Model.V2
             Tokens.Add(token);
         }
 
-        public void AppendApiTextToBuilder(StringBuilder sb, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4)
+        public void AppendApiTextToBuilder<T>(T builder, int indent = 0, bool skipDocs = true, int lineIndentSpaces = 4) where T : class
         {
             if (skipDocs && Tokens.Count > 0 && Tokens[0].IsDocumentation == true)
             {
@@ -75,24 +75,43 @@ namespace APIView.Model.V2
             //Add empty line in case of review line without tokens
             if (Tokens.Count == 0)
             {
-                sb.Append(Environment.NewLine);
+                AppendToBuilder(builder, Environment.NewLine);
                 return;
             }
             //Add spaces for indentation
-            for (int i = 0; i < indent; i++)
-            {
-                for(int j = 0; j < lineIndentSpaces; j++)
-                {
-                    sb.Append(" ");
-                }
-            }
+            string indentSpaces = new string(' ', indent * lineIndentSpaces);
+
             //Process all tokens
-            sb.Append(ToString(true));
-            
-            sb.Append(Environment.NewLine);
+            AppendToBuilder(builder, indentSpaces);
+            AppendToBuilder(builder, ToString(true), LineId);
+
+            AppendToBuilder(builder, Environment.NewLine);
             foreach (var child in Children)
             {
-                child.AppendApiTextToBuilder(sb, indent + 1, skipDocs, lineIndentSpaces);
+                child.AppendApiTextToBuilder(builder, indent + 1, skipDocs, lineIndentSpaces);
+            }
+        }
+
+        private void AppendToBuilder<T>(T builder, string text, string lineId = null)
+        {
+            switch (builder)
+            {
+                case StringBuilder stringBuilder:
+                    stringBuilder.Append(text);
+                    break;
+                case List<(string lineText, string lineId)> stringList:
+                    if (stringList.Count == 0 || text.Equals(Environment.NewLine))
+                    {
+                        stringList.Add((text, lineId));
+                    }
+                    else 
+                    {
+                        var lastTuple = stringList[stringList.Count - 1];
+                        stringList[stringList.Count - 1] = (lastTuple.lineText + text, lastTuple.lineId);
+                    }
+                    break;
+                default:
+                    throw new ArgumentException("Unsupported type for builder. Expected StringBuilder or List<string>.");
             }
         }
 

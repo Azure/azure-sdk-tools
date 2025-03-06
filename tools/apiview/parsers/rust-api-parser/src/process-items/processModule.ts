@@ -31,15 +31,15 @@ export function processModule(
     Kind: TokenKind.Keyword,
     Value: "pub mod",
   });
-
+  let fullName = "";
   // parent module
   if (parentModule) {
+    fullName += parentModule.prefix + "::";
     reviewLine.Tokens.push({
       Kind: TokenKind.TypeName,
       Value: parentModule.prefix,
       RenderClasses: ["module"],
       NavigateToId: parentModule.id.toString(),
-      NavigationDisplayName: parentModule.prefix,
       HasSuffixSpace: false,
     });
     reviewLine.Tokens.push({
@@ -49,13 +49,14 @@ export function processModule(
     });
   }
 
+  fullName += item.name;
   // current module
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: item.name || "null",
     RenderClasses: ["module"],
     NavigateToId: item.id.toString(),
-    NavigationDisplayName: item.name || undefined,
+    NavigationDisplayName: fullName,
   });
 
   reviewLine.Tokens.push({

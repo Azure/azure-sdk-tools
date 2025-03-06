@@ -37,10 +37,13 @@ function processInternalReexports(codeFile: CodeFile): void {
  */
 function addSectionHeader(codeFile: CodeFile, headerText: string): void {
   codeFile.ReviewLines.push({
+    LineId: `header-${headerText}`,
     Tokens: [
       {
         Kind: TokenKind.Punctuation,
         Value: `/* ${headerText} */`,
+        NavigateToId: `header-${headerText}`,
+        NavigationDisplayName: `/* ${headerText} */`,
       },
     ],
   });

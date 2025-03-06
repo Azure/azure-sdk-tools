@@ -24,6 +24,8 @@ export function processConstant(item: Item) {
     Kind: TokenKind.Text,
     Value: item.name || "null",
     HasSuffixSpace: false,
+    NavigateToId: item.id.toString(),
+    NavigationDisplayName: item.name,
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,

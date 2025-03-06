@@ -90,16 +90,24 @@ export function processStruct(item: Item): ReviewLine[] {
       }
     });
 
-    reviewLines.push(structLine);
-    reviewLines.push({
-      RelatedToLine: item.id.toString(),
-      Tokens: [
-        {
-          Kind: TokenKind.Punctuation,
-          Value: "}",
-        },
-      ],
-    });
+    if (structLine.Children.length == 0) {
+      structLine.Tokens.push({
+        Kind: TokenKind.Punctuation,
+        Value: "}",
+      });
+      reviewLines.push(structLine);
+    } else {
+      reviewLines.push(structLine);
+      reviewLines.push({
+        RelatedToLine: item.id.toString(),
+        Tokens: [
+          {
+            Kind: TokenKind.Punctuation,
+            Value: "}",
+          },
+        ],
+      });
+    }
   } else if (
     typeof item.inner.struct.kind === "object" &&
     "tuple" in item.inner.struct.kind &&

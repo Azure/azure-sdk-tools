@@ -19,7 +19,7 @@ import java.util.zip.GZIPOutputStream;
 import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
 public class APIListing implements Parent, JsonSerializable<APIListing> {
-    private static final String parserVersion = "27";
+    private static final String parserVersion = "28";
 
     private Language language;
     private LanguageVariant languageVariant;

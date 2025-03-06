@@ -395,7 +395,7 @@ public class JavaASTAnalyser implements Analyser {
 
         // properties
         gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "properties", gavStr);
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "properties", gavStr, true);
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null
@@ -453,7 +453,7 @@ public class JavaASTAnalyser implements Analyser {
                     for (Dependency d : v) {
                         String gav = d.getGroupId() + ":" + d.getArtifactId() + ":" + d.getVersion();
                         dependenciesLine.addChildLine("maven-lineid-" + gav)
-                                .addToken(TokenKind.MAVEN_DEPENDENCY, gav);
+                                .addToken(new ReviewToken(TokenKind.MAVEN_DEPENDENCY, gav).setSkipDiff());
                     }
                 });
         dependenciesLine.addContextEndTokens();

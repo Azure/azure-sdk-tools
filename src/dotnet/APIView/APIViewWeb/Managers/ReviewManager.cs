@@ -330,35 +330,54 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
         /// </summary>
-        public async Task<int> GenerateAIReview(string reviewId, string revisionId)
+        public async Task<int> GenerateAIReview(ClaimsPrincipal user, string reviewId, string activeApiRevisionId, string diffApiRevisionId)
         {
-            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
-            var revision = revisions.Where(r => r.Id == revisionId).FirstOrDefault();
-            var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            var codeLines = codeFile.RenderText(false);
+            var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeApiRevisionId);
+            var reviewComments = await _commentManager.GetCommentsAsync(reviewId: reviewId, commentType: CommentType.APIRevision);
 
-            var reviewText = new StringBuilder();
-            foreach (var codeLine in codeLines)
+            var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+            var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
+            var activeApiOutline = activeCodeFile.CodeFile.GetApiOutlineText();
+            List<CommentModelForCopilot> existingCommentInfo = new List<CommentModelForCopilot>();
+
+            foreach (var comment in reviewComments)
             {
-                reviewText.Append(codeLine.DisplayString);
-                reviewText.Append("\\n");
+                if (activeCodeLines.Any(line => line.lineId == comment.ElementId))
+                {
+                    var associatedLine = activeCodeLines.FindIndex(line => line.lineId == comment.ElementId);
+                    existingCommentInfo.Add(new CommentModelForCopilot
+                    {
+                        LineNumber = associatedLine + 1,
+                        CommentText = comment.CommentText,
+                        Author = comment.CreatedBy,
+                    });
+                }
             }
 
-            var url = "https://apiview-gpt.azurewebsites.net/python";
+            var url = $"https://apiview-gpt.azurewebsites.net/{LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language)}";
             var client = new HttpClient();
-            client.Timeout = TimeSpan.FromMinutes(20);
-            var payload = new
+            client.Timeout = TimeSpan.FromMinutes(30);
+            var payload = new Dictionary<string, object>
             {
-                content = reviewText.ToString()
+                { "target", String.Join("\\n", activeCodeLines.Select(item => item.lineText.Trim())) },
+                { "outline", activeApiOutline },
+                { "comments", existingCommentInfo }
             };
+
+            if (!String.IsNullOrEmpty(diffApiRevisionId))
+            {
+                var diffApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: diffApiRevisionId);
+                var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(diffApiRevision, false);
+                var diffCodeLines = diffCodeFile.CodeFile.GetApiLines(skipDocs: true);
+                payload.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
+            }
 
             var result = new AIReviewModel();
             try {
                 var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
                 response.EnsureSuccessStatusCode();
                 var responseString = await response.Content.ReadAsStringAsync();
-                var responseSanitized = JsonSerializer.Deserialize<string>(responseString);
-                result = JsonSerializer.Deserialize<AIReviewModel>(responseSanitized);
+                result = JsonSerializer.Deserialize<AIReviewModel>(responseString);
             }
             catch (Exception e ) {
                 throw new Exception($"Copilot Failed: {e.Message}");
@@ -367,29 +386,36 @@ namespace APIViewWeb.Managers
             // Write back result as comments to APIView
             foreach (var comment in result.Comments)
             {
-                var codeLine = codeLines[comment.LineNo];
-                var comment = new CommentItemModel();
-                comment.CreatedOn = DateTime.UtcNow;
-                comment.ReviewId = reviewId;
-                comment.APIRevisionId = revisionId;
-                comment.ElementId = codeLine.ElementId;
+                var codeLine = activeCodeLines[comment.LineNo - 1];
+                var commentModel = new CommentItemModel();
+                commentModel.CreatedOn = DateTime.UtcNow;
+                commentModel.ReviewId = reviewId;
+                commentModel.APIRevisionId = activeApiRevisionId;
+                commentModel.ElementId = codeLine.lineId;
                 //comment.SectionClass = sectionClass; // This will be needed for swagger
-
+            
                 var commentText = new StringBuilder();
                 commentText.AppendLine(comment.Comment);
                 commentText.AppendLine();
-                commentText.AppendLine(comment.Suggestion);
                 commentText.AppendLine();
+                if (!String.IsNullOrEmpty(comment.Suggestion))
+                {
+                    commentText.AppendLine($"Suggestion : `{comment.Suggestion}`");
+                    commentText.AppendLine();
+                    commentText.AppendLine();
+                }
                 foreach (var id in comment.RuleIds)
                 {
                     commentText.AppendLine($"See: https://azure.github.io/azure-sdk/{id}");
                 }
-                comment.ResolutionLocked = false;
-                comment.CreatedBy = "azure-sdk";
-                comment.CommentText = commentText.ToString();
-
-                await _commentsRepository.UpsertCommentAsync(comment);
+                commentModel.ResolutionLocked = false;
+                commentModel.CreatedBy = "azure-sdk";
+                commentModel.CommentText = commentText.ToString();
+            
+                await _commentsRepository.UpsertCommentAsync(commentModel);
+                activeApiRevision.HasAutoGeneratedComments = true;
             }
+            await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
             return result.Comments.Count;
         }
 

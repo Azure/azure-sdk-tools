@@ -10,6 +10,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { MessageService } from 'primeng/api';
 
 describe('ReviewPageOptionsComponent', () => {
   let component: ReviewPageOptionsComponent;
@@ -42,7 +43,8 @@ describe('ReviewPageOptionsComponent', () => {
           provide: HTTP_INTERCEPTORS,
           useClass: HttpErrorInterceptorService,
           multi: true
-        }
+        },
+        MessageService
       ]
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);

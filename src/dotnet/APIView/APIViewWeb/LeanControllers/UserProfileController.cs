@@ -11,13 +11,11 @@ namespace APIViewWeb.LeanControllers
 {
     public class UserProfileController : BaseApiController
     {
-        private readonly ILogger<AuthController> _logger;
         private readonly IUserProfileManager _userProfileManager;
         private readonly UserProfileCache _userProfileCache;
 
         public UserProfileController(ILogger<AuthController> logger, IUserProfileManager userProfileManager, UserProfileCache userProfileCache)
         {
-            _logger = logger;
             _userProfileManager = userProfileManager;
             _userProfileCache = userProfileCache;
         }

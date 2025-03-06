@@ -84,7 +84,7 @@ function isItemAlreadyIncludedInModules(reexportItem: ReviewLine): boolean {
  */
 function processExternalItemReexports(codeFile: CodeFile): void {
   if (reexportLines.external.items.length > 0) {
-    addSectionHeader(codeFile, "External item re-exports");
+    addSectionHeader(codeFile, "External items");
 
     // Process external item re-exports that aren't already included in modules
     for (let i = 0; i < reexportLines.external.items.length; i++) {

@@ -8,15 +8,15 @@ import { getAPIJson } from "../main";
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
  *
- * @param {ApiJson} apiJson - The API JSON object containing all items.
  * @param {Item} item - The module item to process.
+ * @param {Object} parentModule - Optional parent module information.
+ * @returns {ReviewLine[]} Array of ReviewLine objects.
  */
 export function processModule(
   item: Item,
   parentModule?: { prefix: string; id: number },
 ): ReviewLine[] {
   if (!isModuleItem(item)) return;
-  const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
@@ -64,32 +64,64 @@ export function processModule(
     Value: "{",
     HasSuffixSpace: false,
   });
-  if (item.inner.module.items) {
-    // First process non-module children
-    let nonModuleChildrenExist = false;
+
+  if (item.inner && 'module' in item.inner && item.inner.module.items) {
+    const result = processModuleChildren(item, reviewLine, parentModule);
+    reviewLines.push(...result);
+  } else {
+    // Empty module case
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "}",
+    });
+    reviewLines.push(reviewLine);
+  }
+
+  return reviewLines;
+}
+
+/**
+ * Processes the children of a module item.
+ * 
+ * @param {Item} item - The module item whose children are to be processed.
+ * @param {ReviewLine} moduleReviewLine - The ReviewLine for the module declaration.
+ * @param {Object} parentModule - Optional parent module information.
+ * @returns {ReviewLine[]} Array of ReviewLine objects for the module and its children.
+ */
+function processModuleChildren(
+  item: Item,
+  moduleReviewLine: ReviewLine,
+  parentModule?: { prefix: string; id: number },
+): ReviewLine[] {
+  const apiJson = getAPIJson();
+  const resultLines: ReviewLine[] = [];
+  let nonModuleChildrenExist = false;
+
+  // First process non-module children
+  if (isModuleItem(item)) {
     item.inner.module.items.forEach((childId: number) => {
       const childItem = apiJson.index[childId];
       if (!isModuleItem(childItem)) {
         const childReviewLines = processItem(childItem);
         if (childReviewLines) {
-          if (!reviewLine.Children) {
-            reviewLine.Children = [];
+          if (!moduleReviewLine.Children) {
+            moduleReviewLine.Children = [];
           }
-          reviewLine.Children.push(...childReviewLines.filter((item) => item != null));
+          moduleReviewLine.Children.push(...childReviewLines.filter((item) => item != null));
         }
         nonModuleChildrenExist = true;
       }
     });
 
     // Add the current module's review line after processing non-module children
-    reviewLines.push(reviewLine);
+    resultLines.push(moduleReviewLine);
     if (!nonModuleChildrenExist) {
-      reviewLine.Tokens.push({
+      moduleReviewLine.Tokens.push({
         Kind: TokenKind.Punctuation,
         Value: "}",
       });
     } else {
-      reviewLines.push({
+      resultLines.push({
         RelatedToLine: item.id.toString(),
         Tokens: [
           {
@@ -114,11 +146,11 @@ export function processModule(
           prefix: modulePrefix,
         });
         if (siblingModuleLines) {
-          reviewLines.push(...siblingModuleLines);
+          resultLines.push(...siblingModuleLines);
         }
       }
     });
-  }
 
-  return reviewLines;
+    return resultLines;
+  }
 }

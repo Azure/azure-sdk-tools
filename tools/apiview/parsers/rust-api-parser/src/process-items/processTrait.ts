@@ -33,7 +33,7 @@ export function processTrait(item: Item) {
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: item.name || "null",
-    RenderClasses: ["trait"],
+    RenderClasses: ["tname", "trait"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,

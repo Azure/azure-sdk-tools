@@ -22,7 +22,7 @@ export function processAutoTraitImpls(impls: number[]): ReviewToken[] {
       .map<ReviewToken>((implItem) => ({
         Kind: TokenKind.TypeName,
         Value: implItem.inner.impl.trait!.name,
-        RenderClasses: ["trait"],
+        RenderClasses: ["tname", "trait"],
         HasSuffixSpace: false,
       }));
 
@@ -117,26 +117,26 @@ export function processImpl(
     children.length === 0
       ? [] // Empty implBlock if no children
       : [
-          {
-            LineId: item.id.toString() + "_impl",
-            Tokens: [
-              { Kind: TokenKind.Keyword, Value: "impl" },
-              {
-                Kind: TokenKind.TypeName,
-                Value: item.name || "null",
-                RenderClasses: ["impl"],
-                NavigateToId: item.id.toString(),
-                NavigationDisplayName: item.name || undefined,
-              },
-              { Kind: TokenKind.Punctuation, Value: "{" },
-            ],
-            Children: children,
-          },
-          {
-            RelatedToLine: item.id.toString() + "_impl",
-            Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
-          },
-        ];
+        {
+          LineId: item.id.toString() + "_impl",
+          Tokens: [
+            { Kind: TokenKind.Keyword, Value: "impl" },
+            {
+              Kind: TokenKind.TypeName,
+              Value: item.name || "null",
+              RenderClasses: ["tname"],
+              NavigateToId: item.id.toString(),
+              NavigationDisplayName: item.name || undefined,
+            },
+            { Kind: TokenKind.Punctuation, Value: "{" },
+          ],
+          Children: children,
+        },
+        {
+          RelatedToLine: item.id.toString() + "_impl",
+          Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+        },
+      ];
 
   const traitImpls = processOtherTraitImpls(impls);
 

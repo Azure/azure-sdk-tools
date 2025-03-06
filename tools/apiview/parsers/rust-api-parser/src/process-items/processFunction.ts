@@ -31,7 +31,7 @@ export function processFunction(item: Item) {
     Kind: TokenKind.MemberName,
     Value: item.name || "null",
     HasSuffixSpace: false,
-    RenderClasses: ["method"],
+    RenderClasses: ["tname", "method"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });

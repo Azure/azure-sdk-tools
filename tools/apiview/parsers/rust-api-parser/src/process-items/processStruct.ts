@@ -52,7 +52,7 @@ export function processStruct(item: Item): ReviewLine[] {
   structLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: item.name || "null",
-    RenderClasses: ["struct"],
+    RenderClasses: ["tname", "struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });

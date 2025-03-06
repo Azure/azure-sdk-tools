@@ -39,7 +39,7 @@ export function processModule(
     reviewLine.Tokens.push({
       Kind: TokenKind.TypeName,
       Value: parentModule.prefix,
-      RenderClasses: ["module"],
+      RenderClasses: ["mname", "module"],
       NavigateToId: parentModule.id.toString(),
       HasSuffixSpace: false,
     });
@@ -55,7 +55,7 @@ export function processModule(
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: item.name || "null",
-    RenderClasses: ["module"],
+    RenderClasses: ["mname", "module"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: fullName,
   });

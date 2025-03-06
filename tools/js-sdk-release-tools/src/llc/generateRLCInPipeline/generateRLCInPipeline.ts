@@ -39,8 +39,9 @@ export async function generateRLCInPipeline(options: {
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
 }) {
-    let packagePath: string | undefined;
-    let relativePackagePath: string | undefined;
+    let packagePath: string | undefined = undefined;
+    let relativePackagePath: string | undefined = undefined;
+    const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
@@ -200,9 +201,7 @@ export async function generateRLCInPipeline(options: {
                 throw new Error(`Failed to generate codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
             }
         }
-    }
-
-    const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
+    }    
 
     try {
         if (!packagePath || !relativePackagePath) {

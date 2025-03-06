@@ -326,11 +326,12 @@ extends:
 
           jobs:
             - job: Publish_to_Staging
-              type: releaseJob
-              isProduction: false
-              inputs:
-              - input: pipelineArtifact
-                artifactName: APIView
+              templateContext:
+                type: releaseJob
+                isProduction: false
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
               displayName: Publish to Staging
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
@@ -386,11 +387,12 @@ extends:
             - deployment: Publish_Test_UI
               displayName: Publish Test UI
               environment: 'package-publish'
-              type: releaseJob
-              isProduction: false
-              inputs:
-              - input: pipelineArtifact
-                artifactName: APIView
+              templateContext:
+                type: releaseJob
+                isProduction: false
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt
@@ -445,11 +447,12 @@ extends:
             - deployment: Publish_to_Prod
               displayName: Publish to Prod
               environment: 'package-publish'
-              type: releaseJob
-              isProduction: true
-              inputs:
-              - input: pipelineArtifact
-                artifactName: APIView
+              templateContext:
+                type: releaseJob
+                isProduction: true
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt

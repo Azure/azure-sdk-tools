@@ -66,7 +66,7 @@ This is a REST API that evaluates the content of an issue and attempts to predic
 
 #### Example responses
 
-_**Predictions made**_
+_**Only Labels Predicted**_
 
 ```json
 {
@@ -74,8 +74,34 @@ _**Predictions made**_
     "Storage",
     "Client"
   ],  
-  "suggestion" : string | null,  
-  "solution" : string | null  
+  "suggestion" : null,  
+  "solution" : null  
+}
+```
+
+_**Suggestion is provided**_
+
+```json
+{
+  "labels" : [
+    "Storage",
+    "Client"
+  ],  
+  "suggestion" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I have some suggestions that you can try out...",  
+  "solution" : null  
+}
+```
+
+_**Solution is provided**_
+
+```json
+{
+  "labels" : [
+    "Storage",
+    "Client"
+  ],  
+  "suggestion" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I found a solution for your issue...",  
+  "solution" : null  
 }
 ```
 
@@ -83,7 +109,9 @@ _**No predictions**_
 
 ```json
 {
-  "labels": []
+  "labels": [],  
+  "suggestion" : null,  
+  "solution" : null  
 }
 ```
 

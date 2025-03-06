@@ -61,15 +61,12 @@ The system processes these Rust constructs:
       .      .
       .      .
    ```
-## Advanced Features
+## Additional Design Considerations
 
 - **Type Bridging**: Cross-language type safety via [typeshare](https://github.com/1password/typeshare) between the Rustdoc types and the TS types.
-- **Re-export Resolution**: Deterministic handling of module/item re-exports.
 - **Semantic Tokens**: Context-aware syntax highlighting and navigation.
-- **Trait Implementation Analysis**: Comprehensive handling of trait implementations, specialized handling for derived trait, logical grouping of related implementations
-
-- **Re-export Handling**: Deterministic resolution of re-exports to prevent duplication and maintain correct hierarchy.
-
+- **Trait Implementation Analysis**: Comprehensive handling of trait implementations, specialized handling for derived trait, logical grouping of related implementations.
+- **Re-export Resolution**: Deterministic resolution of module/item re-exports to prevent duplication in rendering and maintain correct hierarchy.
 - **Sorting**: Sorts items within modules by type and name for consistent output. Sorts re-exports after the lines are generated to avoid redundancy.
 
 ## Technical Architecture

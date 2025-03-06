@@ -1,5 +1,11 @@
 # @azure-tools/typespec-bump-deps
 
+## 0.9.7
+
+### Patch Changes
+
+- Include events, sse, streams in packages
+
 ## 0.9.6
 
 ### Patch Changes

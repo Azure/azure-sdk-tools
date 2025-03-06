@@ -36,6 +36,8 @@ export function processTypeAlias(item: Item): ReviewLine[] {
   reviewLine.Tokens.push({
     Kind: TokenKind.Text,
     Value: item.name || "unknown",
+    NavigateToId: item.id.toString(),
+    NavigationDisplayName: item.name || "unknown",
   });
 
   // Add equals sign

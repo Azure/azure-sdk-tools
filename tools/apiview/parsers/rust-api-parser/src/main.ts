@@ -128,19 +128,15 @@ function buildCodeFile(): CodeFile {
  * @param inputFilePath Path to the input file
  * @returns Whether there is a format mismatch
  */
-function readApiJson(inputFilePath: string): boolean {
+function readApiJson(inputFilePath: string): void {
   const data = fs.readFileSync(inputFilePath, "utf8");
   apiJson = JSON.parse(data);
 
-  let hasFormatMismatch = false;
   if (apiJson.format_version !== FORMAT_VERSION) {
-    hasFormatMismatch = true;
     console.warn(
       `Warning: Different format version detected: ${apiJson.format_version}, parser supports ${FORMAT_VERSION}. This may cause errors or unexpected results.`,
     );
   }
-
-  return hasFormatMismatch;
 }
 
 /**
@@ -155,18 +151,11 @@ function main() {
   const inputFilePath = args[0];
   const outputFilePath = args[1];
 
-  const hasFormatMismatch = readApiJson(inputFilePath);
+  readApiJson(inputFilePath);
 
-  try {
-    const codeFile = buildCodeFile();
-    fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
-    console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);
-  } catch (error) {
-    const errorMessage = hasFormatMismatch
-      ? `Failed to generate API surface (possibly due to format version mismatch): ${error.message}`
-      : `Failed to generate API surface: ${error.message}`;
-    throw new Error(errorMessage);
-  }
+  const codeFile = buildCodeFile();
+  fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
+  console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);
 }
 
 main();

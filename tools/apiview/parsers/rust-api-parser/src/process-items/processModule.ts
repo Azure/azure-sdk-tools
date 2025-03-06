@@ -1,9 +1,10 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
+import { Id, Item, ItemKind } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { isModuleItem } from "./utils/typeGuards";
 import { getAPIJson } from "../main";
+import { getSortedChildIds } from "./utils/sorting";
 
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
@@ -65,7 +66,7 @@ export function processModule(
     HasSuffixSpace: false,
   });
 
-  if (item.inner && 'module' in item.inner && item.inner.module.items) {
+  if (item.inner && "module" in item.inner && item.inner.module.items) {
     const result = processModuleChildren(item, reviewLine, parentModule);
     reviewLines.push(...result);
   } else {
@@ -82,7 +83,7 @@ export function processModule(
 
 /**
  * Processes the children of a module item.
- * 
+ *
  * @param {Item} item - The module item whose children are to be processed.
  * @param {ReviewLine} moduleReviewLine - The ReviewLine for the module declaration.
  * @param {Object} parentModule - Optional parent module information.
@@ -97,60 +98,64 @@ function processModuleChildren(
   const resultLines: ReviewLine[] = [];
   let nonModuleChildrenExist = false;
 
-  // First process non-module children
-  if (isModuleItem(item)) {
-    item.inner.module.items.forEach((childId: number) => {
-      const childItem = apiJson.index[childId];
-      if (!isModuleItem(childItem)) {
-        const childReviewLines = processItem(childItem);
-        if (childReviewLines) {
-          if (!moduleReviewLine.Children) {
-            moduleReviewLine.Children = [];
-          }
-          moduleReviewLine.Children.push(...childReviewLines.filter((item) => item != null));
-        }
-        nonModuleChildrenExist = true;
-      }
-    });
-
-    // Add the current module's review line after processing non-module children
-    resultLines.push(moduleReviewLine);
-    if (!nonModuleChildrenExist) {
-      moduleReviewLine.Tokens.push({
-        Kind: TokenKind.Punctuation,
-        Value: "}",
-      });
-    } else {
-      resultLines.push({
-        RelatedToLine: item.id.toString(),
-        Tokens: [
-          {
-            Kind: TokenKind.Punctuation,
-            Value: "}",
-          },
-        ],
-      });
-    }
-
-    // Then process module children
-    item.inner.module.items.forEach((childId: number) => {
-      const childItem = apiJson.index[childId];
-      if (isModuleItem(childItem)) {
-        const modulePrefix = parentModule
-          ? parentModule.prefix
-            ? `${parentModule.prefix}::${item.name}`
-            : item.name
-          : item.name;
-        const siblingModuleLines = processModule(childItem, {
-          id: item.id,
-          prefix: modulePrefix,
-        });
-        if (siblingModuleLines) {
-          resultLines.push(...siblingModuleLines);
-        }
-      }
-    });
-
-    return resultLines;
+  if (!isModuleItem(item)) {
+    return [];
   }
+  const sortedChildIds = getSortedChildIds(item.inner.module.items);
+
+  // Process non-module children in the sorted order
+  for (let i = 0; i < sortedChildIds.nonModule.length; i++) {
+    const childId = sortedChildIds.nonModule[i];
+    const childItem = apiJson.index[childId];
+    if (!isModuleItem(childItem)) {
+      const childReviewLines = processItem(childItem);
+      if (childReviewLines) {
+        if (!moduleReviewLine.Children) {
+          moduleReviewLine.Children = [];
+        }
+        moduleReviewLine.Children.push(...childReviewLines.filter((item) => item != null));
+      }
+      nonModuleChildrenExist = true;
+    }
+  }
+
+  // Add the current module's review line after processing non-module children
+  resultLines.push(moduleReviewLine);
+  if (!nonModuleChildrenExist) {
+    moduleReviewLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "}",
+    });
+  } else {
+    resultLines.push({
+      RelatedToLine: item.id.toString(),
+      Tokens: [
+        {
+          Kind: TokenKind.Punctuation,
+          Value: "}",
+        },
+      ],
+    });
+  }
+
+  // Then process module children
+  for (let i = 0; i < sortedChildIds.module.length; i++) {
+    const moduleChildId = sortedChildIds.module[i];
+    const moduleChild = apiJson.index[moduleChildId];
+    const childItem = apiJson.index[moduleChild.id];
+    const modulePrefix = parentModule
+      ? parentModule.prefix
+        ? `${parentModule.prefix}::${item.name}`
+        : item.name
+      : item.name;
+    const siblingModuleLines = processModule(childItem, {
+      id: item.id,
+      prefix: modulePrefix,
+    });
+    if (siblingModuleLines) {
+      resultLines.push(...siblingModuleLines);
+    }
+  }
+
+  return resultLines;
 }

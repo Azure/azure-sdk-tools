@@ -22,7 +22,7 @@ http_logger.setLevel(logging.WARNING)
 
 COSMOS_SELECT_ID_PARTITIONKEY_QUERY = "select c.id, c.{0} as partitionKey, c._ts from {1} c"
 
-COSMOS_CONTAINERS = ["Reviews", "Comments", "PullRequests", "APIRevisions", "MigrationStatus", "SamplesRevisions"]
+COSMOS_CONTAINERS = ["APIRevisions", "Reviews", "Comments", "PullRequests", "SamplesRevisions"]
 BACKUP_CONTAINER = "backups"
 BLOB_NAME_PATTERN ="cosmos/{0}/{1}"
 
@@ -61,11 +61,40 @@ def restore_data_from_backup(backup_storage_url, dest_url, db_name):
 
 
 def get_backup_contents(container_client, blob_name):
+    """Download blob from storage and parse its JSON contents"""
     backup_date = datetime.now().strftime("%y%m%d")
     blob_path = BLOB_NAME_PATTERN.format(backup_date, blob_name)
-    contents = codecs.decode(container_client.get_blob_client(blob_path).download_blob().content_as_bytes(), 'utf-8-sig')
-    records = json.loads(contents)
-    return records
+    
+    try:
+        # Get the blob client and download content
+        blob_client = container_client.get_blob_client(blob_path)
+        download_stream = blob_client.download_blob()
+        content_bytes = download_stream.readall()
+        content_text = content_bytes.decode('utf-8-sig')
+        
+        logging.info(f"Downloaded blob {blob_path}, size: {len(content_text)} bytes")
+        
+        records = []
+        for line in content_text.splitlines():
+            line = line.strip()
+            if line:  # Skip empty lines
+                try:
+                    record = json.loads(line)
+                    records.append(record)
+                except json.JSONDecodeError as e:
+                    logging.warning(f"Failed to parse line: {e}")
+        
+        if records:
+            logging.info(f"Successfully parsed {len(records)} JSON records from {blob_path}")
+            return records
+        else:
+            logging.error(f"No valid JSON records found in {blob_path}")
+            return []
+            
+    except Exception as e:
+        logging.error(f"Error processing blob {blob_path}: {str(e)}")
+        traceback.print_exc()
+        return []
      
 
 

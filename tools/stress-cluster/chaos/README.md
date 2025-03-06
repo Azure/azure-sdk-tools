@@ -360,8 +360,8 @@ annotations:
 
 dependencies:
 - name: stress-test-addons
-  version: 0.2.0
-  repository: https://stresstestcharts.blob.core.windows.net/helm/
+  version: ~0.3.0
+  repository: "@stress-test-charts"
 ```
 
 The `stress-test-addons` dependency is a [helm library chart](https://helm.sh/docs/topics/library_charts/), which

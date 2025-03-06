@@ -340,10 +340,6 @@ extends:
 
               steps:
 
-              - download: current
-                artifact: APIView
-                timeoutInMinutes: 5
-
               - task: FileTransform@1
                 displayName: 'Update Angular Config for Environment'
                 inputs:
@@ -402,10 +398,6 @@ extends:
                   deploy:
                     steps:
 
-                    - download: current
-                      artifact: APIView
-                      timeoutInMinutes: 5
-
                     - task: FileTransform@1
                       displayName: 'Update Angular Config for Environment'
                       inputs:
@@ -460,10 +452,6 @@ extends:
                 runOnce:
                   deploy:
                     steps:
-
-                    - download: current
-                      artifact: APIView
-                      timeoutInMinutes: 5
 
                     - task: FileTransform@1
                       displayName: 'Update Angular Config for Environment'

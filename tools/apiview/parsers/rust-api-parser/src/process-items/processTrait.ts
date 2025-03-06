@@ -81,5 +81,4 @@ export function processTrait(item: Item) {
     IsContextEndLine: true,
   });
   return reviewLines;
-  // TODO: bounds, implementations
 }

@@ -42,7 +42,6 @@ export function processStatic(item: Item) {
       Value: ":",
     });
     reviewLine.Tokens.push(...typeToReviewTokens(item.inner.static.type));
-    // TODO: make sure to encode other attributes too
   }
 
   reviewLines.push(reviewLine);

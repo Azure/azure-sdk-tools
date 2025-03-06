@@ -24,7 +24,6 @@ export function processProcMacro(item: Item): ReviewLine[] | null {
     Children: [],
   };
 
-  // TODO: Add proc macro example to verify rendering
   // Add proc-macro attribute
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,

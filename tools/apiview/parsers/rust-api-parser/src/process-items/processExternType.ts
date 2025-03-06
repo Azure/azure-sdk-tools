@@ -41,7 +41,6 @@ export function processExternType(item: Item): ReviewLine[] | null {
     Kind: TokenKind.Punctuation,
     Value: ";",
   });
-  // TODO: Add example for extern type
 
   reviewLines.push(reviewLine);
   return reviewLines;

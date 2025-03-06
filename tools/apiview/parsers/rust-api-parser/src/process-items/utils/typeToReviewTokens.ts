@@ -94,7 +94,6 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       { Kind: TokenKind.Text, Value: type.array.len.toString(), HasSuffixSpace: false },
       { Kind: TokenKind.Punctuation, Value: "]", HasSuffixSpace: false },
     ];
-    // TODO: add example in the rust repo
   } else if ("pat" in type) {
     return [
       ...typeToReviewTokens(type.pat.type),
@@ -102,7 +101,6 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       { Kind: TokenKind.Text, Value: type.pat.__pat_unstable_do_not_use, HasSuffixSpace: false },
       { Kind: TokenKind.Text, Value: " */", HasSuffixSpace: false },
     ];
-    // TODO: add an example in the rust repo
   } else if ("impl_trait" in type) {
     return [
       { Kind: TokenKind.Keyword, Value: "impl" },
@@ -129,7 +127,6 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       }),
     ];
 
-    // TODO: add an example in the rust repo
   } else if ("raw_pointer" in type) {
     return [
       { Kind: TokenKind.Punctuation, Value: "*", HasSuffixSpace: false },
@@ -139,7 +136,6 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       },
       ...typeToReviewTokens(type.raw_pointer.type),
     ];
-    // TODO: add an example in the rust repo
   } else if ("borrowed_ref" in type) {
     const lifetime = type.borrowed_ref.lifetime;
     const elidedLifetime = lifetime && !shouldElideLifetime(lifetime) ? `${lifetime} ` : "";
@@ -153,7 +149,6 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       { Kind: TokenKind.Text, Value: elidedLifetime, HasSuffixSpace: false },
       ...typeToReviewTokens(type.borrowed_ref.type),
     ];
-    // TODO: add an example in the rust repo
   } else if ("qualified_path" in type) {
     return [
       ...typeToReviewTokens(type.qualified_path.self_type),
@@ -164,11 +159,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       },
       { Kind: TokenKind.TypeName, Value: type.qualified_path.name, HasSuffixSpace: false },
     ];
-    // TODO: args: GenericArgs is not being used
-    // TODO: trait.args is not being used
-    // TODO: add an example in the rust repo
   } else {
-    // return "unknown";
     return [{ Kind: TokenKind.Text, Value: "unknown" }];
   }
 }

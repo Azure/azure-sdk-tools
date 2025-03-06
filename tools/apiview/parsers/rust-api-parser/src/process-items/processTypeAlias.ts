@@ -59,7 +59,6 @@ export function processTypeAlias(item: Item): ReviewLine[] {
     reviewLine.Tokens.push(...genericsTokens.wherePredicates);
   }
 
-  // TODO: Add example for type alias with generics
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,

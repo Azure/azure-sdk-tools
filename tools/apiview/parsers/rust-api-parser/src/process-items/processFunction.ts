@@ -50,7 +50,6 @@ export function processFunction(item: Item) {
     HasPrefixSpace: false,
   });
 
-  // TODO: function header is unused
   // Add function parameters
   if (item.inner.function.sig.inputs.length > 0) {
     item.inner.function.sig.inputs.forEach((input: [string, Type], index: number) => {

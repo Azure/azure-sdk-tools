@@ -48,7 +48,6 @@ export function processTraitAlias(item: Item): ReviewLine[] {
     Kind: TokenKind.Text,
     Value: "/* trait alias definition */",
   });
-  // TODO: Add example for trait alias in the template
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,

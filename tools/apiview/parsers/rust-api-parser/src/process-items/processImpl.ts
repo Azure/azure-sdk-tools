@@ -141,8 +141,4 @@ export function processImpl(
   const traitImpls = processOtherTraitImpls(impls);
 
   return { deriveTokens, implBlock, traitImpls };
-  // TODO: generics unused
-  // TODO: provided_trait_methods unused
-  // TODO: trait
-  // TODO: is_negative
 }

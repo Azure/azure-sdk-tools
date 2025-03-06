@@ -101,5 +101,4 @@ export function processEnum(item: Item): ReviewLine[] {
     reviewLines.push(...implResult.traitImpls);
   }
   return reviewLines;
-  // TODO: has_stripped_variants
 }

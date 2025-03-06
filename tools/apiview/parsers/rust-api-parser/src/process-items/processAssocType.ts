@@ -57,7 +57,6 @@ export function processAssocType(item: Item): ReviewLine[] | null {
     });
     reviewLine.Tokens.push(...typeToReviewTokens(assocType.type));
   }
-  // TODO: Add example for associated type with bounds and generics
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,

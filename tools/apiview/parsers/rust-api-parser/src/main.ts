@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
-import { CodeFile, TokenKind } from "./models/apiview-models";
+import { CodeFile, ReviewLine, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
 import { reexportLines } from "./process-items/processUse";
 
@@ -9,17 +9,124 @@ export function getAPIJson(): Crate {
   return apiJson;
 }
 
-function main() {
-  // Read the JSON file
-  const args = process.argv.slice(2);
-  if (args.length < 2) {
-    throw new Error("Please provide input and output file paths as arguments");
+/**
+ * Processes the root item of the crate and adds its review lines to the code file
+ * @param codeFile The code file to add review lines to
+ */
+function processRootItem(codeFile: CodeFile): void {
+  const reviewLines = processItem(apiJson.index[apiJson.root]);
+  if (reviewLines) {
+    codeFile.ReviewLines.push(...reviewLines);
   }
-  const inputFilePath = args[0];
-  const outputFilePath = args[1];
+}
 
+/**
+ * Processes internal reexport lines and adds them to the code file
+ * @param codeFile The code file to add review lines to
+ */
+function processInternalReexports(codeFile: CodeFile): void {
+  if (reexportLines.internal.length > 0) {
+    codeFile.ReviewLines.push(...reexportLines.internal);
+  }
+}
+
+/**
+ * Adds a section header to the code file
+ * @param codeFile The code file to add the header to
+ * @param headerText The header text
+ */
+function addSectionHeader(codeFile: CodeFile, headerText: string): void {
+  codeFile.ReviewLines.push({
+    Tokens: [
+      {
+        Kind: TokenKind.Punctuation,
+        Value: `/* ${headerText} */`,
+      },
+    ],
+  });
+}
+
+/**
+ * Processes external module reexports and adds them to the code file
+ * @param codeFile The code file to add review lines to
+ */
+function processExternalModuleReexports(codeFile: CodeFile): void {
+  if (reexportLines.external.items.length > 0) {
+    addSectionHeader(codeFile, "External module re-exports");
+    codeFile.ReviewLines.push(...reexportLines.external.modules);
+  }
+}
+
+/**
+ * Checks if an item is already included in any of the external modules
+ * @param reexportItem The item to check
+ * @returns Whether the item is already included
+ */
+function isItemAlreadyIncludedInModules(reexportItem: ReviewLine): boolean {
+  for (let j = 0; j < reexportLines.external.modules.length; j++) {
+    const moduleReexport = reexportLines.external.modules[j];
+
+    if (moduleReexport.Children && moduleReexport.Children.length > 0) {
+      for (let k = 0; k < moduleReexport.Children.length; k++) {
+        if (moduleReexport.Children[k].LineId === reexportItem.LineId) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Processes external item reexports and adds them to the code file
+ * @param codeFile The code file to add review lines to
+ */
+function processExternalItemReexports(codeFile: CodeFile): void {
+  if (reexportLines.external.items.length > 0) {
+    addSectionHeader(codeFile, "External item re-exports");
+
+    // Process external item re-exports that aren't already included in modules
+    for (let i = 0; i < reexportLines.external.items.length; i++) {
+      const reexportItem = reexportLines.external.items[i];
+
+      // Only add the item if it's not already included in a module
+      if (!isItemAlreadyIncludedInModules(reexportItem)) {
+        codeFile.ReviewLines.push(reexportItem);
+      }
+    }
+  }
+}
+
+/**
+ * Builds the code file by processing items and reexports
+ * @returns The built code file
+ */
+function buildCodeFile(): CodeFile {
+  const codeFile: CodeFile = {
+    PackageName: apiJson.index[apiJson.root].name || "unknown",
+    PackageVersion: apiJson["crate_version"] || "unknown",
+    ParserVersion: "1.0.0",
+    Language: "Rust",
+    ReviewLines: [],
+  };
+
+  processRootItem(codeFile);
+  processInternalReexports(codeFile);
+  processExternalModuleReexports(codeFile);
+  processExternalItemReexports(codeFile);
+  addSectionHeader(codeFile, "End");
+
+  return codeFile;
+}
+
+/**
+ * Reads and parses the API JSON from the input file
+ * @param inputFilePath Path to the input file
+ * @returns Whether there is a format mismatch
+ */
+function readApiJson(inputFilePath: string): boolean {
   const data = fs.readFileSync(inputFilePath, "utf8");
-  // Parse the JSON data
   apiJson = JSON.parse(data);
 
   let hasFormatMismatch = false;
@@ -30,68 +137,25 @@ function main() {
     );
   }
 
-  // Create the CodeFile object
-  const codeFile: CodeFile = {
-    PackageName: apiJson.index[apiJson.root].name || "unknown",
-    PackageVersion: apiJson["crate_version"] || "unknown",
-    ParserVersion: "1.0.0",
-    Language: "Rust",
-    ReviewLines: [],
-  };
+  return hasFormatMismatch;
+}
+
+/**
+ * Main function that orchestrates the API parsing process
+ */
+function main() {
+  // Read the JSON file
+  const args = process.argv.slice(2);
+  if (args.length < 2) {
+    throw new Error("Please provide input and output file paths as arguments");
+  }
+  const inputFilePath = args[0];
+  const outputFilePath = args[1];
+
+  const hasFormatMismatch = readApiJson(inputFilePath);
+
   try {
-    const reviewLines = processItem(apiJson.index[apiJson.root]);
-    if (reviewLines) {
-      codeFile.ReviewLines.push(...reviewLines);
-    }
-
-    if (reexportLines.internal.length > 0) {
-      codeFile.ReviewLines.push(...reexportLines.internal);
-    }
-
-    if (reexportLines.external.items.length > 0) {
-      codeFile.ReviewLines.push({
-        Tokens: [
-          {
-            Kind: TokenKind.Punctuation,
-            Value: "/* External module re-exports */",
-          },
-        ],
-      });
-      codeFile.ReviewLines.push(...reexportLines.external.modules);
-    }
-
-    if (reexportLines.external.items.length > 0) {
-      codeFile.ReviewLines.push({
-        Tokens: [
-          {
-            Kind: TokenKind.Punctuation,
-            Value: "/* External item re-exports */",
-          },
-        ],
-      });
-      reexportLines.external.items.forEach((item) => {
-        let itemExists = false
-        reexportLines.external.modules.forEach((module) => {
-          if (module.Children && module.Children.length > 0 && module.Children.some((child) => child.LineId === item.LineId)) {
-            itemExists = true;
-            return;
-          }
-        })
-        if (!itemExists) {
-          codeFile.ReviewLines.push(item);
-        }
-      })
-    }
-
-    codeFile.ReviewLines.push({
-      Tokens: [
-        {
-          Kind: TokenKind.Punctuation,
-          Value: "/* End */",
-        },
-      ],
-    });
-    // Write the JSON output to a file
+    const codeFile = buildCodeFile();
     fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
     console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);
   } catch (error) {

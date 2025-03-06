@@ -75,8 +75,8 @@ function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
  */
 function processModuleReexport(
   itemId: Id,
-  itemSummary: any,
-  apiJson: any
+  itemSummary: ItemSummary,
+  apiJson: Crate,
 ): { items: ReviewLine[]; modules: ReviewLine[] } {
   const moduleHeaderLine = createModuleHeaderLine(itemId, itemSummary);
   const children = findModuleChildren(itemSummary.path.join("::"), apiJson);
@@ -110,7 +110,7 @@ function processModuleReexport(
 /**
  * Creates the header line for a module
  */
-function createModuleHeaderLine(itemId: Id, itemSummary: any): ReviewLine {
+function createModuleHeaderLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
   return {
     LineId: itemId.toString(),
     Tokens: [
@@ -140,7 +140,7 @@ function createModuleHeaderLine(itemId: Id, itemSummary: any): ReviewLine {
 /**
  * Finds all child items of a module based on path
  */
-function findModuleChildren(currentPath: string, apiJson: any): ReviewLine[] {
+function findModuleChildren(currentPath: string, apiJson: Crate): ReviewLine[] {
   const children: ReviewLine[] = [];
 
   // Process all items in paths to find children

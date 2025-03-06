@@ -63,6 +63,12 @@
     <None Update="SampleTestFiles\azure-schemaregistry_python_diff.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="SampleTestFiles\azure-storage-file-share_active.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="SampleTestFiles\azure-storage-file-share_baseline.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="SampleTestFiles\azure.data.tables.12.9.0_doc_change.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

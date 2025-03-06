@@ -158,7 +158,7 @@ function DeployHelmResources()
         }
         RunOrExitOnFailure helm repo add --force-update $chartRepoName file://$absAddonsPath
     } else {
-        RunOrExitOnFailure helm repo add --force-update $chartRepoName https://stresstestcharts.blob.core.windows.net/helm/
+        RunOrExitOnFailure helm repo add --force-update $chartRepoName https://azuresdkartifacts.z5.web.core.windows.net/stress/
     }
     RunOrExitOnFailure helm repo add chaos-mesh https://charts.chaos-mesh.org
     RunOrExitOnFailure helm dependency update $PSScriptRoot/kubernetes/stress-infrastructure

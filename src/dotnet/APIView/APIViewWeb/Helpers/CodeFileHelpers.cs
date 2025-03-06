@@ -402,6 +402,30 @@ namespace APIViewWeb.Helpers
             return true;
         }
 
+        private static void UpdateMissingRelatedLineId(List<ReviewLine> lines)
+        {
+            // This method process all lines at same level to identify line Id of previous line before end of context line.
+            // This is required to set related line ID for end of context lines that are not set by parser.
+            // <Context begin line. for e.g.g class <className> { >
+            //          <SChild review lines>
+            // <End of context line. for e.g. "}">
+            
+            string contextLineId = "";
+            foreach (var line in lines)
+            {
+                if (line.IsContextEndLine == true)
+                {
+                    line.RelatedToLine = string.IsNullOrEmpty(line.RelatedToLine)? contextLineId : line.RelatedToLine;
+                    continue;
+                }
+                //If current line as line Id then set it as line ID of current context
+                if (!string.IsNullOrEmpty(line.LineId))
+                {
+                    contextLineId = line.LineId;
+                }
+            }
+        }
+
         public static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
         {
             List<ReviewLine> resultLines = [];
@@ -412,6 +436,9 @@ namespace APIViewWeb.Helpers
             {
                 line.IsActiveRevisionLine = false;
             }
+
+            UpdateMissingRelatedLineId(activeLines);
+            UpdateMissingRelatedLineId(diffLines);
 
             var intersectLines = diffLines.Intersect(activeLines);
             var interleavedLines = activeLines.InterleavedUnion(diffLines);

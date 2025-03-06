@@ -148,7 +148,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="commentText"></param>
         /// <returns></returns>
         [HttpPatch("{reviewId}/{commentId}/updateCommentText", Name = "UpdateCommentText")]
-        public async Task<ActionResult> UpdateCommentTextAsync(string reviewId, string commentId, string commentText)
+        public async Task<ActionResult> UpdateCommentTextAsync(string reviewId, string commentId, [FromForm] string commentText)
         {
             await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, new string[0]);
             return Ok();

@@ -88,6 +88,8 @@ public class JavaASTAnalyser implements Analyser {
      *
      **********************************************************************************************/
 
+    private int JAVADOC_LINE_COUNT = 0;
+
     // This is the model that we build up as the AST of all files are analysed. The APIListing is then output as
     // JSON that can be understood by APIView.
     private final APIListing apiListing;
@@ -391,7 +393,7 @@ public class JavaASTAnalyser implements Analyser {
         // parent
         String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
                 + mavenPom.getParent().getVersion();
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr);
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr, true);
 
         // properties
         gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
@@ -1463,7 +1465,8 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         Stream.of(lines).forEach(line -> {
-            final ReviewLine reviewLine = parent.addChildLine().setRelatedToLine(targetLineId);
+            // we add a line id here so that each line of the javadoc can be commented on
+            final ReviewLine reviewLine = parent.addChildLine("JAVADOC_LINE_" + JAVADOC_LINE_COUNT++).setRelatedToLine(targetLineId);
 
             if (line.contains("&")) {
                 line = HtmlEscape.unescapeHtml(line);

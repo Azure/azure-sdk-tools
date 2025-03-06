@@ -52,5 +52,20 @@ namespace APIViewWeb.LeanControllers
             }
             return new LeanJsonResult(results, StatusCodes.Status200OK);
         }
+
+        /// <summary>
+        /// Retrieves Pull Requests of all API Revisions associated with a Review
+        /// </summary>
+        /// <param name="pullRequestNumber"></param>
+        /// <param name="repoName"></param>
+        /// <param name="commitSHA"></param>
+        /// <returns></returns>
+        [HttpGet(Name = "GetPullRequestReviews")]
+        public async Task<ActionResult<IEnumerable<PullRequestModel>>> GetPullRequestReviews(int pullRequestNumber, string repoName, string commitSHA)
+        {
+            IEnumerable<PullRequestModel> results = await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: pullRequestNumber, repoName: repoName);
+            var prForCommit = results.Where(c => c.Commits.Contains(commitSHA));
+            return new LeanJsonResult(prForCommit, StatusCodes.Status200OK);
+        }
     }
 }

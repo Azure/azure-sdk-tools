@@ -3,6 +3,7 @@ using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -68,6 +69,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="repoName"></param>
         /// <param name="commitSHA"></param>
         /// <returns></returns>
+        [AllowAnonymous]
         [HttpGet(Name = "GetPullRequestReviews")]
         public async Task<ActionResult<IEnumerable<PullRequestModel>>> GetPullRequestReviews(int pullRequestNumber, string repoName, string commitSHA)
         {

@@ -65,7 +65,11 @@ namespace APIViewWeb.LeanControllers
         {
             IEnumerable<PullRequestModel> results = await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: pullRequestNumber, repoName: repoName);
             var prForCommit = results.Where(c => c.Commits.Contains(commitSHA));
-            return new LeanJsonResult(prForCommit, StatusCodes.Status200OK);
+            if (prForCommit.Any())
+            {
+                return new LeanJsonResult(prForCommit, StatusCodes.Status200OK);
+            }
+            return StatusCode(StatusCodes.Status404NotFound);
         }
     }
 }

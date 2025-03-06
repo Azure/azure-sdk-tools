@@ -339,7 +339,6 @@ extends:
                 os: linux
 
               steps:
-              - checkout: self
 
               - download: current
                 artifact: APIView
@@ -402,7 +401,6 @@ extends:
                 runOnce:
                   deploy:
                     steps:
-                    - checkout: self
 
                     - download: current
                       artifact: APIView
@@ -462,7 +460,6 @@ extends:
                 runOnce:
                   deploy:
                     steps:
-                    - checkout: self
 
                     - download: current
                       artifact: APIView

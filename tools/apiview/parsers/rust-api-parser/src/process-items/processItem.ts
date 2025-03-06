@@ -25,26 +25,26 @@ import { processAssocType } from "./processAssocType";
  * @param {Item} item - The item to process.
  * @returns {ReviewLine | null} The ReviewLine object or null if the item is not processed.
  */
-export function processItem(item: Item, apiJson: Crate): ReviewLine[] | null {
+export function processItem(item: Item): ReviewLine[] | null {
   if (typeof item.inner === "object") {
     if ("module" in item.inner) {
-      return processModule(item, apiJson);
+      return processModule(item);
     } else if ("use" in item.inner) {
-      return processUse(item, apiJson);
+      return processUse(item);
     } else if ("union" in item.inner) {
-      return processUnion(item, apiJson);
+      return processUnion(item);
     } else if ("struct" in item.inner) {
-      return processStruct(item, apiJson);
+      return processStruct(item);
     } else if ("enum" in item.inner) {
-      return processEnum(item, apiJson);
+      return processEnum(item);
     } else if ("function" in item.inner) {
       return processFunction(item);
     } else if ("trait" in item.inner) {
-      return processTrait(item, apiJson);
+      return processTrait(item);
     } else if ("trait_alias" in item.inner) {
-      return processTraitAlias(item, apiJson);
+      return processTraitAlias(item);
     } else if ("type_alias" in item.inner) {
-      return processTypeAlias(item, apiJson);
+      return processTypeAlias(item);
     } else if ("constant" in item.inner) {
       return processConstant(item);
     } else if ("static" in item.inner) {

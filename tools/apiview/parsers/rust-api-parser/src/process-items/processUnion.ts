@@ -5,6 +5,7 @@ import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isUnionItem } from "./utils/typeGuards";
 import { processStructField } from "./processStructField";
+import { getAPIJson } from "../main";
 
 /**
  * Processes a union item and adds its documentation to the ReviewLine.
@@ -12,8 +13,9 @@ import { processStructField } from "./processStructField";
  * @param {Crate} apiJson - The API JSON object containing all items.
  * @param {Item} item - The union item to process.
  */
-export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
+export function processUnion(item: Item): ReviewLine[] {
   if (!isUnionItem(item)) return [];
+  const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = [];
 
   if (item.docs) {
@@ -23,7 +25,7 @@ export function processUnion(item: Item, apiJson: Crate): ReviewLine[] {
   // Process derives and impls
   let implResult: ImplProcessResult;
   if (item.inner.union && item.inner.union.impls) {
-    implResult = processImpl({ ...item, inner: { union: item.inner.union } }, apiJson);
+    implResult = processImpl({ ...item, inner: { union: item.inner.union } });
   }
 
   const unionLine: ReviewLine = {

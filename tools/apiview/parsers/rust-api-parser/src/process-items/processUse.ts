@@ -1,20 +1,22 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
+import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
 import { processItem } from "./processItem";
 import { externalReexports } from "./utils/externalReexports";
+import { getAPIJson } from "../main";
 
 export const reexportLines: {
   internal: ReviewLine[];
-  external: ReviewLine[];
+  external: { items: ReviewLine[]; modules: ReviewLine[] };
 } = {
   internal: [],
-  external: [],
+  external: { items: [], modules: [] },
 };
 
-export function processUse(item: Item, apiJson: Crate): ReviewLine[] | undefined {
+export function processUse(item: Item): ReviewLine[] | undefined {
   if (!isUseItem(item)) return;
+  const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
@@ -42,20 +44,70 @@ export function processUse(item: Item, apiJson: Crate): ReviewLine[] | undefined
   });
 
   reviewLines.push(reviewLine);
-  console.log("Processing use item", item.inner.use.id, item.inner.use.source);
 
   if (item.inner.use.id in apiJson.index) {
-    reexportLines.internal.push(...processItem(apiJson.index[item.inner.use.id], apiJson));
+    // non external crates
+
+    // 1. Option 1 is to make them all children of "use" line
+    // reviewLine.Children = processItem(apiJson.index[item.inner.use.id], apiJson);
+
+    // 2. Option 2 is to dump them all globally to the parent module
+    // reexportLines.internal.push(...processItem(apiJson.index[item.inner.use.id], apiJson));
+
+    // 3. Option 3 is a revised version of option 2
+    // Dumps them all, but manages to keep the structure by encapsulating them in modules
     // for the re-exports in the crate
-    // if (isModuleItem(apiJson.index[item.inner.use.id])) {
-    //   reexportLines.internal.push(...processItem(apiJson.index[item.inner.use.id], apiJson));
-    // }
-    // else {
-    //   // TODO: get the string that you'll get after stripping "item.inner.use.name" at the end of "item.inner.use.source"
-    // }
+    if (isModuleItem(apiJson.index[item.inner.use.id])) {
+      reexportLines.internal.push(...processItem(apiJson.index[item.inner.use.id]));
+    } else {
+      // Extract the base path by removing the item name from the source
+      const useSource = item.inner.use.source || "";
+      const useName = apiJson.index[item.inner.use.id].name || "";
+      // Get the base path by removing the name from the end of the source
+      const basePath = useSource.endsWith(useName)
+        ? useSource.substring(0, useSource.length - useName.length - 2) // -2 for ::
+        : useSource;
+
+      const reviewLine: ReviewLine = {
+        LineId: apiJson.index[item.inner.use.id].id.toString() + "_reexport_parent",
+        Tokens: [
+          {
+            Kind: TokenKind.Keyword,
+            Value: "pub mod",
+          },
+          {
+            Kind: TokenKind.TypeName,
+            Value: basePath,
+            RenderClasses: ["module"],
+            NavigateToId: apiJson.index[item.inner.use.id].id.toString() + "_reexport_parent",
+            NavigationDisplayName: basePath,
+          },
+          {
+            Kind: TokenKind.Punctuation,
+            Value: "{",
+            HasSuffixSpace: false,
+          },
+        ],
+        Children: processItem(apiJson.index[item.inner.use.id]),
+      };
+      reexportLines.internal.push(reviewLine);
+      reexportLines.internal.push({
+        RelatedToLine: apiJson.index[item.inner.use.id].id.toString() + "_reexport_parent",
+        Tokens: [
+          {
+            Kind: TokenKind.Punctuation,
+            Value: "}",
+          },
+        ],
+      });
+    }
   } else if (item.inner.use.id in apiJson.paths) {
     // for the re-exports in the external crates
-    reexportLines.external.push(...externalReexports(apiJson.paths[item.inner.use.id], apiJson));
+    const lines = externalReexports(item.inner.use.id);
+    if (!(reexportLines.external.items.some((line) => line.LineId === item.inner.use.id.toString()))) {
+      reexportLines.external.items.push(...lines.items);
+    }
+    reexportLines.external.modules.push(...lines.modules);
   }
 
   return reviewLines;

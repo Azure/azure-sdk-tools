@@ -10,7 +10,7 @@ import { isTraitAliasItem } from "./utils/typeGuards";
  * @param {Crate} apiJson - The API JSON object containing all items.
  * @returns {ReviewLine[]} The ReviewLine objects if processing fails.
  */
-export function processTraitAlias(item: Item, apiJson: Crate): ReviewLine[] {
+export function processTraitAlias(item: Item): ReviewLine[] {
   if (!isTraitAliasItem(item)) return [];
 
   const reviewLines: ReviewLine[] = [];

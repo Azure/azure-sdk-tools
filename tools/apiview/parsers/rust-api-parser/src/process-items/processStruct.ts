@@ -6,6 +6,7 @@ import { processGenerics } from "./utils/processGenerics";
 import { isStructItem } from "./utils/typeGuards";
 import { processStructField } from "./processStructField";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
+import { getAPIJson } from "../main";
 
 /**
  * Processes a struct item and adds its documentation to the ReviewLine.
@@ -13,8 +14,9 @@ import { typeToReviewTokens } from "./utils/typeToReviewTokens";
  * @param {Crate} apiJson - The API JSON object containing all items.
  * @param {Item} item - The struct item to process.
  */
-export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
+export function processStruct(item: Item): ReviewLine[] {
   if (!isStructItem(item)) return [];
+  const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = [];
 
   if (item.docs) {
@@ -24,7 +26,7 @@ export function processStruct(item: Item, apiJson: Crate): ReviewLine[] {
   // Process derives and impls
   let implResult: ImplProcessResult;
   if (item.inner.struct.impls) {
-    implResult = processImpl({ ...item, inner: { struct: item.inner.struct } }, apiJson);
+    implResult = processImpl({ ...item, inner: { struct: item.inner.struct } });
   }
 
   const structLine: ReviewLine = {

@@ -1,8 +1,13 @@
 import * as fs from "fs";
 import { processItem } from "./process-items/processItem";
-import { CodeFile } from "./models/apiview-models";
+import { CodeFile, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION } from "../rustdoc-types/output/rustdoc-types";
 import { reexportLines } from "./process-items/processUse";
+
+let apiJson: Crate;
+export function getAPIJson(): Crate {
+  return apiJson;
+}
 
 function main() {
   // Read the JSON file
@@ -15,7 +20,7 @@ function main() {
 
   const data = fs.readFileSync(inputFilePath, "utf8");
   // Parse the JSON data
-  const apiJson: Crate = JSON.parse(data);
+  apiJson = JSON.parse(data);
 
   let hasFormatMismatch = false;
   if (apiJson.format_version !== FORMAT_VERSION) {
@@ -34,7 +39,7 @@ function main() {
     ReviewLines: [],
   };
   try {
-    const reviewLines = processItem(apiJson.index[apiJson.root], apiJson);
+    const reviewLines = processItem(apiJson.index[apiJson.root]);
     if (reviewLines) {
       codeFile.ReviewLines.push(...reviewLines);
     }
@@ -43,10 +48,37 @@ function main() {
       codeFile.ReviewLines.push(...reexportLines.internal);
     }
 
-    if (reexportLines.external.length > 0) {
-      codeFile.ReviewLines.push(...reexportLines.external);
+    if (reexportLines.external.items.length > 0) {
+      codeFile.ReviewLines.push({
+        Tokens: [
+          {
+            Kind: TokenKind.Punctuation,
+            Value: "/* External item re-exports */",
+          },
+        ],
+      });
+      codeFile.ReviewLines.push(...reexportLines.external.items);
+    }
+    if (reexportLines.external.items.length > 0) {
+      codeFile.ReviewLines.push({
+        Tokens: [
+          {
+            Kind: TokenKind.Punctuation,
+            Value: "/* External module re-exports */",
+          },
+        ],
+      });
+      codeFile.ReviewLines.push(...reexportLines.external.modules);
     }
 
+    codeFile.ReviewLines.push({
+      Tokens: [
+        {
+          Kind: TokenKind.Punctuation,
+          Value: "/* End */",
+        },
+      ]
+    })
     // Write the JSON output to a file
     fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
     console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);

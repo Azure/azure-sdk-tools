@@ -11,9 +11,11 @@ import {
 } from "./utils/implTypeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { processGenericArgs } from "./utils/processGenerics";
+import { getAPIJson } from "../main";
 
-export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewToken[] {
-  const traitImpls = (impls: number[], apiJson: Crate) =>
+export function processAutoTraitImpls(impls: number[]): ReviewToken[] {
+  const apiJson = getAPIJson();
+  const traitImpls = (impls: number[]) =>
     impls
       .map((implId) => apiJson.index[implId] as ImplItem)
       .filter((implItem) => isImplItem(implItem) && isAutoDerivedImpl(implItem))
@@ -24,7 +26,7 @@ export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewTo
         HasSuffixSpace: false,
       }));
 
-  const traits = traitImpls(impls, apiJson);
+  const traits = traitImpls(impls);
   if (!traits.length) return [];
 
   return [
@@ -40,7 +42,8 @@ export function processAutoTraitImpls(impls: number[], apiJson: Crate): ReviewTo
   ];
 }
 
-function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
+function processOtherTraitImpls(impls: number[]): ReviewLine[] {
+  const apiJson = getAPIJson();
   return impls
     .map((implId) => apiJson.index[implId] as ImplItem)
     .filter((implItem) => isImplItem(implItem) && isManualTraitImpl(implItem))
@@ -61,7 +64,7 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
           { Kind: TokenKind.Punctuation, Value: "{", HasPrefixSpace: true },
         ],
         Children: implItem.inner.impl.items
-          .map((item) => processItem(apiJson.index[item], apiJson))
+          .map((item) => processItem(apiJson.index[item]))
           .filter((item) => item != null)
           .flat(),
       };
@@ -75,12 +78,13 @@ function processOtherTraitImpls(impls: number[], apiJson: Crate): ReviewLine[] {
     });
 }
 
-function processImpls(impls: number[], apiJson: Crate): ReviewLine[] {
+function processImpls(impls: number[]): ReviewLine[] {
+  const apiJson = getAPIJson();
   return impls
     .map((implId) => apiJson.index[implId] as ImplItem)
     .filter((implItem) => isImplItem(implItem) && isInherentImpl(implItem))
     .flatMap((implItem) =>
-      implItem.inner.impl.items.map((item) => processItem(apiJson.index[item], apiJson)).flat(),
+      implItem.inner.impl.items.map((item) => processItem(apiJson.index[item])).flat(),
     );
 }
 
@@ -95,13 +99,12 @@ export function processImpl(
     | (Item & { inner: { struct: Struct } })
     | (Item & { inner: { enum: Enum } })
     | (Item & { inner: { union: Union } }),
-  apiJson: Crate,
 ): ImplProcessResult {
   const impls = getImplsFromItem(item);
-  const deriveTokens = processAutoTraitImpls(impls, apiJson);
+  const deriveTokens = processAutoTraitImpls(impls);
 
   // Process children first to check if they're empty
-  const children = processImpls(impls, apiJson).filter((item) => item != null);
+  const children = processImpls(impls).filter((item) => item != null);
 
   // Only create an implBlock if there are children
   const implBlock: ReviewLine[] =
@@ -129,7 +132,7 @@ export function processImpl(
           },
         ];
 
-  const traitImpls = processOtherTraitImpls(impls, apiJson);
+  const traitImpls = processOtherTraitImpls(impls);
 
   return { deriveTokens, implBlock, traitImpls };
   // TODO: generics unused

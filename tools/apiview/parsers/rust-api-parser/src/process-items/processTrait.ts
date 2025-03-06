@@ -4,6 +4,7 @@ import { processItem } from "./processItem";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { isTraitItem } from "./utils/typeGuards";
 import { createGenericBoundTokens, processGenerics } from "./utils/processGenerics";
+import { getAPIJson } from "../main";
 
 /**
  * Processes a trait item and adds its documentation to the ReviewLine.
@@ -12,8 +13,9 @@ import { createGenericBoundTokens, processGenerics } from "./utils/processGeneri
  * @param {Item} item - The trait item to process.
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
-export function processTrait(item: Item, apiJson: Crate) {
+export function processTrait(item: Item) {
   if (!isTraitItem(item)) return;
+  const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
@@ -62,7 +64,7 @@ export function processTrait(item: Item, apiJson: Crate) {
   if (item.inner.trait.items) {
     item.inner.trait.items.forEach((associatedItem: number) => {
       if (!reviewLine.Children) reviewLine.Children = [];
-      const childReviewLines = processItem(apiJson.index[associatedItem], apiJson);
+      const childReviewLines = processItem(apiJson.index[associatedItem]);
       if (childReviewLines) reviewLine.Children.push(...childReviewLines);
     });
   }

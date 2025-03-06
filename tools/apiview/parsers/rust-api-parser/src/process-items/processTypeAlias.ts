@@ -1,5 +1,5 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
+import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { isTypeAliasItem } from "./utils/typeGuards";
@@ -9,10 +9,9 @@ import { processGenerics } from "./utils/processGenerics";
  * Processes a type alias item and returns ReviewLine objects.
  *
  * @param {Item} item - The type alias item to process.
- * @param {Crate} apiJson - The API JSON object containing all items.
  * @returns {ReviewLine[]} The ReviewLine objects or null if processing fails.
  */
-export function processTypeAlias(item: Item, apiJson: Crate): ReviewLine[] {
+export function processTypeAlias(item: Item): ReviewLine[] {
   if (!isTypeAliasItem(item)) return [];
 
   const reviewLines: ReviewLine[] = [];

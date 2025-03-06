@@ -4,9 +4,11 @@ import { ImplProcessResult, processImpl } from "./processImpl";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isEnumItem } from "./utils/typeGuards";
+import { getAPIJson } from "../main";
 
-export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
+export function processEnum(item: Item): ReviewLine[] {
   if (!isEnumItem(item)) return [];
+  const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = [];
 
   if (item.docs) {
@@ -16,7 +18,7 @@ export function processEnum(item: Item, apiJson: Crate): ReviewLine[] {
   // Process derives and impls
   let implResult: ImplProcessResult;
   if (item.inner.enum.impls) {
-    implResult = processImpl({ ...item, inner: { enum: item.inner.enum } }, apiJson);
+    implResult = processImpl({ ...item, inner: { enum: item.inner.enum } });
   }
 
   const enumLine: ReviewLine = {

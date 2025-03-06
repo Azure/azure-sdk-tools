@@ -14,7 +14,7 @@ This Rust project reads a cleaned Rustdoc JSON file from the azure-sdk-for-rust 
 - Node.js and npm installed. You can install Node.js from [nodejs.org](https://nodejs.org/).
 - Alpine Linux
     ```sh
-    sudo apk add --update nodejs npm
+    sudo apk add --update nodejs npm && sudo npm i -g ts-node
     ```
 
 ### Usage
@@ -40,6 +40,8 @@ This Rust project reads a cleaned Rustdoc JSON file from the azure-sdk-for-rust 
     ```
     - Example: 
       ```sh
+      ts-node src/main.ts /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/inputs/azure_core.rust.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/outputs/azure_core.json
+      
       node ./dist/src/main.js /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/inputs/azure_core.rust.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/outputs/azure_core.json
 
       node ./dist/src/main.js /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/inputs/azure_template.rust.json /workspaces/azure-sdk-tools/tools/apiview/parsers/rust-api-parser/outputs/azure_template.json

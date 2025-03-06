@@ -3,6 +3,7 @@ import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { isModuleItem } from "./utils/typeGuards";
+import { getAPIJson } from "../main";
 
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
@@ -12,10 +13,10 @@ import { isModuleItem } from "./utils/typeGuards";
  */
 export function processModule(
   item: Item,
-  apiJson: Crate,
   parentModule?: { prefix: string; id: number },
 ): ReviewLine[] {
   if (!isModuleItem(item)) return;
+  const apiJson = getAPIJson();
   const reviewLines: ReviewLine[] = [];
   if (item.docs) reviewLines.push(createDocsReviewLine(item));
 
@@ -68,7 +69,7 @@ export function processModule(
     item.inner.module.items.forEach((childId: number) => {
       const childItem = apiJson.index[childId];
       if (!isModuleItem(childItem)) {
-        const childReviewLines = processItem(childItem, apiJson);
+        const childReviewLines = processItem(childItem);
         if (childReviewLines) {
           if (!reviewLine.Children) {
             reviewLine.Children = [];
@@ -107,7 +108,7 @@ export function processModule(
             ? `${parentModule.prefix}::${item.name}`
             : item.name
           : item.name;
-        const siblingModuleLines = processModule(childItem, apiJson, {
+        const siblingModuleLines = processModule(childItem, {
           id: item.id,
           prefix: modulePrefix,
         });

@@ -23,7 +23,9 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
     };
 
     // If the reexportLines.external.items does not already contain the line, add it
-    if (!(reexportLines.external.items.some((line) => line.LineId === type.resolved_path.id.toString()))) {
+    if (
+      !reexportLines.external.items.some((line) => line.LineId === type.resolved_path.id.toString())
+    ) {
       const lines = externalReexports(type.resolved_path.id);
       reexportLines.external.items.push(...lines.items);
     }

@@ -104,7 +104,9 @@ export function processUse(item: Item): ReviewLine[] | undefined {
   } else if (item.inner.use.id in apiJson.paths) {
     // for the re-exports in the external crates
     const lines = externalReexports(item.inner.use.id);
-    if (!(reexportLines.external.items.some((line) => line.LineId === item.inner.use.id.toString()))) {
+    if (
+      !reexportLines.external.items.some((line) => line.LineId === item.inner.use.id.toString())
+    ) {
       reexportLines.external.items.push(...lines.items);
     }
     reexportLines.external.modules.push(...lines.modules);

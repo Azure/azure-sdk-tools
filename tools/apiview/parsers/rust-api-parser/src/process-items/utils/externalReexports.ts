@@ -1,71 +1,171 @@
-import { Id } from "../../../rustdoc-types/output/rustdoc-types";
+import { Crate, Id, ItemSummary } from "../../../rustdoc-types/output/rustdoc-types";
 import { getAPIJson } from "../../main";
 import { ReviewLine, TokenKind } from "../../models/apiview-models";
 
 /**
  * Processes external re-exports and creates a structured view
  * @param itemId id of the item being re-exported
- * @param apiJson The API JSON object
- * @returns Array of ReviewLine objects representing the external re-export
+ * @returns Object containing ReviewLine arrays for both items and modules
  */
-export function externalReexports(itemId: Id): { items: ReviewLine[], modules: ReviewLine[] } {
+export function externalReexports(itemId: Id): { items: ReviewLine[]; modules: ReviewLine[] } {
   const apiJson = getAPIJson();
-  if (!itemId || !apiJson || !apiJson.paths || !apiJson.paths[itemId]) {
+  if (!isValidItemId(itemId, apiJson)) {
     return { items: [], modules: [] };
   }
 
   const itemSummary = apiJson.paths[itemId];
   // Check if the item has a path
-  if (!itemSummary.path || !Array.isArray(itemSummary.path) || itemSummary.path.length === 0) {
+  if (!hasValidPath(itemSummary)) {
     return { items: [], modules: [] };
   }
 
   // Handle differently based on item kind
-  if (itemSummary.kind === 'module') {
-    const lines = [{
-      LineId: itemId.toString(),
-      Tokens: [{
-        Kind: TokenKind.Keyword,
-        Value: "pub",
-      }, {
-        Kind: TokenKind.Keyword,
-        Value: itemSummary.kind,
-      }, {
-        Kind: TokenKind.TypeName,
-        Value: itemSummary.path.concat().join("::"),
-        RenderClasses: ['reexport'],
-        NavigateToId: itemId.toString(),
-      }, {
-        Kind: TokenKind.Punctuation,
-        Value: "{}"
-      }],
-    }];
-
-    // For modules, find all related items (children of the module)
-
-    return {
-      modules: lines,
-      items: []
-    };
+  if (itemSummary.kind === "module") {
+    return processModuleReexport(itemId, itemSummary, apiJson);
   } else {
     // For non-module items, just represent them directly
     return {
-      items: [{
-        LineId: itemId.toString(),
-        Tokens: [{
-          Kind: TokenKind.Keyword,
-          Value: "pub",
-        }, {
-          Kind: TokenKind.Keyword,
-          Value: itemSummary.kind,
-        }, {
-          Kind: TokenKind.TypeName,
-          Value: itemSummary.path.concat().join("::"),
-          RenderClasses: ['reexport'],
-          NavigateToId: itemId.toString(),
-        }],
-      }],
-      modules: []
+      items: [createItemLine(itemId, itemSummary)],
+      modules: [],
     };
   }
+}
+
+/**
+ * Checks if the item ID is valid in the given API JSON
+ */
+function isValidItemId(itemId: Id, apiJson: Crate): boolean {
+  return !!(itemId && apiJson && apiJson.paths && apiJson.paths[itemId]);
+}
+
+/**
+ * Checks if an item has a valid path
+ */
+function hasValidPath(itemSummary: ItemSummary): boolean {
+  return !!(itemSummary.path && Array.isArray(itemSummary.path) && itemSummary.path.length > 0);
+}
+
+/**
+ * Creates a single ReviewLine representing a non-module item
+ */
+function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
+  return {
+    LineId: itemId.toString(),
+    Tokens: [
+      {
+        Kind: TokenKind.Keyword,
+        Value: "pub",
+      },
+      {
+        Kind: TokenKind.Keyword,
+        Value: itemSummary.kind,
+      },
+      {
+        Kind: TokenKind.TypeName,
+        Value: itemSummary.path.concat().join("::"),
+        RenderClasses: ["reexport"],
+        NavigateToId: itemId.toString(),
+      },
+    ],
+  };
+}
+
+/**
+ * Processes a module re-export, including finding all its children
+ */
+function processModuleReexport(
+  itemId: Id,
+  itemSummary: any,
+  apiJson: any
+): { items: ReviewLine[]; modules: ReviewLine[] } {
+  const moduleHeaderLine = createModuleHeaderLine(itemId, itemSummary);
+  const children = findModuleChildren(itemSummary.path.join("::"), apiJson);
+
+  if (children.length === 0) {
+    // Add closing brace to the header line for empty modules
+    moduleHeaderLine.Tokens.push({
+      Kind: TokenKind.Punctuation,
+      Value: "}",
+    });
+    return {
+      modules: [moduleHeaderLine],
+      items: [],
+    };
+  } else {
+    // Add children and a separate closing brace line for non-empty modules
+    moduleHeaderLine.Children = children;
+    return {
+      modules: [
+        moduleHeaderLine,
+        {
+          RelatedToLine: itemId.toString(),
+          Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+        },
+      ],
+      items: [],
+    };
+  }
+}
+
+/**
+ * Creates the header line for a module
+ */
+function createModuleHeaderLine(itemId: Id, itemSummary: any): ReviewLine {
+  return {
+    LineId: itemId.toString(),
+    Tokens: [
+      {
+        Kind: TokenKind.Keyword,
+        Value: "pub",
+      },
+      {
+        Kind: TokenKind.Keyword,
+        Value: itemSummary.kind,
+      },
+      {
+        Kind: TokenKind.TypeName,
+        Value: itemSummary.path.concat().join("::"),
+        RenderClasses: ["reexport"],
+        NavigateToId: itemId.toString(),
+      },
+      {
+        Kind: TokenKind.Punctuation,
+        Value: "{",
+        HasSuffixSpace: false,
+      },
+    ],
+  };
+}
+
+/**
+ * Finds all child items of a module based on path
+ */
+function findModuleChildren(currentPath: string, apiJson: any): ReviewLine[] {
+  const children: ReviewLine[] = [];
+
+  // Process all items in paths to find children
+  for (const childId in apiJson.paths) {
+    const childItemSummary = apiJson.paths[childId];
+
+    // Skip if the child doesn't have a path
+    if (!hasValidPath(childItemSummary)) {
+      continue;
+    }
+
+    const childPath = childItemSummary.path.join("::");
+
+    // Check if this is a child path (starts with the current path and is not the same path)
+    if (childPath !== currentPath && childPath.startsWith(currentPath + "::")) {
+      // Skip if the child is a module - we'll handle modules separately
+      // TODO: Handle re-exports of modules under modules
+      if (childItemSummary.kind === "module") {
+        continue;
+      }
+
+      // Add as a child
+      children.push(createItemLine(Number(childId), childItemSummary));
+    }
+  }
+
+  return children;
 }

@@ -53,22 +53,34 @@ function main() {
         Tokens: [
           {
             Kind: TokenKind.Punctuation,
-            Value: "/* External item re-exports */",
-          },
-        ],
-      });
-      codeFile.ReviewLines.push(...reexportLines.external.items);
-    }
-    if (reexportLines.external.items.length > 0) {
-      codeFile.ReviewLines.push({
-        Tokens: [
-          {
-            Kind: TokenKind.Punctuation,
             Value: "/* External module re-exports */",
           },
         ],
       });
       codeFile.ReviewLines.push(...reexportLines.external.modules);
+    }
+
+    if (reexportLines.external.items.length > 0) {
+      codeFile.ReviewLines.push({
+        Tokens: [
+          {
+            Kind: TokenKind.Punctuation,
+            Value: "/* External item re-exports */",
+          },
+        ],
+      });
+      reexportLines.external.items.forEach((item) => {
+        let itemExists = false
+        reexportLines.external.modules.forEach((module) => {
+          if (module.Children && module.Children.length > 0 && module.Children.some((child) => child.LineId === item.LineId)) {
+            itemExists = true;
+            return;
+          }
+        })
+        if (!itemExists) {
+          codeFile.ReviewLines.push(item);
+        }
+      })
     }
 
     codeFile.ReviewLines.push({
@@ -77,8 +89,8 @@ function main() {
           Kind: TokenKind.Punctuation,
           Value: "/* End */",
         },
-      ]
-    })
+      ],
+    });
     // Write the JSON output to a file
     fs.writeFileSync(outputFilePath, JSON.stringify(codeFile, null, 2));
     console.log(`The exported API surface has been successfully saved to '${outputFilePath}'`);

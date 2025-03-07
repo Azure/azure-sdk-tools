@@ -54,6 +54,10 @@ export type SdkAutoContext = {
   isPrivateSpecRepo: boolean;
 };
 
+export type CommandLog = {
+  command: string;
+  logIssues: string[];
+};
 
 export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAutoContext> => {
   const logger = winston.createLogger({

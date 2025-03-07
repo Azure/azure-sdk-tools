@@ -1,5 +1,10 @@
 # Release
 
+## 2025-03-04 - 0.2.1
+
+- Delete logic code to log issues in spec-gen
+- Refactor filter log and add log issues to filter logs
+
 ## 2025-03-04 - 0.2.0
 
 - Combined all logging errors from custom scripts into a single entry for devops

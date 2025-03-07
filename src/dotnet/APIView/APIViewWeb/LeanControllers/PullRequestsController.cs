@@ -82,6 +82,7 @@ namespace APIViewWeb.LeanControllers
             var reviewUrlTemplate = "{0}Assemblies/Review/{0}?revisionId={0}";
 
             List<PullRequestReviewDto> pullRequestReviewDtos = new List<PullRequestReviewDto>();
+            var statusCode = StatusCodes.Status204NoContent;
 
             if (prsForCommit.Any())
             {
@@ -101,9 +102,9 @@ namespace APIViewWeb.LeanControllers
                     prDto.Language = pr.Language;
                     pullRequestReviewDtos.Add(prDto);
                 }
-                return new LeanJsonResult(pullRequestReviewDtos, StatusCodes.Status200OK);
+                statusCode = StatusCodes.Status200OK;
             }
-            return StatusCode(StatusCodes.Status404NotFound);
+            return new LeanJsonResult(pullRequestReviewDtos, statusCode);
         }
     }
 }

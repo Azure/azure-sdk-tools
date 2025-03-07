@@ -1,5 +1,9 @@
 # Release
 
+## 2025-03-07 - 0.2.1
+
+- Generated SDK breaking change label artifacts in pipeline scenario
+
 ## 2025-03-04 - 0.2.0
 
 - Combined all logging errors from custom scripts into a single entry for devops

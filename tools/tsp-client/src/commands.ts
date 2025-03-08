@@ -427,27 +427,51 @@ function buildRawGithubUrl(matchResult: any, originalUrl: string): string {
 export async function generateConfigFilesCommand(argv: any) {
   const outputDir = argv["output-dir"];
   const repoRoot = await getRepoRoot(outputDir);
-  const packageJsonArg = argv["package-json"];
   const overridePath = argv["overrides"] ?? undefined;
+  let packageJsonPath;
+  if (argv["package-json"] === undefined) {
+    try {
+      await stat(joinPaths(repoRoot, "eng", "tspclient.yaml"));
+      const tspclientYaml = parseYaml(
+        await readFile(joinPaths(repoRoot, "eng", "tspclient.yaml"), "utf8"),
+      );
+      if (tspclientYaml["emitterUrl"] === undefined) {
+        Logger.error(
+          "Must specify the path to the package.json file using the --package-json flag.",
+        );
+        process.exit(1);
+      }
+      packageJsonPath = tspclientYaml["emitterUrl"];
+    } catch (err) {
+      Logger.error("Must specify the path to the package.json file using the --package-json flag.");
+      process.exit(1);
+    }
+  } else {
+    packageJsonPath = argv["package-json"];
+  }
 
-  let content;
-  const checkUrl = packageJsonArg.match(
+  let packageJson: Record<string, any>;
+
+  const checkUrl = packageJsonPath.match(
     "^https://(?<root>github|raw.githubusercontent).com/(?<repo>[^/]+/[^/]+)/(?<ref>(blob/|refs/heads/|)(?<commit>[a-f0-9]+|[^/]+))/.*",
   );
   if (checkUrl) {
-    const resolvedPackageJsonUrl = buildRawGithubUrl(checkUrl, packageJsonArg);
+    const resolvedPackageJsonUrl = buildRawGithubUrl(checkUrl, packageJsonPath);
     const response = await fetch(resolvedPackageJsonUrl);
     if (!response.ok) {
-      throw new Error(`Failed to fetch file: ${response.statusText}`);
+      Logger.error(`Unable to download package.json content. Error: ${response.text()}`);
+      process.exit(1);
     }
-    content = await response.text();
+    packageJson = await response.json();
   } else {
-    const packageJsonPath = normalizePath(resolve(argv["package-json"]));
-    content = await readFile(packageJsonPath);
+    if (!(await doesFileExist(packageJsonPath))) {
+      Logger.error(`package.json not found in: ${packageJsonPath}`);
+      process.exit(1);
+    }
+    const content = await readFile(packageJsonPath);
+    packageJson = JSON.parse(content.toString());
   }
-
   Logger.info("Generating emitter-package.json file...");
-  const packageJson: Record<string, any> = JSON.parse(content.toString());
   const emitterPackageJson: Record<string, any> = {
     name: "dist/src/index.js",
     dependencies: {},

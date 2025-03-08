@@ -78,8 +78,8 @@ namespace APIViewWeb.LeanControllers
 
             var host = _configuration["APIVIew-Host-Url"];
             var spaHost = _configuration["APIVIew-SPA-Host-Url"];
-            var reviewSpaUrlTemplate = "{0}review/{1}?activeApiRevisionId={1}";
-            var reviewUrlTemplate = "{0}Assemblies/Review/{0}?revisionId={0}";
+            var reviewSpaUrlTemplate = "{0}review/{1}?activeApiRevisionId={2}";
+            var reviewUrlTemplate = "{0}Assemblies/Review/{1}?revisionId={2}";
 
             List<PullRequestReviewDto> pullRequestReviewDtos = new List<PullRequestReviewDto>();
             var statusCode = StatusCodes.Status204NoContent;

@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http;
+using APIViewWeb.DTOs;
 
 namespace APIViewWeb.Managers
 {
@@ -341,7 +342,7 @@ namespace APIViewWeb.Managers
             client.Timeout = TimeSpan.FromMinutes(20);
             var payload = new
             {
-                content = String.Join("\r\n", codeLines.Select(item => item.lineText))
+                content = String.Join("\\n", codeLines.Select(item => item.lineText.Trim()))
             };
 
             var result = new AIReviewModel();

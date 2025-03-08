@@ -140,6 +140,7 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionId"></param>
+        /// <param name="reviewers"></param>
         /// <returns></returns>
 
         [HttpPost("{reviewId}/{apiRevisionId}/reviewers", Name = "AddReviewers")]
@@ -152,15 +153,17 @@ namespace APIViewWeb.LeanControllers
         }
 
         [HttpPost("{reviewId}/{apiRevisionId}/generateReview", Name = "GenerateAIReview")]
-        public async Task GenerateAIReview(string reviewId, string apiRevisionId = null)
+        public async Task<ActionResult<int>> GenerateAIReview(string reviewId, string apiRevisionId = null)
         {
             try
             {
-                await _reviewManager.GenerateAIReview(reviewId, apiRevisionId);
+                var violations = await _reviewManager.GenerateAIReview(reviewId, apiRevisionId);
+                return new LeanJsonResult(violations, StatusCodes.Status200OK);
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error generating AI review" + ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
     }

@@ -219,7 +219,6 @@ const parser = yargs(hideBin(process.argv))
         .option("package-json", {
           type: "string",
           description: "Path to the emitter's package.json file",
-          demandOption: true,
         })
         .option("overrides", {
           type: "string",

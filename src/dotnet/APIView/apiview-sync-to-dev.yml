@@ -4,6 +4,7 @@ parameters:
   default:
   - originals
   - codefiles
+  - usagesamples
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml

@@ -20,7 +20,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         private const string JsonElement = "JsonElement";
         private static readonly string[] suffixes = new string[] { OptionsSuffix };
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Descriptors.AZC0030); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Descriptors.AZC0030);
 
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context)
         {
@@ -54,14 +54,8 @@ namespace Azure.ClientSdk.Analyzers.ModelName
                 return false;
 
             var fullNamespace = symbol.ContainingNamespace.GetFullNamespaceName();
-
-            if ($"{fullNamespace}".Equals(AzureResourceManagerNamespaceName)
-                || $"{fullNamespace}".StartsWith($"{AzureResourceManagerNamespaceName}."))
-            {
-                return true;
-            }
-
-            return false;
+            return $"{fullNamespace}".Equals(AzureResourceManagerNamespaceName)
+                || $"{fullNamespace}".StartsWith($"{AzureResourceManagerNamespaceName}.");
         }
 
         protected override string[] SuffixesToCatch => suffixes;

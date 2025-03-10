@@ -95,6 +95,7 @@ public class JavaASTAnalyser implements Analyser {
 
     private final Map<String,String> shortClassNameToFullyQualfiedNameMap = new HashMap<>();
 
+    private int JAVADOC_LINE_COUNT = 0;
 
 
     /************************************************************************************************
@@ -1463,7 +1464,8 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         Stream.of(lines).forEach(line -> {
-            final ReviewLine reviewLine = parent.addChildLine().setRelatedToLine(targetLineId);
+            // we add a line id here so that each line of the javadoc can be commented on
+            final ReviewLine reviewLine = parent.addChildLine("JAVADOC_LINE_" + JAVADOC_LINE_COUNT++).setRelatedToLine(targetLineId);
 
             if (line.contains("&")) {
                 line = HtmlEscape.unescapeHtml(line);

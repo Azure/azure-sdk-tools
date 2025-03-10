@@ -18,11 +18,10 @@ import { SDKAutomationState } from './sdkAutomationState';
 import { CommentCaptureTransport } from './logging';
 import { findSwaggerToSDKConfiguration } from '../utils/readme';
 import { getInitOutput } from '../types/InitOutput';
-import { MessageRecord } from '../types/Message';
 import { sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, validateSdkSuppressionsFile } from '../types/sdkSuppressions';
 import { parseYamlContent } from '../utils/utils';
 import { SDKSuppressionContentList } from '../utils/handleSuppressionLines';
-import { SdkAutoContext } from './entrypoint';
+import { CommandLog, SdkAutoContext } from './entrypoint';
 
 export const remoteIntegration = 'integration';
 export const remoteMain = 'main';
@@ -49,7 +48,7 @@ export type WorkflowContext = SdkAutoContext & {
   messageCaptureTransport: Transport;
   scriptEnvs: { [key: string]: string | undefined };
   tmpFolder: string;
-  extraResultRecords: MessageRecord[];
+  logIssues: CommandLog[];
 };
 
 export const setFailureType = (context: WorkflowContext, failureType: FailureType) => {
@@ -74,7 +73,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
     ...context,
     pendingPackages: [],
     handledPackages: [],
-    extraResultRecords: [],
+    logIssues: [],
     status: 'inProgress',
     messages,
     messageCaptureTransport: captureTransport,

@@ -5,25 +5,6 @@
 This package contains custom pylint checkers for Azure SDK guidelines. The custom checkers have message codes in the range C4717 - C4738.
 You can identify a custom checker by the link to the guidelines included in its message.
 
-## How to disable a pylint error
-
-To disable a pylint error, add a comment like this to your code:
-
-```bash
-# pylint:disable=connection-string-should-not-be-constructor-param
-```
-
-If you encounter a false positive, use the disable command to suppress the pylint error.
-
-## Machine-Readable Rule Summary
-
-```json
-{
-  "rule_count": 43,
-  "message_code_range": "C4717-C4738",
-  "common_fixes": ["Add kwargs parameter", "Follow naming conventions", "Use type annotations"]
-}
-```
 
 ## Rules List
 
@@ -75,6 +56,17 @@ If you encounter a false positive, use the disable command to suppress the pylin
 | C4760 | do-not-log-exceptions | Do not log exceptions in levels other than debug, otherwise it can reveal sensitive information | pylint:disable=do-not-log-exceptions | [Logging sensitive info](https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info) |
 | C4761 | unapproved-client-method-name-prefix | Clients should use preferred verbs for method names | pylint:disable=unapproved-client-method-name-prefix | [Naming](https://azure.github.io/azure-sdk/python_design.html#naming) |
 | C4762 | do-not-hardcode-dedent | Sphinx will automatically dedent examples. | pylint:disable=do-not-hardcode-dedent | No Link. |
+
+## How to disable a pylint error (do not do this without permission from an azure sdk team member)
+
+To disable a pylint error, add a comment like this to your code:
+
+```bash
+# pylint:disable=connection-string-should-not-be-constructor-param
+```
+
+If you encounter a false positive, use the disable command to suppress the pylint error.
+
 
 ## Code Examples
 

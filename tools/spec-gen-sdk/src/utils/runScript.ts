@@ -155,9 +155,8 @@ const listenOnStream = (
     setSdkAutoStatus(result, lineResult);
     if (context.config.runEnv === 'azureDevOps' && line.toLowerCase().includes("[error]")) {
       logIssues.push(line);
-    } else {
-      context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
     }
+    context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
   };
 
   let cacheLine = '';

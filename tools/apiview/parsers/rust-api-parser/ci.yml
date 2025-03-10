@@ -80,8 +80,8 @@ extends:
             - template: /eng/pipelines/templates/variables/image.yml
             - name: ArtifactName
               value: 'apiview'
-            - name: FeedRegistry
-              value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-rust/npm/registry/'
+            - name: RustGeneratorDirectory
+              value: 'tools/apiview/parsers/rust-api-parser'
           jobs:
           - job: PublishPackage
             displayName: 'Publish rust-genapi package to devops feed'
@@ -90,24 +90,25 @@ extends:
               image: $(LINUXNEXTVMIMAGE)
               os: linux
             steps:
-            - checkout: none
             - download: current
 
             - pwsh: |
                 $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
                 Write-Host "Detected package name: $detectedPackageName"
-                $registry="$(FeedRegistry)"
-                $regAuth=$registry.replace("https:","")
-                $npmReg = $regAuth.replace("registry/","");
-                $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
-                Write-Host "Publishing to $($regAuth)"
-                npm config set $regAuth`:username=azure-sdk
-                npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
-                npm config set $regAuth`:email=not_set
-                npm config set $npmReg`:username=azure-sdk
-                npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
-                npm config set $npmReg`:email=not_set
-                Write-Host "Publishing package"
-                Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true"
-                npm publish $detectedPackageName --registry=$registry --always-auth=true
-              displayName: Publish package
+                Write-Host "##vso[task.setvariable variable=PackageArtifactFullPath]$detectedPackageName"
+              displayName: "Find package artifact"
+
+            - pwsh: |
+                @"
+                registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-rust/npm/registry/
+                always-auth=true
+                "@ | Set-Content -Path $(RustGeneratorDirectory)/.npmrc -NoNewline
+              displayName: Generate .npmrc
+
+            - task: NpmAuthenticate@0
+              inputs:
+                workingFile: $(RustGeneratorDirectory)/.npmrc
+
+            - pwsh: |
+                npm publish $(PackageArtifactFullPath) --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-rust/npm/registry/
+              workingDirectory: $(RustGeneratorDirectory)

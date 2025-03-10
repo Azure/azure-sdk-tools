@@ -26,7 +26,7 @@ Input (Rustdoc JSON)
 ## Core Components
 
 1. **Entry Point (`main.ts`)**: Handles CLI arguments, JSON I/O, process orchestration, and validation.
-2. **Recursive Processing System**: Central dispatcher (`processItem.ts`) delegates to specialized processors for Rust constructs, preserving hierarchical relationships.
+2. **Recursive Processing**: Central dispatcher (`processItem.ts`) delegates to specialized processors for Rust constructs, preserving hierarchical relationships.
 3. **Type System**: Rustdoc types from rust-lang repository, in `rustdoc-types/`, converted to TypeScript interfaces via [typeshare](https://github.com/1password/typeshare).
 4. **Output Generation**: Produces structured APIView JSON with syntax highlighting and navigation metadata.
 
@@ -42,7 +42,7 @@ The system processes these Rust constructs:
 3. **Re-export Handling**: Resolve internal/external re-exports that can be modules/individual items.
 4. **Output**: Generate structured APIView JSON.
 
-## Recursive Processing Model
+## Recursive Processing
 
 - Rust constructs are processed according to their natural containment hierarchy.
 - Central dispatcher (`processItem.ts`) recursively delegates to specialized handlers, processing depth follows the natural nesting of items.

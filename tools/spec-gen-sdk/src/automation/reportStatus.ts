@@ -455,7 +455,7 @@ function generateBreakingChangeArtifact(context: WorkflowContext, shouldLabelBre
     // here we need to consider multiple spec-gen-sdk run scenarios. In a pipeline run with multiple packages generated,
     // if any of the package has breaking change, we should label the PR with breaking change label.
     // if none of the package has breaking change, we should remove the label from the PR. 
-    // However, from 'spec-gen-sdk' perspective, we only create the lable artifact based on the package result. i.e. if 'shouldLabelBreakingChange' is true,
+    // However, from 'spec-gen-sdk' perspective, we only create the label artifact based on the package result. i.e. if 'shouldLabelBreakingChange' is true,
     // we create the artifact with 'add' label. otherwise, we create the artifact with 'remove' label.
     // Regarding the label addition/removal operation in the spec PR, we will defer it to the downstream workflow.
     if (shouldLabelBreakingChange) {

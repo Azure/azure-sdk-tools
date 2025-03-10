@@ -78,3 +78,10 @@ The `FORMAT_VERSION` in `vendor/rustdoc-types/src/lib.rs` is critical for compat
 3. If they don't match, you may need to use a different version of `rustdoc-types`
 
 Current `FORMAT_VERSION`: 37 (as of rustdoc-types 0.33.0)
+
+## Licensing
+
+This project includes transformed types from the [rustdoc-json-types](https://github.com/rust-lang/rust/tree/master/src/rustdoc-json-types) crate, which is dual-licensed under MIT and Apache 2.0 licenses.
+
+- See [NOTICE.txt](./NOTICE.txt) for details on licensing and modifications.
+- See [LICENSE-APACHE.txt](./LICENSE-APACHE.txt) for the Apache License 2.0 text.

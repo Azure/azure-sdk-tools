@@ -1,0 +1,14 @@
+
+This project includes code derived from the rust-lang/rust repository (https://github.com/rust-lang/rust),
+specifically from the rustdoc-types crate (https://github.com/rust-lang/rust/tree/master/src/rustdoc-json-types).
+
+The original source is dual-licensed under the MIT and Apache 2.0 licenses.
+
+A copy of the Apache License 2.0 is included in this directory (see LICENSE-APACHE.txt).
+
+Modifications:
+- Rust types have been transformed into TypeScript types using [typeshare](https://github.com/1Password/typeshare). 
+- Additional annotations (`#[typeshare]`) and serde attributes have been added to the intermediary rust file to facilitate TypeScript generation.
+- Post-processing scripts have been added to handle shortcomings of the typeshare tool.
+
+Refer to README.md for more details on the transformation process.

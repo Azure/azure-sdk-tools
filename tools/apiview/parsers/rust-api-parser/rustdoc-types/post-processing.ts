@@ -27,6 +27,11 @@ newSourceFile.addStatements(`/*
  * - post-processing.ts script for TypeScript transformations
  * - add-typeshare.rs for typeshare annotations
  * - Or update the rustdoc-types version in Cargo.toml for upstream changes
+ *
+ * Licensing:
+ * This file includes transformed types derived from the rust-lang/rust repository,
+ * specifically from the rustdoc-json-types crate, dual-licensed under MIT and Apache 2.0 licenses.
+ * See NOTICE.txt and LICENSE-APACHE.txt in the rustdoc-types directory for details.
  */
 `);
 

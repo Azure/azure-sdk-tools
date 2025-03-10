@@ -392,7 +392,7 @@ public class JavaASTAnalyser implements Analyser {
         // parent
         String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
                 + mavenPom.getParent().getVersion();
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr);
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr, true);
 
         // properties
         gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();

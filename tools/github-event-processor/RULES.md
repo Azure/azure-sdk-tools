@@ -66,14 +66,42 @@ This is a REST API that evaluates the content of an issue and attempts to predic
 
 #### Example responses
 
-_**Predictions made**_
+_**Only Labels Predicted**_
 
 ```json
 {
-  "labels": [
+  "labels" : [
     "Storage",
     "Client"
-  ]
+  ],  
+  "suggestion" : null,  
+  "solution" : null  
+}
+```
+
+_**Suggestion is provided**_
+
+```json
+{
+  "labels" : [
+    "Storage",
+    "Client"
+  ],  
+  "suggestion" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I have some suggestions that you can try out...",  
+  "solution" : null  
+}
+```
+
+_**Solution is provided**_
+
+```json
+{
+  "labels" : [
+    "Storage",
+    "Client"
+  ],  
+  "suggestion" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I found a solution for your issue...",  
+  "solution" : null  
 }
 ```
 
@@ -81,7 +109,9 @@ _**No predictions**_
 
 ```json
 {
-  "labels": []
+  "labels": [],  
+  "suggestion" : null,  
+  "solution" : null  
 }
 ```
 
@@ -118,8 +148,9 @@ IF labels were predicted:
             - Create the following comment, mentioning all AzureSdkOwners from the set
                  "@{person1} @{person2}...${personX}"
 
-        - Create the following comment
-             "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
+        IF solution and suggestion are not populated
+          - Create the following comment
+              "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
 
     # Note: No valid AzureSdkOwners means there were no CODEOWNERS entries for the service label OR no
     # CODEOWNERS entries for the service label with AzureSdkOwners OR there is a CODEOWNERS entry with
@@ -132,6 +163,12 @@ IF labels were predicted:
 
     IF "needs-team-triage" is not being added to the issue
          - Add "needs-team-attention" label to the issue
+
+    IF suggestions is populated
+         - Comment with suggestion
+    ELSE IF solution is populated
+         - Comment with solution
+         - Add "issue-addressed" label to issue
 
 ELSE
     - Add "needs-triage" label to the issue

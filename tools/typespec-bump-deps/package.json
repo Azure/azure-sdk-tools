@@ -1,16 +1,21 @@
 {
   "name": "@azure-tools/typespec-bump-deps",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "description": "Tool to grab latest @next version for all Typespec packages",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
     "typespec-bump-deps": "./cmd/cli.mjs"
   },
+  "files": [
+    "dist",
+    "cmd/cli.mjs"
+  ],
   "scripts": {
     "watch": "tsc -p ./tsconfig.build.json --watch",
     "build": "tsc -p ./tsconfig.build.json",
-    "clean": "rimraf dist/ temp/",
+    "clean": "rimraf dist/",
+    "prepack": "npm run clean && npm run build",
     "test": "vitest run"
   },
   "engines": {
@@ -25,18 +30,18 @@
   "bugs": {
     "url": "https://github.com/Azure/azure-sdk-tools/issues"
   },
-  "homepage": "https://github.com/Azure/azure-sdk-tools#readme",
+  "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/typespec-bump-deps#readme",
   "dependencies": {
     "pacote": "~21.0.0",
     "semver": "^7.7.1"
   },
   "devDependencies": {
-    "@types/chai": "^5.0.1",
-    "@types/node": "^22.13.9",
+    "@types/chai": "^5.2.0",
+    "@types/node": "^22.13.10",
     "@types/pacote": "11.1.8",
     "@types/semver": "^7.5.8",
     "chai": "^5.2.0",
-    "vitest": "^3.0.7",
+    "vitest": "^3.0.8",
     "ts-node": "^10.9.2",
     "typescript": "~5.8.2"
   }

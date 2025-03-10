@@ -156,15 +156,14 @@ export const saveFilteredLog = (context: WorkflowContext) => {
     notEnabled: 'Warning'
   } as const;
   const type = statusMap[context.status];
-  const filteredResultData = [
-    {
-      type: 'Markdown',
-      mode: 'replace',
-      level: type,
-      message: commentBody,
-      time: new Date()
-    } as MessageRecord
-  ].concat(context.extraResultRecords);
+  const filteredResultData = {
+    type: 'Markdown',
+    mode: 'replace',
+    level: type,
+    message: commentBody,
+    time: new Date(),
+    logIssues: context.logIssues
+  } as MessageRecord;
 
   context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
   const content = JSON.stringify(filteredResultData);
@@ -184,29 +183,26 @@ export const generateHtmlFromFilteredLog = (context: WorkflowContext) => {
         return;
     }
 
-    const parseMessageRecord = JSON.parse(messageRecord) as MessageRecord[];
+    const parseMessageRecord = JSON.parse(messageRecord) as MessageRecord;
 
     let pageBody = '';
-    for(let commentBody of parseMessageRecord) {
-        const markdown = commentBody.message || '';
-        if (markdown.trim().length === 0) continue;
-        let noteBlockInfo = '';
-        let mainContent = '';
-        
-        const match = markdown.match(RegexMarkdownSplit);
-        if (match !== null) { 
-            mainContent = match[2].trim(); 
-            const noteBlock = match[1].trim();
-            const noteBlockMatch = noteBlock.match(RegexNoteBlock);
-            if (noteBlockMatch !== null) {
-                noteBlockInfo = noteBlockMatch[1].trim();
-            }
-        } else {
-            mainContent = marked(markdown) as string;
+    const markdown = parseMessageRecord.message || '';
+    let noteBlockInfo = '';
+    let mainContent = '';
+    
+    const match = markdown.match(RegexMarkdownSplit);
+    if (match !== null) { 
+        mainContent = match[2].trim(); 
+        const noteBlock = match[1].trim();
+        const noteBlockMatch = noteBlock.match(RegexNoteBlock);
+        if (noteBlockMatch !== null) {
+            noteBlockInfo = noteBlockMatch[1].trim();
         }
-        const noteBlockHtml = noteBlockInfo && generateNoteBlockTemplate(noteBlockInfo);
-        pageBody += (noteBlockHtml  + mainContent);
+    } else {
+        mainContent = marked(markdown) as string;
     }
+    const noteBlockHtml = noteBlockInfo && generateNoteBlockTemplate(noteBlockInfo);
+    pageBody += (noteBlockHtml  + mainContent);
 
     // eg: spec-gen-sdk-net result
     const pageTitle = `spec-gen-sdk-${context.config.sdkName.substring("azure-sdk-for-".length)} result`;
@@ -453,8 +449,8 @@ function generateBreakingChangeArtifact(context: WorkflowContext, shouldLabelBre
     }
 
     const language = getLanguageByRepoName(context.config.sdkName);
-    const addBreakingChangeLabelArtifact = path.join(breakingChangeLabelArtifactFolder, `spec-gen-sdk-${language}-true}`);
-    const removeBreakingChangeLabelArtifact = path.join(breakingChangeLabelArtifactFolder, `spec-gen-sdk-${language}-false}`);
+    const addBreakingChangeLabelArtifact = path.join(breakingChangeLabelArtifactFolder, `spec-gen-sdk-${language}-true`);
+    const removeBreakingChangeLabelArtifact = path.join(breakingChangeLabelArtifactFolder, `spec-gen-sdk-${language}-false`);
 
     // here we need to consider multiple spec-gen-sdk run scenarios. In a pipeline run with multiple packages generated,
     // if any of the package has breaking change, we should label the PR with breaking change label.

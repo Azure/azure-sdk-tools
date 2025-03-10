@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Azure.ClientSdk.Analyzers.ModelName;
 using Xunit;
 
 using VerifyCS = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<
@@ -9,7 +8,7 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
 {
     public class SuffixAnalyzerBaseTests
     {
-        private const string diagnosticId = "AZC0030";
+        private const string DiagnosticId = "AZC0030";
 
         [Fact]
         public async Task NonPublicClassIsNotChecked()
@@ -38,9 +37,10 @@ public class MonitorParameter
 public class MonitorParameter
 {
 }")]
-        public async Task ClassWithoutSerliaizationMethodsButInModelsNamespaceIsChecked(string test)
+        public async Task ClassWithoutSerializationMethodsButInModelsNamespaceIsChecked(string test)
         {
-            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(3, 14, 3, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
+            var expectedMessage = $"Suggest to rename it to 'MonitorContent' or 'MonitorPatch' or any other appropriate name.";
+            var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(3, 14, 3, 30).WithArguments("MonitorParameter", "Parameter", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -57,12 +57,13 @@ public class MonitorParameter
         return null;
     }
 }";
-            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 14, 4, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
+            var expectedMessage = $"Suggest to rename it to 'MonitorContent' or 'MonitorPatch' or any other appropriate name.";
+            var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(4, 14, 4, 30).WithArguments("MonitorParameter", "Parameter", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
         [Fact]
-        public async Task ClassWithDeserliazationMethodIsChecked()
+        public async Task ClassWithDeserializationMethodIsChecked()
         {
             var test = @"using System.Text.Json;
 namespace Azure.NotModels;
@@ -79,7 +80,8 @@ public class MonitorParameter : IUtf8JsonSerializable
         return;
     }
 }";
-            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(9, 14, 9, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
+            var expectedMessage = $"Suggest to rename it to 'MonitorContent' or 'MonitorPatch' or any other appropriate name.";
+            var expected = VerifyCS.Diagnostic(DiagnosticId).WithSpan(9, 14, 9, 30).WithArguments("MonitorParameter", "Parameter", expectedMessage);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 

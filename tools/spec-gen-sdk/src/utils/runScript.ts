@@ -4,7 +4,6 @@ import { FailureType, setFailureType, WorkflowContext } from '../automation/work
 import { RunLogFilterOptions, RunLogOptions, RunOptions } from '../types/SwaggerToSdkConfig';
 import { Readable } from 'stream';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
-import { vsoLogIssue } from '../automation/logging';
 import { removeAnsiEscapeCodes } from './utils';
 
 export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending' | 'notEnabled'>;
@@ -122,7 +121,7 @@ export const runSdkAutoCustomScript = async (
   }
 
   if(logIssues.length > 0) {
-    vsoLogIssue(removeAnsiEscapeCodes(logIssues.join('\n')));
+    context.logIssues.push({command: scriptPath, logIssues: removeAnsiEscapeCodes(logIssues)});
   }
 
   return result.status;
@@ -154,11 +153,10 @@ const listenOnStream = (
       }
     }
     setSdkAutoStatus(result, lineResult);
-    if (context.config.runEnv === 'azureDevOps' && line.toLowerCase().includes("[error]")) {
+    if (context.config.runEnv === 'azureDevOps' && isLineMatch(line, opts?.showInComment)) {
       logIssues.push(line);
-    } else {
-      context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
     }
+    context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
   };
 
   let cacheLine = '';

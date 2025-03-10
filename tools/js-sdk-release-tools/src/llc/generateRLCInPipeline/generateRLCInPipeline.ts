@@ -39,8 +39,8 @@ export async function generateRLCInPipeline(options: {
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
 }) {
-    let packagePath: string | undefined = undefined;
-    let relativePackagePath: string | undefined = undefined;
+    let packagePath: string | undefined;
+    let relativePackagePath: string | undefined;
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
@@ -132,12 +132,15 @@ export async function generateRLCInPipeline(options: {
                 logger.info(`Autorest configuration is not found in spec PR comment, and start to find it in sdk repository.`);
                 const sdkFolderPath = path.join(options.sdkRepo, 'sdk');
                 for (const rp of fs.readdirSync(sdkFolderPath)) {
+                    logger.info(`Start to find autorest configuration in '${rp}'.`);
                     if (!!autorestConfigFilePath) break;
                     const rpFolderPath = path.join(sdkFolderPath, rp);
                     if (fs.lstatSync(rpFolderPath).isDirectory()) {
                         for (const packageFolder of fs.readdirSync(rpFolderPath)) {
                             if (!!autorestConfigFilePath) break;
-                            if (!packageFolder.endsWith('-rest')) continue;
+                            if (!packageFolder.endsWith('-rest')) 
+                                continue;
+
                             const packageFolderPath = path.join(rpFolderPath, packageFolder);
                             if (!fs.lstatSync(packageFolderPath).isDirectory()) {
                                 continue;
@@ -146,26 +149,32 @@ export async function generateRLCInPipeline(options: {
                             if (!fs.existsSync(currentAutorestConfigFilePath)) {
                                 continue;
                             }
+                            
                             const autorestConfigFilterRegex = new RegExp(`require:[\\s]*-?[\\s]*(.*${options.readmeMd!.replace(/\//g, '\\/').replace(/\./, '\\.')})`);
-                            const regexExecResult = autorestConfigFilterRegex.exec(fs.readFileSync(currentAutorestConfigFilePath, 'utf-8'));
-                            if (!regexExecResult || regexExecResult.length < 2) {
-                                continue;
+                            const autoRestConfigContent = fs.readFileSync(currentAutorestConfigFilePath, 'utf-8');
+                            const regexExecResult = autorestConfigFilterRegex.exec(autoRestConfigContent);
+                            const requireFoundOnlyOne = regexExecResult && regexExecResult.length === 2;
+
+                            const InputFilePattern = new RegExp(`input-file:.*${path.dirname(options.readmeMd!)}.*`);
+                            const containsInputFile = InputFilePattern.test(autoRestConfigContent);
+
+                            if (containsInputFile || requireFoundOnlyOne) {
+                                // NOTE: it can be overrided from other RPs
+                                if (requireFoundOnlyOne) replaceRequireInAutorestConfigurationFile(currentAutorestConfigFilePath, regexExecResult![1], path.join(options.swaggerRepo, options.readmeMd!));
+                                autorestConfigFilePath = currentAutorestConfigFilePath;
+                                isMultiClient = fs.readFileSync(currentAutorestConfigFilePath, 'utf-8').includes('multi-client');
+                                break;
                             }
-                            if (regexExecResult.length !== 2) {
-                                logger.error(`Found ${regexExecResult.length} matches in '${currentAutorestConfigFilePath}'. The autorest configuration file should only contain one require with one readme.md file`);
-                                continue;
-                            }
-                            replaceRequireInAutorestConfigurationFile(currentAutorestConfigFilePath, regexExecResult[1], path.join(options.swaggerRepo, options.readmeMd!));
-                            autorestConfigFilePath = currentAutorestConfigFilePath;
-                            isMultiClient = fs.readFileSync(currentAutorestConfigFilePath, 'utf-8').includes('multi-client');
-                            break;
                         }
                     }
                 }
             }
 
             if (!autorestConfigFilePath) {
-                logger.warn(`Don't find autorest configuration in spec PR comment or sdk repository, skip generating codes.`);
+                logger.warn(`Failed to find autorest configuration in spec PR comment or sdk repository, skip generating codes.`);
+                logger.warn(`The autorest config file path should be 'sdk/<RP_NAME>-rest/swagger/README.md' in sdk repository, and the autorest config should contain one of the patterns:`);
+                logger.warn(`- input-file field contains the 'specification/<RP_NAME>/data-plane' in swagger repository.`);
+                logger.warn(`- require field contains the URL to 'specification/<RP_NAME>/data-plane/readme.md' in swagger repository.`);
                 logger.warn(`If you ensure there is autorest configuration file in sdk repository, please make sure it contains require keyword and the corresponding readme.md in swagger repository.`);
                 return;
             }
@@ -199,7 +208,6 @@ export async function generateRLCInPipeline(options: {
         if (!packagePath || !relativePackagePath) {
             throw new Error(`Failed to get package path`);
         }
-
         const packageJson = JSON.parse(fs.readFileSync(path.join(packagePath, 'package.json'), {encoding: 'utf-8'}));
         const packageName = packageJson.name;
         logger.info(`Start to generate some other files for '${packageName}' in '${packagePath}'.`);

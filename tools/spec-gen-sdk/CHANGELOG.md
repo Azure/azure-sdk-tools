@@ -3,6 +3,7 @@
 ## 2025-03-07 - 0.2.1
 
 - Generated SDK breaking change label artifacts in pipeline scenario
+- Refactored filter log and added entries for pipeline logging issue
 
 ## 2025-03-04 - 0.2.0
 

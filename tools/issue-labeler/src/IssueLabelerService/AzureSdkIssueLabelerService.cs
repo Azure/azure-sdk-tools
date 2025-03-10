@@ -21,7 +21,7 @@ namespace IssueLabelerService
 {
     public class AzureSdkIssueLabelerService
     {
-        private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Category = "", Service = "", Comment = "", ResponseType = ResponseType.Empty });
+        private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Labels = Array.Empty<string>(), Suggestion = null, Solution = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private readonly IConfiguration _config;
         private readonly ITriageRAG _issueLabeler;
@@ -71,9 +71,20 @@ namespace IssueLabelerService
             try
             {
                 // If in dotnet repo run complete issue triage (includes comments) otherwise run the regular triage that we currently do.
-                if(issue.RepositoryName == "azure-sdk-for-net")
+                if (issue.RepositoryName == "azure-sdk-for-net")
                 {
-                    result = CompleteIssueTriage(issue);
+                    try
+                    {
+                        result = CompleteIssueTriage(issue);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Complete Triage failed for {issue.RepositoryName} on issue #{issue.IssueNumber}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
+                        
+                        // Attempt to just label the issue
+                        _logger.LogInformation($"Attempting to run labeler on issue #{issue.IssueNumber}.");
+                        result = await OnlyLabelIssue(issue);
+                    }
                 }
                 else
                 {
@@ -158,7 +169,6 @@ namespace IssueLabelerService
             // Filtered out all sources for either one then not enough information to answer the issue. 
             if (docs.Count == 0 || issues.Count == 0)
             {
-                _logger.LogInformation($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
                 throw new Exception($"Not enough relevant sources found for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.");
             }
 
@@ -201,27 +211,24 @@ namespace IssueLabelerService
 
             var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
             string intro, outro;
-            ResponseType responseType;
 
             if (solution)
             {
                 intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\n\n";
                 outro = "\n\nThis should solve your problem, if it does not feel free to reopen the issue!";
-                responseType = ResponseType.Solution;
             }
             else
             {
                 intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\n\n";
                 outro = "\n\nThe team will get back to you shortly, hopefully this helps in the meantime!";
-                responseType = ResponseType.Suggestion;
             }
 
+            string formatted_response = intro + resultObj.Response + outro;
             return new IssueOutput
             {
-                Category = resultObj.Category,
-                Service = resultObj.Service,
-                Comment = intro + resultObj.Response + outro,
-                ResponseType = responseType
+                Labels = new[] { resultObj.Service, resultObj.Category },
+                Suggestion = solution ? null : formatted_response,
+                Solution = solution ? formatted_response : null,
             };
         }
 
@@ -279,10 +286,9 @@ namespace IssueLabelerService
                 _logger.LogInformation($"Labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.  Using: [{predictions[0]}, {predictions[1]}].");
                 return new IssueOutput
                 {
-                    Category = predictions[0],
-                    Service = predictions[1],
-                    Comment = "",
-                    ResponseType = ResponseType.Labeler
+                    Labels = new[] { predictions[0], predictions[1] },
+                    Suggestion = null,
+                    Solution = null
                 };
             }
             catch (Exception ex)
@@ -307,27 +313,20 @@ namespace IssueLabelerService
             public string RepositoryOwnerName { get; set; }
         }
 
+        // Structure of output fed to the github event processor
         private class IssueOutput
         {
-            public string Category { get; set; }
-            public string Service { get; set; }
-            public string Comment { get; set; }
-            public ResponseType ResponseType { get; set; }
+            public String[] Labels { get; set; }
+            public string Suggestion { get; set; }
+            public string Solution { get; set; }
         }
 
+        // Structure of OpenAI Response  
         private class AIOutput
         {
             public string Category { get; set; }
             public string Service { get; set; }
             public string Response { get; set; }
-        }
-
-        private enum ResponseType
-        {
-            Solution,
-            Suggestion,
-            Labeler,
-            Empty
         }
     }
 }

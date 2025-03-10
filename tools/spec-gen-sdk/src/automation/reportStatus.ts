@@ -1,5 +1,5 @@
 import { MessageRecord, sendSuccess, sendFailure, sendPipelineVariable } from '../types/Message';
-import { existsSync, readFileSync, rmSync, writeFileSync} from 'fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'fs';
 import * as path from 'path';
 import * as prettier from 'prettier';
 import * as Handlebars from 'handlebars';
@@ -14,6 +14,7 @@ import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
 import { marked } from "marked";
+import { getLanguageByRepoName } from './entrypoint';
 
 const commentLimit = 60;
 
@@ -414,7 +415,6 @@ function unifiedRenderingMessages(message: string[], title?: string): string {
 }
 
 const setPipelineVariables = async (context: WorkflowContext, executionReport: ExecutionReport) => {
-  let breakingChangeLabel = "";
   let packageName = "";
   let prBranch = "";
   let prTitle = "";
@@ -422,9 +422,7 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
 
   if (executionReport && executionReport.packages && executionReport.packages.length > 0) {
     const pkg = executionReport.packages[0];
-    if (pkg.shouldLabelBreakingChange) {
-      breakingChangeLabel = pkg.breakingChangeLabel ?? "";
-    }
+    generateBreakingChangeArtifact(context, pkg.shouldLabelBreakingChange);
     packageName = pkg.packageName ?? "";
     if (context.config.pullNumber) {    
       prBody = `Create to sync ${context.config.specRepoHttpsUrl}/pull/${context.config.pullNumber}\n\n`;
@@ -435,8 +433,57 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
   
   prBody = `${prBody}\n This pull request has been automatically generated for preview purposes.`;
   prTitle = `[AutoPR ${packageName}]`;
-  sendPipelineVariable("BreakingChangeLabel", breakingChangeLabel);
+  sendPipelineVariable("BreakingChangeLabel", context.swaggerToSdkConfig.packageOptions.breakingChangesLabel ?? "")
   sendPipelineVariable("PrBranch", prBranch);
   sendPipelineVariable("PrTitle", prTitle);
   sendPipelineVariable("PrBody", prBody);
+}
+
+function generateBreakingChangeArtifact(context: WorkflowContext, shouldLabelBreakingChange: boolean) {
+  context.logger.log('section', 'Generate breaking change label artifact');
+
+  try {
+    const breakingChangeLabelArtifactFolder = path.join(context.config.workingFolder, 'out/breakingchangelabel');
+    if (!existsSync(breakingChangeLabelArtifactFolder)) {
+      mkdirSync(breakingChangeLabelArtifactFolder, { recursive: true });
+    }
+
+    const language = getLanguageByRepoName(context.config.sdkName);
+    const addBreakingChangeLabelArtifact = path.join(breakingChangeLabelArtifactFolder, `spec-gen-sdk-${language}-true`);
+    const removeBreakingChangeLabelArtifact = path.join(breakingChangeLabelArtifactFolder, `spec-gen-sdk-${language}-false`);
+
+    // here we need to consider multiple spec-gen-sdk run scenarios. In a pipeline run with multiple packages generated,
+    // if any of the package has breaking change, we should label the PR with breaking change label.
+    // if none of the package has breaking change, we should remove the label from the PR. 
+    // However, from 'spec-gen-sdk' perspective, we only create the label artifact based on the package result. i.e. if 'shouldLabelBreakingChange' is true,
+    // we create the artifact with 'add' label. otherwise, we create the artifact with 'remove' label.
+    // Regarding the label addition/removal operation in the spec PR, we will defer it to the downstream workflow.
+    if (shouldLabelBreakingChange) {
+      if (!existsSync(addBreakingChangeLabelArtifact)) {
+        writeFileSync(addBreakingChangeLabelArtifact, 'fyi - add breaking change label');
+      }
+    } else {
+      if (!existsSync(removeBreakingChangeLabelArtifact)) {
+        writeFileSync(removeBreakingChangeLabelArtifact, 'fyi - remove breaking change label');
+      }
+    }
+  } catch (error) {
+    // Log error but don't fail the process since this is not critical
+    let errorMessage = 'Unknown error';
+
+    // Safely extract error message without potential type issues
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error !== null && error !== undefined) {
+      try {
+        errorMessage = String(error);
+      } catch {
+        errorMessage = 'Error converting error to string';
+      }
+    }
+
+    context.logger.error(`Error generating breaking change artifact: ${errorMessage}`);
+  }
+
+  context.logger.log('endsection', 'Generate breaking change label artifact');
 }

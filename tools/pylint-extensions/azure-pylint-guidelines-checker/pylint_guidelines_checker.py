@@ -2856,7 +2856,7 @@ class DoNotImportAsyncio(BaseChecker):
     # TODO Find message number
     msgs = {
         "C4763": (
-            "Do not import the asyncio package for operations such as sleep().",
+            "Do not import the asyncio package for sleep(). See https://github.com/Azure/azure-sdk-tools/blob/ee24337a418d950050654244f3478c1f3b831412/tools/pylint-extensions/azure-pylint-guidelines-checker/README.md#do-not-import-asyncio",
             "do-not-import-asyncio",
             "Do not import the asyncio package for operations such as sleep(). Use the corresponding" \
                 "azure.core.pipeline.transport to sleep() instead.",

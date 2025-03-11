@@ -153,7 +153,7 @@ const listenOnStream = (
       }
     }
     setSdkAutoStatus(result, lineResult);
-    if (context.config.runEnv === 'azureDevOps' && isLineMatch(line, opts?.showInComment)) {
+    if (context.config.runEnv === 'azureDevOps' && isLineMatch(line, opts?.scriptError)) {
       logIssues.push(line);
     }
     context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });

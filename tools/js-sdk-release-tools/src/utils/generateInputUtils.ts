@@ -21,7 +21,7 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
     }
 
     const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
-    if ((tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'] ||
+    if ((tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'] ??
         tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary']) !== true) {
         return false;
     }

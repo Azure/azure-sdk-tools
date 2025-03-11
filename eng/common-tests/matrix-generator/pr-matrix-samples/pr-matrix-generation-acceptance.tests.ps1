@@ -9,13 +9,15 @@ Describe "Acceptance tests for .NET PR Matrix Generation" {
     }
 
     # todo: parametrize this test to via file
-    It "Should evaluate a basic package diff correctly" {
+    It "Should evaluate .NET core diffs correctly" {
         # todo actually parameterize this instead of going after the first one specifically only
         $scenarios = Get-Content (Join-Path $PSScriptRoot net_scenarios.json) -Raw | ConvertFrom-Json
         $scenario = $scenarios[0]
 
         $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
 
-        Write-Host $outputProps
+        $detectedOutputs = Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
+            | ForEach-Object { Get-Content -Raw $_ | ConvertFrom-Json }
+
     }
 }

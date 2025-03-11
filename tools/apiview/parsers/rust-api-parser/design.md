@@ -61,6 +61,7 @@ The system processes these Rust constructs:
       .      .
       .      .
    ```
+
 ## Additional Design Considerations
 
 - **Type Bridging**: Cross-language type safety via [typeshare](https://github.com/1password/typeshare) between the Rustdoc types and the TS types.
@@ -68,55 +69,6 @@ The system processes these Rust constructs:
 - **Trait Implementation Analysis**: Comprehensive handling of trait implementations, specialized handling for derived trait, logical grouping of related implementations.
 - **Re-export Resolution**: Deterministic resolution of module/item re-exports to prevent duplication in rendering and maintain correct hierarchy.
 - **Sorting**: Sorts items within modules by type and name for consistent output. Sorts re-exports after the lines are generated to avoid redundancy.
-
-## Technical Architecture
-
-```mermaid
-graph TD
-   RustdocJSON[/"Rustdoc JSON Input File"/] --> MainTS["main.ts (Entry Point)"]
-
-   subgraph Processing Pipeline
-      direction LR
-      MainTS --> TypeSystem["Type System"]
-      TypeSystem --> ProcessItem["processItem.ts (Recursive Dispatcher)"]
-   end
-
-   subgraph Item Processors
-      direction TB
-      ProcessItem <--> Module["Module Processor"]
-      subgraph Module Processing
-         direction TB
-         Module <--> Sort["Sorting Children"]
-         Sort --> ProcessItem
-      end
-      ProcessItem <--> Use["Use/Re-export Processor"]
-      ProcessItem <--> Struct["Struct Processor"]
-      ProcessItem --> Enum["Enum Processor"]
-      ProcessItem --> Trait["Trait Processor"]
-      ProcessItem --> Function["Function Processor"]
-      ProcessItem --> TypeAlias["Type Alias Processor"]
-      ProcessItem --> Const["Constant Processor"]
-      ProcessItem --> Other[". . ."]
-      Module --> Use
-   end
-
-   subgraph Review Line Generation
-      direction LR
-      Module --> ReviewLine["ReviewLine Generation"]
-      Use --> ReviewLine
-      Struct --> ReviewLine
-      Enum --> ReviewLine
-      Trait --> ReviewLine
-      Function --> ReviewLine
-      TypeAlias --> ReviewLine
-      Other --> ReviewLine
-      Const --> ReviewLine
-      ReviewLine --> Ordering["Sorting the Review Lines"]
-      Ordering --> CodeFile["CodeFile Generation"]
-   end
-
-   CodeFile --> OutputJSON[/"APIView JSON Output"/]
-```
 
 ## Rustdoc Types Component
 

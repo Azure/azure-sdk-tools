@@ -5,9 +5,7 @@ This project provides tools to convert Rust models into TypeScript types using `
 ## Setup
 
 1. **Install Rust/Cargo**:
-    ```sh
-    curl https://sh.rustup.rs -sSf | sh
-    ```
+    Follow https://doc.rust-lang.org/cargo/getting-started/installation.html
     Restart the current shell to use `cargo`.
 
 2. **Install Typeshare CLI**:

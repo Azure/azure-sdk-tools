@@ -4,6 +4,7 @@
 
 - Generated SDK breaking change label artifacts in pipeline scenario
 - Refactored filter log and added entries for pipeline logging issue
+- The log issues display depends on the scriptError setting in swagger_to_sdk_config.json.
 
 ## 2025-03-04 - 0.2.0
 

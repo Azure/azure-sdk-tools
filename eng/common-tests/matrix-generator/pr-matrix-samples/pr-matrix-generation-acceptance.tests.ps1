@@ -17,6 +17,6 @@ Describe "Acceptance tests for .NET PR Matrix Generation" {
             | ForEach-Object { Get-Content -Raw $_ | ConvertFrom-Json }
             | Sort-Object -Property Name
 
-        $detectedOutputs | Should -Be $expectedOutputs
+        ($detectedOutputs | ConvertTo-Json -Depth 100) | Should -Be ($expectedOutputs | ConvertTo-Json -Depth 100)
     }
 }

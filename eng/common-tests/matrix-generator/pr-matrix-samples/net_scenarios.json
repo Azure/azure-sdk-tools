@@ -34,8 +34,8 @@
                     "/sdk/eventhub/Azure.Messaging.EventHubs.Shared",
                     "/sdk/eventhub/ci.yml"
                   ],
-                  "safeName": "AzureMessagingEventHubs",
-                  "name": "Azure.Messaging.EventHubs"
+                  "name": "Azure.Messaging.EventHubs",
+                  "safeName": "AzureMessagingEventHubs"
                 },
                 "CIParameters": {
                   "CIMatrixConfigs": []

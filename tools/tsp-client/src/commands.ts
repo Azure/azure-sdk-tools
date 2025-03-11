@@ -22,7 +22,7 @@ import {
   makeSparseSpecDir,
   getPathToDependency,
 } from "./utils.js";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
 import { resolve } from "node:path";
 import { doesFileExist } from "./network.js";
@@ -461,20 +461,18 @@ export async function generateConfigFilesCommand(argv: any) {
     if (saveUrl) {
       try {
         const tspclientYaml = await stat(tspclientYamlPath);
-        if (tspclientYaml?.isFile()) {
+        if (tspclientYaml.isFile()) {
           Logger.info("tspclient.yaml already exists. Overwriting emitterUrl...");
           const tspclientYamlContent = parseYaml(await readFile(tspclientYamlPath, "utf8"));
           tspclientYamlContent["emitterUrl"] = argv["package-json"];
-          await writeFile(tspclientYamlPath, tspclientYamlContent);
-        } else {
+          await writeFile(tspclientYamlPath, stringifyYaml(tspclientYamlContent));
+        }
+      } catch (err: any) {
+        if (err.code === "ENOENT") {
           Logger.info(
             `tspclient.yaml not found. Creating new tspclient.yaml. Path: ${tspclientYamlPath}`,
           );
           await writeFile(tspclientYamlPath, `emitterUrl: ${argv["package-json"]}\n`);
-        }
-      } catch (err: any) {
-        if (err.code === "ENOENT") {
-          Logger.info("tspclient.yaml not found. Creating new tspclient.yaml...");
         } else {
           Logger.error(`Failed to save url to tspclient.yaml. Error: ${err}`);
         }

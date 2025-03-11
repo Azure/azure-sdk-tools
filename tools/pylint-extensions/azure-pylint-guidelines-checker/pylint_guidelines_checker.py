@@ -2848,16 +2848,18 @@ class DoNotUseLegacyTyping(BaseChecker):
 
 class DoNotImportAsyncio(BaseChecker):
 
-    """Rule to check that libraries do not import the asyncio package directly."""
+    """Rule to check that libraries do not import the asyncio package for operations such as sleep()
+    and instead uses the corresponding azure.core.pipeline.transport to sleep()."""
 
     name = "do-not-import-asyncio"
     priority = -1
     # TODO Find message number
     msgs = {
         "C4763": (
-            "Do not import the asyncio package directly in your library",
+            "Do not import the asyncio package for operations such as sleep().",
             "do-not-import-asyncio",
-            "Do not import the asyncio package in your directly.",
+            "Do not import the asyncio package for operations such as sleep(). Use the corresponding" \
+                "azure.core.pipeline.transport to sleep() instead.",
         ),
     }
 

@@ -558,19 +558,48 @@ def is_string(s):
 #### do-not-import-asyncio
 
 ```python
-# Incorrect - Direct import of asyncio
-import asyncio
+# Incorrect - Direct import of asyncio functions
+from asyncio import sleep
+from azure.core.pipeline import AsyncPipeline
+from azure.core.pipeline.transport import HttpRequest as PipelineTransportHttpRequest
+from azure.core.pipeline.policies import (
+    UserAgentPolicy,
+    AsyncRedirectPolicy,
+)
+from azure.core.pipeline.transport import (
+    HttpTransport,
+)
 
-async def get_blob(self, name: str) -> bytes:
-    await asyncio.sleep(1)  # Direct use of asyncio module
-    return await self._client.send_request(...)
+async def main():
+    port = 8080
+    request = PipelineTransportHttpRequest("GET", "http://localhost:{}/basic/string".format(port))
+    policies = [UserAgentPolicy("myusergant"), AsyncRedirectPolicy()]
+    async with AsyncPipeline(HttpTransport, policies=policies) as pipeline:
+        response = await pipeline.run(request)
+        await sleep(0.1)
+        print(response.http_response.status_code)
 
 # Correct - Use azure-core abstractions when possible
-from azure.core.async_paging import AsyncItemPaged
+from azure.core.pipeline import AsyncPipeline
+from azure.core.pipeline.transport import HttpRequest as PipelineTransportHttpRequest
+from azure.core.pipeline.policies import (
+    UserAgentPolicy,
+    AsyncRedirectPolicy,
+)
+from azure.core.pipeline.transport import (
+    AsyncHttpTransport
+)
 
-async def get_blob(self, name: str) -> bytes:
-    # Use azure-core abstractions for async operations
-    return await self._client.send_request(...)
+async def main():
+    port = 8080
+    request = PipelineTransportHttpRequest("GET", "http://localhost:{}/basic/string".format(port))
+    policies = [UserAgentPolicy("myusergant"), AsyncRedirectPolicy()]
+    async with AsyncPipeline(AsyncHttpTransport, policies=policies) as pipeline:
+        response = await pipeline.run(request)
+        # Use the correct transport's sleep instead of asyncio
+        transport: AsyncHttpTransport = cast(AsyncHttpTransport, response.context.transport)
+        await transport.sleep(0.1)
+        print(response.http_response.status_code)
 ```
 
 ### Enum Examples

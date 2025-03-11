@@ -42,6 +42,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         public List<PullRequestFile> PullRequestFiles { get; set; } = new List<PullRequestFile>();
 
         public List<string> AILabelServiceReturn { get; set; } = new List<string>();
+        public string AIServiceSuggestion { get; set; } = null;
+        public string AIServiceSolution { get; set; } = null;
+
 
         public SearchIssuesResult SearchIssuesResultReturn { get; set; } = new SearchIssuesResult();
 
@@ -469,10 +472,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         // The mock won't be calling the actual service and since the method it's overriding is
         // async, the warning needs to be disabled.
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public override async Task<List<string>> QueryAILabelService(IssueEventGitHubPayload issueEventPayload)
+        public override async Task<IssueTriageOutput> QueryAILabelService(IssueEventGitHubPayload issueEventPayload)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            return AILabelServiceReturn;
+            return new IssueTriageOutput { 
+                Labels = AILabelServiceReturn, 
+                Suggestion = AIServiceSuggestion, 
+                Solution = AIServiceSolution 
+            };
         }
 
         /// <summary>

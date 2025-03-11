@@ -1321,23 +1321,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return rulesConfiguration;
         }
 
-        /// <summary>
-        /// Class to hold the response from the AI Label Service query
-        /// </summary>
-        public class LabelResponse
+        public virtual async Task<IssueTriageOutput> QueryAILabelService(IssueEventGitHubPayload issueEventPayload)
         {
-            public string[] Labels { get; set; }
-        }
+            //Empty response for failures
+            IssueTriageOutput empty = new IssueTriageOutput { Labels = [], Suggestion = null, Solution = null };
 
-        public virtual async Task<List<string>> QueryAILabelService(IssueEventGitHubPayload issueEventPayload)
-        {
             // The LABEL_SERVICE_API_KEY is queried from Keyvault as part of the action and added to the
             // environment.
             string AIServiceKey = Environment.GetEnvironmentVariable("LABEL_SERVICE_API_KEY");
             if (string.IsNullOrEmpty(AIServiceKey))
             {
                 Console.WriteLine("LABEL_SERVICE_API_KEY is null or empty.");
-                return new List<string>();
+                return empty;
             }
             string requestUrl = $"https://gh-issue-labeler-function.azurewebsites.net/api/AzureSdkIssueLabelerService?code={AIServiceKey}";
 
@@ -1351,7 +1346,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 RepositoryOwnerName = issueEventPayload.Repository.Owner.Login
             };
             using var client = new HttpClient();
-            List<string> returnList;
+            IssueTriageOutput output;
             try
             {
                 var response = await client.PostAsJsonAsync(requestUrl, payload).ConfigureAwait(false);
@@ -1364,21 +1359,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 // empty list.
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    var suggestions = await response.Content.ReadFromJsonAsync<LabelResponse>().ConfigureAwait(false);
-                    returnList = new List<string>(suggestions.Labels);
+                    output = await response.Content.ReadFromJsonAsync<IssueTriageOutput>().ConfigureAwait(false);
                 }
                 else
                 {
                     Console.WriteLine($"The AI Label service did not return a success. Status Code={response.StatusCode}, Reason={response.ReasonPhrase}");
-                    returnList = new List<string>();
+                    output = empty;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception calling AI Label Service. Exception={ex}");
-                returnList = new List<string>();
+                output = empty;
             }
-            return returnList;
+            return output;
         }
 
         /// <summary>

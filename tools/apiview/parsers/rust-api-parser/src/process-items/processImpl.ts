@@ -125,7 +125,7 @@ export function processImpl(
                 Kind: TokenKind.TypeName,
                 Value: item.name || "null",
                 RenderClasses: ["tname"],
-                NavigateToId: item.id.toString(),
+                NavigateToId: item.id.toString() + "_impl",
                 NavigationDisplayName: item.name || undefined,
               },
               { Kind: TokenKind.Punctuation, Value: "{" },

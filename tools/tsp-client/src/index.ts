@@ -223,6 +223,11 @@ const parser = yargs(hideBin(process.argv))
         .option("overrides", {
           type: "string",
           description: "Path to an override config file for pinning specific dependencies",
+        })
+        .option("save-url", {
+          type: "boolean",
+          description: "Save URL to tspclient.yaml",
+          default: false,
         });
     },
     async (argv: any) => {

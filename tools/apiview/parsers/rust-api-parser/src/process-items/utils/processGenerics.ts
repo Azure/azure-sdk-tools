@@ -29,7 +29,6 @@ export function processGenerics(generics: Generics): {
 function createGenericsParamsTokens(params: GenericParamDef[]): ReviewToken[] {
   return params.flatMap((param: GenericParamDef, index: number) => {
     const tokens: ReviewToken[] = [];
-
     if (index === 0) {
       tokens.push({ Kind: TokenKind.Text, Value: "<", HasSuffixSpace: false });
     }
@@ -50,10 +49,9 @@ function createGenericsParamsTokens(params: GenericParamDef[]): ReviewToken[] {
     // Close generics if it's the last parameter
     if (index === params.length - 1) {
       tokens.push({ Kind: TokenKind.Text, Value: ">", HasSuffixSpace: false });
-    } else {
-      if (index != 0 && tokens.length > 0) {
-        tokens.push({ Kind: TokenKind.Text, Value: "," });
-      }
+    } else if (tokens.length > 1) {
+      // To account for "<"
+      tokens.push({ Kind: TokenKind.Text, Value: "," });
     }
 
     return tokens;
@@ -61,12 +59,8 @@ function createGenericsParamsTokens(params: GenericParamDef[]): ReviewToken[] {
 }
 
 function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewToken[] {
-  return wherePredicates.flatMap((predicate: WherePredicate, index: number) => {
+  const result = wherePredicates.flatMap((predicate: WherePredicate, index: number) => {
     const tokens: ReviewToken[] = [];
-
-    if (index > 0 && tokens.length > 0 && index < wherePredicates.length - 1) {
-      tokens.push({ Kind: TokenKind.Text, Value: "," });
-    }
 
     if ("bound_predicate" in predicate) {
       tokens.push(...typeToReviewTokens(predicate.bound_predicate.type));
@@ -96,8 +90,18 @@ function createWherePredicatesTokens(wherePredicates: WherePredicate[]): ReviewT
         tokens.push({ Kind: TokenKind.Text, Value: "unknown" }); // Unknown is a placeholder for Const
       }
     }
+
+    // Add comma between predicates
+    if (tokens.length > 0 && index < wherePredicates.length - 1) {
+      tokens.push({ Kind: TokenKind.Text, Value: "," });
+    }
+
     return tokens;
   });
+  if (result.length > 0 && result[result.length - 1].Value === ",") {
+    result.pop();
+  }
+  return result;
 }
 
 export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] {

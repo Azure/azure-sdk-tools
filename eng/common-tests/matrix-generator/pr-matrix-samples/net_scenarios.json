@@ -13,8 +13,6 @@
             "DeletedFiles": [],
             "PRNumber": "48379"
         },
-        "repo": "Azure/azure-sdk-for-net",
-        "commit": "",
         "expected_package_output": [
             {
                 "Name": "Azure.Messaging.EventHubs",

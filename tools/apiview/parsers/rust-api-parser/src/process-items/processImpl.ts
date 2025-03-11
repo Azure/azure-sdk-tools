@@ -85,7 +85,7 @@ function processOtherTraitImpls(impls: number[]): ReviewLine[] {
                 },
                 { Kind: TokenKind.Punctuation, Value: ";" },
                 {
-                  Kind: TokenKind.Punctuation,
+                  Kind: TokenKind.Comment,
                   Value: "// provided trait method",
                   HasSuffixSpace: false,
                 },

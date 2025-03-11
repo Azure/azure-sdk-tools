@@ -50,7 +50,7 @@ You can identify a custom checker by the link to the guidelines included in its 
 | C4754 | no-typing-import-in-type-check | Do not import typing under TYPE_CHECKING. | pylint:disable=no-typing-import-in-type-check | No Link. |
 | C4755 | do-not-log-raised-errors | Do not log errors at `error` or `warning` level when error is raised in an exception block. | pylint:disable=do-not-log-raised-errors | No Link. |
 | C4756 | do-not-use-legacy-typing | Do not use legacy (&lt;Python 3.8) type hinting comments | pylint:disable=do-not-use-legacy-typing | No Link. |
-| C4757 | do-not-import-asyncio | If the only usage of the asyncio import in code is for sleep(), import and use the sleep function from the correct azure core transport. Otherwise, or if asyncio usage can not be determined disable this warning. | pylint:disable=do-not-import-asyncio | No Link. |
+| C4757 | do-not-import-asyncio | If asyncio is being used to sleep(), import and use the sleep function from the correct azure.core.pipeline.transport instead. Otherwise, pylint disable this warning. | pylint:disable=do-not-import-asyncio | No Link. |
 | C4758 | invalid-use-of-overload | Do not mix async and synchronous overloads | pylint:disable=invalid-use-of-overload | No Link. |
 | C4759 | do-not-hardcode-connection-verify | Do not hardcode a boolean value to connection_verify | pylint:disable=do-not-hardcode-connection-verify | No LInk. |
 | C4760 | do-not-log-exceptions | Do not log exceptions in levels other than debug, otherwise it can reveal sensitive information | pylint:disable=do-not-log-exceptions | [Logging sensitive info](https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info) |

@@ -13,6 +13,7 @@ import {
   compileTsp,
   discoverEntrypointFile,
   resolveTspConfigUrl,
+  tspCommand,
   TspLocation,
 } from "./typespec.js";
 import {
@@ -280,7 +281,21 @@ export async function generateCommand(argv: any) {
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
     args.push("--force");
   }
-  await npmCommand(srcDir, args);
+  if (!args.includes("ci")) {
+    try {
+      // Attempt to install dependencies using tsp cli
+      await tspCommand(srcDir, ["install"]);
+    } catch (err) {
+      Logger.debug(
+        "Could not verify that the tsp cli is installed. Will install dependencies with npm instead.",
+      );
+      // Default to npm install if tsp install fails
+      await npmCommand(srcDir, args);
+    }
+  } else {
+    // The tsp cli doesn't support a ci command yet, if there's a lock file present use npm ci instead
+    await npmCommand(srcDir, args);
+  }
 
   const [success, exampleCmd] = await compileTsp({
     emitterPackage: emitter,

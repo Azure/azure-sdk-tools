@@ -7,6 +7,7 @@ import {
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
+import { spawn } from "child_process";
 
 export interface TspLocation {
   directory: string;
@@ -197,4 +198,24 @@ export async function importTsp(baseDir: string): Promise<typeof import("@typesp
       throw err;
     }
   }
+}
+
+export async function tspCommand(workingDir: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tsp = spawn("tsp", args, {
+      cwd: workingDir,
+      stdio: "inherit",
+      shell: true,
+    });
+    tsp.once("exit", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`tsp ${args[0]} failed exited with code ${code}`));
+      }
+    });
+    tsp.once("error", (err) => {
+      reject(new Error(`tsp ${args[0]} failed with error: ${err}`));
+    });
+  });
 }

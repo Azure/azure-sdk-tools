@@ -11,7 +11,7 @@
  * Licensing:
  * This file includes transformed types derived from the rust-lang/rust repository,
  * specifically from the rustdoc-json-types crate, dual-licensed under MIT and Apache 2.0 licenses.
- * See NOTICE.txt and LICENSE-APACHE.txt in the rustdoc-types directory for details.
+ * See NOTICE.txt at the root of this repository for details.
  */
 export const FORMAT_VERSION = 37;
 

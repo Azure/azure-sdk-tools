@@ -8,7 +8,7 @@ You can identify a custom checker by the link to the guidelines included in its 
 
 ## Rules List
 
-| Rule ID | Pylint checker name | How to fix | Disable command | Guideline link | Code Example |
+| Rule ID | Pylint checker name | Reasoning | Disable command | Guideline link | Code Example of How to Fix |
 |---------|---------------------|------------|----------------|----------------|-------------|
 | C4717 | client-method-should-not-use-static-method | Use module level functions instead. | # pylint:disable=client-method-should-not-use-static-method | [Python method signatures](https://azure.github.io/azure-sdk/python_implementation.html#method-signatures) | [Example](code_examples.md#client-method-should-not-use-static-method) |
 | C4718 | missing-client-constructor-parameter-credential | Add a credential parameter to the client constructor. Do not use plural form "credentials". | # pylint:disable=missing-client-constructor-parameter-credential | [Client configuration](https://azure.github.io/azure-sdk/python_design.html#client-configuration) | [Example](code_examples.md#missing-client-constructor-parameter-credential) |

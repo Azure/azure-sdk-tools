@@ -29,7 +29,7 @@ extends:
         variables:
           - template: /eng/pipelines/templates/variables/image.yml
           - name: NodeVersion
-            value: '18.x'
+            value: '22.x'
           - name: ArtifactName
             value: 'apiview'
           - name: RustGeneratorDirectory
@@ -49,8 +49,8 @@ extends:
                 displayName: 'Use NodeJS $(NodeVersion)'
 
               - script: |
-                  npm install -g npm@8.16.0
-                displayName: "Install npm 8.16.0"
+                        npm install -g npm@latest
+                displayName: "Install latest npm"
 
               - script: |
                   npm install

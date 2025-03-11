@@ -19,16 +19,14 @@ This tool processes Rustdoc JSON files from the azure-sdk-for-rust repository an
 - **Rust and Cargo**: Required for the rustdoc-types processing. Install from [rust-lang.org](https://www.rust-lang.org/)
 - **Node.js and npm**: Required for running the TypeScript code. Install from [nodejs.org](https://nodejs.org/)
 
+Install `ts-node` to run TypeScript files directly:
+```sh
+npm i -g ts-node
+```
+
 For details about the Rust aspects of this project:
 - See [rustdoc-types README](./rustdoc-types/README.md) for Rust project setup and usage
 - The project uses [typeshare](https://github.com/1password/typeshare) to convert Rust models into TypeScript types
-
-### Alpine Linux Setup
-
-```sh
-sudo apk add --update nodejs npm 
-sudo npm i -g ts-node
-```
 
 ## Installation
 

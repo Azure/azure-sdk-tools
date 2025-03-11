@@ -1,593 +1,1033 @@
+# Code Examples for Pylint Guidelines
 
-## Code Examples
+This document contains code examples for each pylint rule in the Azure SDK guidelines.
 
-This section provides examples of incorrect and correct code for custom linting rules.
+## Table of Contents
 
-### Client Constructor Examples
+- [client-method-should-not-use-static-method](#client-method-should-not-use-static-method)
+- [missing-client-constructor-parameter-credential](#missing-client-constructor-parameter-credential)
+- [missing-client-constructor-parameter-kwargs](#missing-client-constructor-parameter-kwargs)
+- [client-method-has-more-than-5-positional-arguments](#client-method-has-more-than-5-positional-arguments)
+- [client-method-missing-type-annotations](#client-method-missing-type-annotations)
+- [client-incorrect-naming-convention](#client-incorrect-naming-convention)
+- [client-method-missing-kwargs](#client-method-missing-kwargs)
+- [config-missing-kwargs-in-policy](#config-missing-kwargs-in-policy)
+- [async-client-bad-name](#async-client-bad-name)
+- [file-needs-copyright-header](#file-needs-copyright-header)
+- [client-method-name-no-double-underscore](#client-method-name-no-double-underscore)
+- [specify-parameter-names-in-call](#specify-parameter-names-in-call)
+- [connection-string-should-not-be-constructor-param](#connection-string-should-not-be-constructor-param)
+- [package-name-incorrect](#package-name-incorrect)
+- [client-suffix-needed](#client-suffix-needed)
+- [docstring-admonition-needs-newline](#docstring-admonition-needs-newline)
+- [naming-mismatch](#naming-mismatch)
+- [client-accepts-api-version-keyword](#client-accepts-api-version-keyword)
+- [enum-must-be-uppercase](#enum-must-be-uppercase)
+- [enum-must-inherit-case-insensitive-enum-meta](#enum-must-inherit-case-insensitive-enum-meta)
+- [networking-import-outside-azure-core-transport](#networking-import-outside-azure-core-transport)
+- [non-abstract-transport-import](#non-abstract-transport-import)
+- [no-raise-with-traceback](#no-raise-with-traceback)
+- [name-too-long](#name-too-long)
+- [delete-operation-wrong-return-type](#delete-operation-wrong-return-type)
+- [client-method-missing-tracing-decorator](#client-method-missing-tracing-decorator)
+- [client-method-missing-tracing-decorator-async](#client-method-missing-tracing-decorator-async)
+- [client-list-methods-use-paging](#client-list-methods-use-paging)
+- [docstring-missing-param](#docstring-missing-param)
+- [docstring-missing-type](#docstring-missing-type)
+- [docstring-missing-return](#docstring-missing-return)
+- [docstring-missing-rtype](#docstring-missing-rtype)
+- [docstring-should-be-keyword](#docstring-should-be-keyword)
+- [do-not-import-legacy-six](#do-not-import-legacy-six)
+- [no-legacy-azure-core-http-response-import](#no-legacy-azure-core-http-response-import)
+- [docstring-keyword-should-match-keyword-only](#docstring-keyword-should-match-keyword-only)
+- [docstring-type-do-not-use-class](#docstring-type-do-not-use-class)
+- [no-typing-import-in-type-check](#no-typing-import-in-type-check)
+- [do-not-log-raised-errors](#do-not-log-raised-errors)
+- [do-not-use-legacy-typing](#do-not-use-legacy-typing)
+- [do-not-import-asyncio](#do-not-import-asyncio)
+- [invalid-use-of-overload](#invalid-use-of-overload)
+- [do-not-hardcode-connection-verify](#do-not-hardcode-connection-verify)
+- [do-not-log-exceptions](#do-not-log-exceptions)
+- [unapproved-client-method-name-prefix](#unapproved-client-method-name-prefix)
+- [do-not-hardcode-dedent](#do-not-hardcode-dedent)
 
-#### missing-client-constructor-parameter-credential
+## client-method-should-not-use-static-method
 
+**Incorrect:**
 ```python
-# Incorrect - Missing credential parameter
 class BlobClient:
-    def __init__(self, endpoint, **kwargs):
-        self._endpoint = endpoint
-
-# Correct
-class BlobClient:
-    def __init__(self, endpoint, credential, **kwargs):
-        self._endpoint = endpoint
-        self._credential = credential
+    @staticmethod
+    def parse_url(url):
+        # Parse the URL
+        return parsed_url
 ```
 
-#### missing-client-constructor-parameter-kwargs
-
+**Correct:**
 ```python
-# Incorrect - Missing **kwargs parameter
+# Move to module level function
+def parse_blob_url(url):
+    # Parse the URL
+    return parsed_url
+
+class BlobClient:
+    # No static methods in the client class
+    pass
+```
+
+## missing-client-constructor-parameter-credential
+
+**Incorrect:**
+```python
+class BlobClient:
+    def __init__(self, endpoint):
+        self._endpoint = endpoint
+        # Missing credential parameter
+```
+
+**Correct:**
+```python
 class BlobClient:
     def __init__(self, endpoint, credential):
         self._endpoint = endpoint
         self._credential = credential
+```
 
-# Correct
+## missing-client-constructor-parameter-kwargs
+
+**Incorrect:**
+```python
+class BlobClient:
+    def __init__(self, endpoint, credential):
+        self._endpoint = endpoint
+        self._credential = credential
+        # Missing **kwargs
+```
+
+**Correct:**
+```python
 class BlobClient:
     def __init__(self, endpoint, credential, **kwargs):
         self._endpoint = endpoint
         self._credential = credential
+        # **kwargs allows for future additions without breaking changes
 ```
 
-#### client-accepts-api-version-keyword
+## client-method-has-more-than-5-positional-arguments
 
+**Incorrect:**
 ```python
-# Incorrect - Missing api_version parameter
-class BlobClient:
-    def __init__(self, endpoint, credential, **kwargs):
-        self._endpoint = endpoint
-        self._credential = credential
-
-# Correct
-class BlobClient:
-    def __init__(self, endpoint, credential, *, api_version="2020-04-08", **kwargs):
-        self._endpoint = endpoint
-        self._credential = credential
-        self._api_version = api_version
-```
-
-### Method Examples
-
-#### client-method-should-not-use-static-method
-
-```python
-# Incorrect - Using static method in client class
-class BlobClient:
-    @staticmethod
-    def format_url(account, container):
-        return f"https://{account}.blob.core.windows.net/{container}"
-
-# Correct - Move to module-level function
-def format_blob_url(account, container):
-    return f"https://{account}.blob.core.windows.net/{container}"
-
-class BlobClient:
-    # No static methods
+def create_blob(self, name, data, content_type, metadata, cache_control, content_disposition):
+    # Too many positional arguments
     pass
 ```
 
-#### client-method-missing-kwargs
-
+**Correct:**
 ```python
-# Incorrect - Method making network call without **kwargs
-class BlobClient:
-    def get_blob(self, name):
-        return self._transport_pipeline.request(...)
-
-# Correct
-class BlobClient:
-    def get_blob(self, name, **kwargs):
-        return self._transport_pipeline.request(..., **kwargs)
-```
-
-#### client-method-has-more-than-5-positional-arguments
-
-```python
-# Incorrect - Too many positional arguments
-def create_container(self, name, metadata, public_access, timeout, etag, match_condition, lease_id):
-    pass
-
-# Correct - Use keyword-only arguments after the 5th argument
-def create_container(self, name, metadata, public_access, timeout, etag, *, 
-                    match_condition=None, lease_id=None):
+def create_blob(self, name, data, content_type, metadata, cache_control, *, content_disposition=None):
+    # Use keyword-only arguments (after *) for the 6th and beyond parameters
     pass
 ```
 
-### Naming Examples
+## client-method-missing-type-annotations
 
-#### client-incorrect-naming-convention
-
+**Incorrect:**
 ```python
-# Incorrect - Wrong naming conventions
-class blobClient:  # Should be PascalCase
-    def GetBlob(self):  # Should be snake_case
-        my_Constant = "VALUE"  # Constants should be ALL_CAPS
+def get_blob(self, name):
+    # Missing type annotations
+    return self._client.get_blob(name)
+```
+
+**Correct:**
+```python
+def get_blob(self, name: str) -> bytes:
+    # Type annotations provided
+    return self._client.get_blob(name)
+```
+
+## client-incorrect-naming-convention
+
+**Incorrect:**
+```python
+class blobClient:  # Should use PascalCase for class names
+    def GetBlob(self):  # Should use snake_case for methods
+        my_Constant = 42  # Should use ALL_CAPS for constants
         return my_Constant
+```
 
-# Correct
-class BlobClient:
-    def get_blob(self):
-        MY_CONSTANT = "VALUE"
+**Correct:**
+```python
+class BlobClient:  # PascalCase for class names
+    def get_blob(self):  # snake_case for methods
+        MY_CONSTANT = 42  # ALL_CAPS for constants
         return MY_CONSTANT
 ```
 
-#### enum-must-be-uppercase
+## client-method-missing-kwargs
 
+**Incorrect:**
 ```python
-# Incorrect - Enum name not uppercase
-class Colors(str, Enum):
-    Red = "red"
-    Blue = "blue"
-
-# Correct
-class COLORS(str, Enum):
-    RED = "red"
-    BLUE = "blue"
-```
-
-### Documentation Examples
-
-#### docstring-missing-param
-
-```python
-# Incorrect - Missing parameter documentation
-def get_blob(self, name, **kwargs):
-    """Get a blob from the container.
-
-    :return: The blob data.
-    :rtype: bytes
-    """
-    pass
-
-# Correct
-def get_blob(self, name, **kwargs):
-    """Get a blob from the container.
-    
-    :param str name: The name of the blob.
-    :return: The blob data.
-    :rtype: bytes
-    """
-    pass
-```
-
-#### docstring-keyword-should-match-keyword-only
-
-```python
-# Incorrect - Keyword doc doesn't match keyword-only parameters
-def create_blob(self, name, data, *, content_type=None):
-    """Create a blob.
-    
-    :param str name: The name of the blob.
-    :param str data: The blob data.
-    :keyword content_settings: The content settings. (MISMATCH)
-    """
-    pass
-
-# Correct
-def create_blob(self, name, data, *, content_type=None):
-    """Create a blob.
-    
-    :param str name: The name of the blob.
-    :param str data: The blob data.
-    :keyword cstr or None content_type: The content type of the blob.
-    """
-    pass
-```
-
-### Error Handling Examples
-
-#### no-raise-with-traceback
-
-```python
-# Incorrect - Using legacy raise_with_traceback
-from azure.core.exceptions import raise_with_traceback
-try:
-    # Some operation
-except Exception as error:
-    raise_with_traceback(BlobError, error)
-
-# Correct - Using Python 3 raise from
-try:
-    # Some operation
-except Exception as error:
-    raise BlobError("Operation failed") from error
-```
-
-#### do-not-log-raised-errors
-
-```python
-# Incorrect - Logging errors at error level when raising
-try:
-    # Some operation
-except Exception as error:
-    logger.error("Operation failed: %s", error)
-    raise BlobError("Operation failed") from error
-
-# Correct - Use debug level for logging when raising
-try:
-    # Some operation
-except Exception as error:
-    logger.debug("Operation failed: %s", error)
-    raise BlobError("Operation failed") from error
-```
-
-### Type Annotation Examples
-
-#### client-method-missing-type-annotations
-
-```python
-# Incorrect - Missing type annotations
 def get_blob(self, name):
-    """Get a blob from the container."""
-    return self._client.get_blob(name)
-
-# Correct - Using type annotations
-def get_blob(self, name: str) -> bytes:
-    """Get a blob from the container."""
-    return self._client.get_blob(name)
+    # Method making network calls should have **kwargs
+    return self._client.send_request("GET", f"/blobs/{name}")
 ```
 
-#### do-not-use-legacy-typing
-
+**Correct:**
 ```python
-# Incorrect - Using legacy type comments
-def get_blob(self, name):  # type: (str) -> bytes
-    """Get a blob from the container."""
-    return self._client.get_blob(name)
-
-# Correct - Using modern type annotations (Python 3.8+)
-def get_blob(self, name: str) -> bytes:
-    """Get a blob from the container."""
-    return self._client.get_blob(name)
+def get_blob(self, name, **kwargs):
+    # **kwargs allows passing additional options to the network call
+    return self._client.send_request("GET", f"/blobs/{name}", **kwargs)
 ```
 
-### Client Design Examples
+## config-missing-kwargs-in-policy
 
-#### async-client-bad-name
-
+**Incorrect:**
 ```python
-# Incorrect - Has "Async" in client name
-class BlobAsyncClient:
-    async def get_blob(self, name: str) -> bytes:
-        pass
+def create_configuration(endpoint, **kwargs):
+    return {
+        "policies": [
+            RetryPolicy(),  # Missing **kwargs
+            BearerTokenCredentialPolicy(),  # Missing **kwargs
+        ]
+    }
+```
 
-# Correct - No "Async" in client name
-class BlobClient:  # Same name for both sync and async clients
-    async def get_blob(self, name: str) -> bytes:
+**Correct:**
+```python
+def create_configuration(endpoint, **kwargs):
+    return {
+        "policies": [
+            RetryPolicy(**kwargs),
+            BearerTokenCredentialPolicy(**kwargs),
+        ]
+    }
+```
+
+## async-client-bad-name
+
+**Incorrect:**
+```python
+class BlobAsyncClient:  # "Async" should not be in the class name
+    async def get_blob(self, name):
         pass
 ```
 
-#### client-suffix-needed
-
+**Correct:**
 ```python
-# Incorrect - Missing "Client" suffix
-class Blob:
-    def get_blob(self, name: str) -> bytes:
+class BlobClient:  # Same name as sync client
+    async def get_blob(self, name):
         pass
+```
 
-# Correct - Has "Client" suffix
+## file-needs-copyright-header
+
+**Incorrect:**
+```python
+# File without copyright header
+from azure.core import *
+
+# Code starts here
+```
+
+**Correct:**
+```python
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+from azure.core import *
+
+# Code starts here
+```
+
+## client-method-name-no-double-underscore
+
+**Incorrect:**
+```python
 class BlobClient:
-    def get_blob(self, name: str) -> bytes:
+    def __internal_method(self):  # Double underscore prefix is not allowed
         pass
 ```
 
-#### connection-string-should-not-be-constructor-param
-
+**Correct:**
 ```python
-# Incorrect - Connection string in constructor
 class BlobClient:
-    def __init__(self, connection_string: str, **kwargs):
-        self._conn_str = connection_string
+    def _internal_method(self):  # Single underscore for non-public methods
+        pass
+```
 
-# Correct - Use a factory method instead
+## specify-parameter-names-in-call
+
+**Incorrect:**
+```python
+def process_blob(self, name):
+    # Calling with multiple unnamed parameters
+    self._client.upload_blob(name, data, "text/plain", {"key": "value"}, 3600)
+```
+
+**Correct:**
+```python
+def process_blob(self, name):
+    # Named parameters after the second argument
+    self._client.upload_blob(
+        name,
+        data,
+        content_type="text/plain",
+        metadata={"key": "value"},
+        timeout=3600
+    )
+```
+
+## connection-string-should-not-be-constructor-param
+
+**Incorrect:**
+```python
 class BlobClient:
-    def __init__(self, endpoint: str, credential: Any, **kwargs):
+    def __init__(self, connection_string, **kwargs):
+        # Connection string in constructor
+        self._parse_connection_string(connection_string)
+```
+
+**Correct:**
+```python
+class BlobClient:
+    def __init__(self, endpoint, credential, **kwargs):
         self._endpoint = endpoint
         self._credential = credential
     
     @classmethod
-    def from_connection_string(cls, connection_string: str, **kwargs) -> "BlobClient":
-        # Parse connection string and create client
-        endpoint = parse_endpoint(connection_string)
-        credential = parse_credential(connection_string)
+    def from_connection_string(cls, connection_string, **kwargs):
+        # Factory method for connection string
+        endpoint, credential = cls._parse_connection_string(connection_string)
         return cls(endpoint, credential, **kwargs)
 ```
 
-#### config-missing-kwargs-in-policy
+## package-name-incorrect
 
+**Incorrect:**
 ```python
-# Incorrect - Policy missing **kwargs
-def create_config(endpoint, credential):
-    return {
-        "transport": RequestsTransport(),  # Missing **kwargs
-        "policies": [
-            UserAgentPolicy("client_name"),  # Missing **kwargs
-            RetryPolicy()  # Missing **kwargs
-        ]
-    }
-
-# Correct
-def create_config(endpoint, credential):
-    return {
-        "transport": RequestsTransport(**kwargs),
-        "policies": [
-            UserAgentPolicy("client_name", **kwargs),
-            RetryPolicy(**kwargs)
-        ]
-    }
+# setup.py with incorrect package name
+setup(
+    name="azure_storage_blob",  # Using underscores instead of dashes
+    version="1.0.0",
+    # ...
+)
 ```
 
-### Method Implementation Examples
-
-#### client-method-name-no-double-underscore
-
+**Correct:**
 ```python
-# Incorrect - Double underscore prefix
-class BlobClient:
-    def __get_headers(self):
-        return {"Content-Type": "application/json"}
-
-# Correct - Single underscore for non-public methods
-class BlobClient:
-    def _get_headers(self):
-        return {"Content-Type": "application/json"}
+# setup.py with correct package name
+setup(
+    name="azure-storage-blob",  # Using dashes
+    version="1.0.0",
+    # ...
+)
 ```
 
-#### specify-parameter-names-in-call
+## client-suffix-needed
 
+**Incorrect:**
 ```python
-# Incorrect - Multiple positional arguments without names
-def process_blob(self, container_name, blob_name, content_type, metadata, timeout):
-    self._client.create_blob(container_name, blob_name, content_type, metadata, timeout)
-
-# Correct - Named parameters for clarity
-def process_blob(self, container_name, blob_name, content_type, metadata, timeout):
-    self._client.create_blob(
-        container_name, 
-        blob_name, 
-        content_type=content_type, 
-        metadata=metadata, 
-        timeout=timeout
-    )
-```
-
-#### unapproved-client-method-name-prefix
-
-```python
-# Incorrect - Uses non-standard verb prefix
-class BlobClient:
-    def fetch_blob(self, name: str) -> bytes:
-        pass
-    
-    def modify_blob(self, name: str, data: bytes) -> None:
-        pass
-
-# Correct - Uses approved verb prefixes
-class BlobClient:
-    def get_blob(self, name: str) -> bytes:
-        pass
-    
-    def update_blob(self, name: str, data: bytes) -> None:
+class Blob:  # Missing "Client" suffix
+    def get_properties(self):
         pass
 ```
 
-### Return Type Examples
-
-#### delete-operation-wrong-return-type
-
+**Correct:**
 ```python
-# Incorrect - Delete method returns a value
-def delete_blob(self, name: str, **kwargs) -> Dict[str, Any]:
-    response = self._client.send_request(...)
+class BlobClient:  # Has "Client" suffix
+    def get_properties(self):
+        pass
+```
+
+## docstring-admonition-needs-newline
+
+**Incorrect:**
+```python
+def get_examples():
+    """Get examples for the API.
+    .. literalinclude:: ../samples/example.py
+        :start-after: [START get_examples]
+        :end-before: [END get_examples]
+        :language: python
+    """
+    pass
+```
+
+**Correct:**
+```python
+def get_examples():
+    """Get examples for the API.
+
+    .. literalinclude:: ../samples/example.py
+        :start-after: [START get_examples]
+        :end-before: [END get_examples]
+        :language: python
+    """
+    pass
+```
+
+## naming-mismatch
+
+**Incorrect:**
+```python
+# In generated_models.py
+class BlobProperties:
+    pass
+
+# In client code
+from .generated_models import BlobProperties as BlobProps  # aliased name
+```
+
+**Correct:**
+```python
+# In generated_models.py
+class BlobProperties:
+    pass
+
+# In client code
+from .generated_models import BlobProperties  # use original name
+```
+
+## client-accepts-api-version-keyword
+
+**Incorrect:**
+```python
+class BlobClient:
+    def __init__(self, endpoint, credential, **kwargs):
+        # Missing api_version parameter
+        self._endpoint = endpoint
+```
+
+**Correct:**
+```python
+class BlobClient:
+    def __init__(self, endpoint, credential, *, api_version="2020-06-12", **kwargs):
+        # Keyword-only api_version parameter
+        self._endpoint = endpoint
+        self._api_version = api_version
+```
+
+## enum-must-be-uppercase
+
+**Incorrect:**
+```python
+from enum import Enum
+
+class AccessType(str, Enum):  # Enum name should be uppercase
+    Private = "private"
+    Public = "public"
+```
+
+**Correct:**
+```python
+from enum import Enum
+
+class ACCESS_TYPE(str, Enum):  # Uppercase enum name
+    PRIVATE = "private"
+    PUBLIC = "public"
+```
+
+## enum-must-inherit-case-insensitive-enum-meta
+
+**Incorrect:**
+```python
+from enum import Enum
+
+class ACCESS_TYPE(str, Enum):  # Missing CaseInsensitiveEnumMeta
+    PRIVATE = "private"
+    PUBLIC = "public"
+```
+
+**Correct:**
+```python
+from enum import Enum
+from azure.core.enum_base import CaseInsensitiveEnumMeta
+
+class ACCESS_TYPE(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    PRIVATE = "private"
+    PUBLIC = "public"
+```
+
+## networking-import-outside-azure-core-transport
+
+**Incorrect:**
+```python
+# In a client library outside azure.core
+import requests  # Direct networking import
+
+def get_data(url):
+    return requests.get(url)
+```
+
+**Correct:**
+```python
+# In a client library outside azure.core
+from azure.core.rest import HttpRequest
+from azure.core.pipeline import Pipeline
+
+def get_data(url, pipeline):
+    request = HttpRequest("GET", url)
+    return pipeline.run(request)
+```
+
+## non-abstract-transport-import
+
+**Incorrect:**
+```python
+# Importing a specific transport implementation
+from azure.core.pipeline.transport import RequestsTransport
+
+def create_client(endpoint):
+    transport = RequestsTransport()
+    # ...
+```
+
+**Correct:**
+```python
+# Import only the abstract transport
+from azure.core.pipeline.transport import HttpTransport
+
+def create_client(endpoint, transport=None):
+    transport = transport or HttpTransport()
+    # ...
+```
+
+## no-raise-with-traceback
+
+**Incorrect:**
+```python
+from azure.core.exceptions import raise_with_traceback
+
+try:
+    # some operation
+except Exception as e:
+    raise_with_traceback(BlobError, e)
+```
+
+**Correct:**
+```python
+try:
+    # some operation
+except Exception as e:
+    raise BlobError("Failed to perform operation") from e
+```
+
+## name-too-long
+
+**Incorrect:**
+```python
+def download_blob_and_verify_content_with_checksum_validation(self, blob_name):
+    # Method name is too long (over 40 characters)
+    pass
+```
+
+**Correct:**
+```python
+def download_blob_with_checksum(self, blob_name):
+    # Shorter name (under 40 characters)
+    pass
+```
+
+## delete-operation-wrong-return-type
+
+**Incorrect:**
+```python
+def delete_blob(self, name, **kwargs) -> dict:
+    response = self._client.send_request("DELETE", f"/blobs/{name}")
     return response.json()
-
-# Correct - Delete method returns None
-def delete_blob(self, name: str, **kwargs) -> None:
-    self._client.send_request(...)
-    # No return value
 ```
 
-#### client-list-methods-use-paging
-
+**Correct:**
 ```python
-# Incorrect - List method returns a direct list
-def list_blobs(self, **kwargs) -> List[Dict[str, Any]]:
-    response = self._client.send_request(...)
-    return response.json()["blobs"]
+def delete_blob(self, name, **kwargs) -> None:
+    self._client.send_request("DELETE", f"/blobs/{name}")
+    # Return None for delete operations
+```
 
-# Correct - List method returns an ItemPaged instance
-def list_blobs(self, **kwargs) -> ItemPaged[Dict[str, Any]]:
+## client-method-missing-tracing-decorator
+
+**Incorrect:**
+```python
+# Missing distributed_trace decorator
+def get_blob(self, name, **kwargs):
+    return self._client.send_request("GET", f"/blobs/{name}")
+```
+
+**Correct:**
+```python
+from azure.core.tracing.decorator import distributed_trace
+
+@distributed_trace
+def get_blob(self, name, **kwargs):
+    return self._client.send_request("GET", f"/blobs/{name}")
+```
+
+## client-method-missing-tracing-decorator-async
+
+**Incorrect:**
+```python
+# Missing distributed_trace_async decorator
+async def get_blob(self, name, **kwargs):
+    return await self._client.send_request("GET", f"/blobs/{name}")
+```
+
+**Correct:**
+```python
+from azure.core.tracing.decorator_async import distributed_trace_async
+
+@distributed_trace_async
+async def get_blob(self, name, **kwargs):
+    return await self._client.send_request("GET", f"/blobs/{name}")
+```
+
+## client-list-methods-use-paging
+
+**Incorrect:**
+```python
+def list_blobs(self, **kwargs) -> list:
+    response = self._client.send_request("GET", "/blobs")
+    return response.json()["value"]
+```
+
+**Correct:**
+```python
+from azure.core.paging import ItemPaged
+
+def list_blobs(self, **kwargs) -> ItemPaged:
     def get_next(continuation_token=None):
         params = {} if continuation_token is None else {"marker": continuation_token}
-        response = self._client.send_request(params=params, **kwargs)
+        response = self._client.send_request("GET", "/blobs", params=params)
         return response.json()
     
-    return ItemPaged(get_next, extract_data=lambda r: r["blobs"])
+    return ItemPaged(get_next, extract_data=lambda r: r["value"])
 ```
 
-### Distributed Tracing Examples
+## docstring-missing-param
 
-#### client-method-missing-tracing-decorator
-
+**Incorrect:**
 ```python
-# Incorrect - Missing distributed tracing decorator
-from azure.core.tracing.decorator import distributed_trace
-
-class BlobClient:
-    def get_blob(self, name: str, **kwargs) -> bytes:
-        # Makes network call without tracing decorator
-        return self._client.send_request(...)
-
-# Correct
-from azure.core.tracing.decorator import distributed_trace
-
-class BlobClient:
-    @distributed_trace
-    def get_blob(self, name: str, **kwargs) -> bytes:
-        return self._client.send_request(...)
+def get_blob(self, name, **kwargs):
+    """Get a blob from the container.
+    
+    :return: The blob data.
+    :rtype: bytes
+    """
+    # Missing :param name: documentation
 ```
 
-#### client-method-missing-tracing-decorator-async
-
+**Correct:**
 ```python
-# Incorrect - Missing async distributed tracing decorator
-from azure.core.tracing.decorator_async import distributed_trace_async
-
-class BlobClient:
-    async def get_blob(self, name: str, **kwargs) -> bytes:
-        # Makes network call without tracing decorator
-        return await self._client.send_request(...)
-
-# Correct
-from azure.core.tracing.decorator_async import distributed_trace_async
-
-class BlobClient:
-    @distributed_trace_async
-    async def get_blob(self, name: str, **kwargs) -> bytes:
-        return await self._client.send_request(...)
+def get_blob(self, name, **kwargs):
+    """Get a blob from the container.
+    
+    :param name: The name of the blob.
+    :return: The blob data.
+    :rtype: bytes
+    """
 ```
 
-### Import and Module Examples
+## docstring-missing-type
 
-#### no-legacy-azure-core-http-response-import
-
+**Incorrect:**
 ```python
-# Incorrect - Imports HttpResponse from legacy location
-from azure.core.pipeline.transport import HttpResponse
-
-def process_response(response: HttpResponse) -> Dict[str, Any]:
-    return response.json()
-
-# Correct
-from azure.core.rest import HttpResponse
-
-def process_response(response: HttpResponse) -> Dict[str, Any]:
-    return response.json()
+def get_blob(self, name, **kwargs):
+    """Get a blob from the container.
+    
+    :param name: The name of the blob.
+    :return: The blob data.
+    :rtype: bytes
+    """
+    # Missing :type name: documentation
 ```
 
-#### do-not-import-legacy-six
-
+**Correct:**
 ```python
-# Incorrect - Imports six library
-import six
+def get_blob(self, name, **kwargs):
+    """Get a blob from the container.
+    
+    :param name: The name of the blob.
+    :type name: str
+    :return: The blob data.
+    :rtype: bytes
+    """
+```
+
+## docstring-missing-return
+
+**Incorrect:**
+```python
+def get_blob(self, name, **kwargs):
+    """Get a blob from the container.
+    
+    :param name: The name of the blob.
+    :type name: str
+    :rtype: bytes
+    """
+    # Missing :return: documentation
+```
+
+**Correct:**
+```python
+def get_blob(self, name, **kwargs):
+    """Get a blob from the container.
+    
+    :param name: The name of the blob.
+    :type name: str
+    :return: The blob data.
+    :rtype: bytes
+    """
+```
+
+## docstring-missing-rtype
+
+**Incorrect:**
+```python
+def get_blob(self, name, **kwargs):
+    """Get a blob from the container.
+    
+    :param name: The name of the blob.
+    :type name: str
+    :return: The blob data.
+    """
+    # Missing :rtype: documentation
+```
+
+**Correct:**
+```python
+def get_blob(self, name, **kwargs):
+    """Get a blob from the container.
+    
+    :param name: The name of the blob.
+    :type name: str
+    :return: The blob data.
+    :rtype: bytes
+    """
+```
+
+## docstring-should-be-keyword
+
+**Incorrect:**
+```python
+def create_blob(self, name, data, *, content_type=None, **kwargs):
+    """Create a blob.
+    
+    :param name: The name of the blob.
+    :type name: str
+    :param data: The blob data.
+    :type data: bytes
+    :param content_type: The content type of the blob.  # Should use :keyword: for keyword-only args
+    :type content_type: str
+    """
+```
+
+**Correct:**
+```python
+def create_blob(self, name, data, *, content_type=None, **kwargs):
+    """Create a blob.
+    
+    :param name: The name of the blob.
+    :type name: str
+    :param data: The blob data.
+    :type data: bytes
+    :keyword content_type: The content type of the blob.
+    :paramtype content_type: str
+    """
+```
+
+## do-not-import-legacy-six
+
+**Incorrect:**
+```python
+import six  # Legacy compatibility library
 
 def is_string(s):
     return isinstance(s, six.string_types)
+```
 
-# Correct - Uses Python built-ins
+**Correct:**
+```python
 def is_string(s):
-    return isinstance(s, str)
+    return isinstance(s, str)  # Use native Python 3 types
 ```
 
-#### do-not-import-asyncio
+## no-legacy-azure-core-http-response-import
 
+**Incorrect:**
 ```python
-# Incorrect - Direct import of asyncio functions
-from asyncio import sleep
-from azure.core.pipeline import AsyncPipeline
-from azure.core.pipeline.transport import HttpRequest as PipelineTransportHttpRequest
-from azure.core.pipeline.policies import (
-    UserAgentPolicy,
-    AsyncRedirectPolicy,
-)
-from azure.core.pipeline.transport import (
-    HttpTransport,
-)
+# Importing from legacy location
+from azure.core.pipeline.transport import HttpResponse
 
-async def main():
-    port = 8080
-    request = PipelineTransportHttpRequest("GET", "http://localhost:{}/basic/string".format(port))
-    policies = [UserAgentPolicy("myusergant"), AsyncRedirectPolicy()]
-    async with AsyncPipeline(HttpTransport, policies=policies) as pipeline:
-        response = await pipeline.run(request)
-        await sleep(0.1)
-        print(response.http_response.status_code)
-
-# Correct - Use azure-core abstractions when possible
-from azure.core.pipeline import AsyncPipeline
-from azure.core.pipeline.transport import HttpRequest as PipelineTransportHttpRequest
-from azure.core.pipeline.policies import (
-    UserAgentPolicy,
-    AsyncRedirectPolicy,
-)
-from azure.core.pipeline.transport import (
-    AsyncHttpTransport
-)
-
-async def main():
-    port = 8080
-    request = PipelineTransportHttpRequest("GET", "http://localhost:{}/basic/string".format(port))
-    policies = [UserAgentPolicy("myusergant"), AsyncRedirectPolicy()]
-    async with AsyncPipeline(AsyncHttpTransport, policies=policies) as pipeline:
-        response = await pipeline.run(request)
-        # Use the correct transport's sleep instead of asyncio
-        transport: AsyncHttpTransport = cast(AsyncHttpTransport, response.context.transport)
-        await transport.sleep(0.1)
-        print(response.http_response.status_code)
+def process_response(response: HttpResponse):
+    return response.text()
 ```
 
-### Enum Examples
-
-#### enum-must-inherit-case-insensitive-enum-meta
-
+**Correct:**
 ```python
-# Incorrect - Enum doesn't use CaseInsensitiveEnumMeta
-from enum import Enum
+# Importing from new location
+from azure.core.rest import HttpResponse
 
-class COLOR(str, Enum):
-    RED = "red"
-    BLUE = "blue"
-
-# Correct
-from azure.core.enum_base import CaseInsensitiveEnumMeta
-from enum import Enum
-
-class COLOR(str, Enum, metaclass=CaseInsensitiveEnumMeta):
-    RED = "red"
-    BLUE = "blue"
+def process_response(response: HttpResponse):
+    return response.text()
 ```
 
-### Documentation Examples
+## docstring-keyword-should-match-keyword-only
 
-#### docstring-type-do-not-use-class
-
+**Incorrect:**
 ```python
-# Incorrect - Using :class: in docstring type 
-def get_client_by_type(self, client_type):
-    """Get a client by type.
+def create_blob(self, name, data, *, content_type=None):
+    """Create a blob.
     
-    :param client_type: The type of client.
-    :type client_type: :class:`ClientType`
-    :return: The client instance.
-    :rtype: :class:`~azure.client.base.BaseClient`
+    :param name: The name of the blob.
+    :type name: str
+    :param data: The blob data.
+    :type data: bytes
+    :keyword content_settings: The content settings.  # Doesn't match parameter name
+    :paramtype content_settings: dict
     """
-    pass
-
-# Correct - Direct reference to type
-def get_client_by_type(self, client_type):
-    """Get a client by type.
-    
-    :param client_type: The type of client.
-    :type client_type: ClientType
-    :return: The client instance.
-    :rtype: ~azure.client.base.BaseClient
-    """
-    pass
 ```
 
-#### docstring-admonition-needs-newline
-
+**Correct:**
 ```python
-# Incorrect - Missing newline before directive
+def create_blob(self, name, data, *, content_type=None):
+    """Create a blob.
+    
+    :param name: The name of the blob.
+    :type name: str
+    :param data: The blob data.
+    :type data: bytes
+    :keyword content_type: The content type of the blob.  # Matches parameter name
+    :paramtype content_type: str
+    """
+```
+
+## docstring-type-do-not-use-class
+
+**Incorrect:**
+```python
+def get_client(self):
+    """Get the client.
+    
+    :return: The client.
+    :rtype: :class:`~azure.storage.blob.BlobClient`  # Using :class: syntax
+    """
+```
+
+**Correct:**
+```python
+def get_client(self):
+    """Get the client.
+    
+    :return: The client.
+    :rtype: ~azure.storage.blob.BlobClient  # Direct reference without :class:
+    """
+```
+
+## no-typing-import-in-type-check
+
+**Incorrect:**
+```python
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Dict, List  # Should not import from typing under TYPE_CHECKING
+```
+
+**Correct:**
+```python
+from typing import Dict, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models import SomeModel  # Only import non-typing modules under TYPE_CHECKING
+```
+
+## do-not-log-raised-errors
+
+**Incorrect:**
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    # some operation
+except Exception as e:
+    logger.error(f"Operation failed: {e}")  # Logging at error level before raising
+    raise BlobError("Operation failed") from e
+```
+
+**Correct:**
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    # some operation
+except Exception as e:
+    logger.debug(f"Operation failed: {e}")  # Log at debug level before raising
+    # Or just don't log the exception details at all
+    raise BlobError("Operation failed") from e
+```
+
+## do-not-use-legacy-typing
+
+**Incorrect:**
+```python
+def get_blob(self, name):
+    # type: (str) -> bytes
+    """Get a blob."""
+    return self._client.get_blob(name)
+```
+
+**Correct:**
+```python
+def get_blob(self, name: str) -> bytes:
+    """Get a blob."""
+    return self._client.get_blob(name)
+```
+
+## do-not-import-asyncio
+
+**Incorrect:**
+```python
+import asyncio  # Direct import of asyncio
+
+async def get_blob(self):
+    response = await self._client.get_blob()
+    await asyncio.sleep(0.1)  # Using asyncio.sleep directly
+    return response
+```
+
+**Correct:**
+```python
+from azure.core.pipeline.transport import AsyncHttpTransport
+
+async def get_blob(self):
+    response = await self._client.get_blob()
+    transport: AsyncHttpTransport = self._pipeline.context.transport  # Get the transport
+    await transport.sleep(0.1)  # Use transport's sleep method
+    return response
+```
+
+## invalid-use-of-overload
+
+**Incorrect:**
+```python
+from typing import overload
+
+class BlobClient:
+    @overload
+    def get_blob(self, name: str) -> bytes:
+        ...
+    
+    @overload
+    async def get_blob(self, name: str) -> bytes:  # Mixing sync and async
+        ...
+    
+    def get_blob(self, name):
+        # implementation
+        pass
+```
+
+**Correct:**
+```python
+from typing import overload
+
+class BlobClient:
+    @overload
+    def get_blob(self, name: str) -> bytes:
+        ...
+    
+    @overload
+    def get_blob(self, name: str, max_size: int) -> bytes:  # Same sync/async context
+        ...
+    
+    def get_blob(self, name, max_size=None):
+        # implementation
+        pass
+```
+
+## do-not-hardcode-connection-verify
+
+**Incorrect:**
+```python
+from azure.core.pipeline.transport import RequestsTransport
+
+def create_client():
+    transport = RequestsTransport(connection_verify=False)  # Hardcoded to False
+    # ...
+```
+
+**Correct:**
+```python
+from azure.core.pipeline.transport import RequestsTransport
+
+def create_client(verify_ssl=True):
+    transport = RequestsTransport(connection_verify=verify_ssl)  # Configurable
+    # ...
+```
+
+## do-not-log-exceptions
+
+**Incorrect:**
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def get_blob(name):
+    try:
+        response = self._client.get_blob(name)
+        return response
+    except Exception as e:
+        logger.error(f"Error details: {e}")  # Logging exception at error level
+        raise
+```
+
+**Correct:**
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def get_blob(name):
+    try:
+        response = self._client.get_blob(name)
+        return response
+    except Exception as e:
+        logger.debug(f"Error details: {str(e)}")  # Log details at debug level only
+        logger.error("Failed to get blob")  # Higher level logs without sensitive details
+        raise
+```
+
+## unapproved-client-method-name-prefix
+
+**Incorrect:**
+```python
+class BlobClient:
+    def fetch_blob(self, name):  # Using unapproved verb
+        pass
+    
+    def modify_properties(self, properties):  # Using unapproved verb
+        pass
+```
+
+**Correct:**
+```python
+class BlobClient:
+    def get_blob(self, name):  # Using approved verb
+        pass
+    
+    def update_properties(self, properties):  # Using approved verb
+        pass
+```
+
+## do-not-hardcode-dedent
+
+**Incorrect:**
+```python
 def get_examples():
     """Get examples for the API.
+
     .. literalinclude:: ../samples/example.py
         :start-after: [START get_examples]
         :end-before: [END get_examples]
@@ -596,68 +1036,19 @@ def get_examples():
     """
     pass
 
-# Correct - Has newline before directive
+```
+
+**Correct:**
+```python
 def get_examples():
     """Get examples for the API.
-    
+
     .. literalinclude:: ../samples/example.py
         :start-after: [START get_examples]
         :end-before: [END get_examples]
         :language: python
-        :dedent: 4
+        :dedent:
     """
     pass
-```
 
-### Error and Safety Examples
-
-#### do-not-hardcode-connection-verify
-
-```python
-# Incorrect - Connection verify hardcoded to boolean
-from azure.core.pipeline.transport import RequestsTransport
-
-transport = RequestsTransport(connection_verify=False)  # Security risk!
-
-# Correct - Allow user to configure or default to True
-from azure.core.pipeline.transport import RequestsTransport
-
-# Option 1: Default to secure
-transport = RequestsTransport()  # Defaults to connection_verify=True
-
-# Option 2: Accept from configuration
-def create_transport(verify_ssl=True):
-    return RequestsTransport(connection_verify=verify_ssl)
-```
-
-#### do-not-log-exceptions
-
-```python
-# Incorrect - Logging exception at error level
-import logging
-logger = logging.getLogger(__name__)
-
-try:
-    # Some operation
-    response = client.get_blob("name")
-except Exception as e:
-    # This could log sensitive information
-    logger.error("Error accessing blob: %s", str(e))
-    raise
-
-# Correct - Log at debug level or only log safe information
-import logging
-logger = logging.getLogger(__name__)
-
-try:
-    # Some operation
-    response = client.get_blob("name")
-except Exception as e:
-    # Option 1: Log at debug level
-    logger.debug("Error accessing blob: %s", str(e))
-    
-    # Option 2: Log only safe information at higher levels
-    logger.error("Error accessing blob. Check debug logs for details.")
-    
-    raise
 ```

@@ -44,6 +44,7 @@ describe('Auto SDK generation path test', () => {
         const fakeTspConfig = {
             options: {
                 '@azure-tools/typespec-ts': {
+                    'is-modular-library': true,
                     isModularLibrary: true
                 }
             }

@@ -110,5 +110,5 @@ extends:
                 workingFile: $(RustGeneratorDirectory)/.npmrc
 
             - pwsh: |
-                npm publish $(PackageArtifactFullPath) --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-rust/npm/registry/
+                npm publish $(PackageArtifactFullPath) --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
               workingDirectory: $(RustGeneratorDirectory)

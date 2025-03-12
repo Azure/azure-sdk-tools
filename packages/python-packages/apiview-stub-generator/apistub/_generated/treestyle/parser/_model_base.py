@@ -24,10 +24,10 @@ from json import JSONEncoder
 import xml.etree.ElementTree as ET
 from typing_extensions import Self
 import isodate
-from azure.core.exceptions import DeserializationError
-from azure.core import CaseInsensitiveEnumMeta
-from azure.core.pipeline import PipelineResponse
-from azure.core.serialization import _Null
+from ...._vendor.core.exceptions import DeserializationError
+from ...._vendor.core import CaseInsensitiveEnumMeta
+from ...._vendor.core.pipeline import PipelineResponse
+from ...._vendor.core.serialization import _Null
 
 if sys.version_info >= (3, 9):
     from collections.abc import MutableMapping

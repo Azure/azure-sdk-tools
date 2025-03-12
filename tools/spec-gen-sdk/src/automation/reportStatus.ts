@@ -14,7 +14,6 @@ import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
 import { marked } from "marked";
-import { getLanguageByRepoName } from './entrypoint';
 
 const commentLimit = 60;
 
@@ -443,14 +442,18 @@ function generateBreakingChangeArtifact(context: WorkflowContext, shouldLabelBre
   context.logger.log('section', 'Generate breaking change label artifact');
 
   try {
-    const breakingChangeLabelArtifactFolder = path.join(context.config.workingFolder, 'out/breakingchangelabel');
-    if (!existsSync(breakingChangeLabelArtifactFolder)) {
-      mkdirSync(breakingChangeLabelArtifactFolder, { recursive: true });
+    const breakingChangeAddLabelArtifactFolder = path.join(context.config.workingFolder, 'out/breakingchangelabel/add');
+    if (!existsSync(breakingChangeAddLabelArtifactFolder)) {
+      mkdirSync(breakingChangeAddLabelArtifactFolder, { recursive: true });
     }
 
-    const language = getLanguageByRepoName(context.config.sdkName);
-    const addBreakingChangeLabelArtifact = path.join(breakingChangeLabelArtifactFolder, `spec-gen-sdk-${language}-true`);
-    const removeBreakingChangeLabelArtifact = path.join(breakingChangeLabelArtifactFolder, `spec-gen-sdk-${language}-false`);
+    const breakingChangeRemoveLabelArtifactFolder = path.join(context.config.workingFolder, 'out/breakingchangelabel/remove');
+    if (!existsSync(breakingChangeRemoveLabelArtifactFolder)) {
+      mkdirSync(breakingChangeRemoveLabelArtifactFolder, { recursive: true });
+    }
+
+    const addBreakingChangeLabelArtifact = path.join(breakingChangeAddLabelArtifactFolder, `spec-gen-sdk_${context.config.sdkName}_true`);
+    const removeBreakingChangeLabelArtifact = path.join(breakingChangeRemoveLabelArtifactFolder, `spec-gen-sdk_${context.config.sdkName}_false`);
 
     // here we need to consider multiple spec-gen-sdk run scenarios. In a pipeline run with multiple packages generated,
     // if any of the package has breaking change, we should label the PR with breaking change label.
@@ -483,6 +486,7 @@ function generateBreakingChangeArtifact(context: WorkflowContext, shouldLabelBre
     }
 
     context.logger.error(`Error generating breaking change artifact: ${errorMessage}`);
+    setSdkAutoStatus(context, 'failed');
   }
 
   context.logger.log('endsection', 'Generate breaking change label artifact');

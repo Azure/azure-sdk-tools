@@ -100,7 +100,7 @@ extends:
 
             - pwsh: |
                 @"
-                registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-rust/npm/registry/
+                registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/
                 always-auth=true
                 "@ | Set-Content -Path $(RustGeneratorDirectory)/.npmrc -NoNewline
               displayName: Generate .npmrc

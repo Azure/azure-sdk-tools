@@ -1,5 +1,36 @@
 $PackagePropertiesPath = Join-Path "eng" "common" "scripts" "Save-Package-Properties.ps1"
 
+Function Copy-EngCommon {
+    param (
+        [string]$OutputRepo,
+        [string]$InputRepo
+    )
+    Set-StrictMode -Version 3.0
+    $ErrorActionPreference = "Stop"
+
+    $InputRepo = Resolve-Path $InputRepo
+    $OutputRepo = Resolve-Path $OutputRepo
+
+    $inputFiles = Get-ChildItem -Path (Join-Path $InputRepo "eng/common") -Recurse -File
+
+    foreach ($file in $inputFiles) {
+        $relativePath = $file.FullName.Substring($InputRepo.Length + 1)
+        $outputPath = Join-Path $OutputRepo $relativePath
+
+        if (-not (Test-Path $outputPath) -or
+            (Compare-Object (Get-Content $file.FullName) (Get-Content $outputPath))) {
+
+            $outputDirectory = Split-Path -Parent $outputPath
+            if (-not (Test-Path $outputDirectory)) {
+                New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
+            }
+
+            Copy-Item -Path $file.FullName -Destination $outputPath -Force
+            Write-Host "Copied $relativePath"
+        }
+    }
+}
+
 Function Get-Repo {
     param (
         [string]$Repo,
@@ -13,15 +44,20 @@ Function Get-Repo {
         New-Item -ItemType Directory -Path $repoPath | Out-Null
 
         try {
+            Write-Host "Push-Location $repoPath"
             Push-Location $repoPath
+            Write-Host "git clone --no-checkout `"https://github.com/$Repo.git`" ."
             git clone --no-checkout "https://github.com/$Repo.git" .
+            Write-Host "git fetch origin $Reference"
             git fetch origin $Reference
+            Write-Host "git checkout $Reference"
             git checkout $Reference
         }
         finally {
             Pop-Location | Out-Null
         }
     }
+    Copy-EngCommon -OutputRepo $repoPath -InputRepo (Resolve-Path (Join-Path $PSScriptRoot ".." ".." ".." ".."))
 
     return $repoPath
 }
@@ -40,8 +76,13 @@ Function Invoke-PackageProps {
     $InputDiff | ConvertTo-Json -Depth 100 | Set-Content -Path $prDiffFile -Force
 
     try {
+        Write-Host "Push-Location $Repo"
         Push-Location $Repo
+        Write-Host "&`"$PackagePropertiesPath`" -outDirectory `"$uniqueTempDir`" -prDiff `"$prDiffFile`""
+        Write-Host "Package Diff:"
+        Write-Host (Get-Content -Raw $prDiffFile)
         &"$PackagePropertiesPath" -outDirectory "$uniqueTempDir" -prDiff "$prDiffFile"
+        Remove-Item $prDiffFile -Force
     }
     finally {
         Pop-Location | Out-Null

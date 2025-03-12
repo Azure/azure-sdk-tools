@@ -29,6 +29,7 @@ Describe "Acceptance tests for Python PR Matrix Generation" {
     }
 
     It "Should evaluate python diffs correctly - <name>" -ForEach $pythonScenarios {
+        Write-Host "Operating against repo: $RepoRoot"
         $scenario = $_
         $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
         $expectedOutputs = $scenario.expected_package_output | Sort-Object -Property Name

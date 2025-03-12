@@ -1,0 +1,5 @@
+isodate==0.6.1
+typing-extensions==4.6.0
+pylint-guidelines-checker==0.0.7
+pylint<3.0.0
+./

@@ -239,9 +239,7 @@ class StubGenerator:
             # For e.g. _generated, _shared etc
             # Ignore build, which is created when installing a package from source.
             # Ignore tests, which may have an __init__.py but is not part of the package.
-            dirs_to_skip = [
-                x for x in subdirs if x.startswith("_") or x.startswith(".") or x == "tests" or x == "build"
-            ]
+            dirs_to_skip = [x for x in subdirs if x.startswith(("_", ".", "test", "build"))]
             for d in dirs_to_skip:
                 subdirs.remove(d)
 

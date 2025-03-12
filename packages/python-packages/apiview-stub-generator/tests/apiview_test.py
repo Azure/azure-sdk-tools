@@ -9,6 +9,7 @@ import sys
 import tempfile
 import shutil
 from subprocess import check_call, run, PIPE
+import pytest
 from pytest import fail, mark
 
 from apistub import ApiView, TokenKind, StubGenerator

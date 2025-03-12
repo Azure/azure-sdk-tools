@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.17 (Unreleased)
+Fixed issue with azure-core dependency conflict when running the stub generator on azure-core by moving necessary core files into an internal vendor folder.
+
 ## Version 0.3.16 (2025-03-03)
 Fixed emty package name issue when running parser against pacakge source path instead of wheel. PKG_INFO is not available in this case.
 

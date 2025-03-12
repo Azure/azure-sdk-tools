@@ -34,6 +34,7 @@
             "AdditionalValidationPackages": [
               ""
             ],
+<<<<<<< HEAD
             "ArtifactDetails": {
               "triggeringPaths": [
                 "/sdk/template/ci.yml"
@@ -41,6 +42,9 @@
               "safeName": "azuretemplate",
               "name": "azure-template"
             },
+=======
+            "ArtifactDetails": null,
+>>>>>>> main
             "CIParameters": {
               "CIMatrixConfigs": []
             }
@@ -62,6 +66,7 @@
             "AdditionalValidationPackages": [
               ""
             ],
+<<<<<<< HEAD
             "ArtifactDetails": {
               "triggeringPaths": [
                 "/sdk/ml/ci.yml"
@@ -69,6 +74,9 @@
               "safeName": "azureaiml",
               "name": "azure-ai-ml"
             },
+=======
+            "ArtifactDetails": null,
+>>>>>>> main
             "CIParameters": {
               "CIMatrixConfigs": []
             }
@@ -108,6 +116,7 @@
               "/sdk\\communication\\azure-communication-identity",
               "/sdk\\storage\\azure-storage-blob"
             ],
+<<<<<<< HEAD
             "ArtifactDetails": {
               "triggeringPaths": [
                 "/sdk/core/ci.yml"
@@ -115,6 +124,9 @@
               "safeName": "azurecore",
               "name": "azure-core"
             },
+=======
+            "ArtifactDetails": null,
+>>>>>>> main
             "CIParameters": {
               "CIMatrixConfigs": []
             }

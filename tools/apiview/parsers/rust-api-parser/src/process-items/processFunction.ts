@@ -1,9 +1,56 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
-import { Item, Type } from "../../rustdoc-types/output/rustdoc-types";
+import { Item, Type, FunctionHeader } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isFunctionItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
+
+/**
+ * Processes the function header and adds modifiers and ABI information to the tokens
+ * 
+ * @param {FunctionHeader} header - The function header containing const, unsafe, async and ABI information
+ * @param {ReviewLine} reviewLine - The review line to add tokens to
+ */
+function processFunctionHeader(header: FunctionHeader, reviewLine: ReviewLine) {
+  if (header.is_const) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "const",
+    });
+  }
+
+  // Add async before unsafe (correct Rust syntax order)
+  if (header.is_async) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "async",
+    });
+  }
+
+  if (header.is_unsafe) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "unsafe",
+    });
+  }
+
+  // Add ABI if it's not the default Rust ABI
+  if (header.abi !== "Rust") {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "extern",
+    });
+
+    // Format the ABI string based on the type
+    let abiString = Object.keys(header.abi)[0];
+
+    reviewLine.Tokens.push({
+      Kind: TokenKind.StringLiteral,
+      Value: `"${abiString}"`,
+      HasSuffixSpace: true,
+    });
+  }
+}
 
 /**
  * Processes a function item and adds its documentation to the ReviewLine.
@@ -24,7 +71,15 @@ export function processFunction(item: Item) {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Keyword,
-    Value: "pub fn",
+    Value: "pub",
+  });
+
+  // Process function header modifiers and ABI
+  processFunctionHeader(item.inner.function.header, reviewLine);
+
+  reviewLine.Tokens.push({
+    Kind: TokenKind.Keyword,
+    Value: "fn",
   });
 
   reviewLine.Tokens.push({

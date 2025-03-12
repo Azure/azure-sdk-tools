@@ -178,7 +178,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                     }
                                 }
                                 // If the issue had a valid assignee and only labels provided add the comment
-                                if (hasValidAssignee && triageOutput.Suggestion == null && triageOutput.Solution == null)
+                                if (hasValidAssignee && triageOutput.AnswerType == "none" && triageOutput.Labels.Count > 0)
                                 {
                                     string issueComment = "Thank you for your feedback. Tagging and routing to the team member best able to assist.";
                                     gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
@@ -226,21 +226,21 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                             }
                             
-                            // If suggestions is populated add the comment.
-                            if(triageOutput.Suggestion != null)
+                            // If answer is a suggestions/solution add the comment.
+                            if(triageOutput.AnswerType == "suggestion")
                             {
                                 gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
                                                                 issueEventPayload.Issue.Number,
-                                                                triageOutput.Suggestion);
+                                                                triageOutput.Answer);
                             }
                             
-                            // If solution is populated add the comment and add the issue-addressed label
+                            // If answer is a solution add the issue-addressed label
                             // to close out the issue.
-                            if(triageOutput.Solution != null)
+                            if(triageOutput.AnswerType == "solution")
                             {
                                 gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
                                                                 issueEventPayload.Issue.Number,
-                                                                triageOutput.Solution);
+                                                                triageOutput.Answer);
                                 gitHubEventClient.AddLabel(TriageLabelConstants.IssueAddressed);
                             }
                         }

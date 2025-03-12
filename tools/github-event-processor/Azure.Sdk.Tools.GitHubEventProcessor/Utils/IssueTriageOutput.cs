@@ -9,15 +9,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     /// <summary>
     /// Class used to deserialize AI Triage output.
     /// Has four states:
-    /// - Empty: No labels, no suggestion, no solution. Menaual triage is required.
-    /// - Labels: Labels are provided, no suggestion, no solution. 
-    /// - Suggestion: Labels are provided, suggestion is provided, no solution.
-    /// - Solution: Labels are provided, suggestion isn't provided, solution is provided.
+    /// - Empty: No labels, no answer, answer type = "none"
+    /// - Labels: Labels are provided, no answer, answer type = "none". 
+    /// - Suggestion: Labels are provided, answer is provided, answer type = "suggestion".
+    /// - Solution: Labels are provided, answer is provided, answer type = "solution".
     /// </summary>
     public class IssueTriageOutput
     {
         public List<string> Labels { get; set; }
-        public string Suggestion { get; set; }
-        public string Solution { get; set; }
+        public string Answer { get; set; }
+        public string AnswerType { get; set; }
+
+        public static readonly IssueTriageOutput Empty = new() { Labels = [], Answer = null, AnswerType = "none" };
     }
 }

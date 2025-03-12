@@ -72,8 +72,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.Off,
                   RuleState.Off,
                   null, // labels returned from the AI Issue Triage service,
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   false,
                   false, 
@@ -86,8 +86,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   null, // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   false,
                   false,
@@ -100,8 +100,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   null, // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   false,
                   true,
@@ -114,8 +114,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   null, // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   false,
                   false,
@@ -128,8 +128,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel666", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   false, // Has CODEOWNERS entry
                   true,
@@ -142,8 +142,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.Off,
                   "FakeLabel1", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -157,8 +157,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.Off,
                   "FakeLabel2", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -174,8 +174,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel2", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -192,8 +192,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel2", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   "FakeUser1", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -211,8 +211,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel2", // labels returned from the AI Issue Triage service
-                  "FakeSuggestion", // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  "FakeAnswer", // answer returned from the AI Issue Triage service
+                  "suggestion", // answer type returned from the AI Issue Triage service
                   "FakeUser1", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -231,8 +231,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel2", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  "FakeSolution", // solution returned from the AI Issue Triage service
+                  "FakeAnswer", // answer returned from the AI Issue Triage service
+                  "solution", // answer type returned from the AI Issue Triage service
                   "FakeUser1", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -247,8 +247,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.Off,
                   "FakeLabel3", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -264,8 +264,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel3", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -283,8 +283,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel3", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   "FakeUser5", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -302,8 +302,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel4", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   "FakeUser5,FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -319,8 +319,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel4", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -337,8 +337,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel4", // labels returned from the AI Issue Triage service
-                  "FakeSuggestion", // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  "FakeAnswer", // answer returned from the AI Issue Triage service
+                  "suggestion", // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -356,8 +356,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "FakeLabel4", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  "FakeSolution", // solution returned from the AI Issue Triage service
+                  "FakeAnswer", // answer returned from the AI Issue Triage service
+                  "solution", // answer type returned from the AI Issue Triage service
                   null, // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -374,8 +374,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "Client, FakeLabel4", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   "FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -392,8 +392,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "Client, FakeLabel6", // labels returned from the AI Issue Triage service, there is no FakeLabel6 only Client will match
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   "FakeUser1", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -410,8 +410,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "Client, FakeLabel4", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   "FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -428,8 +428,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "Client, FakeLabel4", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  null, // answer returned from the AI Issue Triage service
+                  null, // answer type returned from the AI Issue Triage service
                   "FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -447,8 +447,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "Client, FakeLabel4", // labels returned from the AI Issue Triage service
-                  "FakeSuggestion", // suggestion returned from the AI Issue Triage service
-                  null, // solution returned from the AI Issue Triage service
+                  "FakeAnswer", // answer returned from the AI Issue Triage service
+                  "suggestion", // answer type returned from the AI Issue Triage service
                   "FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -467,8 +467,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   RuleState.On,
                   RuleState.On,
                   "Client, FakeLabel4", // labels returned from the AI Issue Triage service
-                  null, // suggestion returned from the AI Issue Triage service
-                  "FakeSolution", // solution returned from the AI Issue Triage service
+                  "FakeAnswer", // answer returned from the AI Issue Triage service
+                  "solution", // answer type returned from the AI Issue Triage service
                   "FakeUser6", // owners with permission to be assigned to issues
                   true, // Has CODEOWNERS entry
                   true,
@@ -478,8 +478,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                                                  RuleState ruleState, 
                                                  RuleState serviceAttentionRuleState,
                                                  string AIServiceReturnsLabels,
-                                                 string AIServiceSuggestion,
-                                                 string AIServiceSolution,
+                                                 string AIServiceAnswer,
+                                                 string AIServiceAnswerType,
                                                  string ownersWithAssignPermission,
                                                  bool hasCodeownersEntry,
                                                  bool isMemberOfOrg, 
@@ -507,13 +507,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 mockGitHubEventClient.AILabelServiceReturn.AddRange(expectedLabels);
             }
 
-            if (AIServiceSuggestion != null)
+            if (AIServiceAnswer != null)
             {
-                mockGitHubEventClient.AIServiceSuggestion = AIServiceSuggestion;
+                mockGitHubEventClient.AIServiceAnswer = AIServiceAnswer;
             }
-            if (AIServiceSolution != null)
+            if (AIServiceAnswerType != null)
             {
-                mockGitHubEventClient.AIServiceSolution = AIServiceSolution;
+                mockGitHubEventClient.AIServiceAnswerType = AIServiceAnswerType;
             }
 
             // Set the owners with assign permission. If there are none, and there are ServiceOwners, then the
@@ -616,7 +616,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                            
 
                             // When solution is provided by the AI Issue Triage service it should add the label issue-addressed.
-                            if(AIServiceSolution != null)
+                            if(AIServiceAnswerType == "solution")
                             {
                                 Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.IssueAddressed), $"Labels to add should contain {TriageLabelConstants.IssueAddressed} when Solution is provided.");
                             }
@@ -636,7 +636,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                                 Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"With no valid AzureSdkOwners but valid ServiceOwners and ServiceAttention rule being enabled, {TriageLabelConstants.NeedsTeamAttention} should have been added to the issue.");
 
                                 // If only labels are predicted
-                                if(AIServiceSuggestion == null && AIServiceSolution == null)
+                                if(AIServiceAnswerType == null && AIServiceReturnsLabels != null)
                                 {
                                     Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"With no AzureSdkOwners and the ServiceAttention rule being enabled, there should only be one comment created by the ServiceAttention rule but {mockGitHubEventClient.GetComments().Count} comments were created.");
                                 }

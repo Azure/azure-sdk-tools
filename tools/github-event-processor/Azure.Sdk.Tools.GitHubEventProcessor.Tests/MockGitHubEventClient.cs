@@ -42,8 +42,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         public List<PullRequestFile> PullRequestFiles { get; set; } = new List<PullRequestFile>();
 
         public List<string> AILabelServiceReturn { get; set; } = new List<string>();
-        public string AIServiceSuggestion { get; set; } = null;
-        public string AIServiceSolution { get; set; } = null;
+        public string AIServiceAnswer { get; set; } = null;
+        public string AIServiceAnswerType { get; set; } = "none";
 
 
         public SearchIssuesResult SearchIssuesResultReturn { get; set; } = new SearchIssuesResult();
@@ -477,8 +477,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         {
             return new IssueTriageOutput { 
                 Labels = AILabelServiceReturn, 
-                Suggestion = AIServiceSuggestion, 
-                Solution = AIServiceSolution 
+                Answer = AIServiceAnswer, 
+                AnswerType = AIServiceAnswerType 
             };
         }
 

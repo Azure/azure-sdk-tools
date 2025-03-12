@@ -48,8 +48,8 @@
 
 ### AI label service
 
-This is a REST API that evaluates the content of an issue and attempts to predict a set of labels that should be applied to it.  If a prediction is made with a reasonable level of confidence, the service will return exactly one service label and one category label.  If confidence thresholds were not met for both label types, no labels are returned. The AI label service can only a response with labels for [officially supported repositories]
-(<https://github.com/Azure/azure-sdk-tools/blob/main/tools/github-labels/repositories.txt>). For libraries that are not supported it an empty response will be returned.
+This is a REST API that evaluates the content of an issue and attempts to predict a set of labels and provide a relevant comment. If predictions is made with an extreme level of confidence, the service will return one service label, one category label and a solution comment. In this case an `issue-addressed` is added to the issue to close it. If a prediction is made with a reasonable level of confidence, the service will return one service label, one category label, and a suggestion comment.  If confidence thresholds were not met, labels nor a comment are provided. The AI label service can only a response with labels for [officially supported repositories]
+(<https://github.com/Azure/azure-sdk-tools/blob/main/tools/github-labels/repositories.txt>). For libraries that are not supported an empty response will be returned.
 
 #### Example payload
 
@@ -74,8 +74,8 @@ _**Only Labels Predicted**_
     "Storage",
     "Client"
   ],  
-  "suggestion" : null,  
-  "solution" : null  
+  "answer" : null,
+  "answerType" : "none"
 }
 ```
 
@@ -87,8 +87,8 @@ _**Suggestion is provided**_
     "Storage",
     "Client"
   ],  
-  "suggestion" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I have some suggestions that you can try out...",  
-  "solution" : null  
+  "answer" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I have some suggestions that you can try out...",  
+  "answerType" : "suggestion"  
 }
 ```
 
@@ -100,8 +100,8 @@ _**Solution is provided**_
     "Storage",
     "Client"
   ],  
-  "suggestion" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I found a solution for your issue...",  
-  "solution" : null  
+  "answer" : "Hello @user. I'm an AI assistant for the azure-sdk-for-net repository. I found a solution for your issue...",  
+  "answerType" : "solution"  
 }
 ```
 
@@ -110,8 +110,8 @@ _**No predictions**_
 ```json
 {
   "labels": [],  
-  "suggestion" : null,  
-  "solution" : null  
+  "answer" : null,  
+  "answerType" : "none"  
 }
 ```
 
@@ -148,7 +148,7 @@ IF labels were predicted:
             - Create the following comment, mentioning all AzureSdkOwners from the set
                  "@{person1} @{person2}...${personX}"
 
-        IF solution and suggestion are not populated
+        IF only labels were predicted
           - Create the following comment
               "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
 
@@ -164,9 +164,9 @@ IF labels were predicted:
     IF "needs-team-triage" is not being added to the issue
          - Add "needs-team-attention" label to the issue
 
-    IF suggestions is populated
+    IF answer type is suggestion
          - Comment with suggestion
-    ELSE IF solution is populated
+    ELSE IF answer type is solution
          - Comment with solution
          - Add "issue-addressed" label to issue
 

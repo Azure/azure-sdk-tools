@@ -1323,16 +1323,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
 
         public virtual async Task<IssueTriageOutput> QueryAILabelService(IssueEventGitHubPayload issueEventPayload)
         {
-            //Empty response for failures
-            IssueTriageOutput empty = new IssueTriageOutput { Labels = [], Suggestion = null, Solution = null };
-
             // The LABEL_SERVICE_API_KEY is queried from Keyvault as part of the action and added to the
             // environment.
             string AIServiceKey = Environment.GetEnvironmentVariable("LABEL_SERVICE_API_KEY");
             if (string.IsNullOrEmpty(AIServiceKey))
             {
                 Console.WriteLine("LABEL_SERVICE_API_KEY is null or empty.");
-                return empty;
+                return IssueTriageOutput.Empty;
             }
             string requestUrl = $"https://gh-issue-labeler-function.azurewebsites.net/api/AzureSdkIssueLabelerService?code={AIServiceKey}";
 
@@ -1364,13 +1361,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 else
                 {
                     Console.WriteLine($"The AI Label service did not return a success. Status Code={response.StatusCode}, Reason={response.ReasonPhrase}");
-                    output = empty;
+                    output = IssueTriageOutput.Empty;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception calling AI Label Service. Exception={ex}");
-                output = empty;
+                output = IssueTriageOutput.Empty;
             }
             return output;
         }

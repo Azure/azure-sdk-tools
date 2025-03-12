@@ -14,7 +14,6 @@ import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
 import { marked } from "marked";
-import { getLanguageByRepoName } from './entrypoint';
 
 const commentLimit = 60;
 
@@ -487,6 +486,7 @@ function generateBreakingChangeArtifact(context: WorkflowContext, shouldLabelBre
     }
 
     context.logger.error(`Error generating breaking change artifact: ${errorMessage}`);
+    setSdkAutoStatus(context, 'failed');
   }
 
   context.logger.log('endsection', 'Generate breaking change label artifact');

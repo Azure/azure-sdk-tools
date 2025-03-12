@@ -2,7 +2,7 @@
 
 ## 2025-03-11 - 0.2.2
 
-- Saved label artifacts in separated folders
+- Saved label artifacts in separate folders
 - Log issue depended on the 'scriptError' setting in 'swagger_to_sdk_config.json'
 
 ## 2025-03-07 - 0.2.1

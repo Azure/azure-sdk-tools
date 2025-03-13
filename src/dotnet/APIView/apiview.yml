@@ -325,7 +325,8 @@ extends:
               value: 'https://apiviewstagingtest.com/'
 
           jobs:
-            - steps:
+            - job: Download_Artifact
+              steps:
               - checkout: self
               - task: DownloadPipelineArtifact@2
                 displayName: 'Download APIView artifact'

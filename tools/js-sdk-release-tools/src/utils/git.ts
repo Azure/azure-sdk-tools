@@ -1,6 +1,6 @@
-import simpleGit, {SimpleGit} from 'simple-git';
+import { simpleGit, SimpleGit } from 'simple-git';
 import {execSync} from "child_process";
-import {logger} from "./logger";
+import {logger} from "./logger.js";
 
 const git: SimpleGit = simpleGit();
 const path = require('path');

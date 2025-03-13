@@ -1,8 +1,8 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType } from './types';
-import { logger } from '../utils/logger';
+import { SDKType } from './types.js';
+import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
@@ -174,9 +174,13 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
     const tspConfig = await loadTspConfig(typeSpecDirectory);
-    const serviceDir = tspConfig.parameters?.['service-dir']?.default;
+    let serviceDir = tspConfig.parameters?.['service-dir']?.default;
     if (!serviceDir) {
         throw new Error(`Miss service-dir in parameters section of tspconfig.yaml. ${messageToTspConfigSample}`);
+    }
+    const emitterServiceDir = tspConfig.options?.[emitterName]?.['service-dir'];
+    if(emitterServiceDir) {
+        serviceDir = emitterServiceDir;
     }
     const packageDir = tspConfig.options?.[emitterName]?.['package-dir'];
     if (!packageDir) {

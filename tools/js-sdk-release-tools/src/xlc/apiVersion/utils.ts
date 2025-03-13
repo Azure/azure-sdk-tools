@@ -1,9 +1,9 @@
-import { getTsSourceFile } from '../../common/utils';
-import { ApiVersionType } from '../../common/types';
+import { getTsSourceFile } from '../../common/utils.js';
+import { ApiVersionType } from '../../common/types.js';
 import path, { basename } from 'node:path';
 import shell from 'shelljs';
 import { FunctionDeclaration, SourceFile, SyntaxKind } from 'ts-morph';
-import { logger } from '../../utils/logger';
+import { logger } from '../../utils/logger.js';
 import { glob } from 'glob';
 import { exists } from 'fs-extra';
 

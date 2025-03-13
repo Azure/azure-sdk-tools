@@ -1,4 +1,4 @@
-import {logger} from "./logger";
+import {logger} from "./logger.js";
 const semverInc = require('semver/functions/inc')
 
 export function getVersion(npmViewResult: Record<string, any> | undefined, tag: string) {

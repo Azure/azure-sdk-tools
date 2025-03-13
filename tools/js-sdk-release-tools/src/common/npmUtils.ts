@@ -1,5 +1,5 @@
 import { load } from '@npmcli/package-json';
-import { NpmPackageInfo } from './types';
+import { NpmPackageInfo } from './types.js';
 import * as fetch from 'npm-registry-fetch';
 
 export async function getNpmPackageInfo(packageDirectory): Promise<NpmPackageInfo> {

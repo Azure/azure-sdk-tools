@@ -2,26 +2,26 @@ import { execSync } from "child_process";
 import fs from "fs";
 import * as yaml from "js-yaml";
 import * as path from "path";
-import { addApiViewInfo } from "../../utils/addApiViewInfo";
-import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml";
-import { changeConfigOfTestAndSample, ChangeModel, SdkType } from "../../utils/changeConfigOfTestAndSample";
-import { changeRushJson } from "../../utils/changeRushJson";
-import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo";
-import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git";
-import { logger } from "../../utils/logger";
-import { RunningEnvironment } from "../../utils/runningEnvironment";
-import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject';
+import { addApiViewInfo } from "../../utils/addApiViewInfo.js";
+import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml.js";
+import { changeConfigOfTestAndSample, ChangeModel, SdkType } from "../../utils/changeConfigOfTestAndSample.js";
+import { changeRushJson } from "../../utils/changeRushJson.js";
+import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo.js";
+import { getChangedCiYmlFilesInSpecificFolder } from "../../utils/git.js";
+import { logger } from "../../utils/logger.js";
+import { RunningEnvironment } from "../../utils/runningEnvironment.js";
+import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject.js';
 import {
     generateAutorestConfigurationFileForMultiClientByPrComment,
     generateAutorestConfigurationFileForSingleClientByPrComment, replaceRequireInAutorestConfigurationFile
-} from '../utils/generateSampleReadmeMd';
-import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile';
-import { getRelativePackagePath } from "../utils/utils";
-import { defaultChildProcessTimeout, getGeneratedPackageDirectory } from "../../common/utils";
+} from '../utils/generateSampleReadmeMd.js';
+import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
+import { getRelativePackagePath } from "../utils/utils.js";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory } from "../../common/utils.js";
 import { remove } from 'fs-extra';
-import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion";
-import { updateChangelogResult } from "../../common/packageResultUtils";
-import { migratePackage } from "../../common/migration";
+import { generateChangelogAndBumpVersion } from "../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
+import { updateChangelogResult } from "../../common/packageResultUtils.js";
+import { migratePackage } from "../../common/migration.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;

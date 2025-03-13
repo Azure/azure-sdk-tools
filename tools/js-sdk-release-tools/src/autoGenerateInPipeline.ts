@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 import * as path from 'path';
-import { generateMgmt } from './hlc/generateMgmt';
-import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules';
-import { logger } from './utils/logger';
-import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline';
-import { ModularClientPackageOptions, SDKType } from './common/types';
-import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator';
-import { parseInputJson } from './utils/generateInputUtils';
+import { generateMgmt } from './hlc/generateMgmt.js';
+import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules.js';
+import { logger } from './utils/logger.js';
+import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline.js';
+import { ModularClientPackageOptions, SDKType } from './common/types.js';
+import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
+import { parseInputJson } from './utils/generateInputUtils.js';
 
 const shell = require('shelljs');
 const fs = require('fs');

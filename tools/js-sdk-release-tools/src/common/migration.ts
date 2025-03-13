@@ -1,6 +1,6 @@
-import { logger } from "../utils/logger";
-import { runCommand, runCommandOptions } from "./utils";
-import { getNpmPackageInfo } from "./npmUtils";
+import { logger } from "../utils/logger.js";
+import { runCommand, runCommandOptions } from "./utils.js";
+import { getNpmPackageInfo } from "./npmUtils.js";
 import { ensureDir } from "fs-extra";
 import { posix } from "path";
 

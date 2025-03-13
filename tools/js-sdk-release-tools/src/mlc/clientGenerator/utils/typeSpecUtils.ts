@@ -1,7 +1,7 @@
 import { join } from 'path';
-import { ModularClientPackageOptions } from '../../../common/types';
-import { getGeneratedPackageDirectory, runCommand, runCommandOptions } from '../../../common/utils';
-import { logger } from '../../../utils/logger';
+import { ModularClientPackageOptions } from '../../../common/types.js';
+import { getGeneratedPackageDirectory, runCommand, runCommandOptions } from '../../../common/utils.js';
+import { logger } from '../../../utils/logger.js';
 import { load } from '@npmcli/package-json';
 
 export async function updatePackageVersion(packageDirectory: string, version: string): Promise<void> {

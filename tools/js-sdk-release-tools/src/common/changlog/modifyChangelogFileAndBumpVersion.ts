@@ -1,4 +1,4 @@
-import {Changelog} from "../../changelog/changelogGenerator";
+import {Changelog} from "../../changelog/changelogGenerator.js";
 
 const fs = require('fs');
 const path = require('path');

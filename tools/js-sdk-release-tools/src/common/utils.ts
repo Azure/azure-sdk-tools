@@ -175,14 +175,17 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
     const tspConfig = await loadTspConfig(typeSpecDirectory);
     let serviceDir = tspConfig.parameters?.['service-dir']?.default;
+   
+    const emitterOptions = tspConfig.options?.[emitterName];
+    const serviceDirFromEmitter = emitterOptions?.['service-dir'];
+    if(serviceDirFromEmitter) {
+        serviceDir = serviceDirFromEmitter;
+    }   
+    const packageDir = emitterOptions?.['package-dir'];     
+
     if (!serviceDir) {
         throw new Error(`Miss service-dir in parameters section of tspconfig.yaml. ${messageToTspConfigSample}`);
     }
-    const emitterServiceDir = tspConfig.options?.[emitterName]?.['service-dir'];
-    if(emitterServiceDir) {
-        serviceDir = emitterServiceDir;
-    }
-    const packageDir = tspConfig.options?.[emitterName]?.['package-dir'];
     if (!packageDir) {
         throw new Error(`Miss package-dir in ${emitterName} options of tspconfig.yaml. ${messageToTspConfigSample}`);
     }

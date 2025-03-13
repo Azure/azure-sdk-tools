@@ -1,6 +1,6 @@
 [
     {
-        "name": "core-change-net-scenario",
+        "name": "core + ml",
         "diff": {
           "ChangedFiles": [
             "eng/tox/run_coverage.py",

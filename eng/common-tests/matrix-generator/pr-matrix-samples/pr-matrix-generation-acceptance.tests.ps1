@@ -10,7 +10,7 @@ $PYTHON_REPO_REF = "d762abb4d84d78b58db91a45646351c5789ae211"
 $netScenarios = Get-Content (Join-Path $PSScriptRoot net_scenarios.json) | ConvertFrom-Json
 $pythonScenarios = Get-Content (Join-Path $PSScriptRoot python_scenarios.json) | ConvertFrom-Json
 
-Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "Integration"{
+Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "Integration" {
     BeforeAll {
         . $PSScriptRoot/pr-matrix-generation-acceptance.helpers.ps1
         $RepoRoot = Get-Repo -Repo $NET_REPO -Reference $NET_REPO_REF

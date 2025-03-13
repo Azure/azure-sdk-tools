@@ -325,6 +325,13 @@ extends:
               value: 'https://apiviewstagingtest.com/'
 
           jobs:
+            - steps:
+              - checkout: self
+              - task: DownloadPipelineArtifact@2
+                displayName: 'Download APIView artifact'
+                inputs:
+                  source: 'current'
+                  artifact: 'APIView'
             - job: Publish_to_Staging
               templateContext:
                 type: releaseJob

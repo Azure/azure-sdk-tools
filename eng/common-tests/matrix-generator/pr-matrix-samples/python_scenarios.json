@@ -1,6 +1,6 @@
 [
     {
-        "name": "core + ml",
+        "name": "direct + indirect via AdditionalValidationPackages",
         "diff": {
           "ChangedFiles": [
             "eng/tox/run_coverage.py",
@@ -120,5 +120,10 @@
             }
           }
         ]
+    },
+    {
+      "name": "eventhubs direct",
+      "diff": {},
+      "expected_package_output": []
     }
 ]

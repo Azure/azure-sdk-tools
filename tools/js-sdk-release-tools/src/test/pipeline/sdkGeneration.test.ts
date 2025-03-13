@@ -119,6 +119,11 @@ describe('Auto SDK generation path test', () => {
         }
     });
     test('mgmt client generation', async () => {
+        const fakeTspConfig = {
+            options: {
+                '@azure-tools/typespec-ts': {}
+            }
+        };
         const tempSpecFolder = path.join(__dirname, `tmp/spec-${getRandomInt(10000)}`);
         const inputJson = {
             relatedTypeSpecProjectFolder: ['tsp'],
@@ -126,7 +131,11 @@ describe('Auto SDK generation path test', () => {
         };
         try {
             await ensureDir(path.join(tempSpecFolder, 'tsp'));
-            await writeFile(path.join(tempSpecFolder, 'tsp/main.tsp'), "@armProviderNamespace", {
+            await writeFile(path.join(tempSpecFolder, 'tsp/tspconfig.yaml'), stringify(fakeTspConfig), {
+                encoding: 'utf8',
+                flush: true
+            });
+            await writeFile(path.join(tempSpecFolder, 'tsp/main.tsp'), "armProviderNamespace", {
                 encoding: 'utf8',
                 flush: true
             });

@@ -16,17 +16,18 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
     const resolvedRelativeTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
     const tspFolderFromSpecRoot = path.join(specFolder, resolvedRelativeTspFolder);
     const tspConfigPath = path.join(tspFolderFromSpecRoot, 'tspconfig.yaml');
+    const mainTspFliePath = path.join(tspFolderFromSpecRoot, 'main.tsp');
     if (!(await exists(tspConfigPath))) {
         return false;
     }
-
     const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
-    const isMgmtPackageResult = await isMgmtPackage(tspFolderFromSpecRoot);
+    const isMgmtPackageResult = await exists(mainTspFliePath)? await isMgmtPackage(tspFolderFromSpecRoot): false;
     if (isMgmtPackageResult) {
         if ((tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'] ??
             tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary'] ?? true) !== true) {
             return false;
         }
+        return true;
     }
     if ((tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'] ??
         tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary']) !== true) {

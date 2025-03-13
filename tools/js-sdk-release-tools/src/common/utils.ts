@@ -151,6 +151,15 @@ export function tryReadNpmPackageChangelog(changelogPath: string): string {
     }
 }
 
+export async function isMgmtPackage(typeSpecDirectory: string): Promise<Boolean> {
+    const mainTspPath = join(typeSpecDirectory, 'main.tsp');
+    const content = await readFile(mainTspPath, { encoding: 'utf-8' }).toString();
+    if (!content) {
+        throw new Error(`Failed to get main.tsp in ${typeSpecDirectory}`);
+    }
+    return content.includes("@armProviderNamespace");
+}
+
 export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
     const configPath = join(typeSpecDirectory, 'tspconfig.yaml');
     const content = await readFile(configPath, { encoding: 'utf-8' });

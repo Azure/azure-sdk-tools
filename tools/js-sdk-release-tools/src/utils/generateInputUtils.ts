@@ -1,6 +1,6 @@
 import path from "path";
 import { SDKType } from "../common/types";
-import { loadTspConfig } from "../common/utils";
+import { loadTspConfig, isMgmtPackage } from "../common/utils";
 import { RunningEnvironment } from "./runningEnvironment";
 import { exists } from "fs-extra";
 
@@ -21,6 +21,13 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
     }
 
     const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
+    const isMgmtPackageResult = await isMgmtPackage(tspFolderFromSpecRoot);
+    if (isMgmtPackageResult) {
+        if ((tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'] ??
+            tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary'] ?? true) !== true) {
+            return false;
+        }
+    }
     if ((tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'] ??
         tspConfig?.options?.['@azure-tools/typespec-ts']?.['isModularLibrary']) !== true) {
         return false;

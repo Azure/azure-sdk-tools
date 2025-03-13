@@ -118,4 +118,22 @@ describe('Auto SDK generation path test', () => {
             await remove(tempSpecFolder);
         }
     });
+    test('mgmt client generation', async () => {
+        const tempSpecFolder = path.join(__dirname, `tmp/spec-${getRandomInt(10000)}`);
+        const inputJson = {
+            relatedTypeSpecProjectFolder: ['tsp'],
+            specFolder: tempSpecFolder
+        };
+        try {
+            await ensureDir(path.join(tempSpecFolder, 'tsp'));
+            await writeFile(path.join(tempSpecFolder, 'tsp/main.tsp'), "@armProviderNamespace", {
+                encoding: 'utf8',
+                flush: true
+            });
+            const { sdkType } = await parseInputJson(inputJson);
+            expect(sdkType).toBe(SDKType.ModularClient);
+        } finally {
+            await remove(tempSpecFolder);
+        }
+    });
 });

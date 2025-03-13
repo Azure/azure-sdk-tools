@@ -178,7 +178,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                     }
                                 }
                                 // If the issue had a valid assignee and only labels provided add the comment
-                                if (hasValidAssignee && triageOutput.AnswerType == "none" && triageOutput.Labels.Count > 0)
+                                // Also safegaurding against empty answer, this comment should be made given an invalid Answer.
+                                if (hasValidAssignee && (string.IsNullOrEmpty(triageOutput.AnswerType) || string.IsNullOrEmpty(triageOutput.Answer)))
                                 {
                                     string issueComment = "Thank you for your feedback. Tagging and routing to the team member best able to assist.";
                                     gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
@@ -226,22 +227,26 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                             }
                             
-                            // If answer is a suggestions/solution add the comment.
-                            if(triageOutput.AnswerType == "suggestion")
+                            // Making sure the Answer is valid
+                            if(!string.IsNullOrEmpty(triageOutput.Answer))
                             {
-                                gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
-                                                                issueEventPayload.Issue.Number,
-                                                                triageOutput.Answer);
-                            }
+                                // If answer is a suggestions/solution add the comment.
+                                if(triageOutput.AnswerType == "suggestion")
+                                {
+                                    gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
+                                                                    issueEventPayload.Issue.Number,
+                                                                    triageOutput.Answer);
+                                }
                             
-                            // If answer is a solution add the issue-addressed label
-                            // to close out the issue.
-                            if(triageOutput.AnswerType == "solution")
-                            {
-                                gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
-                                                                issueEventPayload.Issue.Number,
-                                                                triageOutput.Answer);
-                                gitHubEventClient.AddLabel(TriageLabelConstants.IssueAddressed);
+                                // If answer is a solution add the issue-addressed label
+                                // to close out the issue.
+                                if(triageOutput.AnswerType == "solution")
+                                {
+                                    gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
+                                                                    issueEventPayload.Issue.Number,
+                                                                    triageOutput.Answer);
+                                    gitHubEventClient.AddLabel(TriageLabelConstants.IssueAddressed);
+                                }
                             }
                         }
                         // If there are no labels predicted add NeedsTriage to the issue

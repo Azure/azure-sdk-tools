@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
 
         public List<string> AILabelServiceReturn { get; set; } = new List<string>();
         public string AIServiceAnswer { get; set; } = null;
-        public string AIServiceAnswerType { get; set; } = "none";
+        public string AIServiceAnswerType { get; set; } = null;
 
 
         public SearchIssuesResult SearchIssuesResultReturn { get; set; } = new SearchIssuesResult();

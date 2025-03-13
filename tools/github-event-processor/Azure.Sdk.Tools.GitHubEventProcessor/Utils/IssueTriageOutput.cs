@@ -9,8 +9,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     /// <summary>
     /// Class used to deserialize AI Triage output.
     /// Has four states:
-    /// - Empty: No labels, no answer, answer type = "none"
-    /// - Labels: Labels are provided, no answer, answer type = "none". 
+    /// - Empty: No labels, no answer, no answer type
+    /// - Labels: Labels are provided, no answer, no answer type. 
     /// - Suggestion: Labels are provided, answer is provided, answer type = "suggestion".
     /// - Solution: Labels are provided, answer is provided, answer type = "solution".
     /// </summary>
@@ -20,6 +20,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         public string Answer { get; set; }
         public string AnswerType { get; set; }
 
-        public static readonly IssueTriageOutput Empty = new() { Labels = [], Answer = null, AnswerType = "none" };
+        public static readonly IssueTriageOutput Empty = new() { Labels = [], Answer = null, AnswerType = null };
     }
 }

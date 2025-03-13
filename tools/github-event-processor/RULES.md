@@ -48,8 +48,7 @@
 
 ### AI label service
 
-This is a REST API that evaluates the content of an issue and attempts to predict a set of labels and provide a relevant comment. If predictions is made with an extreme level of confidence, the service will return one service label, one category label and a solution comment. In this case an `issue-addressed` is added to the issue to close it. If a prediction is made with a reasonable level of confidence, the service will return one service label, one category label, and a suggestion comment.  If confidence thresholds were not met, labels nor a comment are provided. The AI label service can only a response with labels for [officially supported repositories]
-(<https://github.com/Azure/azure-sdk-tools/blob/main/tools/github-labels/repositories.txt>). For libraries that are not supported an empty response will be returned.
+This is a REST API that evaluates the content of an issue and attempts to predict a set of labels and provide a relevant answer. If predictions are made with a high degree of confidence, the service will return one service label, one category label and a solution comment. In this case an `issue-addressed` is added to the issue to close it. If a prediction is made with a reasonable level of confidence, the service will return one service label, one category label, and a suggestion comment.  If confidence thresholds were not met, labels nor a comment are provided. The AI label service can only respond with labels for [officially supported repositories]
 
 #### Example payload
 
@@ -75,7 +74,7 @@ _**Only Labels Predicted**_
     "Client"
   ],  
   "answer" : null,
-  "answerType" : "none"
+  "answerType" : null
 }
 ```
 
@@ -111,7 +110,7 @@ _**No predictions**_
 {
   "labels": [],  
   "answer" : null,  
-  "answerType" : "none"  
+  "answerType" : null  
 }
 ```
 

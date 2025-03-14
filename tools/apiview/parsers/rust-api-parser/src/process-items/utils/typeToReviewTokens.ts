@@ -157,6 +157,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
         HasSuffixSpace: false,
       },
       { Kind: TokenKind.TypeName, Value: type.qualified_path.name, HasSuffixSpace: false },
+      ...processGenericArgs(type.qualified_path.args),
     ];
   } else {
     return [{ Kind: TokenKind.Text, Value: "unknown" }];

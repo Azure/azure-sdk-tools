@@ -1,0 +1,25 @@
+parameters:
+  "service-dir":
+    default: "sdk/informaticadatamanagement"
+emit:
+  - "@azure-tools/typespec-autorest"
+options:
+  "@azure-tools/typespec-autorest":
+    emitter-output-dir: "{project-root}/.."
+    azure-resource-provider-folder: "resource-manager"
+    output-file: "{azure-resource-provider-folder}/{service-name}/{version-status}/{version}/openapi.json"
+  "@azure-tools/typespec-ts":
+    service-dir: "sdk/informatica"
+    azureSdkForJs: true
+    isModularLibrary: true
+    generateMetadata: true
+    hierarchyClient: false
+    experimentalExtensibleEnums: true
+    enableOperationGroup: true
+    package-dir: "arm-informaticadatamanagement"
+    flavor: "azure"
+    packageDetails:
+      name: "@azure/arm-informaticadatamanagement"
+linter:
+  extends:
+    - "@azure-tools/typespec-azure-rulesets/resource-manager"

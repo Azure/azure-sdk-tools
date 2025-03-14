@@ -153,3 +153,4 @@ export function vsoAddAttachment(name: string, path: string): void {
 export function vsoLogIssue(message: string, type = "error"): void {
   console.log(`##vso[task.logissue type=${type}]${message}`);
 }
+

@@ -9,11 +9,12 @@ import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
 import { formatSuppressionLine } from '../utils/reportFormat';
 import { extractPathFromSpecConfig, removeAnsiEscapeCodes } from '../utils/utils';
-import { vsoAddAttachment, vsoLogIssue } from './logging';
+import { vsoAddAttachment } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
-import { writeTmpJsonFile } from '../utils/fsUtils';
+import { deleteTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
 import { marked } from "marked";
+import { vsoLogError, vsoLogWarning } from './entrypoint';
 
 const commentLimit = 60;
 
@@ -80,6 +81,7 @@ export const generateReport = (context: WorkflowContext) => {
       vsoAddAttachment(`Generation Summary for ${specConfigPath}`, markdownFilePath);
     } catch (e) {
       context.logger.error(`IOError: Fails to write markdown file. Details: ${e}`);
+      vsoLogError(context, `IOError: Fails to write markdown file. Details: ${e}`);
     }
   }
 
@@ -92,12 +94,18 @@ export const generateReport = (context: WorkflowContext) => {
     sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder
   };
 
+  let message = "";
+  deleteTmpJsonFile(context, 'execution-report.json');
   writeTmpJsonFile(context, 'execution-report.json', executionReport);
   if (context.status === 'failed') {
-    vsoLogIssue(`The generation process failed for ${specConfigPath}. Refer to the full log for details.`);
+    message = `The generation process failed for ${specConfigPath}. Refer to the full log for details.`;
+    context.logger.error(message);
+    vsoLogError(context, message);
   } 
   else if (context.status === 'notEnabled') {
-    vsoLogIssue(`SDK configuration is not enabled for ${specConfigPath}. Refer to the full log for details.`, "warning");
+    message = `SDK configuration is not enabled for ${specConfigPath}. Refer to the full log for details.`;
+    context.logger.warn(message);
+    vsoLogWarning(context, message);
   } else {
     context.logger.info(`Main status [${context.status}]`);
   }
@@ -161,7 +169,7 @@ export const saveFilteredLog = (context: WorkflowContext) => {
     level: type,
     message: commentBody,
     time: new Date(),
-    logIssues: context.logIssues
+    vsoLogs: context.vsoLogs
   } as MessageRecord;
 
   context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
@@ -179,6 +187,7 @@ export const generateHtmlFromFilteredLog = (context: WorkflowContext) => {
         messageRecord = readFileSync(context.filteredLogFileName).toString();
     } catch (error) {
         context.logger.error(`IOError: Fails to read log in'${context.filteredLogFileName}', Details: ${error}`)
+        vsoLogError(context, `IOError: Fails to read log in'${context.filteredLogFileName}', Details: ${error}`);
         return;
     }
 
@@ -421,7 +430,6 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
 
   if (executionReport && executionReport.packages && executionReport.packages.length > 0) {
     const pkg = executionReport.packages[0];
-    generateBreakingChangeArtifact(context, pkg.shouldLabelBreakingChange);
     packageName = pkg.packageName ?? "";
     if (context.config.pullNumber) {    
       prBody = `Create to sync ${context.config.specRepoHttpsUrl}/pull/${context.config.pullNumber}\n\n`;
@@ -436,58 +444,4 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
   sendPipelineVariable("PrBranch", prBranch);
   sendPipelineVariable("PrTitle", prTitle);
   sendPipelineVariable("PrBody", prBody);
-}
-
-function generateBreakingChangeArtifact(context: WorkflowContext, shouldLabelBreakingChange: boolean) {
-  context.logger.log('section', 'Generate breaking change label artifact');
-
-  try {
-    const breakingChangeAddLabelArtifactFolder = path.join(context.config.workingFolder, 'out/breakingchangelabel/add');
-    if (!existsSync(breakingChangeAddLabelArtifactFolder)) {
-      mkdirSync(breakingChangeAddLabelArtifactFolder, { recursive: true });
-    }
-
-    const breakingChangeRemoveLabelArtifactFolder = path.join(context.config.workingFolder, 'out/breakingchangelabel/remove');
-    if (!existsSync(breakingChangeRemoveLabelArtifactFolder)) {
-      mkdirSync(breakingChangeRemoveLabelArtifactFolder, { recursive: true });
-    }
-
-    const addBreakingChangeLabelArtifact = path.join(breakingChangeAddLabelArtifactFolder, `spec-gen-sdk_${context.config.sdkName}_true`);
-    const removeBreakingChangeLabelArtifact = path.join(breakingChangeRemoveLabelArtifactFolder, `spec-gen-sdk_${context.config.sdkName}_false`);
-
-    // here we need to consider multiple spec-gen-sdk run scenarios. In a pipeline run with multiple packages generated,
-    // if any of the package has breaking change, we should label the PR with breaking change label.
-    // if none of the package has breaking change, we should remove the label from the PR. 
-    // However, from 'spec-gen-sdk' perspective, we only create the label artifact based on the package result. i.e. if 'shouldLabelBreakingChange' is true,
-    // we create the artifact with 'add' label. otherwise, we create the artifact with 'remove' label.
-    // Regarding the label addition/removal operation in the spec PR, we will defer it to the downstream workflow.
-    if (shouldLabelBreakingChange) {
-      if (!existsSync(addBreakingChangeLabelArtifact)) {
-        writeFileSync(addBreakingChangeLabelArtifact, 'fyi - add breaking change label');
-      }
-    } else {
-      if (!existsSync(removeBreakingChangeLabelArtifact)) {
-        writeFileSync(removeBreakingChangeLabelArtifact, 'fyi - remove breaking change label');
-      }
-    }
-  } catch (error) {
-    // Log error but don't fail the process since this is not critical
-    let errorMessage = 'Unknown error';
-
-    // Safely extract error message without potential type issues
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    } else if (error !== null && error !== undefined) {
-      try {
-        errorMessage = String(error);
-      } catch {
-        errorMessage = 'Error converting error to string';
-      }
-    }
-
-    context.logger.error(`Error generating breaking change artifact: ${errorMessage}`);
-    setSdkAutoStatus(context, 'failed');
-  }
-
-  context.logger.log('endsection', 'Generate breaking change label artifact');
 }

@@ -21,7 +21,7 @@ import { getInitOutput } from '../types/InitOutput';
 import { sdkSuppressionsFileName, SdkSuppressionsYml, SdkPackageSuppressionsEntry, validateSdkSuppressionsFile } from '../types/sdkSuppressions';
 import { parseYamlContent } from '../utils/utils';
 import { SDKSuppressionContentList } from '../utils/handleSuppressionLines';
-import { CommandLog, SdkAutoContext } from './entrypoint';
+import { VsoLogs, SdkAutoContext } from './entrypoint';
 
 export const remoteIntegration = 'integration';
 export const remoteMain = 'main';
@@ -48,7 +48,7 @@ export type WorkflowContext = SdkAutoContext & {
   messageCaptureTransport: Transport;
   scriptEnvs: { [key: string]: string | undefined };
   tmpFolder: string;
-  logIssues: CommandLog[];
+  vsoLogs: VsoLogs;
 };
 
 export const setFailureType = (context: WorkflowContext, failureType: FailureType) => {
@@ -73,7 +73,7 @@ export const workflowInit = async (context: SdkAutoContext): Promise<WorkflowCon
     ...context,
     pendingPackages: [],
     handledPackages: [],
-    logIssues: [],
+    vsoLogs: new Map(),
     status: 'inProgress',
     messages,
     messageCaptureTransport: captureTransport,
@@ -154,7 +154,7 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
     context.status = 'notEnabled';
     context.logger.warn(`No SDKs are enabled for generation. Please enable them in either the corresponding tspconfig.yaml or readme.md file.`);
   } else {
-    context.logger.info(`SDK to generate:${context.config.sdkName}`);
+    context.logger.info(`SDK to generate:${context.config.sdkName}, configPath: ${enabledSdkForTspConfig ? context.config.tspConfigPath : context.config.readmePath}`);
   }
   context.logger.log('endsection', 'Validate SDK configuration');
 };

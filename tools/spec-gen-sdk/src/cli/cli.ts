@@ -83,9 +83,8 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
   }
 
   const elapsed = process.hrtime(start);
-  console.log(`Execution time: ${elapsed[0]}s`);
-
-  console.log(`Exit with status ${status}`);
+  console.log(`spec-gen-sdk execution time: ${elapsed[0]}s`);
+  console.log(`spec-gen-sdk exit with status ${status}`);
   if (status !== undefined && !['warning', 'succeeded', 'notEnabled'].includes(status)) {
     process.exit(-1);
   } else {

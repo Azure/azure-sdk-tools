@@ -53,11 +53,16 @@ export type SdkAutoContext = {
   swaggerToSdkConfig: SwaggerToSdkConfig
   isPrivateSpecRepo: boolean;
 };
-
-export type CommandLog = {
-  command: string;
-  logIssues: string[];
-};
+/*
+export type VsoLogs = {
+  task: string;
+  errors?: string[];
+  warnings?: string[];
+};*/
+export type VsoLogs = Map<string, {
+  errors?: string[];
+  warnings?: string[];
+}>;
 
 export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAutoContext> => {
   const logger = winston.createLogger({
@@ -123,10 +128,15 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     await workflowMain(workflowContext);
   } catch (e) {
     if (workflowContext) {
-      sdkContext.logger.error(`FatalError: ${e.message}. Please refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
+      const message = `FatalError: ${e.message}. Please refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`;
+      sdkContext.logger.error(message);
       workflowContext.status = workflowContext.status === 'notEnabled' ? workflowContext.status : 'failed';
       setFailureType(workflowContext, FailureType.PipelineFrameworkFailed);
       workflowContext.messages.push(e.message);
+      vsoLogError(workflowContext, message);
+      if (e.stack) {
+        vsoLogError(workflowContext, `ErrorStack: ${e.stack}.`);
+      }
     }
     if (e.stack) {
       sdkContext.logger.error(`ErrorStack: ${e.stack}.`);
@@ -213,3 +223,56 @@ export const getSdkRepoConfig = async (options: SdkAutoOptions, specRepoConfig: 
 
   return sdkRepoConfig;
 };
+
+export function vsoLogError(context: WorkflowContext, message, task: string = "spec-gen-sdk"): void {
+  vsoLogErrors(context, [message], task);
+}
+
+export function vsoLogWarning(context: WorkflowContext, message, task: string = "spec-gen-sdk"): void {
+  vsoLogWarnings(context, [message], task);
+}
+export function vsoLogErrors(
+  context: WorkflowContext,
+  errors: string[],
+  task: string = "spec-gen-sdk"
+): void {
+  if (context.config.runEnv !== 'azureDevOps') {
+    return;
+  }
+  if (!context.vsoLogs.has(task)) {
+    // Create a new entry with the initial errors
+    context.vsoLogs.set(task, { errors: [...errors] });
+    return;
+  }
+
+  // If the task already exists, merge the new errors into the existing array
+  const logEntry = context.vsoLogs.get(task);
+  if (logEntry?.errors) {
+    logEntry.errors.push(...errors);
+  } else {
+    logEntry!.errors = [...errors];
+  }
+}
+
+export function vsoLogWarnings(
+  context: WorkflowContext,
+  warnings: string[],
+  task: string = "spec-gen-sdk"
+): void {
+  if (context.config.runEnv !== 'azureDevOps') {
+    return;
+  }
+  if (!context.vsoLogs.has(task)) {
+    // Create a new entry with the initial errors
+    context.vsoLogs.set(task, { warnings: [...warnings] });
+    return;
+  }
+
+  // If the task already exists, merge the new errors into the existing array
+  const logEntry = context.vsoLogs.get(task);
+  if (logEntry?.warnings) {
+    logEntry.warnings.push(...warnings);
+  } else {
+    logEntry!.warnings = [...warnings];
+  }
+}

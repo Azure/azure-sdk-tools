@@ -65,7 +65,7 @@ This is a REST API that evaluates the content of an issue and attempts to predic
 
 #### Example responses
 
-_**Only Labels Predicted**_
+_**Only labels predicted**_
 
 ```json
 {

@@ -4,10 +4,10 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20250130.2'
+    default: '1.0.0-dev.20250301.1'
   - name: JavaScriptAPIParser
     type: string
-    default: '@azure-tools/ts-genapi@2.0.3'
+    default: '@azure-tools/ts-genapi@2.0.5'
   - name: RustAPIParser
     type: string
     default: '@azure-tools/rust-genapi@1.0.0-beta.1'

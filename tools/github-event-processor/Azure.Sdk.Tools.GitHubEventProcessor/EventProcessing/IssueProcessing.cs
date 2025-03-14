@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     // If there are no labels and no assignees
                     if ((issueEventPayload.Issue.Labels.Count == 0) && (issueEventPayload.Issue.Assignee == null))
                     {
-                        IssueTriageResponse triageOutput = await gitHubEventClient.QueryAILabelService(issueEventPayload);
+                        IssueTriageResponse triageOutput = await gitHubEventClient.QueryAIIssueTriageService(issueEventPayload);
                         if (triageOutput.Labels.Count() > 0)
                         {
                             // If labels were predicted, add them to the issue

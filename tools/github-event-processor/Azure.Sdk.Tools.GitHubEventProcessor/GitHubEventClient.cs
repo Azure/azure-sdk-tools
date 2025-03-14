@@ -1321,7 +1321,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return rulesConfiguration;
         }
 
-        public virtual async Task<IssueTriageResponse> QueryAILabelService(IssueEventGitHubPayload issueEventPayload)
+        public virtual async Task<IssueTriageResponse> QueryAIIssueTriageService(IssueEventGitHubPayload issueEventPayload)
         {
             // The LABEL_SERVICE_API_KEY is queried from Keyvault as part of the action and added to the
             // environment.

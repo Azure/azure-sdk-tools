@@ -1,14 +1,14 @@
-import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types';
-import { buildPackage, createArtifact } from '../../common/rushUtils';
-import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
+import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types.js';
+import { buildPackage, createArtifact } from '../../common/rushUtils.js';
+import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils.js';
 import { posix } from 'node:path';
 
-import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
-import { generateChangelogAndBumpVersion } from '../../common/changlog/automaticGenerateChangeLogAndBumpVersion';
-import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
-import { getGeneratedPackageDirectory } from '../../common/utils';
-import { getNpmPackageInfo } from '../../common/npmUtils';
-import { logger } from '../../utils/logger';
+import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
+import { generateChangelogAndBumpVersion } from '../../common/changlog/automaticGenerateChangeLogAndBumpVersion.js';
+import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
+import { getGeneratedPackageDirectory } from '../../common/utils.js';
+import { getNpmPackageInfo } from '../../common/npmUtils.js';
+import { logger } from '../../utils/logger.js';
 import { exists, remove } from 'fs-extra';
 import unixify from 'unixify';
 

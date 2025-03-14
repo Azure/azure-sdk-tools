@@ -1,6 +1,6 @@
-import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml";
-import { changeRushJson } from "../../utils/changeRushJson";
-import { getRelativePackagePath } from "./utils";
+import { modifyOrGenerateCiYml } from "../../utils/changeCiYaml.js";
+import { changeRushJson } from "../../utils/changeRushJson.js";
+import { getRelativePackagePath } from "./utils.js";
 
 export async function generateExtraFiles(packagePath: string, packageName: string, sdkRepo: string) {
     await modifyOrGenerateCiYml(sdkRepo, packagePath, packageName, false);

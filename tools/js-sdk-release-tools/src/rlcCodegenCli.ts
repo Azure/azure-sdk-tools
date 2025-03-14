@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {logger} from "./utils/logger";
+import {logger} from "./utils/logger.js";
 import {
     createFolderIfNotExist,
     findPackageInRepo, getConfigFromReadmeMd, getInputFromCommand,
@@ -9,11 +9,11 @@ import {
     getPackageNameFromReadmeMd,
     getPackagePathFromReadmePath,
     validPackageName
-} from "./llc/utils/utils";
-import {generateSampleReadmeMd, modifyExistingReadmeMd} from "./llc/utils/generateSampleReadmeMd";
+} from "./llc/utils/utils.js";
+import {generateSampleReadmeMd, modifyExistingReadmeMd} from "./llc/utils/generateSampleReadmeMd.js";
 import * as fs from "fs";
 import * as path from "path";
-import {buildGeneratedCodes, generateCodes} from "./llc/generateRLCInTerminal/generateRLCInTerminal";
+import {buildGeneratedCodes, generateCodes} from "./llc/generateRLCInTerminal/generateRLCInTerminal.js";
 
 const shell = require('shelljs');
 

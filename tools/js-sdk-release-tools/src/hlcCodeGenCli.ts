@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import {logger} from "./utils/logger";
-import {getLastCommitId} from "./utils/git";
-import {generateMgmt} from "./hlc/generateMgmt";
+import {logger} from "./utils/logger.js";
+import {getLastCommitId} from "./utils/git.js";
+import {generateMgmt} from "./hlc/generateMgmt.js";
 
 const shell = require('shelljs');
 

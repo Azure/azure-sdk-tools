@@ -24,9 +24,10 @@
   },
   "author": "Microsoft Corporation",
   "license": "MIT",
+  "type": "module",
   "dependencies": {
     "@azure-tools/openapi-tools-common": "^1.2.2",
-    "@npmcli/package-json": "^5.2.0",
+    "@npmcli/package-json": "^6.1.1",
     "colors": "1.4.0",
     "command-line-args": "^5.1.1",
     "comment-json": "^4.1.0",
@@ -44,7 +45,7 @@
     "typescript-codegen-breaking-change-detector": "0.5.5",
     "unixify": "^1.0.0",
     "winston": "^3.13.1",
-    "yaml": "^1.10.2"
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
@@ -56,7 +57,8 @@
     "rimraf": "^3.0.2",
     "tsx": "^4.16.5",
     "typescript": "5.5.3",
-    "vitest": "2.0.5"
+    "vitest": "2.0.5",
+    "@typespec/compiler": "^0.58.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-android-arm-eabi": "4.20.0",
@@ -75,5 +77,8 @@
     "@rollup/rollup-win32-arm64-msvc": "4.20.0",
     "@rollup/rollup-win32-ia32-msvc": "4.20.0",
     "@rollup/rollup-win32-x64-msvc": "4.20.0"
+  },
+  "peerDependencies": {
+    "@typespec/compiler": ">=0.58.0 <1.0.0"
   }
 }

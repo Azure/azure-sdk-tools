@@ -2855,9 +2855,9 @@ class DoNotImportAsyncio(BaseChecker):
     # TODO Find message number
     msgs = {
         "C4763": (
-            "Do not import the asyncio package directly in your library",
+            "Do not import the asyncio package directly in your library. If asyncio is being used to sleep(), use the sleep function from the correct azure.core.pipeline.transport context instead. For other asyncio function calls, pylint disable this warning.",
             "do-not-import-asyncio",
-            "Do not import the asyncio package in your directly.",
+            "Do not import the asyncio package in your library. If asyncio is being used to sleep(), use the sleep function from the correct azure.core.pipeline.transport context instead. For other asyncio function calls, pylint disable this warning.",
         ),
     }
 

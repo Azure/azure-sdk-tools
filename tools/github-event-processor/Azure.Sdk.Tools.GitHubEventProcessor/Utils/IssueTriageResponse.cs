@@ -14,12 +14,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     /// - Suggestion: Labels are provided, answer is provided, answer type = "suggestion".
     /// - Solution: Labels are provided, answer is provided, answer type = "solution".
     /// </summary>
-    public class IssueTriageOutput
+    public class IssueTriageResponse
     {
         public List<string> Labels { get; set; }
         public string Answer { get; set; }
         public string AnswerType { get; set; }
 
-        public static readonly IssueTriageOutput Empty = new() { Labels = [], Answer = null, AnswerType = null };
+        public static readonly IssueTriageResponse Empty = new() { Labels = [], Answer = null, AnswerType = null };
     }
 }

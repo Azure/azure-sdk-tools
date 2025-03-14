@@ -1321,7 +1321,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return rulesConfiguration;
         }
 
-        public virtual async Task<IssueTriageOutput> QueryAILabelService(IssueEventGitHubPayload issueEventPayload)
+        public virtual async Task<IssueTriageResponse> QueryAILabelService(IssueEventGitHubPayload issueEventPayload)
         {
             // The LABEL_SERVICE_API_KEY is queried from Keyvault as part of the action and added to the
             // environment.
@@ -1329,7 +1329,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             if (string.IsNullOrEmpty(AIServiceKey))
             {
                 Console.WriteLine("LABEL_SERVICE_API_KEY is null or empty.");
-                return IssueTriageOutput.Empty;
+                return IssueTriageResponse.Empty;
             }
             string requestUrl = $"https://gh-issue-labeler-function.azurewebsites.net/api/AzureSdkIssueLabelerService?code={AIServiceKey}";
 
@@ -1343,7 +1343,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 RepositoryOwnerName = issueEventPayload.Repository.Owner.Login
             };
             using var client = new HttpClient();
-            IssueTriageOutput output;
+            IssueTriageResponse output;
             try
             {
                 var response = await client.PostAsJsonAsync(requestUrl, payload).ConfigureAwait(false);
@@ -1356,18 +1356,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 // empty list.
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    output = await response.Content.ReadFromJsonAsync<IssueTriageOutput>().ConfigureAwait(false);
+                    output = await response.Content.ReadFromJsonAsync<IssueTriageResponse>().ConfigureAwait(false);
                 }
                 else
                 {
                     Console.WriteLine($"The AI Label service did not return a success. Status Code={response.StatusCode}, Reason={response.ReasonPhrase}");
-                    output = IssueTriageOutput.Empty;
+                    output = IssueTriageResponse.Empty;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception calling AI Label Service. Exception={ex}");
-                output = IssueTriageOutput.Empty;
+                output = IssueTriageResponse.Empty;
             }
             return output;
         }

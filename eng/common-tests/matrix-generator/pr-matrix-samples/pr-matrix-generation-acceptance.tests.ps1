@@ -53,3 +53,33 @@ Describe "Acceptance tests for Python PR Matrix Generation" -Tag "Integration" {
         }
     }
 }
+
+
+Describe "Acceptance tests for JS PR Matrix Generation" -Tag "Integration" {
+    BeforeAll {
+        $JS_REPO_REF = "c2c9315e40d0805903abc03e4703fc5edf45254a"
+        $JS_REPO = "Azure/azure-sdk-for-js"
+
+        . $PSScriptRoot/pr-matrix-generation-acceptance.helpers.ps1
+        $RepoRoot = Get-Repo -Repo $JS_REPO -Reference $JS_REPO_REF
+    }
+
+    It "Should evaluate python diffs correctly - <name>" -ForEach $pythonScenarios {
+        Write-Host "Operating against repo: $RepoRoot"
+        $scenario = $_
+
+        if (-not $scenario.diff) {
+            Write-Host "Skipping scenario with no diff"
+            return
+        }
+        else {
+            $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
+            $expectedOutputs = $scenario.expected_package_output | Sort-Object -Property Name
+            $detectedOutputs = Get-ChildItem -Path $outputProps -Recurse -Filter "*.json" -Exclude "pr-diff.json" `
+                | ForEach-Object { Get-Content -Raw $_ | ConvertFrom-Json }
+                | Sort-Object -Property Name
+
+            Compare-PackageResults -Actual $detectedOutputs -Expected $expectedOutputs
+        }
+    }
+}

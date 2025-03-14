@@ -373,7 +373,8 @@ namespace APIViewWeb.Helpers
                     NodeIdHashed = nodeIdHashed,
                     NodeId = nodeId,
                     Diagnostics = diagnostic,
-                    RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() }
+                    RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() },
+                    RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Count()
                 };
                 codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Add(rowData);
             }

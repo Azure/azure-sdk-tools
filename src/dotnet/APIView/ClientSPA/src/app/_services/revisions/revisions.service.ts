@@ -169,6 +169,17 @@ export class APIRevisionsService {
     });
   }
 
+  generateAIReview(reviewId: string, apiRevisionId: string): Observable<number> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<number>(this.baseUrl + `/${reviewId}/${apiRevisionId}/generateReview`, {},
+    { 
+      headers: headers,
+      withCredentials: true,
+    });
+  }
+
   private isIndexPage(currentRoute: ActivatedRoute): Observable<boolean> {
     return currentRoute.data.pipe(
       map(data => {

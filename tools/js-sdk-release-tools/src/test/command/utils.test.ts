@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { resolveOptions } from "../../common/utils.js";
 import path from "path";
-import { deepStrictEqual } from "assert";
+import { deepStrictEqual, strictEqual } from "assert";
 
 describe("resolveOptions", () => {
     test("loads config at the given path", async () => {
@@ -28,6 +28,11 @@ describe("resolveOptions", () => {
                     name: "@azure/arm-informaticadatamanagement",
                 },
                 "service-dir": "sdk/informatica",
+            },
+        });
+        deepStrictEqual(options.configFile.parameters, {
+            "service-dir": {
+                default: "sdk/informaticadatamanagement",
             },
         });
     });

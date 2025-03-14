@@ -9,6 +9,8 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using APIView.Model;
 using Microsoft.AspNetCore.Http;
+using APIViewAI.Model;
+using System.Security.Principal;
 
 namespace APIViewWeb.Managers.Interfaces
 {
@@ -45,5 +47,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false);
         public Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId);
         public Task<APIRevisionListItemModel> UpdateAPIRevisionReviewersAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers);
+        public Task DetectSimilarIssuesAsync(ClaimsPrincipal user, CommentItemModel comment);
+
     }
 }

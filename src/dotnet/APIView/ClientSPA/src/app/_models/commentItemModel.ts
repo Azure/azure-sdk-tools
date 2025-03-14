@@ -24,6 +24,7 @@ export class CommentItemModel {
     lastEditedOn: string | null = null;
     isDeleted: boolean = false;
     isInEditMode: boolean = false;
+    isAIGenerated: boolean = false; // Added property to track AI-generated comments
 
     constructor() {
         this.id = '';
@@ -44,5 +45,6 @@ export class CommentItemModel {
         this.lastEditedOn = null;
         this.isDeleted = false;
         this.isInEditMode = false;
+        this.isAIGenerated = false; // Initialize AI-generated flag
     }
 }

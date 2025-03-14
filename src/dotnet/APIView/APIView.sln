@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestReferenceWithInternalsV
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIViewJsonUtility", "APIViewJsonUtility\APIViewJsonUtility.csproj", "{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "APIViewAI", "APIViewAI\APIViewAI.csproj", "{DBF168C6-B208-4FC6-8A22-5FD5E8ED59CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1C37681-2D54-4BDF-A4B8-834EC29AAFCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DBF168C6-B208-4FC6-8A22-5FD5E8ED59CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBF168C6-B208-4FC6-8A22-5FD5E8ED59CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBF168C6-B208-4FC6-8A22-5FD5E8ED59CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBF168C6-B208-4FC6-8A22-5FD5E8ED59CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

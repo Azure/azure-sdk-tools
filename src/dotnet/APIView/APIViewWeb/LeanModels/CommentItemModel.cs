@@ -35,5 +35,6 @@ namespace APIViewWeb.LeanModels
         public DateTime CreatedOn { get; set; }
         public DateTime? LastEditedOn { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsAIGenerated { get; set; } = false;
     }
 }

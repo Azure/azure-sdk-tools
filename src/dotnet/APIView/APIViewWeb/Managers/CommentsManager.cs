@@ -99,7 +99,7 @@ namespace APIViewWeb.Managers
                     ChangedBy = user.GetGitHubLogin(),
                     ChangedOn = DateTime.Now,
                 });
-            comment.CreatedBy = user.GetGitHubLogin();
+            comment.CreatedBy = comment.CreatedBy ?? user.GetGitHubLogin();
             comment.CreatedOn = DateTime.Now;
 
             await _commentsRepository.UpsertCommentAsync(comment);

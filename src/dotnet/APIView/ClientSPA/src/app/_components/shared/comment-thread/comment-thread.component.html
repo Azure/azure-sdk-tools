@@ -11,8 +11,9 @@
             <p-panel [toggleable]="false" [attr.data-comment-id]="comment.id">
                 <ng-template pTemplate="header">
                     <div class="flex align-items-center gap-2">
-                        <span class="fw-bold">{{ comment.createdBy }}</span>
+                        <span class="fw-bold">{{ comment.createdBy }} </span>
                         <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
+                        <span *ngIf="comment?.isAIGenerated" class="fw-bold"> [AI Generated]</span>
                     </div>
                 </ng-template>
                 <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">

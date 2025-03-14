@@ -37,6 +37,8 @@ using APIViewWeb.Managers.Interfaces;
 using Azure.Identity;
 using APIViewWeb.Helpers;
 using Azure.Storage.Blobs;
+using APIViewAI;
+using APIViewAI.Interfaces;
 
 namespace APIViewWeb
 {
@@ -132,6 +134,8 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, SwiftLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
             services.AddSingleton<LanguageService, TypeSpecLanguageService>();
+
+            services.AddSingleton<IAPIViewCommentProcessor, APIViewCommentProcessor>();
 
             if (Environment.IsDevelopment() && Configuration["AuthenticationScheme"] == "Test")
             {

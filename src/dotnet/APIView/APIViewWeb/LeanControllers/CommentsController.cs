@@ -2,6 +2,7 @@ using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -20,14 +21,16 @@ namespace APIViewWeb.LeanControllers
         private readonly ICommentsManager _commentsManager;
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
+        private readonly IAPIRevisionsManager _revisionsManager;
 
         public CommentsController(ILogger<CommentsController> logger, ICommentsManager commentManager,
-            IReviewManager reviewManager, INotificationManager notificationManager)
+            IReviewManager reviewManager, INotificationManager notificationManager, IAPIRevisionsManager revisionsManager)
         {
             _logger = logger;
             _commentsManager = commentManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
+            _revisionsManager = revisionsManager;
         }
 
         /// <summary>
@@ -132,6 +135,8 @@ namespace APIViewWeb.LeanControllers
             };
 
             await _commentsManager.AddCommentAsync(User, comment);
+            // Do not wait for response from AI task that detect similar comments
+            _ = _revisionsManager.DetectSimilarIssuesAsync(User, comment);
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
             if (review != null)
             {

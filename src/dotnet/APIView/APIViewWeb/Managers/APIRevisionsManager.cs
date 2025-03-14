@@ -1,6 +1,9 @@
 using ApiView;
 using APIView.DIff;
 using APIView.Model;
+using APIViewAI;
+using APIViewAI.Model;
+using APIViewAI.Interfaces;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
@@ -19,8 +22,11 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
+using APIView.Model.V2;
 
 namespace APIViewWeb.Managers
 {
@@ -37,6 +43,8 @@ namespace APIViewWeb.Managers
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IAPIViewCommentProcessor _apiCommentProcessor;
+        private readonly ICommentsManager _commentsManager;
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
@@ -51,7 +59,9 @@ namespace APIViewWeb.Managers
             IBlobOriginalsRepository originalsRepository,
             INotificationManager notificationManager,
             TelemetryClient telemetryClient,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IAPIViewCommentProcessor apiviewCommentProcessor,
+            ICommentsManager commentsManager)
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -64,6 +74,8 @@ namespace APIViewWeb.Managers
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
             _telemetryClient = telemetryClient;
+            _apiCommentProcessor = apiviewCommentProcessor;
+            _commentsManager = commentsManager;
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
             {
@@ -524,6 +536,10 @@ namespace APIViewWeb.Managers
             {
                 // Run offline review gen for review and reviewCodeFileModel
                 await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFile.FileId, name, language);
+            }
+            else
+            {
+                //_ = _apiCommentProcessor.GenerateAIReviewComments(apiRevision.Id, review.Id);
             }
 
             // auto subscribe revision creation user
@@ -1030,6 +1046,124 @@ namespace APIViewWeb.Managers
                 }
             }
             return revisionModel;
+        }
+
+        public async Task DetectSimilarIssuesAsync(ClaimsPrincipal user, CommentItemModel comment)
+        {
+            if (!IsReviewerUser(user))
+                return;
+
+            //Get API surface for current revision, review line text for commented line
+            //Send request to AI service
+            //Process the response and Identify line ID for each review line in the response from AI
+            //Create a comment in comments repository for each line
+            //Push notification about added comments to user.
+
+            var revisionId = comment.APIRevisionId;
+            var reviewId = comment.ReviewId;
+
+            var codeFile = await GetCodeFileForRevisionId(revisionId);
+            if (codeFile != null && codeFile.ReviewLines.Count > 0)
+            {
+                var request = new CommentRequestModel(comment.CommentText, GetReviewLineTextFromId(codeFile, comment.ElementId), codeFile.GetApiText());
+                var responses = await _apiCommentProcessor.DetectSimilarSuggestionsAsync(request);
+                await CreateCommentFromAIResponse(user, codeFile, responses, reviewId, revisionId);
+                var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionId);
+                await _signalRHubContext.Clients.All.SendAsync("APIRevisionUpdated", apiRevision);
+            }
+        }
+
+        public async Task GenerateAIReviewComments(string revisionId, string reviewId)
+        {
+            var codeFile = await GetCodeFileForRevisionId(revisionId);
+            if (codeFile != null && codeFile.ReviewLines.Count > 0)
+            {
+                var request = new CommentRequestModel("", "", codeFile.GetApiText());
+                //var responses = await _apiCommentProcessor.GenerateAIReviewCommentsAsync(request);
+                //await CreateCommentFromAIResponse(null, codeFile, responses, reviewId, revisionId);
+            }
+        }
+
+        private bool IsReviewerUser(ClaimsPrincipal user)
+        {
+            //Todo Ensure user is a reviewer
+            return true;
+        }
+        
+        private string GetReviewLineTextFromId(CodeFile codeFile, string id)
+        {
+            var reviewLine = FindReviewLine(codeFile.ReviewLines, id, true);
+            return reviewLine == null ? "" : reviewLine.ToString();
+        }
+
+        private string GetReviewLineIdFromText(CodeFile codeFile, string text)
+        {
+            var reviewLine = FindReviewLine(codeFile.ReviewLines, text, false);
+            return reviewLine == null ? "" : reviewLine.LineId;
+        }
+
+        private ReviewLine FindReviewLine(List<ReviewLine> reviews, string searchValue, bool isSearchById)
+        {
+            if (reviews == null)
+                return null;
+            foreach (var review in reviews)
+            {
+                var value = isSearchById ? review.LineId : review.ToString().Trim();
+                if (!string.IsNullOrEmpty(value) && value.Equals(searchValue))
+                    return review;
+
+                var childResult = FindReviewLine(review.Children, searchValue, isSearchById);
+                if(childResult != null)
+                    return childResult;
+            }
+            return null;
+        }
+
+        private async Task<CodeFile> GetCodeFileForRevisionId(string revisionId)
+        {
+            var revisionModel = await _apiRevisionsRepository.GetAPIRevisionAsync(revisionId);
+            if (revisionModel == null)
+            {
+                _telemetryClient.TrackEvent($"No API revision found with id:{revisionId}");
+                return null;
+            }
+
+            var codeFile = await _codeFileRepository.GetCodeFileAsync(revisionModel);
+            if(codeFile == null)
+            {
+                _telemetryClient.TrackEvent($"No API Code file found in storage for revision:{revisionId}");
+                return null;
+            }
+
+            return codeFile.CodeFile;
+        }
+
+        private async Task CreateCommentFromAIResponse(ClaimsPrincipal user, CodeFile codeFile, IList<CommentResponseModel> comments, string reviewId, string revisionId)
+        {
+            if (comments != null)
+            {
+                foreach (var c in comments)
+                {
+                    var commentTextInResp = c.Comment;
+                    var lineId = GetReviewLineIdFromText(codeFile, c.ReviewLine);
+                    if (!string.IsNullOrEmpty(lineId))
+                    {
+                        var comment = new CommentItemModel
+                        {
+                            ReviewId = reviewId,
+                            APIRevisionId = revisionId,
+                            ElementId = lineId,
+                            CommentText = commentTextInResp,
+                            CreatedBy = "azure-sdk",
+                            CreatedOn = DateTime.UtcNow,
+                            CommentType = LeanModels.CommentType.APIRevision,
+                            IsAIGenerated = true
+                        };
+                        await _commentsManager.AddCommentAsync(user, comment);
+                        _telemetryClient.TrackTrace($"Created AI generated comment for revision with ID: {revisionId}, Comment:{commentTextInResp}");
+                    }
+                }
+            }
         }
     }
 }

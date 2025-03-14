@@ -8,14 +8,15 @@ using Azure.AI.OpenAI;
 using APIViewWeb.Repositories;
 using System.Text.Json;
 using APIViewWeb.LeanModels;
- 
+using OpenAI;
+
 namespace APIViewWeb.Managers
 {
     public class AICommentsManager : IAICommentsManager
     {
         private readonly IAICommentsRepository _aiCommentsRepository;
         private readonly IConfiguration _configuration;
-        private readonly OpenAIClient _openAIClient;
+        private readonly AzureOpenAIClient _openAIClient;
 
         public AICommentsManager(
             IAICommentsRepository aiCommentsRepository,
@@ -24,7 +25,7 @@ namespace APIViewWeb.Managers
         {
             _aiCommentsRepository = aiCommentsRepository;
             _configuration = configuration;
-            _openAIClient = new OpenAIClient(
+            _openAIClient = new AzureOpenAIClient(
                 new Uri(_configuration["OpenAI:Endpoint"]),
                 new AzureKeyCredential(_configuration["OpenAI:Key"]));
         }
@@ -120,9 +121,8 @@ namespace APIViewWeb.Managers
 
         private async Task<float[]> GetEmbeddingsAsync(string badCode)
         {
-            var options = new EmbeddingsOptions(badCode);
-            var response = await _openAIClient.GetEmbeddingsAsync(_configuration["OpenAI:Model"], options);
-            return response.Value.Data[0].Embedding.ToArray();
+            var response = await _openAIClient.GetEmbeddingClient(_configuration["OpenAI:Model"]).GenerateEmbeddingAsync(badCode);
+            return response.Value.ToFloats().ToArray();
         }
     }
 }

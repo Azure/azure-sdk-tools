@@ -52,7 +52,7 @@ stages:
                   displayName: Push ${{ config.name }}
                   condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
                   image: image:tag
-                  remoteImage: 
+                  remoteImage:
                   - ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}
                   - ${{ if config.stableTags }}:
                     - ${{ each stableTag in config.stableTags }}:

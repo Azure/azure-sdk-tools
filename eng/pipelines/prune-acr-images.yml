@@ -1,0 +1,41 @@
+# parameters.Repositories expects an array of objects like:
+# - name: 'stress/otelcollector'
+#   cutoffDays: 365
+#   excludeTags:
+#   - '0.94.0'
+
+parameters:
+  - name: ContainerRegistry
+    type: string
+  - name: Repositories
+    type: object
+
+stages:
+  - stage:
+    displayName: Prune Stale Images
+    dependsOn: []
+    variables:
+      - template: /eng/pipelines/templates/variables/globals.yml
+      - template: /eng/pipelines/templates/variables/image.yml
+    jobs:
+      - job:
+        displayName: Prune Images in ${{ parameters.ContainerRegistry }} ACR
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+
+        steps:
+          - ${{ each repo in parameters.Repositories }}:
+            - task: AzureCLI@2
+              displayName: Prune ${{ repo.name }} Images
+              condition: succeeded()
+              inputs:
+                azureSubscription: "Azure SDK Engineering System"
+                scriptType: pscore
+                scriptPath: eng/scripts/prune-acr-images.ps1
+                arguments: >
+                  -ContainerRegistry ${{ parameters.ContainerRegistry }}
+                  -Repository ${{ repo.name }}
+                  -ExcludeTags ('${{ convertToJson(repo.excludeTags) }}' | ConvertFrom-Json)
+                  -CutoffDays ${{ repo.cutoffDays }}

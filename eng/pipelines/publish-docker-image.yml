@@ -3,6 +3,7 @@
 #   dockerRepo: 'engsys/testproxy-lin'
 #   prepareScript: tools/test-proxy/docker/prepare.ps1
 #   excludeFromManifest: true/false
+#   prune: false
 #   configPath: 'tools/test-proxy/docker'
 #   stableTags:
 #   - 'latest'
@@ -36,3 +37,13 @@ extends:
     stages:
       - template: /eng/pipelines/publish-docker-image-isolated.yml
         parameters: ${{ parameters }}
+
+      - template: /eng/pipelines/prune-acr-images.yml
+        parameters:
+          ContainerRegistry: ${{ parameters.ContainerRegistry }}
+          Repositories:
+            - ${{ each deployment in parameters.DockerDeployments }}:
+              - ${{ if ne(deployment.prune, false) }}:
+                - name: ${{ deployment.dockerRepo }}
+                  excludeTags: ${{ deployment.stableTags }}
+                  cutoffDays: 365

@@ -10,8 +10,15 @@ import {
   ImplItem,
 } from "./utils/implTypeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
-import { processGenericArgs } from "./utils/processGenerics";
+import { processGenericArgs, processGenerics } from "./utils/processGenerics";
 import { getAPIJson } from "../main";
+
+// Interface for the result of processing implementations
+export interface ImplProcessResult {
+  deriveTokens: ReviewToken[]; // Auto-derived trait implementations (#[derive(...)])
+  implBlock: ReviewLine[]; // Inherent implementations (impl Type { ... })
+  traitImpls: ReviewLine[]; // Manual trait implementations (impl Trait for Type { ... })
+}
 
 // Helper function to map impl IDs to their items and filter by type
 function getFilteredImpls<T extends ImplItem>(
@@ -86,6 +93,7 @@ function processOtherTraitImpls(impls: number[]): ReviewLine[] {
         ],
       }),
     );
+    const implGenerics = processGenerics(implItem.inner.impl.generics)
     // Create the main impl line with trait name and type
     const reviewLineForImpl: ReviewLine = {
       LineId: implId + "_impl",
@@ -93,10 +101,13 @@ function processOtherTraitImpls(impls: number[]): ReviewLine[] {
         {
           Kind: TokenKind.Keyword,
           Value: (implItem.inner.impl.is_unsafe ? "unsafe " : "") + "impl",
+          HasSuffixSpace: false,
         },
+        ...implGenerics.params,
         {
           Kind: TokenKind.TypeName,
           Value: (implItem.inner.impl.is_negative ? "!" : "") + implItem.inner.impl.trait.name,
+          HasPrefixSpace: true,
           HasSuffixSpace: false,
           NavigateToId: implId + "_impl",
           // Create navigation display name by combining trait and type names
@@ -108,6 +119,7 @@ function processOtherTraitImpls(impls: number[]): ReviewLine[] {
         { Kind: TokenKind.Punctuation, Value: "for", HasPrefixSpace: true },
         // Add the type the trait is implemented for
         ...parentName,
+        ...implGenerics.wherePredicates,
         { Kind: TokenKind.Punctuation, Value: "{", HasPrefixSpace: true },
       ],
       // Add both implemented methods and provided methods as children
@@ -128,6 +140,7 @@ function processOtherTraitImpls(impls: number[]): ReviewLine[] {
     return [reviewLineForImpl, closingLine];
   });
 }
+
 // Process inherent implementations
 function processImpls(impls: number[]): ReviewLine[] {
   const apiJson = getAPIJson();
@@ -144,13 +157,6 @@ function processImpls(impls: number[]): ReviewLine[] {
           .flat(),
       )
   );
-}
-
-// Interface for the result of processing implementations
-export interface ImplProcessResult {
-  deriveTokens: ReviewToken[]; // Auto-derived trait implementations (#[derive(...)])
-  implBlock: ReviewLine[]; // Inherent implementations (impl Type { ... })
-  traitImpls: ReviewLine[]; // Manual trait implementations (impl Trait for Type { ... })
 }
 
 // Main function to process implementations for a given item
@@ -175,27 +181,27 @@ export function processImpl(
     children.length === 0
       ? [] // Empty implBlock if no children
       : [
-          // Create the main implementation line with type name
-          {
-            LineId: item.id.toString() + "_impl",
-            Tokens: [
-              { Kind: TokenKind.Keyword, Value: "impl" },
-              {
-                Kind: TokenKind.TypeName,
-                Value: item.name || "null",
-                RenderClasses: ["tname"],
-                NavigateToId: item.id.toString() + "_impl",
-                NavigationDisplayName: item.name || undefined,
-              },
-              { Kind: TokenKind.Punctuation, Value: "{" },
-            ],
-            Children: children,
-          },
-          {
-            RelatedToLine: item.id.toString() + "_impl",
-            Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
-          },
-        ];
+        // Create the main implementation line with type name
+        {
+          LineId: item.id.toString() + "_impl",
+          Tokens: [
+            { Kind: TokenKind.Keyword, Value: "impl" },
+            {
+              Kind: TokenKind.TypeName,
+              Value: item.name || "null",
+              RenderClasses: ["tname"],
+              NavigateToId: item.id.toString() + "_impl",
+              NavigationDisplayName: item.name || undefined,
+            },
+            { Kind: TokenKind.Punctuation, Value: "{" },
+          ],
+          Children: children,
+        },
+        {
+          RelatedToLine: item.id.toString() + "_impl",
+          Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
+        },
+      ];
 
   // Process manual trait implementations (like impl Trait for Type { ... })
   const traitImpls = processOtherTraitImpls(impls);

@@ -173,7 +173,7 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await loadTspConfig(typeSpecDirectory);
+    const tspConfig = await resolveOptions(typeSpecDirectory);
     let serviceDir = tspConfig.parameters?.['service-dir']?.default;
    
     const emitterOptions = tspConfig.options?.[emitterName];
@@ -274,5 +274,29 @@ export async function existsAsync(path: string): Promise<boolean> {
     } catch (error) {
         logger.warn(`Fail to find ${path} for error: ${error}`);
         return false;
+    }
+}
+
+export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+    const compiler = await tryImportCompiler();
+    if (compiler === undefined) return undefined;
+      const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
+        compiler.NodeHost,
+        {
+          cwd:process.cwd(),
+          entrypoint: typeSpecDirectory, // not really used here
+          configPath: typeSpecDirectory,
+        },
+      );
+      return options
+}
+
+
+async function tryImportCompiler(): Promise<typeof import("@typespec/compiler") | undefined> {
+    try {
+      const module = await import("@typespec/compiler");
+      return module;
+    } catch {
+      return undefined;
     }
 }

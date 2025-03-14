@@ -7,7 +7,7 @@ import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 
 /**
  * Processes the function header and adds modifiers and ABI information to the tokens
- * 
+ *
  * @param {FunctionHeader} header - The function header containing const, unsafe, async and ABI information
  * @param {ReviewLine} reviewLine - The review line to add tokens to
  */
@@ -143,6 +143,7 @@ export function processFunction(item: Item) {
     Kind: TokenKind.Punctuation,
     Value: ")",
     HasPrefixSpace: false,
+    HasSuffixSpace: false,
   });
 
   // Add return type if present
@@ -150,6 +151,7 @@ export function processFunction(item: Item) {
     reviewLine.Tokens.push({
       Kind: TokenKind.Punctuation,
       Value: "->",
+      HasPrefixSpace: true,
     });
     reviewLine.Tokens.push(...typeToReviewTokens(item.inner.function.sig.output));
   }

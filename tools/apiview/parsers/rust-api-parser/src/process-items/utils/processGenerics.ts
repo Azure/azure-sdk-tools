@@ -139,6 +139,8 @@ export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] 
 
 export function processGenericArgs(args: GenericArgs): ReviewToken[] {
   let result: ReviewToken[] = [];
+  // Check if args is empty
+  if (!args) return result;
   // Process generic arguments based on their type
   if ("angle_bracketed" in args) {
     // Filter valid args that have a type property

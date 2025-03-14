@@ -3,7 +3,7 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLine } from "./utils/generateDocReviewLine";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { isAssocTypeItem } from "./utils/typeGuards";
-import { createGenericBoundTokens } from "./utils/processGenerics";
+import { createGenericBoundTokens, processGenerics } from "./utils/processGenerics";
 
 /**
  * Processes an associated type item and returns ReviewLine objects.
@@ -39,6 +39,8 @@ export function processAssocType(item: Item): ReviewLine[] | null {
     HasSuffixSpace: false,
   });
 
+  const generics = processGenerics(item.inner.assoc_type.generics)
+  reviewLine.Tokens.push(...generics.params);
   // Add bounds if available
   const assocType = item.inner.assoc_type;
   if (assocType && assocType.bounds && assocType.bounds.length > 0) {
@@ -58,6 +60,7 @@ export function processAssocType(item: Item): ReviewLine[] | null {
     reviewLine.Tokens.push(...typeToReviewTokens(assocType.type));
   }
 
+  reviewLine.Tokens.push(...generics.wherePredicates);
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
     Value: ";",

@@ -174,8 +174,7 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
     const tspConfig = await resolveOptions(typeSpecDirectory);
-    let serviceDir = tspConfig.configFile.parameters.parameters?.['service-dir']?.default;
-   
+    let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
     const emitterOptions = tspConfig.options?.[emitterName];
     const serviceDirFromEmitter = emitterOptions?.['service-dir'];
     if(serviceDirFromEmitter) {

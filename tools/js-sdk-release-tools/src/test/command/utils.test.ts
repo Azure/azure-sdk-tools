@@ -30,10 +30,9 @@ describe("resolveOptions", () => {
                 "service-dir": "sdk/informatica",
             },
         });
-        deepStrictEqual(options.configFile.parameters, {
-            "service-dir": {
-                default: "sdk/informaticadatamanagement",
-            },
-        });
+        strictEqual(
+            options.configFile.parameters?.["service-dir"]?.default,
+            "sdk/informaticadatamanagement",
+        );
     });
 });

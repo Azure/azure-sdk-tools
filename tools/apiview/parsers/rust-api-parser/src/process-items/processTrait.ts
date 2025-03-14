@@ -58,8 +58,11 @@ export function processTrait(item: Item) {
   }
 
   if (item.inner.trait.bounds) {
-    reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":", HasPrefixSpace: false });
-    reviewLine.Tokens.push(...createGenericBoundTokens(item.inner.trait.bounds));
+    const boundTokens = createGenericBoundTokens(item.inner.trait.bounds)
+    if (boundTokens.length > 0) {
+      reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":", HasPrefixSpace: false });
+      reviewLine.Tokens.push(...boundTokens);
+    }
   }
 
   // Add generics where clauses if present

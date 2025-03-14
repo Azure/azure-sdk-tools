@@ -143,6 +143,7 @@ export function processFunction(item: Item) {
     Kind: TokenKind.Punctuation,
     Value: ")",
     HasPrefixSpace: false,
+    HasSuffixSpace: false,
   });
 
   // Add return type if present
@@ -150,6 +151,7 @@ export function processFunction(item: Item) {
     reviewLine.Tokens.push({
       Kind: TokenKind.Punctuation,
       Value: "->",
+      HasPrefixSpace: true,
     });
     reviewLine.Tokens.push(...typeToReviewTokens(item.inner.function.sig.output));
   }

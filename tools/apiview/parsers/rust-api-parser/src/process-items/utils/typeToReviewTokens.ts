@@ -156,6 +156,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
         Value: type.qualified_path.trait ? type.qualified_path.trait.name + "::" : "",
         HasSuffixSpace: false,
       },
+      ...processGenericArgs(type.qualified_path.trait.args),
       { Kind: TokenKind.TypeName, Value: type.qualified_path.name, HasSuffixSpace: false },
       ...processGenericArgs(type.qualified_path.args),
     ];

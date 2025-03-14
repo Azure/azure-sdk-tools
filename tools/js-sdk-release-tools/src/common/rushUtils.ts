@@ -2,7 +2,8 @@ import { CommentArray, CommentJSONValue, CommentObject, assign, parse, stringify
 import { ModularClientPackageOptions, PackageResult } from './types.js';
 import { access } from 'node:fs/promises';
 import { basename, join, normalize, posix, relative, resolve } from 'node:path';
-import { ensureDir, readFile, writeFile } from 'fs-extra';
+import pkg from 'fs-extra';
+const { ensureDir, readFile, writeFile } = pkg;
 import { getArtifactName, getNpmPackageInfo } from './npmUtils.js';
 import { runCommand, runCommandOptions } from './utils.js';
 

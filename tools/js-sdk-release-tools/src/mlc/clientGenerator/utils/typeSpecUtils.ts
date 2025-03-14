@@ -2,8 +2,8 @@ import { join } from 'path';
 import { ModularClientPackageOptions } from '../../../common/types.js';
 import { getGeneratedPackageDirectory, runCommand, runCommandOptions } from '../../../common/utils.js';
 import { logger } from '../../../utils/logger.js';
-import { load } from '@npmcli/package-json';
-
+import pkg from '@npmcli/package-json';
+const { load } = pkg;
 export async function updatePackageVersion(packageDirectory: string, version: string): Promise<void> {
     const packageJson = await load(packageDirectory);
     packageJson.content.version = version;

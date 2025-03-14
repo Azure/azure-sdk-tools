@@ -3,7 +3,7 @@ import {execSync} from "child_process";
 import {logger} from "./logger.js";
 
 const git: SimpleGit = simpleGit();
-const path = require('path');
+import * as path from 'path';
 
 export async function getChangedPackageDirectory(throwErrorWhenFindingUnexpectedFile: boolean = true) {
     const changedPackageDirectories: Set<string> = new Set<string>();

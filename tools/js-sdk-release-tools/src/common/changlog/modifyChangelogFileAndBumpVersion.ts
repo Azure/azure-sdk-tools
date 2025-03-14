@@ -1,7 +1,7 @@
 import {Changelog} from "../../changelog/changelogGenerator.js";
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import * as path from 'path';
 
 const todayDate = new Date();
 const dd = String(todayDate.getDate()).padStart(2, '0');

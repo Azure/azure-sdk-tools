@@ -7,7 +7,7 @@ import { logger } from '../../utils/logger.js';
 import { glob } from 'glob';
 import { exists } from 'fs-extra';
 
-var unixify = require('unixify');
+import unixify from 'unixify';
 
 function tryFindVersionInFunctionBody(func: FunctionDeclaration): string | undefined {
     const apiVersionStatements = func.getStatements().filter((s) => s.getText().includes('options.apiVersion'));

@@ -3,7 +3,7 @@ import * as path from "path";
 import {logger} from "../../utils/logger.js";
 import {getLatestStableVersion} from "../../utils/version.js";
 import { tryGetNpmView } from "../../common/npmUtils.js";
-const readline = require('readline');
+import readline from 'readline';
 
 export function validPackageName(packageName) {
     const match = /@azure-rest\/[a-zA-Z-]+/.exec(packageName);

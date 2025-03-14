@@ -28,7 +28,19 @@ export function processTrait(item: Item) {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Keyword,
-    Value: "pub trait",
+    Value: "pub",
+  });
+
+  if (item.inner.trait.is_unsafe) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "unsafe",
+    });
+  }
+
+  reviewLine.Tokens.push({
+    Kind: TokenKind.Keyword,
+    Value: "trait",
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,

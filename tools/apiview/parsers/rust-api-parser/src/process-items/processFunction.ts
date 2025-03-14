@@ -7,7 +7,7 @@ import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 
 /**
  * Processes the function header and adds modifiers and ABI information to the tokens
- * 
+ *
  * @param {FunctionHeader} header - The function header containing const, unsafe, async and ABI information
  * @param {ReviewLine} reviewLine - The review line to add tokens to
  */

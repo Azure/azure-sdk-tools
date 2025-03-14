@@ -712,13 +712,20 @@ export class CodePanelComponent implements OnChanges{
     this.codeLineSearchMatchInfo = new DoublyLinkedList<CodeLineSearchMatch>();
     
     this.codePanelRowData.forEach((row, idx) => {
-      if (row.rowOfTokens && row.rowOfTokens.length > 0) {
-        let codeLineAsString = convertRowOfTokensToString(row.rowOfTokens);
+      let codeLineAsString = '';
+      if (row.type == CodePanelRowDatatype.CodeLine || row.type == CodePanelRowDatatype.Documentation) {
+        codeLineAsString = convertRowOfTokensToString(row.rowOfTokens);
+      } else if (row.type == CodePanelRowDatatype.Diagnostics) {
+        codeLineAsString = row.diagnostics.text;
+      }
+
+      if (codeLineAsString) {
         const regex = new RegExp(searchText, "gi");
         const matches = [...codeLineAsString.matchAll(regex)];
         if (matches.length > 0) {
           hasMatch = true;
-          this.searchMatchedRowInfo.set(row.nodeIdHashed!, matches);
+          const matchKey = `${row.nodeIdHashed}-${row.type}-${row.rowPositionInGroup}`;
+          this.searchMatchedRowInfo.set(matchKey, matches);
           matches.forEach((match, index) => {
             const searchMatch = new CodeLineSearchMatch(idx, row.nodeIdHashed!, index);
             this.codeLineSearchMatchInfo!.append(searchMatch);
@@ -753,35 +760,47 @@ export class CodePanelComponent implements OnChanges{
     
     codeLines.forEach((codeLine) => {
       const nodeIdhashed = codeLine.getAttribute('data-node-id');
-      if (nodeIdhashed && this.searchMatchedRowInfo.has(nodeIdhashed)) {
+      const rowType = codeLine.getAttribute('data-row-type');
+      const rowPositionInGroup = codeLine.getAttribute('data-row-position-in-group');
+      const matchKey = `${nodeIdhashed}-${rowType}-${rowPositionInGroup}`;
+      if (this.searchMatchedRowInfo.has(matchKey)) {
         const tokens = codeLine.querySelectorAll('.code-line-content > span');
-        const matches = this.searchMatchedRowInfo.get(nodeIdhashed)!;
-  
-        matches.forEach((match, index) => {
-          const matchStartIndex = match.index!;
-          const matchEndIndex = matchStartIndex + match[0].length;
-  
-          let currentOffset = 0;
-          tokens.forEach((token) => {
-            const tokenText = token.textContent || '';
-            const tokenLength = tokenText.length;
+        const matches = this.searchMatchedRowInfo.get(matchKey)!;
 
+        let currentOffset = 0;
+        let matchIndex = 0;
+
+        tokens.forEach((token) => {
+          const tokenText = token.textContent || '';
+          const tokenLength = tokenText.length;
+        
+          let newInnerHTML = '';
+          let lastIndex = 0;
+
+          for (let i = matchIndex; i < matches.length; i++) {          
+            let match = matches[i];
+            const matchStartIndex = match.index!;
+            const matchEndIndex = matchStartIndex + match[0].length;
+  
             const tokenStart = currentOffset;
             const tokenEnd = currentOffset + tokenLength;
   
             if (matchStartIndex < tokenEnd && matchEndIndex > tokenStart) {
               const highlightStart = Math.max(0, matchStartIndex - tokenStart);
               const highlightEnd = Math.min(tokenLength, matchEndIndex - tokenStart);
-
-              const beforeMatch = tokenText.slice(0, highlightStart);
+        
+              const beforeMatch = tokenText.slice(lastIndex, highlightStart);
               const matchText = tokenText.slice(highlightStart, highlightEnd);
-              const afterMatch = tokenText.slice(highlightEnd);
-
-              token.innerHTML = `${beforeMatch}<mark class="codeline-search-match-highlight search-match-${index}">${matchText}</mark>${afterMatch}`;
+              lastIndex = highlightEnd;
+        
+              newInnerHTML += `${beforeMatch}<mark class="codeline-search-match-highlight search-match-${i}">${matchText}</mark>`;
+              matchIndex++;
             }
-  
-            currentOffset += tokenLength;
-          });
+          }
+
+          newInnerHTML += tokenText.slice(lastIndex);
+          token.innerHTML = newInnerHTML;
+          currentOffset += tokenLength;
         });
       }
     });

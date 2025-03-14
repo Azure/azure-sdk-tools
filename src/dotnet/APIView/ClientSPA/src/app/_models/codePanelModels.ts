@@ -16,7 +16,7 @@ export class CodePanelRowData {
   rowOfTokens: StructuredToken[];
   nodeId: string;
   nodeIdHashed: string;
-  rowPositionInGroup: number;
+  rowPositionInGroup: number; // a group of consecutive rows can have the same nodeIdHashed. With this you can index specific rows within the group
   associatedRowPositionInGroup: number;
   rowOfTokensPosition: string;
   rowClasses: Set<string>;

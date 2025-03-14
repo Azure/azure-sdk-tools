@@ -30,6 +30,9 @@ describe("resolveOptions", () => {
                 },
                 "service-dir": "sdk/informatica",
             },
+            "usingParam":{
+                "output-file": "sdk/informaticadatamanagement"
+            }
         });
         strictEqual(
             options.configFile.parameters?.["service-dir"]?.default,

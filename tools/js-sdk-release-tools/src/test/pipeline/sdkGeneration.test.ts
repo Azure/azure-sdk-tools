@@ -1,10 +1,10 @@
 import path from 'path';
 import { describe, expect, test } from 'vitest';
-import { getRandomInt } from '../utils/utils';
+import { getRandomInt } from '../utils/utils.js';
 import { ensureDir, remove, writeFile } from 'fs-extra';
 import { stringify } from 'yaml';
-import { SDKType } from '../../common/types';
-import { parseInputJson } from '../../utils/generateInputUtils';
+import { SDKType } from '../../common/types.js';
+import { parseInputJson } from '../../utils/generateInputUtils.js';
 
 describe('Auto SDK generation path test', () => {
     test('high level client generation', async () => {

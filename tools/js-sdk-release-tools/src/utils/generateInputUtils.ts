@@ -1,7 +1,7 @@
 import path from "path";
-import { SDKType } from "../common/types";
-import { loadTspConfig, isMgmtPackage } from "../common/utils";
-import { RunningEnvironment } from "./runningEnvironment";
+import { SDKType } from "../common/types.js";
+import { loadTspConfig, isMgmtPackage } from "../common/utils.js";
+import { RunningEnvironment } from "./runningEnvironment.js";
 import { exists } from "fs-extra";
 
 async function isManagementPlaneModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {

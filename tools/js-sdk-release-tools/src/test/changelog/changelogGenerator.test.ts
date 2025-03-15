@@ -1,9 +1,9 @@
 import { expect, test } from "vitest";
-import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
+import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData.js";
 import path from "path";
-import { SDKType } from "../../common/types";
+import { SDKType } from "../../common/types.js";
 import { describe } from "node:test";
-import { tryReadNpmPackageChangelog } from "../../common/utils";
+import { tryReadNpmPackageChangelog } from "../../common/utils.js";
 import { removeSync, outputFileSync } from "fs-extra";
 
 describe("Breaking change detection", () => {

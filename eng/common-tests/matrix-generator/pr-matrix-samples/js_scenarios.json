@@ -1,0 +1,35 @@
+[
+    {
+        "name": "should-trigger-core",
+        "diff":   {
+            "ChangedFiles": [
+              "common/config/rush/common-versions.json",
+              "common/config/rush/pnpm-lock.yaml",
+              "sdk/storage/storage-blob/README.md",
+              "sdk/storage/storage-blob/src/Clients.ts",
+              "sdk/storage/storage-file-datalake/README.md",
+              "sdk/storage/storage-file-datalake/samples-dev/dataLakeServiceClient.ts",
+              "sdk/storage/storage-file-datalake/samples/v12/javascript/dataLakeServiceClient.js",
+              "sdk/storage/storage-file-datalake/samples/v12/typescript/src/dataLakeServiceClient.ts",
+              "sdk/storage/storage-file-datalake/src/clients.ts",
+              "sdk/storage/storage-file-share/README.md",
+              "sdk/storage/storage-file-share/samples-dev/shareServiceClient.ts",
+              "sdk/storage/storage-file-share/samples/v12/javascript/shareServiceClient.js",
+              "sdk/storage/storage-file-share/samples/v12/typescript/src/shareServiceClient.ts",
+              "sdk/storage/storage-file-share/src/Clients.ts",
+              "sdk/storage/storage-file-share/test/utils/index.ts",
+              "sdk/translation/ai-translation-document-rest/test/public/node/containerHelper.ts"
+            ],
+            "ChangedServices": [
+              "storage",
+              "translation"
+            ],
+            "ExcludePaths": [],
+            "DeletedFiles": [],
+            "PRNumber": "33362"
+        },
+        "expected_package_output": [
+
+        ]
+    }
+]

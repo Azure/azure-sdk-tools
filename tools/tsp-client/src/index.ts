@@ -219,11 +219,15 @@ const parser = yargs(hideBin(process.argv))
         .option("package-json", {
           type: "string",
           description: "Path to the emitter's package.json file",
-          demandOption: true,
         })
         .option("overrides", {
           type: "string",
           description: "Path to an override config file for pinning specific dependencies",
+        })
+        .option("save-url", {
+          type: "boolean",
+          description: "Save URL to tspclient.yaml",
+          default: false,
         });
     },
     async (argv: any) => {

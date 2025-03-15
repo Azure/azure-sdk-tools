@@ -34,6 +34,7 @@ namespace APIViewWeb.Helpers
         public string Title { get; set; }
         public string Author { get; set; }
         public string ReviewId { get; set; }
+        public IEnumerable<string> APIRevisionIds { get; set; } // Include revision with these ids
         public bool WithTreeStyleTokens { get; set; }
         public IEnumerable<string> Details { get; set; }
     }
@@ -116,7 +117,11 @@ namespace APIViewWeb.Helpers
 
             response.ContentType = !string.IsNullOrEmpty(ContentType) ? ContentType : "application/json";
             response.StatusCode = _statusCode;
-            response.Headers["Location"] = _locationUrl;
+
+            if (!string.IsNullOrEmpty(_locationUrl))
+            {
+                response.Headers["Location"] = _locationUrl;
+            }
 
             var serializedValue = JsonSerializer.Serialize(Value, _serializerOptions);
             await response.WriteAsync(serializedValue);

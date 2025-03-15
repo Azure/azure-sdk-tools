@@ -148,6 +148,22 @@ namespace APIViewWeb.LeanControllers
             [FromQuery] string diffApiRevisionId = null)
         {
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
+            APIRevisionListItemModel diffAPIRevision = null;
+
+            if (activeAPIRevision.IsDeleted)
+            {
+                return new LeanJsonResult(null, StatusCodes.Status204NoContent);
+            }
+
+            if (!string.IsNullOrEmpty(diffApiRevisionId))
+            {
+                diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
+
+                if (diffAPIRevision.IsDeleted) 
+                {
+                    return new LeanJsonResult(null, StatusCodes.Status204NoContent);
+                }
+            }
 
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
@@ -160,9 +176,8 @@ namespace APIViewWeb.LeanControllers
                     Comments = comments
                 };
 
-                if (!string.IsNullOrEmpty(diffApiRevisionId))
+                if (diffAPIRevision != null)
                 {
-                    var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
                     codePanelRawData.diffRevisionCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
                 }
 

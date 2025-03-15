@@ -27,6 +27,7 @@
                     [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
                     [userProfile]="userProfile"
                     [loadFailed]="loadFailed"
+                    [loadFailedMessage]="loadFailedMessage"
                     [showLineNumbers]="showLineNumbers" 
                     [scrollToNodeIdHashed]="scrollToNodeIdHashed"
                     [scrollToNodeId]="scrollToNodeId"
@@ -39,6 +40,7 @@
         <ng-template pTemplate>
             <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel px-3">
                 <app-review-page-options
+                    [loadingStatus]="getLoadingStatus()"
                     [isDiffView]="!!diffApiRevisionId"
                     [contentHasDiff]="codePanelData?.hasDiff"
                     [diffStyleInput]="diffStyle!"
@@ -72,14 +74,14 @@
         </ng-template>
     </p-splitter>
 </app-review-page-layout>
-<p-sidebar [(visible)]="revisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="revisions-sidebar">
+<p-sidebar *ngIf="getLoadingStatus() === 'completed'" [(visible)]="revisionSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="revisions-sidebar">
     <app-revisions-list *ngIf="review"
         [review]="review"
         [userProfile]="userProfile"
         [revisionSidePanel]="revisionSidePanel!">
     </app-revisions-list>
 </p-sidebar>
-<p-sidebar [(visible)]="conversationSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="conversation-sidebar">
+<p-sidebar *ngIf="getLoadingStatus() === 'completed'" [(visible)]="conversationSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="conversation-sidebar">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2">
             <a [routerLink]="['/conversation', this.reviewId]" class="h4">Conversations</a>
@@ -89,6 +91,7 @@
         [apiRevisions]="apiRevisions"
         [comments]="comments"
         [review]="review"
+        [userProfile]="userProfile"
         [activeApiRevisionId]="activeApiRevisionId"
         (scrollToNodeEmitter)="handleScrollToNodeEmitter($event)"
         (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)">

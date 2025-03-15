@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Managers;
 using System.Collections.Generic;
-using APIViewWeb.Models;
-using System.Linq;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 

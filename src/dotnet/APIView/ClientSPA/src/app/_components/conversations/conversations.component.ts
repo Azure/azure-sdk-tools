@@ -164,6 +164,8 @@ export class ConversationsComponent implements OnChanges {
   }
   
   handleSaveCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
+    console.log("commentUpdates", commentUpdates);
+    console.log("review", this.review);
     commentUpdates.reviewId = this.review?.id!;
     if (commentUpdates.commentId) {
       this.commentsService.updateComment(this.review?.id!, commentUpdates.commentId, commentUpdates.commentText!).pipe(take(1)).subscribe({

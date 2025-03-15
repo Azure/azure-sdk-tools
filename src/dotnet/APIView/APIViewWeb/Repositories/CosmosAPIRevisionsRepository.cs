@@ -164,6 +164,28 @@ namespace APIViewWeb
                 FeedResponse<APIRevisionListItemModel> response = await feedIterator.ReadNextAsync();
                 revisions.AddRange(response);
             }
+
+            // Ensure to include result for any explicitly specified apiRevision Ids 
+            if (filterAndSortParams.APIRevisionIds != null && filterAndSortParams.APIRevisionIds.Any())
+            {
+                var revisionIdsNotYetIncluded = filterAndSortParams.APIRevisionIds.Except(revisions.Select(r => r.Id));
+                if (revisionIdsNotYetIncluded.Any())
+                {
+                    var revisionsNotYetIncludedAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(revisionIdsNotYetIncluded);
+                    var revisionIdsNotYetIncludedQuery = $"SELECT * FROM Revisions c WHERE c.id IN {revisionsNotYetIncludedAsQueryStr}";
+                    QueryDefinition revisionIdsNotYetIncludedQueryDefinition = new QueryDefinition(revisionIdsNotYetIncludedQuery);
+                    using FeedIterator<APIRevisionListItemModel> revisionsNotYetIncludedFeedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(revisionIdsNotYetIncludedQueryDefinition);
+                    var revisionsNotYetIncluded = new List<APIRevisionListItemModel>();
+                    while (revisionsNotYetIncludedFeedIterator.HasMoreResults)
+                    {
+                        FeedResponse<APIRevisionListItemModel> response = await revisionsNotYetIncludedFeedIterator.ReadNextAsync();
+                        revisionsNotYetIncluded.AddRange(response);
+                    }
+                    revisions.AddRange(revisionsNotYetIncluded);
+                    totalCount += revisionsNotYetIncluded.Count();
+                }
+            }
+
             var noOfItemsRead = pageParams.NoOfItemsRead + revisions.Count();
             return new PagedList<APIRevisionListItemModel>((IEnumerable<APIRevisionListItemModel>)revisions, noOfItemsRead, totalCount, pageParams.PageSize);
         }

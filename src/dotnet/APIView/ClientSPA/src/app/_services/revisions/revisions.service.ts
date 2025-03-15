@@ -24,7 +24,7 @@ export class APIRevisionsService {
   getAPIRevisions(noOfItemsRead: number, pageSize: number,
     reviewId : string, label: string | undefined = undefined, author: string | undefined = undefined, 
     details: string [] = [], sortField: string = "lastUpdatedOn", sortOrder: number = 1, isDeleted: boolean = false,
-    isAssignedToMe: boolean = false, withTreeStyleTokens: boolean = false
+    isAssignedToMe: boolean = false, withTreeStyleTokens: boolean = false, apiRevisionIds: string[] = []
     ): Observable<PaginatedResult<APIRevision[]>> {
     let params = new HttpParams();
     params = params.append('noOfItemsRead', noOfItemsRead);
@@ -38,6 +38,7 @@ export class APIRevisionsService {
       author: author,
       reviewId: reviewId,
       details: details,
+      apiRevisionIds: apiRevisionIds,
       sortField: sortField,
       sortOrder: sortOrder
     };
@@ -45,6 +46,8 @@ export class APIRevisionsService {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     })
+
+    console.log(params);
        
     return this.http.post<APIRevision[]>(this.baseUrl, data,
       { 

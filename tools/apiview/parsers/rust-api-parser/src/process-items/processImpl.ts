@@ -112,6 +112,7 @@ function processOtherTraitImpls(impls: number[]): ReviewLine[] {
           // Create navigation display name by combining trait and type names
           NavigationDisplayName:
             implItem.inner.impl.trait.name + "_" + parentName.map((token) => token.Value).join(""),
+          RenderClasses: ["interface"],
         },
         // Add any generic arguments the trait might have
         ...processGenericArgs(implItem.inner.impl.trait.args),
@@ -188,7 +189,7 @@ export function processImpl(
               {
                 Kind: TokenKind.MemberName,
                 Value: item.name || "null",
-                RenderClasses: ["tname"],
+                RenderClasses: ["interface"],
                 NavigateToId: item.id.toString() + "_impl",
                 NavigationDisplayName: item.name || undefined,
               },

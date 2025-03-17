@@ -348,6 +348,7 @@ extends:
                 inputs:
                 - input: pipelineArtifact
                   artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               displayName: Publish to Staging
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general

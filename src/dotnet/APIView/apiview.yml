@@ -333,14 +333,15 @@ extends:
                 os: linux
               steps:
               - checkout: self
-              - pwsh: |
-                  Get-ChildItem -Path $(Pipeline.Workspace) -Recurse
-                  Get-ChildItem -Path $(Pipeline.Workspace) -Recurse | Where-Object { $_.Name -eq 'APIView' }
               - task: DownloadPipelineArtifact@2
                 displayName: 'Download APIView artifact'
                 inputs:
                   source: 'current'
                   artifact: 'APIView'
+              - pwsh: |
+                  Get-ChildItem -Path $(Pipeline.Workspace) -Recurse
+                  Get-ChildItem -Path $(Pipeline.Workspace) -Recurse | Where-Object { $_.Name -eq 'APIView' }
+              
             - job: Publish_to_Staging
               templateContext:
                 type: releaseJob

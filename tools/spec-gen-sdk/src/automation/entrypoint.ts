@@ -17,7 +17,7 @@ import {
   sdkAutoLogLevels
 } from './logging';
 import path from 'path';
-import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog } from './reportStatus';
+import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog, saveVsoLog } from './reportStatus';
 import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 import { extractPathFromSpecConfig } from '../utils/utils';
@@ -48,6 +48,7 @@ export type SdkAutoContext = {
   fullLogFileName: string;
   filteredLogFileName: string;
   htmlLogFileName: string;
+  vsoLogFileName: string;
   specRepoConfig: SpecConfig;
   sdkRepoConfig: SdkRepoConfig;
   swaggerToSdkConfig: SwaggerToSdkConfig
@@ -83,6 +84,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   }
   const fullLogFileName = path.join(logFolder, `${fileNamePrefix}-full.log`);
   const filteredLogFileName = path.join(logFolder, `${fileNamePrefix}-filtered.log`);
+  const vsoLogFileName = path.join(logFolder, `${fileNamePrefix}-vso.log`);
   const htmlLogFileName = path.join(logFolder, `${fileNamePrefix}-${options.sdkName.substring("azure-sdk-for-".length)}-gen-result.html`);
   if (existsSync(fullLogFileName)) {
     rmSync(fullLogFileName);
@@ -92,6 +94,9 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   }
   if (existsSync(htmlLogFileName)) {
     rmSync(htmlLogFileName);
+  }
+  if (existsSync(vsoLogFileName)) {
+    rmSync(vsoLogFileName);
   }
   logger.add(loggerFileTransport(fullLogFileName));
   logger.info(`Log to ${fullLogFileName}`);
@@ -109,6 +114,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     logger,
     fullLogFileName,
     filteredLogFileName,
+    vsoLogFileName,
     htmlLogFileName,
     specRepoConfig,
     sdkRepoConfig,
@@ -144,6 +150,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     saveFilteredLog(workflowContext);
     generateHtmlFromFilteredLog(workflowContext);
     generateReport(workflowContext);
+    saveVsoLog(workflowContext);
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;

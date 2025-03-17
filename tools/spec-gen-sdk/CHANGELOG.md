@@ -3,7 +3,7 @@
 ## 2025-03-14 - 0.3.0
 
 - Removed breaking change label artifact related code
-- Refactored loggings for pipeline scenarios
+- Refactored loggings for pipeline scenarios and created separted log file
 
 ## 2025-03-11 - 0.2.2
 

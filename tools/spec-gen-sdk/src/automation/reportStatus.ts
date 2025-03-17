@@ -3,12 +3,11 @@ import { existsSync, readFileSync, rmSync, writeFileSync} from 'fs';
 import * as path from 'path';
 import * as prettier from 'prettier';
 import * as Handlebars from 'handlebars';
-
 import { getSDKAutomationStateString, SDKAutomationState } from './sdkAutomationState';
 import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
 import { formatSuppressionLine } from '../utils/reportFormat';
-import { extractPathFromSpecConfig, removeAnsiEscapeCodes } from '../utils/utils';
+import { extractPathFromSpecConfig, mapToObject, removeAnsiEscapeCodes } from '../utils/utils';
 import { vsoAddAttachment } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { deleteTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
@@ -91,7 +90,8 @@ export const generateReport = (context: WorkflowContext) => {
     fullLogPath: context.fullLogFileName,
     filteredLogPath: context.filteredLogFileName,
     sdkArtifactFolder: context.sdkArtifactFolder,
-    sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder
+    sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder,
+    ...(context.config.runEnv === 'azureDevOps' ? {vsoLogPath: context.vsoLogFileName} : {})
   };
 
   let message = "";
@@ -124,6 +124,19 @@ export const generateReport = (context: WorkflowContext) => {
   context.logger.log('endsection', 'Generate report');
 }
 
+export const saveVsoLog = (context: WorkflowContext) => {
+  const vsoLogFileName = context.vsoLogFileName;
+  context.logger.log('section', `Save log to ${vsoLogFileName}`);
+  try {
+    const content = JSON.stringify(mapToObject(context.vsoLogs), null, 2);
+    writeFileSync(context.vsoLogFileName, content);
+  } catch (error) {
+    context.logger.error(`IOError: Fails to write log to ${vsoLogFileName}. Details: ${error}`);
+    return
+  }
+  context.logger.log('endsection', `Save log to ${vsoLogFileName}`);
+}
+
 export const saveFilteredLog = (context: WorkflowContext) => {
   context.logger.log('section', 'Save filtered log');
   let hasBreakingChange = false;
@@ -153,28 +166,34 @@ export const saveFilteredLog = (context: WorkflowContext) => {
   }
 
   const extra = { hasBreakingChange, showLiteInstallInstruction };
-  let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
-  const statusMap = {
-    pending: 'Error',
-    inProgress: 'Error',
-    failed: 'Error',
-    warning: 'Warning',
-    succeeded: 'Info',
-    notEnabled: 'Warning'
-  } as const;
-  const type = statusMap[context.status];
-  const filteredResultData = {
-    type: 'Markdown',
-    mode: 'replace',
-    level: type,
-    message: commentBody,
-    time: new Date(),
-    vsoLogs: context.vsoLogs
-  } as MessageRecord;
 
-  context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
-  const content = JSON.stringify(filteredResultData);
-  writeFileSync(context.filteredLogFileName, content);
+  try {
+    let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
+    const statusMap = {
+      pending: 'Error',
+      inProgress: 'Error',
+      failed: 'Error',
+      warning: 'Warning',
+      succeeded: 'Info',
+      notEnabled: 'Warning'
+    } as const;
+    const type = statusMap[context.status];
+    const filteredResultData = {
+      type: 'Markdown',
+      mode: 'replace',
+      level: type,
+      message: commentBody,
+      time: new Date(),
+    } as MessageRecord;
+
+    context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
+    const content = JSON.stringify(filteredResultData);
+    writeFileSync(context.filteredLogFileName, content);
+  } catch (error) {
+    context.logger.error(`IOError: Fails to write log to ${context.filteredLogFileName}. Details: ${error}`);
+    vsoLogError(context, `IOError: Fails to write log to ${context.filteredLogFileName}. Details: ${error}`);
+  }
+
   context.logger.log('endsection', 'Save filtered log status');
 };
 
@@ -184,40 +203,36 @@ export const generateHtmlFromFilteredLog = (context: WorkflowContext) => {
     const RegexNoteBlock = /> \[!NOTE\]\s*>\s*(.*)/;
     let messageRecord: string | undefined = undefined;
     try {
-        messageRecord = readFileSync(context.filteredLogFileName).toString();
+      messageRecord = readFileSync(context.filteredLogFileName).toString();
+      const parseMessageRecord = JSON.parse(messageRecord) as MessageRecord;
+      let pageBody = '';
+      const markdown = parseMessageRecord.message || '';
+      let noteBlockInfo = '';
+      let mainContent = '';
+      const match = markdown.match(RegexMarkdownSplit);
+      if (match !== null) {
+          mainContent = match[2].trim();
+          const noteBlock = match[1].trim();
+          const noteBlockMatch = noteBlock.match(RegexNoteBlock);
+          if (noteBlockMatch !== null) {
+              noteBlockInfo = noteBlockMatch[1].trim();
+          }
+      } else {
+          mainContent = marked(markdown) as string;
+      }
+      const noteBlockHtml = noteBlockInfo && generateNoteBlockTemplate(noteBlockInfo);
+      pageBody += (noteBlockHtml  + mainContent);
+
+      // eg: spec-gen-sdk-net result
+      const pageTitle = `spec-gen-sdk-${context.config.sdkName.substring("azure-sdk-for-".length)} result`;
+      const generatedHtml: string = generateHtmlTemplate(pageBody, pageTitle );
+      context.logger.info(`Writing html to ${context.htmlLogFileName}`);
+      writeFileSync(context.htmlLogFileName, generatedHtml , "utf-8");
     } catch (error) {
-        context.logger.error(`IOError: Fails to read log in'${context.filteredLogFileName}', Details: ${error}`)
-        vsoLogError(context, `IOError: Fails to read log in'${context.filteredLogFileName}', Details: ${error}`);
-        return;
+        context.logger.error(`Error: failed to generate html log'${context.htmlLogFileName}', Details: ${error}`)
+        vsoLogError(context, `Error: failed to generate html log'${context.htmlLogFileName}', Details: ${error}`);
     }
 
-    const parseMessageRecord = JSON.parse(messageRecord) as MessageRecord;
-
-    let pageBody = '';
-    const markdown = parseMessageRecord.message || '';
-    let noteBlockInfo = '';
-    let mainContent = '';
-    
-    const match = markdown.match(RegexMarkdownSplit);
-    if (match !== null) { 
-        mainContent = match[2].trim(); 
-        const noteBlock = match[1].trim();
-        const noteBlockMatch = noteBlock.match(RegexNoteBlock);
-        if (noteBlockMatch !== null) {
-            noteBlockInfo = noteBlockMatch[1].trim();
-        }
-    } else {
-        mainContent = marked(markdown) as string;
-    }
-    const noteBlockHtml = noteBlockInfo && generateNoteBlockTemplate(noteBlockInfo);
-    pageBody += (noteBlockHtml  + mainContent);
-
-    // eg: spec-gen-sdk-net result
-    const pageTitle = `spec-gen-sdk-${context.config.sdkName.substring("azure-sdk-for-".length)} result`;
-    const generatedHtml: string = generateHtmlTemplate(pageBody, pageTitle );
-    
-    context.logger.info(`Writing html to ${context.htmlLogFileName}`);
-    writeFileSync(context.htmlLogFileName, generatedHtml , "utf-8");
     context.logger.log('endsection', 'Generate HTML from filtered log');
 }
 
@@ -357,28 +372,6 @@ const handleBarHelpers = {
   },
   renderParseSuppressionLinesErrors: (parseSuppressionLinesErrors: string[]) => {
     return `<pre><strong>Parse Suppression File Errors</strong><BR>${parseSuppressionLinesErrors.map(trimNewLine).join('<BR>')}</pre>`;
-  },
-  renderSDKTitleMapping: (sdkRepoName: string) => {
-    switch (sdkRepoName) {
-      case 'azure-cli-extensions':
-        return 'Azure CLI Extension Generation';
-      case 'azure-sdk-for-trenton':
-        return 'Trenton Generation';
-      default:
-        return sdkRepoName;
-    }
-  },
-  renderSDKNameMapping: (sdkRepoName: string) => {
-    switch (sdkRepoName) {
-      case 'azure-cli-extensions':
-        return 'Azure CLI';
-      case 'azure-sdk-for-trenton':
-        return 'Trenton';
-      case 'azure-resource-manager-schemas':
-        return 'Schema';
-      default:
-        return 'SDK';
-    }
   },
   shouldRender: (messages: boolean | string[] | undefined,
     isBetaMgmtSdk: boolean | undefined,

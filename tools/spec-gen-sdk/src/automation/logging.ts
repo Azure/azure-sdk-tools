@@ -1,6 +1,7 @@
 import * as winston from 'winston';
 import { default as Transport } from 'winston-transport';
 import { SDKAutomationState } from './sdkAutomationState';
+import { setTimeout } from 'timers/promises';
 
 export const sdkAutoLogLevels = {
   levels: {
@@ -128,67 +129,16 @@ export const loggerFileTransport = (fileName: string) => {
   });
 };
 
-/**
- * Ensures all logs are written to file transports
- */
 export const loggerWaitToFinish = async (logger: winston.Logger) => {
   logger.info('Wait for logger transports to complete');
-
-  const fileTransports = logger.transports.filter(
-    (transport) => transport instanceof winston.transports.File
-  );
-
-
-  try {
-    await waitForWinston(fileTransports);
-  } catch (err) {
-      console.log(err);
-  }
-};
-
-const waitForWinston = (fileTransports) => {
-  return new Promise<void>((resolve) => {
-    (async () => {
-      try {
-        for (const transport of fileTransports) {
-          await closeWinstonTransportAndWaitForFinish(transport);
+  for (const transport of logger.transports) {
+    if (transport instanceof winston.transports.File) {
+      if (transport.end) {
+          await setTimeout(2000);
+          transport.end();
         }
-        resolve();
-      } catch (err) {
-        console.log(err); 
-        resolve();
-      }
-    })();
-  });
-};
-
-const closeWinstonTransportAndWaitForFinish = (transport) => {
-    if (!transport.close) {
-        // e.g. transport.name === 'console'
-        return Promise.resolve();
     }
-    // e.g. transport.name === 'file'
-
-    return new Promise<void>((resolve) => {
-        transport._doneFinish = false;
-        function done() {
-            if (transport._doneFinish) {
-                return; // avoid resolving twice, for example timeout after successful 'finish' event
-            }
-            transport._doneFinish = true;
-            resolve();
-        }
-        setTimeout(() => { // TODO: use a cancellable setInterval instead
-            done();
-        }, 5000); // just in case the 'finish' event never occurs
-
-        const finished = () => {
-            done();
-        };
-
-        transport.once('finish', finished);
-        transport.close();
-    });  
+  }
 };
 
 export function vsoAddAttachment(name: string, path: string): void {

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { getApiVersionType } from '../../mlc/apiVersion/apiVersionTypeExtractor';
 import { getApiVersionType as getApiVersionTypeInRLC } from '../../llc/apiVersion/apiVersionTypeExtractor';
 import { join } from 'path';
@@ -65,6 +65,20 @@ describe('Rest client file fallbacks', () => {
         test("src/xxxContext.ts doesn't exists, fallback to src/xxxClient.ts", async () => {
             const root = join(__dirname, 'testCases/rlc-client/');
             const version = await getApiVersionTypeInRLC(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("Model only spec", async () => {
+            const root = join(__dirname, 'testCases/rlc-model-only/');
+            vi.mock('../../common/npmUtils', () => ({
+                tryGetNpmView: vi.fn().mockResolvedValue({
+                  'dist-tags': {
+                    'latest': '1.0.0-beta.1' // For preview version
+                    // 'latest': '1.0.0' // For stable version
+                  }
+                })
+              }));
+            const version = await getApiVersionTypeInRLC(root);
+            vi.restoreAllMocks();
             expect(version).toBe(ApiVersionType.Preview);
         });
     });

@@ -2,6 +2,10 @@ import { findParametersPath, getApiVersionTypeFromOperations, getApiVersionTypeF
 
 import { ApiVersionType } from "../../common/types";
 import { IApiVersionTypeExtractor } from "../../common/interfaces";
+import { tryGetNpmView } from "../../common/npmUtils";
+import { getNpmPackageName } from "../../common/utils";
+import { getVersion, isBetaVersion } from "../../utils/version";
+import { logger } from "../../utils/logger";
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string
@@ -13,8 +17,17 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
         if (typeFromClient !== ApiVersionType.None) return typeFromClient;
     }
     
-    const parametersFolder = "src/";
-    const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, parametersFolder, findParametersPath);
-    if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
-    return ApiVersionType.Stable;
+    logger.info('No client found, fallback to get api version type in operation\'s parameter');
+    const parametersFolder = ["src/", "generated/", "src/generated"];
+    for (const folder of parametersFolder) {
+        const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, folder, findParametersPath);
+        if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
+    }
+
+    logger.info('No operation found, fallback to get api version type from latest version in NPM');
+    const packageName = getNpmPackageName(packageRoot);
+    const npmViewResult = await tryGetNpmView(packageName);
+    const latestVersion = getVersion(npmViewResult, "latest");
+    const isBeta = isBetaVersion(latestVersion);
+    return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
 };

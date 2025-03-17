@@ -34,12 +34,13 @@ export function processAssocType(item: Item): ReviewLine[] | null {
 
   // Add name
   reviewLine.Tokens.push({
-    Kind: TokenKind.Text,
+    Kind: TokenKind.MemberName,
     Value: item.name || "unknown",
     HasSuffixSpace: false,
+    RenderClasses: ["interface"],
   });
 
-  const generics = processGenerics(item.inner.assoc_type.generics)
+  const generics = processGenerics(item.inner.assoc_type.generics);
   reviewLine.Tokens.push(...generics.params);
   // Add bounds if available
   const assocType = item.inner.assoc_type;

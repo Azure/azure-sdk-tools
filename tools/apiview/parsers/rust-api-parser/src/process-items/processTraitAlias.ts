@@ -33,9 +33,12 @@ export function processTraitAlias(item: Item): ReviewLine[] {
 
   // Add name
   reviewLine.Tokens.push({
-    Kind: TokenKind.Text,
+    Kind: TokenKind.MemberName,
     Value: item.name || "unknown",
     HasSuffixSpace: false,
+    RenderClasses: ["interface"],
+    NavigateToId: item.id.toString(),
+    NavigationDisplayName: item.name || undefined,
   });
 
   // Add equals sign

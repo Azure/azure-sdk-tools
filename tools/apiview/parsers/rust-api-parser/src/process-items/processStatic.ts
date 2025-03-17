@@ -29,7 +29,7 @@ export function processStatic(item: Item) {
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
     Value: item.name || "null",
-    RenderClasses: ["sliteral", "static"],
+    RenderClasses: ["interface"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,

@@ -21,11 +21,12 @@ export function processConstant(item: Item) {
     Value: "pub const",
   });
   reviewLine.Tokens.push({
-    Kind: TokenKind.Text,
+    Kind: TokenKind.MemberName,
     Value: item.name || "null",
     HasSuffixSpace: false,
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name,
+    RenderClasses: ["interface"],
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,

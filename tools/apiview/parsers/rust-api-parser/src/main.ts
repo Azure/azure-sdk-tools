@@ -46,6 +46,7 @@ function addSectionHeader(codeFile: CodeFile, headerText: string): void {
         Value: `/* ${headerText} */`,
         NavigateToId: `header-${headerText}`,
         NavigationDisplayName: `/* ${headerText} */`,
+        RenderClasses: ["namespace"],
       },
     ],
   });

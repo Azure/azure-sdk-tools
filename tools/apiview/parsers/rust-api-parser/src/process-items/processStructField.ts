@@ -23,6 +23,9 @@ export function processStructField(fieldItem: Item): ReviewLine {
         Kind: TokenKind.MemberName,
         Value: fieldItem.name || "null",
         HasSuffixSpace: false,
+        RenderClasses: ["interface"],
+        NavigateToId: fieldItem.id.toString(),
+        NavigationDisplayName: fieldItem.name,
       },
       {
         Kind: TokenKind.Punctuation,

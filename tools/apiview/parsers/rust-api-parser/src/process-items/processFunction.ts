@@ -86,7 +86,7 @@ export function processFunction(item: Item) {
     Kind: TokenKind.MemberName,
     Value: item.name || "null",
     HasSuffixSpace: false,
-    RenderClasses: ["tname", "method"],
+    RenderClasses: ["method"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });

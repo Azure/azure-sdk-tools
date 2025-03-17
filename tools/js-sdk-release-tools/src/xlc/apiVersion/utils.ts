@@ -122,8 +122,8 @@ export const getApiVersionTypeFromRestClient = async (
     return ApiVersionType.None;
 };
 
-export const getApiVersionTypeFromOperations = (paramtersPath: string): ApiVersionType => {
-    const sourceFile = getTsSourceFile(paramtersPath);
+export const getApiVersionTypeFromOperations = (parametersPath: string): ApiVersionType => {
+    const sourceFile = getTsSourceFile(parametersPath);
     const apiVersions = findApiVersionsInOperations(sourceFile);
     if (!apiVersions) return ApiVersionType.None;
     const previewVersions = apiVersions.filter((v) => v.indexOf('-preview') >= 0);

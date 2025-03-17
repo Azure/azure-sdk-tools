@@ -1,5 +1,5 @@
 import { MessageRecord, sendSuccess, sendFailure, sendPipelineVariable } from '../types/Message';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'fs';
+import { existsSync, readFileSync, rmSync, writeFileSync} from 'fs';
 import * as path from 'path';
 import * as prettier from 'prettier';
 import * as Handlebars from 'handlebars';

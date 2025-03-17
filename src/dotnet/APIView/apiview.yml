@@ -325,23 +325,6 @@ extends:
               value: 'https://apiviewstagingtest.com/'
 
           jobs:
-            - job: Download_Artifact
-              displayName: Download APIView artifact
-              pool:
-                name: azsdk-pool-mms-ubuntu-2004-general
-                image: azsdk-pool-mms-ubuntu-2004-1espt
-                os: linux
-              steps:
-              - checkout: self
-              - task: DownloadPipelineArtifact@2
-                displayName: 'Download APIView artifact'
-                inputs:
-                  source: 'current'
-                  artifact: 'APIView'
-              - pwsh: |
-                  Get-ChildItem -Path $(Pipeline.Workspace) -Recurse
-                  Get-ChildItem -Path $(Pipeline.Workspace) -Recurse | Where-Object { $_.Name -eq 'APIView' }
-              
             - job: Publish_to_Staging
               templateContext:
                 type: releaseJob

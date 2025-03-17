@@ -103,7 +103,7 @@ export function getNpmPackageName(packageRoot: string): string {
     return packageName;
 }
 
-export function getApiReviewPath(packageRoot: string): string {
+export function getRootLayerApiReviewPath(packageRoot: string): string {
     const sdkType = getSDKType(packageRoot);
     const reviewDir = path.join(packageRoot, 'review');
     switch (sdkType) {

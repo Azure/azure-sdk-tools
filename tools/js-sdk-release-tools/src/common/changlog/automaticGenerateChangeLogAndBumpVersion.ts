@@ -21,8 +21,64 @@ import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version";
 import { ApiVersionType, SDKType } from "../types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
-import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils';
+import { fixChangelogFormat, getRootLayerApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils';
 import { tryGetNpmView } from '../npmUtils';
+import { getApiLayerApiViewNamePathMap } from "../../mlc/utils/fileUtils";
+
+// TODO: better name
+interface ChangeLogsByLayers {
+    root: Changelog;
+    api?: Map<string, Changelog>;
+}
+
+async function generateChangelogs(
+    newPackageRoot: string,
+    oldPackageRoot: string
+): Promise<ChangeLogsByLayers> {
+    const oldSDKType = getSDKType(oldPackageRoot);
+    const newSDKType = getSDKType(newPackageRoot);
+    const oldApiMdFilePath = getRootLayerApiReviewPath(oldPackageRoot);
+    const newApiMdFilePath = getRootLayerApiReviewPath(newPackageRoot);
+    const rootLayerChangelog: Changelog = await extractExportAndGenerateChangelog(
+        oldApiMdFilePath,
+        newApiMdFilePath,
+        oldSDKType,
+        newSDKType
+    );
+
+    if (newSDKType !== SDKType.ModularClient) return { root: rootLayerChangelog };
+
+    const oldNamePathMap = await getApiLayerApiViewNamePathMap(
+        oldPackageRoot
+    );
+    const newNamePathMap = await getApiLayerApiViewNamePathMap(
+        newPackageRoot
+    );
+
+    const apiLayerchangelogs: Map<string, Changelog> = new Map();
+    const newlyAddedNewFiles: [string, string][] = [];
+    for (const [newFileName, newFilePath] of newNamePathMap) {
+        // generate changelog
+        const oldFilePath = oldNamePathMap.get(newFileName);
+        if (!oldFilePath) {
+            newlyAddedNewFiles.push([newFileName, newFilePath]);
+            continue;
+        }
+        const changelog = await extractExportAndGenerateChangelog(
+            oldFilePath,
+            newFilePath,
+            oldSDKType,
+            newSDKType
+        );
+        apiLayerchangelogs.set(newFileName, changelog);
+        oldNamePathMap.delete(newFileName);
+    }
+
+    // TODO: handle remaining oldNamePathMap (deleted in new)
+    // TODO: handle newlyAddedNewFiles
+    
+    return { root: rootLayerChangelog, api: apiLayerchangelogs };
+}
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);

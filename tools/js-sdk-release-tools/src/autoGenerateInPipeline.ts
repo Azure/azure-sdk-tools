@@ -20,22 +20,24 @@ async function automationGenerateInPipeline(
     sdkGenerationType: string | undefined,
     local: boolean
 ) {
-    const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
-    const {
-        sdkType,
-        specFolder,
-        readmeMd,
-        gitCommitId,
-        outputJson,
-        repoHttpsUrl,
-        downloadUrlPrefix,
-        skipGeneration,
-        runningEnvironment,
-        typespecProject,
-        autorestConfig
-    } = await parseInputJson(inputJson);
-
+    let output: {packages: any[], language: string} = {packages: [], language: 'JavaScript'};
     try {
+        const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
+        const {
+            sdkType,
+            specFolder,
+            readmeMd,
+            gitCommitId,
+            outputJson,
+            repoHttpsUrl,
+            downloadUrlPrefix,
+            skipGeneration,
+            runningEnvironment,
+            typespecProject,
+            autorestConfig
+        } = await parseInputJson(inputJson);
+        output = outputJson;
+
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
         }
@@ -96,7 +98,7 @@ async function automationGenerateInPipeline(
                 break;
         }
     } catch (e) {
-        const packageNameStr = `'${outputJson.packages?.[0]?.packageName}' `;
+        const packageNameStr = `'${output.packages?.[0]?.packageName}' `;
         logger.error(`Failed to generate SDK for package ${packageNameStr ?? ''}due to ${(e as Error)?.stack ?? e}.`);
         logger.error(`Please review the detail errors for potential fixes.`);
         logger.error(
@@ -107,7 +109,7 @@ async function automationGenerateInPipeline(
         if (!local) {
             await restoreNodeModules(String(shell.pwd()));
         }
-        fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, null, '  '), { encoding: 'utf-8' });
+        fs.writeFileSync(outputJsonPath, JSON.stringify(output, null, '  '), { encoding: 'utf-8' });
     }
 }
 
@@ -124,6 +126,5 @@ const optionDefinitions = [
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
 automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.local ?? false).catch(e => {
-    logger.error(e.message);
     process.exit(1);
 });

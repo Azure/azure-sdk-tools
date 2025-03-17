@@ -28,12 +28,24 @@ export function processTrait(item: Item) {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Keyword,
-    Value: "pub trait",
+    Value: "pub",
+  });
+
+  if (item.inner.trait.is_unsafe) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "unsafe",
+    });
+  }
+
+  reviewLine.Tokens.push({
+    Kind: TokenKind.Keyword,
+    Value: "trait",
   });
   reviewLine.Tokens.push({
-    Kind: TokenKind.TypeName,
+    Kind: TokenKind.MemberName,
     Value: item.name || "null",
-    RenderClasses: ["tname", "trait"],
+    RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,
@@ -46,8 +58,11 @@ export function processTrait(item: Item) {
   }
 
   if (item.inner.trait.bounds) {
-    reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":", HasPrefixSpace: false });
-    reviewLine.Tokens.push(...createGenericBoundTokens(item.inner.trait.bounds));
+    const boundTokens = createGenericBoundTokens(item.inner.trait.bounds);
+    if (boundTokens.length > 0) {
+      reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":", HasPrefixSpace: false });
+      reviewLine.Tokens.push(...boundTokens);
+    }
   }
 
   // Add generics where clauses if present

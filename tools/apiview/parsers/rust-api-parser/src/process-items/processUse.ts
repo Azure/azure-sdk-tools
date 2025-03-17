@@ -39,8 +39,9 @@ export function processUse(item: Item): ReviewLine[] | undefined {
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: useValue,
-    RenderClasses: ["mname", "use"],
+    RenderClasses: ["dependencies"],
     NavigateToId: item.inner.use.id.toString(),
+    NavigationDisplayName: useValue,
   });
 
   reviewLines.push(reviewLine);
@@ -78,7 +79,7 @@ export function processUse(item: Item): ReviewLine[] | undefined {
           {
             Kind: TokenKind.TypeName,
             Value: basePath,
-            RenderClasses: ["mname"],
+            RenderClasses: ["namespace"],
             NavigateToId: apiJson.index[item.inner.use.id].id.toString() + "_reexport_parent",
             NavigationDisplayName: basePath,
           },

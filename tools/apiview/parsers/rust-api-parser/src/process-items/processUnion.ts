@@ -49,9 +49,9 @@ export function processUnion(item: Item): ReviewLine[] {
   });
 
   unionLine.Tokens.push({
-    Kind: TokenKind.TypeName,
+    Kind: TokenKind.MemberName,
     Value: item.name || "null",
-    RenderClasses: ["tname", "union"],
+    RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });

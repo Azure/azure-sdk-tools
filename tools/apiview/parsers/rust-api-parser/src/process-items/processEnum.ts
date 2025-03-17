@@ -42,10 +42,11 @@ export function processEnum(item: Item): ReviewLine[] {
   });
 
   enumLine.Tokens.push({
-    Kind: TokenKind.TypeName,
+    Kind: TokenKind.MemberName,
     Value: item.name || "null",
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
+    RenderClasses: ["enum"],
   });
 
   const genericsTokens = processGenerics(item.inner.enum.generics);
@@ -72,10 +73,8 @@ export function processEnum(item: Item): ReviewLine[] {
         LineId: variantItem.id.toString(),
         Tokens: [
           {
-            Kind: TokenKind.TypeName,
+            Kind: TokenKind.Text,
             Value: variantItem.name || "null",
-            NavigateToId: variantItem.id.toString(),
-            NavigationDisplayName: variantItem.name || undefined,
             HasSuffixSpace: false,
           },
           {

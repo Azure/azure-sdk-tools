@@ -113,6 +113,10 @@ const parser = yargs(hideBin(process.argv))
         .option("repo", {
           type: "string",
           description: "Repository where the project is defined",
+        })
+        .option("skip-install", {
+          type: "boolean",
+          description: "Skip installing dependencies",
         });
     },
     async (argv: any) => {
@@ -146,6 +150,10 @@ const parser = yargs(hideBin(process.argv))
         .options("save-inputs", {
           type: "boolean",
           description: "Don't clean up the temp directory after generation",
+        })
+        .option("skip-install", {
+          type: "boolean",
+          description: "Skip installing dependencies",
         });
     },
     async (argv: any) => {
@@ -181,6 +189,10 @@ const parser = yargs(hideBin(process.argv))
         .option("save-inputs", {
           type: "boolean",
           description: "Don't clean up the temp directory after generation",
+        })
+        .option("skip-install", {
+          type: "boolean",
+          description: "Skip installing dependencies",
         });
     },
     async (argv: any) => {

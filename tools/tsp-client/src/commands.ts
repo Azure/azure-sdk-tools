@@ -247,6 +247,7 @@ export async function generateCommand(argv: any) {
   let outputDir = argv["output-dir"];
   const emitterOptions = argv["emitter-options"];
   const saveInputs = argv["save-inputs"];
+  const skipInstall = argv["skip-install"];
 
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
@@ -264,24 +265,27 @@ export async function generateCommand(argv: any) {
   }
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
-  Logger.info("Installing dependencies from npm...");
-  const args: string[] = [];
-  try {
-    // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
-    await stat(joinPaths(tempRoot, "package-lock.json"));
-    args.push("ci");
-  } catch (err) {
-    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
-    args.push("install");
+  if (skipInstall) {
+    Logger.info("Skipping installation of dependencies");
+  } else {
+    Logger.info("Installing dependencies from npm...");
+    const args: string[] = [];
+    try {
+      // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+      await stat(joinPaths(tempRoot, "package-lock.json"));
+      args.push("ci");
+    } catch (err) {
+      // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+      args.push("install");
+    }
+    // NOTE: This environment variable should be used for developer testing only. A force
+    // install may ignore any conflicting dependencies and result in unexpected behavior.
+    dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
+    if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
+      args.push("--force");
+    }
+    await npmCommand(srcDir, args);
   }
-  // NOTE: This environment variable should be used for developer testing only. A force
-  // install may ignore any conflicting dependencies and result in unexpected behavior.
-  dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
-  if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
-    args.push("--force");
-  }
-  await npmCommand(srcDir, args);
-
   const [success, exampleCmd] = await compileTsp({
     emitterPackage: emitter,
     outputPath: outputDir,

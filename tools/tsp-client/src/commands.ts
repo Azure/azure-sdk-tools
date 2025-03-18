@@ -493,11 +493,14 @@ export async function generateLockFileCommand(argv: any) {
 }
 
 export async function installDependencies(argv: any) {
-  const outputDir = argv["output-dir"];
-  const repoRoot = await getRepoRoot(outputDir);
+  const outputPath = argv["path"];
+  const repoRoot = await getRepoRoot(outputPath ?? process.cwd());
   let installPath = repoRoot;
-  if (outputDir !== ".") {
-    installPath = outputDir;
+  if (outputPath !== undefined) {
+    Logger.warn(
+      "The install path of the node_modules/ directory must be in the path of the target project, otherwise other commands using npm will fail.",
+    );
+    installPath = resolvePath(outputPath);
   }
 
   Logger.info("Installing dependencies from npm...");
@@ -518,7 +521,7 @@ export async function installDependencies(argv: any) {
   }
   // NOTE: This environment variable should be used for developer testing only. A force
   // install may ignore any conflicting dependencies and result in unexpected behavior.
-  dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
+  dotenvConfig({ path: resolve(repoRoot, ".env") });
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
     args.push("--force");
   }

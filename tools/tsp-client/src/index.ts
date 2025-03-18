@@ -280,16 +280,23 @@ const parser = yargs(hideBin(process.argv))
     },
   )
   .command(
-    "install-dependencies",
+    "install-dependencies [path]",
     "Install dependencies for the TypeSpec project. Default to the root of the repository.",
-    {},
+    (yargs: any) => {
+      return yargs
+        .option("output-dir", {
+          alias: "o",
+          type: "string",
+          description: "This option is disabled for this command",
+          hidden: true, // Hide the option from help output
+          default: undefined, // Remove the default value
+        })
+        .positional("path", {
+          type: "string",
+          description: "Install path of the node_modules/ directory",
+        });
+    },
     async (argv: any) => {
-      if (argv["output-dir"] !== ".") {
-        Logger.warn(
-          "The install path of the node_modules/ directory must be in the path of the target project, otherwise other commands will fail.",
-        );
-        argv["output-dir"] = resolveOutputDir(argv);
-      }
       await installDependencies(argv);
     },
   )

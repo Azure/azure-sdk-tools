@@ -389,6 +389,7 @@ extends:
                 inputs:
                 - input: pipelineArtifact
                   artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt
@@ -444,6 +445,7 @@ extends:
                 inputs:
                 - input: pipelineArtifact
                   artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt

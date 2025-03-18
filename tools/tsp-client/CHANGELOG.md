@@ -1,5 +1,10 @@
 # Release
 
+## 2025-03-19 0.16.0
+
+- Added `install-dependencies` command to install dependencies pinned by `emitter-package.json` and `emitter-package-lock.json` at the root of the repository.
+- Support a `--skip-install` flag on the `init`, `update`, and `generate` commands to skip installing dependencies during generation.
+
 ## 2025-02-13 - 0.15.4
 
 - Enable `debug` logs for the `convert` command

@@ -488,6 +488,39 @@ export async function generateLockFileCommand(argv: any) {
   Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
 }
 
+export async function installDependencies(argv: any) {
+  const outputDir = argv["output-dir"];
+  const repoRoot = await getRepoRoot(outputDir);
+  let installPath = repoRoot;
+  if (outputDir !== ".") {
+    installPath = outputDir;
+  }
+
+  Logger.info("Installing dependencies from npm...");
+  const args: string[] = [];
+  await cp(
+    joinPaths(repoRoot, "eng", "emitter-package.json"),
+    joinPaths(installPath, "package.json"),
+  );
+  try {
+    // Check if emitter-package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+    const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
+    await cp(emitterLockPath, joinPaths(installPath, "package-lock.json"));
+    args.push("ci");
+  } catch (err) {
+    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+    args.push("install");
+  }
+  // NOTE: This environment variable should be used for developer testing only. A force
+  // install may ignore any conflicting dependencies and result in unexpected behavior.
+  dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
+  if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
+    args.push("--force");
+  }
+  await npmCommand(installPath, args);
+}
+
 export async function sortSwaggerCommand(argv: any): Promise<void> {
   Logger.info("Sorting a swagger content...");
   let swaggerFile = argv["swagger-file"];

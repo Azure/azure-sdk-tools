@@ -8,6 +8,7 @@ import {
   generateConfigFilesCommand,
   generateLockFileCommand,
   initCommand,
+  installDependencies,
   sortSwaggerCommand,
   syncCommand,
   updateCommand,
@@ -264,6 +265,20 @@ const parser = yargs(hideBin(process.argv))
       argv["output-dir"] = resolveOutputDir(argv);
       const rawArgs = process.argv.slice(3);
       await compareCommand(argv, rawArgs);
+    },
+  )
+  .command(
+    "install-dependencies",
+    "Install dependencies for the TypeSpec project. Default to the root of the repository.",
+    {},
+    async (argv: any) => {
+      if (argv["output-dir"] !== ".") {
+        Logger.warn(
+          "The install path of the node_modules/ directory must be in the path of the target project, otherwise other commands will fail.",
+        );
+        argv["output-dir"] = resolveOutputDir(argv);
+      }
+      await installDependencies(argv);
     },
   )
   .demandCommand(1, "Please provide a command.")

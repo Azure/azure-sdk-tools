@@ -21,12 +21,13 @@ namespace IssueLabelerService
 {
     public class AzureSdkIssueLabelerService
     {
-        private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Labels = Array.Empty<string>(), Suggestion = null, Solution = null });
+        private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Labels = [], Answer = null, AnswerType = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private readonly IConfiguration _config;
         private readonly ITriageRAG _issueLabeler;
         private static readonly ConcurrentDictionary<string, byte> CommonModelRepositories = new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, byte> InitializedRepositories = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, byte> CompleteTraigeRepositories = new(StringComparer.OrdinalIgnoreCase); 
         private IModelHolderFactoryLite ModelHolderFactory { get; }
         private ILabelerLite Labeler { get; }
         private string CommonModelRepositoryName { get; }
@@ -42,15 +43,8 @@ namespace IssueLabelerService
             CommonModelRepositoryName = config["CommonModelRepositoryName"];
 
             // Initialize the set of repositories that use the common model.
-            var commonModelRepos = config["ReposUsingCommonModel"];
-
-            if (!string.IsNullOrEmpty(commonModelRepos))
-            {
-                foreach (var repo in commonModelRepos.Split(';', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    CommonModelRepositories.TryAdd(repo, 1);
-                }
-            }
+            ConvertRepoStringList(config["ReposUsingCommonModel"], CommonModelRepositories);
+            ConvertRepoStringList(config["CompleteTraigeRepositories"], CompleteTraigeRepositories);
         }
 
         [Function("AzureSdkIssueLabelerService")]
@@ -70,8 +64,8 @@ namespace IssueLabelerService
             IssueOutput result;
             try
             {
-                // If in dotnet repo run complete issue triage (includes comments) otherwise run the regular triage that we currently do.
-                if (issue.RepositoryName == "azure-sdk-for-net")
+                // If in flagged triage repo run complete issue triage (includes comments) otherwise run the regular triage that we currently do.
+                if (CompleteTraigeRepositories.ContainsKey(issue.RepositoryName))
                 {
                     try
                     {
@@ -123,13 +117,22 @@ namespace IssueLabelerService
             var openAIEndpoint = new Uri(_config["OpenAIEndpoint"]);
             var modelName = _config["OpenAIModelName"];
 
+
+            // TODO make switching between different Indexes easier
+            // For now we manually go python or dotnet
+            var issueIndexName = _config["IssueIndexNameDotNet"];
+            var documentIndexName = _config["DocumentIndexNameDotNet"];
+            if(issue.RepositoryName == "azure-sdk-for-python")
+            {
+                issueIndexName = _config["IssueIndexNamePython"];
+                documentIndexName = _config["DocumentIndexNamePython"];
+            }
+            
             // Issue specific configurations
-            var issueIndexName = _config["IssueIndexName"];
             var issueSemanticName = _config["IssueSemanticName"];
             const string issueFieldName = "text_vector";
 
             // Document specific configurations
-            var documentIndexName = _config["DocumentIndexName"];
             var documentSemanticName = _config["DocumentSemanticName"];
             const string documentFieldName = "text_vector";
 
@@ -215,20 +218,25 @@ namespace IssueLabelerService
             if (solution)
             {
                 intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I found a solution for your issue!\n\n";
-                outro = "\n\nThis should solve your problem, if it does not feel free to reopen the issue!";
+                outro = "\n\nThis should solve your problem, if it does not feel free to reopen the issue.";
             }
             else
             {
-                intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you :)\n\n";
-                outro = "\n\nThe team will get back to you shortly, hopefully this helps in the meantime!";
+                intro = $"Hello @{issue.IssueUserLogin}. I'm an AI assistant for the {issue.RepositoryName} repository. I have some suggestions that you can try out while the team gets back to you.\n\n";
+                outro = "\n\nThe team will get back to you shortly, hopefully this helps in the meantime.";
+            }
+
+            if(string.IsNullOrEmpty(resultObj.Response))
+            {
+                throw new Exception($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber} had an emtpy response.");
             }
 
             string formatted_response = intro + resultObj.Response + outro;
             return new IssueOutput
             {
-                Labels = new[] { resultObj.Service, resultObj.Category },
-                Suggestion = solution ? null : formatted_response,
-                Solution = solution ? formatted_response : null,
+                Labels = [resultObj.Service, resultObj.Category],
+                Answer = formatted_response,
+                AnswerType = solution ? "solution" : "suggestion",
             };
         }
 
@@ -286,9 +294,9 @@ namespace IssueLabelerService
                 _logger.LogInformation($"Labels were predicted for {issue.RepositoryName} using the `{predictionRepositoryName}` model for issue #{issue.IssueNumber}.  Using: [{predictions[0]}, {predictions[1]}].");
                 return new IssueOutput
                 {
-                    Labels = new[] { predictions[0], predictions[1] },
-                    Suggestion = null,
-                    Solution = null
+                    Labels = [ predictions[0], predictions[1] ],
+                    Answer = null,
+                    AnswerType = null
                 };
             }
             catch (Exception ex)
@@ -303,6 +311,17 @@ namespace IssueLabelerService
             ? CommonModelRepositoryName
             : repoName;
 
+        private void ConvertRepoStringList(string repos, ConcurrentDictionary<string, byte> dict)
+        {
+            if (!string.IsNullOrEmpty(repos))
+            {
+                foreach (var repo in repos.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    dict.TryAdd(repo, 1);
+                }
+            }
+        }
+
         private class IssuePayload
         {
             public int IssueNumber { get; set; }
@@ -316,9 +335,9 @@ namespace IssueLabelerService
         // Structure of output fed to the github event processor
         private class IssueOutput
         {
-            public String[] Labels { get; set; }
-            public string Suggestion { get; set; }
-            public string Solution { get; set; }
+            public string[] Labels { get; set; }
+            public string Answer { get; set; }
+            public string AnswerType { get; set; }
         }
 
         // Structure of OpenAI Response  

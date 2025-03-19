@@ -87,12 +87,12 @@ namespace SearchIndexCreator
         //Retrieve documents from GitHub, upload to Azure Blob Storage, and create an Azure Search Index
         private static async Task ProcessDocs(IConfigurationSection config)
         {
-            // 1. Retrieve all documents from a repository
-            var docsRetrieval = new DocumentRetrieval(config["GithubKey"]);
-            var readmeFiles = await docsRetrieval.GetDocuments("Azure", "azure-sdk-for-net");
+            //// 1. Retrieve all documents from a repository
+            //var docsRetrieval = new DocumentRetrieval(config["GithubKey"]);
+            //var readmeFiles = await docsRetrieval.GetDocuments("Azure", "azure-sdk-for-net");
 
-            // 2. Upload the documents to Azure Blob Storage
-            await docsRetrieval.UploadFiles(readmeFiles, config["DocumentStorageName"], $"{config["DocumentIndexName"]}-blob");
+            //// 2. Upload the documents to Azure Blob Storage
+            //await docsRetrieval.UploadFiles(readmeFiles, config["DocumentStorageName"], $"{config["DocumentIndexName"]}-blob");
 
             // 3. Create an Azure Search Index
             var defaultCredential = new DefaultAzureCredential();

@@ -1,6 +1,6 @@
-# Code Examples for Pylint Guidelines
+# Code Examples for Azure SDK Python Guidelines
 
-This document contains code examples for each pylint rule in the Azure SDK guidelines.
+This document contains code examples showing how to fix violations of the Azure SDK Python Guidelines.
 
 ## Table of Contents
 
@@ -53,542 +53,508 @@ This document contains code examples for each pylint rule in the Azure SDK guide
 
 ## client-method-should-not-use-static-method
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class BlobClient:
+class ExampleClient:
     @staticmethod
-    def parse_url(url):
-        # Parse the URL
-        return parsed_url
+    def get_data(name):
+        return {"name": name}
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-# Move to module level function
-def parse_blob_url(url):
-    # Parse the URL
-    return parsed_url
+class ExampleClient:
+    def get_data(self, name):
+        return {"name": name}
 
-class BlobClient:
-    # No static methods in the client class
-    pass
+# Alternatively, use a module-level function
+def get_data(name):
+    return {"name": name}
 ```
 
 ## missing-client-constructor-parameter-credential
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class BlobClient:
+class ExampleClient:
     def __init__(self, endpoint):
-        self._endpoint = endpoint
-        # Missing credential parameter
+        self.endpoint = endpoint
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-class BlobClient:
-    def __init__(self, endpoint, credential):
-        self._endpoint = endpoint
-        self._credential = credential
+class ExampleClient:
+    def __init__(self, endpoint, credential, **kwargs):
+        self.endpoint = endpoint
+        self.credential = credential
 ```
 
 ## missing-client-constructor-parameter-kwargs
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class BlobClient:
+class ExampleClient:
     def __init__(self, endpoint, credential):
-        self._endpoint = endpoint
-        self._credential = credential
-        # Missing **kwargs
+        self.endpoint = endpoint
+        self.credential = credential
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-class BlobClient:
+class ExampleClient:
     def __init__(self, endpoint, credential, **kwargs):
-        self._endpoint = endpoint
-        self._credential = credential
-        # **kwargs allows for future additions without breaking changes
+        self.endpoint = endpoint
+        self.credential = credential
 ```
 
 ## client-method-has-more-than-5-positional-arguments
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-def create_blob(self, name, data, content_type, metadata, cache_control, content_disposition):
-    # Too many positional arguments
-    pass
+class ExampleClient:
+    def update_item(self, item_id, name, description, version, status, category, tags):
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-def create_blob(self, name, data, content_type, metadata, cache_control, *, content_disposition=None):
-    # Use keyword-only arguments (after *) for the 6th and beyond parameters
-    pass
+class ExampleClient:
+    def update_item(self, item_id, name, description, *, version, status, category, tags):
+        # Implementation
 ```
 
 ## client-method-missing-type-annotations
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-def get_blob(self, name):
-    # Missing type annotations
-    return self._client.get_blob(name)
+class ExampleClient:
+    def get_item(self, item_id):
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-def get_blob(self, name: str) -> bytes:
-    # Type annotations provided
-    return self._client.get_blob(name)
+class ExampleClient:
+    def get_item(self, item_id: str) -> Dict[str, Any]:
+        # Implementation
 ```
 
 ## client-incorrect-naming-convention
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class blobClient:  # Should use PascalCase for class names
-    def GetBlob(self):  # Should use snake_case for methods
-        my_Constant = 42  # Should use ALL_CAPS for constants
-        return my_Constant
+class exampleClient:  # lowercase first letter
+    DEFAULT_value = "something"  # not all caps for constant
+    
+    def GetItem(self, itemId):  # camelCase method
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-class BlobClient:  # PascalCase for class names
-    def get_blob(self):  # snake_case for methods
-        MY_CONSTANT = 42  # ALL_CAPS for constants
-        return MY_CONSTANT
+class ExampleClient:  # PascalCase for class
+    DEFAULT_VALUE = "something"  # UPPERCASE for constants
+    
+    def get_item(self, item_id):  # snake_case for methods and variables
+        # Implementation
 ```
 
 ## client-method-missing-kwargs
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-def get_blob(self, name):
-    # Method making network calls should have **kwargs
-    return self._client.send_request("GET", f"/blobs/{name}")
+class ExampleClient:
+    @distributed_trace
+    def get_item(self, item_id: str) -> Dict[str, Any]:
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-def get_blob(self, name, **kwargs):
-    # **kwargs allows passing additional options to the network call
-    return self._client.send_request("GET", f"/blobs/{name}", **kwargs)
+class ExampleClient:
+    @distributed_trace
+    def get_item(self, item_id: str, **kwargs) -> Dict[str, Any]:
+        # Implementation
 ```
 
 ## config-missing-kwargs-in-policy
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-def create_configuration(endpoint, **kwargs):
-    return {
-        "policies": [
-            RetryPolicy(),  # Missing **kwargs
-            BearerTokenCredentialPolicy(),  # Missing **kwargs
-        ]
-    }
+def create_configuration():
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy()
+    return config
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-def create_configuration(endpoint, **kwargs):
-    return {
-        "policies": [
-            RetryPolicy(**kwargs),
-            BearerTokenCredentialPolicy(**kwargs),
-        ]
-    }
+def create_configuration():
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy(**kwargs)
+    return config
 ```
 
 ## async-client-bad-name
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class BlobAsyncClient:  # "Async" should not be in the class name
-    async def get_blob(self, name):
-        pass
+class ExampleAsyncClient:
+    # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-class BlobClient:  # Same name as sync client
-    async def get_blob(self, name):
-        pass
+class ExampleClient:  # Same name for both sync and async clients
+    # Implementation
 ```
 
 ## file-needs-copyright-header
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-# File without copyright header
-from azure.core import *
+"""Example module docstring."""
 
-# Code starts here
+def example_function():
+    # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-# Copyright (c) Microsoft Corporation. All rights reserved.
+# ------------------------------------
+# Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
+# ------------------------------------
 
-from azure.core import *
+"""Example module docstring."""
 
-# Code starts here
+def example_function():
+    # Implementation
 ```
 
 ## client-method-name-no-double-underscore
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class BlobClient:
-    def __internal_method(self):  # Double underscore prefix is not allowed
-        pass
+class ExampleClient:
+    def __get_item(self, item_id: str) -> Dict[str, Any]:
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-class BlobClient:
-    def _internal_method(self):  # Single underscore for non-public methods
-        pass
+class ExampleClient:
+    def _get_item(self, item_id: str) -> Dict[str, Any]:
+        # Implementation
 ```
 
 ## specify-parameter-names-in-call
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-def process_blob(self, name):
-    # Calling with multiple unnamed parameters
-    self._client.upload_blob(name, data, "text/plain", {"key": "value"}, 3600)
+def process(self):
+    result = self.client.update_item("item1", "new name", "new description", 2, "active", "general")
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-def process_blob(self, name):
-    # Named parameters after the second argument
-    self._client.upload_blob(
-        name,
-        data,
-        content_type="text/plain",
-        metadata={"key": "value"},
-        timeout=3600
+def process(self):
+    result = self.client.update_item(
+        "item1", 
+        "new name", 
+        "new description", 
+        version=2, 
+        status="active", 
+        category="general"
     )
 ```
 
 ## connection-string-should-not-be-constructor-param
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class BlobClient:
+class ExampleClient:
     def __init__(self, connection_string, **kwargs):
-        # Connection string in constructor
-        self._parse_connection_string(connection_string)
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-class BlobClient:
+class ExampleClient:
     def __init__(self, endpoint, credential, **kwargs):
-        self._endpoint = endpoint
-        self._credential = credential
-    
+        # Implementation
+        
     @classmethod
     def from_connection_string(cls, connection_string, **kwargs):
-        # Factory method for connection string
-        endpoint, credential = cls._parse_connection_string(connection_string)
+        # Parse connection string and create client
         return cls(endpoint, credential, **kwargs)
 ```
 
 ## package-name-incorrect
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-# setup.py with incorrect package name
-setup(
-    name="azure_storage_blob",  # Using underscores instead of dashes
-    version="1.0.0",
-    # ...
-)
+# setup.py
+PACKAGE_NAME = "azure.storage.blobs"
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-# setup.py with correct package name
-setup(
-    name="azure-storage-blob",  # Using dashes
-    version="1.0.0",
-    # ...
-)
+# setup.py
+PACKAGE_NAME = "azure-storage-blobs"
 ```
 
 ## client-suffix-needed
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class Blob:  # Missing "Client" suffix
-    def get_properties(self):
-        pass
+class BlobService:
+    # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-class BlobClient:  # Has "Client" suffix
-    def get_properties(self):
-        pass
+class BlobClient:
+    # Implementation
 ```
 
 ## docstring-admonition-needs-newline
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-def get_examples():
-    """Get examples for the API.
-    .. literalinclude:: ../samples/example.py
-        :start-after: [START get_examples]
-        :end-before: [END get_examples]
-        :language: python
+def example_function():
+    """Example function.
+    
+    .. admonition:: Example
+       This is an example.
+    .. literalinclude:: ../samples/sample.py
     """
-    pass
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-def get_examples():
-    """Get examples for the API.
+def example_function():
+    """Example function.
+    
+    .. admonition:: Example
+       This is an example.
 
-    .. literalinclude:: ../samples/example.py
-        :start-after: [START get_examples]
-        :end-before: [END get_examples]
-        :language: python
+    .. literalinclude:: ../samples/sample.py
     """
-    pass
 ```
 
 ## naming-mismatch
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-# In generated_models.py
-class BlobProperties:
-    pass
-
-# In client code
-from .generated_models import BlobProperties as BlobProps  # aliased name
+# __init__.py
+from ._generated.models import ExampleModel as Example
+__all__ = ["Example"]
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-# In generated_models.py
-class BlobProperties:
-    pass
-
-# In client code
-from .generated_models import BlobProperties  # use original name
+# __init__.py
+from ._generated.models import ExampleModel
+__all__ = ["ExampleModel"]
 ```
 
 ## client-accepts-api-version-keyword
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-class BlobClient:
+class ExampleClient:
     def __init__(self, endpoint, credential, **kwargs):
-        # Missing api_version parameter
-        self._endpoint = endpoint
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-class BlobClient:
-    def __init__(self, endpoint, credential, *, api_version="2020-06-12", **kwargs):
-        # Keyword-only api_version parameter
-        self._endpoint = endpoint
-        self._api_version = api_version
+class ExampleClient:
+    def __init__(self, endpoint, credential, *, api_version="2021-01-01", **kwargs):
+        """
+        :keyword str api_version: The API version to use for this operation.
+        """
+        # Implementation
 ```
 
 ## enum-must-be-uppercase
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-from enum import Enum
-
-class AccessType(str, Enum):  # Enum name should be uppercase
-    Private = "private"
-    Public = "public"
+class Color(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    red = "red"
+    blue = "blue"
+    green = "green"
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-from enum import Enum
-
-class ACCESS_TYPE(str, Enum):  # Uppercase enum name
-    PRIVATE = "private"
-    PUBLIC = "public"
+class Color(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    RED = "red"
+    BLUE = "blue"
+    GREEN = "green"
 ```
 
 ## enum-must-inherit-case-insensitive-enum-meta
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-from enum import Enum
-
-class ACCESS_TYPE(str, Enum):  # Missing CaseInsensitiveEnumMeta
-    PRIVATE = "private"
-    PUBLIC = "public"
+class Color(str, Enum):
+    RED = "red"
+    BLUE = "blue"
+    GREEN = "green"
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-from enum import Enum
-from azure.core.enum_base import CaseInsensitiveEnumMeta
+from azure.core import CaseInsensitiveEnumMeta
 
-class ACCESS_TYPE(str, Enum, metaclass=CaseInsensitiveEnumMeta):
-    PRIVATE = "private"
-    PUBLIC = "public"
+class Color(str, Enum, metaclass=CaseInsensitiveEnumMeta):
+    RED = "red"
+    BLUE = "blue"
+    GREEN = "green"
 ```
 
 ## networking-import-outside-azure-core-transport
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-# In a client library outside azure.core
-import requests  # Direct networking import
+import requests
 
-def get_data(url):
+def fetch_data(url):
     return requests.get(url)
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-# In a client library outside azure.core
-from azure.core.rest import HttpRequest
-from azure.core.pipeline import Pipeline
+from azure.core.pipeline.transport import HttpRequest
 
-def get_data(url, pipeline):
+def fetch_data(pipeline, url):
     request = HttpRequest("GET", url)
     return pipeline.run(request)
 ```
 
 ## non-abstract-transport-import
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-# Importing a specific transport implementation
 from azure.core.pipeline.transport import RequestsTransport
 
-def create_client(endpoint):
-    transport = RequestsTransport()
-    # ...
+def create_client(endpoint, credential, **kwargs):
+    transport = RequestsTransport(**kwargs)
+    # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-# Import only the abstract transport
 from azure.core.pipeline.transport import HttpTransport
 
-def create_client(endpoint, transport=None):
-    transport = transport or HttpTransport()
-    # ...
+def create_client(endpoint, credential, **kwargs):
+    # Let caller or azure.core decide the transport
+    # Implementation
 ```
 
 ## no-raise-with-traceback
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 from azure.core.exceptions import raise_with_traceback
 
 try:
     # some operation
-except Exception as e:
-    raise_with_traceback(BlobError, e)
+except Exception as error:
+    raise_with_traceback(
+        ValueError("An error occurred"), error
+    )
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 try:
     # some operation
-except Exception as e:
-    raise BlobError("Failed to perform operation") from e
+except Exception as error:
+    raise ValueError("An error occurred") from error
 ```
 
 ## name-too-long
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-def download_blob_and_verify_content_with_checksum_validation(self, blob_name):
-    # Method name is too long (over 40 characters)
-    pass
+def fetch_all_items_from_database_with_additional_metadata_included(client):
+    # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-def download_blob_with_checksum(self, blob_name):
-    # Shorter name (under 40 characters)
-    pass
+def fetch_all_items_with_metadata(client):
+    # Implementation
 ```
 
 ## delete-operation-wrong-return-type
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-def delete_blob(self, name, **kwargs) -> dict:
-    response = self._client.send_request("DELETE", f"/blobs/{name}")
-    return response.json()
+class ExampleClient:
+    def delete_item(self, item_id, **kwargs) -> Dict[str, Any]:
+        # Implementation that returns item data
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
-def delete_blob(self, name, **kwargs) -> None:
-    self._client.send_request("DELETE", f"/blobs/{name}")
-    # Return None for delete operations
+class ExampleClient:
+    def delete_item(self, item_id, **kwargs) -> None:
+        # Implementation that returns None
 ```
 
 ## client-method-missing-tracing-decorator
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-# Missing distributed_trace decorator
-def get_blob(self, name, **kwargs):
-    return self._client.send_request("GET", f"/blobs/{name}")
+class ExampleClient:
+    def get_item(self, item_id: str, **kwargs) -> Dict[str, Any]:
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 from azure.core.tracing.decorator import distributed_trace
 
-@distributed_trace
-def get_blob(self, name, **kwargs):
-    return self._client.send_request("GET", f"/blobs/{name}")
+class ExampleClient:
+    @distributed_trace
+    def get_item(self, item_id: str, **kwargs) -> Dict[str, Any]:
+        # Implementation
 ```
 
 ## client-method-missing-tracing-decorator-async
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
-# Missing distributed_trace_async decorator
-async def get_blob(self, name, **kwargs):
-    return await self._client.send_request("GET", f"/blobs/{name}")
+class ExampleAsyncClient:
+    async def get_item(self, item_id: str, **kwargs) -> Dict[str, Any]:
+        # Implementation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 from azure.core.tracing.decorator_async import distributed_trace_async
 
-@distributed_trace_async
-async def get_blob(self, name, **kwargs):
-    return await self._client.send_request("GET", f"/blobs/{name}")
+class ExampleAsyncClient:
+    @distributed_trace_async
+    async def get_item(self, item_id: str, **kwargs) -> Dict[str, Any]:
+        # Implementation
 ```
 
 ## client-list-methods-use-paging
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def list_blobs(self, **kwargs) -> list:
     response = self._client.send_request("GET", "/blobs")
     return response.json()["value"]
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 from azure.core.paging import ItemPaged
 
@@ -603,7 +569,7 @@ def list_blobs(self, **kwargs) -> ItemPaged:
 
 ## docstring-missing-param
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
@@ -614,7 +580,7 @@ def get_blob(self, name, **kwargs):
     # Missing :param name: documentation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
@@ -627,7 +593,7 @@ def get_blob(self, name, **kwargs):
 
 ## docstring-missing-type
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
@@ -639,7 +605,7 @@ def get_blob(self, name, **kwargs):
     # Missing :type name: documentation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
@@ -653,7 +619,7 @@ def get_blob(self, name, **kwargs):
 
 ## docstring-missing-return
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
@@ -665,7 +631,7 @@ def get_blob(self, name, **kwargs):
     # Missing :return: documentation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
@@ -679,7 +645,7 @@ def get_blob(self, name, **kwargs):
 
 ## docstring-missing-rtype
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
@@ -691,7 +657,7 @@ def get_blob(self, name, **kwargs):
     # Missing :rtype: documentation
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
@@ -705,7 +671,7 @@ def get_blob(self, name, **kwargs):
 
 ## docstring-should-be-keyword
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def create_blob(self, name, data, *, content_type=None, **kwargs):
     """Create a blob.
@@ -719,7 +685,7 @@ def create_blob(self, name, data, *, content_type=None, **kwargs):
     """
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def create_blob(self, name, data, *, content_type=None, **kwargs):
     """Create a blob.
@@ -735,7 +701,7 @@ def create_blob(self, name, data, *, content_type=None, **kwargs):
 
 ## do-not-import-legacy-six
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 import six  # Legacy compatibility library
 
@@ -743,7 +709,7 @@ def is_string(s):
     return isinstance(s, six.string_types)
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def is_string(s):
     return isinstance(s, str)  # Use native Python 3 types
@@ -751,7 +717,7 @@ def is_string(s):
 
 ## no-legacy-azure-core-http-response-import
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 # Importing from legacy location
 from azure.core.pipeline.transport import HttpResponse
@@ -760,7 +726,7 @@ def process_response(response: HttpResponse):
     return response.text()
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 # Importing from new location
 from azure.core.rest import HttpResponse
@@ -771,7 +737,7 @@ def process_response(response: HttpResponse):
 
 ## docstring-keyword-should-match-keyword-only
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def create_blob(self, name, data, *, content_type=None):
     """Create a blob.
@@ -782,10 +748,10 @@ def create_blob(self, name, data, *, content_type=None):
     :type data: bytes
     :keyword content_settings: The content settings.  # Doesn't match parameter name
     :paramtype content_settings: dict
-    """
+    ```
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def create_blob(self, name, data, *, content_type=None):
     """Create a blob.
@@ -796,34 +762,34 @@ def create_blob(self, name, data, *, content_type=None):
     :type data: bytes
     :keyword content_type: The content type of the blob.  # Matches parameter name
     :paramtype content_type: str
-    """
+    ```
 ```
 
 ## docstring-type-do-not-use-class
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def get_client(self):
     """Get the client.
     
     :return: The client.
     :rtype: :class:`~azure.storage.blob.BlobClient`  # Using :class: syntax
-    """
+    ```
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def get_client(self):
     """Get the client.
     
     :return: The client.
     :rtype: ~azure.storage.blob.BlobClient  # Direct reference without :class:
-    """
+    ```
 ```
 
 ## no-typing-import-in-type-check
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 from typing import TYPE_CHECKING
 
@@ -831,7 +797,7 @@ if TYPE_CHECKING:
     from typing import Dict, List  # Should not import from typing under TYPE_CHECKING
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 from typing import Dict, List, TYPE_CHECKING
 
@@ -841,7 +807,7 @@ if TYPE_CHECKING:
 
 ## do-not-log-raised-errors
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 import logging
 
@@ -854,7 +820,7 @@ except Exception as e:
     raise BlobError("Operation failed") from e
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 import logging
 
@@ -870,7 +836,7 @@ except Exception as e:
 
 ## do-not-use-legacy-typing
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def get_blob(self, name):
     # type: (str) -> bytes
@@ -878,7 +844,7 @@ def get_blob(self, name):
     return self._client.get_blob(name)
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def get_blob(self, name: str) -> bytes:
     """Get a blob."""
@@ -887,7 +853,7 @@ def get_blob(self, name: str) -> bytes:
 
 ## do-not-import-asyncio
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 import asyncio  # Direct import of asyncio
 
@@ -897,7 +863,7 @@ async def get_blob(self):
     return response
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 from azure.core.pipeline.transport import AsyncHttpTransport
 
@@ -910,7 +876,7 @@ async def get_blob(self):
 
 ## invalid-use-of-overload
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 from typing import overload
 
@@ -928,7 +894,7 @@ class BlobClient:
         pass
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 from typing import overload
 
@@ -948,7 +914,7 @@ class BlobClient:
 
 ## do-not-hardcode-connection-verify
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 from azure.core.pipeline.transport import RequestsTransport
 
@@ -957,7 +923,7 @@ def create_client():
     # ...
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 from azure.core.pipeline.transport import RequestsTransport
 
@@ -968,7 +934,7 @@ def create_client(verify_ssl=True):
 
 ## do-not-log-exceptions
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 import logging
 
@@ -983,7 +949,7 @@ def get_blob(name):
         raise
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 import logging
 
@@ -1001,7 +967,7 @@ def get_blob(name):
 
 ## unapproved-client-method-name-prefix
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 class BlobClient:
     def fetch_blob(self, name):  # Using unapproved verb
@@ -1011,7 +977,7 @@ class BlobClient:
         pass
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 class BlobClient:
     def get_blob(self, name):  # Using approved verb
@@ -1023,7 +989,7 @@ class BlobClient:
 
 ## do-not-hardcode-dedent
 
-**Incorrect:**
+❌ **Incorrect**:
 ```python
 def get_examples():
     """Get examples for the API.
@@ -1038,7 +1004,7 @@ def get_examples():
 
 ```
 
-**Correct:**
+✅ **Correct**:
 ```python
 def get_examples():
     """Get examples for the API.

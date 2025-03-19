@@ -53,6 +53,10 @@ This document contains code examples showing how to fix violations of the Azure 
 - [do-not-hardcode-dedent](#do-not-hardcode-dedent)
 - [client-lro-methods-use-polling](#client-lro-methods-use-polling)
 - [lro-methods-use-correct-naming](#lro-methods-use-correct-naming)
+- [missing-user-agent-policy](#missing-user-agent-policy)
+- [missing-logging-policy](#missing-logging-policy)
+- [missing-retry-policy](#missing-retry-policy)
+- [missing-distributed-tracing-policy](#missing-distributed-tracing-policy)
 
 ## client-method-should-not-use-static-method
 
@@ -1073,4 +1077,90 @@ class ExampleClient:
     def begin_long_running_operation(self, **kwargs):
         # Implementation that uses correct naming
         return LROPoller()
+```
+
+## missing-user-agent-policy
+
+❌ **Incorrect**:
+```python
+def create_configuration(**kwargs):
+    config = Configuration()
+    config.retry_policy = RetryPolicy()
+    config.logging_policy = NetworkTraceLoggingPolicy()
+    return config
+```
+
+✅ **Correct**:
+```python
+def create_configuration(**kwargs):
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy(**kwargs)
+    config.retry_policy = RetryPolicy(**kwargs)
+    config.logging_policy = NetworkTraceLoggingPolicy(**kwargs)
+    return config
+```
+
+## missing-logging-policy
+
+❌ **Incorrect**:
+```python
+def create_configuration(**kwargs):
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy(**kwargs)
+    config.retry_policy = RetryPolicy(**kwargs)
+    return config
+```
+
+✅ **Correct**:
+```python
+def create_configuration(**kwargs):
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy(**kwargs)
+    config.retry_policy = RetryPolicy(**kwargs)
+    config.logging_policy = NetworkTraceLoggingPolicy(**kwargs)
+    return config
+```
+
+## missing-retry-policy
+
+❌ **Incorrect**:
+```python
+def create_configuration(**kwargs):
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy(**kwargs)
+    config.logging_policy = NetworkTraceLoggingPolicy(**kwargs)
+    return config
+```
+
+✅ **Correct**:
+```python
+def create_configuration(**kwargs):
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy(**kwargs)
+    config.retry_policy = RetryPolicy(**kwargs)
+    config.logging_policy = NetworkTraceLoggingPolicy(**kwargs)
+    return config
+```
+
+## missing-distributed-tracing-policy
+
+❌ **Incorrect**:
+```python
+def create_configuration(**kwargs):
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy(**kwargs)
+    config.retry_policy = RetryPolicy(**kwargs)
+    config.logging_policy = NetworkTraceLoggingPolicy(**kwargs)
+    return config
+```
+
+✅ **Correct**:
+```python
+def create_configuration(**kwargs):
+    config = Configuration()
+    config.user_agent_policy = UserAgentPolicy(**kwargs)
+    config.retry_policy = RetryPolicy(**kwargs)
+    config.logging_policy = NetworkTraceLoggingPolicy(**kwargs)
+    config.distributed_tracing_policy = DistributedTracingPolicy(**kwargs)
+    return config
 ```

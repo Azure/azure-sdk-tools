@@ -3217,7 +3217,7 @@ def register(linter):
     linter.register_checker(CheckDocstringParameters(linter))
 
     # Rules are disabled until false positive rate improved
-    linter.register_checker(CheckForPolicyUse(linter))
+    #linter.register_checker(CheckForPolicyUse(linter))
     linter.register_checker(ClientHasApprovedMethodNamePrefix(linter))
 
     # linter.register_checker(ClientDocstringUsesLiteralIncludeForCodeExample(linter))

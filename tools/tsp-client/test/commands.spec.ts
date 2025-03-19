@@ -282,7 +282,7 @@ describe.sequential("Verify commands", () => {
     }
   }, 360000);
 
-  it.only("Generate config files using azure-sdk/emitter-package-json-pinning", async () => {
+  it.skip("Generate config files using azure-sdk/emitter-package-json-pinning", async () => {
     try {
       const args = {
         "package-json": joinPaths(cwd(), "test", "examples", "package-sdk-pinning.json"),

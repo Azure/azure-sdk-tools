@@ -15,6 +15,7 @@ This document contains code examples showing how to fix violations of the Azure 
 - [async-client-bad-name](#async-client-bad-name)
 - [file-needs-copyright-header](#file-needs-copyright-header)
 - [client-method-name-no-double-underscore](#client-method-name-no-double-underscore)
+- [client-docstring-use-literal-include](#client-docstring-use-literal-include)
 - [specify-parameter-names-in-call](#specify-parameter-names-in-call)
 - [connection-string-should-not-be-constructor-param](#connection-string-should-not-be-constructor-param)
 - [package-name-incorrect](#package-name-incorrect)
@@ -50,6 +51,8 @@ This document contains code examples showing how to fix violations of the Azure 
 - [do-not-log-exceptions](#do-not-log-exceptions)
 - [unapproved-client-method-name-prefix](#unapproved-client-method-name-prefix)
 - [do-not-hardcode-dedent](#do-not-hardcode-dedent)
+- [client-lro-methods-use-polling](#client-lro-methods-use-polling)
+- [lro-methods-use-correct-naming](#lro-methods-use-correct-naming)
 
 ## client-method-should-not-use-static-method
 
@@ -246,6 +249,27 @@ class ExampleClient:
 class ExampleClient:
     def _get_item(self, item_id: str) -> Dict[str, Any]:
         # Implementation
+```
+
+## client-docstring-use-literal-include
+❌ **Incorrect**:
+```python
+def example_function():
+    """Example function.
+    
+    .. code-block:: python
+    
+       def example():
+           pass
+    """
+```
+✅ **Correct**:
+```python
+def example_function():
+    """Example function.
+    
+    .. literalinclude:: ../samples/sample.py
+    """
 ```
 
 ## specify-parameter-names-in-call
@@ -497,14 +521,14 @@ def fetch_all_items_with_metadata(client):
 ```python
 class ExampleClient:
     def delete_item(self, item_id, **kwargs) -> Dict[str, Any]:
-        # Implementation that returns item data
+        return delete_response
 ```
 
 ✅ **Correct**:
 ```python
 class ExampleClient:
     def delete_item(self, item_id, **kwargs) -> None:
-        # Implementation that returns None
+        return None  # No return value for delete operation
 ```
 
 ## client-method-missing-tracing-decorator
@@ -585,7 +609,7 @@ def get_blob(self, name, **kwargs):
 def get_blob(self, name, **kwargs):
     """Get a blob from the container.
     
-    :param name: The name of the blob.
+    :param str name: The name of the blob.
     :return: The blob data.
     :rtype: bytes
     """
@@ -1017,4 +1041,36 @@ def get_examples():
     """
     pass
 
+```
+
+## client-lro-methods-use-polling
+❌ **Incorrect**:
+```python
+class ExampleClient:
+    def begin_long_running_operation(self, **kwargs):
+        # Implementation that does not use polling
+        return []
+```
+✅ **Correct**:
+```python
+class ExampleClient:
+    def begin_long_running_operation(self, **kwargs):
+        # Implementation that uses polling
+        return LROPoller()
+```
+
+# lro-methods-use-correct-naming
+❌ **Incorrect**:
+```python
+class ExampleClient:
+    def long_running_operation(self, **kwargs):
+        # Implementation that does not use correct naming
+        return LROPoller()
+```
+✅ **Correct**:
+```python
+class ExampleClient:
+    def begin_long_running_operation(self, **kwargs):
+        # Implementation that uses correct naming
+        return LROPoller()
 ```

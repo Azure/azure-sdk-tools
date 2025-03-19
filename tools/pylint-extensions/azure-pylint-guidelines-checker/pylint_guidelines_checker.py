@@ -2855,9 +2855,9 @@ class DoNotImportAsyncio(BaseChecker):
     priority = -1
     msgs = {
         "C4763": (
-            "Do not import the asyncio package directly in your library. If asyncio.sleep() is being called and there is an azure core transport created, we should instead use the sleep function from the azure.core.pipeline.transport context instead. For other imports of asyncio, ignore this warning.",
+            "If asyncio.sleep() is being called and there is an azure core transport created, we should instead use the sleep function from the azure.core.pipeline.transport context instead of importing asyncio. For other imports of asyncio, ignore this warning.",
             "do-not-import-asyncio",
-            "Do not import the asyncio package directly in your library. If asyncio.sleep() is being called and there is an azure core transport created, we should instead use the sleep function from the azure.core.pipeline.transport context instead. For other imports of asyncio, ignore this warning.",
+            "If asyncio.sleep() is being called and there is an azure core transport created, we should instead use the sleep function from the azure.core.pipeline.transport context instead of importing asyncio. For other imports of asyncio, ignore this warning.",
         ),
     }
 

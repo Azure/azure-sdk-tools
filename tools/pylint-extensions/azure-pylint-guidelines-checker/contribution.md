@@ -1,5 +1,7 @@
 # Contributing to the Pylint Custom Checkers
 
+The code presented in this repository is a lift-and-shift of code [originally written by @kristapratico](https://github.com/Azure/azure-sdk-for-python/blob/ae2948416956938c908dcfb570a7456b23482149/scripts/pylint_custom_plugin/)
+
 When implementing a new pylint checker there are three cases to consider:
 
 **Checker Scenarios and Corresponding Actions:**

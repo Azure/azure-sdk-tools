@@ -1847,25 +1847,25 @@ class CheckForPolicyUse(BaseChecker):
     name = "check-for-policies"
     priority = -1
     msgs = {
-        "C4744": (
+        "C4769": (
             "You should include a UserAgentPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-user-agent-policy",
             "You should include a UserAgentPolicy in the HTTP Pipeline.",
         ),
-        "C4745": (
+        "C4770": (
             "You should include a LoggingPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-logging-policy",
             "You should include a LoggingPolicy in the HTTP Pipeline.",
         ),
-        "C4746": (
+        "C4771": (
             "You should include a RetryPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-retry-policy",
             "You should include a RetryPolicy in the HTTP Pipeline.",
         ),
-        "C4747": (
+        "C4772": (
             "You should include a DistributedTracingPolicy in your HTTP pipeline. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#network-operations",
             "missing-distributed-tracing-policy",
@@ -2068,7 +2068,7 @@ class CheckDocstringAdmonitionNewline(BaseChecker):
     name = "check-admonition"
     priority = -1
     msgs = {
-        "C4748": (
+        "C4744": (
             "The .. literalinclude statement needs a blank line above it. ",
             "docstring-admonition-needs-newline",
             "Put a newline after the example and before the literalinclude.",
@@ -2156,13 +2156,13 @@ class CheckEnum(BaseChecker):
     name = "check-enum"
     priority = -1
     msgs = {
-        "C4749": (
+        "C4746": (
             "The enum must use uppercase naming. See details: "
             "https://azure.github.io/azure-sdk/python_design.html#enumerations",
             "enum-must-be-uppercase",
             "Capitalize enum name.",
         ),
-        "C4750": (
+        "C4747": (
             "The enum must inherit from CaseInsensitiveEnumMeta. See details: "
             "https://azure.github.io/azure-sdk/python_implementation.html#extensible-enumerations",
             "enum-must-inherit-case-insensitive-enum-meta",
@@ -2240,7 +2240,7 @@ class CheckAPIVersion(BaseChecker):
     name = "check-api-version-kwarg"
     priority = -1
     msgs = {
-        "C4751": (
+        "C4748": (
             "The client constructor needs to take in an optional keyword-only api_version argument. See details: "
             "https://azure.github.io/azure-sdk/python_design.html#specifying-the-service-version",
             "client-accepts-api-version-keyword",
@@ -2315,7 +2315,7 @@ class CheckNamingMismatchGeneratedCode(BaseChecker):
     name = "check-naming-mismatch"
     priority = -1
     msgs = {
-        "C4752": (
+        "C4745": (
             "Do not alias generated code. "
             "This messes up sphinx, intellisense, and apiview, so please modify the name of the generated code through"
             " the swagger / directives, or code customizations. See Details: "
@@ -2426,7 +2426,7 @@ class NonAbstractTransportImport(BaseChecker):
     name = "non-abstract-transport-import"
     priority = -1
     msgs = {
-        "C4754": (
+        "C4749": (
             "Only import abstract transports.",
             "non-abstract-transport-import",
             "Only import abstract transports. Let core or end-user decide which transport to use.",
@@ -2462,7 +2462,7 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
     name = "no-raise-with-traceback"
     priority = -1
     msgs = {
-        "C4755": (
+        "C4754": (
             "Don't use raise_with_traceback, use python 3 'raise from' syntax.",
             "no-raise-with-traceback",
             "Don't use raise_with_traceback instead use python 3 'raise from' syntax.",
@@ -2506,7 +2506,7 @@ class NameExceedsStandardCharacterLength(BaseChecker):
     name = "name-too-long"
     priority = -1
     msgs = {
-        "C4756": (
+        "C4751": (
             "Name is over standard character length of 40.",
             "name-too-long",
             "Only use names that are less than 40 characters.",
@@ -2616,7 +2616,7 @@ class DeleteOperationReturnStatement(BaseChecker):
     name = "delete-operation-wrong-return-type"
     priority = -1
     msgs = {
-        "C4757": (
+        "C4752": (
             "delete* or begin_delete* should return None or LROPoller[None], respectively.",
             "delete-operation-wrong-return-type",
             "delete* or begin_delete* functions should return None or LROPoller[None].",
@@ -2661,7 +2661,7 @@ class DoNotImportLegacySix(BaseChecker):
     name = "do-not-import-legacy-six"
     priority = -1
     msgs = {
-        "C4758": (
+        "C4757": (
             "Do not import the six package in your library. Six was used to work with python2, which is no longer supported.",
             "do-not-import-legacy-six",
             "Do not import the six package in your library.",
@@ -2695,7 +2695,7 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
     name = "no-legacy-azure-core-http-response-import"
     priority = -1
     msgs = {
-        "C4759": (
+        "C4756": (
             "Do not import HttpResponse from azure.core.pipeline.transport outside of Azure Core.",
             "no-legacy-azure-core-http-response-import",
             "Do not import HttpResponse from azure.core.pipeline.transport outside of Azure Core. You can import HttpResponse from azure.core.rest instead.",
@@ -2729,7 +2729,7 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
 
     name = "do-not-log-raised-errors"
     priority = -1
-    msgs = {"C4760": (
+    msgs = {"C4762": (
             "Do not log errors that get raised in an exception block.",
             "do-not-log-raised-errors",
             "Do not log errors at error or warning level when error is raised in an exception block",
@@ -2785,7 +2785,7 @@ class NoImportTypingFromTypeCheck(BaseChecker):
     name = "no-typing-import-in-type-check"
     priority = -1
     msgs = {
-        "C4761": (
+        "C4760": (
             "Do not import from typing inside of TYPE_CHECKING.",
             "no-typing-import-in-type-check",
             "Do not import from typing inside of TYPE_CHECKING. You can import from typing outside of TYPE_CHECKING.",
@@ -2827,7 +2827,7 @@ class DoNotUseLegacyTyping(BaseChecker):
     name = "do-not-use-legacy-typing"
     priority = -1
     msgs = {
-        "C4762": (
+        "C4761": (
             "Do not use legacy typing using comments.",
             "do-not-use-legacy-typing",
             "Do not use legacy typing using comments. Python 2 is no longer supported, use Python 3.9+ type hints instead.",
@@ -2894,7 +2894,7 @@ class InvalidUseOfOverload(BaseChecker):
     name = "invalid-use-of-overload"
     priority = -1
     msgs = {
-        "C4764": (
+        "C4765": (
             "Do not mix async and synchronous overloads",
             "invalid-use-of-overload",
             "Functions and their overloads must be either all async or all synchronous.",
@@ -2954,7 +2954,7 @@ class DoNotLogExceptions(BaseChecker):
 
     name = "do-not-log-exceptions"
     priority = -1
-    msgs = {"C4765": (
+    msgs = {"C4766": (
             "Do not log exceptions. See Details:"
             " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
             "do-not-log-exceptions",
@@ -3032,7 +3032,7 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
     name = "do-not-hardcode-connection-verify"
     priority = -1
     msgs = {
-        "C4766": (
+        "C4767": (
             "Do not hardcode a boolean value to connection_verify",
             "do-not-hardcode-connection-verify",
             "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to be able to set it",
@@ -3105,7 +3105,7 @@ class DoNotDedentDocstring(BaseChecker):
     name = "do-not-hardcode-dedent"
     priority = -1
     msgs = {
-        "C4767": (
+        "C4768": (
             "Do not hardcode dedent value in docstring. Leave the dedent entry in your docstring empty, do not assign a numerical value to it.",
             "do-not-hardcode-dedent",
             "Do not hardcode dedent value in docstring. It's up to sphinx to handle this automatically",

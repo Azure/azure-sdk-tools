@@ -11,8 +11,8 @@ const testCaseDir = '../../misc/test-cases/patch-detection';
 
 describe("patch current tool's breaking changes", async () => {
   test('detect function overloads', async () => {
-    const currentApiViewPath = join(__dirname, testCaseDir, 'current-package/patch.api.md');
-    const baselineApiViewPath = join(__dirname, testCaseDir, 'baseline-package/patch.api.md');
+    const currentApiViewPath = join(__dirname, testCaseDir, 'function-overloads/current-package/patch.api.md');
+    const baselineApiViewPath = join(__dirname, testCaseDir, 'function-overloads/baseline-package/patch.api.md');
     const date = getFormattedDate();
 
     let tempFolder: string | undefined = undefined;
@@ -35,8 +35,8 @@ describe("patch current tool's breaking changes", async () => {
   });
 
   test('detect function', async () => {
-    const currentApiViewPath = join(__dirname, testCaseDir, 'current-package/patch.api.md');
-    const baselineApiViewPath = join(__dirname, testCaseDir, 'baseline-package/patch.api.md');
+    const currentApiViewPath = join(__dirname, testCaseDir, 'function/current-package/patch.api.md');
+    const baselineApiViewPath = join(__dirname, testCaseDir, 'function/baseline-package/patch.api.md');
     const date = getFormattedDate();
 
     let tempFolder: string | undefined = undefined;
@@ -88,8 +88,8 @@ describe("patch current tool's breaking changes", async () => {
   });
 
   test('detect routes', async () => {
-    const currentApiViewPath = join(__dirname, testCaseDir, 'current-package/patch.api.md');
-    const baselineApiViewPath = join(__dirname, testCaseDir, 'baseline-package/patch.api.md');
+    const currentApiViewPath = join(__dirname, testCaseDir, 'routes/current-package/patch.api.md');
+    const baselineApiViewPath = join(__dirname, testCaseDir, 'routes/baseline-package/patch.api.md');
     const date = getFormattedDate();
 
     let tempFolder: string | undefined = undefined;
@@ -134,8 +134,8 @@ describe("patch current tool's breaking changes", async () => {
   });
 
   test('detect union types', async () => {
-    const currentApiViewPath = join(__dirname, testCaseDir, 'current-package/patch.api.md');
-    const baselineApiViewPath = join(__dirname, testCaseDir, 'baseline-package/patch.api.md');
+    const currentApiViewPath = join(__dirname, testCaseDir, 'union-type/current-package/patch.api.md');
+    const baselineApiViewPath = join(__dirname, testCaseDir, 'union-type/baseline-package/patch.api.md');
     const date = getFormattedDate();
 
     let tempFolder: string | undefined = undefined;

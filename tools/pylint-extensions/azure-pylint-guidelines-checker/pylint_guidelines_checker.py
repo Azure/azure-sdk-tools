@@ -2384,7 +2384,7 @@ class NonCoreNetworkImport(BaseChecker):
     name = "networking-import-outside-azure-core-transport"
     priority = -1
     msgs = {
-        "C4753": (
+        "C4749": (
             "This import is not allowed here. Consider using an abstract"
             " alternative from azure.core.pipeline.transport.",
             "networking-import-outside-azure-core-transport",
@@ -2426,7 +2426,7 @@ class NonAbstractTransportImport(BaseChecker):
     name = "non-abstract-transport-import"
     priority = -1
     msgs = {
-        "C4749": (
+        "C4750": (
             "Only import abstract transports.",
             "non-abstract-transport-import",
             "Only import abstract transports. Let core or end-user decide which transport to use.",

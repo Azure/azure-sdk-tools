@@ -1,6 +1,6 @@
 # Release History
 
-## 0.5.3 (2025-03-15)
+## 0.5.3 (2025-03-19)
 - Updating documentation
 
 ## 0.5.2 (2025-02-19)

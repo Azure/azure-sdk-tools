@@ -12,16 +12,7 @@ options:
     output-file: "{service-dir}"
   "@azure-tools/typespec-ts":
     service-dir: "sdk/informatica"
-    azureSdkForJs: true
-    isModularLibrary: true
-    generateMetadata: true
-    hierarchyClient: false
-    experimentalExtensibleEnums: true
-    enableOperationGroup: true
-    package-dir: "arm-informaticadatamanagement"
-    flavor: "azure"
-    packageDetails:
-      name: "@azure/arm-informaticadatamanagement"
+    output-folder: "{service-dir}/src/generated"
 linter:
   extends:
     - "@azure-tools/typespec-azure-rulesets/resource-manager"

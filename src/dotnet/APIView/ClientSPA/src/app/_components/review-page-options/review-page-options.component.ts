@@ -20,6 +20,7 @@ import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
   styleUrls: ['./review-page-options.component.scss']
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges {
+  @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
   @Input() contentHasDiff: boolean | undefined = false;

@@ -67,19 +67,33 @@ describe('Rest client file fallbacks', () => {
             const version = await getApiVersionTypeInRLC(root);
             expect(version).toBe(ApiVersionType.Preview);
         });
-        test("Model only spec", async () => {
-            const root = join(__dirname, 'testCases/rlc-model-only/');
-            vi.mock('../../common/npmUtils', () => ({
-                tryGetNpmView: vi.fn().mockResolvedValue({
-                  'dist-tags': {
-                    'latest': '1.0.0-beta.1' // For preview version
-                    // 'latest': '1.0.0' // For stable version
-                  }
-                })
-              }));
+        test("get source folder from readme", async () => {
+            const root = join(__dirname, 'testCases/rlc-source-from-readme/');
             const version = await getApiVersionTypeInRLC(root);
-            vi.restoreAllMocks();
             expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("get source folder from src", async () => {
+            const root = join(__dirname, 'testCases/rlc-source-from-src/');
+            const version = await getApiVersionTypeInRLC(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("Model only spec", async () => {
+            vi.mock('../../common/npmUtils', async () => {
+                let count = 0;
+                return {
+                    tryGetNpmView: async () => {
+                        count++;
+                        if (count === 1) return { 'dist-tags': { latest: "1.0.0-beta.1" }}
+                        return { 'dist-tags': { latest: "1.0.0" }}
+                    },
+                }
+            });
+            const root = join(__dirname, 'testCases/rlc-model-only/');
+            const version1 = await getApiVersionTypeInRLC(root);
+            expect(version1).toBe(ApiVersionType.Preview);
+            const version2 = await getApiVersionTypeInRLC(root);
+            expect(version2).toBe(ApiVersionType.Stable);
+            vi.restoreAllMocks();
         });
     });
 });

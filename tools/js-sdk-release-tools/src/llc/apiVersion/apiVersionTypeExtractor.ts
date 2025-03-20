@@ -3,11 +3,48 @@ import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFi
 import { ApiVersionType } from "../../common/types";
 import { IApiVersionTypeExtractor } from "../../common/interfaces";
 import { join } from "path";
-import { exists } from "fs-extra";
+import { exists, readFile } from "fs-extra";
 import { tryGetNpmView } from "../../common/npmUtils";
 import { getNpmPackageName } from "../../common/utils";
 import { getVersion, isBetaVersion } from "../../utils/version";
 import { logger } from "../../utils/logger";
+import { parse } from "yaml"
+import { iterate, MarkDownEx, parseMarkdown } from "@azure-tools/openapi-tools-common";
+
+function extractAutorestConfig(readme: MarkDownEx) {
+    let isInConfigurationSection = false;
+    for (const node of iterate(readme.markDown)) {
+        if (node.type === 'heading' && node.level === 2 && node.firstChild?.literal?.trim() === 'Configuration') {
+            isInConfigurationSection = true;
+            continue;
+        }
+
+        if (node.type === 'heading' && node.level >= 2 && node.firstChild?.literal?.trim() !== 'Configuration') {
+            isInConfigurationSection = false;
+            continue;
+        }
+
+        // find yaml code block
+        if (isInConfigurationSection && node.type === 'code_block' &&
+            node.info === 'yaml' && node.literal !== null) {
+            return parse(node.literal);
+        }
+    }
+}
+
+async function resolveParameterPath(packageRoot: string) {
+    let parametersPath = join(packageRoot, "src/parameters.ts");
+    const swaggerReadmePath = join(packageRoot, "swagger/README.md");
+    const hasSwaggerReadme = await exists(swaggerReadmePath);
+    if (hasSwaggerReadme) {
+        const autoRestContent = await readFile(swaggerReadmePath, { encoding: 'utf-8' });
+        const readme = parseMarkdown(autoRestContent);
+        const config = extractAutorestConfig(readme);
+        const sourceFolderPath = config["source-code-folder-path"];
+        if (sourceFolderPath) parametersPath = join(packageRoot, sourceFolderPath, "parameters.ts");
+    }
+    return parametersPath;
+}
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string
@@ -18,11 +55,11 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
         const typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, pattern, tryFindRestClientPath);
         if (typeFromClient !== ApiVersionType.None) return typeFromClient;
     }
-    
+
     logger.info('No client found, fallback to get api version type in operation\'s parameter');
-    const parametersFolder = ["src/", "generated/", "src/generated"];
-    for (const folder of parametersFolder) {
-        const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, folder, findParametersPath);
+    const parametersPath = await resolveParameterPath(packageRoot);
+    if (await exists(parametersPath)) {
+        const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
         if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
     }
 

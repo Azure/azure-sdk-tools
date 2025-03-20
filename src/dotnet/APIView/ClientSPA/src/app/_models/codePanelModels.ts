@@ -16,9 +16,8 @@ export class CodePanelRowData {
   rowOfTokens: StructuredToken[];
   nodeId: string;
   nodeIdHashed: string;
-  rowPositionInGroup: number;
+  rowPositionInGroup: number; // a group of consecutive rows can have the same nodeIdHashed. With this you can index specific rows within the group
   associatedRowPositionInGroup: number;
-  rowOfTokensPosition: string;
   rowClasses: Set<string>;
   indent: number;
   diffKind: string;
@@ -31,26 +30,44 @@ export class CodePanelRowData {
   commentThreadIsResolvedBy: string;
   isHiddenAPI: boolean;
   
-  constructor() {
-    this.type = '';
-    this.lineNumber = 0;
-    this.rowOfTokens = [];
-    this.nodeId = '';
-    this.nodeIdHashed = '';
-    this.rowPositionInGroup = 0;
-    this.associatedRowPositionInGroup = 0;
-    this.rowOfTokensPosition = '';
-    this.rowClasses = new Set<string>();
-    this.indent = 0;
-    this.diffKind = '';
-    this.toggleDocumentationClasses = '';
-    this.toggleCommentsClasses = '';
-    this.diagnostics = new CodeDiagnostic();
-    this.comments = [];
-    this.showReplyTextBox = false;
-    this.isResolvedCommentThread = false;
-    this.commentThreadIsResolvedBy = '';
-    this.isHiddenAPI = false;
+  constructor(
+    type: string = '',
+    lineNumber: number = 0,
+    rowOfTokens: StructuredToken[] = [],
+    nodeId: string = '',
+    nodeIdHashed: string = '',
+    rowPositionInGroup: number = 0,
+    associatedRowPositionInGroup: number = 0,
+    rowClasses: Set<string> = new Set<string>(),
+    indent: number = 0,
+    diffKind: string = '',
+    toggleDocumentationClasses: string = '',
+    toggleCommentsClasses: string = '',
+    diagnostics: CodeDiagnostic = new CodeDiagnostic(),
+    comments: CommentItemModel[] = [],
+    showReplyTextBox: boolean = false,
+    isResolvedCommentThread: boolean = false,
+    commentThreadIsResolvedBy: string = '',
+    isHiddenAPI: boolean = false
+  ) {
+    this.type = type;
+    this.lineNumber = lineNumber;
+    this.rowOfTokens = rowOfTokens;
+    this.nodeId = nodeId;
+    this.nodeIdHashed = nodeIdHashed;
+    this.rowPositionInGroup = rowPositionInGroup;
+    this.associatedRowPositionInGroup = associatedRowPositionInGroup;
+    this.rowClasses = rowClasses;
+    this.indent = indent;
+    this.diffKind = diffKind;
+    this.toggleDocumentationClasses = toggleDocumentationClasses;
+    this.toggleCommentsClasses = toggleCommentsClasses;
+    this.diagnostics = diagnostics;
+    this.comments = comments;
+    this.showReplyTextBox = showReplyTextBox;
+    this.isResolvedCommentThread = isResolvedCommentThread;
+    this.commentThreadIsResolvedBy = commentThreadIsResolvedBy;
+    this.isHiddenAPI = isHiddenAPI;
   }
 }
 

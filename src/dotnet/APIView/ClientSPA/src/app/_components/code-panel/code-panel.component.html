@@ -28,7 +28,7 @@
       </div>
     </ng-container>
     <ng-container *ngIf="item.type === CodePanelRowDatatype.Diagnostics">
-      <div>
+      <div class="code-line-content">
         <span>{{ item.diagnostics.text }} <a *ngIf="item.diagnostics.helpLinkUri" href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a></span>
       </div>
     </ng-container>

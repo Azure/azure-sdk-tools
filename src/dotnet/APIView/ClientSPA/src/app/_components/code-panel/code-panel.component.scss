@@ -136,6 +136,7 @@
     }
     
     .code-line-content {
+        max-height: 21px;
         grid-column: 2;
         position: relative; 
         white-space: pre;

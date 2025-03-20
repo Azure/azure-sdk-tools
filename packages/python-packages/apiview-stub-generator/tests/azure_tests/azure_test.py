@@ -17,6 +17,7 @@ from apistub import ApiView, TokenKind, StubGenerator
 SDK_PARAMS = [
     ("azure-core", "1.32.0", "core", "azure.core"),
     #("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence"),
+    #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts"),
     #("corehttp", "1.0.0b5", "corehttp", "core", "corehttp"),
     #("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob")
 ]

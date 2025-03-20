@@ -63,7 +63,7 @@ function createItemLine(itemId: Id, itemSummary: ItemSummary): ReviewLine {
       {
         Kind: TokenKind.TypeName,
         Value: itemSummary.path.concat().join("::"),
-        RenderClasses: ["mname", "reexport"],
+        RenderClasses: ["dependencies"],
         NavigateToId: itemId.toString(),
       },
     ],
@@ -125,7 +125,6 @@ function createModuleHeaderLine(itemId: Id, itemSummary: ItemSummary): ReviewLin
       {
         Kind: TokenKind.TypeName,
         Value: itemSummary.path.concat().join("::"),
-        RenderClasses: ["mname", "module", "reexport"],
         NavigateToId: itemId.toString(),
       },
       {

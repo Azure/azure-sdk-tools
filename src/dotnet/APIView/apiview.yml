@@ -4,13 +4,13 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20250130.2'
+    default: '1.0.0-dev.20250301.1'
   - name: JavaScriptAPIParser
     type: string
-    default: '@azure-tools/ts-genapi@2.0.3'
+    default: '@azure-tools/ts-genapi@2.0.5'
   - name: RustAPIParser
     type: string
-    default: '@azure-tools/rust-genapi@1.0.0-beta.1'
+    default: '@azure-tools/rust-genapi@1.0.0'
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
@@ -326,6 +326,13 @@ extends:
 
           jobs:
             - job: Publish_to_Staging
+              templateContext:
+                type: releaseJob
+                isProduction: false
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               displayName: Publish to Staging
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
@@ -333,11 +340,6 @@ extends:
                 os: linux
 
               steps:
-              - checkout: self
-
-              - download: current
-                artifact: APIView
-                timeoutInMinutes: 5
 
               - task: FileTransform@1
                 displayName: 'Update Angular Config for Environment'
@@ -383,6 +385,13 @@ extends:
             - deployment: Publish_Test_UI
               displayName: Publish Test UI
               environment: 'package-publish'
+              templateContext:
+                type: releaseJob
+                isProduction: false
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt
@@ -392,11 +401,6 @@ extends:
                 runOnce:
                   deploy:
                     steps:
-                    - checkout: self
-
-                    - download: current
-                      artifact: APIView
-                      timeoutInMinutes: 5
 
                     - task: FileTransform@1
                       displayName: 'Update Angular Config for Environment'
@@ -439,6 +443,13 @@ extends:
             - deployment: Publish_to_Prod
               displayName: Publish to Prod
               environment: 'package-publish'
+              templateContext:
+                type: releaseJob
+                isProduction: true
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt
@@ -448,11 +459,6 @@ extends:
                 runOnce:
                   deploy:
                     steps:
-                    - checkout: self
-
-                    - download: current
-                      artifact: APIView
-                      timeoutInMinutes: 5
 
                     - task: FileTransform@1
                       displayName: 'Update Angular Config for Environment'

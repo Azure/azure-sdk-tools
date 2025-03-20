@@ -50,9 +50,9 @@ export function processStruct(item: Item): ReviewLine[] {
   });
 
   structLine.Tokens.push({
-    Kind: TokenKind.TypeName,
+    Kind: TokenKind.MemberName,
     Value: item.name || "null",
-    RenderClasses: ["tname", "struct"],
+    RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });

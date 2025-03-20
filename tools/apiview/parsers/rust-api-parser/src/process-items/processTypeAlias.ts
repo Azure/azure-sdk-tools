@@ -34,10 +34,11 @@ export function processTypeAlias(item: Item): ReviewLine[] {
 
   // Add name
   reviewLine.Tokens.push({
-    Kind: TokenKind.Text,
+    Kind: TokenKind.MemberName,
     Value: item.name || "unknown",
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || "unknown",
+    RenderClasses: ["interface"],
   });
 
   // Add equals sign

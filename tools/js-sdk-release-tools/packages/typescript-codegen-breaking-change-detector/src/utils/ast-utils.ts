@@ -204,6 +204,7 @@ export function getCallableEntityParametersFromSymbol(symbol: Symbol): Parameter
   return getCallableEntityParameters(node);
 }
 
+// Note: return true when parameters list is the same in name and type 
 export function isSameConstructorLikeDeclaration<T extends CallSignatureDeclaration | ConstructorDeclaration>(
   left: T,
   right: T

@@ -1,5 +1,19 @@
-import { CallSignatureDeclaration, FunctionDeclaration, Node, SourceFile, SyntaxKind } from 'ts-morph';
-import { AstContext, DiffLocation, DiffPair, DiffReasons, AssignDirection, FindMappingConstructorLikeDeclaration } from '../common/types';
+import {
+  CallSignatureDeclaration,
+  ClassDeclaration,
+  FunctionDeclaration,
+  Node,
+  SourceFile,
+  SyntaxKind,
+} from 'ts-morph';
+import {
+  AstContext,
+  DiffLocation,
+  DiffPair,
+  DiffReasons,
+  AssignDirection,
+  FindMappingConstructorLikeDeclaration,
+} from '../common/types';
 import {
   findFunctionBreakingChanges,
   findInterfaceBreakingChanges,
@@ -7,6 +21,7 @@ import {
   checkRemovedDeclaration,
   createDiffPair,
   checkAddedDeclaration,
+  findClassBreakingChanges,
 } from '../diff/declaration-diff';
 import { logger } from '../../logging/logger';
 
@@ -31,7 +46,7 @@ const findMappingCallSignature: FindMappingConstructorLikeDeclaration<CallSignat
   if (foundPaths.length === 0) return undefined;
   if (foundPaths.length > 1) logger.warn(`Found more than one mapping call signature for path '${path}'`);
   return { declaration: foundPaths[0], id: path };
-}
+};
 
 export function patchRoutes(astContext: AstContext): DiffPair[] {
   const baseline = astContext.baseline.getInterface('Routes');
@@ -130,6 +145,20 @@ export function patchFunction(name: string, astContext: AstContext): DiffPair[] 
     currentFunctions[0]
   );
   return pairs;
+}
+
+export function patchClass(name: string, astContext: AstContext, assignDirection: AssignDirection): DiffPair[] {
+  const baseline = astContext.baseline.getClass(name);
+  const current = astContext.current.getClass(name);
+
+  if (!baseline && !current) throw new Error(`Failed to find class '${name}' in baseline and current package`);
+
+  const addPair = checkAddedDeclaration(DiffLocation.Class, baseline, current);
+  if (addPair) return [addPair];
+
+  const removePair = checkRemovedDeclaration(DiffLocation.Class, baseline, current);
+  if (removePair) return [removePair];
+  return patchDeclaration(assignDirection, findClassBreakingChanges, baseline!, current!);
 }
 
 export function patchDeclaration<T extends Node>(

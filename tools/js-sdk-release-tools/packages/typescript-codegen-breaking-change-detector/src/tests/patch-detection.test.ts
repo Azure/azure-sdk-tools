@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 import { join } from 'node:path';
 import { createAstContext } from '../azure/detect-breaking-changes';
-import { patchFunction, patchRoutes, patchTypeAlias } from '../azure/patch/patch-detection';
+import { patchClass, patchFunction, patchRoutes, patchTypeAlias } from '../azure/patch/patch-detection';
 import { createTempFolder, getFormattedDate } from './utils';
 import { DiffLocation, DiffReasons, AssignDirection } from '../azure/common/types';
 
@@ -34,6 +34,7 @@ describe("patch current tool's breaking changes", async () => {
     }
   });
 
+  // TODO: seperate tests
   test('detect function', async () => {
     const currentApiViewPath = join(__dirname, testCaseDir, 'function/current-package/patch.api.md');
     const baselineApiViewPath = join(__dirname, testCaseDir, 'function/baseline-package/patch.api.md');
@@ -87,6 +88,7 @@ describe("patch current tool's breaking changes", async () => {
     }
   });
 
+  // TODO: seperate tests
   test('detect routes', async () => {
     const currentApiViewPath = join(__dirname, testCaseDir, 'routes/current-package/patch.api.md');
     const baselineApiViewPath = join(__dirname, testCaseDir, 'routes/baseline-package/patch.api.md');
@@ -133,6 +135,7 @@ describe("patch current tool's breaking changes", async () => {
     }
   });
 
+  // TODO: seperate tests
   test('detect union types', async () => {
     const currentApiViewPath = join(__dirname, testCaseDir, 'union-type/current-package/patch.api.md');
     const baselineApiViewPath = join(__dirname, testCaseDir, 'union-type/baseline-package/patch.api.md');
@@ -179,5 +182,71 @@ describe("patch current tool's breaking changes", async () => {
     } finally {
       if (tempFolder) remove(tempFolder);
     }
+  });
+
+  describe('detect class', async () => {
+    test('removing constructors', async () => {
+      const currentApiViewPath = join(__dirname, testCaseDir, 'class/current-package/patch.api.md');
+      const baselineApiViewPath = join(__dirname, testCaseDir, 'class/baseline-package/patch.api.md');
+      const date = getFormattedDate();
+
+      let tempFolder: string | undefined = undefined;
+      try {
+        const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
+        const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
+        const breakingPairs = patchClass('RemoveClassConstructor', astContext, AssignDirection.CurrentToBaseline);
+        expect(breakingPairs.length).toBe(2);
+        expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+        expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
+        expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+        expect(breakingPairs[0].target?.name).toBe('constructor(remove: string) {}');
+        expect(breakingPairs[1].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+        expect(breakingPairs[1].location).toBe(DiffLocation.Signature);
+        expect(breakingPairs[1].reasons).toBe(DiffReasons.Removed);
+        expect(breakingPairs[1].target?.name).toBe('constructor(p1: string, p2: string) {}');
+      } finally {
+        if (tempFolder) remove(tempFolder);
+      }
+    });
+
+    test('removing class', async () => {
+      const currentApiViewPath = join(__dirname, testCaseDir, 'class/current-package/patch.api.md');
+      const baselineApiViewPath = join(__dirname, testCaseDir, 'class/baseline-package/patch.api.md');
+      const date = getFormattedDate();
+
+      let tempFolder: string | undefined = undefined;
+      try {
+        const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
+        const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
+        const breakingPairs = patchClass('RemoveClass', astContext, AssignDirection.CurrentToBaseline);
+        expect(breakingPairs.length).toBe(1);
+        expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+        expect(breakingPairs[0].location).toBe(DiffLocation.Class);
+        expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+        expect(breakingPairs[0].target?.name).toBe('RemoveClass');
+      } finally {
+        if (tempFolder) remove(tempFolder);
+      }
+    });
+
+    test('adding class', async () => {
+      const currentApiViewPath = join(__dirname, testCaseDir, 'class/current-package/patch.api.md');
+      const baselineApiViewPath = join(__dirname, testCaseDir, 'class/baseline-package/patch.api.md');
+      const date = getFormattedDate();
+
+      let tempFolder: string | undefined = undefined;
+      try {
+        const tempFolder = await createTempFolder(`.tmp/temp-${date}`);
+        const astContext = await createAstContext(baselineApiViewPath, currentApiViewPath, tempFolder);
+        const breakingPairs = patchClass('AddClass', astContext, AssignDirection.CurrentToBaseline);
+        expect(breakingPairs.length).toBe(1);
+        expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+        expect(breakingPairs[0].location).toBe(DiffLocation.Class);
+        expect(breakingPairs[0].reasons).toBe(DiffReasons.Added);
+        expect(breakingPairs[0].source?.name).toBe('AddClass');
+      } finally {
+        if (tempFolder) remove(tempFolder);
+      }
+    });
   });
 });

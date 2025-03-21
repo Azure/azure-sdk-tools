@@ -39,7 +39,7 @@ public static class Startup
         builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureSettings>();
 
         builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
-        builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
+        builder.Services.AddApplicationInsightsTelemetryProcessor<AzureStorageTelemetryProcessor>();
         builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
 
         builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();

@@ -305,20 +305,14 @@ class ClassNode(NodeEntityBase):
         # Find base classes
         base_classes = []
         bases = getattr(self.obj, "__orig_bases__", [])
-        logging.debug(f"Orig bases for {self.namespace_id}: {bases}")
         if not bases:
             bases = getattr(self.obj, "__bases__", [])
-            logging.debug(f"Bases for {self.namespace_id}: {bases}")
         if not bases:
             supertype = getattr(self.obj, "__supertype__", None)
             if supertype:
                 bases = [supertype]
-            logging.debug(f"Supertype Bases for {self.namespace_id}: {bases}")
         for cl in [c for c in bases or [] if c is not object]:
-            logging.debug(f"Found base class for {self.namespace_id}: {cl}")
-            qual_name = get_qualified_name(cl, self.namespace)
-            logging.debug(f"Base class qualified name: {qual_name}")
-            base_classes.append(qual_name)
+            base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
 
     def generate_tokens(self, review_lines: "ReviewLines"):

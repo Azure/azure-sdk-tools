@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { Observable, map } from 'rxjs';
@@ -122,7 +122,7 @@ export class ReviewsService {
     });
   }
 
-  getReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) : Observable<ArrayBuffer>{
+  getReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) : Observable<HttpResponse<ArrayBuffer>>{
     let params = new HttpParams();
     if (activeApiRevisionId) {
       params = params.append('activeApiRevisionId', activeApiRevisionId);
@@ -131,5 +131,7 @@ export class ReviewsService {
       params = params.append('diffApiRevisionId', diffApiRevisionId);
     }
     return this.http.get(this.baseUrl + `/${reviewId}/content`, 
-    { params: params, responseType: 'arraybuffer', withCredentials: true });
+    { 
+      params: params, observe: 'response',
+      responseType: 'arraybuffer', withCredentials: true });
   }}

@@ -6,12 +6,19 @@ export class StructuredToken {
     properties: { [key: string]: string; };
     renderClasses: Set<string>;
 
-    constructor() {
-        this.value = '';
-        this.id = '';
-        this.kind = '';
-        this.tags = new Set();
-        this.properties = {};
-        this.renderClasses = new Set();
+    constructor(
+        value = '',
+        id = '',
+        kind = '',
+        tags = new Set<string>(),
+        properties = {},
+        renderClasses = new Set<string>()
+    ) {
+        this.value = value;
+        this.id = id;
+        this.kind = kind;
+        this.tags = tags;
+        this.properties = properties;
+        this.renderClasses = renderClasses;
     }
 }

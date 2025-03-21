@@ -37,6 +37,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() userProfile : UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
   @Input() loadFailed : boolean = false;
+  @Input() loadFailedMessage : string | undefined;
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
 
@@ -712,15 +713,23 @@ export class CodePanelComponent implements OnChanges{
     this.codeLineSearchMatchInfo = new DoublyLinkedList<CodeLineSearchMatch>();
     
     this.codePanelRowData.forEach((row, idx) => {
-      if (row.rowOfTokens && row.rowOfTokens.length > 0) {
-        let codeLineAsString = convertRowOfTokensToString(row.rowOfTokens);
+      let codeLineAsString = undefined;
+      if (row.type == CodePanelRowDatatype.CodeLine || row.type == CodePanelRowDatatype.Documentation) {
+        codeLineAsString = convertRowOfTokensToString(row.rowOfTokens);
+      } else if (row.type == CodePanelRowDatatype.Diagnostics) {
+        codeLineAsString = row.diagnostics.text;
+      }
+
+      if (codeLineAsString) {
+        codeLineAsString = this.escapeHtml(codeLineAsString);
         const regex = new RegExp(searchText, "gi");
         const matches = [...codeLineAsString.matchAll(regex)];
         if (matches.length > 0) {
           hasMatch = true;
-          this.searchMatchedRowInfo.set(row.nodeIdHashed!, matches);
+          const matchKey = `${row.nodeIdHashed}-${row.type}-${row.rowPositionInGroup}`;
+          this.searchMatchedRowInfo.set(matchKey, matches);
           matches.forEach((match, index) => {
-            const searchMatch = new CodeLineSearchMatch(idx, row.nodeIdHashed!, index);
+            const searchMatch = new CodeLineSearchMatch(idx, row.type, row.rowPositionInGroup, row.nodeIdHashed!, index);
             this.codeLineSearchMatchInfo!.append(searchMatch);
           });
         }
@@ -753,35 +762,47 @@ export class CodePanelComponent implements OnChanges{
     
     codeLines.forEach((codeLine) => {
       const nodeIdhashed = codeLine.getAttribute('data-node-id');
-      if (nodeIdhashed && this.searchMatchedRowInfo.has(nodeIdhashed)) {
+      const rowType = codeLine.getAttribute('data-row-type');
+      const rowPositionInGroup = codeLine.getAttribute('data-row-position-in-group');
+      const matchKey = `${nodeIdhashed}-${rowType}-${rowPositionInGroup}`;
+      if (this.searchMatchedRowInfo.has(matchKey)) {
         const tokens = codeLine.querySelectorAll('.code-line-content > span');
-        const matches = this.searchMatchedRowInfo.get(nodeIdhashed)!;
-  
-        matches.forEach((match, index) => {
-          const matchStartIndex = match.index!;
-          const matchEndIndex = matchStartIndex + match[0].length;
-  
-          let currentOffset = 0;
-          tokens.forEach((token) => {
-            const tokenText = token.textContent || '';
-            const tokenLength = tokenText.length;
+        const matches = this.searchMatchedRowInfo.get(matchKey)!;
 
+        let currentOffset = 0;
+        let matchIndex = 0;
+
+        tokens.forEach((token) => {
+          const tokenContent = token.innerHTML || '';
+          const tokenLength = tokenContent.length;
+
+          let newInnerHTML = '';
+          let lastIndex = 0;
+
+          for (let i = matchIndex; i < matches.length; i++) {          
+            let match = matches[i];
+            const matchStartIndex = match.index!;
+            const matchEndIndex = matchStartIndex + match[0].length;
+  
             const tokenStart = currentOffset;
             const tokenEnd = currentOffset + tokenLength;
   
             if (matchStartIndex < tokenEnd && matchEndIndex > tokenStart) {
               const highlightStart = Math.max(0, matchStartIndex - tokenStart);
               const highlightEnd = Math.min(tokenLength, matchEndIndex - tokenStart);
-
-              const beforeMatch = tokenText.slice(0, highlightStart);
-              const matchText = tokenText.slice(highlightStart, highlightEnd);
-              const afterMatch = tokenText.slice(highlightEnd);
-
-              token.innerHTML = `${beforeMatch}<mark class="codeline-search-match-highlight search-match-${index}">${matchText}</mark>${afterMatch}`;
+        
+              const beforeMatch = tokenContent.slice(lastIndex, highlightStart);
+              const matchText = tokenContent.slice(highlightStart, highlightEnd);
+              lastIndex = highlightEnd;
+        
+              newInnerHTML += `${beforeMatch}<mark class="codeline-search-match-highlight search-match-${i}">${matchText}</mark>`;
+              matchIndex++;
             }
-  
-            currentOffset += tokenLength;
-          });
+          }
+
+          newInnerHTML += tokenContent.slice(lastIndex);
+          token.innerHTML = newInnerHTML;
+          currentOffset += tokenLength;
         });
       }
     });
@@ -791,9 +812,15 @@ export class CodePanelComponent implements OnChanges{
     this.elementRef.nativeElement.querySelectorAll('.codeline-search-match-highlight').forEach((element) => {
       const parent = element.parentNode as HTMLElement;
       if (parent) {
-        parent.innerHTML = parent.textContent || '';
+        parent.innerHTML = this.escapeHtml(parent.textContent!) || '';
       }
     });
+  }
+
+  private escapeHtml(text: string) {
+    const element = document.createElement('div');
+    element.textContent = text;
+    return element.innerHTML;
   }
 
   private getCodeLineIndex(event: MenuItemCommandEvent) {
@@ -825,18 +852,21 @@ export class CodePanelComponent implements OnChanges{
   private highlightActiveSearchMatch(scrollIntoView: boolean = true) {
     if (this.codeLineSearchInfo?.currentMatch) {
       const nodeIdHashed = this.codeLineSearchInfo?.currentMatch.value.nodeIdHashed;
+      const rowPositionInGroup = this.codeLineSearchInfo?.currentMatch.value.rowPositionInGroup;
+      const rowType = this.codeLineSearchInfo?.currentMatch.value.rowType;
       const matchId = this.codeLineSearchInfo?.currentMatch.value.matchId;
 
       const activeMatch = this.elementRef.nativeElement.querySelector('.codeline-search-match-highlight.active');
       if (activeMatch) {
         activeMatch.classList.remove('active');
       }
-      const codeLine = this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"]`);
+      const codeLine = this.elementRef.nativeElement.querySelector(
+        `.code-line[data-node-id="${nodeIdHashed}"][data-row-position-in-group="${rowPositionInGroup}"][data-row-type="${rowType}"]`    
+      );
       if (codeLine) {
         const match = codeLine.querySelector(`.search-match-${matchId}`) as HTMLElement;
         if (match) {
           setTimeout(() => {
-            //this.elementRef.nativeElement.querySelector(`.code-line[data-node-id="${nodeIdHashed}"] .codeline-search-match-highlight.search-match-${matchId}`)!.classList.add('active');
             match.classList.add('active');
             if (scrollIntoView) {
               match.scrollIntoView({ behavior: 'smooth', inline: 'center' });

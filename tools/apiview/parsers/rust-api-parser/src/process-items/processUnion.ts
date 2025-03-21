@@ -1,7 +1,7 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { ImplProcessResult, processImpl } from "./processImpl";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isUnionItem } from "./utils/typeGuards";
 import { processStructField } from "./processStructField";
@@ -16,11 +16,7 @@ import { getAPIJson } from "../main";
 export function processUnion(item: Item): ReviewLine[] {
   if (!isUnionItem(item)) return [];
   const apiJson = getAPIJson();
-  const reviewLines: ReviewLine[] = [];
-
-  if (item.docs) {
-    reviewLines.push(createDocsReviewLine(item));
-  }
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Process derives and impls
   let implResult: ImplProcessResult;

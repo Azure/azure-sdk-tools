@@ -136,7 +136,7 @@ export const getIntegrationBranchName = (context: WorkflowContext, packageName: 
 
 // tslint:disable-next-line: max-line-length
 export const getPackageData = (context: WorkflowContext, result: PackageResult, suppressionContentList?: SDKSuppressionContentList): PackageData => {
-  const relativeFolderPath = result.path[0];
+  const relativeFolderPath = result.path.find(p => p.startsWith('sdk') && !path.extname(p))!;
   if (!relativeFolderPath) {
     // Allow empty package for go sdk
     // throw new Error('Empty path array in package result');

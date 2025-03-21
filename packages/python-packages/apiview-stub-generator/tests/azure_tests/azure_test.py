@@ -110,7 +110,7 @@ def _get_pypi_files(temp_dir, package_name, version, pkg_type):
     if not url:
         raise ValueError(f"Could not find {pkg_type} file for the specified version.")
     
-    pkg_path = _download_file(temp_dir, pkg_type)
+    pkg_path = _download_file(temp_dir, url)
     
     return pkg_path
 

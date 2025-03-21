@@ -5,14 +5,13 @@
 # --------------------------------------------------------------------------
 
 import os
-import sys
 import tempfile
 import shutil
 import requests
-from subprocess import check_call, run, PIPE
+from subprocess import check_call
 from pytest import fail, mark
 
-from apistub import ApiView, TokenKind, StubGenerator
+from apistub import ApiView, StubGenerator
 import json
 
 SDK_PARAMS = [
@@ -140,22 +139,6 @@ class TestApiViewAzure:
                     collect_line_ids(line.children, index)
 
         collect_line_ids(apiview.review_lines)
-
-    def _dependency_installed(self, dep):
-        result = run([sys.executable, "-m", "pip", "show", dep], stdout=PIPE, stderr=PIPE, text=True)
-        # return code 1 means the package is not installed
-        return result.returncode == 0
-
-    def _uninstall_dep(self, dep):
-        if self._dependency_installed(dep):
-            check_call([sys.executable, "-m", "pip", "uninstall", "-y", dep])
-            try:
-                for module in list(sys.modules):
-                    if module.startswith(dep):
-                        del sys.modules[module]
-            except KeyError:
-                pass
-        assert not self._dependency_installed(dep)
     
     def _download_packages(self, directory, package_name, version, pkg_type):
         temp_dir = tempfile.mkdtemp()
@@ -172,7 +155,7 @@ class TestApiViewAzure:
         else:
             print(f"Tar.gz file downloaded to: {pkg_path}")
         return pkg_path
-    
+
     def _diff_token_file(self, old_file, new_file):
         """
         Compare two token JSON files and return the differences.
@@ -180,15 +163,13 @@ class TestApiViewAzure:
         with open(old_file, 'r') as f1, open(new_file, 'r') as f2:
             old_tokens = json.load(f1)
             new_tokens = json.load(f2)
-            
+
             # Replace "ParserVersion" value with "x.x.x"
-            if "ParserVersion" in old_tokens:
-                old_tokens["ParserVersion"] = "x.x.x"
-            if "ParserVersion" in new_tokens:
-                new_tokens["ParserVersion"] = "x.x.x"
-            
+            old_tokens["ParserVersion"] = "x.x.x"
+            new_tokens["ParserVersion"] = "x.x.x"
+
             assert old_tokens == new_tokens, "Generated token file does not match the provided token file."
-        
+
     def _write_tokens(self, stub_gen):
         apiview = stub_gen.generate_tokens()
         json_tokens = stub_gen.serialize(apiview)
@@ -204,7 +185,7 @@ class TestApiViewAzure:
 
         return apiview
 
-    @mark.parametrize("pkg_name,version,directory,pkg_namespace, pkg_type", SDK_PARAMS, ids=SDK_IDS)
+    @mark.parametrize("pkg_name,version,directory,pkg_namespace,pkg_type", SDK_PARAMS, ids=SDK_IDS)
     def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
         pkg_path = self._download_packages(directory, pkg_name, version, pkg_type)
         temp_path = tempfile.gettempdir()
@@ -212,7 +193,6 @@ class TestApiViewAzure:
             pkg_path=pkg_path, temp_path=temp_path, out_path=temp_path,
         )
         apiview = self._write_tokens(stub_gen)
-        
         self._validate_line_ids(apiview)
 
         assert apiview.package_name == pkg_name

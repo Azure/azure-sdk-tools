@@ -1,11 +1,11 @@
-import { NpmPackageInfo, VersionPolicyName } from './types';
+import { NpmPackageInfo, VersionPolicyName } from './types.js';
 import { posix } from 'path';
-import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils';
+import { getNpmPackageName, getNpmPackageSafeName } from './npmUtils.js';
 import { parse, stringify } from 'yaml';
 import { readFile, writeFile } from 'fs/promises';
 
-import { existsAsync } from './utils';
-import { logger } from '../utils/logger';
+import { existsAsync } from './utils.js';
+import { logger } from '../utils/logger.js';
 
 interface ArtifactInfo {
     name: string;

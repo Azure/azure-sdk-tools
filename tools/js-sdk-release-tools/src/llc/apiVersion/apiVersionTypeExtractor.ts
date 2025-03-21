@@ -1,9 +1,10 @@
-import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils";
+import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils.js";
 
-import { ApiVersionType } from "../../common/types";
-import { IApiVersionTypeExtractor } from "../../common/interfaces";
+import { ApiVersionType } from "../../common/types.js";
+import { IApiVersionTypeExtractor } from "../../common/interfaces.js";
 import { join } from "path";
 import { exists } from "fs-extra";
+
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string

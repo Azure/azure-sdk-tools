@@ -19,7 +19,7 @@ SDK_PARAMS = [
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence"),
     ("corehttp", "1.0.0b5", "core", "corehttp"),
     ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob"),
-    ("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
+    #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
 ]
 SDK_IDS = [f"{pkg_name}_{version}" for pkg_name, version, _, _ in SDK_PARAMS]
 

@@ -1,6 +1,6 @@
 [
     {
-        "name": "core-change-net-scenario",
+        "name": "direct + indirect via AdditionalValidationPackages",
         "diff": {
           "ChangedFiles": [
             "eng/tox/run_coverage.py",
@@ -34,7 +34,13 @@
             "AdditionalValidationPackages": [
               ""
             ],
-            "ArtifactDetails": null,
+            "ArtifactDetails": {
+              "triggeringPaths": [
+                "/sdk/template/ci.yml"
+              ],
+              "safeName": "azuretemplate",
+              "name": "azure-template"
+            },
             "CIParameters": {
               "CIMatrixConfigs": []
             }
@@ -56,7 +62,13 @@
             "AdditionalValidationPackages": [
               ""
             ],
-            "ArtifactDetails": null,
+            "ArtifactDetails": {
+              "triggeringPaths": [
+                "/sdk/ml/ci.yml"
+              ],
+              "safeName": "azureaiml",
+              "name": "azure-ai-ml"
+            },
             "CIParameters": {
               "CIMatrixConfigs": []
             }
@@ -76,31 +88,42 @@
             "ReleaseStatus": "2025-03-10",
             "IncludedForValidation": true,
             "AdditionalValidationPackages": [
-              "/sdk\\servicebus\\azure-servicebus",
-              "/sdk\\eventhub\\azure-eventhub",
-              "/sdk\\tables\\azure-data-tables",
-              "/sdk\\appconfiguration\\azure-appconfiguration",
-              "/sdk\\keyvault\\azure-keyvault-keys",
-              "/sdk\\identity\\azure-identity",
-              "/sdk\\core\\azure-mgmt-core",
-              "/sdk\\core\\azure-core-experimental",
-              "/sdk\\core\\azure-core-tracing-opentelemetry",
-              "/sdk\\core\\azure-core-tracing-opencensus",
-              "/sdk\\ml\\azure-ai-ml",
-              "/sdk\\documentintelligence\\azure-ai-documentintelligence",
-              "/sdk\\ai\\azure-ai-inference",
-              "/sdk\\textanalytics\\azure-ai-textanalytics",
-              "/sdk\\translation\\azure-ai-translation-document",
-              "/sdk\\compute\\azure-mgmt-compute",
-              "/sdk\\communication\\azure-communication-chat",
-              "/sdk\\communication\\azure-communication-identity",
-              "/sdk\\storage\\azure-storage-blob"
+              "/sdk/servicebus/azure-servicebus",
+              "/sdk/eventhub/azure-eventhub",
+              "/sdk/tables/azure-data-tables",
+              "/sdk/appconfiguration/azure-appconfiguration",
+              "/sdk/keyvault/azure-keyvault-keys",
+              "/sdk/identity/azure-identity",
+              "/sdk/core/azure-mgmt-core",
+              "/sdk/core/azure-core-experimental",
+              "/sdk/core/azure-core-tracing-opentelemetry",
+              "/sdk/core/azure-core-tracing-opencensus",
+              "/sdk/ml/azure-ai-ml",
+              "/sdk/documentintelligence/azure-ai-documentintelligence",
+              "/sdk/ai/azure-ai-inference",
+              "/sdk/textanalytics/azure-ai-textanalytics",
+              "/sdk/translation/azure-ai-translation-document",
+              "/sdk/compute/azure-mgmt-compute",
+              "/sdk/communication/azure-communication-chat",
+              "/sdk/communication/azure-communication-identity",
+              "/sdk/storage/azure-storage-blob"
             ],
-            "ArtifactDetails": null,
+            "ArtifactDetails": {
+              "triggeringPaths": [
+                "/sdk/core/ci.yml"
+              ],
+              "safeName": "azurecore",
+              "name": "azure-core"
+            },
             "CIParameters": {
               "CIMatrixConfigs": []
             }
           }
         ]
+    },
+    {
+      "name": "eventhubs direct",
+      "diff": {},
+      "expected_package_output": []
     }
 ]

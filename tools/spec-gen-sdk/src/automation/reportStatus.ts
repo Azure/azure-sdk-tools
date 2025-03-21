@@ -3,17 +3,17 @@ import { existsSync, readFileSync, rmSync, writeFileSync} from 'fs';
 import * as path from 'path';
 import * as prettier from 'prettier';
 import * as Handlebars from 'handlebars';
-
 import { getSDKAutomationStateString, SDKAutomationState } from './sdkAutomationState';
 import { setSdkAutoStatus } from '../utils/runScript';
 import { FailureType, setFailureType, WorkflowContext } from './workflow';
 import { formatSuppressionLine } from '../utils/reportFormat';
-import { extractPathFromSpecConfig, removeAnsiEscapeCodes } from '../utils/utils';
-import { vsoAddAttachment, vsoLogIssue } from './logging';
+import { extractPathFromSpecConfig, mapToObject, removeAnsiEscapeCodes } from '../utils/utils';
+import { vsoAddAttachment } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
-import { writeTmpJsonFile } from '../utils/fsUtils';
+import { deleteTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { getGenerationBranchName } from '../types/PackageData';
 import { marked } from "marked";
+import { vsoLogError, vsoLogWarning } from './entrypoint';
 
 const commentLimit = 60;
 
@@ -80,6 +80,7 @@ export const generateReport = (context: WorkflowContext) => {
       vsoAddAttachment(`Generation Summary for ${specConfigPath}`, markdownFilePath);
     } catch (e) {
       context.logger.error(`IOError: Fails to write markdown file. Details: ${e}`);
+      vsoLogError(context, `IOError: Fails to write markdown file. Details: ${e}`);
     }
   }
 
@@ -89,15 +90,22 @@ export const generateReport = (context: WorkflowContext) => {
     fullLogPath: context.fullLogFileName,
     filteredLogPath: context.filteredLogFileName,
     sdkArtifactFolder: context.sdkArtifactFolder,
-    sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder
+    sdkApiViewArtifactFolder: context.sdkApiViewArtifactFolder,
+    ...(context.config.runEnv === 'azureDevOps' ? {vsoLogPath: context.vsoLogFileName} : {})
   };
 
+  let message = "";
+  deleteTmpJsonFile(context, 'execution-report.json');
   writeTmpJsonFile(context, 'execution-report.json', executionReport);
   if (context.status === 'failed') {
-    vsoLogIssue(`The generation process failed for ${specConfigPath}. Refer to the full log for details.`);
+    message = `The generation process failed for ${specConfigPath}. Refer to the full log for details.`;
+    context.logger.error(message);
+    vsoLogError(context, message);
   } 
   else if (context.status === 'notEnabled') {
-    vsoLogIssue(`SDK configuration is not enabled for ${specConfigPath}. Refer to the full log for details.`, "warning");
+    message = `SDK configuration is not enabled for ${specConfigPath}. Refer to the full log for details.`;
+    context.logger.warn(message);
+    vsoLogWarning(context, message);
   } else {
     context.logger.info(`Main status [${context.status}]`);
   }
@@ -114,6 +122,19 @@ export const generateReport = (context: WorkflowContext) => {
   }
 
   context.logger.log('endsection', 'Generate report');
+}
+
+export const saveVsoLog = (context: WorkflowContext) => {
+  const vsoLogFileName = context.vsoLogFileName;
+  context.logger.log('section', `Save log to ${vsoLogFileName}`);
+  try {
+    const content = JSON.stringify(mapToObject(context.vsoLogs), null, 2);
+    writeFileSync(context.vsoLogFileName, content);
+  } catch (error) {
+    context.logger.error(`IOError: Fails to write log to ${vsoLogFileName}. Details: ${error}`);
+    return
+  }
+  context.logger.log('endsection', `Save log to ${vsoLogFileName}`);
 }
 
 export const saveFilteredLog = (context: WorkflowContext) => {
@@ -145,29 +166,34 @@ export const saveFilteredLog = (context: WorkflowContext) => {
   }
 
   const extra = { hasBreakingChange, showLiteInstallInstruction };
-  let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
-  const statusMap = {
-    pending: 'Error',
-    inProgress: 'Error',
-    failed: 'Error',
-    warning: 'Warning',
-    succeeded: 'Info',
-    notEnabled: 'Warning'
-  } as const;
-  const type = statusMap[context.status];
-  const filteredResultData = [
-    {
+
+  try {
+    let commentBody = renderHandlebarTemplate(commentDetailView, context, extra);
+    const statusMap = {
+      pending: 'Error',
+      inProgress: 'Error',
+      failed: 'Error',
+      warning: 'Warning',
+      succeeded: 'Info',
+      notEnabled: 'Warning'
+    } as const;
+    const type = statusMap[context.status];
+    const filteredResultData = {
       type: 'Markdown',
       mode: 'replace',
       level: type,
       message: commentBody,
-      time: new Date()
-    } as MessageRecord
-  ].concat(context.extraResultRecords);
+      time: new Date(),
+    } as MessageRecord;
 
-  context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
-  const content = JSON.stringify(filteredResultData);
-  writeFileSync(context.filteredLogFileName, content);
+    context.logger.info(`Writing filtered log to ${context.filteredLogFileName}`);
+    const content = JSON.stringify(filteredResultData);
+    writeFileSync(context.filteredLogFileName, content);
+  } catch (error) {
+    context.logger.error(`IOError: Fails to write log to ${context.filteredLogFileName}. Details: ${error}`);
+    vsoLogError(context, `IOError: Fails to write log to ${context.filteredLogFileName}. Details: ${error}`);
+  }
+
   context.logger.log('endsection', 'Save filtered log status');
 };
 
@@ -177,42 +203,36 @@ export const generateHtmlFromFilteredLog = (context: WorkflowContext) => {
     const RegexNoteBlock = /> \[!NOTE\]\s*>\s*(.*)/;
     let messageRecord: string | undefined = undefined;
     try {
-        messageRecord = readFileSync(context.filteredLogFileName).toString();
+      messageRecord = readFileSync(context.filteredLogFileName).toString();
+      const parseMessageRecord = JSON.parse(messageRecord) as MessageRecord;
+      let pageBody = '';
+      const markdown = parseMessageRecord.message || '';
+      let noteBlockInfo = '';
+      let mainContent = '';
+      const match = markdown.match(RegexMarkdownSplit);
+      if (match !== null) {
+          mainContent = match[2].trim();
+          const noteBlock = match[1].trim();
+          const noteBlockMatch = noteBlock.match(RegexNoteBlock);
+          if (noteBlockMatch !== null) {
+              noteBlockInfo = noteBlockMatch[1].trim();
+          }
+      } else {
+          mainContent = marked(markdown) as string;
+      }
+      const noteBlockHtml = noteBlockInfo && generateNoteBlockTemplate(noteBlockInfo);
+      pageBody += (noteBlockHtml  + mainContent);
+
+      // eg: spec-gen-sdk-net result
+      const pageTitle = `spec-gen-sdk-${context.config.sdkName.substring("azure-sdk-for-".length)} result`;
+      const generatedHtml: string = generateHtmlTemplate(pageBody, pageTitle );
+      context.logger.info(`Writing html to ${context.htmlLogFileName}`);
+      writeFileSync(context.htmlLogFileName, generatedHtml , "utf-8");
     } catch (error) {
-        context.logger.error(`IOError: Fails to read log in'${context.filteredLogFileName}', Details: ${error}`)
-        return;
+        context.logger.error(`Error: failed to generate html log'${context.htmlLogFileName}', Details: ${error}`)
+        vsoLogError(context, `Error: failed to generate html log'${context.htmlLogFileName}', Details: ${error}`);
     }
 
-    const parseMessageRecord = JSON.parse(messageRecord) as MessageRecord[];
-
-    let pageBody = '';
-    for(let commentBody of parseMessageRecord) {
-        const markdown = commentBody.message || '';
-        if (markdown.trim().length === 0) continue;
-        let noteBlockInfo = '';
-        let mainContent = '';
-        
-        const match = markdown.match(RegexMarkdownSplit);
-        if (match !== null) { 
-            mainContent = match[2].trim(); 
-            const noteBlock = match[1].trim();
-            const noteBlockMatch = noteBlock.match(RegexNoteBlock);
-            if (noteBlockMatch !== null) {
-                noteBlockInfo = noteBlockMatch[1].trim();
-            }
-        } else {
-            mainContent = marked(markdown) as string;
-        }
-        const noteBlockHtml = noteBlockInfo && generateNoteBlockTemplate(noteBlockInfo);
-        pageBody += (noteBlockHtml  + mainContent);
-    }
-
-    // eg: spec-gen-sdk-net result
-    const pageTitle = `spec-gen-sdk-${context.config.sdkName.substring("azure-sdk-for-".length)} result`;
-    const generatedHtml: string = generateHtmlTemplate(pageBody, pageTitle );
-    
-    context.logger.info(`Writing html to ${context.htmlLogFileName}`);
-    writeFileSync(context.htmlLogFileName, generatedHtml , "utf-8");
     context.logger.log('endsection', 'Generate HTML from filtered log');
 }
 
@@ -353,28 +373,6 @@ const handleBarHelpers = {
   renderParseSuppressionLinesErrors: (parseSuppressionLinesErrors: string[]) => {
     return `<pre><strong>Parse Suppression File Errors</strong><BR>${parseSuppressionLinesErrors.map(trimNewLine).join('<BR>')}</pre>`;
   },
-  renderSDKTitleMapping: (sdkRepoName: string) => {
-    switch (sdkRepoName) {
-      case 'azure-cli-extensions':
-        return 'Azure CLI Extension Generation';
-      case 'azure-sdk-for-trenton':
-        return 'Trenton Generation';
-      default:
-        return sdkRepoName;
-    }
-  },
-  renderSDKNameMapping: (sdkRepoName: string) => {
-    switch (sdkRepoName) {
-      case 'azure-cli-extensions':
-        return 'Azure CLI';
-      case 'azure-sdk-for-trenton':
-        return 'Trenton';
-      case 'azure-resource-manager-schemas':
-        return 'Schema';
-      default:
-        return 'SDK';
-    }
-  },
   shouldRender: (messages: boolean | string[] | undefined,
     isBetaMgmtSdk: boolean | undefined,
     hasBreakingChange?: boolean) => {
@@ -418,7 +416,6 @@ function unifiedRenderingMessages(message: string[], title?: string): string {
 }
 
 const setPipelineVariables = async (context: WorkflowContext, executionReport: ExecutionReport) => {
-  let breakingChangeLabel = "";
   let packageName = "";
   let prBranch = "";
   let prTitle = "";
@@ -426,9 +423,6 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
 
   if (executionReport && executionReport.packages && executionReport.packages.length > 0) {
     const pkg = executionReport.packages[0];
-    if (pkg.shouldLabelBreakingChange) {
-      breakingChangeLabel = pkg.breakingChangeLabel ?? "";
-    }
     packageName = pkg.packageName ?? "";
     if (context.config.pullNumber) {    
       prBody = `Create to sync ${context.config.specRepoHttpsUrl}/pull/${context.config.pullNumber}\n\n`;
@@ -439,7 +433,7 @@ const setPipelineVariables = async (context: WorkflowContext, executionReport: E
   
   prBody = `${prBody}\n This pull request has been automatically generated for preview purposes.`;
   prTitle = `[AutoPR ${packageName}]`;
-  sendPipelineVariable("BreakingChangeLabel", breakingChangeLabel);
+  sendPipelineVariable("BreakingChangeLabel", context.swaggerToSdkConfig.packageOptions.breakingChangesLabel ?? "")
   sendPipelineVariable("PrBranch", prBranch);
   sendPipelineVariable("PrTitle", prTitle);
   sendPipelineVariable("PrBody", prBody);

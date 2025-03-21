@@ -47,7 +47,7 @@
                         <p-multiSelect [ngModel]="value" [appendTo]="reviewsTable" [options]="languages" [filter]="false" [(ngModel)]="selectedLanguages" (onChange)="filter($event.value)" optionLabel="label">
                             <ng-template let-option pTemplate="item">
                                 <div class="inline-block vertical-align-middle">
-                                    <img [alt]="" src="{{assetsPath}}/images/{{ option.label | languageNames }}-original.svg" width="24" class="vertical-align-middle" />
+                                    <img [alt]="" src="{{assetsPath}}/images/{{ option.label | languageNames: userProfile?.preferences?.theme }}-original.svg" width="24" class="vertical-align-middle" />
                                     <span class="mx-2 mt-1">{{ option.label }}</span>
                                 </div>
                             </ng-template>
@@ -63,7 +63,7 @@
     <ng-template pTemplate="body" let-review>
         <tr [pContextMenuRow]="review" [pSelectableRow]="review">
             <td>
-                <img class="ms-3" src="{{assetsPath}}/images/{{ review.language | languageNames }}-original.svg" alt="{{review.language}}" width="25">
+                <img class="ms-3" src="{{assetsPath}}/images/{{ review.language | languageNames: userProfile?.preferences?.theme }}-original.svg" alt="{{review.language}}" width="25">
             </td>
             <td style="word-wrap: break-word; max-width: 10ch">{{ review.packageName }} <i *ngIf="review.isApproved" class="fas fa-check-circle text-success"></i></td>
         </tr>

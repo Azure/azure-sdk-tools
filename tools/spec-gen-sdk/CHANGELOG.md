@@ -1,5 +1,21 @@
 # Release
 
+## 2025-03-14 - 0.3.0
+
+- Removed breaking change label artifact related code
+- Refactored loggings for pipeline scenarios and created separted log file
+
+## 2025-03-11 - 0.2.2
+
+- Saved label artifacts in separate folders
+- Log issue depended on the 'scriptError' setting in 'swagger_to_sdk_config.json'
+
+## 2025-03-07 - 0.2.1
+
+- Generated SDK breaking change label artifacts in pipeline scenario
+- Refactored filter log and added entries for pipeline logging issue
+- Log issue depended on the 'scriptError' setting in 'swagger_to_sdk_config.json'
+
 ## 2025-03-04 - 0.2.0
 
 - Combined all logging errors from custom scripts into a single entry for devops

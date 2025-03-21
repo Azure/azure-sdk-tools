@@ -1,5 +1,8 @@
 # Release History
 
+## 0.5.3 (2025-03-19)
+- Updating documentation
+
 ## 0.5.2 (2025-02-19)
 
 - Bug fix for `do-not-log-exceptions` checker, was incorrectly flagging debug logs.

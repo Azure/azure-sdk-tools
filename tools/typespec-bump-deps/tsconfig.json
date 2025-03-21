@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "composite": true,
+    "composite": false,
     "alwaysStrict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "nodenext",
@@ -20,7 +20,8 @@
     "lib": ["es2019"],
     "experimentalDecorators": true,
     "newLine": "LF",
-    "outDir": "dist"
+    "outDir": "dist",
+    "incremental": false
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }

@@ -1,0 +1,46 @@
+[
+    {
+        "name": "core-change-net-scenario",
+        "diff": {
+            "ChangedFiles": [
+              "sdk/eventhub/Azure.Messaging.EventHubs/README.md"
+            ],
+            "ChangedServices": [
+              "eventhub",
+              "template"
+            ],
+            "ExcludePaths": [],
+            "DeletedFiles": [],
+            "PRNumber": "48379"
+        },
+        "expected_package_output": [
+            {
+                "Name": "Azure.Messaging.EventHubs",
+                "Version": "5.12.0-beta.3",
+                "DevVersion": null,
+                "DirectoryPath": "sdk/eventhub/Azure.Messaging.EventHubs",
+                "ServiceDirectory": "eventhub",
+                "ReadMePath": "sdk/eventhub/Azure.Messaging.EventHubs/README.md",
+                "ChangeLogPath": "sdk/eventhub/Azure.Messaging.EventHubs/CHANGELOG.md",
+                "Group": null,
+                "SdkType": "client",
+                "IsNewSdk": true,
+                "ArtifactName": "Azure.Messaging.EventHubs",
+                "ReleaseStatus": "Unreleased",
+                "IncludedForValidation": false,
+                "AdditionalValidationPackages": null,
+                "ArtifactDetails": {
+                  "triggeringPaths": [
+                    "/sdk/eventhub/Azure.Messaging.EventHubs.Shared",
+                    "/sdk/eventhub/ci.yml"
+                  ],
+                  "name": "Azure.Messaging.EventHubs",
+                  "safeName": "AzureMessagingEventHubs"
+                },
+                "CIParameters": {
+                  "CIMatrixConfigs": []
+                }
+            }
+        ]
+    }
+]

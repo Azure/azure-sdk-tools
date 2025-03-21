@@ -214,6 +214,16 @@ Example:
 tsp-client generate-lock-file
 ```
 
+### install-dependencies
+
+Install the dependencies pinned in emitter-package.json and emitter-package-lock.json (if it exists) at the root of the repository by default. The command supports a positional path parameter if the dependencies need to be installed in an alternate directory.
+
+> IMPORTANT: The node_modules/ directory needs to be installed in a path where basic npm commands will be able to use it. Typically within the same directory path as the target TypeSpec project to compile.
+
+```bash
+tsp-client install-dependencies [optional install path]
+```
+
 ## Important concepts
 
 ### Per project setup

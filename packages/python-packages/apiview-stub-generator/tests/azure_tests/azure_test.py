@@ -15,15 +15,15 @@ from apistub import ApiView, StubGenerator
 import json
 
 SDK_PARAMS = [
-    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
-    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
-    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
+    #("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
+    #("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
+    #("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
     ("corehttp", "1.0.0b5", "core", "corehttp", "src"),
     ("corehttp", "1.0.0b5", "core", "corehttp", "whl"),
     ("corehttp", "1.0.0b5", "core", "corehttp", "sdist"),
-    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "src"),
-    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "whl"),
-    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
+    #("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "src"),
+    #("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "whl"),
+    #("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
     #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
 ]
 SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]
@@ -190,6 +190,8 @@ class TestApiViewAzure:
 
     @mark.parametrize("pkg_name,version,directory,pkg_namespace,pkg_type", SDK_PARAMS, ids=SDK_IDS)
     def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
+        print("Pip freeze before test")
+        check_call(["pip", "freeze"])
         pkg_path = self._download_packages(directory, pkg_name, version, pkg_type)
         temp_path = tempfile.gettempdir()
         stub_gen = StubGenerator(

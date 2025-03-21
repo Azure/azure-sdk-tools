@@ -167,6 +167,9 @@ class TestApiViewAzure:
             # Replace "ParserVersion" value with "x.x.x"
             old_tokens["ParserVersion"] = "x.x.x"
             new_tokens["ParserVersion"] = "x.x.x"
+            # Replace the GLOBAL header value ("# Package is parsed using apiview-stub-generator(version:0.3.17), Python version: 3.10.12") which may differ.
+            old_tokens["ReviewLines"]["Tokens"]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
+            new_tokens["ReviewLines"]["Tokens"]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
 
             assert old_tokens == new_tokens, "Generated token file does not match the provided token file."
 

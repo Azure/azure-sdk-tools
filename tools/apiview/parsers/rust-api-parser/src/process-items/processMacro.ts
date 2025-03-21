@@ -14,18 +14,24 @@ export function processMacro(item: Item): ReviewLine[] | null {
 
   const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
-  // Create the ReviewLine object
-  const reviewLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
-
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: item.inner.macro,
+  // Split the macro value by newlines
+  const macroLines = item.inner.macro.split('\n');
+  
+  // Create ReviewLines for each macro line
+  macroLines.forEach((line, index) => {
+    const reviewLine: ReviewLine = {
+      LineId: index === 0 ? item.id.toString() : `${item.id.toString()}_macro_${index}`,
+      Tokens: [
+        {
+          Kind: TokenKind.Text,
+          Value: line,
+        },
+      ],
+      // Only additional lines are related to the first line
+      RelatedToLine: index === 0 ? undefined : item.id.toString(),
+    };
+    reviewLines.push(reviewLine);
   });
 
-  reviewLines.push(reviewLine);
   return reviewLines;
 }

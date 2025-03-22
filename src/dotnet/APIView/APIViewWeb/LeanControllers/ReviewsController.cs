@@ -16,6 +16,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
+using System.Collections.Generic;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using APIViewWeb.DTOs;
+using APIView.Model.V2;
+using System;
+using System.Linq;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -202,6 +210,29 @@ namespace APIViewWeb.LeanControllers
             }
 
             return new LeanJsonResult("Invalid APIRevision", StatusCodes.Status500InternalServerError);
+        }
+
+        ///<summary>
+        ///Retrieve Cross Language Content for specified revisions
+        ///</summary>
+        ///<param name="apiRevisionId"></param>
+        ///<param name="apiCodeFileId"></param>
+        ///<returns></returns>
+        [Route("crossLanguageContent")]
+        [HttpGet]
+        public async Task<ActionResult<CrossLanguageContentDto>> GetReviewContentAsync([FromQuery] string apiRevisionId, [FromQuery] string apiCodeFileId)
+        {
+            var results = new List<CrossLanguageContentDto>();
+
+            var revisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: apiRevisionId, codeFileId: apiCodeFileId);
+            var processingData = new CrossLanguageProcessingDto();
+            await CodeFileHelpers.GrabCrossLanguageReviewLines(processingData, revisionReviewCodeFile.ReviewLines);
+            var contentData = new CrossLanguageContentDto();
+            contentData.Content = processingData.Content;
+            contentData.APIRevisionId = apiRevisionId;
+            contentData.Language = revisionReviewCodeFile.Language;
+
+            return new LeanJsonResult(contentData, StatusCodes.Status200OK);
         }
     }
 }

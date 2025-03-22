@@ -121,3 +121,39 @@ export function getAIReviewNotifiationInfo(jobInfo : AIReviewJobCompletedDto, or
   }
   return undefined;
 }
+
+export function getCodePanelRowDataClass(row: CodePanelRowData) {
+  let classObject: { [key: string]: boolean } = {};
+  if (row.rowClasses) {
+    for (let className of Array.from(row.rowClasses)) {
+      classObject[className] = true;
+    }
+  }
+
+  if (row.isHiddenAPI) {
+    classObject['hidden-api'] = true;
+  }
+  return classObject;
+}
+
+export function getStructuredTokenClass(token: StructuredToken) {
+  let classObject: { [key: string]: boolean } = {};
+  if (token.renderClasses) {
+    for (let className of Array.from(token.renderClasses)) {
+      classObject[className] = true;
+    }
+  }
+
+  if (token.properties && 'NavigateToUrl' in token.properties) {
+    classObject['url-token'] = true;
+  }
+
+  if (token.properties && 'NavigateToId' in token.properties) {
+    classObject['nav-token'] = true;
+  }
+
+  if (token.tags && new Set(token.tags).has('Deprecated')) {
+    classObject['deprecated-token'] = true;
+  }
+  return classObject;
+}

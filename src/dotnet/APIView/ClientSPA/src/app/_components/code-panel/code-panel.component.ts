@@ -75,7 +75,8 @@ export class CodePanelComponent implements OnChanges{
 
     this.menuItemsLineActions = [
       { label: 'Copy line', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLineToClipBoard(event) },
-      { label: 'Copy permalink', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLinePermaLinkToClipBoard(event) }
+      { label: 'Copy permalink', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLinePermaLinkToClipBoard(event) },
+      { label: 'Cross language', icon: 'bi bi-table', command: (event) => this.showCrossLanguageView(event) }
     ];
 
     fromEvent<KeyboardEvent>(document, 'keydown')
@@ -635,6 +636,10 @@ export class CodePanelComponent implements OnChanges{
     this.navigateToCommentThread(event.direction);
   }
 
+  handleCloseCrossLanguageViewEmitter(event: any) {
+    this.removeItemsFromScroller(event[0], event[1] as CodePanelRowDatatype);
+  }
+
   navigateToCommentThread(direction: CodeLineRowNavigationDirection) {
     const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
@@ -847,6 +852,18 @@ export class CodePanelComponent implements OnChanges{
     const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
     const codeLineText = convertRowOfTokensToString(codeLine.rowOfTokens);
     navigator.clipboard.writeText(codeLineText);
+  }
+
+  private showCrossLanguageView(event: MenuItemCommandEvent) {
+    const codeLineIndex = this.getCodeLineIndex(event);
+    const codeLine = this.codePanelRowData[parseInt(codeLineIndex!, 10)];
+    const crossLanguageRow = new CodePanelRowData();
+    crossLanguageRow.type = CodePanelRowDatatype.CrossLanguageView;
+    crossLanguageRow.nodeIdHashed = codeLine.nodeIdHashed;
+    crossLanguageRow.nodeId = codeLine.nodeId;
+    crossLanguageRow.rowClasses = new Set<string>(['cross-language-view']);
+    crossLanguageRow.associatedRowPositionInGroup = codeLine.rowPositionInGroup;
+    this.insertItemsIntoScroller([crossLanguageRow], crossLanguageRow.nodeIdHashed, codeLine.type, crossLanguageRow.associatedRowPositionInGroup);
   }
 
   private highlightActiveSearchMatch(scrollIntoView: boolean = true) {

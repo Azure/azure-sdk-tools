@@ -45,6 +45,12 @@
         (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)">
       </app-comment-thread>
     </ng-container>
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguageView">
+      <app-cross-lang-view
+        [codePanelRowData]="item"
+        (closeCrossLanguageViewEmitter)="handleCloseCrossLanguageViewEmitter($event)"
+      ></app-cross-lang-view>
+    </ng-container>
   </div>
 </div>
 <div class="pt-4 d-flex justify-content-center align-items-center" *ngIf="!isLoading && !codePanelRowSource">

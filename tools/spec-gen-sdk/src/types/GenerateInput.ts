@@ -8,6 +8,7 @@ export type GenerateInput = {
   headSha: string;
   repoHttpsUrl: string;
   apiVersion?: string;
+  sdkReleaseType: string;
   changedFiles: string[];
   relatedReadmeMdFiles?: string[];
   relatedTypeSpecProjectFolder?: string[];

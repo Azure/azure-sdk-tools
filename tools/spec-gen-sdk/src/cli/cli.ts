@@ -22,6 +22,7 @@ export type SpecGenSdkCliConfig = {
   sdkRepoName: string;
   apiVersion?: string;
   prNumber?: string;
+  sdkReleaseType: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   headRepoHttpsUrl?: string;
@@ -40,6 +41,7 @@ const initCliConfig = (argv) : SpecGenSdkCliConfig => {
     sdkRepoName: argv.sdkRepoName,
     apiVersion: argv.apiVersion,
     prNumber: argv.prNumber,
+    sdkReleaseType: argv.sdkReleaseType,
     specCommitSha: argv.specCommitSha,
     specRepoHttpsUrl: argv.specRepoHttpsUrl,
     headRepoHttpsUrl: argv.headRepoHttpsUrl,
@@ -68,11 +70,12 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       pullNumber: config.prNumber,
       sdkName: config.sdkRepoName,
       apiVersion: config.apiVersion,
+      sdkReleaseType: config.sdkReleaseType,
       workingFolder: config.workingFolder,
       headRepoHttpsUrl: config.headRepoHttpsUrl,
       headBranch: config.headBranch,
       isTriggeredByPipeline: config.isTriggeredByPipeline,
-      runEnv: config.isTriggeredByPipeline.toLocaleLowerCase() === "true" ? 'azureDevOps' : 'local',
+      runEnv: config.isTriggeredByPipeline.toLowerCase() === "true" ? 'azureDevOps' : 'local',
       branchPrefix: 'sdkAuto',
       version: config.version
     });
@@ -175,6 +178,13 @@ yargs(hideBin(process.argv))
           alias: "apiv",
           type: "string",
           description: "The version of the API spec to be used to generate the SDK",
+        },
+        'sdk-release-type': {
+          alias: "srt",
+          type: "string",
+          description: "The release type of SDK, either 'beta' or 'stable'",
+          default: "beta",
+          choices: ['beta', 'stable']
         }
     })},
     async (argv) => {

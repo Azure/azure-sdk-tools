@@ -312,6 +312,7 @@ const workflowCallGenerateScript = async (
     repoHttpsUrl: context.config.specRepoHttpsUrl ?? "",
     changedFiles,
     apiVersion: context.config.apiVersion,
+    sdkReleaseType: context.config.sdkReleaseType,
     installInstructionInput: {
       isPublic: !context.isPrivateSpecRepo,
       downloadUrlPrefix: "",

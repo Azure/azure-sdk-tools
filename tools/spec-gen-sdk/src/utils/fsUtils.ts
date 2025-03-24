@@ -15,7 +15,7 @@ export const readTmpJsonFile = (context: WorkflowContext, fileName: string): unk
   const filePath = path.join(context.tmpFolder, fileName);
 
   if (!fs.existsSync(filePath)) {
-    context.logger.warn(`Warning: File ${filePath} not found to read. Please re-run the pipeline if the error is transitient error or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
+    context.logger.warn(`Warning: File ${filePath} not found to read. Re-run if the error is transitient or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
     return undefined;
   }
 
@@ -26,7 +26,7 @@ export const readTmpJsonFile = (context: WorkflowContext, fileName: string): unk
     context.logger.info(JSON.stringify(content, undefined, 2));
     return content;
   } catch (e) {
-    context.logger.error(`IOError: Failed to read ${fileName}: ${e.message}. Please re-run the pipeline if the error is retryable or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
+    context.logger.error(`IOError: Failed to read ${fileName}: ${e.message}. Re-run if the error is retryable or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
     return undefined;
   }
 };

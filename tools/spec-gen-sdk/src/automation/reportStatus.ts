@@ -21,7 +21,7 @@ export const generateReport = (context: WorkflowContext) => {
   context.logger.log('section', 'Generate report');
   let executionReport: ExecutionReport;
   const packageReports: PackageReport[] = [];
-  const specConfigPath = (context.config.tspConfigPath ?? context.config.readmePath)?.replace(/\//g, '-');
+  const specConfigPath = (context.specConfigPath)?.replace(/\//g, '-');
 
   let hasSuppressions = false
   let hasAbsentSuppressions = false;

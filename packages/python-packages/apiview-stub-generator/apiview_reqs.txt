@@ -1,5 +1,4 @@
 astroid==2.15.8
-azure-pylint-guidelines-checker==0.5.2
 charset-normalizer==3.4.1
 dill==0.3.9
 isodate==0.6.1

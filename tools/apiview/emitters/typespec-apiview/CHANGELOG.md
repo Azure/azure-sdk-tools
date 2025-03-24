@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.6.0 (03-20-2025)
+Support new TypeSpec compiler.
+**BREAKING CHANGE**: Removed support for `--version` parameter. Multi-versioned specs will be emitter as-is.
+
 ## Version 0.5.1 (02-27-2025)
 Support new TypeSpec syntax.
 

@@ -12,11 +12,15 @@ export class CodeLineSearchInfo {
 
 export class CodeLineSearchMatch {
   rowIndex: number;
+  rowType: string;
+  rowPositionInGroup: number;
   nodeIdHashed: string;
   matchId: number;
 
-  constructor(rowIndex: number, nodeIdHashed: string, matchId: number) {
+  constructor(rowIndex: number, rowType: string, rowPositionInGroup: number, nodeIdHashed: string, matchId: number) {
     this.rowIndex = rowIndex;
+    this.rowType = rowType;
+    this.rowPositionInGroup = rowPositionInGroup;
     this.nodeIdHashed = nodeIdHashed;
     this.matchId = matchId;
   }

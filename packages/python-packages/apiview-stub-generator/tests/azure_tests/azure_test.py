@@ -5,23 +5,28 @@
 # --------------------------------------------------------------------------
 
 import os
-import sys
 import tempfile
 import shutil
 import requests
-from subprocess import check_call, run, PIPE
+from subprocess import check_call
 from pytest import fail, mark
 
-from apistub import ApiView, TokenKind, StubGenerator
+from apistub import ApiView, StubGenerator
+import json
 
 SDK_PARAMS = [
-    ("azure-core", "1.32.0", "core", "azure.core"),
-    #("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence"),
-    #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts"),
-    #("corehttp", "1.0.0b5", "corehttp", "core", "corehttp"),
-    #("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob")
+    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
+    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
+    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
+    ("corehttp", "1.0.0b5", "core", "corehttp", "src"),
+    ("corehttp", "1.0.0b5", "core", "corehttp", "whl"),
+    ("corehttp", "1.0.0b5", "core", "corehttp", "sdist"),
+    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "src"),
+    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "whl"),
+    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
+    #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
 ]
-SDK_IDS = [f"{pkg_name}_{version}" for pkg_name, version, _, _ in SDK_PARAMS]
+SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]
 
 def _copy_directory_from_github(dest_dir, repo_url, directory, tag=None):
     """
@@ -78,7 +83,7 @@ def _download_file(dest_folder, url):
                 f.write(chunk)
     return local_filename
 
-def _get_pypi_files(temp_dir, package_name, version):
+def _get_pypi_files(temp_dir, package_name, version, pkg_type):
     """
     Get the wheel and tar.gz files from PyPI for a specific version of a package.
 
@@ -91,22 +96,22 @@ def _get_pypi_files(temp_dir, package_name, version):
     response.raise_for_status()
     data = response.json()
     
-    wheel_url = None
-    tar_gz_url = None
+    url = None
     
     for file_info in data['urls']:
-        if file_info['packagetype'] == 'bdist_wheel':
-            wheel_url = file_info['url']
-        elif file_info['packagetype'] == 'sdist':
-            tar_gz_url = file_info['url']
+        if pkg_type == "whl" and file_info['packagetype'] == 'bdist_wheel':
+            url = file_info['url']
+            break
+        elif pkg_type == "sdist" and file_info['packagetype'] == 'sdist':
+            url = file_info['url']
+            break
     
-    if not wheel_url or not tar_gz_url:
-        raise ValueError("Could not find both wheel and tar.gz files for the specified version.")
+    if not url:
+        raise ValueError(f"Could not find {pkg_type} file for the specified version.")
     
-    wheel_path = _download_file(temp_dir, wheel_url)
-    tar_gz_path = _download_file(temp_dir, tar_gz_url)
+    pkg_path = _download_file(temp_dir, url)
     
-    return wheel_path, tar_gz_path
+    return pkg_path
 
 
 class TestApiViewAzure:
@@ -134,42 +139,76 @@ class TestApiViewAzure:
                     collect_line_ids(line.children, index)
 
         collect_line_ids(apiview.review_lines)
-
-    def _dependency_installed(self, dep):
-        result = run([sys.executable, "-m", "pip", "show", dep], stdout=PIPE, stderr=PIPE, text=True)
-        # return code 1 means the package is not installed
-        return result.returncode == 0
-
-    def _uninstall_dep(self, dep):
-        if self._dependency_installed(dep):
-            check_call([sys.executable, "-m", "pip", "uninstall", "-y", dep])
-            try:
-                for module in list(sys.modules):
-                    if module.startswith(dep):
-                        del sys.modules[module]
-            except KeyError:
-                pass
-        assert not self._dependency_installed(dep)
     
-    def _download_packages(self, directory, package_name, version):
+    def _download_packages(self, directory, package_name, version, pkg_type):
         temp_dir = tempfile.mkdtemp()
         temp_path = os.path.join(temp_dir, package_name)
         # copy src to tmp/tmp**/azure-*
-        src_path = _get_src(temp_path, directory, package_name, version)
+        if pkg_type == "src":
+            src_path = _get_src(temp_path, directory, package_name, version)
+            print(f"Source directory copied to: {src_path}")
+            return src_path
         # copy whl and sdist files to tmp/tmp**
-        whl_path, sdist_path = _get_pypi_files(temp_dir, package_name, version)
-        print(f"Source directory copied to: {src_path}")
-        print(f"Wheel file downloaded to: {whl_path}")
-        print(f"Tar.gz file downloaded to: {sdist_path}")
-        return src_path, whl_path, sdist_path
+        pkg_path = _get_pypi_files(temp_dir, package_name, version, pkg_type)
+        if pkg_type == "whl":
+            print(f"Wheel file downloaded to: {pkg_path}")
+        else:
+            print(f"Tar.gz file downloaded to: {pkg_path}")
+        return pkg_path
 
-    @mark.parametrize("pkg_name,version,directory,pkg_namespace", SDK_PARAMS, ids=SDK_IDS)
-    def test_sdks(self, pkg_name, version, directory, pkg_namespace):
-        src_path, whl_path, sdist_path = self._download_packages(directory, pkg_name, version)
-        temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=src_path, temp_path=temp_path)
+    def _diff_token_file(self, old_file, new_file):
+        """
+        Compare two token JSON files and return the differences.
+        """
+        with open(old_file, 'r') as f1, open(new_file, 'r') as f2:
+            old_tokens = json.load(f1)
+            new_tokens = json.load(f2)
+
+            # Replace "ParserVersion" value with "x.x.x"
+            old_tokens["ParserVersion"] = "x.x.x"
+            new_tokens["ParserVersion"] = "x.x.x"
+            # Replace the GLOBAL header value ("# Package is parsed using apiview-stub-generator(version:0.3.17), Python version: 3.10.12") which may differ.
+            old_tokens["ReviewLines"][0]["Tokens"][0]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
+            new_tokens["ReviewLines"][0]["Tokens"][0]["Value"] = "Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
+
+            assert old_tokens == new_tokens, "Generated token file does not match the provided token file."
+
+    def _write_tokens(self, stub_gen):
         apiview = stub_gen.generate_tokens()
+        json_tokens = stub_gen.serialize(apiview)
+        # Write to JSON file
+        out_file_path = stub_gen.out_path
+        # Generate JSON file name if outpath doesn't have json file name
+        if not out_file_path.endswith(".json"):
+            out_file_path = os.path.join(
+                stub_gen.out_path, f"{apiview.package_name}_python.json"
+            )
+        with open(out_file_path, "w") as json_file:
+            json_file.write(json_tokens)
+
+        return apiview
+
+    @mark.parametrize("pkg_name,version,directory,pkg_namespace,pkg_type", SDK_PARAMS, ids=SDK_IDS)
+    def test_sdks(self, pkg_name, version, directory, pkg_namespace, pkg_type):
+        print("Pip freeze before test")
+        check_call(["pip", "freeze"])
+        pkg_path = self._download_packages(directory, pkg_name, version, pkg_type)
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(
+            pkg_path=pkg_path, temp_path=temp_path, out_path=temp_path,
+        )
+        apiview = self._write_tokens(stub_gen)
         self._validate_line_ids(apiview)
 
         assert apiview.package_name == pkg_name
         assert apiview.namespace == pkg_namespace
+<<<<<<< HEAD
+=======
+
+        # Compare the generated token file with the provided token file
+        outfile = f"{pkg_name}_python.json"
+        generated_token_file = os.path.join(temp_path, outfile)
+        provided_token_file = os.path.abspath(os.path.join(os.path.dirname(__file__), f"token_files/{outfile}"))
+
+        self._diff_token_file(provided_token_file, generated_token_file)
+>>>>>>> 2009895f82425f28d03b637d5bf985e45f63e2c2

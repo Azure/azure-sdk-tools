@@ -234,6 +234,11 @@
     background: url(/icons/typespec-original.svg) center center no-repeat;
 }
 
+.icon-rust {
+    @extend .icon-language;
+    background: var(--rust-icon)
+}
+
 .icon-comments {
     cursor: pointer;
     position: absolute;

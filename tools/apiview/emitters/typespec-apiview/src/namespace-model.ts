@@ -1,6 +1,10 @@
 import {
-  AliasStatementNode,
   Namespace,
+  Program,
+} from "@typespec/compiler";
+import {
+  Node,
+  AliasStatementNode,
   ModelStatementNode,
   OperationStatementNode,
   InterfaceStatementNode,
@@ -8,7 +12,6 @@ import {
   NamespaceStatementNode,
   ModelExpressionNode,
   IntersectionExpressionNode,
-  ProjectionModelExpressionNode,
   SyntaxKind,
   BaseNode,
   IdentifierNode,
@@ -22,9 +25,6 @@ import {
   UnionExpressionNode,
   UnionVariantNode,
   AugmentDecoratorStatementNode,
-  Program,
-  Node,
-  visitChildren,
   ScalarStatementNode,
   TypeReferenceNode,
   JsNamespaceDeclarationNode,
@@ -32,8 +32,8 @@ import {
   StringLiteralNode,
   ObjectLiteralNode,
   ConstStatementNode,
-} from "@typespec/compiler";
-
+  visitChildren
+} from "@typespec/compiler/ast";
 export class NamespaceModel {
   kind = SyntaxKind.NamespaceStatement;
   name: string;
@@ -45,7 +45,6 @@ export class NamespaceModel {
     | ModelStatementNode
     | ModelExpressionNode
     | IntersectionExpressionNode
-    | ProjectionModelExpressionNode
     | EnumStatementNode
     | ScalarStatementNode
     | UnionStatementNode
@@ -57,7 +56,6 @@ export class NamespaceModel {
     | ModelStatementNode
     | ModelExpressionNode
     | IntersectionExpressionNode
-    | ProjectionModelExpressionNode
     | EnumStatementNode
     | ScalarStatementNode
     | UnionStatementNode

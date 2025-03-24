@@ -75,10 +75,11 @@ const findApiVersionsInOperations = (sourceFile: SourceFile | undefined): Array<
             const defaultValue = m.getChildrenOfKind(SyntaxKind.StringLiteral)[0];
             return defaultValue && defaultValue.getText() === '"api-version"';
         })[0];
-        const apiVersion = property.getChildrenOfKind(SyntaxKind.LiteralType)[0].getText();
+        const literals = property.getChildrenOfKind(SyntaxKind.LiteralType);
+        const apiVersion = literals.length > 0 ? literals[0].getText() : undefined;
         return apiVersion;
     });
-    return apiVersions;
+    return apiVersions?.filter((v) => v !== undefined);
 };
 
 // workaround for createClient function changes it's way to setup api-version
@@ -109,17 +110,6 @@ export const tryFindRestClientPath = async (
     return clientFiles[0];
 };
 
-export const findParametersPath = (packageRoot: string, relativeParametersFolder: string): string => {
-    const parametersPath = path.join(packageRoot, relativeParametersFolder);
-    const fileNames = shell.ls(parametersPath);
-    const clientFiles = fileNames.filter((f) => f === 'parameters.ts');
-    if (clientFiles.length !== 1)
-        throw new Error(`Expected 1 'parameters.ts' file, but found '${clientFiles}' in '${parametersPath}'.`);
-
-    const clientPath = path.join(parametersPath, clientFiles[0]);
-    return clientPath;
-};
-
 export const getApiVersionTypeFromRestClient = async (
     packageRoot: string,
     clientPattern: string,
@@ -133,13 +123,8 @@ export const getApiVersionTypeFromRestClient = async (
     return ApiVersionType.None;
 };
 
-export const getApiVersionTypeFromOperations = (
-    packageRoot: string,
-    relativeParametersFolder: string,
-    findPararametersPath: (packageRoot: string, relativeParametersFolder: string) => string
-): ApiVersionType => {
-    const paraPath = findPararametersPath(packageRoot, relativeParametersFolder);
-    const sourceFile = getTsSourceFile(paraPath);
+export const getApiVersionTypeFromOperations = (parametersPath: string): ApiVersionType => {
+    const sourceFile = getTsSourceFile(parametersPath);
     const apiVersions = findApiVersionsInOperations(sourceFile);
     if (!apiVersions) return ApiVersionType.None;
     const previewVersions = apiVersions.filter((v) => v.indexOf('-preview') >= 0);

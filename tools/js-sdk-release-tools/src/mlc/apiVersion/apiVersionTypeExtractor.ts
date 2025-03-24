@@ -1,6 +1,8 @@
 import { ApiVersionType } from "../../common/types";
 import { IApiVersionTypeExtractor } from "../../common/interfaces";
-import { findParametersPath, getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils";
+import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils";
+import { join } from "path";
+import { exists } from "fs-extra";
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string
@@ -13,8 +15,11 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
     typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, clientPattern, tryFindRestClientPath);
     if (typeFromClient !== ApiVersionType.None) return typeFromClient;
 
-    const parametersFolder = "src/rest";
-    const typeFromOperations = getApiVersionTypeFromOperations(packageRoot, parametersFolder, findParametersPath);
+    const parametersPath = join(packageRoot, "src/rest/parameters.ts");
+    if (!(await exists(parametersPath))) {
+        throw new Error(`Failed to find parameters file '${parametersPath}'.`);
+    }
+    const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
     if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
     return ApiVersionType.Stable;
 };

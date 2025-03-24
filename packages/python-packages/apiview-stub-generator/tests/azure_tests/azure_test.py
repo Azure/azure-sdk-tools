@@ -21,9 +21,12 @@ SDK_PARAMS = [
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
-    ("corehttp", "1.0.0b5", "core", "corehttp", "whl"),
-    ("corehttp", "1.0.0b5", "core", "corehttp", "src"),
-    ("corehttp", "1.0.0b5", "core", "corehttp", "sdist"),
+    # Ignoring corehttp for now as version on PyPI imports AsyncContextManager from typing_extensions for azure.core.runtime.pipeline.AsyncPipeline,
+    # which returns a different type for typing_extensions 4.12.2 than 4.6.0. Pinning typing-extensions==4.12.2.
+    # TODO: Update corehttp to 1.0.0b6 when available on PyPI.
+    #("corehttp", "1.0.0b5", "core", "corehttp", "whl"),
+    #("corehttp", "1.0.0b5", "core", "corehttp", "src"),
+    #("corehttp", "1.0.0b5", "core", "corehttp", "sdist"),
     ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
     ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "src"),
     ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "whl"),

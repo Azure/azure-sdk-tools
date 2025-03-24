@@ -233,7 +233,7 @@ function HasValidOwnerTag([object]$ResourceGroup) {
 function HasValidAliasInName([object]$ResourceGroup) {
     # check compliance (formatting first, then validate alias) and skip if compliant
     if ($ResourceGroup.ResourceGroupName `
-      -match '^(rg-)?(?<alias>(t-|a-|v-)?[a-z,A-Z]+)([-_].*)?$' `
+      -match '^(SSS3PT_)?(rg-)?(?<alias>(t-|a-|v-)?[a-z,A-Z]+)([-_].*)?$' `
       -and (IsValidAlias -Alias $matches['alias']))
     {
       Write-Host " Found resource group '$($ResourceGroup.ResourceGroupName)' starting with valid alias '$($matches['alias'])'"

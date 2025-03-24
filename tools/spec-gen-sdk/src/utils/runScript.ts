@@ -5,6 +5,7 @@ import { RunLogFilterOptions, RunLogOptions, RunOptions } from '../types/Swagger
 import { Readable } from 'stream';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { removeAnsiEscapeCodes } from './utils';
+import { vsoLogErrors, vsoLogWarnings } from '../automation/entrypoint';
 
 export type RunResult = Exclude<SDKAutomationState, 'inProgress' | 'pending' | 'notEnabled'>;
 export type StatusContainer = { status: SDKAutomationState };
@@ -39,6 +40,9 @@ export const runSdkAutoCustomScript = async (
 ): Promise<SDKAutomationState> => {
   const scriptPath = runOptions.path;
   const cwdAbsolutePath = path.resolve(options.cwd);
+  const vsoLogErrorsArray: string[] = [];
+  const vsoLogWarningsArray: string[] = [];
+  let message = "";
   const args = (options.argTmpFileList ?? []).map((fileName) =>
     path.relative(cwdAbsolutePath, path.resolve(path.join(context.tmpFolder, fileName)))
   );
@@ -46,14 +50,17 @@ export const runSdkAutoCustomScript = async (
     args.push(...options.argList);
   }
   if (options.statusContext.status === 'failed' && !options.continueOnFailed) {
-    context.logger.warn(`Warning: Skip command for failed context: ${scriptPath} ${args.join(' ')}. Please ensure the script runs successfully to proceed the SDK generation.`);
+    message = `Warning: Skip command for failed context: ${scriptPath} ${args.join(' ')}. Please ensure the script runs successfully to proceed the SDK generation.`;
+    context.logger.warn(message);
+    if (context.config.runEnv === 'azureDevOps') {
+      vsoLogWarningsArray.push(message);
+    }
     return 'failed';
   }
 
   context.logger.log('command', `${scriptPath} ${args.join(' ')}`);
   context.logger.log('info', `Config: ${JSON.stringify({ ...runOptions, path: undefined })}`);
   const result: StatusContainer = { status: 'succeeded' };
-  const logIssues: string[] = [];
 
   const env = {
     PWD: path.resolve(options.cwd),
@@ -82,8 +89,8 @@ export const runSdkAutoCustomScript = async (
     });
 
     const prefix = `[${runOptions.logPrefix ?? options.fallbackName ?? path.basename(scriptPath)}]`;
-    listenOnStream(context, result, prefix, logIssues, child.stdout, runOptions.stdout, 'cmdout');
-    listenOnStream(context, result, prefix, logIssues, child.stderr, runOptions.stderr, 'cmderr');
+    listenOnStream(context, result, prefix, vsoLogErrorsArray, child.stdout, runOptions.stdout, 'cmdout');
+    listenOnStream(context, result, prefix, vsoLogErrorsArray, child.stderr, runOptions.stderr, 'cmderr');
 
     cmdRet = await new Promise((resolve) => {
       // tslint:disable-next-line: no-shadowed-variable
@@ -94,7 +101,11 @@ export const runSdkAutoCustomScript = async (
   } catch (e) {
     cmdRet.code = -1;
     const scriptName = scriptPath.split("/").pop();
-    context.logger.error(`RuntimeError: exception is thrown while running customized language ${scriptName} script. Stack: ${e.stack}. Please refer to the detail log in pipeline run or local console for more information.`);
+    message = `RuntimeError: exception is thrown while running customized language ${scriptName} script. Stack: ${e.stack}. Please refer to the detail log in pipeline run or local console for more information.`;
+    context.logger.error(message);
+    if (context.config.runEnv === 'azureDevOps') {
+      vsoLogErrorsArray.push(message);
+    }
   }
 
   let showInComment = false;
@@ -120,8 +131,11 @@ export const runSdkAutoCustomScript = async (
     setSdkAutoStatus(options.statusContext, result.status);
   }
 
-  if(logIssues.length > 0) {
-    context.logIssues.push({command: scriptPath, logIssues: removeAnsiEscapeCodes(logIssues)});
+  if (vsoLogErrorsArray.length > 0) {
+    vsoLogErrors(context, removeAnsiEscapeCodes(vsoLogErrorsArray), scriptPath);
+  }
+  if (vsoLogWarningsArray.length > 0) {
+    vsoLogWarnings(context, removeAnsiEscapeCodes(vsoLogWarningsArray), scriptPath);
   }
 
   return result.status;
@@ -131,7 +145,7 @@ const listenOnStream = (
   context: WorkflowContext,
   result: StatusContainer,
   prefix: string,
-  logIssues: string[],
+  vsoLogErrors: string[],
   stream: Readable,
   opts: RunLogOptions | undefined,
   logType: 'cmdout' | 'cmderr'
@@ -153,8 +167,8 @@ const listenOnStream = (
       }
     }
     setSdkAutoStatus(result, lineResult);
-    if (context.config.runEnv === 'azureDevOps' && isLineMatch(line, opts?.showInComment)) {
-      logIssues.push(line);
+    if (context.config.runEnv === 'azureDevOps' && isLineMatch(line, opts?.scriptError)) {
+      vsoLogErrors.push(line);
     }
     context.logger.log(logType, `${prefix} ${line}`, { showInComment: _showInComment, lineResult });
   };
@@ -189,3 +203,4 @@ export const isLineMatch = (line: string, filter: RunLogFilterOptions | undefine
   }
   return filter.exec(line) !== null;
 };
+

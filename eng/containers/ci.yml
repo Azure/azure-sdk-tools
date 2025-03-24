@@ -8,6 +8,7 @@ parameters:
   - name: mock_attestation
     dockerRepo: 'keyvault-mock-attestation'
     configPath: 'tools/keyvault-mock-attestation'
+    prune: false
     stableTags:
     - 'latest'
   - name: stress_watcher

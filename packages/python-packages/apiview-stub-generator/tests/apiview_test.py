@@ -14,6 +14,28 @@ from pytest import fail, mark
 from apistub import ApiView, TokenKind, StubGenerator
 from apistub.nodes import PylintParser
 
+# Read in all init files from init_files folder and add the paths to INIT_PARAMS in the form of (file_name, file_path)
+INIT_FILES_PATH = os.path.join(os.path.dirname(__file__), "init_files")
+def _get_init_files(init_path=INIT_FILES_PATH):
+    """
+    Read in all init files from init_files and return them in the form of (file_name, file_path)
+    """
+    init_files = [os.path.join(init_path, f) for f in os.listdir(init_path)]
+    init_params = []
+    init_ids = []
+    for init_file in init_files:
+        file_name = os.path.basename(init_file)
+        file_path = os.path.abspath(init_file)
+        if ".extend_" in file_name:
+            extends = True
+        else:
+            extends = False
+        init_params.append((file_path, extends))
+        init_ids.append(file_name)
+    return init_params, init_ids
+
+INIT_PARAMS, INIT_IDS = _get_init_files()
+
 def _build_dist(src_dir, build_type, extension):
     check_call([sys.executable, "-m", "build", src_dir, f"--{build_type}"])
     dist_dir = os.path.join(src_dir, "dist")
@@ -208,3 +230,10 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # Check that TokenKind is EXTERNAL_URL
         assert apiview.review_lines[2]["Tokens"][1]["Kind"] == 8
+    
+    @mark.parametrize("file_path, extends", INIT_PARAMS, ids=INIT_IDS)
+    def test_set_namespace(self, file_path, extends):
+        stub_gen = StubGenerator(pkg_path=PKG_PATH)
+        stub_gen._set_root_namespace(file_path, "namespace")
+        # If the file is an extend_ file, the namespace should not be set
+        assert (stub_gen.namespace == "") if extends else (stub_gen.namespace == "namespace")

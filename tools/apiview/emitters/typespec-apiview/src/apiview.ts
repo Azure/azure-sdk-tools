@@ -1,4 +1,12 @@
 import {
+  Expression,
+  getNamespaceFullName,
+  getSourceLocation,
+  Namespace,
+  navigateProgram,
+  Program
+} from "@typespec/compiler";
+import { 
   AliasStatementNode,
   ArrayExpressionNode,
   ArrayLiteralNode,
@@ -12,9 +20,6 @@ import {
   EnumMemberNode,
   EnumSpreadMemberNode,
   EnumStatementNode,
-  Expression,
-  getNamespaceFullName,
-  getSourceLocation,
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -23,8 +28,6 @@ import {
   ModelPropertyNode,
   ModelSpreadPropertyNode,
   ModelStatementNode,
-  Namespace,
-  navigateProgram,
   NumericLiteralNode,
   ObjectLiteralNode,
   ObjectLiteralPropertyNode,
@@ -32,7 +35,6 @@ import {
   OperationSignatureDeclarationNode,
   OperationSignatureReferenceNode,
   OperationStatementNode,
-  Program,
   ScalarStatementNode,
   StringLiteralNode,
   StringTemplateExpressionNode,
@@ -46,8 +48,8 @@ import {
   UnionExpressionNode,
   UnionStatementNode,
   UnionVariantNode,
-  ValueOfExpressionNode,
-} from "@typespec/compiler";
+  ValueOfExpressionNode
+} from "@typespec/compiler/ast";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
 import { CodeDiagnostic, CodeDiagnosticLevel, CodeFile, NavigationItem, ReviewLine, ReviewToken, ReviewTokenOptions, TokenKind } from "./schemas.js";
@@ -73,10 +75,10 @@ export class ApiView {
   typeDeclarations = new Set<string>();
   includeGlobalNamespace: boolean;
 
-  constructor(name: string, packageName: string, packageVersion?: string, includeGlobalNamespace?: boolean) {
+  constructor(name: string, packageName: string, includeGlobalNamespace?: boolean) {
     this.name = name;
     this.packageName = packageName;
-    this.packageVersion = packageVersion ?? "";
+    this.packageVersion = "ALL";
     this.includeGlobalNamespace = includeGlobalNamespace ?? false;
     this.crossLanguagePackageId = packageName;
     this.currentLine = {

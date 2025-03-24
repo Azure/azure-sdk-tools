@@ -198,6 +198,7 @@ Purview,,e99695
 Quantum,,e99695
 Quota,Quota Service,e99695
 Recovery Services Backup,,e99695
+Recovery Services Data-Replication,,e99695
 Recovery Services Site-Recovery,,e99695
 Redis Cache,,e99695
 Relay,,e99695
@@ -215,6 +216,7 @@ SQL - VM,,e99695
 Scheduler,,e99695
 Schema Registry,,e99695
 Search,,e99695
+Secret Store Extension,,e99695
 Security,,e99695
 SecurityInsights,,e99695
 Server Management,,e99695

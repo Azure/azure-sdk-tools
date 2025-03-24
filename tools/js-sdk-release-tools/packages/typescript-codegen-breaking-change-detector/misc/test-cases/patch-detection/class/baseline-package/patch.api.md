@@ -7,4 +7,14 @@ class RemoveClassConstructor {
 }
 
 class RemoveClass {}
+
+class RemoveMethodClass {
+    removeMethod(a: string): void;
+    removeArrowFunc(a: string): void;
+}
+
+class RemovePropClass {
+    removeProp: string;
+}
+
 ```

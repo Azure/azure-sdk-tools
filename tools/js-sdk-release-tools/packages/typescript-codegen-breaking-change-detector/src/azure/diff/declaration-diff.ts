@@ -334,14 +334,12 @@ export function findClassBreakingChanges(source: ClassDeclaration, target: Class
     findMappingConstructorLikeDeclaration
   );
 
-  return constructorBreakingChanges;
-
-  // // find public method breaking changes
-  // // TODO: check public/protected/private modifier, only care about public members
-  // const targetProperties = target.getType().getProperties();
-  // const sourceProperties = source.getType().getProperties();
-  // const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
-  // return [...constructorBreakingChanges, ...propertyBreakingChanges];
+  // find public method breaking changes
+  // TODO: check public/protected/private modifier, only care about public members
+  const targetProperties = target.getType().getProperties();
+  const sourceProperties = source.getType().getProperties();
+  const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
+  return [...constructorBreakingChanges, ...propertyBreakingChanges];
 }
 
 function findRemovedFunctionOverloads(

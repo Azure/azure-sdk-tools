@@ -6,4 +6,9 @@ class RemoveClassConstructor {
 }
 
 class AddClass {}
+
+class RemoveMethodClass {}
+
+class RemovePropClass {
+}
 ```

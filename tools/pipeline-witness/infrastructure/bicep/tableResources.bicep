@@ -55,11 +55,16 @@ resource eventGridSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscript
   parent: eventGridTopic
   name: table.container
   properties: {
-    destination: {
-      properties: {
-        resourceId: eventHubs[i].id
+    deliveryWithResourceIdentity: {
+      destination: {
+        properties: {
+          resourceId: eventHubs[i].id
+        }
+        endpointType: 'EventHub'
       }
-      endpointType: 'EventHub'
+      identity: {
+        type: 'SystemAssigned'
+      }
     }
     filter: {
       subjectBeginsWith: '/blobServices/default/containers/${table.container}'

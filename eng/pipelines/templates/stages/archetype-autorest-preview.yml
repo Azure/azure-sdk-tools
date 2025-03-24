@@ -1,4 +1,9 @@
 parameters:
+# Version of Node.js to use.
+- name: NodeVersion
+  type: string
+  default: '20.x'
+
 # Whether to build alpha versions of the packages. This is passed as a flag to the build script.
 - name: BuildPrereleaseVersion
   type: boolean
@@ -94,6 +99,11 @@ stages:
       path: s/autorest
 
     - checkout: azure-sdk-tools
+
+    - task: UseNode@1
+      displayName: 'Install Node.js'
+      inputs:
+        version: ${{ parameters.NodeVersion }}
 
     - ${{ parameters.AutorestInitializationSteps }}
 
@@ -198,6 +208,11 @@ stages:
     steps:
     - checkout: azure-sdk-tools
 
+    - task: UseNode@1
+      displayName: 'Install Node.js'
+      inputs:
+        version: ${{ parameters.NodeVersion }}
+
     - download: current
       artifact: build_artifacts
       displayName: Download build artifacts
@@ -269,6 +284,11 @@ stages:
         path: s/autorest # Use a predictable path for the `self` repo
 
       - checkout: azure-sdk-tools
+
+      - task: UseNode@1
+        displayName: 'Install Node.js'
+        inputs:
+          version: ${{ parameters.NodeVersion }}
         
       - download: current
         artifact: build_artifacts
@@ -327,6 +347,11 @@ stages:
     - checkout: self
       path: s/autorest
     - checkout: azure-sdk-tools
+
+    - task: UseNode@1
+      displayName: 'Install Node.js'
+      inputs:
+        version: ${{ parameters.NodeVersion }}
 
     - download: current
       artifact: build_artifacts
@@ -396,6 +421,11 @@ stages:
           WorkingDirectory: $(sdkRepositoryPath)
           Commitish: $(branchName)
         SkipCheckoutNone: true
+
+    - task: UseNode@1
+      displayName: 'Install Node.js'
+      inputs:
+        version: ${{ parameters.NodeVersion }}
 
     - download: current
       displayName: Download pipeline artifacts

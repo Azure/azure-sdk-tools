@@ -41,7 +41,13 @@ export async function diagnosticsFor(code: string, options: ApiViewEmitterOption
   const outPath = resolvePath("/apiview.json");
   const diagnostics = await runner.diagnose(code, {
     noEmit: false,
-    emitters: { "@azure-tools/typespec-apiview": { ...options, "output-file": outPath } },
+    emit: ["@azure-tools/typespec-apiview"],
+    options: {
+      "@azure-tools/typespec-apiview": {
+        ...options,
+        "output-file": outPath,  
+      }
+    },
     miscOptions: { "disable-linter": true },
   });
   return diagnostics;
@@ -52,7 +58,13 @@ export async function apiViewFor(code: string, options: ApiViewEmitterOptions): 
   const outPath = resolvePath("/apiview.json");
   await runner.compile(code, {
     noEmit: false,
-    emitters: { "@azure-tools/typespec-apiview": { ...options, "output-file": outPath } },
+    emit: ["@azure-tools/typespec-apiview"],
+    options: {
+      "@azure-tools/typespec-apiview": {
+        ...options,
+        "output-file": outPath,  
+      }
+    },
     miscOptions: { "disable-linter": true },
   });
 

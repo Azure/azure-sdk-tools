@@ -15,15 +15,18 @@ from apistub import ApiView, StubGenerator
 import json
 
 SDK_PARAMS = [
-    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
+    ("azure-core", "1.32.0", "core", "azure.core", "src"),
+    ("azure-core", "1.32.0", "core", "azure.core", "whl"),
+    ("azure-core", "1.32.0", "core", "azure.core", "sdist"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
+    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
-    ("corehttp", "1.0.0b5", "core", "corehttp", "src"),
     ("corehttp", "1.0.0b5", "core", "corehttp", "whl"),
+    ("corehttp", "1.0.0b5", "core", "corehttp", "src"),
     ("corehttp", "1.0.0b5", "core", "corehttp", "sdist"),
+    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
     ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "src"),
     ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "whl"),
-    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
     #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
 ]
 SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]
@@ -202,13 +205,9 @@ class TestApiViewAzure:
 
         assert apiview.package_name == pkg_name
         assert apiview.namespace == pkg_namespace
-<<<<<<< HEAD
-=======
-
         # Compare the generated token file with the provided token file
         outfile = f"{pkg_name}_python.json"
         generated_token_file = os.path.join(temp_path, outfile)
         provided_token_file = os.path.abspath(os.path.join(os.path.dirname(__file__), f"token_files/{outfile}"))
 
         self._diff_token_file(provided_token_file, generated_token_file)
->>>>>>> 2009895f82425f28d03b637d5bf985e45f63e2c2

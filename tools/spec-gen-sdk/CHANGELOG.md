@@ -1,5 +1,9 @@
 # Release
 
+## 2025-03-21 - 0.3.1
+
+- Added 'sdk-release-type' to input parameters and 'generateInput' type.
+
 ## 2025-03-14 - 0.3.0
 
 - Removed breaking change label artifact related code

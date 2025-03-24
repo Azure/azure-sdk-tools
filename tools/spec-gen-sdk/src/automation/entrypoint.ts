@@ -32,6 +32,7 @@ interface SdkAutoOptions {
   readmePath?: string;  
   pullNumber?: string;
   apiVersion?: string;
+  sdkReleaseType: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   workingFolder: string;

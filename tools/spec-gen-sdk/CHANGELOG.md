@@ -3,6 +3,7 @@
 ## 2025-03-21 - 0.3.1
 
 - Added 'sdk-release-type' to input parameters and 'generateInput' type
+- Removed setting pipeline variables of SDK pull request
 
 ## 2025-03-14 - 0.3.0
 

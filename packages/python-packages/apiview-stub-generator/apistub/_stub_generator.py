@@ -166,7 +166,7 @@ class StubGenerator:
             pkg_name = os.path.split(self.pkg_path)[-1]
             version = importlib.metadata.version(pkg_name)
             dist = importlib.metadata.distribution(pkg_name)
-            self.extras_require = dist.metadata.get_all('Provides-Extra')
+            self.extras_require = dist.metadata.get_all('Provides-Extra') or []
             return pkg_root_path, pkg_name, version
         pkg_root_path = self.wheel_path
         metadata = get_metadata(self.pkg_path)
@@ -234,10 +234,9 @@ class StubGenerator:
             # For e.g. _generated, _shared etc
             # Ignore build, which is created when installing a package from source.
             # Ignore tests, which may have an __init__.py but is not part of the package.
-            dirs_to_skip = [
-                x for x in subdirs if x.startswith("_") or x.startswith(".") or x == "tests" or x == "build"
-            ]
+            dirs_to_skip = [x for x in subdirs if x.startswith(("_", ".", "test", "build"))]
             for d in dirs_to_skip:
+                logging.debug("Dirs to skip: {}".format(dirs_to_skip))
                 subdirs.remove(d)
             if INIT_PY_FILE in files:
                 module_name = os.path.relpath(root, pkg_root_path).replace(

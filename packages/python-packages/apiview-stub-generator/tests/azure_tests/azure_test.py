@@ -15,15 +15,24 @@ from apistub import ApiView, StubGenerator
 import json
 
 SDK_PARAMS = [
-    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
+    ("azure-core", "1.32.0", "core", "azure.core", "src"),
+    ("azure-core", "1.32.0", "core", "azure.core", "whl"),
+    ("azure-core", "1.32.0", "core", "azure.core", "sdist"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
+    ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),
-    ("corehttp", "1.0.0b5", "core", "corehttp", "src"),
-    ("corehttp", "1.0.0b5", "core", "corehttp", "whl"),
-    ("corehttp", "1.0.0b5", "core", "corehttp", "sdist"),
+    # Ignoring corehttp for now as version on PyPI imports AsyncContextManager from typing_extensions for azure.core.runtime.pipeline.AsyncPipeline,
+    # which returns a different type for typing_extensions 4.12.2 than 4.6.0. Pinning typing-extensions==4.12.2.
+    # TODO: Update corehttp to 1.0.0b6 when available on PyPI.
+    #("corehttp", "1.0.0b5", "core", "corehttp", "whl"),
+    #("corehttp", "1.0.0b5", "core", "corehttp", "src"),
+    #("corehttp", "1.0.0b5", "core", "corehttp", "sdist"),
+    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
     ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "src"),
     ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "whl"),
-    ("azure-eventhub-checkpointstoreblob", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblob", "sdist"),
+    ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "src"),
+    ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "sdist"),
+    ("azure-eventhub-checkpointstoreblob-aio", "1.2.0", "eventhub", "azure.eventhub.extensions.checkpointstoreblobaio", "whl"),
     #("azure-synapse-artifacts", "0.20.0", "synapse", "azure.synapse.artifacts")
 ]
 SDK_IDS = [f"{pkg_name}_{version}[{pkg_type}]" for pkg_name, version, _, _, pkg_type in SDK_PARAMS]
@@ -202,7 +211,6 @@ class TestApiViewAzure:
 
         assert apiview.package_name == pkg_name
         assert apiview.namespace == pkg_namespace
-
         # Compare the generated token file with the provided token file
         outfile = f"{pkg_name}_python.json"
         generated_token_file = os.path.join(temp_path, outfile)

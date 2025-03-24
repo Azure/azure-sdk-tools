@@ -15,6 +15,9 @@ from apistub._version import VERSION
 from apistub._node_index import NodeIndex
 from apistub._metadata_map import MetadataMap
 
+### NOTE: The generated models use vendored azure-core under `_vendor`, and all azure.core imports in the
+### generated code must be updated to the _vendor. This was done to avoid a dependency conflict when
+### installing azure-core as a dependency and also parsing the azure-core package.
 from ._models import (
     CodeFile,
     ReviewToken as TokenImpl,

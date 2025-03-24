@@ -77,6 +77,11 @@ describe('Rest client file fallbacks', () => {
             const version = await getApiVersionTypeInRLC(root);
             expect(version).toBe(ApiVersionType.Preview);
         });
+        test("get api version in parameters.ts that has `api-version: string`", async () => {
+            const root = join(__dirname, 'testCases/rlc-source-from-src-streaming/');
+            const version = await getApiVersionTypeInRLC(root);
+            expect(version).toBe(ApiVersionType.Stable);
+        });
         test("Model only spec", async () => {
             vi.mock('../../common/npmUtils', async () => {
                 let count = 0;

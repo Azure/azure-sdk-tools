@@ -75,10 +75,11 @@ const findApiVersionsInOperations = (sourceFile: SourceFile | undefined): Array<
             const defaultValue = m.getChildrenOfKind(SyntaxKind.StringLiteral)[0];
             return defaultValue && defaultValue.getText() === '"api-version"';
         })[0];
-        const apiVersion = property.getChildrenOfKind(SyntaxKind.LiteralType)[0].getText();
+        const literals = property.getChildrenOfKind(SyntaxKind.LiteralType);
+        const apiVersion = literals.length > 0 ? literals[0].getText() : undefined;
         return apiVersion;
     });
-    return apiVersions;
+    return apiVersions?.filter((v) => v !== undefined);
 };
 
 // workaround for createClient function changes it's way to setup api-version

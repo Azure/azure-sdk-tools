@@ -34,6 +34,7 @@
 # Eng Sys Tools
 ###########
 /tools/                                @azure/azure-sdk-eng
+/tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/               @JimSuplizio
 /tools/github-event-processor/         @JimSuplizio @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/         @JimSuplizio @weshaggard

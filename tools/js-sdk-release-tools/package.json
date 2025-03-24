@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/js-sdk-release-tools",
-  "version": "2.7.23",
+  "version": "2.7.24",
   "description": "",
   "files": [
     "dist"
@@ -56,7 +56,7 @@
     "rimraf": "^3.0.2",
     "tsx": "^4.16.5",
     "typescript": "5.5.3",
-    "vitest": "2.0.5"
+    "vitest": "3.0.9"
   },
   "optionalDependencies": {
     "@rollup/rollup-android-arm-eabi": "4.20.0",

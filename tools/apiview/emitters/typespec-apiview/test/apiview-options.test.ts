@@ -6,8 +6,7 @@ describe("apiview-options: tests", () => {
 
   it("omits namespaces that aren't proper subnamespaces", async () => {
     const input = `
-    #suppress "deprecated"
-    @TypeSpec.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( #{ title: "Test"} )
     namespace Azure.Test {
       model Foo {};
     }
@@ -31,15 +30,14 @@ describe("apiview-options: tests", () => {
     `
     const apiview = await apiViewFor(input, {});
     const actual = apiViewText(apiview);
-    compare(expect, actual, 10);
+    compare(expect, actual, 6);
   });
 
   it("outputs the global namespace when --include-global-namespace is set", async () => {
     const input = `
     model SomeGlobal {};
 
-    #suppress "deprecated"
-    @TypeSpec.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( #{ title: "Test"} )
     namespace Azure.Test {
       model Foo {};
     }
@@ -49,13 +47,9 @@ describe("apiview-options: tests", () => {
       model SomeGlobal {}
     }
 
-    #suppress "deprecated"
-    @TypeSpec.service(
-      {
-        title: "Test";
-        version: "1";
-      }
-    )
+    @TypeSpec.service(#{
+      title: "Test"
+    })
     namespace Azure.Test {
       model Foo {}
     }
@@ -66,58 +60,5 @@ describe("apiview-options: tests", () => {
     // TODO: Update once bug is fixed: https://github.com/microsoft/typespec/issues/3165
     const actual = apiViewText(apiview);
     compare(expect, actual, 3);
-  });
-
-  it("emits error if multi-service package tries to specify version", async () => {
-    const input = `
-    #suppress "deprecated"
-    @TypeSpec.service( { title: "Test", version: "1" } )
-    namespace Azure.Test {
-      model Foo {};
-    }
-
-    @TypeSpec.service( { title: "OtherTest", version: "1" } )
-    namespace Azure.OtherTest {
-      model Foo {};
-    }
-    `
-    const diagnostics = await diagnosticsFor(input, {"version": "1"});
-    expectDiagnostics(diagnostics, [
-      {
-        code: "deprecated"
-      },
-      {
-        code: "@azure-tools/typespec-apiview/invalid-option",
-        message: `Option "--output-file" cannot be used with multi-service specs unless "--service" is also supplied.`
-      },
-      {
-        code: "@azure-tools/typespec-apiview/invalid-option",
-        message: `Option "--version" cannot be used with multi-service specs unless "--service" is also supplied.`
-      },
-    ]);
-  });
-
-  it("allows options if multi-service package specifies --service", async () => {
-    const input = `
-    #suppress "deprecated"
-    @TypeSpec.service( { title: "Test", version: "1" } )
-    namespace Azure.Test {
-      model Foo {};
-    }
-
-    #suppress "deprecated"
-    @TypeSpec.service( { title: "OtherTest", version: "1" } )
-    namespace Azure.OtherTest {
-      model Foo {};
-    }
-    `;
-    const expect = `
-    namespace Azure.OtherTest {
-      model Foo {}
-    }
-    `;
-    const apiview = await apiViewFor(input, {"version": "1", "service": "OtherTest"});
-    const actual = apiViewText(apiview);
-    compare(expect, actual, 10);
   });
 });

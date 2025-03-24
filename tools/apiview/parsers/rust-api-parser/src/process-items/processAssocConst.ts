@@ -1,6 +1,6 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { isAssocConstItem } from "./utils/typeGuards";
 
@@ -12,11 +12,7 @@ import { isAssocConstItem } from "./utils/typeGuards";
  */
 export function processAssocConst(item: Item): ReviewLine[] | null {
   if (!isAssocConstItem(item)) return null;
-
-  const reviewLines: ReviewLine[] = [];
-
-  // Add documentation if available
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item): [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {

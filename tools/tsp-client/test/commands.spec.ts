@@ -252,8 +252,8 @@ describe.sequential("Verify commands", () => {
       const emitterJson = JSON.parse(
         await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
       );
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-python"], "0.37.3");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.63.0");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
     } catch (error: any) {
@@ -273,7 +273,7 @@ describe.sequential("Verify commands", () => {
       const emitterJson = JSON.parse(
         await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
       );
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-python"], "0.36.0");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
       assert.exists(emitterJson["overrides"]);
       assert.equal(emitterJson["overrides"]["@typespec/compiler"], "0.61.0");
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
@@ -293,9 +293,9 @@ describe.sequential("Verify commands", () => {
       const emitterJson = JSON.parse(
         await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
       );
-      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-python"], "0.37.3");
-      assert.equal(Object.keys(emitterJson["devDependencies"]).length, 1);
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.65.0");
+      assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.38.4");
+      assert.equal(Object.keys(emitterJson["devDependencies"]).length, 2);
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "~0.67.0");
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);

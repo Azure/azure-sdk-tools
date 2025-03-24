@@ -129,7 +129,7 @@ export const workflowValidateSdkConfig = async (context: WorkflowContext) => {
       if (!twoConfigProvided) {
         context.status = 'notEnabled';
         let sampleTspConfigUrl = "https://aka.ms/azsdk/tspconfig-sample-dpg";
-        if (tspConfigPath.includes(".Management/")) {
+        if (tspConfigPath.includes(".Management")) {
           sampleTspConfigUrl = "https://aka.ms/azsdk/tspconfig-sample-mpg"
         }
         context.logger.warn(`Warning: cannot find supported emitter in tspconfig.yaml for typespec project ${tspConfigPath}. This typespec project will be skipped from SDK generation. Refer to ${sampleTspConfigUrl} to add the right emitter config in the 'tspconfig.yaml' file`);

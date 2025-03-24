@@ -81,15 +81,3 @@ export type MessageRecord = ResultMessageRecord | RawMessageRecord | MarkdownMes
  * See type MessageRecord
  */
 export type MessageLine = MessageRecord | MessageRecord[];
-
-
-export const sendPipelineVariable = (variable: string, value: string,isOutput=false) => {
-  console.log(`##vso[task.setVariable variable=${variable}${isOutput?';isoutput=true':''}]${value}`);
-};
-export const sendSuccess = () => {
-  sendPipelineVariable("ValidationResult", "success");
-};
-
-export const sendFailure = () => {
-  sendPipelineVariable("ValidationResult", "failure");
-};

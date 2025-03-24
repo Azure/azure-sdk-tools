@@ -203,7 +203,7 @@ export const getSdkRepoConfig = async (options: SdkAutoOptions, specRepoConfig: 
   };
   let sdkRepoConfig = specRepoConfig.sdkRepositoryMappings[sdkName];
   if (sdkRepoConfig === undefined) {
-    throw new Error(`ConfigError: SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository.`);
+    throw new Error(`ConfigError: SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`);
   }
 
   if (typeof sdkRepoConfig === 'string') {

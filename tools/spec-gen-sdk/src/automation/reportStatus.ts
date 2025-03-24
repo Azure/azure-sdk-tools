@@ -1,4 +1,4 @@
-import { MessageRecord, sendSuccess, sendFailure, sendPipelineVariable } from '../types/Message';
+import { MessageRecord } from '../types/Message';
 import { existsSync, readFileSync, rmSync, writeFileSync} from 'fs';
 import * as path from 'path';
 import * as prettier from 'prettier';
@@ -11,7 +11,6 @@ import { extractPathFromSpecConfig, mapToObject, removeAnsiEscapeCodes } from '.
 import { vsoAddAttachment } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
 import { deleteTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
-import { getGenerationBranchName } from '../types/PackageData';
 import { marked } from "marked";
 import { vsoLogError, vsoLogWarning } from './entrypoint';
 
@@ -21,7 +20,7 @@ export const generateReport = (context: WorkflowContext) => {
   context.logger.log('section', 'Generate report');
   let executionReport: ExecutionReport;
   const packageReports: PackageReport[] = [];
-  const specConfigPath = (context.config.tspConfigPath ?? context.config.readmePath)?.replace(/\//g, '-');
+  const specConfigPath = (context.specConfigPath)?.replace(/\//g, '-');
 
   let hasSuppressions = false
   let hasAbsentSuppressions = false;
@@ -108,17 +107,6 @@ export const generateReport = (context: WorkflowContext) => {
     vsoLogWarning(context, message);
   } else {
     context.logger.info(`Main status [${context.status}]`);
-  }
-  if (context.config.runEnv === 'azureDevOps') {
-    context.logger.info("Set pipeline variables.");
-    setPipelineVariables(context, executionReport);
-  }
-
-  if (context.status === 'failed') {
-    console.log(`##vso[task.complete result=Failed;]`);
-    sendFailure();
-  } else {
-    sendSuccess();
   }
 
   context.logger.log('endsection', 'Generate report');
@@ -413,28 +401,4 @@ const renderHandlebarTemplate = (
 
 function unifiedRenderingMessages(message: string[], title?: string): string {
   return `<pre>${title ? `<strong>${title}</strong><BR>` : ''}${message.map(trimNewLine).join('<BR>')}</pre>`;
-}
-
-const setPipelineVariables = async (context: WorkflowContext, executionReport: ExecutionReport) => {
-  let packageName = "";
-  let prBranch = "";
-  let prTitle = "";
-  let prBody = "";
-
-  if (executionReport && executionReport.packages && executionReport.packages.length > 0) {
-    const pkg = executionReport.packages[0];
-    packageName = pkg.packageName ?? "";
-    if (context.config.pullNumber) {    
-      prBody = `Create to sync ${context.config.specRepoHttpsUrl}/pull/${context.config.pullNumber}\n\n`;
-    }
-    prBranch = getGenerationBranchName(context, packageName);
-    prBody = `${prBody}${pkg.installInstructions ?? ''}`;
-  }
-  
-  prBody = `${prBody}\n This pull request has been automatically generated for preview purposes.`;
-  prTitle = `[AutoPR ${packageName}]`;
-  sendPipelineVariable("BreakingChangeLabel", context.swaggerToSdkConfig.packageOptions.breakingChangesLabel ?? "")
-  sendPipelineVariable("PrBranch", prBranch);
-  sendPipelineVariable("PrTitle", prTitle);
-  sendPipelineVariable("PrBody", prBody);
 }

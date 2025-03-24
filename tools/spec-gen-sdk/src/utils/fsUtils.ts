@@ -15,7 +15,7 @@ export const readTmpJsonFile = (context: WorkflowContext, fileName: string): unk
   const filePath = path.join(context.tmpFolder, fileName);
 
   if (!fs.existsSync(filePath)) {
-    context.logger.warn(`Warning: File ${filePath} not found to read. Re-run if the error is transitient or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
+    context.logger.warn(`Warning: File ${filePath} not found to read. Re-run if the error is transient or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
     return undefined;
   }
 

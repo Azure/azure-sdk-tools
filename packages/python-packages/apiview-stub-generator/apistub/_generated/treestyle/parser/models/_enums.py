@@ -7,7 +7,7 @@
 # --------------------------------------------------------------------------
 
 from enum import Enum
-from azure.core import CaseInsensitiveEnumMeta
+from ....._vendor.core import CaseInsensitiveEnumMeta
 
 
 class CodeDiagnosticLevel(int, Enum, metaclass=CaseInsensitiveEnumMeta):

@@ -1,6 +1,6 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { isTypeAliasItem } from "./utils/typeGuards";
 import { processGenerics } from "./utils/processGenerics";
@@ -13,11 +13,7 @@ import { processGenerics } from "./utils/processGenerics";
  */
 export function processTypeAlias(item: Item): ReviewLine[] {
   if (!isTypeAliasItem(item)) return [];
-
-  const reviewLines: ReviewLine[] = [];
-
-  // Add documentation if available
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
@@ -34,10 +30,11 @@ export function processTypeAlias(item: Item): ReviewLine[] {
 
   // Add name
   reviewLine.Tokens.push({
-    Kind: TokenKind.Text,
+    Kind: TokenKind.MemberName,
     Value: item.name || "unknown",
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || "unknown",
+    RenderClasses: ["interface"],
   });
 
   // Add equals sign

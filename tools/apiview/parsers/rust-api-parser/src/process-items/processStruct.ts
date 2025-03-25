@@ -1,7 +1,7 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { ImplProcessResult, processImpl } from "./processImpl";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isStructItem } from "./utils/typeGuards";
 import { processStructField } from "./processStructField";
@@ -17,11 +17,7 @@ import { getAPIJson } from "../main";
 export function processStruct(item: Item): ReviewLine[] {
   if (!isStructItem(item)) return [];
   const apiJson = getAPIJson();
-  const reviewLines: ReviewLine[] = [];
-
-  if (item.docs) {
-    reviewLines.push(createDocsReviewLine(item));
-  }
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Process derives and impls
   let implResult: ImplProcessResult;
@@ -50,9 +46,9 @@ export function processStruct(item: Item): ReviewLine[] {
   });
 
   structLine.Tokens.push({
-    Kind: TokenKind.TypeName,
+    Kind: TokenKind.MemberName,
     Value: item.name || "null",
-    RenderClasses: ["tname", "struct"],
+    RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });

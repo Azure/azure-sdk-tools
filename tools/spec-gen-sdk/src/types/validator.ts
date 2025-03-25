@@ -9,7 +9,7 @@ export const getTypeTransformer = <T>(schema: object, name: string) => {
     }
     if (!validator(obj)) {
       const error = validator.errors![0];
-      throw new Error(`ConfigError: Invalid ${name}: ${error.dataPath} ${error.message}. If the SDK artifacts haven't been successfully generated, please fix the errors to ensure they are generated correctly. Refer to the schema definitions at https://github.com/Azure/azure-rest-api-specs/tree/main/documentation/sdkautomation for guidance.`);
+      throw new Error(`ConfigError: Invalid ${name}: ${error.dataPath} ${error.message}. If the SDK artifacts haven't been successfully generated, please fix the errors to ensure they are generated correctly. Refer to the schema definitions at https://github.com/Azure/azure-rest-api-specs/tree/main/documentation/sdkautomation for guidance`);
     }
 
     return obj as T;

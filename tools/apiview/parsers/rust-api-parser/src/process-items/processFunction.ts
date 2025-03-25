@@ -1,13 +1,13 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item, Type, FunctionHeader } from "../../rustdoc-types/output/rustdoc-types";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isFunctionItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 
 /**
  * Processes the function header and adds modifiers and ABI information to the tokens
- * 
+ *
  * @param {FunctionHeader} header - The function header containing const, unsafe, async and ABI information
  * @param {ReviewLine} reviewLine - The review line to add tokens to
  */
@@ -57,10 +57,9 @@ function processFunctionHeader(header: FunctionHeader, reviewLine: ReviewLine) {
  *
  * @param {Item} item - The function item to process.
  */
-export function processFunction(item: Item) {
-  if (!isFunctionItem(item)) return;
-  const reviewLines: ReviewLine[] = [];
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
+export function processFunction(item: Item): ReviewLine[] {
+  if (!isFunctionItem(item)) return [];
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
@@ -86,7 +85,7 @@ export function processFunction(item: Item) {
     Kind: TokenKind.MemberName,
     Value: item.name || "null",
     HasSuffixSpace: false,
-    RenderClasses: ["tname", "method"],
+    RenderClasses: ["method"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
   });
@@ -143,6 +142,7 @@ export function processFunction(item: Item) {
     Kind: TokenKind.Punctuation,
     Value: ")",
     HasPrefixSpace: false,
+    HasSuffixSpace: false,
   });
 
   // Add return type if present
@@ -150,6 +150,7 @@ export function processFunction(item: Item) {
     reviewLine.Tokens.push({
       Kind: TokenKind.Punctuation,
       Value: "->",
+      HasPrefixSpace: true,
     });
     reviewLine.Tokens.push(...typeToReviewTokens(item.inner.function.sig.output));
   }

@@ -4,6 +4,7 @@ parameters:
   default:
   - originals
   - codefiles
+  - usagesamples
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -16,6 +17,15 @@ stages:
         pool:
           name: azsdk-pool-mms-win-2022-general
           vmImage: windows-2022
+
+        strategy:
+          matrix:
+            Staging:
+              destStorageAccount: '$(apiview-staging-storageaccount)'
+              destCosmosUrl: '$(apiview-staging-cosmos-url)'
+            UI:
+              destStorageAccount: '$(apiview-ui-storageaccount)'
+              destCosmosUrl: '$(apiview-ui-cosmos-url)'
 
         steps:
         - pwsh: |
@@ -36,7 +46,7 @@ stages:
               Inline: |
                 $azcopy = $(Resolve-Path "$(Build.BinariesDirectory)/azcopy/azcopy_windows_amd64_*/azcopy.exe")[0]
                 $sourceUrl = "https://$(apiview-prod-storageaccount).blob.core.windows.net/${{c}}"
-                $destUrl = "https://$(apiview-staging-storageaccount).blob.core.windows.net/${{c}}"
+                $destUrl = "https://$(destStorageAccount).blob.core.windows.net/${{c}}"
                 &($azcopy) sc $sourceUrl $destUrl --recursive=true
             env:
               AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
@@ -56,5 +66,5 @@ stages:
             Inline: |
               cd $(Build.SourcesDirectory)/eng/scripts/python/apiview-syncdb/
               python -m pip install -r requirements.txt
-              python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --db-name $(apiview-cosmosdb-name) --backup-storage-url $(apiview-cosmos-backup-url)
+              python ./sync_cosmosdb.py --dest-url $(destCosmosUrl) --db-name $(apiview-cosmosdb-name) --backup-storage-url $(apiview-cosmos-backup-url)
               exit $LASTEXITCODE

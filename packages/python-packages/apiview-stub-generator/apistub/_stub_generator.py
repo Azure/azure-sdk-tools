@@ -5,14 +5,12 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
 
-import glob
 import importlib.metadata
 import sys
 import os
 import argparse
 from pkginfo import get_metadata
 
-import io
 import importlib
 import logging
 import shutil
@@ -29,7 +27,6 @@ from apistub._generated.treestyle.parser._model_base import (
 )
 
 INIT_PY_FILE = "__init__.py"
-TOP_LEVEL_WHEEL_FILE = "top_level.txt"
 INIT_EXTENSION_SUBSTRING = ".extend_path(__path__, __name__)"
 
 logging.getLogger().setLevel(logging.ERROR)
@@ -118,16 +115,15 @@ class StubGenerator:
         self.source_url = source_url
         self.mapping_path = mapping_path
         self.filter_namespace = filter_namespace or ""
+        self.namespace = ""
         if verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 
         # Extract package to temp directory if it is wheel or sdist
         if self.pkg_path.endswith((".whl", ".zip", ".tar.gz")):
             self.wheel_path = self._extract_wheel()
-            self.namespace = self._get_whl_root_namespace(self.wheel_path)
         else:
             self.wheel_path = None
-            self.namespace = ""
 
         if not skip_pylint:
             PylintParser.parse(self.wheel_path or self.pkg_path)
@@ -170,7 +166,7 @@ class StubGenerator:
             pkg_name = os.path.split(self.pkg_path)[-1]
             version = importlib.metadata.version(pkg_name)
             dist = importlib.metadata.distribution(pkg_name)
-            self.extras_require = dist.metadata.get_all('Provides-Extra')
+            self.extras_require = dist.metadata.get_all('Provides-Extra') or []
             return pkg_root_path, pkg_name, version
         pkg_root_path = self.wheel_path
         metadata = get_metadata(self.pkg_path)
@@ -185,11 +181,10 @@ class StubGenerator:
         self._install_package()
         pkg_root_path, pkg_name, version = self._get_pkg_metadata()
         logging.info(
-            "package name: {0}, version:{1}, namespace:{2}".format(
-                pkg_name, version, self.namespace
+            "package name: {0}, version:{1}".format(
+                pkg_name, version
             )
         )
-
         if self.filter_namespace:
             logging.info(
                 "Namespace filter is passed. Filtering modules within namespace :{}".format(
@@ -239,18 +234,15 @@ class StubGenerator:
             # For e.g. _generated, _shared etc
             # Ignore build, which is created when installing a package from source.
             # Ignore tests, which may have an __init__.py but is not part of the package.
-            dirs_to_skip = [
-                x for x in subdirs if x.startswith("_") or x.startswith(".") or x == "tests" or x == "build"
-            ]
+            dirs_to_skip = [x for x in subdirs if x.startswith(("_", ".", "test", "build"))]
             for d in dirs_to_skip:
+                logging.debug("Dirs to skip: {}".format(dirs_to_skip))
                 subdirs.remove(d)
-
-            # Add current path as module name if _init.py is present
             if INIT_PY_FILE in files:
                 module_name = os.path.relpath(root, pkg_root_path).replace(
                     os.path.sep, "."
                 )
-                # If namespace has not been set yet, try to find the first __init__.py that's not purely for extension or tests.
+                # If namespace has not been set yet, try to find the first __init__.py that's not purely for extension.
                 if not self.namespace:
                     self._set_root_namespace(
                         os.path.join(root, INIT_PY_FILE), module_name
@@ -270,7 +262,17 @@ class StubGenerator:
 
     def _set_root_namespace(self, init_file_path, module_name):
         with open(init_file_path, "r") as f:
-            content = f.readlines()
+            in_docstring = False
+            content = []
+            for line in f:
+                stripped_line = line.strip()
+                # If in multi-line docstring, skip following lines until end of docstring.
+                # If single-line docstring, skip the docstring line.
+                if stripped_line.startswith(('"""', "'''")) and not stripped_line.endswith(('"""', "'''")):
+                    in_docstring = not in_docstring
+                # If comment, skip line. Otherwise, add to content.
+                if not in_docstring and not stripped_line.startswith("#"):
+                    content.append(line)
             if len(content) > 1 or (
                 len(content) == 1 and not INIT_EXTENSION_SUBSTRING in content[0]
             ):
@@ -363,30 +365,6 @@ class StubGenerator:
             for item in os.listdir(internal_folder):
                 shutil.move(os.path.join(internal_folder, item), temp_pkg_dir)
             os.rmdir(internal_folder)
-
-    def _get_whl_root_namespace(self, wheel_extract_path):
-        # APiStubgen finds namespace from setup.py when running against code repo
-        # But we don't have setup.py to parse when wheel is uploaded into APIView tool
-        # Parse top_level.txt file in dist-info/egg-info to find root module name
-        # recursive should be True to account for cases where egg-info is nested inside another directory (e.g. requests)
-        files = glob.glob(
-            os.path.join(wheel_extract_path, "**", TOP_LEVEL_WHEEL_FILE), recursive=True
-        )
-        if not files:
-            logging.warning(
-                "File {0} is not found in {1} to identify root module name. All modules in package will be parsed".format(
-                    TOP_LEVEL_WHEEL_FILE, wheel_extract_path
-                )
-            )
-            return ""
-        with io.open(files[0], "r") as top_lvl_file:
-            root_module_name = top_lvl_file.readline().strip()
-            logging.info(
-                "Root module found in {0}: '{1}'".format(
-                    TOP_LEVEL_WHEEL_FILE, root_module_name
-                )
-            )
-            return root_module_name
 
     def _install_package(self):
         commands = [sys.executable, "-m", "pip", "install", self.pkg_path, "-q"]

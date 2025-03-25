@@ -17,7 +17,7 @@ import {
   sdkAutoLogLevels
 } from './logging';
 import path from 'path';
-import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog } from './reportStatus';
+import { generateReport, generateHtmlFromFilteredLog, saveFilteredLog, saveVsoLog } from './reportStatus';
 import { SpecConfig, SdkRepoConfig, getSpecConfig, specConfigPath } from '../types/SpecConfig';
 import { getSwaggerToSdkConfig, SwaggerToSdkConfig } from '../types/SwaggerToSdkConfig';
 import { extractPathFromSpecConfig } from '../utils/utils';
@@ -32,6 +32,7 @@ interface SdkAutoOptions {
   readmePath?: string;  
   pullNumber?: string;
   apiVersion?: string;
+  sdkReleaseType: string;
   specCommitSha: string;
   specRepoHttpsUrl: string;
   workingFolder: string;
@@ -48,16 +49,20 @@ export type SdkAutoContext = {
   fullLogFileName: string;
   filteredLogFileName: string;
   htmlLogFileName: string;
+  vsoLogFileName: string;
   specRepoConfig: SpecConfig;
   sdkRepoConfig: SdkRepoConfig;
   swaggerToSdkConfig: SwaggerToSdkConfig
   isPrivateSpecRepo: boolean;
 };
 
-export type CommandLog = {
-  command: string;
-  logIssues: string[];
-};
+/*
+ * VsoLogs is a map of task names to log entries. Each log entry contains an array of errors and warnings.
+ */
+export type VsoLogs = Map<string, {
+  errors?: string[];
+  warnings?: string[];
+}>;
 
 export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAutoContext> => {
   const logger = winston.createLogger({
@@ -80,6 +85,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   }
   const fullLogFileName = path.join(logFolder, `${fileNamePrefix}-full.log`);
   const filteredLogFileName = path.join(logFolder, `${fileNamePrefix}-filtered.log`);
+  const vsoLogFileName = path.join(logFolder, `${fileNamePrefix}-vso.log`);
   const htmlLogFileName = path.join(logFolder, `${fileNamePrefix}-${options.sdkName.substring("azure-sdk-for-".length)}-gen-result.html`);
   if (existsSync(fullLogFileName)) {
     rmSync(fullLogFileName);
@@ -89,6 +95,9 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
   }
   if (existsSync(htmlLogFileName)) {
     rmSync(htmlLogFileName);
+  }
+  if (existsSync(vsoLogFileName)) {
+    rmSync(vsoLogFileName);
   }
   logger.add(loggerFileTransport(fullLogFileName));
   logger.info(`Log to ${fullLogFileName}`);
@@ -106,6 +115,7 @@ export const getSdkAutoContext = async (options: SdkAutoOptions): Promise<SdkAut
     logger,
     fullLogFileName,
     filteredLogFileName,
+    vsoLogFileName,
     htmlLogFileName,
     specRepoConfig,
     sdkRepoConfig,
@@ -123,10 +133,15 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     await workflowMain(workflowContext);
   } catch (e) {
     if (workflowContext) {
-      sdkContext.logger.error(`FatalError: ${e.message}. Please refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`);
+      const message = `FatalError: ${e.message}. Please refer to the inner logs for details or report this issue through https://aka.ms/azsdk/support/specreview-channel.`;
+      sdkContext.logger.error(message);
       workflowContext.status = workflowContext.status === 'notEnabled' ? workflowContext.status : 'failed';
       setFailureType(workflowContext, FailureType.PipelineFrameworkFailed);
       workflowContext.messages.push(e.message);
+      vsoLogError(workflowContext, message);
+      if (e.stack) {
+        vsoLogError(workflowContext, `ErrorStack: ${e.stack}.`);
+      }
     }
     if (e.stack) {
       sdkContext.logger.error(`ErrorStack: ${e.stack}.`);
@@ -136,6 +151,7 @@ export const sdkAutoMain = async (options: SdkAutoOptions) => {
     saveFilteredLog(workflowContext);
     generateHtmlFromFilteredLog(workflowContext);
     generateReport(workflowContext);
+    saveVsoLog(workflowContext);
   }
   await loggerWaitToFinish(sdkContext.logger);
   return workflowContext?.status;
@@ -187,7 +203,7 @@ export const getSdkRepoConfig = async (options: SdkAutoOptions, specRepoConfig: 
   };
   let sdkRepoConfig = specRepoConfig.sdkRepositoryMappings[sdkName];
   if (sdkRepoConfig === undefined) {
-    throw new Error(`ConfigError: SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository.`);
+    throw new Error(`ConfigError: SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`);
   }
 
   if (typeof sdkRepoConfig === 'string') {
@@ -213,3 +229,56 @@ export const getSdkRepoConfig = async (options: SdkAutoOptions, specRepoConfig: 
 
   return sdkRepoConfig;
 };
+
+export function vsoLogError(context: WorkflowContext, message, task: string = "spec-gen-sdk"): void {
+  vsoLogErrors(context, [message], task);
+}
+
+export function vsoLogWarning(context: WorkflowContext, message, task: string = "spec-gen-sdk"): void {
+  vsoLogWarnings(context, [message], task);
+}
+export function vsoLogErrors(
+  context: WorkflowContext,
+  errors: string[],
+  task: string = "spec-gen-sdk"
+): void {
+  if (context.config.runEnv !== 'azureDevOps') {
+    return;
+  }
+  if (!context.vsoLogs.has(task)) {
+    // Create a new entry with the initial errors
+    context.vsoLogs.set(task, { errors: [...errors] });
+    return;
+  }
+
+  // If the task already exists, merge the new errors into the existing array
+  const logEntry = context.vsoLogs.get(task);
+  if (logEntry?.errors) {
+    logEntry.errors.push(...errors);
+  } else {
+    logEntry!.errors = [...errors];
+  }
+}
+
+export function vsoLogWarnings(
+  context: WorkflowContext,
+  warnings: string[],
+  task: string = "spec-gen-sdk"
+): void {
+  if (context.config.runEnv !== 'azureDevOps') {
+    return;
+  }
+  if (!context.vsoLogs.has(task)) {
+    // Create a new entry with the initial errors
+    context.vsoLogs.set(task, { warnings: [...warnings] });
+    return;
+  }
+
+  // If the task already exists, merge the new errors into the existing array
+  const logEntry = context.vsoLogs.get(task);
+  if (logEntry?.warnings) {
+    logEntry.warnings.push(...warnings);
+  } else {
+    logEntry!.warnings = [...warnings];
+  }
+}

@@ -1,6 +1,6 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isModuleItem, isUseItem } from "./utils/typeGuards";
 import { processItem } from "./processItem";
 import { externalReexports } from "./utils/externalReexports";
@@ -17,8 +17,7 @@ export const reexportLines: {
 export function processUse(item: Item): ReviewLine[] | undefined {
   if (!isUseItem(item)) return;
   const apiJson = getAPIJson();
-  const reviewLines: ReviewLine[] = [];
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   const reviewLine: ReviewLine = {
     LineId: item.id.toString(),
@@ -39,8 +38,9 @@ export function processUse(item: Item): ReviewLine[] | undefined {
   reviewLine.Tokens.push({
     Kind: TokenKind.TypeName,
     Value: useValue,
-    RenderClasses: ["mname", "use"],
+    RenderClasses: ["dependencies"],
     NavigateToId: item.inner.use.id.toString(),
+    NavigationDisplayName: useValue,
   });
 
   reviewLines.push(reviewLine);
@@ -78,7 +78,7 @@ export function processUse(item: Item): ReviewLine[] | undefined {
           {
             Kind: TokenKind.TypeName,
             Value: basePath,
-            RenderClasses: ["mname"],
+            RenderClasses: ["namespace"],
             NavigateToId: apiJson.index[item.inner.use.id].id.toString() + "_reexport_parent",
             NavigationDisplayName: basePath,
           },

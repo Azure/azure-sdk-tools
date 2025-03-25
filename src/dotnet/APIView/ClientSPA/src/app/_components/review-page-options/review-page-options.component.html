@@ -1,4 +1,5 @@
-<app-page-options-section sectionName="Approval">
+<ng-container *ngIf="loadingStatus === 'completed'; else loadingOrFailedTemplate">
+    <app-page-options-section sectionName="Approval">
     <ul class="list-group">
         <li class="list-group-item text-center">
             <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">
@@ -49,25 +50,25 @@
             </ng-template>
         </li>
     </ul>
-</app-page-options-section>
+    </app-page-options-section>
 
-<app-page-options-section *ngIf="associatedPullRequests.length > 0" sectionName="Associated Pull Requests">
+    <app-page-options-section *ngIf="associatedPullRequests.length > 0" sectionName="Associated Pull Requests">
     <ul class="list-group">
         <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
             <a href="https://github.com/{{pullRequest.repoName}}/pull/{{pullRequest.pullRequestNumber}}" target="_blank">{{pullRequest.repoName}}/{{pullRequest.pullRequestNumber}}</a>
         </li>
     </ul>
-</app-page-options-section>
+    </app-page-options-section>
 
-<app-page-options-section *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0" sectionName="Associated API Revisions" [collapsedInput]="true">
+    <app-page-options-section *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0" sectionName="Associated API Revisions" [collapsedInput]="true">
     <ul class="list-group">
         <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
             <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank">{{pullRequest.language}}/{{pullRequest.packageName}}</a>
         </li>
     </ul>
-</app-page-options-section>
+    </app-page-options-section>
 
-<app-page-options-section sectionName="Page Utils">
+    <app-page-options-section sectionName="Page Utils">
     <ul class="list-group">
         <li class="list-group-item"> 
             <p-iconField iconPosition="left" class="w-full">
@@ -114,9 +115,9 @@
             </div>
         </li>
     </ul>
-</app-page-options-section>
+    </app-page-options-section>
 
-<app-page-options-section sectionName="Page Settings">
+    <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showCommentsSwitch"
@@ -165,9 +166,9 @@
                 [style]="{'width':'100%'}"/>
         </li>
     </ul>
-</app-page-options-section>
+    </app-page-options-section>
 
-<app-page-options-section sectionName="API Revision Options">
+    <app-page-options-section sectionName="API Revision Options">
     <ul class="list-group">
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="markedAsViewSwitch"
@@ -201,9 +202,9 @@
             </p-multiSelect>
         </li>
     </ul>
-</app-page-options-section>
+    </app-page-options-section>
 
-<app-page-options-section sectionName="Review Options">
+    <app-page-options-section sectionName="Review Options">
     <ul class="list-group">
         <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="subscribeSwitch"
@@ -211,9 +212,9 @@
             <label class="ms-2">Subscribe</label>
         </li>
     </ul>
-</app-page-options-section>
+    </app-page-options-section>
 
-<app-page-options-section sectionName="Change History" [collapsedInput]="true">
+    <app-page-options-section sectionName="Change History" [collapsedInput]="true">
     <ul class="list-group">
         <li class="list-group-item change-history">
             <p-timeline [value]="activeAPIRevision?.changeHistory">
@@ -230,9 +231,9 @@
             </p-timeline>
         </li>
     </ul>
-</app-page-options-section>
+    </app-page-options-section>
 
-<p-dialog header="Approve APIRevision" 
+    <p-dialog header="Approve APIRevision" 
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
     [style]="{ width: '40dvw' }">
     <ul class="list-group">
@@ -260,9 +261,9 @@
             (click)="toggleAPIRevisionApproval()"
             [disabled]="(hasActiveConversation && !overrideActiveConversationforApproval) || (hasFatalDiagnostics && !overrideFatalDiagnosticsforApproval)">Confirm</button>
       </div>
-</p-dialog>
+    </p-dialog>
 
-<p-dialog header="Disable Lazy Loading" 
+    <p-dialog header="Disable Lazy Loading" 
     [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
     [style]="{ width: '30dvw' }" (onHide)="disableCodeLinesLazyLoading = userProfile?.preferences?.disableCodeLinesLazyLoading!">
     <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
@@ -270,4 +271,10 @@
     <button class="btn btn-primary" type="button" (click)="disableCodeLinesLazyLoadingEmitter.emit(disableCodeLinesLazyLoading); showDisableCodeLinesLazyLoadingModal = false">Disable</button>
     <button class="btn btn-link" type="button" (click)="showDisableCodeLinesLazyLoadingModal = false;">Cancel</button>
     </div>
-</p-dialog>
+    </p-dialog>
+</ng-container>
+<ng-template #loadingOrFailedTemplate>
+    <div *ngIf="loadingStatus === 'loading'" class="spinner-border m-3" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</ng-template>

@@ -1,7 +1,7 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Crate, Item } from "../../rustdoc-types/output/rustdoc-types";
 import { processItem } from "./processItem";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isTraitItem } from "./utils/typeGuards";
 import { createGenericBoundTokens, processGenerics } from "./utils/processGenerics";
 import { getAPIJson } from "../main";
@@ -13,11 +13,10 @@ import { getAPIJson } from "../main";
  * @param {Item} item - The trait item to process.
  * @param {ReviewLine} reviewLine - The ReviewLine object to update.
  */
-export function processTrait(item: Item) {
-  if (!isTraitItem(item)) return;
+export function processTrait(item: Item): ReviewLine[] {
+  if (!isTraitItem(item)) return [];
   const apiJson = getAPIJson();
-  const reviewLines: ReviewLine[] = [];
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
@@ -28,12 +27,24 @@ export function processTrait(item: Item) {
 
   reviewLine.Tokens.push({
     Kind: TokenKind.Keyword,
-    Value: "pub trait",
+    Value: "pub",
+  });
+
+  if (item.inner.trait.is_unsafe) {
+    reviewLine.Tokens.push({
+      Kind: TokenKind.Keyword,
+      Value: "unsafe",
+    });
+  }
+
+  reviewLine.Tokens.push({
+    Kind: TokenKind.Keyword,
+    Value: "trait",
   });
   reviewLine.Tokens.push({
-    Kind: TokenKind.TypeName,
+    Kind: TokenKind.MemberName,
     Value: item.name || "null",
-    RenderClasses: ["tname", "trait"],
+    RenderClasses: ["struct"],
     NavigateToId: item.id.toString(),
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,
@@ -46,8 +57,11 @@ export function processTrait(item: Item) {
   }
 
   if (item.inner.trait.bounds) {
-    reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":", HasPrefixSpace: false });
-    reviewLine.Tokens.push(...createGenericBoundTokens(item.inner.trait.bounds));
+    const boundTokens = createGenericBoundTokens(item.inner.trait.bounds);
+    if (boundTokens.length > 0) {
+      reviewLine.Tokens.push({ Kind: TokenKind.Text, Value: ":", HasPrefixSpace: false });
+      reviewLine.Tokens.push(...boundTokens);
+    }
   }
 
   // Add generics where clauses if present

@@ -185,3 +185,16 @@ export function extractPathFromSpecConfig(tspConfigPath: string | undefined, rea
   }
   return prefix;
 }
+
+/**
+ * Convert a Map to an object.
+ * @param {Map<K, V>} map The Map to convert to an object.
+ * @returns {Record<string, V>} The object representation of the Map.
+ */
+export function mapToObject<K, V>(map: Map<K, V>): Record<string, V> {
+  const obj: Record<string, V> = {};
+  for (const [key, value] of map.entries()) {
+    obj[String(key)] = value;
+  }
+  return obj;
+}

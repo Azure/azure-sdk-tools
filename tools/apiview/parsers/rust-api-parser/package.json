@@ -1,10 +1,10 @@
 {
   "name": "@azure-tools/rust-genapi",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "publishConfig": {
-    "registry": "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-rust/npm/registry/"
+    "registry": "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/"
   },
   "files": [
     "dist",

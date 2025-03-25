@@ -1,0 +1,129 @@
+[
+  {
+    "name": "Specific Core Change",
+    "diff": {
+      "ChangedFiles": [
+        "sdk/azcore/core.go"
+      ],
+      "ChangedServices": [
+        "azcore"
+      ],
+      "ExcludePaths": [],
+      "DeletedFiles": [],
+      "PRNumber": "33362"
+    },
+    "expected_package_output": [
+      {
+        "Name": "sdk/azcore",
+        "Version": "1.18.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/azcore",
+        "ServiceDirectory": "azcore",
+        "ReadMePath": "sdk/azcore/README.md",
+        "ChangeLogPath": "sdk/azcore/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": null,
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": null,
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "Change multiple resourcemanager packages",
+    "diff": {
+      "ChangedFiles": [
+        "sdk/resourcemanager/dashboard/armdashboard/constants.go",
+        "sdk/resourcemanager/storage/armstorage/accounts_client.go",
+        "sdk/resourcemanager/customproviders/armcustomproviders/LICENSE.txt"
+      ],
+      "ChangedServices": [
+        "resourcemanager"
+      ],
+      "ExcludePaths": [],
+      "DeletedFiles": [],
+      "PRNumber": "33362"
+    },
+    "expected_package_output": [
+      {
+        "Name": "sdk/resourcemanager/customproviders/armcustomproviders",
+        "Version": "0.7.0",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/resourcemanager/customproviders/armcustomproviders",
+        "ServiceDirectory": "resourcemanager/customproviders/armcustomproviders",
+        "ReadMePath": "sdk/resourcemanager/customproviders/armcustomproviders/README.md",
+        "ChangeLogPath": "sdk/resourcemanager/customproviders/armcustomproviders/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "mgmt",
+        "IsNewSdk": true,
+        "ArtifactName": null,
+        "ReleaseStatus": "2023-11-24",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": null,
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "sdk/resourcemanager/dashboard/armdashboard",
+        "Version": "1.2.0",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/resourcemanager/dashboard/armdashboard",
+        "ServiceDirectory": "resourcemanager/dashboard/armdashboard",
+        "ReadMePath": "sdk/resourcemanager/dashboard/armdashboard/README.md",
+        "ChangeLogPath": "sdk/resourcemanager/dashboard/armdashboard/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "mgmt",
+        "IsNewSdk": true,
+        "ArtifactName": null,
+        "ReleaseStatus": "2023-11-24",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": null,
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "sdk/resourcemanager/storage/armstorage",
+        "Version": "1.7.0",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/resourcemanager/storage/armstorage",
+        "ServiceDirectory": "resourcemanager/storage/armstorage",
+        "ReadMePath": "sdk/resourcemanager/storage/armstorage/README.md",
+        "ChangeLogPath": "sdk/resourcemanager/storage/armstorage/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "mgmt",
+        "IsNewSdk": true,
+        "ArtifactName": null,
+        "ReleaseStatus": "2025-02-27",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": null,
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "Indirect Change",
+    "diff": {
+      "ChangedFiles": [
+        "eng/.golangci.yml"
+      ],
+      "ChangedServices": [],
+      "ExcludePaths": [],
+      "DeletedFiles": [],
+      "PRNumber": "33362"
+    },
+    "expected_package_output": []
+  }
+]

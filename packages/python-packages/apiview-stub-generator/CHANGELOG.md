@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.3.17 (Unreleased)
+## Version 0.3.17 (2025-03-25)
 Fixed issue with azure-core dependency conflict when running the stub generator on azure-core by moving necessary core files into an internal vendor folder.
 Fixed bug where package namespace was not being discovered correctly due to missing checks for init extension file format.
 

@@ -13,6 +13,7 @@ using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -187,6 +188,19 @@ namespace APIViewWeb.LeanControllers
             }
 
             return new LeanJsonResult("Invalid APIRevision", StatusCodes.Status500InternalServerError);
+        }
+
+        ///<summary>
+        ///Retrieve Cross Language Content for specified revisions
+        ///</summary>
+        ///<param name="reviewId"></param>
+        ///<param name="apiRevisionIds"></param>
+        ///<returns></returns>
+        [Route("{reviewId}/crossLanguageContent")]
+        [HttpGet]
+        public async Task<ActionResult<IDictionary<string, IDictionary<string, CodePanelRowData>>> GetReviewContentAsync(string reviewId, [FromQuery] IEnumerable<string> apiRevisionIds)
+        {
+            
         }
     }
 }

@@ -238,6 +238,7 @@ namespace APIViewWeb.Helpers
                 Type = reviewLine.Tokens.Any(t => t.IsDocumentation == true) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
                 NodeIdHashed = nodeIdHashed,
                 NodeId = reviewLine.LineId,
+                CrossLanguageId = reviewLine.CrossLanguageId,
                 Indent = indent,
                 DiffKind = reviewLine.DiffKind,
                 IsHiddenAPI = (reviewLine.IsHidden == true)

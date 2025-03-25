@@ -76,7 +76,7 @@ export class CodePanelComponent implements OnChanges{
     this.menuItemsLineActions = [
       { label: 'Copy line', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLineToClipBoard(event) },
       { label: 'Copy permalink', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLinePermaLinkToClipBoard(event) },
-      { label: 'Cross language', icon: 'bi bi-table', command: (event) => this.showCrossLanguageView(event) }
+      { label: 'Cross language', icon: 'bi bi-arrow-left-right', command: (event) => this.showCrossLanguageView(event) }
     ];
 
     fromEvent<KeyboardEvent>(document, 'keydown')
@@ -176,6 +176,10 @@ export class CodePanelComponent implements OnChanges{
       classObject['deprecated-token'] = true;
     }
     return classObject;
+  }
+
+  getLineMenu(row: CodePanelRowData) {
+    return this.menuItemsLineActions;
   }
 
   getNavigationId(token: StructuredToken) {

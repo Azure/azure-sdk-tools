@@ -8,7 +8,8 @@ import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { MessageService } from 'primeng/api';
 import { StructuredToken } from 'src/app/_models/structuredToken';
-import { CodePanelRowData } from 'src/app/_models/codePanelModels';
+import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
+import { CodeDiagnostic } from 'src/app/_models/codeDiagnostic';
 
 describe('CodePanelComponent', () => {
   let component: CodePanelComponent;
@@ -144,6 +145,56 @@ describe('CodePanelComponent', () => {
       component.searchCodePanelRowData('');
       expect(component.codeLineSearchMatchInfo?.length).toBeUndefined();
     });
+
+    it('should match across different row types', async () => {
+      const row1 = new CodePanelRowData(
+        CodePanelRowDatatype.Documentation, 1, [
+          new StructuredToken("// <summary>", '', "content", new Set(["doc"]), {}, new Set(["comment"])),
+          new StructuredToken(" ", '', "nonBreakingSpace")
+        ], "Azure.Template.MiniSecretClient.MiniSecretClient(System.Uri, Azure.Core.TokenCredential)", "nodeIdHashed", 0, 0
+      );
+      const row2 = new CodePanelRowData(
+        CodePanelRowDatatype.Documentation, 2, [
+          new StructuredToken("// Initializes a new instance of the <see cref=\"T:Azure.Template.MiniSecretClient\" />.", '', "content", new Set(["doc"]), {}, new Set(["comment"])),
+          new StructuredToken(" ", '', "nonBreakingSpace")
+        ], "Azure.Template.MiniSecretClient.MiniSecretClient(System.Uri, Azure.Core.TokenCredential)", "nodeIdHashed", 1, 0
+      );
+      const row3 = new CodePanelRowData(
+        CodePanelRowDatatype.Documentation, 3, [
+          new StructuredToken("// </summary>", '', "content", new Set(["doc"]), {}, new Set(["comment"])),
+          new StructuredToken(" ", '', "nonBreakingSpace")
+        ], "Azure.Template.MiniSecretClient.MiniSecretClient(System.Uri, Azure.Core.TokenCredential)", "nodeIdHashed", 2, 0
+      );
+      const row4 = new CodePanelRowData(
+        CodePanelRowDatatype.CodeLine, 4, [
+          new StructuredToken("public", '', "content", new Set(), {}, new Set(["keyword"])),
+          new StructuredToken(" ", '', "nonBreakingSpace"),
+          new StructuredToken("MiniSecretClient", '', "content", new Set(), {}, new Set(["tname"])),
+          new StructuredToken("(", '', "content", new Set(), {}, new Set(["punc"])),
+          new StructuredToken("Uri", '', "content", new Set(), {}, new Set(["tname"])),
+          new StructuredToken(" ", '', "nonBreakingSpace"),
+          new StructuredToken("endpoint", '', "content", new Set(), {}, new Set(["text"])),
+          new StructuredToken(",", '', "content", new Set(), {}, new Set(["punc"])),
+          new StructuredToken(" ", '', "nonBreakingSpace"),
+          new StructuredToken("TokenCredential", '', "content", new Set(), {}, new Set(["tname"])),
+          new StructuredToken(" ", '', "nonBreakingSpace"),
+          new StructuredToken("credential", '', "content", new Set(), {}, new Set(["text"])),
+          new StructuredToken(";", '', "content", new Set(), {}, new Set(["punc"])),
+          new StructuredToken(" ", '', "nonBreakingSpace")
+        ], "Azure.Template.MiniSecretClient.MiniSecretClient(System.Uri, Azure.Core.TokenCredential)", "nodeIdHashed", 0, 0
+      );
+      const row5 = new CodePanelRowData(
+        CodePanelRowDatatype.Diagnostics, 5, [], "Azure.Template.MiniSecretClient.MiniSecretClient(System.Uri, Azure.Core.TokenCredential)", "nodeIdHashed", 0, 0,
+        new Set(), 0, "noneDiff", '', '', new CodeDiagnostic("diagnosticId", "text", "helpLinkUri", "targetId", "level"),
+      );
+
+      component.codePanelRowData = [row1, row2, row3, row4, row5];
+      await component.searchCodePanelRowData('MiniSecretClient');
+    
+      expect(component.searchMatchedRowInfo.size).toBe(2);
+      expect(component.codeLineSearchMatchInfo?.length).toBe(2);
+      expect(component.codeLineSearchInfo?.currentMatch?.value.nodeIdHashed).toBe('nodeIdHashed');
+    });
   });
 
   describe('highlightSearchMatches', () => {
@@ -157,5 +208,4 @@ describe('CodePanelComponent', () => {
       expect(component.clearSearchMatchHighlights).toHaveBeenCalled();
     });
   });
-  
 });

@@ -119,7 +119,6 @@ function findConstructorLikeDeclarationBreakingChanges<T extends ConstructorLike
     const getNameNode = (n: T): NameNode => ({ name: n.getText(), node: n });
     const targetNameNode = getNameNode(targetDeclaration);
     const pair = createDiffPair(DiffLocation.Signature, DiffReasons.Removed, undefined, targetNameNode);
-    console.log("🚀 ~ pairs ~ pair ~ not found:", pair)
     result.push(pair);
     return result;
   }, new Array<DiffPair>());
@@ -325,7 +324,7 @@ export function findInterfaceBreakingChanges(
   return [...callSignatureBreakingChanges, ...propertyBreakingChanges];
 }
 
-// TODO
+// TODO: detect property and method
 export function findClassBreakingChanges(source: ClassDeclaration, target: ClassDeclaration) {
   // find constructor breaking changes
   const constructorBreakingChanges = findConstructorLikeDeclarationBreakingChanges(
@@ -333,13 +332,7 @@ export function findClassBreakingChanges(source: ClassDeclaration, target: Class
     target.getConstructors(),
     findMappingConstructorLikeDeclaration
   );
-
-  // find public method breaking changes
-  // TODO: check public/protected/private modifier, only care about public members
-  const targetProperties = target.getType().getProperties();
-  const sourceProperties = source.getType().getProperties();
-  const propertyBreakingChanges = findPropertyBreakingChanges(sourceProperties, targetProperties);
-  return [...constructorBreakingChanges, ...propertyBreakingChanges];
+  return constructorBreakingChanges;
 }
 
 function findRemovedFunctionOverloads(

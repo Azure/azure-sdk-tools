@@ -6,8 +6,21 @@ import { DiffLocation, DiffReasons, AssignDirection } from '../azure/common/type
 
 describe("patch current tool's breaking changes", async () => {
   test('detect function overloads', async () => {
-    const currentApiView = ``;
-    const baselineApiView = ``;
+    const baselineApiView = `
+    export interface A {a: string;}
+    export interface B {b: string;}
+    export interface C {c: string;}
+    export interface D {d: string;}
+    export function isUnexpected(response: A | B): response is A;
+    export function isUnexpected(response: C | D): response is A;`;
+
+    const currentApiView = `
+    export interface A {a: string;}
+    export interface B {b: string;}
+    export interface C {c: string;}
+    export interface D {d: string;}
+    export function isUnexpected(response: A | B): response is A;
+    export function isUnexpected(response: C | E): response is C;`;
 
     const astContext = createTestAstContext(baselineApiView, currentApiView);
     let breakingPairs = patchFunction('isUnexpected', astContext);
@@ -24,8 +37,19 @@ describe("patch current tool's breaking changes", async () => {
 
   // TODO: seperate tests
   test('detect function', async () => {
-    const currentApiView = ``;
-    const baselineApiView = ``;
+    const baselineApiView = `
+    export function funcBasic(a: string): string
+    export function funcReturnType(a: string): string
+    export function funcParameterCount(a: string, b: string): string
+    export function funcParameterType(a: string): string
+    export function funcRemove(a: string): string`;
+
+    const currentApiView = `
+    export function funcBasic(a: string): string
+    export function funcReturnType(a: string): number
+    export function funcParameterCount(a: string, b: string, c: string): string
+    export function funcParameterType(a: number): string
+    export function funcAdd(a: string): string`;
 
     const astContext = createTestAstContext(baselineApiView, currentApiView);
 
@@ -71,8 +95,32 @@ describe("patch current tool's breaking changes", async () => {
 
   // TODO: seperate tests
   test('detect routes', async () => {
-    const currentApiView = ``;
-    const baselineApiView = ``;
+    const baselineApiView = `
+        export interface ClustersGet {
+        a: number;
+    }
+    export interface Routes {
+        (path: "basic", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
+        (path: "remove", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
+        (path: "change_return_type", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
+        (path: "change_para_count", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
+        (path: "change_para_type", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
+    }`;
+
+    const currentApiView = `
+    export interface ClustersGet {
+        a: string;
+    }
+    export interface ClusterGetOld {
+        a: number;
+    }
+    export interface Routes {
+        (path: "basic", subscriptionId: string, resourceGroupName: string, clusterName: string): ClusterGetOld;
+        (path: "add", subscriptionId: string, resourceGroupName: string, clusterName: string): ClusterGetOld;
+        (path: "change_return_type", subscriptionId: string, resourceGroupName: string, clusterName: string): ClustersGet;
+        (path: "change_para_count", subscriptionId: string, resourceGroupName: string): ClusterGetOld;
+        (path: "change_para_type", subscriptionId: string, resourceGroupName: string, clusterName: number): ClusterGetOld;
+    }`;
 
     const astContext = createTestAstContext(baselineApiView, currentApiView);
     const breakingPairs = patchRoutes(astContext);
@@ -111,8 +159,18 @@ describe("patch current tool's breaking changes", async () => {
 
   // TODO: seperate tests
   test('detect union types', async () => {
-    const currentApiView = ``;
-    const baselineApiView = ``;
+    const baselineApiView = `
+    export type typesChange = "basic" | "remove";
+    export type typesRemove = "basic" | "remove";
+
+    export type typesExpand = string | number;
+    export type typesNarrow = string | number | boolean;`;
+
+    const currentApiView = `export type typesChange = "basic" | "rEmove";
+    export type typesAdd = "basic" | "rEmove";
+
+    export type typesExpand = string | number | boolean;
+    export type typesNarrow = string | number;`;
 
     const astContext = createTestAstContext(baselineApiView, currentApiView);
     let breakingPairs = patchTypeAlias('typesChange', astContext, AssignDirection.CurrentToBaseline);
@@ -152,9 +210,29 @@ describe("patch current tool's breaking changes", async () => {
   });
 
   describe('detect class', async () => {
-    test('removing constructors', async () => {
-      const currentApiView = ``;
-      const baselineApiView = ``;
+    test('add constructors', async () => {
+      const baselineApiView = `
+      class AddClassConstructor {
+      }`;
+      const currentApiView = `
+      class AddClassConstructor {
+        constructor(p1: string, p2: string) {}
+      }`;
+
+      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const breakingPairs = patchClass('AddClassConstructor', astContext, AssignDirection.CurrentToBaseline);
+      expect(breakingPairs.length).toBe(0);
+    });
+
+    test('remove constructors', async () => {
+      const baselineApiView = `
+      class RemoveClassConstructor {
+        constructor(remove: string) {}
+        constructor(p1: string, p2: string) {}
+      }`;
+      const currentApiView = `
+      class RemoveClassConstructor {
+      }`;
 
       const astContext = createTestAstContext(baselineApiView, currentApiView);
       const breakingPairs = patchClass('RemoveClassConstructor', astContext, AssignDirection.CurrentToBaseline);
@@ -169,9 +247,66 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs[1].target?.name).toBe('constructor(p1: string, p2: string) {}');
     });
 
-    test('removing class', async () => {
+    test('change type of constructor\'s parameter', async () => {
+      const baselineApiView = `
+      class TestClass {
+        constructor(p1: string, p2: string) {}
+      }`;
+      const currentApiView = `
+      class TestClass {
+        constructor(p2: string, p2: number) {}
+      }`;
+
+      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const breakingPairs = patchClass('TestClass', astContext, AssignDirection.CurrentToBaseline);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+      expect(breakingPairs[0].target?.name).toBe('constructor(p1: string, p2: string) {}');
+    });
+
+    test('change name of constructor\'s parameter', async () => {
+      const baselineApiView = `
+      class TestClass {
+        constructor(p1: string, p2: string) {}
+      }`;
+      const currentApiView = `
+      class TestClass {
+        constructor(p2: string, p3: string) {}
+      }`;
+
+      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const breakingPairs = patchClass('TestClass', astContext, AssignDirection.CurrentToBaseline);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+      expect(breakingPairs[0].target?.name).toBe('constructor(p1: string, p2: string) {}');
+    });
+
+    test('change constructor\'s parameters list', async () => {
+      const baselineApiView = `
+      class TestClass {
+        constructor(p1: string, p2: string, p3: string) {}
+      }`;
+      const currentApiView = `
+      class TestClass {
+        constructor(p2: string, p2: string) {}
+      }`;
+
+      const astContext = createTestAstContext(baselineApiView, currentApiView);
+      const breakingPairs = patchClass('TestClass', astContext, AssignDirection.CurrentToBaseline);
+      expect(breakingPairs.length).toBe(1);
+      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
+      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
+      expect(breakingPairs[0].target?.name).toBe('constructor(p1: string, p2: string, p3: string) {}');
+    });
+
+    test('remove class', async () => {
+      const baselineApiView = `class RemoveClass {}`;
       const currentApiView = ``;
-      const baselineApiView = ``;
 
       const astContext = createTestAstContext(baselineApiView, currentApiView);
       const breakingPairs = patchClass('RemoveClass', astContext, AssignDirection.CurrentToBaseline);
@@ -182,9 +317,9 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs[0].target?.name).toBe('RemoveClass');
     });
 
-    test('adding class', async () => {
-      const currentApiView = ``;
+    test('add class', async () => {
       const baselineApiView = ``;
+      const currentApiView = `class AddClass {}`;
 
       const astContext = createTestAstContext(baselineApiView, currentApiView);
       const breakingPairs = patchClass('AddClass', astContext, AssignDirection.CurrentToBaseline);
@@ -193,45 +328,6 @@ describe("patch current tool's breaking changes", async () => {
       expect(breakingPairs[0].location).toBe(DiffLocation.Class);
       expect(breakingPairs[0].reasons).toBe(DiffReasons.Added);
       expect(breakingPairs[0].source?.name).toBe('AddClass');
-    });
-
-    test('remove methods (including arrow functions and classic methods)', async () => {
-      const baselineApiView = `
-        class RemoveMethodClass {
-          removeMethod(a: string): void;
-          removeArrowFunc(a: string): void;
-        }`;
-      const currentApiView = `class RemoveMethodClass {}`;
-
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
-      const breakingPairs = patchClass('RemoveMethodClass', astContext, AssignDirection.CurrentToBaseline);
-      expect(breakingPairs.length).toBe(2);
-      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
-      expect(breakingPairs[0].location).toBe(DiffLocation.Signature);
-      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
-      expect(breakingPairs[0].target?.name).toBe('removeMethod');
-      expect(breakingPairs[1].assignDirection).toBe(AssignDirection.CurrentToBaseline);
-      expect(breakingPairs[1].location).toBe(DiffLocation.Signature);
-      expect(breakingPairs[1].reasons).toBe(DiffReasons.Removed);
-      expect(breakingPairs[1].target?.name).toBe('removeArrowFunc');
-    });
-
-    test('remove classic properties', async () => {
-      const baselineApiView = `
-        export class RemovePropClass {
-          removeProp: string;
-        }`;
-      const currentApiView = `
-        export class RemovePropClass {
-        }`;
-
-      const astContext = createTestAstContext(baselineApiView, currentApiView);
-      const breakingPairs = patchClass('RemovePropClass', astContext, AssignDirection.CurrentToBaseline);
-      expect(breakingPairs.length).toBe(1);
-      expect(breakingPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
-      expect(breakingPairs[0].location).toBe(DiffLocation.Property);
-      expect(breakingPairs[0].reasons).toBe(DiffReasons.Removed);
-      expect(breakingPairs[0].target?.name).toBe('removeProp');
     });
   });
 });

@@ -1,6 +1,6 @@
 import {logger} from "./logger.js";
-import pkg from 'semver';
-const { semverInc } = pkg;
+import {inc as semverInc} from "semver";
+
 
 export function getVersion(npmViewResult: Record<string, any> | undefined, tag: string) {
     const distTags: Record<string, any> | undefined = npmViewResult?.['dist-tags'];

@@ -3,7 +3,7 @@ import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFi
 import { ApiVersionType } from "../../common/types.js";
 import { IApiVersionTypeExtractor } from "../../common/interfaces.js";
 import { join } from "path";
-import { exists, readFile } from "fs-extra";
+import fs from 'fs-extra';
 import { tryGetNpmView } from "../../common/npmUtils.js";
 import { getNpmPackageName } from "../../common/utils.js";
 import { getVersion, isBetaVersion } from "../../utils/version.js";
@@ -35,9 +35,9 @@ function extractAutorestConfig(readme: MarkDownEx) {
 async function resolveParameterPath(packageRoot: string) {
     let parametersPath = join(packageRoot, "src/parameters.ts");
     const swaggerReadmePath = join(packageRoot, "swagger/README.md");
-    const hasSwaggerReadme = await exists(swaggerReadmePath);
+    const hasSwaggerReadme = await fs.exists(swaggerReadmePath);
     if (hasSwaggerReadme) {
-        const autoRestContent = await readFile(swaggerReadmePath, { encoding: 'utf-8' });
+        const autoRestContent = await fs.readFile(swaggerReadmePath, { encoding: 'utf-8' });
         const readme = parseMarkdown(autoRestContent);
         const config = extractAutorestConfig(readme);
         const sourceFolderPath = config["source-code-folder-path"];
@@ -58,7 +58,7 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
 
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');
     const parametersPath = await resolveParameterPath(packageRoot);
-    if (await exists(parametersPath)) {
+    if (await fs.exists(parametersPath)) {
         const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
         if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
     }

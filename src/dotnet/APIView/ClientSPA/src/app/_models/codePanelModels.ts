@@ -17,6 +17,7 @@ export class CodePanelRowData {
   rowOfTokens: StructuredToken[];
   nodeId: string;
   nodeIdHashed: string;
+  crossLanguageId: string;
   rowPositionInGroup: number; // a group of consecutive rows can have the same nodeIdHashed. With this you can index specific rows within the group
   associatedRowPositionInGroup: number;
   rowClasses: Set<string>;
@@ -37,6 +38,7 @@ export class CodePanelRowData {
     rowOfTokens: StructuredToken[] = [],
     nodeId: string = '',
     nodeIdHashed: string = '',
+    crossLanguageId: string = '',
     rowPositionInGroup: number = 0,
     associatedRowPositionInGroup: number = 0,
     rowClasses: Set<string> = new Set<string>(),
@@ -56,6 +58,7 @@ export class CodePanelRowData {
     this.rowOfTokens = rowOfTokens;
     this.nodeId = nodeId;
     this.nodeIdHashed = nodeIdHashed;
+    this.crossLanguageId = crossLanguageId;
     this.rowPositionInGroup = rowPositionInGroup;
     this.associatedRowPositionInGroup = associatedRowPositionInGroup;
     this.rowClasses = rowClasses;

@@ -17,14 +17,17 @@ export class RevisionOptionsComponent implements OnChanges {
   @Input() activeSamplesRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
   @Input() samplesRevisions: SamplesRevision[] = [];
+  @Input() crossLanguageAPIRevisions: APIRevision[] = [];
 
   mappedApiRevisions: any[] = [];
   activeApiRevisionsMenu: any[] = [];
   activeSamplesRevisionsMenu: any[] = [];
   diffApiRevisionsMenu: any[] = [];
+  crossLanguageAPIRevisionsMenu: any[] = [];
   selectedActiveAPIRevision: any;
   selectedActiveSamplesRevision: any;
   selectedDiffAPIRevision: any = null;
+  selectedCrossLanguageAPIRevision: any = null;
 
   manualIcon = MANUAL_ICON;
   prIcon = PR_ICON;
@@ -76,6 +79,13 @@ export class RevisionOptionsComponent implements OnChanges {
       if (this.samplesRevisions.length > 0) {
         this.activeSamplesRevisionsMenu = this.samplesRevisions;
         this.selectedActiveSamplesRevision = this.samplesRevisions.find((samplesRevision: SamplesRevision) => samplesRevision.id === this.activeSamplesRevisionId);
+      }
+    }
+
+    if (changes['crossLanguageAPIRevisions']) {
+      if (this.crossLanguageAPIRevisions.length > 0) {
+        this.crossLanguageAPIRevisionsMenu = this.mapRevisionToMenu(this.crossLanguageAPIRevisions)
+        this.selectedCrossLanguageAPIRevision = this.crossLanguageAPIRevisionsMenu[0];
       }
     }
   }

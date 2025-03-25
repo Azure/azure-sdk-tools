@@ -1,11 +1,11 @@
 import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Observable, Subject, take, takeUntil } from 'rxjs';
+import { concatMap, EMPTY, Observable, Subject, take, takeUntil } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
-import { APIRevision, ApiTreeBuilderData } from 'src/app/_models/revision';
+import { APIRevision, APIRevisionGroupedByLanguage, ApiTreeBuilderData } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
@@ -22,6 +22,7 @@ import { SamplesRevisionService } from 'src/app/_services/samples/samples.servic
 import { SamplesRevision } from 'src/app/_models/samples';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { HttpResponse } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-review-page',
@@ -36,14 +37,18 @@ export class ReviewPageComponent implements OnInit {
   diffApiRevisionId : string | null = null;
   diffStyle : string | null = null;
 
+  assetsPath : string = environment.assetsPath;
+
   userProfile : UserProfile | undefined;
   review : Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
+  crossLanguageAPIRevisions: APIRevisionGroupedByLanguage[] = [];
   comments: CommentItemModel[] = [];
   activeAPIRevision : APIRevision | undefined = undefined;
   diffAPIRevision : APIRevision | undefined = undefined;
   latestSampleRevision: SamplesRevision | undefined = undefined;
   revisionSidePanel : boolean | undefined = undefined;
+  crosslanguageRevisionSidePanel : boolean | undefined = undefined; 
   conversationSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
@@ -114,11 +119,11 @@ export class ReviewPageComponent implements OnInit {
       }
     });
 
+    this.createSideMenu();
     this.loadReview(this.reviewId!);
     this.loadPreferredApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
     this.loadComments();
-    this.createSideMenu();
     this.handleRealTimeReviewUpdates();
     this.handleRealTimeAPIRevisionUpdates();
     this.loadLatestSampleRevision(this.reviewId!);
@@ -267,8 +272,9 @@ export class ReviewPageComponent implements OnInit {
 
     this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined, 
       undefined, "createdOn", undefined, undefined, undefined, true, pageRevisions)
-      .pipe(takeUntil(this.destroyLoadAPIRevision$)).subscribe({
-        next: (response: any) => {
+      .pipe(
+        takeUntil(this.destroyLoadAPIRevision$),
+        concatMap((response: any) => {
           this.apiRevisions = response.result;
           if (this.apiRevisions.length > 0) {
             this.language = this.apiRevisions[0].language;
@@ -278,8 +284,30 @@ export class ReviewPageComponent implements OnInit {
               this.diffAPIRevision = this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0];
             }
           }
-        }
-      });
+
+          if (this.activeAPIRevision && this.activeAPIRevision.files[0].crossLanguagePackageId) {
+            return this.apiRevisionsService.getCrossLanguageAPIRevisions(this.activeAPIRevision.files[0].crossLanguagePackageId);
+          }
+          return EMPTY
+        })
+      ).subscribe({
+          next: (response: any) => {
+            this.crossLanguageAPIRevisions = response.filter((c: APIRevisionGroupedByLanguage) => c.label !== this.language);
+            const menu = this.sideMenu!;
+            this.sideMenu = [];
+            this.sideMenu!.push(menu[0]);
+            this.sideMenu!.push({
+              icon: 'bi bi-arrow-left-right',
+              tooltip: 'Cross Language',
+              command: () => {
+                if (this.getLoadingStatus() === 'completed') {
+                  this.crosslanguageRevisionSidePanel = !this.crosslanguageRevisionSidePanel;
+                }
+              }
+            });
+            this.sideMenu!.push(...(menu.splice(1)));
+          }
+        });
   }
 
   loadComments() {

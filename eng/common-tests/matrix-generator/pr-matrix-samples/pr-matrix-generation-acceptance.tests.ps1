@@ -7,7 +7,7 @@ $jsScenarios = Get-Content (Join-Path $PSScriptRoot js_scenarios.json) | Convert
 $goScenarios = Get-Content (Join-Path $PSScriptRoot go_scenarios.json) | ConvertFrom-Json
 $javaScenarios = Get-Content (Join-Path $PSScriptRoot java_scenarios.json) | ConvertFrom-Json
 
-Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "Integration" {
+Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "IntegrationTest" {
     BeforeAll {
         $NET_REPO = "Azure/azure-sdk-for-net"
         $NET_REPO_REF = "331c07a1ab59ed0042972ca6d0df830df235280f"
@@ -28,7 +28,7 @@ Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "Integration" {
     }
 }
 
-Describe "Acceptance tests for Python PR Matrix Generation" -Tag "Integration" {
+Describe "Acceptance tests for Python PR Matrix Generation" -Tag "IntegrationTest" {
     BeforeAll {
         $PYTHON_REPO_REF = "7656cf20f78b7653522040e372a37ff03338b1a2"
         $PYTHON_REPO = "Azure/azure-sdk-for-python"
@@ -57,7 +57,7 @@ Describe "Acceptance tests for Python PR Matrix Generation" -Tag "Integration" {
     }
 }
 
-Describe "Acceptance tests for JS PR Matrix Generation" -Tag "Integration" {
+Describe "Acceptance tests for JS PR Matrix Generation" -Tag "IntegrationTest" {
     BeforeAll {
         $JS_REPO_REF = "e2598ca60018edc7b0c3a5b3a28ae7fb40b85894"
         $JS_REPO = "Azure/azure-sdk-for-js"
@@ -86,7 +86,7 @@ Describe "Acceptance tests for JS PR Matrix Generation" -Tag "Integration" {
     }
 }
 
-Describe "Acceptance tests for Go PR Matrix Generation" -Tag "Integration" {
+Describe "Acceptance tests for Go PR Matrix Generation" -Tag "IntegrationTest" {
     BeforeAll {
         $GO_REPO_REF = "524f41ef0bdb788e8df3e77fcf47f982421ee5d9"
         $GO_REPO = "Azure/azure-sdk-for-go"
@@ -115,7 +115,7 @@ Describe "Acceptance tests for Go PR Matrix Generation" -Tag "Integration" {
     }
 }
 
-Describe "Acceptance tests for Java PR Matrix Generation" -Tag "Integration" {
+Describe "Acceptance tests for Java PR Matrix Generation" -Tag "IntegrationTest" {
     BeforeAll {
         $JAVA_REPO_REF = "296f1fad306a49601ec61280eb4af1f33934ccde"
         $JAVA_REPO = "Azure/azure-sdk-for-java"

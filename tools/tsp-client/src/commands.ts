@@ -494,7 +494,7 @@ export async function generateLockFileCommand(argv: any) {
 
 export async function installDependencies(argv: any) {
   const outputPath = argv["path"];
-  const repoRoot = await getRepoRoot(outputPath ?? process.cwd());
+  const repoRoot = await getRepoRoot(process.cwd());
   let installPath = repoRoot;
   if (outputPath !== undefined) {
     Logger.warn(
@@ -503,7 +503,6 @@ export async function installDependencies(argv: any) {
     installPath = resolvePath(outputPath);
   }
 
-  Logger.info("Installing dependencies from npm...");
   const args: string[] = [];
   await cp(
     joinPaths(repoRoot, "eng", "emitter-package.json"),
@@ -525,6 +524,7 @@ export async function installDependencies(argv: any) {
   if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
     args.push("--force");
   }
+  Logger.info("Installing dependencies from npm...");
   await npmCommand(installPath, args);
 }
 

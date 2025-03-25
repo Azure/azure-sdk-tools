@@ -14,6 +14,11 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using APIViewWeb.DTOs;
+using APIView.Model.V2;
+using System;
+using System.Linq;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -193,14 +198,26 @@ namespace APIViewWeb.LeanControllers
         ///<summary>
         ///Retrieve Cross Language Content for specified revisions
         ///</summary>
-        ///<param name="reviewId"></param>
-        ///<param name="apiRevisionIds"></param>
+        ///<param name="apiRevisionInfo"></param>
         ///<returns></returns>
-        [Route("{reviewId}/crossLanguageContent")]
-        [HttpGet]
-        public async Task<ActionResult<IDictionary<string, IDictionary<string, CodePanelRowData>>> GetReviewContentAsync(string reviewId, [FromQuery] IEnumerable<string> apiRevisionIds)
+        [Route("crossLanguageContent")]
+        [HttpPost]
+        public async Task<ActionResult<IEnumerable<CrossLanguageContentDto>>> GetReviewContentAsync([FromBody] IEnumerable<CrossLanguageDtoForApiParam> apiRevisionInfo)
         {
-            
+            var results = new List<CrossLanguageContentDto>();
+
+            foreach (var info in apiRevisionInfo.Distinct()) 
+            {
+                var revisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: info.APIRevisionId, codeFileId: info.APICodeFileId);
+                var processingData = new CrossLanguageProcessingDto();
+                await CodeFileHelpers.GrabCrossLanguageReviewLines(processingData, revisionReviewCodeFile.ReviewLines);
+                var contentData = new CrossLanguageContentDto();
+                contentData.Content = processingData.Content;
+                contentData.APIRevisonId = info.APIRevisionId;
+                results.Add(contentData);
+            }
+
+            return new LeanJsonResult(results, StatusCodes.Status200OK);
         }
     }
 }

@@ -17,17 +17,7 @@ describe("resolveOptions", () => {
                     "resource-manager/{service-name}/{version-status}/{version}/openapi.json",
             },
             "@azure-tools/typespec-ts": {
-                azureSdkForJs: true,
-                enableOperationGroup: true,
-                experimentalExtensibleEnums: true,
-                flavor: "azure",
-                generateMetadata: true,
-                hierarchyClient: false,
-                isModularLibrary: true,
-                "package-dir": "arm-informaticadatamanagement",
-                packageDetails: {
-                    name: "@azure/arm-informaticadatamanagement",
-                },
+                "output-folder": "sdk/informatica/src/generated",
                 "service-dir": "sdk/informatica",
             },
             "usingParam":{

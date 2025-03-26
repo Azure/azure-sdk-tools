@@ -89,7 +89,6 @@ namespace APIViewWeb.Helpers
         private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
             ReferenceHandler = ReferenceHandler.IgnoreCycles,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             WriteIndented = false,

@@ -198,26 +198,24 @@ namespace APIViewWeb.LeanControllers
         ///<summary>
         ///Retrieve Cross Language Content for specified revisions
         ///</summary>
-        ///<param name="apiRevisionInfo"></param>
+        ///<param name="apiRevisionId"></param>
+        ///<param name="apiCodeFileId"></param>
         ///<returns></returns>
         [Route("crossLanguageContent")]
-        [HttpPost]
-        public async Task<ActionResult<IEnumerable<CrossLanguageContentDto>>> GetReviewContentAsync([FromBody] IEnumerable<CrossLanguageDtoForApiParam> apiRevisionInfo)
+        [HttpGet]
+        public async Task<ActionResult<CrossLanguageContentDto>> GetReviewContentAsync([FromQuery] string apiRevisionId, [FromQuery] string apiCodeFileId)
         {
             var results = new List<CrossLanguageContentDto>();
 
-            foreach (var info in apiRevisionInfo.Distinct()) 
-            {
-                var revisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: info.APIRevisionId, codeFileId: info.APICodeFileId);
-                var processingData = new CrossLanguageProcessingDto();
-                await CodeFileHelpers.GrabCrossLanguageReviewLines(processingData, revisionReviewCodeFile.ReviewLines);
-                var contentData = new CrossLanguageContentDto();
-                contentData.Content = processingData.Content;
-                contentData.APIRevisonId = info.APIRevisionId;
-                results.Add(contentData);
-            }
+            var revisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: apiRevisionId, codeFileId: apiCodeFileId);
+            var processingData = new CrossLanguageProcessingDto();
+            await CodeFileHelpers.GrabCrossLanguageReviewLines(processingData, revisionReviewCodeFile.ReviewLines);
+            var contentData = new CrossLanguageContentDto();
+            contentData.Content = processingData.Content;
+            contentData.APIRevisionId = apiRevisionId;
+            contentData.Language = revisionReviewCodeFile.Language;
 
-            return new LeanJsonResult(results, StatusCodes.Status200OK);
+            return new LeanJsonResult(contentData, StatusCodes.Status200OK);
         }
     }
 }

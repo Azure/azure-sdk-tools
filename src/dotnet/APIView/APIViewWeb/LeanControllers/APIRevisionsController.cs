@@ -57,8 +57,12 @@ namespace APIViewWeb.LeanControllers
         [HttpGet("{crossLanguageId}/crosslanguage", Name = "GetCrossLanguageAPIRevision")]
         public async Task<ActionResult<APIRevisionListItemModel>> GetCrossLanguageAPIRevision(string crossLanguageId, APIRevisionType apiRevisionType = APIRevisionType.All)
         {
-            var result = await _apiRevisionsManager.GetCrossLanguageAPIRevisionsAsync(crossLanguageId: crossLanguageId, apiRevisionType: apiRevisionType);
-            var groupResults = result.GroupBy(r => r.Language).Select(g => new
+            var results = new List<APIRevisionListItemModel>();
+            foreach (var language in LanguageServiceHelpers.SupportedLanguages)
+            {
+                results.AddRange(await _apiRevisionsManager.GetCrossLanguageAPIRevisionsAsync(crossLanguageId: crossLanguageId, language: language, apiRevisionType: apiRevisionType));
+            }
+            var groupResults = results.GroupBy(r => r.Language).Select(g => new
             {
                Label = g.Key,
                Items = g.ToList()

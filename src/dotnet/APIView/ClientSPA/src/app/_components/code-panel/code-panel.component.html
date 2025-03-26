@@ -8,7 +8,7 @@
     [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">
       <div class="line-actions">
-          <span *ngIf="showLineNumbers" class="line-number">
+          <span *ngIf="showLineNumbers" [ngClass]="getLineNumberClassObject(item)">
             <span class="text-decoration-none" (click)="toggleLineActionMenu($event, index)">{{index+1}}</span>
             <p-menu appendTo="body" [attr.data-line-action-menu-id]="index" [model]="getLineMenu(item)" [popup]="true">
               <ng-template pTemplate="item" let-item>
@@ -45,9 +45,10 @@
         (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)">
       </app-comment-thread>
     </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguageView">
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguage">
       <app-cross-lang-view
         [codePanelRowData]="item"
+        [userProfile]="userProfile"
         (closeCrossLanguageViewEmitter)="handleCloseCrossLanguageViewEmitter($event)"
       ></app-cross-lang-view>
     </ng-container>

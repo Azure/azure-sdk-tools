@@ -150,17 +150,15 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Retrieve the latest APRevison for a particular Review.
-        /// Filter by APIRevisionType if specified and Review contains specified type
-        /// If APIRevisionType is not specified, return the latest revision irrespective of the type
-        /// Return default if no revisoin is found
+        /// Retrieve Revisions from the APIRevisions container in CosmosDb for a given crossLanguageId and language
         /// </summary>
         /// <param name="crossLanguageId"></param>
+        /// <param name="language"></param>
         /// <param name="apiRevisionType"></param>
         /// <returns>APIRevisionListItemModel</returns>
-        public async Task<IEnumerable<APIRevisionListItemModel>> GetCrossLanguageAPIRevisionsAsync(string crossLanguageId, APIRevisionType apiRevisionType = APIRevisionType.All)
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetCrossLanguageAPIRevisionsAsync(string crossLanguageId, string language, APIRevisionType apiRevisionType = APIRevisionType.All)
         {
-            return await this._apiRevisionsRepository.GetCrossLanguageAPIRevisionsAsync(crossLanguageId, apiRevisionType);
+            return await this._apiRevisionsRepository.GetCrossLanguageAPIRevisionsAsync(crossLanguageId, language, apiRevisionType);
         }
 
         /// <summary>

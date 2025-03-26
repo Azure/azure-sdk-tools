@@ -13,6 +13,7 @@ import { PullRequestsService } from 'src/app/_services/pull-requests/pull-reques
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
 import { FormControl } from '@angular/forms';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-review-page-options',
@@ -56,6 +57,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   private destroy$ = new Subject<void>();
   
   webAppUrl : string = this.configService.webAppUrl
+  assetsPath : string = environment.assetsPath;
   
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;

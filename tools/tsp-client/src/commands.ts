@@ -247,6 +247,7 @@ export async function generateCommand(argv: any) {
   let outputDir = argv["output-dir"];
   const emitterOptions = argv["emitter-options"];
   const saveInputs = argv["save-inputs"];
+  const skipInstall = argv["skip-install"];
 
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
@@ -264,24 +265,27 @@ export async function generateCommand(argv: any) {
   }
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
-  Logger.info("Installing dependencies from npm...");
-  const args: string[] = [];
-  try {
-    // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
-    await stat(joinPaths(tempRoot, "package-lock.json"));
-    args.push("ci");
-  } catch (err) {
-    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
-    args.push("install");
+  if (skipInstall) {
+    Logger.info("Skipping installation of dependencies");
+  } else {
+    Logger.info("Installing dependencies from npm...");
+    const args: string[] = [];
+    try {
+      // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+      await stat(joinPaths(tempRoot, "package-lock.json"));
+      args.push("ci");
+    } catch (err) {
+      // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+      args.push("install");
+    }
+    // NOTE: This environment variable should be used for developer testing only. A force
+    // install may ignore any conflicting dependencies and result in unexpected behavior.
+    dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
+    if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
+      args.push("--force");
+    }
+    await npmCommand(srcDir, args);
   }
-  // NOTE: This environment variable should be used for developer testing only. A force
-  // install may ignore any conflicting dependencies and result in unexpected behavior.
-  dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
-  if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
-    args.push("--force");
-  }
-  await npmCommand(srcDir, args);
-
   const [success, exampleCmd] = await compileTsp({
     emitterPackage: emitter,
     outputPath: outputDir,
@@ -486,6 +490,42 @@ export async function generateLockFileCommand(argv: any) {
   }
   await removeDirectory(tempRoot);
   Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
+}
+
+export async function installDependencies(argv: any) {
+  const outputPath = argv["path"];
+  const repoRoot = await getRepoRoot(process.cwd());
+  let installPath = repoRoot;
+  if (outputPath !== undefined) {
+    Logger.warn(
+      "The install path of the node_modules/ directory must be in the path of the target project, otherwise other commands using npm will fail.",
+    );
+    installPath = resolvePath(outputPath);
+  }
+
+  const args: string[] = [];
+  await cp(
+    joinPaths(repoRoot, "eng", "emitter-package.json"),
+    joinPaths(installPath, "package.json"),
+  );
+  try {
+    // Check if emitter-package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+    const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    await stat(joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
+    await cp(emitterLockPath, joinPaths(installPath, "package-lock.json"));
+    args.push("ci");
+  } catch (err) {
+    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+    args.push("install");
+  }
+  // NOTE: This environment variable should be used for developer testing only. A force
+  // install may ignore any conflicting dependencies and result in unexpected behavior.
+  dotenvConfig({ path: resolve(repoRoot, ".env") });
+  if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
+    args.push("--force");
+  }
+  Logger.info("Installing dependencies from npm...");
+  await npmCommand(installPath, args);
 }
 
 export async function sortSwaggerCommand(argv: any): Promise<void> {

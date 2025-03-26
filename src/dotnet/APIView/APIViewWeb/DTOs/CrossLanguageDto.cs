@@ -4,12 +4,6 @@ using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.DTOs
 {
-    public class CrossLanguageDtoForApiParam
-    {
-        public string APIRevisionId { get; set; }
-        public string APICodeFileId { get; set; }
-    }
-
     public class CrossLanguageProcessingDto 
     {
         public Dictionary<string, List<CodePanelRowData>> Content { get; set; } = new Dictionary<string, List<CodePanelRowData>>();
@@ -21,7 +15,12 @@ namespace APIViewWeb.DTOs
 
     public class CrossLanguageContentDto
     {
+        /// <summary>
+        /// Key: Cross Language Line ID
+        /// Value: Cross Language Row Data
+        /// </summary>
         public Dictionary<string, List<CodePanelRowData>> Content { get; set; } = new Dictionary<string, List<CodePanelRowData>>();
         public string APIRevisonId { get; set; }
+        public string Language { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 
+using Amazon.Runtime.Internal.Transform;
 using ApiView;
 using APIView;
 using APIView.Model.V2;
@@ -83,7 +84,7 @@ namespace APIViewWeb.Helpers
                     crossLanguageProcessingData.GrabLines = true;
                     crossLanguageProcessingData.CurrentRoot = line;
                     crossLanguageProcessingData.GrabIndent = indent;
-                    crossLanguageProcessingData.Content.Add(line.CrossLanguageId, new List<CodePanelRowData>());
+                    crossLanguageProcessingData.Content.Add(line.CrossLanguageId.ToLower(), new List<CodePanelRowData>());
                 }
 
                 if (crossLanguageProcessingData.GrabLines)
@@ -91,7 +92,7 @@ namespace APIViewWeb.Helpers
                     CodePanelRowData rowData = GetCodePanelRowData(crossLanguageProcessingData.CodePanelData, line, null, indent);
                     if (rowData.Type == CodePanelRowDatatype.CodeLine)
                     {
-                        crossLanguageProcessingData.Content[crossLanguageProcessingData.CurrentRoot.CrossLanguageId].Add(rowData);
+                        crossLanguageProcessingData.Content[crossLanguageProcessingData.CurrentRoot.CrossLanguageId.ToLower()].Add(rowData);
                     }
                 }
 

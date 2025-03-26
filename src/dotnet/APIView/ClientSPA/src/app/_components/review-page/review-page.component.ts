@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { concatMap, EMPTY, Observable, Subject, take, takeUntil } from 'rxjs';
+import { concatMap, EMPTY, from, Observable, Subject, take, takeUntil, tap } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
@@ -13,7 +13,7 @@ import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
-import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
+import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
@@ -75,6 +75,7 @@ export class ReviewPageComponent implements OnInit {
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
+  crossLanguageRowData: CrossLanguageContentDto[] = [];
   apiRevisionPageSize = 50;
   lastNodeIdUnhashedDiscarded = '';
 
@@ -289,23 +290,42 @@ export class ReviewPageComponent implements OnInit {
             return this.apiRevisionsService.getCrossLanguageAPIRevisions(this.activeAPIRevision.files[0].crossLanguagePackageId);
           }
           return EMPTY
-        })
+        }),
+        concatMap((response: any) => {
+          this.crossLanguageAPIRevisions = response.filter((c: APIRevisionGroupedByLanguage) => c.label !== this.language);
+          const menu = this.sideMenu!;
+          this.sideMenu = [];
+          this.sideMenu!.push(menu[0]);
+          this.sideMenu!.push({
+            icon: 'bi bi-arrow-left-right',
+            tooltip: 'Cross Language',
+            command: () => {
+              if (this.getLoadingStatus() === 'completed') {
+                this.crosslanguageRevisionSidePanel = !this.crosslanguageRevisionSidePanel;
+              }
+            }
+          });
+          this.sideMenu!.push(...(menu.splice(1)));
+          if (this.crossLanguageAPIRevisions.length > 0) {
+            const itemsToProcess = this.crossLanguageAPIRevisions
+              .filter(revision => revision.items.length > 0 && revision.items[0].files.length > 0)
+              .map(revision => ({
+                apiRevisionId: revision.items[0].id,
+                codeFileId: revision.items[0].files[0].fileId,
+              }));
+            return from(itemsToProcess).pipe(
+              concatMap((item : any) => this.reviewsService.getCrossLanguageContent(item.apiRevisionId, item.codeFileId).pipe(
+                tap(response => {
+                  this.crossLanguageRowData.push(response);
+                })
+              ))
+            );
+          }
+          return EMPTY;
+        }),
       ).subscribe({
           next: (response: any) => {
-            this.crossLanguageAPIRevisions = response.filter((c: APIRevisionGroupedByLanguage) => c.label !== this.language);
-            const menu = this.sideMenu!;
-            this.sideMenu = [];
-            this.sideMenu!.push(menu[0]);
-            this.sideMenu!.push({
-              icon: 'bi bi-arrow-left-right',
-              tooltip: 'Cross Language',
-              command: () => {
-                if (this.getLoadingStatus() === 'completed') {
-                  this.crosslanguageRevisionSidePanel = !this.crosslanguageRevisionSidePanel;
-                }
-              }
-            });
-            this.sideMenu!.push(...(menu.splice(1)));
+            
           }
         });
   }

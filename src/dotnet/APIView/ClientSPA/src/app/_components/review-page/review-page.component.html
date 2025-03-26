@@ -22,6 +22,7 @@
         <ng-template pTemplate>
             <div class="col flex align-items-center justify-content-center border review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
                 <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
+                    [crossLanguageRowData]="crossLanguageRowData"
                     [language]="language" [languageSafeName]="languageSafeName"
                     [isDiffView]="!!diffApiRevisionId"
                     [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"

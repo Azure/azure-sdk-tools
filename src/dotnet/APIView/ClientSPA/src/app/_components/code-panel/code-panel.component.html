@@ -45,9 +45,10 @@
         (commentThreadNavaigationEmitter)="handleCommentThreadNavaigationEmitter($event)">
       </app-comment-thread>
     </ng-container>
-    <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguageView">
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.CrossLanguage">
       <app-cross-lang-view
         [codePanelRowData]="item"
+        [userProfile]="userProfile"
         (closeCrossLanguageViewEmitter)="handleCloseCrossLanguageViewEmitter($event)"
       ></app-cross-lang-view>
     </ng-container>

@@ -1,4 +1,5 @@
 
+using Amazon.Runtime.Internal.Transform;
 using ApiView;
 using APIView;
 using APIView.Model.V2;
@@ -76,30 +77,62 @@ namespace APIViewWeb.Helpers
         public static async Task GrabCrossLanguageReviewLines(
             CrossLanguageProcessingDto crossLanguageProcessingData, IEnumerable<ReviewLine> reviewLines, int indent = 0)
         {
+            string currentCrossLangId = null;
             foreach (var line in reviewLines)
             {
-                if (!String.IsNullOrEmpty(line.CrossLanguageId) && !crossLanguageProcessingData.GrabLines)
+                if (crossLanguageProcessingData.ContextEndLine != null && line.IsContextEndLine == true)
                 {
+                    GrabLinesForCrossLanguageView(crossLanguageProcessingData, line, indent);
+                    crossLanguageProcessingData.ContextEndLine = null;
+                    continue;
+                }
+
+                if (!String.IsNullOrEmpty(line.CrossLanguageId) && line.CrossLanguageId != currentCrossLangId)
+                {
+                    currentCrossLangId = line.CrossLanguageId;
                     crossLanguageProcessingData.GrabLines = true;
                     crossLanguageProcessingData.CurrentRoot = line;
                     crossLanguageProcessingData.GrabIndent = indent;
-                    crossLanguageProcessingData.Content.Add(line.CrossLanguageId, new List<CodePanelRowData>());
+
+                    if (crossLanguageProcessingData.Content.ContainsKey(line.CrossLanguageId.ToLower()))
+                    {
+                        crossLanguageProcessingData.Content[line.CrossLanguageId.ToLower()].Add(new CodePanelRowData() {
+                            Type = CodePanelRowDatatype.Separator
+                        });
+                    }
+                    else
+                    {
+                        crossLanguageProcessingData.Content.Add(line.CrossLanguageId.ToLower(), new List<CodePanelRowData>());
+                    }
                 }
 
                 if (crossLanguageProcessingData.GrabLines)
                 {
-                    CodePanelRowData rowData = GetCodePanelRowData(crossLanguageProcessingData.CodePanelData, line, null, indent);
-                    if (rowData.Type == CodePanelRowDatatype.CodeLine)
-                    {
-                        crossLanguageProcessingData.Content[crossLanguageProcessingData.CurrentRoot.CrossLanguageId].Add(rowData);
-                    }
+                    GrabLinesForCrossLanguageView(crossLanguageProcessingData, line, indent);
                 }
 
                 await GrabCrossLanguageReviewLines(crossLanguageProcessingData, line.Children, indent + 1);
                 if (indent == crossLanguageProcessingData.GrabIndent)
                 {
                     crossLanguageProcessingData.GrabLines = false;
+                    crossLanguageProcessingData.ContextEndLine = crossLanguageProcessingData.CurrentRoot;
                     crossLanguageProcessingData.CurrentRoot = null;
+                }
+            }
+        }
+
+        private static void GrabLinesForCrossLanguageView(CrossLanguageProcessingDto crossLanguageProcessingData, ReviewLine line, int indent)
+        {
+            CodePanelRowData rowData = GetCodePanelRowData(crossLanguageProcessingData.CodePanelData, line, null, indent);
+            if (rowData.Type == CodePanelRowDatatype.CodeLine)
+            {
+                if (crossLanguageProcessingData.CurrentRoot != null)
+                {
+                    crossLanguageProcessingData.Content[crossLanguageProcessingData.CurrentRoot.CrossLanguageId.ToLower()].Add(rowData);
+                }
+                else
+                {
+                    crossLanguageProcessingData.Content[crossLanguageProcessingData.ContextEndLine.CrossLanguageId.ToLower()].Add(rowData);
                 }
             }
         }

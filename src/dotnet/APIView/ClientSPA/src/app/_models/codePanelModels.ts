@@ -8,7 +8,7 @@ export enum CodePanelRowDatatype {
   Documentation = "documentation",
   Diagnostics = "diagnostics",
   CommentThread = "commentThread",
-  CrossLanguageView = "crossLanguageView"
+  CrossLanguage = "crossLanguage"
 }
 
 export class CodePanelRowData {
@@ -27,6 +27,7 @@ export class CodePanelRowData {
   toggleCommentsClasses: string;
   diagnostics: CodeDiagnostic;
   comments: CommentItemModel[];
+  crossLanguageLines: Map<string, CrossLanguageRowDto>; // key: language
   showReplyTextBox: boolean;
   isResolvedCommentThread: boolean;
   commentThreadIsResolvedBy: string;
@@ -38,7 +39,6 @@ export class CodePanelRowData {
     rowOfTokens: StructuredToken[] = [],
     nodeId: string = '',
     nodeIdHashed: string = '',
-    crossLanguageId: string = '',
     rowPositionInGroup: number = 0,
     associatedRowPositionInGroup: number = 0,
     rowClasses: Set<string> = new Set<string>(),
@@ -48,17 +48,18 @@ export class CodePanelRowData {
     toggleCommentsClasses: string = '',
     diagnostics: CodeDiagnostic = new CodeDiagnostic(),
     comments: CommentItemModel[] = [],
+    crossLanguageLines: Map<string, CrossLanguageRowDto> = new Map<string, CrossLanguageRowDto>(),
     showReplyTextBox: boolean = false,
     isResolvedCommentThread: boolean = false,
     commentThreadIsResolvedBy: string = '',
-    isHiddenAPI: boolean = false
+    isHiddenAPI: boolean = false,
+    crossLanguageId: string = '',
   ) {
     this.type = type;
     this.lineNumber = lineNumber;
     this.rowOfTokens = rowOfTokens;
     this.nodeId = nodeId;
     this.nodeIdHashed = nodeIdHashed;
-    this.crossLanguageId = crossLanguageId;
     this.rowPositionInGroup = rowPositionInGroup;
     this.associatedRowPositionInGroup = associatedRowPositionInGroup;
     this.rowClasses = rowClasses;
@@ -68,10 +69,12 @@ export class CodePanelRowData {
     this.toggleCommentsClasses = toggleCommentsClasses;
     this.diagnostics = diagnostics;
     this.comments = comments;
+    this.crossLanguageLines = crossLanguageLines;
     this.showReplyTextBox = showReplyTextBox;
     this.isResolvedCommentThread = isResolvedCommentThread;
     this.commentThreadIsResolvedBy = commentThreadIsResolvedBy;
     this.isHiddenAPI = isHiddenAPI;
+    this.crossLanguageId = crossLanguageId;
   }
 }
 
@@ -112,4 +115,24 @@ export class CodePanelNodeMetaData {
     this.isProcessed = false;
     this.relatedNodeIdHash = '';
   }
+}
+
+export interface CrossLanguageRowDto {
+  codeLines: CodePanelRowData[]
+  apiRevisionId: string;
+  reviewId: string;
+  language: string;
+  packageVersion: string;
+  packageName: string;
+}
+
+export interface CrossLanguageContentDto {
+  // key: crossLanguageId
+  // value: CodePanelRowData
+  content: { [key: string]: CodePanelRowData[] };
+  apiRevisionId: string;
+  reviewId: string;
+  language: string;
+  packageVersion: string;
+  packageName: string;
 }

@@ -73,7 +73,7 @@ Function Invoke-PackageProps {
     $uniqueTempDir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
     New-Item -Path $uniqueTempDir -ItemType Directory | Out-Null
 
-    $prDiffFile = Join-Path $uniqueTempDir "pr-diff.json"
+    $prDiffFile = Join-Path $Repo "pr-diff.json"
     $InputDiff | ConvertTo-Json -Depth 100 | Set-Content -Path $prDiffFile -Force
 
     try {

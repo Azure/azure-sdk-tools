@@ -2,8 +2,10 @@
 param(
   [Parameter(Mandatory = $true)]
   [string] $engCommonSyncPRNumber
-
 )
+
+. "${PSScriptRoot}/../common/scripts/logging.ps1"
+. "${PSScriptRoot}/../common/scripts/Helpers/git-helpers.ps1"
 
 gh auth status
 
@@ -39,9 +41,12 @@ $repos = @(
   "azure-rest-api-specs"
 )
 
+$owner = "Azure"
+$prFields = "number,url,state,mergeable,mergeStateStatus,reviews"
+
 foreach ($repo in $repos)
 {
-  $prstate = gh pr view $engCommonSyncBranch -R Azure/$repo --json "url,state,mergeable,mergeStateStatus,reviews" | ConvertFrom-Json
+  $prstate = gh pr view $engCommonSyncBranch -R benbp/$repo --json $prFields | ConvertFrom-Json
 
   Write-Host "$($prstate.url) - " -NoNewline
   if ($prstate.state -eq "MERGED") {
@@ -50,12 +55,20 @@ foreach ($repo in $repos)
   }
   
   if ($prstate.reviews.author.login -notcontains $ghloggedInUser) {
-    gh pr review $engCommonSyncBranch -R Azure/$repo --approve
+    gh pr review $engCommonSyncBranch -R "${owner}/${repo}" --approve
     # Refresh after approval
-    $prstate = gh pr view $engCommonSyncBranch -R Azure/$repo --json "url,state,mergeable,mergeStateStatus,reviews" | ConvertFrom-Json
+    $prstate = gh pr view $engCommonSyncBranch -R "${owner}/${repo}" --json $prFields | ConvertFrom-Json
   }
   else {
     Write-Host "Already approved"
+  }
+
+  if ($prstate.mergeStateStatus -eq "BLOCKED") {
+    $variables = @{ owner = $owner; name = $repo; number = $prstate.number }
+    $resolved = TryResolveAIReviewThreads -repoOwner $owner -repoName $repo -prNumber $prstate.number
+    if ($resolved) {
+      $prstate = gh pr view $engCommonSyncBranch -R "${owner}/${repo}" --json $prFields | ConvertFrom-Json
+    }
   }
 
   if ($prstate.mergeStateStatus -ne "CLEAN") {

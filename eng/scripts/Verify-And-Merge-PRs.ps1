@@ -1,92 +1,37 @@
 param(
   [string]$PRDataArtifactPath,
+  # @('Azure;azure-sdk-for-net;1', ...)
   [array]$PRDataInline,
   [string]$AuthToken,
   [switch]$SkipMerge
 )
 
-. "${PSScriptRoot}\..\common\scripts\logging.ps1"
+. "${PSScriptRoot}/../common/scripts/common.ps1"
 
 $ResolveReviewAuthors = @('copilot-pull-request-reviewer')
 
-$gql_PullRequestQuery = @'
-query PullRequest($owner: String!, $name: String!, $number: Int!) {
-  repository(owner: $owner, name: $name) {
-    pullRequest(number: $number) {
-      url
-      merged
-      mergeable
-      state
-      mergeStateStatus
-      headRefOid
-    }
-  }
-}
-'@
-
-$gql_ReviewThreadsQuery = @'
-query ReviewThreads($owner: String!, $name: String!, $number: Int!) {
-  repository(owner: $owner, name: $name) {
-    pullRequest(number: $number) {
-      reviewThreads(first: 100) {
-        nodes {
-          id
-          isResolved
-          comments(first: 100) {
-            nodes {
-              body
-              author {
-                login
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-'@
-
-$gql_ResolveThreadMutation = @'
-mutation ResolveThread($id: ID!) {
-  resolveReviewThread(input: { threadId: $id }) {
-    thread {
-      isResolved
-    }
-  }
-}
-'@
-
-function Main() {
-  if (!$AuthToken) {
-    $AuthToken = gh auth token
-    if ($LASTEXITCODE) {
-      LogError "Failed to retrieve auth token from gh cli"
-      exit 1
-    }
-  }
-
-  $Headers = @{
-    "Content-Type"   = "text/json"
-    "Authorization"  = "bearer $AuthToken"
+function Main([string]$prFile, [array]$prs, [string]$ghToken, [switch]$noMerge) {
+  # Setup GH_TOKEN for the gh cli commands
+  if ($ghToken) {
+    $env:GH_TOKEN = $ghToken
   }
 
   $prList = @()
-  if ($PRDataArtifactPath) {
-    foreach ($line in (Get-Content $PRDataArtifactPath)) {
+  if ($prFile) {
+    foreach ($line in (Get-Content $prFile)) {
       $repoOwner, $repoName, $Number = $line.Split(";")
       $prList += @{ RepoOwner = $repoOwner; RepoName = $repoName; Number = $Number }
     }
   }
-  foreach ($line in $PRDataInline) {
+  foreach ($line in $prs) {
     $repoOwner, $repoName, $Number = $line.Split(";")
     $prList += @{ RepoOwner = $repoOwner; RepoName = $repoName; Number = $Number }
   }
 
   $mergeable = ProcessPRMergeStatuses $prList
 
-  if ($SkipMerge) {
-    LogInfo "Skipping merge of $($mergeable.Length) PRs due to -SkipMerge parameter."
+  if ($noMerge) {
+    LogInfo "Skipping merge of $($mergeable.Length) PRs."
     return
   }
 
@@ -123,90 +68,23 @@ function ProcessPRMergeStatuses([array]$prData) {
 function MergePRs([array]$toMerge) {
   foreach ($pr in $toMerge)
   {
-    LogInfo $toMerge.HeadSHA
-    $body = @{
-      sha = $toMerge.HeadSHA
-      merge_method = "squash"
-    } | ConvertTo-Json -Compress
-
-    try {
-      LogInfo "Merging $($toMerge.MergeUrl)"
-      $response = Invoke-RestMethod -Method Put -Headers $Headers $toMerge.MergeUrl -Body $body
-    }
-    catch {
-      LogError "Invoke-RestMethod [$($toMerge.MergeUrl)] failed with exception."
-      throw
+    LogInfo "Merging $($toMerge.Url) - $($toMerge.HeadSHA)"
+    gh pr merge $toMerge.Url --squash --match-head-commit $toMerge.HeadSHA
+    if ($LASTEXITCODE) {
+      LogError "Failed to merge [$($toMerge.MergeUrl)]. See above logs for details."
+      exit $LASTEXITCODE
     }
   }
-}
-
-function RequestGithubGraphQL([string]$query, [object]$variables = @{}) {
-  $body = @{ query = $query; variables = $variables } | ConvertTo-Json -Depth 100
-
-  try {
-    $response = Invoke-RestMethod `
-      -Method Post `
-      -Uri "https://api.github.com/graphql" `
-      -Headers $Headers `
-      -Body $body `
-      -ContentType "application/json"
-  }
-  catch {
-    throw "Invoke-RestMethod failed for graphql operation: `n$query"
-  }
-
-  # The API will return 200 with a list of error messages for bad queries
-  if ($response.errors) {
-    throw $response.errors.message -join '`n'
-  }
-
-  return $response
-}
-
-function TryResolveAIReviewThreads([string]$repoOwner, [string]$repoName, [string]$prNumber) {
-  $variables = @{ owner = $repoOwner; name = $repoName; number = [int]$prNumber }
-  $response = RequestGithubGraphQL -query $gql_ReviewThreadsQuery -variables $variables
-  $reviews = $response.data.repository.pullRequest.reviewThreads.nodes
-
-  $threadIds = @()
-  # There should be only one threadId for copilot, but make it an array in case there
-  # are more, or if we want to resolve threads from multiple ai authors in the future.
-  # Don't mark threads from humans as resolved, as those may be real questions/blockers.
-  foreach ($thread in $reviews) {
-    if ($thread.comments.nodes | Where-Object { $_.author.login -in $ResolveReviewAuthors }) {
-      $threadIds += $thread.id
-      continue
-    }
-  }
-
-  if (!$threadIds) {
-    return $false
-  }
-
-  if ($SkipMerge) {
-    LogWarning "Skipping resolution of $($threadIds.Count) AI review threads"
-    return $false
-  }
-
-  foreach ($threadId in $threadIds) {
-    LogInfo "Resolving review thread '$threadId' for '$repoName' PR '$prNumber'"
-    $response = RequestGithubGraphQL -query $gql_ResolveThreadMutation -variables @{ id = $threadId }
-    $reviews = $response.data.repository.pullRequest.reviewThreads.nodes
-  }
-
-  return $true
 }
 
 function GetOrSetMergeablePR([string]$repoOwner, [string]$repoName, [string]$prNumber, [switch]$SkipResolveReviews) {
-  $prMergeUrl = "https://api.github.com/repos/${repoOwner}/${repoName}/pulls/${prNumber}/merge"
   $prUrl = "https://github.com/${repoOwner}/${repoName}/pull/${prNumber}"
 
-  function _output([switch]$block, [switch]$retry, [string]$headSha) {
+  function _pr([switch]$block, [switch]$retry, [string]$headSha) {
     return @{
       Block = $retry.ToBool() -or $block.ToBool();
       Retry = $retry.ToBool();
       Url = $prUrl;
-      MergeUrl = $prMergeUrl;
       HeadSHA = $headSha;
       RepoOwner = $repoOwner;
       RepoName = $repoName;
@@ -215,36 +93,40 @@ function GetOrSetMergeablePR([string]$repoOwner, [string]$repoName, [string]$prN
   }
 
   $variables = @{ owner = $repoOwner; name = $repoName; number = [int]$prNumber }
-  $response = RequestGithubGraphQL -query $gql_PullRequestQuery -variables $variables
-  $pullRequest = $response.data.repository.pullRequest
+  $result = gh pr view $prUrl --json "url,mergeable,state,mergeStateStatus,headRefOid"
+  if ($LASTEXITCODE) {
+    LogWarning "Failure looking up ${prUrl} ($LASTEXITCODE)."
+    return (_pr -retry)
+  }
+  $pullRequest = $result | ConvertFrom-Json
 
-  if ($pullRequest.merged) {
+  if ($pullRequest.state -eq "MERGED") {
     LogInfo "${prUrl} is merged."
     return
   }
-  if ($pullRequest.state -ieq "CLOSED") {
+  if ($pullRequest.state -eq "CLOSED") {
     LogWarning "${prUrl} is closed. Investigate why it was not merged."
-    return (_output -block -headSha $pullRequest.headRefOid)
+    return (_pr -block -headSha $pullRequest.headRefOid)
   }
-  if ($pullRequest.mergeable -ieq "MERGEABLE" -and $pullRequest.mergeStateStatus -ieq "CLEAN") {
+  if ($pullRequest.mergeable -eq "MERGEABLE" -and $pullRequest.mergeStateStatus -ieq "CLEAN") {
     LogInfo "${prUrl} is ready to merge."
-    return (_output -headSha $pullRequest.headRefOid)
+    return (_pr -headSha $pullRequest.headRefOid)
   }
   if ($pullRequest.mergeStateStatus -ieq "BLOCKED" -and !$SkipResolveReviews) {
-    $didResolve = TryResolveAIReviewThreads -repoOwner $repoOwner -repoName $repoName -prNumber $prNumber
-    # If we resolved reviews, restart the merge evaluation
-    if ($didResolve) {
-      return GetOrSetMergeablePR -SkipResolveReviews -repoOwner $repoOwner -repoName $repoName -prNumber $prNumber
+    $threads = GetAIReviewThreads -repoOwner $repoOwner -repoName $repoName -prNumber $prNumber
+    if ($threads) {
+      LogWarning "${prUrl} has state '$($pullRequest.mergeStateStatus)'. Ensure all outstanding PR review conversations are resolved."
+      return (_pr -retry -headSha $pullRequest.headRefOid)
     }
   }
   if ($pullRequest.mergeStateStatus -ine "CLEAN") {
     LogWarning "${prUrl} has state '$($pullRequest.mergeStateStatus)'. Ensure all checks are green and reviewers have approved the latest commit."
-    return (_output -retry -headSha $pullRequest.headRefOid)
+    return (_pr -retry -headSha $pullRequest.headRefOid)
   }
 
   LogWarning ($pullRequest | ConvertTo-Json -Depth 100)
   LogWarning "${prUrl} is unmergeable with state '$($pullRequest.mergeStateStatus)'. Contact the engineering system team for assistance."
-  return (_output -retry -headSha $pullRequest.headRefOid)
+  return (_pr -retry -headSha $pullRequest.headRefOid)
 }
 
-Main
+Main -prFile $PRDataArtifactPath -prs $PRDataInline -ghToken $AuthToken -noMerge:$SkipMerge

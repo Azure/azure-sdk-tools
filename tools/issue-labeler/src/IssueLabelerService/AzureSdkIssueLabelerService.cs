@@ -188,11 +188,11 @@ namespace IssueLabelerService
             string message;
             if (solution)
             {
-                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nAs a reminder use ONLY the Category and Service fields from the issues above in your answer.\nThe user needs a solution to their GitHub Issue:\n{query}";
+                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nThe user needs a solution to their GitHub Issue:\n{query}";
             }
             else
             {
-                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nAs a reminder use ONLY the Category and Service fields from the issues above in your answer.\nThe user needs suggestions for their GitHub Issue:\n{query}";
+                message = $"Sources:\nDocumentation:\n{string.Join("\n", printableDocs)}\nGitHub Issues:\n{string.Join("\n", printableIssues)}\nThe user needs suggestions for their GitHub Issue:\n{query}";
             }
 
             // Structured output for the model

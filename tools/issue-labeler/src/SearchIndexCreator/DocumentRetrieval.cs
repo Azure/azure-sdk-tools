@@ -35,6 +35,16 @@ namespace SearchIndexCreator
             await DirectoryTree(_token, documentPaths, owner, repo);
             var documentFiles = new List<(string FilePath, string Url, string Content)>();
             await GetDocumentContents(owner, repo, documentFiles, documentPaths);
+
+            // Save files locally
+            foreach (var file in documentFiles)
+            {
+                var localFilePath = Path.Combine("localFiles", file.FilePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(localFilePath));
+                var jsonContent = JsonConvert.SerializeObject(new { file.Url, file.Content });
+                await File.WriteAllTextAsync(localFilePath, jsonContent);
+            }
+
             return documentFiles;
         }
 
@@ -86,19 +96,16 @@ namespace SearchIndexCreator
 
                 try
                 {
-                    var jsonContent = System.Text.Json.JsonSerializer.Serialize(new { file.Url, file.Content });
+                    var localFilePath = Path.Combine("localFiles", file.FilePath);
                     var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
                     {
                         ContentType = "application/json" // Specify the content type
                     };
 
-                    using (var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(jsonContent)))
+                    await blobClient.UploadAsync(localFilePath, new Azure.Storage.Blobs.Models.BlobUploadOptions
                     {
-                        await blobClient.UploadAsync(stream, new Azure.Storage.Blobs.Models.BlobUploadOptions
-                        {
-                            HttpHeaders = blobHttpHeaders
-                        });
-                    }
+                        HttpHeaders = blobHttpHeaders
+                    });
 
                     Console.WriteLine($"Uploaded {file.FilePath} to {containerClient.Name} container.");
                 }

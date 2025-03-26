@@ -68,7 +68,7 @@ namespace SearchIndexCreator
             // 1. Retrieve all issues from a repository
             var tokenAuth = new Credentials(config["GithubKey"]);
             var issueRetrieval = new IssueRetrieval(tokenAuth, config);
-            var issues = await issueRetrieval.RetrieveAllIssues("Azure", "azure-sdk-for-net");
+            var issues = await issueRetrieval.RetrieveAllIssues("Azure", config["repo"]);
 
             // 2. Upload the issues to Azure CosmosDB
             var defaultCredential = new DefaultAzureCredential();
@@ -87,12 +87,12 @@ namespace SearchIndexCreator
         //Retrieve documents from GitHub, upload to Azure Blob Storage, and create an Azure Search Index
         private static async Task ProcessDocs(IConfigurationSection config)
         {
-            //// 1. Retrieve all documents from a repository
-            //var docsRetrieval = new DocumentRetrieval(config["GithubKey"]);
-            //var readmeFiles = await docsRetrieval.GetDocuments("Azure", "azure-sdk-for-net");
+            // 1. Retrieve all documents from a repository
+            var docsRetrieval = new DocumentRetrieval(config["GithubKey"]);
+            var readmeFiles = await docsRetrieval.GetDocuments("Azure", config["repo"]);
 
-            //// 2. Upload the documents to Azure Blob Storage
-            //await docsRetrieval.UploadFiles(readmeFiles, config["DocumentStorageName"], $"{config["DocumentIndexName"]}-blob");
+            // 2. Upload the documents to Azure Blob Storage
+            await docsRetrieval.UploadFiles(readmeFiles, config["DocumentStorageName"], $"{config["DocumentIndexName"]}-blob");
 
             // 3. Create an Azure Search Index
             var defaultCredential = new DefaultAzureCredential();
@@ -109,7 +109,7 @@ namespace SearchIndexCreator
         {
             // Retrieve examples of issues for testing from a repository
             var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
-            var issues = await issueRetrieval.RetrieveIssueExamples("Azure", "azure-sdk-for-net", 7);
+            var issues = await issueRetrieval.RetrieveIssueExamples("Azure", config["repo"], 7);
             issueRetrieval.DownloadIssue(issues);
         }
 
@@ -121,7 +121,7 @@ namespace SearchIndexCreator
 
             // Retrieve examples of issues for testing from a repository
             var issueRetrieval = new IssueRetrieval(new Credentials(config["GithubKey"]), config);
-            var issues = await issueRetrieval.RetrieveIssueExamples("Azure", "azure-sdk-for-net", days);
+            var issues = await issueRetrieval.RetrieveIssueExamples("Azure", config["repo"], days);
 
             var client = new GitHubClient(new ProductHeaderValue("Microsoft-ML-IssueBot"))
             {

@@ -8,8 +8,6 @@ param(
 
 . "${PSScriptRoot}/../common/scripts/common.ps1"
 
-$ResolveReviewAuthors = @('copilot-pull-request-reviewer')
-
 function Main([string]$prFile, [array]$prs, [string]$ghToken, [switch]$noMerge) {
   # Setup GH_TOKEN for the gh cli commands
   if ($ghToken) {
@@ -28,7 +26,7 @@ function Main([string]$prFile, [array]$prs, [string]$ghToken, [switch]$noMerge) 
     $prList += @{ RepoOwner = $repoOwner; RepoName = $repoName; Number = $Number }
   }
 
-  $mergeable = ProcessPRMergeStatuses $prList
+  $mergeable = ProcessPRMergeStatuses -prData $prList -noMerge:$noMerge
 
   if ($noMerge) {
     LogInfo "Skipping merge of $($mergeable.Length) PRs."
@@ -38,7 +36,7 @@ function Main([string]$prFile, [array]$prs, [string]$ghToken, [switch]$noMerge) 
   MergePRs $mergeable
 }
 
-function ProcessPRMergeStatuses([array]$prData) {
+function ProcessPRMergeStatuses([array]$prData, [switch]$noMerge) {
   for ($retry = 1; $retry -le 5; $retry++)
   {
     $curr, $prData = $prData, @()
@@ -47,7 +45,7 @@ function ProcessPRMergeStatuses([array]$prData) {
       $prData += GetOrSetMergeablePR -repoOwner $pr.RepoOwner -repoName $pr.RepoName -prNumber $pr.Number
     }
 
-    if ($SkipMerge -or $prData.Retry -notcontains $true) {
+    if ($noMerge -or $prData.Retry -notcontains $true) {
       break
     }
 
@@ -92,7 +90,6 @@ function GetOrSetMergeablePR([string]$repoOwner, [string]$repoName, [string]$prN
     }
   }
 
-  $variables = @{ owner = $repoOwner; name = $repoName; number = [int]$prNumber }
   $result = gh pr view $prUrl --json "url,mergeable,state,mergeStateStatus,headRefOid"
   if ($LASTEXITCODE) {
     LogWarning "Failure looking up ${prUrl} ($LASTEXITCODE)."

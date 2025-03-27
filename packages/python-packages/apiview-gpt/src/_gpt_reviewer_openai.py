@@ -21,6 +21,8 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 class GptReviewer:
 
     def __init__(self, log_prompts: bool = False):
+        # FIXME: Hook prompty up
+        # result = prompty.execute(prompt_file_path, inputs={"question": payload})
         self.client = openai.AzureOpenAI(
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
             azure_ad_token_provider=get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),

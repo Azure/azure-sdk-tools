@@ -124,14 +124,14 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
 
+  const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
+  console.log(`##vso[task.setVariable variable=GeneratedSDK.StagedArtifactsFolder]${stagedArtifactsFolder}`);
+
   // if no artifact generated or language is Go, skip
   if (pkg.artifactPaths.length === 0 || language.toLocaleLowerCase() === 'go') { 
     return; 
   }
-
-  const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.StagedArtifactsFolder]${stagedArtifactsFolder}`);
-  
+ 
   const destination = path.join(stagedArtifactsFolder, pkg.name);
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });

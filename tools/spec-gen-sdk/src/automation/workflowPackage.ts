@@ -155,7 +155,10 @@ const workflowPkgSaveApiViewArtifact = async (context: WorkflowContext, pkg: Pac
     return;
   }
 
-  const destination = path.join(context.config.workingFolder, 'out', 'stagedArtifacts', pkg.name);
+  const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
+  console.log(`##vso[task.setVariable variable=GeneratedSDK.StagedArtifactsFolder]${stagedArtifactsFolder}`);
+
+  const destination = path.join(stagedArtifactsFolder, pkg.name);
   if (!existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }

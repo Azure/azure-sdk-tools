@@ -46,7 +46,7 @@ $prFields = "number,url,state,mergeable,mergeStateStatus,reviews"
 
 foreach ($repo in $repos)
 {
-  $prstate = gh pr view $engCommonSyncBranch -R benbp/$repo --json $prFields | ConvertFrom-Json
+  $prstate = gh pr view $engCommonSyncBranch -R $owner/$repo --json $prFields | ConvertFrom-Json
 
   Write-Host "$($prstate.url) - " -NoNewline
   if ($prstate.state -eq "MERGED") {

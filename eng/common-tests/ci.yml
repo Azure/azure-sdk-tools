@@ -29,4 +29,4 @@ extends:
     TargetDirectory: eng/common-tests
     TargetTags: UnitTest,IntegrationTest
     PreTestSteps:
-      - template: eng/common/pipelines/templates/steps/enable-long-path-support.yml
+      - template: /eng/common/pipelines/templates/steps/enable-long-path-support.yml

@@ -47,12 +47,16 @@ Function Get-Repo {
         try {
             Write-Host "Push-Location $repoPath"
             Push-Location $repoPath
-            Write-Host "git clone --no-checkout `"https://github.com/$Repo.git`" ."
-            git clone --no-checkout "https://github.com/$Repo.git" .
-            Write-Host "git fetch origin $Reference"
-            git fetch origin $Reference
-            Write-Host "git checkout $Reference"
-            git checkout $Reference
+            Write-Host "git clone --no-checkout --filter=tree:0 `"https://github.com/$Repo.git`" ."
+            git clone --no-checkout --filter=tree:0 "https://github.com/$Repo.git" .
+            Write-Host "git config gc.auto"
+            git config gc.auto
+            Write-Host "git sparse-checkout init"
+            git sparse-checkout init --no-cone
+            Write-Host "git sparse-checkout add '*'"
+            git sparse-checkout add /*
+            Write-Host "git -c advice.detachedHead=false checkout $Reference"
+            git -c advice.detachedHead=false checkout $Reference
         }
         finally {
             Pop-Location | Out-Null
@@ -70,8 +74,11 @@ Function Invoke-PackageProps {
     )
 
     $env:GITHUB_ACTIONS="true"
-    $uniqueTempDir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ([System.IO.Path]::GetRandomFileName())
-    New-Item -Path $uniqueTempDir -ItemType Directory | Out-Null
+    $PackageInfoFolder = Join-Path $Repo "PackageInfo"
+
+    if (Test-Path $PackageInfoFolder) {
+        Remove-Item -Path $PackageInfoFolder -Recurse -Force
+    }
 
     $prDiffFile = Join-Path $Repo "pr-diff.json"
     $InputDiff | ConvertTo-Json -Depth 100 | Set-Content -Path $prDiffFile -Force
@@ -79,10 +86,10 @@ Function Invoke-PackageProps {
     try {
         Write-Host "Push-Location $Repo"
         Push-Location $Repo
-        Write-Host "&`"$PackagePropertiesPath`" -outDirectory `"$uniqueTempDir`" -prDiff `"$prDiffFile`""
+        Write-Host "&`"$PackagePropertiesPath`" -outDirectory `"$PackageInfoFolder`" -prDiff `"$prDiffFile`""
         Write-Host "Package Diff:"
         Write-Host (Get-Content -Raw $prDiffFile)
-        &"$PackagePropertiesPath" -outDirectory "$uniqueTempDir" -prDiff "$prDiffFile"
+        &"$PackagePropertiesPath" -outDirectory "$PackageInfoFolder" -prDiff "$prDiffFile"
         Remove-Item $prDiffFile -Force
     }
     finally {

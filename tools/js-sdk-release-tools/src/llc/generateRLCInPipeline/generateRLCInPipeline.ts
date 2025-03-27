@@ -39,8 +39,8 @@ export async function generateRLCInPipeline(options: {
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
 }) {
-    let packagePath: string | undefined = undefined;
-    let relativePackagePath: string | undefined = undefined;
+    let packagePath: string | undefined;
+    let relativePackagePath: string | undefined;
     const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 

@@ -107,11 +107,13 @@ function GetOrSetMergeablePR([string]$repoOwner, [string]$repoName, [string]$prN
     return (_pr -headSha $pullRequest.headRefOid)
   }
   if ($pullRequest.mergeStateStatus -ieq "BLOCKED" -and !$SkipResolveReviews) {
-    $threads = GetAIReviewThreads -repoOwner $repoOwner -repoName $repoName -prNumber $prNumber
+    $threads = GetUnresolvedAIReviewThreads -repoOwner $repoOwner -repoName $repoName -prNumber $prNumber
     if ($threads) {
       LogWarning "${prUrl} has state '$($pullRequest.mergeStateStatus)'. Ensure all outstanding PR review conversations are resolved."
       return (_pr -retry -headSha $pullRequest.headRefOid)
     }
+    LogWarning "${prUrl} has state '$($pullRequest.mergeStateStatus)'. Ensure PR has been approved after the latest commit."
+    return (_pr -retry -headSha $pullRequest.headRefOid)
   }
   if ($pullRequest.mergeStateStatus -ine "CLEAN") {
     LogWarning "${prUrl} has state '$($pullRequest.mergeStateStatus)'. Ensure all checks are green and reviewers have approved the latest commit."

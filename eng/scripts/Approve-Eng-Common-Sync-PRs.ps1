@@ -42,10 +42,14 @@ $repos = @(
 )
 
 $owner = "Azure"
-$prFields = "number,url,state,mergeable,mergeStateStatus,reviews"
+
+function getPRState([string]$owner, [string]$repo) {
+  $prFields = "number,url,state,headRefOid,mergeable,mergeStateStatus,reviews"
+  return gh pr view $engCommonSyncBranch -R $owner/$repo --json $prFields | ConvertFrom-Json
+}
 
 foreach ($repo in $repos) {
-  $prstate = gh pr view $engCommonSyncBranch -R $owner/$repo --json $prFields | ConvertFrom-Json
+  $prstate = getPRState $owner $repo
 
   Write-Host "$($prstate.url) - " -NoNewline
   if ($prstate.state -eq "MERGED") {
@@ -53,10 +57,13 @@ foreach ($repo in $repos) {
     continue
   }
 
-  if ($prstate.reviews.author.login -notcontains $ghloggedInUser) {
+  $latestCommitDate = (gh pr view $engCommonSyncBranch -R "${owner}/${repo}" --json "commits" --jq ".commits[-1].committedDate")
+  $approvalAfterCommit = $prstate.reviews | Where-Object { $_.state -eq "APPROVED" -and $_.submittedAt -gt $latestCommitDate }
+
+  if (!$approvalAfterCommit -or $prstate.reviews.author.login -notcontains $ghloggedInUser) {
     gh pr review $engCommonSyncBranch -R "${owner}/${repo}" --approve
-    # Refresh after approval
-    $prstate = gh pr view $engCommonSyncBranch -R "${owner}/${repo}" --json $prFields | ConvertFrom-Json
+    # Refresh after re-approval
+    $prstate = getPRState $owner $repo
   }
   else {
     Write-Host "Already approved"
@@ -65,7 +72,7 @@ foreach ($repo in $repos) {
   if ($prstate.mergeStateStatus -eq "BLOCKED") {
     $resolved = TryResolveAIReviewThreads -repoOwner $owner -repoName $repo -prNumber $prstate.number
     if ($resolved) {
-      $prstate = gh pr view $engCommonSyncBranch -R "${owner}/${repo}" --json $prFields | ConvertFrom-Json
+      $prstate = getPRState $owner $repo
     }
   }
 

@@ -70,6 +70,13 @@ namespace IssueLabelerService
                     try
                     {
                         result = CompleteIssueTriage(issue);
+
+                        // Temporary run both to get labels
+                        if(issue.RepositoryName == "azure-sdk-for-net")
+                        {
+                            var labels = await OnlyLabelIssue(issue);
+                            result.Labels = labels.Labels;
+                        }
                     }
                     catch (Exception ex)
                     {

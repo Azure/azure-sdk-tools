@@ -1,5 +1,5 @@
 import {Changelog} from "../../changelog/changelogGenerator";
-import { getSDKType } from "../utils";
+import { changeClientFile } from "../../xlc/codeUpdate/updateUserAgent";
 
 const fs = require('fs');
 const path = require('path');
@@ -52,40 +52,6 @@ function changePackageJSON(packageFolderPath: string, packageVersion: string) {
     const data: string = fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8');
     const result = data.replace(/"version": "[0-9.a-z-]+"/g, '"version": "' + packageVersion + '"');
     fs.writeFileSync(path.join(packageFolderPath, 'package.json'), result, 'utf8');
-}
-
-function changeClientFile(packageFolderPath: string, packageVersion: string) {
-    const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
-    const packageName = packageJsonData.name.replace("@azure/", "");
-    const sdkType = getSDKType(packageFolderPath)
-    if(sdkType === "HighLevelClient"){ // Update version in src for HLC
-        const files: string[] = fs.readdirSync(path.join(packageFolderPath, 'src'));
-        files.forEach(file => {
-            if (file.endsWith('.ts')) {
-                const data: string = fs.readFileSync(path.join(packageFolderPath, 'src', file), 'utf8');
-                const result = data.replace(/const packageDetails = `azsdk-js-[0-9a-z-]+\/[0-9.a-z-]+`;/g, 'const packageDetails = `azsdk-js-' + packageName + '/' + packageVersion + '`;');
-                fs.writeFileSync(path.join(packageFolderPath, 'src', file), result, 'utf8');
-            }
-        })
-    } else if (sdkType === "ModularClient"){ // Update version in src for Modular
-        const files: string[] = fs.readdirSync(path.join(packageFolderPath, 'src',"api"));
-        files.forEach(file => {
-            if (file.endsWith('Context.ts')) {
-                const data: string = fs.readFileSync(path.join(packageFolderPath, 'src',"api", file), 'utf8');
-                const result = data.replace(/const userAgentInfo = `azsdk-js-[0-9a-z-]+\/[0-9.a-z-]+`;/g, 'const userAgentInfo = `azsdk-js-' + packageName + '/' + packageVersion + '`;');
-                fs.writeFileSync(path.join(packageFolderPath, 'src','api', file), result, 'utf8');
-            }
-        })
-    } else{ // Update version in src for RLC
-        const files: string[] = fs.readdirSync(path.join(packageFolderPath, 'src'));
-        files.forEach(file => {
-            if (file.endsWith('.ts')) {
-                const data: string = fs.readFileSync(path.join(packageFolderPath, 'src', file), 'utf8');
-                const result = data.replace(/const userAgentInfo = `azsdk-js-[0-9a-z-]+\/[0-9.a-z-]+`;/g, 'const userAgentInfo = `azsdk-js-' + packageName + '/' + packageVersion + '`;');
-                fs.writeFileSync(path.join(packageFolderPath, 'src', file), result, 'utf8');
-            }
-        })
-    }
 }
 
 export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string, comparedVersion:string) {

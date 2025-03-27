@@ -4,6 +4,10 @@ import { getApiVersionType as getApiVersionTypeInRLC } from '../../llc/apiVersio
 import { join } from 'path';
 import { ApiVersionType } from '../../common/types';
 import { tryFindApiVersionInRestClient } from '../../xlc/apiVersion/utils';
+import { changeClientFile } from '../../xlc/codeUpdate/updateUserAgent';
+
+const fs = require('fs');
+const path = require('path');
 
 describe('Modular client api-version Extractor', () => {
     test('new createClient function', async () => {
@@ -40,6 +44,13 @@ describe('Modular client api-version Extractor', () => {
         const root = join(__dirname, 'testCases/old2/');
         const version = await getApiVersionType(root);
         expect(version).toBe(ApiVersionType.Stable);
+    });
+    test('update package version for userAgentInfo',async ()=>{
+        const root = join(__dirname, 'testCases/modular-context/');
+        const expectedVersion = "1.0.0";
+        changeClientFile(root,expectedVersion);
+        const data: string = fs.readFileSync(path.join(root, 'src',"api", "testContext.ts"), 'utf8');
+        expect(data.includes(expectedVersion)).toBe(true)
     });
 });
 

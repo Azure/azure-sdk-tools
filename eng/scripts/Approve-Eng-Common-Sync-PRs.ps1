@@ -57,7 +57,8 @@ foreach ($repo in $repos) {
     continue
   }
 
-  $latestCommitDate = (gh pr view $engCommonSyncBranch -R "${owner}/${repo}" --json "commits" --jq ".commits[-1].committedDate")
+  $commitDateString = (gh pr view $engCommonSyncBranch -R "${owner}/${repo}" --json "commits" --jq ".commits[-1].committedDate")
+  $latestCommitDate = ([datetime]$commitDateString).ToUniversalTime()
   $approvalAfterCommit = $prstate.reviews | Where-Object { $_.state -eq "APPROVED" -and $_.submittedAt -gt $latestCommitDate }
 
   if (!$approvalAfterCommit -or $prstate.reviews.author.login -notcontains $ghloggedInUser) {

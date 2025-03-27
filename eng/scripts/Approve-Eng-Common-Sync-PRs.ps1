@@ -20,7 +20,7 @@ $engCommonToolsBranch = gh pr view $engCommonSyncPRNumber -R Azure/azure-sdk-too
 if (!$engCommonToolsBranch) {
   Write-Error "Didn't find branch for PR $engCommonSyncPRNumber in Azure/azure-sdk-tools"
   exit 1
-} 
+}
 
 # needs to remain in sync with \eng\pipelines\templates\stages\archetype-sdk-tool-repo-sync.yml
 $engCommonSyncBranch = "sync-eng/common-${engCommonToolsBranch}-${engCommonSyncPRNumber}"
@@ -44,8 +44,7 @@ $repos = @(
 $owner = "Azure"
 $prFields = "number,url,state,mergeable,mergeStateStatus,reviews"
 
-foreach ($repo in $repos)
-{
+foreach ($repo in $repos) {
   $prstate = gh pr view $engCommonSyncBranch -R $owner/$repo --json $prFields | ConvertFrom-Json
 
   Write-Host "$($prstate.url) - " -NoNewline
@@ -53,7 +52,7 @@ foreach ($repo in $repos)
     Write-Host "MERGED"
     continue
   }
-  
+
   if ($prstate.reviews.author.login -notcontains $ghloggedInUser) {
     gh pr review $engCommonSyncBranch -R "${owner}/${repo}" --approve
     # Refresh after approval
@@ -64,7 +63,6 @@ foreach ($repo in $repos)
   }
 
   if ($prstate.mergeStateStatus -eq "BLOCKED") {
-    $variables = @{ owner = $owner; name = $repo; number = $prstate.number }
     $resolved = TryResolveAIReviewThreads -repoOwner $owner -repoName $repo -prNumber $prstate.number
     if ($resolved) {
       $prstate = gh pr view $engCommonSyncBranch -R "${owner}/${repo}" --json $prFields | ConvertFrom-Json

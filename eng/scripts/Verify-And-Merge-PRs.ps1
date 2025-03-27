@@ -37,11 +37,9 @@ function Main([string]$prFile, [array]$prs, [string]$ghToken, [switch]$noMerge) 
 }
 
 function ProcessPRMergeStatuses([array]$prData, [switch]$noMerge) {
-  for ($retry = 1; $retry -le 5; $retry++)
-  {
+  for ($retry = 1; $retry -le 5; $retry++) {
     $curr, $prData = $prData, @()
-    foreach ($pr in ($curr | Where-Object { $_.Retry -ne $false }))
-    {
+    foreach ($pr in ($curr | Where-Object { $_.Retry -ne $false })) {
       $prData += GetOrSetMergeablePR -repoOwner $pr.RepoOwner -repoName $pr.RepoName -prNumber $pr.Number
     }
 
@@ -64,8 +62,7 @@ function ProcessPRMergeStatuses([array]$prData, [switch]$noMerge) {
 }
 
 function MergePRs([array]$toMerge) {
-  foreach ($pr in $toMerge)
-  {
+  foreach ($pr in $toMerge) {
     LogInfo "Merging $($toMerge.Url) - $($toMerge.HeadSHA)"
     gh pr merge $toMerge.Url --squash --match-head-commit $toMerge.HeadSHA
     if ($LASTEXITCODE) {
@@ -80,13 +77,13 @@ function GetOrSetMergeablePR([string]$repoOwner, [string]$repoName, [string]$prN
 
   function _pr([switch]$block, [switch]$retry, [string]$headSha) {
     return @{
-      Block = $retry.ToBool() -or $block.ToBool();
-      Retry = $retry.ToBool();
-      Url = $prUrl;
-      HeadSHA = $headSha;
+      Block     = $retry.ToBool() -or $block.ToBool();
+      Retry     = $retry.ToBool();
+      Url       = $prUrl;
+      HeadSHA   = $headSha;
       RepoOwner = $repoOwner;
-      RepoName = $repoName;
-      Number = $prNumber;
+      RepoName  = $repoName;
+      Number    = $prNumber;
     }
   }
 

@@ -52,9 +52,9 @@ Function Get-Repo {
             Write-Host "git config gc.auto"
             git config gc.auto
             Write-Host "git sparse-checkout init"
-            git sparse-checkout init --no-cone
-            Write-Host "git sparse-checkout add '*'"
-            git sparse-checkout add /*
+            git sparse-checkout init
+            Write-Host "git sparse-checkout set --no-cone '/*'"
+            git sparse-checkout set --no-cone '/*'
             Write-Host "git -c advice.detachedHead=false checkout $Reference"
             git -c advice.detachedHead=false checkout $Reference
         }

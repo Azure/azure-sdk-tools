@@ -134,8 +134,8 @@ export const loggerWaitToFinish = async (logger: winston.Logger) => {
   for (const transport of logger.transports) {
     if (transport instanceof winston.transports.File) {
       if (transport.end) {
-          transport.end();
           await setTimeout(2000);
+          transport.end();
         }
     }
   }

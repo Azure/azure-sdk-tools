@@ -20,9 +20,10 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 _LOG_PROMPTS = os.getenv("APIVIEW_LOG_PROMPT", "false").lower() == "true"
 _PROMPTS_INDEX = os.getenv("APIVIEW_PROMPT_INDEX", "0")
 
-class GptReviewer:
+class ApiViewReview:
 
-    def __init__(self, log_prompts: bool = False, use_rag: bool = True):
+    def __init__(self, *, language: str, log_prompts: bool = False, use_rag: bool = True):
+        self.language = language
         self.output_parser = GuidelinesResult
         if log_prompts:
             # remove the folder if it exists
@@ -35,9 +36,9 @@ class GptReviewer:
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
 
-    def get_response(self, apiview, language):
+    def get_response(self, apiview):
         apiview = self.unescape(apiview)
-        guidelines = self.retrieve_guidelines(language)
+        guidelines = self.retrieve_guidelines(self.language)
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=False)
         final_results = GuidelinesResult(status="Success", violations=[])
         extra_comments = {}
@@ -45,7 +46,7 @@ class GptReviewer:
         guidelines.extend(list(extra_comments.values()))
         full_apiview = "\n".join(chunked_apiview.sections[0].lines)
         system_prompt = self.system_prompt.format(
-            language=language, apiview=full_apiview
+            language=self.language, apiview=full_apiview
         )
         human_prompt = self.human_prompt.format(
             guidelines=json.dumps(guidelines), apiview=full_apiview

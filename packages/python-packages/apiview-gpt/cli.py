@@ -74,13 +74,13 @@ def generate_review(language: str, path: str, log_prompts: bool = False):
     """
     Generate a review for an APIView
     """
-    from src._gpt_reviewer_openai import GptReviewer
-    rg = GptReviewer(log_prompts=log_prompts)
+    from src._gpt_reviewer_openai import ApiViewReview
+    rg = ApiViewReview(language=language, log_prompts=log_prompts)
     filename = os.path.splitext(os.path.basename(path))[0]
 
     with open(path, "r") as f:
         apiview = f.read()
-    review = rg.get_response(apiview, language)
+    review = rg.get_response(apiview)
     output_path = os.path.join('scratch', 'output', language)
     if not os.path.exists(output_path):
         os.makedirs(output_path)

@@ -2747,51 +2747,31 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
             for nod in except_block:
                 # Get the nodes in each block (e.g. nodes Expr and Raise)
                 exception_block_body = nod.body
-                self.check_for_raise(exception_block_body)
+                exception_name = nod.name.name
+                self.check_for_raise(exception_block_body, exception_name)
         except:
             pass
 
-    def check_for_raise(self, node):
+    def check_for_raise(self, node, exception_name):
         """ Helper function - checks for instance of 'Raise' node
             Also checks 'If' and nested 'If' branches
         """
         for i in node:
             if isinstance(i, astroid.Raise):
-                self.check_for_logging(node, i)
+                self.check_for_logging(node, exception_name)
             # Check for any nested 'If' branches
             if isinstance(i, astroid.If):
-                self.check_for_raise(i.body)
+                self.check_for_raise(i.body, exception_name)
 
                 # Check any 'elif' or 'else' branches
-                self.check_for_raise(i.orelse)
+                self.check_for_raise(i.orelse, exception_name)
 
-    def check_for_logging(self, node, raise_node):
+    def check_for_logging(self, node, exception_name):
         """ Helper function - Called from 'check_for_raise' function
             Checks if the same exception that's being raised is also being logged
         """
-        # Get the exception object being raised
+
         try:
-            # Different forms of raise statements:
-            # 1. raise exc_var
-            # 2. raise ExcClass as exc_var
-            # We need the actual variable reference that's being raised
-            
-            # Extract the variable name being raised
-            raised_var = None
-            
-            # Case: raise exc_var (direct variable reference)
-            if hasattr(raise_node.exc, 'name'):
-                raised_var = raise_node.exc.name
-            # Case: raise ExcClass(exc_var) (exception with argument)
-            elif (hasattr(raise_node, 'exc') and 
-                  isinstance(raise_node.exc, astroid.Call)):
-                raised_var = raise_node.exc.func.name
-            # Case: raise from (Python 3 syntax)
-            elif hasattr(raise_node, 'cause') and hasattr(raise_node.cause, 'name'):
-                raised_var = raise_node.cause.name
-            # If we couldn't determine what's being raised, exit
-            else:
-                return
                 
             # Now check all logger calls to see if they're logging the exact same exception variable
             for j in node:
@@ -2805,23 +2785,30 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                                 # 2. logger.debug(f"something {exception}")
                                 # 3. logger.debug("Failed: %r", exception)
                                 
-                                # Direct logging of the exception object
+                                
+                                # Check for f-strings that might contain the exception
                                 for log_arg in j.value.args:
-                                    if isinstance(log_arg, astroid.Name) and log_arg.name == raised_var:
+                                    if isinstance(log_arg, astroid.Name) and log_arg.name == exception_name:
                                         self.add_message(
                                             msgid="do-not-log-raised-errors",
                                             node=j, 
                                             confidence=None,
                                         )
                                         return
-                                
-                                # Check for f-strings that might contain the exception
-                                for log_arg in j.value.args:
+                                    if isinstance(log_arg, astroid.Call):
+                                        for arg in log_arg.args:
+                                            if isinstance(arg, astroid.Name) and arg.name == exception_name:
+                                                self.add_message(
+                                                    msgid="do-not-log-raised-errors",
+                                                    node=j,
+                                                    confidence=None,
+                                                )
+                                                return
                                     if isinstance(log_arg, astroid.JoinedStr):
                                         for value in log_arg.values:
                                             if isinstance(value, astroid.FormattedValue):
                                                 try:
-                                                    if isinstance(value.value, astroid.Name) and value.value.name == raised_var:
+                                                    if isinstance(value.value, astroid.Name) and value.value.name == exception_name:
                                                         self.add_message(
                                                             msgid="do-not-log-raised-errors",
                                                             node=j,
@@ -2834,7 +2821,7 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                                 # Check for string formatting with exception as argument
                                 if len(j.value.args) > 1:
                                     for idx in range(1, len(j.value.args)):
-                                        if isinstance(j.value.args[idx], astroid.Name) and j.value.args[idx].name == raised_var:
+                                        if isinstance(j.value.args[idx], astroid.Name) and j.value.args[idx].name == exception_name:
                                             self.add_message(
                                                 msgid="do-not-log-raised-errors",
                                                 node=j,

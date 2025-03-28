@@ -12,11 +12,16 @@ class Section:
         self.lines = lines
         self.start_line_no = start_line_no
 
-    def __str__(self):
+    def numbered(self) -> str:
+        """Returns the lines with line numbers."""
         numbered_lines = []
         for i, line in enumerate(self.lines):
             numbered_lines.append(f"{self.start_line_no + i + 1:4d}: {line}")
         return "\n".join(numbered_lines)
+
+
+    def __str__(self):
+        return "\n".join(self.lines)
 
 
 class SectionedDocument:

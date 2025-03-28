@@ -96,7 +96,7 @@ Function Invoke-PackageProps {
         Pop-Location | Out-Null
     }
 
-    return $uniqueTempDir
+    return $PackageInfoFolder
 }
 
 Function OrderArtifactDetails {

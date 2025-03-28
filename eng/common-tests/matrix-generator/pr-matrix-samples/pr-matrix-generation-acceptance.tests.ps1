@@ -10,7 +10,7 @@ $javaScenarios = Get-Content (Join-Path $PSScriptRoot java_scenarios.json) | Con
 Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "IntegrationTest" {
     BeforeAll {
         $NET_REPO = "Azure/azure-sdk-for-net"
-        $NET_REPO_REF = "331c07a1ab59ed0042972ca6d0df830df235280f"
+        $NET_REPO_REF = "adaf77d86185ab38e86e20647f9327bf78e8a6c2"
 
         . $PSScriptRoot/pr-matrix-generation-acceptance.helpers.ps1
         $RepoRoot = Get-Repo -Repo $NET_REPO -Reference $NET_REPO_REF
@@ -24,7 +24,7 @@ Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "IntegrationTest"
             | ForEach-Object { Get-Content -Raw $_ | ConvertFrom-Json -AsHashtable }
             | Sort-Object -Property Name
 
-        ($detectedOutputs | ConvertTo-Json -Depth 100) | Should -Be ($expectedOutputs | ConvertTo-Json -Depth 100)
+        Compare-PackageResults -Actual $detectedOutputs -Expected $expectedOutputs
     }
 }
 

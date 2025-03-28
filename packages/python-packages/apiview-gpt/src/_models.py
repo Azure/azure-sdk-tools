@@ -124,6 +124,12 @@ class GuidelinesResult(BaseModel):
                         print(f"WARNING: Found multiple instances of bad code, default to first: {bad_code}")
         return line_no
 
+    def sort(self):
+        """
+        Sort the violations by line number.
+        """
+        self.violations.sort(key=lambda x: x.line_no)
+
 class VectorDocument(BaseModel):
     id: Optional[str] = Field(description="unique ID of the document")
     language: str = Field(description="programming language of the document")

@@ -1,9 +1,7 @@
 import os
-import json
 
 from ._version import VERSION
-from ._gpt_reviewer_openai import ApiViewReview
-from ._vector_db import VectorDB
+from ._apiview_reviewer import ApiViewReview
 from ._models import GuidelinesResult, Violation, VectorDocument, VectorSearchResult
 
 __version__ = VERSION

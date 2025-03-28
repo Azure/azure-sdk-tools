@@ -18,15 +18,15 @@ _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 _PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
-_LOG_PROMPTS = os.getenv("APIVIEW_LOG_PROMPT", "false").lower() == "true"
-_PROMPTS_INDEX = os.getenv("APIVIEW_PROMPT_INDEX", "0")
-
 class ApiViewReview:
 
-    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "gpt-o3-mini"], log_prompts: bool = False,):
+    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini"], log_prompts: bool = False,):
         self.language = language
         self.model = model
         self.output_parser = GuidelinesResult
+        self.log_prompts = log_prompts
+        if self.log_prompts is None:
+            self.log_prompts = os.getenv("APIVIEW_LOG_PROMPTS", "false").lower() == "true"
         if log_prompts:
             # remove the folder if it exists
             base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
@@ -38,12 +38,12 @@ class ApiViewReview:
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
 
-    def get_response(self, apiview: str) -> GuidelinesResult:
+    def get_response(self, apiview: str, *, chunk_input: bool = False) -> GuidelinesResult:
         apiview = self.unescape(apiview)
         guidelines = self._retrieve_static_guidelines(self.language, include_general_guidelines=True)
-        chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=False)
+        chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=chunk_input)
         final_results = GuidelinesResult(status="Success", violations=[])
-        for chunk in chunked_apiview:
+        for i, chunk in enumerate(chunked_apiview):
             # select the appropriate prompty file and run it
             prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
             prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
@@ -57,9 +57,10 @@ class ApiViewReview:
                 chunk_result = GuidelinesResult(**json_object)
                 final_results.merge(chunk_result, section=chunk)
             except json.JSONDecodeError:
-                print(f"WARNING: Failed to decode JSON from response: {response}")
-                sys.exit(1)
+                print(f"WARNING: Failed to decode JSON for chunk {i}: {response}")
+                continue
         final_results.validate(guidelines=guidelines)
+        final_results.sort()
         return final_results
 
     def unescape(self, text: str) -> str:

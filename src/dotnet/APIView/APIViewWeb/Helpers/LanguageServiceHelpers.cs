@@ -70,7 +70,7 @@ namespace APIViewWeb.Helpers
 
         public static LanguageService GetLanguageService(string language, IEnumerable<LanguageService> languageServices)
         {
-            return languageServices.FirstOrDefault(service => service.Name == language);
+            return languageServices.FirstOrDefault(service => service.Name.Equals(language, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

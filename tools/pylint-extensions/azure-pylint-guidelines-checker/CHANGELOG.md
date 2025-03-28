@@ -3,6 +3,7 @@
 ## 0.5.3 (Unreleased)
 - Updating documentation
 - Renaming `do-not-log-exception` to `do-not-log-exception-if-not-debug`
+- Update `do-not-log-raised-errors`
 
 ## 0.5.2 (2025-02-19)
 

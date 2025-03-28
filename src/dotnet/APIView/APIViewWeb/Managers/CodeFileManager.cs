@@ -41,6 +41,7 @@ namespace APIViewWeb.Managers
         /// <param name="baselineCodeFileName"></param>
         /// <param name="baselineStream"></param>
         /// <param name="project"></param>
+        /// <param name="language"></param>
         /// <returns></returns>
         public async Task<CodeFile> GetCodeFileAsync(string repoName,
             string buildId,
@@ -51,7 +52,8 @@ namespace APIViewWeb.Managers
             MemoryStream originalFileStream,
             string baselineCodeFileName = "",
             MemoryStream baselineStream = null,
-            string project = "public"
+            string project = "public",
+            string language = null
             )
         {
             CodeFile codeFile = null;
@@ -59,7 +61,7 @@ namespace APIViewWeb.Managers
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
                 using var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
-                codeFile = await CreateCodeFileAsync(originalName: Path.GetFileName(originalFileName), fileStream: stream, runAnalysis: false, memoryStream: originalFileStream);
+                codeFile = await CreateCodeFileAsync(originalName: Path.GetFileName(originalFileName), fileStream: stream, runAnalysis: false, memoryStream: originalFileStream, language: language);
             }
             else
             {
@@ -141,7 +143,7 @@ namespace APIViewWeb.Managers
             Stream fileStream = null,
             string language = null)
         {
-            var languageService = _languageServices.FirstOrDefault(s => (language != null ? s.Name == language : s.IsSupportedFile(originalName)));
+            var languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices) ?? _languageServices.FirstOrDefault(s => s.IsSupportedFile(originalName));
             if (fileStream != null)
             {
                 await fileStream.CopyToAsync(memoryStream);

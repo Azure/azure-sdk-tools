@@ -10,15 +10,14 @@ model:
   configuration:
     type: azure_openai
     azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
-    azure_deployment: gpt-4o-mini
+    azure_deployment: o3-mini
     api_version: 2025-01-01-preview
   parameters:
-    temperature: 0.7
-    top_p: 0.95
     stop: []
     frequency_penalty: 0
     presence_penalty: 0
-    max_tokens: 16384
+    max_completion_tokens: 20000
+    reasoning_effort: "high"
 sample:
   language: python
   context: |
@@ -84,13 +83,15 @@ followed.
 
 - APIView does not contain runnable code or implementations. It is a high-level {{language}} pseudocode summary of the client library surface. 
 
+- If related violations occur on multiple lines, report them as distinct violations and reference the other lines in the comment.
+
 # CONTEXT
 These are deemd the most relevant guidelines for this review. Ground your responses solely within this context.
 {{context}}
 
 # FORMAT
 You must output a JSON objects which follows the following schema:
-```JSON
+```json
 {
   "status": "string", # "Succeeded if the request has no violations. Error if there are violations."
   "violations": [
@@ -105,6 +106,7 @@ You must output a JSON objects which follows the following schema:
   ]
 }
 ```
+- DO NOT include the code markdown tags in the output.
 - If you cannot output this schema for any reason, reply with "I cannot handle your request."
 
 user:

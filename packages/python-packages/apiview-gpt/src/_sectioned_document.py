@@ -20,7 +20,6 @@ class SectionedDocument:
 
     def __init__(self, lines: List[str], chunk: bool):
         self.sections = []
-
         if chunk:
             line_data = []
             for i, line in enumerate(lines):
@@ -40,3 +39,6 @@ class SectionedDocument:
         else:
             # just do one big chunk
             self.sections.append(Section(lines, 0))
+
+    def __iter__(self):
+        return iter(self.sections)

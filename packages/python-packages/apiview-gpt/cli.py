@@ -8,6 +8,7 @@ from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
 from src import VectorDB, VectorDocument
+from typing import Literal
 
 helps["review"] = """
     type: group
@@ -70,12 +71,12 @@ def search_documents(language: str, path: str, log_result: bool = False):
             json.dump(results, f, indent=4)
     pprint(results)
 
-def generate_review(language: str, path: str, log_prompts: bool = False):
+def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "gpt-o3-mini"], log_prompts: bool = False):
     """
     Generate a review for an APIView
     """
     from src._gpt_reviewer_openai import ApiViewReview
-    rg = ApiViewReview(language=language, log_prompts=log_prompts)
+    rg = ApiViewReview(language=language, model=model, log_prompts=log_prompts)
     filename = os.path.splitext(os.path.basename(path))[0]
 
     with open(path, "r") as f:
@@ -88,25 +89,10 @@ def generate_review(language: str, path: str, log_prompts: bool = False):
         f.write(review.model_dump_json(indent=4))
     pprint(review)
 
-def parse_guidelines(language: str, path: str):
-    """
-    Parse API guidelines
-    """
-    from src import GuidelinesParser
-    gp = GuidelinesParser(language)
-    with open(path, "r") as f:
-        guidelines = f.read()
-    parsed = gp.parse(guidelines)
-    with open('guidelines.json', 'w') as f:
-        json.dump(parsed, f, indent=4)
-    pprint(parsed)
-
 class CliCommandsLoader(CLICommandsLoader):
     def load_command_table(self, args):
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
-        with CommandGroup(self, "guidelines", "__main__#{}") as g:
-            g.command("parse", "parse_guidelines")
         with CommandGroup(self, "vector", "__main__#{}") as g:
             g.command("get", "get_document")
             g.command("create", "create_document")
@@ -121,11 +107,10 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument("document_id", type=str, help="The ID of the document to retrieve", options_list=("--id"))
             ac.argument("log_result", action="store_true", help="Log the search results to a file called 'search_result_dump.json'")
             ac.argument("path", type=str, help="The path to a JSON file containing an array of vector documents to add.")
-        with ArgumentsContext(self, "guidelines") as ac:
-            ac.argument("path", type, help="The path to the guidelines")
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument("log_prompts", action="store_true", help="Log each prompt in ascending order in the `scratch/propmts` folder.")
+            ac.argument("model", type=str, help="The model to use for the review", options_list=("--model", "-m"), choices=["gpt-4o-mini", "gpt-o3-mini"])
         super(CliCommandsLoader, self).load_arguments(command)
 
 

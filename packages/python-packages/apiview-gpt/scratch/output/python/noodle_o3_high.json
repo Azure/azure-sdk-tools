@@ -1,0 +1,95 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [],
+            "line_no": 33,
+            "bad_code": "async def __init__( self, endpoint, credential, options: dict)",
+            "suggestion": "Use a normal synchronous __init__ (e.g. def __init__(...) ) and provide an async classmethod (e.g. async def create(...)) for any asynchronous initialization if needed.",
+            "comment": "Python does not support asynchronous __init__ methods. Async initialization should be implemented via a synchronous __init__ and an async factory method instead."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-namespaces-async"
+            ],
+            "line_no": 31,
+            "bad_code": "class azure.contoso.NoodleAsyncManager:",
+            "suggestion": "Move the async client to the azure.contoso.aio namespace and name the class consistently with its synchronous counterpart (e.g. NoodleManager).",
+            "comment": "Async client types should be placed in a sub-namespace with an '.aio' suffix. This ensures consistency with Azure SDK guidelines for asynchronous clients."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-connection-string"
+            ],
+            "line_no": 46,
+            "bad_code": "def __init__( self, endpoint, credential, connection_string: Optional[str], options: dict)",
+            "suggestion": "Remove the connection_string parameter from __init__ and implement a classmethod like 'from_connection_string' for creating the client instance using a connection string.",
+            "comment": "Client constructors should not accept a connection string. Instead, a separate factory method (from_connection_string) should be provided."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-options-naming"
+            ],
+            "line_no": 56,
+            "bad_code": "def get_noodle(self, options: dict) -> NoodleResponse",
+            "suggestion": "Refactor the method to expose each optional parameter using keyword-only arguments. For example: 'def get_noodle(self, *, timeout: Optional[int] = None, retry: Optional[int] = None) -> NoodleResponse:'",
+            "comment": "Optional operation-specific settings should be provided as explicit keyword-only parameters rather than as a generic options dictionary."
+        },
+        {
+            "rule_ids": [
+                "python-client-options-naming",
+                "python_design.html#python-response-paged-protocol"
+            ],
+            "line_no": 58,
+            "bad_code": "def get_noodles(self, options: dict) -> List[NoodleResponse]",
+            "suggestion": "Return an object that implements the ItemPaged protocol (e.g. azure.core.paging.ItemPaged[NoodleResponse]) instead of a List.",
+            "comment": "Avoid grouping optional parameters in a dictionary; instead, use individual keyword-only parameters to improve clarity and discoverability. Operations that return collections should implement the ItemPaged protocol rather than returning a plain List to support paging scenarios."
+        },
+        {
+            "rule_ids": [
+                "python-client-options-naming"
+            ],
+            "line_no": 40,
+            "bad_code": "async def get_noodle_async(self, options: dict) -> NoodleResponse",
+            "suggestion": "Define the method with explicit keyword-only arguments, for example: 'async def get_noodle_async(self, *, timeout: Optional[int] = None) -> NoodleResponse:'",
+            "comment": "For async methods, optional parameters should be exposed as explicit keyword-only arguments rather than an options dictionary."
+        },
+        {
+            "rule_ids": [
+                "python-client-options-naming",
+                "python-response-paged-protocol"
+            ],
+            "line_no": 42,
+            "bad_code": "async def get_noodles_async(self, options: dict) -> List[NoodleResponse]",
+            "suggestion": "Return an async pager type instead of a List, enabling iteration over pages with by_page().",
+            "comment": "Avoid using an options dict for optional parameters in async methods; use explicit keyword-only parameters instead. Async list operations should return a pager (e.g. an asynchronous ItemPaged object) rather than a plain List, to support proper paging."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-models-enum-name-uppercase"
+            ],
+            "line_no": 16,
+            "bad_code": "blue = \"blue\"",
+            "suggestion": "Change the enum member to: BLUE = \"blue\"",
+            "comment": "Enum member names should be in uppercase as per the Azure SDK guidelines."
+        },
+        {
+            "rule_ids": [
+                "python-models-enum-name-uppercase"
+            ],
+            "line_no": 17,
+            "bad_code": "green = \"green\"",
+            "suggestion": "Change the enum member to: GREEN = \"green\"",
+            "comment": "Enum member names should be in uppercase as per the Azure SDK guidelines."
+        },
+        {
+            "rule_ids": [
+                "python-models-enum-name-uppercase"
+            ],
+            "line_no": 18,
+            "bad_code": "red = \"red\"",
+            "suggestion": "Change the enum member to: RED = \"red\"",
+            "comment": "Enum member names should be in uppercase as per the Azure SDK guidelines."
+        }
+    ]
+}

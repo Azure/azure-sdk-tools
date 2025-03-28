@@ -1,10 +1,10 @@
-import os
-import json
-import openai
 import dotenv
-from typing import List, Union
-
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+import json
+import os
+import prompty
+import prompty.azure
+import sys
+from typing import List, Union, Literal
 
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
@@ -16,14 +16,16 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
+_PROMPTS_FOLDER = os.path.join(_PACKAGE_ROOT, "prompts")
 
 _LOG_PROMPTS = os.getenv("APIVIEW_LOG_PROMPT", "false").lower() == "true"
 _PROMPTS_INDEX = os.getenv("APIVIEW_PROMPT_INDEX", "0")
 
 class ApiViewReview:
 
-    def __init__(self, *, language: str, log_prompts: bool = False, use_rag: bool = True):
+    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "gpt-o3-mini"], log_prompts: bool = False,):
         self.language = language
+        self.model = model
         self.output_parser = GuidelinesResult
         if log_prompts:
             # remove the folder if it exists
@@ -36,137 +38,39 @@ class ApiViewReview:
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
 
-    def get_response(self, apiview):
+    def get_response(self, apiview: str) -> GuidelinesResult:
         apiview = self.unescape(apiview)
-        guidelines = self.retrieve_guidelines(self.language)
+        guidelines = self._retrieve_static_guidelines(self.language, include_general_guidelines=True)
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=False)
         final_results = GuidelinesResult(status="Success", violations=[])
-        extra_comments = {}
-
-        guidelines.extend(list(extra_comments.values()))
-        full_apiview = "\n".join(chunked_apiview.sections[0].lines)
-        system_prompt = self.system_prompt.format(
-            language=self.language, apiview=full_apiview
-        )
-        human_prompt = self.human_prompt.format(
-            guidelines=json.dumps(guidelines), apiview=full_apiview
-        )
-
-        results = self.client.beta.chat.completions.parse(
-            model="o3-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": human_prompt},
-            ],
-            response_format=GuidelinesResult,
-        )
-
-        output = results.choices[0].message.parsed
-        final_results.violations.extend(
-            self.process_violations(output.violations, chunked_apiview.sections[0])
-        )
-        # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6571
-        if len(output.violations) > 0:
-            final_results.status = "Error"
-        self.process_rule_ids(final_results, guidelines)
+        for chunk in chunked_apiview:
+            # select the appropriate prompty file and run it
+            prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
+            prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
+            response = prompty.execute(prompt_path, inputs={
+                "language": self.language,
+                "context": json.dumps(guidelines),
+                "apiview": str(chunk),
+            })
+            try:
+                json_object = json.loads(response)
+                chunk_result = GuidelinesResult(**json_object)
+                final_results.merge(chunk_result, section=chunk)
+            except json.JSONDecodeError:
+                print(f"WARNING: Failed to decode JSON from response: {response}")
+                sys.exit(1)
+        final_results.validate(guidelines=guidelines)
         return final_results
-
-    def process_rule_ids(self, results, guidelines):
-        """Ensure that each rule ID matches with an actual guideline ID.
-        This ensures that the links that appear in APIView should never be broken (404).
-        """
-        # create an index for easy lookup
-        index = {x["id"]: x for x in guidelines}
-        for violation in results.violations:
-            to_remove = []
-            to_add = []
-            for rule_id in violation.rule_ids:
-                try:
-                    index[rule_id]
-                    continue
-                except KeyError:
-                    # see if any guideline ID ends with the rule_id. If so, update it and preserve in the index
-                    matched = False
-                    for guideline in guidelines:
-                        if guideline["id"].endswith(rule_id):
-                            to_remove.append(rule_id)
-                            to_add.append(guideline["id"])
-                            index[rule_id] = guideline["id"]
-                            matched = True
-                            break
-                    if matched:
-                        continue
-                    # no match or partial match found, so remove the rule_id
-                    to_remove.append(rule_id)
-                    print(
-                        f"WARNING: Rule ID {rule_id} not found. Possible hallucination."
-                    )
-            # update the rule_ids arrays with the new values. Don't modify the array while iterating over it!
-            for rule_id in to_remove:
-                violation.rule_ids.remove(rule_id)
-            for rule_id in to_add:
-                violation.rule_ids.append(rule_id)
 
     def unescape(self, text: str) -> str:
         return str(bytes(text, "utf-8").decode("unicode_escape"))
 
-    def process_violations(
-        self, violations: List[Violation], section: Section
-    ) -> List[Violation]:
-        if not violations:
-            return violations
-
-        combined_violations = {}
-        for violation in violations:
-            line_no = self.find_line_number(section, violation.bad_code)
-            violation.line_no = line_no
-            # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6590
-            if not line_no:
-                continue
-            existing = combined_violations.get(line_no, None)
-            if existing:
-                for rule_id in violation.rule_ids:
-                    if rule_id not in existing.rule_ids:
-                        existing.rule_ids.append(rule_id)
-                        if existing.suggestion != violation.suggestion:
-                            # FIXME: Collect all suggestions and use the most popular??
-                            existing.suggestion = violation.suggestion
-                        existing.comment = existing.comment + " " + violation.comment
-            else:
-                combined_violations[line_no] = violation
-        return [x for x in combined_violations.values() if x.line_no != 1]
-
-    def find_line_number(self, chunk: Section, bad_code: str) -> Union[int, None]:
-        offset = chunk.start_line_no
-        line_no = None
-        for i, line in enumerate(chunk.lines):
-            # FIXME: see: https://github.com/Azure/azure-sdk-tools/issues/6572
-            if line.strip().startswith(bad_code.strip()):
-                if line_no is None:
-                    line_no = offset + i
-                else:
-                    print(
-                        f"WARNING: Found multiple instances of bad code, default to first: {bad_code}"
-                    )
-        # FIXME: see: https://github.com/Azure/azure-sdk-tools/issues/6572
-        if not line_no:
-            print(
-                f"WARNING: Could not find bad code. Trying less precise method: {bad_code}"
-            )
-            for i, line in enumerate(chunk.lines):
-                if bad_code.strip().startswith(line.strip()):
-                    if line_no is None:
-                        line_no = offset + i
-                    else:
-                        print(
-                            f"WARNING: Found multiple instances of bad code, default to first: {bad_code}"
-                        )
-        return line_no
-
-    def select_guidelines(self, all, select_ids):
-        return [guideline for guideline in all if guideline["id"] in select_ids]
-
-    def retrieve_guidelines(self, language, include_general_guidelines: bool = False):
+    def _retrieve_static_guidelines(self, language, include_general_guidelines: bool = False):
+        """
+        Retrieves the guidelines for the given language, optional with general guidelines.
+        This method retrieves guidelines statically from the file system. It does not
+        query any Azure service.
+        """
         general_guidelines = []
         if include_general_guidelines:
             general_guidelines_path = os.path.join(_GUIDELINES_FOLDER, "general")

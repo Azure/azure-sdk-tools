@@ -24,13 +24,22 @@
         "Group": null,
         "SdkType": "client",
         "IsNewSdk": true,
-        "ArtifactName": null,
+        "ArtifactName": "sdk/azcore",
         "ReleaseStatus": "Unreleased",
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
-        "ArtifactDetails": null,
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/eng",
+            "/sdk/azcore/ci.yml"
+          ]
+        },
         "CIParameters": {
-          "CIMatrixConfigs": []
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
+          "IsSdkLibrary": true,
+          "NonShipping": false,
+          "LicenseCheck": true
         }
       }
     ]
@@ -62,13 +71,21 @@
         "Group": null,
         "SdkType": "mgmt",
         "IsNewSdk": true,
-        "ArtifactName": null,
+        "ArtifactName": "sdk/resourcemanager/customproviders/armcustomproviders",
         "ReleaseStatus": "2023-11-24",
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
-        "ArtifactDetails": null,
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/sdk/resourcemanager/customproviders/armcustomproviders/ci.yml"
+          ]
+        },
         "CIParameters": {
-          "CIMatrixConfigs": []
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
+          "IsSdkLibrary": true,
+          "NonShipping": false,
+          "LicenseCheck": true
         }
       },
       {
@@ -82,13 +99,21 @@
         "Group": null,
         "SdkType": "mgmt",
         "IsNewSdk": true,
-        "ArtifactName": null,
+        "ArtifactName": "sdk/resourcemanager/dashboard/armdashboard",
         "ReleaseStatus": "2023-11-24",
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
-        "ArtifactDetails": null,
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/sdk/resourcemanager/dashboard/armdashboard/ci.yml"
+          ]
+        },
         "CIParameters": {
-          "CIMatrixConfigs": []
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
+          "IsSdkLibrary": true,
+          "NonShipping": false,
+          "LicenseCheck": true
         }
       },
       {
@@ -102,13 +127,20 @@
         "Group": null,
         "SdkType": "mgmt",
         "IsNewSdk": true,
-        "ArtifactName": null,
+        "ArtifactName": "sdk/resourcemanager/storage/armstorage",
         "ReleaseStatus": "2025-02-27",
         "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
-        "ArtifactDetails": null,
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/sdk/resourcemanager/storage/armstorage/ci.yml"
+          ]
+        },
         "CIParameters": {
-          "CIMatrixConfigs": []
+          "CIMatrixConfigs": [],
+          "NonShipping": false,
+          "IsSdkLibrary": true,
+          "LicenseCheck": true
         }
       }
     ]
@@ -124,6 +156,65 @@
       "DeletedFiles": [],
       "PRNumber": "33362"
     },
-    "expected_package_output": []
+    "expected_package_output": [
+      {
+        "Name": "sdk/template/aztemplate",
+        "Version": "0.6.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/aztemplate",
+        "ServiceDirectory": "template/aztemplate",
+        "ReadMePath": "sdk/template/aztemplate/README.md",
+        "ChangeLogPath": "sdk/template/aztemplate/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "sdk/template/aztemplate",
+        "ReleaseStatus": "2025-03-06",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/eng",
+            "/sdk/template/aztemplate/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
+          "IsSdkLibrary": true,
+          "NonShipping": false,
+          "LicenseCheck": true
+        }
+      },
+      {
+        "Name": "sdk/azcore",
+        "Version": "1.18.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/azcore",
+        "ServiceDirectory": "azcore",
+        "ReadMePath": "sdk/azcore/README.md",
+        "ChangeLogPath": "sdk/azcore/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "sdk/azcore",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/eng",
+            "/sdk/azcore/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
+          "IsSdkLibrary": true,
+          "NonShipping": false,
+          "LicenseCheck": true
+        }
+      }
+    ]
   }
 ]

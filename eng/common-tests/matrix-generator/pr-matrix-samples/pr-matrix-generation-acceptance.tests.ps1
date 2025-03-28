@@ -16,7 +16,7 @@ Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "IntegrationTest"
         $RepoRoot = Get-Repo -Repo $NET_REPO -Reference $NET_REPO_REF
     }
 
-    It "Should evaluate targeted .NET packages correctly - $($_.Name)" -ForEach $netScenarios {
+    It "Should evaluate targeted .NET packages correctly - $($_.name)" -ForEach $netScenarios {
         $scenario = $_
         $outputProps = Invoke-PackageProps -InputDiff $scenario.diff -Repo "$RepoRoot"
         $expectedOutputs = $scenario.expected_package_output | Sort-Object -Property Name
@@ -37,7 +37,7 @@ Describe "Acceptance tests for Python PR Matrix Generation" -Tag "IntegrationTes
         $RepoRoot = Get-Repo -Repo $PYTHON_REPO -Reference $PYTHON_REPO_REF
     }
 
-    It "Should evaluate targeted pyton packages correctly - $($_.Name)" -ForEach $pythonScenarios {
+    It "Should evaluate targeted pyton packages correctly - $($_.name)" -ForEach $pythonScenarios {
         Write-Host "Operating against repo: $RepoRoot"
         $scenario = $_
 
@@ -66,7 +66,7 @@ Describe "Acceptance tests for JS PR Matrix Generation" -Tag "IntegrationTest" {
         $RepoRoot = Get-Repo -Repo $JS_REPO -Reference $JS_REPO_REF
     }
 
-    It "Should evaluate targeted js packages correctly - $($_.Name)" -ForEach $jsScenarios {
+    It "Should evaluate targeted js packages correctly - $($_.name)" -ForEach $jsScenarios {
         Write-Host "Operating against repo: $RepoRoot"
         $scenario = $_
 
@@ -88,14 +88,14 @@ Describe "Acceptance tests for JS PR Matrix Generation" -Tag "IntegrationTest" {
 
 Describe "Acceptance tests for Go PR Matrix Generation" -Tag "IntegrationTest" {
     BeforeAll {
-        $GO_REPO_REF = "524f41ef0bdb788e8df3e77fcf47f982421ee5d9"
+        $GO_REPO_REF = "f7328681bcccd0bebad6e8ea8b9c8a5c753368d2"
         $GO_REPO = "Azure/azure-sdk-for-go"
 
         . $PSScriptRoot/pr-matrix-generation-acceptance.helpers.ps1
         $RepoRoot = Get-Repo -Repo $GO_REPO -Reference $GO_REPO_REF
     }
 
-    It "Should evaluate targeted go packages correctly - $($_.Name)" -ForEach $goScenarios {
+    It "Should evaluate targeted go packages correctly - $($_.name)" -ForEach $goScenarios {
         Write-Host "Operating against repo: $RepoRoot"
         $scenario = $_
 
@@ -124,7 +124,7 @@ Describe "Acceptance tests for Java PR Matrix Generation" -Tag "IntegrationTest"
         $RepoRoot = Get-Repo -Repo $JAVA_REPO -Reference $JAVA_REPO_REF
     }
 
-    It "Should evaluate targeted java packages correctly - $($_.Name)" -ForEach $javaScenarios {
+    It "Should evaluate targeted java packages correctly - $($_.name)" -ForEach $javaScenarios {
         Write-Host "Operating against repo: $RepoRoot"
         $scenario = $_
 

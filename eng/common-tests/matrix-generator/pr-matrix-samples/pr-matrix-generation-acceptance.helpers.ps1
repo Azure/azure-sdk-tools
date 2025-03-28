@@ -99,18 +99,24 @@ Function Invoke-PackageProps {
     return $PackageInfoFolder
 }
 
-Function OrderArtifactDetails {
+Function OrderObject {
     param (
         [PSCustomObject]$PackagePropObject
     )
     $sortedDetails = [ordered]@{}
+    $sortedCIParams = [ordered]@{}
 
     # Sort the existing hashtable by key name, then rebuild it
     $PackagePropObject.ArtifactDetails.PSObject.Properties | Sort-Object Name | ForEach-Object {
         $sortedDetails[$_.Name] = $_.Value
     }
 
+    $PackagePropObject.CIParameters.PSObject.Properties | Sort-Object Name | ForEach-Object {
+        $sortedCIParams[$_.Name] = $_.Value
+    }
+
     $PackagePropObject.ArtifactDetails = $sortedDetails
+    $PackagePropObject.CIParameters = $sortedCIParams
 }
 
 Function Compare-PackageResults {
@@ -131,8 +137,8 @@ Function Compare-PackageResults {
     $sortedExpected = $Expected | Sort-Object -Property Name
 
     for ($i = 0; $i -lt $sortedActual.Count; $i++) {
-        OrderArtifactDetails -PackagePropObject $sortedActual[$i]
-        OrderArtifactDetails -PackagePropObject $sortedExpected[$i]
+        OrderObject -PackagePropObject $sortedActual[$i]
+        OrderObject -PackagePropObject $sortedExpected[$i]
     }
 
     $sortedActual | ConvertTo-Json -Depth 100 | Should -Be ($sortedExpected | ConvertTo-Json -Depth 100)

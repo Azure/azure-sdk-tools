@@ -2740,42 +2740,98 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
            Go through exception block and branches and ensure error hasn't been logged if exception is raised.
         """
-        # Return a list of exception blocks
-        except_block = node.handlers
-        # Iterate through each exception block
-        for nod in except_block:
-            # Get the nodes in each block (e.g. nodes Expr and Raise)
-            exception_block_body = nod.body
-            self.check_for_raise(exception_block_body)
+        try:
+            # Return a list of exception blocks
+            except_block = node.handlers
+            # Iterate through each exception block
+            for nod in except_block:
+                # Get the nodes in each block (e.g. nodes Expr and Raise)
+                exception_block_body = nod.body
+                exception_name = nod.name.name
+                self.check_for_raise(exception_block_body, exception_name)
+        except:
+            pass
 
-    def check_for_raise(self, node):
+    def check_for_raise(self, node, exception_name):
         """ Helper function - checks for instance of 'Raise' node
             Also checks 'If' and nested 'If' branches
         """
         for i in node:
             if isinstance(i, astroid.Raise):
-                self.check_for_logging(node)
+                self.check_for_logging(node, exception_name)
             # Check for any nested 'If' branches
             if isinstance(i, astroid.If):
-                self.check_for_raise(i.body)
+                self.check_for_raise(i.body, exception_name)
 
                 # Check any 'elif' or 'else' branches
-                self.check_for_raise(i.orelse)
+                self.check_for_raise(i.orelse, exception_name)
 
-    def check_for_logging(self, node):
-        """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
-            levels. Called from 'check_for_raise' function
+    def check_for_logging(self, node, exception_name):
+        """ Helper function - Called from 'check_for_raise' function
+            Checks if the same exception that's being raised is also being logged
         """
-        matches = [".warning", ".error", ".exception"]
-        for j in node:
-            if isinstance(j, astroid.Expr):
-                expression = j.as_string().lower()
-                if any(x in expression for x in matches):
-                    self.add_message(
-                        msgid=f"do-not-log-raised-errors",
-                        node=j,
-                        confidence=None,
-                    )
+
+        try:
+                
+            # Now check all logger calls to see if they're logging the exact same exception variable
+            for j in node:
+                if isinstance(j, astroid.Expr):
+                    for l in j.value.func.expr.infer():
+                        try:
+                            if "logger" in l.as_string():
+                                # Check all arguments to the logger
+                                # The exception could be logged in various ways:
+                                # 1. logger.debug(exception)
+                                # 2. logger.debug(f"something {exception}")
+                                # 3. logger.debug("Failed: %r", exception)
+                                
+                                
+                                # Check for f-strings that might contain the exception
+                                for log_arg in j.value.args:
+                                    if isinstance(log_arg, astroid.Name) and log_arg.name == exception_name:
+                                        self.add_message(
+                                            msgid="do-not-log-raised-errors",
+                                            node=j, 
+                                            confidence=None,
+                                        )
+                                        return
+                                    if isinstance(log_arg, astroid.Call):
+                                        for arg in log_arg.args:
+                                            if isinstance(arg, astroid.Name) and arg.name == exception_name:
+                                                self.add_message(
+                                                    msgid="do-not-log-raised-errors",
+                                                    node=j,
+                                                    confidence=None,
+                                                )
+                                                return
+                                    if isinstance(log_arg, astroid.JoinedStr):
+                                        for value in log_arg.values:
+                                            if isinstance(value, astroid.FormattedValue):
+                                                try:
+                                                    if isinstance(value.value, astroid.Name) and value.value.name == exception_name:
+                                                        self.add_message(
+                                                            msgid="do-not-log-raised-errors",
+                                                            node=j,
+                                                            confidence=None,
+                                                        )
+                                                        return
+                                                except AttributeError:
+                                                    pass
+                                
+                                # Check for string formatting with exception as argument
+                                if len(j.value.args) > 1:
+                                    for idx in range(1, len(j.value.args)):
+                                        if isinstance(j.value.args[idx], astroid.Name) and j.value.args[idx].name == exception_name:
+                                            self.add_message(
+                                                msgid="do-not-log-raised-errors",
+                                                node=j,
+                                                confidence=None,
+                                            )
+                                            return
+                        except:
+                            pass
+        except (AttributeError, IndexError):
+            pass
 
 
 class NoImportTypingFromTypeCheck(BaseChecker):
@@ -2952,12 +3008,12 @@ class DoNotLogExceptions(BaseChecker):
 
     """Rule to check that exceptions aren't logged"""
 
-    name = "do-not-log-exceptions"
+    name = "do-not-log-exceptions-if-not-debug"
     priority = -1
     msgs = {"C4766": (
             "Do not log exceptions. See Details:"
             " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
-            "do-not-log-exceptions",
+            "do-not-log-exceptions-if-not-debug",
             "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
             ),
             }
@@ -3007,13 +3063,13 @@ class DoNotLogExceptions(BaseChecker):
                                     #  error
                                     if ".__name__" not in expression1[i+1]:
                                         self.add_message(
-                                            msgid=f"do-not-log-exceptions",
+                                            msgid=f"do-not-log-exceptions-if-not-debug",
                                             node=j,
                                             confidence=None,
                                         )
                                 else:
                                     self.add_message(
-                                        msgid=f"do-not-log-exceptions",
+                                        msgid=f"do-not-log-exceptions-if-not-debug",
                                         node=j,
                                         confidence=None,
                                     )

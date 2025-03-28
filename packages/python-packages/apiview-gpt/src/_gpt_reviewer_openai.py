@@ -17,57 +17,26 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
-
 class GptReviewer:
 
     def __init__(self, log_prompts: bool = False):
-        # FIXME: Hook prompty up
-        # result = prompty.execute(prompt_file_path, inputs={"question": payload})
-        self.client = openai.AzureOpenAI(
-            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-            azure_ad_token_provider=get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),
-            api_version="2025-01-01-preview"
-        )
         self.output_parser = GuidelinesResult
         if log_prompts:
             # remove the folder if it exists
             base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
             if os.path.exists(base_path):
                 import shutil
-
                 shutil.rmtree(base_path)
             os.makedirs(base_path)
-            os.environ["APIVIEW_LOG_PROMPT"] = str(log_prompts)
-            os.environ["APIVIEW_PROMPT_INDEX"] = "0"
-
-        self.system_prompt = """
-You are an expert code reviewer for SDKs. You will analyze an entire client library apiview surface for {language} to determine whether it meets the SDK guidelines. ONLY mention if the library is clearly and visibly violating a guideline. Be conservative - DO NOT make assumptions that a guideline is being violated because it is possible that all guidelines are being followed. Evaluate each
-piece of code against all guidelines. Code may violate multiple guidelines. Some additional notes: each class will contain its namespace, like class azure.contoso.ClassName where 'azure.contoso' is the namespace and ClassName is the name of the class. The apiview will not contain runnable code, it is meant to be a high-level {language} pseudocode summary of a client library surface.
-Format instructions: 'rule_ids' should contain the unique rule ID or IDs that were violated. 'line_no' should contain the line number of the violation, if known. 'bad_code' should contain the original code that was bad, cited verbatim. It should contain a single line of code. 'suggestion' should contain the suggested {language} code which fixes the bad code. If code is not feasible, a description is fine. 'comment' should contain a comment about the violation.
-"""
-        self.human_prompt = """
-Given the following guidelines:
-{guidelines}
-
-Evaluate the apiview for any violations:
-```
-{apiview}
-```
-
-"""
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
 
     def get_response(self, apiview, language):
         apiview = self.unescape(apiview)
-
         guidelines = self.retrieve_guidelines(language)
-
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=False)
-
         final_results = GuidelinesResult(status="Success", violations=[])
-
         extra_comments = {}
 
         guidelines.extend(list(extra_comments.values()))

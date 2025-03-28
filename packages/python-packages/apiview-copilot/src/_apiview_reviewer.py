@@ -4,10 +4,10 @@ import os
 import prompty
 import prompty.azure
 import sys
-from typing import List, Union, Literal
+from typing import Literal
 
-from ._sectioned_document import SectionedDocument, Section
-from ._models import GuidelinesResult, Violation
+from ._sectioned_document import SectionedDocument
+from ._models import GuidelinesResult
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
     # running on dev machine, loadenv

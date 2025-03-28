@@ -3,11 +3,9 @@ import json
 import os
 from pprint import pprint
 import sys
-from typing import List
 
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
-from knack.help import CLIHelp
 from knack.help_files import helps
 from src import VectorDB, VectorDocument
 

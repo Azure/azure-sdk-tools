@@ -17,9 +17,12 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
+_LOG_PROMPTS = os.getenv("APIVIEW_LOG_PROMPT", "false").lower() == "true"
+_PROMPTS_INDEX = os.getenv("APIVIEW_PROMPT_INDEX", "0")
+
 class GptReviewer:
 
-    def __init__(self, log_prompts: bool = False):
+    def __init__(self, log_prompts: bool = False, use_rag: bool = True):
         self.output_parser = GuidelinesResult
         if log_prompts:
             # remove the folder if it exists

@@ -1,0 +1,9 @@
+:host ::ng-deep {    
+    .cross-language-view-container {
+        .tab-content {
+            max-height: 25dvh;
+            overflow-y: auto;
+            height: 25dvh;
+        }
+    }
+}

@@ -10,6 +10,7 @@ using APIViewWeb.Managers;
 using System.Collections.Generic;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using System.Linq;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -45,6 +46,24 @@ namespace APIViewWeb.LeanControllers
         {
             var result = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: reviewId, apiRevisionType: apiRevisionType);
             return new LeanJsonResult(result, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Get APIRevisions with the same Cross Language Id
+        /// </summary>
+        /// <param name="crossLanguageId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        [HttpGet("{crossLanguageId}/crosslanguage", Name = "GetCrossLanguageAPIRevision")]
+        public async Task<ActionResult<APIRevisionListItemModel>> GetCrossLanguageAPIRevision(string crossLanguageId, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            var result = await _apiRevisionsManager.GetCrossLanguageAPIRevisionsAsync(crossLanguageId: crossLanguageId, apiRevisionType: apiRevisionType);
+            var groupResults = result.GroupBy(r => r.Language).Select(g => new
+            {
+               Label = g.Key,
+               Items = g.ToList()
+            });
+            return new LeanJsonResult(groupResults, StatusCodes.Status200OK);
         }
 
         /// <summary>

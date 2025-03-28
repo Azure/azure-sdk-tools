@@ -1,8 +1,10 @@
 
+using Amazon.Runtime.Internal.Transform;
 using ApiView;
 using APIView;
 using APIView.Model.V2;
 using APIView.TreeToken;
+using APIViewWeb.DTOs;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
 using System;
@@ -72,6 +74,36 @@ namespace APIViewWeb.Helpers
             return codePanelData;
         }
 
+        public static async Task GrabCrossLanguageReviewLines(
+            CrossLanguageProcessingDto crossLanguageProcessingData, IEnumerable<ReviewLine> reviewLines, int indent = 0)
+        {
+            foreach (var line in reviewLines)
+            {
+                if (!String.IsNullOrEmpty(line.CrossLanguageId) && !crossLanguageProcessingData.GrabLines)
+                {
+                    crossLanguageProcessingData.GrabLines = true;
+                    crossLanguageProcessingData.CurrentRoot = line;
+                    crossLanguageProcessingData.GrabIndent = indent;
+                    crossLanguageProcessingData.Content.Add(line.CrossLanguageId.ToLower(), new List<CodePanelRowData>());
+                }
+
+                if (crossLanguageProcessingData.GrabLines)
+                {
+                    CodePanelRowData rowData = GetCodePanelRowData(crossLanguageProcessingData.CodePanelData, line, null, indent);
+                    if (rowData.Type == CodePanelRowDatatype.CodeLine)
+                    {
+                        crossLanguageProcessingData.Content[crossLanguageProcessingData.CurrentRoot.CrossLanguageId.ToLower()].Add(rowData);
+                    }
+                }
+
+                await GrabCrossLanguageReviewLines(crossLanguageProcessingData, line.Children, indent + 1);
+                if (indent == crossLanguageProcessingData.GrabIndent)
+                {
+                    crossLanguageProcessingData.GrabLines = false;
+                    crossLanguageProcessingData.CurrentRoot = null;
+                }
+            }
+        }
 
         private static async Task<string> BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, ReviewLine reviewLine, string parentNodeIdHashed, int nodePositionAtLevel,
             string prevNodeHashId, Dictionary<string, string> relatedLineMap, int indent = 1)
@@ -238,6 +270,7 @@ namespace APIViewWeb.Helpers
                 Type = reviewLine.Tokens.Any(t => t.IsDocumentation == true) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
                 NodeIdHashed = nodeIdHashed,
                 NodeId = reviewLine.LineId,
+                CrossLanguageId = reviewLine.CrossLanguageId,
                 Indent = indent,
                 DiffKind = reviewLine.DiffKind,
                 IsHiddenAPI = (reviewLine.IsHidden == true)
@@ -295,7 +328,6 @@ namespace APIViewWeb.Helpers
             }
             return codePanelRowData;
         }
-
 
         private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, CodePanelRowData codePanelRowData)
         {
@@ -384,7 +416,6 @@ namespace APIViewWeb.Helpers
         {
             return AreReviewLinesSame(codeFileA.ReviewLines, codeFileB.ReviewLines);
         }
-
 
         private static bool AreReviewLinesSame(List<ReviewLine> reviewLinesA, List<ReviewLine> reviewLinesB)
         {
@@ -553,7 +584,6 @@ namespace APIViewWeb.Helpers
                     CollectDocumentationLines(codePanelData, line.Children, documentationRowMap, indent + 1, nodeIdHashed, enableSkipDiff);
             }
         }
-
 
         // Documentation rows are collected from active revision using node hash ID generated for corresponding code line.
         // Hash ID uses diff kind type to generate the hashed node ID and it will be different after diff calculation for same code line token

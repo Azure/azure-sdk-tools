@@ -2757,7 +2757,7 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         """
         for i in node:
             if isinstance(i, astroid.Raise):
-                self.check_for_logging(node)
+                self.check_for_logging(node, i)
             # Check for any nested 'If' branches
             if isinstance(i, astroid.If):
                 self.check_for_raise(i.body)
@@ -2765,16 +2765,86 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                 # Check any 'elif' or 'else' branches
                 self.check_for_raise(i.orelse)
 
-    def check_for_logging(self, node):
+    def check_for_logging(self, node, raise_node):
         """ Helper function - Called from 'check_for_raise' function
+            Checks if the same exception that's being raised is also being logged
         """
-        for j in node:
-            if isinstance(j, astroid.Expr) and j.value.func.expr.name == "logging":
-                self.add_message(
-                    msgid=f"do-not-log-raised-errors",
-                    node=j,
-                    confidence=None,
-                )
+        # Get the exception object being raised
+        try:
+            # Different forms of raise statements:
+            # 1. raise exc_var
+            # 2. raise ExcClass as exc_var
+            # We need the actual variable reference that's being raised
+            
+            # Extract the variable name being raised
+            raised_var = None
+            
+            # Case: raise exc_var (direct variable reference)
+            if hasattr(raise_node.exc, 'name'):
+                raised_var = raise_node.exc.name
+            # Case: raise ExcClass(exc_var) (exception with argument)
+            elif (hasattr(raise_node, 'exc') and 
+                  isinstance(raise_node.exc, astroid.Call)):
+                raised_var = raise_node.exc.func.name
+            # Case: raise from (Python 3 syntax)
+            elif hasattr(raise_node, 'cause') and hasattr(raise_node.cause, 'name'):
+                raised_var = raise_node.cause.name
+            # If we couldn't determine what's being raised, exit
+            else:
+                return
+                
+            # Now check all logger calls to see if they're logging the exact same exception variable
+            for j in node:
+                if isinstance(j, astroid.Expr):
+                    for l in j.value.func.expr.infer():
+                        try:
+                            if "logger" in l.as_string():
+                                # Check all arguments to the logger
+                                # The exception could be logged in various ways:
+                                # 1. logger.debug(exception)
+                                # 2. logger.debug(f"something {exception}")
+                                # 3. logger.debug("Failed: %r", exception)
+                                
+                                # Direct logging of the exception object
+                                for log_arg in j.value.args:
+                                    if isinstance(log_arg, astroid.Name) and log_arg.name == raised_var:
+                                        self.add_message(
+                                            msgid="do-not-log-raised-errors",
+                                            node=j, 
+                                            confidence=None,
+                                        )
+                                        return
+                                
+                                # Check for f-strings that might contain the exception
+                                for log_arg in j.value.args:
+                                    if isinstance(log_arg, astroid.JoinedStr):
+                                        for value in log_arg.values:
+                                            if isinstance(value, astroid.FormattedValue):
+                                                try:
+                                                    if isinstance(value.value, astroid.Name) and value.value.name == raised_var:
+                                                        self.add_message(
+                                                            msgid="do-not-log-raised-errors",
+                                                            node=j,
+                                                            confidence=None,
+                                                        )
+                                                        return
+                                                except AttributeError:
+                                                    pass
+                                
+                                # Check for string formatting with exception as argument
+                                if len(j.value.args) > 1:
+                                    for idx in range(1, len(j.value.args)):
+                                        if isinstance(j.value.args[idx], astroid.Name) and j.value.args[idx].name == raised_var:
+                                            self.add_message(
+                                                msgid="do-not-log-raised-errors",
+                                                node=j,
+                                                confidence=None,
+                                            )
+                                            return
+                        except:
+                            pass
+        except (AttributeError, IndexError):
+            pass
 
 
 class NoImportTypingFromTypeCheck(BaseChecker):

@@ -3426,7 +3426,7 @@ class TestDoNotLogErrorsEndUpRaising(pylint.testutils.CheckerTestCase):
 
     def test_implicit_else_exception_logged(self, setup):
         """Check that any exceptions raised in branches aren't logged at error level."""
-        try_node, expression_node = setup.body[7].body[0], setup.body[7].body[0].handlers[0].body[1]
+        try_node, expression_node = setup.body[8].body[0], setup.body[8].body[0].handlers[0].body[1]
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="do-not-log-raised-errors",

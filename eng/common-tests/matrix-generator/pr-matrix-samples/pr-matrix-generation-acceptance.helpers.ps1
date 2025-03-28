@@ -99,30 +99,41 @@ Function Invoke-PackageProps {
     return $PackageInfoFolder
 }
 
-Function OrderObject {
+function Order-JsonObject {
     param (
-        [PSCustomObject]$PackagePropObject
+        [Parameter(Mandatory = $true)]
+        [hashtable]$JsonObject
     )
-    $sortedDetails = [ordered]@{}
-    $sortedCIParams = [ordered]@{}
 
-    # Sort the existing hashtable by key name, then rebuild it
-    $PackagePropObject.ArtifactDetails.PSObject.Properties | Sort-Object Name | ForEach-Object {
-        $sortedDetails[$_.Name] = $_.Value
+    $orderedObject = @{}
+
+    foreach ($key in ($JsonObject.Keys | Sort-Object)) {
+        $value = $JsonObject[$key]
+
+        if ($value -is [hashtable]) {
+            $orderedObject[$key] = Order-JsonObject -JsonObject $value
+        } elseif ($value -is [array]) {
+            $orderedArray = @()
+            foreach ($item in $value | Sort-Object) {
+                if ($item -is [hashtable]) {
+                    $orderedArray += Order-JsonObject -JsonObject $item
+                } else {
+                    $orderedArray += $item
+                }
+            }
+            $orderedObject[$key] = $orderedArray
+        } else {
+            $orderedObject[$key] = $value
+        }
     }
 
-    $PackagePropObject.CIParameters.PSObject.Properties | Sort-Object Name | ForEach-Object {
-        $sortedCIParams[$_.Name] = $_.Value
-    }
-
-    $PackagePropObject.ArtifactDetails = $sortedDetails
-    $PackagePropObject.CIParameters = $sortedCIParams
+    return $orderedObject
 }
 
 Function Compare-PackageResults {
     param(
-        [PSCustomObject[]]$Actual,
-        [PSCustomObject[]]$Expected
+        [HashTable[]]$Actual,
+        [HashTable[]]$Expected
     )
     # we would LOVE to be able to run a simple comparison here, but the artifact details are not in consistent order (nor should HAVE to be)
     # so we need to do a little more work to do a valid comparison
@@ -137,8 +148,8 @@ Function Compare-PackageResults {
     $sortedExpected = $Expected | Sort-Object -Property Name
 
     for ($i = 0; $i -lt $sortedActual.Count; $i++) {
-        OrderObject -PackagePropObject $sortedActual[$i]
-        OrderObject -PackagePropObject $sortedExpected[$i]
+        $sortedActual[$i] = Order-JsonObject $sortedActual[$i]
+        $sortedExpected[$i] = Order-JsonObject $sortedExpected[$i]
     }
 
     $sortedActual | ConvertTo-Json -Depth 100 | Should -Be ($sortedExpected | ConvertTo-Json -Depth 100)

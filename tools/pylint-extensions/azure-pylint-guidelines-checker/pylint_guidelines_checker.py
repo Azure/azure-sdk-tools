@@ -2954,12 +2954,12 @@ class DoNotLogExceptions(BaseChecker):
 
     """Rule to check that exceptions aren't logged"""
 
-    name = "do-not-log-exceptions"
+    name = "do-not-log-exceptions-if-not-debug"
     priority = -1
     msgs = {"C4766": (
             "Do not log exceptions. See Details:"
             " https://azure.github.io/azure-sdk/python_implementation.html#python-logging-sensitive-info",
-            "do-not-log-exceptions",
+            "do-not-log-exceptions-if-not-debug",
             "Do not log exceptions in levels other than debug, it can otherwise reveal sensitive information",
             ),
             }
@@ -3009,13 +3009,13 @@ class DoNotLogExceptions(BaseChecker):
                                     #  error
                                     if ".__name__" not in expression1[i+1]:
                                         self.add_message(
-                                            msgid=f"do-not-log-exceptions",
+                                            msgid=f"do-not-log-exceptions-if-not-debug",
                                             node=j,
                                             confidence=None,
                                         )
                                 else:
                                     self.add_message(
-                                        msgid=f"do-not-log-exceptions",
+                                        msgid=f"do-not-log-exceptions-if-not-debug",
                                         node=j,
                                         confidence=None,
                                     )

@@ -48,7 +48,7 @@ This document contains code examples showing how to fix violations of the Azure 
 - [do-not-import-asyncio](#do-not-import-asyncio)
 - [invalid-use-of-overload](#invalid-use-of-overload)
 - [do-not-hardcode-connection-verify](#do-not-hardcode-connection-verify)
-- [do-not-log-exceptions](#do-not-log-exceptions)
+- [do-not-log-exceptions-if-not-debug](#do-not-log-exceptions-if-not-debug)
 - [unapproved-client-method-name-prefix](#unapproved-client-method-name-prefix)
 - [do-not-hardcode-dedent](#do-not-hardcode-dedent)
 - [client-lro-methods-use-polling](#client-lro-methods-use-polling)
@@ -960,7 +960,7 @@ def create_client(verify_ssl=True):
     # ...
 ```
 
-## do-not-log-exceptions
+## do-not-log-exceptions-if-not-debug
 
 ❌ **Incorrect**:
 ```python

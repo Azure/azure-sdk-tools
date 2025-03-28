@@ -3604,7 +3604,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         debug_node = setup.body[1].body[0].handlers[0].body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=9,
                 node=error_node,
                 col_offset=8,
@@ -3612,7 +3612,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=39,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=10,
                 node=warning_node,
                 col_offset=8,
@@ -3620,7 +3620,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=31,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=11,
                 node=info_node,
                 col_offset=8,
@@ -3639,7 +3639,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         debug_node = setup.body[2].body[0].handlers[0].body[3]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=20,
                 node=error_node,
                 col_offset=8,
@@ -3647,7 +3647,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=30,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=21,
                 node=warning_node,
                 col_offset=8,
@@ -3655,7 +3655,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=32,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=22,
                 node=info_node,
                 col_offset=8,
@@ -3679,7 +3679,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         info_node = setup.body[4].body[0].handlers[0].body[0].orelse[0].orelse[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=43,
                 node=error_node,
                 col_offset=12,
@@ -3687,7 +3687,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=33,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=46,
                 node=warning_node,
                 col_offset=12,
@@ -3695,7 +3695,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=36,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=49,
                 node=info_node,
                 col_offset=12,
@@ -3712,7 +3712,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
         warning_node = setup.body[5].body[0].handlers[0].body[0].orelse[0]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=58,
                 node=error_node,
                 col_offset=12,
@@ -3720,7 +3720,7 @@ class TestDoNotLogExceptions(pylint.testutils.CheckerTestCase):
                 end_col_offset=65,
             ),
             pylint.testutils.MessageTest(
-                msg_id="do-not-log-exceptions",
+                msg_id="do-not-log-exceptions-if-not-debug",
                 line=61,
                 node=warning_node,
                 col_offset=12,

@@ -2740,13 +2740,16 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
         """Check that raised errors aren't logged at 'error' or 'warning' levels in exception blocks.
            Go through exception block and branches and ensure error hasn't been logged if exception is raised.
         """
-        # Return a list of exception blocks
-        except_block = node.handlers
-        # Iterate through each exception block
-        for nod in except_block:
-            # Get the nodes in each block (e.g. nodes Expr and Raise)
-            exception_block_body = nod.body
-            self.check_for_raise(exception_block_body)
+        try:
+            # Return a list of exception blocks
+            except_block = node.handlers
+            # Iterate through each exception block
+            for nod in except_block:
+                # Get the nodes in each block (e.g. nodes Expr and Raise)
+                exception_block_body = nod.body
+                self.check_for_raise(exception_block_body)
+        except:
+            pass
 
     def check_for_raise(self, node):
         """ Helper function - checks for instance of 'Raise' node
@@ -2763,19 +2766,15 @@ class DoNotLogErrorsEndUpRaising(BaseChecker):
                 self.check_for_raise(i.orelse)
 
     def check_for_logging(self, node):
-        """ Helper function - checks 'Expr' nodes to see if logging has occurred at 'warning' or 'error'
-            levels. Called from 'check_for_raise' function
+        """ Helper function - Called from 'check_for_raise' function
         """
-        matches = [".warning", ".error", ".exception"]
         for j in node:
-            if isinstance(j, astroid.Expr):
-                expression = j.as_string().lower()
-                if any(x in expression for x in matches):
-                    self.add_message(
-                        msgid=f"do-not-log-raised-errors",
-                        node=j,
-                        confidence=None,
-                    )
+            if isinstance(j, astroid.Expr) and j.value.func.expr.name == "logging":
+                self.add_message(
+                    msgid=f"do-not-log-raised-errors",
+                    node=j,
+                    confidence=None,
+                )
 
 
 class NoImportTypingFromTypeCheck(BaseChecker):

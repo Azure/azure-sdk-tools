@@ -11,13 +11,12 @@
 ################
 # Automation
 ################
-/.github/CODEOWNERS                    @azure/azure-sdk-eng
+/.github/CODEOWNERS                    @azure/azure-sdk-eng @jsquire
 
 ###########
 # Eng Sys
 ###########
 /eng/                                  @azure/azure-sdk-eng
-
 /.config/1espt/                        @benbp @weshaggard
 
 ###########
@@ -29,6 +28,7 @@
 # GitHub Tools
 ###########
 /tools/github/                        @jsquire @ronniegeraghty
+/tools/issue-labeler                  @jsquire @jeo02
 
 ###########
 # Eng Sys Tools

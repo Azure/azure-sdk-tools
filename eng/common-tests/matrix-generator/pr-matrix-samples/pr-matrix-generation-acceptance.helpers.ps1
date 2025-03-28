@@ -147,10 +147,17 @@ Function Compare-PackageResults {
     $sortedActual = $Actual | Sort-Object -Property Name
     $sortedExpected = $Expected | Sort-Object -Property Name
 
-    for ($i = 0; $i -lt $sortedActual.Count; $i++) {
-        $sortedActual[$i] = Order-JsonObject $sortedActual[$i]
-        $sortedExpected[$i] = Order-JsonObject $sortedExpected[$i]
+    if ($sortedActual -is [HashTable]) {
+        $sortedActual = Order-JsonObject $sortedActual
+        $sortedExpected = Order-JsonObject $sortedExpected
     }
+    else {
+        for ($i = 0; $i -lt $sortedActual.Count; $i++) {
+            $sortedActual[$i] = Order-JsonObject $sortedActual[$i]
+            $sortedExpected[$i] = Order-JsonObject $sortedExpected[$i]
+        }
+    }
+
 
     $sortedActual | ConvertTo-Json -Depth 100 | Should -Be ($sortedExpected | ConvertTo-Json -Depth 100)
 }

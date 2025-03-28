@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
 import * as path from 'path';
-import { generateMgmt } from './hlc/generateMgmt';
-import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules';
-import { logger } from './utils/logger';
-import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline';
-import { ModularClientPackageOptions, SDKType } from './common/types';
-import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator';
-import { parseInputJson } from './utils/generateInputUtils';
+import { generateMgmt } from './hlc/generateMgmt.js';
+import { backupNodeModules, restoreNodeModules } from './utils/backupNodeModules.js';
+import { logger } from './utils/logger.js';
+import { generateRLCInPipeline } from './llc/generateRLCInPipeline/generateRLCInPipeline.js';
+import { ModularClientPackageOptions, SDKType } from './common/types.js';
+import { generateAzureSDKPackage } from './mlc/clientGenerator/modularClientPackageGenerator.js';
+import { parseInputJson } from './utils/generateInputUtils.js';
 
-const shell = require('shelljs');
-const fs = require('fs');
+import shell from 'shelljs';
+import fs from 'fs';
 
 async function automationGenerateInPipeline(
     inputJsonPath: string,
@@ -121,7 +121,7 @@ const optionDefinitions = [
     // do NOT set to true in sdk automation pipeline 
     { name: 'local', type: Boolean, defaultValue: false }
 ];
-const commandLineArgs = require('command-line-args');
+import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
 automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.local ?? false).catch(e => {
     logger.error(e.message);

@@ -1,21 +1,21 @@
-import {logger} from "../utils/logger";
+import {logger} from "../utils/logger.js";
 import {execSync} from "child_process";
 
 import fs from "fs";
 import * as path from "path";
-import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git";
-import {generateChangelogAndBumpVersion} from "../common/changlog/automaticGenerateChangeLogAndBumpVersion";
-import {Changelog} from "../changelog/changelogGenerator";
-import {changeRushJson} from "../utils/changeRushJson";
-import {modifyOrGenerateCiYml} from "../utils/changeCiYaml";
-import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/changeConfigOfTestAndSample";
-import {changeReadmeMd} from "./utils/changeReadmeMd";
-import {RunningEnvironment} from "../utils/runningEnvironment";
-import {getOutputPackageInfo} from "../utils/getOutputPackageInfo";
-import {getReleaseTool} from "./utils/getReleaseTool";
-import { addApiViewInfo } from "../utils/addApiViewInfo";
-import { defaultChildProcessTimeout } from '../common/utils'
-import { migratePackage } from "../common/migration";
+import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git.js";
+import {generateChangelogAndBumpVersion} from "../common/changlog/automaticGenerateChangeLogAndBumpVersion.js";
+import {Changelog} from "../changelog/changelogGenerator.js";
+import {changeRushJson} from "../utils/changeRushJson.js";
+import {modifyOrGenerateCiYml} from "../utils/changeCiYaml.js";
+import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/changeConfigOfTestAndSample.js";
+import {changeReadmeMd} from "./utils/changeReadmeMd.js";
+import {RunningEnvironment} from "../utils/runningEnvironment.js";
+import {getOutputPackageInfo} from "../utils/getOutputPackageInfo.js";
+import {getReleaseTool} from "./utils/getReleaseTool.js";
+import { addApiViewInfo } from "../utils/addApiViewInfo.js";
+import { defaultChildProcessTimeout } from '../common/utils.js'
+import { migratePackage } from "../common/migration.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,

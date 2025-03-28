@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { updatePackageVersion } from "../../mlc/clientGenerator/utils/typeSpecUtils";
+import { updatePackageVersion } from "../../mlc/clientGenerator/utils/typeSpecUtils.js";
 import { join } from "path";
 import { load } from '@npmcli/package-json';
-import { tryGetNpmView } from "../../common/npmUtils";
+import { tryGetNpmView } from "../../common/npmUtils.js";
 
 describe('Npm package json', () => {
     test('Replace package version', async () => {

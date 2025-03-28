@@ -1,10 +1,10 @@
 import * as path from "path";
-import {logger} from "../../utils/logger";
+import {logger} from "../../utils/logger.js";
 import {execSync} from "child_process";
-import {generateChangelog} from "../utils/generateChangelog";
-import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../../utils/changeConfigOfTestAndSample";
-import {generateExtraFiles} from "../utils/generateExtraFiles";
-import { defaultChildProcessTimeout } from "../../common/utils";
+import {generateChangelog} from "../utils/generateChangelog.js";
+import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../../utils/changeConfigOfTestAndSample.js";
+import {generateExtraFiles} from "../utils/generateExtraFiles.js";
+import { defaultChildProcessTimeout } from "../../common/utils.js";
 
 const shell = require('shelljs')
 

@@ -1,4 +1,4 @@
-import { Changelog, ChangelogItem } from './changelogGenerator';
+import { Changelog, ChangelogItem } from './changelogGenerator.js';
 import { InlineDeclarationNameSetMessage, NodeContext } from 'typescript-codegen-breaking-change-detector';
 
 export class RestLevelClientChangelogPostProcessor {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { runCommand, runCommandOptions } from "../../common/utils";
+import { runCommand, runCommandOptions } from "../../common/utils.js";
 
 describe('Run command', () => {
     test('Invalid command should throw error', async () => {

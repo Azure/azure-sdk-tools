@@ -7,7 +7,8 @@ $jsScenarios = Get-Content (Join-Path $PSScriptRoot js_scenarios.json) | Convert
 $goScenarios = Get-Content (Join-Path $PSScriptRoot go_scenarios.json) | ConvertFrom-Json -AsHashtable
 $javaScenarios = Get-Content (Join-Path $PSScriptRoot java_scenarios.json) | ConvertFrom-Json -AsHashtable
 
-Describe ".NET Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
+# due to relative slowness of these tests, we're limiting them to linux only for now.
+Describe ".NET Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
     BeforeAll {
         $NET_REPO = "Azure/azure-sdk-for-net"
         $NET_REPO_REF = "adaf77d86185ab38e86e20647f9327bf78e8a6c2"
@@ -28,7 +29,7 @@ Describe ".NET Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
     }
 }
 
-Describe "Python Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
+Describe "Python Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
     BeforeAll {
         $PYTHON_REPO_REF = "7656cf20f78b7653522040e372a37ff03338b1a2"
         $PYTHON_REPO = "Azure/azure-sdk-for-python"
@@ -57,7 +58,7 @@ Describe "Python Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
     }
 }
 
-Describe "JS Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
+Describe "JS Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
     BeforeAll {
         $JS_REPO_REF = "e2598ca60018edc7b0c3a5b3a28ae7fb40b85894"
         $JS_REPO = "Azure/azure-sdk-for-js"
@@ -86,7 +87,7 @@ Describe "JS Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
     }
 }
 
-Describe "Go Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
+Describe "Go Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
     BeforeAll {
         $GO_REPO_REF = "f7328681bcccd0bebad6e8ea8b9c8a5c753368d2"
         $GO_REPO = "Azure/azure-sdk-for-go"
@@ -115,7 +116,7 @@ Describe "Go Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
     }
 }
 
-Describe "Java Get-PrPkgProperties Tests" -Tag "IntegrationTest" {
+Describe "Java Get-PrPkgProperties Tests" -Skip:($IsWindows -or $IsMacOS) -Tag "IntegrationTest" {
     BeforeAll {
         $JAVA_REPO_REF = "296f1fad306a49601ec61280eb4af1f33934ccde"
         $JAVA_REPO = "Azure/azure-sdk-for-java"

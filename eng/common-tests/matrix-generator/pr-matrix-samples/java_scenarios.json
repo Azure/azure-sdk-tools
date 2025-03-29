@@ -1,0 +1,434 @@
+[
+  {
+    "name": "Specific Package Change",
+    "diff": {
+      "ChangedFiles": [
+        "sdk/appconfiguration/azure-data-appconfiguration/CHANGELOG.md"
+      ],
+      "ChangedServices": [
+        "appconfiguration"
+      ],
+      "ExcludePaths": [
+        "eng/versioning/external_dependencies.txt",
+        "eng/versioning/version_client.txt",
+        "eng/versioning/version_data.txt",
+        "eng/versioning/version_data_java_files.txt",
+        "sdk/batch/microsoft-azure-batch/",
+        "sdk/boms/",
+        "sdk/cosmos/",
+        "sdk/e2e/",
+        "sdk/cognitiveservices/ms-azure-cs-autosuggest/",
+        "sdk/cognitiveservices/ms-azure-cs-computervision/",
+        "sdk/cognitiveservices/ms-azure-cs-contentmoderator/",
+        "sdk/cognitiveservices/ms-azure-cs-customimagesearch/",
+        "sdk/cognitiveservices/ms-azure-cs-customsearch/",
+        "sdk/cognitiveservices/ms-azure-cs-customvision-prediction/",
+        "sdk/cognitiveservices/ms-azure-cs-customvision-training/",
+        "sdk/cognitiveservices/ms-azure-cs-entitysearch/",
+        "sdk/cognitiveservices/ms-azure-cs-faceapi/",
+        "sdk/cognitiveservices/ms-azure-cs-imagesearch/",
+        "sdk/cognitiveservices/ms-azure-cs-luis-authoring/",
+        "sdk/cognitiveservices/ms-azure-cs-luis-runtime/",
+        "sdk/cognitiveservices/ms-azure-cs-newssearch/",
+        "sdk/cognitiveservices/ms-azure-cs-qnamaker/",
+        "sdk/cognitiveservices/ms-azure-cs-spellcheck/",
+        "sdk/cognitiveservices/ms-azure-cs-videosearch/",
+        "sdk/cognitiveservices/ms-azure-cs-visualsearch/",
+        "sdk/cognitiveservices/ms-azure-cs-websearch/",
+        "sdk/eventhubs/microsoft-azure-eventhubs/",
+        "sdk/eventhubs/microsoft-azure-eventhubs-eph/",
+        "sdk/mediaservices/microsoft-azure-media/",
+        "sdk/servicebus/microsoft-azure-servicebus/",
+        "sdk/spring/"
+      ],
+      "DeletedFiles": [],
+      "PRNumber": "44300"
+    },
+    "expected_package_output": [
+      {
+        "Name": "azure-data-appconfiguration",
+        "Version": "1.9.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/appconfiguration/azure-data-appconfiguration",
+        "ServiceDirectory": "appconfiguration",
+        "ReadMePath": "sdk/appconfiguration/azure-data-appconfiguration/README.md",
+        "ChangeLogPath": "sdk/appconfiguration/azure-data-appconfiguration/CHANGELOG.md",
+        "Group": "com.azure",
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-data-appconfiguration",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": [
+          "com.azure:perf-test-core"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-data-appconfiguration",
+          "releaseInBatch": "${{ parameters.release_azuredataappconfiguration }}",
+          "safeName": "azuredataappconfiguration",
+          "groupId": "com.azure",
+          "triggeringPaths": [
+            "/sdk/appconfiguration/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "azure-resourcemanager-appconfiguration",
+        "Version": "1.1.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/appconfiguration/azure-resourcemanager-appconfiguration",
+        "ServiceDirectory": "appconfiguration",
+        "ReadMePath": "sdk/appconfiguration/azure-resourcemanager-appconfiguration/README.md",
+        "ChangeLogPath": "sdk/appconfiguration/azure-resourcemanager-appconfiguration/CHANGELOG.md",
+        "Group": "com.azure.resourcemanager",
+        "SdkType": "mgmt",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-resourcemanager-appconfiguration",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          "com.azure:perf-test-core"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-resourcemanager-appconfiguration",
+          "releaseInBatch": "${{ parameters.release_azureresourcemanagerappconfiguration }}",
+          "safeName": "azureresourcemanagerappconfiguration",
+          "groupId": "com.azure.resourcemanager",
+          "triggeringPaths": [
+            "/sdk/appconfiguration/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "Eng and Core",
+    "diff": {
+      "ChangedFiles": [
+        "eng/versioning/external_dependencies.txt",
+        "sdk/clientcore/optional-dependency-tests/pom.xml",
+        "sdk/core/azure-core/src/test/java/com/azure/core/validation/http/LocalTestServer.java"
+      ],
+      "ChangedServices": [
+        "clientcore",
+        "core"
+      ],
+      "ExcludePaths": [
+        "eng/versioning/external_dependencies.txt",
+        "eng/versioning/version_client.txt",
+        "eng/versioning/version_data.txt",
+        "eng/versioning/version_data_java_files.txt",
+        "sdk/batch/microsoft-azure-batch/",
+        "sdk/boms/",
+        "sdk/cosmos/",
+        "sdk/e2e/",
+        "sdk/cognitiveservices/ms-azure-cs-autosuggest/",
+        "sdk/cognitiveservices/ms-azure-cs-computervision/",
+        "sdk/cognitiveservices/ms-azure-cs-contentmoderator/",
+        "sdk/cognitiveservices/ms-azure-cs-customimagesearch/",
+        "sdk/cognitiveservices/ms-azure-cs-customsearch/",
+        "sdk/cognitiveservices/ms-azure-cs-customvision-prediction/",
+        "sdk/cognitiveservices/ms-azure-cs-customvision-training/",
+        "sdk/cognitiveservices/ms-azure-cs-entitysearch/",
+        "sdk/cognitiveservices/ms-azure-cs-faceapi/",
+        "sdk/cognitiveservices/ms-azure-cs-imagesearch/",
+        "sdk/cognitiveservices/ms-azure-cs-luis-authoring/",
+        "sdk/cognitiveservices/ms-azure-cs-luis-runtime/",
+        "sdk/cognitiveservices/ms-azure-cs-newssearch/",
+        "sdk/cognitiveservices/ms-azure-cs-qnamaker/",
+        "sdk/cognitiveservices/ms-azure-cs-spellcheck/",
+        "sdk/cognitiveservices/ms-azure-cs-videosearch/",
+        "sdk/cognitiveservices/ms-azure-cs-visualsearch/",
+        "sdk/cognitiveservices/ms-azure-cs-websearch/",
+        "sdk/eventhubs/microsoft-azure-eventhubs/",
+        "sdk/eventhubs/microsoft-azure-eventhubs-eph/",
+        "sdk/mediaservices/microsoft-azure-media/",
+        "sdk/servicebus/microsoft-azure-servicebus/",
+        "sdk/spring/"
+      ],
+      "DeletedFiles": [],
+      "PRNumber": "44295"
+    },
+    "expected_package_output": [
+      {
+        "Name": "azure-core",
+        "Version": "1.56.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/core/azure-core",
+        "ServiceDirectory": "core",
+        "ReadMePath": "sdk/core/azure-core/README.md",
+        "ChangeLogPath": "sdk/core/azure-core/CHANGELOG.md",
+        "Group": "com.azure",
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-core",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": [
+          "com.azure:azure-core-tracing-opentelemetry-samples",
+          "com.azure:azure-core-perf",
+          "com.azure:perf-test-core"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-core",
+          "releaseInBatch": "${{ parameters.release_azurecore }}",
+          "safeName": "azurecore",
+          "groupId": "com.azure",
+          "triggeringPaths": [
+            "/eng",
+            "/sdk/parents/azure-sdk-parent",
+            "/sdk/parents/azure-client-sdk-parent",
+            "/sdk/core/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [
+            {
+              "Name": "Java_ci_test_base",
+              "GenerateVMJobs": true,
+              "Path": "eng/pipelines/templates/stages/platform-matrix.json",
+              "Selection": "sparse",
+              "NonSparseParameters": "Agent"
+            },
+            {
+              "Name": "version_overrides_tests",
+              "PRBatching": false,
+              "Path": "sdk/core/version-overrides-matrix.json",
+              "Selection": "all",
+              "GenerateVMJobs": true
+            }
+          ]
+        }
+      },
+      {
+        "Name": "core",
+        "Version": "1.0.0-beta.8",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/clientcore/core",
+        "ServiceDirectory": "clientcore",
+        "ReadMePath": "sdk/clientcore/core/README.md",
+        "ChangeLogPath": "sdk/clientcore/core/CHANGELOG.md",
+        "Group": "io.clientcore",
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "core",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          "io.clientcore:optional-dependency-tests"
+        ],
+        "ArtifactDetails": {
+          "name": "core",
+          "releaseInBatch": "${{ parameters.release_core }}",
+          "safeName": "core",
+          "groupId": "io.clientcore",
+          "triggeringPaths": [
+            "/sdk/parents/clientcore-parent",
+            "/sdk/clientcore/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [
+            {
+              "Name": "clientcore_ci_test_base",
+              "GenerateVMJobs": true,
+              "Path": "sdk/clientcore/platform-matrix.json",
+              "Selection": "sparse",
+              "NonSparseParameters": "Agent"
+            }
+          ]
+        }
+      },
+      {
+        "Name": "http-okhttp3",
+        "Version": "1.0.0-beta.3",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/clientcore/http-okhttp3",
+        "ServiceDirectory": "clientcore",
+        "ReadMePath": "sdk/clientcore/http-okhttp3/README.md",
+        "ChangeLogPath": "sdk/clientcore/http-okhttp3/CHANGELOG.md",
+        "Group": "io.clientcore",
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "http-okhttp3",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          "io.clientcore:optional-dependency-tests"
+        ],
+        "ArtifactDetails": {
+          "name": "http-okhttp3",
+          "releaseInBatch": "${{ parameters.release_clientcorehttpokhttp3 }}",
+          "safeName": "httpokhttp3",
+          "groupId": "io.clientcore",
+          "triggeringPaths": [
+            "/sdk/clientcore/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": [
+            {
+              "Name": "clientcore_ci_test_base",
+              "GenerateVMJobs": true,
+              "Path": "sdk/clientcore/platform-matrix.json",
+              "Selection": "sparse",
+              "NonSparseParameters": "Agent"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "Only excluded files changed",
+    "diff": {
+      "ChangedFiles": [
+        "eng/versioning/external_dependencies.txt",
+        "sdk/cognitiveservices/ms-azure-cs-faceapi/pom.xml"
+      ],
+      "ChangedServices": [
+        "clientcore",
+        "core"
+      ],
+      "ExcludePaths": [
+        "eng/versioning/external_dependencies.txt",
+        "eng/versioning/version_client.txt",
+        "eng/versioning/version_data.txt",
+        "eng/versioning/version_data_java_files.txt",
+        "sdk/batch/microsoft-azure-batch/",
+        "sdk/boms/",
+        "sdk/cosmos/",
+        "sdk/e2e/",
+        "sdk/cognitiveservices/ms-azure-cs-autosuggest/",
+        "sdk/cognitiveservices/ms-azure-cs-computervision/",
+        "sdk/cognitiveservices/ms-azure-cs-contentmoderator/",
+        "sdk/cognitiveservices/ms-azure-cs-customimagesearch/",
+        "sdk/cognitiveservices/ms-azure-cs-customsearch/",
+        "sdk/cognitiveservices/ms-azure-cs-customvision-prediction/",
+        "sdk/cognitiveservices/ms-azure-cs-customvision-training/",
+        "sdk/cognitiveservices/ms-azure-cs-entitysearch/",
+        "sdk/cognitiveservices/ms-azure-cs-faceapi/",
+        "sdk/cognitiveservices/ms-azure-cs-imagesearch/",
+        "sdk/cognitiveservices/ms-azure-cs-luis-authoring/",
+        "sdk/cognitiveservices/ms-azure-cs-luis-runtime/",
+        "sdk/cognitiveservices/ms-azure-cs-newssearch/",
+        "sdk/cognitiveservices/ms-azure-cs-qnamaker/",
+        "sdk/cognitiveservices/ms-azure-cs-spellcheck/",
+        "sdk/cognitiveservices/ms-azure-cs-videosearch/",
+        "sdk/cognitiveservices/ms-azure-cs-visualsearch/",
+        "sdk/cognitiveservices/ms-azure-cs-websearch/",
+        "sdk/eventhubs/microsoft-azure-eventhubs/",
+        "sdk/eventhubs/microsoft-azure-eventhubs-eph/",
+        "sdk/mediaservices/microsoft-azure-media/",
+        "sdk/servicebus/microsoft-azure-servicebus/",
+        "sdk/spring/"
+      ],
+      "DeletedFiles": [],
+      "PRNumber": "44295"
+    },
+    "expected_package_output": [
+      {
+        "Name": "azure-sdk-template-three",
+        "Version": "1.0.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/azure-sdk-template-three",
+        "ServiceDirectory": "template",
+        "ReadMePath": "sdk/template/azure-sdk-template-three/README.md",
+        "ChangeLogPath": "sdk/template/azure-sdk-template-three/CHANGELOG.md",
+        "Group": "com.azure",
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-sdk-template-three",
+        "ReleaseStatus": "2022-04-19",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          "com.azure:azure-template-perf",
+          "com.azure:perf-test-core"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-sdk-template-three",
+          "releaseInBatch": "${{ parameters.release_azuresdktemplatethree }}",
+          "safeName": "azuresdktemplatethree",
+          "groupId": "com.azure",
+          "skipPublishDocMs": true,
+          "triggeringPaths": [
+            "/sdk/template/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "azure-sdk-template-two",
+        "Version": "1.0.0-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/azure-sdk-template-two",
+        "ServiceDirectory": "template",
+        "ReadMePath": "sdk/template/azure-sdk-template-two/README.md",
+        "ChangeLogPath": "sdk/template/azure-sdk-template-two/CHANGELOG.md",
+        "Group": "com.azure",
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-sdk-template-two",
+        "ReleaseStatus": "2022-04-19",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          "com.azure:azure-template-perf",
+          "com.azure:perf-test-core"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-sdk-template-two",
+          "releaseInBatch": "${{ parameters.release_azuresdktemplatetwo }}",
+          "safeName": "azuresdktemplatetwo",
+          "groupId": "com.azure",
+          "skipPublishDocMs": true,
+          "triggeringPaths": [
+            "/sdk/template/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      },
+      {
+        "Name": "azure-sdk-template",
+        "Version": "1.2.2-beta.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/azure-sdk-template",
+        "ServiceDirectory": "template",
+        "ReadMePath": "sdk/template/azure-sdk-template/README.md",
+        "ChangeLogPath": "sdk/template/azure-sdk-template/CHANGELOG.md",
+        "Group": "com.azure",
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "azure-sdk-template",
+        "ReleaseStatus": "Unreleased",
+        "IncludedForValidation": true,
+        "AdditionalValidationPackages": [
+          "com.azure:azure-template-perf",
+          "com.azure:perf-test-core"
+        ],
+        "ArtifactDetails": {
+          "name": "azure-sdk-template",
+          "releaseInBatch": "${{ parameters.release_azuresdktemplate }}",
+          "safeName": "azuresdktemplate",
+          "groupId": "com.azure",
+          "skipPublishDocMs": true,
+          "triggeringPaths": [
+            "/sdk/template/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "CIMatrixConfigs": []
+        }
+      }
+    ]
+  }
+]

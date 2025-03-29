@@ -27,4 +27,6 @@ extends:
   template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
   parameters:
     TargetDirectory: eng/common-tests
-    TargetTags: UnitTest
+    TargetTags: UnitTest,IntegrationTest
+    PreTestSteps:
+      - template: /eng/common/pipelines/templates/steps/enable-long-path-support.yml

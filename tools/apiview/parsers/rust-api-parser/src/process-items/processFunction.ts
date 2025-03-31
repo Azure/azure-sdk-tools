@@ -1,6 +1,6 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item, Type, FunctionHeader } from "../../rustdoc-types/output/rustdoc-types";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isFunctionItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
@@ -57,10 +57,9 @@ function processFunctionHeader(header: FunctionHeader, reviewLine: ReviewLine) {
  *
  * @param {Item} item - The function item to process.
  */
-export function processFunction(item: Item) {
-  if (!isFunctionItem(item)) return;
-  const reviewLines: ReviewLine[] = [];
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
+export function processFunction(item: Item): ReviewLine[] {
+  if (!isFunctionItem(item)) return [];
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {

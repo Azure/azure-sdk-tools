@@ -1,6 +1,6 @@
 import { ReviewLine, TokenKind } from "../models/apiview-models";
 import { Item } from "../../rustdoc-types/output/rustdoc-types";
-import { createDocsReviewLine } from "./utils/generateDocReviewLine";
+import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isProcMacroItem } from "./utils/typeGuards";
 
 /**
@@ -12,10 +12,7 @@ import { isProcMacroItem } from "./utils/typeGuards";
 export function processProcMacro(item: Item): ReviewLine[] | null {
   if (!isProcMacroItem(item)) return null;
 
-  const reviewLines: ReviewLine[] = [];
-
-  // Add documentation if available
-  if (item.docs) reviewLines.push(createDocsReviewLine(item));
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {

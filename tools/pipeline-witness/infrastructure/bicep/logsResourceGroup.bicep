@@ -81,6 +81,9 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
     source: logsStorageAccount.id
     topicType: 'microsoft.storage.storageaccounts'
   }
+  identity: {
+    type: 'SystemAssigned'
+  }
 }
 
 // Event Hub
@@ -95,7 +98,7 @@ resource devOpsEventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-previ
   properties: {
     minimumTlsVersion: '1.0'
     publicNetworkAccess: 'Enabled'
-    disableLocalAuth: false
+    disableLocalAuth: true
     zoneRedundant: false
     isAutoInflateEnabled: false
     maximumThroughputUnits: 0
@@ -115,7 +118,7 @@ resource gitHubEventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-previ
   properties: {
     minimumTlsVersion: '1.0'
     publicNetworkAccess: 'Enabled'
-    disableLocalAuth: false
+    disableLocalAuth: true
     zoneRedundant: false
     isAutoInflateEnabled: false
     maximumThroughputUnits: 0
@@ -222,8 +225,16 @@ resource eventHubsDataReceiverRoleDefinition 'Microsoft.Authorization/roleDefini
   scope: subscription()
   // This is the Event Hubs Data Receiver role
   // Allows receive access to Azure Event Hubs resources.
-  // see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#analytics
+  // see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/analytics#azure-event-hubs-data-receiver
   name: 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde'
+}
+
+resource eventHubsDataSenderRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: subscription()
+  // This is the Event Hubs Data Sender role
+  // Allows send access to Azure Event Hubs resources..
+  // see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/analytics#azure-event-hubs-data-sender
+  name: '2b629674-e913-4c01-ae53-ef4638d8f975'
 }
 
 resource devOpsKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
@@ -246,6 +257,26 @@ resource gitHubKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments
   }
 }
 
+resource devOpsEventGridEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(eventHubsDataSenderRoleDefinition.id, logsStorageAccountName, devOpsEventHubNamespace.id)
+  scope: devOpsEventHubNamespace
+  properties:{
+    principalId: eventGridTopic.identity.principalId
+    roleDefinitionId: eventHubsDataSenderRoleDefinition.id
+    description: 'Event Hubs Data Sender'
+  }
+}
+
+resource gitHubEventGridEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(eventHubsDataSenderRoleDefinition.id, logsStorageAccountName, gitHubEventHubNamespace.id)
+  scope: gitHubEventHubNamespace
+  properties:{
+    principalId: eventGridTopic.identity.principalId
+    roleDefinitionId: eventHubsDataSenderRoleDefinition.id
+    description: 'Event Hubs Data Sender'
+  }
+}
+
 // Data Explorer needs to a per-table cursor when importing data. Because the read cursor for Event Hubs is the
 // consumer group and the basic tier for event hubs is limited to 1 consumer group per event hub and 10 event hubs per
 // namespace, we need an event hub per table, so we split our tables across two namespaces.
@@ -253,7 +284,7 @@ resource gitHubKustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments
 module devOpsTables 'tableResources.bicep' = {
   name: '${deployment().name}-devOpsTables'
   scope: resourceGroup()
-  dependsOn:[ kustoScriptInvocation ]
+  dependsOn:[ kustoScriptInvocation, devOpsEventGridEventHubsAssignment ]
   params: {
     location: location
     logsStorageAccountName: logsStorageAccountName
@@ -301,7 +332,7 @@ module devOpsTables 'tableResources.bicep' = {
 module gitHubTables 'tableResources.bicep' = {
   name: '${deployment().name}-gitHubTables'
   scope: resourceGroup()
-  dependsOn:[ kustoScriptInvocation ]
+  dependsOn:[ kustoScriptInvocation, gitHubEventGridEventHubsAssignment ]
   params: {
     location: location
     logsStorageAccountName: logsStorageAccountName

@@ -1,0 +1,23 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_design=html=python-client-same-name-sync-async"
+            ],
+            "line_no": 31,
+            "bad_code": "class azure.contoso.NoodleAsyncManager:",
+            "suggestion": "Rename 'NoodleAsyncManager' to 'NoodleManager' and move it to the 'azure.contoso.aio' package to meet the guidelines.",
+            "comment": "The asynchronous client class does not share the same name as the synchronous client. According to SDK guidelines, both sync and async clients should have the same client name, with the async version residing in an 'aio' subpackage."
+        },
+        {
+            "rule_ids": [
+                "python_documentation=html=python-docstrings-kwargs"
+            ],
+            "line_no": 54,
+            "bad_code": "def create_noodle(self, body: NoodleCreateRequest, **kwargs) -> NoodleResponse",
+            "suggestion": "Add a comprehensive docstring to the 'create_noodle' method that documents the purpose, expected keys, and usage of **kwargs, including a link to https://aka.ms/azsdk/python/options for more details.",
+            "comment": "This public method accepts **kwargs but does not provide any documentation for them. SDK guidelines require that any **kwargs directly consumed by a method be documented with a reference to core options."
+        }
+    ]
+}

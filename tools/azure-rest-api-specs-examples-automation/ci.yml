@@ -41,7 +41,8 @@ stages:
 
     - script: |
         go mod download golang.org/x/tools@latest
-      displayName: 'Download Golang tools'
+        go install golang.org/x/tools/cmd/goimports@latest
+      displayName: 'Install Golang tools'
     
     - script: |
         pip install parameterized

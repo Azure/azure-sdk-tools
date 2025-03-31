@@ -22,7 +22,8 @@ jobs:
 
   - script: |
       go mod download golang.org/x/tools@latest
-    displayName: 'Download Golang tools'
+      go install golang.org/x/tools/cmd/goimports@latest
+    displayName: 'Install Golang tools'
 
   - script: |
       ./automation/main.sh --build-id=$(Build.BuildId) --github-token=$(azuresdk-github-pat) --release-in-days=10 --skip-processed=true --persist-data=true --merge-pull-request=true

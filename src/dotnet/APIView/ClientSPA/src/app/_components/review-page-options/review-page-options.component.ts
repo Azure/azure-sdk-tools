@@ -399,6 +399,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   toggleAPIRevisionApproval() {
     this.apiRevisionApprovalEmitter.emit(true);
+    this.showAPIRevisionApprovalModal = false;
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {

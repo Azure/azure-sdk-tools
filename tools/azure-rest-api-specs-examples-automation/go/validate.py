@@ -29,7 +29,7 @@ class GoVet:
         if match:
             self.golang_version = match.group(1)
         else:
-            self.golang_version = "1.18"
+            self.golang_version = "1.23.0"
 
         self.modules = []
         match = re.search(r"github\.com/Azure/azure-sdk-for-go/sdk/azcore (v[.\-\w]*)", go_mod, re.MULTILINE)
@@ -79,7 +79,7 @@ class GoVet:
 
                 logging.info("Run goimports")
                 # goimports
-                cmd = ["go", "install", "golang.org/x/tools/cmd/goimports@v0.24.0"]
+                cmd = ["go", "install", "golang.org/x/tools/cmd/goimports"]
                 check_call(cmd, tmp_dir_name)
 
                 cmd = ["goimports", "-w", "."]

@@ -23,7 +23,7 @@ pr:
 variables:
 - template: ../../eng/pipelines/templates/variables/globals.yml
 - name: GoVersion
-  value: '1.18'
+  value: '1.23.0'
 
 stages:
 - stage: Build
@@ -38,6 +38,10 @@ stages:
     - task: GoTool@0
       inputs:
         version: $(GoVersion)
+
+    - script: |
+        go mod download golang.org/x/tools@latest
+      displayName: 'Download Golang tools'
     
     - script: |
         pip install parameterized

@@ -1,0 +1,126 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_design=html=python-client-hier-creation"
+            ],
+            "line_no": 5,
+            "bad_code": "ivar name: str",
+            "suggestion": "Define 'name' as a class attribute or in the constructor: 'self.name = name'.",
+            "comment": "The use of 'ivar' is not standard Python syntax; attributes should be defined in the constructor or as class attributes."
+        },
+        {
+            "rule_ids": [
+                "python_design=html=python-client-hier-creation"
+            ],
+            "line_no": 6,
+            "bad_code": "ivar color: NoodleColor",
+            "suggestion": "Define 'color' as a class attribute or in the constructor: 'self.color = color'.",
+            "comment": "The use of 'ivar' is not standard Python syntax; attributes should be defined in the constructor or as class attributes."
+        },
+        {
+            "rule_ids": [
+                "python_design=html=python-client-hier-creation"
+            ],
+            "line_no": 12,
+            "bad_code": "    )",
+            "suggestion": "Add a body to the constructor to initialize the class attributes: 'self.name = name; self.color = color'.",
+            "comment": "The constructor is missing a body. Constructors should contain initialization logic."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 16,
+            "bad_code": "    blue = \"blue\"",
+            "suggestion": "    BLUE = \"blue\"",
+            "comment": "Enum names should be in UPPERCASE."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 17,
+            "bad_code": "    green = \"green\"",
+            "suggestion": "    GREEN = \"green\"",
+            "comment": "Enum names should be in UPPERCASE."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 18,
+            "bad_code": "    red = \"red\"",
+            "suggestion": "    RED = \"red\"",
+            "comment": "Enum names should be in UPPERCASE."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 22,
+            "bad_code": "ivar name: str",
+            "suggestion": "Replace 'ivar name: str' with 'self.name: str' in the __init__ method.",
+            "comment": "The term 'ivar' is not standard Python syntax for declaring instance variables."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 23,
+            "bad_code": "ivar color: Optional[NoodleColor]",
+            "suggestion": "Replace 'ivar color: Optional[NoodleColor]' with 'self.color: Optional[NoodleColor]' in the __init__ method.",
+            "comment": "The term 'ivar' is not standard Python syntax for declaring instance variables."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 28,
+            "bad_code": "color: Optional[NoodleColor]",
+            "suggestion": "Add validation to ensure 'color' is of type NoodleColor or None.",
+            "comment": "There is no validation for the 'color' parameter in the constructor."
+        },
+        {
+            "rule_ids": [
+                "python_design=html=python-client-separate-sync-async"
+            ],
+            "line_no": 31,
+            "bad_code": "class azure.contoso.NoodleAsyncManager:",
+            "suggestion": "Create a separate class for synchronous operations, such as `NoodleManager`.",
+            "comment": "The class is named for async operations but does not provide a corresponding sync class, violating the guideline to provide separate client classes for sync and async."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 38,
+            "bad_code": "async def __init__(self, endpoint, credential, options: dict)",
+            "suggestion": "Change the constructor to a regular synchronous method.",
+            "comment": "The constructor is defined as async, which is not typical for initializers in Python. This can lead to confusion regarding the nature of the class."
+        },
+        {
+            "rule_ids": [
+                "general_design=html=general-auth-connection-strings"
+            ],
+            "line_no": 50,
+            "bad_code": "connection_string: Optional[str]",
+            "suggestion": "Remove the connection_string parameter from the constructor.",
+            "comment": "The constructor supports constructing a service client with a connection string, which is not allowed."
+        },
+        {
+            "rule_ids": [
+                "python_documentation=html=python-docstrings-kwargs"
+            ],
+            "line_no": 54,
+            "bad_code": "def create_noodle(self, body: NoodleCreateRequest, **kwargs) -> NoodleResponse",
+            "suggestion": "Add a docstring to the create_noodle method that documents the **kwargs.",
+            "comment": "The method does not document the **kwargs directly consumed by it."
+        },
+        {
+            "rule_ids": [
+                "python_documentation=html=python-docstrings-kwargs"
+            ],
+            "line_no": 56,
+            "bad_code": "def get_noodle(self, options: dict) -> NoodleResponse",
+            "suggestion": "Add a docstring to the get_noodle method that describes the options parameter.",
+            "comment": "The method does not document the options parameter or its expected structure."
+        },
+        {
+            "rule_ids": [
+                "python_documentation=html=python-docstrings-kwargs"
+            ],
+            "line_no": 58,
+            "bad_code": "def get_noodles(self, options: dict) -> List[NoodleResponse]",
+            "suggestion": "Add a docstring to the get_noodles method that describes the options parameter.",
+            "comment": "The method does not document the options parameter or its expected structure."
+        }
+    ]
+}

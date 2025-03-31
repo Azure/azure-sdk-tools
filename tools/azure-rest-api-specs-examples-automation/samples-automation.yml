@@ -19,6 +19,7 @@ jobs:
   - task: GoTool@0
     inputs:
       version: $(GoVersion)
+    displayName: 'Install Golang'
 
   - script: |
       go mod download golang.org/x/tools@latest

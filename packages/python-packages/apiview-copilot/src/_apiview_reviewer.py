@@ -62,13 +62,14 @@ class ApiViewReview:
 
             if self.use_rag:
                 # use the Azure OpenAI service to get guidelines
-                guidelines = self._retrieve_guidelines_from_search(chunk)
+                context = self._retrieve_guidelines_from_search(chunk)
+                guidelines = context["guidelines"]
             # select the appropriate prompty file and run it
             prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
             prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
             response = prompty.execute(prompt_path, inputs={
                 "language": self.language,
-                "context": json.dumps(guidelines),
+                "context": json.dumps(context),
                 "apiview": chunk.numbered(),
             })
             try:
@@ -212,9 +213,14 @@ class ApiViewReview:
 
                 # now do the same for examples
                 for ex in guideline.get("related_examples", []):
-                    if ex not in seen_example_ids:
-                        seen_example_ids.add(ex)
-                        final_examples[ex] = None
+                    try:
+                        if ex not in seen_example_ids:
+                            seen_example_ids.add(ex)
+                            final_examples[ex] = None
+                    except TypeError:
+                        # FIXME: This shouldn't happen once the data integrity is cleaned up
+                        print(f"WARNING: Examples for guideline {gid} is not a string! Skipping.")
+                        continue
 
             # now resolve all examples
             example_ids_to_lookup = [eid for eid, val in final_examples.items() if val is None]
@@ -227,8 +233,25 @@ class ApiViewReview:
                 # queue up more related guidelines from the example
                 for gid in ex.get("guideline_ids", []):
                     if gid not in seen_guideline_ids:
-                        seen_guideline_ids.add(gid)
                         queue.append(gid)
+
+        # flatten the results to just the values
+        final_guidelines = [v for v in final_guidelines.values() if v is not None]
+        final_examples = [v for v in final_examples.values() if v is not None]
+
+        # remove irrelevant guideline fields
+        remove_guideline_fields = ["category", "_rid", "_self", "_etag", "_attachments", "_ts", "related_guidelines", "related_examples"]
+        for guideline in final_guidelines:
+            for field in remove_guideline_fields:
+                if field in guideline:
+                    del guideline[field]
+
+        # remove irrelevant example fields
+        remove_example_fields = ["_rid", "_self", "_etag", "_attachments", "_ts", "guideline_ids"]
+        for example in final_examples:
+            for field in remove_example_fields:
+                if field in example:
+                    del example[field]
 
         return {
             "guidelines": final_guidelines,

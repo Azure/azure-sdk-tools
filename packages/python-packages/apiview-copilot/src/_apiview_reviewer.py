@@ -1,5 +1,6 @@
 from azure.cosmos import CosmosClient
 from azure.search.documents import SearchClient
+from azure.search.documents.models import VectorizableTextQuery, QueryType, QueryCaptionType
 from azure.identity import DefaultAzureCredential
 
 from collections import deque
@@ -122,7 +123,19 @@ class ApiViewReview:
         search_name = os.getenv("AZURE_SEARCH_NAME")
         search_endpoint = f"https://{search_name}.search.windows.net"
         client = SearchClient(endpoint=search_endpoint, index_name="guidelines-index", credential=credential)
-        result = list(client.search(search_text=query, top=10, filter=self._get_filter_expression()))
+        result = list(client.search(
+            search_text=query,
+            top=10,
+            filter=self._get_filter_expression(),
+            semantic_configuration_name="archagent-semantic-search-guidelines",
+            query_type=QueryType.SEMANTIC,
+            query_caption=QueryCaptionType.EXTRACTIVE,
+            vector_queries=[
+                VectorizableTextQuery(
+                    text=query,
+                    fields="text_vector"                    
+                )
+            ]))
         return result
 
     def _search_examples(self, chunk: Section) -> List[object]:
@@ -130,7 +143,20 @@ class ApiViewReview:
         search_name = os.getenv("AZURE_SEARCH_NAME")
         search_endpoint = f"https://{search_name}.search.windows.net"
         client = SearchClient(endpoint=search_endpoint, index_name="examples-index", credential=credential)
-        return list(client.search(search_text=str(chunk), top=10, filter=self._get_filter_expression()))
+        query = str(chunk)
+        return list(client.search(
+            search_text=query,
+            top=10,
+            filter=self._get_filter_expression(),
+            semantic_configuration_name="archagent-semantic-search-examples",
+            query_type=QueryType.SEMANTIC,
+            query_caption=QueryCaptionType.EXTRACTIVE,
+            vector_queries=[
+                VectorizableTextQuery(
+                    text=query,
+                    fields="text_vector"
+                )
+            ]))
 
     def _retrieve_guidelines_from_search(self, chunk: Section) -> List[object]:
         """

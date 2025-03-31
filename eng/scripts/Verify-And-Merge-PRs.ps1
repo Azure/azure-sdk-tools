@@ -38,8 +38,9 @@ function Main([string]$prFile, [array]$prs, [string]$ghToken, [switch]$noMerge) 
 
 function ProcessPRMergeStatuses([array]$prData, [switch]$noMerge) {
   for ($retry = 1; $retry -le 5; $retry++) {
-    $curr, $prData = $prData, @()
-    foreach ($pr in ($curr | Where-Object { $_.Retry -ne $false })) {
+    $currPRSet = $prData
+    $prData = @()
+    foreach ($pr in ($currPRSet | Where-Object { $_.Retry -ne $false })) {
       $prData += GetOrSetMergeablePR -repoOwner $pr.RepoOwner -repoName $pr.RepoName -prNumber $pr.Number
     }
 

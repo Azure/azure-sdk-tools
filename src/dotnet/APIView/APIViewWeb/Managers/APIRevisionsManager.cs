@@ -1140,12 +1140,18 @@ namespace APIViewWeb.Managers
 
         private async Task CreateCommentFromAIResponse(ClaimsPrincipal user, CodeFile codeFile, IList<CommentResponseModel> comments, string reviewId, string revisionId)
         {
+            var existingComments = await _commentsManager.GetCommentsAsync(reviewId);
             if (comments != null)
             {
                 foreach (var c in comments)
                 {
                     var commentTextInResp = c.Comment;
                     var lineId = GetReviewLineIdFromText(codeFile, c.ReviewLine);
+                    if (existingComments.Any(x => x.ElementId.Equals(lineId)))
+                    {
+                        _telemetryClient.TrackTrace($"Comment already exists for revision with ID: {revisionId}, Comment:{commentTextInResp}");
+                        continue;
+                    }
                     if (!string.IsNullOrEmpty(lineId))
                     {
                         var comment = new CommentItemModel

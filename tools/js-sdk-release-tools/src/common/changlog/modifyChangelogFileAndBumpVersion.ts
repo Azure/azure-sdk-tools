@@ -1,5 +1,5 @@
 import {Changelog} from "../../changelog/changelogGenerator";
-import { changeClientFile } from "../../xlc/codeUpdate/updateUserAgent";
+import { updateUserAgent } from "../../xlc/codeUpdate/updateUserAgent";
 
 const fs = require('fs');
 const path = require('path');
@@ -24,7 +24,7 @@ The package of ${packageJsonData.name} is using our next generation design princ
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);
-    changeClientFile(packageFolderPath, newVersion);
+    updateUserAgent(packageFolderPath, newVersion);
 }
 
 export function makeChangesForMigrateTrack1ToTrack2(packageFolderPath: string, nextPackageVersion: string) {
@@ -45,7 +45,7 @@ To learn more, please refer to our documentation [Quick Start](https://aka.ms/az
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, nextPackageVersion);
-    changeClientFile(packageFolderPath, nextPackageVersion)
+    updateUserAgent(packageFolderPath, nextPackageVersion)
 }
 
 function changePackageJSON(packageFolderPath: string, packageVersion: string) {
@@ -70,10 +70,10 @@ ${originalChangeLogContent.replace(/.*Release History[\n\r]*/g, '')}`;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), modifiedChangelogContent, {encoding: 'utf-8'});
 
     changePackageJSON(packageFolderPath, packageVersion);
-    changeClientFile(packageFolderPath, packageVersion);
+    updateUserAgent(packageFolderPath, packageVersion);
 }
 
 export function makeChangesForPatchReleasingTrack2(packageFolderPath: string, packageVersion: string) {
     changePackageJSON(packageFolderPath, packageVersion);
-    changeClientFile(packageFolderPath, packageVersion);
+    updateUserAgent(packageFolderPath, packageVersion);
 }

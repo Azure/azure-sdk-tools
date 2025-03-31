@@ -20,7 +20,15 @@ model:
     max_tokens: 16384
 sample:
   question: |
-    public SyncPoller<PhoneNumberOperation, PhoneNumberSearchResult> beginSearchAvailablePhoneNumbers(String countryCode, PhoneNumberType phoneNumberType, PhoneNumberAssignmentType assignmentType, PhoneNumberCapabilities capabilities, PhoneNumberSearchOptions searchOptions, Context context)
+    class azure.contoso.NoodleCreateRequest:
+      ivar name: str
+      ivar color: NoodleColor
+  
+      def __init__(
+        self,
+        name: str,
+        color: Optional[NoodleColor]
+      )
 ---
 
 system:
@@ -28,7 +36,9 @@ You are an AI assistant whose sole job is to convert a given code snippet into a
 
 - Identify the language of the code snippet.
 
-- Be concise and technical, free of emojis or embellishments.
+- Be concise and technical, free of emojis or embellishments. The output should be a single paragraph. No newlines or bullet points.
+
+- Do not include any code in the output.
 
 - Do not imply or infer the function of any of the code.
 

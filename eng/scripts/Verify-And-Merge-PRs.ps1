@@ -64,10 +64,10 @@ function ProcessPRMergeStatuses([array]$prData, [switch]$noMerge) {
 
 function MergePRs([array]$toMerge) {
   foreach ($pr in $toMerge) {
-    LogInfo "Merging $($toMerge.Url) - $($toMerge.HeadSHA)"
-    gh pr merge $toMerge.Url --squash --match-head-commit $toMerge.HeadSHA
+    LogInfo "Merging $($pr.Url) at $($pr.HeadSHA)"
+    gh pr merge $pr.Url --squash --match-head-commit $pr.HeadSHA
     if ($LASTEXITCODE) {
-      LogError "Failed to merge [$($toMerge.MergeUrl)]. See above logs for details."
+      LogError "Failed to merge [$($pr.Url)]. See above logs for details."
       exit $LASTEXITCODE
     }
   }

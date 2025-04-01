@@ -4,6 +4,7 @@
 - Updating documentation
 - Renaming `do-not-log-exception` to `do-not-log-exception-if-not-debug`
 - Update `do-not-log-raised-errors`
+- Update `async-client-bad-name` due to AI loophole (moved Async to end of name)
 
 ## 0.5.2 (2025-02-19)
 

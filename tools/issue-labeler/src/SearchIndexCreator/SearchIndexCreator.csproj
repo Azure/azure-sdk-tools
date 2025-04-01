@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\github-event-processor\Azure.Sdk.Tools.GitHubEventProcessor\Azure.Sdk.Tools.GitHubEventProcessor.csproj" />
-    <ProjectReference Include="..\AzureRAGService\AzureRAGService.csproj" />
+    <ProjectReference Include="..\AzureRagService\AzureRagService.csproj" />
   </ItemGroup>
 
   <ItemGroup>

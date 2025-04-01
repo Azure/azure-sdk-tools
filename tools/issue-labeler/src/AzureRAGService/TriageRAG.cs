@@ -9,20 +9,16 @@ using OpenAI.Chat;
 using Azure.Identity;
 using System.Text.Json;
 
-namespace AzureRAGService
+namespace AzureRagService
 {
-    public interface ITriageRAG
+    public class TriageRag
     {
-        IEnumerable<(T, double)> AzureSearchQuery<T>(Uri searchEndpoint, string indexName, string semanticConfigName, string field, DefaultAzureCredential credential, string query, int count);
-        string SendMessageQna(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string instructions, string message, BinaryData structure);
-    }
+        private ILogger<TriageRag> _logger;
+        private static ChatClient _chatClient;
 
-    public class TriageRAG : ITriageRAG
-    {
-        private ILogger<ITriageRAG> _logger;
-
-        public TriageRAG(ILogger<ITriageRAG> logger)
+        public TriageRag(ILogger<TriageRag> logger, ChatClient chatClient)
         {
+            _chatClient = chatClient;
             _logger = logger;
         }
 
@@ -39,7 +35,7 @@ namespace AzureRAGService
         /// <param name="query">The search query.</param>
         /// <param name="count">The number of results to return.</param>
         /// <returns>An enumerable of "search results" with their associated scores.</returns>
-        public IEnumerable<(T, double)> AzureSearchQuery<T>(
+        public async Task<List<(T, double)>> AzureSearchQuery<T>(
             Uri searchEndpoint,
             string indexName,
             string semanticConfigName,
@@ -74,17 +70,21 @@ namespace AzureRAGService
                 SemanticConfigurationName = semanticConfigName
             };
 
-            SearchResults<T> response = searchClient.Search<T>(
+            SearchResults<T> response = await searchClient.SearchAsync<T>(
                 query,
                 options);
 
+
             _logger.LogInformation($"{typeof(T).Name}s found.");
 
+            List<(T, double)> results = new List<(T, double)>();
             foreach (SearchResult<T> result in response.GetResults())
             {
                 _logger.LogInformation(result.SemanticSearch.RerankerScore.ToString());
-                yield return (result.Document, result.SemanticSearch.RerankerScore ?? 0.0);
+                results.Add((result.Document, result.SemanticSearch.RerankerScore ?? 0.0));
             }
+
+            return results;
         }
 
         /// <summary>
@@ -95,10 +95,8 @@ namespace AzureRAGService
         /// <param name="modelName">The name of the OpenAI model.</param>
         /// <param name="message">The message to send.</param>
         /// <returns>The response from the OpenAI model.</returns>
-        public string SendMessageQna(Uri openAIEndpoint, DefaultAzureCredential credential, string modelName, string instructions, string message, BinaryData structure)
+        public async Task<string> SendMessageQna(string instructions, string message, BinaryData structure)
         {
-            AzureOpenAIClient openAIClient = new(openAIEndpoint, credential);
-            ChatClient chatClient = openAIClient.GetChatClient(modelName);
 
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
 
@@ -111,7 +109,7 @@ namespace AzureRAGService
                 )
             };
 
-            ChatCompletion answers = chatClient.CompleteChat(
+            ChatCompletion answers = await _chatClient.CompleteChatAsync(
                 [
                     new DeveloperChatMessage(instructions),
                     new UserChatMessage(message)

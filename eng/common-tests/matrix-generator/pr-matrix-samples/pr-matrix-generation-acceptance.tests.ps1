@@ -4,7 +4,7 @@ Import-Module Pester
 $netScenarios = Get-Content (Join-Path $PSScriptRoot net_scenarios.json) | ConvertFrom-Json
 $pythonScenarios = Get-Content (Join-Path $PSScriptRoot python_scenarios.json) | ConvertFrom-Json
 
-Describe "Acceptance tests for .NET PR Matrix Generation" {
+Describe "Acceptance tests for .NET PR Matrix Generation" -Tag "Matrix Acceptance" {
     BeforeAll {
         . $PSScriptRoot/pr-matrix-generation-acceptance.helpers.ps1
         $RepoRoot = Get-Repo -Repo "Azure/azure-sdk-for-net" -Reference "331c07a1ab59ed0042972ca6d0df830df235280f"
@@ -22,7 +22,7 @@ Describe "Acceptance tests for .NET PR Matrix Generation" {
     }
 }
 
-Describe "Acceptance tests for Python PR Matrix Generation" {
+Describe "Acceptance tests for Python PR Matrix Generation" -Tag "Matrix Acceptance" {
     BeforeAll {
         . $PSScriptRoot/pr-matrix-generation-acceptance.helpers.ps1
         $RepoRoot = Get-Repo -Repo "Azure/azure-sdk-for-python" -Reference "516977e3a0f9ba22d5611608f64b836fefffc37e"

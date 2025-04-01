@@ -62,6 +62,7 @@ jobs:
     pool:
       name: azsdk-pool-mms-ubuntu-2204-general
       vmImage: ubuntu-22.04
+    timeoutInMinutes: 120
 
     variables:
       - template: /eng/pipelines/templates/variables/globals.yml

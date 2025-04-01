@@ -993,7 +993,7 @@ class AsyncClientCorrectNaming(BaseChecker):
         try:
             # avoid false positive when async name is used with a base class.
             if (
-                node.name.endswith("Client")
+                "client" in node.name.lower()
                 and "async" in node.name.lower()
                 and "base" not in node.name.lower()
             ):
@@ -2842,9 +2842,9 @@ class NoImportTypingFromTypeCheck(BaseChecker):
     priority = -1
     msgs = {
         "C4760": (
-            "Do not import from typing inside of TYPE_CHECKING.",
+            "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modules from typing outside of TYPE_CHECKING.",
             "no-typing-import-in-type-check",
-            "Do not import from typing inside of TYPE_CHECKING. You can import from typing outside of TYPE_CHECKING.",
+            "Do not import from typing inside of `if TYPE_CHECKING` block. You can import modulesfrom typing outside of TYPE_CHECKING.",
         ),
     }
 
@@ -3091,9 +3091,9 @@ class DoNotHardcodeConnectionVerify(BaseChecker):
     priority = -1
     msgs = {
         "C4767": (
-            "Do not hardcode a boolean value to connection_verify",
+            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to set it.",
             "do-not-hardcode-connection-verify",
-            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to be able to set it",
+            "Do not hardcode a boolean value to connection_verify. It's up to customers who use the code to set it",
         ),
     }
 

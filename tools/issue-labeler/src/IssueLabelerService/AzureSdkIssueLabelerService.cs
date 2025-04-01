@@ -24,7 +24,7 @@ namespace IssueLabelerService
         private static readonly ActionResult EmptyResult = new JsonResult(new IssueOutput { Labels = [], Answer = null, AnswerType = null });
         private readonly ILogger<AzureSdkIssueLabelerService> _logger;
         private readonly IConfiguration _config;
-        private readonly TriageRag _issueLabeler;
+        private readonly TriageRag _ragService;
         private static readonly ConcurrentDictionary<string, byte> CommonModelRepositories = new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, byte> InitializedRepositories = new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, byte> CompleteTraigeRepositories = new(StringComparer.OrdinalIgnoreCase); 
@@ -32,11 +32,11 @@ namespace IssueLabelerService
         private ILabelerLite Labeler { get; }
         private string CommonModelRepositoryName { get; }
 
-        public AzureSdkIssueLabelerService(ILabelerLite labeler, IModelHolderFactoryLite modelHolderFactory, IConfiguration config, ILogger<AzureSdkIssueLabelerService> logger, TriageRag issueLabeler)
+        public AzureSdkIssueLabelerService(ILabelerLite labeler, IModelHolderFactoryLite modelHolderFactory, IConfiguration config, ILogger<AzureSdkIssueLabelerService> logger, TriageRag ragService)
         {
             _config = config;
             _logger = logger;
-            _issueLabeler = issueLabeler;
+            _ragService = ragService;
             ModelHolderFactory = modelHolderFactory;
             Labeler = labeler;
 
@@ -69,12 +69,12 @@ namespace IssueLabelerService
                 {
                     try
                     {
-                        result = await CompleteIssueTriage(issue);
+                        result = await CompleteIssueTriageAsync(issue);
 
                         // Temporary run both to get labels
                         if(issue.RepositoryName == "azure-sdk-for-net")
                         {
-                            var labels = await OnlyLabelIssue(issue);
+                            var labels = await OnlyLabelIssueAsync(issue);
                             result.Labels = labels.Labels;
                         }
                     }
@@ -84,12 +84,12 @@ namespace IssueLabelerService
                         
                         // Attempt to just label the issue
                         _logger.LogInformation($"Attempting to run labeler on issue #{issue.IssueNumber}.");
-                        result = await OnlyLabelIssue(issue);
+                        result = await OnlyLabelIssueAsync(issue);
                     }
                 }
                 else
                 {
-                    result = await OnlyLabelIssue(issue);
+                    result = await OnlyLabelIssueAsync(issue);
                 }
             }
             catch (Exception ex)
@@ -116,7 +116,7 @@ namespace IssueLabelerService
             return JsonConvert.DeserializeObject<IssuePayload>(requestBody);
         }
 
-        private async Task<IssueOutput> CompleteIssueTriage(IssuePayload issue)
+        private async Task<IssueOutput> CompleteIssueTriageAsync(IssuePayload issue)
         {
             // Configuration for Azure services
             var credential = new DefaultAzureCredential();
@@ -148,8 +148,8 @@ namespace IssueLabelerService
             double scoreThreshold = double.Parse(_config["ScoreThreshold"]);
             double solutionThreshold = double.Parse(_config["SolutionThreshold"]);
 
-            var relevantIssues = await _issueLabeler.AzureSearchQuery<Issue>(searchEndpoint, issueIndexName, issueSemanticName, issueFieldName, credential, query, top);
-            var relevantDocuments = await _issueLabeler.AzureSearchQuery<Document>(searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, query, top);
+            var relevantIssues = await _ragService.AzureSearchQueryAsync<Issue>(searchEndpoint, issueIndexName, issueSemanticName, issueFieldName, credential, query, top);
+            var relevantDocuments = await _ragService.AzureSearchQueryAsync<Document>(searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, query, top);
 
             // Filter sources under threshold
             var docs = relevantDocuments
@@ -215,7 +215,7 @@ namespace IssueLabelerService
             }
             """u8.ToArray());
 
-            var response = await _issueLabeler.SendMessageQna(instructions, message, structure);
+            var response = await _ragService.SendMessageQnaAsync(instructions, message, structure);
             _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Complete Triage model for issue #{issue.IssueNumber}.: \n{response}");
 
             var resultObj = JsonConvert.DeserializeObject<AIOutput>(response);
@@ -240,13 +240,13 @@ namespace IssueLabelerService
             string formatted_response = intro + resultObj.Response + outro;
             return new IssueOutput
             {
-                Labels = new string[] { resultObj.Service, resultObj.Category },
+                Labels = [ resultObj.Service, resultObj.Category ],
                 Answer = formatted_response,
                 AnswerType = solution ? "solution" : "suggestion",
             };
         }
 
-        private async Task<IssueOutput> OnlyLabelIssue(IssuePayload issue)
+        private async Task<IssueOutput> OnlyLabelIssueAsync(IssuePayload issue)
         {
             var predictionRepositoryName = TranslateRepoName(issue.RepositoryName);
 

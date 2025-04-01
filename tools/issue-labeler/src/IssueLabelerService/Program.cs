@@ -11,6 +11,7 @@ using Azure.Search.Documents;
 using System;
 using Azure.AI.OpenAI;
 using OpenAI.Chat;
+using Azure.Search.Documents.Indexes;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -20,13 +21,21 @@ var host = new HostBuilder()
         var config = context.Configuration;
         services.AddSingleton(config);
 
+        var credential = new DefaultAzureCredential();
+
         services.AddSingleton<ChatClient>(sp =>
         {
             var openAIEndpoint = new Uri(config["OpenAIEndpoint"]);
-            var credential = new DefaultAzureCredential();
+            
             var openAIClient = new AzureOpenAIClient(openAIEndpoint, credential);
             var modelName = config["OpenAIModelName"];
             return openAIClient.GetChatClient(modelName);
+        });
+
+        services.AddSingleton<SearchIndexClient>(sp =>
+        {
+            var searchEndpoint = new Uri(config["SearchEndpoint"]);
+            return new SearchIndexClient(searchEndpoint, credential);
         });
 
         services.AddSingleton<TriageRag>();

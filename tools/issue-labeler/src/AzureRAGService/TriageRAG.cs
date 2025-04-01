@@ -7,20 +7,33 @@ using Azure.Search.Documents.Models;
 using OpenAI.Chat;
 using Azure.Identity;
 using System.Text.Json;
+using Azure.Search.Documents.Indexes;
+using Microsoft.Extensions.Configuration;
 
 namespace AzureRagService
 {
     public class TriageRag
     {
+        private static ChatClient s_chatClient;
+        private static SearchIndexClient s_searchIndexClient;
+        private static List<SearchClient> s_searchClients = new List<SearchClient>();
         private ILogger<TriageRag> _logger;
-        private static ChatClient _chatClient;
-
-        public TriageRag(ILogger<TriageRag> logger, ChatClient chatClient)
+        private IConfiguration _config;
+        private List<String> indexNameSuffix = new List<string>
         {
-            _chatClient = chatClient;
-            _logger = logger;
-        }
+            "Python",
+            "DotNet"
+        };
 
+        public TriageRag(ILogger<TriageRag> logger, ChatClient chatClient, SearchIndexClient searchIndexClient, IConfiguration config)
+        {
+            s_chatClient = chatClient;
+            _logger = logger;
+            s_searchIndexClient = searchIndexClient;
+            _config = config;
+
+            LoadSearchClient();
+        }
 
         /// <summary>
         /// Executes an Azure Search query.
@@ -34,7 +47,7 @@ namespace AzureRagService
         /// <param name="query">The search query.</param>
         /// <param name="count">The number of results to return.</param>
         /// <returns>An enumerable of "search results" with their associated scores.</returns>
-        public async Task<List<(T, double)>> AzureSearchQuery<T>(
+        public async Task<List<(T, double)>> AzureSearchQueryAsync<T>(
             Uri searchEndpoint,
             string indexName,
             string semanticConfigName,
@@ -43,7 +56,17 @@ namespace AzureRagService
             string query,
             int count)
         {
-            SearchClient searchClient = new SearchClient(searchEndpoint, indexName, credential);
+            if (s_searchClients.Count == 0)
+            {
+                LoadSearchClient();
+            }
+
+            SearchClient? searchClient = FindSearchClient(indexName);
+            if (searchClient == null)
+            {
+                _logger.LogError($"SearchClient for index '{indexName}' not loaded.");
+                return new List<(T, double)>();
+            }
 
             _logger.LogInformation($"Searching for related {typeof(T).Name.ToLower()}s...");
             SearchOptions options = new SearchOptions
@@ -93,7 +116,7 @@ namespace AzureRagService
         /// <param name="message">The message or user query to send.</param>
         /// <param name="structure">The JSON schema structure for the response.</param>
         /// <returns>The response from the OpenAI model.</returns>
-        public async Task<string> SendMessageQna(string instructions, string message, BinaryData structure)
+        public async Task<string> SendMessageQnaAsync(string instructions, string message, BinaryData structure)
         {
 
             _logger.LogInformation($"\n\nWaiting for an Open AI response...");
@@ -107,7 +130,7 @@ namespace AzureRagService
                 )
             };
 
-            ChatCompletion answers = await _chatClient.CompleteChatAsync(
+            ChatCompletion answers = await s_chatClient.CompleteChatAsync(
                 [
                     new DeveloperChatMessage(instructions),
                     new UserChatMessage(message)
@@ -119,7 +142,42 @@ namespace AzureRagService
 
             return answers.Content[0].Text;
         }
+
+        private void LoadSearchClient()
+        { 
+            foreach (var indexSuffix in indexNameSuffix)
+            {
+                var docIndexName = $"DocumentIndexName{indexSuffix}";
+                var docSearchClient = s_searchIndexClient.GetSearchClient(_config[docIndexName]);
+
+                var issueIndexName = $"IssueIndexName{indexSuffix}";
+                var issueSearchClient = s_searchIndexClient.GetSearchClient(_config[issueIndexName]);
+
+                s_searchClients.Add(docSearchClient);
+                s_searchClients.Add(issueSearchClient);
+            }
+        }
+
+        /// <summary>
+        /// Finds a SearchClient from the list of search clients given an index name.
+        /// </summary>
+        /// <param name="indexName">The name of the search index.</param>
+        /// <returns>The SearchClient associated with the given index name, or null if not found.</returns>
+        private SearchClient? FindSearchClient(string indexName)
+        {
+            foreach (var searchClient in s_searchClients)
+            {
+                if (searchClient.IndexName.Equals(indexName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return searchClient;
+                }
+            }
+
+            return null;
+        }
     }
+
+    
 
     public class Issue
     {

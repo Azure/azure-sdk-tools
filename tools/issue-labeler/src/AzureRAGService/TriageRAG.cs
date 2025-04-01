@@ -3,7 +3,6 @@
 
 using Azure.Search.Documents;
 using Microsoft.Extensions.Logging;
-using Azure.AI.OpenAI;
 using Azure.Search.Documents.Models;
 using OpenAI.Chat;
 using Azure.Identity;
@@ -88,12 +87,11 @@ namespace AzureRagService
         }
 
         /// <summary>
-        /// "Question and Answer" using Open AI models. Message must include both the prompt and the query
+        /// Sends a message to the OpenAI model for Question and Answer.
         /// </summary>
-        /// <param name="openAIEndpoint">The OpenAI endpoint URI.</param>
-        /// <param name="credential">The Azure credential.</param>
-        /// <param name="modelName">The name of the OpenAI model.</param>
-        /// <param name="message">The message to send.</param>
+        /// <param name="instructions">The developer instructions for the OpenAI model.</param>
+        /// <param name="message">The message or user query to send.</param>
+        /// <param name="structure">The JSON schema structure for the response.</param>
         /// <returns>The response from the OpenAI model.</returns>
         public async Task<string> SendMessageQna(string instructions, string message, BinaryData structure)
         {

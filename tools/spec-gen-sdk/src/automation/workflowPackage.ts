@@ -121,7 +121,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   const relativeFolderPathParts = pkg.relativeFolderPath.split('/');
   let serviceName = relativeFolderPathParts[relativeFolderPathParts.indexOf('sdk') + 1];
   if (language.toLowerCase() === 'go') {
-    serviceName = pkg.relativeFolderPath.replace(/^\/?sdk\//, "");
+    serviceName = pkg.relativeFolderPath.replace(/^\/?sdk\//, ""); // go uses relative path as package name
   }
   console.log(`##vso[task.setVariable variable=GeneratedSDK.ServiceName]${serviceName}`);
   context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);

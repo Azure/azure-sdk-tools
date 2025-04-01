@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-01 - 0.3.3
+
+- Use relative directory paths from 'sdk' as go service name
+
 ## 2025-03-27 - 0.3.2
 
 - Ensure relativeFolderPath is correct for all languages

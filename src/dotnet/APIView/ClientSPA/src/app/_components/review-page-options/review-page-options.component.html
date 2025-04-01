@@ -10,10 +10,9 @@
                     </div>
                 </ng-container>
                 <ng-template #cantToggleApproveAPIRevision>
-                    <div class="d-grid gap-2">
+                    <div class="d-grid gap-2" pTooltip="API Revision cannot be approved when comparing against unapproved revision." 
+                        tooltipPosition="bottom">
                         <button class="{{apiRevisionApprovalBtnClass}}" type="button"
-                            pTooltip="API Revision cannot be approved when comparing against unapproved revision. Or when the diffApiRevision is older than the activeApiRevision." 
-                            tooltipPosition="bottom"
                             disabled>
                             {{apiRevisionApprovalBtnLabel}}
                         </button>
@@ -62,8 +61,11 @@
 
     <app-page-options-section *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0" sectionName="Associated API Revisions" [collapsedInput]="true">
     <ul class="list-group">
-        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
-            <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank">{{pullRequest.language}}/{{pullRequest.packageName}}</a>
+        <li class="list-group-item" *ngFor="let pullRequest of pullRequestsOfAssociatedAPIRevisions">
+            <span>
+                <img src="{{assetsPath}}/images/{{ pullRequest.language | languageNames: userProfile?.preferences?.theme }}-original.svg" class="me-2" width="20" height="20">
+                <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank" ><small>{{pullRequest.packageName}}</small></a>
+            </span>
         </li>
     </ul>
     </app-page-options-section>

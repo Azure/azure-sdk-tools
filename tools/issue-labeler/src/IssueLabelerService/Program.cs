@@ -4,6 +4,7 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using AzureRAGService;
 using Hubbup.MikLabelModel;
 
 var host = new HostBuilder()
@@ -11,6 +12,7 @@ var host = new HostBuilder()
     .ConfigureServices((context, services) => {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
+        services.AddSingleton<ITriageRAG, TriageRAG>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
         var config = context.Configuration;

@@ -1,5 +1,10 @@
 # Release
 
+## 2025-03-27 - 0.3.2
+
+- Ensure relativeFolderPath is correct for all languages
+- Ensure GeneratedSDK.StagedArtifactsFolder variable is set for all languiges
+
 ## 2025-03-21 - 0.3.1
 
 - Added 'sdk-release-type' to input parameters and 'generateInput' type

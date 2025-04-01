@@ -117,18 +117,20 @@ const workflowPkgDetectArtifacts = async (context: WorkflowContext, pkg: Package
  * Copy sdk artifact path to {work_dir}/out/stagedArtifacts
  */
 const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: PackageData) => {
-  const relativeFolderPathParts = pkg.relativeFolderPath.split('/');
-  const serviceName = relativeFolderPathParts[relativeFolderPathParts.indexOf('sdk') + 1];
-  console.log(`##vso[task.setVariable variable=GeneratedSDK.ServiceName]${serviceName}`);
-
-  context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
-
+  const relativeFolderPathParts = pkg.relativeFolderPath.split('/');
+  let serviceName = relativeFolderPathParts[relativeFolderPathParts.indexOf('sdk') + 1];
+  if (language.toLowerCase() === 'go') {
+    serviceName = pkg.relativeFolderPath.replace(/^\/?sdk\//, ""); // go uses relative path as package name
+  }
+  console.log(`##vso[task.setVariable variable=GeneratedSDK.ServiceName]${serviceName}`);
+  context.logger.info(`Save ${pkg.artifactPaths.length} artifact to Azure devOps.`);
+  
   const stagedArtifactsFolder = path.join(context.config.workingFolder, 'out', 'stagedArtifacts');
   console.log(`##vso[task.setVariable variable=GeneratedSDK.StagedArtifactsFolder]${stagedArtifactsFolder}`);
 
   // if no artifact generated or language is Go, skip
-  if (pkg.artifactPaths.length === 0 || language.toLocaleLowerCase() === 'go') { 
+  if (pkg.artifactPaths.length === 0 || language.toLowerCase() === 'go') { 
     return; 
   }
  

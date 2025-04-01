@@ -120,7 +120,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   const language = pkg.language ?? getLanguageByRepoName(context.sdkRepoConfig.mainRepository.name);
   const relativeFolderPathParts = pkg.relativeFolderPath.split('/');
   let serviceName = relativeFolderPathParts[relativeFolderPathParts.indexOf('sdk') + 1];
-  if (language.toLocaleLowerCase() === 'go') {
+  if (language.toLowerCase() === 'go') {
     serviceName = pkg.relativeFolderPath.replace(/^\/?sdk\//, "");
   }
   console.log(`##vso[task.setVariable variable=GeneratedSDK.ServiceName]${serviceName}`);
@@ -130,7 +130,7 @@ const workflowPkgSaveSDKArtifact = async (context: WorkflowContext, pkg: Package
   console.log(`##vso[task.setVariable variable=GeneratedSDK.StagedArtifactsFolder]${stagedArtifactsFolder}`);
 
   // if no artifact generated or language is Go, skip
-  if (pkg.artifactPaths.length === 0 || language.toLocaleLowerCase() === 'go') { 
+  if (pkg.artifactPaths.length === 0 || language.toLowerCase() === 'go') { 
     return; 
   }
  

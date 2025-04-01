@@ -10,10 +10,9 @@
                     </div>
                 </ng-container>
                 <ng-template #cantToggleApproveAPIRevision>
-                    <div class="d-grid gap-2">
+                    <div class="d-grid gap-2" pTooltip="API Revision cannot be approved when comparing against unapproved revision." 
+                        tooltipPosition="bottom">
                         <button class="{{apiRevisionApprovalBtnClass}}" type="button"
-                            pTooltip="API Revision cannot be approved when comparing against unapproved revision. Or when the diffApiRevision is older than the activeApiRevision." 
-                            tooltipPosition="bottom"
                             disabled>
                             {{apiRevisionApprovalBtnLabel}}
                         </button>

@@ -105,4 +105,14 @@ describe('ReviewPageOptionsComponent', () => {
       expect(component.disableCodeLinesLazyLoading).toEqual(false);
     })
   });
+
+  describe('Toggle APIRevision Approval', () => {
+    it('should close APIRevision Approval Modal', () => {
+      component.showAPIRevisionApprovalModal = true;
+      component.loadingStatus = "completed";
+      fixture.detectChanges();
+      component.toggleAPIRevisionApproval();
+      expect(component.showAPIRevisionApprovalModal).not.toBeTruthy();
+    });
+  });
 });

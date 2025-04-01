@@ -144,7 +144,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.setPullRequestsInfo();
     }
 
-    if (changes['diffAPIRevision'] && changes['diffAPIRevision'].currentValue != undefined) {
+    if (changes['diffAPIRevision']) {
       this.setAPIRevisionApprovalStates();
     }
 
@@ -294,8 +294,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setAPIRevisionApprovalStates() {
     this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
-    const isActiveAPIRevisionAhead = (!this.diffAPIRevision) ? true : ((new Date(this.activeAPIRevision?.createdOn!)) > (new Date(this.diffAPIRevision?.createdOn!)));
-    this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0) && isActiveAPIRevisionAhead;
+    this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0);
 
     if (this.canToggleApproveAPIRevision) {
       this.apiRevisionApprovalBtnClass = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "btn btn-outline-secondary" : "btn btn-success";
@@ -400,6 +399,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   toggleAPIRevisionApproval() {
     this.apiRevisionApprovalEmitter.emit(true);
+    this.showAPIRevisionApprovalModal = false;
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {

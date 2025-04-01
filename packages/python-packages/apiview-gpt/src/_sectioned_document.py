@@ -13,14 +13,16 @@ class Section:
         self.start_line_no = start_line_no
 
     def __str__(self):
-        return "\n".join(self.lines)
+        numbered_lines = []
+        for i, line in enumerate(self.lines):
+            numbered_lines.append(f"{self.start_line_no + i + 1:4d}: {line}")
+        return "\n".join(numbered_lines)
 
 
 class SectionedDocument:
 
     def __init__(self, lines: List[str], chunk: bool):
         self.sections = []
-
         if chunk:
             line_data = []
             for i, line in enumerate(lines):
@@ -40,3 +42,6 @@ class SectionedDocument:
         else:
             # just do one big chunk
             self.sections.append(Section(lines, 0))
+
+    def __iter__(self):
+        return iter(self.sections)

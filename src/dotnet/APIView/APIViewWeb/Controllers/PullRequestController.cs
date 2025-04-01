@@ -116,7 +116,7 @@ namespace APIViewWeb.Controllers
                 packageName: packageName, originalFileName: originalFileName,
                 codeFileName: codeFileName, originalFileStream: memoryStream,
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
-                project: project);
+                project: project, language: language);
 
             if (codeFile.PackageName != null && (packageName ==  null || packageName != codeFile.PackageName))
             {

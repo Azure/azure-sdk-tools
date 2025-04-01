@@ -1,7 +1,7 @@
 import os
 import json
 
-from src._markdown_parser import parse_markdown
+from scripts._markdown_parser import parse_markdown
 
 _PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
 _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")

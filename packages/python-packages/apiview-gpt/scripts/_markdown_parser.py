@@ -6,11 +6,9 @@
 
 import dotenv
 from bs4 import BeautifulSoup
-import json
 import markdown_it
 import os
 import re
-import sys
 from typing import List, Optional, Tuple
 
 dotenv.load_dotenv()

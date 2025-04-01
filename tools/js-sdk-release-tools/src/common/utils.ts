@@ -280,7 +280,7 @@ export async function existsAsync(path: string): Promise<boolean> {
 }
 
 export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
-    const compiler = await tryImportCompiler();
+    const compiler = await import("@typespec/compiler");
     if (compiler === undefined) return undefined;
       const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
         compiler.NodeHost,
@@ -291,14 +291,4 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
         },
       );
       return options
-}
-
-
-async function tryImportCompiler(): Promise<typeof import("@typespec/compiler") | undefined> {
-    try {
-      const module = await import("@typespec/compiler");
-      return module;
-    } catch {
-      return undefined;
-    }
 }

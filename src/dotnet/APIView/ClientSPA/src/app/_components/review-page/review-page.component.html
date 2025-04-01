@@ -94,3 +94,17 @@
         (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)">
     </app-conversations >
 </p-sidebar>
+<p-sidebar [(visible)]="copilotSidePanel!" position="right" [modal]="true" [showCloseIcon]="false" styleClass="copilot-sidebar">
+    <ng-template pTemplate="header">
+        <div class="flex align-items-center gap-2">
+            <h4>Copilot</h4>
+        </div>
+    </ng-template>
+    <div *ngFor="let copilot of copilotComments" class="flex flex-column gap-2">
+        <div class="flex align-items-center gap-2">
+            <h4>{{ copilot?.createdBy }}</h4>
+            <h5>{{ copilot?.elementId }}</h5>
+            <h5>{{ copilot?.commentText }}</h5>
+        </div>
+    </div>
+</p-sidebar>

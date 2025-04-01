@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { MenuItem, TreeNode } from 'primeng/api';
+import { MenuItem, MessageService, TreeNode } from 'primeng/api';
 import { Observable, Subject, take, takeUntil } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -44,6 +44,7 @@ export class ReviewPageComponent implements OnInit {
   latestSampleRevision: SamplesRevision | undefined = undefined;
   revisionSidePanel : boolean | undefined = undefined;
   conversationSidePanel : boolean | undefined = undefined;
+  copilotSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
   languageSafeName: string | undefined;
@@ -66,6 +67,7 @@ export class ReviewPageComponent implements OnInit {
   panelSizes = [this.leftNavigationPanelSize, 70, this.pageOptionsPanelSize];
   minSizes = [0.1, 1, 0.1];
 
+  copilotComments: CommentItemModel[] = [];
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
   apiRevisionPageSize = 50;
@@ -82,7 +84,7 @@ export class ReviewPageComponent implements OnInit {
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
-    private samplesRevisionService: SamplesRevisionService) {}
+    private samplesRevisionService: SamplesRevisionService, private messageService: MessageService) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
@@ -120,6 +122,7 @@ export class ReviewPageComponent implements OnInit {
     this.handleRealTimeReviewUpdates();
     this.handleRealTimeAPIRevisionUpdates();
     this.loadLatestSampleRevision(this.reviewId!);
+    this.handleAICommentUpdates();
   }
 
   createSideMenu() {
@@ -147,6 +150,11 @@ export class ReviewPageComponent implements OnInit {
             this.router.navigate([`/samples/${this.reviewId}`])
           }
         }
+      },
+      {
+        icon: 'bi bi-magic',
+        tooltip: 'Copilot',
+        command: () => { this.copilotSidePanel = !this.copilotSidePanel; }
       }
     ];
   }
@@ -534,6 +542,13 @@ export class ReviewPageComponent implements OnInit {
           }
         }
       }
+    });
+  }
+
+  handleAICommentUpdates() {
+    this.signalRService.onAICommentUpdates().pipe(takeUntil(this.destroy$)).subscribe((comment: CommentItemModel) => {
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: comment.commentText, key: 'bl', life: 3000 });
+      this.copilotComments.push(comment);
     });
   }
 

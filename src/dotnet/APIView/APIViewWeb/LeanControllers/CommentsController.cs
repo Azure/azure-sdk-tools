@@ -22,15 +22,17 @@ namespace APIViewWeb.LeanControllers
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
         private readonly IAPIRevisionsManager _revisionsManager;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         public CommentsController(ILogger<CommentsController> logger, ICommentsManager commentManager,
-            IReviewManager reviewManager, INotificationManager notificationManager, IAPIRevisionsManager revisionsManager)
+            IReviewManager reviewManager, INotificationManager notificationManager, IAPIRevisionsManager revisionsManager, IHubContext<SignalRHub> signalRHub)
         {
             _logger = logger;
             _commentsManager = commentManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
             _revisionsManager = revisionsManager;
+            _signalRHubContext = signalRHub;
         }
 
         /// <summary>
@@ -142,7 +144,8 @@ namespace APIViewWeb.LeanControllers
             {
                 await _notificationManager.SubscribeAsync(review, User);
             }
-             return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));
+            await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("ReceiveAICommentUpdates", comment);
+            return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));
         }
 
         /// <summary>

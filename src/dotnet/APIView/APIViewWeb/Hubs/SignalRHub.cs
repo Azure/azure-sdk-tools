@@ -35,5 +35,10 @@ namespace APIViewWeb.Hubs
         {
             await Clients.All.SendAsync("ReceiveCommentUpdates", commentUpdatesDto);
         }
+
+        public async Task PushAICommentUpdates(CommentUpdatesDto commentUpdatesDto)
+        {
+            await Clients.Caller.SendAsync("ReceiveAICommentUpdates", commentUpdatesDto);
+        }
     }   
 }

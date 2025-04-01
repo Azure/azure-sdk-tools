@@ -5,6 +5,7 @@ import { Observable, Subject } from 'rxjs';
 import { CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
+import { CommentItemModel } from 'src/app/_models/commentItemModel';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,7 @@ import { APIRevision } from 'src/app/_models/revision';
 export class SignalRService {
   private connection : signalR.HubConnection;
   private commentUpdates: Subject<CommentUpdatesDto> = new Subject<CommentUpdatesDto>();
+  private aiCommentUpdates: Subject<CommentItemModel> = new Subject<CommentItemModel>();
   private reviewUpdates: Subject<Review> = new Subject<Review>();
   private apiRevisionUpdates: Subject<APIRevision> = new Subject<APIRevision>();
 
@@ -41,6 +43,7 @@ export class SignalRService {
     })
     this.handleConnectionId();
     this.handleCommentUpdates();
+    this.handleAICommentUpdates();
     this.handleReviewUpdates();
     this.handleAPIRevisionUpdates();
   }
@@ -54,6 +57,12 @@ export class SignalRService {
   handleCommentUpdates() {
     this.connection.on("ReceiveCommentUpdates", (commentUpdates: CommentUpdatesDto) => {
       this.commentUpdates.next(commentUpdates);
+    });
+  }
+
+  handleAICommentUpdates() {
+    this.connection.on("ReceiveAICommentUpdates", (comments: CommentItemModel) => {
+      this.aiCommentUpdates.next(comments);
     });
   }
 
@@ -71,6 +80,10 @@ export class SignalRService {
 
   onCommentUpdates() : Observable<CommentUpdatesDto> {
     return this.commentUpdates.asObservable();
+  }
+
+  onAICommentUpdates() : Observable<CommentItemModel> {
+    return this.aiCommentUpdates.asObservable();
   }
 
   onReviewUpdates() : Observable<Review> {

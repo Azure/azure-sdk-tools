@@ -49,7 +49,7 @@ export class CommentThreadComponent {
 
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
-  constructor(private userProfileService: UserProfileService, private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
+  constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
 
   ngOnInit(): void {
     this.menuItemsLoggedInUsers.push({

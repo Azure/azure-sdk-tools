@@ -109,7 +109,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     private configService: ConfigService, 
     private route: ActivatedRoute, 
     private router: Router, 
-    private apiRevisionsService: APIRevisionsService, private pullRequestService: PullRequestsService) { }
+    private apiRevisionsService: APIRevisionsService,
+    private pullRequestService: PullRequestsService) { }
 
   ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));

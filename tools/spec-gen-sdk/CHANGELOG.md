@@ -1,6 +1,6 @@
 # Release
 
-## 2025-04-01 - 0.3.4
+## 2025-04-02 - 0.3.4
 
 - Read the corresponding sdk repository configuration for private repository
 

@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 
-const yaml = require('yaml');
+import { parse, stringify } from 'yaml'
 
 function addExcludeBranch(branches: any) {
     if (branches && branches.include.includes('feature/*')) {
@@ -76,7 +76,7 @@ export function modifyOrGenerateCiYml(azureSDKForJSRepoRoot: string, changedPack
     if (isMgmt) {
         // modify or change ci.mgmt.yml
         if (fs.existsSync(ciMgmtYmlPath)) {
-            const ciMgmtYml = yaml.parse(fs.readFileSync(ciMgmtYmlPath, {encoding: 'utf-8'}));
+            const ciMgmtYml = parse(fs.readFileSync(ciMgmtYmlPath, {encoding: 'utf-8'}));
             let changed = false;
             changed = addExcludeBranch(ciMgmtYml?.trigger?.branches) || changed;
             changed = addExcludeBranch(ciMgmtYml?.pr?.branches) || changed;
@@ -86,7 +86,7 @@ export function modifyOrGenerateCiYml(azureSDKForJSRepoRoot: string, changedPack
             if (changed) {
                 fs.writeFileSync(ciMgmtYmlPath, `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
                 
-${yaml.stringify(ciMgmtYml)}`, {encoding: 'utf-8'});
+${stringify(ciMgmtYml)}`, {encoding: 'utf-8'});
             }
         } else {
             const ciMgmtYml = `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
@@ -131,20 +131,20 @@ extends:
         }
         // modify ci.yml if exist
         if (fs.existsSync(ciYmlPath)) {
-            const ciYml = yaml.parse(fs.readFileSync(ciYmlPath, {encoding: 'utf-8'}));
+            const ciYml = parse(fs.readFileSync(ciYmlPath, {encoding: 'utf-8'}));
             let changed = false;
             changed = addExcludePath(ciYml?.trigger?.paths, [`${changedPackageDirectory.replace(/\\/g, '/')}`, `sdk/${rpFolderName}/ci.mgmt.yml`]) || changed;
             changed = addExcludePath(ciYml?.pr?.paths, [`${changedPackageDirectory.replace(/\\/g, '/')}`, `sdk/${rpFolderName}/ci.mgmt.yml`]) || changed;
             if (changed) {
                 fs.writeFileSync(ciYmlPath, `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
                 
-${yaml.stringify(ciYml)}`, {encoding: 'utf-8'});
+${stringify(ciYml)}`, {encoding: 'utf-8'});
             }
         }
     } else {
         // modify or change ci.yml
         if (fs.existsSync(ciYmlPath)) {
-            const ciYml = yaml.parse(fs.readFileSync(ciYmlPath, {encoding: 'utf-8'}));
+            const ciYml = parse(fs.readFileSync(ciYmlPath, {encoding: 'utf-8'}));
             let changed = false;
             changed = addExcludeBranch(ciYml?.trigger?.branches) || changed;
             changed = addExcludeBranch(ciYml?.pr?.branches) || changed;
@@ -152,10 +152,10 @@ ${yaml.stringify(ciYml)}`, {encoding: 'utf-8'});
             if (changed) {
                 fs.writeFileSync(ciYmlPath, `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
                 
-${yaml.stringify(ciYml)}`, {encoding: 'utf-8'});
+${stringify(ciYml)}`, {encoding: 'utf-8'});
             }
         } else {
-            const ciYml = yaml.parse(`
+            const ciYml = parse(`
 trigger:
   branches:
     include:
@@ -192,7 +192,7 @@ extends:
         `);
 
             if (fs.existsSync(ciMgmtYmlPath)) {
-                const ciMgmtYml = yaml.parse(fs.readFileSync(ciMgmtYmlPath, 'utf-8'));
+                const ciMgmtYml = parse(fs.readFileSync(ciMgmtYmlPath, 'utf-8'));
                 if (ciMgmtYml?.trigger?.paths?.include) {
                     addExcludePath(ciYml?.trigger?.paths, ciMgmtYml.trigger.paths.include)
                 }
@@ -203,7 +203,7 @@ extends:
 
             fs.writeFileSync(ciYmlPath, `# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
                 
-${yaml.stringify(ciYml)}`, {encoding: 'utf-8'})
+${stringify(ciYml)}`, {encoding: 'utf-8'})
         }
     }
 }

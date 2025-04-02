@@ -1,6 +1,6 @@
-import { ChangelogResult, NpmPackageInfo, PackageResult } from './types';
+import { ChangelogResult, NpmPackageInfo, PackageResult } from './types.js';
 
-import { Changelog } from '../changelog/changelogGenerator';
+import { Changelog } from '../changelog/changelogGenerator.js';
 
 export function initPackageResult(): PackageResult {
     const breakingChangeItems = [];

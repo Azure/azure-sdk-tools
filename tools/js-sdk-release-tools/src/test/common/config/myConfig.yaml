@@ -1,0 +1,18 @@
+parameters:
+  "service-dir":
+    default: "sdk/informaticadatamanagement"
+emit:
+  - "@azure-tools/typespec-autorest"
+options:
+  "@azure-tools/typespec-autorest":
+    emitter-output-dir: "{project-root}/.."
+    azure-resource-provider-folder: "resource-manager"
+    output-file: "{azure-resource-provider-folder}/{service-name}/{version-status}/{version}/openapi.json"
+  "usingParam":
+    output-file: "{service-dir}"
+  "@azure-tools/typespec-ts":
+    service-dir: "sdk/informatica"
+    output-folder: "{service-dir}/src/generated"
+linter:
+  extends:
+    - "@azure-tools/typespec-azure-rulesets/resource-manager"

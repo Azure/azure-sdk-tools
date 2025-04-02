@@ -2,27 +2,27 @@ import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
 
-import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
-import { Changelog } from "../../changelog/changelogGenerator";
+import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData.js";
+import { Changelog } from "../../changelog/changelogGenerator.js";
 import {
     makeChangesForFirstRelease,
     makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,
     makeChangesForReleasingTrack2
-} from "./modifyChangelogFileAndBumpVersion";
-import { logger } from "../../utils/logger";
+} from "./modifyChangelogFileAndBumpVersion.js";
+import { logger } from "../../utils/logger.js";
 import {
     bumpPatchVersion,
     bumpPreviewVersion,
     getNewVersion,
     getVersion,
     isBetaVersion
-} from "../../utils/version";
+} from "../../utils/version.js";
 import { execSync } from "child_process";
-import { getversionDate } from "../../utils/version";
-import { ApiVersionType, SDKType } from "../types"
-import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
-import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils';
-import { tryGetNpmView } from '../npmUtils';
+import { getversionDate } from "../../utils/version.js";
+import { ApiVersionType, SDKType } from "../types.js"
+import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
+import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog } from '../utils.js';
+import { tryGetNpmView } from '../npmUtils.js';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     logger.info(`Start to generate changelog and bump version in ${packageFolderPath}`);

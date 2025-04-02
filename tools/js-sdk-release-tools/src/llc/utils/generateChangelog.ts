@@ -1,10 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
-import { logger } from "../../utils/logger";
-import { getLatestStableVersion } from "../../utils/version";
-import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
-import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils";
-import { tryGetNpmView } from "../../common/npmUtils";
+import { logger } from "../../utils/logger.js";
+import { getLatestStableVersion } from "../../utils/version.js";
+import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData.js";
+import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils.js";
+import { tryGetNpmView } from "../../common/npmUtils.js";
 
 const shell = require('shelljs');
 const todayDate = new Date();

@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from 'vitest';
-import { getApiVersionType } from '../../mlc/apiVersion/apiVersionTypeExtractor';
-import { getApiVersionType as getApiVersionTypeInRLC } from '../../llc/apiVersion/apiVersionTypeExtractor';
+import { getApiVersionType } from '../../mlc/apiVersion/apiVersionTypeExtractor.js';
+import { getApiVersionType as getApiVersionTypeInRLC } from '../../llc/apiVersion/apiVersionTypeExtractor.js';
 import { join } from 'path';
-import { ApiVersionType } from '../../common/types';
-import { tryFindApiVersionInRestClient } from '../../xlc/apiVersion/utils';
+import { ApiVersionType } from '../../common/types.js';
+import { tryFindApiVersionInRestClient } from '../../xlc/apiVersion/utils.js';
 
 describe('Modular client api-version Extractor', () => {
     test('new createClient function', async () => {

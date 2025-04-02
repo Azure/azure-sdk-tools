@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-02 - 0.3.4
+
+- Read the corresponding sdk repository configuration for private repository
+
 ## 2025-04-01 - 0.3.3
 
 - Use relative directory paths from 'sdk' as go service name

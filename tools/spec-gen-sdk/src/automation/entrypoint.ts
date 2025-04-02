@@ -201,7 +201,14 @@ export const getSdkRepoConfig = async (options: SdkAutoOptions, specRepoConfig: 
     }
     return repoKey;
   };
-  let sdkRepoConfig = specRepoConfig.sdkRepositoryMappings[sdkName];
+  let sdkRepositoryMappings = specRepoConfig.sdkRepositoryMappings;
+  if (specRepo.name.endsWith("-pr")) {
+    sdkRepositoryMappings = specRepoConfig.overrides[`${specRepo.owner}/${specRepo.name}`]?.sdkRepositoryMappings ?? specRepoConfig.overrides[`Azure/${specRepo.name}`]?.sdkRepositoryMappings;
+  }
+  if (!sdkRepositoryMappings) {
+    throw new Error(`ConfigError: SDK repository mappings cannot be found in SpecConfig for ${specRepo.owner}/${specRepo.name}. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`);
+  }
+  let sdkRepoConfig = sdkRepositoryMappings[sdkName];
   if (sdkRepoConfig === undefined) {
     throw new Error(`ConfigError: SDK ${sdkName} is not defined in SpecConfig. Please add the related config at the 'specificationRepositoryConfiguration.json' file under the root folder of the azure-rest-api-specs(-pr) repository`);
   }

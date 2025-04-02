@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.3.18 (Unreleased)
+## Version 0.3.18 (2025-04-02)
 Updated the default mapping path from "apiview_mapping_python.json" to "apiview-properties.json" to align with TCGC mapping file, and additionally check the old default file name if the new default is not found.
 
 ## Version 0.3.17 (2025-03-25)

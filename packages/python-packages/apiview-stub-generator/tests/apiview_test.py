@@ -219,7 +219,7 @@ class TestApiView:
         assert os.path.exists(mapping_file_path)
 
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
         cross_language_lines = []

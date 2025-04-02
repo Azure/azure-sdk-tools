@@ -65,7 +65,7 @@ usage: apistubgen [-h] --pkg-path PKG_PATH [--temp-path TEMP_PATH]
   --out-path OUT_PATH   Path at which to write the generated JSON file.
                         Defaults to CWD.
   --mapping-path MAPPING_PATH
-                        Path to an 'apiview_mapping_python.json' file
+                        Path to an 'apiview-properties.json' file
                         that supplies cross-language definition IDs.
   --verbose             Enable verbose logging.
   --filter-namespace FILTER_NAMESPACE

@@ -64,7 +64,7 @@ class StubGenerator:
                 "--mapping-path",
                 default=None,
                 help=(
-                    "Path to an 'apiview_mapping_python.json' file that supplies cross-language definition IDs."
+                    "Path to an 'apiview-properties.json' file that supplies cross-language definition IDs."
                 ),
             )
             parser.add_argument(

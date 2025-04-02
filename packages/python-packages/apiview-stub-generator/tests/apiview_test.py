@@ -61,6 +61,14 @@ def _add_pyproject_package_to_temp(src_dir):
     assert os.path.exists(pyproject_path)
     os.remove(setup_py_path)
     assert not os.path.exists(setup_py_path)
+
+    # Move the new mapping file to the old mapping file name
+    mapping_file_path = os.path.join(dest_dir, "apiview-properties.json")
+    old_mapping_file_path = os.path.join(dest_dir, "apiview_mapping_python.json")
+    shutil.move(mapping_file_path, old_mapping_file_path)
+    assert os.path.exists(old_mapping_file_path)
+    assert not os.path.exists(mapping_file_path)
+
     return dest_dir
 
 PKG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
@@ -76,6 +84,9 @@ PYPROJECT_IDS = ["pyproject-source", "pyproject-whl", "pyproject-sdist"]
 
 ALL_PATHS = [PKG_PATH, WHL_PATH, SDIST_PATH, PYPROJECT_PKG_PATH, PYPROJECT_WHL_PATH, PYPROJECT_SDIST_PATH]
 ALL_PATH_IDS = ["setup-source", "setup-whl", "setup-sdist", "pyproject-source", "pyproject-whl", "pyproject-sdist"]
+
+MAPPING_PATHS = [(PKG_PATH, "apiview-properties.json"), (PYPROJECT_PKG_PATH, "apiview_mapping_python.json")]
+MAPPING_IDS = [mapping_file for _, mapping_file in MAPPING_PATHS]
 
 class TestApiView:
     def _count_newlines(self, apiview: ApiView):
@@ -201,12 +212,14 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
 
-    def test_mapping_file(self):
-        mapping_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest", "apiview_mapping_python.json")
-        )
+    @mark.parametrize("pkg_path, mapping_file", MAPPING_PATHS, ids=MAPPING_IDS)
+    def test_mapping_file(self, pkg_path, mapping_file):
+        # Check that mapping file exists
+        mapping_file_path = os.path.join(pkg_path, mapping_file)
+        assert os.path.exists(mapping_file_path)
+
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path, mapping_path=mapping_path)
+        stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
         cross_language_lines = []

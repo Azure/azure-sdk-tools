@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-02 0.17.0
+
+- Updated peerDependency support for `@typespec/compiler` to `>=0.66.0`.
+
 ## 2025-03-25 0.16.0
 
 - Added `install-dependencies` command to install dependencies pinned by `emitter-package.json` and `emitter-package-lock.json` at the root of the repository.

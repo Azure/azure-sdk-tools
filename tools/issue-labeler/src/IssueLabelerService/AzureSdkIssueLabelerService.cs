@@ -119,9 +119,6 @@ namespace IssueLabelerService
         private async Task<IssueOutput> CompleteIssueTriageAsync(IssuePayload issue)
         {
             // Configuration for Azure services
-            var credential = new DefaultAzureCredential();
-            var searchEndpoint = new Uri(_config["SearchEndpoint"]);
-            var openAIEndpoint = new Uri(_config["OpenAIEndpoint"]);
             var modelName = _config["OpenAIModelName"];
 
             // TODO make switching between different Indexes easier
@@ -148,8 +145,8 @@ namespace IssueLabelerService
             double scoreThreshold = double.Parse(_config["ScoreThreshold"]);
             double solutionThreshold = double.Parse(_config["SolutionThreshold"]);
 
-            var relevantIssues = await _ragService.AzureSearchQueryAsync<Issue>(searchEndpoint, issueIndexName, issueSemanticName, issueFieldName, credential, query, top);
-            var relevantDocuments = await _ragService.AzureSearchQueryAsync<Document>(searchEndpoint, documentIndexName, documentSemanticName, documentFieldName, credential, query, top);
+            var relevantIssues = await _ragService.AzureSearchQueryAsync<Issue>(issueIndexName, issueSemanticName, issueFieldName, query, top);
+            var relevantDocuments = await _ragService.AzureSearchQueryAsync<Document>(documentIndexName, documentSemanticName, documentFieldName, query, top);
 
             // Filter sources under threshold
             var docs = relevantDocuments

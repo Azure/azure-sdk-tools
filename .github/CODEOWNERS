@@ -28,7 +28,7 @@
 # GitHub Tools
 ###########
 /tools/github/                        @jsquire @ronniegeraghty
-/tools/issue-labeler/                 @jsquire @jeo02
+/tools/issue-labeler/                  @jsquire @jeo02
 
 ###########
 # Eng Sys Tools

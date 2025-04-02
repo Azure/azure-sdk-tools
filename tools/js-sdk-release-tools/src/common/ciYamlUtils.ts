@@ -103,7 +103,7 @@ async function createManagementPlaneCiYaml(
     const parsed = parse(template.toString());
     parsed.trigger.paths.include = [packageDirToSdkRoot, ciMgmtPath];
     parsed.pr.paths.include = [packageDirToSdkRoot, ciMgmtPath];
-    parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot;
+    parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot.split('/')[1];
     parsed.extends.parameters.Artifacts = [artifact];
 
     await writeCiYaml(ciMgmtPath, parsed);

@@ -1,11 +1,4 @@
-
 <Project>
-
-    <PropertyGroup>
-        <!-- Override output paths to use the default behavior -->
-        <BaseOutputPath Condition="'$(BaseOutputPath)' == ''">$(MSBuildProjectDirectory)\bin\</BaseOutputPath>
-        <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)' == ''">$(MSBuildProjectDirectory)\obj\</BaseIntermediateOutputPath>
-    </PropertyGroup>
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -15,6 +8,14 @@
     <MicrosoftMLVersion>3.0.1</MicrosoftMLVersion>
     <PollyVersion>8.4.2</PollyVersion>
     <MicrosoftExtensionsLoggingAbstractionsVersion>8.0.2</MicrosoftExtensionsLoggingAbstractionsVersion>
+    <AzureAIOpenAIVersion>2.2.0-beta.1</AzureAIOpenAIVersion>
+    <AzureIdentityVersion>1.13.1</AzureIdentityVersion>
+    <AzureSearchDocumentsVersion>11.7.0-beta.2</AzureSearchDocumentsVersion>
+    <AzureStorageBlobsVersion>12.23.0</AzureStorageBlobsVersion>
+    <NewtonsoftJsonVersion>13.0.3</NewtonsoftJsonVersion>
+    <OctokitVersion>13.0.1</OctokitVersion>
+    <MicrosoftExtensionsConfigurationVersion>9.0.0</MicrosoftExtensionsConfigurationVersion>
+    <MicrosoftExtensionsLoggingVersion>9.0.0</MicrosoftExtensionsLoggingVersion>
   </PropertyGroup>
   
   <Import Project="../../Directory.Build.props" />

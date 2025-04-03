@@ -21,6 +21,7 @@ import { MessageService } from 'primeng/api';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { HttpResponse } from '@angular/common/http';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { Review } from 'src/app/_models/review';
 
 describe('ReviewPageComponent', () => {
   let component: ReviewPageComponent;
@@ -77,19 +78,31 @@ describe('ReviewPageComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should set loadFailed and loadFailedMessage when loadReviewContent returns status 204', () => {
-    const reviewId = 'test-review-id';
-    const activeApiRevisionId = 'test-active-api-revision-id';
-    const diffApiRevisionId = 'test-diff-api-revision-id';
+  describe('Set LoadFailed and loadFailedMessage', () => {
+    it('should set loadFailed and loadFailedMessage when loadReviewContent returns status 204', () => {
+      const reviewId = 'test-review-id';
+      const activeApiRevisionId = 'test-active-api-revision-id';
+      const diffApiRevisionId = 'test-diff-api-revision-id';
+  
+      spyOn(reviewsService, 'getReviewContent').and.returnValue(
+        of(new HttpResponse<ArrayBuffer>({ status: 204 }))
+      );
+      component.loadReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId);
+  
+      expect(component.loadFailed).toBeTrue();
+      expect(component.loadFailedMessage).toContain('API-Revision Content Not Found. The');
+      expect(component.loadFailedMessage).toContain('active and/or diff API-Revision(s) may have been deleted.');
+    });
 
-    spyOn(reviewsService, 'getReviewContent').and.returnValue(
-      of(new HttpResponse<ArrayBuffer>({ status: 204 }))
-    );
-    component.loadReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId);
-
-    expect(component.loadFailed).toBeTrue();
-    expect(component.loadFailedMessage).toContain('API-Revision Content Not Found. The');
-    expect(component.loadFailedMessage).toContain('active and/or diff API-Revision(s) may have been deleted.');
+    it('should set loadFailed and loadFailedMessage when Review is deleted', () => {
+      var review = new Review();
+      review.isDeleted = true;
+      spyOn(reviewsService, 'getReview').and.returnValue(of(review));
+      component.loadReview('testReviewId');
+  
+      expect(component.loadFailed).toBeTrue();
+      expect(component.loadFailedMessage).toContain('Review has been deleted.');
+    });
   });
 
   it('should include activeAPIRevision and diffAPIRevision in pageRevisions of the getAPIRevisions call when they are present', () => {

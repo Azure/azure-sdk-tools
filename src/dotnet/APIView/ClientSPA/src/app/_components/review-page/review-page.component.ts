@@ -211,6 +211,9 @@ export class ReviewPageComponent implements OnInit {
     this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (response: HttpResponse<ArrayBuffer>) => {
+          if (this.updateLoadingStateBasedOnReviewDeletionStatus()) {
+            return;
+          }
           if (response.status == 204) {
             this.loadFailed = true;
             this.loadFailedMessage = "API-Revision Content Not Found. The";
@@ -240,6 +243,7 @@ export class ReviewPageComponent implements OnInit {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
           this.review = review;
+          this.updateLoadingStateBasedOnReviewDeletionStatus();
         }
       });
   }
@@ -579,6 +583,15 @@ export class ReviewPageComponent implements OnInit {
         break;
       }
     }
+  }
+
+  updateLoadingStateBasedOnReviewDeletionStatus() : boolean {
+    if (this.review?.isDeleted) {
+      this.loadFailed = true;
+      this.loadFailedMessage = "Review has been deleted.";
+      return true;
+    }
+    return false;
   }
   
   ngOnDestroy() {

@@ -540,7 +540,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             await controller.AddSanitizer();
 
-            var result = (await testRecordingHandler.SanitizerRegistry.GetSanitizers(testRecordingHandler.PlaybackSessions[recordingId])).Last();
+            var result = (await testRecordingHandler.SanitizerRegistry.GetSanitizers(testRecordingHandler.PlaybackSessions[recordingId])).First();
             
             Assert.True(result is HeaderRegexSanitizer);
         }

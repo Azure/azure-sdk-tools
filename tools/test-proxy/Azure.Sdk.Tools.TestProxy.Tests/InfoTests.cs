@@ -92,8 +92,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(model.Sanitizers.Count() == defaultExtensionCount + 2);
 
             // confirm that the overridden matcher is showing up
-            Assert.True(descriptions[defaultExtensionCount].ConstructorDetails.Arguments[1].Item2 == "\"ABC123\"");
-            Assert.True(descriptions[defaultExtensionCount + 1].ConstructorDetails.Arguments[1].Item2 == "\".+?\"");
+            Assert.True(descriptions[1].ConstructorDetails.Arguments[1].Item2 == "\"ABC123\"");
+            Assert.True(descriptions[0].ConstructorDetails.Arguments[1].Item2 == "\".+?\"");
 
             // and finally confirm our sanitizers are what we expect
             Assert.True(descriptions[defaultExtensionCount + 2].Name == "CustomDefaultMatcher");

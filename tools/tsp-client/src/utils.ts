@@ -93,8 +93,12 @@ export async function writeTspLocationYaml(
   tspLocation: TspLocation,
   projectPath: string,
 ): Promise<void> {
-  await writeFile(
-    joinPaths(projectPath, "tsp-location.yaml"),
-    `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${formatAdditionalDirectories(tspLocation.additionalDirectories)}`,
-  );
+  let tspLocationContent = `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${formatAdditionalDirectories(tspLocation.additionalDirectories)}`;
+  if (tspLocation.entrypointFile) {
+    tspLocationContent += `\nentrypointFile: ${tspLocation.entrypointFile}`;
+  }
+  if (tspLocation.emitterPackageJsonPath) {
+    tspLocationContent += `\nemitterPackageJsonPath: ${tspLocation.emitterPackageJsonPath}`;
+  }
+  await writeFile(joinPaths(projectPath, "tsp-location.yaml"), tspLocationContent);
 }

@@ -24,7 +24,7 @@ import {
 } from "./utils.js";
 import { parse as parseYaml } from "yaml";
 import { config as dotenvConfig } from "dotenv";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { doesFileExist } from "./network.js";
 import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
@@ -37,9 +37,10 @@ export async function initCommand(argv: any) {
 
   const repoRoot = await getRepoRoot(outputDir);
 
-  const emitter = await getEmitterFromRepoConfig(
-    joinPaths(repoRoot, "eng", "emitter-package.json"),
-  );
+  const emitterPackageJsonPath =
+    argv["emitter-package-json-path"] ?? joinPaths(repoRoot, "eng", "emitter-package.json");
+
+  const emitter = await getEmitterFromRepoConfig(emitterPackageJsonPath);
   if (!emitter) {
     throw new Error("Couldn't find emitter-package.json in the repo");
   }
@@ -91,6 +92,9 @@ export async function initCommand(argv: any) {
       repo: resolvedConfigUrl.repo,
       additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
     };
+    if (argv["emitter-package-json-path"]) {
+      tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
+    }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
@@ -134,6 +138,9 @@ export async function initCommand(argv: any) {
       repo: repo ?? "",
       additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
     };
+    if (argv["emitter-package-json-path"]) {
+      tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
+    }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     outputDir = newPackageDir;
   }
@@ -162,6 +169,8 @@ export async function syncCommand(argv: any) {
     throw new Error("Could not find repo root");
   }
   const tspLocation: TspLocation = await readTspLocation(outputDir);
+  const emitterPackageJsonPath =
+    tspLocation.emitterPackageJsonPath ?? joinPaths(repoRoot, "eng", "emitter-package.json");
   const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   Logger.debug(`Using project name: ${projectName}`);
@@ -227,15 +236,24 @@ export async function syncCommand(argv: any) {
   }
 
   try {
-    const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    let emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    if (tspLocation.emitterPackageJsonPath) {
+      // If the emitter package json path is provided, we need to check for the lock file in the same directory
+      const emitterPackageJsonDir = dirname(tspLocation.emitterPackageJsonPath);
+      const lockFileExists = await stat(
+        joinPaths(emitterPackageJsonDir, "emitter-package-lock.json"),
+      );
+      if (lockFileExists.isFile()) {
+        emitterLockPath = joinPaths(emitterPackageJsonDir, "emitter-package-lock.json");
+      }
+    }
     await cp(emitterLockPath, joinPaths(tempRoot, "package-lock.json"), { recursive: true });
   } catch (err) {
     Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
     Logger.debug("Will attempt look for emitter-package.json...");
   }
   try {
-    const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
-    await cp(emitterPath, joinPaths(tempRoot, "package.json"), { recursive: true });
+    await cp(emitterPackageJsonPath, joinPaths(tempRoot, "package.json"), { recursive: true });
   } catch (err) {
     throw new Error(
       `Ran into the following error: ${err}\nTo continue using tsp-client, please provide a valid emitter-package.json file in the eng/ directory of the repository.`,
@@ -258,7 +276,8 @@ export async function generateCommand(argv: any) {
   }
   const srcDir = joinPaths(tempRoot, projectName);
   const emitter = await getEmitterFromRepoConfig(
-    joinPaths(await getRepoRoot(outputDir), "eng", "emitter-package.json"),
+    tspLocation.emitterPackageJsonPath ??
+      joinPaths(await getRepoRoot(outputDir), "eng", "emitter-package.json"),
   );
   if (!emitter) {
     throw new Error("emitter is undefined");

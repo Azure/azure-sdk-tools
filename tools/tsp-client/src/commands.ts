@@ -446,7 +446,7 @@ export async function generateConfigFilesCommand(argv: any) {
   const content = await readFile(packageJsonPath);
   const packageJson: Record<string, any> = JSON.parse(content.toString());
   const emitterPackageJson: Record<string, any> = {
-    name: "dist/src/index.js",
+    main: "dist/src/index.js",
     dependencies: {},
   };
 

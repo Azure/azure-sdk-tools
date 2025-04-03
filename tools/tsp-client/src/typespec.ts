@@ -14,6 +14,7 @@ export interface TspLocation {
   repo: string;
   additionalDirectories?: string[];
   entrypointFile?: string;
+  emitterPackageJsonPath?: string;
 }
 
 export function resolveTspConfigUrl(configUrl: string): {

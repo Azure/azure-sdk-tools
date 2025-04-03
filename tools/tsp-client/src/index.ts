@@ -117,6 +117,10 @@ const parser = yargs(hideBin(process.argv))
         .option("skip-install", {
           type: "boolean",
           description: "Skip installing dependencies",
+        })
+        .option("emitter-package-json-path", {
+          type: "string",
+          description: "Alternate path for emitter-package.json file",
         });
     },
     async (argv: any) => {

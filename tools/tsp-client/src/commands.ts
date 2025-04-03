@@ -37,9 +37,10 @@ export async function initCommand(argv: any) {
 
   const repoRoot = await getRepoRoot(outputDir);
 
-  const emitter = await getEmitterFromRepoConfig(
-    joinPaths(repoRoot, "eng", "emitter-package.json"),
-  );
+  const emitterPackageJsonPath =
+    argv["emitter-package-json"] ?? joinPaths(repoRoot, "eng", "emitter-package.json");
+
+  const emitter = await getEmitterFromRepoConfig(emitterPackageJsonPath);
   if (!emitter) {
     throw new Error("Couldn't find emitter-package.json in the repo");
   }
@@ -91,6 +92,9 @@ export async function initCommand(argv: any) {
       repo: resolvedConfigUrl.repo,
       additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
     };
+    if (argv["emitter-package-json-path"]) {
+      tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
+    }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
@@ -134,6 +138,9 @@ export async function initCommand(argv: any) {
       repo: repo ?? "",
       additionalDirectories: configYaml?.parameters?.dependencies?.additionalDirectories,
     };
+    if (argv["emitter-package-json-path"]) {
+      tspLocationData.emitterPackageJsonPath = argv["emitter-package-json-path"];
+    }
     await writeTspLocationYaml(tspLocationData, newPackageDir);
     outputDir = newPackageDir;
   }

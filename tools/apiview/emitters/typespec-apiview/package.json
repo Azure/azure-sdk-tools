@@ -55,7 +55,8 @@
     "!dist/test/**"
   ],
   "peerDependencies": {
-    "@typespec/compiler": "^1.0.0-0"
+    "@typespec/compiler": "^1.0.0-0",
+    "@typespec/versioning": ">=0.67 <1.0"
   },
   "devDependencies": {
     "@azure-tools/typespec-azure-core": ">=0.53 <1.0",

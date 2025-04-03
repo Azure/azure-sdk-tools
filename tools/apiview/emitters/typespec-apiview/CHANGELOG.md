@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.7.0 (TBD)
+## Version 0.7.0 (04-03-2025)
 Support new TypeSpec compiler.
 
 ## Version 0.6.0 (03-20-2025)

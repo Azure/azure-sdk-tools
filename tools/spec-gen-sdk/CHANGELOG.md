@@ -1,5 +1,9 @@
 # Release
 
+## 2025-04-03 - 0.3.5
+
+- Exclude '-pr' in the language value when spec repo is private repo
+
 ## 2025-04-02 - 0.3.4
 
 - Read the corresponding sdk repository configuration for private repository

@@ -6,6 +6,7 @@
 - Support specifying an alternate path to the emitter-package.json file:
   - For the `sync` and `update` commands: support `emitterPackageJsonPath` property in tsp-location.yaml
   - For `init`: support a `--emitter-package-json-path` flag to pass in the alternate path for emitter-package.json.
+- Fixed bug in `generate-config-files` command to output `main` instead of `name` for the entry point of the emitter-package.json file.
 
 ## 2025-03-25 0.16.0
 

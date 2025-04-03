@@ -14,6 +14,8 @@ import { cwd } from "node:process";
 import { joinPaths } from "@typespec/compiler";
 import { readTspLocation, removeDirectory } from "../src/fs.js";
 import { doesFileExist } from "../src/network.js";
+import { TspLocation } from "../src/typespec.js";
+import { writeTspLocationYaml } from "../src/utils.js";
 
 describe.sequential("Verify commands", () => {
   let repoRoot;
@@ -120,6 +122,29 @@ describe.sequential("Verify commands", () => {
           cwd(),
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
+        "save-inputs": true,
+      };
+      await updateCommand(args);
+    } catch (error) {
+      assert.fail(`Failed to generate. Error: ${error}`);
+    }
+  });
+
+  it("Update example sdk with custom emitter-package.json path", async () => {
+    try {
+      const tspLocationContent: TspLocation = {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
+        repo: "Azure/azure-rest-api-specs",
+        additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        emitterPackageJsonPath: joinPaths(cwd(), "test/utils/emitter-package.json"),
+      };
+      await writeTspLocationYaml(
+        tspLocationContent,
+        joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
+      );
+      const args = {
+        "output-dir": joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
         "save-inputs": true,
       };
       await updateCommand(args);

@@ -38,7 +38,7 @@ export async function initCommand(argv: any) {
   const repoRoot = await getRepoRoot(outputDir);
 
   const emitterPackageJsonPath =
-    argv["emitter-package-json"] ?? joinPaths(repoRoot, "eng", "emitter-package.json");
+    argv["emitter-package-json-path"] ?? joinPaths(repoRoot, "eng", "emitter-package.json");
 
   const emitter = await getEmitterFromRepoConfig(emitterPackageJsonPath);
   if (!emitter) {

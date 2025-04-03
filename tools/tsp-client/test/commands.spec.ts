@@ -161,7 +161,7 @@ describe.sequential("Verify commands", () => {
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
         "tsp-config":
-          "https://github.com/Azure/azure-rest-api-specs/blob/db63bea839f5648462c94e685d5cc96f8e8b38ba/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml",
+          "https://github.com/Azure/azure-rest-api-specs/blob/45924e49834c4e01c0713e6b7ca21f94be17e396/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml",
         "save-inputs": true,
       };
       await updateCommand(args);
@@ -177,7 +177,7 @@ describe.sequential("Verify commands", () => {
           cwd(),
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
-        commit: "db63bea839f5648462c94e685d5cc96f8e8b38ba",
+        commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
         "save-inputs": true,
       };
       await updateCommand(args);

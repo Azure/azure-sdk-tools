@@ -20,9 +20,7 @@ using Azure.Core.Traits;
     }
   ]>
 )
-@service({
-  title: "Contoso Widget Manager",
-})
+@service(#{ title: "Contoso Widget Manager" })
 @server(
   "{endpoint}/widget",
   "Contoso Widget APIs",
@@ -66,5 +64,5 @@ alias ServiceTraits = SupportsRepeatableRequests &
 alias Operations = Azure.Core.ResourceOperations<ServiceTraits>;
 
 interface Widgets {
-    getWidget is Operations.ResourceRead<Widget>;
+  getWidget is Operations.ResourceRead<Widget>;
 }

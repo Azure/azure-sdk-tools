@@ -68,7 +68,7 @@ const generateSdk = async (config: SpecGenSdkCliConfig) => {
       specCommitSha: config.specCommitSha,
       specRepoHttpsUrl: config.specRepoHttpsUrl,
       pullNumber: config.prNumber,
-      sdkName: config.sdkRepoName,
+      sdkName: config.sdkRepoName.replace('-pr', ''),
       apiVersion: config.apiVersion,
       sdkReleaseType: config.sdkReleaseType,
       workingFolder: config.workingFolder,

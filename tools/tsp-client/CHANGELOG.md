@@ -2,7 +2,7 @@
 
 ## 2025-04-02 0.17.0
 
-- Updated peerDependency support for `@typespec/compiler` to `>=0.66.0`.
+- Updated peerDependency support for `@typespec/compiler` to `^1.0.0-0`.
 
 ## 2025-03-25 0.16.0
 

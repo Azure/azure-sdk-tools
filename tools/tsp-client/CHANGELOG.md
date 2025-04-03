@@ -1,8 +1,11 @@
 # Release
 
-## 2025-04-02 0.17.0
+## 2025-04-03 0.17.0
 
 - Updated peerDependency support for `@typespec/compiler` to `^1.0.0-0`.
+- Support specifying an alternate path to the emitter-package.json file:
+  - For the `sync` and `update` commands: support `emitterPackageJsonPath` property in tsp-location.yaml
+  - For `init`: support a `--emitter-package-json-path` flag to pass in the alternate path for emitter-package.json.
 
 ## 2025-03-25 0.16.0
 

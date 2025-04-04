@@ -9,6 +9,7 @@ import json
 import os
 import prompty
 import prompty.azure
+from time import time
 from typing import Literal, List
 
 from ._sectioned_document import SectionedDocument, Section
@@ -51,6 +52,8 @@ class ApiViewReview:
         return str(hash(json.dumps(obj)))
 
     def get_response(self, apiview: str, *, chunk_input: bool = False) -> GuidelinesResult:
+        print(f"Generating review...")
+        start_time = time()
         apiview = self.unescape(apiview)
         if not self.use_rag:
             guidelines = self._retrieve_static_guidelines(self.language, include_general_guidelines=True)
@@ -82,6 +85,8 @@ class ApiViewReview:
                 continue
         final_results.validate(guidelines=guidelines)
         final_results.sort()
+        end_time = time()
+        print(f"Review generated in {end_time - start_time:.2f} seconds.")
         return final_results
 
     def unescape(self, text: str) -> str:
@@ -114,9 +119,9 @@ class ApiViewReview:
         Returns the filter expression for the given language.
         """
         if self.language == "all":
-            return "language eq '' or language eq null"
+            return "lang eq '' or lang eq null"
         else:
-            return f"language eq '{self.language}' or language eq '' or language eq null"
+            return f"lang eq '{self.language}' or lang eq '' or lang eq null"
 
     def _search_guidelines(self, query: str) -> List[object]:
         credential = DefaultAzureCredential()
@@ -233,12 +238,12 @@ class ApiViewReview:
                 final_guidelines[gid] = guideline
 
                 # queue up related guidelines
-                for rel in guideline.get("related_guidelines", []):
+                for rel in guideline.get("related_guidelines") or []:
                     if rel not in seen_guideline_ids:
                         queue.append(rel)
 
                 # now do the same for examples
-                for ex in guideline.get("related_examples", []):
+                for ex in guideline.get("related_examples") or []:
                     try:
                         if ex not in seen_example_ids:
                             seen_example_ids.add(ex)

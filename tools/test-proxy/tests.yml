@@ -192,17 +192,23 @@ stages:
             rootFolder: $(CLONE_LOCATION)
 
         - pwsh: |
-            dotnet test
-          displayName: 'Invoke Tests'
+            dotnet test --framework net9.0
+          displayName: 'Invoke Tests .NET 9'
           workingDirectory: $(CLONE_LOCATION)/sdk/core/Azure.Core.TestFramework
           env:
             PROXY_MANUAL_START: "true"
             PROXY_DEBUG_MODE: "true"
 
+        - pwsh: |
+            dotnet test --framework net8.0
+          displayName: 'Invoke Tests .NET 8'
+          workingDirectory: $(CLONE_LOCATION)/sdk/core/Azure.Core.TestFramework
+          env:
+            PROXY_MANUAL_START: "true"
+            PROXY_DEBUG_MODE: "true"
 
     - job: Test_Python_Tables
       displayName: Run Python Tables CI Tests
-
 
       strategy:
         matrix:

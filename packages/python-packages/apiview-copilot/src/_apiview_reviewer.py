@@ -27,14 +27,13 @@ DEFAULT_MODEL = "o3-mini"
 
 class ApiViewReview:
 
-    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini"], use_rag: bool = True, log_prompts: bool = False,):
+    def __init__(self, *, language: str, model: Literal["gpt-4o-mini", "o3-mini"], log_prompts: bool = False,):
         self.language = language
         self.model = model
         self.output_parser = GuidelinesResult
         self.log_prompts = log_prompts
         if self.log_prompts is None:
             self.log_prompts = os.getenv("APIVIEW_LOG_PROMPTS", "false").lower() == "true"
-        self.use_rag = use_rag
         if log_prompts:
             # remove the folder if it exists
             base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
@@ -46,32 +45,46 @@ class ApiViewReview:
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
 
-    def get_response(self, apiview: str, *, chunk_input: bool = False) -> GuidelinesResult:
+    def get_response(self, apiview: str, *, chunk_input: bool = False, use_rag: bool = False) -> GuidelinesResult:
+        print(f"Generating review...")
+        start_time = time()
         apiview = self.unescape(apiview)
-        if not self.use_rag:
+        if not use_rag:
             guidelines = self._retrieve_static_guidelines(self.language, include_general_guidelines=True)
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=chunk_input)
         final_results = GuidelinesResult(status="Success", violations=[])
+        max_retries = 5
         for i, chunk in enumerate(chunked_apiview):
-            if self.use_rag:
-                # use the Azure OpenAI service to get guidelines
-                context = self._retrieve_guidelines_from_search(chunk)
-                guidelines = context["guidelines"]
-            # select the appropriate prompty file and run it
-            prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
-            prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
-            response = prompty.execute(prompt_path, inputs={
-                "language": self.language,
-                "context": json.dumps(context),
-                "apiview": chunk.numbered(),
-            })
-            try:
-                json_object = json.loads(response)
-                chunk_result = GuidelinesResult(**json_object)
-                final_results.merge(chunk_result, section=chunk)
-            except json.JSONDecodeError:
-                print(f"WARNING: Failed to decode JSON for chunk {i}: {response}")
-                continue
+            for j in range(max_retries):
+                print(f"Processing chunk {i + 1}/{len(chunked_apiview)}... ({j + 1}/{max_retries})")
+                if i == 0 and len(chunked_apiview.sections) > 1:
+                    # the first chunk is the header, so skip it
+                    continue
+
+                if use_rag:
+                    # use the Azure OpenAI service to get guidelines
+                    context = self._retrieve_guidelines_from_search(chunk)
+                    guidelines = context["guidelines"]
+                # select the appropriate prompty file and run it
+                prompt_file = f"review_apiview_{self.model}.prompty".replace("-", "_")
+                prompt_path = os.path.join(_PROMPTS_FOLDER, prompt_file)
+                response = prompty.execute(prompt_path, inputs={
+                    "language": self.language,
+                    "context": json.dumps(context) if use_rag else json.dumps(guidelines),
+                    "apiview": chunk.numbered(),
+                })
+                try:
+                    json_object = json.loads(response)
+                    chunk_result = GuidelinesResult(**json_object)
+                    final_results.merge(chunk_result, section=chunk)
+                    break
+                except json.JSONDecodeError:
+                    if j == max_retries - 1:
+                        print(f"WARNING: Failed to decode JSON for chunk {i}: {response}")
+                        break
+                    else:
+                        print(f"WARNING: Failed to decode JSON for chunk {i}: {response}. Retrying...")
+                        continue
         final_results.validate(guidelines=guidelines)
         final_results.sort()
         return final_results

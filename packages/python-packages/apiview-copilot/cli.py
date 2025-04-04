@@ -12,7 +12,7 @@ from typing import Literal
 
 helps["review"] = """
     type: group
-    short-summary: Commands related to APIView GPT reviews.
+    short-summary: Commands related to APIView reviews.
 """
 
 helps["eval"] = """
@@ -20,7 +20,7 @@ helps["eval"] = """
     short-summary: Commands related to APIView copilot evals.
 """
 
-def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "o3-mini"], chunk_input: bool = False, log_prompts: bool = False):
+def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "o3-mini"], chunk_input: bool = False, log_prompts: bool = False, use_rag: bool = False):
     """
     Generate a review for an APIView
     """
@@ -30,13 +30,14 @@ def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "o3-
 
     with open(path, "r") as f:
         apiview = f.read()
-    review = rg.get_response(apiview, chunk_input=chunk_input)
+    review = rg.get_response(apiview, chunk_input=chunk_input, use_rag=use_rag)
     output_path = os.path.join('scratch', 'output', language)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     with open(os.path.join(output_path, f'{filename}.json'), 'w') as f:
         f.write(review.model_dump_json(indent=4))
-    pprint(review)
+    print(f"Review saved to {os.path.join(output_path, f'{filename}.json')}")
+    print(f"Found {len(review.violations or [])} violations")
 
 
 def create_test_case(language: str, test_case: str, apiview_path: str, expected_path: str, test_file: str, overwrite: bool = False):
@@ -130,7 +131,8 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument("log_prompts", action="store_true", help="Log each prompt in ascending order in the `scratch/propmts` folder.")
             ac.argument("model", type=str, help="The model to use for the review", options_list=("--model", "-m"), choices=["gpt-4o-mini", "o3-mini"])
-            ac.argument("chunk_input", action="store_true", help="Chunk the input into smaller sections.")
+            ac.argument("chunk_input", action="store_true", help="Chunk the input into smaller sections (currently, by class).")
+            ac.argument("use_rag", action="store_true", help="Use RAG pattern to generate the review.")
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("language", type=str, help="The language for the test case.")
             ac.argument("test_case", type=str, help="The name of the test case")

@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 import os, re
 
-PACKAGE_NAME = "apiview-gpt"
+PACKAGE_NAME = "apiview-copilot"
 
 DESCRIPTION = (
-    "A tool for generating APIView reviews using GPT-4."
+    "A tool for generating APIView AI review."
 )
 
 with open(os.path.join("src", "_version.py"), "r") as fd:
@@ -32,7 +32,7 @@ setup(
         "charset-normalizer",
     ],
     python_requires=">=3.8.0",
-    entry_points={"console_scripts": ["apiview-gpt=create_review",]},
+    entry_points={"console_scripts": ["apiview-copilot=create_review",]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",

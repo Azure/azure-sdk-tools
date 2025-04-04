@@ -1,6 +1,6 @@
-# APIView GPT Reviewer 
+# APIView Copilot Reviewer 
 
-This GPT-enabled tool is designed to produce automated reviews of APIView.
+This tool is designed to produce automated reviews of APIView.
 
 ## Getting Started
 
@@ -29,13 +29,13 @@ APIVIEW_GPT_SERVICE_URL=https://apiview-gpt.azurewebsites.net
 3. Run `python cli.py review generate --language <LANG> --path <PATH>`
 4. Output will be stored in `scratch\output\<LANG>\<INPUT_FILENAME>.json`.
 
-If you would like to see the raw text of the prompts sent to ChatGPT, you can append the
+If you would like to see the raw text of the prompts sent to the LLM, you can append the
 `--log-prompts` flag, which will dump the prompts in ascending order to a folder called `scratch/prompts`.
 This folder will be wiped with each invocation and overwritten.
 
 ## Working With Semantic Documents
 
-APIView GPT uses semantic search to ground the ChatGPT request. To interact with the semantic database:
+APIView Copilot uses semantic search to ground the LLM request. To interact with the semantic database:
 1. Add the following to your `.env` file:
 ```
 APIVIEW_API_KEY="" # The APIView API key

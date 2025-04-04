@@ -50,3 +50,7 @@ class SectionedDocument:
 
     def __iter__(self):
         return iter(self.sections)
+
+    def __len__(self):
+        # Return the number of sections in the document
+        return len(self.sections)

@@ -14,7 +14,7 @@ helps["review"] = """
     short-summary: Commands related to APIView GPT reviews.
 """
 
-def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "gpt-o3-mini"], chunk_input: bool = False, log_prompts: bool = False):
+def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "gpt-o3-mini"], chunk_input: bool = False, log_prompts: bool = False, use_rag: bool = False):
     """
     Generate a review for an APIView
     """
@@ -24,13 +24,14 @@ def generate_review(language: str, path: str, model: Literal["gpt-4o-mini", "gpt
 
     with open(path, "r") as f:
         apiview = f.read()
-    review = rg.get_response(apiview, chunk_input=chunk_input)
+    review = rg.get_response(apiview, chunk_input=chunk_input, use_rag=use_rag)
     output_path = os.path.join('scratch', 'output', language)
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     with open(os.path.join(output_path, f'{filename}.json'), 'w') as f:
         f.write(review.model_dump_json(indent=4))
-    pprint(review)
+    print(f"Review saved to {os.path.join(output_path, f'{filename}.json')}")
+    print(f"Found {len(review.violations or [])} violations")
 
 class CliCommandsLoader(CLICommandsLoader):
     def load_command_table(self, args):
@@ -45,7 +46,8 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument("path", type=str, help="The path to the APIView file")
             ac.argument("log_prompts", action="store_true", help="Log each prompt in ascending order in the `scratch/propmts` folder.")
             ac.argument("model", type=str, help="The model to use for the review", options_list=("--model", "-m"), choices=["gpt-4o-mini", "o3-mini"])
-            ac.argument("chunk_input", action="store_true", help="Chunk the input into smaller sections.")
+            ac.argument("chunk_input", action="store_true", help="Chunk the input into smaller sections (currently, by class).")
+            ac.argument("use_rag", action="store_true", help="Use RAG pattern to generate the review.")
         super(CliCommandsLoader, self).load_arguments(command)
 
 
